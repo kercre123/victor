@@ -1,0 +1,76 @@
+{
+  "behaviorType": "InteractWithFaces",
+  "name": "interactWithFaces",
+  "initial_take_anim_group": "interactWithFaces_initial",
+  "wait_anim_group": "interactWithFaces_squint",
+
+  "emotionScorers": [
+    {
+      "emotionType": "Social",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.8
+          },
+          {
+            "x": 0.0,
+            "y": 0.8
+          },
+          {
+            "x": 0.2,
+            "y": 0.5
+          },
+          {
+            "x": 1.0,
+            "y": 0.1
+          }
+        ]
+      },
+      "trackDelta": false
+    },
+    {
+      "emotionType": "Excited",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 1.0
+          },
+          {
+            "x": 0.0,
+            "y": 1.0
+          },
+          {
+            "x": 0.5,
+            "y": 0.6
+          },
+          {
+            "x": 1.0,
+            "y": 0.5
+          }
+        ]
+      },
+      "trackDelta": false
+    }      
+  ],
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 5.0,
+        "y": 0.0
+      },
+      {
+        "x": 10.0,
+        "y": 0.1
+      },
+      {
+        "x": 20.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "FreeplayOne"
+  ]
+}

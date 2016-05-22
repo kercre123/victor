@@ -1,0 +1,65 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : true,
+   "NumObjects" : 1,
+   "Objects" : [
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 0.7853979999999999,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "Translation" : [ 145.0, 60.0, 21.754750 ]
+         },
+         "Type" : "FIRE"
+      }
+   ],
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_OffTheMat0.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 1.0471980,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.3839720,
+            "Translation" : [ -15.0, -115.0, 44.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_FIRE",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 207.3167572021484,
+               "x_imgLowerRight" : 243.4693145751953,
+               "x_imgUpperLeft" : 209.4806671142578,
+               "x_imgUpperRight" : 247.4254913330078,
+               "y_imgLowerLeft" : 100.1778411865234,
+               "y_imgLowerRight" : 103.5583724975586,
+               "y_imgUpperLeft" : 65.4040527343750,
+               "y_imgUpperRight" : 67.66728210449219
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_M",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 117.8550338745117,
+               "x_imgLowerRight" : 160.4349670410156,
+               "x_imgUpperLeft" : 101.0486984252930,
+               "x_imgUpperRight" : 139.8022003173828,
+               "y_imgLowerLeft" : 133.0000762939453,
+               "y_imgLowerRight" : 124.0433807373047,
+               "y_imgUpperLeft" : 117.6274948120117,
+               "y_imgUpperRight" : 110.1590118408203
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_OffTheMat"
+}

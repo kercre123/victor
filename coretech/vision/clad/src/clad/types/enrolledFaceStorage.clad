@@ -1,0 +1,27 @@
+/**
+* File: enrolledFaceStorage.clad
+*
+* Author: Andrew Stein
+* Date:   5/10/2016
+*
+* Description: CLAD struct storing packed face enrollment data on the robot
+*
+* Copyright: Anki, Inc. 2016
+**/
+
+
+namespace Anki {
+namespace Vision {
+
+  structure EnrolledFaceStorage
+  {
+    int_64      enrollmentTimeCount,
+    int_64      lastDataUpdateTimeCount,
+    int_64      lastSeenTimeCount,
+    int_32      faceID,
+    uint_8      nextDataToUpdate,
+    string      name
+  }
+
+} // namespace Vision
+} // namespace Anki

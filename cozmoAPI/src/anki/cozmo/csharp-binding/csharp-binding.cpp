@@ -1,0 +1,235 @@
+//
+//  csharp-binding.h
+//  CozmoGame
+//
+//  Created by Greg Nagel on 4/11/15.
+//
+//
+
+#include "anki/cozmo/csharp-binding/csharp-binding.h"
+
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/csharp-binding/dasLoggerProvider.h"
+#include "anki/cozmo/cozmoAPI.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+
+#include "util/global/globalDefinitions.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
+#include "util/logging/sosLoggerProvider.h"
+#include "util/logging/multiLoggerProvider.h"
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
+#if __APPLE__
+#include "TargetConditionals.h"
+#if TARGET_OS_IPHONE
+#define USE_IOS
+#endif
+#endif
+
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "util/logging/saveToFileLoggerProvider.h"
+#include "util/logging/rollingFileLogger.h"
+#endif
+
+#ifdef USE_IOS
+#include "anki/cozmo/csharp-binding/ios/ios-binding.h"
+#endif
+
+#if defined(USE_IOS) || defined(ANDROID)
+#define USE_DAS 1
+#else
+#define USE_DAS 0
+#endif
+
+using namespace Anki;
+using namespace Anki::Cozmo;
+
+const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
+const char* VIZ_HOST_IP = "127.0.0.1";
+
+CozmoAPI* engineAPI = nullptr;
+Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
+
+void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sEventF(eventName, keyValues, "%s", eventValue);
+}
+
+void Unity_DAS_LogE(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sErrorF(eventName, keyValues, "%s", eventValue);
+}
+
+void Unity_DAS_LogW(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sWarningF(eventName, keyValues, "%s", eventValue);
+}
+
+void Unity_DAS_LogI(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sInfoF(eventName, keyValues, "%s", eventValue);
+}
+
+void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sDebugF(eventName, keyValues, "%s", eventValue);
+}
+
+void Unity_DAS_SetGlobal(const char* key, const char* value)
+{
+  Anki::Util::sSetGlobal(key,value);
+}
+
+void configure_engine(Json::Value& config)
+{
+  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
+    config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
+  }
+  if(!config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+    config[AnkiUtil::kP_VIZ_HOST_IP] = VIZ_HOST_IP;
+  }
+  if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = ROBOT_ADVERTISING_PORT;
+  }
+  if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
+  }
+  if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
+    config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
+  }
+  
+}
+
+static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki::Util::Data::DataPlatform* platform)
+{
+#if USE_DAS
+  std::string dasConfigPath = resourcesBasePath + "/DASConfig.json";
+  std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
+  std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
+  DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
+#endif
+}
+
+int cozmo_startup(const char *configuration_data)
+{
+  int result = (int)RESULT_OK;
+  
+  if (engineAPI != nullptr) {
+      PRINT_STREAM_ERROR("cozmo_startup", "Game already initialized.");
+      return (int)RESULT_FAIL;
+  }
+  
+  Json::Reader reader;
+  Json::Value config;
+  if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
+      PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
+      return (int)RESULT_FAIL;
+  }
+
+  // Create the data platform with the folders sent from Unity
+  std::string filesPath = config["DataPlatformFilesPath"].asCString();
+  std::string cachePath = config["DataPlatformCachePath"].asCString();
+  std::string externalPath = config["DataPlatformExternalPath"].asCString();
+  std::string resourcesPath = config["DataPlatformResourcesPath"].asCString();
+  std::string resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
+
+  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
+
+  cozmo_configure_das(resourcesBasePath, dataPlatform);
+
+  // Initialize logging
+  #if ANKI_DEV_CHEATS
+    DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+  #endif
+  
+  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
+    new Util::SosLoggerProvider()
+#if USE_DAS
+    , new Util::DasLoggerProvider()
+#endif
+#if ANKI_DEV_CHEATS
+    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+#endif
+  });
+  Anki::Util::gLoggerProvider = loggerProvider;
+  
+  PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
+  PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s", filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+
+#ifdef USE_IOS
+    result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform);
+#endif
+    
+  configure_engine(config);
+
+  Cozmo::CozmoAPI* created_engine = new Cozmo::CozmoAPI();
+
+  bool engineResult = created_engine->StartRun(dataPlatform, config);
+  if (! engineResult) {
+    delete created_engine;
+    return (int)engineResult;
+  }
+  
+  engineAPI = created_engine;
+  
+  return result;
+}
+
+int cozmo_shutdown()
+{
+  int result = (int)RESULT_OK;
+    
+#ifdef USE_IOS
+    result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
+#endif
+    
+  Anki::Util::SafeDelete(engineAPI);
+  Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::DestroyInstance();
+#endif
+  Anki::Util::SafeDelete(dataPlatform);
+
+  return result;
+}
+
+int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
+{
+  int result = (int)RESULT_OK;
+  
+#ifdef USE_IOS
+  result = Anki::Cozmo::iOSBinding::cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
+#endif
+  
+  return result;
+}
+
+void cozmo_send_to_clipboard(const char* log) {
+#ifdef USE_IOS
+  Anki::Cozmo::iOSBinding::cozmo_engine_send_to_clipboard(log);
+#endif
+}

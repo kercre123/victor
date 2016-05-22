@@ -1,0 +1,13 @@
+!*.dll
+!*.a
+!*.dylib
+!*.la
+!*.so
+!*.obj
+!*.o
+!*.ko
+!*.exe
+!*.lib
+!*.pyc
+ScriptedSequenceEditorColors.asset
+ScriptedSequenceEditorColors.asset.meta

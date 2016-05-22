@@ -1,0 +1,80 @@
+﻿using UnityEngine;
+using System.Collections.Generic;
+
+public class StateMachine {
+
+  private List<State> _StateStack = new List<State>();
+
+  private State _CurrState = null;
+  private State _NextState = null;
+
+  private GameBase _Game = null;
+
+  public GameBase GetGame() {
+    return _Game;
+  }
+
+  public State GetParentState() {
+    return _StateStack.Count > 0 ? _StateStack[_StateStack.Count - 1] : null;
+  }
+
+  // This is useful for if you want a reference back to the MonoBehaviour that created
+  // and updates your state machine. You should be using GameBase as a common access
+  // point for shared data across states.
+  public void SetGameRef(GameBase game) {
+    _Game = game;
+  }
+
+  public void SetNextState(State nextState) {
+    _NextState = nextState;
+    if (_NextState != null) {
+      _NextState.SetStateMachine(this);
+    }
+  }
+
+  public void PushSubState(State subState) {
+    _StateStack.Add(_CurrState);
+    _NextState = subState;
+    _NextState.SetStateMachine(this);
+    _CurrState = null;
+  }
+    
+  public void PopState() {
+    var oldState = _CurrState;
+
+    _CurrState = _StateStack[_StateStack.Count - 1];
+    _StateStack.RemoveAt(_StateStack.Count - 1);
+    _NextState = null;
+
+    if (oldState != null) {      
+      oldState.Exit();
+    }
+  }
+
+  public void UpdateStateMachine() {
+    if (_NextState != null) {
+      if (_CurrState != null) {
+        _CurrState.Exit();
+      }
+      _CurrState = _NextState;
+      _NextState = null;
+      // its possible the call to CurrState.Exit
+      // above could change the value of NextState to null
+      if (_CurrState != null) {
+        _CurrState.Enter();
+      }
+    }
+    else if(_CurrState != null) {
+      _CurrState.Update();
+    }
+  }
+
+  public void Stop() {
+    if (_CurrState != null) {
+      _CurrState.Exit();
+      _CurrState = null;
+    }
+    _NextState = null;
+  }
+}
+  

@@ -1,0 +1,26 @@
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+
+enum uint_32 GameObjectType
+{
+
+  Invalid = 0,
+  Default,
+  UI,
+  SFX,
+  Aria,
+  CozmoAnimation,
+  CozmoBus_2,
+  CozmoBus_3,
+  CozmoBus_4,
+
+  End, // Need end val so I can enumerate through GameObjects
+
+}
+
+}
+}
+}

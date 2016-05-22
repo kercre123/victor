@@ -1,0 +1,44 @@
+/**
+ * File: testTransferDL.h
+ *
+ * Author: Molly Jameson
+ * Date:   1/29/2016
+ *
+ * Description: Testcase service to pull data from the server using TransferQueueMgr.
+ *
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
+
+#include "anki/cozmo/basestation/util/tests/testTransferDL.h"
+
+namespace Anki {
+  
+  namespace Util {
+    
+    void TestTransferDL::OnTransferReady( TransferQueueMgr::StartRequestFunc funcStartRequest )
+    {
+      // If we want to call this a few times in a loop, it's possible.
+      // Also if we have no data, do nothing.
+      HttpRequestCallback callback =
+      std::bind(&ITransferable::OnTransferComplete, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3,std::placeholders::_4);
+      
+      // Just do a get
+      HttpRequest request;
+      request.uri = "http://www.google.com";
+      request.method = Anki::Util::HttpMethodGet;
+      funcStartRequest(request, _dispatchQueue, callback);
+    }
+    
+    void TestTransferDL::OnTransferComplete(const HttpRequest& request,const int responseCode, const std::map<std::string,std::string>& responseHeaders, const std::vector<uint8_t>& responseBody)
+    {
+      if (!isHttpSuccessCode(responseCode))
+      {
+        printf("TestTransferDL::OnTransferComplete Error\n");
+        return;
+      }
+      printf("TestTransferDL::OnTransferComplete success\n");
+    }
+
+  } // namespace Cozmo
+} // namespace Anki

@@ -1,0 +1,56 @@
+// File: behaviorType
+// Author: Lee Crippen
+// Created: 10/15/2015
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+// These are games that are recognized in the engine
+enum uint_8 BehaviorGameFlag {
+  NoGame     = 0,   // flag for none of the following
+  SpeedTap   = 0x01,
+  Simon      = 0x02,
+  CubePounce = 0x04,
+
+  All = 0xff
+}
+
+// These are sparks recognized by the engine
+enum uint_8 BehaviorSpark {
+  NoSpark
+}
+
+// Actual types of behaviors
+enum uint_8 BehaviorType {
+  NoneBehavior, // Named differently to not conflict with the Python keyword
+  LookAround,
+  InteractWithFaces,
+  ReactToCliff,
+  ReactToPickup,
+  ReactToPoke,
+  ReactToRobotOnBack,
+  ReactToOnCharger,
+  PlayAnim,
+  UnityDriven,
+  PounceOnMotion,
+  FindFaces,
+  ExploreMarkedCube,
+  ExploreCliff,
+  ExploreBringCubeToBeacon,
+  ExploreLookAroundInPlace,
+  ExploreVisitPossibleMarker,
+  RequestGameSimple,
+  RollBlock,
+  StackBlocks,
+  AdmireStack,
+  FactoryTest,
+  DemoFearEdge,
+  FlipDownFromWheelie,
+  DockingTestSimple,
+  DriveOffCharger,
+  Count
+}
+
+} // namespace Cozmo
+} // namespace Anki

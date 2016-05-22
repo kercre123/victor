@@ -1,0 +1,294 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "connect.label.showCubes": {
+    "translation": "Put {0} cubes in front of Cozmo."
+  },
+  "minigame.text.playerWins": {
+    "translation": "Player\nWins!"
+  },
+  "minigame.text.cozmoWins": {
+    "translation": "Cozmo\nWins!"
+  },
+  "minigame.quitView.title": {
+    "translation": "Quit Game?"
+  },
+  "minigame.quitView.description": {
+    "translation": "Any progress in this game will be lost. Are you sure?"
+  },
+  "minigame.text.winner": {
+    "translation": "Winner!"
+  },
+  "minigame.text.score": {
+    "translation": "Score"
+  },
+  "minigame.label.showCubes.singular": {
+    "translation": "Put {0} cube in front of Cozmo. It will turn white when he can see it."
+  },
+  "minigame.label.showCubes.plural": {
+    "translation": "Put {0} cubes in front of Cozmo. They'll turn white when he can see them."
+  },
+  "minigame.label.waitingForCubes.singular": {
+    "translation": "Waiting for cube..."
+  },
+  "minigame.label.waitingForCubes.plural": {
+    "translation": "Waiting for cubes..."
+  },
+  "minigame.label.cubesReady.singular": {
+    "translation": "{0} cube ready!"
+  },
+  "minigame.label.cubesReady.plural": {
+    "translation": "{0} cubes ready!"
+  },
+  "minigame.label.readyToPlay": {
+    "translation": "Ready to Play?"
+  },
+  "minigames.label.gamesAndActivities": {
+    "translation": "Games & Activities"
+  },
+  "minigames.label.cozmoUnlocksPanel": {
+    "translation": "Cozmo Unlocks"
+  },
+  "minigame.label.difficultySelect": {
+    "translation": "SELECT DIFFICULTY"
+  },
+  "askCozmo.title": {
+    "translation": "Ask Cozmo"
+  },
+  "askCozmo.button": {
+    "translation": "GIVE ME ANSWER"
+  },
+  "playhouseGame01.text.howToPlay": {
+    "translation": "Select animations together to create a play for Cozmo"
+  },
+  "simonGame.label.watchCozmoPattern": {
+    "translation": "Watch Cozmo make a pattern."
+  },
+  "simonGame.label.watchCozmoGuess": {
+    "translation": "Watch Cozmo copy your pattern."
+  },
+  "simonGame.label.createYourPattern": {
+    "translation": "Tap the cubes to create a pattern."
+  },
+  "simonGame.label.makeYourGuess": {
+    "translation": "Tap the cubes to copy Cozmo's pattern."
+  },
+  "simonGame.label.yourTurn": {
+    "translation": "Your Turn!"
+  },
+  "simonGame.label.cozmoTurn": {
+    "translation": "Cozmo's Turn!"
+  },
+  "simonGame.header.watchCozmoPattern": {
+    "translation": "Watch Cozmo Make a Pattern"
+  },
+  "simonGame.header.watchCozmoGuess": {
+    "translation": "Watch Cozmo Guess"
+  },
+  "simonGame.header.createYourPattern": {
+    "translation": "Make a Pattern"
+  },
+  "simonGame.header.makeYourGuess": {
+    "translation": "Copy Cozmo's Pattern"
+  },
+  "simonGame.label.stepsLeft": {
+    "translation": "Steps In Pattern: {0}/{1}"
+  },
+  "simonGame.text.patternLength": {
+    "translation": "Pattern Length: {0}"
+  },
+  "simonGame.text.howToPlay": {
+    "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
+  },
+  "speedTap.roundsText": {
+    "translation": "Round {0:N0}"
+  },
+  "speedTap.roundsWon.cozmo": {
+    "translation": "cozmo rounds won: {0:N0}"
+  },
+  "speedTap.roundsWon.player": {
+    "translation": "player rounds won: {0:N0}"
+  },
+  "speedTap.score.cozmo": {
+    "translation": "cozmo score: {0:N0}"
+  },
+  "speedTap.score.player": {
+    "translation": "player score: {0:N0}"
+  },
+  "speedTap.text.howToPlay": {
+    "translation": "The cubes will show different patterns. When both cubes show the same pattern, slap your cube as fast as you can! If you beat Cozmo, you'll win a point.\nWatch out: Tap a Red cube and Cozmo wins the point!"
+  },
+  "speedTap.text.howToPlayNoRed": {
+    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
+  },
+  "speedTap.text.howToPlayLightCountSameColorNoRed": {
+    "translation": "Tap the cube faster than Cozmo when the colors AND the light numbers are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
+  },
+  "speedTap.text.howToPlayLightCountNoColor": {
+    "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
+  },
+  "speedTap.tapBlock": {
+    "translation": "Tap a flashing cube to claim it and begin the game!\n\n(Make sure your and Cozmo's cubes are far apart.)"
+  },
+  "speedTap.tapBlockForRound": {
+    "translation": "Ready? \nTap your cube to start the next round.\n\n(Make sure your and Cozmo's cubes are far apart.)"
+  },
+  "speedTap.dontMoveCozmo.title": {
+    "translation": "Please Don't Move Cozmo"
+  },
+  "speedTap.dontMoveCozmo.description": {
+    "translation": "Cozmo doesn't appreciate being moved during games! Please don't do that."
+  },
+  "speedTap.dontMoveBlock.title": {
+    "translation": "Please Don't Move Cozmo's Cube"
+  },
+  "speedTap.dontMoveBlock.description": {
+    "translation": "Cozmo doesn't appreciate his cube being moved during games! Please don't do that."
+  },
+  "treasureHunt.title": {
+    "translation": "Treasure Hunt"
+  },
+  "vortex.title": {
+    "translation": "Vortex"
+  },
+  "vortex.subtitle": {
+    "translation": "Vortex Subtitle"
+  },
+  "vortex.description": {
+    "translation": "Vortex Description"
+  },
+  "vortex.spinButton": {
+    "translation": "Spin"
+  },
+  "vortex.replayButton": {
+    "translation": "Replay"
+  },
+  "vortex.vortexStatus": {
+    "translation": "Round: {0:D}"
+  },
+  "vortex.vortexWon": {
+    "translation": "{0} Won"
+  },
+  "codeBreaker.button.guessCode": {
+    "translation": "GUESS CODE"
+  },
+  "codeBreaker.button.pickingCode": {
+    "translation": "PICKING CODE..."
+  },
+  "codeBreaker.text.guessesLeft": {
+    "translation": "Guesses Left: {0}"
+  },
+  "codeBreaker.text.howToPlayShort": {
+    "translation": "Tap Cube: Change color.\n        'Guess Code' will be green when the cubes are lined up.\n\n        BACKPACK LIGHTS: \n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
+  },
+  "codeBreaker.text.howToPlayLong": {
+    "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
+  },
+  "cubeSlap.text.howToPlay": {
+    "translation": "Cozmo will try to slap the cube after it turns green! Pull the cube away just as Cozmo trys to slap it. Be careful, if you move it too early you'll lose a life."
+  },
+  "cubePounce.info.cozmoWinEarly": {
+    "translation": "Cozmo wins! You moved the Cube too early!"
+  },
+  "cubePounce.info.playerWinPoint": {
+    "translation": "You Win! You were too fast for Cozmo!"
+  },
+  "cubePounce.info.waitForPounce": {
+    "translation": "Wait for Cozmo to pounce, then yank the cube away before they slap it!"
+  },
+  "cubePounce.info.cozmoWinPoint": {
+    "translation": "Cozmo wins! They slapped the Cube!"
+  },
+  "cubePounce.info.setupText": {
+    "translation": "Place a cube in front of Cozmo, hold it still when it turns green."
+  },
+  "cubePounce.header.cozmoWinEarly": {
+    "translation": "Don't Move the Cube!"
+  },
+  "cubePounce.header.playerWinPoint": {
+    "translation": "You Win a Point!"
+  },
+  "cubePounce.header.waitForPounce": {
+    "translation": "Wait for Pounce..."
+  },
+  "cubePounce.header.cozmoWinPoint": {
+    "translation": "Cozmo Wins a Point!"
+  },
+  "cubePounce.header.setupText": {
+    "translation": "Game Setup"
+  },
+  "minigame.text.howToPlay": {
+    "translation": "How To Play"
+  },
+  "minigame.difficulty.easy": {
+    "translation": "Easy"
+  },
+  "minigame.difficulty.medium": {
+    "translation": "Medium"
+  },
+  "minigame.difficulty.hard": {
+    "translation": "Hard"
+  },
+  "minigame.difficulty.expert": {
+    "translation": "Expert"
+  },
+  "speedTap.difficulty.easyDescription": {
+    "translation": "Start with Easy Mode, unlock more over time!"
+  },
+  "speedTap.difficulty.mediumDescription": {
+    "translation": "Patterns may have up to 2 colors"
+  },
+  "speedTap.difficulty.hardDescription": {
+    "translation": "Patterns may have 1-2 colors and any number of lights."
+  },
+  "speedTap.difficulty.expertDescription": {
+    "translation": "Patterns may have any number of colors and lights."
+  },
+  "button.retry": {
+    "translation": "Try Again"
+  },
+  "speedTap.text.waitForCozmo": {
+    "translation": "Wait for Cozmo to claim his cube."
+  },
+  "speedTap.difficulty.easyDescription.locked": {
+    "translation": "Unlock by unlocking Speed Tap."
+  },
+  "speedTap.difficulty.mediumDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Easy."
+  },
+  "speedTap.difficulty.hardDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Medium."
+  },
+  "speedTap.difficulty.expertDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Hard."
+  }, 
+  "speedTap.text.getReady": {
+    "translation": "Get Ready!"
+  },
+  "speedTap.text.bestOf": {
+    "translation": "<b>Winner:</b> Best of {0} Rounds"
+  },
+  "speedTap.text.displayWinnerSubtitle": {
+    "translation": "takes Round {0}!"
+  },
+  "speedTap.text.roundScore": {
+    "translation": "Player: {0} - Cozmo: {1}"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Selection
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "selectionBehaviorChooserConfig" :
+  {
+    "type" : "selection"
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Demo
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "demoBehaviorChooserConfig" :
+  {
+    // chooser type
+    "type" : "demo",
+    
+    // this are the behaviors that are allowed in this behavior chooser
+    "behaviorGroups" : [ "Demo" ],
+  
+    // By default all behaviors are enabled, the following are then applied in order
+    // 1) anything belonging to a group in disabledGroups is disabled
+    // 2) anything belonging to a group in enabledGroups is re-enabled (to e.g. re-enable a subgroup disabled in 1)
+    // 3) anything belonging in disabledBehaviors is disabled (to e.g. disable a few specific behaviors)
+    // 4) anything belonging in enabledBehaviors is re-enabled (to e.g. re-enable a few specific behaviors)
+    
+    "disabledGroups" : [
+    ],
+    "enabledGroups" : [
+    ],
+    "disabledBehaviors" : [
+    ],
+    "enabledBehaviors" : [
+    ],
+    // For current behavior, X = time running, Y = bonus (can be -ve, to encourage switching away from a long-running behavior)
+    "scoreBonusForCurrentBehavior" : {
+      "nodes" : [
+        { "x" :   0.0, "y" :  0.0 }
+      ]
+    }
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Regular play / goals
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "freeplayBehaviorChooserConfig" :
+  {
+    "type" : "goal",
+    
+    // parameters to decide between goals
+    "evaluator" :
+    {
+
+    },
+    // goals to create
+    "goals" :
+    [
+    
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // FreeplayOne : old freeplay with game requests
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      {
+        "name" : "freeplayOne",
+        "behaviorChooser" :
+        {
+          "type" : "simple",
+     
+          // this are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "FreeplayOne" ],
+     
+          // scores from old config
+          "scoreBonusForCurrentBehavior" : {
+            "nodes" : [
+              { "x" :   2.0, "y" :  2.0 },
+              { "x" :  10.0, "y" :  0.1 },
+              { "x" :  60.0, "y" :  0.0 },
+              { "x" : 120.0, "y" :  0.0 },
+              { "x" : 240.0, "y" : -0.5 }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

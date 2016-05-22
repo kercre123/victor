@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8066850c0fd5246ccacb34fc100eb09c, type: 3}
+  m_Name: DevChallengeList
+  m_EditorClassIdentifier: 
+  ChallengeData:
+  - {fileID: 11400000, guid: 83404e274f1bb4124b2e2a43f6192d8a, type: 2}
+  - {fileID: 11400000, guid: 2f76149c3fba543f3bf29bc75e1c6dc1, type: 2}
+  - {fileID: 11400000, guid: d44689b385ee54da18f236c954649c67, type: 2}
+  - {fileID: 11400000, guid: 13ed8b29577ad4b43a5ad77a93b04379, type: 2}
+  - {fileID: 11400000, guid: c699e9cf12d854898ac333505f6adef3, type: 2}
+  - {fileID: 11400000, guid: 42702cbdf4c0c418a84f8792f3062612, type: 2}
+  - {fileID: 11400000, guid: 592a511fba09d4666848e7d79c44d1b6, type: 2}

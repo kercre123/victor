@@ -1,0 +1,24 @@
+#include "bignum.h"
+
+#ifndef __DIFFIE_H
+#define __DIFFIE_H
+
+static const int SECRET_LENGTH = AES_BLOCK_LENGTH;
+
+struct DiffieHellman {
+  // These are the numbers for our diffie group
+  const big_mont_t* mont;
+  const big_num_t*  gen;
+  
+  int               pin;
+  uint8_t           local_secret[SECRET_LENGTH];
+  uint8_t           remote_secret[SECRET_LENGTH];
+  uint8_t           encoded_key[AES_BLOCK_LENGTH];
+  
+  big_num_t         state;
+};
+
+void dh_start(DiffieHellman* dh);
+void dh_finish(DiffieHellman* dh);
+
+#endif

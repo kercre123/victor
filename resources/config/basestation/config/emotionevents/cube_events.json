@@ -1,0 +1,22 @@
+{
+  "emotionEvents" : [
+    {
+      "name" : "FoundObservedObject",
+      "emotionAffectors" : [										  
+        {
+          "emotionType" : "Excited",
+          "value" : 0.08
+        }
+      ]
+    },
+    {
+      "name": "FoundPossibleObject",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Excited",
+          "value" : 0.03
+        }
+      ]
+    }
+  ]
+}

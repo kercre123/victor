@@ -1,0 +1,138 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "name.cozmo": {
+    "translation": "Cozmo"
+  },
+  "name.player": {
+    "translation": "Player"
+  },
+  "button.quitGame": {
+    "translation": "Quit Game"
+  },
+  "button.quit": {
+    "translation": "Quit"
+  },
+  "button.startChallenge": {
+    "translation": "Start"
+  },
+  "button.yes": {
+    "translation": "Yes"
+  },
+  "button.no": {
+    "translation": "No"
+  },
+  "button.continue": {
+    "translation": "Continue"
+  },
+  "button.again": {
+    "translation": "Play Again"
+  },
+  "button.ready": {
+    "translation": "Ready"
+  },
+  "button.close": {
+    "translation": "Close"
+  },
+  "label.percentComplete": {
+    "translation": "{0:P2} Complete"
+  },
+  "label.plusCount": {
+    "translation": "+{0}"
+  },
+  "label.xCount": {
+    "translation": "x{0}"
+  },
+  "label.colonCount": {
+    "translation": "{0}: {1}"
+  },
+  "dailySummary.title": {
+    "translation": "Daily Summary for {0}/{1}"
+  },
+  "endSession.title": {
+    "translation": "End Session?"
+  },
+  "endSession.description": {
+    "translation": "Need a break? Tap END SESSION and send Cozmo back to his charger."
+  },
+  "requestGame.title": {
+    "translation": "{0}!"
+  },
+  "requestGame.description": {
+    "translation": "Cozmo wants to play"
+  },
+  "dailyGoal.title": {
+    "translation": "Today's Goals"
+  },
+  "dailyGoal.FriendBonus": {
+    "translation": "Friend Bonus"
+  },
+  "dailyGoal.Complete": {
+    "translation": "Complete"
+  },
+  "timeline.weekLabel": {
+    "translation": "{0}W\nAGO"
+  },
+  "label.connect": {
+    "translation": "Connect"
+  },
+  "label.loading": {
+    "translation": "Loading"
+  },
+  "button.save": {
+    "translation": "Save"
+  },
+  "cozmoTab.title": {
+    "translation": "Core Upgrades"
+  },
+  "cozmoTab.hexCount": {
+    "translation": "Hex Pieces: {0}"
+  },
+  "requestSparkView.sparkunlockbutton": {
+    "translation": "Give {0} {1}"
+  },
+  "requestSparkView.TreatCount": {
+    "translation": "Total {0}: {1}"
+  },
+  "dailyGoal.title.missing": {
+    "translation": "Missing Title"
+  },
+  "dailyGoal.description.missing": {
+    "translation": "This goal has no description set."
+  },
+  "dailyGoal.title.WinSpeedTap": {
+    "translation": "Win Speed Tap"
+  },
+  "dailyGoal.description.WinSpeedTap": {
+    "translation": "This goal has no description set."
+  },
+  "dailyGoal.title.PlaySpeedTap": {
+    "translation": "Play Speed Tap"
+  },
+  "dailyGoal.description.PlaySpeedTap": {
+    "translation": "This goal has no description set."
+  },
+  "dailyGoal.title.WinSpeedTapHands": {
+    "translation": "Win Speed Tap Hands"
+  },
+  "dailyGoal.description.WinSpeedTapHands": {
+    "translation": "This goal has no description set."
+  }
+}

@@ -1,0 +1,89 @@
+set -e
+TESTNAME=cozmoEngine
+PROJECTNAME=cozmoEngine
+PROJECTROOT=
+# change dir to the project dir, no matter where script is executed from
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo "Entering directory \`${DIR}'"
+cd $DIR
+
+GIT=`which git`
+if [ -z $GIT ];then
+  echo git not found
+  exit 1
+fi
+TOPLEVEL=`$GIT rev-parse --show-toplevel`
+BUILDTOOLS=$TOPLEVEL/tools/anki-util/tools/build-tools
+
+# prepare
+PROJECT=$TOPLEVEL/$PROJECTROOT/generated/mac
+BUILD_TYPE="Debug"
+DERIVED_DATA=$PROJECT/DerivedData
+GTEST=$TOPLEVEL/tools/anki-util/libs/framework/
+
+# build
+xcodebuild \
+-project $PROJECT/$PROJECTNAME.xcodeproj \
+-target ${TESTNAME}UnitTest \
+-sdk macosx \
+-configuration $BUILD_TYPE  \
+SYMROOT="$DERIVED_DATA" \
+OBJROOT="$DERIVED_DATA" \
+build 
+
+
+set -o pipefail
+set +e
+
+# clean output
+rm -rf $DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest*
+rm -rf $DERIVED_DATA/$BUILD_TYPE/case*
+rm -f $DERIVED_DATA/$BUILD_TYPE/*.txt
+
+DUMP_OUTPUT=0
+ARGS=""
+while (( "$#" )); do
+
+    if [[ "$1" == "-x" ]]; then
+        DUMP_OUTPUT=1
+    else
+        if [[ "$ARGS" == "" ]]; then
+            ARGS="--gtest_filter=$1"
+        else
+            ARGS="$ARGS $1"
+        fi
+    fi
+    shift
+done
+
+if (( \! $DUMP_OUTPUT )); then
+    ARGS="$ARGS --silent"
+fi
+
+# execute
+ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/" \
+ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
+DYLD_FRAMEWORK_PATH="$GTEST" \
+DYLD_LIBRARY_PATH="$GTEST" \
+GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest_.xml \
+$BUILDTOOLS/tools/ankibuild/multiTest.py \
+--path $DERIVED_DATA/$BUILD_TYPE \
+--executable ${TESTNAME}UnitTest \
+--stdout_file \
+--xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
+--xml_basename ${TESTNAME}GoogleTest_ \
+$ARGS
+
+EXIT_STATUS=$?
+set -e
+
+if (( $DUMP_OUTPUT )); then
+    cat $DERIVED_DATA/$BUILD_TYPE/*.txt
+fi
+
+#tarball files together
+cd $DERIVED_DATA/$BUILD_TYPE
+tar czf ${TESTNAME}GoogleTest.tar.gz ${TESTNAME}GoogleTest_*
+
+# exit
+exit $EXIT_STATUS

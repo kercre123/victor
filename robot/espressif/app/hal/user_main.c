@@ -1,0 +1,264 @@
+#include "c_types.h"
+#include "ets_sys.h"
+#include "osapi.h"
+#include "gpio.h"
+#include "eagle_soc.h"
+#include "os_type.h"
+#include "mem.h"
+#include "user_interface.h"
+#include "client.h"
+#include "driver/uart.h"
+#include "driver/i2spi.h"
+#include "driver/crash.h"
+#include "gpio.h"
+#include "backgroundTask.h"
+#include "foregroundTask.h"
+#include "user_config.h"
+#include "rboot.h"
+
+/** Handle wifi events passed by the OS
+ */
+void wifi_event_callback(System_Event_t *evt)
+{
+  switch (evt->event)
+  {
+    case EVENT_STAMODE_CONNECTED:
+    {
+      os_printf("Station connected to %s %d\r\n", evt->event_info.connected.ssid, evt->event_info.connected.channel);
+#ifndef COZMO_AS_AP
+      // Create ip config
+      struct ip_info ipinfo;
+      ipinfo.gw.addr = ipaddr_addr(STATION_GATEWAY);
+      ipinfo.ip.addr = ipaddr_addr(STATION_IP);
+      ipinfo.netmask.addr = ipaddr_addr(STATION_NETMASK);
+
+      // Assign ip config
+      if (wifi_set_ip_info(STATION_IF, &ipinfo) == false)
+      {
+        os_printf("Couldn't set IP info\r\n");
+      }
+#endif
+      break;
+    }
+    case EVENT_STAMODE_DISCONNECTED:
+    {
+      os_printf("Station disconnected from %s because %d\r\n",
+                evt->event_info.disconnected.ssid,
+                evt->event_info.disconnected.reason);
+      break;
+    }
+    case EVENT_STAMODE_AUTHMODE_CHANGE:
+    {
+      os_printf("Station authmode %d -> %d\r\n",
+                evt->event_info.auth_change.old_mode,
+                evt->event_info.auth_change.new_mode);
+      break;
+    }
+    case EVENT_STAMODE_GOT_IP:
+    {
+      os_printf("Station got IP " IPSTR ", " IPSTR ", " IPSTR "\r\n",
+                IP2STR(&evt->event_info.got_ip.ip),
+                IP2STR(&evt->event_info.got_ip.mask),
+                IP2STR(&evt->event_info.got_ip.gw));
+      break;
+    }
+    case EVENT_SOFTAPMODE_STACONNECTED:
+    {
+      os_printf("AP station %d jointed: " MACSTR "\r\n",
+                evt->event_info.sta_connected.aid,
+                MAC2STR(evt->event_info.sta_connected.mac));
+      break;
+    }
+    case EVENT_SOFTAPMODE_STADISCONNECTED:
+    {
+      os_printf("AP station %d left: " MACSTR "\r\n",
+                evt->event_info.sta_connected.aid,
+                MAC2STR(evt->event_info.sta_connected.mac));
+      break;
+    }
+    default:
+    {
+      os_printf("Unhandled wifi event: %d\r\n", evt->event);
+    }
+  }
+}
+
+static void checkAndClearBootloaderConfig(void)
+{
+  // To work around reboot loop bugs in upgradeController, always FULLY erase the sector if even one bit remains
+  u32 bootdata;
+  u32 i;
+  for (i = 0; i < SECTOR_SIZE; i += 4)
+  {
+    // Avoiding using ICACHE to read data since it might not be valid
+    while(spi_flash_read((BOOT_CONFIG_SECTOR*SECTOR_SIZE) + i, &bootdata, 4) != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("ERBCS\r\n");
+      // Can't continue booting until this is done so might as well continue
+    }
+    
+    if (bootdata != 0xFFFFffff)
+    {
+      os_printf("Clearing bootloader config\r\n");
+      // Clear the bootloader config to indicate we have successfully booted
+      while (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
+      {
+        os_printf("EEBCS\r\n");
+        // Can't safely continue booting so might as well keep trying
+      }
+      break;
+    }
+  }
+}
+
+
+/** System calls this method before initalizing the radio.
+ * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
+ * I think everything else should still happen in user_init and system_init_done
+ */
+void user_rf_pre_init(void)
+{
+  crashHandlerInit(); // Set up our own crash handler, so we can record crashes in more detail
+  system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
+  system_phy_set_max_tpw(48); // Set the maximum  TX power allowed
+}
+
+/// Forward declarations
+typedef void (*NVInitDoneCB)(const int8_t);
+int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
+void NVWipeAll(void);
+
+static void nv_init_done(const int8_t result)
+{
+  // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
+  i2spiInit();
+
+  os_printf("User initalization complete\r\n");
+}
+
+/** Callback after all the chip system initalization is done.
+ * We shouldn't do any networking until after this is done.
+ */
+static void system_init_done(void)
+{
+  // Check bootloader config and clear if nessisary
+  // Do this before i2spiInit so we don't desynchronize
+  checkAndClearBootloaderConfig();
+  
+  // Setup Basestation client
+  clientInit();
+
+  // Set up shared background tasks
+  backgroundTaskInit();
+  
+  // Set up shared foreground tasks
+  foregroundTaskInit();
+
+  // Check the file system integrity
+  // Must be called after backgroundTaskInit and foregroundTaskInit
+  NVInit(true, nv_init_done);
+}
+
+/** User initialization function
+ * This function is responsible for setting all the wireless parameters and
+ * Setting up any user application code to run on the espressif.
+ * It is called automatically from the os main function.
+ */
+void user_init(void)
+{
+  char ssid[65];
+  int8 err;
+
+  wifi_status_led_uninstall();
+
+  REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
+  err = system_update_cpu_freq(160);
+
+  uart_init(BIT_RATE_230400, BIT_RATE_115200);
+
+  gpio_init();
+
+  os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
+
+  uint8 macaddr[6];
+  wifi_get_macaddr(SOFTAP_IF, macaddr);
+  
+  if (*SERIAL_NUMBER == 0xFFFFffff)
+  {
+    os_printf("No serial number present, will use MAC instead\r\n");
+    os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
+  }
+  else
+  {
+    os_sprintf(ssid, "3p%04x", (*SERIAL_NUMBER) & 0xFFFF);
+  }
+
+  struct softap_config ap_config;
+  
+  // Create config for Wifi AP
+  err = wifi_softap_get_config(&ap_config);
+  if (err == false)
+  {
+    os_printf("Error getting wifi softap config\r\n");
+  }
+
+  os_sprintf((char*)ap_config.ssid, ssid);
+  os_sprintf((char*)ap_config.password, AP_KEY);
+  ap_config.ssid_len = 0;
+  ap_config.channel = (macaddr[5]/24) + 1;
+  ap_config.authmode = AUTH_WPA2_PSK;
+  ap_config.max_connection = AP_MAX_CONNECTIONS;
+  ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
+  ap_config.beacon_interval = 10 + ap_config.channel; // Must be 50 or lower for iOS devices to connect
+
+  // Setup ESP module to AP mode and apply settings
+  wifi_set_opmode(SOFTAP_MODE);
+  wifi_softap_set_config(&ap_config);
+  wifi_set_phy_mode(PHY_MODE_11G);
+  // Disable radio sleep
+  //wifi_set_sleep_type(NONE_SLEEP_T);
+  // XXX: This may help streaming performance, but seems to cause slow advertising - not sure which is worse
+  //wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
+  
+  // Disable DHCP server before setting static IP info
+  err = wifi_softap_dhcps_stop();
+  if (err == false)
+  {
+    os_printf("Couldn't stop DHCP server\r\n");
+  }
+
+  struct ip_info ipinfo;
+  ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
+  ipinfo.ip.addr = ipaddr_addr(AP_IP);
+  ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
+
+  // Assign ip config
+  err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+  if (err == false)
+  {
+    os_printf("Couldn't set IP info\r\n");
+  }
+
+  // Configure the DHCP server
+  struct dhcps_lease dhcpInfo;
+  dhcpInfo.start_ip.addr = ipaddr_addr(DHCP_START);
+  dhcpInfo.end_ip.addr   = ipaddr_addr(DHCP_END);
+  err = wifi_softap_set_dhcps_lease(&dhcpInfo);
+  if (err == false)
+  {
+    os_printf("Couldn't set DHCPS lease information\r\n");
+  }
+
+  // Start DHCP server
+  err = wifi_softap_dhcps_start();
+  if (err == false)
+  {
+    os_printf("Couldn't restart DHCP server\r\n");
+  }
+
+  os_printf("SSID: %s\r\nPSK: %s\r\n", ap_config.ssid, ap_config.password);
+
+  // Register callbacks
+  system_init_done_cb(&system_init_done);
+  //wifi_set_event_handler_cb(wifi_event_callback);
+}

@@ -1,0 +1,21 @@
+// File: keyWordRecognized
+// Author: damjan stulic
+// Created: 9/4/15
+// Copyright: Anki, inc. 2015
+
+#include "clad/types/keyWords.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+
+message KeyWordRecognized {
+  KeyWord keyWord,
+  int_32  score
+}
+
+
+} // end namespace ExternalInterface
+} // end namespace Cozmo
+} // end namespace Anki

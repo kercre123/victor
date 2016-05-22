@@ -1,0 +1,303 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : false,
+   "NumObjects" : 1,
+   "Objects" : [
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 0.0, 1.0, 0.0 ],
+            "Translation" : [ 80.0, 0.0, 21.754750 ]
+         },
+         "Type" : "STAR5"
+      }
+   ],
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance0.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.30,
+            "Translation" : [ -0.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 102.4199981689453,
+               "x_imgLowerRight" : 216.5732727050781,
+               "x_imgUpperLeft" : 95.88410949707031,
+               "x_imgUpperRight" : 223.1101531982422,
+               "y_imgLowerLeft" : 163.6348876953125,
+               "y_imgLowerRight" : 163.6419525146484,
+               "y_imgUpperLeft" : 47.59333801269531,
+               "y_imgUpperRight" : 47.58467102050781
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance1.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.23750,
+            "Translation" : [ -50.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 124.8011779785156,
+               "x_imgLowerRight" : 194.1891784667969,
+               "x_imgUpperLeft" : 123.3795242309570,
+               "x_imgUpperRight" : 195.6331329345703,
+               "y_imgLowerLeft" : 123.3558807373047,
+               "y_imgLowerRight" : 123.3579025268555,
+               "y_imgUpperLeft" : 52.57773590087891,
+               "y_imgUpperRight" : 52.55995941162109
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance2.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.1750,
+            "Translation" : [ -100.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 134.5925445556641,
+               "x_imgLowerRight" : 184.4079284667969,
+               "x_imgUpperLeft" : 134.5771331787109,
+               "x_imgUpperRight" : 184.4211883544922,
+               "y_imgLowerLeft" : 119.4072647094727,
+               "y_imgLowerRight" : 119.4074707031250,
+               "y_imgUpperLeft" : 69.58931732177734,
+               "y_imgUpperRight" : 69.58821868896484
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance3.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.11250,
+            "Translation" : [ -150.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 140.6249237060547,
+               "x_imgLowerRight" : 178.3707580566406,
+               "x_imgUpperLeft" : 140.4847412109375,
+               "x_imgUpperRight" : 178.4994506835938,
+               "y_imgLowerLeft" : 126.4163436889648,
+               "y_imgLowerRight" : 126.4249038696289,
+               "y_imgUpperLeft" : 88.62100982666016,
+               "y_imgUpperRight" : 88.61087799072266
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance4.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.050,
+            "Translation" : [ -200.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 143.6377410888672,
+               "x_imgLowerRight" : 175.3553466796875,
+               "x_imgUpperLeft" : 143.6380004882812,
+               "x_imgUpperRight" : 175.3565216064453,
+               "y_imgLowerLeft" : 139.2867279052734,
+               "y_imgLowerRight" : 139.293457031250,
+               "y_imgUpperLeft" : 107.6600265502930,
+               "y_imgUpperRight" : 107.6467590332031
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance5.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0698130,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.30,
+            "Translation" : [ -0.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 121.24902343750,
+               "x_imgLowerRight" : 236.2075347900391,
+               "x_imgUpperLeft" : 117.1885147094727,
+               "x_imgUpperRight" : 244.8309020996094,
+               "y_imgLowerLeft" : 161.8196716308594,
+               "y_imgLowerRight" : 165.4594879150391,
+               "y_imgUpperLeft" : 46.64483261108398,
+               "y_imgUpperRight" : 46.71083068847656
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance6.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.1483530,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.23750,
+            "Translation" : [ -50.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 169.6198120117188,
+               "x_imgLowerRight" : 239.7628631591797,
+               "x_imgUpperLeft" : 169.5922241210938,
+               "x_imgUpperRight" : 244.0308380126953,
+               "y_imgLowerLeft" : 122.57031250,
+               "y_imgLowerRight" : 125.0707015991211,
+               "y_imgUpperLeft" : 52.46603012084961,
+               "y_imgUpperRight" : 53.12729263305664
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance7.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 0.2268930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.1750,
+            "Translation" : [ -100.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 206.2448883056641,
+               "x_imgLowerRight" : 257.334472656250,
+               "x_imgUpperLeft" : 207.2331848144531,
+               "x_imgUpperRight" : 260.4987182617188,
+               "y_imgLowerLeft" : 119.7245178222656,
+               "y_imgLowerRight" : 121.7692184448242,
+               "y_imgUpperLeft" : 69.57560729980469,
+               "y_imgUpperRight" : 69.80162811279297
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_M",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 128.0,
+               "x_imgLowerRight" : 142.0,
+               "x_imgUpperLeft" : 77.0,
+               "x_imgUpperRight" : 97.0,
+               "y_imgLowerLeft" : 136.0,
+               "y_imgLowerRight" : 126.0,
+               "y_imgUpperLeft" : 133.0,
+               "y_imgUpperRight" : 124.0
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance8.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.3054330,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.11250,
+            "Translation" : [ -150.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 239.2246246337891,
+               "x_imgLowerRight" : 280.798339843750,
+               "x_imgUpperLeft" : 240.4146881103516,
+               "x_imgUpperRight" : 282.6484069824219,
+               "y_imgLowerLeft" : 128.0185699462891,
+               "y_imgLowerRight" : 129.6584930419922,
+               "y_imgUpperLeft" : 88.57527923583984,
+               "y_imgUpperRight" : 88.68424987792969
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_VaryingDistance9.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 0.3839720,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.050,
+            "Translation" : [ -200.0, 0.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_STAR5",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 271.7238159179688,
+               "x_imgLowerRight" : 308.1357727050781,
+               "x_imgUpperLeft" : 272.678222656250,
+               "x_imgUpperRight" : 308.4459533691406,
+               "y_imgLowerLeft" : 141.3296356201172,
+               "y_imgLowerRight" : 142.7950134277344,
+               "y_imgUpperLeft" : 108.4160461425781,
+               "y_imgUpperRight" : 108.6182785034180
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_G",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 150.8943481445312,
+               "x_imgLowerRight" : 174.7209777832031,
+               "x_imgUpperLeft" : 89.51781463623047,
+               "x_imgUpperRight" : 121.4596939086914,
+               "y_imgLowerLeft" : 198.6464233398438,
+               "y_imgLowerRight" : 182.1353759765625,
+               "y_imgUpperLeft" : 191.1240692138672,
+               "y_imgUpperRight" : 176.7570037841797
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_VaryingDistance"
+}

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8066850c0fd5246ccacb34fc100eb09c, type: 3}
+  m_Name: InvestorChallengeList
+  m_EditorClassIdentifier: 
+  ChallengeData:
+  - {fileID: 11400000, guid: 287f6fbfe815b45b09c31e6b0a00c391, type: 2}
+  - {fileID: 11400000, guid: eebd08c113bca4b7585f8cb879003166, type: 2}
+  - {fileID: 11400000, guid: f8ff97abab9ce4f28b4405992866d3fa, type: 2}
+  - {fileID: 11400000, guid: a77fbd9a90cd642ebbdb10afdd8e687c, type: 2}

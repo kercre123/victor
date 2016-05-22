@@ -1,0 +1,518 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+#include "clad/types/actionTypes.clad"
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/objectFamilies.clad"
+#include "clad/types/proxMessages.clad"
+#include "clad/types/powerMessages.clad"
+#include "clad/types/debugConsoleTypes.clad"
+#include "clad/types/engineState.clad"
+#include "clad/types/firmwareTypes.clad"
+#include "clad/types/toolCodes.clad"
+#include "clad/types/factoryTestTypes.clad"
+#include "clad/types/unlockTypes.clad"
+#include "clad/types/gameEvent.clad"
+#include "clad/types/uiConnectionTypes.clad"
+#include "clad/types/nvStorageTypes.clad"
+#include "clad/types/animationEvents.clad"
+#include "clad/types/motorTypes.clad"
+#include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognized.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/audio/audioCallbackMessage.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+message UiDeviceAvailable {
+    UiConnectionType  connectionType,
+    uint_32 deviceID
+}
+
+message RobotConnected {
+    uint_32 robotID,
+    uint_8 successful
+}
+
+message RobotDisconnected {
+    uint_32 robotID,
+    float_32 timeSinceLastMsg_sec
+}
+
+
+message UiDeviceConnected {
+    UiConnectionType  connectionType,
+    uint_32 deviceID,
+    uint_8 successful
+}
+
+message EngineRobotCLADVersionMismatch {
+  bool engineToRobotMismatch,
+  bool robotToEngineMistmatch,
+  string  engineEnginetoRobotHash,	// Engine's calculated hash for the engine to robot messages
+  string  engineRobotToEngineHash,	// Engine's calculated hash for the robot to engine messages
+  string  robotEnginetoRobotHash,	// Robot's calculated hash for the engine to robot messages
+  string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
+}
+
+message ObjectAvailable
+{
+  uint_32     factory_id,
+  ObjectType  objectType,
+  int_8       rssi,
+}
+
+message ObjectUnavailable
+{
+  uint_32      factory_id,
+}
+
+
+/*
+message Bogus {
+}
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////  ROBOT STATE  ///////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message RobotState {
+    float_32 pose_x,
+    float_32 pose_y,
+    float_32 pose_z,
+    float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 posePitch_rad,    // robot pitch angle
+    float_32 pose_qw,          // full 3d rotation as a quaternion
+    float_32 pose_qx,          //  "
+    float_32 pose_qy,          //  "
+    float_32 pose_qz,          //  "
+    float_32 leftWheelSpeed_mmps,
+    float_32 rightWheelSpeed_mmps,
+    float_32 headAngle_rad,
+    float_32 liftHeight_mm,
+    float_32 batteryVoltage,
+    int_32   carryingObjectID,      // will be -1 if not carrying object
+    int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+    int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
+    int_32   localizedToObjectID,   // Will be -1 if not localized to any object
+    uint_32  lastImageTimeStamp,    // Last image processed by the vision system
+    uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
+    uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
+    uint_8   robotID
+}
+
+message RobotPickedUp {
+    uint_8   robotID
+}
+
+message RobotPutDown {
+    uint_8   robotID
+}
+
+message RobotPoked {
+    uint_8   robotID
+}
+
+message RobotStopped {
+}
+
+message RobotOnBack {
+    bool onBack
+}
+
+// Tests a collision, not contacts.
+message RobotOnChargerPlatformEvent {
+  bool   onCharger
+}
+
+// Generic string for sending debug string up to game
+message DebugString {
+    string    text
+}
+message DebugAnimationString {
+string    text
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////  VISION  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// RobotProcessedImage
+//  Sent every time a full frame processing is completed, whether or not anything was
+//  detected. Reports the image timestamp that was processed. Sent _after_ any results
+//  or observations from the same image to indicate nothing else is coming from that
+//  image.
+message RobotProcessedImage {
+   uint_32 timestamp
+}
+
+// RobotObservedObject for signaling that an object
+//  with specified ID/Type/Family was seen at a particular location in the image
+//  and the world
+message RobotObservedObject {
+    uint_32 robotID,
+    uint_32 timestamp,
+    ObjectFamily objectFamily,
+    ObjectType   objectType,
+    int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
+    float_32 img_topLeft_x,  // position in image coords
+    float_32 img_topLeft_y,  //     "
+    float_32 img_width,      //     "
+    float_32 img_height,     //     "
+    float_32 world_x,        // absolute 3D position in world coords
+    float_32 world_y,        //     "
+    float_32 world_z,        //     "
+    float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
+    float_32 quaternion_x,   //     "
+    float_32 quaternion_y,   //     "
+    float_32 quaternion_z,   //     "
+    float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
+    uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
+    uint_8   isActive
+}
+
+// Message for the robot observing a possible object (existence hasn't been confirmed yet)
+message RobotObservedPossibleObject {
+    // objectID will always be -1
+    // markersVisible will always be true
+    RobotObservedObject possibleObject
+}
+
+// RobotObservedFace
+message RobotObservedFace {
+    int_32   faceID,         // negative: tracked but not recognized; positive: recognized face
+    uint_32  robotID,
+    uint_32  timestamp,
+    float_32 world_x,        // absolute 3D position in world coords
+    float_32 world_y,        //     "
+    float_32 world_z,        //     "
+    float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
+    float_32 quaternion_x,   //     "
+    float_32 quaternion_y,   //     "
+    float_32 quaternion_z,   //     "
+    string   name            // Empty if none assigned yet
+// TODO: Add expression / landmark locations
+}
+
+// RobotChangedObservedFaceID
+//  This generally happens when a tracked face (negative ID) is recognized and
+//  receives a positive ID or when face records get merged
+message RobotChangedObservedFaceID {
+    int_32   oldID,
+    int_32   newID
+}
+
+// RobotObservedMotion
+message RobotObservedMotion {
+    uint_32  timestamp, // Of the corresponding image
+    float_32 img_area,  // Size of the region of detected motion, as a fraction of image
+    int_16   img_x,     // Centroid of the motion region relative to image center, in pixels
+    int_16   img_y,
+    float_32 ground_area, // Amount of motion on the ground, as a fraction of the ground ROI (0 if none)
+    int_16   ground_x,    // Centroid of the motion on the ground in robot coordinates, in mm
+    int_16   ground_y
+}
+
+// RobotDeletedFace - sent when an _observed_ face has been deleted (e.g. if not seen for too long)
+message RobotDeletedFace {
+    int_32  faceID,
+    uint_32 robotID
+}
+
+// RobotObservedNothing
+message RobotObservedNothing {
+    uint_32 robotID
+}
+
+// RobotDeletedObject
+message RobotDeletedObject {
+    uint_32 robotID,
+    uint_32 objectID
+}
+
+// RobotMarkedObjectPoseUnknown
+message RobotMarkedObjectPoseUnknown {
+    uint_32 robotID,
+    uint_32 objectID
+}
+
+// RobotReadToolCode
+message RobotReadToolCode {
+  ToolCodeInfo info
+}
+
+// Sent when a face is loaded from a saved album, in order to keep the game's list of
+// names and IDs in sync with the engine
+message RobotLoadedKnownFace {
+    int_32 faceID,
+    string name
+}
+
+// RobotReachedEnrollmentCount
+//  Sent when enrollment count hits zero and enroll ID is set
+//  (Used within Engine, probably not useful to Game)
+message RobotReachedEnrollmentCount {
+    int_32  faceID,
+    uint_8  count
+}
+
+// NOTE: This is separate from deleting an _observed_ face.
+message RobotErasedEnrolledFace {
+    int_32 faceID,
+    string name
+}
+
+// Sent if all enrolled faces are cleared, e.g. when a new face album is loaded from
+// memory (in which case RobotAddedNamedFaces messages should follow).
+// NOTE: This is separate from _observed_ faces.
+message RobotErasedAllEnrolledFaces {
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  ACTIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// RobotCompletedAction
+// TODO: Add action type, more informative result codes...
+message RobotCompletedAction {
+    uint_32 robotID,
+    uint_32 idTag,                        // The identifier of the specific action that completed
+    RobotActionType  actionType,          // see enum in actionTypes.def
+    ActionResult  result,                 //  "
+    ActionCompletedUnion completionInfo   //  "
+}
+
+// BlockPickedUp
+message BlockPickedUp {
+    bool didSucceed                       // true if robot thinks it picked up a block (from low or high position)
+}
+
+// BlockPlaced
+message BlockPlaced {
+    bool didSucceed                       // true if robot thinks it placed up a block (from low or high position)
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  SOUND  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Note: these should go away when the robot can play its own sounds and doesn't
+//       rely on the phone to do it.
+
+message PlaySound {
+    string soundFilename,
+    uint_8 numLoops,
+    uint_8 volume
+}
+
+message StopSound {
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  ANIMATIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message AnimationAvailable {
+  string animName
+}
+
+// Broadcast by AnimationStreamer when a new streaming animation is requested
+// before the last one finished.
+message AnimationAborted {
+  uint_32 tag
+}
+
+message AnimationEvent {
+  uint_32   timestamp,
+  AnimEvent event_id
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Mood / Emotions
+///////////////////////////////////////////////////////////////////////////////
+
+message MoodState {
+  uint_8  robotID,
+  float_32 emotionValues[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Progression Unlocks
+///////////////////////////////////////////////////////////////////////////////
+
+message RequestSetUnlockResult {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+structure UnlockEntry {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+message UnlockStatus {
+  UnlockEntry unlocks[uint_8]
+}  
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Debug / Console
+///////////////////////////////////////////////////////////////////////////////
+
+structure DebugConsoleVar {
+  string varName,
+  string category,
+  float_64 minValue,
+  float_64 maxValue,
+  ConsoleVarUnion varValue
+}
+
+message InitDebugConsoleVarMessage {
+  DebugConsoleVar varData[uint_16]
+}
+
+message VerifyDebugConsoleFuncMessage {
+  string funcName,
+  string statusMessage,
+  bool success
+}
+
+message VerifyDebugConsoleVarMessage {
+  string varName,
+  string statusMessage,
+  ConsoleVarUnion varValue,
+  bool success
+}
+
+message DebugLatencyMessage {
+  float_32 averageLatency,
+  float_32 minLatency,
+  float_32 maxLatency
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// State
+///////////////////////////////////////////////////////////////////////////////
+message UpdateEngineState {
+  EngineState oldState,
+  EngineState newState
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// BlockPool
+///////////////////////////////////////////////////////////////////////////////
+
+structure BlockPoolBlockData {
+  uint_32 id,
+  bool enabled
+}
+
+message InitBlockPoolMessage {
+  uint_8              blockPoolEnabled,
+  BlockPoolBlockData  blockData[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Robot flash (non-volatile storage)
+///////////////////////////////////////////////////////////////////////////////
+
+// Data that is returned from robot in response to a NVStorageReadEntry request.
+// If tag corresponds to a multi-blob message (see NVEntryTag definition)
+// the index indicates the blob order. Yes, blobs can come back out of order.
+message NVStorageData {
+  NVStorage::NVEntryTag tag,
+  uint_16 data_length,
+  uint_8  data[1024],
+  uint_8  index
+}
+
+// Returned in response to NVStorageWriteEntry, NVStorageReadEntry, and NVStorageEraseEntry
+// to confirm success/failure of operation.
+message NVStorageOpResult {
+  NVStorage::NVEntryTag  tag,
+  NVStorage::NVResult    result,
+  NVStorage::NVOperation op
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// FactoryTest
+///////////////////////////////////////////////////////////////////////////////
+
+message FactoryTestResult {
+  FactoryTestResultEntry resultEntry
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Firmware
+///////////////////////////////////////////////////////////////////////////////
+
+message FirmwareUpdateProgress {
+  uint_32 robotID,
+  FirmwareUpdateStage stage,
+  FirmwareUpdateSubStage subStage,
+  string  fwSig,
+  uint_8  percentComplete
+}
+
+message FirmwareUpdateComplete {
+  uint_32 robotID,
+  FirmwareUpdateResult  result,
+  string  fwSig
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CozmoGameEvent, generic events unity might care about.
+///////////////////////////////////////////////////////////////////////////////
+message CozmoGameEvent {
+  GameEvent eventEnum,
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  GAME  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// The behavior wants the UI to pop up a game request
+message RequestGameStart {
+  bool firstRequest
+}
+
+// Special request for face enrollment
+message RequestEnrollFace {
+  bool firstRequest,
+  int_32 face_id
+}
+
+message SparkUnlockEnded {
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  DEMO  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message DemoState {
+  uint_8 stateNum
+}
+
+// keep empty to generate an auto-union that includes all messages in this file
+// if you do not want to include messages in this union, use the keyword "structure" instead of "message"
+union MessageEngineToGame { }
+
+} // namespace G2U
+} // namespace Cozmo
+} // namespace Anki

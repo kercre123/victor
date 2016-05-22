@@ -1,0 +1,55 @@
+# Misc
+*.bak
+*~
+matlab.mat
+# Mac OS
+*.DS_Store
+# Xcode
+*.mexmaci64
+*.o
+*.obj
+*.so
+*.la
+*.a
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+# MSVC
+*.res
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.ncb
+*.exe
+*.dll
+*.lib
+*.aps
+*.layout
+*.log
+*.tlog
+*.pdb
+*.lastbuildstate
+*.idb
+*.ilk
+*.pyc
+*.mexw32
+*.mexw64
+*.mexmac
+*.mexmaci64
+*.ipch
+*.asv
+build/msvc*
+build/xcode*
+project/xcode4/CoreTech_Common/CoreTech_Common.xcodeproj/xcuserdata
+project/xcode4/CoreTech_Common_Test/CoreTech_Common_Test.xcodeproj/xcuserdata
+project/xcode4/CoreTech_Common.xcworkspace/xcuserdata
+project/xcode4/CoreTech_Common/CoreTech_Common.xcodeproj/project.xcworkspace/xcuserdata
+project/xcode4/CoreTech_Math/CoreTech_Math.xcodeproj/xcuserdata
+project/xcode4/CoreTech_Math/CoreTech_Math.xcodeproj/project.xcworkspace/xcuserdata
+project/xcode4/CoreTech_Common_Embedded/CoreTech_Common_Embedded.xcodeproj/xcuserdata
+project/xcode4/CoreTech_Common_Embedded_Test/CoreTech_Common_Embedded_Test.xcodeproj/xcuserdata
+project/myriad1/unitTests/output
+build

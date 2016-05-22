@@ -1,0 +1,59 @@
+/** Logging / debugging types and enums
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+enum int_8 LogLevel
+{
+  ANKI_LOG_LEVEL_DEBUG = -1,
+  ANKI_LOG_LEVEL_PRINT = 0,
+  ANKI_LOG_LEVEL_INFO,
+  ANKI_LOG_LEVEL_EVENT,
+  ANKI_LOG_LEVEL_WARN,
+  ANKI_LOG_LEVEL_ASSERT,
+  ANKI_LOG_LEVEL_ERROR
+}
+
+
+/// These traces replace printing text with a much lower level of overhead
+message PrintTrace
+{
+  uint_32   stringId, // Before name for alignment, uint32 for alignment and room for growth
+  uint_16   name,
+  LogLevel  level,
+  int_32    value[uint_8:12], // We can use type casts to pack other things in here, need to keep size of this message plus tag plus RTIP -> WiFi overhead under 64 bytes
+}
+
+message MainCycleTimeError
+{
+  uint_32 numMainTooLongErrors,
+  uint_32 avgMainTooLateTime,
+  uint_32 numMainTooLateErrors,
+  uint_32 avgMainTooLongTime,
+}
+
+message TimeProfileStat
+{
+  uint_32 avg,
+  uint_32 max,
+  bool    isHeader,
+  string  profName,
+}
+
+message DataDump
+{
+  uint_32 id,
+  uint_8  data[uint_8],
+}
+
+message PrintText
+{
+  LogLevel level,
+  string   text
+}
+
+} // namespace RobotInterface
+} // namespace Cozmo
+} // namespace Anki

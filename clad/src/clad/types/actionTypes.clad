@@ -1,0 +1,151 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+#include "clad/audio/audioEventTypes.clad"
+#include "clad/types/toolCodes.clad"
+
+namespace Anki {
+namespace Cozmo {
+
+enum no_cpp_class uint_32 ActionConstants {
+  INVALID_TAG = 0
+}
+
+// TODO: Convert to uint_8 or int_16
+enum int_32 RobotActionType {
+    COMPOUND = -2,
+    UNKNOWN = -1,
+    DRIVE_TO_POSE,
+    DRIVE_TO_OBJECT,
+    DRIVE_TO_PLACE_CARRIED_OBJECT,
+    TURN_IN_PLACE,
+    SEARCH_SIDE_TO_SIDE,
+    MOVE_HEAD_TO_ANGLE,
+    ALIGN_WITH_OBJECT,
+    PICKUP_OBJECT_LOW,         // Possible sub-type of PickAndPlaceAction
+    PICKUP_OBJECT_HIGH,        //   "
+    PLACE_OBJECT_LOW,          //   "
+    PLACE_OBJECT_HIGH,         //   "
+    ROLL_OBJECT_LOW,           //   "
+    POP_A_WHEELIE,
+    PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
+    CROSS_BRIDGE,
+    ASCEND_OR_DESCEND_RAMP,
+    MOUNT_CHARGER,
+    DRIVE_TO_AND_MOUNT_CHARGER,
+    TRAVERSE_OBJECT,
+    DRIVE_TO_AND_TRAVERSE_OBJECT,
+    TURN_TOWARDS_OBJECT,
+    TURN_TOWARDS_POSE,
+    VISUALLY_VERIFY_OBJECT,
+    PLAY_ANIMATION,
+    DEVICE_AUDIO,              // This calls audio from WWise
+    WAIT,
+    HANG,
+    WAIT_FOR_LAMBDA,
+    MOVE_LIFT_TO_HEIGHT,
+    PAN_AND_TILT,
+    DRIVE_STRAIGHT,
+    TRACK_OBJECT,
+    TRACK_FACE,
+    TRACK_MOTION,
+    TURN_TOWARDS_LAST_FACE_POSE,
+    READ_TOOL_CODE,
+    SAY_TEXT, 
+    ENROLL_NAMED_FACE,
+    FLIP_BLOCK
+}
+
+
+enum uint_8 ActionResult {
+    SUCCESS = 0,
+    RUNNING,
+    FAILURE_NOT_STARTED,
+    FAILURE_TIMEOUT,
+    FAILURE_PROCEED,
+    FAILURE_RETRY,
+    FAILURE_ABORT,
+    FAILURE_TRACKS_LOCKED,
+    FAILURE_BAD_TAG,
+    CANCELLED,
+    INTERRUPTED
+}
+
+enum uint_8 ObjectInteractionResult {
+    SUCCESS = 0,
+
+    // Failures types:
+    INCOMPLETE,
+    INVALID_OBJECT,                 // e.g., doesn't exist or wrong type
+    NO_PREACTION_POSES,
+    DID_NOT_REACH_PREACTION_POSE,
+    NOT_CARRYING,                   // When trying to place or after picking up
+    STILL_CARRYING,                 // When trying to do something not possible while carrying or after placing
+    VISUAL_VERIFICATION_FAILED,     // Didn't see object after reaching pre-action pose
+    UNKNOWN_PROBLEM,
+}
+
+enum uint_8 AlignmentType {
+  LIFT_FINGER = 0, // Fingers aligned with object
+  LIFT_PLATE,      // Lift plate aligned with object
+  BODY,            // Front of body aligned with object
+  CUSTOM
+}
+
+// Object Interaction completed is used actions that interact with objects
+structure ObjectInteractionCompleted {
+    int_32     objectIDs[5],
+    uint_8     numObjects = 0,
+    ObjectInteractionResult result,
+}
+
+// Used by PlayAnimationAction
+structure AnimationCompleted {
+  string animationName,
+}
+
+// Used by DeviceAudioAction
+structure DeviceAudioCompleted {
+  Audio::GameEvent::GenericEvent audioEvent,
+}
+
+// Used by TrackFaceAction
+structure TrackFaceCompleted {
+  int_32 faceID
+}
+
+// Used by ReadToolCodeAction
+structure ReadToolCodeCompleted {
+  ToolCodeInfo info // info.code will be UnknownTool if failure
+}
+
+// Used by EnrollNamedFaceAction on success
+structure FaceEnrollmentCompleted {
+  int_32 faceID,
+  string name
+}
+
+// Use tag to determine what struct to use
+union ActionCompletedUnion {
+  ObjectInteractionCompleted  objectInteractionCompleted,
+  AnimationCompleted          animationCompleted,
+  DeviceAudioCompleted        deviceAudioCompleted,
+  TrackFaceCompleted          trackFaceCompleted,
+  ReadToolCodeCompleted       readToolCodeCompleted,
+  FaceEnrollmentCompleted     faceEnrollmentCompleted,
+}
+
+
+enum uint_8 QueueActionPosition {
+    NOW = 0,                 // Queue now, cancel current, but leave rest of queue intact
+    NOW_AND_CLEAR_REMAINING, // Queue now and clear rest of queue
+    NOW_AND_RESUME,          // Queue now, reset current and return to it once new action completes
+    NEXT,
+    AT_END,
+    IN_PARALLEL
+}
+
+} // namespace Cozmo
+} // namespace Anki

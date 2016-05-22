@@ -1,0 +1,53 @@
+/** CLAD definitions for robot non-volatile storage
+ * WARNING For backwards forward compatibility, all structures must be left as defined and new versions added with their
+ * Own unique identifier when needed.
+ */
+
+#include "clad/types/nvStorageTypes.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace NVStorage {
+
+  /// Used to store a retrieve serialized NV storage structures without caring whats in them
+  structure NVStorageBlob
+  {
+    uint_32 tag,
+    uint_8  blob[uint_32:1024],
+  }
+
+  enum int_8 NVReportDest
+  {
+    ENGINE,
+    WIFI,
+    RTIP,
+    BODY,
+  }
+
+  message NVStorageRead
+  {
+    uint_32 tag,
+    uint_32 tagRangeEnd,
+    NVReportDest to,
+  }
+
+  message NVStorageWrite
+  {
+    NVReportDest reportTo, // Where we send reports
+    bool writeNotErase,    // If true this is a write, if false erase
+    bool reportEach,       // Report each operation completed
+    bool reportDone,       // Report when final operation is done
+    uint_32 rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
+    NVStorageBlob entry
+  }
+
+  structure NVOpResult {
+    uint_32 tag,
+    NVResult   result,
+    bool       write,
+  }
+
+}
+
+}
+}

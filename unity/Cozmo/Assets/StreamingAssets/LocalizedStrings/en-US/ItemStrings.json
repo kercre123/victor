@@ -1,0 +1,33 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "item.experience.singular": {
+    "translation": "Green Point"
+  },
+  "item.experience.plural": {
+    "translation": "Green Points"
+  },
+  "item.treat.singular": {
+    "translation": "Spark"
+  },
+  "item.treat.plural": {
+    "translation": "Sparks"
+  }
+}

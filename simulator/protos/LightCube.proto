@@ -1,0 +1,43 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO LightCube [
+  field SFString   name         "LightCube"
+  field SFVec3f    translation  0 0 0
+  field SFRotation rotation     0 0 1 0
+  field SFInt32    ID           0
+]
+{
+  Block1x1 {
+    name IS name
+    translation IS translation
+    rotation IS rotation
+    blockColor 0.8 0.8 0.8
+    %{ if fields.ID.value == 0 then }%
+      markerImg_front  "lightCubes/lightCubeI_front.png"
+      markerImg_back   "lightCubes/lightCubeI_back.png"
+      markerImg_left   "lightCubes/lightCubeI_left.png"
+      markerImg_right  "lightCubes/lightCubeI_right.png"
+      markerImg_top    "lightCubes/lightCubeI_top.png"
+      markerImg_bottom "lightCubes/lightCubeI_bottom.png"        
+    %{ elseif fields.ID.value == 1 then }%
+      markerImg_front  "lightCubes/lightCubeJ_front.png"
+      markerImg_back   "lightCubes/lightCubeJ_back.png"
+      markerImg_left   "lightCubes/lightCubeJ_left.png"
+      markerImg_right  "lightCubes/lightCubeJ_right.png"
+      markerImg_top    "lightCubes/lightCubeJ_top.png"
+      markerImg_bottom "lightCubes/lightCubeJ_bottom.png"
+    %{ elseif fields.ID.value == 2 then }%
+      markerImg_front  "lightCubes/lightCubeK_front.png"
+      markerImg_back   "lightCubes/lightCubeK_back.png"
+      markerImg_left   "lightCubes/lightCubeK_left.png"
+      markerImg_right  "lightCubes/lightCubeK_right.png"
+      markerImg_top    "lightCubes/lightCubeK_top.png"
+      markerImg_bottom "lightCubes/lightCubeK_bottom.png"
+    %{ else 
+      error("Markers not defined for LightCube with specified ID")
+    end }%
+    
+    active TRUE 
+    activeID IS ID
+  }
+}

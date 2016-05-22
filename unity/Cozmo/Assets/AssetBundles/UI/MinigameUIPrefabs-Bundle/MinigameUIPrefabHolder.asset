@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e25f62d4af0554b99974e01dee43a6c6, type: 3}
+  m_Name: MinigameUIPrefabHolder
+  m_EditorClassIdentifier: 
+  _SharedMinigameViewPrefab: {fileID: 11492476, guid: f98f8a15834f84763adff953eafcb498,
+    type: 2}
+  _ChallengeEndViewPrefab: {fileID: 11474462, guid: 1b4135647dd7e4fb2bd98651dea5bac5,
+    type: 2}
+  _ShowCozmoCubeSlide: {fileID: 146872, guid: 95d62b6d570b642638e6e63c769a1b62, type: 2}

@@ -1,0 +1,29 @@
+{
+  // sample json file to test parsing code
+  "key": "value",
+  "floatKey": 3.1415,
+
+  "list": [1,2,3,4],
+
+  "dict": {
+    "list": [
+      {
+        "bv": false,
+        "str": "string"
+      },
+      {
+        "bv": true,
+        "int": -1234
+      }
+    ],
+    "otherDict": {
+      "val": "the value is this string"
+    },
+    "imporatantKeys": {
+      "key1": 5678,
+      "key2": {
+        "thing": "stuff"
+      }
+    }
+  }
+}

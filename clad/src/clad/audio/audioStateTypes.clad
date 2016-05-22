@@ -1,0 +1,48 @@
+// Available Game States in project
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+namespace GameState {
+
+enum uint_32 External_Name
+{
+  External_Name_Off = 151699428,
+  External_Name_On = 4053302206,
+  Invalid = 0,
+}
+
+enum uint_32 GenericState
+{
+  Invalid = 0,
+}
+
+enum uint_32 Mood
+{
+  Happy = 1427264549,
+  Invalid = 0,
+  Neutral = 670611050,
+  Sad = 443572635,
+}
+
+enum uint_32 Music
+{
+  Generic_Activity = 3767021196,
+  Hub = 646625282,
+  Invalid = 0,
+  Silent = 3160623154,
+  Sleep = 3671647190,
+}
+
+enum uint_32 StateGroupType
+{
+  External_Name = 2869506494,
+  Invalid = 0,
+  Mood = 3128647864,
+  Music = 3991942870,
+}
+
+} // GameState
+} // Audio
+} // Cozmo
+} // Anki

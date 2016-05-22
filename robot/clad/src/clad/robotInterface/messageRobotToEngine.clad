@@ -1,0 +1,159 @@
+/** Clad definitions of all messages sent from the Cozmo robot to the Cozmo engine
+ * This file is used on both the RTIP and WiFi chips on the robot but because we use explicit union tags, we don't have
+ * to recompile the code in lock step.
+ */
+
+
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/robotLogging.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/motorTypes.clad"
+#include "clad/types/dockingSignals.clad"
+#include "clad/types/imu.clad"
+#include "clad/types/proxMessages.clad"
+#include "clad/types/powerMessages.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/robotInterface/otaMessages.clad"
+#include "clad/types/nvStorage.clad"
+#include "clad/types/bleMessages.clad"
+#include "clad/types/animationEvents.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+message FWVersionInfo
+{
+  uint_32 wifiVersion = 0, // TODO actually handle or replace them
+  uint_32 rtipVersion = 0,
+  uint_32 bodyVersion = 0,
+  uint_8  toRobotCLADHash[16],
+  uint_8  toEngineCLADHash[16]
+}
+
+message SyncTimeAck
+{
+  bool isPhysical
+}
+
+message RobotPoked
+{
+  uint_32 robotID
+}
+
+message RobotStopped
+{
+  uint_8 reason  // reserved for later in case we need reasons
+}
+
+// These two messages bookend animations as they are played on the robot
+message AnimationStarted
+{
+  uint_8 tag
+}
+
+message AnimationEnded
+{
+  uint_8 tag
+}
+
+message AnimationEvent
+{
+  uint_32   timestamp,
+  uint_8    tag,
+  AnimEvent event_id
+}
+
+message RobotAvailable
+{
+  uint_32 robotID,
+  uint_16 modelID,
+}
+
+message NVReadResultToEngine
+{
+  uint_32 robotAddress,
+  NVStorage::NVStorageBlob blob,
+}
+
+message NVOpResultToEngine
+{
+  uint_32 robotAddress,
+  NVStorage::NVOpResult report
+}
+
+enum int_8 CrashSource
+{
+  WiFiCrash,
+  RTIPCrash,
+  BodyCrash,
+  PropCrash,
+}
+
+message CrashReport
+{
+  uint_32 dump[128],
+  CrashSource which,
+}
+
+/// *************** Overall message pipe ******************************* ///
+
+/** Pipe from robot to engine.
+ * This cannot be an auto union because we need explicit tag values by destination. The tag space is shared with
+ * messageEngineToRobot.clad
+ * 0xB0 and up going to the engine
+ */
+union RobotToEngine {
+  // 0xB0 to 0xEF: Reliable messages to the Engine
+  PrintTrace                 trace                  = 0xB0,
+  PrintText                  printText              = 0xB1,
+  MainCycleTimeError         mainCycleTimeError     = 0xB2,
+  GoalPose                   goalPose               = 0xB3,
+  ObjectMoved                activeObjectMoved      = 0xB4,
+  ObjectStoppedMoving        activeObjectStopped    = 0xB5,
+  ObjectTapped               activeObjectTapped     = 0xB6,
+  DataDump                   dataDump               = 0xB7,
+  BlockPickedUp              blockPickedUp          = 0xB8,
+  BlockPlaced                blockPlaced            = 0xB9,
+  RampTraverseStart          rampTraverseStarted    = 0xBA,
+  RampTraverseComplete       rampTraverseCompleted  = 0xBB,
+  BridgeTraverseStart        bridgeTraverseStarted  = 0xBC,
+  BridgeTraverseComplete     bridgeTraverseCompleted= 0xBD,
+  TimeProfileStat            timeProfStat           = 0xBE,
+  IMUDataChunk               imuDataChunk           = 0xBF,
+  CliffEvent                 cliffEvent             = 0xC0,
+  ChargerEvent               chargerEvent           = 0xC1,
+  SyncTimeAck                syncTimeAck            = 0xC2,
+  RobotPoked                 robotPoked             = 0xC3,
+  ChargerMountComplete       chargerMountCompleted  = 0xC4,
+  MovingLiftPostDock         movingLiftPostDock     = 0xC5,
+  ProxObstacle               proxObstacle           = 0xC6,
+  IMURawDataChunk            imuRawDataChunk        = 0xC7,
+  CameraCalibration          cameraCalibration      = 0xC8,
+  RobotAvailable             robotAvailable         = 0xC9,
+  AnimationStarted           animStarted            = 0xCA,
+  AnimationEnded             animEnded              = 0xCB,
+  NVReadResultToEngine       nvData                 = 0xCD,
+  NVOpResultToEngine         nvResult               = 0xCE,
+  CrashReport                crashReport            = 0xCF,
+  ObjectConnectionState activeObjectConnectionState = 0xD0,
+  MotorCalibration           motorCalibration       = 0xD1,
+  FWVersionInfo              fwVersionInfo          = 0xD2,
+  DockingStatus              dockingStatus          = 0xD3,
+  RobotStopped               robotStopped           = 0xD4,
+  AnimationEvent             animEvent              = 0xD5,
+  
+  OTA::Ack                   otaAck                 = 0xEF,
+  
+  //0xF0 to 0x FE: Unreliable message to the Engine
+  RobotState                 state                  = 0xF0,
+  AnimationState             animState              = 0xF1,
+  ImageChunk                 image                  = 0xF2,
+  ObjectDiscovered           activeObjectDiscovered = 0xF3,
+  ImageImuData               imageGyro              = 0xF4,
+}
+
+
+} // namespace RobotInterface
+} // namespace Cozmo
+} // namespace Anki

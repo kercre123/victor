@@ -1,0 +1,81 @@
+// FactoryTest enumeration file
+//  for the C-Like Abstract Data language
+// Author: Kevin Yoon
+// Copyright: Anki Inc (c) 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 FactoryTestState {
+  InitRobot,
+  ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
+  DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
+  GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
+  TakeCalibrationImages,    // Take and save images of calibration patterns
+  ComputeCameraCalibration, // Compute calibration and check that values are reasonable
+  WaitForCameraCalibration,
+  ReadLiftToolCode,
+  GotoPickupPose,
+  StartPickup,
+  PickingUpBlock,
+  PlacingBlock,
+  DockToCharger,
+  BLE_TestControl,
+}
+
+enum uint_8 FactoryTestResultCode {
+  UNKNOWN = 0,
+  SUCCESS,
+  MISMATCHED_CLAD,
+  INIT_LIFT_HEIGHT_FAILED,
+  CHARGER_UNDETECTED,
+  CHARGER_UNAVAILABLE,
+  CHARGER_UNCONNECTED,
+  IMU_DRIFTING,
+  STILL_ON_CHARGER,
+  GOTO_CALIB_POSE_ACTION_FAILED,
+  CLIFF_UNDETECTED,
+  CLIFF_UNEXPECTED,
+  NOT_IN_CALIBRATION_POSE,
+  CALIBRATION_TIMED_OUT,
+  CALIBRATION_VALUES_OOR,
+  CAMERA_CALIB_WRITE_FAILED,
+  CALIB_IMAGES_WRITE_FAILED,
+  CALIB_POSE_WRITE_FAILED,
+  CALIB_IMAGES_SEND_FAILED,
+  CALIB_POSE_SEND_FAILED, 
+  READ_TOOL_CODE_FAILED,
+  TOOL_CODE_POSITIONS_OOR,
+  TOOL_CODE_WRITE_FAILED,
+  GOTO_PRE_PICKUP_POSE_ACTION_FAILED,
+  NOT_IN_PRE_PICKUP_POSE,
+  CUBE_NOT_FOUND,
+  CUBE_NOT_WHERE_EXPECTED,
+  PICKUP_FAILED,
+  PLACEMENT_FAILED,
+  UNEXPECTED_OBSERVED_OBJECT,
+  GOTO_PRE_MOUNT_CHARGER_POSE_ACTION_FAILED,
+  CHARGER_NOT_FOUND,
+  CHARGER_DOCK_FAILED,
+  QUEUE_ACTION_FAILED,
+  MOTOR_CALIB_UNEXPECTED,
+  TEST_RESULT_WRITE_FAILED,
+  TEST_TIMED_OUT,
+  TEST_CANCELLED,
+  ROBOT_PICKUP,
+  TOOL_CODE_IMAGES_WRITE_FAILED,
+
+  // New result codes should be added at the end
+}
+
+structure FactoryTestResultEntry {
+  uint_64 utcTime,
+  uint_32 engineSHA1,
+  uint_32 timestamps[16],
+  uint_32 stationID,
+  FactoryTestResultCode result,
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

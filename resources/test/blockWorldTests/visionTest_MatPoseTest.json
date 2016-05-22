@@ -1,0 +1,191 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : true,
+   "NumObjects" : 0,
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest0.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.260,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.3839720,
+            "Translation" : [ -66.0, -231.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_K",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 196.5576477050781,
+               "x_imgLowerRight" : 206.2948455810547,
+               "x_imgUpperLeft" : 126.1759719848633,
+               "x_imgUpperRight" : 146.4205932617188,
+               "y_imgLowerLeft" : 95.48985290527344,
+               "y_imgLowerRight" : 77.53892517089844,
+               "y_imgUpperLeft" : 89.86888885498047,
+               "y_imgUpperRight" : 73.43368530273438
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest1.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.49270,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.3839720,
+            "Translation" : [ -161.0, -114.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_F",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 188.7949676513672,
+               "x_imgLowerRight" : 220.5425262451172,
+               "x_imgUpperLeft" : 110.1768417358398,
+               "x_imgUpperRight" : 151.6520843505859,
+               "y_imgLowerLeft" : 126.6185913085938,
+               "y_imgLowerRight" : 99.86946105957031,
+               "y_imgUpperLeft" : 110.5545959472656,
+               "y_imgUpperRight" : 89.25363922119141
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest2.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.209440,
+            "Translation" : [ 81.0, -66.40000000000001, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_R",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 202.4914703369141,
+               "x_imgLowerRight" : 194.2360229492188,
+               "x_imgUpperLeft" : 118.2954177856445,
+               "x_imgUpperRight" : 126.1450805664062,
+               "y_imgLowerLeft" : 162.3327484130859,
+               "y_imgLowerRight" : 139.5498352050781,
+               "y_imgUpperLeft" : 162.2600097656250,
+               "y_imgUpperRight" : 139.7052459716797
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest3.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 2.4660,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.2443460,
+            "Translation" : [ 302.0, 302.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_Y",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 125.4080963134766,
+               "x_imgLowerRight" : 80.20222473144531,
+               "x_imgUpperLeft" : 169.4893951416016,
+               "x_imgUpperRight" : 127.1820220947266,
+               "y_imgLowerLeft" : 117.4071273803711,
+               "y_imgLowerRight" : 128.9767913818359,
+               "y_imgUpperLeft" : 126.4740905761719,
+               "y_imgUpperRight" : 140.9210815429688
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest4.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 1.9950,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.1745330,
+            "Translation" : [ -153.0, -289.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_A",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 78.56098937988281,
+               "x_imgLowerRight" : 164.3228454589844,
+               "x_imgUpperLeft" : 125.3111419677734,
+               "x_imgUpperRight" : 196.7580871582031,
+               "y_imgLowerLeft" : 189.1844635009766,
+               "y_imgLowerRight" : 205.6555175781250,
+               "y_imgUpperLeft" : 163.2655029296875,
+               "y_imgUpperRight" : 173.5889434814453
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest5.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 1.9140,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.209440,
+            "Translation" : [ -12.0, -30.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_G",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 49.12082290649414,
+               "x_imgLowerRight" : 128.4160766601562,
+               "x_imgUpperLeft" : 93.51316833496094,
+               "x_imgUpperRight" : 159.7220764160156,
+               "y_imgLowerLeft" : 172.2941284179688,
+               "y_imgLowerRight" : 183.5304565429688,
+               "y_imgUpperLeft" : 148.6787872314453,
+               "y_imgUpperRight" : 156.1509704589844
+            }
+         ]
+      },
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_MatPoseTest6.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 0.5639999999999999,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : 0.0,
+            "Translation" : [ -323.0, -9.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_B",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 168.0303649902344,
+               "x_imgLowerRight" : 134.2138519287109,
+               "x_imgUpperLeft" : 100.0936050415039,
+               "x_imgUpperRight" : 74.16035461425781,
+               "y_imgLowerLeft" : 217.6439361572266,
+               "y_imgLowerRight" : 202.0879669189453,
+               "y_imgUpperLeft" : 231.0378875732422,
+               "y_imgUpperRight" : 211.4143066406250
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_MatPoseTest"
+}

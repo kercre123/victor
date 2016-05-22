@@ -1,0 +1,96 @@
+// Define constants used by fixtures
+#ifndef FIXTURE_H
+#define FIXTURE_H
+
+#define FIXTURE_NONE          0     // No ID resistors
+#define FIXTURE_BODY_TEST     1     // ID 1
+#define FIXTURE_HEAD_TEST     2     // ID 2  
+
+// Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
+#define FIXTURE_CHARGER_TEST  4     // ID 3
+#define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
+#define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
+#define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
+
+#define FIXTURE_PLAYPEN_TEST  9     // ID 4 + 1
+#define FIXTURE_CUBEFCC_TEST  13    // ID 4 + 3 + 1
+
+#define FIXTURE_DEBUG         16
+
+typedef unsigned char FixtureType;
+#define FIXTURE_TYPES { "NO ID", "BODY", "HEAD", "?", "CHARGE", "CUBE1", "CUBE2", "CUBE3", \
+                        "?", "PLAYPEN", "?", "?",  "?", "CUBEFCC", "?", "?", "DEBUG" }
+
+extern char g_lotCode[15];
+extern u32 g_time;
+extern u32 g_dateCode;
+
+// Diagnostic mode commands are used to speak to the robot over the test port (charge contacts)
+typedef enum
+{
+  DMC_ENTER                 = 0xA3,
+  DMC_FIRST                 = 0x01,
+  
+  DMC_NACK                  = 0x01,
+  DMC_ACK                   = 0x02,
+  
+  DMC_LAST
+} DiagnosticModeCommand;
+
+// Error numbers - these are thrown and eventually arrive on the display for the factory operator
+// To aid memorization, error numbers are grouped logically:
+//  3xy - motor errors - where X is the motor 1 (left), 2 (right), 3 (lift), or 4 (head) - and Y is the problem (reversed, encoder, etc)
+//  4xy - testport errors - indicating problems communicating with the device or storing factory info
+//  5xy - head errors - where X is the component (0 = CPU) and Y is the problem
+//  6xy - body errors - where X is the component (0 = CPU) and Y is the problem
+//  7xy - cube/charger errors - where X is the component (0 = CPU) and Y is the problem
+#define ERROR_OK                    0
+
+// Internal Errors
+#define ERROR_EMPTY_COMMAND         1
+#define ERROR_ACK1                  2
+#define ERROR_ACK2                  3
+#define ERROR_RECEIVE               4
+#define ERROR_UNKNOWN_MODE          5
+#define ERROR_OUT_OF_RANGE          6
+#define ERROR_ALIGNMENT             7
+
+#define ERROR_SERIAL_EXISTS         8
+#define ERROR_LOT_CODE              9
+#define ERROR_OUT_OF_SERIALS        10    // When the fixture itself runs out of 500,000 serial numbers
+
+#define ERROR_CUBE_ROM_OVERSIZE     11    // When you link a too-big cube ROM
+#define ERROR_CUBE_ROM_MISPATCH     12    // When you can't patch the cube ROM
+#define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
+
+#define IS_INTERNAL_ERROR(e) (e < 100)
+
+// SWD errors
+#define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
+#define ERROR_SWD_READ_FAULT        451   // SWD read failed
+#define ERROR_SWD_WRITE_FAULT       452   // SWD write failed
+#define ERROR_SWD_WRITE_STUB        453   // Can't write stub
+#define ERROR_SWD_WRITE_BLOCK       454   // Can't write block
+#define ERROR_SWD_NOSTUB            455   // Stub did not start up
+#define ERROR_SWD_MISMATCH          456   // Flash failed - contents do not match
+#define ERROR_SWD_FLASH_TIMEOUT     457   // Flash failed - stub timed out during flash operation
+
+// Head errors
+#define ERROR_HEAD_BOOTLOADER       500   // Can't load bootloader into K02
+
+#define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
+#define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash
+#define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
+#define ERROR_HEAD_RADIO_TIMEOUT    513   // Unable to send command due to ESP timeout (broken connection?)
+
+// Body errors
+#define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
+
+// Cube/charger errors
+#define ERROR_CUBE_CANNOT_WRITE     700
+#define ERROR_CUBE_NO_COMMUNICATION 701
+#define ERROR_CUBE_VERIFY_FAILED    702
+#define ERROR_CUBE_BLOCK_FAILED     703
+
+
+#endif

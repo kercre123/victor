@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makesafe", "makesafe.vcxproj", "{50AC5C18-01FC-48BC-A117-807767830F80}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "keygen", "keygen.vcxproj", "{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release_FIXTURE|Win32 = Release_FIXTURE|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{50AC5C18-01FC-48BC-A117-807767830F80}.Debug|Win32.ActiveCfg = Debug|Win32
+		{50AC5C18-01FC-48BC-A117-807767830F80}.Debug|Win32.Build.0 = Debug|Win32
+		{50AC5C18-01FC-48BC-A117-807767830F80}.Release_FIXTURE|Win32.ActiveCfg = Release_FIXTURE|Win32
+		{50AC5C18-01FC-48BC-A117-807767830F80}.Release_FIXTURE|Win32.Build.0 = Release_FIXTURE|Win32
+		{50AC5C18-01FC-48BC-A117-807767830F80}.Release|Win32.ActiveCfg = Release|Win32
+		{50AC5C18-01FC-48BC-A117-807767830F80}.Release|Win32.Build.0 = Release|Win32
+		{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}.Debug|Win32.Build.0 = Debug|Win32
+		{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}.Release_FIXTURE|Win32.ActiveCfg = Release|Win32
+		{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}.Release_FIXTURE|Win32.Build.0 = Release|Win32
+		{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}.Release|Win32.ActiveCfg = Release|Win32
+		{5CAA2F6E-9863-417B-BAA8-FBDF75821FDD}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

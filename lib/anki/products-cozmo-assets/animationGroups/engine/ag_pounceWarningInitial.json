@@ -1,0 +1,10 @@
+{
+  "Animations": [
+    {
+      "Name": "anim_pounce_reactToOBJ_01_shorter",
+      "Weight": 1.0,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    }
+  ]
+}

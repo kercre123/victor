@@ -1,0 +1,36 @@
+// File: behaviorGroup
+// Author: Mark Wesley
+// Created: 01/14/16
+// Copyright: Anki, inc. 2016
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 BehaviorGroup {
+
+    Reactionary = 0,
+    AffectsBlocks,
+    MiniGame,
+    RequestSpeedTap,
+    RequestSimon,
+    RequestCubePounce,
+    RequestFaceEnroll,
+    Unlock_CubeRoll,
+
+    // Freeplay
+    FreeplayOne,      // this is a temp goal with the old behaviors from freeplay. Placeholder for games before turning into proper goals
+    FreeplayExplore,  // this will be the new exploration goal
+
+    Demo,
+    DemoFingerPounce,
+    DemoFaces,
+    DemoCubes,
+    DemoRequestSpeedTap,
+    
+    Count
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

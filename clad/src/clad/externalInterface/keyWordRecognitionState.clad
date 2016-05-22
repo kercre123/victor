@@ -1,0 +1,21 @@
+// File: keyWordRecognitionState
+// Author: damjan stulic
+// Created: 9/4/15
+// Copyright: Anki, inc. 2015
+
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+
+message KeyWordRecognitionEnabled {
+}
+
+message KeyWordRecognitionDisabled {
+}
+
+
+} // end namespace ExternalInterface
+} // end namespace Cozmo
+} // end namespace Anki

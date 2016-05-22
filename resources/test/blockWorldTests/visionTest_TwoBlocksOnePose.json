@@ -1,0 +1,87 @@
+{
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : true,
+   "NumObjects" : 2,
+   "Objects" : [
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 1.0471980,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "Translation" : [ 270.0, 99.0, 21.754750 ]
+         },
+         "Type" : "ANGRYFACE"
+      },
+      {
+         "ObjectName" : "Block",
+         "ObjectPose" : {
+            "Angle" : 1.0471980,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "Translation" : [ 270.0, 35.0, 21.754750 ]
+         },
+         "Type" : "BULLSEYE2"
+      }
+   ],
+   "Poses" : [
+      {
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_TwoBlocksOnePose0.png",
+         "NumMarkers" : 3,
+         "RobotPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 1.0, 0.0, 0.0 ],
+            "HeadAngle" : -0.3141590,
+            "Translation" : [ 105.0, 67.0, 0.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_ANGRYFACE",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 89.16259002685547,
+               "x_imgLowerRight" : 138.5977630615234,
+               "x_imgUpperLeft" : 85.44686889648438,
+               "x_imgUpperRight" : 137.6525268554688,
+               "y_imgLowerLeft" : 83.09143066406250,
+               "y_imgLowerRight" : 78.08425140380859,
+               "y_imgUpperLeft" : 25.88786125183105,
+               "y_imgUpperRight" : 25.04963111877441
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_BULLSEYE2",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 180.4035644531250,
+               "x_imgLowerRight" : 229.8322906494141,
+               "x_imgUpperLeft" : 181.3439636230469,
+               "x_imgUpperRight" : 233.5337524414062,
+               "y_imgLowerLeft" : 78.07593536376953,
+               "y_imgLowerRight" : 83.08203887939453,
+               "y_imgUpperLeft" : 25.06678199768066,
+               "y_imgUpperRight" : 25.87366867065430
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "markerType" : "MARKER_T",
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 212.0111389160156,
+               "x_imgLowerRight" : 200.3208618164062,
+               "x_imgUpperLeft" : 109.0938415527344,
+               "x_imgUpperRight" : 120.2926483154297,
+               "y_imgLowerLeft" : 156.501464843750,
+               "y_imgLowerRight" : 124.2575836181641,
+               "y_imgUpperLeft" : 156.5325469970703,
+               "y_imgUpperRight" : 124.3350677490234
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_TwoBlocksOnePose"
+}

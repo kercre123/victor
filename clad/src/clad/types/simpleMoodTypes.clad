@@ -1,0 +1,21 @@
+// File: simpleMoodTypes
+// Author: Trevor Dasch
+// Created: 2/17/16
+// Copyright: Anki, inc. 2016
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 SimpleMoodType {
+
+Happy = 0,
+Sad,
+Default,
+
+Count
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

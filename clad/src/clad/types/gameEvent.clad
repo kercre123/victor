@@ -1,0 +1,48 @@
+// File: GameEvents
+// Author: Molly Jameson
+// Created: 3/31/16
+// Copyright: Anki, inc. 2016
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 GameEvent
+{
+  OnDriveStart,
+  OnDriveEnd,
+  OnFidget,
+  OnSpeedtapStarted,
+  OnSpeedtapHandCozmoWin,
+  OnSpeedtapHandPlayerWin,
+  OnSpeedtapRoundCozmoWinAnyIntensity,
+  OnSpeedtapRoundCozmoWinLowIntensity,
+  OnSpeedtapRoundCozmoWinHighIntensity,
+  OnSpeedtapRoundPlayerWinAnyIntensity,
+  OnSpeedtapRoundPlayerWinLowIntensity,
+  OnSpeedtapRoundPlayerWinHighIntensity,
+  OnSpeedtapGameCozmoWinAnyIntensity,
+  OnSpeedtapGameCozmoWinLowIntensity,
+  OnSpeedtapGameCozmoWinHighIntensity,
+  OnSpeedtapGamePlayerWinAnyIntensity,
+  OnSpeedtapGamePlayerWinLowIntensity,
+  OnSpeedtapGamePlayerWinHighIntensity,
+  OnSpeedtapGetOut,
+  OnSpeedtapCozmoConfirm,
+  OnSpeedtapTap,
+  OnSpeedtapFakeout,
+  OnSpeedtapIdle,
+  OnLearnedPlayerName,
+  OnSawNewUnnamedFace,
+  OnSawNewNamedFace,
+  OnSawOldUnnamedFace,
+  OnSawOldNamedFace,
+  OnWiggle,
+  Count, // Keep count at end.
+}
+
+
+} // end namespace Cozmo
+} // end namespace Anki
+

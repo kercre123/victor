@@ -1,0 +1,11 @@
+cosmo watch me /1e-10/
+cosmo fetch /1e-10/
+cosmo hello /1e-10/
+cosmo goodbye /1e-10/
+cosmo come here /1e-10/
+cosmo pick up cube /1e-10/
+cosmo pick up block /1e-10/
+cosmo drop cube /1e-10/
+cosmo drop block /1e-10/
+cosmo stack cube /1e-10/
+cosmo stack block /1e-10/

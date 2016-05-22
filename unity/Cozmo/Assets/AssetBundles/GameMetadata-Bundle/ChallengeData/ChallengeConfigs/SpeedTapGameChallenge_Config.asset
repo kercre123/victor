@@ -1,0 +1,179 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a449b0de3bc04d88802548a816083a6, type: 3}
+  m_Name: SpeedTapGameChallenge_Config
+  m_EditorClassIdentifier: 
+  _SkillConfig:
+    _EvaluateLevelChangeEvent:
+    - _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
+      _EnumValue: 19
+    - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
+      _EnumValue: 16
+    _GainChallengePointEvent:
+    - _EnumValueAsString: OnSpeedtapHandCozmoWin
+      _EnumValue: 8
+    - _EnumValueAsString: OnSpeedtapRoundCozmoWinAnyIntensity
+      _EnumValue: 10
+    - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
+      _EnumValue: 16
+    _LoseChallengePointEvent:
+    - _EnumValueAsString: OnSpeedtapHandPlayerWin
+      _EnumValue: 9
+    - _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
+      _EnumValue: 13
+    - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
+      _EnumValue: 16
+    _ResetPointsEvent:
+    - _EnumValueAsString: OnSpeedtapStarted
+      _EnumValue: 7
+    _UsePointThreshold: 0
+    _ComparedPointThreshold: 0
+    _Levels:
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 0.5
+      - name: TapDelayMax
+        val: 0.85
+      - name: WrongTapChance
+        val: 0.05
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 0.4
+      - name: TapDelayMax
+        val: 0.7
+      - name: WrongTapChance
+        val: 0.05
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 0.35
+      - name: TapDelayMax
+        val: 0.6
+      - name: WrongTapChance
+        val: 0.04
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 0.25
+      - name: TapDelayMax
+        val: 0.5
+      - name: WrongTapChance
+        val: 0.03
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 0.15
+      - name: TapDelayMax
+        val: 0.4
+      - name: WrongTapChance
+        val: 0.02
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 0.05
+      - name: TapDelayMax
+        val: 0.3
+      - name: WrongTapChance
+        val: 0
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+  Rounds: 3
+  MaxScorePerRound: 5
+  MinIdleInterval_percent: 0
+  MaxIdleInterval_percent: 0.3
+  BaseMatchChance: 0.2
+  MatchChanceIncrease: 0.1
+  CozmoFakeoutChance: 0.2
+  _BetweenRoundMusic:
+    _Music: -527946100
+  DifficultySettings:
+  - DifficultyID: 0
+    Colors:
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 0}
+    - {r: 1, g: 0, b: 1, a: 1}
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
+  - DifficultyID: 1
+    Colors:
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
+  - DifficultyID: 2
+    Colors:
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
+  - DifficultyID: 3
+    Colors:
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1

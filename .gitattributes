@@ -1,0 +1,8 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+#* text=auto
+
+# Special line ending handling
+*.sln text eol=crlf
+*.clad text eol=lf
+*.sh text eol=lf
+*.bash text eol=lf

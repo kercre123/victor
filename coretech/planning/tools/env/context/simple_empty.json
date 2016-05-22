@@ -1,0 +1,89 @@
+{
+  "env": {
+    "obstacles": {
+      "angles": [
+        {
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+       ,{
+          "obstacles": [
+          ]
+        }
+      ]
+    }
+   ,"robotParams": {
+      "halfWheelBase_mm": 24
+     ,"maxVelocity_mmps": 60
+     ,"maxReverseVelocity_mmps": 25
+    }
+  }
+ ,"goal": {
+    "x_mm": 387.002
+   ,"y_mm": -16.5339
+   ,"theta_rads": -1.0472
+  }
+ ,"start": {
+    "x_mm": 201.469
+   ,"y_mm": 217.98
+   ,"theta_rads": -0.0294512
+  }
+ ,"free_turn_at_goal": 0
+ ,"force_replan": 1
+}

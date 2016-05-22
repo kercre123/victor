@@ -1,0 +1,62 @@
+/** Clad for messages from active objects to Engine or Game
+ * ROBOT_CLAD_SHARED
+ */
+
+#include "clad/types/activeObjectTypes.clad"
+
+
+namespace Anki {
+namespace Cozmo {
+
+message ObjectDiscovered
+{
+  uint_32     factory_id,
+  ActiveObjectType  device_type,
+  int_8       rssi
+}
+
+message ObjectConnectionState
+{  
+  uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 factoryID,
+  ActiveObjectType  device_type,
+  bool connected
+}
+
+message ObjectMoved
+{
+  uint_32     timestamp,
+  uint_32     objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32     robotID,
+  ActiveAccel accel,
+  UpAxis      upAxis,
+}
+
+message ObjectStoppedMoving
+{
+  uint_32     timestamp,
+  uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 robotID,
+  UpAxis  upAxis,
+  bool    rolled,
+}
+
+message ObjectTapped
+{
+  uint_32     timestamp,
+  uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 robotID,
+  uint_8  numTaps,
+}
+
+structure PropState
+{
+  uint_8 slot,
+  int_8  x,
+  int_8  y,
+  int_8  z,
+  uint_8 shockCount,
+}
+
+} // Cozmo
+} // Anki
