@@ -12,8 +12,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 4000); // How long before deleting unobserved face
-  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 4000);
+  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 15000); // How long before deleting unobserved face
+  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 15000);
   
   FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
   : face(faceIn)
