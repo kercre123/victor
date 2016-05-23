@@ -141,22 +141,4 @@ public class ObservedObject {
       TimeLastSeen = Time.time;
   }
 
-  public Vector2 GetBestFaceVector(Vector3 initialVector) {
-    
-    Vector2[] faces = { TopNorth, TopEast, -TopNorth, -TopEast };
-    Vector2 face = faces[0];
-    
-    float bestDot = -float.MaxValue;
-    
-    for (int i = 0; i < 4; i++) {
-      float dot = Vector2.Dot(initialVector, faces[i]);
-      if (dot > bestDot) {
-        bestDot = dot;
-        face = faces[i];
-      }
-    }
-    
-    return face;
-  }
-
 }
