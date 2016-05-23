@@ -45,7 +45,8 @@ namespace Anki {
     } // GetSize()
     
     Platform::Platform(Type type)
-    : MatPiece(type, GetPlatformSize(type))
+    : ObservableObject(ObjectFamily::Mat, type)
+    , MatPiece(type, GetPlatformSize(type))
     {
       const f32& length = GetSize().x();
       const f32& width  = GetSize().y();
