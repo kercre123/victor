@@ -1,0 +1,10 @@
+#include "AnkiEnum/AnkiEnum.clad"
+
+message Foo {
+  bool isFoo,
+  int_8 myByte,
+  int_16 myShort,
+  float_32 myFloat,
+  uint_32 myNormal,
+  AnkiTypes::AnkiEnum myFoo,
+}

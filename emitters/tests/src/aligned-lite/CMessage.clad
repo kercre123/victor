@@ -1,0 +1,77 @@
+// CMessage message definition file
+//  for the C-Like Abstract Data language
+// Author: Mark Pauley
+// Copyright: Anki, Inc (c) 2015
+
+message Void {}
+
+// Wrapped buffer
+message Buffer16
+{
+  uint_8 buffer[15]
+}
+
+// PlayerId
+message PlayerId
+{
+  uint_8 playerId
+}
+
+// Player and Profile pair
+message PlayerAndProfile
+{
+  uint_16 playerId,
+  uint_8 profileBuffer[1022]
+}
+
+// Player And Vehicle pair
+message PlayerAndVehicle
+{
+  uint_64 vehicleUUID[3],
+  PlayerAndProfile x,
+  PlayerId otherId[1],
+  Buffer16 buffer[8]
+}
+
+// Lobby Service
+enum uint_8 ClientLobbyState {
+  Nil = 0,
+  PreLobby,
+  InLobby,
+  GameReady,
+  InGame
+}
+
+message LobbyState
+{
+  ClientLobbyState lobbyState
+}
+
+// Emotion Service
+enum uint_8 EmotionRequestType {
+  Nil = 0x0,
+  Start,
+  Stop
+}
+
+message PlayerEmotion
+{
+  EmotionRequestType requestType,
+  uint_8 soundToPlay[10],
+}
+
+union PlayerMessage
+{
+    Buffer16         UiMessageData, // wrapped UIMessage
+    Void             RequestLobbyData,
+    Buffer16         ResponseLobbyData,
+    PlayerId         RequestPlayerData,  //data for playerId
+    PlayerAndProfile ResponsePlayerData, //wrapped profile
+    PlayerAndVehicle PlayerRequestVehicleSelect,
+    Void             HostReadyForGameStart,
+    Void             HostBackToLobby,
+    Void             ClientReadForGameStart,
+    LobbyState       ClientStateUpdate,
+    PlayerEmotion    EmotionMessage,
+    Buffer16         VehicleControllerMessage
+}
