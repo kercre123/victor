@@ -1,0 +1,276 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AD48CD7F181CD0D100D93ED6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD48CD7E181CD0D100D93ED6 /* main.cpp */; };
+		AD48CD91181CD89800D93ED6 /* StringMapBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD48CD8F181CD89800D93ED6 /* StringMapBuilder.cpp */; };
+		B987E0711950F03E006B92EB /* parsingConstants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B987E06F1950F03E006B92EB /* parsingConstants.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AD48CD7B181CD0D100D93ED6 /* StringMapBuilder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StringMapBuilder; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD48CD7E181CD0D100D93ED6 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		AD48CD8F181CD89800D93ED6 /* StringMapBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringMapBuilder.cpp; sourceTree = "<group>"; };
+		AD48CD90181CD89800D93ED6 /* StringMapBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringMapBuilder.h; sourceTree = "<group>"; };
+		AD48CD9F181CE51400D93ED6 /* stringMapBuilder.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = stringMapBuilder.json; sourceTree = SOURCE_ROOT; };
+		AD48CDA0181CED4B00D93ED6 /* stringMapBuilder.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = stringMapBuilder.sh; sourceTree = SOURCE_ROOT; };
+		AD7482A118F49B1600770BFD /* stringMapBuilderTest.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = stringMapBuilderTest.json; sourceTree = SOURCE_ROOT; };
+		B987E06F1950F03E006B92EB /* parsingConstants.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = parsingConstants.cpp; path = ../../../../source/anki/util/parsingConstants/parsingConstants.cpp; sourceTree = "<group>"; };
+		B987E0701950F03E006B92EB /* parsingConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = parsingConstants.h; path = ../../../../source/anki/util/parsingConstants/parsingConstants.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AD48CD78181CD0D100D93ED6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AD48CD72181CD0D100D93ED6 = {
+			isa = PBXGroup;
+			children = (
+				AD48CD7D181CD0D100D93ED6 /* StringMapBuilder */,
+				AD48CD7C181CD0D100D93ED6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AD48CD7C181CD0D100D93ED6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AD48CD7B181CD0D100D93ED6 /* StringMapBuilder */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AD48CD7D181CD0D100D93ED6 /* StringMapBuilder */ = {
+			isa = PBXGroup;
+			children = (
+				B987E06F1950F03E006B92EB /* parsingConstants.cpp */,
+				B987E0701950F03E006B92EB /* parsingConstants.h */,
+				AD7482A118F49B1600770BFD /* stringMapBuilderTest.json */,
+				AD48CDA0181CED4B00D93ED6 /* stringMapBuilder.sh */,
+				AD48CD9F181CE51400D93ED6 /* stringMapBuilder.json */,
+				AD48CD7E181CD0D100D93ED6 /* main.cpp */,
+				AD48CD8F181CD89800D93ED6 /* StringMapBuilder.cpp */,
+				AD48CD90181CD89800D93ED6 /* StringMapBuilder.h */,
+			);
+			path = StringMapBuilder;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AD48CD7A181CD0D100D93ED6 /* StringMapBuilder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD48CD84181CD0D100D93ED6 /* Build configuration list for PBXNativeTarget "StringMapBuilder" */;
+			buildPhases = (
+				AD48CD77181CD0D100D93ED6 /* Sources */,
+				AD48CD78181CD0D100D93ED6 /* Frameworks */,
+				AD48CD8E181CD69100D93ED6 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StringMapBuilder;
+			productName = StringMapBuilder;
+			productReference = AD48CD7B181CD0D100D93ED6 /* StringMapBuilder */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AD48CD73181CD0D100D93ED6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0500;
+				ORGANIZATIONNAME = "damjan stulic";
+			};
+			buildConfigurationList = AD48CD76181CD0D100D93ED6 /* Build configuration list for PBXProject "StringMapBuilder" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = AD48CD72181CD0D100D93ED6;
+			productRefGroup = AD48CD7C181CD0D100D93ED6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AD48CD7A181CD0D100D93ED6 /* StringMapBuilder */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		AD48CD8E181CD69100D93ED6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo /bin/cp $BUILT_PRODUCTS_DIR/StringMapBuilder $SRCROOT/stringMapBuilder.exe\n/bin/cp $BUILT_PRODUCTS_DIR/StringMapBuilder $SRCROOT/stringMapBuilder.exe";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AD48CD77181CD0D100D93ED6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD48CD7F181CD0D100D93ED6 /* main.cpp in Sources */,
+				AD48CD91181CD89800D93ED6 /* StringMapBuilder.cpp in Sources */,
+				B987E0711950F03E006B92EB /* parsingConstants.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AD48CD82181CD0D100D93ED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../../../libs/packaged/include",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = ../../../source/anki;
+			};
+			name = Debug;
+		};
+		AD48CD83181CD0D100D93ED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../../../libs/packaged/include",
+				);
+				"INSTALL_PATH[sdk=*]" = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = ../../../source/anki;
+			};
+			name = Release;
+		};
+		AD48CD85181CD0D100D93ED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../../../BasestationResources/iOS/include",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AD48CD86181CD0D100D93ED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../../../BasestationResources/iOS/include",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AD48CD76181CD0D100D93ED6 /* Build configuration list for PBXProject "StringMapBuilder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD48CD82181CD0D100D93ED6 /* Debug */,
+				AD48CD83181CD0D100D93ED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AD48CD84181CD0D100D93ED6 /* Build configuration list for PBXNativeTarget "StringMapBuilder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD48CD85181CD0D100D93ED6 /* Debug */,
+				AD48CD86181CD0D100D93ED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AD48CD73181CD0D100D93ED6 /* Project object */;
+}

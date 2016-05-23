@@ -1,0 +1,7 @@
+// Item Constants ...
+CONST_STRING_ID( Scrambled )
+CONST_STRING_ID( TractorBeam )
+CONST_STRING_ID( GravityBeam )
+CONST_STRING_ID( EBrake )
+CONST_STRING_ID( Boost )
+CONST_STRING_ID( ReverseDrive )

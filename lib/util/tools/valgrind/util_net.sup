@@ -1,0 +1,16 @@
+{
+   gethostbyname
+   Memcheck:Leak
+   ...
+   fun:si_module_with_name
+   fun:gethostbyname
+   ...
+}
+{
+   gethostbyname
+   Memcheck:Addr8
+   ...
+   fun:si_module_with_name
+   fun:gethostbyname
+   ...
+}

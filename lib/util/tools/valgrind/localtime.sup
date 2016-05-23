@@ -1,0 +1,18 @@
+{
+   localtime-static-malloc
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:localtime
+   ...
+   fun:_Z13RUN_ALL_TESTSv
+}
+{
+   mktime
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:mktime
+   ...
+   fun:_Z13RUN_ALL_TESTSv
+}

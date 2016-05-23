@@ -1,0 +1,30 @@
+.DS_Store
+.idea
+
+# project folders
+project/gyp-android
+project/gyp-ios
+project/gyp-mac
+project/gyp-linux
+
+# configure artifacts
+project/gyp/utilUnitTest.lst
+project/gyp/util.lst
+project/gyp/networkApp.lst
+project/gyp/utilUnitTestExe.lst
+project/gyp/utilEmbedded.lst
+
+#build artifacts
+*.pyc
+libs/packaged/include
+project/gyp/build
+
+#emacs turds
+*~
+
+# Vagrant
+.vagrant
+
+# Sonar
+.sonar*
+

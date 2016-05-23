@@ -1,0 +1,28 @@
+
+// CONSOLE_ARG_TYPE( friendly_name, type, parse_tokens )
+
+CONSOLE_ARG_TYPE( Bool, bool, "bool" )
+
+// char type is supported, but stored as int8 so it's not required for this list
+CONSOLE_ARG_TYPE( Int8, int8_t, "int8_t, int8, char, signed char" )
+CONSOLE_ARG_TYPE( UInt8, uint8_t, "uint8_t, uint8, unsigned char" )
+
+CONSOLE_ARG_TYPE( Int16, int16_t, "int16_t, int16, short, signed short" )
+CONSOLE_ARG_TYPE( UInt16, uint16_t, "uint16_t, uint16, unsigned short" )
+
+CONSOLE_ARG_TYPE( Int32, int32_t, "int32_t, int32, int, signed int" )
+CONSOLE_ARG_TYPE( UInt32, uint32_t, "uint32_t, uint32, unsigned int" )
+
+CONSOLE_ARG_TYPE( Int64, int64_t, "int64_t, int64, long long int, signed long long int, long long, signed long long" )
+CONSOLE_ARG_TYPE( UInt64, uint64_t, "uint64_t, uint64, unsigned long long int, unsigned long long" )
+
+CONSOLE_ARG_TYPE( Float, float, "float" )
+CONSOLE_ARG_TYPE( Double, double, "double" )
+
+// These need to be added by hand since they don't play nicely with our templates
+// We still need to include them in places (like enums, etc.), so we turn them on/off with CONSOLE_INCLUDE_MANUAL_TYPES
+#ifdef CONSOLE_INCLUDE_MANUAL_TYPES
+
+  CONSOLE_ARG_TYPE( String, const char*, "const char*" )
+
+#endif

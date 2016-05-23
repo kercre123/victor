@@ -1,0 +1,197 @@
+{
+  "target": "config/testStringMap.json",
+  "sources" :
+  [
+    {
+      "file": "config/tests/testItems.json",
+      "list_key": "item_bays.bays",
+      "id_key": "",
+      "string_map_target_key": "bays"
+    },
+    {
+      "files":
+      [
+        "config/tests/testItems.json",
+        "config/tests/testUpgradeData.json"
+      ],
+      "list_and_keys" :
+      [
+        {
+          "list_key": "items.real_items",
+          "id_key": "id"
+        },
+        {
+          "list_key": "upgrades",
+          "id_key": "id"
+        },
+        {
+          "list_key": "meta_upgrades",
+          "id_key": "id"
+        }
+      ],
+      "remove_missing_keys" : true, // items are stored in profile. Do not reuse ids
+      "string_map_target_key": "vehicle_addons"
+    },
+    {
+      "file": "config/mapFiles/tracks.json",
+      "list_key": "track_types",
+      "id_key": "id",
+      "string_map_target_key": "track_types"
+    },
+    {
+      "files":
+      [
+        "config/tests/testGameTypes.json"
+      ],
+      "list_and_keys" :
+      [
+        {
+          "list_key": "game_types",
+          "id_key": "id"
+        }
+      ],
+      "string_map_target_key": "game_types"
+    },
+    {
+      "file": "config/tests/characters/characterEmotions.json",
+      "list_key": "characters",
+      "id_key": "id",
+      "string_map_target_key": "voice_ids"
+    },
+    {
+      "files":
+        [
+          "config/tests/testGameTypes.json",
+          "config/tests/testMedals.json",
+          "config/tests/testItems.json",
+          "../source/anki/util/parsingConstants/soundNames.def"
+        ],
+      "list_and_keys" :
+        [
+          {
+            "search_for_key": "sound"
+          },
+          {
+            "search_for_key": "selected_sounds"
+          },
+          {
+            "search_for_key": "charge_up_sound_id"
+          },
+          {
+            "search_for_key": "charge_up_sound_loop"
+          },
+          {
+            "search_for_key": "damage_sound"
+          },
+          {
+            "search_for_key": "damage_sound_loop"
+          },
+          {
+            "search_for_key": "equipped_sound_id"
+          },
+          {
+            "search_for_key": "item_not_ready_sound"
+          },
+          {
+            "search_for_key": "shot_blocked_sound"
+          },
+          {
+            "search_for_key": "shot_blocked_sound_loop"
+          },
+          {
+            "search_for_key": "shot_reflected_sound"
+          },
+          {
+            "search_for_key": "shot_reflected_sound_loop"
+          },
+          {
+            "search_for_key": "sound_loop"
+          },
+          {
+            "search_for_key": "upgraded_sound_loop"
+          }
+        ],
+      "string_map_target_key": "events",
+      "allow_multiple_id_ocurrences": true // soundIds can be reused
+    },
+    {
+      "file": "config/tests/testMedals.json",
+      "list_key": "medals",
+      "id_key": "id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "medals"
+    },
+    {
+      "file": "config/tests/testUpgradeData.json",
+      "list_key": "upgrades",
+      "id_key": "target_id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "upgrade_targets",
+      "allow_multiple_id_ocurrences": true // several upgrades can have the same target_Id
+    },
+    {
+      "files":
+      [
+        "config/tests/testUpgradeTrees.json"
+      ],
+      "list_key": "upgrade_trees",
+      "nested_list_key": "upgrade_choices",
+      "id_key": "choice_id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "upgrade_choices"
+    },
+    {
+      "file": "config/tests/campaign/testCampaigns.json",
+      "list_key": "",
+      "id_key": "id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "campaigns"
+    },
+    {
+      "file": "config/tests/campaign/testMissionGroups.json",
+      "list_key": "",
+      "id_key": "id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "mission_groups"
+    },
+    {
+      "file": "config/tests/campaign/testMissions.json",
+      "list_key": "",
+      "id_key": "id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "missions"
+    },
+    {
+      "file": "config/tests/characters/testVehicleSetups.json",
+      "list_key": "",
+      "id_key": "id",
+      // "remove_missing_keys" : false,
+      "string_map_target_key": "character_vehicle_setups"
+    },
+    {
+     "file": "audio/testCharacterVOPackages.json",
+     "list_and_keys" :
+     [
+      {
+      "list_key": "commanderType.audio_packages",
+      "id_key": "voice_id"
+      },
+      {
+      "list_key": "vehicleType.audio_packages",
+      "id_key": "voice_id"
+      },
+      {
+      "list_key": "publicAddressType.audio_packages",
+      "id_key": "voice_id"
+      },
+      {
+      "list_key": "casterType.audio_packages",
+      "id_key": "voice_id"
+      }
+     ],
+	   "remove_missing_keys" : true,
+	   "allow_multiple_id_ocurrences": false,
+      "string_map_target_key": "voice_ids"
+    }
+  ]
+}

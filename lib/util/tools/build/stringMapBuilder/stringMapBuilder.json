@@ -1,0 +1,13 @@
+{
+  "target": "config/stringMap.json",
+  "sources" :
+  [
+    {
+      "file": "config/mapFiles/tracks.json",
+      "list_key": "track_types",
+      "id_key": "id",
+      "remove_missing_keys" : false,
+      "string_map_target_key": "track_types"
+    }
+  ]
+}

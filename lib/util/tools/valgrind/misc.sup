@@ -1,0 +1,418 @@
+{
+   vsscanf
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:vsscanf_l
+   ...
+}
+{
+   strtold
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:strtold_l
+   ...
+}
+{
+   printf-wtf
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   fun:printf
+   ...
+}
+{
+   fflush
+   Memcheck:Param
+   match-leak-kinds: all
+   ...
+   fun:fflush
+   ...
+}
+{
+   lock_init
+   Memcheck:Cond
+   fun:pthread_rwlock_init
+   fun:_ZN11BaseStation12LocalPlanner11ActionTableC2Ev
+   fun:_ZN11BaseStation12LocalPlanner11ActionTableC1Ev
+   fun:_ZN11BaseStation12LocalPlanner11ActionTable11getInstanceEv
+   fun:_ZN11BaseStation14PlannerManager13ResetPlannersEv
+   fun:_ZN11BaseStation3GMO14VehicleManager13TickVehicleAIEv
+   fun:_ZN11BaseStation3GMO14VehicleManager12MainGameLoopEv
+   fun:_ZN11BaseStation3GMO14VehicleManager6UpdateEv
+   fun:_ZN11BaseStation15BaseStationMain6UpdateEy
+}
+{
+   pthread_lock_not_initialized
+   Memcheck:Cond
+   fun:pthread_rwlock_init
+   fun:_ZN11BaseStation12LocalPlanner11ActionTableC2Ev
+   fun:_ZN11BaseStation12LocalPlanner11ActionTableC1Ev
+   fun:_ZN11BaseStation12LocalPlanner11ActionTable11getInstanceEv
+   fun:_ZN11BaseStation14PlannerManager32InitializeAfterTrackConfirmationEv
+   fun:_ZN11BaseStation3GMO14VehicleManager32InitializeAfterTrackConfirmationEv
+   fun:_ZN11BaseStation3GMO14VehicleManager26TransitionToTrackConfirmedEv
+   fun:_ZN11BaseStation8GameType11GameStartedEv
+   fun:_ZN11BaseStation8GameType6UpdateEv
+   fun:_ZN11BaseStation3GMO19GameStateController6UpdateEv
+   fun:_ZN11BaseStation15BaseStationMain6UpdateEy
+   fun:_ZN11BaseStation25BasestationFullGoogleTest15TickBasestationEv
+   fun:_ZN11BaseStation25BasestationFullGoogleTest18AdvanceToGameStartEv
+   fun:_ZN11BaseStation45TestValgrind_TestBasestationStartAndStop_Test8TestBodyEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:_Z13RUN_ALL_TESTSv
+}
+{
+   static_objects
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:atexit_register
+   fun:__cxa_atexit
+   fun:_Z21GetGameTypeFromStringPKc
+}
+{
+   dylib_loading_process
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+}
+{
+   dylib_loading_process
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   ...
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+}
+{
+   dylib_loading_process
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+}
+{
+   dylib_loading_process
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+}
+{
+   dylib_loading_process
+   Memcheck:Cond
+   ...
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+}
+{
+   dylib_loading_process
+   Memcheck:Cond
+   ...
+   fun:_ZN11ImageLoader22recursiveLoadLibrariesERKNS_11LinkContextEbRKNS_10RPathChainE
+   fun:_ZN11ImageLoader4linkERKNS_11LinkContextEbbbRKNS_10RPathChainE
+   fun:_ZN4dyld4linkEP11ImageLoaderbbRKNS0_10RPathChainE
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+}
+{
+   dylib_Java_loading_process
+   Memcheck:Value8
+   ...
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dylib_Java_loading_process
+   Memcheck:Addr4
+   ...
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dylib_Java_loading_process
+   Memcheck:Addr8
+   ...
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dylib_glCreateMallocZone
+   Memcheck:Addr4
+   ...
+   fun:_ZL18glCreateMallocZonev
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dylib_glCreateMallocZone
+   Memcheck:Addr8
+   ...
+   fun:_ZL18glCreateMallocZonev
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dyld_loading_process_osx10.10
+   Memcheck:Leak
+   ...
+   fun:_ZN16ImageLoaderMachO11doImageInitERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dyld_loading_process_osx10.10
+   Memcheck:Leak
+   ...
+   fun:_ZN4dyldL12notifySingleE17dyld_image_statesPK11ImageLoader
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dyld_loading_process_osx10.10
+   Memcheck:Leak
+   ...
+   fun:_ZN4dyldL18notifyBatchPartialE17dyld_image_statesbPFPKcS0_jPK15dyld_image_infoE
+   fun:_ZN11ImageLoader4linkERKNS_11LinkContextEbbbRKNS_10RPathChainE
+   fun:_ZN4dyld4linkEP11ImageLoaderbbRKNS0_10RPathChainE
+   fun:dlopen
+   fun:dlopen
+   fun:heim_load_frameworks
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   ...
+}
+{
+   dyld_loading_process_osx10.10
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:_ZN4dyldL18notifyBatchPartialE17dyld_image_statesbPFPKcS0_jPK15dyld_image_infoE
+   fun:_ZN4dyld36registerImageStateBatchChangeHandlerE17dyld_image_statesPFPKcS0_jPK15dyld_image_infoE
+   fun:dyld_register_image_state_change_handler
+   fun:_objc_init
+   fun:_os_object_init
+   fun:libdispatch_init
+   fun:libSystem_initializer
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dylib_Java_loading_process_osx10.10
+   Memcheck:Leak
+   ...
+   fun:JLIsRuntimeInstalledForTask
+   fun:CheckForInstalledJavaRuntimes
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dyld_loading_process_osx10.10
+   Memcheck:Leak
+   ...
+   fun:call_load_methods
+   fun:load_images
+   fun:_ZN4dyldL12notifySingleE17dyld_image_statesPK11ImageLoader
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   ...
+}
+{
+   dyld_loading_process_osx10.10
+   Memcheck:Leak
+   ...
+   fun:call_load_methods
+   fun:load_images
+   fun:_ZN4dyldL12notifySingleE17dyld_image_statesPK11ImageLoader
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   dyld_loading_process
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:atexit_register
+   fun:__cxa_atexit
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}

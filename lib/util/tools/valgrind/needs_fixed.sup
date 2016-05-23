@@ -1,0 +1,164 @@
+{
+   profile-needs-rh-instance
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   ...
+   fun:_ZN4Anki11DriveEngine8RushHourC2Ev
+   fun:_ZN4Anki11DriveEngine8RushHourC1Ev
+   fun:_ZN4Anki4Util16DynamicSingletonINS_11DriveEngine8RushHourEE11getInstanceEv
+   fun:_ZN4Anki11DriveEngine13OnlineAccount14ProfileAccount15GenerateGuestIdEv
+   fun:_ZN4Anki11DriveEngine13OnlineAccount14ProfileAccountC2ERKNSt3__112basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEESB_SB_SB_
+   ...
+}
+
+{
+   virtual-vehicle-needs-rh-instance
+   Memcheck:Leak
+   ...
+   fun:_ZN4Anki4Util16DynamicSingletonINS_11DriveEngine8RushHourEE11getInstanceEv
+   fun:_ZN4Anki11DriveEngine8RushHour14getRefInstanceEv
+   fun:_ZN4Anki11DriveEngine14VirtualVehicle32CreateVirtualVehicleConnectionIdEjj
+   fun:_ZN4Anki11DriveEngine14VirtualVehicleC1Ejj
+   ...
+}
+{
+   profile-test-leaks
+   Memcheck:Leak
+   ...
+   fun:_ZN4Anki11DriveEngine13OnlineAccount56OnlineProfileSerializationTest_AccountSerialization_Test8TestBodyEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   ...
+}
+{
+   profile-rnd-dep
+   Memcheck:Leak
+   ...
+   fun:_ZN4Anki11DriveEngine8RushHour14getRefInstanceEv
+   fun:_ZN4Anki11DriveEngine13OnlineAccount13OnlineProfile17GenerateProfileIDEv
+   ...
+}
+{
+   ihttprequest-leak
+   Memcheck:Leak
+   ...
+   fun:_ZN4Anki11DriveEngine13OnlineAccount13OnlineProfile13CreateRequestENS0_10HttpMethodERKNSt3__112basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEERKNS4_3mapISA_SA_NS4_4lessISA_EENS8_INS4_4pairISB_SA_EEEEEESL_SC_
+   ...
+}
+{
+   unittest-shared-stop-rushhour-is-not-good-enough-for-valgrind
+   Memcheck:Leak
+   ...
+   fun:_ZN4Anki11DriveEngine16StandaloneHelper13StartRushHourERKNSt3__112basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEb
+   fun:_ZN14UnitTestShared5SetUpEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:_Z13RUN_ALL_TESTSv
+   fun:main
+}
+{
+   uncond_jump_from_new_in_road_net
+   Memcheck:Cond
+   ...
+   fun:_ZN4Anki4Util7sEventFEPKcRKNSt3__16vectorINS3_4pairIS2_S2_EENS3_9allocatorIS6_EEEES2_z
+   fun:_ZN11BaseStation3GMO14VehicleManager6UpdateEv
+   ...
+}
+{
+   uncond_jump_from_new_in_road_net
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN4Anki4Util7sEventFEPKcRKNSt3__16vectorINS3_4pairIS2_S2_EENS3_9allocatorIS6_EEEES2_z
+   fun:_ZN11BaseStation3GMO14VehicleManager6UpdateEv
+   ...
+}
+{
+   uncond_jump_from_new_in_road_net
+   Memcheck:Value8
+   ...
+   fun:_ZN4Anki4Util7sEventFEPKcRKNSt3__16vectorINS3_4pairIS2_S2_EENS3_9allocatorIS6_EEEES2_z
+   fun:_ZN11BaseStation3GMO14VehicleManager6UpdateEv
+   ...
+}
+{
+   uninitialiazed-profile-id
+   Memcheck:Cond
+   ...
+   fun:_ZN8MetaGame7Profile27AccumulateTransactionValuesERKNS_10GameResultE
+   fun:_ZN4Anki11DriveEngine14ProfileService14ProfileService31HandleProfileTransactionMessageEPKN11BaseStation25ProfileTransactionMessageE
+   fun:_ZN4Anki11DriveEngine22GamepadMessageReceiver24ProfileTransactionUpdateEPKN11BaseStation9UiMessageE
+   ...
+}
+{
+   uninitialiazed-profile-id
+   Memcheck:Value8
+   ...
+   fun:_ZN8MetaGame7Profile27AccumulateTransactionValuesERKNS_10GameResultE
+   fun:_ZN4Anki11DriveEngine14ProfileService14ProfileService31HandleProfileTransactionMessageEPKN11BaseStation25ProfileTransactionMessageE
+   fun:_ZN4Anki11DriveEngine22GamepadMessageReceiver24ProfileTransactionUpdateEPKN11BaseStation9UiMessageE
+   ...
+}
+{
+   uninitialiazed-PlaybackSequenceManager
+   Memcheck:Cond
+   ...
+   fun:_ZN11BaseStation33PlaybackSequenceDefinitionManager24LoadAllPlaybackSequencesEPKNS_7VehicleE
+   fun:_ZN11BaseStation23PlaybackSequenceManager4InitEv
+   ...
+}
+{
+   uninitialiazed-PlaybackSequenceManager
+   Memcheck:Value8
+   ...
+   fun:_ZN11BaseStation33PlaybackSequenceDefinitionManager24LoadAllPlaybackSequencesEPKNS_7VehicleE
+   fun:_ZN11BaseStation23PlaybackSequenceManager4InitEv
+   ...
+}
+{
+   ptree-in-shootin-vehicle-item
+   Memcheck:Cond
+   ...
+   fun:_ZN11BaseStation19ShootingVehicleItemC2EPNS_7VehicleERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEESC_NS6_4lessISC_EEEEPNS_8TargeterEPNS_15TargeterContextEc
+   fun:_ZN11BaseStation19ShootingVehicleItemC1EPNS_7VehicleERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEESC_NS6_4lessISC_EEEEPNS_8TargeterEPNS_15TargeterContextEc
+   ...
+}
+{
+   ptree-in-shootin-vehicle-item
+   Memcheck:Value8
+   ...
+   fun:_ZN11BaseStation19ShootingVehicleItemC2EPNS_7VehicleERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEESC_NS6_4lessISC_EEEEPNS_8TargeterEPNS_15TargeterContextEc
+   fun:_ZN11BaseStation19ShootingVehicleItemC1EPNS_7VehicleERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEESC_NS6_4lessISC_EEEEPNS_8TargeterEPNS_15TargeterContextEc
+   ...
+}
+{
+   uninit-var-in-SystemParameters
+   Memcheck:Value8
+   ...
+   fun:_ZN11BaseStation16SystemParameters21InitVehicleParametersEPN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESA_NS4_4lessISA_EEEE
+   fun:_ZN11BaseStation16SystemParameters4InitEPN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESA_NS4_4lessISA_EEEE
+   ...
+}
+{
+   GetRankingVO
+   Memcheck:Value8
+   ...
+   fun:_ZNK8MetaGame9StringMap11GetSoundIntENSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE
+   fun:_ZNK11BaseStation8GameType12GetRankingVOEPKNS_7VehicleEhRh
+   ...
+}
+{
+   GetRankingVO
+   Memcheck:Cond
+   ...
+   fun:_ZNK8MetaGame9StringMap11GetSoundIntENSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE
+   fun:_ZNK11BaseStation8GameType12GetRankingVOEPKNS_7VehicleEhRh
+   ...
+}
