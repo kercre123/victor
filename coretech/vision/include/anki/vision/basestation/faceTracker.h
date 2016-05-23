@@ -52,6 +52,8 @@ namespace Vision {
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
+    // returns the minimum distance between eyes a face has to have in order to be enrollable
+    static float GetMinEyeDistanceForEnrollment();
     
     Result   AssignNameToID(FaceID_t faceID, const std::string& name);
     

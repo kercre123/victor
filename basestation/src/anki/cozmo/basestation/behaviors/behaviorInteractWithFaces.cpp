@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/faceTracker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
@@ -61,6 +62,9 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kRequestDelayNumLoops, "Behavior.InteractWithFaces", 5);
 
   CONSOLE_VAR_RANGED(f32, kEnrollRequestCooldownInterval_s, "Behavior.InteractWithFaces", 10.0f, 0.0f, 30.0f);
+  
+  CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 850.0f, 500.0f, 1300.0f);
+
 
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -588,6 +592,30 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     FaceData* faceData = nullptr;
     if( ! GetCurrentFace(robot, face, faceData) ) {
       return false;
+    }
+    
+    // do not enroll if face is too far
+    if ( face->HasEyes() )
+    {
+      const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
+      const float eyeDistance = face->GetIntraEyeDistance();
+      // if your eye distance is smaller than the threshold, you are further away than we allow for enrollment
+      if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
+        return false;
+      }
+    }
+    else
+    {
+      Pose3d distanceToYourFace;
+      if ( !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), distanceToYourFace) ) {
+        return false;
+      }
+      
+      // check your face is close enough
+      const float kMaxDistanceFromRobotForEnrollment_mmSQ = kMaxDistanceFromRobotForEnrollment_mm * kMaxDistanceFromRobotForEnrollment_mm;
+      if ( distanceToYourFace.GetTranslation().LengthSq() > kMaxDistanceFromRobotForEnrollment_mmSQ ) {
+        return false;
+      }
     }
 
     // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this
