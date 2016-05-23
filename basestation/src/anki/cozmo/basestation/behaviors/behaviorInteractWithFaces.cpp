@@ -63,7 +63,7 @@ namespace Cozmo {
 
   CONSOLE_VAR_RANGED(f32, kEnrollRequestCooldownInterval_s, "Behavior.InteractWithFaces", 10.0f, 0.0f, 30.0f);
   
-  CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 650.0f, 400.0f, 1200.0f);
+  CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 850.0f, 500.0f, 1300.0f);
 
 
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
