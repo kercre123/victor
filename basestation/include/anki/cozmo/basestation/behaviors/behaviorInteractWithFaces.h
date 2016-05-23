@@ -71,6 +71,7 @@ namespace Cozmo {
       float _newKnownFace = 0.0f;   // score if we have a new known face
       float _unknownFace  = 0.0f;   // score if we don't have a new known face, but we have an unknown
       float _unknownFace_cooldown = 0.0f; // cooldown applied to not bounce between unknown faces all the time
+      float _unknownFace_bonusToDistanceTo1 = 0.0f; // factor applied to distance to face to give bonus to closer ones. MinDistance will get this bonus, MaxDistance gets 0
       float _oldKnownFace = 0.0f;   // score if we don't have new known or unknown faces, but we have old known
       float _oldKnownFace_secondsToVal = 0.0f; // seconds it takes _oldKnownFace to reach the value (from 0)
     };
@@ -130,9 +131,10 @@ namespace Cozmo {
     // face. Returns true if both were successful, false if there were any problems
     bool GetCurrentFace(const Robot& robot, const Face*& face, FaceData*& faceData);
 
-    float ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const;
-    float ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData) const;
-
+    float ComputeFaceScore(FaceID_t faceID, const FaceData& faceData, const Robot& robot) const;
+    float ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData, const Robot& robot) const;
+    float ComputeDistanceBonus(FaceID_t faceID, const Robot& robot) const;
+    
     // return the face id of a face to track, or Vision::UnknownFaceID if there is none
     FaceID_t GetNewFace(const Robot& robot);
 
