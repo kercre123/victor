@@ -11,10 +11,10 @@ namespace Cozmo {
       private const float kAnimDur = 0.25f;
 
       [SerializeField]
-      private Cozmo.UI.IconProxy _ChallangeIcon;
+      private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
+      private UnityEngine.UI.Image _ChallengeIcon;
 
       public string Text {
         set {
@@ -24,7 +24,7 @@ namespace Cozmo {
 
       public Sprite Icon {
         set {
-          _ChallangeIcon.SetIcon(value);
+          _ChallengeIcon.overrideSprite = value;
         }
       }
 
