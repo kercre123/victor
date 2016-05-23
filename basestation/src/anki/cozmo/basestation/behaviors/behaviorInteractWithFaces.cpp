@@ -552,7 +552,7 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     // do not enroll if face is too far
     const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
     const float eyeDistance = face->GetIntraEyeDistance();
-    if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
+    if ( eyeDistance > kMinEyeDistanceForEnrollment ) { // if current eye distance is greater than min, it means the face if further than allowed
       return false;
     }
 
