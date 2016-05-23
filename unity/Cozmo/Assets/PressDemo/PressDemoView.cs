@@ -10,7 +10,10 @@ public class PressDemoView : Cozmo.UI.BaseView {
   private UnityEngine.UI.Button _ForceProgressSecretButton;
 
   [SerializeField]
-  private UnityEngine.UI.Button _StartButton;
+  private Cozmo.UI.CozmoButton _StartButton;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _StartButtonText;
 
   // this button is hidden and on top of _ForceProgressButton
   // and used if the demoer wants to start the demo and skip
@@ -55,7 +58,8 @@ public class PressDemoView : Cozmo.UI.BaseView {
   }
 
   public void HideStartButtons() {
-    _StartButton.gameObject.SetActive(false);
+    _StartButton.Interactable = false;
+    _StartButtonText.text = "";
     _StartNoEdgeSecretButton.gameObject.SetActive(false);
   }
 
