@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/faceTracker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
@@ -545,6 +546,13 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     const Face* face = nullptr;
     FaceData* faceData = nullptr;
     if( ! GetCurrentFace(robot, face, faceData) ) {
+      return false;
+    }
+    
+    // do not enroll if face is too far
+    const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
+    const float eyeDistance = face->GetIntraEyeDistance();
+    if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
       return false;
     }
 
