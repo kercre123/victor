@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -44,12 +45,19 @@ bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
 {
   UpdateTargetBlock(robot);
   
-  return _targetBlock.IsSet() && !robot.IsCarryingObject();
+  return _targetBlock.IsSet();
 }
 
 Result BehaviorRollBlock::InitInternal(Robot& robot)
 {
-  TransitionToReactingToBlock(robot);
+  if (robot.IsCarryingObject())
+  {
+    TransitionToSettingDownBlock(robot);
+  }
+  else
+  {
+    TransitionToReactingToBlock(robot);
+  }
   return Result::RESULT_OK;
 }
   
@@ -60,12 +68,27 @@ void BehaviorRollBlock::StopInternal(Robot& robot)
 
 void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
-  ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
-  if( nullptr != closestObj ) {
-    _targetBlock = closestObj->GetID();
+  if (!robot.IsCarryingObject())
+  {
+    ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
+    if( nullptr != closestObj ) {
+      _targetBlock = closestObj->GetID();
+    }
+    else {
+      _targetBlock.UnSet();
+    }
   }
-  else {
-    _targetBlock.UnSet();
+  else
+  {
+    const ObservableObject* carriedObj = robot.GetBlockWorld().GetActiveObjectByID(robot.GetCarryingObject());
+    if (nullptr != carriedObj && carriedObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+    {
+      _targetBlock = carriedObj->GetID();
+    }
+    else
+    {
+      _targetBlock.UnSet();
+    }
   }
 }
 
@@ -73,6 +96,17 @@ bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
 {
   return _robot.CanPickUpObjectFromGround(*obj) &&
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS;
+}
+  
+void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
+{
+  SET_STATE(SettingDownBlock);
+  
+  constexpr float kAmountToReverse_mm = 90.f;
+  CompoundActionSequential* actionsToDo = new CompoundActionSequential(robot, {
+    new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
+    new PlaceObjectOnGroundAction(robot)});
+  StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
 }
 
 void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)

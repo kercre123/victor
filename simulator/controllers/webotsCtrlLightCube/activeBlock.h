@@ -1,7 +1,7 @@
 /*
  * File:          activeBlock.h
  * Date:
- * Description:   
+ * Description:   Main controller for simulated blocks and chargers
  * Author:        
  * Modifications: 
  */

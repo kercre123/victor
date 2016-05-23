@@ -1,20 +1,22 @@
 #VRML_SIM V7.3.0 utf8
 
 PROTO CozmoCharger [
-  field SFString name "CozmoCharger000"
-  
+  field SFString name "CozmoCharger"
+  field SFInt32  ID 3  # Active ID slot 3 is reserved for charger (in sim)
+  field SFBool   active TRUE  # Whether or not the charger has lights and accel
+
   # Dimensions
   field SFFloat wallWidth     .01
   field SFFloat wallHeight    .026
   field SFFloat platformWidth .06  # Platform is the flat part that robot sits on when charging
-  field SFFloat platformLength .042  
-  field SFFloat platformHeight .005  
+  field SFFloat platformLength .042
+  field SFFloat platformHeight .005
   field SFFloat rampLength     .044      # The ramp is the part that leads up to the platform
   field SFFloat rampWidthAtGround  .072
 
   field SFFloat dockMarkerWidth  0.027
   field SFFloat dockMarkerHeight 0.020
-  
+
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
   field SFFloat mass 0.2
@@ -22,15 +24,19 @@ PROTO CozmoCharger [
 
 ]
 {
-Robot {
+Supervisor {
 
   name IS name
   translation IS translation
   rotation IS rotation
   contactMaterial "cmat_ramp"
-  
+
+  %{ if fields.active.value then }%
+    controller "webotsCtrlLightCube"
+  %{ end }%
+
   children [
-    
+
     # Ramp marker
     Transform {
       rotation 0 0 1 1.5708 # 90 deg about z-axis
@@ -45,10 +51,10 @@ Robot {
         }
       ]
     }
-      
+
     DEF ChargerGroup Group {
       children [
-      
+
         # Back side
         # Origin is center of back side of charger
         # x-axis points toward ramp, y-axis points to robot left when robot is in charger, z-axis points up
@@ -65,11 +71,11 @@ Robot {
 			    size %{=fields.wallWidth.value}% %{=fields.platformWidth.value + 2*fields.wallWidth.value}% %{=fields.wallHeight.value}%
 			  }
 			}
-		  ] 
+		  ]
       	}
-      
-      
-        # Left Side      
+
+
+        # Left Side
         Transform {
           translation %{=fields.platformLength.value/2+fields.wallWidth.value}% %{=fields.platformWidth.value/2+fields.wallWidth.value/2}% %{=fields.wallHeight.value/2}%
           children [
@@ -81,10 +87,10 @@ Robot {
 			    size %{=fields.platformLength.value}% %{=fields.wallWidth.value}% %{=fields.wallHeight.value}%
 			  }
 			}
-          ] 
+          ]
         } # Left Side Transform
-    
-        # Right Side      
+
+        # Right Side
         Transform {
           translation %{=fields.platformLength.value/2+fields.wallWidth.value}% %{=-fields.platformWidth.value/2-fields.wallWidth.value/2}% %{=fields.wallHeight.value/2}%
           children [
@@ -96,10 +102,10 @@ Robot {
 			    size %{=fields.platformLength.value}% %{=fields.wallWidth.value}% %{=fields.wallHeight.value}%
 			  }
 			}
-          ] 
-        } # Right Side Transform    
+          ]
+        } # Right Side Transform
 
-        
+
         # Platform
         Transform {
           translation %{=fields.platformLength.value/2+fields.wallWidth.value}% 0 %{=fields.platformHeight.value/2}%
@@ -112,10 +118,10 @@ Robot {
 			    size %{=fields.platformLength.value}% %{=fields.platformWidth.value}% %{=fields.platformHeight.value}%
 			  }
 			}
-          ] 
-        } # Platform Transform            
-        
-        
+          ]
+        } # Platform Transform
+
+
         # Ramp
         Transform {
           translation %{=fields.platformLength.value+fields.wallWidth.value}% 0 0
@@ -134,23 +140,23 @@ Robot {
 				    0 %{=fields.platformWidth.value/2}% 0,
 				    0 %{=fields.platformWidth.value/2}% %{=fields.platformHeight.value}%,
 				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2}% 0,
-				    
+
 				    # Left ramp wall
 				    0 %{=-fields.platformWidth.value/2-fields.wallWidth.value}% 0,
-				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2-fields.wallWidth.value}% 0,				    
+				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2-fields.wallWidth.value}% 0,
    				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2-fields.wallWidth.value}% %{=fields.wallHeight.value-fields.platformHeight.value}%,
-   				    0 %{=-fields.platformWidth.value/2-fields.wallWidth.value}% %{=fields.wallHeight.value}%,   				    
-   				    0 %{=-fields.platformWidth.value/2}% %{=fields.wallHeight.value}%, 
-   				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2}% %{=fields.wallHeight.value-fields.platformHeight.value}%,  				    
+   				    0 %{=-fields.platformWidth.value/2-fields.wallWidth.value}% %{=fields.wallHeight.value}%,
+   				    0 %{=-fields.platformWidth.value/2}% %{=fields.wallHeight.value}%,
+   				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2}% %{=fields.wallHeight.value-fields.platformHeight.value}%,
 
 				    # Right ramp wall
 				    0 %{=fields.platformWidth.value/2+fields.wallWidth.value}% 0,
-				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2+fields.wallWidth.value}% 0,				    
+				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2+fields.wallWidth.value}% 0,
    				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2+fields.wallWidth.value}% %{=fields.wallHeight.value-fields.platformHeight.value}%,
-   				    0 %{=fields.platformWidth.value/2+fields.wallWidth.value}% %{=fields.wallHeight.value}%,   				    
-   				    0 %{=fields.platformWidth.value/2}% %{=fields.wallHeight.value}%, 
-   				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2}% %{=fields.wallHeight.value-fields.platformHeight.value}%  				    
-				    
+   				    0 %{=fields.platformWidth.value/2+fields.wallWidth.value}% %{=fields.wallHeight.value}%,
+   				    0 %{=fields.platformWidth.value/2}% %{=fields.wallHeight.value}%,
+   				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2}% %{=fields.wallHeight.value-fields.platformHeight.value}%
+
 				  ]
 				}
 				coordIndex [
@@ -163,7 +169,7 @@ Robot {
 			      2  5  4  -1
 			      2  0  3  -1
 			      2  3  5  -1
-			      
+
 			      # Left ramp wall
 			      6  2  7  -1
 			      6  0  2  -1
@@ -177,7 +183,7 @@ Robot {
 			      11 7  2  -1
 			      11 2  0  -1
 			      11 0  10 -1
-			      
+
 			      # Right ramp wall
 			      12 5  3  -1
 			      12 13 5  -1
@@ -194,12 +200,12 @@ Robot {
 				]
 			  }
 			}
-          ] 
-        } # Ramp Transform                    
-        
+          ]
+        } # Ramp Transform
+
       ] # ChargerGroup Children
-    } # ChargerGroup 
-    
+    } # ChargerGroup
+
     Transform {
       translation %{=fields.wallWidth.value + 0.038}% 0 %{=fields.platformHeight.value}%
       rotation 1 0 0 0
@@ -218,17 +224,80 @@ Robot {
 		}
       ]
     }
-    
+
+    %{
+    if fields.active.value then
+      # Index array of LED positions
+      idx = {}
+      idx[1] = { 0.05, 0, 0.005}
+      idx[2] = { 0.07, 0, 0.003}
+      idx[3] = { 0.09, 0, 0.001}
+      idx[4] = { 0.03, 0, 0.001}  # Hidden
+
+      for i=1,4 do
+        led_name = string.format("led%d", i-1)
+        ledWidth = 0.005
+        ledHeight = 0.001
+
+        # Position of LED center wrt block origin
+        lx = idx[i][1]
+        ly = idx[i][2]
+        lz = idx[i][3]
+    }%
+    LED {
+      name "%{=led_name}%"
+      children [
+        DEF LED_SHAPE Group {
+          children [
+            Shape {
+      	      appearance Appearance {
+                material Material {
+                  diffuseColor 0.3 0.3 0.3
+                }
+              }
+              geometry Box {
+                size %{=ledWidth}% %{=ledWidth}% %{=ledHeight}%
+              }
+            }
+          ]
+        }
+      ]
+      translation %{=lx}% %{=ly}% %{=lz}%
+      color []
+      gradual TRUE
+    }
+    %{ end }%   # End light for loop
+
+
+    # Radio receive channel for messages from robot
+    Receiver {
+      name   "receiver"
+      type   "radio"
+    }
+
+    # Radio send channel for messages to Robot
+    Emitter {
+      name   "emitter"
+      type   "radio"
+    }
+
+    # Accelerometer
+    Accelerometer {
+      name "accel"
+    }
+
+    %{ end }% # if active
+
   ] # Solid Children
-  
+
   boundingObject USE ChargerGroup
-  
+
   physics Physics {
     density -1
     mass IS mass
   }
-  
+
 } # Parent Solid (the actual ramp)
 
-  
+
 } # PROTO

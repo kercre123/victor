@@ -10,6 +10,7 @@
 #define __Anki_Cozmo_ActiveCube_H__
 
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/activeObject.h"
 
 namespace Anki {
   
@@ -18,10 +19,9 @@ class Camera;
 
 namespace Cozmo {
   
-  class ActiveCube : public Block
+  class ActiveCube : public Block, public ActiveObject
   {
   public:
-    static const s32 NUM_LEDS = 4;
     
     ActiveCube(Type type);
     ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
@@ -32,32 +32,9 @@ namespace Cozmo {
       return new ActiveCube(this->_type);
     }
     
-    virtual bool IsActive() const override  { return true; }
-    
     // This overrides ObservableObject::SetPose to mark this object as localized
     // anytime its pose is set
     void SetPose(const Pose3d& newPose);
-    
-    // Set the same color and flashing frequency of one or more LEDs on the block
-    // If turnOffUnspecifiedLEDs is true, any LEDs that were not indicated by
-    // whichLEDs will be turned off. Otherwise, they will be left in their current
-    // state.
-    // NOTE: Alpha is ignored.
-    void SetLEDs(const WhichCubeLEDs whichLEDs,
-                 const ColorRGBA& onColor,        const ColorRGBA& offColor,
-                 const u32 onPeriod_ms,           const u32 offPeriod_ms,
-                 const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
-                 const bool turnOffUnspecifiedLEDs);
-    
-    // Specify individual colors and flash frequencies for all the LEDS of the block
-    // The index of the arrays matches the diagram above.
-    // NOTE: Alpha is ignored
-    void SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
-                 const std::array<u32,NUM_LEDS>& offColors,
-                 const std::array<u32,NUM_LEDS>& onPeriods_ms,
-                 const std::array<u32,NUM_LEDS>& offPeriods_ms,
-                 const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
-                 const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms);
     
     // Make whatever state has been set on the block relative to a given (x,y)
     //  location.
@@ -73,19 +50,8 @@ namespace Cozmo {
     // the block's current state.
     WhichCubeLEDs MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
                                              const Point2f& xyPosition,
-                                             MakeRelativeMode mode) const;   
-    
-    // If object is moving, returns true and the time that it started moving in t.
-    // If not moving, returns false and the time that it stopped moving in t.
-    virtual bool IsMoving(TimeStamp_t* t = nullptr) const override { if (t) *t=_movingTime; return _isMoving; }
-    
-    // Set the moving state of the object and when it either started or stopped moving.
-    virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
-    
-    virtual bool CanBeUsedForLocalization() const override;
-
-    
-    
+                                             MakeRelativeMode mode) const;
+        
     
     // Take the given top LED pattern and create a pattern that indicates
     // the corresponding bottom LEDs as well
@@ -112,18 +78,8 @@ namespace Cozmo {
     //void FillMessage(SetBlockLights& msg) const;
 
 
-    const LEDstate& GetLEDState(s32 whichLED) const;
     
   protected:
-    
-    bool        _isMoving = false;
-    TimeStamp_t _movingTime = 0;
-    
-    // Keep track of flash rate and color of each LED
-    std::array<LEDstate,NUM_LEDS> _ledState;
-    std::array<LEDstate,NUM_LEDS> _scaledLedState;
-    
-    void ScaleLEDValuesForHardware();
     
     // Temporary timer for faking duration of identification process
     // TODO: Remove once real identification is implemented
@@ -140,20 +96,6 @@ namespace Cozmo {
     return static_cast<WhichCubeLEDs>((pattern << 4) + (pattern & 0x0F));
   }
   
-  inline const ActiveCube::LEDstate& ActiveCube::GetLEDState(s32 whichLED) const
-  {
-    if(whichLED >= NUM_LEDS) {
-      PRINT_NAMED_WARNING("ActiveCube.GetLEDState.IndexTooLarge",
-                          "Requested LED index is too large (%d > %d). Returning %d.",
-                          whichLED, NUM_LEDS-1, NUM_LEDS-1);
-      whichLED = NUM_LEDS-1;
-    } else if(whichLED < 0) {
-      PRINT_NAMED_WARNING("ActiveCube.GetLEDState.NegativeIndex",
-                          "LED index should be >= 0, not %d. Using 0.", whichLED);
-      whichLED = 0;
-    }
-    return _scaledLedState[whichLED];
-  }
   
 } // namespace Cozmo
 } // namespace Anki

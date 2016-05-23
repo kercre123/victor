@@ -197,7 +197,7 @@ namespace Cozmo {
   }
   
   Block::Block(const ObjectFamily family, const ObjectType type)
-  : ActionableObject(family, type)
+  : ObservableObject(family, type)
   , _size(LookupBlockInfo(_type).size)
   , _name(LookupBlockInfo(_type).name)
   , _vizHandle(VizManager::INVALID_HANDLE)
