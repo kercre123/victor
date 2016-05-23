@@ -224,14 +224,56 @@ namespace Cozmo {
 
   float BehaviorInteractWithFaces::ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const
   {
-    // use new score system from json config
-    const float faceScore = ComputeFaceSmartScore(faceID, faceData);
-    return faceScore;
+    if ( _smartScore._isValid )
+    {
+      // use new score system from json config
+      const float faceScore = ComputeFaceSmartScore(faceID, faceData);
+      return faceScore;
+    }
+    else
+    {
+      // priority for interacting with faces
+      // 1. known face we haven't seen
+      // 2. unknown face
+      // 3. known face we've seen (prioritized by how recently it was seen)
+      // 4. Faces on cooldown (these will always have score -1)
+      const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( currentTime_sec < faceData._coolDownUntil_sec || faceData._deleted ) {
+        // TODO:(bn) consider deleted faces? turn to the last known pose?
+        return -1.0f;
+      }
+
+      constexpr float kNewScore = 50.0f;
+      constexpr float kKnownFaceScore = 20.0f;
+
+      // add some randomness to break ties
+      float score = GetRNG().RandDbl();
+
+      // TEMP:  // TODO:(bn) better function for this?
+      if( faceID > 0 ) {
+        // we prefer faces we know, since they are more stable
+        score += kKnownFaceScore;
+       }
+
+      if( !faceData._playedNewFaceAnim ) {
+        score += kNewScore;
+       }
+   
+      // faces are deleted if they aren't seen for a while, so we assume that all of the faces in
+      // _interestingFacesData are still relevant, which means we want to look at the oldest one (so they are
+      // looked at in the order that the appeared)
+      const float timeSinceObservation = currentTime_sec - faceData._lastSeen_sec;
+      score += timeSinceObservation;
+      
+      return score;
+    }
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   float BehaviorInteractWithFaces::ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData) const
   {
+    ASSERT_NAMED(_smartScore._isValid, "ComputeFaceSmartScore.RequiresSmartScore");
+  
     // classes:
     // + deleted/cooldown
     // + known - new
