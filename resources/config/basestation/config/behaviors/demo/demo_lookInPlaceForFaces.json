@@ -1,24 +1,10 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
   "name": "demo_lookInPlaceForFaces",
-  "emotionScorers": [
-    {
-      "emotionType": "Social",
-      "scoreGraph": {
-        "nodes": [
-          {
-            "x": -1.0,
-            "y": 0.1
-          },
-          {
-            "x": 1.0,
-            "y": 0.1
-          }
-        ]
-      },
-      "trackDelta": false
-    }
-  ],  
+  
+  // this score relies now in demo_interactWithFaces to switch between them
+  "flatScore" : 0.5,
+  
   "behaviorGroups": [
     "Demo",
     "DemoFaces",
