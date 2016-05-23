@@ -14,8 +14,6 @@ public class DevHubWorld : HubWorldBase {
 
   public override bool LoadHubWorld() {
     ShowHubWorldDialog();
-    // dev volume defaults to 0
-    RobotEngineManager.Instance.CurrentRobot.SetRobotVolume(0.0f);
     return true;
   }
 
