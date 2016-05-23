@@ -6,6 +6,8 @@ namespace Cozmo {
 namespace RobotInterface {
 namespace OTA {
 
+  
+
   message Write
   {
     int_16 packetNumber, ///< Write packet number to ensure ordering, counts up from 0, set to -1 for EOF
