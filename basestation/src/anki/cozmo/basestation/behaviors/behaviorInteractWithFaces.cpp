@@ -62,6 +62,9 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kRequestDelayNumLoops, "Behavior.InteractWithFaces", 5);
 
   CONSOLE_VAR_RANGED(f32, kEnrollRequestCooldownInterval_s, "Behavior.InteractWithFaces", 10.0f, 0.0f, 30.0f);
+  
+  CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 650.0f, 400.0f, 1200.0f);
+
 
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -550,10 +553,27 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     }
     
     // do not enroll if face is too far
-    const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
-    const float eyeDistance = face->GetIntraEyeDistance();
-    if ( eyeDistance > kMinEyeDistanceForEnrollment ) { // if current eye distance is greater than min, it means the face if further than allowed
-      return false;
+    if ( face->HasEyes() )
+    {
+      const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
+      const float eyeDistance = face->GetIntraEyeDistance();
+      // if your eye distance is smaller than the threshold, you are further away than we allow for enrollment
+      if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
+        return false;
+      }
+    }
+    else
+    {
+      Pose3d distanceToYourFace;
+      if ( !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), distanceToYourFace) ) {
+        return false;
+      }
+      
+      // check your face is close enough
+      const float kMaxDistanceFromRobotForEnrollment_mmSQ = kMaxDistanceFromRobotForEnrollment_mm * kMaxDistanceFromRobotForEnrollment_mm;
+      if ( distanceToYourFace.GetTranslation().LengthSq() > kMaxDistanceFromRobotForEnrollment_mmSQ ) {
+        return false;
+      }
     }
 
     // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this
