@@ -72,14 +72,25 @@ void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
       DTM::stop();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
-
       Radio::shutdown();
+
+      // Reconfigure stack so the softdevice doesn't choke on it.
+      NVIC_SetPriority(RADIO_IRQn, 0);
+      NVIC_DisableIRQ(GPIOTE_IRQn);
+
+      for (int i = 0; i < MOTOR_COUNT; i++) {
+        Motors::setPower(i, 0);
+      }
+    
+      // Start advertising
       Bluetooth::advertise();
       break ;
     
     case BODY_WIFI_OPERATING_MODE:
       DTM::stop();
       Bluetooth::shutdown();
+
+      Motors::init();
 
       Radio::advertise();
       Backpack::lightMode(TIMER_LEDS);
@@ -102,8 +113,7 @@ int main(void)
   using namespace Anki::Cozmo::RobotInterface;
 
   Storage::init();
-  //Bootloader::init();
-  
+
   // Initialize our scheduler
   RTOS::init();
 

@@ -19,6 +19,6 @@ struct DiffieHellman {
 };
 
 void dh_start(DiffieHellman* dh);
-void dh_finish(DiffieHellman* dh);
+void dh_finish(const void* key, DiffieHellman* dh);
 
 #endif

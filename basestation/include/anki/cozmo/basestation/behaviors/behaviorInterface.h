@@ -157,8 +157,6 @@ protected:
     _behaviorGroups.SetBitFlag(behaviorGroup, newVal);
   }
     
-  // Going forward we don't want names being set arbitrarily (they can come from data etc.)
-  void DEMO_HACK_SetName(const char* inName) { _name = inName; }
   // Only sets the name if it's currenty the base default name
   void SetDefaultName(const char* inName);
   inline void SetStateName(const std::string& inName) { _stateName = inName; }

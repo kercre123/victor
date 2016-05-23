@@ -216,8 +216,7 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame,
   }
   
   if(!_frames.empty()) {
-    ASSERT_NAMED(_frameIter != _frames.end(), "Track.AddKeyFrameHelper.BadFrameIter");
-    prevKeyFrame = &(*_frameIter);
+    prevKeyFrame = &(_frames.back());
   } else {
     prevKeyFrame = nullptr;
   }
@@ -338,7 +337,7 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot, const s
       ++nextToLastFrame;
 
       if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
-    PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.BadTriggerTime",
+        PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.BadTriggerTime",
                             "New keyframe (t=%d) must be after the last keyframe (t=%d)",
                             _frames.back().GetTriggerTime(), nextToLastFrame->GetTriggerTime());
         

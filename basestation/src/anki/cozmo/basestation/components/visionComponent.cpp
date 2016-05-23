@@ -142,16 +142,6 @@ namespace Cozmo {
       return result;
     }
     
-    if(ROLLING_SHUTTER_CORRECTION)
-    {
-      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
-    }
-    else
-    {
-      _visionSystem->ShouldDoRollingShutterCorrection(false);
-      EnableVisionWhileMovingFast(false);
-    }
-    
     // Request face album data from the robot
     std::string faceAlbumName;
     JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
@@ -198,6 +188,16 @@ namespace Cozmo {
       
       // Fine-tune calibration using tool code dots
       //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
+    }
+    
+    if(ROLLING_SHUTTER_CORRECTION)
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
+    }
+    else
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(false);
+      EnableVisionWhileMovingFast(false);
     }
   } // SetCameraCalibration()
   
@@ -1448,7 +1448,7 @@ namespace Cozmo {
   
   Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback)
   {
-    auto calibImages = _visionSystem->GetCalibrationImages();
+    const auto& calibImages = _visionSystem->GetCalibrationImages();
     
     // Make sure there is no more than 5 images in the list
     if (calibImages.size() > 6 || calibImages.size() < 4) {
@@ -1558,7 +1558,7 @@ namespace Cozmo {
   
   Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback)
   {
-    auto images = _visionSystem->GetToolCodeImages();
+    const auto& images = _visionSystem->GetToolCodeImages();
     
     // Make sure there is no more than 2 images in the list
     if (images.size() != 2) {

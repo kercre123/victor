@@ -274,14 +274,14 @@ namespace Anki {
       bool animHasInitialFaceFrame = false;
       if (nullptr != ourAnimation)
       {
-        auto procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
+        const auto& procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
         // If our track is not empty and starts at beginning
         if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
         {
           animHasInitialFaceFrame = true;
         }
         
-        auto faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
+        const auto& faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
         // If our track is not empty and starts at beginning
         if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
         {

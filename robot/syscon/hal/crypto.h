@@ -38,6 +38,7 @@ namespace Crypto {
   void init();
   void manage();
   void execute(const CryptoTask* task);
+  const void* aes_key();
 }
 
 #endif

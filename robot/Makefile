@@ -66,7 +66,7 @@ stage_binaries:
 	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries
-	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	python3 ./tools/sign.py -c -t --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"

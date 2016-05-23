@@ -20,7 +20,9 @@
 #include "clad/types/gameEvent.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include "util/time/stepTimers.h"
+#include <vector>
 #include <sys/stat.h>
 
 #include "anki/common/robot/config.h"
@@ -41,7 +43,18 @@ namespace Anki {
     , _gameEventResponses(new GameEventResponsesContainer())
     , _robotMessageHandler(new RobotInterface::MessageHandler())
     {
+      using namespace ExternalInterface;
       
+      auto broadcastAvailableAnimationsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
+      {
+          this->BroadcastAvailableAnimations();
+      };
+      
+      MessageGameToEngineTag tag = MessageGameToEngineTag::RequestAvailableAnimations;
+      IExternalInterface* externalInterface = context->GetExternalInterface();
+      if (externalInterface != nullptr){
+        _signalHandles.push_back( externalInterface->Subscribe(tag, broadcastAvailableAnimationsCallback) );
+      }
     }
     
     RobotManager::~RobotManager() = default;
@@ -248,7 +261,7 @@ namespace Anki {
       
       auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, "json", true);
       
-      for (auto path : filePaths)
+      for (const auto& path : filePaths)
       {
         struct stat attrib{0};
         int result = stat(path.c_str(), &attrib);
@@ -330,7 +343,7 @@ namespace Anki {
       _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
       
       auto filePaths = Util::FileUtils::FilesInDirectory(animationGroupFolder, true, "json",true);
-      for (auto path : filePaths)
+      for (const auto& path : filePaths)
       {
         struct stat attrib{0};
         int result = stat(path.c_str(), &attrib);

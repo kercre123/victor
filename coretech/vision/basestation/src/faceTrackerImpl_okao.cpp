@@ -19,11 +19,27 @@
 #include "anki/common/basestation/math/rotation.h"
 #include "anki/common/basestation/jsonTools.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vision {
+  
+  namespace FaceEnrollParams {
+    CONSOLE_VAR(s32, kMinDetectionConfidence,       "Vision.FaceTracker",  500);
+    CONSOLE_VAR(f32, kCloseDistanceBetweenEyesMin,  "Vision.FaceTracker",  64.f);
+    CONSOLE_VAR(f32, kCloseDistanceBetweenEyesMax,  "Vision.FaceTracker",  128.f);
+    CONSOLE_VAR(f32, kFarDistanceBetweenEyesMin,    "Vision.FaceTracker",  16.f);
+    CONSOLE_VAR(f32, kFarDistanceBetweenEyesMax,    "Vision.FaceTracker",  32.f);
+    CONSOLE_VAR(f32, kLookingStraightMaxAngle_deg,  "Vision.FaceTracker",  25.f);
+    //CONSOLE_VAR(f32, kLookingLeftRightMinAngle_deg,  "Vision.FaceTracker",  10.f);
+    //CONSOLE_VAR(f32, kLookingLeftRightMaxAngle_deg,  "Vision.FaceTracker",  20.f);
+    CONSOLE_VAR(f32, kLookingUpMinAngle_deg,        "Vision.FaceTracker",  25.f);
+    CONSOLE_VAR(f32, kLookingUpMaxAngle_deg,        "Vision.FaceTracker",  45.f);
+    CONSOLE_VAR(f32, kLookingDownMinAngle_deg,      "Vision.FaceTracker", -10.f);
+    CONSOLE_VAR(f32, kLookingDownMaxAngle_deg,      "Vision.FaceTracker", -25.f);
+  }
   
   FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
   : _recognizer(config)
@@ -625,19 +641,7 @@ namespace Vision {
   {
 #   define DEBUG_ENROLLABILITY 0
     
-    // TODO: Make console vars
-    const s32 kMinDetectionConfidence       = 500;
-    const f32 kCloseDistanceBetweenEyesMin  = 64.f;
-    const f32 kCloseDistanceBetweenEyesMax  = 128.f;
-    const f32 kFarDistanceBetweenEyesMin    = 16.f;
-    const f32 kFarDistanceBetweenEyesMax    = 32.f;
-    const f32 kLookingStraightMaxAngle_deg  = 25.f;
-    //const f32 kLookingLeftRightMinAngle_deg = 10.f;
-    //const f32 kLookingLeftRightMaxAngle_deg = 20.f;
-    const f32 kLookingUpMinAngle_deg        = 25.f;
-    const f32 kLookingUpMaxAngle_deg        = 45.f;
-    const f32 kLookingDownMinAngle_deg      = -10.f;
-    const f32 kLookingDownMaxAngle_deg      = -25.f;
+    using namespace FaceEnrollParams;
     
     bool enableEnrollment = false;
     

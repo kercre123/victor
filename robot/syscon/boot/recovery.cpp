@@ -236,23 +236,8 @@ static inline bool FlashBlock() {
   return true;
 }
 
-void BlinkALot(void) {
-  Lights::set(1, 4, 0x80);
-  MicroWait(25000);
-  Lights::set(2, 4, 0x80);
-  MicroWait(25000);
-  Lights::set(3, 4, 0x80);
-  MicroWait(25000);
-  Lights::set(3, 4, 0x80);
-  MicroWait(25000);
-  Lights::set(2, 4, 0x80);
-  MicroWait(25000);
-  Lights::set(1, 4, 0x80);
-  MicroWait(25000);
-}
 
 void EnterRecovery(void) {
-  BlinkALot();
   UARTInit();
   SyncToHead();
 

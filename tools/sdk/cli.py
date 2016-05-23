@@ -138,6 +138,34 @@ class EngineRemoteCmd(cmd.Cmd):
 
         return suggestions
 
+    # ================================================================================
+    # Animations
+
+    def do_getAnimations(self, line):
+        "getAnimations - requests a list of available animations from the engine"
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["RequestAvailableAnimations"]) )
+
+    def do_playAnimation(self,line):
+        "playAnimation animationName ['playAnimation list' to list all Animations currently stored]"
+        engineInterface.QueueCommand( (EngineCommand.playAnimation, line.split()) )
+
+    def complete_playAnimation(self, text, line, start_index, end_index):
+        suggestions = []
+                
+        animationNames = engineInterface.gEngineInterfaceInstance.animationManager.animationNames
+
+        for cliCmdName in kCliCmdNames:
+            if cliCmdName.startswith(text):
+                suggestions.append(cliCmdName)
+
+        # TODO make this thread safe with a call to SyncCommand
+        for animationName in animationNames:
+            if animationName.startswith(text):
+                suggestions.append(animationName)
+                
+        return suggestions
+
+
     # ================================================================================  
     # Start connect etc.  
 

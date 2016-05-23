@@ -332,7 +332,7 @@
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/softdevice/s110/headers;../include;./crypto;.</IncludePath>
+              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/softdevice/s110/headers;../include;../../crypto;.</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -401,14 +401,14 @@
               <FilePath>.\boot\startup_nrf51.s</FilePath>
             </File>
             <File>
-              <FileName>crc32.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\crc32.cpp</FilePath>
-            </File>
-            <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\lights.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crc32.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\crypto\crc32.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -9,6 +9,7 @@ import threading # for threaded engine
 from collections import deque # queue for threaded engine
 from debugConsole import DebugConsoleManager
 from moodManager import MoodManager
+from animationManager import AnimationManager
 from tcpConnection import TcpConnection
 
 CLAD_DIR  = os.path.join("generated", "cladPython")
@@ -49,6 +50,7 @@ class EngineCommand:
     consoleFunc = 1
     sendMsg     = 2
     setEmotion  = 3    
+    playAnimation = 4     
     
     
 class ConnectionState:
@@ -107,6 +109,7 @@ class _EngineInterfaceImpl:
         
         self.debugConsoleManager = DebugConsoleManager()
         self.moodManager = MoodManager()
+        self.animationManager = AnimationManager()
         
         
     def __del__(self):
@@ -117,6 +120,7 @@ class _EngineInterfaceImpl:
         sys.stdout.write("SDK Connected to Engine" + os.linesep)
         self.state = ConnectionState.connected
         self.HandleSendMessageCommand(*["GetAllDebugConsoleVarMessage"])
+        self.HandleSendMessageCommand(*["RequestAvailableAnimations"])
 
 
     def ReceiveFromEngine(self):
@@ -222,6 +226,7 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.AnimationAvailable:
                         msg = fromEngMsg.AnimationAvailable
                         #sys.stdout.write("Recv: AnimationAvailable '" + msg.animName + "'" + os.linesep)
+                        self.animationManager.UpdateAnimations(msg)
                     elif fromEngMsg.tag == fromEngMsg.Tag.InitDebugConsoleVarMessage:
                         # multiple of these arrive after we send GetAllDebugConsoleVarMessage (they don't all fit in 1 message)
                         msg = fromEngMsg.InitDebugConsoleVarMessage
@@ -430,15 +435,30 @@ class _EngineInterfaceImpl:
                 return self.sendToEngine(m)
                 
         return False
-            
-            
-    def PlayAnim(self, *args):
     
+    def HandlePlayAnimationCommand(self, *args):
+        
+        lenArgs = len(args)
         playAnimMsg = GToEI.PlayAnimation()
         playAnimMsg.robotID = 1
-        playAnimMsg.numLoops = 1
-        playAnimMsg.animationName = "pounceForward"
+
+        if (lenArgs < 1):
+            sys.stderr.write("[HandlePlayAnimationCommand] Error: No args, expected 'list' or 'numLoops animationName optional_numLoops'" + os.linesep)
+            return False
+
+        animName = args[0]
+
+        if animName.lower() == "list":
+            self.animationManager.PrintAnimations()
+            return True
+        if animName not in self.animationManager.animationNames:
+            sys.stderr.write("[PlayAnim] Error: Animation requested not in list of possible animations" + os.linesep)
+            return False
+
+        playAnimMsg.animationName = animName
         
+        playAnimMsg.numLoops = int(args[1]) if (lenArgs > 1) else 1
+
         toEngMessage = GToEM(PlayAnimation = playAnimMsg);
         
         sys.stdout.write("Send PlayAnimation = '" + str(toEngMessage) + "'" + os.linesep)
@@ -502,6 +522,8 @@ class _EngineInterfaceImpl:
             return self.HandleSendMessageCommand(*inCommand[1])
         elif (commandType == EngineCommand.setEmotion):
             return self.HandleSetEmotionCommand(*inCommand[1])
+        elif (commandType == EngineCommand.playAnimation):
+            return self.HandlePlayAnimationCommand(*inCommand[1])
         else:
             sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
             return False

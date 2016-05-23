@@ -10,9 +10,9 @@ PROTO CozmoVizDisplay
   field SFFloat pixelSize 1.0
 
   field SFBool moodViz FALSE
-  field SFVec2f moodPos 1.0 0.35
+  field SFVec2f moodPos 1.0 0.25
   field SFBool behaviorSelectionViz FALSE
-  field SFVec2f behaviorSelectionPos 1.0 0.63
+  field SFVec2f behaviorSelectionPos 1.0 0.50
 
   field SFBool dockViz FALSE
   field SFBool infoViz TRUE
@@ -71,7 +71,7 @@ Supervisor {
         }
       ]
       name "cozmo_viz_display"
-      width 300
+      width 400
       height 200
       windowPosition 1 1
       %{ if fields.infoViz.value then }%

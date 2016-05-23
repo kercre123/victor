@@ -177,7 +177,7 @@ namespace Anki {
         case State::Init:
         {
           // Cancel all actions
-          for (auto tag : _actionCallbackMap) {
+          for (const auto& tag : _actionCallbackMap) {
             robot.GetActionList().Cancel(tag.first);
           }
           _actionCallbackMap.clear();
@@ -382,7 +382,7 @@ namespace Anki {
       robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(true);
     
       // Cancel all actions
-      for (auto tag : _actionCallbackMap) {
+      for (const auto& tag : _actionCallbackMap) {
         robot.GetActionList().Cancel(tag.first);
       }
       _actionCallbackMap.clear();
