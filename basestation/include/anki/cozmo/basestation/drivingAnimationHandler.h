@@ -25,9 +25,9 @@ namespace Anki {
     class Robot;
     
     // Default driving animations
-    static const char* kDefaultDrivingStartAnim = "";
-    static const char* kDefaultDrivingLoopAnim = "";
-    static const char* kDefaultDrivingEndAnim = "";
+    static const char* kDefaultDrivingStartAnim = "ag_driving01_startDriving";
+    static const char* kDefaultDrivingLoopAnim = "ag_driving01_drivingLoop";
+    static const char* kDefaultDrivingEndAnim = "ag_driving01_endDriving";
     
     class DrivingAnimationHandler
     {
