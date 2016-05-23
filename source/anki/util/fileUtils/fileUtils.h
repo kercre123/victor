@@ -1,0 +1,66 @@
+//
+//  fileUtils.h
+//  driveEngine
+//
+//  Created by Tony Xu on 3/2/15.
+//
+//
+
+#ifndef __Util__FileUtils_H__
+#define __Util__FileUtils_H__
+
+#include <stdio.h>
+#include <string>
+#include <vector>
+
+namespace Anki {
+namespace Util {
+
+class FileUtils{
+public:
+  static bool DirectoryExists(const std::string& path);
+
+  // stripFilename - if set to true, will remove text after last '/'
+  // dashP (-p)    - Create intermediate directories as required.  If this option is not specified,
+  // the full path prefix of each operand must already exist.  On the other hand, with this
+  // option specified, no error will be reported if a directory given as an operand already exists.
+  static bool CreateDirectory(const std::string& path, const bool stripFilename = false, bool dashP = true);
+  
+  static void RemoveDirectory(const std::string& path);
+  
+  // If useFullPath is true, the returned vector will contain full paths to each file found
+  // (i.e., path/to/file/filename.ext). If extensions are provided (with or without "."), only
+  // files with any of those extensions (case sensitive) will be returned. Use nullptr or "" for
+  // withExtension to accept any extension. Enabling recure will also enable useFullPath.
+  static std::vector<std::string> FilesInDirectory(const std::string& path, bool useFullPath = false,
+                                                   const char* withExtension = nullptr, bool recurse = false);
+  static std::vector<std::string> FilesInDirectory(const std::string& path, bool useFullPath,
+                                                   const std::vector<const char*>& withExtensions, bool recurse = false);
+
+  static bool FileExists(const std::string& fileName);
+
+  static std::string ReadFile(const std::string& fileName);
+    
+  static bool WriteFile(const std::string& fileName, const std::string& body);
+  
+  static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body);
+  
+  static void DeleteFile(const std::string& fileName);
+  
+  static void ListAllDirectories( const std::string& path, std::vector<std::string>& directories );
+  
+  static bool FilenameHasSuffix(const char* inFilename, const char* inSuffix);
+  
+  // Insert a platform-specific file separater between the strings in the given vector.
+  // Example FullFilePath({"path", "to", "file.txt"}) will return "path\\to\\file.txt" on
+  // Windows and "path/to/file.txt" on other platforms. More complicated cases are
+  // also handled, where the passed-in strings may or may not already have leading/trailing
+  // file separators, to avoid duplicates.
+  static std::string FullFilePath(std::vector<std::string>&& names);
+  
+};
+
+} // namespace Util
+} // namespace Anki
+
+#endif // __Util__FileUtils_H__

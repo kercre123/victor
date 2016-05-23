@@ -1,0 +1,8 @@
+{
+   profile-account-string
+   Memcheck:Leak
+   ...
+   fun:_ZN4Anki11DriveEngine13OnlineAccount14ProfileAccountC2ERKNSt3__112basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEESB_SB_SB_
+   fun:_ZN4Anki11DriveEngine13OnlineAccount14ProfileAccountC1ERKNSt3__112basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEESB_SB_SB_
+   ...
+}

@@ -1,0 +1,8 @@
+{
+   printflogger-thread-id-allocated-but-never-released
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_ZN4Anki4Util20PrintfLoggerProvider6PrintfEPKcS3_RKNSt3__16vectorINS4_4pairIS3_S3_EENS4_9allocatorIS7_EEEES3_
+   ...
+}

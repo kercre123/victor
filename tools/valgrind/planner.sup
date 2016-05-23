@@ -1,0 +1,9 @@
+{
+   read_write_lock_init
+   Memcheck:Cond
+   fun:pthread_rwlock_init
+   fun:_ZN11BaseStation12LocalPlanner11ActionTableC2Ev
+   ...
+   fun:_Z13RUN_ALL_TESTSv
+   fun:main
+}
