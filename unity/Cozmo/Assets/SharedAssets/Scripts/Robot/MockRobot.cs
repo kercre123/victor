@@ -349,7 +349,7 @@ public class MockRobot : IRobot {
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
 
     TurnInPlace(maxTurnAngle, 4.3f, 10f);
