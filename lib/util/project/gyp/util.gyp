@@ -8,6 +8,7 @@
     'networkApp_source_file_name': 'networkApp.lst',
 
     'build_flavor%': 'dev',
+    'clad_dir%': '../../BLAHBLAH/message-buffers',
     
     'compiler_flags': [
       '-fdiagnostics-show-category=name',
@@ -261,14 +262,14 @@
             'target_name': 'util_UnitTest',
             'sources': [
               "<!@(cat <(util_source_file_name))",
-              '../../tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp',
+              '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
             ],
             'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
               '../../source/3rd',
               '../../libs/framework/gtest-linux/include',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
             ],
             'direct_dependent_settings': {
               'include_dirs': [
@@ -276,7 +277,7 @@
               '../../libs/packaged/include',
               '../../source/3rd',
               '../../libs/framework/gtest-linux/include',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
               ],
             },
             'defines': [
@@ -358,20 +359,20 @@
             'target_name': 'util_UnitTest',
             'sources': [ 
               "<!@(cat <(util_source_file_name))",
-              '../../tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp',
+              '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
             ],
             'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
               '../../source/3rd',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
             ],
             'direct_dependent_settings': {
               'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
               '../../source/3rd',
-              '../../tools/message-buffers/support/cpp/include',
+              '<(clad_dir)/support/cpp/include',
               ],
             },
             'export_dependent_settings': [
@@ -495,20 +496,20 @@
       'target_name': 'util',
       'sources': [
         '<!@(cat <(util_source_file_name))',
-        '../../tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp',
+        '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
       ],
       'include_dirs': [
         '../../source/anki',
         '../../libs/packaged/include',
         '../../source/3rd',
-        '../../tools/message-buffers/support/cpp/include',
+        '<(clad_dir)/support/cpp/include',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../source/anki',
           '../../libs/packaged/include',
           '../../source/3rd',
-          '../../tools/message-buffers/support/cpp/include',
+          '<(clad_dir)/support/cpp/include',
         ],
       },
       'export_dependent_settings': [

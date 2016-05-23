@@ -154,6 +154,8 @@ def main(scriptArgs):
                       help='builds mathlab\'s mex project')
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
+  parser.add_argument('--with-clad', metavar='CLAD_PATH', dest='cladPath', action='store', default=None,
+                      help='Use clad installation located at CLAD_PATH')
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
                       help='Use build tools located at BUILD_TOOLS_PATH')
   parser.add_argument('--ankiUtil', metavar='ANKI_UTIL_PATH', dest='ankiUtilPath', action='store', default=None,
@@ -232,7 +234,7 @@ def main(scriptArgs):
   coretechInternalProjectPath = os.path.join(options.coretechInternalPath, 'project/gyp/coretech-internal.gyp')
 
   if not options.buildToolsPath:
-    options.buildToolsPath = os.path.join(options.projectRoot, 'tools/anki-util/tools/build-tools')
+    options.buildToolsPath = os.path.join(options.projectRoot, 'tools/build')
   if not os.path.exists(options.buildToolsPath):
     UtilLog.error('build tools not found [%s]' % (options.buildToolsPath) )
     return False
@@ -266,7 +268,7 @@ def main(scriptArgs):
   import generateUnityMeta
 
   if not options.ankiUtilPath:
-    options.ankiUtilPath = os.path.join(options.projectRoot, 'tools/anki-util')
+    options.ankiUtilPath = os.path.join(options.projectRoot, 'lib/util')
   if not os.path.exists(options.ankiUtilPath):
     UtilLog.error('anki-util not found [%s]' % (options.ankiUtilPath) )
     return False
@@ -293,7 +295,7 @@ def main(scriptArgs):
         return False
     externalsPath = options.externalsPath
 
-    gypPath = os.path.join(options.buildToolsPath, 'gyp')
+    gypPath = os.path.join(options.projectRoot, 'tools/gyp')
     if (options.gypPath is not None):
       gypPath = options.gypPath
 
@@ -344,7 +346,7 @@ def main(scriptArgs):
     # TODO: remove dependency on abspath.
     # there is a bug due to 'os.chdir' and user passed rel path
     if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure_engine.py'),
-     '--updateListsOnly', '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath]) != 0):
+     '--updateListsOnly', '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath, '--with-clad', options.cladPath]) != 0):
       UtilLog.error("error executing cozmo-engine configure")
       return False
     return True
@@ -354,7 +356,8 @@ def main(scriptArgs):
     # TODO: we should pass in our own options with any additional overides..
     # subproject might need to know about the build-tools location, --verbose, and other args...
     if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure_engine.py'),
-     '--platform', platform, '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath, '--updateListsOnly']) != 0):
+     '--platform', platform, '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath, '--updateListsOnly',
+     '--with-clad', options.cladPath]) != 0):
       UtilLog.error("error executing submodule configure")
       return False
 
@@ -400,6 +403,9 @@ def main(scriptArgs):
     UtilLog.error("error symlinking pocket sphinx resources")
     return False
 
+  # paths relative to gyp file
+  clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
+
   # mac
   if 'mac' in options.platforms:
       os.environ['GYP_DEFINES'] = """
@@ -437,6 +443,7 @@ def main(scriptArgs):
                                   ce-das_path={21}
                                   cg-ble_cozmo_path={22}
                                   ce-ble_cozmo_path={23}
+                                  clad_dir={24}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -462,6 +469,7 @@ def main(scriptArgs):
                                     ceDasProjectPath,
                                     cgBLECozmoProjectPath,
                                     ceBLECozmoProjectPath,
+                                    clad_dir_rel,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -509,6 +517,7 @@ def main(scriptArgs):
                                 ce-das_path={18}
                                 cg-ble_cozmo_path={19}
                                 ce-ble_cozmo_path={20}
+                                clad_dir={21}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -531,6 +540,7 @@ def main(scriptArgs):
                                   ceDasProjectPath,
                                   cgBLECozmoProjectPath,
                                   ceBLECozmoProjectPath,
+                                  clad_dir_rel,
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -606,6 +616,7 @@ def main(scriptArgs):
                                 ce-das_path={19}
                                 cg-ble_cozmo_path={20}
                                 ce-ble_cozmo_path={21}
+                                clad_dir={22}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -629,6 +640,7 @@ def main(scriptArgs):
                                   ceDasProjectPath,
                                   cgBLECozmoProjectPath,
                                   ceBLECozmoProjectPath,
+                                  clad_dir_rel,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')

@@ -32,6 +32,8 @@ def main(scriptArgs):
                         help='prepends to the environment PATH')
   parser.add_argument('--with-gyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                         help='Use gyp installation located at GYP_PATH')
+  parser.add_argument('--with-clad', metavar='CLAD_PATH', dest='cladPath', action='store', default=None,
+                        help='Use clad installation located at CLAD_PATH')
   parser.add_argument('--clean', '-c', dest='clean', action='store_true',
                         help='cleans all output folders')
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
@@ -93,6 +95,10 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import util
+
+  if not options.cladPath:
+      options.cladPath = util.Module.get_path('clad')
 
   # do not check for gyp if we are only updating list files
   if not options.updateListsOnly:
@@ -157,6 +163,9 @@ def main(scriptArgs):
   configurePath = os.path.join(projectRoot, 'project/gyp')
   gypFile = 'util.gyp'
 
+  # paths relative to gyp file
+  clad_dir_rel = os.path.relpath(options.cladPath, configurePath)
+
   # mac
   if 'mac' in options.platforms:
     UtilLog.info('generating mac project')
@@ -169,6 +178,7 @@ def main(scriptArgs):
             'output_location': projectRoot+'/project/gyp-mac',
             'gyp_location': gypPath,
             'configure_location': configurePath,
+            'clad_dir': clad_dir_rel,
             'arch_group': options.arch,
             'ndk_root': 'INVALID'
     }
@@ -202,6 +212,7 @@ def main(scriptArgs):
             'output_location': 'gyp-ios', 
             'gyp_location': gypPath,
             'configure_location': configurePath,
+            'clad_dir': clad_dir_rel,
             'arch_group': options.arch,
             'ndk_root': 'INVALID'
     }
@@ -233,6 +244,7 @@ def main(scriptArgs):
             'output_location': 'gyp-linux', 
             'gyp_location': gypPath,
             'configure_location': configurePath,
+            'clad_dir': clad_dir_rel,
             'OS': 'linux',
             'target_arch': 'x64',
             'clang': 1,
@@ -298,6 +310,7 @@ def main(scriptArgs):
             'output_location': 'gyp-android', 
             'gyp_location': gypPath,
             'configure_location': configurePath,
+            'clad_dir': clad_dir_rel,
             'OS': 'android',
             'target_arch': 'arm',
             'clang': 1,

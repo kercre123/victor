@@ -35,6 +35,8 @@ def main(scriptArgs):
                       help='cleans all output folders')
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
+  parser.add_argument('--with-clad', metavar='CLAD_PATH', dest='cladPath', action='store', default=None,
+                      help='Use clad installation located at CLAD_PATH')
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
                       help='Use build tools located at BUILD_TOOLS_PATH')
   parser.add_argument('--ankiUtil', metavar='ANKI_UTIL_PATH', dest='ankiUtilPath', action='store', default=None,
@@ -147,7 +149,8 @@ def main(scriptArgs):
     # TODO: remove dependency on abspath. 
     # there is a bug due to 'os.chdir' and user passed rel path
     if (subprocess.call([os.path.abspath(os.path.join(options.ankiUtilPath, 'project/gyp/configure.py')),
-     '--updateListsOnly' ]) != 0):
+     '--updateListsOnly', '--buildTools', options.buildToolsPath, '--with-clad', options.cladPath,
+     '--projectRoot', options.ankiUtilPath ]) != 0):
       print "error executing anki-util configure"
       return False
     return True
@@ -159,12 +162,16 @@ def main(scriptArgs):
     # TODO: remove dependency on abspath. 
     # there is a bug due to 'os.chdir' and user passed rel path
     if (subprocess.call([os.path.abspath(os.path.join(options.ankiUtilPath, 'project/gyp/configure.py')),
-     '--platform', platform, '--updateListsOnly']) != 0):
+     '--platform', platform, '--updateListsOnly', '--buildTools', options.buildToolsPath, '--with-clad', options.cladPath,
+     '--projectRoot', options.ankiUtilPath ]) != 0):
       print "error executing anki-util configure"
       return False
 
   configurePath = os.path.join(projectRoot, 'project/gyp')
   gypFile = 'coretech-internal.gyp'
+
+  # paths relative to gyp file
+  clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
 
   # mac
   if 'mac' in options.platforms:
@@ -181,12 +188,14 @@ def main(scriptArgs):
                                 cti-gtest_path={3}
                                 cti-util_gyp_path={4}
                                 cti-cozmo_engine_path={5}
+                                clad_dir={6}
                                 """.format(options.arch, 
                                   os.path.join(projectRoot, 'generated/mac'), 
                                   coretechExternalPath,
                                   gtestPath, 
                                   ankiUtilProjectPath, 
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
+                                  clad_dir_rel
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
     gyp.main(gypArgs)
@@ -207,12 +216,14 @@ def main(scriptArgs):
                                 cti-gtest_path={3}
                                 cti-util_gyp_path={4}
                                 cti-cozmo_engine_path={5}
+                                clad_dir={6}
                                 """.format(options.arch, 
                                   os.path.join(projectRoot, 'generated/ios'), 
                                   coretechExternalPath,
                                   gtestPath, 
                                   ankiUtilProjectPath, 
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
+                                  clad_dir_rel
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -233,12 +244,14 @@ def main(scriptArgs):
                                 cti-gtest_path={3}
                                 cti-util_gyp_path={4}
                                 cti-cozmo_engine_path={5}
+                                clad_dir={6}
                                 """.format(options.arch,
                                   os.path.join(projectRoot, 'generated/linux'),
                                   coretechExternalPath,
                                   gtestPath,
                                   ankiUtilProjectPath,
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
+                                  clad_dir_rel
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', '../../generated/linux', gypFile]
     gyp.main(gypArgs)
@@ -292,13 +305,15 @@ def main(scriptArgs):
                                 cti-util_gyp_path={4}
                                 cti-cozmo_engine_path={5}
                                 ndk_root={6}
+                                clad_dir={7}
                                 """.format(options.arch, 
                                   os.path.join(projectRoot, 'generated/android'), 
                                   coretechExternalPath,
                                   gtestPath, 
                                   ankiUtilProjectPath, 
                                   subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
-                                  ndk_root
+                                  ndk_root,
+                                  clad_dir_rel,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')

@@ -13,7 +13,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # prepare
-PROJECT=$TOPLEVEL/project/gyp-mac
+PROJECT=$TOPLEVEL/lib/util/project/gyp-mac
 BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
 
@@ -61,7 +61,7 @@ ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
 DYLD_FRAMEWORK_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
 DYLD_LIBRARY_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
 GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/basestationGoogleTest.xml \
-$TOPLEVEL/tools/build/multiTest/MultiTest.py \
+$TOPLEVEL/lib/util/tools/build/multiTest/MultiTest.py \
 --stdout_fail \
 --path $DERIVED_DATA/$BUILD_TYPE \
 --executable UtilUnitTest \
