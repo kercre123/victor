@@ -52,12 +52,14 @@ private:
   const Robot& _robot;
 
   enum class State {
+    SettingDownBlock,
     ReactingToBlock,
     PerformingAction
   };
 
   State _state = State::ReactingToBlock;
 
+  void TransitionToSettingDownBlock(Robot& robot);
   void TransitionToReactingToBlock(Robot& robot);
   void TransitionToPerformingAction(Robot& robot);
 

@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "dockActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/helpers/templateHelpers.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
