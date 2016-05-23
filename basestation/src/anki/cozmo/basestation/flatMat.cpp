@@ -41,7 +41,8 @@ namespace Anki {
     
     
     FlatMat::FlatMat(Type type)
-    : MatPiece(type, GetSizeByType(type))
+    : ObservableObject(ObjectFamily::Mat, type)
+    , MatPiece(type, GetSizeByType(type))
     {
       if(ObjectType::FlatMat_LETTERS_4x4 == _type) {
         //#         include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"

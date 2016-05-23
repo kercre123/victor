@@ -374,12 +374,12 @@ namespace Anki {
 #ifndef TARGET_K02
               RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
-              AnkiEvent( 175, "CozmoBot.BroadcastingAvailability", 475, "RobotID: %d", 1, msg.robotID);
+              AnkiEvent( 177, "CozmoBot.BroadcastingAvailability", 477, "RobotID: %d", 1, msg.robotID);
               RobotInterface::SendMessage(msg);
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
-                  AnkiWarn( 176, "CozmoBot.TestModeFailed", 476, "TestMode %d failed to start.", 1, DEFAULT_TEST_MODE);
+                  AnkiWarn( 178, "CozmoBot.TestModeFailed", 478, "TestMode %d failed to start.", 1, DEFAULT_TEST_MODE);
                   return RESULT_FAIL;
                 }
               }
