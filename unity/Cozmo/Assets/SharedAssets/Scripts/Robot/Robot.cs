@@ -918,7 +918,7 @@ public class Robot : IRobot {
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
 
     SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
@@ -929,6 +929,7 @@ public class Robot : IRobot {
       maxTiltSpeed_radPerSec: 0f,
       tiltAccel_radPerSec2: 0f,
       tiltTolerance_rad: 0f,
+      sayName: sayName,
       robotID: ID
     ), 
       callback, 
