@@ -284,6 +284,7 @@ message TurnTowardsLastFacePose {
     float_32 tiltAccel_radPerSec2 = 0.0,
     float_32 tiltTolerance_rad = 0.0,
 
+    bool     sayName = 0, // If a named face is seen at end, say that name
     uint_8   robotID
 }
 
@@ -337,6 +338,12 @@ message Wait {
   float_32 time_s
 }
 
+// WaitForImages - wait for the specified number of images to be processed
+message WaitForImages {
+  uint_32 numImages,
+  uint_32 afterTimeStamp = 0  // Only count images with timestamp > than this
+}
+
 // TODO: Why can't I use the auto-union feature? I have to manually add each message or else I get an infinite CLAD recursion?
 //union RobotActionUnion { }
 
@@ -372,6 +379,7 @@ union RobotActionUnion {
   TurnTowardsObject         turnTowardsObject,
   TurnTowardsPose           turnTowardsPose,
   Wait                      wait,
+  WaitForImages             waitForImages
 }
 
 
