@@ -19,6 +19,8 @@ typedef s32 Fixed;
 namespace Motors {
   // Initialize the PWM peripheral on the designated pins in the source file.
   void init();
+  void start();
+  void stop();
   void teardown(void);  // Only used for rebooting the machine
   
   // Set the (unitless) power for a specified motor in the range [-798, 798].
