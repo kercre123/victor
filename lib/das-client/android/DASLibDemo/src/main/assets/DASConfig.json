@@ -1,0 +1,8 @@
+{
+  "dasConfig" : {
+    "localMinLogLevel": "info",
+    "remoteMinLogLevel": "event",
+    "gameMinLogLevel" : "info",
+    "url": "http://10.77.0.20/~seichert/store.cgi"
+  }
+}
