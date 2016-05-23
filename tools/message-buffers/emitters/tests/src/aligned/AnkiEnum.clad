@@ -1,0 +1,21 @@
+namespace AnkiTypes {
+  enum int_8 AnkiEnum {
+    e1 = 0x0f,
+    e2,
+    e3,
+    myReallySilly_EnumVal,
+    d1 = 5,
+    d2,
+    d3
+  }
+
+  enum no_cpp_class int_8 AnkiNoClassEnum {
+    e1 = 0x0f,
+    e2,
+    e3,
+    myReallySilly_EnumVal,
+    d1 = 5,
+    d2,
+    d3
+  }
+} // namespace AnkiTypes

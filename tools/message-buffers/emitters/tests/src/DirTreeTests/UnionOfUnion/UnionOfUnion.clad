@@ -1,0 +1,27 @@
+// A sample .clad file
+// containing a union with union members
+
+#include "Foo/Foo.clad"
+#include "Bar/Bar.clad"
+
+union FooBarUnion {
+  Foo myFoo,
+  Bar myBar
+}
+
+union BarFooUnion {
+  Bar myBar,
+  Foo myFoo
+}
+
+union UnionOfUnion {
+  FooBarUnion myFooBar,
+  BarFooUnion myBarFoo
+}
+
+message MessageOfUnion {
+  int_32 anInt,
+  FooBarUnion myFooBar,
+  bool aBool
+}
+

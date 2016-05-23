@@ -1,0 +1,16 @@
+
+
+message IntsWithDefaultValue {
+  uint_32 a = 42,
+  uint_8 b = 0xFF,
+  int_32 c = -2,
+  bool d = 1
+}
+
+message FloatsWithDefaultValue {
+  float_32 a = 0.42,
+  float_32 b = 12.0,
+  float_64 c = 10.0101,
+  float_32 d = -2.0
+}
+
