@@ -273,7 +273,7 @@ namespace Anki {
       
       if (!skipStateUpdate)
       {
-        _poseState = PoseState::Known;
+        SetPoseState(PoseState::Known);
       }
       
       std::string poseName("Object");

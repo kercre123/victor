@@ -281,6 +281,12 @@ namespace Anki {
         _visionComponentPtr->Pause(true);
         
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
+        
+        if( _isOnChargerPlatform )
+        {
+          _isOnChargerPlatform = false;
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+        }
       }
       else if (true == _isPickedUp && false == t) {
         // Robot just got put back down
@@ -1099,13 +1105,14 @@ namespace Anki {
       
       // Update ChargerPlatform
       ObservableObject* charger = dynamic_cast<ObservableObject*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
-      if( charger )
+      if( charger && charger->IsPoseStateKnown() && !IsPickedUp() )
       {
+        // This state is useful for knowing not to play a cliff react when just driving off the charger.
         bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-        if( isOnChargerPlatform != _isOnChargerPlatform)
+        if(isOnChargerPlatform != _isOnChargerPlatform)
         {
           _isOnChargerPlatform = isOnChargerPlatform;
-          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(isOnChargerPlatform)));
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
         }
       }
 

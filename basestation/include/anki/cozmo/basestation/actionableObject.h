@@ -78,6 +78,8 @@ namespace Anki {
       bool IsBeingCarried() const;
       void SetBeingCarried(const bool tf);
       
+      virtual bool CanIntersectWithRobot() const { return false; }
+      
       // TODO: Possibly make this more descriptive to give finer-tuned control over states and visualization options.
       bool IsSelected() const;
       void SetSelected(const bool tf);
