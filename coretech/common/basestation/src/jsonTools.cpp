@@ -16,6 +16,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 
 #include "json/json.h"
 #include <iostream>
@@ -28,6 +29,36 @@ namespace Anki
 
 namespace JsonTools
 {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float ParseFloat(const Json::Value& config, const char* key, const std::string& debugName) {
+  const std::string& eventName = debugName + ".ParseFloat.NotValidFloat";
+  ASSERT_NAMED_EVENT(config[key].isNumeric(), eventName.c_str(), "%s", key);
+  return config[key].asFloat();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string& debugName) {
+  const std::string& eventName = debugName + ".ParseUint8.NotValidUint8";
+  ASSERT_NAMED_EVENT(config[key].isNumeric(), eventName.c_str(), "%s", key);
+  Json::Int intVal = config[key].asInt();
+  return Anki::Util::numeric_cast<uint8_t>(intVal);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName) {
+  const std::string& eventName = debugName + ".ParseBool.NotValidBool";
+  ASSERT_NAMED_EVENT(config[key].isBool(), eventName.c_str(), "%s", key);
+  return config[key].asBool();
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName) {
+  const std::string& eventName = debugName + ".ParseString.NotValidString";
+  ASSERT_NAMED_EVENT(config[key].isString(), eventName.c_str(), "%s", key);
+  return config[key].asString();
+};
+
   
 // Specializations of GetValue for all types we care about
 
