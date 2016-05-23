@@ -12,15 +12,15 @@ Event,,Hijack_Audio_Disable_Bypass,3535474666,PlugInControl,HijackAudioDisableBy
 Event,,Hijack_Audio_Enable_Bypass,2589144983,PlugInControl,HijackAudioEnableBypass,Deprecated - Working on new method
 Event,,Music_Play,202194903,Music,Play,
 Event,,Music_Stop,3227181061,Music,Stop,
-Event,,Sfx_Coz_Dev_Test_01_Play,4175204205,DevRobot,SFX_Test_01,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_02_Play,4243365832,DevRobot,SFX_Test_02,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_03_Play,3293055567,DevRobot,SFX_Test_03,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_Lp_01_Play,835806870,DevRobot,SFX_TestLoopPlay_01,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_Lp_01_Stop,1566344232,DevRobot,SFX_TestLoopStop_01,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_Lp_02_Play,384316327,DevRobot,SFX_TestLoopPlay_02,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_Lp_02_Stop,3414422517,DevRobot,SFX_TestLoopStop_02,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_Lp_03_Play,3934080800,DevRobot,SFX_TestLoopPlay_03,Dev placeholder sound
-Event,,Sfx_Coz_Dev_Test_Lp_03_Stop,2277339810,DevRobot,SFX_TestLoopStop_03,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_01_Play,4175204205,Robot,SFX_Test_01,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_02_Play,4243365832,Robot,SFX_Test_02,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_03_Play,3293055567,Robot,SFX_Test_03,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_Lp_01_Play,835806870,Robot,SFX_TestLoopPlay_01,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_Lp_01_Stop,1566344232,Robot,SFX_TestLoopStop_01,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_Lp_02_Play,384316327,Robot,SFX_TestLoopPlay_02,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_Lp_02_Stop,3414422517,Robot,SFX_TestLoopStop_02,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_Lp_03_Play,3934080800,Robot,SFX_TestLoopPlay_03,Dev placeholder sound
+Event,,Sfx_Coz_Dev_Test_Lp_03_Stop,2277339810,Robot,SFX_TestLoopStop_03,Dev placeholder sound
 Event,,Sfx_Gp_Shared_Block_Connect_Play,596005814,SFX,GameSharedBlockConnect,
 Event,,Sfx_Gp_Shared_Game_End_Play,2780471356,SFX,GameSharedEnd,
 Event,,Sfx_Gp_Shared_Request_Game_Play,1948557956,SFX,GameSharedRequestGame,
@@ -88,15 +88,15 @@ Event,,Sfx_Ui_Shared_Lose_Play,2255190640,SFX,SharedLose,
 Event,,Sfx_Ui_Shared_Win_Play,790005487,SFX,SharedWin,
 Event,,Sfx_Ui_Window_Close_Play,945548936,UI,WindowClose,
 Event,,Sfx_Ui_Window_Open_Play,1425451874,UI,WindowOpen,
-Event,,Vo_Coz_Dev_Test_01_Play,2490335911,DevRobot,Vo_Test_01,
-Event,,Vo_Coz_Dev_Test_02_Play,2941826454,DevRobot,Vo_Test_02,
-Event,,Vo_Coz_Dev_Test_03_Play,1724354181,DevRobot,Vo_Test_03,
-Event,,Vo_Coz_Dev_Test_Lp_01_Play,3188180480,DevRobot,Vo_TestLoopPlay_01,
-Event,,Vo_Coz_Dev_Test_Lp_01_Stop,1531439490,DevRobot,Vo_TestLoopStop_01,
-Event,,Vo_Coz_Dev_Test_Lp_02_Play,3167504997,DevRobot,Vo_TestLoopPlay_02,
-Event,,Vo_Coz_Dev_Test_Lp_02_Stop,255510755,DevRobot,Vo_TestLoopStop_02,
-Event,,Vo_Coz_Dev_Test_Lp_03_Play,3960416630,DevRobot,Vo_TestLoopPlay_03,
-Event,,Vo_Coz_Dev_Test_Lp_03_Stop,437563144,DevRobot,Vo_TestLoopStop_03,
+Event,,Vo_Coz_Dev_Test_01_Play,2490335911,Robot,Vo_Test_01,
+Event,,Vo_Coz_Dev_Test_02_Play,2941826454,Robot,Vo_Test_02,
+Event,,Vo_Coz_Dev_Test_03_Play,1724354181,Robot,Vo_Test_03,
+Event,,Vo_Coz_Dev_Test_Lp_01_Play,3188180480,Robot,Vo_TestLoopPlay_01,
+Event,,Vo_Coz_Dev_Test_Lp_01_Stop,1531439490,Robot,Vo_TestLoopStop_01,
+Event,,Vo_Coz_Dev_Test_Lp_02_Play,3167504997,Robot,Vo_TestLoopPlay_02,
+Event,,Vo_Coz_Dev_Test_Lp_02_Stop,255510755,Robot,Vo_TestLoopStop_02,
+Event,,Vo_Coz_Dev_Test_Lp_03_Play,3960416630,Robot,Vo_TestLoopPlay_03,
+Event,,Vo_Coz_Dev_Test_Lp_03_Stop,437563144,Robot,Vo_TestLoopStop_03,
 Event,,Vo_Coz_External_Name_First_Play,3129794587,Robot,ExternalNameFirstPlay,
 Event,,Vo_Coz_External_Name_Play,1707690926,Robot,ExternalName,
 Event,,Vo_Coz_Gp_Shared_Fakeout_Play,2145308968,Robot,SharedTakeout,
@@ -121,15 +121,22 @@ Event,,Vo_Coz_Gp_Shared_Win_Medium_Play,3583968567,Robot,SharedWinMedium,
 Event,,Vo_Coz_Gp_Shared_Win_Short_Play,1731815324,Robot,SharedWinShort,
 Event,,Vo_Coz_Gp_Shared_Win_Short_Wow_Play,2491294792,Robot,SharedWinShortWow,
 Event,,Vo_Coz_Gp_St_Tap_Effort_Play,1227708849,Robot,EffortTap,
-Event,,Vo_Coz_Placeholder_Play,1720370564,DevRobot,Dev_Placeholder,
+Event,,Vo_Coz_Placeholder_Play,1720370564,Robot,Dev_Placeholder,
+Event,,Vo_Coz_React_3Block_Topple_1_Play,2333334480,Robot,React3BlockTopple1,
+Event,,Vo_Coz_React_3Block_Topple_2_Play,1981221877,Robot,React3BlockTopple2,
 Event,,Vo_Coz_React_Block_Reach_Struggle_Play,3413616816,Robot,ReactBlockReachStruggle,
+Event,,Vo_Coz_React_Cliff_Neutral_Play,2915487867,Robot,ReactCliffNeutral,
 Event,,Vo_Coz_React_Cliff_Nope_Play,764338282,Robot,ReactCliffNope,
 Event,,Vo_Coz_React_Cliff_Play,2113972887,Robot,ReactCliff,
 Event,,Vo_Coz_React_Face_Dislike_Play,2041456948,Robot,ReactFaceDislike,
 Event,,Vo_Coz_React_Face_Like_Play,2832780992,Robot,ReactFaceLike,
 Event,,Vo_Coz_React_Face_Suspicious_Play,829421008,Robot,ReactFaceSuspicious,
 Event,,Vo_Coz_React_Face_Wiggle_Play,3502280502,Robot,ReactFaceWiggle,
+Event,,Vo_Coz_React_Pickup_Angry_1_Play,1506987515,Robot,ReactPickupAngry1,
+Event,,Vo_Coz_React_Pickup_Angry_2_Play,1203373130,Robot,ReactPickupAngry2,
 Event,,Vo_Coz_React_Pickup_Angry_Play,2018376227,Robot,ReactPickupAngry,
+Event,,Vo_Coz_React_Stuck_Angry_1_Play,2466015547,Robot,ReactStuckAngry1,
+Event,,Vo_Coz_React_Stuck_Angry_2_Play,2162297994,Robot,ReactStuckAngry2,
 Event,,Vo_Coz_React_Stuck_Angry_Play,3644548067,Robot,ReactStuckAngry,
 Event,,Vo_Coz_React_Stuck_Turtle_Roll_Fail_Play,3482707801,Robot,ReactStuckTurtleRollFail,
 Event,,Vo_Coz_React_Stuck_Turtle_Struggle_Play,3080537054,Robot,ReactStuckTurtleStruggle,
@@ -162,6 +169,7 @@ Event,,Vo_Coz_Shared_Fussy_Short_Play,1220210336,Robot,SharedFussyShort,
 Event,,Vo_Coz_Shared_Giggle_Happy_Lp_Play,4108451578,Robot,SharedGiggleHappy_Loop,
 Event,,Vo_Coz_Shared_Giggle_Happy_Lp_Stop,1254039812,Robot,SharedGiggleHappy_LoopStop,
 Event,,Vo_Coz_Shared_Giggle_Mischief_Play,397975633,Robot,SharedGiggleMischief,
+Event,,Vo_Coz_Shared_Giggle_Short_Play,996121627,Robot,SharedGiggleShort,
 Event,,Vo_Coz_Shared_Happy_Lp_Play,3671776400,Robot,SharedHappy_Loop,
 Event,,Vo_Coz_Shared_Happy_Lp_Stop,2020361522,Robot,SharedHappy_LoopStop,
 Event,,Vo_Coz_Shared_Happy_Play,201496157,Robot,SharedHappy,
