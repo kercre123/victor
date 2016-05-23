@@ -1,13 +1,4 @@
-// Based on Drive Testfix, updated for Cozmo EP1 Testfix
-
-// Helpful references are:
-//  https://www.silabs.com/Support%20Documents/TechnicalDocs/AN0062.pdf
-//  https://github.com/MarkDing/swd_programing_sram/blob/master/README.md
-//  ARM Debug Interface v5
-//  K02 Reference manual covers a few SWD details
-
-// Observations:  K02 needs to have power cycled if it starts replying with FAULT
-
+// swd.c hacked up for local on-board NRF programming
 //#define SWD_DEBUG
 
 #include "hal/console.h"
@@ -55,10 +46,10 @@ static void swd_turnaround_host()
 		bit_delay();
     
 		// Drive clock high and set SWDIO
-    GSET(GPIOB, GPIOB_SWC | GPIOB_SWD);
+    GSET(GPIOA, GPIOA_NRF_SWC | GPIOA_NRF_SWD);
 
 		// Take over SWDIO pin
-		PIN_OUT(GPIOB, PINB_SWD);
+		PIN_OUT(GPIOA, PINA_NRF_SWD);
 
 		HostBus = 1;
 		// clock is idle (high)
@@ -72,18 +63,18 @@ static void swd_turnaround_target()
 	{ // clock is idle (high)
 		bit_delay();
 		// Drive clock low and set SWDIO
-		GRESET(GPIOB, GPIOB_SWC);
-    GSET(GPIOB, GPIOB_SWD);
+		GRESET(GPIOA, GPIOA_NRF_SWC);
+    GSET(GPIOA, GPIOA_NRF_SWD);
 
 		bit_delay();
 		// Drive clock high
-		GSET(GPIOB, GPIOB_SWC);
+		GSET(GPIOA, GPIOA_NRF_SWC);
 		bit_delay();
 		// Drive clock low
-		GRESET(GPIOB, GPIOB_SWC);
+		GRESET(GPIOA, GPIOA_NRF_SWC);
 
 		// Release SWDIO pin
-		PIN_IN(GPIOB, PINB_SWD);
+		PIN_IN(GPIOA, PINA_NRF_SWD);
 
 		HostBus = 0;
 	}
@@ -110,11 +101,11 @@ static void write_bits(int nbits, const unsigned long *bits)
 		bit_delay();
 		
 		// drive SWCLK low and output next bit to SWDIO line
-    GRESET(GPIOB, GPIOB_SWC);
+    GRESET(GPIOA, GPIOA_NRF_SWC);
 		if ((wbuf)&1)
-      GSET(GPIOB, GPIOB_SWD);
+      GSET(GPIOA, GPIOA_NRF_SWD);
     else
-      GRESET(GPIOB, GPIOB_SWD);
+      GRESET(GPIOA, GPIOA_NRF_SWD);
 		bit_delay();
 
 		// prepare for next bit
@@ -126,7 +117,7 @@ static void write_bits(int nbits, const unsigned long *bits)
 			(wbuf) >>= 1;
 
 		// drive SWCLK high
-    GSET(GPIOB, GPIOB_SWC);
+    GSET(GPIOA, GPIOA_NRF_SWC);
 	}
 }
 
@@ -147,15 +138,15 @@ static void read_bits(int nbits, volatile unsigned long *bits)
 	{
 		bit_delay();
 		// read bit from SWDIO line
-		(*bits) |= ((GREAD(GPIOB)&GPIOB_SWD)?1:0) << i;
+		(*bits) |= ((GREAD(GPIOA)&GPIOA_NRF_SWD)?1:0) << i;
 
 		// drive SWCLK high
-		GSET(GPIOB, GPIOB_SWC);
+		GSET(GPIOA, GPIOA_NRF_SWC);
 
 		bit_delay();
 
 		// drive SWCLK low
-		GRESET(GPIOB, GPIOB_SWC);
+		GRESET(GPIOA, GPIOA_NRF_SWC);
 
 		// prepare for next bit
 		i++;
@@ -521,27 +512,27 @@ static void swd_chipinit(void)
 }
 
 // Set up the SWD GPIO
-void InitSWD(void)
+static void InitNRFSWD(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure; 
-  GPIO_InitStructure.GPIO_Pin = GPIOB_SWD;
+  GPIO_InitStructure.GPIO_Pin = GPIOA_NRF_SWD;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = GPIOB_SWC;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_InitStructure.GPIO_Pin = GPIOA_NRF_SWC;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 // Be nice and stop driving power into turned-off boards
-void SWDDeinit(void)
+void NRFSWDDeinit(void)
 {
-  PIN_IN(GPIOB, PINB_SWD);
-  PIN_IN(GPIOB, PINB_SWC);
-  PIN_PULL_NONE(GPIOB, PINB_SWD);
-  PIN_PULL_NONE(GPIOB, PINB_SWC);
+  PIN_IN(GPIOA, PINA_NRF_SWD);
+  PIN_IN(GPIOA, PINA_NRF_SWC);
+  PIN_PULL_NONE(GPIOA, PINA_NRF_SWD);
+  PIN_PULL_NONE(GPIOA, PINA_NRF_SWC);
 }
 
 #define STUB_TIMEOUT 1000000  // 1 second is long enough to flash a page, right?
@@ -552,7 +543,7 @@ void SWDDeinit(void)
 // Stubs are bins (see binaries.h) with initialization code at the front that manage flashing a block at a time
 // Stubs consist of a load address (usually 0x2000000), temp addr (load+0x1000), and a command addr (temp+blocksize+4)
 // Typical block sizes are 1KB or 2KB - see the other stubs (in fixture/flash_stubs) for examples
-void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
+void NRFSWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
 {
   // Power cycle the board to clear the cobwebs
   DisableBAT();      // DisableBAT contains its own delay to empty out power
@@ -560,7 +551,7 @@ void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
   MicroWait(50000);  // Power should be stable by now (bit unstable at 10ms)
 
   // Try to contact via SWD
-  InitSWD();
+  InitNRFSWD();
   swd_enable();
   swd_chipinit();
 
@@ -589,7 +580,7 @@ void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
 }
 
 // Send a file to the stub, one block at a time
-void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial)
+void NRFSWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial)
 { 
   while (start < end)
   {

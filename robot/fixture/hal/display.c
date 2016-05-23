@@ -65,13 +65,13 @@ static int scale_y = 1;
 static void DisplayWrite(bool cmd, const u8* p, int count)
 {
   if (cmd) {
-    GPIO_RESET(CMD_PORT, CMD_SOURCE);
+    PIN_RESET(CMD_PORT, CMD_SOURCE);
   } else {
-    GPIO_SET(CMD_PORT, CMD_SOURCE);
+    PIN_SET(CMD_PORT, CMD_SOURCE);
   }
   MicroWait(1);
   
-  GPIO_RESET(CS_PORT, CS_SOURCE);
+  PIN_RESET(CS_PORT, CS_SOURCE);
   MicroWait(1);
 
   while (count-- > 0) {
@@ -83,7 +83,7 @@ static void DisplayWrite(bool cmd, const u8* p, int count)
   while (!(SPI3->SR & SPI_FLAG_TXE)) ;
   while (SPI3->SR & SPI_FLAG_BSY) ;
 
-  GPIO_SET(CS_PORT, CS_SOURCE);
+  PIN_SET(CS_PORT, CS_SOURCE);
   MicroWait(1);
 }
 
@@ -114,10 +114,10 @@ void InitDisplay(void)
  
   PIN_OUT(CMD_PORT, CMD_SOURCE);  
   
-  GPIO_SET(CS_PORT, CS_SOURCE);  // Force CS high
+  PIN_SET(CS_PORT, CS_SOURCE);  // Force CS high
   PIN_OUT(CS_PORT, CS_SOURCE);
 
-  GPIO_RESET(RES_PORT, RES_SOURCE);  // Force RESET low
+  PIN_RESET(RES_PORT, RES_SOURCE);  // Force RESET low
   PIN_OUT(RES_PORT, RES_SOURCE);
 
   // Initialize SPI in master mode
@@ -136,7 +136,7 @@ void InitDisplay(void)
   SPI_Cmd(SPI3, ENABLE);
 
   MicroWait(10000);
-  GPIO_SET(RES_PORT, RES_SOURCE);
+  PIN_SET(RES_PORT, RES_SOURCE);
 
   SPI3->SR = 0;
 
