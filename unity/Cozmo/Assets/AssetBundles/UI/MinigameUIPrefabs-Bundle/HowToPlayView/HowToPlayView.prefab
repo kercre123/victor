@@ -125,7 +125,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 3
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.MinigameWidgets.HowToPlayView:_ContentsTextLabel
@@ -247,8 +250,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0.45, y: 1}
-  m_AnchoredPosition: {x: 25, y: 105}
-  m_SizeDelta: {x: -70, y: -631}
+  m_AnchoredPosition: {x: 60, y: 105}
+  m_SizeDelta: {x: -180, y: -631}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22486502
 RectTransform:
