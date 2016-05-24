@@ -49,7 +49,7 @@ class DigestFile:
         assert len(data) <= BLOCK_LENGTH
 
         data = data + b"\xFF" * (BLOCK_LENGTH - len(data))
-        data += pack("<II", len(data), crc32(data))
+        data += pack("<II", block, crc32(data))
         
         self.hash.update(data)
         self.fo.write(data)
