@@ -3431,7 +3431,7 @@ namespace Anki {
       msg.pose_qz = q.z();
       
       msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
-      msg.rightWheelSpeed_mmps = GetRigthWheelSpeed();
+      msg.rightWheelSpeed_mmps = GetRightWheelSpeed();
       
       msg.headAngle_rad = GetHeadAngle();
       msg.liftHeight_mm = GetLiftHeight();
