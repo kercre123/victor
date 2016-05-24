@@ -55,7 +55,8 @@ enum int_32 RobotActionType {
     READ_TOOL_CODE,
     SAY_TEXT, 
     ENROLL_NAMED_FACE,
-    FLIP_BLOCK
+    FLIP_BLOCK,
+    WAIT_FOR_IMAGES
 }
 
 

@@ -80,6 +80,8 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::TurnTowardsLastFacePose,
       MessageGameToEngineTag::TurnTowardsObject,
       MessageGameToEngineTag::TurnTowardsPose,
+      MessageGameToEngineTag::Wait,
+      MessageGameToEngineTag::WaitForImages,
     };
     
     // Subscribe to all action events
@@ -505,7 +507,7 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
 
 IActionRunner* GetTurnTowardsLastFacePoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
-  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle));
+  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle), msg.sayName);
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -637,7 +639,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
       
     case RobotActionUnionTag::turnTowardsLastFacePose:
-      return new TurnTowardsLastFacePoseAction(robot, actionUnion.Get_turnTowardsLastFacePose().maxTurnAngle);
+      return GetTurnTowardsLastFacePoseActionHelper(robot, actionUnion.Get_turnTowardsLastFacePose());
 
     case RobotActionUnionTag::searchSideToSide:
       return new SearchSideToSideAction(robot);
@@ -676,6 +678,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       }
       return action;
     }
+      
+    case RobotActionUnionTag::waitForImages:
+      return new WaitForImagesAction(robot, actionUnion.Get_waitForImages().numImages,
+                                     actionUnion.Get_waitForImages().afterTimeStamp);
+      
       // TODO: Add cases for other actions
       
     default:
@@ -864,6 +871,16 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       newAction = action;
       break;
     }
+      
+    case ExternalInterface::MessageGameToEngineTag::Wait:
+      newAction = new WaitAction(robot, event.GetData().Get_Wait().time_s);
+      break;
+      
+    case ExternalInterface::MessageGameToEngineTag::WaitForImages:
+      newAction = new WaitForImagesAction(robot, event.GetData().Get_WaitForImages().numImages,
+                                          event.GetData().Get_WaitForImages().afterTimeStamp);
+      break;
+      
     default:
     {
       PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",

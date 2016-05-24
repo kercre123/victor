@@ -31,7 +31,6 @@ parser.add_argument("-s", "--sign", type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", action="store_true",
                     help="Add version information comment block")
-args = parser.parse_args()
 
 FILE_TYPE_VERSION   = 0x00000001
 
@@ -178,6 +177,22 @@ def get_version_comment_block():
     encodded = json.dumps(comment).encode("UTF-8")
     return encodded + b"\x00"
 
+
+def get_version_comment_block():
+    p = subprocess.Popen(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
+    assert p.wait() == 0
+    comment = {}
+    comment['version'] = p.communicate()[0].decode().strip()
+    comment['date'] = time.ctime()
+    comment['time'] = time.time()
+    p = subprocess.Popen(['git', 'status'], stdout=subprocess.PIPE)
+    assert p.wait() == 0
+    comment['dirt'] = p.communicate()[0].decode()[:1000]
+    encodded = json.dumps(comment).encode("UTF-8")
+    paddingLength = BLOCK_LENGTH - len(encodded)
+    assert paddingLength > 0, "Must have null termination"
+    return encodded + (b"\x00" * paddingLength)
+    
 
 # This generates a single file for RTIP that is actually both
 if __name__ == '__main__':

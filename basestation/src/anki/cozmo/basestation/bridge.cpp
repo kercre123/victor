@@ -45,7 +45,8 @@ namespace Anki {
     
     
     Bridge::Bridge(Type type)
-    : MatPiece(type, {GetLength(type), 74.5f, 5.f})
+    : ObservableObject(ObjectFamily::Mat, type)
+    , MatPiece(type, {GetLength(type), 74.5f, 5.f})
     {
       Vision::MarkerType leftMarkerType = Vision::MARKER_UNKNOWN, rightMarkerType = Vision::MARKER_UNKNOWN, middleMarkerType = Vision::MARKER_UNKNOWN;
       f32 markerSize = 0.f;

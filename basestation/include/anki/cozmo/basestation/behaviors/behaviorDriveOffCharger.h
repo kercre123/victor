@@ -37,6 +37,9 @@ protected:
   virtual Result ResumeInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  
+  // Only start this behavior if we're on the charge contacts
+  virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
 private:
 

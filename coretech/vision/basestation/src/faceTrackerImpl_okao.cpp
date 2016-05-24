@@ -628,6 +628,11 @@ namespace Vision {
     return _recognizer.LoadAlbum(_okaoCommonHandle, albumName, names);
   }
   
+  float FaceTracker::Impl::GetMinEyeDistanceForEnrollment()
+  {
+    return FaceEnrollParams::kFarDistanceBetweenEyesMin;
+  }
+  
   void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
                                                 Vision::FaceID_t forFaceID,
                                                 s32 numEnrollments)

@@ -61,8 +61,8 @@ nrf_fix:
 
 # This fixes the headers and places the binaries in release
 stage_binaries:
-	@if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp -v ./build/app/robot.axf ./binaries; fi
-	@if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp -v ./syscon/build/app/syscon.axf ./binaries; fi
+	@if test ./build/app/robot.axf -nt ./binaries/robot.axf; then cp -v ./build/app/robot.axf ./binaries/robot.axf; fi
+	@if test ./syscon/build/app/syscon.axf -nt ./binaries/syscon.axf; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf; fi
 	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries

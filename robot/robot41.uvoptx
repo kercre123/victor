@@ -149,66 +149,34 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>139</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>35744</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\unicd\GitHub\products-cozmo\robot\syscon\k02_hal\hal\spi.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\robot\k02_hal/hal/spi.cpp\139</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
           <LineNumber>121</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>35686</Address>
+          <Address>9074</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\unicd\GitHub\products-cozmo\robot\syscon\k02_hal\hal\spi.cpp</Filename>
+          <Filename>&lt;2&gt;.\k02_hal\hal\spi.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\robot\k02_hal/hal/spi.cpp\121</Expression>
         </Bp>
         <Bp>
-          <Number>2</Number>
+          <Number>1</Number>
           <Type>0</Type>
           <LineNumber>48</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>37996</Address>
+          <Address>10686</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\unicd\GitHub\products-cozmo\robot\syscon\k02_hal\hal\main.cpp</Filename>
+          <Filename>&lt;2&gt;k02_hal/hal/main.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\robot\k02_hal/hal/main.cpp\48</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>30</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>G:\products-cozmo\robot\boot\main.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression></Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -226,6 +194,16 @@
           <count>2</count>
           <WinNumber>1</WinNumber>
           <ItemText>SVC_Vector</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>countdown</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>current_mode</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

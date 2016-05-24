@@ -105,6 +105,14 @@ static void dh_complete(const void*, int) {
   memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
   memcpy(msg.encoded_key, dh_state.encoded_key, AES_BLOCK_LENGTH);  
   RobotInterface::SendMessage(msg);
+
+  // Display the pin number
+  RobotInterface::DisplayNumber dn;
+  dn.value = *(const uint32_t*)Crypto::aes_key();
+  dn.digits = 8;
+  dn.x = 0;
+  dn.y = 16;
+  RobotInterface::SendMessage(dn);
 }
 
 void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {  
@@ -122,9 +130,10 @@ void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = dh_state.pin; 
-  dn.x = 32;
-  dn.y = 24;
+  dn.value = dh_state.pin;
+  dn.digits = 8;
+  dn.x = 0;
+  dn.y = 16;
   RobotInterface::SendMessage(dn);
 }
 
@@ -352,6 +361,13 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       Crypto::execute(&t);
 
       RTOS::start(task, TRANSMISSION_RATE);
+
+      using namespace Anki::Cozmo;
+      // Disable test mode when we someone connects
+      RobotInterface::EnterFactoryTestMode ftm;
+      ftm.mode = RobotInterface::FTM_None;
+      RobotInterface::SendMessage(ftm);  
+  
       break;
 
     case BLE_GAP_EVT_DISCONNECTED:

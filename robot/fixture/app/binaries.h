@@ -26,6 +26,9 @@ extern "C" {
   // SWD stubs - these are used to flash MCUs via SWD
   extern const uint8_t g_stubK02[], g_stubK02End[];
   extern const uint8_t g_stubBody[], g_stubBodyEnd[];  
+  
+  // Firmware for local (nRF51) radio
+  extern const uint8_t g_radio[], g_radioEnd[];
 }
 
 #endif

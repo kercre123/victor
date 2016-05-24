@@ -273,7 +273,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       return nullptr;
     }
 
-    ObservableObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    ActiveObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
     {
       const ObservableObject* object = nullptr;
       const char* familyStr = nullptr;
@@ -299,10 +299,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         return nullptr;
       }
       
-      return (ObservableObject*)object;
+      return const_cast<ActiveObject*>(dynamic_cast<const ActiveObject*>(object));
     } // GetActiveObject()
     
-    ObservableObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
+    ActiveObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
     {
       for(const auto& objectsByType : _existingObjects) {
         if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first) {
@@ -310,7 +310,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
             for(const auto& objectWithID : objectsByID.second) {
               ObservableObject* object = objectWithID.second;
               if(object->IsActive() && object->GetActiveID() == activeID) {
-                return object;
+                return dynamic_cast<ActiveObject*>(object);
               }
             }
           }
@@ -2333,9 +2333,9 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
       
       // Is there an active object with the same activeID that already exists?
-      ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(activeObjectType);
+      ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
       const char* objTypeStr = EnumToString(objType);
-      ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
+      ActiveObject* matchingObject = GetActiveObjectByActiveID(activeID);
       if (matchingObject == nullptr) {
         // If no match found, find one of the same type with an invalid activeID and assume it's that
         const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(objType);
@@ -2866,7 +2866,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                  !object->IsBeingCarried() &&
                  !object->IsPoseStateUnknown() &&
-                 object->GetID() != _robot->GetDockObject())
+                 object->GetID() != _robot->GetDockObject() &&
+                 !object->CanIntersectWithRobot())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.

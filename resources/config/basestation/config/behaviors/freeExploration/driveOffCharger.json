@@ -1,0 +1,9 @@
+{
+  "behaviorType": "DriveOffCharger",
+  "name": "DriveOffCharger",
+  "flatScore" : 3.0,
+  "behaviorGroups": [
+    "Demo",
+    "FreeplayOne"
+  ]
+}

@@ -23,11 +23,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define GPIOB_SWD       GPIO_Pin_10
-#define PINB_SWD        GPIO_PinSource10
-#define GPIOB_SWC       GPIO_Pin_11
-#define PINB_SWC        GPIO_PinSource11
-
 #define GSET(gp, pin)      gp->BSRRL = (pin)
 #define GRESET(gp, pin)    gp->BSRRH = (pin)
 #define GREAD(gp)          gp->IDR
@@ -50,10 +45,10 @@ void SlowPrintf(const char* format, ...);
 // 10 bit delays makes about
 #define bit_delay() {volatile int x = 10; while (x--);}
 
-char HostBus = 0; // SWD bus is controlled by the host or target
+static char HostBus = 0; // SWD bus is controlled by the host or target
 
 // Switch to host-controlled bus
-void swd_turnaround_host()
+static void swd_turnaround_host()
 {
 	if(!HostBus)
 	{ // clock is idle (low)
@@ -71,7 +66,7 @@ void swd_turnaround_host()
 }
 
 // Switch to target-controlled bus
-void swd_turnaround_target()
+static void swd_turnaround_target()
 {
 	if(HostBus)
 	{ // clock is idle (high)
@@ -98,7 +93,7 @@ void swd_turnaround_target()
 // implement any SWD protocol. The bits are clocked out on the clock falling
 // edge for the SWD state machine to latch on the rising edge. After it
 // is done this function leaves the clock low.
-void write_bits(int nbits, const unsigned long *bits)
+static void write_bits(int nbits, const unsigned long *bits)
 {
 	int i;
 	unsigned long wbuf = *bits;
@@ -139,7 +134,7 @@ void write_bits(int nbits, const unsigned long *bits)
 // implement any SWD protocol. The bits are expected to be clocked out on
 // the clock rising edge and then they are latched on the clock falling edge.
 // After it is done this function leaves the clock low.
-void read_bits(int nbits, volatile unsigned long *bits)
+static void read_bits(int nbits, volatile unsigned long *bits)
 {
 	int i;
 
@@ -175,19 +170,11 @@ void read_bits(int nbits, volatile unsigned long *bits)
 	}
 }
 
-// Send 8 0 bits to flush SWD state
-void swd_flush(void)
-{
-	unsigned long data = 0;
-
-	write_bits(8, &data);
-}
-
 // Send magic number to switch to SWD mode. This function sends many
 // zeros, 1s, then the magic number, then more 1s and zeros to try to
 // get the SWD state machine's attention if it is connected in some
 // unusual state.
-void swd_enable(void)
+static void swd_enable(void)
 {
 	unsigned long data;
 
@@ -233,7 +220,7 @@ void swd_enable(void)
 // by a 3-bit status response from the target and then a data phase
 // which is 32 bits of data + 1 bit of parity. This function reads
 // the three bit status responses.
-int swd_get_target_response(void)
+static int swd_get_target_response(void)
 {
 	unsigned long data;
 
@@ -244,7 +231,7 @@ int swd_get_target_response(void)
 
 // This function counts the number of 1s in an integer. It is used
 // to calculate parity. This is the MIT HAKMEM (Hacks Memo) implementation.
-int count_ones(unsigned long n)
+static int count_ones(unsigned long n)
 {
    register unsigned int tmp;
 
@@ -252,27 +239,12 @@ int count_ones(unsigned long n)
            - ((n >> 2) & 011111111111);
    return ((tmp + (tmp >> 3)) & 030707070707) % 63;
 }
-/*
-int count_ones(unsigned long bits)
-{
-	char i;
-	char ones = 0;
-
-	for(i=0;i<32;i++)
-	{
-		if(bits&1)
-			ones++;
-		bits >>= 1;
-	}
-
-	return ones;
-}*/
 
 // This is one of the two core SWD functions. It can write to a debug port
 // register or to an access port register. It implements the host->target
 // write request, reading the 3-bit status, and then writing the 33 bits
 // data+parity.
-int swd_write(char APnDP, int A, unsigned long data)
+static int swd_write(char APnDP, int A, unsigned long data)
 {
 	unsigned long wpr;
 	int response;
@@ -314,7 +286,7 @@ int swd_write(char APnDP, int A, unsigned long data)
 // register or an access port register. It implements the host->target
 // read request, reading the 3-bit status, and then reading the 33 bits
 // data+parity.
-int swd_read(char APnDP, int A, volatile unsigned long *data)
+static int swd_read(char APnDP, int A, volatile unsigned long *data)
 {
 	unsigned long wpr;
 	int response;
@@ -374,7 +346,7 @@ int swd_read(char APnDP, int A, volatile unsigned long *data)
 	return SWD_ACK;
 }
 
-void swd_setcsw(int addr, int size)
+static void swd_setcsw(int addr, int size)
 {
   unsigned long val;
   swd_read(1, 0x0, &val);   // Get AP reg 0
@@ -383,7 +355,7 @@ void swd_setcsw(int addr, int size)
   swd_write(1, 0, csw);
 }
 
-int swd_read32(int addr)
+static int swd_read32(int addr)
 {
   unsigned long value;
   int r = swd_write(1, 0x4, addr);   // Set address
@@ -399,7 +371,7 @@ int swd_read32(int addr)
   return value;
 }
 
-int swd_write32(int addr, int data)
+static int swd_write32(int addr, int data)
 {
   unsigned long value;
   int r = swd_write(1, 0x4, addr);   // Set address
@@ -415,7 +387,13 @@ int swd_write32(int addr, int data)
   return r;
 }
 
-int swd_write16(int addr, u16 data)
+// Send 8 0 bits to flush SWD state
+static void swd_flush(void)
+{
+	unsigned long data = 0;
+	write_bits(8, &data);
+}
+static int swd_write16(int addr, u16 data)
 {
   unsigned long value;
   swd_setcsw(1, 1);   // Switch to 16-bit mode    
@@ -432,10 +410,17 @@ int swd_write16(int addr, u16 data)
   swd_setcsw(1, 2);   // Back to 32-bit mode
   return r;
 }
-
+// Lock the JTAG port - upon next reset, JTAG will not work again - EVER
+// If you need a dev robot, you must have Pablo swap the CPU
+// Returns 0 on success, 1 on erase failure (chip will survive), 2 on program failure (dead)
+static int swd_lock_jtag(void)
+{
+  // TBD
+  return 0;
+}
 
 // Write a CPU register in the ARM core - mostly to set up PC and SP before execution
-void swd_write_cpu_reg(int reg, int value)
+static void swd_write_cpu_reg(int reg, int value)
 {
   // Wait for debug module to free up after last write
   int dhcsr;
@@ -448,7 +433,7 @@ void swd_write_cpu_reg(int reg, int value)
 }
 
 // Read a CPU register from the ARM core
-int swd_read_cpu_reg(int reg)
+static int swd_read_cpu_reg(int reg)
 {
   // Wait for debug module to free up from last write
   int dhcsr;
@@ -467,7 +452,7 @@ int swd_read_cpu_reg(int reg)
 }
 
 // Display a crash dump - for debugging the stub/firmware
-void swd_crash_dump()
+static void swd_crash_dump()
 {
   try {
     // Halt CPU
@@ -494,7 +479,7 @@ void swd_crash_dump()
 }
 
 // Initialize the chip
-void swd_chipinit(void)
+static void swd_chipinit(void)
 {
   unsigned long value, idcode;
   if (SWD_ACK != swd_read(0, 0, &idcode))   // Debug port (not AP), register 0 (IDCODE)
@@ -533,15 +518,6 @@ void swd_chipinit(void)
 
   // Better engineers use a breakpoint on the flash reset vector
   // But we're just going to assume our stub is safe to run without a boot ROM first
-}
-
-// Lock the JTAG port - upon next reset, JTAG will not work again - EVER
-// If you need a dev robot, you must have Pablo swap the CPU
-// Returns 0 on success, 1 on erase failure (chip will survive), 2 on program failure (dead)
-int swd_lock_jtag(void)
-{
-  // TBD
-  return 0;
 }
 
 // Set up the SWD GPIO

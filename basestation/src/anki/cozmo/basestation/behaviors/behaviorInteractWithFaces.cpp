@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/faceTracker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
@@ -31,6 +32,9 @@
 
 #define SKIP_REQUIRE_KNOWN_FACE 1
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace Anki {
 namespace Cozmo {
 
@@ -58,6 +62,9 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kRequestDelayNumLoops, "Behavior.InteractWithFaces", 5);
 
   CONSOLE_VAR_RANGED(f32, kEnrollRequestCooldownInterval_s, "Behavior.InteractWithFaces", 10.0f, 0.0f, 30.0f);
+  
+  CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 850.0f, 500.0f, 1300.0f);
+
 
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -84,10 +91,25 @@ namespace Cozmo {
                           "Disabling requirement to see a known face in order to enroll. This needs to be changed for the demo at some point");
       _readyToEnrollFace = true;
     }
+    
+    // - - - -
+    // parse smart score
+    // - - - -
+    // _smartScore
+    const Json::Value& smartScoreConfig = config["smartScore"];
+    if ( !smartScoreConfig.isNull() ) {
+      _smartScore._isValid = true; // something is defined, trust data
+      _smartScore._whileRunning = JsonTools::ParseFloat(smartScoreConfig, "flatScore_whileRunning", "BehaviorInteractWithFaces");
+      _smartScore._newKnownFace = JsonTools::ParseFloat(smartScoreConfig, "flatScore_newKnownFace", "BehaviorInteractWithFaces");
+      _smartScore._unknownFace  = JsonTools::ParseFloat(smartScoreConfig, "flatScore_unknownFace", "BehaviorInteractWithFaces");
+      _smartScore._unknownFace_cooldown = JsonTools::ParseFloat(smartScoreConfig, "flatScore_unknownFace_cooldown", "BehaviorInteractWithFaces");
+      _smartScore._oldKnownFace = JsonTools::ParseFloat(smartScoreConfig, "flatScore_oldKnownFace", "BehaviorInteractWithFaces");
+      _smartScore._oldKnownFace_secondsToVal = JsonTools::ParseFloat(smartScoreConfig, "flatScore_oldKnownFace_secondsToVal", "BehaviorInteractWithFaces");
+    }
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
-  {    
+  {
     TransitionToDispatch(robot);
     return RESULT_OK;
   }
@@ -97,6 +119,7 @@ namespace Cozmo {
     
   }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
   {
     // runnable if there are any faces that we might want to interact with
@@ -205,41 +228,104 @@ namespace Cozmo {
 
   float BehaviorInteractWithFaces::ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const
   {
-    // priority for interacting with faces
-    // 1. known face we haven't seen
-    // 2. unknown face
-    // 3. known face we've seen (prioritized by how recently it was seen)
-    // 4. Faces on cooldown (these will always have score -1)
+    if ( _smartScore._isValid )
+    {
+      // use new score system from json config
+      const float faceScore = ComputeFaceSmartScore(faceID, faceData);
+      return faceScore;
+    }
+    else
+    {
+      // priority for interacting with faces
+      // 1. known face we haven't seen
+      // 2. unknown face
+      // 3. known face we've seen (prioritized by how recently it was seen)
+      // 4. Faces on cooldown (these will always have score -1)
+      const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( currentTime_sec < faceData._coolDownUntil_sec || faceData._deleted ) {
+        // TODO:(bn) consider deleted faces? turn to the last known pose?
+        return -1.0f;
+      }
 
+      constexpr float kNewScore = 50.0f;
+      constexpr float kKnownFaceScore = 20.0f;
+
+      // add some randomness to break ties
+      float score = GetRNG().RandDbl();
+
+      // TEMP:  // TODO:(bn) better function for this?
+      if( faceID > 0 ) {
+        // we prefer faces we know, since they are more stable
+        score += kKnownFaceScore;
+       }
+
+      if( !faceData._playedNewFaceAnim ) {
+        score += kNewScore;
+       }
+   
+      // faces are deleted if they aren't seen for a while, so we assume that all of the faces in
+      // _interestingFacesData are still relevant, which means we want to look at the oldest one (so they are
+      // looked at in the order that the appeared)
+      const float timeSinceObservation = currentTime_sec - faceData._lastSeen_sec;
+      score += timeSinceObservation;
+      
+      return score;
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  float BehaviorInteractWithFaces::ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData) const
+  {
+    ASSERT_NAMED(_smartScore._isValid, "ComputeFaceSmartScore.RequiresSmartScore");
+  
+    // classes:
+    // + deleted/cooldown
+    // + known - new
+    // + known - old
+    // + unknown
+  
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
     if( currentTime_sec < faceData._coolDownUntil_sec || faceData._deleted ) {
-      // TODO:(bn) consider deleted faces? turn to the last known pose?
       return -1.0f;
     }
         
-    constexpr float kNewScore = 50.0f;
-    constexpr float kKnownFaceScore = 20.0f;
-
-    // add some randomness to break ties
-    float score = GetRNG().RandDbl();
-
-    // TEMP:  // TODO:(bn) better function for this?
-    if( faceID > 0 ) {
-      // we prefer faces we know, since they are more stable
-      score += kKnownFaceScore;
+    float score = 0.0f;
+    const bool isKnown = ( faceID > 0 );
+    const bool hasInteracted = FLT_GT(faceData._coolDownUntil_sec, 0.0f);
+    if ( isKnown )
+    {
+      if ( hasInteracted )
+      {
+        float factor = 1.0f;
+        const bool doFactorOverTime = FLT_GT(_smartScore._oldKnownFace_secondsToVal, 0.0f);
+        if ( doFactorOverTime ) {
+          // get the factor [0,1] depending on time passed and how long it takes to reach the full value
+          float timePassed = currentTime_sec - faceData._coolDownUntil_sec;
+          factor = Util::Clamp(timePassed / _smartScore._oldKnownFace_secondsToVal, 0.0f, 1.0f);
+        }
+        // KNOWN OLD
+        score = factor * _smartScore._oldKnownFace;
+      }
+      else
+      {
+        // KNOWN NEW
+        score = _smartScore._newKnownFace;
+      }
+    }
+    else
+    {
+      // UNKNOWN
+      ASSERT_NAMED(!hasInteracted, "BehaviorInteractWithFaces.UnknownFaceHasBeenSeen");
+      float timeSinceLastStop = currentTime_sec - _lastInteractionEndedTime_sec;
+      if ( timeSinceLastStop > _smartScore._unknownFace_cooldown ) {
+        score = _smartScore._unknownFace;
+      } else {
+        // we have interacted recently, we don't need to chase unknown faces yet, keep chilling to see
+        // if they become known, which would give us more information on cooldowns and desires
+        score = 0.0f;
+      }
     }
 
-    if( !faceData._playedNewFaceAnim ) {
-      score += kNewScore;
-    }
-
-    // faces are deleted if they aren't seen for a while, so we assume that all of the faces in
-    // _interestingFacesData are still relevant, which means we want to look at the oldest one (so they are
-    // looked at in the order that the appeared)
-    const float timeSinceObservation = currentTime_sec - faceData._lastSeen_sec;
-    score += timeSinceObservation;
-    
     return score;
   }
  
@@ -404,8 +490,16 @@ namespace Cozmo {
                             _currentFace,
                             data->_coolDownUntil_sec);
         }
+      
+        // StopInternal also sets this time, however, we want to use if for scoring, and StopInternal won't
+        // be called until we have already been kicked out as the running behavior, which won't probably happen
+        // if we don't set this cooldown now
+        const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        _lastInteractionEndedTime_sec = currentTime_sec;
 
-        TransitionToDispatch(robot);
+        // We should give up IsRunning after a successful iteration, to let chooser pick something else
+        // without having to interrupt us
+        // TransitionToDispatch(robot);
       });
   }
 
@@ -436,8 +530,47 @@ namespace Cozmo {
       SendDenyRequest(robot);
     }
     _currentState = State::Dispatch;
+    
+    const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _lastInteractionEndedTime_sec = currentTime_sec;
+  }
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float BehaviorInteractWithFaces::EvaluateRunningScoreInternal(const Robot& robot) const
+{
+  float ret = 0.0f;
+  if ( _smartScore._isValid ) {
+    ret = _smartScore._whileRunning;
+  } else {
+    ret = BaseClass::EvaluateRunningScoreInternal(robot);
   }
 
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
+{
+  float ret = 0.0f;
+  if ( _smartScore._isValid )
+  {
+    // the score for the behavior is that of the best face's score
+    for( const auto& facePair : _interestingFacesData )
+    {
+      float score = ComputeFaceSmartScore(facePair.first, facePair.second);
+      if ( score > ret ) {
+        ret = score;
+      }
+    }
+  }
+  else
+  {
+    ret = BaseClass::EvaluateScoreInternal(robot);
+  }
+  return ret;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BehaviorInteractWithFaces::ShouldEnrollCurrentFace(const Robot& robot)
   {
     if( !_readyToEnrollFace ) {
@@ -459,6 +592,30 @@ namespace Cozmo {
     FaceData* faceData = nullptr;
     if( ! GetCurrentFace(robot, face, faceData) ) {
       return false;
+    }
+    
+    // do not enroll if face is too far
+    if ( face->HasEyes() )
+    {
+      const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
+      const float eyeDistance = face->GetIntraEyeDistance();
+      // if your eye distance is smaller than the threshold, you are further away than we allow for enrollment
+      if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
+        return false;
+      }
+    }
+    else
+    {
+      Pose3d distanceToYourFace;
+      if ( !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), distanceToYourFace) ) {
+        return false;
+      }
+      
+      // check your face is close enough
+      const float kMaxDistanceFromRobotForEnrollment_mmSQ = kMaxDistanceFromRobotForEnrollment_mm * kMaxDistanceFromRobotForEnrollment_mm;
+      if ( distanceToYourFace.GetTranslation().LengthSq() > kMaxDistanceFromRobotForEnrollment_mmSQ ) {
+        return false;
+      }
     }
 
     // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this
@@ -710,7 +867,8 @@ namespace Cozmo {
   {
     _currentState = state;
     PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.TransitionTo", "%s", stateName.c_str());
-    SetStateName(stateName);
+    std::string debugString = "[" +std::to_string(_currentFace) + "]" + stateName;
+    SetStateName(debugString);
   }
 
   

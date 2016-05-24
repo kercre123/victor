@@ -15,10 +15,12 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -1143,16 +1145,18 @@ namespace Anki {
     TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
     , _poseWrtRobot(pose)
-    , _isPoseSet(true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    , _isPoseSet(true)
     {
+      
     }
     
     TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
-    , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    , _isPoseSet(false)
     {
+      
     }
     
     
@@ -1187,6 +1191,8 @@ namespace Anki {
     
     ActionResult TurnTowardsPoseAction::Init()
     {
+      _nothingToDo = false; // in case of re-run
+      
       if(!_isPoseSet) {
         PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseNotSet", "");
         return ActionResult::FAILURE_ABORT;
@@ -1218,10 +1224,12 @@ namespace Anki {
         if(turnAngle.getAbsoluteVal() <= _maxTurnAngle) {
           SetBodyPanAngle(turnAngle);
         } else {
-          PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.RequiredTurnTooLarge",
-                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
+          PRINT_NAMED_INFO("TurnTowardsPoseAction.Init.RequiredTurnTooLarge",
+                           "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
                             turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
-          return ActionResult::FAILURE_ABORT;
+          
+          _nothingToDo = true;
+          return ActionResult::SUCCESS;
         }
       }
       
@@ -1233,6 +1241,16 @@ namespace Anki {
       return PanAndTiltAction::Init();
       
     } // TurnTowardsPoseAction::Init()
+    
+    ActionResult TurnTowardsPoseAction::CheckIfDone()
+    {
+      if(_nothingToDo) {
+        return ActionResult::SUCCESS;
+      } else {
+        return PanAndTiltAction::CheckIfDone();
+      }
+    }
+    
     
     const std::string& TurnTowardsPoseAction::GetName() const
     {
@@ -1399,38 +1417,220 @@ namespace Anki {
     
 #pragma mark ---- TurnTowardsLastFacePoseAction ----
 
-    TurnTowardsLastFacePoseAction::TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle)
+    TurnTowardsLastFacePoseAction::TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle, bool sayName)
     : TurnTowardsPoseAction(robot, maxTurnAngle)
+    , _sayName(sayName)
     {
-      Pose3d pose;
-      // If we have a last observed face set the pose of it otherwise pose wil not be set and TurnTowardsPoseAction will return failure
-      if(robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
-      {
-        SetPose(pose);
-        _hasFace = true;
-      }
+     
     }
 
+    void TurnTowardsLastFacePoseAction::SetAction(IActionRunner *action)
+    {
+      if(nullptr != _action) {
+        _action->PrepForCompletion();
+        Util::SafeDelete(_action);
+      }
+      _action = action;
+    }
+    
+    TurnTowardsLastFacePoseAction::~TurnTowardsLastFacePoseAction()
+    {
+      SetAction(nullptr);
+      
+      // In case we got interrupted and didn't get a chance to do this
+      if(_tracksLocked) {
+        _robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
+                                               (u8)AnimTrackFlag::BODY_TRACK);
+      }
+    }
+    
     ActionResult TurnTowardsLastFacePoseAction::Init()
     {
-      if( _hasFace ) {
+      // If we have a last observed face set, use its pose. Otherwise pose wil not be set
+      // and TurnTowardsPoseAction will return failure.
+      Pose3d pose;
+      if(_robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
+      {
+        TurnTowardsPoseAction::SetPose(pose);
+        
+        _action = nullptr;
+        _obsFaceID = Vision::UnknownFaceID;
+        _closestDistSq = std::numeric_limits<f32>::max();
+        
+        if(_robot.HasExternalInterface())
+        {
+          using namespace ExternalInterface;
+          auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+          helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedFace>();
+          helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotChangedObservedFaceID>();
+        }
+        
+        _state = State::Turning;
+        _robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::HEAD_TRACK |
+                                             (u8)AnimTrackFlag::BODY_TRACK);
+        _tracksLocked = true;
+        
         return TurnTowardsPoseAction::Init();
-      }
-      else {
-        // this action is just a no-op without a face
+        
+      } else {
+        _state = State::SayingName; // jump to end
         return ActionResult::SUCCESS;
       }
-    }
+      
+    } // Init()
 
+    template<>
+    void TurnTowardsLastFacePoseAction::HandleMessage(const ExternalInterface::RobotObservedFace& msg)
+    {
+      Vision::FaceID_t faceID = msg.faceID;
+      if(_state == State::Turning || _state == State::WaitingForFace)
+      {
+        // Record this face if it is closer than any we've seen so far
+        const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(faceID);
+        if(nullptr != face) {
+          Pose3d faceWrtRobot;
+          if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), faceWrtRobot)) {
+            const f32 distSq = faceWrtRobot.GetTranslation().LengthSq();
+            if(distSq < _closestDistSq) {
+              _obsFaceID = faceID;
+              _closestDistSq = distSq;
+              PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.ObservedFaceCallback",
+                                "Observed ID=%d at distSq=%.1f",
+                                _obsFaceID, _closestDistSq);
+            }
+          }
+        }
+      }
+    } // HandleMessage(RobotObservedFace)
+    
+    
+    template<>
+    void TurnTowardsLastFacePoseAction::HandleMessage(const ExternalInterface::RobotChangedObservedFaceID& msg)
+    {
+      if(_obsFaceID == msg.oldID) {
+        PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.HandleChangedFaceIDMessage",
+                          "Updating fine-tune ID from %d to %d",
+                          _obsFaceID, msg.newID);
+        _obsFaceID = msg.newID;
+      }
+    } // HandleMessage(RobotChangedObservedFaceID)
+    
+    
+    void TurnTowardsLastFacePoseAction::CreateFineTuneAction()
+    {
+      PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.CreateFinalAction.SawFace",
+                        "Observed ID=%d. Will fine tune.", _obsFaceID);
+                        
+      const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
+      if(nullptr != face) {
+        // Valid face...
+        Pose3d pose;
+        if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
+          // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
+          // require too large of an adjustment.
+          TurnTowardsPoseAction* fineTune = new TurnTowardsPoseAction(_robot, pose, DEG_TO_RAD(45));
+          fineTune->ShouldSuppressTrackLocking(true); // We're already locking... would cause conflict.
+          SetAction(fineTune);
+        }
+      } else {
+        SetAction(nullptr);
+      }
+      
+      _state = State::FineTuning;
+    } // CreateFineTuneAction()
+    
+    
     ActionResult TurnTowardsLastFacePoseAction::CheckIfDone()
     {
-      if( _hasFace ) {
-        return TurnTowardsPoseAction::CheckIfDone();
-      }
-      else {
-        return ActionResult::SUCCESS;
-      }
-    }
+      ActionResult result = ActionResult::RUNNING;
+      
+      switch(_state)
+      {
+        case State::Turning:
+        {
+          result = TurnTowardsPoseAction::CheckIfDone();
+          if(ActionResult::RUNNING != result) {
+            _robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
+                                                   (u8)AnimTrackFlag::BODY_TRACK);
+            _tracksLocked = false;
+          }
+          
+          if(ActionResult::SUCCESS == result)
+          {
+            // Initial (blind) turning to pose finished...
+            if(_obsFaceID == Vision::UnknownFaceID) {
+              // ...didn't see a face yet, wait a couple of images to see if we do
+              PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.CheckIfDone.NoFaceObservedYet",
+                                "Will wait no more than %d frames",
+                                _maxFramesToWait);
+              ASSERT_NAMED(nullptr == _action, "TurnTowardsLastFacePoseAction.CheckIfDone.ActionPointerShouldStillBeNull");
+              auto waitAction = new WaitForImagesAction(_robot, _maxFramesToWait);
+              waitAction->ShouldSuppressTrackLocking(true);
+              SetAction(waitAction);
+              _state = State::WaitingForFace;
+            } else {
+              // ...if we've already seen a face, jump straight to turning
+              // towards that face and (optionally) saying name.
+              CreateFineTuneAction(); // Moves to State:FineTuning
+            }
+            result = ActionResult::RUNNING;
+          }
+          
+          break;
+        }
+          
+        case State::WaitingForFace:
+        {
+          result = _action->Update();
+          if(_obsFaceID != Vision::UnknownFaceID) {
+            // We saw a face. Turn towards it and (optionally) say name.
+            CreateFineTuneAction(); // Moves to State:FineTuning
+            result = ActionResult::RUNNING;
+          }
+          break;
+        }
+          
+        case State::FineTuning:
+        {
+          if(nullptr == _action) {
+            // No final action, just done.
+            result = ActionResult::SUCCESS;
+          } else {
+            // Wait for final action of fine-tune turning to complete.
+            // Create action to say name if enabled and we have a name by now.
+            result = _action->Update();
+            if(ActionResult::SUCCESS == result && _sayName)
+            {
+              const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
+              if(nullptr != face && !face->GetName().empty())
+              {
+                SetAction(new SayTextAction(_robot, face->GetName(), SayTextStyle::Name_Normal, false));
+                _state = State::SayingName;
+                result = ActionResult::RUNNING;
+              }
+            }
+          }
+          break;
+        }
+          
+        case State::SayingName:
+        {
+          if(nullptr == _action) {
+            // No say name action, just done
+            result = ActionResult::SUCCESS;
+          } else {
+            // Wait for say name action to finish
+            result = _action->Update();
+          }
+            
+          break;
+        }
+          
+      } // switch(_state)
+      
+      return result;
+      
+    } // TurnTowardsLastFacePose::CheckIfDone()
 
   
     const std::string& TurnTowardsLastFacePoseAction::GetName() const
@@ -1445,15 +1645,16 @@ namespace Anki {
                                                                IActionRunner* action,
                                                                bool turnBeforeAction,
                                                                bool turnAfterAction,
-                                                               Radians maxTurnAngle)
+                                                               Radians maxTurnAngle,
+                                                               bool sayName)
       : CompoundActionSequential(robot)
     {
       if( turnBeforeAction ) {
-        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle) );
+        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) );
       }
       AddAction(action);
       if( turnAfterAction ) {
-        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle) ) ;
+        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) ) ;
       }
     }  
     
@@ -1482,6 +1683,44 @@ namespace Anki {
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _doneTimeInSeconds) {
         return ActionResult::SUCCESS;
       } else {
+        return ActionResult::RUNNING;
+      }
+    }
+    
+#pragma mark ---- WaitForImagesAction ----
+    
+    WaitForImagesAction::WaitForImagesAction(Robot& robot, u32 numFrames, TimeStamp_t afterTimeStamp)
+    : IAction(robot)
+    , _numFramesToWaitFor(numFrames)
+    , _afterTimeStamp(afterTimeStamp)
+    {
+      _name = "WaitFor" + std::to_string(_numFramesToWaitFor) + "Images";
+    }
+    
+    ActionResult WaitForImagesAction::Init()
+    {
+      _numFramesSeen = 0;
+      
+      auto imageProcLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
+      {
+        if(msg.GetData().Get_RobotProcessedImage().timestamp > _afterTimeStamp) {
+          ++_numFramesSeen;
+          PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d",
+                            _numFramesSeen, _numFramesToWaitFor);
+        }
+      };
+      
+      _imageProcSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage, imageProcLambda);
+      
+      return ActionResult::SUCCESS;
+    }
+    
+    ActionResult WaitForImagesAction::CheckIfDone()
+    {
+      if(_numFramesSeen >= _numFramesToWaitFor) {
+        return ActionResult::SUCCESS;
+      }
+      else {
         return ActionResult::RUNNING;
       }
     }

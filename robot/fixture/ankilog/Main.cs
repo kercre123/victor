@@ -338,6 +338,7 @@ namespace AnkiLog
                     port.Write(m_safe, index, 1);
                     if ('1' != port.ReadByte())
                         return;
+                    System.Console.WriteLine("HeadAck " + index);
                 }
 
                 // Send the remaining data blocks
@@ -354,6 +355,7 @@ namespace AnkiLog
 
                     if ('1' != port.ReadByte())
                         return;
+                    System.Console.WriteLine("BlockAck " + index);
                 }
                 System.Console.WriteLine("Flash successful");
             }
