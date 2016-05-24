@@ -1008,8 +1008,11 @@ namespace Anki {
       }
       
       /////////// Update discovered active objects //////
-      for (const auto& obj : _discoveredObjects) {
-        if (GetLastMsgTimestamp() - obj.second.lastDiscoveredTimeStamp > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+      for (auto iter = _discoveredObjects.begin(); iter != _discoveredObjects.end();) {// Note not incrementing the iterator here
+        const auto& obj = *iter;
+        const int32_t maxTimestamp = 10 * Util::numeric_cast<int32_t>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS);
+        const int32_t timeStampDiff = Util::numeric_cast<int32_t>(GetLastMsgTimestamp()) - Util::numeric_cast<int32_t>(obj.second.lastDiscoveredTimeStamp);
+        if (timeStampDiff > maxTimestamp) {
           if (_enableDiscoveredObjectsBroadcasting) {
             PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",
                              "FactoryID 0x%x (type: %s, lastObservedTime %d, currTime %d)",
@@ -1020,7 +1023,10 @@ namespace Anki {
             ExternalInterface::ObjectUnavailable m(obj.first);
             Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
           }
-          _discoveredObjects.erase(obj.first);
+          iter = _discoveredObjects.erase(iter);
+        }
+        else {
+          ++iter;
         }
       }
 
