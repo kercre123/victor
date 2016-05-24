@@ -1,12 +1,13 @@
 #include <stdint.h>
 
+#include "random.h"
+
+#ifdef NRF51
 extern "C" {
   #include "nrf.h" 
   #include "nrf_sdm.h"
   #include "nrf_soc.h"
 }
-
-#include "random.h"
 
 static inline void sd_rand(void* ptr, int length) {
   uint8_t* data = (uint8_t*)ptr;
@@ -47,3 +48,6 @@ void gen_random(void* ptr, int length) {
     }
   }
 }
+#else
+#error "IMPLEMENTATION NEEDED FOR GEN_RANDOM FOR THIS ARCHITECTURE"
+#endif

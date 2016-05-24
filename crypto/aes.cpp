@@ -1,29 +1,15 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "aes.h"
+#include "random.h"
+
+#ifdef NRF51
+
 extern "C" {
   #include "nrf.h" 
   #include "nrf_sdm.h"
   #include "nrf_soc.h"
-}
-
-#include "aes.h"
-#include "random.h"
-#include "../hal/storage.h"
-
-// Top 16 bytes of application space
-void aes_key_init() {
-  if (aes_key() != NULL) {
-    return ;
-  }
-  
-  uint8_t key[AES_KEY_LENGTH];
-  gen_random(key, AES_KEY_LENGTH);
-  Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
-}
-
-const void* aes_key() {
-  return Storage::get_lazy(STORAGE_AES_KEY);
 }
 
 void aes_ecb(ecb_data_t* ecb) {
@@ -40,8 +26,17 @@ void aes_ecb(ecb_data_t* ecb) {
     while (!NRF_ECB->EVENTS_ENDECB) ;
   }
 }
+#else
 
-int aes_encode(uint8_t* data, int length) {
+#include "aes128.cpp"
+
+void aes_ecb(ecb_data_t* ecb) {
+  AES128_ECB_encrypt(ecb->cleartext, ecb->key, ecb->ciphertext)
+}
+
+#endif
+
+int aes_encode(const void* key, uint8_t* data, int length) {
   ecb_data_t ecb;
 
   // This forces the block length to be a multiple of 16
@@ -53,7 +48,7 @@ int aes_encode(uint8_t* data, int length) {
     length += AES_BLOCK_LENGTH;
   }
 
-  memcpy(ecb.key, aes_key(), AES_KEY_LENGTH);
+  memcpy(ecb.key, key, AES_KEY_LENGTH);
   
   gen_random(ecb.cleartext, AES_BLOCK_LENGTH);
 
@@ -72,10 +67,10 @@ int aes_encode(uint8_t* data, int length) {
   return length + AES_BLOCK_LENGTH;
 }
 
-int aes_decode(uint8_t* data, int length) {
+int aes_decode(const void* key, uint8_t* data, int length) {
   ecb_data_t ecb;
   
-  memcpy(ecb.key, aes_key(), AES_KEY_LENGTH);
+  memcpy(ecb.key, key, AES_KEY_LENGTH);
   memcpy(ecb.cleartext, data, AES_BLOCK_LENGTH);
 
   uint8_t *block = data + AES_BLOCK_LENGTH;

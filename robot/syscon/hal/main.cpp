@@ -85,7 +85,7 @@ static void setupOperatingMode() {
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       Radio::shutdown();
-      
+
       // Start advertising
       Motors::stop();
       Bluetooth::advertise();
@@ -94,6 +94,8 @@ static void setupOperatingMode() {
     case BODY_WIFI_OPERATING_MODE:
       DTM::stop();
       Bluetooth::shutdown();
+
+      Motors::init();
 
       Radio::advertise();
       Backpack::lightMode(TIMER_LEDS);

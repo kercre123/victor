@@ -54,7 +54,7 @@ void dh_start(DiffieHellman* dh) {
   mont_power(*dh->mont, dh->state, *dh->gen, secret);
 }
 
-void dh_finish(DiffieHellman* dh) {
+void dh_finish(const void* key, DiffieHellman* dh) {
   // Encode their secret for exponent
   big_num_t temp;
 
@@ -67,7 +67,7 @@ void dh_finish(DiffieHellman* dh) {
   ecb_data_t ecb;
   
   memcpy(ecb.key, temp.digits, AES_KEY_LENGTH);
-  memcpy(ecb.cleartext, aes_key(), AES_BLOCK_LENGTH);
+  memcpy(ecb.cleartext, key, AES_BLOCK_LENGTH);
   
   aes_ecb(&ecb);
 

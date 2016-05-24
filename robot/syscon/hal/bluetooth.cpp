@@ -108,7 +108,7 @@ static void dh_complete(const void*, int) {
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = *(const uint32_t*)aes_key();
+  dn.value = *(const uint32_t*)Crypto::aes_key();
   dn.digits = 8;
   dn.x = 0;
   dn.y = 16;

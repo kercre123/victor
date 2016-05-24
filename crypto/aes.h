@@ -18,9 +18,8 @@ struct ecb_data_t
 
 
 void aes_key_init();
-const void* aes_key();
 void aes_ecb(ecb_data_t* ecb);
-int aes_decode(uint8_t* data, int length);
-int aes_encode(uint8_t* data, int length);
+int aes_decode(const void* key, uint8_t* data, int length);
+int aes_encode(const void* key, uint8_t* data, int length);
 
 #endif
