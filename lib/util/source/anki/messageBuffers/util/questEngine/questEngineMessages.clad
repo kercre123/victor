@@ -1,0 +1,36 @@
+namespace Anki {
+namespace Util {
+namespace QuestEngine {
+
+message NoticePair {
+  bool force,
+  uint_8 priority,
+  float_64 noticeTime,
+  string guid,
+  string target,
+  string titleKey,
+  string descriptionKey,
+  string buttonKey,
+  string navigationAction,
+}
+
+message EventPair {
+  string eventName,
+  uint_32 count,
+}
+
+message TriggerLog {
+  string ruleId,
+  float_64 triggerTimes[uint_16],
+}
+
+message QuestStore {
+  EventPair eventStats[uint_16],
+  NoticePair notices[uint_16],
+  TriggerLog ruleTriggers[uint_16],
+}
+
+}
+}
+}
+

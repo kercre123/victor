@@ -37,6 +37,8 @@ def main(scriptArgs):
                       help='builds mathlab\'s mex project')
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
+  parser.add_argument('--with-clad', metavar='CLAD_PATH', dest='cladPath', action='store', default=None,
+                        help='Use clad installation located at CLAD_PATH')  
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
                       help='Use build tools located at BUILD_TOOLS_PATH')
   parser.add_argument('--ankiUtil', metavar='ANKI_UTIL_PATH', dest='ankiUtilPath', action='store', default=None,
@@ -90,7 +92,7 @@ def main(scriptArgs):
     projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
 
   if not options.buildToolsPath:
-    options.buildToolsPath = os.path.join(options.projectRoot, 'tools/anki-util/tools/build-tools')
+    options.buildToolsPath = os.path.join(options.projectRoot, 'tools/build')
   if not os.path.exists(options.buildToolsPath):
     UtilLog.error('build tools not found [%s]' % (options.buildToolsPath) )
     return False
@@ -108,7 +110,7 @@ def main(scriptArgs):
   coretechInternalProjectPath = os.path.join(options.coretechInternalPath, 'project/gyp/coretech-internal.gyp')
 
   if not options.ankiUtilPath:
-    options.ankiUtilPath = os.path.join(options.projectRoot, 'tools/anki-util')
+    options.ankiUtilPath = os.path.join(options.projectRoot, 'lib/util')
   if not os.path.exists(options.ankiUtilPath):
     UtilLog.error('anki-util not found [%s]' % (options.ankiUtilPath) )
     return False
@@ -152,7 +154,7 @@ def main(scriptArgs):
       return False
     coretechExternalPath = options.coretechExternalPath
 
-    gypPath = os.path.join(options.buildToolsPath, 'gyp')
+    gypPath = os.path.join(options.projectRoot, 'tools/gyp')
     if (options.gypPath is not None):
       gypPath = options.gypPath
 
@@ -219,8 +221,9 @@ def main(scriptArgs):
   
   if options.updateListsOnly:
     if (subprocess.call([os.path.join(options.coretechInternalPath, 'project/gyp/configure.py'),
-     '--updateListsOnly', '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath]) != 0):
-      UtilLog.error("error executing anki-util configure")
+     '--updateListsOnly', '--ankiUtil', options.ankiUtilPath, '--buildTools', options.buildToolsPath,
+     '--with-clad', options.cladPath ]) != 0):
+      UtilLog.error("error executing submodule configure")
       return False
     return True
 
@@ -229,7 +232,8 @@ def main(scriptArgs):
     # TODO: we should pass in our own options with any additional overides..
     # subproject might need to know about the build-tools location, --verbose, and other args...
     if (subprocess.call([os.path.join(options.coretechInternalPath, 'project/gyp/configure.py'),
-     '--platform', platform, '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath, '--updateListsOnly']) != 0):
+     '--platform', platform, '--ankiUtil', options.ankiUtilPath, '--updateListsOnly', '--buildTools', options.buildToolsPath,
+     '--with-clad', options.cladPath ]) != 0):
       UtilLog.error("error executing submodule configure")
       return False
 
@@ -247,6 +251,8 @@ def main(scriptArgs):
   audioProjectPath = os.path.abspath(os.path.join(configurePath, options.audioPath))
   bleCozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
   dasProjectPath = os.path.relpath(dasProjectPath, configurePath)
+  # paths relative to gyp file
+  clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
 
   # mac
   if 'mac' in options.platforms:
@@ -275,6 +281,7 @@ def main(scriptArgs):
                                   cg-audio_path={11}
                                   ce-ble_cozmo_path={12}
                                   ce-das_path={13}
+                                  clad_dir={14}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -290,6 +297,7 @@ def main(scriptArgs):
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
                                     dasProjectPath,
+                                    clad_dir_rel,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -326,6 +334,7 @@ def main(scriptArgs):
                                 cg-audio_path={11}
                                 ce-ble_cozmo_path={12}
                                 ce-das_path={13}
+                                clad_dir={14}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -341,6 +350,7 @@ def main(scriptArgs):
                                   audioProjectGypPath,
                                   bleCozmoProjectPath,
                                   dasProjectPath,
+                                  clad_dir_rel,
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -372,6 +382,7 @@ def main(scriptArgs):
                                   ce-audio_path={10}
                                   ce-ble_cozmo_path={11}
                                   ce-das_path={12}
+                                  clad_dir={13}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mex'),
@@ -386,6 +397,7 @@ def main(scriptArgs):
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
                                     dasProjectPath,
+                                    clad_dir_rel,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
       gyp.main(gypArgs)
@@ -453,6 +465,7 @@ def main(scriptArgs):
                                 cg-audio_path={12}
                                 ce-ble_cozmo_path={13}
                                 ce-das_path={14}
+                                clad_dir={15}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -469,6 +482,7 @@ def main(scriptArgs):
                                   audioProjectGypPath,
                                   bleCozmoProjectPath,
                                   dasProjectPath,
+                                  clad_dir_rel,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')

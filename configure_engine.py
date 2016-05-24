@@ -14,7 +14,8 @@ import time
 ENGINE_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
 EXTERNALS_ROOT = os.path.join(ENGINE_ROOT, 'EXTERNALS')
 CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
-BUILD_TOOLS_ROOT = os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'tools', 'build-tools', 'tools')
+BUILD_TOOLS_ROOT = os.path.join(ENGINE_ROOT, 'tools', 'build', 'tools')
+CLAD_ROOT = os.path.join(ENGINE_ROOT, 'tools', 'message-buffers')
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.util
 import ankibuild.xcode
@@ -338,6 +339,7 @@ def generate_gyp(path, command, platform, options, dep_location):
         extract_dependencies(dep_location, EXTERNALS_ROOT)
 
     arguments += ['--coretechExternal', CTE_ROOT]
+    arguments += ['--with-clad', CLAD_ROOT]
     if os.environ.get("EXTERNALS_DIR"):
         arguments += ['--externals', os.environ.get("EXTERNALS_DIR")]
     else:

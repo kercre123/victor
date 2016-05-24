@@ -1,0 +1,108 @@
+{
+   GameStateController_static_factory_map
+   Memcheck:Leak
+   ...
+   fun:_ZN11BaseStation3GMO19GameStateController14CreateGameTypeERKN8MetaGame12GameSettingsE
+   fun:_ZN11BaseStation3GMO19GameStateController4InitEPNS_9IPausableEPNS_16IProfileAccessorERKN8MetaGame12GameSettingsE
+   ...
+}
+{
+   GameStateController_static_factory_map
+   Memcheck:Leak
+   ...
+   fun:_ZN11BaseStation3GMO19GameStateController14CreateGameTypeERKN8MetaGame12GameSettingsE
+   fun:_ZN11BaseStation3GMO19GameStateController4InitEPNS_9IPausableEPKNS_16IProfileAccessorERKN8MetaGame12GameSettingsE
+   ...
+}
+{
+   character_controller_static_string_map
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:_ZN8MetaGame10Characters39GetCharacterEmotionEventEntryFromStringERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE
+   fun:_ZN8MetaGame10Characters20CharacterEmotionData16ReloadFromConfigERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEESB_NS5_4lessISB_EEEESG_
+   fun:_ZN8MetaGame10Characters26CharacterEmotionController24LoadCharacterEmotionDataERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEESB_NS5_4lessISB_EEEESG_
+   fun:_ZN8MetaGame10Characters26CharacterEmotionController15ReloadFromPtreeERN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEESB_NS5_4lessISB_EEEE
+   fun:_ZN8MetaGame18MetaGameController10InitializeEPN11BaseStation8PlatformERKN5boost13property_tree11basic_ptreeINSt3__112basic_stringIcNS7_11char_traitsIcEENS7_9allocatorIcEEEESD_NS7_4lessISD_EEEE
+   ...
+}
+{
+   tonys-profile-strings-osx10.10
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__sub_I_profileDataKeys.cpp
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   scrambler-consol-var-osx10.10
+   Memcheck:Leak
+   ...
+   fun:_ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
+   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader19processInitializersERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+   fun:_ZN4dyld24initializeMainExecutableEv
+   fun:_ZN4dyld5_mainEPK12macho_headermiPPKcS5_S5_Pm
+   fun:_ZN13dyldbootstrap5startEPK12macho_headeriPPKclS2_Pm
+   fun:_dyld_start
+   ...
+}
+{
+   localtime-osx10.10
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:localtime
+   fun:_Z16getDASTimeStringRNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+   fun:_DAS_Log
+   ...
+}
+{
+   emotion-events
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:atexit_register
+   fun:__cxa_atexit
+   fun:_ZN8MetaGame10Characters39GetCharacterEmotionEventEntryFromStringERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE
+   ...
+}
+{
+   road-network-read-line
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_ZN11BaseStation8ReadLineEP7__sFILEPKcz
+   fun:_ZN11BaseStation23RoadPieceFileDefinition34ParseLegacyRoadPieceDefinitionFileERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE
+   fun:_ZN11BaseStation20RoadPieceDefinitions24parseLegacyRoadPieceFileERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE
+   fun:_ZN11BaseStation20RoadPieceDefinitions4InitEv
+   ...
+}
+{
+   fake-das-local-storage
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_Znwm
+   fun:_DAS_Log
+   ...
+}
+{
+   static-color-vector
+   Memcheck:Leak
+   ...
+   fun:_ZN8MetaGame16LightDefinitions8GetColorEm
+   ...
+}

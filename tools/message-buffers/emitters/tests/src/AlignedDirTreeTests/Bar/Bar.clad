@@ -1,0 +1,12 @@
+#include "AnkiEnum/AnkiEnum.clad"
+
+message Bar {
+  bool     boolBuff[8],
+  int_8    byteBuff[2],
+  int_16   shortBuff[3],
+  int_64   longlong,
+  float_64 doubleBuff[3],
+  AnkiTypes::AnkiEnum enumBuff[4],
+  //string[uint_16] myLongerString,
+  int_16   fixedBuff[20]
+}

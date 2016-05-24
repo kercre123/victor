@@ -13,13 +13,13 @@ if [ -z $GIT ];then
   exit 1
 fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
-BUILDTOOLS=$TOPLEVEL/tools/anki-util/tools/build-tools
+BUILDTOOLS=$TOPLEVEL/tools/build
 
 # prepare
 PROJECT=$TOPLEVEL/$PROJECTROOT/generated/mac
 BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
-GTEST=$TOPLEVEL/tools/anki-util/libs/framework/
+GTEST=$TOPLEVEL/lib/util/libs/framework/
 
 # build
 xcodebuild \

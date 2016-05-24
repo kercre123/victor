@@ -14,8 +14,8 @@ def _modify_path():
     searchpath = os.path.normpath(os.path.abspath(os.path.realpath(searchpath)))
     if searchpath not in sys.path:
         sys.path.insert(0, searchpath)
-    sys.path.insert(0, os.path.join('..', 'tools', 'anki-util', 'tools', 'message-buffers'))
-    sys.path.insert(0, os.path.join('..', '..', 'tools', 'anki-util', 'tools', 'message-buffers'))
+    sys.path.insert(0, os.path.join('..', 'tools', 'message-buffers'))
+    sys.path.insert(0, os.path.join('..', '..', 'tools', 'message-buffers'))
 _modify_path()
 
 from clad import ast
