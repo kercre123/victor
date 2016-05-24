@@ -212,10 +212,11 @@ namespace Anki
         case PST_POINT_TURN:
         {
           const PathSegmentDef::s_turn& seg = def_.turn;
-          CoreTechPrint("ptTurn: x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)\n",
+          CoreTechPrint("ptTurn: x %f, y %f, targetAngle %f, tol %fdeg speed/accel/decel = (%f, %f, %f)\n",
                  seg.x,
                  seg.y,
                  seg.targetAngle,
+                 RAD_TO_DEG( seg.angleTolerance ),
                  GetTargetSpeed(),
                  GetAccel(),
                  GetDecel());
