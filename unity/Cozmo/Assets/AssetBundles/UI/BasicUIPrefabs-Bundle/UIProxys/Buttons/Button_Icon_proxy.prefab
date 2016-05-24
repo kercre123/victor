@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Interactable: 1
   _TextLabel: {fileID: 0}
-  _TextLabelOffset: -5
+  _TextLabelOffset: 0
   TextEnabledColor: {r: 0.7019608, g: 0.89411765, b: 1, a: 1}
   TextPressedColor: {r: 0.40727723, g: 0.5286883, b: 0.5955882, a: 1}
   TextDisabledColor: {r: 0.7019608, g: 0.8941177, b: 1, a: 0.20392157}
@@ -145,6 +145,10 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _UISoundEvent._GameObjectType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TextLabelOffset
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

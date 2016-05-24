@@ -80,7 +80,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.72156864, g: 0.8745098, b: 0.36078432, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -147,7 +147,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Interactable: 1
   _TextLabel: {fileID: 11492386}
-  _TextLabelOffset: -5
+  _TextLabelOffset: 0
   TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   TextPressedColor: {r: 0.28676468, g: 0.2837336, b: 0.23826772, a: 1}
   TextDisabledColor: {r: 0.41176474, g: 0.40784317, b: 0.34901962, a: 0.316}
@@ -325,7 +325,7 @@ Prefab:
         type: 3}
     - target: {fileID: 0}
       propertyPath: _TextLabelOffset
-      value: -5
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

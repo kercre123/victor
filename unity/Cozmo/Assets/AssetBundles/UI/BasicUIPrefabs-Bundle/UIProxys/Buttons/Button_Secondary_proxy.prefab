@@ -135,7 +135,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Interactable: 1
   _TextLabel: {fileID: 11492938}
-  _TextLabelOffset: -5
+  _TextLabelOffset: 0
   TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   TextPressedColor: {r: 0.27205884, g: 0.26880816, b: 0.2200476, a: 1}
   TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 0.3882353}
@@ -341,7 +341,7 @@ Prefab:
         type: 3}
     - target: {fileID: 0}
       propertyPath: _TextLabelOffset
-      value: -5
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
