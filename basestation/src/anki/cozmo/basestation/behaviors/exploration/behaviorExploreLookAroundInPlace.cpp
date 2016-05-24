@@ -108,6 +108,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax", debugName);
   _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection", debugName);
+  _configParams.behavior_ShouldLowerLift = ParseBool(config, "behavior_ShouldLowerLift", debugName);
   _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg", debugName);
   // turn speed
   _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
@@ -160,9 +161,15 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   if( _configParams.behavior_ShouldResetTurnDirection ) {
     DecideTurnDirection();
   }
-  
-  // start first iteration
-  TransitionToS1_OppositeTurn(robot);
+
+  // if we should lower the lift, do that now
+  if( _configParams.behavior_ShouldLowerLift ) {
+    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn);
+  }
+  else {
+    TransitionToS1_OppositeTurn(robot);
+  }
 
   return Result::RESULT_OK;
 }

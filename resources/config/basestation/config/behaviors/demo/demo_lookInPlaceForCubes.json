@@ -11,6 +11,7 @@
   "params":
   {
     "behavior_ShouldResetTurnDirection": false,
+    "behavior_ShouldLowerLift": true,
     "behavior_DistanceFromRecentLocationMin_mm": 40.0,
     "behavior_RecentLocationsMax": 1,
     "behavior_AngleOfFocus_deg": 0.0,
