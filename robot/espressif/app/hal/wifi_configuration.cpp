@@ -179,7 +179,7 @@ namespace WiFiConfiguration {
     
     //i2spiSwitchMode(I2SPI_PAUSED);
     
-    if (msg.rfMax_dBm <= 82) // A valid dBm, use 0xff to disable setting
+    if (msg.rfMax_dBm <= MAX_TPW) // A valid dBm, use 0xff to disable setting
     {
       system_phy_set_max_tpw(msg.rfMax_dBm);
     }
