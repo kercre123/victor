@@ -14,8 +14,7 @@ public class UIManager : MonoBehaviour {
   public static UIManager Instance {
     get {
       if (_Instance == null) {
-        DAS.Error("UIManager.NullInstance", "Do not access UIManager until start");
-        DAS.Error("UIManager null stack trace", System.Environment.StackTrace);
+        DAS.Error("UIManager.NullInstance", "Do not access UIManager until start: " + System.Environment.StackTrace);
       }
       return _Instance;
     }
