@@ -129,7 +129,7 @@ namespace Cozmo {
     
     bool isRunnable = false;
     for(auto & faceData : _interestingFacesData) {
-      if( ComputeFaceScore(faceData.first, faceData.second) > 0.0f ) {
+      if( ComputeFaceScore(faceData.first, faceData.second, robot) > 0.0f ) {
         isRunnable = true;
         break;
       }
