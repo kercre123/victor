@@ -103,6 +103,10 @@ uint32_t uesb_init(const uesb_config_t *parameters)
 
 uint32_t uesb_disable(void)
 {
+  if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
+    return UESB_SUCCESS;
+  }
+  
   while(m_uesb_mainstate != UESB_STATE_IDLE) { uesb_stop(); }
   m_uesb_mainstate = UESB_STATE_UNINITIALIZED;
 

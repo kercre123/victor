@@ -47,6 +47,7 @@ namespace Vision {
     void EnableDisplay(bool enabled) { }
     
     static bool IsRecognitionSupported() { return true; }
+    static float GetMinEyeDistanceForEnrollment();
     
     void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
                                Vision::FaceID_t forFaceID,

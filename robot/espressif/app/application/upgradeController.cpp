@@ -327,34 +327,37 @@ namespace UpgradeController {
           }
           else
           {
-            if (fwb->blockAddress == 0xFFFFffff)
+	    if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
             {
-              // TODO something with signature header
-              #if DEBUG_OTA
-              os_printf("OTA Sig header\r\n");
-              #endif
-              retries = MAX_RETRIES;
-              bufferUsed -= sizeof(FirmwareBlock);
-              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-              bytesProcessed += sizeof(FirmwareBlock);
-              ack.bytesProcessed = bytesProcessed;
-              ack.result = OKAY;
-              RobotInterface::SendMessage(ack);
-            }
-            else if (fwb->blockAddress == 0xFFFFfffc) // Comment block, ignore
-            {
-              #if DEBUG_OTA
-              os_printf("OTA comment\r\n");
-              #endif
-              retries = MAX_RETRIES;
-              bufferUsed -= sizeof(FirmwareBlock);
-              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-              bytesProcessed += sizeof(FirmwareBlock);
-              ack.bytesProcessed = bytesProcessed;
-              ack.result = OKAY;
-              RobotInterface::SendMessage(ack);
-            }
-            else if (fwb->blockAddress & 0x40000000) // Destined for the Espressif flash
+              if (fwb->blockAddress == CERTIFICATE_BLOCK)
+              {
+                // TODO something with signature header
+                #if DEBUG_OTA
+                os_printf("OTA Sig header\r\n");
+                #endif
+                retries = MAX_RETRIES;
+                bufferUsed -= sizeof(FirmwareBlock);
+                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+                bytesProcessed += sizeof(FirmwareBlock);
+                ack.bytesProcessed = bytesProcessed;
+                ack.result = OKAY;
+                RobotInterface::SendMessage(ack);
+              }
+              else if (fwb->blockAddress == COMMENT_BLOCK)
+              {
+                #if DEBUG_OTA
+                os_printf("OTA comment\r\n");
+                #endif
+                retries = MAX_RETRIES;
+                bufferUsed -= sizeof(FirmwareBlock);
+                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+                bytesProcessed += sizeof(FirmwareBlock);
+                ack.bytesProcessed = bytesProcessed;
+                ack.result = OKAY;
+                RobotInterface::SendMessage(ack);
+              }
+	    }
+            else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
             {
               const uint32 destAddr = ESP_FW_WRITE_ADDRESS + (fwb->blockAddress & ESP_FW_ADDR_MASK);
               #if DEBUG_OTA

@@ -350,13 +350,16 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       SendRobotMessage<CubeLights>(lights, payload.objectID);
       
       // if a charger, and robot is on the charger, add a pose for the charager
-      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER && IsOnCharger() )
+      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
       {
         SetCharger(objID);
-        Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(objID, ObjectFamily::Charger));
-        if( charger )
+        if( IsOnCharger() )
         {
-          charger->SetPoseToRobot(GetPose());
+          Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(objID, ObjectFamily::Charger));
+          if( charger )
+          {
+            charger->SetPoseToRobot(GetPose());
+          }
         }
       }
       
@@ -404,6 +407,11 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // Ignore move messages for objects we are docking to, since we expect to bump them
   else if(object->GetID() != GetDockObject())
   {
+    if( object->GetID() == _chargerID )
+    {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.Charger","Charger sending garbage move messages");
+      return;
+    }
     ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
     
     if(object->GetPoseState() == ObservableObject::PoseState::Known)
@@ -438,7 +446,6 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
           SetLocalizedTo(nullptr);
         }
       }
-      
     }
     
     // Don't notify game about moving objects that are being carried
@@ -506,6 +513,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
           SetLocalizedTo(nullptr);
         }
       }
+
     }
     
     // Update the ID to be the blockworld ID before broadcasting

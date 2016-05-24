@@ -66,6 +66,7 @@ namespace Anki {
       virtual Charger*   CloneType() const override;
       virtual void    Visualize(const ColorRGBA& color) const override;
       virtual void    EraseVisualization() const override;
+      virtual bool CanIntersectWithRobot() const override { return true; }
       
 
       virtual Point3f GetSameDistanceTolerance()  const override;

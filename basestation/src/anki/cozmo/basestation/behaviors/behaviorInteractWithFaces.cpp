@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/faceTracker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
@@ -61,6 +62,9 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kRequestDelayNumLoops, "Behavior.InteractWithFaces", 5);
 
   CONSOLE_VAR_RANGED(f32, kEnrollRequestCooldownInterval_s, "Behavior.InteractWithFaces", 10.0f, 0.0f, 30.0f);
+  
+  CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 850.0f, 500.0f, 1300.0f);
+
 
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -224,14 +228,56 @@ namespace Cozmo {
 
   float BehaviorInteractWithFaces::ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const
   {
-    // use new score system from json config
-    const float faceScore = ComputeFaceSmartScore(faceID, faceData);
-    return faceScore;
+    if ( _smartScore._isValid )
+    {
+      // use new score system from json config
+      const float faceScore = ComputeFaceSmartScore(faceID, faceData);
+      return faceScore;
+    }
+    else
+    {
+      // priority for interacting with faces
+      // 1. known face we haven't seen
+      // 2. unknown face
+      // 3. known face we've seen (prioritized by how recently it was seen)
+      // 4. Faces on cooldown (these will always have score -1)
+      const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( currentTime_sec < faceData._coolDownUntil_sec || faceData._deleted ) {
+        // TODO:(bn) consider deleted faces? turn to the last known pose?
+        return -1.0f;
+      }
+
+      constexpr float kNewScore = 50.0f;
+      constexpr float kKnownFaceScore = 20.0f;
+
+      // add some randomness to break ties
+      float score = GetRNG().RandDbl();
+
+      // TEMP:  // TODO:(bn) better function for this?
+      if( faceID > 0 ) {
+        // we prefer faces we know, since they are more stable
+        score += kKnownFaceScore;
+       }
+
+      if( !faceData._playedNewFaceAnim ) {
+        score += kNewScore;
+       }
+   
+      // faces are deleted if they aren't seen for a while, so we assume that all of the faces in
+      // _interestingFacesData are still relevant, which means we want to look at the oldest one (so they are
+      // looked at in the order that the appeared)
+      const float timeSinceObservation = currentTime_sec - faceData._lastSeen_sec;
+      score += timeSinceObservation;
+      
+      return score;
+    }
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   float BehaviorInteractWithFaces::ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData) const
   {
+    ASSERT_NAMED(_smartScore._isValid, "ComputeFaceSmartScore.RequiresSmartScore");
+  
     // classes:
     // + deleted/cooldown
     // + known - new
@@ -546,6 +592,30 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     FaceData* faceData = nullptr;
     if( ! GetCurrentFace(robot, face, faceData) ) {
       return false;
+    }
+    
+    // do not enroll if face is too far
+    if ( face->HasEyes() )
+    {
+      const float kMinEyeDistanceForEnrollment = Vision::FaceTracker::GetMinEyeDistanceForEnrollment();
+      const float eyeDistance = face->GetIntraEyeDistance();
+      // if your eye distance is smaller than the threshold, you are further away than we allow for enrollment
+      if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
+        return false;
+      }
+    }
+    else
+    {
+      Pose3d distanceToYourFace;
+      if ( !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), distanceToYourFace) ) {
+        return false;
+      }
+      
+      // check your face is close enough
+      const float kMaxDistanceFromRobotForEnrollment_mmSQ = kMaxDistanceFromRobotForEnrollment_mm * kMaxDistanceFromRobotForEnrollment_mm;
+      if ( distanceToYourFace.GetTranslation().LengthSq() > kMaxDistanceFromRobotForEnrollment_mmSQ ) {
+        return false;
+      }
     }
 
     // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this

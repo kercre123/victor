@@ -2866,7 +2866,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                  !object->IsBeingCarried() &&
                  !object->IsPoseStateUnknown() &&
-                 object->GetID() != _robot->GetDockObject())
+                 object->GetID() != _robot->GetDockObject() &&
+                 !object->CanIntersectWithRobot())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.

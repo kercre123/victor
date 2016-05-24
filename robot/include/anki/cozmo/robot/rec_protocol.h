@@ -21,6 +21,12 @@ static const uint32_t		 HEAD_RECOVERY_NOTICE = 0x49485a43;
 #define SHA1_BLOCK_SIZE 20
 #endif
 
+#define SPECIAL_BLOCK     (0xFF000000)
+#define CERTIFICATE_BLOCK (0xFFFFffff)
+#define COMMENT_BLOCK     (0xFFFFfffc)
+#define ESPRESSIF_BLOCK   (0x40000000)
+#define BODY_BLOCK        (0x80000000)
+
 typedef struct {
   uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
   uint32_t   blockAddress;

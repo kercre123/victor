@@ -61,12 +61,12 @@ nrf_fix:
 
 # This fixes the headers and places the binaries in release
 stage_binaries:
-	@if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp -v ./build/app/robot.axf ./binaries; fi
-	@if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp -v ./syscon/build/app/syscon.axf ./binaries; fi
+	@if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp -v ./build/app/robot.axf ./binaries/robot.afx; fi
+	@if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.afx; fi
 	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries
-	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
