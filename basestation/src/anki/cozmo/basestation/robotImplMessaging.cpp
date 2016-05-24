@@ -360,6 +360,8 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
         }
       }
       
+      // Remove from the list of discovered objects since we are connecting to it
+      _discoveredObjects.erase(payload.factoryID);
     }
   } else {
     // Remove active object from blockworld if it exists
