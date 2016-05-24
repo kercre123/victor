@@ -27,6 +27,10 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
+
+
 namespace Anki {
   namespace Vision {
     
