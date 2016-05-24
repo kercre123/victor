@@ -1,0 +1,18 @@
+//
+//  debug-osx.xcconfig
+//
+//  Created by damjan stulic on 5/16/14.
+//  Copyright (c) 2014 Anki. All rights reserved.
+//
+#include "debug.xcconfig"
+
+SDKROOT = macosx
+ONLY_ACTIVE_ARCH = YES
+VALID_ARCHS = i386 x86_64
+SUPPORTED_PLATFORMS = macosx
+MACOSX_DEPLOYMENT_TARGET = 10.9
+
+GCC_OPTIMIZATION_LEVEL = s
+
+TARGET_PREPROCESSOR_DEFINITIONS =
+
