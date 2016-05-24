@@ -25,8 +25,6 @@ parser.add_argument("-b", "--body", type=str,
                     help="NRF ELF Image")
 parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
-parser.add_argument("-t", "--header", action='store_true',
-                    help="Include header block")
 parser.add_argument("-s", "--sign", type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", action="store_true",
@@ -212,11 +210,10 @@ if __name__ == '__main__':
     if args.comment:
         fo.write(get_version_comment_block(), COMMENT_BLOCK)
 
-    if args.header:
+    if key:
         print ("Writting header information")
         fo.write(make_header(key, SHA512), HEADER_INFORMATION)
-
-    fo.writeCert(key)
+        fo.writeCert(key)
 
     print ("Writting rom block")
     # this is our rom information
