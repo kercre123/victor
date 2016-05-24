@@ -65,7 +65,9 @@ namespace Cozmo {
   
   CONSOLE_VAR_RANGED(f32, kMaxDistanceFromRobotForEnrollment_mm, "Behavior.InteractWithFaces", 850.0f, 500.0f, 1300.0f);
 
-
+  CONSOLE_VAR(f32, kMinFaceDistanceForBonus_m, "Behavior.InteractWithFaces", 0.0f);
+  CONSOLE_VAR(f32, kMaxFaceDistanceForBonus_m, "Behavior.InteractWithFaces", 2.0f);
+  
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   {
@@ -103,6 +105,7 @@ namespace Cozmo {
       _smartScore._newKnownFace = JsonTools::ParseFloat(smartScoreConfig, "flatScore_newKnownFace", "BehaviorInteractWithFaces");
       _smartScore._unknownFace  = JsonTools::ParseFloat(smartScoreConfig, "flatScore_unknownFace", "BehaviorInteractWithFaces");
       _smartScore._unknownFace_cooldown = JsonTools::ParseFloat(smartScoreConfig, "flatScore_unknownFace_cooldown", "BehaviorInteractWithFaces");
+      _smartScore._unknownFace_bonusToDistanceTo1 = JsonTools::ParseFloat(smartScoreConfig, "unknownFace_bonusToDistanceTo1", "BehaviorInteractWithFaces");
       _smartScore._oldKnownFace = JsonTools::ParseFloat(smartScoreConfig, "flatScore_oldKnownFace", "BehaviorInteractWithFaces");
       _smartScore._oldKnownFace_secondsToVal = JsonTools::ParseFloat(smartScoreConfig, "flatScore_oldKnownFace_secondsToVal", "BehaviorInteractWithFaces");
     }
@@ -126,7 +129,7 @@ namespace Cozmo {
     
     bool isRunnable = false;
     for(auto & faceData : _interestingFacesData) {
-      if( ComputeFaceScore(faceData.first, faceData.second) > 0.0f ) {
+      if( ComputeFaceScore(faceData.first, faceData.second, robot) > 0.0f ) {
         isRunnable = true;
         break;
       }
@@ -203,7 +206,7 @@ namespace Cozmo {
     float bestScore = 0.0f;
 
     for( const auto& facePair : _interestingFacesData ) {
-      float score = ComputeFaceScore(facePair.first, facePair.second);
+      float score = ComputeFaceScore(facePair.first, facePair.second, robot);
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
                              "BehaviorInteractWithFaces.ScoreFace",
                              "face %d -> %f",
@@ -226,12 +229,12 @@ namespace Cozmo {
   }
 
 
-  float BehaviorInteractWithFaces::ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const
+  float BehaviorInteractWithFaces::ComputeFaceScore(FaceID_t faceID, const FaceData& faceData, const Robot& robot) const
   {
     if ( _smartScore._isValid )
     {
       // use new score system from json config
-      const float faceScore = ComputeFaceSmartScore(faceID, faceData);
+      const float faceScore = ComputeFaceSmartScore(faceID, faceData, robot);
       return faceScore;
     }
     else
@@ -274,7 +277,7 @@ namespace Cozmo {
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  float BehaviorInteractWithFaces::ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData) const
+  float BehaviorInteractWithFaces::ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData, const Robot& robot) const
   {
     ASSERT_NAMED(_smartScore._isValid, "ComputeFaceSmartScore.RequiresSmartScore");
   
@@ -308,8 +311,9 @@ namespace Cozmo {
       }
       else
       {
-        // KNOWN NEW
-        score = _smartScore._newKnownFace;
+        // KNOWN NEW (with distance bonus for tie break)
+        const float distanceScoreTieBreaker = ComputeDistanceBonus(faceID, robot);
+        score = _smartScore._newKnownFace + distanceScoreTieBreaker;
       }
     }
     else
@@ -317,8 +321,11 @@ namespace Cozmo {
       // UNKNOWN
       ASSERT_NAMED(!hasInteracted, "BehaviorInteractWithFaces.UnknownFaceHasBeenSeen");
       float timeSinceLastStop = currentTime_sec - _lastInteractionEndedTime_sec;
-      if ( timeSinceLastStop > _smartScore._unknownFace_cooldown ) {
-        score = _smartScore._unknownFace;
+      if ( timeSinceLastStop > _smartScore._unknownFace_cooldown )
+      {
+        // unknown face get the base score plus a little bit to favor closer faces
+        const float distanceScoreTieBreaker = ComputeDistanceBonus(faceID, robot);
+        score = _smartScore._unknownFace + distanceScoreTieBreaker;
       } else {
         // we have interacted recently, we don't need to chase unknown faces yet, keep chilling to see
         // if they become known, which would give us more information on cooldowns and desires
@@ -327,6 +334,38 @@ namespace Cozmo {
     }
 
     return score;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  float BehaviorInteractWithFaces::ComputeDistanceBonus(FaceID_t faceID, const Robot& robot) const
+  {
+    float distanceScore = 0.0f;
+    
+    const bool hasDistanceBonusFactor = FLT_GT(_smartScore._unknownFace_bonusToDistanceTo1, 0.0f);
+    if (hasDistanceBonusFactor)
+    {
+      // get face data to grab known distance
+      const Face* face = robot.GetFaceWorld().GetFace(faceID);
+      if( nullptr != face )
+      {
+        Pose3d distanceToFace;
+        if ( face->GetHeadPose().GetWithRespectTo(robot.GetPose(), distanceToFace) )
+        {
+          assert(FLT_GT(kMinFaceDistanceForBonus_m+kMaxFaceDistanceForBonus_m,0.0f));
+          
+          // we have distance, normalize [0,1] so that 0 is maxDistance and 1 is minDistance
+          const float distanceToFace_mm = distanceToFace.GetTranslation().Length();
+          const float distanceToFace_m = MM_TO_M(distanceToFace_mm);
+          const float distNormalized = (distanceToFace_m-kMinFaceDistanceForBonus_m)/(kMaxFaceDistanceForBonus_m+kMinFaceDistanceForBonus_m);
+          const float distNormalizedInv = 1.0f - distNormalized;
+          
+          // finally apply the factor to the distance normalized
+          distanceScore = distNormalizedInv * _smartScore._unknownFace_bonusToDistanceTo1;
+        }
+      }
+    }
+    
+    return distanceScore;
   }
  
   void BehaviorInteractWithFaces::TransitionToGlancingDown(Robot& robot)
@@ -557,7 +596,7 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     // the score for the behavior is that of the best face's score
     for( const auto& facePair : _interestingFacesData )
     {
-      float score = ComputeFaceSmartScore(facePair.first, facePair.second);
+      float score = ComputeFaceSmartScore(facePair.first, facePair.second, robot);
       if ( score > ret ) {
         ret = score;
       }
