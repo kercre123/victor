@@ -23,6 +23,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -34,15 +35,19 @@ using namespace ExternalInterface;
 static const std::string s_PounceAnimGroup        = "ag_pounceOnMotionPounce";
 static const std::string s_PounceSuccessAnimGroup = "ag_pounceOnMotionSuccess";
 static const std::string s_PounceFailAnimGroup    = "ag_pounceOnMotionFail";
+static const std::string s_pounceDriveFaceAnimGroup = "ag_pounceDriveFace";
 static const std::string s_PounceInitalWarningAnimGroup = "ag_pounceWarningInitial";
 static const char* kMaxNoMotionBeforeBored_Sec    = "maxNoGroundMotionBeforeBored_Sec";
-static const char* kBackUpDistance                = "backUpDistance";
 static const char* kTimeBeforeRotate_Sec          = "TimeBeforeRotate_Sec";
+// combination of offset between lift and robot orign and motion built into animation
+static constexpr float kDriveForwardUntilDist = 31.f;
+static constexpr float kAnimationMotionPadding = 15.f;
 
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
   SetDefaultName("PounceOnMotion");
+
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedMotion,
@@ -50,7 +55,6 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   }});
 
   _maxTimeSinceNoMotion_sec = config.get(kMaxNoMotionBeforeBored_Sec, _maxTimeSinceNoMotion_sec).asFloat();
-  _backUpDistance = config.get(kBackUpDistance, _backUpDistance).asFloat();
   _maxTimeBeforeRotate = config.get(kTimeBeforeRotate_Sec, _maxTimeBeforeRotate).asFloat();
   
   SET_STATE(Inactive);
@@ -193,9 +197,20 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         }
         else if( _state == State::PlayingFinalReaction )
         {
-          PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.Complete", "post-pounce reaction animation complete");
+          EnableCliffReacts(true,robot);
           // We exit out of this mode during the update when we time out so just start waiting for motion again after backing up
           _numValidPouncePoses = 0; // wait until we're seeing motion again
+          if( GetDriveDistance() > 0.f )
+          {
+            TransitionToBackUp(robot);
+          }
+          else
+          {
+            TransitionToBringingHeadDown(robot);
+          }
+        }
+        else if( _state == State::BackUp )
+        {
           TransitionToBringingHeadDown(robot);
         }
       }
@@ -254,7 +269,6 @@ void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
   
 void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y)
 {
-  PRINT_NAMED_DEBUG("TransitionToTurnToMotion", "Motion Found, Turn to Motion");
   SET_STATE(TurnToMotion);
   
   const Point2f motionCentroid(motion_img_x, motion_img_y);
@@ -265,23 +279,56 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t moti
   robot.GetActionList().QueueActionAtEnd(turnAction);
   _waitForActionTag = turnAction->GetTag();
 }
+
+float BehaviorPounceOnMotion::GetDriveDistance()
+{
+  return _lastPoseDist - kDriveForwardUntilDist;
+}
+
 void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
 {
   SET_STATE(Pouncing);
-  IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceAnimGroup);
   
+  IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceAnimGroup);
   IActionRunner* actionToRun = animAction;
   
-  if( _lastPoseDist > _driveForwardUntilDist + 5.0f ) {
+  if( _lastPoseDist > kDriveForwardUntilDist + 5.0f ) {
     
-    float distToDrive = _lastPoseDist - _driveForwardUntilDist;
+    float distToDrive = GetDriveDistance();
     
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.SprintForward",
                      "driving forward %fmm before playing pounce animation",
                      distToDrive);
+    // We want a smooth transition to pounce so don't use DriveStraightAction which will do a stop then the anim.
+    // Instead turn on the wheels, and then animation will take over naturally and cause us to lock the body track and stop.
+    float driveSpeed = MAX_WHEEL_SPEED_MMPS;
     
-    IActionRunner* driveAction = new DriveStraightAction(robot, distToDrive, 150.0f);
+    float driveTime = (distToDrive - kAnimationMotionPadding) / driveSpeed;
+    robot.SendRobotMessage<RobotInterface::DriveWheels>(driveSpeed,driveSpeed,0.f,0.f);
+    
+    // We also want a different keep alive during this time
+    IActionRunner* faceDriveAnim = new PlayAnimationGroupAction(robot, s_pounceDriveFaceAnimGroup, 10, true);
+    robot.GetActionList().AddConcurrentAction(faceDriveAnim);
+    
+    u32 faceDriveID = faceDriveAnim->GetTag();
+    IActionRunner* driveAction = new WaitAction(robot,driveTime);
+    driveAction->AddCompletionCallback([this,&robot,faceDriveID](ActionResult result)
+                                        {
+                                          if( result != ActionResult::SUCCESS)
+                                          {
+                                            robot.SendRobotMessage<RobotInterface::DriveWheels>(0.f,0.f,0.f,0.f);
+                                          }
+                                          robot.GetActionList().Cancel(faceDriveID);
+                                          EnableCliffReacts(false,robot);
+                                        }
+                                       );
     actionToRun = new CompoundActionSequential(robot, {driveAction, animAction});
+  }
+  else
+  {
+    // Don't disable cliff reacts until the animation actually starts.
+    // when we're driving forward is when cliff reacts are most likely
+    EnableCliffReacts(false,robot);
   }
   
   _waitForActionTag = actionToRun->GetTag();
@@ -329,6 +376,15 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   SET_STATE(PlayingFinalReaction);
   
   robot.GetMoveComponent().EnableLiftPower(true);
+}
+  
+void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
+{
+  SET_STATE(BackUp);
+  // back up some of the way
+  IActionRunner* driveAction = new DriveStraightAction(robot, -GetDriveDistance() * 0.75f, 75.0f);
+  _waitForActionTag = driveAction->GetTag();
+  robot.GetActionList().QueueActionNow(driveAction);
 }
   
 void BehaviorPounceOnMotion::SetState_internal(State state, const std::string& stateName)
@@ -400,11 +456,27 @@ void BehaviorPounceOnMotion::StopInternal(Robot& robot)
   Cleanup(robot);
 }
   
+void  BehaviorPounceOnMotion::EnableCliffReacts(bool enable,Robot& robot)
+{
+  if( _cliffReactEnabled && !enable )
+  {
+    robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+  }
+  else if( !_cliffReactEnabled && enable )
+  {
+    robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
+  }
+  
+  _cliffReactEnabled = enable;
+}
+  
 void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 {
   if( _state == State::RelaxingLift) {
     robot.GetMoveComponent().EnableLiftPower(true);
   }
+  
+  EnableCliffReacts(true,robot);
   
   SET_STATE(Inactive);
   _numValidPouncePoses = 0;

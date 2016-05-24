@@ -50,11 +50,9 @@ protected:
   int _numValidPouncePoses = 0;
 
   float _lastPoseDist = 0.0f;
-  const float _driveForwardUntilDist = 50.0f;
   
   // Overwritten by config.
   float _maxTimeSinceNoMotion_sec = 30.0;
-  float _backUpDistance = -50.0;
   float _maxTimeBeforeRotate = 8.f;
   
   
@@ -70,6 +68,7 @@ private:
     Pouncing,
     RelaxingLift,
     PlayingFinalReaction,
+    BackUp,
     Complete,
   };
 
@@ -79,7 +78,10 @@ private:
 
   u32 _waitForActionTag = 0;
 
+  bool  _cliffReactEnabled = true;
   float _stopRelaxingTime = 0.0f;
+  float GetDriveDistance();
+  void  EnableCliffReacts(bool enable,Robot& robot);
 
   // reset everything for when the behavior is finished
   void Cleanup(Robot& robot);
@@ -93,7 +95,7 @@ private:
   void TransitionToPounce(Robot& robot);
   void TransitionToRelaxLift(Robot& robot);
   void TransitionToResultAnim(Robot& robot);
-
+  void TransitionToBackUp(Robot& robot);
 };
 
 }
