@@ -15,8 +15,9 @@
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/common/basestation/utils/timer.h"
-#include <util/helpers/templateHelpers.h>
-#include <util/logging/logging.h>
+#include "util/console/consoleInterface.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
 
@@ -31,6 +32,10 @@ namespace Cozmo {
 
   // This is roughly (2 x ExpectedOneWayLatency_ms + BasestationTick_ms) / AudioSampleLength_ms
   const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
+  
+  CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
+  CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 1000);
+  
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context,
                                        Audio::RobotAudioClient& audioClient)
@@ -402,6 +407,7 @@ namespace Cozmo {
       
       // Prep sound
       _audioClient.CreateAudioAnimation( anim );
+      _audioBufferingTime_ms = 0;
       
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
@@ -1247,6 +1253,32 @@ namespace Cozmo {
         _audioClient.GetCurrentAnimation()->Update(startTime_ms, streamingTime_ms);
         // Check if audio is ready to proceed.
         result = _audioClient.UpdateAnimationIsReady();
+        
+        // If audio takes too long abort animation
+        if ( !result ) {
+          // Watch for Audio time outs
+          if ( _audioBufferingTime_ms == 0 ) {
+            _audioBufferingTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+          }
+          else {
+            if ( (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms) > kAnimationAudioAllowedBufferTime_ms ) {
+              PRINT_NAMED_WARNING("AnimationStreamer.ShouldProcessAnimationFrame", "Abort animation '%s' due to audio issue", anim->GetName().c_str());
+              if (kFullAnimationAbortOnAudioTimeout) {
+                // Abort the entire animation
+                Abort();
+              }
+              else {
+                // Abort only the animation audio
+                _audioClient.GetCurrentAnimation()->AbortAnimation();
+                _audioClient.ClearCurrentAnimation();
+              }
+            }
+          }
+        }
+        else {
+          // Audio is streaming
+          _audioBufferingTime_ms = 0;
+        }
       }
     }
     
