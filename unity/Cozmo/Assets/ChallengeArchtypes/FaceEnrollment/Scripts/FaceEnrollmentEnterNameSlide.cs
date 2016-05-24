@@ -16,6 +16,7 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
     _SubmitName.onClick.AddListener(HandleSubmitNameButton);
     _SubmitName.Interactable = false;
     _NameInputField.onValueChanged.AddListener(HandleInputFieldDone);
+    _NameInputField.ActivateInputField();
   }
 
   private void HandleInputFieldDone(string input) {
