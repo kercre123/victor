@@ -32,9 +32,19 @@ static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) 
   memcpy(result.digits, ecb.ciphertext, AES_BLOCK_LENGTH);
 }
 
+static void fix_pin(uint32_t& pin) {
+  for (int bit = 0; bit < sizeof(pin) * 8; bit += 4) {
+    int nibble = (pin >> bit) & 0xF;
+    if (nibble > 0x9) {
+      pin += 0x06 << bit;
+    }
+  }
+}
+
 void dh_start(DiffieHellman* dh) {
   // Generate our secret
   gen_random(&dh->pin, sizeof(dh->pin));
+  fix_pin(dh->pin);
   gen_random(dh->local_secret, SECRET_LENGTH);
 
   // Encode our secret as an exponent
