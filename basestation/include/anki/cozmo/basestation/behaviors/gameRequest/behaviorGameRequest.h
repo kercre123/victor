@@ -59,7 +59,7 @@ protected:
   // Utility functions for sub-classes
   
   // these send the message (don't do anything with animations)
-  void SendRequest(Robot& robot);
+  void SendRequest(Robot& robot, bool initialRequest);
   void SendDeny(Robot& robot);
 
   // the time at which it will be OK to end the behavior (allowing us a delay after the request), or -1
@@ -82,7 +82,6 @@ protected:
   bool GetLastBlockPose(Pose3d& pose) const;
 
   bool HasFace(const Robot& robot) const;
-  bool GetFacePose(const Robot& robot, Pose3d& facePose) const;
 
   virtual void HandleCliffEvent(Robot& robot, const EngineToGameEvent& event) {};
 

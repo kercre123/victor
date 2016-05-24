@@ -109,11 +109,11 @@ Result IBehaviorRequestGame::InitInternal(Robot& robot)
   return RequestGame_InitInternal(robot);
 }
 
-void IBehaviorRequestGame::SendRequest(Robot& robot)
+void IBehaviorRequestGame::SendRequest(Robot& robot, bool initialRequest)
 {
   using namespace ExternalInterface;
 
-  robot.Broadcast( MessageEngineToGame( RequestGameStart(true) ) );
+  robot.Broadcast( MessageEngineToGame( RequestGameStart(initialRequest) ) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
@@ -230,18 +230,6 @@ bool IBehaviorRequestGame::HasFace(const Robot& robot) const
 
   Pose3d waste;
   TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFace(waste);
-  
-  const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
-
-  return hasFace;
-}
-
-bool IBehaviorRequestGame::GetFacePose(const Robot& robot, Pose3d& facePose) const
-{
-  float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001 ) );
-
-  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
   
   const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
 

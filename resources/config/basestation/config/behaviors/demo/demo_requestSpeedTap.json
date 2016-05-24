@@ -3,6 +3,8 @@
   "name" : "demo_RequestSpeedTap",
   "requiredGameFlags" : "SpeedTap",
 
+  "do_second_request": true,
+  
   "zero_block_config": {
     "request_animName" : "requestGame_speedTap_request",
     "deny_animName" : "requestGame_speedTap_deny",
