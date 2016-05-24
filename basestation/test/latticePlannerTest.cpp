@@ -589,3 +589,31 @@ TEST(LatticePlannerMotionProfile, Complex2)
     ASSERT_NEAR(expectedLen[i], seg.GetLength(), 0.1);
   }
 }
+
+TEST(LatticePlannerMotionProfile, ZeroLengthSeg)
+{
+  Robot robot(1, cozmoContext);
+  
+  PathMotionProfile motionProfile = PathMotionProfile();
+  motionProfile.speed_mmps = 100;
+  motionProfile.accel_mmps2 = 200;
+  motionProfile.decel_mmps2 = 500;
+  
+  Planning::Path path;
+  path.AppendLine(0, 178.592758, -99.807365, 176.896408, -80.959740, 100, 200, 500);
+  path.AppendLine(0, 176.896408, -80.959740, 176.000000, -71.000000, 100, 200, 500);
+  path.AppendPointTurn(0, 176.000000, -71.000000, 1.570796, -2, 100, 500, DEG_TO_RAD_F32(2), true);
+  
+  LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
+  ASSERT_TRUE(planner != nullptr);
+  
+  Planning::Path path2;
+  planner->ApplyMotionProfile(path, motionProfile, path2);
+  
+  f32 expectedSpeeds[] = {100, 100, -2};
+  for(int i=0; i<path2.GetNumSegments();i++)
+  {
+    Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
+    ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
+  }
+}
