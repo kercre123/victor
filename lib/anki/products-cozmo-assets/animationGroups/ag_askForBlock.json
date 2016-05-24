@@ -1,7 +1,7 @@
 {
   "Animations": [
     {
-      "Name": "anim_reactToBlock_success_01_-22.5",
+      "Name": "anim_reacttoblock_ask_01_-22.5",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default",
@@ -10,7 +10,7 @@
       "HeadAngleMax_Deg": -10.0
     },
     {
-      "Name": "anim_reactToBlock_success_01_0",
+      "Name": "anim_reacttoblock_ask_01_0",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default",
@@ -19,7 +19,7 @@
       "HeadAngleMax_Deg": 10.0
     },
     {
-      "Name": "anim_reactToBlock_success_01_22.5",
+      "Name": "anim_reacttoblock_ask_01_22.5",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default",
@@ -28,7 +28,7 @@
       "HeadAngleMax_Deg": 30.0
     },
     {
-      "Name": "anim_reactToBlock_success_01_45",
+      "Name": "anim_reacttoblock_ask_01_45",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default",
