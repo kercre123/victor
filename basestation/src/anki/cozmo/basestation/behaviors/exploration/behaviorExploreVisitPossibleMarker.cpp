@@ -75,7 +75,7 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   const AIWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
   for( const auto& marker : markerList )
   {
-    // pick closes marker to us
+    // pick closest marker to us
     const Vec3f& dirToMarker = marker.pose.GetTranslation() - robot.GetPose().GetTranslation();
     const float distToMarkerSQ = dirToMarker.LengthSq();
     if( distToMarkerSQ < std::pow( kEvpm_DistanceFromPossibleCubeMin_mm, 2) ) {
@@ -94,11 +94,11 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   if ( nullptr != closestMarker )
   {
     PRINT_NAMED_DEBUG("BehaviorExploreVisitPossibleMarker.Init",
-                      "Approaching possible marker which if sqrt(%f)mm away",
+                      "Approaching possible marker which is sqrt(%f)mm away",
                       distToClosestSQ);
     
     // calculate best approach position
-    ApproachPossibleCube(robot, closestMarker->pose);
+    ApproachPossibleCube(robot, closestMarker->type, closestMarker->pose);
   
     return Result::RESULT_OK;
   }
@@ -112,7 +112,9 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot, const Pose3d& possibleCubePose)
+void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
+                                                              ObjectType objectType,
+                                                              const Pose3d& possibleCubePose)
 {
   // trust that the whiteboard will never return information that is not valid in the current origin
   ASSERT_NAMED(&robot.GetPose().FindOrigin() == &possibleCubePose.FindOrigin(),
@@ -127,9 +129,44 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot, cons
   const float distanceRand = static_cast<float>( GetRNG().RandDblInRange(
     kEvpm_DistanceFromPossibleCubeMin_mm, kEvpm_DistanceFromPossibleCubeMax_mm));
 
+  Pose3d relPose;
+  if( possibleCubePose.GetWithRespectTo( robot.GetPose(), relPose ) ) {
+
+    const float distSq = relPose.GetTranslation().LengthSq();
+    
+    if( std::pow(kEvpm_DistanceFromPossibleCubeMin_mm, 2) <= distSq &&
+        distSq <= std::pow( kEvpm_DistanceFromPossibleCubeMax_mm, 2) ) {
+      // the robot is already within range, so just look at the cube and verify that it's there
+
+      // NOTE: there may be an obstacle here, this isn't a great way to do this (should use planning distance,
+      // etc)
+
+      static const int kNumImagesForVerification = 5;
+      
+      CompoundActionSequential* action = new CompoundActionSequential(robot, {
+          new TurnTowardsPoseAction(robot, relPose, PI_F),
+          new WaitForImagesAction(robot, kNumImagesForVerification) });
+
+      PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
+                       "robot is already within range of the cube, check if we can see it");
+      
+      StartActing(action, [this, &robot, objectType, possibleCubePose](ActionResult res) {
+          if( res == ActionResult::SUCCESS ) {
+            MarkPossiblePoseAsEmpty(robot, objectType, possibleCubePose);
+          }
+        });
+      return;
+    }
+  }
+  else {
+    PRINT_NAMED_WARNING("BehaviorExploreVisitPossibleMarker.NoTransform",
+                        "Could not get pose of possible object W.R.T robot");
+    return;
+  }
+  
   CompoundActionSequential* approachAction = new CompoundActionSequential(robot);
   
-  if( APPROACH_NORMAL_TO_MARKERS ) {  
+  if( APPROACH_NORMAL_TO_MARKERS ) {
     // generate all possible points to pick one later on
     Vec3f fwd (possibleCubePose.GetRotation() * X_AXIS_3D());
     fwd.z() = 0.0f;
@@ -174,40 +211,36 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot, cons
   }
   else {
     // drive directly to the cube
-
-    // NOTE: there may be an obstacle here, this isn't a great way to do this (should use planning distance,
-    // etc)
-
-    Pose3d relPose;
-    if( possibleCubePose.GetWithRespectTo( robot.GetPose(), relPose ) ) {
-      const Pose2d relPose2d(relPose);
-      Vec3f newTranslation = relPose.GetTranslation();
-      float oldLength = newTranslation.MakeUnitLength();
+    const Pose2d relPose2d(relPose);
+    Vec3f newTranslation = relPose.GetTranslation();
+    float oldLength = newTranslation.MakeUnitLength();
       
-      Pose3d newTargetPose(RotationVector3d{},
-                           newTranslation * (oldLength - distanceRand),
-                           &robot.GetPose());
+    Pose3d newTargetPose(RotationVector3d{},
+                         newTranslation * (oldLength - distanceRand),
+                         &robot.GetPose());
 
-      // turn first to signal intent
-      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
-      approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
+    // turn first to signal intent
+    approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
+    approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
 
-      // This requires us to bail out of this behavior if we see one, but that's not currently happening
-      // // add a search action after driving / facing, in case we don't see the object
-      // approachAction->AddAction(new SearchSideToSideAction(robot));
-    }
-    else {
-      PRINT_NAMED_WARNING("BehaviorExploreVisitPossibleMarker.NoTransform",
-                          "Could not get pose of possible object W.R.T robot");
-      delete approachAction;
-      return;
-    }
+    // This requires us to bail out of this behavior if we see one, but that's not currently happening
+    // // add a search action after driving / facing, in case we don't see the object
+    // approachAction->AddAction(new SearchSideToSideAction(robot));
   }
-  
+
   // TODO Either set head up at end, or at start and as soon as we see the cube, react
   
   StartActing(approachAction);
 }
+
+void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(Robot& robot, ObjectType objectType, const Pose3d& pose)
+{
+  PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.ClearPose",
+                   "robot looked at pose, so clear it");
+
+  robot.GetBehaviorManager().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
+}
+
 
 } // namespace Cozmo
 } // namespace Anki
