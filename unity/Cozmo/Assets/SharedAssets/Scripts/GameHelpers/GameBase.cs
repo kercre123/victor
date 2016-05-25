@@ -110,7 +110,7 @@ public abstract class GameBase : MonoBehaviour {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
-    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback:FinishTurnToFace);
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: FinishTurnToFace);
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
@@ -142,7 +142,7 @@ public abstract class GameBase : MonoBehaviour {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.Icon = data.ChallengeIcon;
+    titleWidget.Icon = data.ChallengeIconPlainStyle;
     newView.ShowQuitButton();
 
     // TODO use different color for activities vs games

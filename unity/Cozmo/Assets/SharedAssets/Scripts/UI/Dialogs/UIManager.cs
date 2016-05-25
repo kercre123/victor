@@ -169,6 +169,10 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllViewsImmediately() {
+    if (Instance == null) {
+      DAS.Error("UIManager.CloseAllViewsImmediatelyInternal", "Closing views called when UI manager is already destroyed");
+      return;
+    }
     Instance.CloseAllViewsImmediatelyInternal();
   }
 
@@ -176,6 +180,7 @@ public class UIManager : MonoBehaviour {
     // Close views down the stack
     while (_OpenViews.Count > 0) {
       if (_OpenViews[Instance._OpenViews.Count - 1] != null) {
+        DAS.Debug("UIManager.CloseAllViewsImmediatelyInternal", "Closing View " + _OpenViews[Instance._OpenViews.Count - 1].name);
         _OpenViews[Instance._OpenViews.Count - 1].CloseViewImmediately();
       }
     }

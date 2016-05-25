@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &133620
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -34,7 +34,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &144010
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -67,7 +67,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &170352
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -84,7 +84,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &176710
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -149,7 +149,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &185298
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -166,7 +166,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &191380
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -289,7 +289,7 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues: []
   ModifiedLocalReferences:
-  - ObjectPath: ../
+  - ObjectPath: ../../../
     FieldName: Cozmo.UI.AlertView:_CloseButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -307,7 +307,7 @@ MonoBehaviour:
   Prefab: {fileID: 116638, guid: 44454b3ff11754c71b8b19311c580825, type: 2}
   ModifiedValues: []
   ModifiedLocalReferences:
-  - ObjectPath: ../
+  - ObjectPath: ../../../
     FieldName: Cozmo.UI.AlertView:_Icon
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -351,8 +351,8 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 0
+  m_Spacing: 40
+  m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
 --- !u!114 &11462024
 MonoBehaviour:
@@ -370,7 +370,7 @@ MonoBehaviour:
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
-  m_FlexibleWidth: 1
+  m_FlexibleWidth: -1
   m_FlexibleHeight: -1
 --- !u!114 &11464646
 MonoBehaviour:
@@ -419,11 +419,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 100
+  m_MinWidth: -1
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
-  m_FlexibleWidth: 0.4
+  m_FlexibleWidth: -1
   m_FlexibleHeight: -1
 --- !u!114 &11475530
 MonoBehaviour:
@@ -442,7 +442,7 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"No"'
   ModifiedLocalReferences:
-  - ObjectPath: ../../../
+  - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_SecondaryButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -466,7 +466,7 @@ MonoBehaviour:
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: 945548936
   ModifiedLocalReferences:
-  - ObjectPath: ../../../
+  - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_PrimaryButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -538,12 +538,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 22488516}
-  m_Father: {fileID: 22468726}
-  m_RootOrder: 2
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 8}
-  m_SizeDelta: {x: 1044, y: 100}
+  m_Father: {fileID: 22481126}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 35}
+  m_SizeDelta: {x: -400, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419290
 RectTransform:
@@ -555,12 +555,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22468726}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0.15, y: 0.3}
-  m_AnchorMax: {x: 0.85, y: 0.47}
-  m_AnchoredPosition: {x: -0.00011444092, y: 94}
-  m_SizeDelta: {x: -1142.3999, y: 0}
+  m_Father: {fileID: 22481126}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 74.4975}
+  m_SizeDelta: {x: -400, y: 260.84744}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22428002
 RectTransform:
@@ -570,14 +570,16 @@ RectTransform:
   m_GameObject: {fileID: 170352}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4665022, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 22468726}
-  m_RootOrder: 3
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 11, y: 390}
-  m_SizeDelta: {x: 1367.7, y: 209}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 22499992}
+  - {fileID: 22494732}
+  m_Father: {fileID: 22481126}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 9.999975, y: -193}
+  m_SizeDelta: {x: 41, y: 240}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22437776
 RectTransform:
@@ -608,12 +610,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 22481126}
-  - {fileID: 22419290}
-  - {fileID: 22418172}
-  - {fileID: 22428002}
-  - {fileID: 22499992}
-  - {fileID: 22472902}
-  - {fileID: 22494732}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -633,12 +629,12 @@ RectTransform:
   m_Children:
   - {fileID: 22437776}
   - {fileID: 22493430}
-  m_Father: {fileID: 22468726}
-  m_RootOrder: 5
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -371}
-  m_SizeDelta: {x: 1400, y: 218}
+  m_Father: {fileID: 22481126}
+  m_RootOrder: 3
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 0, y: 183}
+  m_SizeDelta: {x: -320, y: 248}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22476742
 RectTransform:
@@ -666,13 +662,17 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 22419290}
+  - {fileID: 22418172}
+  - {fileID: 22428002}
+  - {fileID: 22472902}
   m_Father: {fileID: 22468726}
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1890, y: 1120}
+  m_SizeDelta: {x: 1890, y: 1150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22482196
 RectTransform:
@@ -736,11 +736,11 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22468726}
-  m_RootOrder: 6
+  m_Father: {fileID: 22428002}
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 10, y: 376}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 401, y: 413}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22499992
@@ -753,12 +753,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22468726}
-  m_RootOrder: 4
-  m_AnchorMin: {x: 0, y: 1}
+  m_Father: {fileID: 22428002}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 519, y: -370}
-  m_SizeDelta: {x: 150, y: 150}
+  m_AnchoredPosition: {x: 114.6, y: 8.5}
+  m_SizeDelta: {x: 173, y: -60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22536050
 CanvasGroup:

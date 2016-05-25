@@ -1105,19 +1105,14 @@ ParticleSystem:
         serializedVersion: 2
         m_Curve:
         - time: 0
-          value: 0.6456693
-          inSlope: 1.1657617
-          outSlope: 1.1657617
-          tangentMode: 0
-        - time: 0.40046072
-          value: 0.8626739
-          inSlope: -0.0023176125
-          outSlope: -0.0023176125
+          value: 0.25436497
+          inSlope: 1.4553581
+          outSlope: 1.4553581
           tangentMode: 0
         - time: 1
-          value: 0.4015748
-          inSlope: -1.4800335
-          outSlope: -1.4800335
+          value: 0.56099504
+          inSlope: -0.5142481
+          outSlope: -0.5142481
           tangentMode: 0
         m_PreInfinity: 2
         m_PostInfinity: 2
@@ -2579,13 +2574,8 @@ ParticleSystem:
         m_Curve:
         - time: 0
           value: 0.96850395
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-        - time: 0.06859207
-          value: 1
-          inSlope: 0.41944262
-          outSlope: 0.41944262
+          inSlope: 0.5637814
+          outSlope: 0.5637814
           tangentMode: 0
         - time: 1
           value: 0.9330709
@@ -2599,19 +2589,14 @@ ParticleSystem:
         serializedVersion: 2
         m_Curve:
         - time: 0
-          value: 0.6417323
+          value: 0.27941346
           inSlope: 1.1587106
           outSlope: 1.1587106
           tangentMode: 0
-        - time: 0.5159842
-          value: 0.8587369
-          inSlope: -0.20638168
-          outSlope: -0.20638168
-          tangentMode: 0
-        - time: 1
-          value: 0.3858268
-          inSlope: -2.4082997
-          outSlope: -2.4082997
+        - time: 0.9964538
+          value: 0.714196
+          inSlope: 0
+          outSlope: 0
           tangentMode: 0
         m_PreInfinity: 2
         m_PostInfinity: 2
