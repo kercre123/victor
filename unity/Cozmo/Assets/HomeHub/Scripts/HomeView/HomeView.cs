@@ -27,10 +27,19 @@ namespace Cozmo.HomeHub {
     private CozmoButton _CozmoTabButton;
 
     [SerializeField]
+    private CozmoButton _CozmoTabDownButton;
+
+    [SerializeField]
     private CozmoButton _PlayTabButton;
 
     [SerializeField]
+    private CozmoButton _PlayTabDownButton;
+
+    [SerializeField]
     private CozmoButton _ProfileTabButton;
+
+    [SerializeField]
+    private CozmoButton _ProfileTabDownButton;
 
     [SerializeField]
     private RectTransform _ScrollRectContent;
@@ -71,13 +80,15 @@ namespace Cozmo.HomeHub {
 
       _ChallengeStates = challengeStatesById;
 
-      _CurrentTab = GameObject.Instantiate(_PlayTabPrefab.gameObject).GetComponent<HomeViewTab>();
-      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
-      _CurrentTab.Initialize(this);
+      HandlePlayTabButton();
 
       _CozmoTabButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
       _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
       _ProfileTabButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
+
+      _CozmoTabDownButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
+      _PlayTabDownButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
+      _ProfileTabDownButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
 
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
@@ -110,6 +121,15 @@ namespace Cozmo.HomeHub {
       _CurrentTab = GameObject.Instantiate(_CozmoTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
+
+      _CozmoTabButton.gameObject.SetActive(false);
+      _CozmoTabDownButton.gameObject.SetActive(true);
+
+      _PlayTabButton.gameObject.SetActive(true);
+      _PlayTabDownButton.gameObject.SetActive(false);
+
+      _ProfileTabButton.gameObject.SetActive(true);
+      _ProfileTabDownButton.gameObject.SetActive(false);
     }
 
     private void HandlePlayTabButton() {
@@ -120,6 +140,15 @@ namespace Cozmo.HomeHub {
       _CurrentTab = GameObject.Instantiate(_PlayTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
+
+      _CozmoTabButton.gameObject.SetActive(true);
+      _CozmoTabDownButton.gameObject.SetActive(false);
+
+      _PlayTabButton.gameObject.SetActive(false);
+      _PlayTabDownButton.gameObject.SetActive(true);
+
+      _ProfileTabButton.gameObject.SetActive(true);
+      _ProfileTabDownButton.gameObject.SetActive(false);
     }
 
     private void HandleProfileTabButton() {
@@ -130,6 +159,15 @@ namespace Cozmo.HomeHub {
       _CurrentTab = GameObject.Instantiate(_ProfileTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
+
+      _CozmoTabButton.gameObject.SetActive(true);
+      _CozmoTabDownButton.gameObject.SetActive(false);
+
+      _PlayTabButton.gameObject.SetActive(true);
+      _PlayTabDownButton.gameObject.SetActive(false);
+
+      _ProfileTabButton.gameObject.SetActive(false);
+      _ProfileTabDownButton.gameObject.SetActive(true);
     }
 
     public Dictionary<string, ChallengeStatePacket> GetChallengeStates() {
