@@ -289,7 +289,8 @@ static void manage_ble(void*) {
   }
 }
 
-static void start_message_transmission(const void*, int) {
+static void start_message_transmission(const void*, int size) {
+  tx_buffer.message_size = size;
   tx_pending = true;
 }
 
