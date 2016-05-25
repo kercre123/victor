@@ -355,8 +355,9 @@ class GamePlatformConfiguration(object):
 
         class_code = 'public class BuildFlags { \n'
         git_variable = '  public const string kGitHash = \"' + subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
-
-        file = open(os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated', 'BuildFlags.cs'), 'w')
+        buildFlagsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
+        ankibuild.util.File.mkdir_p(buildFlagsPath)
+        file = open(os.path.join(buildFlagsPath, 'BuildFlags.cs'), 'w')
 
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
             file.write(class_code + git_variable +

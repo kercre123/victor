@@ -14,5 +14,5 @@ if [ -z $GIT ];then
 fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-cd $TOPLEVEL/project/gyp
-./configure.py
+cd $TOPLEVEL/lib/util/project/gyp
+./configure.py --buildTools $TOPLEVEL/tools/build --with-clad $TOPLEVEL/tools/message-buffers --with-gyp $TOPLEVEL/tools/gyp --projectRoot  $TOPLEVEL/lib/util/
