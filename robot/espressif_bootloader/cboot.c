@@ -33,6 +33,7 @@
 
 #include "cboot-private.h"
 #include "cboot-gpio.h"
+#include "cboot-rtc.h"
 
 #define DEBUG 0
 
@@ -52,11 +53,14 @@ NOINLINE int verify_firmware_hash(const AppImageHeader* header, const uint32 ima
   int i;
   uint32 index = sizeof(AppImageHeader); // Current read index
   
-  //ets_printf("AIH: size=%x, image#=%x, evil=%x\r\n", header->size, header->imageNumber, header->evil);
+  //ets_printf("AIH @ %x: size=%x, image#=%x, evil=%x\r\n", imageStart, header->size, header->imageNumber, header->evil);
   
+  if (header->imageNumber < 1) return FALSE;
   if (header->evil != 0) return FALSE;
   
   SHA1Init(&ctx);
+  
+  int retries = 3;
   
   while (index < header->size)
   {
@@ -66,9 +70,15 @@ NOINLINE int verify_firmware_hash(const AppImageHeader* header, const uint32 ima
     
     if (SPIRead(readPos, buffer, readLength) != SPI_FLASH_RESULT_OK)
     {
-      ets_printf("Failed to read back firmware for hash validation\r\n");
-      return FALSE;
+      if (retries-- <= 0)
+      {
+        ets_printf("Failed to read back firmware at %x for hash validation\r\n", readPos);
+        return FALSE;
+      }
+      else continue;
     }
+    
+    retries = 3;
   
     //ets_printf("SHA1Update: %x, %x\r\n", readPos, readLength);
     SHA1Update(&ctx, buffer, readLength);
@@ -102,14 +112,17 @@ NOINLINE int verify_firmware_hash(const AppImageHeader* header, const uint32 ima
  */
 NOINLINE uint32 select_image(uint8* const buffer)
 {
+  uint32 retImage       = FACTORY_FW_START;
   uint32 preferredImage = FACTORY_FW_START;
   uint32 secondImage    = FACTORY_FW_START;
   AppImageHeader* preferredHeader = NULL;
   AppImageHeader* secondHeader    = NULL;
+  FWImageSelection preferredEnum  = FW_IMAGE_FACTORY;
+  FWImageSelection secondEnum     = FW_IMAGE_FACTORY;
+  uint32 retSelection = FW_IMAGE_FACTORY;
   if (get_gpio(RECOVERY_MODE_PIN) == FALSE)
   {
     ets_printf("Selecting recovery image\r\n");
-    return FACTORY_FW_START;
   }
   else
   {
@@ -118,45 +131,53 @@ NOINLINE uint32 select_image(uint8* const buffer)
     if (SPIRead(APPLICATION_A_SECTOR * SECTOR_SIZE, &aihA, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
     {
       ets_printf("Failed to read application image A header\r\nFalling back to factory image\r\n");
-      return FACTORY_FW_START;
     }
-    if (SPIRead(APPLICATION_B_SECTOR * SECTOR_SIZE, &aihB, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
+    else if (SPIRead(APPLICATION_B_SECTOR * SECTOR_SIZE, &aihB, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
     {
       ets_printf("Failed to read application image B header\r\n");
-      return FACTORY_FW_START;
-    }
-    
-    if (aihA.imageNumber > aihB.imageNumber)
-    {
-      preferredImage  = APPLICATION_A_SECTOR * SECTOR_SIZE;
-      secondImage     = APPLICATION_B_SECTOR * SECTOR_SIZE;
-      preferredHeader = &aihA;
-      secondHeader    = &aihB;
     }
     else
     {
-      preferredImage  = APPLICATION_B_SECTOR * SECTOR_SIZE;
-      secondImage     = APPLICATION_A_SECTOR * SECTOR_SIZE;
-      preferredHeader = &aihB;
-      secondHeader    = &aihA;
-    }
-    
-    if (verify_firmware_hash(preferredHeader, preferredImage, buffer))
-    {
-      ets_printf("Selecting newest image\r\n");
-      return preferredImage + sizeof(AppImageHeader);
-    }
-    else if (verify_firmware_hash(secondHeader, secondImage, buffer))
-    {
-      ets_printf("Selecting older image\r\n");
-      return secondImage + sizeof(AppImageHeader);
-    }
-    else
-    {
-      ets_printf("Falling back to factory image\r\n");
-      return FACTORY_FW_START;
+      if (aihA.imageNumber > aihB.imageNumber)
+      {
+        preferredImage  = APPLICATION_A_SECTOR * SECTOR_SIZE;
+        secondImage     = APPLICATION_B_SECTOR * SECTOR_SIZE;
+        preferredHeader = &aihA;
+        secondHeader    = &aihB;
+        preferredEnum   = FW_IMAGE_A;
+        secondEnum      = FW_IMAGE_B;
+      }
+      else
+      {
+        preferredImage  = APPLICATION_B_SECTOR * SECTOR_SIZE;
+        secondImage     = APPLICATION_A_SECTOR * SECTOR_SIZE;
+        preferredHeader = &aihB;
+        secondHeader    = &aihA;
+        preferredEnum   = FW_IMAGE_B;
+        secondEnum      = FW_IMAGE_A;
+      }
+      
+      if (verify_firmware_hash(preferredHeader, preferredImage, buffer))
+      {
+        ets_printf("Selecting newest image\r\n");
+        retImage = preferredImage + sizeof(AppImageHeader);
+        retSelection = preferredEnum;
+      }
+      else if (verify_firmware_hash(secondHeader, secondImage, buffer))
+      {
+        ets_printf("Selecting older image\r\n");
+        retImage = secondImage + sizeof(AppImageHeader);
+        retSelection = secondEnum;
+      }
+      else
+      {
+        ets_printf("Falling back to factory image\r\n");
+      }
     }
   }
+  
+  system_rtc_mem(RTC_IMAGE_SELECTION, &retSelection, 1, TRUE);
+  return retImage;
 }
 
 NOINLINE uint32 check_image(uint32 readpos, uint8* buffer) {
@@ -252,7 +273,7 @@ NOINLINE uint32 check_image(uint32 readpos, uint8* buffer) {
     return 0;
   }
 
-  ets_printf("Found valid rom at %x\r\n", romaddr);
+  //ets_printf("Found valid rom at %x\r\n", romaddr);
 
   return romaddr;
 }
@@ -283,16 +304,16 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
   // create function pointer for entry point
   usercode = header->entry;
   
-  ets_printf("Header %d sections, entry at %x\r\n", header->count, header->entry);
+  //ets_printf("Header %d sections, entry at %x\r\n", header->count, header->entry);
   
   // copy all the sections
   for (sectcount = header->count; sectcount > 0; sectcount--) {
-    
+
+    //ets_printf("\tCopying section %d: rp = %x\twp = %x\tlen = %x\r\n", sectcount, readpos, section->address, section->length);
+
     // read section header
     SPIRead(readpos, section, sizeof(section_header));
     readpos += sizeof(section_header);
-
-    //ets_printf("\tCopying section %d: wp = %x, len = %d\r\n", sectcount, section->address, section->length);
 
     // get section address and length
     writepos = section->address;
@@ -346,7 +367,6 @@ void NOINLINE writeProtect(void)
   }
   
   // XXX Exectute the flash protect command!
-  ets_printf("WARNING: Flash write protection not yet implemented\r\n");
 }
 
 __attribute__((section(".iram2.text"))) void NOINLINE stage2a(void)

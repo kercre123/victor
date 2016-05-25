@@ -14,10 +14,11 @@
 #include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "user_config.h"
+#include "flash_map.h"
 
 /** Handle wifi events passed by the OS
  */
-void wifi_event_callback(System_Event_t *evt)
+void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
 {
   switch (evt->event)
   {
@@ -98,12 +99,19 @@ typedef void (*NVInitDoneCB)(const int8_t);
 int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
 void NVWipeAll(void);
 
-static void nv_init_done(const int8_t result)
+static void ICACHE_FLASH_ATTR nv_init_done(const int8_t result)
 {
   // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
   i2spiInit();
 
-  os_printf("User initalization complete\r\n");
+  if (FACTORY_FIRMWARE)
+  {
+    os_printf("Factory Firmware Init Complete\r\n");
+  }
+  else 
+  {
+    os_printf("Application Firmware Init Complete\r\n");
+  }
 }
 
 /** Callback after all the chip system initalization is done.

@@ -263,7 +263,10 @@ endif
 # Should be done in top-level makefile only
 #
 
-all:	.subdirs $(OBJS) $(OLIBS) $(OIMAGES) $(OBINS) $(SPECIAL_MKTARGETS)
+all: .subdirs $(OBJS) $(OLIBS) $(OIMAGES) $(OBINS) $(SPECIAL_MKTARGETS)
+
+/lib/libmain_w.a: /lib/libmain.a
+	$(OBJCOPY) -W Cache_Read_Enable_New $< $@
 
 clean:
 	$(foreach d, $(SUBDIRS), $(MAKE) -C $(d) clean;)

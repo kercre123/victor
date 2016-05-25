@@ -22,6 +22,8 @@ parser.add_argument("-s", "--sign", action="store_true",
                     help="Include signature block")
 parser.add_argument("-c", "--comment", action="store_true",
                     help="Add version information comment block")
+parser.add_argument("--prepend_size_word", action="store_true",
+                    help="Put a single u32 size word at the front of the file for recovery images.")
 args = parser.parse_args()
 
 BLOCK_LENGTH = 0x800
@@ -83,3 +85,9 @@ with open(args.output, "wb") as fo:
         for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
             fo.write(data)
             fo.write(pack("<II", block*BLOCK_LENGTH+base_addr, crc32(data)))
+
+if args.prepend_size_word:
+    fw = open(args.output, 'rb').read()
+    with open(args.output, "wb") as fo:
+        fo.write(pack("I", len(fw)))
+        fo.write(fw)

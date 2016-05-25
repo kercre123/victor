@@ -31,7 +31,7 @@ $(CBOOT_BUILD_BASE):
 $(CBOOT_FW_BASE):
 	mkdir -p $@
 
-$(CBOOT_BUILD_BASE)/cboot.o: cboot.c cboot-private.h cboot-gpio.h flash_map.h sha1.h
+$(CBOOT_BUILD_BASE)/cboot.o: cboot.c cboot-private.h cboot-gpio.h cboot-rtc.h flash_map.h sha1.h
 	@echo "CC $<"
 	@$(CC) $(CFLAGS) -I$(CBOOT_BUILD_BASE) $(CBOOT_EXTRA_INCDIR) -c $< -o $@
 

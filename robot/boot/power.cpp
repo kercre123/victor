@@ -69,7 +69,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(void)
   GPIO_IN(GPIO_WS, PIN_WS);
   SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp);
 
-  MicroWait(10000);
+  //MicroWait(10000);
 
   // Turn on 2v8 and 3v3 rails
   GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
@@ -77,7 +77,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(void)
   SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
 
   // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < 32*512; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;

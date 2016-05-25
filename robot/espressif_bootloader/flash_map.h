@@ -34,6 +34,20 @@ typedef enum {
   ESP_WIFI_CFG_SECTOR         = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long
 } FlashSector;
 
+/// Map of data stored in the RTC
+typedef enum {
+  RTC_SYSTEM_RESERVED = 0x00,
+  RTC_IMAGE_SELECTION = 0xbf,
+} RTCMemAddress;
+
+/// Enum for boot images
+// Use complex bit pattern to make error rejection easier
+typedef enum {
+  FW_IMAGE_FACTORY = 0x0000C0DE,
+  FW_IMAGE_A       = 0x00C0DE00,
+  FW_IMAGE_B       = 0xC0DE0000,
+} FWImageSelection;
+
 /** Header placed at the start of each application image
  * Size must be a multiple of 4 to keep firmware image on word boundary.
  */

@@ -37,7 +37,7 @@ typedef enum {
   NV_SEGMENT_A = 0,
   NV_SEGMENT_B = 1,
   NV_SEGMENT_F = 0x40,
-  NV_SEGMENT_UNINITALIZED = 0x80
+  NV_SEGMENT_UNINITALIZED = -128
 } NVSegment;
 
 struct NVEntryHeader {
@@ -74,7 +74,7 @@ static NVStorageState nv;
 static s32 getStartOfSegment(void)
 {
   if (nv.segment & NV_SEGMENT_F) return FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE;
-  else return NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * nv.segment);
+  else return NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * nv.segment) + sizeof(NVDataAreaHeader);
 }
 
 static inline s32 getEndOfSegment(void)
@@ -434,7 +434,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
   {
     nv.segment = newestJournalSegment;
     nv.flashPointer = getStartOfSegment();
-    os_printf("NVInit selecting segment at %x\r\n", nv.flashPointer - sizeof(NVDataAreaHeader));
+    os_printf("NVInit selecting segment %d at %x\r\n", nv.segment, nv.flashPointer - sizeof(NVDataAreaHeader));
     if ((newestJournalVersion != NV_STORAGE_FORMAT_VERSION) && (gc == false))
     {
       os_printf("NVInit WARNING: flash storage version %d current softare version %d but GC not scheduled!\r\n", newestJournalVersion, NV_STORAGE_FORMAT_VERSION);

@@ -293,11 +293,8 @@ void i2spiTask(os_event_t *event)
           {
             outgoingPhase       = BOOTLOADER_XFER_PHASE;
             rtipBootloaderState = STATE_IDLE;
-            os_printf("I2SPI Recovery mode synchronized.\r\n");
             #if FACTORY_FIRMWARE
               foregroundTaskPost(i2spiRecoveryCallback, rtipBootloaderState);
-            #else
-              while(1); /// We shouldn't be here, wait for reboot into our factory firmware
             #endif
           }
           break;
