@@ -56,13 +56,13 @@ fi
 
 # execute
 set -o pipefail
-ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/testdata" \
-ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
-GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/basestationGoogleTest.xml \
 $TOPLEVEL/tools/build/tools/ankibuild/multiTest.py \
 --stdout_fail \
 --path $DERIVED_DATA/$BUILD_TYPE \
 --gtest_path "$DERIVED_DATA/$BUILD_TYPE/" \
+--work_path "$DERIVED_DATA/$BUILD_TYPE/testdata" \
+--config_path "$DERIVED_DATA/$BUILD_TYPE/" \
+--gtest_output "xml:$DERIVED_DATA/$BUILD_TYPE/basestationGoogleTest.xml" \
 --executable UtilUnitTest \
 --stdout_file \
 --xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
