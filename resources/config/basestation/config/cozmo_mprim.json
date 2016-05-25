@@ -31,17 +31,17 @@
       "name": "hard right"
     },
     {
-      "extra_cost_factor": 5.0,
+      "extra_cost_factor": 2.0,
       "index": 6,
       "name": "inplace left"
     },
     {
-      "extra_cost_factor": 5.0,
+      "extra_cost_factor": 2.0,
       "index": 7,
       "name": "inplace right"
     },
     {
-      "extra_cost_factor": 1.4,
+      "extra_cost_factor": 1.2,
       "index": 8,
       "name": "backwards short straight",
       "reverse_action": true
