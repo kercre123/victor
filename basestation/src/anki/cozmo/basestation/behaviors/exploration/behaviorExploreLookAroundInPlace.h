@@ -105,6 +105,7 @@ private:
     float   behavior_DistanceFromRecentLocationMin_mm;
     uint8_t behavior_RecentLocationsMax;
     bool    behavior_ShouldResetTurnDirection;
+    bool    behavior_ShouldLowerLift;
     float   behavior_AngleOfFocus_deg;
     // turn speed
     float sx_BodyTurnSpeed_degPerSec;
