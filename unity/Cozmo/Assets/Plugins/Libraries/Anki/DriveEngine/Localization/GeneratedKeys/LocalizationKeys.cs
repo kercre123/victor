@@ -206,6 +206,7 @@ public static class LocalizationKeys {
   public const string kNamePlayer = "name.player";
   public const string kButtonQuitGame = "button.quitGame";
   public const string kButtonQuit = "button.quit";
+  public const string kButtonCancel = "button.cancel";
   public const string kButtonStartChallenge = "button.startChallenge";
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
