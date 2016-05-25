@@ -121,19 +121,19 @@
     "translation": "Round {0:N0}"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap a flashing cube to claim it and begin the game!\n\n(Make sure your and Cozmo's cubes are far apart.)"
+    "translation": "Tap a flashing cube\nto play with!\n\nCubes should be separated."
   },
   "speedTap.tapBlockForRound": {
-    "translation": "Ready? \nTap your cube to start the next round.\n\n(Make sure your and Cozmo's cubes are far apart.)"
+    "translation": "Tap your cube to begin the next round."
   },
   "speedTap.dontMoveCozmo.title": {
-    "translation": "Please Don't Move Cozmo"
+    "translation": "Cozmo has moved!"
   },
   "speedTap.dontMoveCozmo.description": {
-    "translation": "Cozmo doesn't appreciate being moved during games! Please don't do that."
+    "translation": "Cozmo has moved and can't continue the game."
   },
   "speedTap.dontMoveBlock.title": {
-    "translation": "Please Don't Move Cozmo's Cube"
+    "translation": "Cozmo's cube has moved!"
   },
   "speedTap.dontMoveBlock.description": {
     "translation": "Cozmo doesn't appreciate his cube being moved during games! Please don't do that."
@@ -226,22 +226,22 @@
     "translation": "Expert"
   },
   "speedTap.difficulty.easyDescription": {
-    "translation": "Start with Easy Mode, unlock more over time!"
+    "translation": "Be the first to slap your cube when the colors match - but never slap on red!"
   },
   "speedTap.difficulty.mediumDescription": {
-    "translation": "Patterns may have up to 2 colors"
+    "translation": "Same rules as Easy mode, but with light patterns! Cubes may have up to 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
-    "translation": "Patterns may have 1-2 colors and any number of lights."
+    "translation": "More complexity! Patterns may have 1-2 colors and any number of lights."
   },
   "speedTap.difficulty.expertDescription": {
-    "translation": "Patterns may have any number of colors and lights."
+    "translation": "Experts only: Patterns may have any number of colors and lights."
   },
   "button.retry": {
     "translation": "Try Again"
   },
   "speedTap.text.waitForCozmo": {
-    "translation": "Wait for Cozmo to claim his cube."
+    "translation": "Cozmo is getting ready..."
   },
   "speedTap.difficulty.easyDescription.locked": {
     "translation": "Unlock by unlocking Speed Tap."
