@@ -592,18 +592,6 @@ namespace Cozmo {
                                          info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
                                          info.observedCalibDotRight_x, info.observedCalibDotRight_y);
                         
-                        // Verify tool code data is in range
-                        static const f32 pixelDistThresh = 30.f;
-                        f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
-                                                           Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
-                        f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
-                                                           Point2f(info.observedCalibDotRight_x, info.observedCalibDotRight_y));
-                        
-                        if (distL > pixelDistThresh || distR > pixelDistThresh) {
-                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
-                          return false;
-                        }
-                        
                         // Store results to nvStorage
                         if (ENABLE_NVSTORAGE_WRITES) {
                           u8 buf[info.Size()];
@@ -620,8 +608,22 @@ namespace Cozmo {
                             EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
                             return false;
                           }
-                          
                         }
+                        
+                        
+                        // Verify tool code data is in range
+                        static const f32 pixelDistThresh = 30.f;
+                        f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
+                                                           Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
+                        f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
+                                                           Point2f(info.observedCalibDotRight_x, info.observedCalibDotRight_y));
+                        
+                        if (distL > pixelDistThresh || distR > pixelDistThresh) {
+                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
+                          return false;
+                        }
+                        
+                        
                         return true;
                       });
       
