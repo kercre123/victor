@@ -5,8 +5,13 @@
 
 typedef uint16_t big_num_cell_t;
 
-// 1024 static allocated
-static const int CELL_SIZE = 128;
+#ifdef NRF51
+// 1024-bit safe (DH keys)
+static const int CELL_SIZE = 129;
+#else
+// 2048-bit safe (RSA Pub)
+static const int CELL_SIZE = 257;
+#endif
 static const int CELL_BITS = (sizeof(big_num_cell_t) * 8);
 
 struct big_num_t {
@@ -23,6 +28,12 @@ struct big_mont_t {
   big_num_t r2;
   big_num_t rinv;
   big_num_t minv;
+};
+
+// This is used for public decryption
+struct big_rsa_t {
+  big_num_t modulo;
+  big_num_t exp;
 };
 
 union big_overflow_t {

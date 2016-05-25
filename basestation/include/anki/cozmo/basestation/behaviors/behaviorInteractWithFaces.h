@@ -41,11 +41,45 @@ namespace Cozmo {
     virtual bool IsRunnableInternal(const Robot& robot) const override;
     
   protected:
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // IBehavior API
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
     virtual Result InitInternal(Robot& robot) override;
     virtual void   StopInternal(Robot& robot) override;
+    
+    // score
+    virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
+    virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
   private:
+  
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Types
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    using BaseClass = IBehavior;
+    
+    // this is a struct to help score smarter for the demo. Ideally every type of reaction should be its own
+    // behavior. Then it would be easy to set different scores and cooldowns, for example to score high with low cooldown
+    // for interacting with a new face, but having low score or high cooldown to interact with old ones. All that
+    // complexity is here because this behavior does everything.
+    struct SmartFaceScore {
+      bool  _isValid      = false;
+      float _whileRunning = 0.0f;   // score while running
+      float _newKnownFace = 0.0f;   // score if we have a new known face
+      float _unknownFace  = 0.0f;   // score if we don't have a new known face, but we have an unknown
+      float _unknownFace_cooldown = 0.0f; // cooldown applied to not bounce between unknown faces all the time
+      float _unknownFace_bonusToDistanceTo1 = 0.0f; // factor applied to distance to face to give bonus to closer ones. MinDistance will get this bonus, MaxDistance gets 0
+      float _oldKnownFace = 0.0f;   // score if we don't have new known or unknown faces, but we have old known
+      float _oldKnownFace_secondsToVal = 0.0f; // seconds it takes _oldKnownFace to reach the value (from 0)
+    };
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
     using Face = Vision::TrackedFace;
     using FaceID_t = Vision::FaceID_t;
     
@@ -97,8 +131,10 @@ namespace Cozmo {
     // face. Returns true if both were successful, false if there were any problems
     bool GetCurrentFace(const Robot& robot, const Face*& face, FaceData*& faceData);
 
-    float ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const;
-
+    float ComputeFaceScore(FaceID_t faceID, const FaceData& faceData, const Robot& robot) const;
+    float ComputeFaceSmartScore(FaceID_t faceID, const FaceData& faceData, const Robot& robot) const;
+    float ComputeDistanceBonus(FaceID_t faceID, const Robot& robot) const;
+    
     // return the face id of a face to track, or Vision::UnknownFaceID if there is none
     FaceID_t GetNewFace(const Robot& robot);
 
@@ -116,6 +152,8 @@ namespace Cozmo {
     float _requestEnrollOnCooldownUntil_s = -1.0f;
 
     float _lastGlanceTime = 0;
+    
+    float _lastInteractionEndedTime_sec = 0.0f;
 
     // Known face data
     std::unordered_map<FaceID_t, FaceData> _interestingFacesData;
@@ -124,6 +162,9 @@ namespace Cozmo {
     // Config parameters
     ////////////////////////////////////////////////////////////////////////////////
     
+    // smart score
+    SmartFaceScore _smartScore;
+   
     // config can specify whether or not we do this at all
     bool _faceEnrollEnabled;
     

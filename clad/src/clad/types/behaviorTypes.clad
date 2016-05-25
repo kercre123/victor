@@ -44,6 +44,7 @@ enum uint_8 BehaviorType {
   RollBlock,
   StackBlocks,
   AdmireStack,
+  PutDownBlock,
   FactoryTest,
   DemoFearEdge,
   FlipDownFromWheelie,

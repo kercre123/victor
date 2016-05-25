@@ -246,7 +246,7 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
     struct {
       big_num_cell_t lower;
       int16_t upper;
-    };
+    } parts;
 
     uint32_t word;
   };
@@ -262,18 +262,18 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
 
   // Lower section summation
   for (idx = 0; idx < b.used; idx++) {
-    word = a.digits[idx] - b.digits[idx] + upper;
-    out.digits[idx] = lower;
+    word = a.digits[idx] - b.digits[idx] + parts.upper;
+    out.digits[idx] = parts.lower;
   }
   
   // Carry through
   for (; idx < a.used; idx++) {
-    word = a.digits[idx] + upper;
-    out.digits[idx] = lower;
+    word = a.digits[idx] + parts.upper;
+    out.digits[idx] = parts.lower;
   }
 
   // underflow
-  if (upper) {
+  if (parts.upper) {
     return true;
   }
 

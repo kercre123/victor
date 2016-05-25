@@ -12,8 +12,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 4000); // How long before deleting unobserved face
-  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 4000);
+  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 15000); // How long before deleting unobserved face
+  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 15000);
   
   FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
   : face(faceIn)
@@ -252,7 +252,9 @@ namespace Cozmo {
     
     knownFace->numTimesObserved++;
     
-    if(knownFace->numTimesObserved >= MinTimesToSeeFace)
+    // Wait to report this face until we've seen it enough times to be convinced it's
+    // not a false positive (random detection), or if it has been recognized already.
+    if(knownFace->numTimesObserved >= MinTimesToSeeFace || !knownFace->face.GetName().empty())
     {
 #     if 0 // !USE_POSE_FOR_ID
       // Remove any known faces whose poses overlap with this observed face

@@ -15,12 +15,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "app/bodyTest.h"
-#include "app/cubeTest.h"
-#include "app/headTest.h"
-#include "app/robotTest.h"
+#include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 15;
+u8 g_fixtureReleaseVersion = 16;
 const char* BUILD_INFO = "NOT FOR FACTORY";
 
 BOOL g_isDevicePresent = 0;
@@ -170,14 +167,21 @@ bool DetectDevice(void)
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
-    case FIXTURE_CUBEFCC_TEST:
       return CubeDetect();
-    case FIXTURE_HEAD_TEST:
+    case FIXTURE_HEAD1_TEST:
+    case FIXTURE_HEAD2_TEST:
       return HeadDetect();
-    case FIXTURE_BODY_TEST:
+    case FIXTURE_BODY1_TEST:
+    case FIXTURE_BODY2_TEST:
       return BodyDetect();
+    case FIXTURE_ROBOT_TEST:
+    case FIXTURE_FINAL_TEST:
     case FIXTURE_PLAYPEN_TEST:
       return RobotDetect();
+    case FIXTURE_MOTOR_TEST:
+      return MotorDetect();
+    case FIXTURE_EXTRAS_TEST:
+      return ExtrasDetect();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -345,12 +349,12 @@ BOOL ToggleContacts(void)
   const u32 maxCycles = 5000;
   for (i = 0; i < maxCycles; i++)
   {
-    GPIO_SET(GPIOC, 10);
+    PIN_SET(GPIOC, 10);
     PIN_OUT(GPIOC, 10);
-    GPIO_SET(GPIOC, 12);
+    PIN_SET(GPIOC, 12);
     MicroWait(10);
-    GPIO_RESET(GPIOC, 12);
-    GPIO_RESET(GPIOC, 10);
+    PIN_RESET(GPIOC, 12);
+    PIN_RESET(GPIOC, 10);
     MicroWait(5);
     PIN_IN(GPIOC, 10);
     MicroWait(5);
@@ -364,8 +368,8 @@ BOOL ToggleContacts(void)
   PIN_PULL_NONE(GPIOC, 10);
   PIN_OUT(GPIOC, 10);
   PIN_PP(GPIOC, 10);
-  GPIO_RESET(GPIOC, 10);
-  GPIO_SET(GPIOC, 12);
+  PIN_RESET(GPIOC, 10);
+  PIN_SET(GPIOC, 12);
   PIN_OUT(GPIOC, 12);
   
   return sawPowerOn;*/
@@ -392,21 +396,30 @@ static void MainExecution()
     case FIXTURE_CHARGER_TEST:
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
-    case FIXTURE_CUBE3_TEST:   
-    case FIXTURE_CUBEFCC_TEST:         
+    case FIXTURE_CUBE3_TEST:
       m_functions = GetCubeTestFunctions();
       break;
-    case FIXTURE_BODY_TEST:
-      m_functions = GetBodyTestFunctions();
-      break;
-    case FIXTURE_HEAD_TEST:
+    case FIXTURE_HEAD1_TEST:
+    case FIXTURE_HEAD2_TEST:
       m_functions = GetHeadTestFunctions();
       break;    
-    case FIXTURE_DEBUG:
-      m_functions = GetDebugTestFunctions();
+    case FIXTURE_BODY1_TEST:
+    case FIXTURE_BODY2_TEST:
+      m_functions = GetBodyTestFunctions();
       break;
+    case FIXTURE_ROBOT_TEST:
+    case FIXTURE_FINAL_TEST:
     case FIXTURE_PLAYPEN_TEST:
       m_functions = GetRobotTestFunctions();
+      break;
+    case FIXTURE_MOTOR_TEST:
+      m_functions = GetMotorTestFunctions();
+      break;
+    case FIXTURE_EXTRAS_TEST:
+      m_functions = GetExtrasTestFunctions();
+      break;
+    case FIXTURE_DEBUG:
+      m_functions = GetDebugTestFunctions();
       break;
   }
   
@@ -464,61 +477,6 @@ void StoreParams(void)
     FLASH_ProgramByte(FLASH_PARAMS + i, ((u8*)(&g_flashParams))[i]);
   FLASH_Lock();
 }
-
-#if 0
-extern u8 g_fixbootbin[], g_fixbootend[];
-
-// Check if bootloader is outdated and update it with the latest
-// This is stupidly risky and could easily brick a board - but it replaces an old bootloader that bricks boards
-// Fight bricking with bricking!
-void UpdateBootLoader(void)
-{
-  // Save the serial number, in case we have to restore it
-  u32 serial = FIXTURE_SERIAL;
-  
-  // Spend a little while checking - no point in giving up on our first try, since the board will die if we do
-  for (int i = 0; i < 100; i++)
-  {
-    // Byte by byte comparison
-    bool matches = true;
-    for (int j = 0; j < (g_fixbootend - g_fixbootbin); j++)
-      if (g_fixbootbin[j] != ((u8*)FLASH_BOOTLOADER)[j])
-        matches = false;
-      
-    // Bail out if all is good
-    if (matches)
-      return;
-    
-    SlowPutString("Mismatch!\r\n");
-    
-    // If not so good, check a few more times, leaving time for voltage to stabilize
-    if (i > 50)
-    {
-      SlowPutString("Flashing...");
-      
-      // Gulp.. it's bricking time
-      FLASH_Unlock();
-      
-      // Erase and reflash the boot code
-      FLASH_EraseSector(FLASH_BLOCK_BOOT, VoltageRange_1);
-      for (int j = 0; j < (g_fixbootend - g_fixbootbin); j++)
-        FLASH_ProgramByte(FLASH_BOOTLOADER + j, g_fixbootbin[j]);
-      
-      // Recover the serial number
-      FLASH_ProgramByte(FLASH_BOOTLOADER_SERIAL, serial & 255);
-      FLASH_ProgramByte(FLASH_BOOTLOADER_SERIAL+1, serial >> 8);
-      FLASH_ProgramByte(FLASH_BOOTLOADER_SERIAL+2, serial >> 16);
-      FLASH_ProgramByte(FLASH_BOOTLOADER_SERIAL+3, serial >> 24);
-      FLASH_Lock();
-      
-      SlowPutString("Done!\r\n");
-    }
-  }
-  
-  // If we get here, we are DEAD!
-}
-#endif
-
 int main(void)
 {
   __IO uint32_t i = 0;
@@ -529,53 +487,9 @@ int main(void)
   InitConsole();
   
   SlowPutString("STARTUP!\r\n");
-  
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-  
-  /* Initialize LEDs */
-  STM_EVAL_LEDInit(LEDRED);
-  STM_EVAL_LEDInit(LEDGREEN);
 
-  STM_EVAL_LEDOff(LEDRED);
-  STM_EVAL_LEDOff(LEDGREEN);
-  
-  // This belongs in future board.c
-  // Always enable charger/ENCHG (PA15), despite switch being off
-  // On EP1 fixtures, R5 must be removed for this to work!
-  GPIO_InitTypeDef  GPIO_InitStructure;
-  GPIO_SetBits(GPIOA, GPIO_Pin_15);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-  
-  // Initialize PB13-PB15 as the ID inputs with pullups
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-  // Wait for lines to initialize and not float
-  // 2 us was not long enough, just being safe...
-  MicroWait(100);
-
-  // Read the pins with pull-down resistors on GPIOB[15:12]
-  g_fixtureType = (FixtureType)(~(GPIO_READ(GPIOB) >> 12) & 15);
-
+  g_fixtureType = (FixtureType)InitBoard();
   SlowPrintf("Fixture: %i\r\n", g_fixtureType);
-  
-  InitBAT();
   
   SlowPutString("Initializing Display...\r\n");
   

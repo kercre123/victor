@@ -41,7 +41,7 @@ static const char* kDriveOffChargerBehavior = "DriveOffCharger";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
 // static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
-static const char* kSleepBehavior = "demo_sleep";
+static const char* kSleepOnChargerBehavior = "ReactToOnCharger";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
 static const char* kKnockOverStackBehavior = "AdmireStack";
 
@@ -91,18 +91,18 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   SetAllBehaviorsEnabled(false);
 }
 
-unsigned int DemoBehaviorChooser::GetStateNum(State state)
+unsigned int DemoBehaviorChooser::GetUISceneNumForState(State state)
 {
   switch( state ) {
     case State::None: return 0;
     case State::WakeUp: return 1;
-    case State::DriveOffCharger: return 2;
-    case State::FearEdge: return 3;
-    case State::Pounce: return 4;
-    case State::Faces: return 5;
-    case State::Cubes: return 6;
-    case State::MiniGame: return 7;
-    case State::Sleep: return 8;
+    case State::DriveOffCharger: return 1;
+    case State::FearEdge: return 2;
+    case State::Pounce: return 3;
+    case State::Faces: return 4;
+    case State::Cubes: return 5;
+    case State::MiniGame: return 6;
+    case State::Sleep: return 7;
   }
 }
 
@@ -198,7 +198,20 @@ void DemoBehaviorChooser::TransitionToNextState()
     }
   }
 
-  _robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::DemoState( GetStateNum( _state ))));
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DemoState(GetUISceneNumForState(_state))));
+}
+
+bool DemoBehaviorChooser::IsBehaviorRunning(const char* behaviorName) const
+{
+  IBehavior* behavior = _robot.GetBehaviorFactory().FindBehaviorByName(behaviorName);
+  if( nullptr == behavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoNamedBehavior",
+                      "couldn't get behavior behavior '%s' by name",
+                      behaviorName);
+    return false;
+  }
+
+  return behavior->IsRunning();
 }
 
 bool DemoBehaviorChooser::DidBehaviorRunAndStop(const char* behaviorName) const
@@ -307,14 +320,13 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   SetBehaviorGroupEnabled(BehaviorGroup::DemoRequestSpeedTap);
 
   // when mini game starts, will go to selection chooser, then back to this chooser
-  _checkTransition = [this]() { return false; };
+  _checkTransition = [this]() { return IsBehaviorRunning(kSleepOnChargerBehavior); };
 }
 
 void DemoBehaviorChooser::TransitionToSleep()
 {
   SET_STATE(Sleep);
   SetAllBehaviorsEnabled(false);
-  SetBehaviorEnabled(kSleepBehavior, true);
 
   // no transition out of this one
   _checkTransition = nullptr;

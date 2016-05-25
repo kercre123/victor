@@ -94,7 +94,7 @@ namespace Anki {
       
       // Amount of time orientation is within tolerance of target angle before
       // the controller is considered to have reached the target point turn angle.
-      const u32 IN_POSITION_THRESHOLD_MS = 100;
+      const u32 IN_POSITION_THRESHOLD_MS = 500;
       
       // For checking if robot is not turning despite maxed integral power being applied
       TimeStamp_t pointTurnIntegralPowerMaxedStartTime_ = 0;
@@ -647,7 +647,7 @@ namespace Anki {
           if (inPositionStartTime_ == 0) {
             AnkiDebug( 161, "ManagePointTurn.InRange", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
-          } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
+          } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS || !WheelController::AreWheelsMoving()) {
 #           if(DEBUG_STEERING_CONTROLLER)
             f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
             WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);

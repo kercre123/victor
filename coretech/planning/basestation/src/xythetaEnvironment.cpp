@@ -18,6 +18,7 @@
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
+#include "util/console/consoleInterface.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
@@ -30,6 +31,8 @@ using namespace std;
 
 namespace Anki {
 namespace Planning {
+
+CONSOLE_VAR(f32, kXYTPlanner_PointTurnTolOverride_deg, "Planner", 2.0f);
 
 #define LATTICE_PLANNER_ACCEL 200
 #define LATTICE_PLANNER_DECEL 200
@@ -1425,6 +1428,13 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
     PathSegment segment(seg);
     segment.OffsetStart(curr.x_mm, curr.y_mm);
 
+#if REMOTE_CONSOLE_ENABLED
+    if( segment.GetType() == PST_POINT_TURN) {
+      segment.GetDef().turn.angleTolerance = DEG_TO_RAD(kXYTPlanner_PointTurnTolOverride_deg);
+    }
+#endif
+
+
     float xx, yy, aa;
     segment.GetStartPoint(xx,yy);
     // printf("start: (%f, %f)\n", xx, yy);
@@ -1469,10 +1479,10 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
         // target angle is less that 180 degrees away from the current
         // angle
         if(FLT_NEAR(path[endIdx].GetDef().turn.x, segment.GetDef().turn.x) &&
-               FLT_NEAR(path[endIdx].GetDef().turn.y, segment.GetDef().turn.y) &&
-               FLT_NEAR(path[endIdx].GetTargetSpeed(), segment.GetTargetSpeed())) {
+           FLT_NEAR(path[endIdx].GetDef().turn.y, segment.GetDef().turn.y) &&
+           FLT_NEAR(path[endIdx].GetTargetSpeed(), segment.GetTargetSpeed())) {
           path[endIdx].GetDef().turn.targetAngle = segment.GetDef().turn.targetAngle;
-        shouldAdd = false;
+          shouldAdd = false;
         }
         break;
 

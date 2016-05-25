@@ -411,7 +411,7 @@ namespace Face {
     memset(frame, 0, sizeof(frame));
 
 
-    for (int c = 0; c < 4; c++) {
+    for (int c = 0; c < digits; c++) {
       int ch = (value >> ((digits - 1 - c) * 4)) & 0xF;
       for (int x = 0; x < 16; x++) {
         u64 line = DIGITS[ch][x];

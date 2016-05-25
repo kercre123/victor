@@ -1,11 +1,10 @@
 // Based on Drive Testfix, updated for Cozmo EP1 Testfix
 #include "hal/monitor.h"
 #include "hal/timers.h"
+#include "hal/board.h"
 #include "lib/stm32f2xx.h"
 #include "lib/stm32f2xx_rcc.h"
 #include "hal/console.h"
-
-#define PLAYPEN_ONLY    // XXX: Only way to share sensors right now, arrgh
 
 // These addresses are shifted left by 1 for the R/nW bit in the LSB
 #define CHARGE_CONTACT_ADDRESS  (0x80)  // 8'b10000000
@@ -15,60 +14,53 @@
 #define READ                    1
 
 #define CLOCK_WAIT              5
-#ifdef PLAYPEN_ONLY
-#define GPIOB_SCL               8
-#define GPIOB_SDA               9
-#else
-#define GPIOB_SCL               9   // XXX: Backward for digital pot
-#define GPIOB_SDA               8
-#endif
 
 static void I2C_Pulse(void)
 {  
-  GPIO_SET(GPIOB, GPIOB_SCL);
+  PIN_SET(GPIOB, PINB_SCL);
   MicroWait(CLOCK_WAIT);
-  GPIO_RESET(GPIOB, GPIOB_SCL);
+  PIN_RESET(GPIOB, PINB_SCL);
   MicroWait(CLOCK_WAIT);
 }
 
 static void I2C_Start(void)
 {
-  PIN_OUT(GPIOB, GPIOB_SDA);
+  PIN_OUT(GPIOB, PINB_SDA);
   
-  GPIO_SET(GPIOB, GPIOB_SDA);
-  GPIO_SET(GPIOB, GPIOB_SCL);
+  PIN_SET(GPIOB, PINB_SDA);
+  PIN_SET(GPIOB, PINB_SCL);
   MicroWait(CLOCK_WAIT);
-  GPIO_RESET(GPIOB, GPIOB_SDA);
+  PIN_RESET(GPIOB, PINB_SDA);
   MicroWait(CLOCK_WAIT);
-  GPIO_RESET(GPIOB, GPIOB_SCL);
+  PIN_RESET(GPIOB, PINB_SCL);
   MicroWait(CLOCK_WAIT);
 }
 
 static void I2C_Stop(void)
 {
-  PIN_OUT(GPIOB, GPIOB_SDA);
+  PIN_OUT(GPIOB, PINB_SDA);
   
-  GPIO_RESET(GPIOB, GPIOB_SDA);
+  PIN_RESET(GPIOB, PINB_SDA);
   MicroWait(CLOCK_WAIT);
-  GPIO_SET(GPIOB, GPIOB_SCL);
+  PIN_SET(GPIOB, PINB_SCL);
   MicroWait(CLOCK_WAIT);
-  GPIO_SET(GPIOB, GPIOB_SDA);
+  PIN_SET(GPIOB, PINB_SDA);
   MicroWait(CLOCK_WAIT);
 }
 
 static void I2C_ACK(void)
 {
-  PIN_OUT(GPIOB, GPIOB_SDA);
+  PIN_OUT(GPIOB, PINB_SDA);
   
-  GPIO_RESET(GPIOB, GPIOB_SDA);
+  PIN_RESET(GPIOB, PINB_SDA);
   I2C_Pulse();
 }
 
 static void I2C_NACK(void)
 {
-  PIN_OUT(GPIOB, GPIOB_SDA);
+  PIN_OUT(GPIOB, PINB_SDA);
   
-  GPIO_SET(GPIOB, GPIOB_SDA);
+  PIN_SET(GPIOB, PINB_SDA);
   I2C_Pulse();
 }
 
@@ -87,17 +79,17 @@ static u8 I2C_Get8(void)
 {
   u8 value = 0;
   
-  PIN_IN(GPIOB, GPIOB_SDA);
+  PIN_IN(GPIOB, PINB_SDA);
   
   for (int i = 0; i < 8; i++)
   {
-    GPIO_SET(GPIOB, GPIOB_SCL);
+    PIN_SET(GPIOB, PINB_SCL);
     MicroWait(CLOCK_WAIT);
     
     value <<= 1;
-    value |= (GPIO_READ(GPIOB) >> GPIOB_SDA) & 1;
+    value |= (GPIO_READ(GPIOB) >> PINB_SDA) & 1;
     
-    GPIO_RESET(GPIOB, GPIOB_SCL);
+    PIN_RESET(GPIOB, PINB_SCL);
     MicroWait(CLOCK_WAIT);
   }
   
@@ -155,16 +147,12 @@ void InitMonitor(void)
   GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_8;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  
-  // SDA
-  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_9;
+  GPIO_InitStructure.GPIO_Pin =  GPIOB_SCL | GPIOB_SDA;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   
   // Let the lines float high
-  GPIO_SET(GPIOB, GPIOB_SDA);
-  GPIO_SET(GPIOB, GPIOB_SCL);
+  PIN_SET(GPIOB, PINB_SDA);
+  PIN_SET(GPIOB, PINB_SCL);
   
   // Setup the calibration register
   I2C_Send16(CHARGE_CONTACT_ADDRESS, 5, 0x75A5);  // Setup by TI's app... LSB = 20u

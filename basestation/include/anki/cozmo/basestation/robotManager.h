@@ -107,6 +107,9 @@ public:
 
   // Iterate through the loaded animations and broadcast their names
   void BroadcastAvailableAnimations();
+    
+  // Iterate through the loaded animation groups and broadcast their names
+  void BroadcastAvailableAnimationGroups();
   
   using RobotMap = std::map<RobotID_t,Robot*>;
   const RobotMap& GetRobotMap() const { return _robots; }

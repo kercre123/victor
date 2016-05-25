@@ -74,7 +74,11 @@ void AccelRead()
   u8 idata *p = _readings;
   
   if (IsCharger())
+  {
+    for (i = 0; i < HAND_LEN; i++)
+      _radioOut[i] = 0;
     return;
+  }
 
   Start(); //start condition
   Write((I2C_ADDR << 1) | I2C_WRITE_BIT); //slave address send

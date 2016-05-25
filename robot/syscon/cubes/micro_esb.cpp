@@ -103,14 +103,27 @@ uint32_t uesb_init(const uesb_config_t *parameters)
 
 uint32_t uesb_disable(void)
 {
-  if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
+  if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
+    return UESB_SUCCESS;
+  }
+  
+  while(m_uesb_mainstate != UESB_STATE_IDLE) { uesb_stop(); }
   m_uesb_mainstate = UESB_STATE_UNINITIALIZED;
 
   NRF_RADIO->SHORTS = 0;
+  
   NRF_RADIO->INTENCLR = 0xFFFFFFFF;
+  
   NRF_RADIO->EVENTS_DISABLED = 0;
+  NRF_RADIO->EVENTS_READY = 0;
+  NRF_RADIO->EVENTS_ADDRESS = 0;
+  NRF_RADIO->EVENTS_PAYLOAD = 0;
+  NRF_RADIO->EVENTS_END = 0;
+  NRF_RADIO->EVENTS_RSSIEND = 0;
+  NRF_RADIO->EVENTS_BCMATCH = 0;;
 
-  NRF_RADIO->POWER = 0;
+  NVIC_SetPriority(RADIO_IRQn, 0);
+  NVIC_DisableIRQ(RADIO_IRQn);
 
   return UESB_SUCCESS;
 }

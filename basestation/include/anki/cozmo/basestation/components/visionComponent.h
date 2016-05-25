@@ -206,9 +206,14 @@ struct DockingErrorSignal;
     Result EraseFace(const std::string& name);
     void   EraseAllFaces();
     
-    // Load/Save face album data to robot
+    // Load/Save face album data to/from robot's NVStorage
     Result SaveFaceAlbumToRobot();
-    Result LoadFaceAlbumFromRobot();
+    Result LoadFaceAlbumFromRobot(); // Broadcasts any loaded names and IDs
+    
+    // Load/Save face album data to/from file.
+    // NOTE: Load replaces whatever is in the robot's NVStorage!
+    Result SaveFaceAlbumToFile(const std::string& path);
+    Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     
   protected:
     

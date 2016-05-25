@@ -151,6 +151,8 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromRobotFailed", "");
       }
     } else {
+      // Erase all faces on the robot
+      EraseAllFaces();
       
       std::list<Vision::FaceNameAndID> namesAndIDs;
       result = _visionSystem->LoadFaceAlbum(faceAlbumName, namesAndIDs);
@@ -1781,6 +1783,37 @@ namespace Cozmo {
     
     return lastResult;
   } // LoadFaceAlbumFromRobot()
+  
+  
+  Result VisionComponent::SaveFaceAlbumToFile(const std::string& path)
+  {
+    Lock();
+    Result result = _visionSystem->SaveFaceAlbum(path);
+    Unlock();
+    
+    if(RESULT_OK != result) {
+      PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbum.SaveToFileFailed",
+                          "AlbumFile: %s", path.c_str());
+    }
+    return result;
+  }
+  
+  
+  Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path)
+  {
+    std::list<Vision::FaceNameAndID> namesAndIDs;
+    Result result = _visionSystem->LoadFaceAlbum(path, namesAndIDs);
+    BroadcastLoadedNamesAndIDs(namesAndIDs);
+    
+    if(RESULT_OK != result) {
+      PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",
+                          "AlbumFile: %s", path.c_str());
+    } else {
+      result = SaveFaceAlbumToRobot();
+    }
+    
+    return result;
+  }
   
   
   void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)

@@ -7,7 +7,6 @@ namespace Anki {
       namespace FCC {
         void start(void);
         void mainDTMExecution(void);
-        void mainLEDExecution(void);
       }
     }
   }

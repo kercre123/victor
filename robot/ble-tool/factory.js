@@ -25,7 +25,9 @@ noble.on('discover', function (device) {
   device.on('servicesDiscover', function (services) {
     services.forEach(function (service) {
       // Locate cozmo service ID
-      if (service.uuid !== '763dbeef5df1405e8aac51572be5bab3') return ;
+      if (service.uuid !== '763dbeef5df1405e8aac51572be5bab3') {
+        return ;
+      }
 
       service.on('characteristicsDiscover', function(characteristics) {
         var receive, send;

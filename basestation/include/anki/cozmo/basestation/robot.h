@@ -109,6 +109,7 @@ struct RobotState;
 class ActiveCube;
 class SpeedChooser;
 class DrivingAnimationHandler;
+class LightsComponent;
   
 namespace Audio {
   class RobotAudioClient;
@@ -293,7 +294,7 @@ public:
     
     // Wheel speeds, mm/sec
     f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
-    f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
+    f32 GetRightWheelSpeed() const { return _rightWheelSpeed_mmps; }
     
     // Return pose of robot's drive center based on what it's currently carrying
     const Pose3d& GetDriveCenterPose() const;
@@ -591,6 +592,8 @@ public:
     void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
     
     // ========= Lights ==========
+
+    // TODO:(bn) move all of this into lights component (and don't expose raw settings like this directly)
     
     // Color specified as RGBA, where A(lpha) will be ignored
     void SetDefaultLights(const u32 color);
@@ -685,7 +688,10 @@ public:
   
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
-  
+
+          LightsComponent& GetLightsComponent()       { assert(_lightsComponent); return *_lightsComponent; }
+    const LightsComponent& GetLightsComponent() const { assert(_lightsComponent); return *_lightsComponent; }
+
     const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
           MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
@@ -758,14 +764,16 @@ public:
   
     DrivingAnimationHandler* _drivingAnimationHandler;
   
-    //ActionQueue           _actionQueue;
-    ActionList              _actionList;
-    MovementComponent       _movementComponent;
-    VisionComponent*        _visionComponentPtr;
-    NVStorageComponent      _nvStorageComponent;
-    TextToSpeechComponent  _textToSpeechComponent;
+    //ActionQueue         _actionQueue;
+    ActionList            _actionList;
+    MovementComponent     _movementComponent;
+    VisionComponent*      _visionComponentPtr;
+    NVStorageComponent    _nvStorageComponent;
+    TextToSpeechComponent _textToSpeechComponent;
+
+    std::unique_ptr<LightsComponent>  _lightsComponent;
   
-    // Hash to not spam debug messages
+     // Hash to not spam debug messages
     size_t            _lastDebugStringHash;
 
     // Path Following. There are two planners, only one of which can

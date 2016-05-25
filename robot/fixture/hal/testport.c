@@ -17,15 +17,11 @@
 #include "hal/portable.h"
 #include "hal/uart.h"
 #include "../app/fixture.h"
+#include "hal/board.h"
 
-#define TESTPORT_TX       USART3
-#define TESTPORT_RX       USART3
+#define TESTPORT_TX       USART6  // Only works on Rev1+ fixtures
+#define TESTPORT_RX       USART6
 #define BAUD_RATE         500000
-
-#define PINC_TX           11
-#define GPIOC_TX          (1 << PINC_TX)
-#define PINC_RX           10
-#define GPIOC_RX          (1 << PINC_RX)
 
 #define TIMEOUT 800000  // 800 ms, some commands take a while...
 
@@ -57,14 +53,14 @@ void InitTestPort(int baudRate)
   
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Pin =  GPIOC_TX;
+  GPIO_InitStructure.GPIO_Pin =  GPIOC_CHGTX;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_TX, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOC, PINC_CHGTX, GPIO_AF_USART3);
   
-  GPIO_InitStructure.GPIO_Pin =  GPIOC_RX;
+  GPIO_InitStructure.GPIO_Pin =  GPIOC_CHGRX;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_RX, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOC, PINC_CHGRX, GPIO_AF_USART3);
   
   // TESTPORT_TX/RX config
   USART_Cmd(TESTPORT_TX, DISABLE);
@@ -77,20 +73,8 @@ void InitTestPort(int baudRate)
   USART_Init(TESTPORT_TX, &USART_InitStructure);  
   USART_Cmd(TESTPORT_TX, ENABLE);
   
-  // Pull PC10 low
-  GPIO_ResetBits(GPIOC, GPIO_Pin_10);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-  
-  // Pull PC11 low
-  GPIO_ResetBits(GPIOC, GPIO_Pin_11);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-  
+  // XXX: Init GPIOs
+
   TestEnableRx();
 }
 
@@ -177,9 +161,9 @@ void TestEnableTx(void)
     
   if (!m_isInTxMode)
   {
-    GPIO_RESET(GPIOC, PINC_RX);
-    PIN_OUT(GPIOC, PINC_RX);
-    PIN_AF(GPIOC, PINC_TX);
+    PIN_RESET(GPIOC, PINC_CHGRX);
+    PIN_OUT(GPIOC, PINC_CHGRX);
+    PIN_AF(GPIOC, PINC_CHGTX);
     volatile u32 v = TESTPORT_RX->SR;
 //  XXX    USART_Cmd(TESTPORT_RX, DISABLE);
     MicroWait(40);
@@ -196,9 +180,9 @@ void TestEnableRx(void)
     while (!(TESTPORT_TX->SR & USART_FLAG_TC))
       ;
 
-    GPIO_RESET(GPIOC, PINC_TX);    
-    PIN_OUT(GPIOC, PINC_TX);
-    PIN_AF(GPIOC, PINC_RX);
+    PIN_RESET(GPIOC, PINC_CHGTX);    
+    PIN_OUT(GPIOC, PINC_CHGTX);
+    PIN_AF(GPIOC, PINC_CHGRX);
     MicroWait(20);
 // XXX    USART_Cmd(TESTPORT_RX, ENABLE);
     v = TESTPORT_RX->SR;

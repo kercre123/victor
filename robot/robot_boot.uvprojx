@@ -328,15 +328,13 @@
             <v6LangP>0</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
-            <v6Lto>0</v6Lto>
-            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>  --library_type=standardlib --diag_suppress=1296,186 
  --library_interface=armcc  
 --gnu</MiscControls>
               <Define>COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>k02_hal/lib;include;k02_hal</IncludePath>
+              <IncludePath>k02_hal/lib;include;k02_hal;../crypto</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -383,11 +381,6 @@
           <GroupName>boot</GroupName>
           <Files>
             <File>
-              <FileName>crc32.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\boot\crc32.cpp</FilePath>
-            </File>
-            <File>
               <FileName>fconf.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\fconf.cpp</FilePath>
@@ -421,6 +414,11 @@
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\uart.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crc32.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\crypto\crc32.cpp</FilePath>
             </File>
           </Files>
         </Group>

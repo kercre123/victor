@@ -45,6 +45,7 @@ static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 static const char* kShouldUseBlocksKey = "use_block";
+static const char* kDoSecondRequestKey = "do_second_request";
 
 // TODO:(bn) replace these with animation groups
 static const char* kDrivingFailAnimName = "ID_react2block_align_fail";
@@ -53,10 +54,12 @@ static const char* kPickupFailAnimName = "ID_rollBlock_fail_01";
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
 static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
-static const float kFaceVerificationTime_s = 0.75f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
 static const bool  kShouldUseBlocksDefault = true;
+static const bool  kDoSecondRequestDefault = false;
+
+static const int   kFaceVerificationNumImages = 4;
 
 // #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
 // to avoid cliff issues, we're only going to move slightly forwards
@@ -88,7 +91,8 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
   else {
 
     _shouldUseBlocks = config.get(kShouldUseBlocksKey, kShouldUseBlocksDefault).asBool();
-
+    _doSecondRequest = config.get(kDoSecondRequestKey, kDoSecondRequestDefault).asBool();
+  
     _zeroBlockConfig.LoadFromJson(config[kZeroBlockGroupKey]);
 
     if( _shouldUseBlocks ) {
@@ -159,6 +163,8 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
       TransitionToPlayingInitialAnimation(robot);
     }
   }
+
+  _initialRequest = true;
   
   return RESULT_OK;
 }
@@ -431,30 +437,16 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
-  Pose3d lastFacePose;
-  if( GetFacePose( robot, lastFacePose ) ) {
-    StartActing(new TurnTowardsPoseAction(robot, lastFacePose, PI_F),
-                [this, &robot](ActionResult result) {
-                  if( result == ActionResult::SUCCESS ) {
-                    TransitionToVerifyingFace(robot);
-                  }
-                  else if (result == ActionResult::FAILURE_RETRY) {
-                    TransitionToLookingAtFace(robot);
-                  }
-                  else {
-                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.LookingAtFace.Failed",
-                                     "failed to look at face after dropping block, so ending the behavior");
-                  }
-                } );
-    SET_STATE(State::LookingAtFace);
-  }
+  StartActing(new TurnTowardsLastFacePoseAction(robot),
+              &BehaviorRequestGameSimple::TransitionToVerifyingFace);
+  SET_STATE(State::LookingAtFace);
 }
 
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 {
   if( DO_FACE_VERIFICATION_STEP ) {
     _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    StartActing(new WaitAction( robot, kFaceVerificationTime_s ),
+    StartActing(new WaitForImagesAction(robot, kFaceVerificationNumImages),
                 [this, &robot](ActionResult result) {
                   if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
                     TransitionToPlayingRequstAnim(robot);
@@ -486,7 +478,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
 
 void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 {
-  SendRequest(robot);
+  SendRequest(robot, _initialRequest);
 
   if( GetFaceID() == Vision::UnknownFaceID ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
@@ -504,9 +496,18 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
-  // no callback here, behavior is over once this is Done
-  StartActing( CreatePlayAnimationAction( robot, _activeConfig->denyAnimationName ) );
+  IActionRunner* denyAnimAction = CreatePlayAnimationAction( robot, _activeConfig->denyAnimationName );
 
+  if( _initialRequest && _doSecondRequest ) {
+    // try again
+    _initialRequest = false;
+    StartActing(denyAnimAction, &BehaviorRequestGameSimple::TransitionToLookingAtFace);
+  }
+  else {
+    // TODO:(bn) different animation the second time?
+    StartActing(denyAnimAction);
+  }
+  
   SET_STATE(State::PlayingDenyAnim);
 }
 
@@ -530,7 +531,12 @@ u32 BehaviorRequestGameSimple::GetNumBlocks(const Robot& robot) const
 bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPoseRet)
 {
   Pose3d facePose;
-  if ( ! GetFacePose(robot, facePose ) ) {
+  
+  if( HasFace(robot) ) {
+    TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
+    ASSERT_NAMED( lastObservedFaceTime > 0, "BehaviorRequestGameSimple.HasFaceWithoutPose" );
+  }
+  else {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFace",
                         "Face pose is invalid!");
     return false;

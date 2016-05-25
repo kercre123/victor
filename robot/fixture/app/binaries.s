@@ -2,7 +2,7 @@
   AREA    ER_BINARIES, DATA, READONLY
 
 // Uncomment this line to build a mini-version without binaries (to speed debugging)
-//#define INCBIN ;
+#define INCBIN ;
     
   ; Note:  Cube and charger share the same binary
   ALIGN
@@ -106,6 +106,14 @@ g_EspBootEnd
 g_EspInit
   INCBIN releases\\esp.init.bin
 g_EspInitEnd
+
+
+  ALIGN
+  EXPORT g_Radio
+  EXPORT g_RadioEnd
+g_Radio
+  INCBIN releases\\radio.bin
+g_RadioEnd
 #endif
 
   ALIGN

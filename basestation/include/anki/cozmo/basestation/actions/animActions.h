@@ -60,7 +60,7 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual f32 GetTimeoutInSeconds() const override { return 10.f; }
+      virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
       
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
@@ -77,20 +77,13 @@ namespace Anki {
       bool                      _wasAborted;
       AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
       bool                      _interruptRunning;
-      Animation*                _customAnimation = nullptr;
+      Animation*                _animPointer = nullptr;
       
       // For responding to AnimationStarted, AnimationEnded, and AnimationEvent events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
       Signal::SmartHandle _eventSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
-      
-    private:
-      // For handling playing an altered copy of an animation
-      std::unique_ptr<Animation> _alteredAnimation;
-      
-      const Animation* GetOurAnimation() const;
-      bool NeedsAlteredAnimation() const;
       
     }; // class PlayAnimationAction
 

@@ -27,6 +27,10 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
+
+
 namespace Anki {
   namespace Vision {
     
@@ -273,7 +277,7 @@ namespace Anki {
       
       if (!skipStateUpdate)
       {
-        _poseState = PoseState::Known;
+        SetPoseState(PoseState::Known);
       }
       
       std::string poseName("Object");

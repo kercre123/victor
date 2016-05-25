@@ -2,6 +2,7 @@
 
 #include "fcc.h"
 #include "oled.h"
+#include "dac.h"
 #include "anki/cozmo/robot/hal.h"
 
 #include "anki/cozmo/robot/spineData.h"
@@ -23,8 +24,37 @@ using namespace Anki::Cozmo::RobotInterface;
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
+struct LightEnable {
+  int index;
+  uint16_t color;
+};
+
+static const LightEnable lights[] = {
+  { 0, 0x7FFF },
+  { 1, 0x001F },
+  { 1, 0x03E0 },
+  { 1, 0x7C00 },
+  { 2, 0x001F },
+  { 2, 0x03E0 },
+  { 2, 0x7C00 },
+  { 3, 0x001F },
+  { 3, 0x03E0 },
+  { 3, 0x7C00 },
+  { 4, 0x7FFF }
+};
+
+static int NUM_LIGHTS = sizeof(lights) / sizeof(LightEnable);
+
+enum SecondaryTest {
+  TEST_NONE,
+  TEST_MOTOR,
+  TEST_LEDS,
+  TEST_LOW_NOISE,
+  TEST_HI_NOISE
+};
+
 struct DTM_Mode_Settings {
-  bool    motor_drive;
+  SecondaryTest side_test;
   int32_t command;
   int32_t freq;
   int32_t payload;
@@ -32,19 +62,26 @@ struct DTM_Mode_Settings {
 };
 
 static const DTM_Mode_Settings DTM_MODE[] = {
-  { false,    LE_RECEIVER_TEST,  1,                   0xFF,         0xFF },   // 0 = listen
-  { false, LE_TRANSMITTER_TEST,  1,           DTM_PKT_0X55,         0xFF },   // 1 = tx ch1
-  { false, LE_TRANSMITTER_TEST, 20,           DTM_PKT_0X55,         0xFF },
-  { false, LE_TRANSMITTER_TEST, 40,           DTM_PKT_0X55,         0xFF },
-  { false, LE_TRANSMITTER_TEST,  1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4 = tx ch1
-  { false, LE_TRANSMITTER_TEST, 20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
-  { false, LE_TRANSMITTER_TEST, 40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
-  { true,             LE_RESET,  0,                   0xFF,         0xFF },   // 7 = motor test
-  { false,            LE_RESET,  0,                   0xFF,         0xFF },
-  { false,            LE_RESET,  0,                   0xFF,         0xFF },
-  { false,            LE_RESET,  0,                   0xFF,         0xFF },   // 10 = wifi ch1 (wifi modes start at 10)
-  { false,            LE_RESET,  0,                   0xFF,         0xFF },
-  { false,            LE_RESET,  0,                   0xFF,         0xFF },
+  { TEST_LEDS,      LE_RECEIVER_TEST,      1,                   0xFF,         0xFF },   // 0 = listen
+  { TEST_NONE,      LE_TRANSMITTER_TEST,   1,           DTM_PKT_0X55,         0xFF },   // 1 = tx ch1
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  20,           DTM_PKT_0X55,         0xFF },
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  40,           DTM_PKT_0X55,         0xFF },
+  { TEST_NONE,      LE_TRANSMITTER_TEST,   1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4 = tx ch1
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { TEST_MOTOR,     LE_RESET,              0,                   0xFF,         0xFF },   // 7 = motor test
+  { TEST_LOW_NOISE, LE_RESET,              0,                   0xFF,         0xFF },   // 8 = low speaker noise
+  { TEST_HI_NOISE,  LE_RESET,              0,                   0xFF,         0xFF },   // 9 = high speaker noise
+  
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 10 = wifi ch1 (wifi modes start at 10)
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 13 = wifi ch1 low power
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 16 = wifi ch1 low power
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
 };
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
@@ -71,11 +108,7 @@ static void configureTest(int mode) {
   current_mode = mode;
 }
 
-static void runTest(int mode) {
-  if (!DTM_MODE[mode].motor_drive) {
-    return ;
-  }
-
+static void runMotorTest() {
   static const int DIRECTION_CHANGE_COUNT = 200;
   static const int DIRECTION_POWER = 0x4000;
   static int direction_counter = 0;
@@ -91,6 +124,40 @@ static void runTest(int mode) {
   }
 }
 
+static void runLEDTest() {
+  // Select a color
+  int color = (g_dataToHead.positions[1] >> 10) % NUM_LIGHTS;
+  
+  // Tell the body to change it's colors
+  Anki::Cozmo::RobotInterface::BackpackLights msg;
+
+  memset(&msg, 0, sizeof(msg));
+
+  int idx = lights[color].index;
+  uint16_t clr = lights[color].color;
+  
+  msg.lights[idx].onColor = clr;
+  msg.lights[idx].offColor = clr;
+
+  SendMessage(msg);
+}
+
+static void whiteNoise(uint16_t scale) {
+  using namespace Anki::Cozmo::HAL;
+  __disable_irq();
+
+  static volatile uint16_t* DAC_WRITE = (volatile uint16_t*) &DAC0_DAT0L;
+  uint64_t lsfr = 0xFFFFFFFFFFFFFFFFL;
+  int i = 0;
+  
+  DAC::EnableAudio(true);
+  
+  for(;;) {    
+    lsfr = (lsfr >> 1) ^ (lsfr & 1 ? 0xC96C5795D7870F42 : 0);
+    DAC_WRITE[i++ & 0xF] = (uint16_t) lsfr & scale;
+  }
+}
+
 void Anki::Cozmo::HAL::FCC::start(void) { 
   // Enable body radio mode
   SetBodyRadioMode msg;
@@ -103,11 +170,19 @@ void Anki::Cozmo::HAL::FCC::start(void) {
 // See "ESP8266 Certification and Test Guide" for details on the command format
 static const char* WIFI_TESTS[] = {
   /* 0 = No Test             */  "CmdStop\r",
-  /* 1 = 2412MHz  0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
-  /* 2 = 2437MHz +4dB 1Mbps  */  "WifiTxout 6 1 240 0\r",
-  /* 3 = 2462MHz  0dB 1Mbps  */  "WifiTxout 11 1 0 0\r",
+  /* 10 = 2412MHz  -6dB 1Mbps */  "WifiTxout 1 1 24 0\r",
+  /* 11 = 2437MHz  -6dB 1Mbps */  "WifiTxout 6 1 24 0\r",
+  /* 12 = 2462MHz  -6dB 1Mbps */  "WifiTxout 11 1 24 0\r",
+  /* 13 = 2412MHz  -8dB 1Mbps */  "WifiTxout 1 1 32 0\r",
+  /* 14 = 2437MHz  -8dB 1Mbps */  "WifiTxout 6 1 32 0\r",
+  /* 15 = 2462MHz  -8dB 1Mbps */  "WifiTxout 11 1 32 0\r",
+  /* 16 = 2412MHz  -4dB 24Mbps */  "WifiTxout 1 9 16 0\r",
+  /* 17 = 2437MHz  -4dB 24Mbps */  "WifiTxout 6 9 16 0\r",
+  /* 18 = 2462MHz  -4dB 24Mbps */  "WifiTxout 11 9 16 0\r",
 };
-#define WIFI_TEST_COUNT (sizeof(WIFI_TESTS)/sizeof(char*))
+
+static const int WIFI_TEST_COUNT = sizeof(WIFI_TESTS) / sizeof(WIFI_TESTS[0]);
+
 static void sendWifiCommand(int test) {
   static int running = 0, startdelay = 0;
   if (test >= WIFI_TEST_COUNT)
@@ -153,15 +228,15 @@ static void sendWifiCommand(int test) {
   }
 }
 
+static int configuring_motor = 0;
 void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // If the motors are not going crazy, use wheel positions for
   // selecting things
-  if (!DTM_MODE[current_mode].motor_drive) {
-    static int configuring_motor = 0;
-    bool select = iabs(configuring_motor - g_dataToHead.positions[2]) > 0x100;
+  if (DTM_MODE[current_mode].side_test != TEST_MOTOR) {
+    bool select = iabs(configuring_motor - g_dataToHead.positions[1]) > 0x400;
 
     if (select) {
-      configuring_motor = g_dataToHead.positions[2];
+      configuring_motor = g_dataToHead.positions[1];
       
       // Set our run mode
       if (current_mode != target_mode) {
@@ -178,58 +253,29 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
 
   static int updates = 0;
   
-  updates = (updates+1) & 7;
-  if (0 == updates)
-    OLED::DisplayDigit(6, 0, target_mode / 10);
-  if (1 == updates)
-    OLED::DisplayDigit(12, 0, target_mode % 10);
-  if (2 == updates)
-    OLED::DisplayDigit(110, 0, current_mode / 10);
-  if (3 == updates)
-    OLED::DisplayDigit(116, 0, current_mode % 10);
+  switch (updates = (updates+1) & 7) {
+    case 0: OLED::DisplayDigit(6, 0, target_mode / 10); break ;
+    case 1: OLED::DisplayDigit(12, 0, target_mode % 10); break ;
+    case 2: OLED::DisplayDigit(110, 0, current_mode / 10); break ;
+    case 3: OLED::DisplayDigit(116, 0, current_mode % 10); break ;
+  }
 
   sendWifiCommand((current_mode < 10) ? 0 : current_mode-9);  // Wifi test modes start at 10
-  runTest(current_mode);
-}
 
-struct LightEnable {
-  int index;
-  uint16_t color;
-};
-
-static const LightEnable lights[] = {
-  { 0, 0x7FFF },
-  { 1, 0x001F },
-  { 1, 0x03E0 },
-  { 1, 0x7C00 },
-  { 2, 0x001F },
-  { 2, 0x03E0 },
-  { 2, 0x7C00 },
-  { 3, 0x001F },
-  { 3, 0x03E0 },
-  { 3, 0x7C00 },
-  { 4, 0x7FFF }
-};
-static int NUM_LIGHTS = sizeof(lights) / sizeof(LightEnable);
-
-void Anki::Cozmo::HAL::FCC::mainLEDExecution(void) {
-  // Select a color
-  static int color = - 1;
-  int select = (g_dataToHead.positions[0] >> 10) % NUM_LIGHTS;
- 
-  if (select == color) { return ; }
-  color = select;
-  
-  // Tell the body to change it's colors
-  Anki::Cozmo::RobotInterface::BackpackLights msg;
-
-  memset(&msg, 0, sizeof(msg));
-
-  int idx = lights[color].index;
-  uint16_t clr = lights[color].color;
-  
-  msg.lights[idx].onColor = clr;
-  msg.lights[idx].offColor = clr;
-
-  SendMessage(msg);
+  switch(DTM_MODE[current_mode].side_test) {
+    case TEST_MOTOR:
+      runMotorTest();
+      break ;
+    case TEST_LEDS:
+      runLEDTest();
+      break ;
+    case TEST_LOW_NOISE:
+      whiteNoise(0x7FFF);
+      break ;
+    case TEST_HI_NOISE:
+      whiteNoise(0xFFFF);
+      break ;
+    default:
+      break ;
+  }
 }

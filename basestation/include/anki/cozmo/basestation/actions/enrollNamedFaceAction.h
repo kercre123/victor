@@ -81,7 +81,7 @@ namespace Cozmo {
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;
       s32 numEnrollments;
-      std::function<Result(const Vision::TrackedFace*)> startFcn, duringFcn, stopFcn;
+      std::function<Result(void)> startFcn, duringFcn, stopFcn;
     };
     
     std::vector<EnrollStep> _enrollSequence;

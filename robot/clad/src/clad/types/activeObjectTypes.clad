@@ -60,6 +60,11 @@ enum uint_8 WhichCubeLEDs
   FRONT_RIGHT = 0x12, // Front | right
   BACK_LEFT   = 0x03, // Back  | left
   BACK_RIGHT  = 0x09, // Back  | right
+
+  // Charger lights
+  CHARGER_BACK   = 0x01,
+  CHARGER_MIDDLE = 0x02,
+  CHARGER_FRONT  = 0x04
 }
 
 enum uint_8 MakeRelativeMode

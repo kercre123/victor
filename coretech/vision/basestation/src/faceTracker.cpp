@@ -66,6 +66,11 @@ namespace Vision {
     return Impl::IsRecognitionSupported();
   }
   
+  float FaceTracker::GetMinEyeDistanceForEnrollment()
+  {
+    return Impl::GetMinEyeDistanceForEnrollment();
+  }
+  
   Result FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name)
   {
     return _pImpl->AssignNameToID(faceID, name);

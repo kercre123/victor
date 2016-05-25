@@ -6,6 +6,7 @@
 #include "hal/flash.h"
 #include "hal/uart.h"
 #include "hal/display.h"
+#include "hal/motorled.h"
 #include "../../crypto/crypto.h"
 #include "../app/fixture.h"
 #include <stdarg.h>
@@ -399,6 +400,15 @@ void SendTestMessage(void)
   SendTestMode(test);
 }
 
+void SetMotor(void)
+{
+  int test = 0;
+  char* arg = GetArgument(1);  
+  sscanf(arg, "%i", &test);
+  MotorPWM(test);
+  ConsolePrintf(":: %d ::\n", LEDTest(test));
+}  
+
 void HeadESP();
 
 static CommandFunction m_functions[] =
@@ -416,7 +426,8 @@ static CommandFunction m_functions[] =
   {"Burn", CubeBurn, FALSE},
   {"SetVBAT", SetVBAT, FALSE},
   {"Send", SendTestMessage, FALSE},
-  {"ESP", HeadESP, FALSE},
+  {"HeadESP", HeadESP, FALSE},
+  {"SetMotor", SetMotor, FALSE},
 };
 
 static void ParseCommand(void)

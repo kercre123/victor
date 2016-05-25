@@ -10,7 +10,7 @@ struct DiffieHellman {
   const big_mont_t* mont;
   const big_num_t*  gen;
   
-  int               pin;
+  uint32_t          pin;
   uint8_t           local_secret[SECRET_LENGTH];
   uint8_t           remote_secret[SECRET_LENGTH];
   uint8_t           encoded_key[AES_BLOCK_LENGTH];
@@ -19,6 +19,6 @@ struct DiffieHellman {
 };
 
 void dh_start(DiffieHellman* dh);
-void dh_finish(DiffieHellman* dh);
+void dh_finish(const void* key, DiffieHellman* dh);
 
 #endif

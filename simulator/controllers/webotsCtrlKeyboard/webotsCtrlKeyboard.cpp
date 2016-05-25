@@ -2036,6 +2036,7 @@ namespace Anki {
                   turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
                   turnTowardsPose.maxTurnAngle = M_PI;
                   turnTowardsPose.robotID = 1;
+                  turnTowardsPose.sayName = true;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
                 } else if(altPressed && shiftPressed) {
                   // SHIFT+ALT+F: Erase current face

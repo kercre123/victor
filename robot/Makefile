@@ -14,6 +14,7 @@ RELEASE_DIR=releases
 
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
+DEVELOPMENT_KEY=tools/development.pem
 
 .PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app
 
@@ -52,6 +53,11 @@ k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 staging_dir:
 	mkdir -p ./staging
 
+export_key:
+	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) ./generated/publickey.h
+	g++ -o generated/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
+	./generated/calcMont >> ./generated/publickey.h
+
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
 	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
@@ -61,17 +67,18 @@ nrf_fix:
 
 # This fixes the headers and places the binaries in release
 stage_binaries:
-	@if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp -v ./build/app/robot.axf ./binaries; fi
-	@if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp -v ./syscon/build/app/syscon.axf ./binaries; fi
+	@if test ./build/app/robot.axf -nt ./binaries/robot.axf; then cp -v ./build/app/robot.axf ./binaries/robot.axf; fi
+	@if test ./syscon/build/app/syscon.axf -nt ./binaries/syscon.axf; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf; fi
 	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries
-	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
 
-esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
+esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin

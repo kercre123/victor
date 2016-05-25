@@ -20,13 +20,13 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/toolCodes.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
-  
-  namespace Cozmo {
+namespace Cozmo {
 
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
@@ -189,11 +189,11 @@ namespace Anki {
     private:
       CompoundActionParallel _compoundAction;
       
-      Radians _bodyPanAngle;
-      Radians _headTiltAngle;
-      bool    _isPanAbsolute;
-      bool    _isTiltAbsolute;
-      bool    _moveEyes = true;
+      Radians _bodyPanAngle   = 0.f;
+      Radians _headTiltAngle  = 0.f;
+      bool    _isPanAbsolute  = false;
+      bool    _isTiltAbsolute = false;
+      bool    _moveEyes       = true;
       
       const f32 _kDefaultPanAngleTol  = DEG_TO_RAD(5);
       const f32 _kDefaultMaxPanSpeed  = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
@@ -367,6 +367,7 @@ namespace Anki {
       
     protected:
       virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
       
       TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle);
       
@@ -376,8 +377,10 @@ namespace Anki {
       Pose3d    _poseWrtRobot;
       
     private:
-      bool      _isPoseSet;
       Radians   _maxTurnAngle;
+      bool      _isPoseSet   = false;
+      bool      _nothingToDo = false;
+      
       
     }; // class TurnTowardsPoseAction
     
@@ -425,9 +428,9 @@ namespace Anki {
     public:
       // If facing the object requires less than turnAngleTol turn, then no
       // turn is performed. If a turn greater than maxTurnAngle is required,
-      // the action fails. For angles in between, the robot will first turn
-      // to face the object, then tilt its head. To disallow turning, set
-      // maxTurnAngle to zero.
+      // the action does nothing but succeeds. For angles in between, the robot
+      // will first turn to face the object, then tilt its head. To disallow turning,
+      // set maxTurnAngle to zero.
       
       TurnTowardsObjectAction(Robot& robot,
                        ObjectID objectID,
@@ -464,26 +467,59 @@ namespace Anki {
     }; // TurnTowardsObjectAction
     
     
-    // Turn towards the last known face pose. Note that this action "succeeds" without doing anything if there
-    // is no face
+    // Turn towards the last known face pose. Note that this action "succeeds" without doing
+    // anything if there is no face.
+    // If a face is seen after we stop turning, "fine tune" the turn a bit and
+    // say the face's name if we recognize it (and sayName=true).
     class TurnTowardsLastFacePoseAction : public TurnTowardsPoseAction
     {
     public:
-      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = PI_F);
+      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = PI_F, bool sayName = false);
+      virtual ~TurnTowardsLastFacePoseAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE; }
 
+      // Will manually manage locking head and body internally
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+      
+      // Set the maximum number of frames we are will to wait to see a face after
+      // the initial blind turn to the last face pose.
+      void SetMaxFramesToWait(u32 N) { _maxFramesToWait = N; }
+      
+      // Template for all events we subscribe to
+      template<typename T>
+      void HandleMessage(const T& msg);
+      
     protected:
 
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
 
     private:
-      bool _hasFace = false;
+      enum class State : u8 {
+        Turning,
+        WaitingForFace,
+        FineTuning,
+        SayingName,
+      };
+      
+      IActionRunner*          _action            = nullptr;
+      f32                     _closestDistSq     = std::numeric_limits<f32>::max();
+      u32                     _maxFramesToWait   = 10;
+      Vision::FaceID_t        _obsFaceID         = Vision::UnknownFaceID;
+      State                   _state             = State::Turning;
+      bool                    _sayName           = false;
+      bool                    _tracksLocked      = false;
+      
+      std::vector<Signal::SmartHandle> _signalHandles;
+
+      void CreateFineTuneAction();
+      void SetAction(IActionRunner* action);
       
     }; // TurnTowardsLastFacePoseAction
 
+    
     // Turn towards the last face before or after another action
     class TurnTowardsFaceWrapperAction : public CompoundActionSequential
     {
@@ -495,7 +531,8 @@ namespace Anki {
                                    IActionRunner* action,
                                    bool turnBeforeAction = true,
                                    bool turnAfterAction = false,
-                                   Radians maxTurnAngle = PI_F);
+                                   Radians maxTurnAngle = PI_F,
+                                   bool sayName = false);
     };
     
     
@@ -552,6 +589,7 @@ namespace Anki {
         , _lambda(lambda)
         {
         }
+      virtual ~WaitForLambdaAction() { }
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_LAMBDA; }
@@ -580,6 +618,39 @@ namespace Anki {
 
     };
 
+    // Wait for some number of images to be processed by the robot.
+    // Optionally specify to only start counting images after a given timestamp.
+    class WaitForImagesAction : public IAction
+    {
+    public:
+      
+      WaitForImagesAction(Robot& robot, u32 numFrames, TimeStamp_t afterTimeStamp = 0);
+      virtual ~WaitForImagesAction() { }
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_IMAGES; }
+      
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+      
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+
+    protected:
+      
+      virtual ActionResult Init() override;
+      
+      virtual ActionResult CheckIfDone() override;
+      
+      std::string _name = "WaitForImages";
+      
+    private:
+      u32 _numFramesSeen;
+      u32 _numFramesToWaitFor;
+      TimeStamp_t _afterTimeStamp;
+
+      Signal::SmartHandle        _imageProcSignalHandle;
+      
+    }; // WaitForImagesAction()
+    
     
     class ReadToolCodeAction : public IAction
     {
@@ -626,7 +697,7 @@ namespace Anki {
       
     }; // class ReadToolCodeAction
     
-  }
-}
+} // namespace Cozmo
+} // namespace Anki
 
 #endif /* ANKI_COZMO_BASIC_ACTIONS_H */

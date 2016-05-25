@@ -221,7 +221,7 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
   
   // Knock over
-  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot);
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
   action->AddAction(flipBlockAction);
 
   StartActing(action, [this, &robot](ActionResult res) {
