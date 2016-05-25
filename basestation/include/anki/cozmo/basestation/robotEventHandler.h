@@ -45,6 +45,9 @@ class RobotEventHandler : private Util::noncopyable
 public:
   RobotEventHandler(const CozmoContext* context);
   
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
 protected:
   const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
@@ -53,21 +56,6 @@ protected:
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   
   void HandleActionEvents(const GameToEngineEvent& event);
-  void HandleQueueSingleAction(const GameToEngineEvent& event);
-  void HandleQueueCompoundAction(const GameToEngineEvent& event);
-  void HandleSetLiftHeight(const GameToEngineEvent& event);
-  void HandleEnableLiftPower(const GameToEngineEvent& event);
-  void HandleEnableCliffSensor(const GameToEngineEvent& event);
-  void HandleDisplayProceduralFace(const GameToEngineEvent& event);
-  void HandleForceDelocalizeRobot(const GameToEngineEvent& event);
-  void HandleBehaviorManagerEvent(const GameToEngineEvent& event);
-  void HandleSendAvailableObjects(const GameToEngineEvent& event);
-  void HandleSaveCalibrationImage(const GameToEngineEvent& event);
-  void HandleClearCalibrationImages(const GameToEngineEvent& event);
-  void HandleComputeCameraCalibration(const GameToEngineEvent& event);
-  void HandleCameraCalibration(const GameToEngineEvent& event);
-  void HandleSetHeadlight(const GameToEngineEvent& event);
-  void HandleAnimationAborted(const EngineToGameEvent& event);
 };
 
   
