@@ -24,6 +24,8 @@ parser.add_argument('--path', metavar='path',
 parser.add_argument('--executable', metavar='executable',
                     default='UnitTest', help='name of the executable to run')
 parser.add_argument('--gtest_filter', help='Filter which tests to run')
+parser.add_argument('--gtest_path', const=True, action='store', dest='gtestPath', nargs='?',
+                    default=None, help='location of gtest libs for DYLD_*_PATH')
 parser.add_argument('--shuffle', const=True, action='store_const',
                     default=False, help='Randomize the order of the tests (may be slower)')
 parser.add_argument('--repeat', default=1, type=int,
@@ -77,6 +79,10 @@ if args.stdout:
     out = None
 else:
     out = open(os.devnull, 'w')
+
+if args.gtestPath:
+    os.environ['DYLD_FRAMEWORK_PATH'] = args.gtestPath
+    os.environ['DYLD_LIBRARY_PATH'] = args.gtestPath
 
 listedTests = subprocess.check_output(listArgs, cwd=pathname)
 testCases = {}
