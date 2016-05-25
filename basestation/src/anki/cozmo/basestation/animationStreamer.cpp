@@ -20,6 +20,7 @@
 #include "util/logging/logging.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
+#define DEBUT_ANIMATION_STREAMING_AUDIO 0
 
 namespace Anki {
 namespace Cozmo {
@@ -562,7 +563,6 @@ namespace Cozmo {
   {
     using namespace Audio;
     
-    
     if ( _audioClient.HasAnimation() ) {
       
       RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
@@ -572,15 +572,30 @@ namespace Cozmo {
       if ( nullptr != audioMsg ) {
         // Add key frame
         BufferMessageToSend( audioMsg );
+        
+        if (DEBUT_ANIMATION_STREAMING_AUDIO) {
+          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
+                           "Has Animation and Audio Message");
+        }
       }
       else {
         // Insert Silence
         BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+        
+        if (DEBUT_ANIMATION_STREAMING_AUDIO) {
+          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
+                           "Has Animation Insert Silence");
+        }
       }
     }
     else if ( sendSilence ) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+      
+      if (DEBUT_ANIMATION_STREAMING_AUDIO) {
+        PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
+                         "NO Animation Insert Silence");
+      }
     }
   
     return RESULT_OK;
@@ -1222,10 +1237,21 @@ namespace Cozmo {
               }
             }
           }
+          
+          if (DEBUT_ANIMATION_STREAMING_AUDIO) {
+            PRINT_NAMED_INFO("AnimationStreamer.ShouldProcessAnimationFrame",
+                             "Audio Animation Is NOT Ready | buffering time: %d ms",
+                             (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms));
+          }
         }
         else {
           // Audio is streaming
           _audioBufferingTime_ms = 0;
+
+          if (DEBUT_ANIMATION_STREAMING_AUDIO) {
+            PRINT_NAMED_INFO("AnimationStreamer.ShouldProcessAnimationFrame",
+                             "Audio Animation IS Ready");
+          }
         }
       }
     }
