@@ -6,7 +6,7 @@ namespace Anki {
 		namespace HAL {
 			namespace Power {
 				void init(void);
-        void enableEspressif(void);
+        void enableEspressif(bool fixture);
         void disableEspressif(void);
 			}
 		}
