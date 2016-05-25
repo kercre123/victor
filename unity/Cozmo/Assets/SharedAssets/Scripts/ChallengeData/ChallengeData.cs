@@ -48,6 +48,19 @@ public class ChallengeData : ScriptableObject {
     get { return _ChallengeIcon; }
   }
 
+  // icon to show to represent this challenge
+  [SerializeField]
+  private Sprite _ChallengeIconPlainStyle;
+
+  public Sprite ChallengeIconPlainStyle {
+    get { 
+      if (_ChallengeIconPlainStyle == null) {
+        return ChallengeIcon;
+      }
+      return _ChallengeIconPlainStyle; 
+    }
+  }
+
   [SerializeField]
   private UnlockableInfo.SerializableUnlockIds _UnlockId;
 

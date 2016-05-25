@@ -181,7 +181,7 @@ MonoBehaviour:
   _WinnerNameTextLabel: {fileID: 0}
   _CurrentRoundTextLabel: {fileID: 0}
   _RoundCountBar: {fileID: 11426088}
-  BannerAnimationDurationSeconds: 2.5
+  BannerAnimationDurationSeconds: 1.5
 --- !u!114 &11489782
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -331,7 +331,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: BannerAnimationDurationSeconds
-      value: 2.5
+      value: 1.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

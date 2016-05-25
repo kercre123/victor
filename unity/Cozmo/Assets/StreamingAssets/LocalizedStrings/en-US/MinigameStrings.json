@@ -120,30 +120,6 @@
   "speedTap.roundsText": {
     "translation": "Round {0:N0}"
   },
-  "speedTap.roundsWon.cozmo": {
-    "translation": "cozmo rounds won: {0:N0}"
-  },
-  "speedTap.roundsWon.player": {
-    "translation": "player rounds won: {0:N0}"
-  },
-  "speedTap.score.cozmo": {
-    "translation": "cozmo score: {0:N0}"
-  },
-  "speedTap.score.player": {
-    "translation": "player score: {0:N0}"
-  },
-  "speedTap.text.howToPlay": {
-    "translation": "The cubes will show different patterns. When both cubes show the same pattern, slap your cube as fast as you can! If you beat Cozmo, you'll win a point.\nWatch out: Tap a Red cube and Cozmo wins the point!"
-  },
-  "speedTap.text.howToPlayNoRed": {
-    "translation": "Tap the cube faster than Cozmo when the colors are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
-  },
-  "speedTap.text.howToPlayLightCountSameColorNoRed": {
-    "translation": "Tap the cube faster than Cozmo when the colors AND the light numbers are the same to earn a point! Don't tap when it's red - then you'll lose a point instead."
-  },
-  "speedTap.text.howToPlayLightCountNoColor": {
-    "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
-  },
   "speedTap.tapBlock": {
     "translation": "Tap a flashing cube to claim it and begin the game!\n\n(Make sure your and Cozmo's cubes are far apart.)"
   },
