@@ -32,6 +32,7 @@ OBJROOT="$DERIVED_DATA" \
 build 
 
 rm -f $DERIVED_DATA/$BUILD_TYPE/*.txt
+rm -f $DERIVED_DATA/$BUILD_TYPE/*.xml
 
 DUMP_OUTPUT=0
 ARGS=""
@@ -78,7 +79,7 @@ fi
 #tarball files together
 echo "Entering directory \`${DERIVED_DATA}/${BUILD_TYPE}}'"
 cd $DERIVED_DATA/$BUILD_TYPE
-tar czf basestationGoogleTest.tar.gz basestationGoogleTest_*
+tar czf utilUnitGoogleTest.tar.gz googleTest_*
 
 # exit
 exit $EXIT_STATUS
