@@ -63,9 +63,6 @@ namespace Cozmo {
           if (_UseEndCap) {
             float capPos = 0.0f;
             capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width;
-            
-            Debug.LogWarning(string.Format("Update ProgBar : CapPos {0} :: FillAmount {1} :: ImageWidth {2}",
-              capPos, _FilledForegroundImage.fillAmount, _FilledForegroundImage.sprite.rect.width));
 
             if (capPos < _EndCap.sprite.rect.width) {
               _EndCap.gameObject.SetActive(false);
