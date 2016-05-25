@@ -332,6 +332,10 @@ message AnimationAvailable {
   string animName
 }
 
+message AnimationGroupAvailable {
+  string animGroupName
+}
+
 // Broadcast by AnimationStreamer when a new streaming animation is requested
 // before the last one finished.
 message AnimationAborted {

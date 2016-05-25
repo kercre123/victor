@@ -51,6 +51,7 @@ class EngineCommand:
     sendMsg     = 2
     setEmotion  = 3    
     playAnimation = 4     
+    playAnimationGroup = 5     
     
     
 class ConnectionState:
@@ -121,6 +122,7 @@ class _EngineInterfaceImpl:
         self.state = ConnectionState.connected
         self.HandleSendMessageCommand(*["GetAllDebugConsoleVarMessage"])
         self.HandleSendMessageCommand(*["RequestAvailableAnimations"])
+        self.HandleSendMessageCommand(*["RequestAvailableAnimationGroups"])
 
 
     def ReceiveFromEngine(self):
@@ -227,6 +229,9 @@ class _EngineInterfaceImpl:
                         msg = fromEngMsg.AnimationAvailable
                         #sys.stdout.write("Recv: AnimationAvailable '" + msg.animName + "'" + os.linesep)
                         self.animationManager.UpdateAnimations(msg)
+                    elif fromEngMsg.tag == fromEngMsg.Tag.AnimationGroupAvailable:
+                        msg = fromEngMsg.AnimationGroupAvailable
+                        self.animationManager.UpdateAnimationGroups(msg)
                     elif fromEngMsg.tag == fromEngMsg.Tag.InitDebugConsoleVarMessage:
                         # multiple of these arrive after we send GetAllDebugConsoleVarMessage (they don't all fit in 1 message)
                         msg = fromEngMsg.InitDebugConsoleVarMessage
@@ -443,7 +448,7 @@ class _EngineInterfaceImpl:
         playAnimMsg.robotID = 1
 
         if (lenArgs < 1):
-            sys.stderr.write("[HandlePlayAnimationCommand] Error: No args, expected 'list' or 'numLoops animationName optional_numLoops'" + os.linesep)
+            sys.stderr.write("[HandlePlayAnimationCommand] Error: No args, expected 'list' or 'animationName optional_numLoops'" + os.linesep)
             return False
 
         animName = args[0]
@@ -451,8 +456,12 @@ class _EngineInterfaceImpl:
         if animName.lower() == "list":
             self.animationManager.PrintAnimations()
             return True
-        if animName not in self.animationManager.animationNames:
-            sys.stderr.write("[PlayAnim] Error: Animation requested not in list of possible animations" + os.linesep)
+
+        if animName.lower() == "get_matching_names":
+            return self.animationManager.GetMatchingAnimNames(args[1])
+
+        if not self.animationManager.InAnimationNames(animName):
+            sys.stderr.write("[PlayAnimation] Error: Animation requested not in list of possible animations" + os.linesep)
             return False
 
         playAnimMsg.animationName = animName
@@ -464,7 +473,37 @@ class _EngineInterfaceImpl:
         sys.stdout.write("Send PlayAnimation = '" + str(toEngMessage) + "'" + os.linesep)
         self.sendToEngine(toEngMessage)
         
+    def HandlePlayAnimationGroupCommand(self, *args):
+        lenArgs = len(args)
+        playAnimGroupMsg = GToEI.PlayAnimationGroup()
+        playAnimGroupMsg.robotID = 1
+
+        if (lenArgs < 1):
+            sys.stderr.write("[HandlePlayAnimationGroupCommand] Error: No args, expected 'list' or 'animationGroupName optional_numLoops'" + os.linesep)
+            return False
+
+        animGroupName = args[0]
+        if animGroupName.lower() == "list":
+            self.animationManager.PrintAnimationGroups()
+            return True
+
+        if animGroupName.lower() == "get_matching_names":
+            return self.animationManager.GetMatchingAnimGroupNames(args[1])
+
+        if not self.animationManager.InAnimationGroupNames(animGroupName):
+            sys.stderr.write("[PlayAnimationGroup] Error: Animation Group requested not in list of possible animation groups" + os.linesep)
+            return False
+
+        playAnimGroupMsg.animationGroupName = animGroupName
         
+        playAnimGroupMsg.numLoops = int(args[1]) if (lenArgs > 1) else 1
+
+        toEngMessage = GToEM(PlayAnimationGroup = playAnimGroupMsg);
+        
+        sys.stdout.write("Send PlayAnimationGroup = '" + str(toEngMessage) + "'" + os.linesep)
+        self.sendToEngine(toEngMessage)
+
+
     def HandleSetEmotionCommand(self, *args):
     
         lenArgs = len(args)
@@ -524,6 +563,8 @@ class _EngineInterfaceImpl:
             return self.HandleSetEmotionCommand(*inCommand[1])
         elif (commandType == EngineCommand.playAnimation):
             return self.HandlePlayAnimationCommand(*inCommand[1])
+        elif (commandType == EngineCommand.playAnimationGroup):
+            return self.HandlePlayAnimationGroupCommand(*inCommand[1])
         else:
             sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
             return False
