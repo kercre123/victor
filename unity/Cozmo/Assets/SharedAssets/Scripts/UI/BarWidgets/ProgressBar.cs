@@ -10,6 +10,11 @@ namespace Cozmo {
       [SerializeField]
       private Image _FilledForegroundImage;
 
+      [SerializeField]
+      private bool _UseEndCap = false;
+      [SerializeField]
+      private Image _EndCap;
+
       public Sprite FillImage {
         set {
           _FilledForegroundImage.overrideSprite = value;
@@ -35,6 +40,13 @@ namespace Cozmo {
         _StartProgress = 0;
         _FilledForegroundImage.fillAmount = 0;
         _TimePassedSeconds = 0;
+        if (_UseEndCap && _EndCap == null) {
+          DAS.Warn("ProgressBar.Start", "UseEndCap enabled but EndCap is NULL");
+          _UseEndCap = false;
+        }
+        if (!_UseEndCap && _EndCap != null) {
+          _EndCap.gameObject.SetActive(false);
+        }
       }
 
       private void Update() {
@@ -45,6 +57,24 @@ namespace Cozmo {
           }
           _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress, 
             _TargetProgress - _StartProgress, kTweenDuration);
+          
+          // If Endcap is enabled and != null, update position based on the width and fill amount
+          // of the Foreground Image.
+          if (_UseEndCap) {
+            float capPos = 0.0f;
+            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width;
+            
+            Debug.LogWarning(string.Format("Update ProgBar : CapPos {0} :: FillAmount {1} :: ImageWidth {2}",
+              capPos, _FilledForegroundImage.fillAmount, _FilledForegroundImage.sprite.rect.width));
+
+            if (capPos < _EndCap.sprite.rect.width) {
+              _EndCap.gameObject.SetActive(false);
+            }
+            else {
+              _EndCap.gameObject.SetActive(true);
+              _EndCap.rectTransform.localPosition = new Vector3(capPos, _EndCap.rectTransform.localPosition.y);
+            }
+          }
 
           if (_TargetProgress > _FilledForegroundImage.fillAmount) {
             _FilledForegroundImage.color = _IncreasingColor;
