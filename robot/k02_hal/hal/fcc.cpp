@@ -252,12 +252,26 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   static bool displayNum = false;
 
   static int updates = 0;
-  
+
+  Anki::Cozmo::RobotInterface::SetHeadlight headlight;
+
   switch (updates = (updates+1) & 7) {
-    case 0: OLED::DisplayDigit(6, 0, target_mode / 10); break ;
-    case 1: OLED::DisplayDigit(12, 0, target_mode % 10); break ;
-    case 2: OLED::DisplayDigit(110, 0, current_mode / 10); break ;
-    case 3: OLED::DisplayDigit(116, 0, current_mode % 10); break ;
+    case 0: 
+      OLED::DisplayDigit(6, 0, target_mode / 10);
+      break ;
+    case 1:
+      OLED::DisplayDigit(12, 0, target_mode % 10); 
+      headlight.enable = false;
+      SendMessage(headlight);
+      break ;
+    case 2:
+      OLED::DisplayDigit(110, 0, current_mode / 10); 
+      break ;
+    case 3:
+      OLED::DisplayDigit(116, 0, current_mode % 10); 
+      headlight.enable = true;
+      SendMessage(headlight);
+      break ;
   }
 
   sendWifiCommand((current_mode < 10) ? 0 : current_mode-9);  // Wifi test modes start at 10
