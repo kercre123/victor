@@ -27,43 +27,44 @@ void Anki::Cozmo::HAL::Power::init()
   GPIO_IN(GPIO_BODY_UART, PIN_BODY_UART);
   SOURCE_SETUP(GPIO_BODY_UART, SOURCE_BODY_UART, SourceGPIO);
 
-  // This is just a check to see if the body is connected
-  int timeout = GetMicroCounter() + 3000000;  
-  uint8_t last = 0;
-  int edges = 0;
-  
-  while (timeout - GetMicroCounter() > 0) {
-    uint8_t current = GPIO_READ(GPIO_BODY_UART) & PIN_BODY_UART;
-    if (last ^ current) {
-      if (edges > 0x10) {
-        return ;
-      }
-      edges++;
-    }
-    last = current;
-  }
+  GPIO_IN(GPIO_DEBUG_UART, PIN_DEBUG_UART);
+  SOURCE_SETUP(GPIO_DEBUG_UART, SOURCE_DEBUG_UART, SourceGPIO | SourcePullUp);
+
+  MicroWait(5000);
 
   // We are on likely on a test fixure, power up espressif
-  enableEspressif();
-  for(;;) ;
+  if (!GPIO_READ(GPIO_DEBUG_UART)) {
+    enableEspressif(true);
+    for(;;) ;
+  }
+
+  SOURCE_SETUP(GPIO_DEBUG_UART, SOURCE_DEBUG_UART, SourceGPIO);
 }
 
-void Anki::Cozmo::HAL::Power::enableEspressif(void)
+void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
 {
-  // Pull-down SCK during ESP8266 boot
-  GPIO_SET(GPIO_MISO, PIN_MISO);
-  GPIO_OUT(GPIO_MISO, PIN_MISO);
-  SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+  if (!fixture) {
+    // Pull-down SCK during ESP8266 boot
+    GPIO_SET(GPIO_MISO, PIN_MISO);
+    GPIO_OUT(GPIO_MISO, PIN_MISO);
+    SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+
+    // Weakly pull MOSI high to put ESP8266 into flash boot mode
+    // We rely on the fixture to pull this strongly low and enter bootloader mode
+    GPIO_IN(GPIO_MOSI, PIN_MOSI);
+    SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
+  } else {
+    // Pull hard down to ground
+    GPIO_RESET(GPIO_MOSI, PIN_MOSI);
+    GPIO_OUT(GPIO_MOSI, PIN_MOSI);
+    SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO);
+  }
 
   // Pull-down SCK during ESP8266 boot
   GPIO_RESET(GPIO_SCK, PIN_SCK);
   GPIO_OUT(GPIO_SCK, PIN_SCK);
   SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
   
-  // Weakly pull MOSI high to put ESP8266 into flash boot mode
-  // We rely on the fixture to pull this strongly low and enter bootloader mode
-  GPIO_IN(GPIO_MOSI, PIN_MOSI);
-  SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
 
   // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
   GPIO_IN(GPIO_WS, PIN_WS);

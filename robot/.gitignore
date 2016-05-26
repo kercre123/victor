@@ -1,4 +1,5 @@
 RTE
 dist
 staging
+generated
 crypto/*/*manifest*

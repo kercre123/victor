@@ -20,16 +20,16 @@ static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) 
     sha1_final(&ctx, sig);
   
     // Setup ECB
-    memcpy(ecb.cleartext, random, AES_BLOCK_LENGTH);
+    memcpy(ecb.cleartext, random, AES_KEY_LENGTH);
     memcpy(ecb.key, sig, sizeof(ecb.key));
   }
 
   result.negative = false;
-  result.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
+  result.used = AES_KEY_LENGTH / sizeof(big_num_cell_t);
 
   aes_ecb(&ecb);
 
-  memcpy(result.digits, ecb.ciphertext, AES_BLOCK_LENGTH);
+  memcpy(result.digits, ecb.ciphertext, AES_KEY_LENGTH);
 }
 
 static void fix_pin(uint32_t& pin) {
@@ -67,10 +67,25 @@ void dh_finish(const void* key, DiffieHellman* dh) {
   ecb_data_t ecb;
   
   memcpy(ecb.key, temp.digits, AES_KEY_LENGTH);
-  memcpy(ecb.cleartext, key, AES_BLOCK_LENGTH);
+  memcpy(ecb.cleartext, key, AES_KEY_LENGTH);
   
   aes_ecb(&ecb);
 
-  memcpy(dh->encoded_key, ecb.ciphertext, AES_BLOCK_LENGTH);
+  memcpy(dh->encoded_key, ecb.ciphertext, AES_KEY_LENGTH);
 }
 
+// Supply remote_secret, local_secret, encoded_key and pin
+void dh_reverse(DiffieHellman* dh, uint8_t* key) {
+  // Encode our secret as an exponent
+  big_num_t temp;
+
+  dh_encode_random(temp, dh->pin, dh->local_secret);
+  mont_power(*dh->mont, dh->state, *dh->gen, temp);
+
+  dh_encode_random(temp, dh->pin, dh->remote_secret);
+  mont_power(*dh->mont, dh->state, dh->state, temp);
+
+  mont_from(*dh->mont, temp, dh->state);
+
+  AES128_ECB_decrypt(dh->encoded_key, (uint8_t*)temp.digits, key);
+}

@@ -23,7 +23,7 @@ enum BLEError {
   BLE_ERROR_BUFFER_OVERFLOW
 };
 
-static const int COZMO_FRAME_DATA_LENGTH = AES_BLOCK_LENGTH;
+static const int COZMO_FRAME_DATA_LENGTH = AES_KEY_LENGTH;
 
 enum CozmoFrameFlags {
   START_OF_MESSAGE = 0x01,

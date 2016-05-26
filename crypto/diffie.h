@@ -3,7 +3,7 @@
 #ifndef __DIFFIE_H
 #define __DIFFIE_H
 
-static const int SECRET_LENGTH = AES_BLOCK_LENGTH;
+static const int SECRET_LENGTH = AES_KEY_LENGTH;
 
 struct DiffieHellman {
   // These are the numbers for our diffie group
@@ -13,12 +13,13 @@ struct DiffieHellman {
   uint32_t          pin;
   uint8_t           local_secret[SECRET_LENGTH];
   uint8_t           remote_secret[SECRET_LENGTH];
-  uint8_t           encoded_key[AES_BLOCK_LENGTH];
+  uint8_t           encoded_key[AES_KEY_LENGTH];
   
   big_num_t         state;
 };
 
 void dh_start(DiffieHellman* dh);
 void dh_finish(const void* key, DiffieHellman* dh);
+void dh_reverse(DiffieHellman* dh, uint8_t* key);
 
 #endif

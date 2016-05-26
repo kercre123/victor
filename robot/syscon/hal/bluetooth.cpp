@@ -35,7 +35,7 @@ static uint8_t              m_nonce[member_size(Anki::Cozmo::BLE_SendHello, nonc
 static bool                 m_authenticated;
 
 static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
-static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_BLOCK_LENGTH;
+static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
 static const uint8_t HELLO_SIGNATURE[] = { 'C', 'Z', 'M', '0' };
 
 struct BLE_CladBuffer {
@@ -103,7 +103,7 @@ static void dh_complete(const void*, int) {
   // Transmit our encryped key
   BLE_EncodedKey msg;
   memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
-  memcpy(msg.encoded_key, dh_state.encoded_key, AES_BLOCK_LENGTH);  
+  memcpy(msg.encoded_key, dh_state.encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
 
   // Display the pin number
