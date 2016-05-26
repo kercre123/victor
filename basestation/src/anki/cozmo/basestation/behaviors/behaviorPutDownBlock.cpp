@@ -22,6 +22,8 @@ namespace Cozmo {
 
 CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg, "Behavior.PutDownBlock", -20.0f);
 
+static const char* const kLookAtFaceAnimGroup = "ag_lookAtFace_keepAlive";
+
 BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
@@ -58,7 +60,9 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot)
 
   // in any case, look back at the last face after this is done (to give them a chance to show another cube)
 
-  action->AddAction(new TurnTowardsLastFacePoseAction(robot));
+  action->AddAction(new TurnTowardsFaceWrapperAction(
+                      robot,
+                      new PlayAnimationGroupAction(robot, kLookAtFaceAnimGroup)));
   return action;
 }
 

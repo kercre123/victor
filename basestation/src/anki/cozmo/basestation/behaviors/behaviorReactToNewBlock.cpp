@@ -138,9 +138,9 @@ bool BehaviorReactToNewBlock::ShouldAskForBlock(const Robot& robot, ObjectID blo
 
   Pose3d relPos;
   if ( !block->GetPose().GetWithRespectTo(robot.GetPose(), relPos) ) {
-    PRINT_NAMED_WARNING("BehaviorReactToNewBlock.NoPoseWRTRobot",
-                        "couldnt get pose with respect to robot for block %d",
-                        blockID.GetValue());
+    PRINT_NAMED_DEBUG("BehaviorReactToNewBlock.ShouldAskForBlock.NoPoseWRTRobot",
+                      "couldnt get pose with respect to robot for block %d",
+                      blockID.GetValue());
     return false;
   }
 
@@ -172,6 +172,7 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
     PRINT_NAMED_ERROR("BehaviorReactToNewBlock.NullBlock",
                       "couldnt get block %d",
                       _targetBlock.GetValue());
+    _targetBlock.UnSet();
     return;
   }
 
@@ -180,6 +181,7 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
     PRINT_NAMED_WARNING("BehaviorReactToNewBlock.NoPoseWRTRobot",
                         "couldnt get pose with respect to robot for block %d",
                         _targetBlock.GetValue());
+    _targetBlock.UnSet();
     return;
   }
 
@@ -237,6 +239,7 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
     PRINT_NAMED_ERROR("BehaviorReactToNewBlock.NullBlock",
                       "couldnt get block %d",
                       _targetBlock.GetValue());
+    _targetBlock.UnSet();
     return;
   }
   
@@ -299,6 +302,7 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
                      "haven't seen block since ts %d (curr is %d), giving up",
                      _targetBlockLastSeen,
                      currTS);
+    _targetBlock.UnSet();
     return;
   }
   
