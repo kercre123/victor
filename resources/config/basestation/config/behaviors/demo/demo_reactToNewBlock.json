@@ -1,0 +1,11 @@
+{
+  "behaviorType": "ReactToNewBlock",
+  "name": "ReactToNewBlock",
+  "flatScore": 0.8,
+  
+  "behaviorGroups": [
+    "Demo",
+    "DemoCubes",
+    "DemoFaces"
+  ]
+}

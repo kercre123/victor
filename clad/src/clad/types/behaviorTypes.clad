@@ -31,6 +31,7 @@ enum uint_8 BehaviorType {
   ReactToPoke,
   ReactToRobotOnBack,
   ReactToOnCharger,
+  ReactToNewBlock,
   PlayAnim,
   UnityDriven,
   PounceOnMotion,
@@ -50,6 +51,7 @@ enum uint_8 BehaviorType {
   FlipDownFromWheelie,
   DockingTestSimple,
   DriveOffCharger,
+
   Count
 }
 

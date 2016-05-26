@@ -8,10 +8,10 @@ import sys, os, time
 import cmd
 import argparse
 
-sys.path.insert(0, os.path.join("tools"))
 import engineInterface
 from engineInterface import GToEM # to get message definitions too
 from engineInterface import EngineCommand # for enum
+from verboseLevel import VerboseLevel
 
 kCliCmdNames = [
     "list",
@@ -194,6 +194,44 @@ class EngineRemoteCmd(cmd.Cmd):
     def do_requestDataDrivenLists(self, line):
         "requestDataDrivenLists - requests lists of anything non-CLAD data-driven e.g. all console vars, all animations"
         engineInterface.QueueCommand( (EngineCommand.sendMsg, ["GetAllDebugConsoleVarMessage"]) )  # get all the Console Var/Function entries
+
+    # ================================================================================  
+    # Common Actions
+
+    def do_SearchForCube(self,line):
+        "Search for a light cube by spinning around (optionally accepts a specific objectId to look for)"
+        inputSplit = line.split()
+        objectId = 0
+        matchAnyObjectId = True
+
+        if (len(inputSplit) >= 1):
+            objectId = int(inputSplit[0])
+            matchAnyObjectId = False
+        
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["SearchForObject", "Anki.Cozmo.ObjectFamily.LightCube", str(objectId), str(matchAnyObjectId)]) )
+
+    def do_Turn(self,line):
+        "Turn (90 degrees by default, accepts anyup to 4 args for [angleToTurn [radsPerSec [accRPS2 [isAbsolute]]]]"
+        inputSplit = line.split()
+        angleToTurn = float(inputSplit[0]) if (len(inputSplit) >= 1) else 1.57 
+        radsPerSec  = float(inputSplit[1]) if (len(inputSplit) >= 2) else 1.0
+        accRPS2     = float(inputSplit[2]) if (len(inputSplit) >= 3) else 1.0
+        isAbsolute  = int(  inputSplit[3]) if (len(inputSplit) >= 4) else 0
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["TurnInPlace", str(angleToTurn), str(radsPerSec), str(accRPS2), str(isAbsolute), "1" ]) )
+
+    def do_Drive(self,line):
+        "Drive (forwards by default, accepts anyup to 4 args for [lWheelSpeed [rWheelSpeed [lWheelAcc [rWheeelAcc]]]]"
+        inputSplit = line.split()
+        lWheelSpeed = float(inputSplit[0]) if (len(inputSplit) >= 1) else 20.0
+        rWheelSpeed = float(inputSplit[1]) if (len(inputSplit) >= 2) else 20.0
+        lWheelAcc   = float(inputSplit[2]) if (len(inputSplit) >= 3) else 20.0
+        rWheelAcc   = float(inputSplit[3]) if (len(inputSplit) >= 4) else 20.0
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["DriveWheels", str(lWheelSpeed), str(rWheelSpeed), str(lWheelAcc), str(rWheelAcc) ]) )
+
+    def do_StopCozmo(self,line):
+        "Stop Cozmo from driving or moving their head"
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["DriveWheels", "0", "0", "0", "0"]) ) 
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["MoveHead", "0.0"]) ) 
         
     # ================================================================================  
     # quit / exit / etc
@@ -211,11 +249,18 @@ class EngineRemoteCLI:
 
         parser = argparse.ArgumentParser()
         parser.add_argument("-udp", dest='udp', action='store_true', default=False, help="Connect over UDP (e.g. for Webots) vs default TCP connection to iOS device")
-        parser.add_argument("-verbose", dest='verbose', action='store_true', default=False, help="Verbose logging")
+        parser.add_argument("-v", "--verbosity", dest='verboseLevel', action="count", help="Verbose logging level ('-v' = Med, '-vv' =Max)")
+    
         args = parser.parse_args()
+        verboseLevel = int(args.verboseLevel) if (args.verboseLevel != None) else 0
         useTcp = not args.udp
 
-        engineInterface.Init(True, useTcp, args.verbose)
+        if verboseLevel >= VerboseLevel.Max:
+            sys.stdout.write("[CLI] Args = '" + str(args) + "'" + os.linesep)
+            sys.stdout.write("[CLI] verboseLevel = '" + str(verboseLevel) + "'" + os.linesep)
+            sys.stdout.write("[CLI] useTcp = '" + str(useTcp) + "'" + os.linesep)
+
+        engineInterface.Init(True, useTcp, verboseLevel)
         self.keepRunning = True
         self.run()
         

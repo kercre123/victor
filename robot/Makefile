@@ -56,6 +56,9 @@ k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
 	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
+k02_fcc_fix: staging_dir
+	python3 ./tools/boot_header.py ./build/fcc/robot.axf
+	
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 

@@ -70,6 +70,9 @@ public:
   // called when Cozmo can identify a clear quad (no borders, obstacles, etc)
   void ProcessClearQuad(const Quad2f& quad);
 
+  // called when we've searched for a possible object at a given pose, but failed to find it
+  void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
+
   // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
   void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID) { _topOfStackToAdmire = topBlockID; _bottomOfStackToAdmire = bottomBlockID; }
   void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); _bottomOfStackToAdmire.UnSet(); }

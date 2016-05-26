@@ -136,11 +136,6 @@ namespace Cozmo {
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
     
-    // Helper for fast forwarding to end of animation and streaming last face,
-    // used in case an animation gets interrupted with nothing and we don't
-    // want to leave its face frozen in an arbitrary place
-    bool StreamLastFace(Animation* anim);
-    
     // This is performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
     

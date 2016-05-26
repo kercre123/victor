@@ -11,22 +11,15 @@ from debugConsole import DebugConsoleManager
 from moodManager import MoodManager
 from animationManager import AnimationManager
 from tcpConnection import TcpConnection
-
-CLAD_DIR  = os.path.join("generated", "cladPython")
-sys.path.insert(0, CLAD_DIR)
-
-try:
-    sys.path.append('robot/tools/') # [MARKW:TODO] Share ReliableTransport (or just UDPTransport) more cleanly between sdk and robot-tools
-    from ReliableTransport import UDPTransport
-except:
-    sys.exit("Can't import UDPTransport!{linesep}\t* Are you running from the base cozmo-engine directory?{linesep}".format(linesep=os.linesep))
+from udpConnection import UdpConnection
+from verboseLevel import VerboseLevel
 
 try:
     from clad.externalInterface.messageEngineToGame import Anki
     from clad.externalInterface.messageGameToEngine import Anki as _Anki
 except Exception as e:
     sys.stdout.write("Exception = " + str(e)  + os.linesep)
-    sys.exit("Can't import CLAD libraries!{linesep}\t* Are you running from the base cozmo-engine directory?{linesep}".format(linesep=os.linesep))
+    sys.exit("Can't import CLAD libraries!{linesep}\t* Are you running from the base SDK directory?{linesep}".format(linesep=os.linesep))
 
 # [MARKW:TODO] i don't know why robot interface does this?
 #Anki.update(_Anki.deep_clone())
@@ -45,20 +38,13 @@ gAsyncEngineInterfaceInstance = None
 
 
 class EngineCommand:
-    ""
-    consoleVar  = 0
-    consoleFunc = 1
-    sendMsg     = 2
-    setEmotion  = 3    
-    playAnimation = 4     
-    playAnimationGroup = 5     
-    
-    
-class ConnectionState:
-    "An enum for connection states"
-    notConnected      = 0
-    tryingToConnect   = 1
-    connected         = 2
+    "An enum of Command types that EngineInterface can perform"
+    consoleVar         = 0
+    consoleFunc        = 1
+    sendMsg            = 2
+    setEmotion         = 3
+    playAnimation      = 4
+    playAnimationGroup = 5
 
 
 def ArgListToString(*args):
@@ -69,8 +55,8 @@ def ArgListToString(*args):
             argsToString += " "
         argsToString += args[i]
     return argsToString
-        
-        
+
+
 # ================================================================================    
 # Internal Private _EngineInterfaceImpl for talking to/from cozmo-engine
 # ================================================================================
@@ -79,34 +65,44 @@ def ArgListToString(*args):
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
     
-    def __init__(self, useTcpConnection, verboseMode):
+    def __init__(self, useTcpConnection, verboseLevel):
 
         self.useTcpConnection = useTcpConnection;
+        self.verboseLevel = verboseLevel
+
         if self.useTcpConnection:
             sys.stdout.write("Creating TCP SDK Connection" + os.linesep)
-            self.tcpConnection = TcpConnection()
+
+            engineIpAddress = "127.0.0.1"
+            sdkTcpPort = 5107
+
+            self.engineConnection = TcpConnection(verboseLevel, engineIpAddress, sdkTcpPort, GToEI, GToEM)
         else:
             sys.stdout.write("Creating UDP SDK Connection" + os.linesep)
-
-            self.udpTransport = UDPTransport(None, None, False)
-            self.ipAddress = "127.0.0.1" # localhost, using raw "unreliable" udp
-            self.engineIpAddress = "127.0.0.1"
-            self.sdkToEngPort = 5114     # = 0x13FA, byte-swapped = 0xFA13 64019
-            self.engToSdkPort = 5116     # = 0x13FC, byte-swapped = 0xFC13 64531        
+            
+            # [MARKW:TODO] Tidy up the mess of things that we have to manually pass into UdpConnection
+            ourIpAddress = "127.0.0.1" # localhost, using raw "unreliable" udp
+            engineIpAddress = "127.0.0.1"
+            sdkToEngPort = 5114     # = 0x13FA, byte-swapped = 0xFA13 64019
+            engToSdkPort = 5116     # = 0x13FC, byte-swapped = 0xFC13 64531        
             htons_sdkToEngPort = 64019   # [MARKW:TODO] don't hardcode this, htons in the correct places
 
-            self.engDest = (self.engineIpAddress, htons_sdkToEngPort)        
-            self.adPort = 5105
-            self.adDest = (self.engineIpAddress, self.adPort)
-            self.udpTransport.OpenSocket(self.engToSdkPort)
+            adPort = 5105
+            
+            self.engineConnection = UdpConnection(verboseLevel, engToSdkPort, GToEI, GToEM)
 
-        self.state = ConnectionState.notConnected
-        
-        self.numAnims = 0
-        
-        self.verboseMode = verboseMode
-        self.verboseSendToAd = False
-        self.verboseSendToEngine = verboseMode
+            adMsg = GToE.AdvertisementRegistrationMsg()
+            adMsg.toEnginePort=sdkToEngPort
+            adMsg.fromEnginePort=engToSdkPort
+            adMsg.ip = ourIpAddress
+            adMsg.id = 1
+            adMsg.enableAdvertisement = True
+            adMsg.oneShot = True            
+            toEngAdMsg = GToEM(AdvertisementRegistrationMsg = adMsg);
+            
+            self.engineConnection.adDest = (engineIpAddress, adPort)
+            self.engineConnection.engDest = (engineIpAddress, htons_sdkToEngPort)
+            self.engineConnection.adMsg = toEngAdMsg
         
         self.debugConsoleManager = DebugConsoleManager()
         self.moodManager = MoodManager()
@@ -117,9 +113,11 @@ class _EngineInterfaceImpl:
         self.Disconnect()    
          
 
-    def OnConnected(self):
+    def OnConnectionAcked(self):
+        "Called when we receive a confirmation message that we're connected to the Engine"
         sys.stdout.write("SDK Connected to Engine" + os.linesep)
-        self.state = ConnectionState.connected
+        self.engineConnection.OnConnectionAcked()
+        # Request any one-off state info (e.g. lists of anything only known at load-time)
         self.HandleSendMessageCommand(*["GetAllDebugConsoleVarMessage"])
         self.HandleSendMessageCommand(*["RequestAvailableAnimations"])
         self.HandleSendMessageCommand(*["RequestAvailableAnimationGroups"])
@@ -130,60 +128,53 @@ class _EngineInterfaceImpl:
         keepPumpingIncomingSocket = True
         while keepPumpingIncomingSocket:
 
-            if self.useTcpConnection:
-                self.tcpConnection.Update()
-                d, a = self.tcpConnection.ReceiveData()
-            else:
-                d, a = self.udpTransport.ReceiveData()
+            messageData, srcAddr = self.engineConnection.ReceiveMessage()
 
-            if (d == None) or (len(d) == 0):
+            if (messageData == None) or (len(messageData) == 0):
                 # nothing left to read
                 keepPumpingIncomingSocket = False
-            elif ((len(d) == 1) and (d[0] == 0)):
+            elif ((len(messageData) == 1) and (messageData[0] == 0)):
                 # special case from engine at start of connection - ignore
-                #sys.stdout.write("Recv: 1 zero byte from " + str(a) + os.linesep + "     " + str(d) + os.linesep)
+                if self.verboseLevel >= VerboseLevel.High:
+                    sys.stdout.write("Recv: Ignoring message of 1 zero byte from " + str(srcAddr) + " = '" + str(messageData) + "'" + os.linesep)
                 pass
             else:
-                buffer = d    
                 try:
-                    fromEngMsg = EToGM.unpack(buffer)
+                    fromEngMsg = EToGM.unpack(messageData)
                 except Exception as e:
-                    lenBuffer =  len(buffer)
-                    if lenBuffer:
-                        tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
+                    lenMessageData = len(messageData)
+                    if lenMessageData > 0:
+                        tag = ord(messageData[0]) if sys.version_info.major < 3 else messageData[0]
                     else:
                         tag = -1
 
-                    sys.stderr.write("Exception unpacking message from " + str(a) + ":" + os.linesep + "  " + str(e) + os.linesep)
-                    sys.stderr.write("  " + str(d) + " (" + str(lenBuffer) + " bytes, tag = " + str(tag) + ")" + os.linesep);
-                    sys.stderr.flush()
+                    if self.verboseLevel >= VerboseLevel.High:
+                        sys.stderr.write("Exception unpacking message from " + str(srcAddr) + ":" + os.linesep + "  " + str(e) + os.linesep)
+                        sys.stderr.write("  " + str(messageData) + " (" + str(lenMessageData) + " bytes, tag = " + str(tag) + ")" + os.linesep);
+                        sys.stderr.flush()
                 else:
                     
-                    #sys.stdout.write("Recv: ... " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(a) +  os.linesep);
-                    #sys.stdout.write("     " + str(d) + os.linesep);
+                    #sys.stdout.write("Recv: ... " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(srcAddr) +  os.linesep);
+                    #sys.stdout.write("     " + str(messageData) + os.linesep);
                         
-                    #if msg.tag == msg.Tag.AdvertisementMsg:
-                    #    msgAdv = msg.AdvertisementMsg
-                    #    sys.stdout.write("  GToEM: Adv, id = " + str(msgAdv.id) + os.linesep)
-                    #    sys.stdout.write("  GToEM: Adv, port = " + str(msgAdv.port) + os.linesep)
-                    #    sys.stdout.write("  GToEM: Adv, protocol = " + str(msgAdv.protocol) + os.linesep)
-                    #    sys.stdout.write("  GToEM: Adv, ip = " + msgAdv.ip + os.linesep)
                     if fromEngMsg.tag == fromEngMsg.Tag.UiDeviceConnected:
                         msg = fromEngMsg.UiDeviceConnected
-                        if self.verboseMode:
+                        if self.verboseLevel >= VerboseLevel.High:
                             sys.stdout.write("Recv: UiDeviceConnected Type=" + str(msg.connectionType) + ", id=" + str(msg.deviceID) + ", success=" + str(msg.successful) + os.linesep)
                         if self.useTcpConnection and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverTcp):
-                            self.OnConnected()
+                            self.OnConnectionAcked()
                         elif (not self.useTcpConnection) and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverUdp):
-                            self.OnConnected()
+                            self.OnConnectionAcked()
                         else:
                             sys.stdout.write("Something else Connected to Engine" + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.UpdateEngineState:
                         msg = fromEngMsg.UpdateEngineState
-                        sys.stdout.write("Recv: UpdateEngineState from " + str(msg.oldState) + " to " + str(msg.newState) + os.linesep)
+                        if self.verboseLevel >= VerboseLevel.High:
+                            sys.stdout.write("Recv: UpdateEngineState from " + str(msg.oldState) + " to " + str(msg.newState) + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotConnected:
                         msg = fromEngMsg.RobotConnected
-                        sys.stdout.write("Recv: RobotConnected id=" + str(msg.robotID) + " successful=" + str(msg.successful) + os.linesep)                        
+                        if self.verboseLevel >= VerboseLevel.High:
+                            sys.stdout.write("Recv: RobotConnected id=" + str(msg.robotID) + " successful=" + str(msg.successful) + os.linesep)                        
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedNothing:
                         msg = fromEngMsg.RobotObservedNothing
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedPossibleObject:
@@ -227,7 +218,6 @@ class _EngineInterfaceImpl:
                          #sys.stdout.write("Recv: DebugString = '" + str(msg.text) + "'" + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.AnimationAvailable:
                         msg = fromEngMsg.AnimationAvailable
-                        #sys.stdout.write("Recv: AnimationAvailable '" + msg.animName + "'" + os.linesep)
                         self.animationManager.UpdateAnimations(msg)
                     elif fromEngMsg.tag == fromEngMsg.Tag.AnimationGroupAvailable:
                         msg = fromEngMsg.AnimationGroupAvailable
@@ -275,9 +265,9 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.EngineRobotCLADVersionMismatch:
                         pass
                     else:
-                        if self.verboseMode:
-                            sys.stdout.write("Recv: Unhandled " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(a) +  os.linesep);
-                            sys.stdout.write("     " + str(d) + os.linesep);
+                        if self.verboseLevel >= VerboseLevel.High:
+                            sys.stdout.write("Recv: Unhandled " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(srcAddr) +  os.linesep);
+                            sys.stdout.write("     " + str(messageData) + os.linesep);
                             sys.stdout.write("     " + repr(fromEngMsg) + os.linesep);
                             
                     sys.stdout.flush()
@@ -311,7 +301,7 @@ class _EngineInterfaceImpl:
             toEngMessage = GToEM(SetDebugConsoleVarMessage = setVarMsg);
                 
             sys.stdout.write("Send: " + str(setVarMsg) + os.linesep)
-            self.sendToEngine(toEngMessage)
+            self.engineConnection.SendMessage(toEngMessage, False)
             
             return True
             
@@ -342,7 +332,7 @@ class _EngineInterfaceImpl:
             toEngMessage = GToEM(RunDebugConsoleFuncMessage = runFuncMsg);
                 
             sys.stdout.write("Send: " + str(runFuncMsg) + os.linesep)
-            self.sendToEngine(toEngMessage)
+            self.engineConnection.SendMessage(toEngMessage, False)
             
             return True
         
@@ -437,7 +427,7 @@ class _EngineInterfaceImpl:
             else:
                 m = GToEM(**{msgName: p})
                 #sys.stdout.write("[HandleSendMessageCommand] Sending: '" + str(m) + "'" + os.linesep)
-                return self.sendToEngine(m)
+                return self.engineConnection.SendMessage(m)
                 
         return False
     
@@ -470,8 +460,8 @@ class _EngineInterfaceImpl:
 
         toEngMessage = GToEM(PlayAnimation = playAnimMsg);
         
-        sys.stdout.write("Send PlayAnimation = '" + str(toEngMessage) + "'" + os.linesep)
-        self.sendToEngine(toEngMessage)
+        sys.stdout.write("Send PlayAnimation = '" + str(playAnimMsg) + "'" + os.linesep)
+        self.engineConnection.SendMessage(toEngMessage, False)
         
     def HandlePlayAnimationGroupCommand(self, *args):
         lenArgs = len(args)
@@ -500,8 +490,8 @@ class _EngineInterfaceImpl:
 
         toEngMessage = GToEM(PlayAnimationGroup = playAnimGroupMsg);
         
-        sys.stdout.write("Send PlayAnimationGroup = '" + str(toEngMessage) + "'" + os.linesep)
-        self.sendToEngine(toEngMessage)
+        sys.stdout.write("Send PlayAnimationGroup = '" + str(playAnimGroupMsg) + "'" + os.linesep)
+        self.engineConnection.SendMessage(toEngMessage, False)
 
 
     def HandleSetEmotionCommand(self, *args):
@@ -544,13 +534,13 @@ class _EngineInterfaceImpl:
 
         toEngMessage = GToEM(MoodMessage = moodMessage);
     
-        self.sendToEngine(toEngMessage)
+        self.engineConnection.SendMessage(toEngMessage)
                         
         return True
         
         
     def DoCommand(self, inCommand):
-        
+        "Perform a single command"
         commandType = inCommand[0]
                 
         if (commandType == EngineCommand.consoleVar):
@@ -568,75 +558,25 @@ class _EngineInterfaceImpl:
         else:
             sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
             return False
-            
         
     def Update(self):
-
+        "Update internals (currently just the network connection)"
+        self.engineConnection.Update()
         self.ReceiveFromEngine()
                 
-        if (self.state == ConnectionState.notConnected): 
-
-            sys.stdout.write("Trying to connect to Engine..." + os.linesep);
-            self.state = ConnectionState.tryingToConnect
-
-        if (self.state == ConnectionState.tryingToConnect):
-              
-            if self.useTcpConnection:
-                pass
-            else:
-                adMsg = GToE.AdvertisementRegistrationMsg()
-                adMsg.toEnginePort=self.sdkToEngPort
-                adMsg.fromEnginePort=self.engToSdkPort
-                adMsg.ip = self.ipAddress
-                adMsg.id = 1
-                adMsg.enableAdvertisement = True
-                adMsg.oneShot = True
-                
-                toEngMsg = GToEM(AdvertisementRegistrationMsg = adMsg);
-                
-                self.sendToAd(toEngMsg)
-            
-        elif (self.state == ConnectionState.connected):
-
-            shouldSendPing = True
-            if shouldSendPing:
-                outPingMsg = GToEI.Ping()
-                outPingMsg.counter = 1 # TODO - should increase for duration of connecion
-                    
-                toEngMsg = GToEM(Ping = outPingMsg);
-                self.sendToEngine(toEngMsg, False)
-        else:
-            sys.stderr.write("[Update] Unexpected state: " + str(self.state) + os.linesep)
-    
     def IsConnected(self):
-        return self.state == ConnectionState.connected
+        "Are we sucessfully connected via a network connection"
+        return self.engineConnection.IsConnected()
         
     def Disconnect(self):
-        if self.useTcpConnection:
-            self.tcpConnection.CloseSocket()
-        else:
-            self.udpTransport.CloseSocket()
-
-    def sendToEngine(self, msg, logIfVerbose=True):
-        if self.verboseSendToEngine and logIfVerbose:
-            sys.stdout.write("[sendToEngine] '" + str(msg) + "'" + os.linesep)
-        if self.useTcpConnection:
-            return self.tcpConnection.SendData(msg.pack())
-        else:
-            return self.udpTransport.SendData(self.engDest, msg.pack())
-        
-    def sendToAd(self, msg):
-        if self.useTcpConnection:
-            return True # no ad-server for TCP
-        else:
-            if self.verboseSendToAd:
-                sys.stdout.write("[sendToAd] '" + str(msg) + "'" + os.linesep)
-            return self.udpTransport.SendData(self.adDest, msg.pack())
+        "Disconnect any network connections"
+        self.engineConnection.CloseSocket()
 
 
 # ================================================================================    
 # Threaded Async Engine Interface (runs async)
 # ================================================================================
+
 
 class AsyncEngineInterface(threading.Thread):
     "Async Wrapper of EngineInterface"
@@ -720,14 +660,14 @@ class AsyncEngineInterface(threading.Thread):
 # ================================================================================
 
         
-def Init(runAsync, useTcpConnection, verboseMode):
+def Init(runAsync, useTcpConnection, verboseLevel):
     "Initalize the engine interface. Must be called before any other methods"
     global gEngineInterfaceInstance
     if gEngineInterfaceInstance is not None:
         sys.stderr.write("Already Initialized!")
         return None        
     if gEngineInterfaceInstance is None:
-        gEngineInterfaceInstance = _EngineInterfaceImpl(useTcpConnection, verboseMode)
+        gEngineInterfaceInstance = _EngineInterfaceImpl(useTcpConnection, verboseLevel)
     if runAsync:
         global gAsyncEngineInterfaceInstance
         if gAsyncEngineInterfaceInstance is None:            

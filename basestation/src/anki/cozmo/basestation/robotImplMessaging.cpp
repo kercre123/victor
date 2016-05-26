@@ -378,7 +378,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     }
   }
   
-  PRINT_NAMED_INFO("Robot.HandleActiveObjecConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
+  PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
   
   if (objID.IsSet()) {
     // Update the objectID to be blockworld ID
@@ -415,13 +415,19 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
       return;
     }
     ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
+
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ObjectMoved",
+                     "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
+                     object->GetID().GetValue(), object->GetActiveID(),
+                     EnumToString(object->GetType()), EnumToString(payload.upAxis));
+
     
     if(object->GetPoseState() == ObservableObject::PoseState::Known)
     {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ActiveObjectMoved",
-                       "Received message that %s %d (Active ID %d) moved. Delocalizing it.",
-                       EnumToString(object->GetType()),
-                       object->GetID().GetValue(), object->GetActiveID());
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
+                       "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
+                       object->GetID().GetValue(), object->GetActiveID(),
+                       EnumToString(object->GetType()), EnumToString(payload.upAxis));
       
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it
@@ -485,7 +491,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   {
     ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
 
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.MessageActiveObjectStoppedMoving",
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.ObjectStoppedMoving",
                      "Received message that %s %d (Active ID %d) stopped moving.",
                      EnumToString(object->GetType()),
                      object->GetID().GetValue(), payload.objectID);
@@ -574,12 +580,6 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
   if( !_enableCliffSensor ) {
     return;
   }
-  
-  // Abort any running animation. This will be cleaner than letting a PlayAnimationAction
-  // get deleted during the ActionList.Cancel() below because the action will get notified
-  // of the abort first, and not generate a warning about being deleted without
-  // getting notified about a stop or abort.
-  _animationStreamer.SetStreamingAnimation(nullptr);
   
   // Stop whatever we were doing
   GetActionList().Cancel();

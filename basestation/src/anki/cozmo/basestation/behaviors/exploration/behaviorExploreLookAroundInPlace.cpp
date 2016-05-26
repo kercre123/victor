@@ -108,6 +108,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax", debugName);
   _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection", debugName);
+  _configParams.behavior_ShouldLowerLift = ParseBool(config, "behavior_ShouldLowerLift", debugName);
   _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg", debugName);
   // turn speed
   _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
@@ -160,9 +161,15 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   if( _configParams.behavior_ShouldResetTurnDirection ) {
     DecideTurnDirection();
   }
-  
-  // start first iteration
-  TransitionToS1_OppositeTurn(robot);
+
+  // if we should lower the lift, do that now
+  if( _configParams.behavior_ShouldLowerLift ) {
+    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn);
+  }
+  else {
+    TransitionToS1_OppositeTurn(robot);
+  }
 
   return Result::RESULT_OK;
 }
@@ -388,14 +395,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;
 
-// rsam: I have found the root of this problem. Say you start at Z = 90 turning positive angles as main direction. With
-// the proper data tweaks you, you can make the robot end at Z < 90 at the end of step 5. Step 6 then would try
-// to move from < 90 to > 90. However the action for step 6 fails (something we will investigate further), and
-// instead of retrying, it simply transitions to S7, which checks that Z should be > 90, when it's not
-// Until we know the cause of giving up, disable this assert
-//  // assert we are not turning more than PI in one iteration (because of Radian rescaling)
-//  ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
-//    "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
+  // assert we are not turning more than PI in one iteration (because of Radian rescaling)
+  ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
+    "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
 
   // while not completed a whole turn start another iteration
   if ( fabsf(_behaviorBodyFacingDone_rad) < 2*PI )
