@@ -117,7 +117,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #endif
   
     // Setup our update method to be called periodically
-    _dispatchQueue = Util::Dispatch::Create();
+    _dispatchQueue = Util::Dispatch::Create( "AudioController" );
     const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(UPDATE_LOOP_SLEEP_DURATION_MS);
     _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
   }
@@ -130,6 +130,7 @@ AudioController::~AudioController()
   {
     _taskHandle->Invalidate();
   }
+  Util::Dispatch::Stop( _dispatchQueue );
   Util::Dispatch::Release( _dispatchQueue );
   Util::SafeDelete( _pluginInterface );
   

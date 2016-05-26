@@ -39,6 +39,7 @@ RobotAudioAnimation::RobotAudioAnimation()
 RobotAudioAnimation::~RobotAudioAnimation()
 {
   if ( _postEventTimerQueue != nullptr ) {
+    Util::Dispatch::Stop( _postEventTimerQueue );
     Util::Dispatch::Release( _postEventTimerQueue );
   }
   if ( _audioBuffer != nullptr ) {
@@ -125,7 +126,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   }
   
   // Setup Dispatch
-  _postEventTimerQueue = Util::Dispatch::Create( "PostEventTimerQueue" );
+  _postEventTimerQueue = Util::Dispatch::Create( "BotAudioAnimation" );
   
   // Call sub-class specific code
   PrepareAnimation();
