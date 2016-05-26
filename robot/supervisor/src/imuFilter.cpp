@@ -664,7 +664,6 @@ namespace Anki {
         //PERIODIC_PRINT(50, "Pitch %f deg\n", RAD_TO_DEG_F32(pitch_));
       }
       
-#ifndef SIMULATOR
       void UpdateCameraMotion()
       {
         static u8 cameraMotionDecimationCounter = 0;
@@ -679,7 +678,6 @@ namespace Anki {
           cameraMotionDecimationCounter = 0;
         }
       }
-#endif
 
       Result Update()
       {
@@ -797,9 +795,7 @@ namespace Anki {
 
         HandlePickupParalysis();
         
-        #ifndef SIMULATOR
         UpdateCameraMotion();
-        #endif
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {

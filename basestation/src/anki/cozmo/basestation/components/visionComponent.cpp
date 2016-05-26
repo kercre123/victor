@@ -39,6 +39,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
+#include "util/console/consoleInterface.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
@@ -49,6 +50,12 @@
 
 namespace Anki {
 namespace Cozmo {
+
+  CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasMovingTooFast.Block.Head_deg/s",   10.f);
+  CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasMovingTooFast.Block.Body_deg/s",   30.f);
+  CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasMovingTooFast.Face.Head_deg/s",    10.f);
+  CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasMovingTooFast.Face.Body_deg/s",    30.f);
+  CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasMovingTooFast.Face.NumToLookBack", 5);
   
   VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
   : _robot(robot)
@@ -414,15 +421,15 @@ namespace Cozmo {
       // the robot, this additional info allows us to know if motion in the image was likely due to actual
       // robot motion.
       const bool headSame =  NEAR(lastPoseStamp.GetHeadAngle(),
-                                  imagePoseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+                                  imagePoseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
       
       const bool poseSame = (NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
                                   imagePoseStamp.GetPose().GetTranslation().x(), .5f) &&
                              NEAR(lastPoseStamp.GetPose().GetTranslation().y(),
                                   imagePoseStamp.GetPose().GetTranslation().y(), .5f) &&
-                             NEAR(lastPoseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                  imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                  DEG_TO_RAD(0.1)));
+                             NEAR(lastPoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                  imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                  DEG_TO_RAD_F32(0.1)));
       
       Lock();
       _nextPoseData.poseStamp = imagePoseStamp;
@@ -482,7 +489,7 @@ namespace Cozmo {
           TimeStamp_t t;
           RobotPoseStamp p;
           _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), t, p, true);
-          if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
+          if(!WasMovingTooFast(image.GetTimestamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
           {
             _storeNextImageForCalibration = false;
             Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
@@ -650,21 +657,6 @@ namespace Cozmo {
                      "Terminated Robot VisionComponent::Processor thread");
   } // Processor()
   
-  static f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
-  {
-    const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
-    const Radians poseAngle2( p2.GetPose().GetRotationAngle<'Z'>() );
-    const f32 poseAngSpeed = std::abs((poseAngle1-poseAngle2).ToFloat()) / dt;
-    
-    return poseAngSpeed;
-  }
-  
-  static f32 ComputeHeadAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
-  {
-    const f32 headAngSpeed = std::abs((Radians(p1.GetHeadAngle()) - Radians(p2.GetHeadAngle())).ToFloat()) / dt;
-    return headAngSpeed;
-  }
-  
   
   Result VisionComponent::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
   {
@@ -693,11 +685,7 @@ namespace Cozmo {
     
     // If we were moving too fast at timestamp t and we aren't doing rolling shutter correction
     // then don't queue this marker otherwise don't queue if only the head was moving too fast
-    if(!_visionSystem->IsDoingRollingShutterCorrection() && WasMovingTooFast(t, p))
-    {
-      return RESULT_OK;
-    }
-    else if(WasHeadMovingTooFast(t, p))
+    if(WasMovingTooFast(t, DEG_TO_RAD_F32(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD_F32(kHeadTurnSpeedThreshBlock_degs)))
     {
       return RESULT_OK;
     }
@@ -926,7 +914,12 @@ namespace Cozmo {
       }
       
       // If we were moving too fast at the timestamp the face was detected then don't update it
-      if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
+      // If the detected face is being tracked than we should look farther back in imu data history
+      // else we will just look at the previous and next imu data
+      if(WasMovingTooFast(faceDetection.GetTimeStamp(),
+                          DEG_TO_RAD_F32(kBodyTurnSpeedThreshFace_degs),
+                          DEG_TO_RAD_F32(kHeadTurnSpeedThreshFace_degs),
+                          (faceDetection.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
       {
         return RESULT_OK;
       }
@@ -1138,98 +1131,77 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                                         const f32 headTurnSpeedLimit_radPerSec)
+  bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t,
+                                         const f32 headTurnSpeedLimit_radPerSec,
+                                         const int numImuDataToLookBack)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
     if(!_visionWhileMovingFastEnabled && !_robot.IsPickingOrPlacing())
     {
-      TimeStamp_t t_prev, t_next;
-      RobotPoseStamp p_prev, p_next;
-      
-      Result lastResult = _robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Could not get next/previous poses for t = %d, so "
-                            "cannot compute angular velocity. Ignoring marker.\n", t);
-        
-        // Don't return failure, but don't queue the marker either (since we
-        // couldn't check the angular velocity while seeing it
-        return true;
-      }
-      
-      assert(t_prev < t);
-      assert(t_next > t);
-      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
-      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
-      const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
-      const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
-      
-      if(headSpeedNext > headTurnSpeedLimit_radPerSec ||
-         headSpeedPrev > headTurnSpeedLimit_radPerSec)
+      if(numImuDataToLookBack > 0)
       {
-        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
-        //                              "Ignoring vision marker seen while head moving with angular "
-        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-        //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-        //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return (_imuHistory.IsImuDataBeforeTimeGreaterThan(t,
+                                                           numImuDataToLookBack,
+                                                           0, headTurnSpeedLimit_radPerSec, 0));
+      }
+    
+      ImuDataHistory::ImuData prev, next;
+      if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
+      {
+        PRINT_NAMED_WARNING("VisionComponent.WasHeadMovingTooFast",
+                            "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
       
-    } // if(!_visionWhileMovingEnabled)
+      if(ABS(prev.rateY) > headTurnSpeedLimit_radPerSec ||
+         ABS(next.rateY) > headTurnSpeedLimit_radPerSec)
+      {
+        return true;
+      }
+    }
     return false;
   }
   
-  bool VisionComponent::WasBodyMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                                             const f32 bodyTurnSpeedLimit_radPerSec)
+  bool VisionComponent::WasBodyMovingTooFast(TimeStamp_t t,
+                                             const f32 bodyTurnSpeedLimit_radPerSec,
+                                             const int numImuDataToLookBack)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
     if(!_visionWhileMovingFastEnabled && !_robot.IsPickingOrPlacing())
     {
-      TimeStamp_t t_prev, t_next;
-      RobotPoseStamp p_prev, p_next;
-      
-      Result lastResult = _robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Could not get next/previous poses for t = %d, so "
-                            "cannot compute angular velocity. Ignoring marker.\n", t);
-        
-        // Don't return failure, but don't queue the marker either (since we
-        // couldn't check the angular velocity while seeing it
-        return true;
-      }
-      
-      assert(t_prev < t);
-      assert(t_next > t);
-      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
-      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
-      const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
-      const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
-      
-      if(turnSpeedNext > bodyTurnSpeedLimit_radPerSec ||
-         turnSpeedPrev > bodyTurnSpeedLimit_radPerSec)
+      if(numImuDataToLookBack > 0)
       {
-        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
-        //                              "Ignoring vision marker seen while turning with angular "
-        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-        //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
-        //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return (_imuHistory.IsImuDataBeforeTimeGreaterThan(t,
+                                                           numImuDataToLookBack,
+                                                           0, 0, bodyTurnSpeedLimit_radPerSec));
+      }
+    
+      ImuDataHistory::ImuData prev, next;
+      if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
+      {
+        PRINT_NAMED_WARNING("VisionComponent.WasBodyMovingTooFast",
+                            "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
       
-    } // if(!_visionWhileMovingEnabled)
+      if(ABS(prev.rateZ) > bodyTurnSpeedLimit_radPerSec ||
+         ABS(next.rateZ) > bodyTurnSpeedLimit_radPerSec)
+      {
+        return true;
+      }
+    }
     return false;
   }
   
-  bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+  bool VisionComponent::WasMovingTooFast(TimeStamp_t t,
                                          const f32 bodyTurnSpeedLimit_radPerSec,
-                                         const f32 headTurnSpeedLimit_radPerSec)
+                                         const f32 headTurnSpeedLimit_radPerSec,
+                                         const int numImuDataToLookBack)
   {
-    return (WasHeadMovingTooFast(t, p, headTurnSpeedLimit_radPerSec) ||
-            WasBodyMovingTooFast(t, p, bodyTurnSpeedLimit_radPerSec));
+    return (WasHeadMovingTooFast(t, headTurnSpeedLimit_radPerSec, numImuDataToLookBack) ||
+            WasBodyMovingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
   }
 
   template<class PixelType>

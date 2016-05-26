@@ -156,13 +156,20 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                              const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
-    bool WasBodyMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                              const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5));
-    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5),
-                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
+    bool WasHeadMovingTooFast(TimeStamp_t t,
+                              const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                              const int numImuDataToLookBack = 0);
+    bool WasBodyMovingTooFast(TimeStamp_t t,
+                              const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                              const int numImuDataToLookBack = 0);
+    
+    // Returns true if head or body were moving too fast at the timestamp
+    // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
+    // of just looking at the previous and next imu data
+    bool WasMovingTooFast(TimeStamp_t t,
+                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                          const int numImuDataToLookBack = 0);
 
     
     // Camera calibration
