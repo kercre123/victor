@@ -174,6 +174,8 @@ public class ConnectDialog : MonoBehaviour {
       return;
     }
 
+    DAS.Debug("ConnectDialog.RobotConnected", "RobotID: " + robotID);
+
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
       ConsoleLogManager.Instance.EnableSOSLogs(true);
     }

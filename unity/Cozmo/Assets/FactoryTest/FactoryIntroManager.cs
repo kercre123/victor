@@ -60,6 +60,8 @@ public class FactoryIntroManager : MonoBehaviour {
   private List<string> _LogList = new List<string>();
 
   void Start() {
+
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
     _LogFilter = PlayerPrefs.GetString("LogFilter");
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
@@ -105,9 +107,6 @@ public class FactoryIntroManager : MonoBehaviour {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
 
-    SOSLogManager.Instance.CreateListener();
-    RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
-    SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
     _RestartButton.gameObject.SetActive(true);
   }
 
