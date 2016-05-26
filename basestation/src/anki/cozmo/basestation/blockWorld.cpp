@@ -80,6 +80,10 @@ namespace Cozmo {
 CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
 CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // kDebugRenderOverheadEdges: enables/disables debug render
 
+// TODO: put this somewhere more appropriate?
+static const f32 STACKED_HEIGHT_TOL_MM = 15.f;
+
+
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
@@ -1131,7 +1135,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           
           // Check if there are objects on top of this object that need to be moved since the
           // object it's resting on has moved.
-          const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
 
           // Updates poses of stacks of objects by finding the difference between old object poses and applying that
           // to the new observed poses. Has to use the old object to find the object on top
@@ -2924,9 +2927,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                       // Erase the vizualized block and its projected quad
                       //V_robot->GetContext()->GetVizManager()->EraseCuboid(object->GetID());
 
-                      // Clear object, indicating we don't know where it went
-                      ClearObject(object);
-
+                      // Clear object and everything on top of it, indicating we don't know where it went
+                      ObservableObject* objectOnTop = object;
+                      BOUNDED_WHILE(20, objectOnTop != nullptr) {
+                        ClearObject(objectOnTop);
+                        objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
+                      }
                     } // if quads intersect
                   } // if we got block pose wrt robot origin
                 } // if robot is not picking or placing
