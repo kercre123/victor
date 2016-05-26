@@ -575,12 +575,6 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
     return;
   }
   
-  // Abort any running animation. This will be cleaner than letting a PlayAnimationAction
-  // get deleted during the ActionList.Cancel() below because the action will get notified
-  // of the abort first, and not generate a warning about being deleted without
-  // getting notified about a stop or abort.
-  _animationStreamer.SetStreamingAnimation(nullptr);
-  
   // Stop whatever we were doing
   GetActionList().Cancel();
 

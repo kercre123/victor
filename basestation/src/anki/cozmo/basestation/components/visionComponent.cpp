@@ -220,7 +220,6 @@ namespace Cozmo {
     }
     
     _currentImg = {};
-    _nextImg    = {};
     _lastImg    = {};
   }
 
@@ -431,25 +430,24 @@ namespace Cozmo {
                                   imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                   DEG_TO_RAD_F32(0.1)));
       
-      Lock();
-      _nextPoseData.poseStamp = imagePoseStamp;
-      _nextPoseData.timeStamp = imagePoseStampTimeStamp;
-      _nextPoseData.isMoving = !headSame || !poseSame;
-      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
-      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
-                                                                     _nextPoseData.groundPlaneHomography);
-      _nextPoseData.imuDataHistory = _imuHistory;
-      Unlock();
+      VisionPoseData nextPoseData;
+      nextPoseData.poseStamp = imagePoseStamp;
+      nextPoseData.timeStamp = imagePoseStampTimeStamp;
+      nextPoseData.isMoving = !headSame || !poseSame;
+      nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(nextPoseData.poseStamp, nextPoseData.timeStamp);
+      nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(nextPoseData.poseStamp.GetHeadAngle(),
+                                                                     nextPoseData.groundPlaneHomography);
+      nextPoseData.imuDataHistory = _imuHistory;
       
       // Experimental:
-      //UpdateOverheadMap(image, _nextPoseData);
+      //UpdateOverheadMap(image, nextPoseData);
       
       switch(_runMode)
       {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            UpdateVisionSystem(_nextPoseData, image);
+            UpdateVisionSystem(nextPoseData, image);
             _lastImg = image;
           }
           break;
@@ -458,16 +456,17 @@ namespace Cozmo {
         {
           if(!_paused) {
             Lock();
-            
-            if(!_nextImg.IsEmpty()) {
-              PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
-                               "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
-                               image.GetTimestamp(), _nextImg.GetTimestamp(), _currentImg.GetTimestamp());
+            if (_currentImg.IsEmpty())
+            {
+              image.CopyTo(_currentImg);
+              _currentPoseData = std::move(nextPoseData);
             }
-            
-            // TODO: Avoid the copying here (shared memory?)
-            image.CopyTo(_nextImg);
-            
+            else
+            {
+              PRINT_NAMED_INFO("VisionComponent.SetImage.DroppedFrame",
+                               "Dropping image with t=%d, still processing image t=%d.",
+                               image.GetTimestamp(), _currentImg.GetTimestamp());
+            }
             Unlock();
           }
           break;
@@ -620,12 +619,16 @@ namespace Cozmo {
         continue;
       }
       
-      if(!_currentImg.IsEmpty())
+      bool didProcess = false;
+
+      Lock();
+      if (!_currentImg.IsEmpty())
       {
+        didProcess = true;
+        
         // There is an image to be processed:
         UpdateVisionSystem(_currentPoseData, _currentImg);
         
-        Lock();
         
         // Store frame rate
         _processingPeriod = _currentImg.GetTimestamp() - _lastImg.GetTimestamp();
@@ -635,19 +638,12 @@ namespace Cozmo {
         ASSERT_NAMED(_lastImg.GetTimestamp() == _currentImg.GetTimestamp(),
                      "VisionComponent.Processor.WrongImageTimestamp");
         
-        // Clear it when done.
         _currentImg = {};
-        _nextImg = {};
-        
-        Unlock();
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      } else if(!_nextImg.IsEmpty()) {
-        Lock();
-        _currentImg        = _nextImg;
-        _currentPoseData   = _nextPoseData;
-        _nextImg = {};
-        Unlock();
-      } else {
+      }
+      Unlock();
+      
+      if(!didProcess)
+      {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
       }
       

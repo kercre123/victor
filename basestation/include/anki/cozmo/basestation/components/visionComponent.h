@@ -251,7 +251,6 @@ struct DockingErrorSignal;
     std::mutex _lock;
     
     Vision::ImageRGB _currentImg;
-    Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
     
     ImuDataHistory _imuHistory;
@@ -270,7 +269,6 @@ struct DockingErrorSignal;
     TimeStamp_t _processingPeriod = 0;
 
     VisionPoseData   _currentPoseData;
-    VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
     
     std::vector<u8> _albumData, _enrollData; // for loading / saving face data

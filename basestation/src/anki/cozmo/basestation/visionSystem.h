@@ -81,6 +81,41 @@ namespace Cozmo {
     GroundPlaneROI        groundPlaneROI;
     bool                  isMoving;
     ImuDataHistory        imuDataHistory;
+    
+    VisionPoseData() = default;
+    
+    // ---------- Begin Custom copy implementation ------- //
+    template<typename T1, typename T2>
+    friend void swap(T1&& first, T2&& second)
+    {
+      // This enables ADL
+      using std::swap;
+      
+      swap(first.timeStamp, second.timeStamp);
+      swap(first.poseStamp, second.poseStamp);
+      swap(first.cameraPose, second.cameraPose);
+      swap(first.groundPlaneVisible, second.groundPlaneVisible);
+      swap(first.groundPlaneHomography, second.groundPlaneHomography);
+      swap(first.groundPlaneROI, second.groundPlaneROI);
+      swap(first.isMoving, second.isMoving);
+      swap(first.imuDataHistory, second.imuDataHistory);
+      
+      // Because the cameraPose is wrt the pose contained in poseStamp, set it explicitly
+      first.cameraPose.SetParent(&(first.poseStamp.GetPose()));
+      second.cameraPose.SetParent(&(second.poseStamp.GetPose()));
+    }
+    
+    template<typename T>
+    VisionPoseData(T&& other)
+    {
+      swap(*this, std::forward<T>(other));
+    }
+    
+    VisionPoseData& operator=(VisionPoseData other)
+    {
+      swap(*this, other);
+      return *this;
+    }
   };
   
   // Everything that can be generated from one image in one big package:
