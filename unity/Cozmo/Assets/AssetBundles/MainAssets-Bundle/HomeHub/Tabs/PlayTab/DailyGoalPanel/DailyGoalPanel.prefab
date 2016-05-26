@@ -289,7 +289,7 @@ MonoBehaviour:
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: '#dailyGoal.title'
-  _AllUppercase: 1
+  _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11496402
 MonoBehaviour:

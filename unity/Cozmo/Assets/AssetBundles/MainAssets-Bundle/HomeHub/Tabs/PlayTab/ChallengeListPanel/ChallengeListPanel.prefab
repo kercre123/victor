@@ -160,7 +160,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#minigames.label.gamesAndActivities'
-  _AllUppercase: 1
+  _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11474322
 MonoBehaviour:
