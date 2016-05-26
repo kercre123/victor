@@ -94,6 +94,11 @@ namespace Anki {
       // Stop squinting
       _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
       
+      if(_faceAndVerifyAction != nullptr)
+      {
+        _faceAndVerifyAction->PrepForCompletion();
+      }
+      
       Util::SafeDelete(_faceAndVerifyAction);
     }
 

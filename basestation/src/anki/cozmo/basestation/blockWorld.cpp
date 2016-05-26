@@ -3097,7 +3097,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   }
   
     ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                    f32 zTolerance) const
+                                                    f32 zTolerance,
+                                                    const BlockWorldFilter& filterIn) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
       sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
@@ -3111,7 +3112,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
       topOfObjectOnBottom.z() += 0.5f*std::abs(rotatedBtmSize.z());
       
-      BlockWorldFilter filter;
+      BlockWorldFilter filter(filterIn);
       filter.AddIgnoreID(objectOnBottom.GetID());
       
       FindFcn findLambda = [&topOfObjectOnBottom, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
@@ -3125,6 +3126,49 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // close enough together, return this as the object on top
         Point3f dist(topOfObjectOnBottom);
         dist -= bottomOfCandidateObject;
+        dist.Abs();
+        
+        if(dist < sameDistTol) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter, true);
+    }
+  
+  
+    ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                       f32 zTolerance,
+                                                       const BlockWorldFilter& filterIn) const
+    {
+      Point3f sameDistTol(objectOnTop.GetSize());
+      sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
+      sameDistTol.y() *= 0.5f;
+      sameDistTol.z() = zTolerance;
+      sameDistTol = objectOnTop.GetPose().GetRotation() * sameDistTol;
+      sameDistTol.Abs();
+      
+      // Find the point at the top middle of the object on bottom
+      Point3f rotatedBtmSize(objectOnTop.GetPose().GetRotation() * objectOnTop.GetSize());
+      Point3f bottomOfObjectOnTop(objectOnTop.GetPose().GetTranslation());
+      bottomOfObjectOnTop.z() -= 0.5f*std::abs(rotatedBtmSize.z());
+      
+      BlockWorldFilter filter(filterIn);
+      filter.AddIgnoreID(objectOnTop.GetID());
+      
+      FindFcn findLambda = [&bottomOfObjectOnTop, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
+      {
+        // Find the point at top middle of the object we're checking to be underneath
+        Point3f rotatedBtmSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+        Point3f topOfCandidateObject(candidateObject->GetPose().GetTranslation());
+        topOfCandidateObject.z() += 0.5f*std::abs(rotatedBtmSize.z());
+        
+        // If the top of the bottom object and the bottom the candidate top object are
+        // close enough together, return this as the object on top
+        Point3f dist(bottomOfObjectOnTop);
+        dist -= topOfCandidateObject;
         dist.Abs();
         
         if(dist < sameDistTol) {

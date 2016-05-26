@@ -395,14 +395,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;
 
-// rsam: I have found the root of this problem. Say you start at Z = 90 turning positive angles as main direction. With
-// the proper data tweaks you, you can make the robot end at Z < 90 at the end of step 5. Step 6 then would try
-// to move from < 90 to > 90. However the action for step 6 fails (something we will investigate further), and
-// instead of retrying, it simply transitions to S7, which checks that Z should be > 90, when it's not
-// Until we know the cause of giving up, disable this assert
-//  // assert we are not turning more than PI in one iteration (because of Radian rescaling)
-//  ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
-//    "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
+  // assert we are not turning more than PI in one iteration (because of Radian rescaling)
+  ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
+    "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
 
   // while not completed a whole turn start another iteration
   if ( fabsf(_behaviorBodyFacingDone_rad) < 2*PI )

@@ -55,6 +55,10 @@ namespace Cozmo {
       _robot.GetTextToSpeechComponent().ClearLoadedSpeechData(_text, _style);
     }
     
+    if(_playAnimationAction != nullptr)
+    {
+      _playAnimationAction->PrepForCompletion();
+    }
     Util::SafeDelete(_playAnimationAction);
   }
   
