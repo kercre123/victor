@@ -144,7 +144,7 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
 
 bool BehaviorStackBlocks::FilterBlocksForTop(const ObservableObject* obj) const
 {
-  return FilterBlocksHelper(obj) && _robot.CanPickUpObjectFromGround(*obj);
+  return FilterBlocksHelper(obj) && _robot.CanPickUpObject(*obj);
 }
 
 bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) const
@@ -357,7 +357,7 @@ void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
 
   // wait a bit to see if things settle and the cubes become valid (e.g. they were moving, so give them some
   // time to settle). If they become stable, Update will transition us out
-  StartActing(new WaitAction(robot, kBSB_TimeToWaitForValidBlocks_s));                
+  StartActing(new WaitAction(robot, kBSB_TimeToWaitForValidBlocks_s));
 }
 
 
@@ -395,10 +395,10 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
   }
   
   PRINT_NAMED_DEBUG(event,
-                    "block %d: blockUpright?%d CanPickUpObjectFromGround?%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
+                    "block %d: blockUpright?%d CanPickUpObject%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
                     obj->GetID().GetValue(),
                     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS,
-                    _robot.CanPickUpObjectFromGround(*obj),
+                    _robot.CanPickUpObject(*obj),
                     _robot.CanStackOnTopOfObject(*obj),
                     poseStateStr,
                     obj->IsMoving(),

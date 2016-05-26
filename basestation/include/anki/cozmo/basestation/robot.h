@@ -439,6 +439,10 @@ public:
 
     // let's the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
     // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
+    bool CanPickUpObject(const ObservableObject& object) const;
+
+    // same as above, but check that the block is on the ground (as opposed to stacked, on top of a notebook or
+    // something, or in someones hand
     bool CanPickUpObjectFromGround(const ObservableObject& object) const;
     
     /*

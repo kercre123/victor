@@ -42,18 +42,24 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
-  // glance down to see if we see the cube if we still think we are carrying
+  StartActing(CreateLookAfterPlaceAction(robot));
+}
+
+IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot)
+{
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
   if( robot.IsCarryingObject() ) {
+    // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
-    float currHeadAngle = robot.GetHeadAngle();
     
-    CompoundActionSequential* action = new CompoundActionSequential(robot);
     action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)));
     action->AddAction(new WaitForImagesAction(robot, kNumFrames));
-    action->AddAction(new MoveHeadToAngleAction(robot, currHeadAngle));
-    
-    StartActing(action);
   }
+
+  // in any case, look back at the last face after this is done (to give them a chance to show another cube)
+
+  action->AddAction(new TurnTowardsLastFacePoseAction(robot));
+  return action;
 }
 
 void BehaviorPutDownBlock::StopInternal(Robot& robot)
