@@ -10,6 +10,7 @@ GameObject:
   - 224: {fileID: 22401556}
   - 225: {fileID: 22559138}
   - 114: {fileID: 11490628}
+  - 114: {fileID: 11468546}
   m_Layer: 5
   m_Name: TopChallengeContainer
   m_TagString: Untagged
@@ -63,6 +64,7 @@ GameObject:
   - 114: {fileID: 11411100}
   - 114: {fileID: 11483340}
   - 114: {fileID: 11494066}
+  - 114: {fileID: 11479140}
   m_Layer: 5
   m_Name: ChallengeListPanel
   m_TagString: Untagged
@@ -80,6 +82,7 @@ GameObject:
   - 224: {fileID: 22413684}
   - 225: {fileID: 22580098}
   - 114: {fileID: 11422310}
+  - 114: {fileID: 11446838}
   m_Layer: 5
   m_Name: BottomChallengeContainer
   m_TagString: Untagged
@@ -99,10 +102,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 100
+    m_Left: -100
     m_Right: 0
     m_Top: 0
-    m_Bottom: 100
+    m_Bottom: 0
   m_ChildAlignment: 4
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
@@ -124,9 +127,45 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: 80
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
+--- !u!114 &11446838
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 190658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 500
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+--- !u!114 &11468546
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 102888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 500
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
 --- !u!114 &11471502
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -180,6 +219,24 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11479140
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 187040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 1400
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
 --- !u!114 &11483340
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -212,7 +269,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: 80
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
 --- !u!114 &11494066
@@ -407,7 +464,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Padding.m_Left
-      value: 100
+      value: -100
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_MinWidth
+      value: 1400
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

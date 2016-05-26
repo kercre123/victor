@@ -33,7 +33,7 @@ namespace Cozmo.HomeHub {
     private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab, 
                                              HubWorldButton.ButtonClickedHandler handler, string dasParentViewName) {
       RectTransform container;
-      if (_TopChallengeContainer.childCount < _BottomChallengeContainer.childCount) {
+      if (_TopChallengeContainer.childCount > _BottomChallengeContainer.childCount) {
         container = _TopChallengeContainer;
       }
       else {
