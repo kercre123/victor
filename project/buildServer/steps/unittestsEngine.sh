@@ -61,13 +61,12 @@ if (( \! $DUMP_OUTPUT )); then
 fi
 
 # execute
-ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/" \
-ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
-DYLD_FRAMEWORK_PATH="$GTEST" \
-DYLD_LIBRARY_PATH="$GTEST" \
-GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest_.xml \
 $BUILDTOOLS/tools/ankibuild/multiTest.py \
 --path $DERIVED_DATA/$BUILD_TYPE \
+--gtest_path "$GTEST" \
+--work_path "$DERIVED_DATA/$BUILD_TYPE/" \
+--config_path "$DERIVED_DATA/$BUILD_TYPE/" \
+--gtest_output "xml:$DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest_.xml" \
 --executable ${TESTNAME}UnitTest \
 --stdout_file \
 --xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
