@@ -370,11 +370,17 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     // Remove active object from blockworld if it exists
     ActiveObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
-      objID = obj->GetID();
-      GetBlockWorld().ClearObject(objID);
+      bool clearedObject = false;
+      if( ! obj->IsPoseStateKnown() ) {
+        objID = obj->GetID();
+        GetBlockWorld().ClearObject(objID);
+        clearedObject = true;
+      }
+
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
-                       "Object %d (activeID %d, factoryID 0x%x)",
-                       objID.GetValue(), payload.objectID, payload.factoryID);
+                       "Object %d (activeID %d, factoryID 0x%x) cleared?%d",
+                       objID.GetValue(), payload.objectID, payload.factoryID, clearedObject);
+
     }
   }
   
