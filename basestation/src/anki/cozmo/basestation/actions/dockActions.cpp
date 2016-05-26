@@ -26,7 +26,7 @@ namespace Anki {
   namespace Cozmo {
   
     // Which docking method actions should use
-    CONSOLE_VAR(u32, kDockingMethod, "Docking", (u8)DockingMethod::BLIND_DOCKING);
+    CONSOLE_VAR(u32, kDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
     
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
