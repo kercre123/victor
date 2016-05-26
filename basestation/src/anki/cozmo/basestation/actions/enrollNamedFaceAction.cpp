@@ -88,6 +88,10 @@ namespace Cozmo {
   
   EnrollNamedFaceAction::~EnrollNamedFaceAction()
   {
+    if(_action != nullptr)
+    {
+      _action->PrepForCompletion();
+    }
     Util::SafeDelete(_action);
     
     // Leave enrollment enabled

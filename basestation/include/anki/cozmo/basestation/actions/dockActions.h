@@ -240,7 +240,14 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction(Robot& robot);
-      virtual ~PlaceObjectOnGroundAction() { Util::SafeDelete(_faceAndVerifyAction); }
+      virtual ~PlaceObjectOnGroundAction()
+      {
+        if(_faceAndVerifyAction != nullptr)
+        {
+          _faceAndVerifyAction->PrepForCompletion();
+        }
+        Util::SafeDelete(_faceAndVerifyAction);
+      }
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -298,7 +305,14 @@ namespace Anki {
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
-      virtual ~PlaceRelObjectAction() { Util::SafeDelete(_placementVerifyAction); }
+      virtual ~PlaceRelObjectAction()
+      {
+        if(_placementVerifyAction != nullptr)
+        {
+          _placementVerifyAction->PrepForCompletion();
+        }
+        Util::SafeDelete(_placementVerifyAction);
+      }
       
       virtual const std::string& GetName() const override;
       
@@ -336,7 +350,14 @@ namespace Anki {
     {
     public:
       RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
-      virtual ~RollObjectAction() { Util::SafeDelete(_rollVerifyAction); }
+      virtual ~RollObjectAction()
+      {
+        if(_rollVerifyAction != nullptr)
+        {
+          _rollVerifyAction->PrepForCompletion();
+        }
+        Util::SafeDelete(_rollVerifyAction);
+      }
       
       virtual const std::string& GetName() const override;
       
