@@ -329,9 +329,7 @@ public abstract class GameBase : MonoBehaviour {
     SkillSystem.Instance.EndGame();
     //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
 
-    DeregisterForUnwantedCliffEvent();
-    DeregisterForUnwantedOnBackEvent();
-    DeregisterForUnwantedOnBackEvent();
+    DeregisterUnwantedInterruptionEvents();
   }
 
   public void CloseMinigameImmediately() {
@@ -341,6 +339,17 @@ public abstract class GameBase : MonoBehaviour {
     }
     CleanUpOnDestroy();
     Destroy(gameObject);
+  }
+
+  public void SoftEndGameRobotReset() {
+    DeregisterUnwantedInterruptionEvents();
+
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+      // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
+      // if appropriate.
+      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
+    }
   }
 
   public void EndGameRobotReset() {
@@ -412,12 +421,7 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(EndGameRobotReset);
-      // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
-      // if appropriate.
-      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
-    }
+    SoftEndGameRobotReset();
 
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
@@ -662,30 +666,42 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Cliff or Pickup handling
 
-  public void RegisterForUnwantedCliffEvent() {
+  public virtual void RegisterUnwantedInterruptionEvents() {
+    RegisterForUnwantedCliffEvent();
+    RegisterForUnwantedOnBackEvent();
+    RegisterForUnwantedPickUpEvent();
+  }
+
+  public virtual void DeregisterUnwantedInterruptionEvents() {
+    DeregisterForUnwantedCliffEvent();
+    DeregisterForUnwantedOnBackEvent();
+    DeregisterForUnwantedPickUpEvent();
+  }
+
+  protected void RegisterForUnwantedCliffEvent() {
     RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
     RobotEngineManager.Instance.OnCliffEvent += HandleRobotCliffEventStarted;
   }
 
-  public void DeregisterForUnwantedCliffEvent() {
+  protected void DeregisterForUnwantedCliffEvent() {
     RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
   }
 
-  public void RegisterForUnwantedPickUpEvent() {
+  protected void RegisterForUnwantedPickUpEvent() {
     RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
     RobotEngineManager.Instance.OnRobotPickedUp += HandleRobotPickedUpStarted;
   }
 
-  public void DeregisterForUnwantedPickUpEvent() {
+  protected void DeregisterForUnwantedPickUpEvent() {
     RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
   }
 
-  public void RegisterForUnwantedOnBackEvent() {
+  protected void RegisterForUnwantedOnBackEvent() {
     RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
     RobotEngineManager.Instance.OnRobotOnBack += HandleRobotOnBackEventStarted;
   }
 
-  public void DeregisterForUnwantedOnBackEvent() {
+  protected void DeregisterForUnwantedOnBackEvent() {
     RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
   }
 
@@ -702,16 +718,14 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void HandleRobotInterruptionEventStarted() {
-    DeregisterForUnwantedPickUpEvent();
-    DeregisterForUnwantedCliffEvent();
-    DeregisterForUnwantedOnBackEvent();
+    DeregisterUnwantedInterruptionEvents();
 
     PauseStateMachine();
     ShowInterruptionQuitGameView(LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
   }
 
   protected void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
-    EndGameRobotReset();
+    SoftEndGameRobotReset();
 
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);

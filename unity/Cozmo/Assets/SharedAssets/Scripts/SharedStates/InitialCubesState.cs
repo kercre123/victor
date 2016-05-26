@@ -46,10 +46,6 @@ public class InitialCubesState : State {
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
     }
-
-    _Game.RegisterForUnwantedCliffEvent();
-    _Game.RegisterForUnwantedPickUpEvent();
-    _Game.RegisterForUnwantedOnBackEvent();
   }
 
   public override void Update() {

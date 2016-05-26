@@ -65,6 +65,8 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.HideDifficultySelectButtonPanel();
     _Game.SharedMinigameView.HideContinueButton();
 
+    _Game.RegisterUnwantedInterruptionEvents();
+
     _StateMachine.SetNextState(_NextState);
   }
 }

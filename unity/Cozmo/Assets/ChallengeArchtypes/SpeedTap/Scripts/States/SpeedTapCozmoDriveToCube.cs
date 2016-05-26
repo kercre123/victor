@@ -23,6 +23,9 @@ namespace SpeedTap {
       if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
+
+      _SpeedTapGame.DeregisterUnwantedInterruptionEvents();
+
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
@@ -104,6 +107,8 @@ namespace SpeedTap {
     }
 
     private void CompleteDriveToCube() {
+      _SpeedTapGame.RegisterUnwantedInterruptionEvents();
+
       _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
     }
   }
