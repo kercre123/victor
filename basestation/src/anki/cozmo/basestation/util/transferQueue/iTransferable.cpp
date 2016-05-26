@@ -20,7 +20,8 @@ namespace Anki {
   
   namespace Util {
     
-    ITransferable::ITransferable() : _dispatchQueue(Util::Dispatch::Create())
+    ITransferable::ITransferable()
+    : _dispatchQueue(Util::Dispatch::Create("ITransferable"))
     {
     }
     
@@ -32,6 +33,7 @@ namespace Anki {
     
     ITransferable::~ITransferable()
     {
+      Util::Dispatch::Stop(_dispatchQueue);
       Util::Dispatch::Release(_dispatchQueue);
     }
   } // namespace Cozmo

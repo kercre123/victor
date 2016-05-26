@@ -70,11 +70,18 @@ static const DTM_Mode_Settings DTM_MODE[] = {
   { TEST_NONE,      LE_TRANSMITTER_TEST,  20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { TEST_NONE,      LE_TRANSMITTER_TEST,  40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { TEST_MOTOR,     LE_RESET,              0,                   0xFF,         0xFF },   // 7 = motor test
-  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
-  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_LOW_NOISE, LE_RESET,              0,                   0xFF,         0xFF },   // 8 = low speaker noise
+  { TEST_HI_NOISE,  LE_RESET,              0,                   0xFF,         0xFF },   // 9 = high speaker noise
+  
   { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 10 = wifi ch1 (wifi modes start at 10)
-  { TEST_LOW_NOISE, LE_RESET,              0,                   0xFF,         0xFF },
-  { TEST_HI_NOISE,  LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 13 = wifi ch1 low power
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 16 = wifi ch1 low power
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
 };
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
@@ -163,9 +170,15 @@ void Anki::Cozmo::HAL::FCC::start(void) {
 // See "ESP8266 Certification and Test Guide" for details on the command format
 static const char* WIFI_TESTS[] = {
   /* 0 = No Test             */  "CmdStop\r",
-  /* 1 = 2412MHz  0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
-  /* 2 = 2437MHz +4dB 1Mbps  */  "WifiTxout 6 1 240 0\r",
-  /* 3 = 2462MHz  0dB 1Mbps  */  "WifiTxout 11 1 0 0\r",
+  /* 10 = 2412MHz  -6dB 1Mbps */  "WifiTxout 1 1 24 0\r",
+  /* 11 = 2437MHz  -6dB 1Mbps */  "WifiTxout 6 1 24 0\r",
+  /* 12 = 2462MHz  -6dB 1Mbps */  "WifiTxout 11 1 24 0\r",
+  /* 13 = 2412MHz  -8dB 1Mbps */  "WifiTxout 1 1 32 0\r",
+  /* 14 = 2437MHz  -8dB 1Mbps */  "WifiTxout 6 1 32 0\r",
+  /* 15 = 2462MHz  -8dB 1Mbps */  "WifiTxout 11 1 32 0\r",
+  /* 16 = 2412MHz  -4dB 24Mbps */  "WifiTxout 1 9 16 0\r",
+  /* 17 = 2437MHz  -4dB 24Mbps */  "WifiTxout 6 9 16 0\r",
+  /* 18 = 2462MHz  -4dB 24Mbps */  "WifiTxout 11 9 16 0\r",
 };
 
 static const int WIFI_TEST_COUNT = sizeof(WIFI_TESTS) / sizeof(WIFI_TESTS[0]);
@@ -215,15 +228,15 @@ static void sendWifiCommand(int test) {
   }
 }
 
+static int configuring_motor = 0;
 void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // If the motors are not going crazy, use wheel positions for
   // selecting things
   if (DTM_MODE[current_mode].side_test != TEST_MOTOR) {
-    static int configuring_motor = 0;
-    bool select = iabs(configuring_motor - g_dataToHead.positions[2]) > 0x100;
+    bool select = iabs(configuring_motor - g_dataToHead.positions[1]) > 0x400;
 
     if (select) {
-      configuring_motor = g_dataToHead.positions[2];
+      configuring_motor = g_dataToHead.positions[1];
       
       // Set our run mode
       if (current_mode != target_mode) {

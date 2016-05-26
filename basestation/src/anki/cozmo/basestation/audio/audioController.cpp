@@ -19,6 +19,7 @@
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include "util/dispatchQueue/dispatchQueue.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/time/universalTime.h"
 #include "util/logging/logging.h"
@@ -49,12 +50,12 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
   
 using namespace AudioEngine;
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
@@ -64,7 +65,14 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   {
     _audioEngine = new AudioEngineController();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
-
+    const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
+    
+    // If assets don't exist don't init the Audio engine
+    if ( !assetsExist ) {
+      PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets do NOT exists - Ignore if Unit Test");
+      return;
+    }
+    
     // Set Language Local
     const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
     
@@ -109,7 +117,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #endif
   
     // Setup our update method to be called periodically
-    _dispatchQueue = Util::Dispatch::Create();
+    _dispatchQueue = Util::Dispatch::Create( "AudioController" );
     const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(UPDATE_LOOP_SLEEP_DURATION_MS);
     _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
   }
@@ -122,6 +130,7 @@ AudioController::~AudioController()
   {
     _taskHandle->Invalidate();
   }
+  Util::Dispatch::Stop( _dispatchQueue );
   Util::Dispatch::Release( _dispatchQueue );
   Util::SafeDelete( _pluginInterface );
   
@@ -355,6 +364,7 @@ void AudioController::StartUpSetDefaults()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
 {
+#if USE_AUDIO_ENGINE
   using namespace PlugIns;
   // Setup CozmoPlugIn & RobotAudioBuffer
   _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
@@ -415,15 +425,18 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   if ( ! success ) {
     PRINT_NAMED_ERROR( "AudioController.Initialize", "Failed to Register Cozmo PlugIn");
   }
+#endif // USE_AUDIO_ENGINE
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController:: SetupWavePortalPlugIn()
 {
+#if USE_AUDIO_ENGINE
   using namespace PlugIns;
   // Register Wave file
   _wavePortalPlugIn = new WavePortalPlugIn();
   _wavePortalPlugIn->RegisterPlugIn();
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

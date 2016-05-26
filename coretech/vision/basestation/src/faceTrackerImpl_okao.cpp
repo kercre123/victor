@@ -54,6 +54,11 @@ namespace Vision {
     
     Profiler::SetProfileGroupName("FaceTracker");
     
+    Result initResult = Init();
+    if(initResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Constructor.InitFailed", "");
+    }
+    
   } // Impl Constructor()
   
   template<class T>
@@ -71,6 +76,8 @@ namespace Vision {
   
   Result FaceTracker::Impl::Init()
   {
+    _isInitialized = false;
+    
     // Get and print Okao library version as a sanity check that we can even
     // talk to the library
     UINT8 okaoVersionMajor=0, okaoVersionMinor = 0;
@@ -83,20 +90,9 @@ namespace Vision {
                      "Initializing with OkaoVision version %d.%d",
                      okaoVersionMajor, okaoVersionMinor);
     
-    /*
-    // Allocate memory for the Okao libraries
-    _workingMemory = new u8[MaxFaces*800 + 60*1024]; // 0.7KB × [max detection count] + 60KB
-    _backupMemory  = new u8[MaxFaces*4096 + (250+70)*1024];
-    
-    if(_workingMemory == nullptr || _backupMemory == nullptr) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.MemoryAllocFail", "");
-      return RESULT_FAIL_MEMORY;
-    }
-    */
-    
     _okaoCommonHandle = OKAO_CO_CreateHandle();
     if(NULL == _okaoCommonHandle) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoCommonHandleAllocFail", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoCommonHandleNull", "");
       return RESULT_FAIL_MEMORY;
     }
 
@@ -449,14 +445,9 @@ namespace Vision {
                                    std::list<TrackedFace>& faces,
                                    std::list<UpdatedFaceID>& updatedIDs)
   {
-    // Initialize on first use
     if(!_isInitialized) {
-      Result initResult = Init();
-      
-      if(!_isInitialized || initResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.InitFailed", "");
-        return RESULT_FAIL;
-      }
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Update.NotInitialized", "");
+      return RESULT_FAIL;
     }
     
     ASSERT_NAMED(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
@@ -615,17 +606,17 @@ namespace Vision {
   
   Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& names)
   {
-    // Initialize on first use
     if(!_isInitialized) {
-      Result initResult = Init();
-      
-      if(!_isInitialized || initResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("FaceTrackerImpl.SetSerializedAlbum.InitFailed", "");
-        return RESULT_FAIL;
-      }
+      PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.NotInitialized", "");
+      return RESULT_FAIL;
     }
     
-    return _recognizer.LoadAlbum(_okaoCommonHandle, albumName, names);
+    if(NULL == _okaoCommonHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.NullOkaoCommonHandle", "");
+      return RESULT_FAIL;
+    }
+    
+    return _recognizer.LoadAlbum(albumName, names);
   }
   
   float FaceTracker::Impl::GetMinEyeDistanceForEnrollment()

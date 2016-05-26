@@ -17,9 +17,10 @@
 
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "clad/types/objectTypes.h"
-#include "clad/types/objectFamilies.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/types/objectFamilies.h"
+#include "clad/types/objectTypes.h"
+#include "util/helpers/noncopyable.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +31,7 @@ namespace Cozmo {
   using ActiveID = s32;  // TODO: Change this to u32 and use 0 as invalid
   using FactoryID = u32;
   
-  class ObservableObject : public Vision::ObservableObject
+  class ObservableObject : public Vision::ObservableObject, private Util::noncopyable
   {
   public:
     

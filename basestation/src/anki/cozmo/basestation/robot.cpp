@@ -94,6 +94,7 @@ namespace Anki {
 
     CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
     CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
+    CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
   
     // For tool code reading
     // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
@@ -1123,6 +1124,47 @@ namespace Anki {
       }
 
       _lightsComponent->Update();
+
+
+      if( kDebugPossibleBlockInteraction ) {
+        // print a bunch of info helpful for debugging block states
+        for( const auto& objByTypePair : GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube) ) {
+          for( const auto& objByIdPair : objByTypePair.second ) {
+            ObjectID objID = objByIdPair.first;
+            const ObservableObject* obj = objByIdPair.second;
+
+            const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
+            Pose3d relPose;
+            bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
+
+            const char* axisStr = "";
+            switch( obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() ) {
+              case AxisName::X_POS: axisStr="+X"; break;
+              case AxisName::X_NEG: axisStr="-X"; break;
+              case AxisName::Y_POS: axisStr="+Y"; break;
+              case AxisName::Y_NEG: axisStr="-Y"; break;
+              case AxisName::Z_POS: axisStr="+Z"; break;
+              case AxisName::Z_NEG: axisStr="-Z"; break;
+            }
+              
+            PRINT_NAMED_DEBUG("Robot.ObjectInteractionState",
+                              "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
+                              " z=%6.2f UpAxis:%s CanStack?%d CanPickUp?%d FromGround?%d",
+                              objID.GetValue(),
+                              obj->PoseStateToString( obj->GetPoseState() ),
+                              obj->IsMoving(),
+                              obj->IsRestingFlat(),
+                              (IsCarryingObject() && GetCarryingObject() == obj->GetID()),
+                              gotRelPose,
+                              topObj ? topObj->GetID().GetValue() : -1,
+                              relPose.GetTranslation().z(),
+                              axisStr,
+                              CanStackOnTopOfObject(*obj),
+                              CanPickUpObject(*obj),
+                              CanPickUpObjectFromGround(*obj));                              
+          }
+        }
+      }
       
       return RESULT_OK;
       
@@ -2545,7 +2587,7 @@ namespace Anki {
       return true;
     }
 
-    bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
+    bool Robot::CanPickUpObject(const ObservableObject& objectToPickUp) const
     {
       Pose3d relPos;
       if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
@@ -2563,6 +2605,23 @@ namespace Anki {
       return true;
     }
 
+    bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
+    {
+      Pose3d relPos;
+      if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
+        return false;
+      }
+      
+      // check if it's too high to pick up
+      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
+      const float isTooHigh = topZ > (objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
+      if ( isTooHigh ) {
+        return false;
+      }
+    
+      // all checks clear
+      return true;
+    }
     
     // ============ Messaging ================
     

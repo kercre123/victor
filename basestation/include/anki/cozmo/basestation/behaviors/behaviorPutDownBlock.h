@@ -20,6 +20,12 @@ namespace Cozmo {
 
 class BehaviorPutDownBlock : public IBehavior
 {
+public:
+
+  // helper for creating an action to make sure that the "put down" animation is working. It looks down at the
+  // block to make sure we have a chance to see it
+  static IActionRunner* CreateLookAfterPlaceAction(Robot& robot);
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;

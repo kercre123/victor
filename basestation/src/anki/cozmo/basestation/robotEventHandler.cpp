@@ -103,11 +103,9 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetHeadlight>();
 
@@ -1190,40 +1188,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
     PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
   }
 }
-  
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SaveFaceAlbumToFile& msg)
-{
-  // TODO: get RobotID in a non-hack way
-  RobotID_t robotID = 1;
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  if(nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveFaceAlbumToFile.InvalidRobotID", "Failed to find robot %u.", robotID);
-  }
-  else
-  {
-    robot->GetVisionComponent().SaveFaceAlbumToFile(msg.path);
-  }
-}
 
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::LoadFaceAlbumFromFile& msg)
-{
-  // TODO: get RobotID in a non-hack way
-  RobotID_t robotID = 1;
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  if(nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleLoadFaceAlbumFromFile.InvalidRobotID", "Failed to find robot %u.", robotID);
-  }
-  else
-  {
-    robot->GetVisionComponent().LoadFaceAlbumFromFile(msg.path);
-  }
-}
   
 } // namespace Cozmo
 } // namespace Anki

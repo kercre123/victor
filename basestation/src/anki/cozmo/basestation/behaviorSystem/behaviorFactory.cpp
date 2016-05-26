@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToNewBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
@@ -42,6 +43,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+
 
 
 namespace Anki {
@@ -208,6 +210,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DriveOffCharger:
     {
       newBehavior = new BehaviorDriveOffCharger(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToNewBlock:
+    {
+      newBehavior = new BehaviorReactToNewBlock(robot, config);
       break;
     }
     case BehaviorType::Count:

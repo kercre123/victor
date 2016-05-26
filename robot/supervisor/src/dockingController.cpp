@@ -681,11 +681,9 @@ namespace Anki {
         
         Result retVal = RESULT_OK;
         
-#if(!USE_BLIND_DOCKING)
         // There are some special cases for aligning with a block (rolling is basically aligning)
         const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN ||
                                 PickAndPlaceController::GetCurAction() == DA_ROLL_LOW;
-#endif
         
         switch(mode_)
         {
@@ -833,10 +831,7 @@ namespace Anki {
                 }
               }
 
-              
-#if(!CHECK_FINAL_POSE)
               inPosition = true;
-#endif
               
               // If we know we are not in position and we are not currently backing up due to an already recognized
               // failure then fail this dock and either backup or do Hanns maneuver. We are only able to fail

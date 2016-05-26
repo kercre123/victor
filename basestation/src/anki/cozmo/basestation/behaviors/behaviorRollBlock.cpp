@@ -16,16 +16,20 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
+
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
+
+static const char* const kPutDownAnimGroupKey = "put_down_animation_group";
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 
@@ -36,6 +40,8 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 {
   SetDefaultName("RollBlock");
 
+  _putDownAnimGroup = config.get(kPutDownAnimGroupKey, "").asCString();
+  
   // set up the filter we will use for finding blocks we care about
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
@@ -101,17 +107,33 @@ bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
 void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
 {
   SET_STATE(SettingDownBlock);
-  
-  constexpr float kAmountToReverse_mm = 90.f;
-  CompoundActionSequential* actionsToDo = new CompoundActionSequential(robot, {
-    new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-    new PlaceObjectOnGroundAction(robot)});
-  StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
+
+  if( _putDownAnimGroup.empty() ) {
+    constexpr float kAmountToReverse_mm = 90.f;
+    IActionRunner* actionsToDo = new CompoundActionSequential(robot, {
+        new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
+        new PlaceObjectOnGroundAction(robot)});
+    StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
+  }
+  else {
+    StartActing(new PlayAnimationGroupAction(robot, _putDownAnimGroup),
+                [this](Robot& robot) {
+                  // use same logic as put down block behavior
+                  StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot),
+                               &BehaviorRollBlock::TransitionToReactingToBlock);
+                });
+  }
 }
 
 void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
 {
   SET_STATE(ReactingToBlock);
+
+  if( robot.IsCarryingObject() ) {
+    PRINT_NAMED_ERROR("BehaviorRollBlock.ReactWhileHolding",
+                      "block should be put down at this point. Bailing from behavior");
+    return;
+  }
 
   if( !_initialAnimGroup.empty() ) {
     StartActing(new TurnTowardsFaceWrapperAction(

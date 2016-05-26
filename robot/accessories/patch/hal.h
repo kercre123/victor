@@ -48,7 +48,8 @@ void DebugPrint(u8 note, u8 idata *hex, u8 len);
 #define RadioHopTo ((void (code *) (u8 channel)) 0x3DC8)
   
 // Set RGB LED values from _radioPayload[1..12]
-#define LedSetValues ((void (code *) (void)) 0x3B8F)
+// #define LedSetValues ((void (code *) (void)) 0x3B8F)   // Bootloader version has a bug
+void LedSetValues(void);
 #define LedInit ((void (code *) (void)) 0x3B5F)
 
 // Return the model/type from the advertising packet

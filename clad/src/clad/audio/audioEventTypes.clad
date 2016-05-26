@@ -30,7 +30,6 @@ enum uint_32 EventGroupType
   DevRobot,
   GenericEvent,
   Music,
-  PlugInControl,
   Robot,
   SFX,
   UI,
@@ -47,8 +46,6 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
-  Hijack_Audio_Disable_Bypass = 3535474666,  // Deprecated - Working on new method
-  Hijack_Audio_Enable_Bypass = 2589144983,  // Deprecated - Working on new method
   Invalid = 0,  // Use this to check for Invalid events
   Music_Play = 202194903,
   Music_Stop = 3227181061,
@@ -168,17 +165,19 @@ enum uint_32 GenericEvent
   Vo_Coz_React_Cliff_Neutral_Play = 2915487867,
   Vo_Coz_React_Cliff_Nope_Play = 764338282,
   Vo_Coz_React_Cliff_Play = 2113972887,
+  Vo_Coz_React_Cliff_Wow_Play = 3347219747,
   Vo_Coz_React_Face_Dislike_Play = 2041456948,
   Vo_Coz_React_Face_Like_Play = 2832780992,
   Vo_Coz_React_Face_Suspicious_Play = 829421008,
   Vo_Coz_React_Face_Wiggle_Play = 3502280502,
   Vo_Coz_React_Pickup_Angry_1_Play = 1506987515,
   Vo_Coz_React_Pickup_Angry_2_Play = 1203373130,
-  Vo_Coz_React_Pickup_Angry_Play = 2018376227,
   Vo_Coz_React_Stuck_Angry_1_Play = 2466015547,
   Vo_Coz_React_Stuck_Angry_2_Play = 2162297994,
-  Vo_Coz_React_Stuck_Angry_Play = 3644548067,
-  Vo_Coz_React_Stuck_Turtle_Roll_Fail_Play = 3482707801,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_1_Play = 816625709,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_2_Play = 100880008,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_3_Play = 3445537039,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_4_Play = 2656492322,
   Vo_Coz_React_Stuck_Turtle_Struggle_Play = 3080537054,
   Vo_Coz_See_Cube_First_Play = 2830862605,
   Vo_Coz_Shared_Align_Frustrated_Lp_Play = 1590494918,
@@ -255,13 +254,6 @@ enum uint_32 Music
   Stop = 3227181061,
 }
 
-enum uint_32 PlugInControl
-{
-  HijackAudioDisableBypass = 3535474666,  // Deprecated - Working on new method
-  HijackAudioEnableBypass = 2589144983,  // Deprecated - Working on new method
-  Invalid = 0,  // Use this to check for Invalid events
-}
-
 enum uint_32 Robot
 {
   Dev_Placeholder = 1720370564,
@@ -281,17 +273,19 @@ enum uint_32 Robot
   ReactCliff = 2113972887,
   ReactCliffNeutral = 2915487867,
   ReactCliffNope = 764338282,
+  ReactCliffWow = 3347219747,
   ReactFaceDislike = 2041456948,
   ReactFaceLike = 2832780992,
   ReactFaceSuspicious = 829421008,
   ReactFaceWiggle = 3502280502,
-  ReactPickupAngry = 2018376227,
   ReactPickupAngry1 = 1506987515,
   ReactPickupAngry2 = 1203373130,
-  ReactStuckAngry = 3644548067,
   ReactStuckAngry1 = 2466015547,
   ReactStuckAngry2 = 2162297994,
-  ReactStuckTurtleRollFail = 3482707801,
+  ReactStuckTurtleRollFail1 = 816625709,
+  ReactStuckTurtleRollFail2 = 100880008,
+  ReactStuckTurtleRollFail3 = 3445537039,
+  ReactStuckTurtleRollFail4 = 2656492322,
   ReactStuckTurtleStruggle = 3080537054,
   SFX_TestLoopPlay_01 = 835806870,  // Dev placeholder sound
   SFX_TestLoopPlay_02 = 384316327,  // Dev placeholder sound

@@ -43,6 +43,9 @@ private:
   std::string _retryActionAnimGroup = "rollCube_retry";
   std::string _successAnimGroup = "rollCube_success";
 
+  // if this is empty, will use an action, otherwise will use this animation group in order to put down the cube
+  std::string _putDownAnimGroup = "";
+
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
   // UpdateWhileNotRunning
   mutable ObjectID _targetBlock;
