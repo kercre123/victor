@@ -107,10 +107,10 @@ public class ConsoleLogPane : MonoBehaviour {
       var game = HomeHub.Instance.MiniGameInstance;
       if (game != null) {
         if (game.Paused == false && enable) {
-          game.PauseGame();
+          game.PauseStateMachine();
         }
         else if (game.Paused && !enable) {
-          game.UnpauseGame();
+          game.ResumeStateMachine();
         }
       }
     }
