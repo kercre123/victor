@@ -2718,7 +2718,7 @@ namespace Anki {
       _imageSaveMode = mode;
     }
     
-    TimeStamp_t Robot::GetLastImageTimeStamp() {
+    TimeStamp_t Robot::GetLastImageTimeStamp() const {
       return GetVisionComponent().GetLastProcessedImageTimeStamp();
     }
     

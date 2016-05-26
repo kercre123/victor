@@ -74,7 +74,7 @@ namespace Anki {
         bool IsActing() const {return !_actionCallbackMap.empty(); }
       
         // Records this attempt and sets state to reset
-        void EndAttempt(Robot& robot, ActionResult result, std::string name);
+        void EndAttempt(Robot& robot, ActionResult result, std::string name, bool endingFromFailedAction = false);
       
         // Write out information relating to this attempt
         void RecordAttempt(ActionResult result, std::string name);
@@ -118,11 +118,14 @@ namespace Anki {
         bool _reset                = false; // test needs to be reset
         bool _yellForHelp          = false; // whether or not we should yell for help
         bool _yellForCompletion    = false; // whether or not we should yell the test completed
+        bool _endingFromFailedAction = false;
+        int _numSawObject           = 0;
       
         // Stats for test/attempts
         int _numFails              = 0;
         int _numDockingRetries     = 0;
         int _numAttempts           = 0;
+        int _numExtraAttemptsDueToFailure = 0;
         int _numConsecFails        = 0;
         bool _didHM                = false;
         bool _failedCurrentAttempt = false;

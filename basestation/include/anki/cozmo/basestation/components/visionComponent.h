@@ -138,7 +138,7 @@ struct DockingErrorSignal;
     
     bool GetLastProcessedImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
     
-    TimeStamp_t GetLastProcessedImageTimeStamp();
+    TimeStamp_t GetLastProcessedImageTimeStamp() const;
     
     TimeStamp_t GetProcessingPeriod();
     
@@ -251,6 +251,7 @@ struct DockingErrorSignal;
     std::mutex _lock;
     
     Vision::ImageRGB _currentImg;
+    Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
     
     ImuDataHistory _imuHistory;
@@ -266,9 +267,11 @@ struct DockingErrorSignal;
     f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
     f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
     
+    TimeStamp_t _lastProcessedImageTimeStamp = 0;
     TimeStamp_t _processingPeriod = 0;
 
     VisionPoseData   _currentPoseData;
+    VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
     
     std::vector<u8> _albumData, _enrollData; // for loading / saving face data

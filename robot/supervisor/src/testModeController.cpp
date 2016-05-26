@@ -243,10 +243,10 @@ namespace Anki {
         ///////// IMUTest ////////
         bool imuTestDoTurns_ = false;
         bool IT_turnLeft;
-        const f32 IT_TARGET_ANGLE = DEG_TO_RAD(180);
-        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD(90);
-        const f32 IT_ROT_ACCEL = DEG_TO_RAD(720);
-        const f32 IT_ROT_TOL = DEG_TO_RAD(5);
+        const f32 IT_TARGET_ANGLE = DEG_TO_RAD_F32(180);
+        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD_F32(90);
+        const f32 IT_ROT_ACCEL = DEG_TO_RAD_F32(720);
+        const f32 IT_ROT_TOL = DEG_TO_RAD_F32(5);
         ///// End of IMUTest /////
 
 
@@ -505,7 +505,7 @@ namespace Anki {
               break;
             case PFCF_DRIVE_POINT_TURN:
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 312, "Started", 0);
-              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, DEG_TO_RAD(1), 1)) {
+              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, DEG_TO_RAD_F32(1), 1)) {
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 313, "FAILED", 0);
                 return RESULT_FAIL;
               }

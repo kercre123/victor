@@ -476,7 +476,7 @@ public:
     void SetSaveImageMode(const SaveMode_t mode);
     
     // Return the timestamp of the last _processed_ image
-    TimeStamp_t GetLastImageTimeStamp();
+    TimeStamp_t GetLastImageTimeStamp() const;
   
     // =========== Actions Commands =============
     

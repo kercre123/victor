@@ -620,7 +620,7 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
                 RTIP::SendMessage(msg);
               #else
-                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
+                HeadController::SetDesiredAngle(DEG_TO_RAD_F32(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
               #endif
               _tracksInUse |= HEAD_TRACK;

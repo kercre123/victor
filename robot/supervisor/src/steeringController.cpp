@@ -99,7 +99,7 @@ namespace Anki {
       TimeStamp_t pointTurnIntegralPowerMaxedStartTime_ = 0;
       Radians pointTurnIntegralPowerMaxedStartAngle_ = 0;
       const u32 POINT_TURN_STUCK_THRESHOLD_MS = 500;
-      const f32 POINT_TURN_STUCK_THRESHOLD_RAD = DEG_TO_RAD(0.5);
+      const f32 POINT_TURN_STUCK_THRESHOLD_RAD = DEG_TO_RAD_F32(0.5f);
       
       // If desired wheel speed exceeds this limit there is no integral error accumulation
       const s16 POINT_TURN_INTEGRAL_ERROR_ACCUMULATE_SPEED_LIMIT_MMPS = 10;

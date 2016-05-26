@@ -1468,7 +1468,13 @@ namespace Cozmo {
                        "free %d (streamed = %d, played %d)",
                        minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
     }
-    assert(minBytesFreeInRobotBuffer >= 0);
+    
+    if(minBytesFreeInRobotBuffer < 0) {
+      PRINT_NAMED_WARNING("AnimationStreamer.UpdateAmountToSend.NegativeMinBytesFreeInRobot",
+                          "minBytesFree:%d numBytesStreamed:%d numBytesPlayed:%d",
+                          minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
+      minBytesFreeInRobotBuffer = 0;
+    }
     
     // Reset the number of bytes we can send each Update() as a form of
     // flow control: Don't send frames if robot has no space for them, and be
