@@ -67,8 +67,11 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action OnRobotPickedUp;
+  public event Action OnRobotPutDown;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
+  public event Action OnCliffEventFinished;
   public event Action<G2U.RobotOnBack> OnRobotOnBack;
+  public event Action OnRobotOnBackFinished;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
@@ -337,6 +340,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotPickedUp:
       ReceivedSpecificMessage(message.RobotPickedUp);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotPutDown:
+      ReceivedSpecificMessage(message.RobotPutDown);
+      break;
     case G2U.MessageEngineToGame.Tag.MoodState:
       ReceivedSpecificMessage(message.MoodState);
       break;
@@ -355,6 +361,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.CliffEvent:
       ReceivedSpecificMessage(message.CliffEvent);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotCliffEventFinished:
+      ReceivedSpecificMessage(message.RobotCliffEventFinished);
       break;
     case G2U.MessageEngineToGame.Tag.DebugString:
       ReceivedSpecificMessage(message.DebugString);
@@ -427,6 +436,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotOnBack:
       ReceivedSpecificMessage(message.RobotOnBack);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotOnBackFinished:
+      ReceivedSpecificMessage(message.RobotOnBackFinished);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
@@ -673,6 +685,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotPutDown message) {
+    if (CurrentRobot != null && CurrentRobotID == message.robotID && OnRobotPutDown != null) {
+      OnRobotPutDown();
+    }
+  }
+
   private void ReceivedSpecificMessage(G2U.MoodState message) {
     if (CurrentRobot == null)
       return;
@@ -714,9 +732,21 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotCliffEventFinished message) {
+    if (OnCliffEventFinished != null) {
+      OnCliffEventFinished();
+    }
+  }
+
   private void ReceivedSpecificMessage(G2U.RobotOnBack message) {
     if (OnRobotOnBack != null) {
       OnRobotOnBack(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotOnBackFinished message) {
+    if (OnRobotOnBackFinished != null) {
+      OnRobotOnBackFinished();
     }
   }
 
