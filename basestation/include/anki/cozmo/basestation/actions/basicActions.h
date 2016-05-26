@@ -331,7 +331,14 @@ namespace Cozmo {
     {
     public:
       TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed);
-      virtual ~TraverseObjectAction() { Util::SafeDelete(_chosenAction); }
+      virtual ~TraverseObjectAction()
+      {
+        if(_chosenAction != nullptr)
+        {
+          _chosenAction->PrepForCompletion();
+        }
+        Util::SafeDelete(_chosenAction);
+      }
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }

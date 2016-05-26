@@ -63,7 +63,6 @@ namespace Anki {
       f32 maxAngularVel_;
       f32 angularAccel_;
       bool isPointTurnWithTarget_;
-      bool startedPointTurn_;
 
       Radians prevAngle_;
       f32 angularDistExpected_;
@@ -447,7 +446,7 @@ namespace Anki {
 
     void ExecuteDirectDrive(f32 left_vel, f32 right_vel, f32 left_accel, f32 right_accel)
     {
-      //PRINT("DIRECT DRIVE %f %f\n", left_vel, right_vel);
+      //AnkiDebug( 183, "DIRECT DRIVE", 484, "%d: %f   %f  (%f %f)", 5, HAL::GetTimeStamp(), left_vel, right_vel, left_accel, right_accel);
       SetSteerMode(SM_DIRECT_DRIVE);
 
       // Get current desired wheel speeds
@@ -528,6 +527,8 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
+      //AnkiDebug( 184, "PTURN", 485, "%d: %f   %f ", 3, HAL::GetTimeStamp(), angularVel, angularAccel);
+      
       if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
         AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -551,7 +552,6 @@ namespace Anki {
     void ExitPointTurn()
     {
       WheelController::SetDesiredWheelSpeeds(0,0);
-      startedPointTurn_ = false;
       SetSteerMode(SM_PATH_FOLLOW);
     }
 
@@ -610,14 +610,6 @@ namespace Anki {
     // Position-controlled point turn update
     void ManagePointTurn()
     {
-      if (WheelController::AreWheelsMoving() && !startedPointTurn_) {
-        f32 headingError = SpeedController::GetControllerCommandedVehicleSpeed() < 0 ? PI_F : 0;
-        RunLineFollowControllerNL(0,headingError);
-        return;
-      }
-
-      startedPointTurn_ = true;
-
 
       // Update current angular velocity
       f32 currDesiredAngularVel, currDesiredAngle;
@@ -712,7 +704,7 @@ namespace Anki {
           pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularSpeedError, -pointTurnSpeedMaxIntegralError_, pointTurnSpeedMaxIntegralError_);
         }
         
-        //AnkiDebugPeriodic(100, 131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );
+        //AnkiDebug(131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );
       }
 
 
