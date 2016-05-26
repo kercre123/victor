@@ -14,17 +14,22 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
+
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
+
+static const char* const kPutDownAnimGroupKey = "put_down_animation_group";
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 
@@ -35,6 +40,8 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 {
   SetDefaultName("RollBlock");
 
+  _putDownAnimGroup = config.get(kPutDownAnimGroupKey, "").asCString();
+  
   // set up the filter we will use for finding blocks we care about
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
@@ -44,12 +51,19 @@ bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
 {
   UpdateTargetBlock(robot);
   
-  return _targetBlock.IsSet() && !robot.IsCarryingObject();
+  return _targetBlock.IsSet();
 }
 
 Result BehaviorRollBlock::InitInternal(Robot& robot)
 {
-  TransitionToReactingToBlock(robot);
+  if (robot.IsCarryingObject())
+  {
+    TransitionToSettingDownBlock(robot);
+  }
+  else
+  {
+    TransitionToReactingToBlock(robot);
+  }
   return Result::RESULT_OK;
 }
   
@@ -60,12 +74,27 @@ void BehaviorRollBlock::StopInternal(Robot& robot)
 
 void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
-  ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
-  if( nullptr != closestObj ) {
-    _targetBlock = closestObj->GetID();
+  if (!robot.IsCarryingObject())
+  {
+    ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
+    if( nullptr != closestObj ) {
+      _targetBlock = closestObj->GetID();
+    }
+    else {
+      _targetBlock.UnSet();
+    }
   }
-  else {
-    _targetBlock.UnSet();
+  else
+  {
+    const ObservableObject* carriedObj = robot.GetBlockWorld().GetActiveObjectByID(robot.GetCarryingObject());
+    if (nullptr != carriedObj && carriedObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
+    {
+      _targetBlock = carriedObj->GetID();
+    }
+    else
+    {
+      _targetBlock.UnSet();
+    }
   }
 }
 
@@ -74,10 +103,37 @@ bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
   return _robot.CanPickUpObjectFromGround(*obj) &&
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS;
 }
+  
+void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
+{
+  SET_STATE(SettingDownBlock);
+
+  if( _putDownAnimGroup.empty() ) {
+    constexpr float kAmountToReverse_mm = 90.f;
+    IActionRunner* actionsToDo = new CompoundActionSequential(robot, {
+        new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
+        new PlaceObjectOnGroundAction(robot)});
+    StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
+  }
+  else {
+    StartActing(new PlayAnimationGroupAction(robot, _putDownAnimGroup),
+                [this](Robot& robot) {
+                  // use same logic as put down block behavior
+                  StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot),
+                               &BehaviorRollBlock::TransitionToReactingToBlock);
+                });
+  }
+}
 
 void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
 {
   SET_STATE(ReactingToBlock);
+
+  if( robot.IsCarryingObject() ) {
+    PRINT_NAMED_ERROR("BehaviorRollBlock.ReactWhileHolding",
+                      "block should be put down at this point. Bailing from behavior");
+    return;
+  }
 
   if( !_initialAnimGroup.empty() ) {
     StartActing(new TurnTowardsFaceWrapperAction(

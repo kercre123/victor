@@ -88,7 +88,7 @@ namespace Anki {
 
         u32 lastMotionDetectedTime_ms = 0;
         const u32 MOTION_DETECT_TIMEOUT_MS = 250;
-        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD(3);  // Maximum expected drift from gyro
+        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(3);  // Maximum expected drift from gyro
 
 
         // Recorded buffer
@@ -650,21 +650,29 @@ namespace Anki {
 
       void UpdatePitch()
       {
+        static f32 lastHeadAngle = 10000;
         f32 headAngle = HeadController::GetAngleRad();
 
         // If not moving then reset pitch angle with accelerometer.
         // Otherwise, update it with gyro.
         if (!MotionDetected()) {
           pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
-        } else if (HeadController::IsInPosition() && !HeadController::IsMoving()) {
+          
+        // Was originally only updating pitch if head wasn't moving in order to avoid noisy pitch measurements,
+        // that was causing some problems with pounce success detection so now updating pitch all the time.
+        // NB: This pitch measurement isn't precise to begin with, but it's extra imprecise when the head is moving
+        // so be careful relying on it when the head is moving.
+        //} else if (HeadController::IsInPosition() && !HeadController::IsMoving()) {
+        } else if (lastHeadAngle != 10000) {
           f32 dAngle = -gyro_robot_frame_filt[1] * CONTROL_DT;
-          pitch_ += dAngle;
+          pitch_ += dAngle - (headAngle - lastHeadAngle);
         }
+        
+        lastHeadAngle = headAngle;
 
-        //PERIODIC_PRINT(50, "Pitch %f deg\n", RAD_TO_DEG_F32(pitch_));
+        //AnkiDebugPeriodic(50, 182, "RobotPitch", 483, "%f deg (motion %d, gyro %f)", 3, RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
       }
       
-#ifndef SIMULATOR
       void UpdateCameraMotion()
       {
         static u8 cameraMotionDecimationCounter = 0;
@@ -679,7 +687,6 @@ namespace Anki {
           cameraMotionDecimationCounter = 0;
         }
       }
-#endif
 
       Result Update()
       {
@@ -797,9 +804,7 @@ namespace Anki {
 
         HandlePickupParalysis();
         
-        #ifndef SIMULATOR
         UpdateCameraMotion();
-        #endif
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {

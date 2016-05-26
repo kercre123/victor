@@ -1,4 +1,4 @@
-#include "app/headTest.h"
+#include "app/tests.h"
 #include "hal/portable.h"
 #include "hal/testport.h"
 #include "hal/timers.h"
@@ -7,12 +7,11 @@
 #include "hal/uart.h"
 #include "hal/swd.h"
 #include "hal/espressif.h"
+#include "hal/board.h"
 
 #include "app/binaries.h"
 #include "app/fixture.h"
 #include "hal/monitor.h"
-
-#define GPIOB_SWD   10
 
 // Return true if device is detected on contacts
 bool HeadDetect(void)
@@ -25,24 +24,24 @@ bool HeadDetect(void)
   
   // First drive SWD low for 1uS to remove any charge from the pin
   GPIO_InitTypeDef  GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin = 1 << GPIOB_SWD;
+  GPIO_InitStructure.GPIO_Pin = GPIOB_SWD;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_RESET(GPIOB, GPIOB_SWD);
+  PIN_RESET(GPIOB, PINB_SWD);
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   MicroWait(1);
   
   // Now let it float and see if it ends up high
-  PIN_IN(GPIOB, GPIOB_SWD);
+  PIN_IN(GPIOB, PINB_SWD);
   MicroWait(50);  // Reaches 1.72V after 25uS - so give it 50 just to be safe
    
   // Wait 1ms in detect
   MicroWait(1000);
   
   // True if high
-  return !!(GPIO_READ(GPIOB) & (1 << GPIOB_SWD));
+  return !!(GPIO_READ(GPIOB) & GPIOB_SWD);
 }
 
 int GetSequence(void);

@@ -35,7 +35,7 @@ static uint8_t              m_nonce[member_size(Anki::Cozmo::BLE_SendHello, nonc
 static bool                 m_authenticated;
 
 static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
-static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_BLOCK_LENGTH;
+static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
 static const uint8_t HELLO_SIGNATURE[] = { 'C', 'Z', 'M', '0' };
 
 struct BLE_CladBuffer {
@@ -103,8 +103,16 @@ static void dh_complete(const void*, int) {
   // Transmit our encryped key
   BLE_EncodedKey msg;
   memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
-  memcpy(msg.encoded_key, dh_state.encoded_key, AES_BLOCK_LENGTH);  
+  memcpy(msg.encoded_key, dh_state.encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
+
+  // Display the pin number
+  RobotInterface::DisplayNumber dn;
+  dn.value = *(const uint32_t*)Crypto::aes_key();
+  dn.digits = 8;
+  dn.x = 0;
+  dn.y = 16;
+  RobotInterface::SendMessage(dn);
 }
 
 void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {  
@@ -122,9 +130,10 @@ void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = dh_state.pin; 
-  dn.x = 32;
-  dn.y = 24;
+  dn.value = dh_state.pin;
+  dn.digits = 8;
+  dn.x = 0;
+  dn.y = 16;
   RobotInterface::SendMessage(dn);
 }
 
@@ -280,7 +289,8 @@ static void manage_ble(void*) {
   }
 }
 
-static void start_message_transmission(const void*, int) {
+static void start_message_transmission(const void*, int size) {
+  tx_buffer.message_size = size;
   tx_pending = true;
 }
 
@@ -352,6 +362,13 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       Crypto::execute(&t);
 
       RTOS::start(task, TRANSMISSION_RATE);
+
+      using namespace Anki::Cozmo;
+      // Disable test mode when we someone connects
+      RobotInterface::EnterFactoryTestMode ftm;
+      ftm.mode = RobotInterface::FTM_None;
+      RobotInterface::SendMessage(ftm);  
+  
       break;
 
     case BLE_GAP_EVT_DISCONNECTED:

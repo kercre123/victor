@@ -1,0 +1,11 @@
+#include <string.h>
+#include "hal/board.h"
+#include "hal/portable.h"
+#include "hal/uart.h"
+#include "hal/testport.h"
+#include "hal/display.h"
+#include "hal/timers.h"
+#include "../app/fixture.h"
+#include "hal/cube.h"
+#include "hal/flash.h"
+#include "app/binaries.h"

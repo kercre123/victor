@@ -37,7 +37,7 @@ namespace Anki {
 
         // Only angles greater than this can contribute to error
         // TODO: Find out what this actually is
-        const f32 ENCODER_ANGLE_RES = DEG_TO_RAD(0.35f);
+        const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
         
         // Motor burnout protection
         const f32 BURNOUT_POWER_THRESH = 0.6;

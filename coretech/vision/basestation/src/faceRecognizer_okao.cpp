@@ -1256,6 +1256,11 @@ namespace Vision {
   
   Result FaceRecognizer::SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum, HALBUM& album)
   {
+    if(NULL == okaoCommonHandle) {
+      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedAlbum.NullOkaoCommonHandle", "");
+      return RESULT_FAIL;
+    }
+    
     FR_ERROR error;
     album = OKAO_FR_RestoreAlbum(okaoCommonHandle, const_cast<UINT8*>(&(serializedAlbum[0])), (UINT32)serializedAlbum.size(), &error);
     if(NULL == album) {
@@ -1399,6 +1404,11 @@ namespace Vision {
                                            const std::vector<u8>& enrollData,
                                            std::list<FaceNameAndID>& namesAndIDs)
   {
+    if(NULL == _okaoCommonHandle) {
+      PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedData.NullOkaoCommonHandle", "");
+      return RESULT_FAIL;
+    }
+    
     // Note that we load into these temporary data structures and swap them into the
     // real ones later
     HALBUM loadedAlbum;
@@ -1419,6 +1429,10 @@ namespace Vision {
         if(RESULT_OK == lastResult) {
           for(auto & entry : _enrollmentData)
           {
+            PRINT_NAMED_DEBUG("FaceRecognizer.SetSerializedData",
+                              "User '%s' with ID=%d",
+                              entry.second.name.c_str(), entry.second.faceID);
+            
             FaceNameAndID nameAndID{
               .name = entry.second.name,
               .faceID = entry.second.faceID,
@@ -1442,7 +1456,8 @@ namespace Vision {
       std::swap(loadedAlbumData, _okaoFaceAlbum);
       _trackingToFaceID.clear();
       PRINT_NAMED_INFO("FaceRecognizer.UseLoadedAlbumAndEnrollData.Success",
-                       "Loaded album and enroll data passed sanity checks");
+                       "Loaded album and enroll data passed sanity checks (%zu entries)",
+                       _enrollmentData.size());
     }
 
     return lastResult;
@@ -1556,9 +1571,19 @@ namespace Vision {
   } // SaveAlbum()
   
   
-  Result FaceRecognizer::LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName,
+  Result FaceRecognizer::LoadAlbum(const std::string& albumName,
                                    std::list<FaceNameAndID>& namesAndIDs)
   {
+    if(!_isInitialized) {
+      PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.NotInitialized", "");
+      return RESULT_FAIL;
+    }
+    
+    if(NULL == _okaoCommonHandle) {
+      PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.NullOkaoCommonHandle", "");
+      return RESULT_FAIL;
+    }
+    
     Result result = RESULT_OK;
     
     const std::string dataFilename(albumName + "/data.bin");
@@ -1592,7 +1617,7 @@ namespace Vision {
         HALBUM loadedAlbum;
         EnrollmentData loadedEnrollmentData;
         
-        result = SetSerializedAlbum(okaoCommonHandle, serializedAlbum, loadedAlbum);
+        result = SetSerializedAlbum(_okaoCommonHandle, serializedAlbum, loadedAlbum);
         
         // Now try to read the names data
         if(RESULT_OK == result) {

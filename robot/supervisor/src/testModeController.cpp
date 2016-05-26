@@ -30,7 +30,7 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
 
-
+#if(ENABLE_TEST_MODES)
         // Some common vars that can be used across multiple tests
         u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
         
@@ -42,7 +42,7 @@ namespace Anki {
         // use set power level
         bool increasePower_ = true;
 
-#if(ENABLE_TEST_MODES)
+//#if(ENABLE_TEST_MODES)
         //////// DriveTest /////////
         bool enableToggleDir_ = false;   // false: Only drive forward
                                          // true: Switch between driving forward and reverse
@@ -124,7 +124,7 @@ namespace Anki {
 
         ////// End of DriveTest ////////
 
-#endif
+//#endif  //#if(ENABLE_TEST_MODES)
         /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
@@ -191,7 +191,7 @@ namespace Anki {
         f32 maxHeadSpeed_radPerSec_ = 0;
         
         //// End of HeadTest //////
-#if(ENABLE_TEST_MODES)
+//#if(ENABLE_TEST_MODES)
         
         //////// DockPathTest /////////
         enum {
@@ -243,10 +243,10 @@ namespace Anki {
         ///////// IMUTest ////////
         bool imuTestDoTurns_ = false;
         bool IT_turnLeft;
-        const f32 IT_TARGET_ANGLE = DEG_TO_RAD(180);
-        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD(90);
-        const f32 IT_ROT_ACCEL = DEG_TO_RAD(720);
-        const f32 IT_ROT_TOL = DEG_TO_RAD(5);
+        const f32 IT_TARGET_ANGLE = DEG_TO_RAD_F32(180);
+        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD_F32(90);
+        const f32 IT_ROT_ACCEL = DEG_TO_RAD_F32(720);
+        const f32 IT_ROT_TOL = DEG_TO_RAD_F32(5);
         ///// End of IMUTest /////
 
 
@@ -505,7 +505,7 @@ namespace Anki {
               break;
             case PFCF_DRIVE_POINT_TURN:
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 312, "Started", 0);
-              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, DEG_TO_RAD(1), 1)) {
+              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, DEG_TO_RAD_F32(1), 1)) {
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 313, "FAILED", 0);
                 return RESULT_FAIL;
               }
@@ -622,7 +622,7 @@ namespace Anki {
 
        return RESULT_OK;
       }
-#endif
+//#endif // #if(ENABLE_TEST_MODES)
 
       Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
@@ -911,7 +911,7 @@ namespace Anki {
 
         return RESULT_OK;
       }
-#if(ENABLE_TEST_MODES)
+//#if(ENABLE_TEST_MODES)
 
       Result IMUTestInit(s32 flags)
       {
@@ -1193,7 +1193,7 @@ namespace Anki {
             ret = DriveTestInit(p1,p2,p3);
             updateFunc = DriveTestUpdate;
             break;
-#endif
+//#endif
           case TM_LIFT:
             ret = LiftTestInit(p1,p2,p3);
             updateFunc = LiftTestUpdate;
@@ -1206,7 +1206,7 @@ namespace Anki {
             ret = HeadTestInit(p1,p2,p3);
             updateFunc = HeadTestUpdate;
             break;
-#if(ENABLE_TEST_MODES)
+//#if(ENABLE_TEST_MODES)
           case TM_IMU:
             ret = IMUTestInit(p1);
             updateFunc = IMUTestUpdate;

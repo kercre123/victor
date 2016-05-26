@@ -90,6 +90,12 @@ void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose)
+{
+  RemovePossibleMarkersMatching(objectType, pose);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::AddBeacon( const Pose3d& beaconPos )
 {
   _beacons.emplace_back( beaconPos );

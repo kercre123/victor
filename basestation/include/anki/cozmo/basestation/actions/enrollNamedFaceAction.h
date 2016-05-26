@@ -49,6 +49,9 @@ namespace Cozmo {
     
     //void SetIdleAnimation(const std::string& name) { _idleAnimName = name; }
     
+    template<typename T>
+    void HandleMessage(const T& msg);
+    
   protected:
     
     virtual ActionResult Init() override;
@@ -73,6 +76,7 @@ namespace Cozmo {
     IActionRunner*            _action = nullptr;
     TimeStamp_t               _lastModeChangeTime_ms;
     TimeStamp_t               _minTimePerEnrollStep_ms = 1000;
+    TimeStamp_t               _lastFaceSeen_ms = 0;
     s32                       _numEnrollmentsRequired = 0;
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
@@ -81,14 +85,13 @@ namespace Cozmo {
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;
       s32 numEnrollments;
-      std::function<Result(const Vision::TrackedFace*)> startFcn, duringFcn, stopFcn;
+      std::function<Result(void)> startFcn, duringFcn, stopFcn;
     };
     
     std::vector<EnrollStep> _enrollSequence;
     std::vector<EnrollStep>::const_iterator _seqIter;
     
-    Signal::SmartHandle _idChangeSignalHandle;
-    Signal::SmartHandle _enrollmentCountSignalHandle;
+    std::vector<Signal::SmartHandle> _signalHandles;
     
     // Member methods:
     Result InitSequence();

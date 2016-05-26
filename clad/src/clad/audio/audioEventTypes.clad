@@ -13,34 +13,15 @@ enum uint_32 DevDevice
 
 enum uint_32 DevRobot
 {
-  Dev_Placeholder = 1720370564,
   ExternalSource = 1386228553,
   FreqSweep = 2813811606,
   Invalid = 0,  // Use this to check for Invalid events
   PinkNoise_1Sec = 594803606,
   PinkNoise_5Sec = 3129383074,
-  SFX_TestLoopPlay_01 = 835806870,  // Dev placeholder sound
-  SFX_TestLoopPlay_02 = 384316327,  // Dev placeholder sound
-  SFX_TestLoopPlay_03 = 3934080800,  // Dev placeholder sound
-  SFX_TestLoopStop_01 = 1566344232,  // Dev placeholder sound
-  SFX_TestLoopStop_02 = 3414422517,  // Dev placeholder sound
-  SFX_TestLoopStop_03 = 2277339810,  // Dev placeholder sound
-  SFX_Test_01 = 4175204205,  // Dev placeholder sound
-  SFX_Test_02 = 4243365832,  // Dev placeholder sound
-  SFX_Test_03 = 3293055567,  // Dev placeholder sound
   Tone_1760HZ_5Sec = 1500105173,
   Tone_1K_1Sec = 1083086921,
   Tone_1K_5Sec = 1323780941,
   Tone_440HZ_5Sec = 1348811033,
-  Vo_TestLoopPlay_01 = 3188180480,
-  Vo_TestLoopPlay_02 = 3167504997,
-  Vo_TestLoopPlay_03 = 3960416630,
-  Vo_TestLoopStop_01 = 1531439490,
-  Vo_TestLoopStop_02 = 255510755,
-  Vo_TestLoopStop_03 = 437563144,
-  Vo_Test_01 = 2490335911,
-  Vo_Test_02 = 2941826454,
-  Vo_Test_03 = 1724354181,
 }
 
 enum uint_32 EventGroupType
@@ -49,7 +30,6 @@ enum uint_32 EventGroupType
   DevRobot,
   GenericEvent,
   Music,
-  PlugInControl,
   Robot,
   SFX,
   UI,
@@ -66,8 +46,6 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
-  Hijack_Audio_Disable_Bypass = 3535474666,  // Deprecated - Working on new method
-  Hijack_Audio_Enable_Bypass = 2589144983,  // Deprecated - Working on new method
   Invalid = 0,  // Use this to check for Invalid events
   Music_Play = 202194903,
   Music_Stop = 3227181061,
@@ -181,16 +159,25 @@ enum uint_32 GenericEvent
   Vo_Coz_Gp_Shared_Win_Short_Wow_Play = 2491294792,
   Vo_Coz_Gp_St_Tap_Effort_Play = 1227708849,
   Vo_Coz_Placeholder_Play = 1720370564,
+  Vo_Coz_React_3Block_Topple_1_Play = 2333334480,
+  Vo_Coz_React_3Block_Topple_2_Play = 1981221877,
   Vo_Coz_React_Block_Reach_Struggle_Play = 3413616816,
+  Vo_Coz_React_Cliff_Neutral_Play = 2915487867,
   Vo_Coz_React_Cliff_Nope_Play = 764338282,
   Vo_Coz_React_Cliff_Play = 2113972887,
+  Vo_Coz_React_Cliff_Wow_Play = 3347219747,
   Vo_Coz_React_Face_Dislike_Play = 2041456948,
   Vo_Coz_React_Face_Like_Play = 2832780992,
   Vo_Coz_React_Face_Suspicious_Play = 829421008,
   Vo_Coz_React_Face_Wiggle_Play = 3502280502,
-  Vo_Coz_React_Pickup_Angry_Play = 2018376227,
-  Vo_Coz_React_Stuck_Angry_Play = 3644548067,
-  Vo_Coz_React_Stuck_Turtle_Roll_Fail_Play = 3482707801,
+  Vo_Coz_React_Pickup_Angry_1_Play = 1506987515,
+  Vo_Coz_React_Pickup_Angry_2_Play = 1203373130,
+  Vo_Coz_React_Stuck_Angry_1_Play = 2466015547,
+  Vo_Coz_React_Stuck_Angry_2_Play = 2162297994,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_1_Play = 816625709,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_2_Play = 100880008,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_3_Play = 3445537039,
+  Vo_Coz_React_Stuck_Turtle_Roll_Fail_4_Play = 2656492322,
   Vo_Coz_React_Stuck_Turtle_Struggle_Play = 3080537054,
   Vo_Coz_See_Cube_First_Play = 2830862605,
   Vo_Coz_Shared_Align_Frustrated_Lp_Play = 1590494918,
@@ -214,6 +201,7 @@ enum uint_32 GenericEvent
   Vo_Coz_Shared_Excited_Lp_Stop = 1668649942,
   Vo_Coz_Shared_Excited_Play = 2632256753,
   Vo_Coz_Shared_Fall_Asleep_Play = 1843372739,
+  Vo_Coz_Shared_Fall_Cliff_Scream_Play = 1706336539,
   Vo_Coz_Shared_Fussy_Lp_Play = 1512138332,
   Vo_Coz_Shared_Fussy_Lp_Stop = 265842886,
   Vo_Coz_Shared_Fussy_Play = 566465057,
@@ -221,6 +209,7 @@ enum uint_32 GenericEvent
   Vo_Coz_Shared_Giggle_Happy_Lp_Play = 4108451578,
   Vo_Coz_Shared_Giggle_Happy_Lp_Stop = 1254039812,
   Vo_Coz_Shared_Giggle_Mischief_Play = 397975633,
+  Vo_Coz_Shared_Giggle_Short_Play = 996121627,
   Vo_Coz_Shared_Happy_Lp_Play = 3671776400,
   Vo_Coz_Shared_Happy_Lp_Stop = 2020361522,
   Vo_Coz_Shared_Happy_Play = 201496157,
@@ -266,15 +255,9 @@ enum uint_32 Music
   Stop = 3227181061,
 }
 
-enum uint_32 PlugInControl
-{
-  HijackAudioDisableBypass = 3535474666,  // Deprecated - Working on new method
-  HijackAudioEnableBypass = 2589144983,  // Deprecated - Working on new method
-  Invalid = 0,  // Use this to check for Invalid events
-}
-
 enum uint_32 Robot
 {
+  Dev_Placeholder = 1720370564,
   EffortTap = 1227708849,
   ExternalName = 1707690926,
   ExternalNameFirstPlay = 3129794587,
@@ -285,17 +268,35 @@ enum uint_32 Robot
   MovementTreadForward_LoopStop = 2509873633,
   MovementTreadSpin_Loop = 3670184840,
   MovementTreadSpin_LoopStop = 1752784890,
+  React3BlockTopple1 = 2333334480,
+  React3BlockTopple2 = 1981221877,
   ReactBlockReachStruggle = 3413616816,
   ReactCliff = 2113972887,
+  ReactCliffNeutral = 2915487867,
   ReactCliffNope = 764338282,
+  ReactCliffWow = 3347219747,
   ReactFaceDislike = 2041456948,
   ReactFaceLike = 2832780992,
   ReactFaceSuspicious = 829421008,
   ReactFaceWiggle = 3502280502,
-  ReactPickupAngry = 2018376227,
-  ReactStuckAngry = 3644548067,
-  ReactStuckTurtleRollFail = 3482707801,
+  ReactPickupAngry1 = 1506987515,
+  ReactPickupAngry2 = 1203373130,
+  ReactStuckAngry1 = 2466015547,
+  ReactStuckAngry2 = 2162297994,
+  ReactStuckTurtleRollFail1 = 816625709,
+  ReactStuckTurtleRollFail2 = 100880008,
+  ReactStuckTurtleRollFail3 = 3445537039,
+  ReactStuckTurtleRollFail4 = 2656492322,
   ReactStuckTurtleStruggle = 3080537054,
+  SFX_TestLoopPlay_01 = 835806870,  // Dev placeholder sound
+  SFX_TestLoopPlay_02 = 384316327,  // Dev placeholder sound
+  SFX_TestLoopPlay_03 = 3934080800,  // Dev placeholder sound
+  SFX_TestLoopStop_01 = 1566344232,  // Dev placeholder sound
+  SFX_TestLoopStop_02 = 3414422517,  // Dev placeholder sound
+  SFX_TestLoopStop_03 = 2277339810,  // Dev placeholder sound
+  SFX_Test_01 = 4175204205,  // Dev placeholder sound
+  SFX_Test_02 = 4243365832,  // Dev placeholder sound
+  SFX_Test_03 = 3293055567,  // Dev placeholder sound
   ScreenAngry = 2970495120,
   ScreenAngryLong = 1044379185,
   ScreenAngryShort = 675033713,
@@ -350,6 +351,7 @@ enum uint_32 Robot
   SharedExcited_Loop = 3993832652,
   SharedExcited_LoopStop = 1668649942,
   SharedFallAsleeep = 1843372739,
+  SharedFallCliffStcream = 1706336539,
   SharedFussy = 566465057,
   SharedFussyShort = 1220210336,
   SharedFussy_Loop = 1512138332,
@@ -357,6 +359,7 @@ enum uint_32 Robot
   SharedGiggleHappy_Loop = 4108451578,
   SharedGiggleHappy_LoopStop = 1254039812,
   SharedGiggleMischief = 397975633,
+  SharedGiggleShort = 996121627,
   SharedHappy = 201496157,
   SharedHappy_Loop = 3671776400,
   SharedHappy_LoopStop = 2020361522,
@@ -408,6 +411,15 @@ enum uint_32 Robot
   SharedWinMedium = 3583968567,
   SharedWinShort = 1731815324,
   SharedWinShortWow = 2491294792,
+  Vo_TestLoopPlay_01 = 3188180480,
+  Vo_TestLoopPlay_02 = 3167504997,
+  Vo_TestLoopPlay_03 = 3960416630,
+  Vo_TestLoopStop_01 = 1531439490,
+  Vo_TestLoopStop_02 = 255510755,
+  Vo_TestLoopStop_03 = 437563144,
+  Vo_Test_01 = 2490335911,
+  Vo_Test_02 = 2941826454,
+  Vo_Test_03 = 1724354181,
   WakeUp = 1419359148,
   WordCubeHappy = 1191391304,
   WordCubeNeutral = 2400301061,

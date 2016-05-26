@@ -220,8 +220,19 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   // Move head for knock over
   action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
   
+  // Wait for a few frames for block pose to settle down and try turning towards the object again incase
+  // our first turn was slightly off
+  action->AddAction(new WaitForImagesAction(robot, numFramesToWaitForBeforeFlip));
+  
+  // Turn towards bottom block of stack
+  action->AddAction(new TurnTowardsObjectAction(robot,
+                                                bottomBlockID,
+                                                Radians(PI_F),
+                                                false, // verify when done?
+                                                false));
+  
   // Knock over
-  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot);
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
   action->AddAction(flipBlockAction);
 
   StartActing(action, [this, &robot](ActionResult res) {

@@ -41,12 +41,13 @@
 namespace Anki {
   namespace Cozmo {
   
-    CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest.MaxNumAttempts",              50);
+    CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest.MaxNumAttempts",              30);
     CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest.MaxConsecFails",              3);
-    CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest.DockingMethod",               (u8)DockingMethod::BLIND_DOCKING);
-    CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest.MaxXAwayFromPreDock_mm",      20);
-    CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest.MaxYAwayFromPreDock_mm",      20);
+    CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest.DockingMethod",               (u8)DockingMethod::HYBRID_DOCKING);
+    CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest.MaxXAwayFromPreDock_mm",      30);
+    CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest.MaxYAwayFromPreDock_mm",      50);
     CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest.MaxAngleAwayFromPreDock_deg", 10);
+    CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest.DriveToAndPickup",            false);
     
     static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
     static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
@@ -139,6 +140,11 @@ namespace Anki {
       ss << "\n";
       Write(ss.str());
       
+      ss.clear();
+      ss << "@" << kMaxXAwayFromPreDock_mm << " " << kMaxYAwayFromPreDock_mm << " " << kMaxAngleAwayFromPreDock_deg;
+      ss << "\n";
+      Write(ss.str());
+      
       if(robot.GetContext()->GetVizManager() != nullptr)
       {
         std::stringstream ss;
@@ -200,7 +206,7 @@ namespace Anki {
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
-                          EndAttempt(robot, result, "MoveHead");
+                          EndAttempt(robot, result, "MoveHead", true);
                           SetCurrState(State::Init);
                           return false;
                         }
@@ -217,6 +223,7 @@ namespace Anki {
           _failedCurrentAttempt = false;
           _attemptStartTime = robot.GetRobotState().lastImageTimeStamp;
           SetCurrState(State::PickupLow);
+          _numSawObject = 0;
           break;
         }
         case State::PickupLow:
@@ -226,18 +233,50 @@ namespace Anki {
             _initialCubePose = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup)->GetPose();
             _initialRobotPose = robot.GetPose();
           
-            DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectIDPickup);
-            action->SetDockingMethod((DockingMethod)kTestDockingMethod);
-            action->SetMotionProfile(_motionProfile);
-            StartActing(robot, action,
-                        [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                          if (result != ActionResult::SUCCESS) {
-                            EndAttempt(robot, result, "Pickup");
-                            return false;
-                          }
-                          SetCurrState(State::PlaceLow);
-                          return true;
-                        });
+            if(kDriveToAndPickupBlock)
+            {
+              DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectIDPickup);
+              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+              action->SetMotionProfile(_motionProfile);
+              StartActing(robot, action,
+                          [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                            if (result != ActionResult::SUCCESS) {
+                              if(_numSawObject < 5)
+                              {
+                                EndAttempt(robot, result, "PickupNotSeeingObject", true);
+                              }
+                              else
+                              {
+                                EndAttempt(robot, result, "Pickup", true);
+                              }
+                              return false;
+                            }
+                            SetCurrState(State::PlaceLow);
+                            return true;
+                          });
+            }
+            else
+            {
+              PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
+              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+              action->SetDoNearPredockPoseCheck(false);
+              StartActing(robot, action,
+                          [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                            if (result != ActionResult::SUCCESS) {
+                              if(_numSawObject < 5)
+                              {
+                                EndAttempt(robot, result, "PickupNotSeeingObject", true);
+                              }
+                              else
+                              {
+                                EndAttempt(robot, result, "Pickup", true);
+                              }
+                              return false;
+                            }
+                            SetCurrState(State::PlaceLow);
+                            return true;
+                          });
+            }
           }
           else
           {
@@ -254,10 +293,7 @@ namespace Anki {
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
-                          EndAttempt(robot, result, "PlaceOnGround");
-                          // Placing on ground will only fail if we aren't actually carrying the block
-                          // so reset and hope we see it again
-                          SetCurrState(State::Reset);
+                          EndAttempt(robot, result, "PlaceOnGround", true);
                           return false;
                         }
                         SetCurrState(State::Reset);
@@ -303,6 +339,18 @@ namespace Anki {
           f32 y = preActionPose.GetTranslation().y();
           f32 angle = preActionPose.GetRotation().GetAngleAroundZaxis().ToFloat();
           
+          // If we are reseting due to an action failing then we shouldn't go to a random offset
+          // and we should not count this reset pickup as an attempt
+          if(_endingFromFailedAction)
+          {
+            randX = 0;
+            randY = 0;
+            randA = 0;
+            _endingFromFailedAction = false;
+            _numAttempts--;
+            _numExtraAttemptsDueToFailure++;
+          }
+          
           Pose3d p(Radians(angle + randA), Z_AXIS_3D(), {x + randX, y + randY, 0}, &robot.GetPose().FindOrigin());
           
           DriveToPoseAction* action = new DriveToPoseAction(robot, p);
@@ -311,7 +359,7 @@ namespace Anki {
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
-                          EndAttempt(robot, result, "DriveToPose");
+                          EndAttempt(robot, result, "DriveToPose", true);
                           return false;
                         }
                         SetCurrState(State::Inactive);
@@ -327,26 +375,8 @@ namespace Anki {
         case State::ManualReset:
         {
           _reset = true;
-          if(_yellForHelp)
-          {
-            _yellForHelp = false;
-            
-            if(robot.GetContext()->GetVizManager() != nullptr)
-            {
-              robot.GetContext()->GetVizManager()->SendSaveImages(false);
-            }
-            
-            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextStyle::Normal, true), new WaitAction(robot, 3)});
-            StartActing(robot, action,
-                        [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                          if(result == ActionResult::SUCCESS)
-                          {
-                            _yellForHelp = true;
-                          }
-                          return true;
-                        });
-          }
-          else if(_yellForCompletion)
+          
+          if(_yellForCompletion)
           {
             _yellForCompletion = false;
             
@@ -361,6 +391,25 @@ namespace Anki {
                           if(result == ActionResult::SUCCESS)
                           {
                             _yellForCompletion = true;
+                          }
+                          return true;
+                        });
+          }
+          else if(_yellForHelp)
+          {
+            _yellForHelp = false;
+            
+            if(robot.GetContext()->GetVizManager() != nullptr)
+            {
+              robot.GetContext()->GetVizManager()->SendSaveImages(false);
+            }
+            
+            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextStyle::Normal, true), new WaitAction(robot, 3)});
+            StartActing(robot, action,
+                        [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                          if(result == ActionResult::SUCCESS)
+                          {
+                            _yellForHelp = true;
                           }
                           return true;
                         });
@@ -447,6 +496,13 @@ namespace Anki {
     {
       std::string name = StateToString(_currentState);
       
+      name += std::to_string(_numAttempts+_numExtraAttemptsDueToFailure);
+      
+      if(_currentState == State::Reset && _endingFromFailedAction)
+      {
+        name += "FromFailure";
+      }
+      
       if( IsActing() ) {
         name += '*';
       }
@@ -532,8 +588,9 @@ namespace Anki {
       
     } // HandleActionCompleted()
     
-    void BehaviorDockingTestSimple::EndAttempt(Robot& robot, ActionResult result, std::string name)
+    void BehaviorDockingTestSimple::EndAttempt(Robot& robot, ActionResult result, std::string name, bool endingFromFailedAction)
     {
+      _endingFromFailedAction = endingFromFailedAction;
       RecordAttempt(result, name);
       SetCurrState(State::Reset);
       if(result != ActionResult::SUCCESS)
@@ -566,6 +623,7 @@ namespace Anki {
       {
         if(_blockObjectIDPickup.IsSet() && _blockObjectIDPickup == objectID)
         {
+          _numSawObject++;
           return;
         }
         else if(!_blockObjectIDPickup.IsSet())
@@ -580,6 +638,7 @@ namespace Anki {
           else
           {
             PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
+            _yellForHelp = true;
             END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "SawMoreThanOneMarkerOnInit");
           }
           return;
@@ -587,12 +646,14 @@ namespace Anki {
         else
         {
           PRINT_NAMED_WARNING("BehaviorDockingTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
+          _yellForHelp = true;
           END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "UnexpectedBlock");
         }
       }
       else
       {
         PRINT_NAMED_WARNING("BehaviorDockingTest.HandleObservedObject.UnexpectedObservedObject", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
+        _yellForHelp = true;
         END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "UnexpectedObject");
       }
     }
@@ -635,7 +696,7 @@ namespace Anki {
     void BehaviorDockingTestSimple::RecordAttempt(ActionResult result, std::string name)
     {
       std::stringstream ss;
-      ss << "Attempt: " << _numAttempts << " TimeStarted: " << _attemptStartTime << " Result: " << EnumToString(result);
+      ss << "Attempt: " << _numAttempts+_numExtraAttemptsDueToFailure << " TimeStarted: " << _attemptStartTime << " Result: " << EnumToString(result);
       ss << " " << name << " DockingMethod: " << (int)kTestDockingMethod;
       ss << " HM: " << _didHM << " NumDockingRetries: " << _numDockingRetries << "\n\t\t";
       
@@ -676,7 +737,21 @@ namespace Anki {
               p.GetRotationAngle().ToFloat(),
               p.GetRotationAngle().getDegrees());
       
-      ss << "CubeRelativeToRobot " << buf << "\n\t\t";
+      ss << "CubeRelativeToRobot " << buf << "\n";
+    
+      // For log parsing
+      // result, rel block pose x, rel block pose y, rel block angle, dock method, didHM, numDockingRetries
+      // numSawObject
+      sprintf(buf, "!!!%i %f %f %f %i %i %i %i",
+              (int)result,
+              p.GetTranslation().x(),
+              p.GetTranslation().y(),
+              p.GetRotationAngle().ToFloat(),
+              (int)kTestDockingMethod,
+              _didHM,
+              _numDockingRetries,
+              _numSawObject);
+      ss << buf << "\n";
       
       Write(ss.str());
     }

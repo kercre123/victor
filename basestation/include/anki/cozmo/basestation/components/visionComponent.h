@@ -138,7 +138,7 @@ struct DockingErrorSignal;
     
     bool GetLastProcessedImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
     
-    TimeStamp_t GetLastProcessedImageTimeStamp();
+    TimeStamp_t GetLastProcessedImageTimeStamp() const;
     
     TimeStamp_t GetProcessingPeriod();
     
@@ -156,13 +156,20 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                              const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
-    bool WasBodyMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                              const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5));
-    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
-                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5),
-                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
+    bool WasHeadMovingTooFast(TimeStamp_t t,
+                              const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                              const int numImuDataToLookBack = 0);
+    bool WasBodyMovingTooFast(TimeStamp_t t,
+                              const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                              const int numImuDataToLookBack = 0);
+    
+    // Returns true if head or body were moving too fast at the timestamp
+    // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
+    // of just looking at the previous and next imu data
+    bool WasMovingTooFast(TimeStamp_t t,
+                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
+                          const int numImuDataToLookBack = 0);
 
     
     // Camera calibration
@@ -206,15 +213,25 @@ struct DockingErrorSignal;
     Result EraseFace(const std::string& name);
     void   EraseAllFaces();
     
-    // Load/Save face album data to robot
+    // Load/Save face album data to/from robot's NVStorage
     Result SaveFaceAlbumToRobot();
-    Result LoadFaceAlbumFromRobot();
+    Result LoadFaceAlbumFromRobot(); // Broadcasts any loaded names and IDs
+    
+    // Load/Save face album data to/from file.
+    // NOTE: Load replaces whatever is in the robot's NVStorage!
+    Result SaveFaceAlbumToFile(const std::string& path);
+    Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
+    
+    // Templated message handler used internally by AnkiEventUtil
+    template<typename T>
+    void HandleMessage(const T& msg);
     
   protected:
     
     bool _isInitialized = false;
     
     Robot& _robot;
+    const CozmoContext* _context = nullptr;
     
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
@@ -250,6 +267,7 @@ struct DockingErrorSignal;
     f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
     f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
     
+    TimeStamp_t _lastProcessedImageTimeStamp = 0;
     TimeStamp_t _processingPeriod = 0;
 
     VisionPoseData   _currentPoseData;

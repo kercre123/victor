@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
@@ -76,7 +77,7 @@ namespace Anki {
     , _name("PlayAnimation" + _animName + "Action")
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
-    , _customAnimation(animation)
+    , _animPointer(animation)
     {
      
     }
@@ -86,17 +87,11 @@ namespace Anki {
       // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
       // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
       // to clean up
-      if(_startedPlaying) {
-        if(!_stoppedPlaying && !_wasAborted) {
-        PRINT_NAMED_WARNING("PlayAnimationAction.Destructor.NotStoppedOrAborted",
-                            "Action destructing, but stopped/aborted message not "
-                            "received for animation %s", _animName.c_str());
+      if (_robot.GetAnimationStreamer().GetStreamingAnimation() == _animPointer) {
+        PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
+                         "Action destructing, but AnimationStreamer is still streaming this animation(%s). Telling"
+                         "AnimationStreamer to stream null.", _animName.c_str());
         _robot.GetAnimationStreamer().SetStreamingAnimation(nullptr);
-        }
-      } else {
-        PRINT_NAMED_WARNING("PlayAnimationAction.Destructor.NotStoppedOrAborted",
-                            "Destructing action before %s ever started",
-                            _animName.c_str());
       }
     }
 
@@ -106,53 +101,14 @@ namespace Anki {
       _stoppedPlaying = false;
       _wasAborted     = false;
       
-      if (NeedsAlteredAnimation())
+      if (nullptr == _animPointer)
       {
-        const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
-        const Animation* ourAnimation = GetOurAnimation();
-        
-        if( ourAnimation == nullptr)
-        {
-          return ActionResult::FAILURE_ABORT;
-        }
-        
-        _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
-        assert(_alteredAnimation);
-        
-        bool useStreamingProcFace = !streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
-        
-        if (useStreamingProcFace)
-        {
-          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
-          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
-          _alteredAnimation->AddKeyFrameByTime(frameCopy);
-        }
-        else
-        {
-          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
-          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
-          _alteredAnimation->AddKeyFrameByTime(frameCopy);
-        }
+        _animPointer = _robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(_animName);
       }
       
-      // If we've set our altered animation, use that. Use num loops remaining since we haven't started yet,
-      // this will be == total number of loops
-      if (_alteredAnimation)
-      {
-        _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_alteredAnimation.get(), _numLoopsRemaining, _interruptRunning);
-      }
-      else // do the normal thing
-      {
-        if(_customAnimation != nullptr) {
-          _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_customAnimation, _numLoopsRemaining, _interruptRunning);
-        } else {
-          _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animName, _numLoopsRemaining, _interruptRunning);
-        }
-        
-        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
-      }
+      _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animPointer, _numLoopsRemaining, _interruptRunning);
+      _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
+      
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
         _wasAborted = true;
@@ -238,65 +194,6 @@ namespace Anki {
       } else {
         return ActionResult::FAILURE_ABORT;
       }
-    }
-
-    inline const Animation* PlayAnimationAction::GetOurAnimation() const
-    {
-      return (_customAnimation == nullptr ? _robot.GetAnimationStreamer().GetCannedAnimation(_animName) : _customAnimation);
-    }
-    
-    bool PlayAnimationAction::NeedsAlteredAnimation() const
-    {
-      // Animations that don't interrupt never need to be altered
-      if (!_interruptRunning)
-      {
-        return false;
-      }
-      
-      const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
-      // Nothing is currently streaming so no need for alteration
-      if (nullptr == streamingAnimation)
-      {
-        return false;
-      }
-      
-      // The streaming animation has no face tracks, so no need for alteration
-      if (streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty() &&
-          streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
-      {
-        return false;
-      }
-      
-      // Now actually check our animation to see if we have an initial face frame
-      const Animation* ourAnimation = GetOurAnimation();
-      
-      
-      bool animHasInitialFaceFrame = false;
-      if (nullptr != ourAnimation)
-      {
-        const auto& procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
-        // If our track is not empty and starts at beginning
-        if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
-        {
-          animHasInitialFaceFrame = true;
-        }
-        
-        const auto& faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
-        // If our track is not empty and starts at beginning
-        if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
-        {
-          animHasInitialFaceFrame = true;
-        }
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("PlayAnimationAction.NeedsAlteredAnimation.AnimNotFound",
-                          "Animation requested for unknown animation '%s'.\n",
-                          _animName.c_str());
-      }
-      
-      // If we have an initial face frame, no need to alter the animation
-      return !animHasInitialFaceFrame;
     }
 
     ActionResult PlayAnimationAction::CheckIfDone()

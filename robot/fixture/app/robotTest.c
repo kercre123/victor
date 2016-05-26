@@ -1,4 +1,4 @@
-#include "app/robotTest.h"
+#include "app/tests.h"
 #include "hal/portable.h"
 #include "hal/testport.h"
 #include "hal/timers.h"
@@ -10,11 +10,6 @@
 
 #include "app/fixture.h"
 #include "app/binaries.h"
-
-#define PINC_TX           11
-#define GPIOC_TX          (1 << PINC_TX)
-#define PINC_RX           10
-#define GPIOC_RX          (1 << PINC_RX)
 
 // Return true if device is detected on contacts
 bool RobotDetect(void)
@@ -29,26 +24,26 @@ bool RobotDetect(void)
   // Drive power on if we haven't heard a ping lately
   if (!heardPing)
   {
-    GPIO_SET(GPIOC, PINC_TX);
-    PIN_OUT(GPIOC, PINC_TX);
+    PIN_SET(GPIOC, PINC_CHGTX);
+    PIN_OUT(GPIOC, PINC_CHGTX);
     MicroWait(500);
   }
   
   // Receive mode - TX low is floating
-  GPIO_RESET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_UP(GPIOC, PINC_RX);
-  PIN_IN(GPIOC, PINC_RX);
+  PIN_RESET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_UP(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
   MicroWait(10);
   
   // Wait for RX to go low/be low
-  while (GPIO_READ(GPIOC) & GPIOC_RX)
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
     if (getMicroCounter()-start > 1000)
       return !!heardPing;
   MicroWait(10);
   
   // Now wait for it to go high again
-  while (!(GPIO_READ(GPIOC) & GPIOC_RX))
+  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
     if (getMicroCounter()-start > 1000)
       return !!heardPing;
 
@@ -62,26 +57,26 @@ void SendTestChar(int c)
   u32 start = getMicroCounter();
   
   // Receive mode - TX low is floating
-  GPIO_RESET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_UP(GPIOC, PINC_RX);
-  PIN_IN(GPIOC, PINC_RX);
+  PIN_RESET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_UP(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
 
   // Wait for RX to go low/be low
-  while (GPIO_READ(GPIOC) & GPIOC_RX)
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
     if (getMicroCounter()-start > 1000000)
       throw 2;
   // Now wait for it to go high
-  while (!(GPIO_READ(GPIOC) & GPIOC_RX))
+  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
     if (getMicroCounter()-start > 1000000)
       throw 2;
     
   // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
-  GPIO_SET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_NONE(GPIOC, PINC_RX);
-  GPIO_RESET(GPIOC, PINC_RX);
-  PIN_OUT(GPIOC, PINC_RX);
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
+  PIN_RESET(GPIOC, PINC_CHGRX);
+  PIN_OUT(GPIOC, PINC_CHGRX);
   
   MicroWait(30);  // Enough time for robot to turn around
   
@@ -95,16 +90,16 @@ void SendTestChar(int c)
       ;
     last = now;
     if (c & (1<<i))
-      GPIO_SET(GPIOC, PINC_TX);
+      PIN_SET(GPIOC, PINC_CHGTX);
     else
-      GPIO_RESET(GPIOC, PINC_TX);      
+      PIN_RESET(GPIOC, PINC_CHGTX);      
   }
   
   // Receive mode - TX low is floating
-  GPIO_RESET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_UP(GPIOC, PINC_RX);
-  PIN_IN(GPIOC, PINC_RX);
+  PIN_RESET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_UP(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
 }
 void SendTestMode(int test)
 {
@@ -124,8 +119,8 @@ void ChargerTest(void)
   int offContact = 0;
   
   // Act like a charger - the robot expects to start on one!
-  GPIO_SET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
 
   while (1)
   {

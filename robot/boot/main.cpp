@@ -43,7 +43,7 @@ int main (void) {
 
   __disable_irq();
   TimerInit();
-  MicroWait(100000);
+  MicroWait(1000);
 
   Power::init();
   

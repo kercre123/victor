@@ -97,7 +97,10 @@ private:
 
   bool   _shouldPopIdle = false;
 
+  bool   _initialRequest = true;
+
   bool   _shouldUseBlocks;
+  bool   _doSecondRequest;
   
   void SetState_internal(State state, const std::string& stateName);
 

@@ -4650,7 +4650,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
     Point<PRECISION>(0.2249,    0.0851));
 
   const f32 distThreshold      = 3.f;
-  const f32 angleThreshold     = static_cast<f32>(DEG_TO_RAD(2));
+  const f32 angleThreshold     = DEG_TO_RAD_F32(2);
   const f32 pixelErrThreshold  = 1.f;
 
   // Create the 3D marker and put it in the specified pose relative to the camera

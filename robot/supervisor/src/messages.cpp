@@ -202,10 +202,11 @@ namespace Anki {
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?
+        robotState_.status |= (WheelController::AreWheelsMoving() ||
+                              SteeringController::GetMode() == SteeringController::SM_POINT_TURN ? ARE_WHEELS_MOVING : 0);
         robotState_.status |= (HeadController::IsMoving() ||
                                LiftController::IsMoving() ||
-                               WheelController::AreWheelsMoving() ||
-                               SteeringController::GetMode() == SteeringController::SM_POINT_TURN ? IS_MOVING : 0);
+                               (robotState_.status & ARE_WHEELS_MOVING) ? IS_MOVING : 0);
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
@@ -676,7 +677,7 @@ namespace Anki {
       }
       void Process_animHeadAngle(const Anki::Cozmo::AnimKeyFrame::HeadAngle& msg)
       {
-        HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
+        HeadController::SetDesiredAngle(DEG_TO_RAD_F32(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.time_ms)*.001f);
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
@@ -752,7 +753,8 @@ namespace Anki {
       void Process_getPropState(const PropState& msg)
       {
 #ifdef TARGET_K02
-        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
+        // Remapped for EP3
+        HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount);
 #endif
       }
       

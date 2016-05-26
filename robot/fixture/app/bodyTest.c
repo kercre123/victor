@@ -1,4 +1,4 @@
-#include "app/bodyTest.h"
+#include "app/tests.h"
 #include "hal/portable.h"
 #include "hal/testport.h"
 #include "hal/timers.h"
@@ -10,8 +10,6 @@
 #include "app/fixture.h"
 #include "app/binaries.h"
 
-#define GPIOC_TRX 12
-
 // Return true if device is detected on contacts
 bool BodyDetect(void)
 {
@@ -19,7 +17,7 @@ bool BodyDetect(void)
 
   // Set up TRX as weakly pulled-up - it will detect as grounded when the board is attached
   GPIO_InitTypeDef  GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin = 1 << GPIOC_TRX;
+  GPIO_InitStructure.GPIO_Pin = GPIOC_TRX;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -30,14 +28,14 @@ bool BodyDetect(void)
   MicroWait(1000);
   
   // Return true if TRX is pulled down by body board
-  return !(GPIO_READ(GPIOC) & (1 << GPIOC_TRX));
+  return !(GPIO_READ(GPIOC) & GPIOC_TRX);
 }
 
 // Program code on body
 void BodyNRF51(void)
 {
   EnableVEXT();   // Turn on external power to the body
-  MicroWait(100);
+  MicroWait(500000);
   
   // Try to talk to head on SWD
   SWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);

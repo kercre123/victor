@@ -100,73 +100,56 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
-float ParseFloat(const Json::Value& config, const char* key ) {
-  ASSERT_NAMED_EVENT(config[key].isNumeric(), "BehaviorExploreLookAroundInPlace.ParseFloat.NotValidFloat", "%s", key);
-  return config[key].asFloat();
-}
-uint8_t ParseUint8(const Json::Value& config, const char* key ) {
-  ASSERT_NAMED_EVENT(config[key].isNumeric(), "BehaviorExploreLookAroundInPlace.ParseUint8.NotValidUint8", "%s", key);
-  Json::Int intVal = config[key].asInt();
-  return Anki::Util::numeric_cast<uint8_t>(intVal);
-}
-bool ParseBool(const Json::Value& config, const char* key) {
-  ASSERT_NAMED_EVENT(config[key].isBool(), "BehaviorExploreLookAroundInPlace.ParseBool.NotValidBool", "%s", key);
-  return config[key].asBool();
-};
-std::string ParseString(const Json::Value& config, const char* key) {
-  ASSERT_NAMED_EVENT(config[key].isString(), "BehaviorExploreLookAroundInPlace.ParseString.NotValidString", "%s", key);
-  return config[key].asString();
-};
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 {
-  _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm");
-  _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax");
-  _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection");
-  _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg");
+  using namespace JsonTools;
+  const std::string& debugName = "BehaviorExploreLookAroundInPlace.LoadConfig";
+
+  _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
+  _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax", debugName);
+  _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection", debugName);
+  _configParams.behavior_ShouldLowerLift = ParseBool(config, "behavior_ShouldLowerLift", debugName);
+  _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg", debugName);
   // turn speed
-  _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec");
-  _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec");
-  _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec");
+  _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
+  _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec", debugName);
+  _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
   // chance that the main turn will be counter clockwise (vs ccw)
-  _configParams.s0_MainTurnCWChance = ParseFloat(config, "s0_MainTurnCWChance");
+  _configParams.s0_MainTurnCWChance = ParseFloat(config, "s0_MainTurnCWChance", debugName);
   // [min,max] range for random turn angles for step 1
-  _configParams.s1_BodyAngleRangeMin_deg = ParseFloat(config, "s1_BodyAngleRangeMin_deg");
-  _configParams.s1_BodyAngleRangeMax_deg = ParseFloat(config, "s1_BodyAngleRangeMax_deg");
-  _configParams.s1_HeadAngleRangeMin_deg = ParseFloat(config, "s1_HeadAngleRangeMin_deg");
-  _configParams.s1_HeadAngleRangeMax_deg = ParseFloat(config, "s1_HeadAngleRangeMax_deg");
+  _configParams.s1_BodyAngleRangeMin_deg = ParseFloat(config, "s1_BodyAngleRangeMin_deg", debugName);
+  _configParams.s1_BodyAngleRangeMax_deg = ParseFloat(config, "s1_BodyAngleRangeMax_deg", debugName);
+  _configParams.s1_HeadAngleRangeMin_deg = ParseFloat(config, "s1_HeadAngleRangeMin_deg", debugName);
+  _configParams.s1_HeadAngleRangeMax_deg = ParseFloat(config, "s1_HeadAngleRangeMax_deg", debugName);
   // [min,max] range for pause for step 2
-  _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec");
-  _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec");
-  _configParams.s2_WaitAnimGroupName = ParseString(config, "s2_WaitAnimGroupName");
+  _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec", debugName);
+  _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec", debugName);
+  _configParams.s2_WaitAnimGroupName = ParseString(config, "s2_WaitAnimGroupName", debugName);
   // [min,max] range for random angle turns for step 3
-  _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg");
-  _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg");
-  _configParams.s3_HeadAngleRangeMin_deg = ParseFloat(config, "s3_HeadAngleRangeMin_deg");
-  _configParams.s3_HeadAngleRangeMax_deg = ParseFloat(config, "s3_HeadAngleRangeMax_deg");
+  _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg", debugName);
+  _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg", debugName);
+  _configParams.s3_HeadAngleRangeMin_deg = ParseFloat(config, "s3_HeadAngleRangeMin_deg", debugName);
+  _configParams.s3_HeadAngleRangeMax_deg = ParseFloat(config, "s3_HeadAngleRangeMax_deg", debugName);
   // [min,max] range for head move for step 4
-  _configParams.s4_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMin_deg");
-  _configParams.s4_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMax_deg");
-  _configParams.s4_HeadAngleRangeMin_deg = ParseFloat(config, "s4_HeadAngleRangeMin_deg");
-  _configParams.s4_HeadAngleRangeMax_deg = ParseFloat(config, "s4_HeadAngleRangeMax_deg");
-  _configParams.s4_HeadAngleChangesMin = ParseUint8(config, "s4_HeadAngleChangesMin");
-  _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax");
-  _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec");
-  _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec");
-  _configParams.s4_WaitAnimGroupName = ParseString(config, "s4_WaitAnimGroupName");
+  _configParams.s4_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMin_deg", debugName);
+  _configParams.s4_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMax_deg", debugName);
+  _configParams.s4_HeadAngleRangeMin_deg = ParseFloat(config, "s4_HeadAngleRangeMin_deg", debugName);
+  _configParams.s4_HeadAngleRangeMax_deg = ParseFloat(config, "s4_HeadAngleRangeMax_deg", debugName);
+  _configParams.s4_HeadAngleChangesMin = ParseUint8(config, "s4_HeadAngleChangesMin", debugName);
+  _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax", debugName);
+  _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec", debugName);
+  _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec", debugName);
+  _configParams.s4_WaitAnimGroupName = ParseString(config, "s4_WaitAnimGroupName", debugName);
   // [min,max] range for head move  for step 5
-  _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg");
-  _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg");
-  _configParams.s5_HeadAngleRangeMin_deg = ParseFloat(config, "s5_HeadAngleRangeMin_deg");
-  _configParams.s5_HeadAngleRangeMax_deg = ParseFloat(config, "s5_HeadAngleRangeMax_deg");
+  _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg", debugName);
+  _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg", debugName);
+  _configParams.s5_HeadAngleRangeMin_deg = ParseFloat(config, "s5_HeadAngleRangeMin_deg", debugName);
+  _configParams.s5_HeadAngleRangeMax_deg = ParseFloat(config, "s5_HeadAngleRangeMax_deg", debugName);
   // [min,max] range for random angle turns for step 6
-  _configParams.s6_BodyAngleRangeMin_deg = ParseFloat(config, "s6_BodyAngleRangeMin_deg");
-  _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg");
-  _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg");
-  _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg");
+  _configParams.s6_BodyAngleRangeMin_deg = ParseFloat(config, "s6_BodyAngleRangeMin_deg", debugName);
+  _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg", debugName);
+  _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg", debugName);
+  _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg", debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,9 +161,15 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   if( _configParams.behavior_ShouldResetTurnDirection ) {
     DecideTurnDirection();
   }
-  
-  // start first iteration
-  TransitionToS1_OppositeTurn(robot);
+
+  // if we should lower the lift, do that now
+  if( _configParams.behavior_ShouldLowerLift ) {
+    IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn);
+  }
+  else {
+    TransitionToS1_OppositeTurn(robot);
+  }
 
   return Result::RESULT_OK;
 }
@@ -304,7 +293,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
 void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
 {
   {
-    std::string stateName = "TransitionToS4_HeadOnlyUp (" + std::to_string(_s4HeadMovesLeft) + " / " +
+    std::string stateName = "TransitionToS4_HeadOnlyUp (" + std::to_string(_s4HeadMovesLeft) + "/" +
       std::to_string(_s4HeadMovesRolled) + ")";
     SetStateName(stateName);
   }
@@ -405,7 +394,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   Radians currentZ_rad = robot.GetPose().GetRotationAngle<'Z'>();
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;
-  
+
   // assert we are not turning more than PI in one iteration (because of Radian rescaling)
   ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
     "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
@@ -460,6 +449,14 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& ro
   turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
   turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
+// Code for debugging
+//  PRINT_NAMED_WARNING("RSAM", "STATE %s (bh) set BODY %.2f, HEAD %.2f (curB %.2f, curH %.2f)",
+//    GetStateName().c_str(),
+//    RAD_TO_DEG(bodyTargetAngleAbs_rad.ToFloat()),
+//    RAD_TO_DEG(headTargetAngleAbs_rad.ToFloat()),
+//    RAD_TO_DEG(robot.GetPose().GetRotationAngle<'Z'>().ToFloat()),
+//    robot.GetHeadAngle() );
+
   return turnAction;
 }
 
@@ -487,6 +484,14 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
   turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
   turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
+
+// code for debugging
+//  PRINT_NAMED_WARNING("RSAM", "STATE %s (ho) set BODY %.2f, HEAD %.2f (curB %.2f, curH %.2f)",
+//    GetStateName().c_str(),
+//    RAD_TO_DEG(bodyTargetAngleAbs_rad.ToFloat()),
+//    RAD_TO_DEG(headTargetAngleAbs_rad.ToFloat()),
+//    RAD_TO_DEG(robot.GetPose().GetRotationAngle<'Z'>().ToFloat()),
+//    robot.GetHeadAngle() );
 
   return turnAction;
 }

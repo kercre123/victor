@@ -78,7 +78,7 @@ static uint32_t          m_current_time = 0;                                 /**
 
 // Nordic specific configuration values (not defined by BLE standard).
 // Definition of initial values found in ble_dtm.h
-static int32_t           m_tx_power          = DEFAULT_TX_POWER;             /**< TX power for transmission test, default to maximum value (+4 dBm). */
+static int32_t           m_tx_power          = RADIO_TXPOWER_TXPOWER_0dBm;   /**< TX power for transmission test . */
 static NRF_TIMER_Type *  mp_timer            = DEFAULT_TIMER;                /**< Timer to be used. */
 static IRQn_Type         m_timer_irq         = DEFAULT_TIMER_IRQn;           /**< which interrupt line to clear on every timeout */
 

@@ -115,7 +115,16 @@ namespace Anki {
     
     void DriveToObjectAction::SetApproachAngle(const f32 angle_rad)
     {
-      PRINT_NAMED_INFO("DriveToObjectAction.SetApproachingAngle", "%f rad", angle_rad);
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToObjectAction.SetApproachAngle.Invalid",
+                            "Tried to set the approach angle, but action has already started");
+        return;
+      }
+
+      PRINT_NAMED_INFO("DriveToObjectAction.SetApproachingAngle",
+                       "[%d] %f rad",
+                       GetTag(),
+                       angle_rad);
       _useApproachAngle = true;
       _approachAngle_rad = angle_rad;
     }
@@ -385,7 +394,9 @@ namespace Anki {
           } else {
             const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(_robot.GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
-              PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.");
+              PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
+                               "[%d] Robot not close enough, will return FAILURE_RETRY.",
+                               GetTag());
               result = ActionResult::FAILURE_RETRY;
             }
           }
@@ -396,7 +407,9 @@ namespace Anki {
           result = GetPossiblePoses(object, possiblePoses, inPosition);
           
           if(!inPosition) {
-            PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.");
+            PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
+                             "[%d] Robot not in position, will return FAILURE_RETRY.",
+                             GetTag());
             result = ActionResult::FAILURE_RETRY;
           }
         }
@@ -597,13 +610,22 @@ namespace Anki {
                                       const Point3f& distThreshold,
                                       const Radians& angleThreshold)
     {
+
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToObjectAction.SetGoal.Invalid",
+                            "[%d] Tried to set goal, but action has started",
+                            GetTag());
+        return RESULT_FAIL;
+      }
+
       _goalDistanceThreshold = distThreshold;
       _goalAngleThreshold = angleThreshold;
       
       _goalPoses = {pose};
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
-                       "Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg",
+                       "[%d] Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg",
+                       GetTag(),
                        _goalPoses.back().GetTranslation().x(),
                        _goalPoses.back().GetTranslation().y(),
                        _goalPoses.back().GetTranslation().z(),
@@ -618,13 +640,22 @@ namespace Anki {
                                        const Point3f& distThreshold,
                                        const Radians& angleThreshold)
     {
+
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToObjectAction.SetGoals.Invalid",
+                            "[%d] Tried to set goals, but action has started",
+                            GetTag());
+        return RESULT_FAIL;
+      }
+      
       _goalDistanceThreshold = distThreshold;
       _goalAngleThreshold    = angleThreshold;
       
       _goalPoses = poses;
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
-                       "Setting %lu possible goal options.",
+                       "[%d] Setting %lu possible goal options.",
+                       GetTag(),
                        (unsigned long)_goalPoses.size());
       
       _isGoalSet = true;
@@ -678,7 +709,18 @@ namespace Anki {
         if(_goalPoses.size() == 1) {
           planningResult = _robot.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
         } else {
-          planningResult = _robot.StartDrivingToPose(_goalPoses, _pathMotionProfile, &_selectedGoalIndex, _useManualSpeed);
+          planningResult = _robot.StartDrivingToPose(_goalPoses,
+                                                     _pathMotionProfile,
+                                                     &_selectedGoalIndex,
+                                                     _useManualSpeed);
+          PRINT_NAMED_DEBUG("DriveToPoseAction.SelectedGoal",
+                            "[%d] Selected goal %zu W.R.T. robot (%f, %f, %f, %fdeg)",
+                            GetTag(),
+                            _selectedGoalIndex,
+                            _goalPoses[_selectedGoalIndex].GetTranslation().x(),
+                            _goalPoses[_selectedGoalIndex].GetTranslation().y(),
+                            _goalPoses[_selectedGoalIndex].GetTranslation().z(),
+                            _goalPoses[_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees());
         }
         
         if(planningResult != RESULT_OK) {
@@ -788,9 +830,13 @@ namespace Anki {
           static int ctr = 0;
           if(ctr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
-                             "Waiting for robot to complete its path traversal (%d), "
-                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.", ctr,
-                             _robot.GetCurrentPathSegment(), _robot.GetLastSentPathID(), _robot.GetLastRecvdPathID());
+                             "[%d] Waiting for robot to complete its path traversal (%d), "
+                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
+                             GetTag(),
+                             ctr,
+                             _robot.GetCurrentPathSegment(),
+                             _robot.GetLastSentPathID(),
+                             _robot.GetLastRecvdPathID());
           }
           break;
         }
@@ -810,7 +856,8 @@ namespace Anki {
           if(_robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
-                             "Robot %d successfully finished following path (Tdiff=%.1fmm).",
+                             "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm).",
+                             GetTag(),
                              _robot.GetID(), Tdiff.Length());
             
             result = ActionResult::SUCCESS;
@@ -819,8 +866,15 @@ namespace Anki {
           // and it is no longer executing it, but we appear to not be in position
           else if (_robot.GetLastSentPathID() == _robot.GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
-                             "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d",
-                             Tdiff.Length(), _robot.GetLastRecvdPathID());
+                             "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
+                             " goal %zu (%f, %f, %f, %fdeg)",
+                             GetTag(),
+                             Tdiff.Length(), _robot.GetLastRecvdPathID(),
+                             _selectedGoalIndex,
+                             _goalPoses[_selectedGoalIndex].GetTranslation().x(),
+                             _goalPoses[_selectedGoalIndex].GetTranslation().y(),
+                             _goalPoses[_selectedGoalIndex].GetTranslation().z(),
+                             _goalPoses[_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees());
             result = ActionResult::FAILURE_RETRY;
           }
           else {
@@ -881,6 +935,12 @@ namespace Anki {
                             "Tried to set the approach angle, but action has already started");
         return;
       }
+
+      PRINT_NAMED_INFO("IDriveToInteractWithObject.SetApproachingAngle",
+                       "[%d] %f rad",
+                       GetTag(),
+                       angle_rad);
+
       assert(nullptr != _driveToObjectAction);
       _driveToObjectAction->SetApproachAngle(angle_rad);
     }
@@ -1047,7 +1107,12 @@ namespace Anki {
         return;
       }
 
-      ActionableObject* obj = static_cast<ActionableObject*>(observableObject);
+      ActionableObject* obj = dynamic_cast<ActionableObject*>(observableObject);
+      if( nullptr == obj ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.NonActionableObject", "");
+        return;
+      }
+      
       std::vector<PreActionPose> preActionPoses;
       obj->GetCurrentPreActionPoses(preActionPoses,
                                     {PreActionPose::DOCKING},
@@ -1056,14 +1121,15 @@ namespace Anki {
 
       if( preActionPoses.empty() ) {
         PRINT_NAMED_INFO("DriveToRollObjectAction.RollToUpright",
-                         "No valid pre-dock poses will upright object %d, not restricting pose",
+                         "[%d] No valid pre-dock poses will upright object %d, not restricting pose",
+                         GetTag(),
                          _objectID.GetValue());
         // NOTE: this will make it so we *might* get lucky and roll the cube into a state where we can roll it
         // again to upright it, although there is no guarantee. A real solution would need a high-level
         // planner to solve this. By doing nothing here, we don't limit the approach angle at all
       }
         
-      // Execute roll
+      // set approach angle for roll
       if (preActionPoses.size() == 1) {
         Vec3f approachVec = ComputeVectorBetween(obj->GetPose(), preActionPoses[0].GetPose());
         f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());

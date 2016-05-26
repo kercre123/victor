@@ -78,7 +78,7 @@ namespace Vision {
     // 'enrollmentCountReached'. Otherwise 0 is returned.
     EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached);
     
-    Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
+    Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
     
     

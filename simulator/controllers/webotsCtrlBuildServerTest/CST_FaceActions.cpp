@@ -105,7 +105,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 10;
             // Turn towards the last face pose
-            m.action.Set_turnTowardsLastFacePose(ExternalInterface::TurnTowardsLastFacePose(PI, 0, 0, 0, 0, 0, 0, 1));
+            m.action.Set_turnTowardsLastFacePose(ExternalInterface::TurnTowardsLastFacePose(PI, 0, 0, 0, 0, 0, 0, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

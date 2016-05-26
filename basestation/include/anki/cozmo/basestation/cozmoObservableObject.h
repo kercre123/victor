@@ -17,9 +17,10 @@
 
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "clad/types/objectTypes.h"
-#include "clad/types/objectFamilies.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/types/objectFamilies.h"
+#include "clad/types/objectTypes.h"
+#include "util/helpers/noncopyable.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +31,7 @@ namespace Cozmo {
   using ActiveID = s32;  // TODO: Change this to u32 and use 0 as invalid
   using FactoryID = u32;
   
-  class ObservableObject : public Vision::ObservableObject
+  class ObservableObject : public Vision::ObservableObject, private Util::noncopyable
   {
   public:
     
@@ -72,45 +73,7 @@ namespace Cozmo {
     ActiveID     GetActiveID()                  const   { return _activeID; }
     virtual bool IsActive()                     const   { return false; }
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
-    
-    static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type) {
-      ObjectType objType = ObjectType::Unknown;
-      switch(type) {
-        case ActiveObjectType::OBJECT_CHARGER:
-          objType = ObjectType::Charger_Basic;
-          break;
-        case ActiveObjectType::OBJECT_CUBE1:
-          objType = ObjectType::Block_LIGHTCUBE1;
-          break;
-        case ActiveObjectType::OBJECT_CUBE2:
-          objType = ObjectType::Block_LIGHTCUBE2;
-          break;
-        case ActiveObjectType::OBJECT_CUBE3:
-          objType = ObjectType::Block_LIGHTCUBE3;
-          break;
-        default:
-          break;
-      }
-      
-      return objType;
-    }
 
-  
-    struct LEDstate {
-      ColorRGBA onColor;
-      ColorRGBA offColor;
-      u32       onPeriod_ms;
-      u32       offPeriod_ms;
-      u32       transitionOnPeriod_ms;
-      u32       transitionOffPeriod_ms;
-      
-      LEDstate()
-      : onColor(0), offColor(0), onPeriod_ms(0), offPeriod_ms(0)
-      , transitionOnPeriod_ms(0), transitionOffPeriod_ms(0)
-      {
-        
-      }
-    };
     
   protected:
     

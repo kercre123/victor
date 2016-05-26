@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
@@ -93,6 +94,7 @@ namespace Anki {
 
     CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
     CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
+    CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
   
     // For tool code reading
     // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
@@ -117,6 +119,7 @@ namespace Anki {
     , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
     , _nvStorageComponent(*this, _context)
     , _textToSpeechComponent(_context)
+    , _lightsComponent( new LightsComponent( *this ) )
     , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
     , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
@@ -279,6 +282,12 @@ namespace Anki {
         _visionComponentPtr->Pause(true);
         
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
+        
+        if( _isOnChargerPlatform )
+        {
+          _isOnChargerPlatform = false;
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+        }
       }
       else if (true == _isPickedUp && false == t) {
         // Robot just got put back down
@@ -1000,8 +1009,11 @@ namespace Anki {
       }
       
       /////////// Update discovered active objects //////
-      for (const auto& obj : _discoveredObjects) {
-        if (GetLastMsgTimestamp() - obj.second.lastDiscoveredTimeStamp > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+      for (auto iter = _discoveredObjects.begin(); iter != _discoveredObjects.end();) {// Note not incrementing the iterator here
+        const auto& obj = *iter;
+        const int32_t maxTimestamp = 10 * Util::numeric_cast<int32_t>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS);
+        const int32_t timeStampDiff = Util::numeric_cast<int32_t>(GetLastMsgTimestamp()) - Util::numeric_cast<int32_t>(obj.second.lastDiscoveredTimeStamp);
+        if (timeStampDiff > maxTimestamp) {
           if (_enableDiscoveredObjectsBroadcasting) {
             PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",
                              "FactoryID 0x%x (type: %s, lastObservedTime %d, currTime %d)",
@@ -1012,7 +1024,10 @@ namespace Anki {
             ExternalInterface::ObjectUnavailable m(obj.first);
             Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
           }
-          _discoveredObjects.erase(obj.first);
+          iter = _discoveredObjects.erase(iter);
+        }
+        else {
+          ++iter;
         }
       }
 
@@ -1097,13 +1112,57 @@ namespace Anki {
       
       // Update ChargerPlatform
       ObservableObject* charger = dynamic_cast<ObservableObject*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
-      if( charger )
+      if( charger && charger->IsPoseStateKnown() && !IsPickedUp() )
       {
+        // This state is useful for knowing not to play a cliff react when just driving off the charger.
         bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-        if( isOnChargerPlatform != _isOnChargerPlatform)
+        if(isOnChargerPlatform != _isOnChargerPlatform)
         {
           _isOnChargerPlatform = isOnChargerPlatform;
-          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(isOnChargerPlatform)));
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+        }
+      }
+
+      _lightsComponent->Update();
+
+
+      if( kDebugPossibleBlockInteraction ) {
+        // print a bunch of info helpful for debugging block states
+        for( const auto& objByTypePair : GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube) ) {
+          for( const auto& objByIdPair : objByTypePair.second ) {
+            ObjectID objID = objByIdPair.first;
+            const ObservableObject* obj = objByIdPair.second;
+
+            const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
+            Pose3d relPose;
+            bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
+
+            const char* axisStr = "";
+            switch( obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() ) {
+              case AxisName::X_POS: axisStr="+X"; break;
+              case AxisName::X_NEG: axisStr="-X"; break;
+              case AxisName::Y_POS: axisStr="+Y"; break;
+              case AxisName::Y_NEG: axisStr="-Y"; break;
+              case AxisName::Z_POS: axisStr="+Z"; break;
+              case AxisName::Z_NEG: axisStr="-Z"; break;
+            }
+              
+            PRINT_NAMED_DEBUG("Robot.ObjectInteractionState",
+                              "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
+                              " z=%6.2f UpAxis:%s CanStack?%d CanPickUp?%d FromGround?%d",
+                              objID.GetValue(),
+                              obj->PoseStateToString( obj->GetPoseState() ),
+                              obj->IsMoving(),
+                              obj->IsRestingFlat(),
+                              (IsCarryingObject() && GetCarryingObject() == obj->GetID()),
+                              gotRelPose,
+                              topObj ? topObj->GetID().GetValue() : -1,
+                              relPose.GetTranslation().z(),
+                              axisStr,
+                              CanStackOnTopOfObject(*obj),
+                              CanPickUpObject(*obj),
+                              CanPickUpObjectFromGround(*obj));                              
+          }
         }
       }
       
@@ -2528,7 +2587,7 @@ namespace Anki {
       return true;
     }
 
-    bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
+    bool Robot::CanPickUpObject(const ObservableObject& objectToPickUp) const
     {
       Pose3d relPos;
       if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
@@ -2546,6 +2605,23 @@ namespace Anki {
       return true;
     }
 
+    bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
+    {
+      Pose3d relPos;
+      if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
+        return false;
+      }
+      
+      // check if it's too high to pick up
+      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
+      const float isTooHigh = topZ > (objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
+      if ( isTooHigh ) {
+        return false;
+      }
+    
+      // all checks clear
+      return true;
+    }
     
     // ============ Messaging ================
     
@@ -2642,7 +2718,7 @@ namespace Anki {
       _imageSaveMode = mode;
     }
     
-    TimeStamp_t Robot::GetLastImageTimeStamp() {
+    TimeStamp_t Robot::GetLastImageTimeStamp() const {
       return GetVisionComponent().GetLastProcessedImageTimeStamp();
     }
     
@@ -2971,25 +3047,32 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetBlockWorld().GetActiveObjectByID(objectID, ObjectFamily::LightCube));
-      if(activeCube == nullptr) {
+      ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByID(objectID);
+      if(activeObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
         
-        // NOTE: if make relative mode is "off", this call doesn't do anything:
-        const WhichCubeLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
-                                                                                      relativeToPoint,
-                                                                                      makeRelative);
+        WhichCubeLEDs rotatedWhichLEDs = whichLEDs;
         
-        activeCube->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
+        ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+        if(activeCube != nullptr) {
+          // NOTE: if make relative mode is "off", this call doesn't do anything:
+          rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs, relativeToPoint, makeRelative);
+        } else if (makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+          PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
+          return RESULT_FAIL;
+        }
+
+        
+        activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
         
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
           lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
           lights[i].offColor = ENCODED_COLOR(ledState.offColor);
           lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
@@ -3001,10 +3084,10 @@ namespace Anki {
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
                             "Setting lights for object %d (activeID %d)",
-                            objectID.GetValue(), activeCube->GetActiveID());
+                            objectID.GetValue(), activeObject->GetActiveID());
         }
 
-        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
     }
       
@@ -3018,21 +3101,28 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetBlockWorld().GetActiveObjectByID(objectID, ObjectFamily::LightCube));
-      if(activeCube == nullptr) {
+      ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByID(objectID);
+      if(activeObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
         
-        activeCube->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+        activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
 
-        // NOTE: if make relative mode is "off", this call doesn't do anything:
-        activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
+
+        ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+        if(activeCube != nullptr) {
+          // NOTE: if make relative mode is "off", this call doesn't do anything:
+          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
+        } else if (makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+          PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
+          return RESULT_FAIL;
+        }
         
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
           lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
           lights[i].offColor = ENCODED_COLOR(ledState.offColor);
           lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
@@ -3044,10 +3134,10 @@ namespace Anki {
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
                             "Setting lights for object %d (activeID %d)",
-                            objectID.GetValue(), activeCube->GetActiveID());
+                            objectID.GetValue(), activeObject->GetActiveID());
         }
         
-        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
 
     }
@@ -3406,7 +3496,7 @@ namespace Anki {
       msg.pose_qz = q.z();
       
       msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
-      msg.rightWheelSpeed_mmps = GetRigthWheelSpeed();
+      msg.rightWheelSpeed_mmps = GetRightWheelSpeed();
       
       msg.headAngle_rad = GetHeadAngle();
       msg.liftHeight_mm = GetLiftHeight();

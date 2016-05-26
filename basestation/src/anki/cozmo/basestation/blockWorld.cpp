@@ -273,7 +273,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       return nullptr;
     }
 
-    ObservableObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    ActiveObject* BlockWorld::GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const
     {
       const ObservableObject* object = nullptr;
       const char* familyStr = nullptr;
@@ -299,10 +299,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         return nullptr;
       }
       
-      return (ObservableObject*)object;
+      return const_cast<ActiveObject*>(dynamic_cast<const ActiveObject*>(object));
     } // GetActiveObject()
     
-    ObservableObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
+    ActiveObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
     {
       for(const auto& objectsByType : _existingObjects) {
         if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first) {
@@ -310,7 +310,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
             for(const auto& objectWithID : objectsByID.second) {
               ObservableObject* object = objectWithID.second;
               if(object->IsActive() && object->GetActiveID() == activeID) {
-                return object;
+                return dynamic_cast<ActiveObject*>(object);
               }
             }
           }
@@ -1132,25 +1132,32 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           // Check if there are objects on top of this object that need to be moved since the
           // object it's resting on has moved.
           const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
-          ObservableObject* objectOnBottom = matchingObject;
-          ObservableObject* objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
-          while(objectOnTop != nullptr) {
-            // If the object was already updated this timestamp then don't bother doing this.
-            if (objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
-              
-              // Get difference in position between top object's pose and the previous pose of the observed bottom object.
-              // Apply difference to the new observed pose to get the new top object pose.
-              Pose3d topPose = objectOnTop->GetPose();
-              Pose3d bottomPose = objectOnBottom->GetPose();
-              Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
-              topPose.SetTranslation( objSeen->GetPose().GetTranslation() + diff );
-              objectOnTop->SetPose(topPose);
-            }
+
+          // Updates poses of stacks of objects by finding the difference between old object poses and applying that
+          // to the new observed poses. Has to use the old object to find the object on top
+          ObservableObject* objectOnTop = FindObjectOnTopOf(*matchingObject, STACKED_HEIGHT_TOL_MM);
+          ObservableObject* newObjectOnBottom = objSeen;
+          ObservableObject* oldObjectOnBottom = matchingObject->CloneType();
+          oldObjectOnBottom->SetPose(matchingObject->GetPose());
+          // If the object was already updated this timestamp then don't bother doing this.
+          while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
+
+            // Get difference in position between top object's pose and the previous pose of the observed bottom object.
+            // Apply difference to the new observed pose to get the new top object pose.
+            Pose3d topPose = objectOnTop->GetPose();
+            Pose3d bottomPose = oldObjectOnBottom->GetPose();
+            Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
+            topPose.SetTranslation( newObjectOnBottom->GetPose().GetTranslation() + diff );
+            Util::SafeDelete(oldObjectOnBottom);
+            oldObjectOnBottom = objectOnTop->CloneType();
+            oldObjectOnBottom->SetPose(objectOnTop->GetPose());
+            objectOnTop->SetPose(topPose);
             
             // See if there's an object above this object
-            objectOnBottom = objectOnTop;
-            objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+            newObjectOnBottom = objectOnTop;
+            objectOnTop = FindObjectOnTopOf(*oldObjectOnBottom, STACKED_HEIGHT_TOL_MM);
           }
+          Util::SafeDelete(oldObjectOnBottom);
           // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
           
           // Update lastObserved times of this object
@@ -2333,9 +2340,9 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
       
       // Is there an active object with the same activeID that already exists?
-      ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(activeObjectType);
+      ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
       const char* objTypeStr = EnumToString(objType);
-      ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
+      ActiveObject* matchingObject = GetActiveObjectByActiveID(activeID);
       if (matchingObject == nullptr) {
         // If no match found, find one of the same type with an invalid activeID and assume it's that
         const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(objType);
@@ -2866,7 +2873,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                  !object->IsBeingCarried() &&
                  !object->IsPoseStateUnknown() &&
-                 object->GetID() != _robot->GetDockObject())
+                 object->GetID() != _robot->GetDockObject() &&
+                 !object->CanIntersectWithRobot())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
@@ -3089,7 +3097,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   }
   
     ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                    f32 zTolerance) const
+                                                    f32 zTolerance,
+                                                    const BlockWorldFilter& filterIn) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
       sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
@@ -3103,7 +3112,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
       topOfObjectOnBottom.z() += 0.5f*std::abs(rotatedBtmSize.z());
       
-      BlockWorldFilter filter;
+      BlockWorldFilter filter(filterIn);
       filter.AddIgnoreID(objectOnBottom.GetID());
       
       FindFcn findLambda = [&topOfObjectOnBottom, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
@@ -3117,6 +3126,49 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // close enough together, return this as the object on top
         Point3f dist(topOfObjectOnBottom);
         dist -= bottomOfCandidateObject;
+        dist.Abs();
+        
+        if(dist < sameDistTol) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter, true);
+    }
+  
+  
+    ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                       f32 zTolerance,
+                                                       const BlockWorldFilter& filterIn) const
+    {
+      Point3f sameDistTol(objectOnTop.GetSize());
+      sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
+      sameDistTol.y() *= 0.5f;
+      sameDistTol.z() = zTolerance;
+      sameDistTol = objectOnTop.GetPose().GetRotation() * sameDistTol;
+      sameDistTol.Abs();
+      
+      // Find the point at the top middle of the object on bottom
+      Point3f rotatedBtmSize(objectOnTop.GetPose().GetRotation() * objectOnTop.GetSize());
+      Point3f bottomOfObjectOnTop(objectOnTop.GetPose().GetTranslation());
+      bottomOfObjectOnTop.z() -= 0.5f*std::abs(rotatedBtmSize.z());
+      
+      BlockWorldFilter filter(filterIn);
+      filter.AddIgnoreID(objectOnTop.GetID());
+      
+      FindFcn findLambda = [&bottomOfObjectOnTop, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
+      {
+        // Find the point at top middle of the object we're checking to be underneath
+        Point3f rotatedBtmSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+        Point3f topOfCandidateObject(candidateObject->GetPose().GetTranslation());
+        topOfCandidateObject.z() += 0.5f*std::abs(rotatedBtmSize.z());
+        
+        // If the top of the bottom object and the bottom the candidate top object are
+        // close enough together, return this as the object on top
+        Point3f dist(bottomOfObjectOnTop);
+        dist -= topOfCandidateObject;
         dist.Abs();
         
         if(dist < sameDistTol) {

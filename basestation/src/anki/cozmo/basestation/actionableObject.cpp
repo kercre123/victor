@@ -24,9 +24,8 @@
 namespace Anki {
   namespace Cozmo {
         
-    ActionableObject::ActionableObject(ObjectFamily family, ObjectType type)
-    : ObservableObject(family,type)
-    , _isBeingCarried(false)
+    ActionableObject::ActionableObject()
+    : _isBeingCarried(false)
     , _isSelected(false)
     {
       

@@ -38,9 +38,6 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   
   void TransitionToSleepLoop(Robot& robot);
-private:
-  // need to change in EventRun
-  bool _hasBeenOffChargerPlatform;
 }; // class BehaviorReactToOnCharger
   
 

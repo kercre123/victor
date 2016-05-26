@@ -284,7 +284,7 @@ namespace AnimationController {
     
     if (_disabled) 
     {
-      AnkiDebug( 2, "AnimationController", 473, "BufferKeyFrame called while disabled", 0);
+      AnkiDebug( 2, "AnimationController", 477, "BufferKeyFrame called while disabled", 0);
       return RESULT_FAIL;
     }
     
@@ -368,6 +368,23 @@ namespace AnimationController {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
           AnkiWarn( 169, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
+          
+          // Failsafe: make sure body stops moving.
+          // We don't have to do this with lift/head, because they will stop
+          // when the controller reaches its desired value.
+          if(_tracksInUse & BODY_TRACK) {
+            #ifdef TARGET_ESPRESSIF
+            RobotInterface::EngineToRobot msg;
+            msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
+            msg.animBodyMotion.speed = 0;
+            msg.animBodyMotion.curvatureRadius_mm = 0;
+            RTIP::SendMessage(msg);
+            #else
+            SteeringController::ExecuteDirectDrive(0, 0);
+            #endif
+            _tracksInUse &= ~BODY_TRACK;
+          }
+          
         }
       } else {
         _isBufferStarved = false;
@@ -462,7 +479,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn( 173, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
+            AnkiWarn( 177, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -527,7 +544,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          AnkiWarn( 174, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
+          AnkiWarn( 178, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
           return RESULT_FAIL;
         }
 
@@ -603,7 +620,7 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
                 RTIP::SendMessage(msg);
               #else
-                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
+                HeadController::SetDesiredAngle(DEG_TO_RAD_F32(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
               #endif
               _tracksInUse |= HEAD_TRACK;
@@ -755,7 +772,7 @@ namespace AnimationController {
 
           default:
           {
-            AnkiWarn( 167, "AnimationController.UnexpectedTag", 474, "Unexpected message type %d in animation buffer!", 1, msgID);
+            AnkiWarn( 167, "AnimationController.UnexpectedTag", 478, "Unexpected message type %d in animation buffer!", 1, msgID);
             return RESULT_FAIL;
           }
 
