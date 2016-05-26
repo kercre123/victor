@@ -290,22 +290,14 @@ namespace Cozmo {
     return retVal;
   }
 
-  TimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp()
+  TimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
   {
-    
-    Lock();
-    const TimeStamp_t t = (_lastImg.IsEmpty() ? 0 : _lastImg.GetTimestamp());
-    Unlock();
-
-    return t;
+    return _lastProcessedImageTimeStamp;
   }
   
   TimeStamp_t VisionComponent::GetProcessingPeriod()
   {
-    Lock();
-    const TimeStamp_t t = _processingPeriod;
-    Unlock();
-    return t;
+    return _processingPeriod;
   }
 
   void VisionComponent::Lock()
@@ -430,24 +422,25 @@ namespace Cozmo {
                                   imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                   DEG_TO_RAD_F32(0.1)));
       
-      VisionPoseData nextPoseData;
-      nextPoseData.poseStamp = imagePoseStamp;
-      nextPoseData.timeStamp = imagePoseStampTimeStamp;
-      nextPoseData.isMoving = !headSame || !poseSame;
-      nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(nextPoseData.poseStamp, nextPoseData.timeStamp);
-      nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(nextPoseData.poseStamp.GetHeadAngle(),
-                                                                     nextPoseData.groundPlaneHomography);
-      nextPoseData.imuDataHistory = _imuHistory;
+      Lock();
+      _nextPoseData.poseStamp = imagePoseStamp;
+      _nextPoseData.timeStamp = imagePoseStampTimeStamp;
+      _nextPoseData.isMoving = !headSame || !poseSame;
+      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
+      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
+                                                                     _nextPoseData.groundPlaneHomography);
+      _nextPoseData.imuDataHistory = _imuHistory;
+      Unlock();
       
       // Experimental:
-      //UpdateOverheadMap(image, nextPoseData);
+      //UpdateOverheadMap(image, _nextPoseData);
       
       switch(_runMode)
       {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            UpdateVisionSystem(nextPoseData, image);
+            UpdateVisionSystem(_nextPoseData, image);
             _lastImg = image;
           }
           break;
@@ -456,17 +449,16 @@ namespace Cozmo {
         {
           if(!_paused) {
             Lock();
-            if (_currentImg.IsEmpty())
-            {
-              image.CopyTo(_currentImg);
-              _currentPoseData = std::move(nextPoseData);
+            
+            if(!_nextImg.IsEmpty()) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
+                               "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
+                               image.GetTimestamp(), _nextImg.GetTimestamp(), _currentImg.GetTimestamp());
             }
-            else
-            {
-              PRINT_NAMED_INFO("VisionComponent.SetImage.DroppedFrame",
-                               "Dropping image with t=%d, still processing image t=%d.",
-                               image.GetTimestamp(), _currentImg.GetTimestamp());
-            }
+            
+            // TODO: Avoid the copying here (shared memory?)
+            image.CopyTo(_nextImg);
+            
             Unlock();
           }
           break;
@@ -615,32 +607,31 @@ namespace Cozmo {
         std::this_thread::sleep_for(std::chrono::microseconds(100));
         continue;
       }
-      
-      bool didProcess = false;
 
-      Lock();
       if (!_currentImg.IsEmpty())
       {
-        didProcess = true;
-        
         // There is an image to be processed:
         UpdateVisionSystem(_currentPoseData, _currentImg);
-        
-        
-        // Store frame rate
-        _processingPeriod = _currentImg.GetTimestamp() - _lastImg.GetTimestamp();
         
         // Save the image we just processed
         _lastImg = _currentImg;
         ASSERT_NAMED(_lastImg.GetTimestamp() == _currentImg.GetTimestamp(),
                      "VisionComponent.Processor.WrongImageTimestamp");
         
+        Lock();
+        // Clear it when done.
         _currentImg = {};
-      }
-      Unlock();
-      
-      if(!didProcess)
-      {
+        _nextImg = {};
+        Unlock();
+        
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      } else if(!_nextImg.IsEmpty()) {
+        Lock();
+        _currentImg        = _nextImg;
+        _currentPoseData   = _nextPoseData;
+        _nextImg = {};
+        Unlock();
+      } else {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
       }
       
@@ -815,6 +806,10 @@ namespace Cozmo {
         for(auto & debugRGB : result.debugImageRGBs) {
           debugRGB.second.Display(debugRGB.first.c_str());
         }
+        
+        // Store frame rate and last image processed time
+        _processingPeriod = result.timestamp - _lastProcessedImageTimeStamp;
+        _lastProcessedImageTimeStamp = result.timestamp;
         
         // Send the processed image message last
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp)));
