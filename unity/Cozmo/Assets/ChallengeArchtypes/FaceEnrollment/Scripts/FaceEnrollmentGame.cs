@@ -78,6 +78,9 @@ namespace FaceEnrollment {
       if (!success) {
         // TODO: Retry or notify failure or something?
       }
+      else {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
+      }
 
       base.RaiseMiniGameQuit();
     }
