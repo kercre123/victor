@@ -215,11 +215,16 @@ struct DockingErrorSignal;
     Result SaveFaceAlbumToFile(const std::string& path);
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     
+    // Templated message handler used internally by AnkiEventUtil
+    template<typename T>
+    void HandleMessage(const T& msg);
+    
   protected:
     
     bool _isInitialized = false;
     
     Robot& _robot;
+    const CozmoContext* _context = nullptr;
     
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;

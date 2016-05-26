@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -29,6 +30,7 @@
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/fileUtils/fileUtils.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -50,6 +52,7 @@ namespace Cozmo {
   
   VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
   : _robot(robot)
+  , _context(context)
   , _vizManager(context->GetVizManager())
   , _camera(robot.GetID())
   , _runMode(mode)
@@ -57,7 +60,7 @@ namespace Cozmo {
     std::string dataPath("");
     if(context->GetDataPlatform() != nullptr) {
       dataPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                              "/config/basestation/vision");
+                                                            Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
                           "Insantiating VisionSystem with no context and/or data platform.");
@@ -69,66 +72,19 @@ namespace Cozmo {
     if(nullptr != context && nullptr != context->GetExternalInterface())
     {
       using namespace ExternalInterface;
+      auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
       
-      // EnableVisionMode
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableVisionMode,
-        [this] (const AnkiEvent<MessageGameToEngine>& event)
-        {
-          auto const& payload = event.GetData().Get_EnableVisionMode();
-          EnableMode(payload.mode, payload.enable);
-        }));
-            
-      // EnableNewFaceEnrollment
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::SetFaceEnrollmentPose,
-        [this] (const AnkiEvent<MessageGameToEngine>& event) {
-          SetFaceEnrollmentMode(event.GetData().Get_SetFaceEnrollmentPose().pose);
-        }));
-      
-      // StartFaceTracking
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableVisionMode,
-         [this] (const AnkiEvent<MessageGameToEngine>& event)
-         {
-           auto const& payload = event.GetData().Get_EnableVisionMode();
-           EnableMode(payload.mode, payload.enable);
-         }));
-      
-      // VisionWhileMoving
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::VisionWhileMoving,
-         [this] (const AnkiEvent<MessageGameToEngine>& event)
-         {
-           const VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
-           EnableVisionWhileMovingFast(msg.enable);
-         }));
-      
-      // VisionRunMode
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::VisionRunMode,
-         [this] (const AnkiEvent<MessageGameToEngine>& event)
-         {
-           const VisionRunMode& msg = event.GetData().Get_VisionRunMode();
-           SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
-         }));
+      // In alphabetical order:
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByName>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceEnrollmentPose>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
 
-      // EraseEnrolledFaceByName
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseEnrolledFaceByName,
-         [this] (const AnkiEvent<MessageGameToEngine>& event)
-         {
-           EraseFace(event.GetData().Get_EraseEnrolledFaceByName().name);
-         }));
-
-      // EraseEnrolledFaceByID
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseEnrolledFaceByID,
-        [this] (const AnkiEvent<MessageGameToEngine>& event)
-        {
-          auto const faceID = event.GetData().Get_EraseEnrolledFaceByID().faceID;
-          EraseFace(faceID);
-        }));
-      
-      // EraseAllEnrolledFaces
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseAllEnrolledFaces,
-        [this] (const AnkiEvent<MessageGameToEngine>& event)
-        {
-          EraseAllFaces();
-        }));
     }
     
   } // VisionSystem()
@@ -1896,6 +1852,75 @@ namespace Cozmo {
       // TODO: Need to determine what styles need to be created
       _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
     }
+  }
+  
+#pragma mark - 
+#pragma mark Message Handlers
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::EnableVisionMode& payload)
+  {
+    EnableMode(payload.mode, payload.enable);
+  }
+  
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SetFaceEnrollmentPose& msg)
+  {
+    SetFaceEnrollmentMode(msg.pose);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::VisionWhileMoving& msg)
+  {
+    EnableVisionWhileMovingFast(msg.enable);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::VisionRunMode& msg)
+  {
+    SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::EraseEnrolledFaceByName& msg)
+  {
+    EraseFace(msg.name);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::EraseEnrolledFaceByID& msg)
+  {
+    EraseFace(msg.faceID);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::EraseAllEnrolledFaces& msg)
+  {
+    EraseAllFaces();
+  }
+
+  // Helper function to get the full path to face albums if isRelative=true
+  inline static std::string GetFullFaceAlbumPath(const CozmoContext* context, const std::string& pathIn, bool isRelative)
+  {
+    if(isRelative) {
+      return context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                        Util::FileUtils::FullFilePath({"config", "basestation", "faceAlbums", pathIn}));
+    } else {
+      return pathIn;
+    }
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SaveFaceAlbumToFile& msg)
+  {
+    SaveFaceAlbumToFile(GetFullFaceAlbumPath(_context, msg.path, msg.isRelativePath));
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::LoadFaceAlbumFromFile& msg)
+  {
+    LoadFaceAlbumFromFile(GetFullFaceAlbumPath(_context, msg.path, msg.isRelativePath));
   }
   
 } // namespace Cozmo

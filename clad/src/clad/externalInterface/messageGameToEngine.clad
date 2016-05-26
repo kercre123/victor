@@ -294,12 +294,14 @@ message VisionRunMode {
 
 // Save the enrolled face album to a file
 message SaveFaceAlbumToFile {
-  string path
+  string path,
+  bool   isRelativePath=1  // If true, use 'path' relative to internal album path
 }
 
 // Load the face album from a file (this clears all faces stored on the robot!)
 message LoadFaceAlbumFromFile {
-  string path
+  string path,
+  bool   isRelativePath=1  // If true, use 'path' relative to internal album path
 }
 
 ///////////////////////////////////////////////////////////////////////////////
