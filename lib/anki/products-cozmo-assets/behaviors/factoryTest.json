@@ -1,9 +1,0 @@
-{
-  "behaviorType": "FactoryTest",
-  "name": "FactoryTest",
-  "behaviorGroups": [
-    "ChangesPosition",
-    "ChangesOrientation",
-    "MovesLift"
-  ]
-}
