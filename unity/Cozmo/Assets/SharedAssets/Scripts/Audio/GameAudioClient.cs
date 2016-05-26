@@ -195,7 +195,7 @@ namespace Anki {
             if (!hasVolumePref) {
               aValue = GetDefaultVolume(aParameter);
             }
-            SetVolumeValue(aParameter, volumePrefs[aParameter], 0, CurveType.Linear, false);
+            SetVolumeValue(aParameter, aValue, 0, CurveType.Linear, false);
           }
         }
 
