@@ -97,7 +97,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: 400
   m_MinHeight: -1
-  m_PreferredWidth: 350
+  m_PreferredWidth: 450
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -391,7 +391,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_PreferredWidth
-      value: 600
+      value: 450
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_MinWidth
