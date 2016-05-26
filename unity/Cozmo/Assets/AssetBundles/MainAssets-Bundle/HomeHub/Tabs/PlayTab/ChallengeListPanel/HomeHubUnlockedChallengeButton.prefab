@@ -144,9 +144,9 @@ MonoBehaviour:
   - targetImage: {fileID: 0}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.62352943, g: 0.45882356, b: 0.13725491, a: 1}
+    pressedColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: 0.62352943, g: 0.45882356, b: 0.13725491, a: 0.284}
+    disabledColor: {r: 0.6691177, g: 0.6691177, b: 0.6691177, a: 0.284}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: -1705717452
@@ -404,6 +404,30 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _UISoundEvent._GameObjectType
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].pressedColor.r
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].pressedColor.g
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].pressedColor.b
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].disabledColor.r
+      value: 0.6691177
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].disabledColor.g
+      value: 0.6691177
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].disabledColor.b
+      value: 0.6691177
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
