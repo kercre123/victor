@@ -258,9 +258,9 @@ class GamePlatformConfiguration(object):
         # The keys defined in symlink must exist in the following dictionaries
         self.unity_symlink = {}
         self.unity_target = {}
+        self.gyp_dir = os.path.join(GAME_ROOT, 'project', 'gyp')
 
         if platform != 'android':
-            self.gyp_dir = os.path.join(GAME_ROOT, 'project', 'gyp')
             self.workspace_name = '{0}Workspace_{1}'.format(PRODUCT_NAME, self.platform.upper())
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
@@ -343,9 +343,10 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         # START ENGINE GENERATE
+        generate_gyp(self.gyp_dir, './configure.py', self.platform, self.options, os.path.join(ENGINE_ROOT, 'DEPS'))
+
         if self.platform != 'android':
             # Calling generate gyp instead of generate() for engine.
-            generate_gyp(self.gyp_dir, './configure.py', self.platform, self.options, os.path.join(ENGINE_ROOT, 'DEPS'))
             relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
             workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
             workspace.add_project(relative_gyp_project)
@@ -353,6 +354,7 @@ class GamePlatformConfiguration(object):
             self.call_engine('generate')
         # END ENGINE GENERATE
 
+        #START OF DEMO BUILD
         class_code = 'public class BuildFlags { \n'
         git_variable = '  public const string kGitHash = \"' + subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
         buildFlagsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
@@ -361,19 +363,17 @@ class GamePlatformConfiguration(object):
 
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
             file.write(class_code + git_variable +
-            '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+
-            '}')
+                       '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+'}')
         elif self.options.features != None and 'factoryTest' in self.options.features[0]:
             file.write(class_code + git_variable +
-            '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+
-            '}')
+                       '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+'}')
         else:
             file.write(class_code + git_variable +
-            '  public const string kDefaultBuildScene = \"\";'+'\n'+
-            '}')
+                       '  public const string kDefaultBuildScene = \"\";'+'\n'+'}')
 
         file.close()
-        
+        #NEED OF DEMO BUILD
+
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
             xcconfig = [

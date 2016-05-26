@@ -24,10 +24,7 @@ namespace Cozmo {
       }
 
       private DailyGoal _Goal;
-
-      [SerializeField]
-      private Image _GoalIcon;
-
+     
       private float _GoalProg;
 
       public float Progress {

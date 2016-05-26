@@ -159,6 +159,9 @@ public class ConnectDialog : MonoBehaviour {
     _ConnectionStatus.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
     RobotEngineManager.Instance.StartEngine();
     RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
+    // Set initial volumes
+    // TODO: We need to connect to the engine as soon as the app launches so we can begin playing audio.
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -170,22 +173,13 @@ public class ConnectDialog : MonoBehaviour {
       DAS.Error(this, "Unknown robot connected: " + robotID.ToString());
       return;
     }
-      
-    // actually load default volume
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences.ContainsKey(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot)) {
-      _Robot.SetRobotVolume(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences[Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot]);
-    }
-    else {
-      #if UNITY_EDITOR
-      _Robot.SetRobotVolume(0.06f);
-      #else
-      _Robot.SetRobotVolume(1.0f);
-      #endif
-    }
 
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
       ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
+
+    // Set initial Robot Volume when connecting
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[]{ Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
 
     _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");

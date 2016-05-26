@@ -63,8 +63,13 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleDemoState(int demoNum) {
     _PressDemoDebugSceneIndex = demoNum;
+    DAS.Debug("PressDemo", "Demo State #: " + demoNum);
     if (_PressDemoViewInstance != null) {
       _PressDemoViewInstance.SetPressDemoDebugState(demoNum);
+    }
+    // last demo scene so shut off music
+    if (demoNum == 7) {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
     }
   }
 
@@ -82,6 +87,7 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+    DAS.Info(this, "PressDemoHubWorld.HandleExternalRejection");
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
       _RequestDialog = null;
@@ -106,10 +112,12 @@ public class PressDemoHubWorld : HubWorldBase {
       alertView.TitleLocKey = "pressDemo.speedTapRequestAgainTitle";
       alertView.DescriptionLocKey = "pressDemo.speedTapRequestAgainDesc";
     }
+    _RequestDialog = alertView;
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {
     RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleSleepAnimationComplete);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
   }
 
   private void HandleForceProgressPressed() {

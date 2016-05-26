@@ -96,7 +96,6 @@ namespace Cozmo {
       }
 
       protected override void CleanUp() {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowClose);
         ResetButton(_PrimaryButton);
         ResetButton(_CloseButton);
         ResetButton(_SecondaryButton);

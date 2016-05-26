@@ -121,7 +121,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 180676, guid: d996dbae2d79f4c968c6452eea31de98, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoToggleButton:_TextLabelOffset
+    JsonValue: 0.0
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: DifficultySelectOption:_Label
@@ -186,7 +189,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -34.7, y: -65.9}
+  m_AnchoredPosition: {x: -53, y: -71}
   m_SizeDelta: {x: 90, y: 142}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000

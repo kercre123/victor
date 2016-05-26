@@ -8,7 +8,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22414918}
-  - 114: {fileID: 11410636}
+  - 114: {fileID: 11424486}
   m_Layer: 5
   m_Name: TreatRequestButton
   m_TagString: Untagged
@@ -41,7 +41,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22465916}
-  - 114: {fileID: 11428392}
+  - 114: {fileID: 11416934}
   m_Layer: 5
   m_Name: Quit Button
   m_TagString: Untagged
@@ -169,27 +169,6 @@ MonoBehaviour:
   m_Text: 
   _AllUppercase: 0
   GlowText: 0
---- !u!114 &11410636
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 108292}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#requestSparkView.sparkunlockbutton"'
-  ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: RequestTricksView:_TrickRequestButton
-    ReferencePath: 
-  ModifiedGlobalReferences: []
 --- !u!114 &11411518
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -225,22 +204,40 @@ MonoBehaviour:
   m_Text: 
   _AllUppercase: 0
   GlowText: 0
---- !u!114 &11428392
+--- !u!114 &11416934
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 113202}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 103458, guid: 85d9e07d30b304f2782d1dc4fa7f476c, type: 2}
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: RequestTricksView:_OptionalCloseDialogButton
+    ReferencePath: 
+  ModifiedGlobalReferences: []
+--- !u!114 &11424486
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 108292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+  ModifiedValues: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: RequestTricksView:_TrickRequestButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11445982
@@ -492,7 +489,7 @@ RectTransform:
   m_RootOrder: 5
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 200, y: -200}
+  m_AnchoredPosition: {x: 146.9, y: -141}
   m_SizeDelta: {x: 189, y: 175}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22473516

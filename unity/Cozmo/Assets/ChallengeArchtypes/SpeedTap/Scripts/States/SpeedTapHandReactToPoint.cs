@@ -32,8 +32,9 @@ namespace SpeedTap {
     private LightCube _WinningCube;
 
     private float _StartWinEffectTimestampSeconds;
-    private float _CubeCycleDurationSeconds;
-    private float _CubeFlashingDurationSeconds;
+
+    private float _CubeCycleDurationSeconds = 0;
+    private float _CubeFlashingDurationSeconds = 0;
 
     private CubeLightState _CurrentCubeLightState = CubeLightState.None;
 
@@ -45,8 +46,6 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-
-      UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
 
       if (_CurrentWinner == PointWinner.Player) {
         _SpeedTapGame.AddPlayerPoint();
@@ -65,14 +64,17 @@ namespace SpeedTap {
         _SpeedTapGame.EndCurrentRound();
 
         if (_SpeedTapGame.IsGameComplete()) {
+          UpdateBlockLights(_CurrentWinner, wasMistakeMade: false);
           _SpeedTapGame.UpdateUIForGameEnd();
           PlayReactToGameAnimationAndSendEvent();
         }
         else {
+          UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
           _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_CurrentWinner));
         }
       }
       else {
+        UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
         PlayReactToHandAnimation();
       }
     }
@@ -111,20 +113,30 @@ namespace SpeedTap {
       }
 
       if (wasMistakeMade) {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
         _WinningCube.SetLEDsOff();
         SetLosingLightPattern(losingBlock, _kWinCycleSpeedSeconds);
         _CurrentCubeLightState = CubeLightState.LoserFlashing;
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       }
       else {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
         _StartWinEffectTimestampSeconds = Time.time;
         losingBlock.SetLEDsOff();
-        SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
-        _CubeCycleDurationSeconds = _SpeedTapGame.GetCycleDurationSeconds(3, _kWinCycleSpeedSeconds);
-        _CubeFlashingDurationSeconds = 6 * _kWinCycleSpeedSeconds;
-        _CurrentCubeLightState = CubeLightState.WinnerCycling;
+        StartWinningBlockPattern();
       }
+    }
+
+    private void StartWinningBlockPattern() {
+      /*_CubeCycleDurationSeconds = _SpeedTapGame.GetCycleDurationSeconds(3, _kWinCycleSpeedSeconds);
+      _CubeFlashingDurationSeconds = 6 * _kWinCycleSpeedSeconds;
+      SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
+      _CurrentCubeLightState = CubeLightState.WinnerCycling;
+      _StartWinEffectTimestampSeconds = Time.time;*/
+
+      // INGO PR DEMO COZMO-2005
+      // For press demo, switching the win animation to flashing white because that will look better.
+      _CurrentCubeLightState = CubeLightState.None;
+      SetWinningFlashingPattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
     }
 
     private void SetWinningCyclePattern(LightCube winningBlock, Color[] winColors, float cycleDurationSeconds) {

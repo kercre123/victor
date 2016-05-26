@@ -19,6 +19,12 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;
 
+      [SerializeField]
+      private Image _CircuitryWithText;
+
+      [SerializeField]
+      private Image _CircuitryWithoutText;
+
       private ContinueButtonClickHandler _OnClickCallback;
 
       public string DASEventViewController {
@@ -42,6 +48,13 @@ namespace Cozmo {
         if (_ShelfTextLabel != null) {
           _ShelfTextLabel.text = text;
           _ShelfTextLabel.color = textColor;
+        }
+        bool textIsEmpty = string.IsNullOrEmpty(text);
+        if (_CircuitryWithText != null) {
+          _CircuitryWithText.gameObject.SetActive(!textIsEmpty);
+        }
+        if (_CircuitryWithoutText != null) {
+          _CircuitryWithoutText.gameObject.SetActive(textIsEmpty);
         }
       }
 

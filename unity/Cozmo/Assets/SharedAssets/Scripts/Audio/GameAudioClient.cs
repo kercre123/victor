@@ -1,5 +1,9 @@
 using UnityEngine;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
 
 namespace Anki {
   namespace Cozmo {
@@ -142,13 +146,16 @@ namespace Anki {
           client.UnregisterCallbackHandler(playId);
         }
 
-        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear) {      
+        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear, bool storeValue = true) {
           // Must sent to the robot's volume through the robot object
           if (parameter == Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot) {
             IRobot robot = RobotEngineManager.Instance.CurrentRobot;
             if (robot != null) {
               robot.SetRobotVolume(volume);
-            }              
+            }
+            else {
+              DAS.Warn("GameAudioClient.SetVolumeValue", "Attempt to VolumeParameters.VolumeType.Robot value, Robot is NULL");
+            }
           }
           else {
             // User GameObjectType.Invalid to set global RTPC values
@@ -156,14 +163,73 @@ namespace Anki {
             client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
           }
 
-          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
-          if (volumePrefs.ContainsKey(parameter)) {
-            volumePrefs[parameter] = volume;
+          if (storeValue) {
+            System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
+            if (volumePrefs.ContainsKey(parameter)) {
+              volumePrefs[parameter] = volume;
+            }
+            else {
+              volumePrefs.Add(parameter, volume);
+            }
+            DataPersistence.DataPersistenceManager.Instance.Save();
+          }
+        }
+
+        // Use stored values to set all the volume parmaeters
+        static public void SetPersistenceVolumeValues(VolumeParameters.VolumeType[] volumeParams = null) {
+          // If list isn't provided set all volume parameter types
+          List<VolumeParameters.VolumeType> volumeParamList = null;
+          if (volumeParams == null) {
+            volumeParamList = new List<Anki.Cozmo.Audio.VolumeParameters.VolumeType>(volumeParams);
           }
           else {
-            volumePrefs.Add(parameter, volume);
+            volumeParamList = Enum.GetValues(typeof(VolumeParameters.VolumeType)).Cast<VolumeParameters.VolumeType>().ToList();
+          } 
+
+          // Get stored volume parameters
+          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
+          // Set each parameters
+          foreach (VolumeParameters.VolumeType aParameter in volumeParamList) {
+            float aValue;
+            bool hasVolumePref = volumePrefs.TryGetValue(aParameter, out aValue);
+            if (!hasVolumePref) {
+              aValue = GetDefaultVolume(aParameter);
+            }
+            SetVolumeValue(aParameter, aValue, 0, CurveType.Linear, false);
           }
-          DataPersistence.DataPersistenceManager.Instance.Save();
+        }
+
+        // Define default volume values
+        static private float GetDefaultVolume(VolumeParameters.VolumeType volType) {
+          float value = 1.0f;
+          switch (volType) {
+          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music:
+            value = 1.0f;
+            break;
+
+          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot:
+            {
+              #if UNITY_EDITOR
+              value = 0.6f;
+              #else
+              value = 1.0f;
+              #endif
+            }
+            break;
+
+          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.SFX:
+            value = 1.0f;
+            break;
+
+          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.UI:
+            value = 1.0f;
+            break;
+
+          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.VO:
+            value = 1.0f;
+            break;
+          }
+          return value;
         }
 
         // Set Music States
