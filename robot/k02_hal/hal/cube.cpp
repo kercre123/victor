@@ -89,6 +89,12 @@ namespace Anki
         // lastAccSum is the reference value we compare current sum 
         // against to determine if there was motion. This reference value
         // is updated periodically.
+        //
+        // NOTE: Using sum of accelerations because it's a simple value that changes
+        // with rotations since we're not getting rotations. This is not at all a
+        // mathematically supported way of doing motion detection, but it seems to work
+        // and it's small. When all this logic moves to the engine we can do something fancier.
+        //
         s32 accSum = ax + ay + az;  // magnitude of 64 is approx 1g
         if (currTime_ms > lastMotionCheckTime_ms) {  
           lastAccSum[id] = accSum;
