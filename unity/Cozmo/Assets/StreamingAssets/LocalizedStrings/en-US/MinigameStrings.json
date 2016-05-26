@@ -126,17 +126,17 @@
   "speedTap.tapBlockForRound": {
     "translation": "Tap your cube to begin the next round."
   },
-  "speedTap.dontMoveCozmo.title": {
+  "minigame.dontMoveCozmo.title": {
     "translation": "Cozmo has moved!"
   },
-  "speedTap.dontMoveCozmo.description": {
+  "minigame.dontMoveCozmo.description": {
     "translation": "Cozmo has moved and can't continue the game."
   },
   "speedTap.dontMoveBlock.title": {
     "translation": "Cozmo's cube has moved!"
   },
   "speedTap.dontMoveBlock.description": {
-    "translation": "Cozmo doesn't appreciate his cube being moved during games! Please don't do that."
+    "translation": "Cozmo can't find his cube! He can't keep playing."
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
