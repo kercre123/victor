@@ -68,7 +68,7 @@ public class DebugMenuManager : MonoBehaviour {
       GameBase game = GetCurrMinigame();
       if (game != null) {
         if (game.Paused == false) {
-          game.PauseGame();
+          game.PauseStateMachine();
           _DebugPause = true;
         }
       }
@@ -83,7 +83,7 @@ public class DebugMenuManager : MonoBehaviour {
       GameBase game = GetCurrMinigame();
       if (game != null) {
         if (game.Paused) {
-          game.UnpauseGame();
+          game.ResumeStateMachine();
         }
       }
     }

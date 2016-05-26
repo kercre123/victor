@@ -43,10 +43,13 @@ public class InitialCubesState : State {
     _CubeIdToTimeout = new Dictionary<int, float>();
     _ValidCubeIds = new List<int>();
 
-
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
     }
+
+    _Game.RegisterForUnwantedCliffEvent();
+    _Game.RegisterForUnwantedPickUpEvent();
+    _Game.RegisterForUnwantedOnBackEvent();
   }
 
   public override void Update() {

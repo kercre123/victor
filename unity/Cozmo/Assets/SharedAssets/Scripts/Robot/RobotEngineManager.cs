@@ -68,6 +68,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Vector2> OnObservedMotion;
   public event Action OnRobotPickedUp;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
+  public event Action<G2U.RobotOnBack> OnRobotOnBack;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
@@ -424,6 +425,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotProcessedImage:
       ReceiveSpecificMessage(message.RobotProcessedImage);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotOnBack:
+      ReceivedSpecificMessage(message.RobotOnBack);
+      break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
@@ -707,6 +711,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
     if (OnCliffEvent != null) {
       OnCliffEvent(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotOnBack message) {
+    if (OnRobotOnBack != null) {
+      OnRobotOnBack(message);
     }
   }
 
