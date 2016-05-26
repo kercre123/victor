@@ -485,10 +485,7 @@ namespace Cozmo {
         } else {
           
           // If we were moving too fast at the timestamp the image was taken then don't save it for calibration purposes
-          TimeStamp_t t;
-          RobotPoseStamp p;
-          _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), t, p, true);
-          if(!WasMovingTooFast(image.GetTimestamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
+          if(!WasMovingTooFast(image.GetTimestamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
           {
             _storeNextImageForCalibration = false;
             Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
