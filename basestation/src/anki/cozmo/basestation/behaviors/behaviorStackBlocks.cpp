@@ -31,7 +31,8 @@ namespace Cozmo {
 
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_TimeToWaitForValidBlocks_s, "Behavior.StackBlocks", 0.3f);
-
+CONSOLE_VAR(f32, kMaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
+  
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _blockworldFilterForTop( new BlockWorldFilter )
@@ -258,7 +259,12 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     TransitionToStackingBlock(robot);
   }
   else {
-    StartActing(new DriveToPickupObjectAction(robot, _targetBlockTop),
+    const bool sayName = true;
+    const Radians maxTurnTowardsFaceAngle(DEG_TO_RAD(kMaxTurnTowardsFaceBeforePickupAngle_deg) );
+    
+    StartActing(new DriveToPickupObjectAction(robot, _targetBlockTop,
+                                              false, 0, false,
+                                              maxTurnTowardsFaceAngle, sayName),
                 [this,&robot](ActionResult res) {
                   if( res == ActionResult::SUCCESS ) {
                     TransitionToStackingBlock(robot);
