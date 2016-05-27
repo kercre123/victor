@@ -6,6 +6,7 @@
 #include "clad/types/actionTypes.clad"
 #include "clad/types/faceEnrollmentSequences.clad"
 #include "clad/types/gameEvent.clad"
+#include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/sayTextStyles.clad"
 
@@ -208,6 +209,13 @@ message SearchSideToSide {
     uint_8 robotID
 }
 
+// SearchForObject
+message SearchForObject {
+  ObjectFamily  desiredObjectFamily,
+  int_32        desiredObjectID,
+  bool          matchAnyObject = 0,
+}
+
 // SetHeadAngle
 message SetHeadAngle {
     float_32 angle_rad,
@@ -370,6 +378,7 @@ union RobotActionUnion {
   RollObject                rollObject,
   SayText                   sayText,
   SearchSideToSide          searchSideToSide,
+  SearchForObject           searchForObject,
   SetHeadAngle              setHeadAngle,
   SetLiftHeight             setLiftHeight,
   TrackToFace               trackFace,

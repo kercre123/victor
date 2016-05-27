@@ -43,7 +43,7 @@ public:
 private:
   void SendAllDebugConsoleVars();
   std::vector<Signal::SmartHandle> _signalHandles;
-  IExternalInterface* _externalInterface;
+  IExternalInterface* _externalInterface = nullptr;
 };
   
 

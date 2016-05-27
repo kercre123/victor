@@ -1,5 +1,5 @@
 //
-//  robot.h
+//  robotManager.h
 //  Products_Cozmo
 //
 //     RobotManager class for keeping up with available robots, by their ID.
