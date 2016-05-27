@@ -46,10 +46,11 @@ CONSOLE_VAR(f32, kBAS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f)
 CONSOLE_VAR(f32, kBAS_minHeadAngleForSearch_deg, "Behavior.AdmireStack", 10.0f);
 CONSOLE_VAR(f32, kBAS_maxHeadAngleForSearch_deg, "Behavior.AdmireStack", 25.0f);
 CONSOLE_VAR(f32, kBAS_betweenHeadAnglePause_s, "Behavior.AdmireStack", 1.0f);
-CONSOLE_VAR(f32, kBAS_lookAtFaceDelay_s, "Behavior.AdmireStack", 0.4f);
 CONSOLE_VAR(f32, kBAS_minDistanceFromStack_mm, "Behavior.AdmireStack", 130.0f);
 
 CONSOLE_VAR(f32, kBAS_ScoreIncreaseForAction, "Behavior.AdmireStack", 0.8f);
+
+const char* const kFocusEyesForKnockOverAnim = "anim_ReactToBlock_focusedEyes_01";
 
 BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -217,9 +218,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   action->AddAction(new DriveToFlipBlockPoseAction(robot, bottomBlockID));
   
   // Look at face
-  action->AddAction(new TurnTowardsFaceWrapperAction(robot, 
-                                                     // TODO:(bn) animation here?
-                                                     new WaitAction(robot, kBAS_lookAtFaceDelay_s)));
+  action->AddAction(new TurnTowardsFaceWrapperAction(robot,
+                                                     new PlayAnimationAction(robot, kFocusEyesForKnockOverAnim)));
   
   // Turn towards bottom block of stack
   action->AddAction(new TurnTowardsObjectAction(robot,
@@ -352,7 +352,8 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
 
       const float kZTolerance_mm = 15.0f;
       
-      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj && ! obj->IsMoving() ) {
+      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj ) {
+        // TODO:(bn) should check ! IsMoving here, but it's slow / unreliable
         PRINT_NAMED_INFO("BehaviorAdmireStack.HandleObjectObserved.FoundThirdBlock",
                          "Found that block %d appears to be the top of a 3 stack",
                          msg.objectID);
