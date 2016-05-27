@@ -33,7 +33,7 @@ CONSOLE_VAR(u32, kBAS_maxBlockAge_ms, "Behavior.AdmireStack", 500);
 
 CONSOLE_VAR(f32, kBAS_backupAccel_mmps2, "Behavior.AdmireStack", 100.0f);
 CONSOLE_VAR(f32, kBAS_backupDecel_mmps2, "Behavior.AdmireStack", 500.0f);
-CONSOLE_VAR(f32, kBAS_backupDist_mm, "Behavior.AdmireStack", 70.0f);
+CONSOLE_VAR(f32, kBAS_backupDist_mm, "Behavior.AdmireStack", 100.0f);
 CONSOLE_VAR(f32, kBAS_backupForSearchDist_mm, "Behavior.AdmireStack", 50.0f);
 CONSOLE_VAR(f32, kBAS_backupForSearchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
 CONSOLE_VAR(f32, kBAS_backupSpeed_mmps, "Behavior.AdmireStack", 50.0f);
