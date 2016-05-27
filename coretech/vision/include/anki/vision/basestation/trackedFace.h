@@ -114,6 +114,10 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
     
+    // Returns true if face was roughly facing the camera when it was observed
+    bool IsFacingCamera() const;
+    void SetIsFacingCamera(bool tf);
+    
     // Returns true if real eye detections were used to update the translation, false
     // if fake eye centers (based on detection rectangle) were used.
     bool UpdateTranslation(const Vision::Camera& camera);
@@ -136,6 +140,7 @@ namespace Vision {
     TimeStamp_t    _timestamp      = 0;
     s32            _numEnrollments = 0;
     bool           _isBeingTracked = false;
+    bool           _isFacingCamera = false;
 
     std::string    _name;
     
@@ -270,6 +275,14 @@ namespace Vision {
   
   inline const std::string& TrackedFace::GetName() const {
     return _name;
+  }
+  
+  inline bool TrackedFace::IsFacingCamera() const {
+    return _isFacingCamera;
+  }
+  
+  inline void TrackedFace::SetIsFacingCamera(bool tf) {
+    _isFacingCamera = tf;
   }
   
   inline void TrackedFace::SetName(const std::string& newName) {
