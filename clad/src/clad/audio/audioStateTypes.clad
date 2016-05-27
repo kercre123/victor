@@ -27,6 +27,8 @@ enum uint_32 Mood
 
 enum uint_32 Music
 {
+  Cube_Detect = 4025311760,
+  Face_Detect = 1148468660,
   Generic_Activity = 3767021196,
   Hub = 646625282,
   Invalid = 0,
