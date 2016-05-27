@@ -131,7 +131,7 @@ uint32_t ReliableTransport::sMaxPacketsToSendOnSendMessage = 1;
 ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, INetTransportDataReceiver* dataReceiver)
   : INetTransport(dataReceiver)
   , _unreliable(unreliableTransport)
-  , _queue(Dispatch::Create())
+  , _queue(Dispatch::Create("RelTransport", ThreadPriority::High))
   , _transportStats("Reliable")
 #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _timesBetweenUpdates(1000)

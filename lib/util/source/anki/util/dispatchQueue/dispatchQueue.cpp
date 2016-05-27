@@ -16,7 +16,7 @@ namespace Dispatch {
 class Queue {
 public:
   Anki::Util::TaskExecutor taskExecutor;
-  Queue(const char* name) : taskExecutor(name) {};
+  Queue(const char* name, ThreadPriority threadPriority=ThreadPriority::Default) : taskExecutor(name, threadPriority) {};
   virtual ~Queue() {};
 
   virtual void DispatchAsync(const Block &block, const char* name)
@@ -91,9 +91,9 @@ public:
   };
 };
 
-Queue* Create(const char* name /* = nullptr*/)
+Queue* Create(const char* name /* = nullptr*/, ThreadPriority threadPriority)
 {
-  return new Queue(name);
+  return new Queue(name, threadPriority);
 }
 
 Queue* CreateImmediate()
