@@ -30,7 +30,7 @@ namespace Util {
 const char * const RollingFileLogger::kDefaultFileExtension = ".log";
   
 RollingFileLogger::RollingFileLogger(const std::string& baseDirectory, const std::string& extension, std::size_t maxFileSize)
-: _dispatchQueue(Dispatch::Create())
+: _dispatchQueue(Dispatch::Create("RolFileLogger"))
 , _baseDirectory(baseDirectory)
 , _extension(extension)
 , _maxFileSize(maxFileSize)

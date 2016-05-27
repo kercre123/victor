@@ -40,7 +40,7 @@ private:
   std::shared_ptr<void> _handleHeartbeat;
 };
 
-TaskExecutor::TaskExecutor(const char* name)
+TaskExecutor::TaskExecutor(const char* name, ThreadPriority threadPriority)
 : _heartbeat( (void*)0x12345678, [] (void*) {} )
 , _executing(true)
 , _queueName(name != nullptr ? name : "")
@@ -58,6 +58,12 @@ TaskExecutor::TaskExecutor(const char* name)
 
   _taskExecuteThread = std::thread(&TaskExecutor::Execute, this, std::move(executeThreadName));
   _taskDeferredThread = std::thread(&TaskExecutor::ProcessDeferredQueue, this, std::move(deferredThreadName));
+  
+  if (threadPriority != ThreadPriority::Default)
+  {
+    SetThreadPriority(_taskExecuteThread, threadPriority);
+    SetThreadPriority(_taskDeferredThread, threadPriority);
+  }
 }
 
 TaskExecutor::~TaskExecutor()

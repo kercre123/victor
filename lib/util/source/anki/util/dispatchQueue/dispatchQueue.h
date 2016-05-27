@@ -10,6 +10,7 @@
 #define __DispatchQueue__DispatchQueue_H__
 
 #include "util/dispatchQueue/iTaskHandle.h"
+#include "util/threading/threadPriority.h"
 #include <functional>
 #include <chrono>
 
@@ -21,7 +22,7 @@ class Queue;
 using Block = std::function<void()>;
 
 // Create a queue that executes block / tasks on a serial queue
-Queue* Create(const char* name = nullptr);
+Queue* Create(const char* name = nullptr, ThreadPriority threadPriority = ThreadPriority::Default);
 
 // Create a queue that executes blocks immediately
 Queue* CreateImmediate();

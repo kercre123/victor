@@ -16,6 +16,7 @@
 #define	__TaskExecutor_H__
 
 #include "util/dispatchQueue/iTaskHandle.h"
+#include "util/threading/threadPriority.h"
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -51,7 +52,7 @@ typedef struct _TaskHolder {
 
 class TaskExecutor {
 public:
-  explicit TaskExecutor(const char* name = nullptr);
+  explicit TaskExecutor(const char* name = nullptr, ThreadPriority threadPriority=ThreadPriority::Default);
   virtual ~TaskExecutor();
   void StopExecution();
   void Wake(const std::function<void()> task, const char* name);
