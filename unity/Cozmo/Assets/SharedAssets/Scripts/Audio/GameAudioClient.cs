@@ -179,7 +179,7 @@ namespace Anki {
         static public void SetPersistenceVolumeValues(VolumeParameters.VolumeType[] volumeParams = null) {
           // If list isn't provided set all volume parameter types
           List<VolumeParameters.VolumeType> volumeParamList = null;
-          if (volumeParams == null) {
+          if (volumeParams != null) {
             volumeParamList = new List<Anki.Cozmo.Audio.VolumeParameters.VolumeType>(volumeParams);
           }
           else {
@@ -195,7 +195,7 @@ namespace Anki {
             if (!hasVolumePref) {
               aValue = GetDefaultVolume(aParameter);
             }
-            SetVolumeValue(aParameter, volumePrefs[aParameter], 0, CurveType.Linear, false);
+            SetVolumeValue(aParameter, aValue, 0, CurveType.Linear, false);
           }
         }
 
