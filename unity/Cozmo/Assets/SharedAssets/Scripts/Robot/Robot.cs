@@ -549,7 +549,7 @@ public class Robot : IRobot {
   }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
-    float[] dummyDistortionCoeffs = {0,0,0,0,0,0,0,0};
+    float[] dummyDistortionCoeffs = { 0, 0, 0, 0, 0, 0, 0, 0 };
     RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320, dummyDistortionCoeffs);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -1048,6 +1048,21 @@ public class Robot : IRobot {
       queueActionPosition);
 
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+  }
+
+  public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SearchForObject(cube.Family, cube.ID, false, callback, queueActionPosition);
+  }
+
+  public void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(
+      Singleton<SearchForObject>.Instance.Initialize(
+        desiredObjectFamily: objectFamily,
+        desiredObjectID: objectId,
+        matchAnyObject: matchAnyObject
+      ), 
+      callback, 
+      queueActionPosition);
   }
 
   // Height factor should be between 0.0f and 1.0f
