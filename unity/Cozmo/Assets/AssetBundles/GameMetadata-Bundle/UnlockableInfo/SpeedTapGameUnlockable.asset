@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SpeedTapGame
-    _EnumValue: 4
+    _EnumValue: 5
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

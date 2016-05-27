@@ -14,79 +14,79 @@ MonoBehaviour:
   _SkillConfig:
     _EvaluateLevelChangeEvent:
     - _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
-      _EnumValue: 19
+      _EnumValue: 15
     - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
-      _EnumValue: 16
+      _EnumValue: 12
     _GainChallengePointEvent:
     - _EnumValueAsString: OnSpeedtapHandCozmoWin
-      _EnumValue: 8
+      _EnumValue: 4
     - _EnumValueAsString: OnSpeedtapRoundCozmoWinAnyIntensity
-      _EnumValue: 10
+      _EnumValue: 6
     - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
-      _EnumValue: 16
+      _EnumValue: 12
     _LoseChallengePointEvent:
     - _EnumValueAsString: OnSpeedtapHandPlayerWin
-      _EnumValue: 9
+      _EnumValue: 5
     - _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
-      _EnumValue: 13
+      _EnumValue: 9
     - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
-      _EnumValue: 16
+      _EnumValue: 12
     _ResetPointsEvent:
     - _EnumValueAsString: OnSpeedtapStarted
-      _EnumValue: 7
+      _EnumValue: 3
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels:
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.5
+        val: 0
       - name: TapDelayMax
-        val: 0.85
+        val: 0.01
       - name: WrongTapChance
-        val: 0.05
+        val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.4
+        val: 0
       - name: TapDelayMax
-        val: 0.7
+        val: 0.01
       - name: WrongTapChance
-        val: 0.05
+        val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.35
+        val: 0
       - name: TapDelayMax
-        val: 0.6
+        val: 0.01
       - name: WrongTapChance
-        val: 0.04
+        val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.25
+        val: 0
       - name: TapDelayMax
-        val: 0.5
+        val: 0.01
       - name: WrongTapChance
-        val: 0.03
+        val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.15
+        val: 0
       - name: TapDelayMax
-        val: 0.4
+        val: 0.01
       - name: WrongTapChance
-        val: 0.02
+        val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.05
+        val: 0
       - name: TapDelayMax
-        val: 0.3
+        val: 0.01
       - name: WrongTapChance
         val: 0
       UpperBoundThreshold: 0.7
@@ -103,8 +103,8 @@ MonoBehaviour:
   DifficultySettings:
   - DifficultyID: 0
     Colors:
-    - {r: 1, g: 0.87843144, b: 0, a: 1}
-    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 1, g: 1, b: 0.334, a: 1}
+    - {r: 0, g: 1, b: 0.61041856, a: 1}
     - {r: 0, g: 0.36078432, b: 1, a: 1}
     - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
@@ -122,8 +122,8 @@ MonoBehaviour:
       SecondsHandDisplayed: 1
   - DifficultyID: 1
     Colors:
-    - {r: 1, g: 0.87843144, b: 0, a: 1}
-    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 1, g: 1, b: 0.33333334, a: 1}
+    - {r: 0, g: 1, b: 0.6117647, a: 1}
     - {r: 0, g: 0.36078432, b: 1, a: 1}
     - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
@@ -141,8 +141,8 @@ MonoBehaviour:
       SecondsHandDisplayed: 1
   - DifficultyID: 2
     Colors:
-    - {r: 1, g: 0.878, b: 0, a: 1}
-    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 1, g: 1, b: 0.33333334, a: 1}
+    - {r: 0, g: 1, b: 0.6117647, a: 1}
     - {r: 0, g: 0.36078432, b: 1, a: 1}
     - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
@@ -160,8 +160,8 @@ MonoBehaviour:
       SecondsHandDisplayed: 1
   - DifficultyID: 3
     Colors:
-    - {r: 1, g: 0.87843144, b: 0, a: 1}
-    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 1, g: 1, b: 0.33333334, a: 1}
+    - {r: 0, g: 1, b: 0.6117647, a: 1}
     - {r: 0, g: 0.36078432, b: 1, a: 1}
     - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:

@@ -59,6 +59,12 @@ namespace SpeedTap {
       AnimationManager.Instance.RemoveAnimationEndedCallback(_AnimationEventSent, HandleRoundEndAnimDone);
     }
 
+    public override void Pause() {
+      // COZMO-2033; some of the win game animations cause Cozmo's cliff sensor to trigger
+      // So in those cases don't show the "Cozmo Moved; Quit Game" dialog
+      // Do nothing
+    }
+
     private void PlayReactToRoundAnimationAndSendEvent() {
       _AnimationEventSent = GameEvent.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
