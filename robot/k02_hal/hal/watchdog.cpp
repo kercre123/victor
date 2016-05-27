@@ -5,6 +5,7 @@
 
 #include "watchdog.h"
 #include "spi.h"
+#include "uart.h"
 
 static const int totalReset = (1 << WDOG_TOTAL_CHANNELS) - 1;
 static int watchdogChannels = 0;
@@ -16,7 +17,7 @@ static uint32_t reset_magic __attribute__((section("UNINIT"),zero_init));
 static uint32_t reset_count __attribute__((section("UNINIT"),zero_init));
 
 void Anki::Cozmo::HAL::Watchdog::init(void) {
-  static const uint32_t RESET_TIME = 1 * 1024;  // 5 seconds (1khz LPO)
+  static const uint32_t RESET_TIME = 2 * 1024;  // 1 seconds (1khz LPO)
 
   __disable_irq();
   WDOG_UNLOCK = 0xC520;
@@ -66,6 +67,7 @@ void Anki::Cozmo::HAL::Watchdog::pet() {
 extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
+	Anki::Cozmo::HAL::UART::DebugPutc(0xaa);
   if (++reset_count > MAXIMUM_RESET_COUNT) {
     reset_count = 0;
     //Anki::Cozmo::HAL::SPI::EnterRecoveryMode();

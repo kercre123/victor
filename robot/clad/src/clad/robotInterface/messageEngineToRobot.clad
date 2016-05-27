@@ -346,7 +346,7 @@ union EngineToRobot
   AppConnectConfigResult        wifiCfgResult               = 0x2f,
 
   // 0x30 to 0x7f: To RTIP
-  // Available for future use                               = 0x31,
+  OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
   RadioState                    radioConnected              = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,

@@ -217,7 +217,7 @@ void makeDrop(void)
 }
 
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
-#define DRIFT_MARGIN 2
+#define DRIFT_MARGIN 5
 
 int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
 
@@ -365,7 +365,7 @@ void i2spiTask(os_event_t *event)
               {
                 txBuf[w] = (COMMAND_HEADER) | (COMMAND_DONE << 16);
                 bootloaderCommandPhase = BLCP_none;
-                os_printf("Send command done: %08x\r\n", txBuf[w]);
+                //os_printf("Send command done: %08x\r\n", txBuf[w]);
                 break;
               }
               case BLCP_flash_header:

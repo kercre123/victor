@@ -42,6 +42,7 @@ typedef enum {
 
 /// Enum for boot images
 // Use complex bit pattern to make error rejection easier
+// Use amusing bit pattern because we are moving the code around
 typedef enum {
   FW_IMAGE_FACTORY = 0x0000C0DE,
   FW_IMAGE_A       = 0x00C0DE00,

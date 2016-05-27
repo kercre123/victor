@@ -761,6 +761,11 @@ namespace Anki {
         sendTestStateMessages = msg.enable;
       }
       
+      void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
+      {
+        // Handled directly in spi to bypass main execution.
+      }
+      
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);

@@ -45,6 +45,19 @@ namespace OTA {
     Result result,         ///< Result being reported
   }
 
+  enum int_8 RecoveryMode
+  {
+    System_Reset,
+    System_Shutdown,
+    Recovery_Mode,
+    OTA_Mode,
+  }
+
+  message EnterRecoveryMode
+  {
+    RecoveryMode mode
+  }
+
 } // OTA
 
 } // RobotInterface

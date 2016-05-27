@@ -39,6 +39,7 @@ void Anki::Cozmo::HAL::SPI::ManageDrop(void) {
 
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
+  using namespace Anki::Cozmo::RobotInterface;
   static int pwmCmdCounter = 0;
 
   // Process drop receive
@@ -47,7 +48,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
-    //Watchdog::kick(WDOG_WIFI_COMMS);
+    Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;
@@ -58,10 +59,37 @@ static bool ProcessDrop(void) {
     }
 
     uint8_t *payload_data = (uint8_t*) drop->payload;
-    
     if (drop->payloadLen)
     {
-      Anki::Cozmo::HAL::WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
+      switch(payload_data[0])
+      {
+        case EngineToRobot::Tag_enterRecoveryMode:
+        {
+          OTA::EnterRecoveryMode* erm = reinterpret_cast<OTA::EnterRecoveryMode*>(payload_data+1);
+          switch(erm->mode)
+          {
+            case OTA::System_Reset:
+            {
+              NVIC_SystemReset();
+              break;
+            }
+            case OTA::Recovery_Mode:
+            {
+              SPI::EnterRecoveryMode();
+              break;
+            }
+            case OTA::OTA_Mode:
+            {
+              SPI::EnterOTAMode();
+              break;
+            }
+          }
+        }
+        default:
+        {
+          Anki::Cozmo::HAL::WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
+        }
+      }
     }
     
     return true;

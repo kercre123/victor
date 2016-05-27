@@ -151,7 +151,8 @@ namespace UpgradeController {
     haveTermination = false;
     AnimationController::ResumeAndRestoreBuffer();
     i2spiBootloaderCommandDone();
-    //i2spiSwitchMode(I2SPI_REBOOT);
+    i2spiSwitchMode(I2SPI_REBOOT);
+    system_restart();
   }
 
   LOCAL uint32_t calc_crc32(const uint8_t* data, int length)
@@ -210,6 +211,8 @@ namespace UpgradeController {
           Face::FacePrintf("Starting FOTA\nupgrade...");
           counter = system_get_time() + 100000; /// 100 ms delay
           phase = OTAT_Delay;
+          const int8_t mode = OTA_Mode;
+          RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode);
           // Explicit fallthrough to next case
         }
       }
@@ -277,7 +280,7 @@ namespace UpgradeController {
       {
         if ((system_get_time() > counter) && i2spiMessageQueueIsEmpty())
         {
-          i2spiSwitchMode(I2SPI_RECOVERY);
+          i2spiSwitchMode(I2SPI_PAUSED);
           phase = OTAT_Flash_Erase;
           retries = MAX_RETRIES;
           counter = 0;
@@ -598,6 +601,9 @@ namespace UpgradeController {
           default: // If the RTIP has booted we'll get other gibberish
           {
             AnkiDebug( 172, "UpgradeController.state", 463, "Reboot", 0);
+            #if DEBUG_OTA
+            os_printf("Done programming, send command done\r\n");
+            #endif
             phase = OTAT_Reboot;
             break;
           }
@@ -620,7 +626,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_A:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
           phase = OTATR_Set_Evil_B;
         }
@@ -629,9 +635,9 @@ namespace UpgradeController {
       case OTATR_Set_Evil_B:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + 5, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
-          counter = system_get_time() + 100000; // 100ms second delay
+          counter = system_get_time() + 1000000; // 1s second delay
           phase = OTATR_Delay;
         }
         break;
@@ -729,6 +735,9 @@ namespace UpgradeController {
             }
             else
             { // Just wrote the last one
+              #if DEBUG_OTA
+              os_printf("Done programming, send command done\r\n");
+              #endif
               phase = OTATR_Apply;
             }
             break;
@@ -748,7 +757,21 @@ namespace UpgradeController {
       }
       case OTATR_Apply:
       {
-        i2spiBootloaderCommandDone();
+        switch (i2spiGetRtipBootloaderState())
+        {
+          case STATE_ACK:
+          case STATE_IDLE:
+            i2spiBootloaderCommandDone();
+            break;
+          case STATE_NACK:
+            os_printf("NACK, attempting again\r\n");
+            phase = OTATR_Get_Size;
+            break;
+          case STATE_BUSY:
+            break;
+          default:
+            os_printf("%04x\r\n", i2spiGetRtipBootloaderState());
+        }
         break;
       }
       default:
