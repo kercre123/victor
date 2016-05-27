@@ -25,7 +25,7 @@ namespace Anki {
     public:
       ICompoundAction(Robot& robot, std::list<IActionRunner*> actions);
       
-      virtual void AddAction(IActionRunner* action);
+      virtual void AddAction(IActionRunner* action, bool ignoreFailure = false);
       
       // First calls cleanup on any constituent actions and then removes them
       // from this compound action completely.
@@ -48,9 +48,16 @@ namespace Anki {
       virtual void Reset(bool shouldUnlockTracks = true) override;
       
       std::list<IActionRunner*> _actions;
+      
       std::string _name;
       
+      bool ShouldIgnoreFailure(IActionRunner* action) const;
+      
     private:
+      
+      // If actions are in this list, we ignore their failures
+      std::set<IActionRunner*> _ignoreFailure;
+      
       void DeleteActions();
     };
     
@@ -81,6 +88,8 @@ namespace Anki {
       
       // Stores the _currentActionPair's completion union and then deletes _currentActionPair
       void StoreUnionAndDelete();
+      
+      ActionResult MoveToNextAction(double currentTime);
       
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
