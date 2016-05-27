@@ -415,10 +415,10 @@ namespace Anki {
       if(!_hasStarted) {
         PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
-        if( _hasStarted ) {
+        if( _hasStarted && _shouldPlayDrivingAnimation) {
           _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
         }
-      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath()) {
+      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath() && _shouldPlayDrivingAnimation) {
         if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
           return ActionResult::RUNNING;
         }
