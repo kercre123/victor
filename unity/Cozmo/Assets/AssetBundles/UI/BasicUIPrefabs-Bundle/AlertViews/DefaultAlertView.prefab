@@ -195,7 +195,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: -1
+  m_PreferredWidth: 765
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -364,6 +364,7 @@ MonoBehaviour:
   _AlertMessageText: {fileID: 11486870}
   _PrimaryButton: {fileID: 0}
   _SecondaryButton: {fileID: 0}
+  _SecondaryButtonLayoutElement: {fileID: 11468250}
   _CloseButton: {fileID: 0}
   _AlphaController: {fileID: 22541362}
   _Icon: {fileID: 0}
@@ -381,7 +382,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: -1
+  m_PreferredWidth: 765
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -518,10 +519,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22498376}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 764, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22443168
 RectTransform:
@@ -645,10 +646,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22402666}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 764, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22498376
 RectTransform:

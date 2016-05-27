@@ -22,6 +22,9 @@ namespace Cozmo {
       private Cozmo.UI.CozmoButton _SecondaryButton;
 
       [SerializeField]
+      private LayoutElement _SecondaryButtonLayoutElement;
+
+      [SerializeField]
       private Cozmo.UI.CozmoButton _CloseButton;
 
       [SerializeField]
@@ -36,7 +39,6 @@ namespace Cozmo {
           _Icon.SetIcon(icon);
         }
       }
-
 
       private string _TitleKey;
       private string _DescriptionKey;
@@ -92,6 +94,10 @@ namespace Cozmo {
         if (_SecondaryButton != null) {
           _SecondaryButton.DASEventViewController = viewName;
           _SecondaryButton.gameObject.SetActive(false);
+        }
+
+        if (_SecondaryButtonLayoutElement != null) {
+          _SecondaryButtonLayoutElement.gameObject.SetActive(false);
         }
       }
 
@@ -155,6 +161,10 @@ namespace Cozmo {
       public void SetSecondaryButton(string titleKey, Action action = null, 
                                      Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_SecondaryButton, titleKey, action, audioParam);
+
+        if (_SecondaryButtonLayoutElement != null) {
+          _SecondaryButtonLayoutElement.gameObject.SetActive(true);
+        }
       }
 
       public void SetTitleArgs(object[] args) {
