@@ -15,10 +15,11 @@ namespace CubePounce {
       _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
       _CubeSlapGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValueWithoutLift);
       _CurrentRobot.SetLiftHeight(0.8f);
       _CubeSlapGame.ResetPounceChance();
       _CubeSlapGame.UpdateScoreboard();
+      _CubeSlapGame.SharedMinigameView.HideMiddleBackground();
     }
 
     // Target cube is marked as Red if not in the right position, and green if in the right position.
