@@ -126,12 +126,15 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::~AudioController()
 {
-  if ( _taskHandle && _taskHandle->IsValid() )
-  {
+  if ( _taskHandle && _taskHandle->IsValid() ) {
     _taskHandle->Invalidate();
   }
-  Util::Dispatch::Stop( _dispatchQueue );
-  Util::Dispatch::Release( _dispatchQueue );
+  
+  if ( _dispatchQueue != nullptr ) {
+    Util::Dispatch::Stop( _dispatchQueue );
+    Util::Dispatch::Release( _dispatchQueue );
+  }
+
   Util::SafeDelete( _pluginInterface );
   
   ClearGarbageCollector();
