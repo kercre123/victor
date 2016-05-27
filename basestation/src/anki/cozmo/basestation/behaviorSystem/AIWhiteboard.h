@@ -87,6 +87,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of possible markers
+  // TODO:(bn) this is more like "possible objects" now than markers, since I also look at unknown pose obejcts
   const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
 
   // beacons
@@ -122,6 +123,9 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // consider adding an object to possible markers list
+  void ConsiderNewPossibleMarker(ObjectType objectType, const Pose3d& pose);
+  
   // remove possible markers currently stored that
   void RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose);
   
