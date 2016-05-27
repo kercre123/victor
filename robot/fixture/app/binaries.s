@@ -2,7 +2,7 @@
   AREA    ER_BINARIES, DATA, READONLY
 
 // Uncomment this line to build a mini-version without binaries (to speed debugging)
-#define INCBIN ;
+//#define INCBIN ;
     
   ; Note:  Cube and charger share the same binary
   ALIGN
@@ -10,7 +10,7 @@
   EXPORT g_CubeEnd
 g_Cube
 #ifdef FCC
-  INCBIN releases\\cube31.fcc.bin
+  INCBIN releases\\xsfcc.bin
 #else
   INCBIN releases\\cube31.bin
 #endif

@@ -62,6 +62,9 @@ k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
 	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
+k02_fcc_fix: staging_dir
+	python3 ./tools/boot_header.py ./build/fcc/robot.axf
+
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
@@ -72,8 +75,8 @@ stage_binaries:
 	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries
-	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
+	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	#python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"

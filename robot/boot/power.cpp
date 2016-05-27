@@ -44,7 +44,7 @@ void Anki::Cozmo::HAL::Power::init()
 void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
 {
   if (!fixture) {
-    // Pull-down SCK during ESP8266 boot
+    // Set MISO - "recovery boot mode" signal
     GPIO_SET(GPIO_MISO, PIN_MISO);
     GPIO_OUT(GPIO_MISO, PIN_MISO);
     SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
@@ -58,6 +58,9 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
     GPIO_RESET(GPIO_MOSI, PIN_MOSI);
     GPIO_OUT(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO);
+    
+    // Let UART work
+    GPIO_IN(GPIO_MISO, PIN_MISO);
   }
 
   // Pull-down SCK during ESP8266 boot

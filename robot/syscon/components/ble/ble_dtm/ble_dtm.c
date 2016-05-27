@@ -34,7 +34,7 @@
 #define RX_MODE          true   /**< Constant defining RX mode for radio during dtm test. */
 #define TX_MODE          false  /**< Constant defining TX mode for radio during dtm test. */
 
-#define PHYS_CH_MAX      39     /**< Maximum number of valid channels in BLE. */
+#define PHYS_CH_MAX      40     /**< Maximum number of valid channels in BLE + Anki accessories */
 
 // Values that for now are "constants" - they could be configured by a function setting them,
 // but most of these are set by the BLE DTM standard, so changing them is not relevant.

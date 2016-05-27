@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 16;
+u8 g_fixtureReleaseVersion = 18;
 const char* BUILD_INFO = "NOT FOR FACTORY";
 
 BOOL g_isDevicePresent = 0;
