@@ -123,7 +123,7 @@ namespace Cozmo {
     IActionRunner* action = nullptr;
     
     const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
-    if(nullptr == face) {
+    if(nullptr != face) {
       action = new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD_F32(45.f));
     }
     else {
