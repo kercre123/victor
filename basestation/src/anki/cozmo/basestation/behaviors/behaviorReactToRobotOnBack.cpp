@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -53,6 +54,9 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
     StartActing(new PlayAnimationGroupAction(robot, kFlipDownAnimGroupName),
                 &BehaviorReactToRobotOnBack::DelayThenFlipDown);
   }
+  else {
+    SendFinishedFlipDownMessage(robot);
+  }
 }
 
 void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
@@ -61,6 +65,14 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
     StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
   }
+  else {
+    SendFinishedFlipDownMessage(robot);
+  }
+}
+    
+void BehaviorReactToRobotOnBack::SendFinishedFlipDownMessage(Robot& robot){
+  // Send message that we're done flipping
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBackFinished()));
 }
 
 bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)

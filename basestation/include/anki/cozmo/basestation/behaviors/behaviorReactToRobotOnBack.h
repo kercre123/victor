@@ -43,7 +43,8 @@ protected:
 private:
 
   void FlipDownIfNeeded(Robot& robot);
-  void DelayThenFlipDown(Robot& robot);  
+  void DelayThenFlipDown(Robot& robot);
+  void SendFinishedFlipDownMessage (Robot& robot);
   
 };
 
