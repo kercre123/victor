@@ -273,7 +273,7 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\crypto\crc32.cpp</PathWithFileName>
+      <PathWithFileName>..\..\crypto\crc32.cpp</PathWithFileName>
       <FilenameWithoutPath>crc32.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>

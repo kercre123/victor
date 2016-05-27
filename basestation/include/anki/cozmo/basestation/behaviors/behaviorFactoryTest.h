@@ -133,6 +133,8 @@ namespace Cozmo {
     u32      _camCalibPoseIndex = 0;
     f32      _watchdogTriggerTime = -1.0;
     
+    bool     _toolCodeImagesStored;
+    
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
     bool _chargerAvailable = false;

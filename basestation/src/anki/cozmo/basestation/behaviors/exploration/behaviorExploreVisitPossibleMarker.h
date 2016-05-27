@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/common/basestation/math/pose.h"
+#include "clad/types/objectTypes.h"
 
 #include <vector>
 #include <set>
@@ -71,7 +72,10 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // create the proper action to see the cube
-  void ApproachPossibleCube(Robot& robot, const Pose3d& possibleCubePose);
+  void ApproachPossibleCube(Robot& robot, ObjectType objectType, const Pose3d& possibleCubePose);
+
+  // mark the pose as invalid since we tried to search for something there and failed
+  void MarkPossiblePoseAsEmpty(Robot& robot, ObjectType objectType, const Pose3d& pose);
 
 };
   

@@ -62,19 +62,26 @@ struct DTM_Mode_Settings {
 };
 
 static const DTM_Mode_Settings DTM_MODE[] = {
-  { TEST_LEDS,      LE_RECEIVER_TEST,      1,                   0xFF,         0xFF },   // 0 = listen
-  { TEST_NONE,      LE_TRANSMITTER_TEST,   1,           DTM_PKT_0X55,         0xFF },   // 1 = tx ch1
+  { TEST_LEDS,      LE_RECEIVER_TEST,      0,                   0xFF,         0xFF },   // 0 = listen
+  { TEST_NONE,      LE_TRANSMITTER_TEST,   0,           DTM_PKT_0X55,         0xFF },   // 1..3 = tx 02,42,82
   { TEST_NONE,      LE_TRANSMITTER_TEST,  20,           DTM_PKT_0X55,         0xFF },
   { TEST_NONE,      LE_TRANSMITTER_TEST,  40,           DTM_PKT_0X55,         0xFF },
-  { TEST_NONE,      LE_TRANSMITTER_TEST,   1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4 = tx ch1
+  { TEST_NONE,      LE_TRANSMITTER_TEST,   0, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4..7 = carrier 02,42,82
   { TEST_NONE,      LE_TRANSMITTER_TEST,  20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { TEST_NONE,      LE_TRANSMITTER_TEST,  40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { TEST_MOTOR,     LE_RESET,              0,                   0xFF,         0xFF },   // 7 = motor test
+  { TEST_LOW_NOISE, LE_RESET,              0,                   0xFF,         0xFF },   // 8 = low speaker noise
+  { TEST_HI_NOISE,  LE_RESET,              0,                   0xFF,         0xFF },   // 9 = high speaker noise
+  
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 10..18 = wifi modes
   { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
   { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
-  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   // 10 = wifi ch1 (wifi modes start at 10)
-  { TEST_LOW_NOISE, LE_RESET,              0,                   0xFF,         0xFF },
-  { TEST_HI_NOISE,  LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },   
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF }, 
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
+  { TEST_NONE,      LE_RESET,              0,                   0xFF,         0xFF },
 };
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
@@ -162,10 +169,16 @@ void Anki::Cozmo::HAL::FCC::start(void) {
 
 // See "ESP8266 Certification and Test Guide" for details on the command format
 static const char* WIFI_TESTS[] = {
-  /* 0 = No Test             */  "CmdStop\r",
-  /* 1 = 2412MHz  0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
-  /* 2 = 2437MHz +4dB 1Mbps  */  "WifiTxout 6 1 240 0\r",
-  /* 3 = 2462MHz  0dB 1Mbps  */  "WifiTxout 11 1 0 0\r",
+  /* 0 = No Test             */       "CmdStop\r",
+  /* 10 = 2412MHz  -6dB b 1Mbps */    "WifiTxout 1 1 24 0\r",
+  /* 11 = 2437MHz  -6dB b 1Mbps */    "WifiTxout 6 1 24 0\r",
+  /* 12 = 2462MHz  -6dB b 1Mbps */    "WifiTxout 11 1 24 0\r",
+  /* 13 = 2412MHz  -6dB g 6Mbps */    "WifiTxout 1 5 24 0\r",
+  /* 14 = 2437MHz  -6dB g 6Mbps */    "WifiTxout 6 5 24 0\r",
+  /* 15 = 2462MHz  -6dB g 6Mbps */    "WifiTxout 11 5 24 0\r",
+  /* 16 = 2412MHz  -6dB n 6.5Mbps */  "WifiTxout 1 13 24 0\r",
+  /* 17 = 2437MHz  -6dB n 6.5Mbps */  "WifiTxout 6 13 24 0\r",
+  /* 18 = 2462MHz  -6dB n 6.5Mbps */  "WifiTxout 11 13 24 0\r",
 };
 
 static const int WIFI_TEST_COUNT = sizeof(WIFI_TESTS) / sizeof(WIFI_TESTS[0]);
@@ -215,15 +228,14 @@ static void sendWifiCommand(int test) {
   }
 }
 
+static int configuring_motor = 0;
 void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
-  // If the motors are not going crazy, use wheel positions for
-  // selecting things
+  // If the motors are not going crazy, use right tread to select a mode
   if (DTM_MODE[current_mode].side_test != TEST_MOTOR) {
-    static int configuring_motor = 0;
-    bool select = iabs(configuring_motor - g_dataToHead.positions[2]) > 0x100;
+    bool select = iabs(configuring_motor - g_dataToHead.positions[0]) > 0x400;
 
     if (select) {
-      configuring_motor = g_dataToHead.positions[2];
+      configuring_motor = g_dataToHead.positions[0];
       
       // Set our run mode
       if (current_mode != target_mode) {
@@ -232,19 +244,33 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
     }
   }
 
-  // Target mode is set based on the position of the right tread
-  target_mode = (unsigned int)(g_dataToHead.positions[0] >> 9) % DTM_MODE_COUNT;
+  // Target mode is set based on the position of the left tread
+  target_mode = (unsigned int)(g_dataToHead.positions[1] >> 9) % DTM_MODE_COUNT;
 
   // Display current mode and what we would like to test
   static bool displayNum = false;
 
   static int updates = 0;
-  
+
+  Anki::Cozmo::RobotInterface::SetHeadlight headlight;
+
   switch (updates = (updates+1) & 7) {
-    case 0: OLED::DisplayDigit(6, 0, target_mode / 10); break ;
-    case 1: OLED::DisplayDigit(12, 0, target_mode % 10); break ;
-    case 2: OLED::DisplayDigit(110, 0, current_mode / 10); break ;
-    case 3: OLED::DisplayDigit(116, 0, current_mode % 10); break ;
+    case 0: 
+      OLED::DisplayDigit(6, 0, target_mode / 10);
+      break ;
+    case 1:
+      OLED::DisplayDigit(12, 0, target_mode % 10); 
+      headlight.enable = false;
+      SendMessage(headlight);
+      break ;
+    case 2:
+      OLED::DisplayDigit(110, 0, current_mode / 10); 
+      break ;
+    case 3:
+      OLED::DisplayDigit(116, 0, current_mode % 10); 
+      headlight.enable = true;
+      SendMessage(headlight);
+      break ;
   }
 
   sendWifiCommand((current_mode < 10) ? 0 : current_mode-9);  // Wifi test modes start at 10
@@ -257,10 +283,10 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
       runLEDTest();
       break ;
     case TEST_LOW_NOISE:
-      whiteNoise(0x7FFF);
+      whiteNoise(0x7FF);
       break ;
     case TEST_HI_NOISE:
-      whiteNoise(0xFFFF);
+      whiteNoise(0xFFF);
       break ;
     default:
       break ;

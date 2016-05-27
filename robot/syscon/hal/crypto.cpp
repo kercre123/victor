@@ -15,6 +15,7 @@ extern "C" {
 #include "crypto.h"
 #include "diffie.h"
 #include "random.h"
+#include "storage.h"
 
 static volatile int fifoHead;
 static volatile int fifoTail;
@@ -27,7 +28,18 @@ void Crypto::init() {
   memset(fifoQueue, 0, sizeof(fifoQueue));
   
   // Setup key
-  aes_key_init();
+  if (Crypto::aes_key() != NULL) {
+    return ;
+  }
+  
+  uint8_t key[AES_KEY_LENGTH];
+  gen_random(key, AES_KEY_LENGTH);
+  Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
+}
+
+// Top 16 bytes of application space
+const void* Crypto::aes_key() {
+  return Storage::get_lazy(STORAGE_AES_KEY);
 }
 
 void Crypto::execute(const CryptoTask* task) {
@@ -57,16 +69,16 @@ void Crypto::manage(void) {
       aes_ecb((ecb_data_t*) task->state);
       break ;
     case CRYPTO_AES_DECODE:
-      length = aes_decode((uint8_t*) task->state, task->length);
+      length = aes_decode(aes_key(), (uint8_t*) task->state, task->length);
       break ;
     case CRYPTO_AES_ENCODE:
-      length = aes_encode((uint8_t*) task->state, task->length);
+      length = aes_encode(aes_key(), (uint8_t*) task->state, task->length);
       break ;
     case CRYPTO_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);
       break ;
     case CRYPTO_FINISH_DIFFIE_HELLMAN:
-      dh_finish((DiffieHellman*) task->state);
+      dh_finish(aes_key(), (DiffieHellman*) task->state);
       break ;
   }
 

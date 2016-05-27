@@ -294,7 +294,7 @@ public:
     
     // Wheel speeds, mm/sec
     f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
-    f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
+    f32 GetRightWheelSpeed() const { return _rightWheelSpeed_mmps; }
     
     // Return pose of robot's drive center based on what it's currently carrying
     const Pose3d& GetDriveCenterPose() const;
@@ -439,6 +439,10 @@ public:
 
     // let's the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
     // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
+    bool CanPickUpObject(const ObservableObject& object) const;
+
+    // same as above, but check that the block is on the ground (as opposed to stacked, on top of a notebook or
+    // something, or in someones hand
     bool CanPickUpObjectFromGround(const ObservableObject& object) const;
     
     /*
@@ -472,7 +476,7 @@ public:
     void SetSaveImageMode(const SaveMode_t mode);
     
     // Return the timestamp of the last _processed_ image
-    TimeStamp_t GetLastImageTimeStamp();
+    TimeStamp_t GetLastImageTimeStamp() const;
   
     // =========== Actions Commands =============
     

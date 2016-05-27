@@ -1,0 +1,21 @@
+{
+  "behaviorType": "PutDownBlock",
+  "name": "PutDownBlock",
+  "flatScore": 0.5,
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 5.0,
+        "y": 0.0
+      },
+      {
+        "x": 6.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "Demo",
+    "DemoCubes"
+  ]
+}

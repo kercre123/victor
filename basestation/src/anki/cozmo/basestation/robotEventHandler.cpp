@@ -11,6 +11,7 @@
  **/
 
 
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -24,6 +25,7 @@
 #include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/actions/searchForObjectAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -71,6 +73,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::ReadToolCode,
       MessageGameToEngineTag::RollObject,
       MessageGameToEngineTag::SayText,
+      MessageGameToEngineTag::SearchForObject,
       MessageGameToEngineTag::SetHeadAngle,
       MessageGameToEngineTag::SetLiftHeight,
       MessageGameToEngineTag::TrackToFace,
@@ -90,63 +93,27 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       _signalHandles.push_back(externalInterface->Subscribe(tag, actionEventCallback));
     }
     
-    // Custom handler for QueueSingleAction
-    auto queueSingleActionCallback = std::bind(&RobotEventHandler::HandleQueueSingleAction, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::QueueSingleAction, queueSingleActionCallback));
+    // For all other messages, just use an AnkiEventUtil object:
+    auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
     
-    // Custom handler for QueueCompoundAction
-    auto queueCompoundActionCallback = std::bind(&RobotEventHandler::HandleQueueCompoundAction, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
-    
-    // Custom handler for EnableLiftPower
-    auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
+    // GameToEngine: (in alphabetical order)
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetHeadlight>();
 
-    // Custom handler for EnableCliffSensor
-    auto enableCliffSensorCallback = std::bind(&RobotEventHandler::HandleEnableCliffSensor, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::EnableCliffSensor, enableCliffSensorCallback));
-
-    // Custom handler for DisplayProceduralFace
-    auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
     
-    // Custom handler for ForceDelocalizeRobot
-    auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
-    
-    // Custom handler for SendAvailableObjects event
-    auto sendAvailableObjectsCallback = std::bind(&RobotEventHandler::HandleSendAvailableObjects, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SendAvailableObjects, sendAvailableObjectsCallback));
-
-    // Custom handler for SaveCalibrationImage event
-    auto saveCalibrationImageCallback = std::bind(&RobotEventHandler::HandleSaveCalibrationImage, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SaveCalibrationImage, saveCalibrationImageCallback));
-    
-    // Custom handler for ClearCalibrationImages event
-    auto clearCalibrationImagesCallback = std::bind(&RobotEventHandler::HandleClearCalibrationImages, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ClearCalibrationImages, clearCalibrationImagesCallback));
-    
-    // Custom handler for ComputeCameraCalibration event
-    auto computeCameraCalibrationCallback = std::bind(&RobotEventHandler::HandleComputeCameraCalibration, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
-    
-    // Custom handler for CameraCalibration event
-    auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
-    
-    // Custom handler for SetHeadlight
-    auto headlightCallback = std::bind(&RobotEventHandler::HandleSetHeadlight, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SetHeadlight, headlightCallback));
-
-    // Custom handlers for BehaviorManager events
-    {
-      auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
-    }
-
-    // Custom handler for animation aborted
-    auto animAbortedCallback = std::bind(&RobotEventHandler::HandleAnimationAborted, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageEngineToGameTag::AnimationAborted, animAbortedCallback));
+    // EngineToGame: (in alphabetical order)
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
     
   }
 }
@@ -552,6 +519,51 @@ IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterf
   action->SetDuration(setHeadAngle.duration_sec);
   return action;
 }
+
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& msg)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    return;
+  }
+  
+  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
+                     "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
+  } else {
+    
+    // Special case if commanding low dock height
+    if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot->IsCarryingObject()) {
+      
+      // Put the block down right here
+      IActionRunner* newAction = new PlaceObjectOnGroundAction(*robot);
+      robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction);
+    }
+    else {
+      // In the normal case directly set the lift height
+      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(*robot, msg.height_mm);
+      action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
+      action->SetLiftAccel(msg.accel_rad_per_sec2);
+      action->SetDuration(msg.duration_sec);
+      
+      robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
+    }
+  }
+}
+
+  
+IActionRunner* CreateSearchForObjectAction(Robot& robot, const ExternalInterface::SearchForObject& msg)
+{
+  SearchForObjectAction* newAction = new SearchForObjectAction(robot, msg.desiredObjectFamily, msg.desiredObjectID, msg.matchAnyObject );
+  return newAction;
+}
   
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
@@ -644,6 +656,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::searchSideToSide:
       return new SearchSideToSideAction(robot);
 
+    case RobotActionUnionTag::searchForObject:
+      return CreateSearchForObjectAction(robot, actionUnion.Get_searchForObject());
+
     case RobotActionUnionTag::readToolCode:
       return new ReadToolCodeAction(robot);
       
@@ -691,7 +706,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return nullptr;
   }
 }
-  
+
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
   RobotID_t robotID = 1; // We init the robotID to 1
@@ -792,6 +807,11 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       newAction = new PlayAnimationGroupAction(robot, msg.animationGroupName, msg.numLoops);
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::SearchForObject:
+    {
+      newAction = CreateSearchForObjectAction(robot, event.GetData().Get_SearchForObject());
+      break;
+    }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsObject:
     {
       newAction = GetTurnTowardsObjectActionHelper(robot, event.GetData().Get_TurnTowardsObject());
@@ -826,7 +846,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::SetLiftHeight:
     {
       // Special case: doesn't use queuing below
-      HandleSetLiftHeight(event);
+      HandleMessage(event.GetData().Get_SetLiftHeight());
       return;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
@@ -896,10 +916,9 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
 }
   
-void RobotEventHandler::HandleQueueSingleAction(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction& msg)
 {
-  const ExternalInterface::QueueSingleAction& msg = event.GetData().Get_QueueSingleAction();
-  
   // Can't queue actions for nonexistent robots...
   Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   if (nullptr == robot)
@@ -921,11 +940,10 @@ void RobotEventHandler::HandleQueueSingleAction(const GameToEngineEvent& event)
     robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
   }
 }
-  
-void RobotEventHandler::HandleQueueCompoundAction(const GameToEngineEvent& event)
+ 
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundAction& msg)
 {
-  const ExternalInterface::QueueCompoundAction& msg = event.GetData().Get_QueueCompoundAction();
-  
   // Can't queue actions for nonexistent robots...
   Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   if (nullptr == robot)
@@ -963,45 +981,9 @@ void RobotEventHandler::HandleQueueCompoundAction(const GameToEngineEvent& event
     robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
   }
 }
-  
-void RobotEventHandler::HandleSetLiftHeight(const GameToEngineEvent& event)
-{
-  // TODO: get RobotID in a non-hack way
-  RobotID_t robotID = 1;
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    return;
-  }
-  
-  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
-                     "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
-  } else {
-    const ExternalInterface::SetLiftHeight& msg = event.GetData().Get_SetLiftHeight();
-    
-    // Special case if commanding low dock height
-    if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot->IsCarryingObject()) {
-      
-      // Put the block down right here
-      IActionRunner* newAction = new PlaceObjectOnGroundAction(*robot);
-      robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction);
-    }
-    else {
-      // In the normal case directly set the lift height
-      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(*robot, msg.height_mm);
-      action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
-      action->SetLiftAccel(msg.accel_rad_per_sec2);
-      action->SetDuration(msg.duration_sec);
-      
-      robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
-    }
-  }
-}
 
-void RobotEventHandler::HandleEnableLiftPower(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& msg)
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
@@ -1017,13 +999,12 @@ void RobotEventHandler::HandleEnableLiftPower(const GameToEngineEvent& event)
     PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
                      "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
   } else {
-    const ExternalInterface::EnableLiftPower& msg = event.GetData().Get_EnableLiftPower();
     robot->GetMoveComponent().EnableLiftPower(msg.enable);
   }
 }
 
-
-void RobotEventHandler::HandleEnableCliffSensor(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor& msg)
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
@@ -1031,15 +1012,14 @@ void RobotEventHandler::HandleEnableCliffSensor(const GameToEngineEvent& event)
   
   if (nullptr != robot)
   {
-    const ExternalInterface::EnableCliffSensor& msg = event.GetData().Get_EnableCliffSensor();
     robot->SetEnableCliffSensor(msg.enable);
   }
 }
   
-void RobotEventHandler::HandleDisplayProceduralFace(const GameToEngineEvent& event)
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
-  const ExternalInterface::DisplayProceduralFace& msg = event.GetData().Get_DisplayProceduralFace();
-
   Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   
   // We need a robot
@@ -1051,9 +1031,10 @@ void RobotEventHandler::HandleDisplayProceduralFace(const GameToEngineEvent& eve
   robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
   
-void RobotEventHandler::HandleForceDelocalizeRobot(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRobot& msg)
 {
-  RobotID_t robotID = event.GetData().Get_ForceDelocalizeRobot().robotID;
+  RobotID_t robotID = msg.robotID;
 
   Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
     
@@ -1071,11 +1052,10 @@ void RobotEventHandler::HandleForceDelocalizeRobot(const GameToEngineEvent& even
   }
 }
   
-void RobotEventHandler::HandleBehaviorManagerEvent(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::BehaviorManagerMessage& msg)
 {
-  const auto& eventData = event.GetData();
-  const auto& message = eventData.Get_BehaviorManagerMessage();
-  const RobotID_t robotID = message.robotID;
+  const RobotID_t robotID = msg.robotID;
 
   Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
@@ -1086,16 +1066,14 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const GameToEngineEvent& even
   }
   else
   {
-    robot->GetBehaviorManager().HandleMessage(message.BehaviorManagerMessageUnion);
+    robot->GetBehaviorManager().HandleMessage(msg.BehaviorManagerMessageUnion);
   }
 }
 
-void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObjects& msg)
 {
-
-  const auto& eventData = event.GetData();
-  const auto& message = eventData.Get_SendAvailableObjects();
-  const RobotID_t robotID = message.robotID;
+  const RobotID_t robotID = msg.robotID;
   
   Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
@@ -1106,131 +1084,127 @@ void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& even
   }
   else
   {
-    robot->BroadcastAvailableObjects(message.enable);
+    robot->BroadcastAvailableObjects(msg.enable);
   }
 
 }
   
-  void RobotEventHandler::HandleSaveCalibrationImage(const GameToEngineEvent& event)
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationImage& msg)
+{
+  const RobotID_t robotID = msg.robotID;
+  
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
   {
-    
-    const auto& eventData = event.GetData();
-    const auto& message = eventData.Get_SaveCalibrationImage();
-    const RobotID_t robotID = message.robotID;
-    
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    
-    // We need a robot
-    if (nullptr == robot)
-    {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot %u.", robotID);
-    }
-    else
-    {
-      robot->GetVisionComponent().StoreNextImageForCameraCalibration();
-    }
-    
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetVisionComponent().StoreNextImageForCameraCalibration();
   }
   
-  void RobotEventHandler::HandleClearCalibrationImages(const GameToEngineEvent& event)
+}
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationImages& msg)
+{
+  const RobotID_t robotID = msg.robotID;
+  
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
   {
-    
-    const auto& eventData = event.GetData();
-    const auto& message = eventData.Get_ClearCalibrationImages();
-    const RobotID_t robotID = message.robotID;
-    
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    
-    // We need a robot
-    if (nullptr == robot)
-    {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot %u.", robotID);
-    }
-    else
-    {
-      robot->GetVisionComponent().ClearCalibrationImages();
-    }
-    
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetVisionComponent().ClearCalibrationImages();
   }
   
-  void RobotEventHandler::HandleComputeCameraCalibration(const GameToEngineEvent& event)
+}
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCalibration& msg)
+{
+  const RobotID_t robotID = msg.robotID;
+  
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
   {
-    
-    const auto& eventData = event.GetData();
-    const auto& message = eventData.Get_ComputeCameraCalibration();
-    const RobotID_t robotID = message.robotID;
-    
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    
-    // We need a robot
-    if (nullptr == robot)
-    {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
-    }
-    else
-    {
-      robot->GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
-    }
-    
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
   }
   
-  void RobotEventHandler::HandleCameraCalibration(const GameToEngineEvent& event)
-  {
-    // TODO: get RobotID in a non-hack way
-    RobotID_t robotID = 1;
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    
-    // We need a robot
-    if (nullptr == robot)
-    {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
-    }
-    else
-    {
-      CameraCalibration calib = event.GetData().Get_CameraCalibration();
-      std::vector<u8> calibVec(calib.Size());
-      calib.Pack(calibVec.data(), calib.Size());
-      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, calibVec.data(), calibVec.size());
-      
-      PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
-                       "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
-                       calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
-      
-    }
-  }
-  
-  void RobotEventHandler::HandleSetHeadlight(const GameToEngineEvent& event)
-  {
-    // TODO: get RobotID in a non-hack way
-    RobotID_t robotID = 1;
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    
-    // We need a robot
-    if (nullptr == robot)
-    {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
-    }
-    else
-    {
-      robot->SetHeadlight(event.GetData().Get_SetHeadlight().enable);
-    }
-  }
+}
 
-  void RobotEventHandler::HandleAnimationAborted(const EngineToGameEvent &event)
-  {
-    RobotID_t robotID = 1;
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    
-    if(nullptr == robot) {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot %u.", robotID);
-    }
-    else
-    {
-      robot->AbortAnimation();
-      PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
-    }
-  }
+template<>
+void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
   
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    std::vector<u8> calibVec(calib.Size());
+    calib.Pack(calibVec.data(), calib.Size());
+    robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, calibVec.data(), calibVec.size());
+    
+    PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
+                     "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
+                     calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
+    
+  }
+}
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::SetHeadlight& msg)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->SetHeadlight(msg.enable);
+  }
+}
+
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted& msg)
+{
+  RobotID_t robotID = 1;
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  if(nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->AbortAnimation();
+    PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
+  }
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

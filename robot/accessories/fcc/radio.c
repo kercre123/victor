@@ -35,12 +35,22 @@ void writeMultiReg(u8 reg, u8 idata *buf, u8 length)
   RFCSN = 1;
 }
 
-// Test 1: Listen on 2481
-// Test 2: Packets on 2481
-// Test 3: Packets on 2403
-// Test 4: Carrier on 2481
-// Test 5: Carrier on 2403
 void delayms(u8 delay);
+
+// Test mode configuration: CONFIG (RX/TX), RF_SETUP (power/data rate), CHAN, unused
+u8 code TESTS[] = {
+  PRIM_RX|PWR_UP, RF_PWR1|PLL_LOCK, 2,  0,
+  
+  PWR_UP,         RF_PWR1|PLL_LOCK, 2,  0,
+  PWR_UP,         RF_PWR1|PLL_LOCK, 42, 0,
+  PWR_UP,         RF_PWR1|PLL_LOCK, 82, 0,
+  
+  PRIM_RX|PWR_UP, RF_PWR1|PLL_LOCK, 82, 0,
+  
+  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 2,  0,
+  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 42, 0,
+  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 82, 0,
+};
 
 extern u8 xdata _whichTest;
 void TransmitData()
@@ -52,17 +62,11 @@ void TransmitData()
 
   // Enable the radio clock
   RFCKEN = 1;
-
-  // Set datarate (1mbps - default) and power (0dbm)
-  writeReg(RF_SETUP, RF_PWR1 | RF_PWR0 | PLL_LOCK);    // XXX: PLL Lock is for test purposes only
-  if (_whichTest >= 4)
-    writeReg(RF_SETUP, RF_PWR1 | /*RF_PWR0 |*/ PLL_LOCK);    // -6dB
-
-  // Set channel
-  if (_whichTest & 1)
-    writeReg(RF_CH, 81);   // 2481
-  else
-    writeReg(RF_CH, 3);    // 2403
+  
+  i = (_whichTest & 7) << 2;        // Offset into TESTS
+  
+  writeReg(RF_SETUP, TESTS[i+1]);   // Must come first, since it enables power
+  writeReg(RF_CH, TESTS[i+2]);
   
   // Turn off Enhanced Shockburst (on by default) - Cube protocol handles its own reliability
   writeReg(EN_AA, 0);
@@ -78,65 +82,39 @@ void TransmitData()
   writeReg(STATUS, RX_DR | TX_DS | MAX_RT);
   RFF = 0;  // The "8051 way" to acknowledge an untaken interrupt
 
-  // XXX: Set address is not needed yet - default will do
-  //hal_nrf_set_address(HAL_NRF_TX, radioStruct.ADDRESS_TX_PTR); // cube to body
-
   // Flush the last packet we received
   writeReg(FLUSH_RX, 0);
   
-  // Write payload to radio TX FIFO
-  writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 10);
+  // Power up in receive or transmit mode
+  writeReg(CONFIG, TESTS[i+0]);
+  delayms(2);
 
-  if (_whichTest == 1)
-  {
-    // Power up in receive mode - takes 150uS (on top of the 130uS PLL time), so do this ASAP
-    writeReg(CONFIG, PRIM_RX | PWR_UP | EN_CRC | CRCO);
-
-    // Enable receiver
-    RFCE = 1;
-
-    // Now sit and listen for a packet
-    //while (!RFF) ;
-    while(1)
-      LedTest(_whichTest);      
-  }
-
-  // Got it - switch to transmit mode - takes 150uS (on top of the 130uS PLL time), so do this ASAP
-  // Doing this way apparently prevents a tpece2csn spec violation?  Not sure
-  writeReg(CONFIG, PWR_UP | EN_CRC | CRCO);    
-
-  // Toggle radio CE signal to switch from receive to continuous transmit
-  RFCE = 0;
+  // Enable radio
   RFCE = 1;
-
-  // Broadcast continually
-  /*
-  if (_whichTest >= 4)
+  
+  // Tests 1-3, send packets forever
+  if (_whichTest && !(_whichTest & 4))
   {
-    writeReg(RF_SETUP, RF_PWR1 | RF_PWR0 | PLL_LOCK | CONT_WAVE);    // XXX: PLL Lock is for test purposes onlyj
-    while(1)
-      LedTest(_whichTest);  
-  }
-  */
-    
-  writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 17);
+    writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 17);   // Buffer one extra
+    while (1)
+    {
+      LedTest(_whichTest);
+      writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 17);
 
-  // Send packets continually
+      // Clear radio IRQ flags and RRF
+      writeReg(STATUS, RX_DR | TX_DS | MAX_RT);
+      RFF = 0;  // The "8051 way" to acknowledge an untaken interrupt
+
+      // Wait for radio to signal transmit complete
+      while (!RFF)
+        ;
+    }
+  }
+  
+  // Else just wait here
   while (1)
   {
     LedTest(_whichTest);
-    writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 17);
-
-    // Clear radio IRQ flags and RRF
-    writeReg(STATUS, RX_DR | TX_DS | MAX_RT);
-    RFF = 0;  // The "8051 way" to acknowledge an untaken interrupt
-
-    // Wait for radio to signal transmit complete
-    while (!RFF) ;
+    delayms(1);
   }
-    
-  // Power everything down
-  RFCE = 0; 
-  writeReg(CONFIG, 0);
 }
-

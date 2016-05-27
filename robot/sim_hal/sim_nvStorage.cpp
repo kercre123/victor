@@ -174,7 +174,7 @@ namespace Anki {
         // Erasing single blob
         if(!multiErase || msg.rangeEnd == NVStorage::NVEntry_Invalid)
         {
-          printf("Sim_Robot.NVErase: Erasing tag %u\n", msg.entry.tag);
+          printf("Sim_Robot.NVErase: Erasing tag 0x%x\n", msg.entry.tag);
           nvStorage_.erase(msg.entry.tag);
           
           if(msg.reportEach)
@@ -201,13 +201,13 @@ namespace Anki {
             return;
           }
         
-          for(auto iter = nvStorage_.begin(); iter != nvStorage_.end(); ++iter)
+          for(auto iter = nvStorage_.begin(); iter != nvStorage_.end(); )
           {
             if(iter->first >= msg.entry.tag && iter->first <= msg.rangeEnd)
             {
               uint32_t tag = iter->first;
               iter = nvStorage_.erase(iter);
-              printf("Sim_Robot.NVErase: Erasing tag %u\n", tag);
+              printf("Sim_Robot.NVErase: Erasing tag 0x%x\n", tag);
               
               if(msg.reportEach)
               {
@@ -218,6 +218,8 @@ namespace Anki {
                 m.report.write = true;
                 nvOpResultMsgQueue_.push(m);
               }
+            } else {
+              ++iter;
             }
           }
           
@@ -256,7 +258,7 @@ namespace Anki {
         
         while(lower != upper)
         {
-          printf("Sim_Robot.NVRead: Reading tag %u\n", lower->first);
+          printf("Sim_Robot.NVRead: Reading tag 0x%x\n", lower->first);
           RobotInterface::NVReadResultToEngine m;
           m.robotAddress = 1;
           m.blob = lower->second;
@@ -274,7 +276,7 @@ namespace Anki {
       // Single tag
       else
       {
-        printf("Sim_Robot.NVRead: Reading tag %u\n", msg.tag);
+        printf("Sim_Robot.NVRead: Reading tag 0x%x\n", msg.tag);
         RobotInterface::NVReadResultToEngine m;
         m.robotAddress = 1;
         m.blob = nvStorage_[msg.tag];

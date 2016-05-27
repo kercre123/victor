@@ -54,6 +54,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
   _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
   _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
+  _areWheelsMoving = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::ARE_WHEELS_MOVING);
   
   for(auto layerIter = _faceLayerTagsToRemoveOnHeadMovement.begin();
       layerIter != _faceLayerTagsToRemoveOnHeadMovement.end(); )

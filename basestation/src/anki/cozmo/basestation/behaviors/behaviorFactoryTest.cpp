@@ -37,6 +37,9 @@
 
 #define TEST_CHARGER_CONNECT 0
 
+// Whether or not to end the test before the actual block pickup
+#define SKIP_BLOCK_PICKUP 0
+
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
 #define ENABLE_NVSTORAGE_WRITES 1
@@ -132,6 +135,7 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
+    _toolCodeImagesStored = false;
     
     robot.GetActionList().Cancel();
  
@@ -155,6 +159,10 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
+    if (ENABLE_NVSTORAGE_WRITES) {
+      // Erase all entries in flash
+      robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_ReallyEraseAll);
+    }
 
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
@@ -366,7 +374,6 @@ namespace Cozmo {
                 EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
                 return false;
               }
-              robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
               SetCurrState(FactoryTestState::ChargerAndIMUCheck);
               return true;
             });
@@ -375,50 +382,55 @@ namespace Cozmo {
       }
       case FactoryTestState::ChargerAndIMUCheck:
       {
-        // Wait for first image to be taken
-        if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() > 0)
-        { 
-          // Check that robot is on charger
-          if (!robot.IsOnCharger()) {
-            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
-            END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
+        
+        // Check that robot is on charger
+        if (!robot.IsOnCharger()) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
+          END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
+        }
+        
+        // Check for IMU drift
+        if (_holdUntilTime < 0) {
+          // Capture initial robot orientation and check if it changes over some period of time
+          _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+          _holdUntilTime = currentTime_sec + _kIMUDriftDetectPeriod_sec;
+          
+          // Take photo for checking starting pose
+          robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
+        } else if (currentTime_sec > _holdUntilTime) {
+          f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
+          if(angleChange > _kIMUDriftAngleThreshDeg) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
+                                "Angle change of %f deg detected in %f seconds",
+                                angleChange, _kIMUDriftDetectPeriod_sec);
+            END_TEST(FactoryTestResultCode::IMU_DRIFTING);
           }
           
-          // Check for IMU drift
-          if (_holdUntilTime < 0) {
-            // Capture initial robot orientation and check if it changes over some period of time
-            _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
-            _holdUntilTime = currentTime_sec + _kIMUDriftDetectPeriod_sec;
-          } else if (currentTime_sec > _holdUntilTime) {
-            f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
-            if(angleChange > _kIMUDriftAngleThreshDeg) {
-              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
-                                  "Angle change of %f deg detected in %f seconds",
-                                  angleChange, _kIMUDriftDetectPeriod_sec);
-              END_TEST(FactoryTestResultCode::IMU_DRIFTING);
-            }
-            
-            if (TEST_CHARGER_CONNECT) {
-              // Verify that charger was discovered
-              if (!_chargerAvailable) {
-                PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
-                END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
-              }
-              
-              // Connect to charger
-              const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
-              robot.ConnectToBlocks(connectToIDs);
-            }
-            
-            // Drive off charger
-            StartActing(robot, new DriveStraightAction(robot, 250, 100),
-                        [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                          _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
-                          return true;
-                        });
-            SetCurrState(FactoryTestState::DriveToSlot);
+          // Confirm that the first calib photo was taken
+          if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0) {
+            END_TEST(FactoryTestResultCode::FIRST_CALIB_IMAGE_NOT_TAKEN);
           }
-        } // if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() > 0)
+          
+          if (TEST_CHARGER_CONNECT) {
+            // Verify that charger was discovered
+            if (!_chargerAvailable) {
+              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
+              END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+            }
+            
+            // Connect to charger
+            const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
+            robot.ConnectToBlocks(connectToIDs);
+          }
+          
+          // Drive off charger
+          StartActing(robot, new DriveStraightAction(robot, 250, 100),
+                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
+                        return true;
+                      });
+          SetCurrState(FactoryTestState::DriveToSlot);
+        }
         break;
       }
       case FactoryTestState::DriveToSlot:
@@ -550,6 +562,7 @@ namespace Cozmo {
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
                         // Save tool code images to robot (whether it succeeded to read code or not)
+                        _toolCodeImagesStored = false;
                         if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
                                                                                     // Clear tool code images from VisionSystem
                                                                                     robot.GetVisionComponent().ClearToolCodeImages();
@@ -566,6 +579,7 @@ namespace Cozmo {
                                                                                       EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
                                                                                     } else {
                                                                                       PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
+                                                                                      _toolCodeImagesStored = true;
                                                                                     }
                                                                                   }) != RESULT_OK)
                         {
@@ -588,18 +602,6 @@ namespace Cozmo {
                                          info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
                                          info.observedCalibDotRight_x, info.observedCalibDotRight_y);
                         
-                        // Verify tool code data is in range
-                        static const f32 pixelDistThresh = 30.f;
-                        f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
-                                                           Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
-                        f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
-                                                           Point2f(info.observedCalibDotRight_x, info.observedCalibDotRight_y));
-                        
-                        if (distL > pixelDistThresh || distR > pixelDistThresh) {
-                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
-                          return false;
-                        }
-                        
                         // Store results to nvStorage
                         if (ENABLE_NVSTORAGE_WRITES) {
                           u8 buf[info.Size()];
@@ -616,8 +618,22 @@ namespace Cozmo {
                             EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
                             return false;
                           }
-                          
                         }
+                        
+                        
+                        // Verify tool code data is in range
+                        static const f32 pixelDistThresh_x = 20.f;
+                        static const f32 pixelDistThresh_y = 35.f;
+                        f32 distL_x = std::fabsf(info.expectedCalibDotLeft_x - info.observedCalibDotLeft_x);
+                        f32 distL_y = std::fabsf(info.expectedCalibDotLeft_y - info.observedCalibDotLeft_y);
+                        f32 distR_x = std::fabsf(info.expectedCalibDotRight_x - info.observedCalibDotRight_x);
+                        f32 distR_y = std::fabsf(info.expectedCalibDotRight_y - info.observedCalibDotRight_y);
+                        
+                        if (distL_x > pixelDistThresh_x || distL_y > pixelDistThresh_y || distR_x > pixelDistThresh_x || distR_y > pixelDistThresh_y) {
+                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
+                          return false;
+                        }
+                        
                         return true;
                       });
       
@@ -745,6 +761,21 @@ namespace Cozmo {
       }
       case FactoryTestState::PickingUpBlock:
       {
+        
+        if (SKIP_BLOCK_PICKUP) {
+          if (ENABLE_NVSTORAGE_WRITES) {
+            if (!_toolCodeImagesStored) {
+              break;
+            }
+          }
+          
+          // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
+          EndTest(robot, FactoryTestResultCode::SUCCESS);
+          return Status::Complete;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        }
+        
+        
         auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");

@@ -22,7 +22,7 @@ namespace Anki {
     : CompoundActionSequential(robot)
     {
       AddAction(new DriveToFlipBlockPoseAction(robot, objectID));
-      AddAction(new FlipBlockAction(robot));
+      AddAction(new FlipBlockAction(robot, objectID));
     }
     
     void DriveAndFlipBlockAction::SetMotionProfile(const PathMotionProfile& motionProfile)
@@ -66,15 +66,23 @@ namespace Anki {
     }
     
     
-    FlipBlockAction::FlipBlockAction(Robot& robot)
+    FlipBlockAction::FlipBlockAction(Robot& robot, ObjectID objectID)
     : CompoundActionSequential(robot)
     {
       // Need to suppress track locking so the two lift actions don't fail because the other locked the lift track
       // A little dangerous as animations playing in parallel to this action could move lift
       ShouldSuppressTrackLocking(true);
       
+      f32 drivingDist = kDrivingDist_mm;
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(objectID));
+      Pose3d p;
+      if(object->GetPose().GetWithRespectTo(_robot.GetPose(), p))
+      {
+        drivingDist = p.GetTranslation().Length() + kExtraDrivingDist_mm;
+      }
+      
       // Drive through the block
-      DriveStraightAction* drive = new DriveStraightAction(robot, kDrivingDist_mm, kDrivingSpeed_mmps);
+      DriveStraightAction* drive = new DriveStraightAction(robot, drivingDist, kDrivingSpeed_mmps);
       
       // Lift movement to actually flip
       MoveLiftToHeightAction* moveLift = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::CARRY);

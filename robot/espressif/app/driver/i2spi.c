@@ -1,4 +1,4 @@
-/*
+ /*
  * @file I2S driver for Espressif chip.
  * @author Daniel Casner <daniel@anki.com>
  *
@@ -43,7 +43,6 @@ enum {
 
 uint32_t i2spiTxUnderflowCount;
 uint32_t i2spiTxOverflowCount;
-uint32_t i2spiRxOverflowCount;
 uint32_t i2spiPhaseErrorCount;
 int32_t  i2spiIntegralDrift;
 
@@ -249,7 +248,7 @@ void i2spiTask(os_event_t *event)
             {
               if (unlikely(drift > DRIFT_MARGIN)) 
               {
-                i2spiRxOverflowCount++;
+                i2spiPhaseErrorCount++;
                 os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
               }
               if (unlikely(outgoingPhase < PHASE_FLAGS)) // Haven't established outgoing phase yet
@@ -516,7 +515,6 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   nextOutgoingDesc        = &txQueue[2]; // 0th entry will imeediately be going out and we want to stay one ahead
   i2spiTxUnderflowCount   = 0;
   i2spiTxOverflowCount    = 0;
-  i2spiRxOverflowCount    = 0;
   i2spiPhaseErrorCount    = 0;
   i2spiIntegralDrift      = 0;
   txFillCount             = 0;

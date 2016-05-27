@@ -360,7 +360,17 @@ namespace Vision {
     const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < angleTol);
     return isFlat;
   }
-  
+
+  const char* ObservableObject::PoseStateToString(const PoseState& state)
+  {
+    switch(state) {
+      case PoseState::Known: return "Known";
+      case PoseState::Dirty: return "Dirty";
+      case PoseState::Unknown: return "Unknown";
+    }
+  }
+
+
 } // namespace Vision
 } // namespace Anki
 

@@ -62,16 +62,12 @@
 // adds a bunch of noisy prints related to threading
 #define LATTICE_PLANNER_THREAD_DEBUG 0
 
-// The min absolute difference between the commanded end pose angle
-// and the end pose angle of the generated plan that is required
-// in order for a point turn to be appended to the path such that
-// the end pose angle of the path is the commanded one.
-const f32 TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD = DEG_TO_RAD_F32(2.f);
-
 const f32 TERMINAL_POINT_TURN_SPEED = 2; //rad/s
 const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
 const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
 
+// The angular tolerance to use for the point turn that is appended at the end of every path
+const f32 TERMINAL_POINT_TURN_ANGLE_TOL = DEG_TO_RAD_F32(5.f);
 
 namespace Anki {
 namespace Cozmo {
@@ -857,23 +853,22 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
     Radians plannedGoalAngle(end_angle);
     f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
       
-    if (std::abs(angDiff) > TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD) {
-        
-      f32 turnDir = angDiff > 0 ? 1.f : -1.f;
-      f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
-        
-      PRINT_NAMED_INFO(
-        "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
-        "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.",
-        angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
-        
-      path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
-                           rotSpeed,
-                           TERMINAL_POINT_TURN_ACCEL,
-                           TERMINAL_POINT_TURN_DECEL,
-                           POINT_TURN_ANGLE_TOL,
-                           true);
-    }
+    
+    f32 turnDir = angDiff > 0 ? 1.f : -1.f;
+    f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
+      
+    PRINT_NAMED_INFO(
+      "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
+      "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.",
+      angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
+      
+    path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
+                         rotSpeed,
+                         TERMINAL_POINT_TURN_ACCEL,
+                         TERMINAL_POINT_TURN_DECEL,
+                         TERMINAL_POINT_TURN_ANGLE_TOL,
+                         true);
+
   }
 
   return true;  

@@ -45,6 +45,7 @@ public:
   // True if head/lift is on its way to a commanded angle/height
   bool   IsHeadMoving() const {return _isHeadMoving;}
   bool   IsLiftMoving() const {return _isLiftMoving;}
+  bool   AreWheelsMoving() const {return _areWheelsMoving;}
   
   // Returns true if any of the tracks are locked
   bool AreAnyTracksLocked(u8 tracks) const;
@@ -104,6 +105,7 @@ private:
   bool _isMoving;
   bool _isHeadMoving;
   bool _isLiftMoving;
+  bool _areWheelsMoving;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

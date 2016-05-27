@@ -45,6 +45,7 @@ namespace Anki
       u32 GetID() { return *(uint32_t*) 0xFFC; }
 
       void HALInit(void) {
+        UART::Init();
         DAC::Sync();
       }
       
@@ -100,7 +101,6 @@ int main (void)
   DAC::Init();
 
   I2C::Init();
-  UART::Init();
   IMU::Init();
   OLED::Init();
   #ifndef ENABLE_FCC_TEST
@@ -121,7 +121,7 @@ int main (void)
     UART::WaitForSync();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
   #else
-
+  UART::Init();
   FCC::start();
   I2C::Enable();
   for (;;) {

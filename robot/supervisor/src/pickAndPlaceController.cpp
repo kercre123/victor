@@ -393,7 +393,7 @@ namespace Anki {
                   relAngleToMarker -= robotPose_angle.ToFloat();
 
                   f32 targetAngle = (Localization::GetCurrPose_angle() + PI_F + relAngleToMarker).ToFloat();
-                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, DEG_TO_RAD(1), true);
+                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, DEG_TO_RAD_F32(1), true);
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
@@ -554,7 +554,7 @@ namespace Anki {
                 case DA_PICKUP_HIGH:
                 case DA_PLACE_HIGH:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(20));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD_F32(20));
                   break;
                 } // HIGH
                 case DA_PICKUP_LOW:
@@ -562,7 +562,7 @@ namespace Anki {
                 case DA_PLACE_LOW_BLIND:
                 case DA_ROLL_LOW:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD_F32(-15));
                   break;
                 } // LOW
                 default:

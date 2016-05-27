@@ -132,6 +132,8 @@ namespace Cozmo {
       void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
       void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
       
+      void SetShouldPlayDrivingAnimation(bool shouldPlay) { _shouldPlayDrivingAnimation = shouldPlay; }
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -147,6 +149,8 @@ namespace Cozmo {
       bool _hasStarted = false;
       
       std::string _name = "DriveStraightAction";
+      
+      bool _shouldPlayDrivingAnimation = true;
       
     }; // class DriveStraightAction
     
@@ -331,7 +335,14 @@ namespace Cozmo {
     {
     public:
       TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed);
-      virtual ~TraverseObjectAction() { Util::SafeDelete(_chosenAction); }
+      virtual ~TraverseObjectAction()
+      {
+        if(_chosenAction != nullptr)
+        {
+          _chosenAction->PrepForCompletion();
+        }
+        Util::SafeDelete(_chosenAction);
+      }
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }

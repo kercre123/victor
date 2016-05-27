@@ -101,7 +101,7 @@ void InitEspressif(void)
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
   
-  // Pull PA4 (CS#) low.  This MUST happen before ProgramEspressif()
+  // Pull PA4 (CS#) low to select ESP BOOT.  This MUST happen before ProgramEspressif()
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_ResetBits(GPIOA, GPIO_Pin_4);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
@@ -111,6 +111,15 @@ void InitEspressif(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+  // Pull PC12 (DUT_TRX) low to select "esptool" mode in bootloader.
+  GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
   // Reset the UARTs since they tend to clog with framing errors
   RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART2, ENABLE);
   RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART2, DISABLE);

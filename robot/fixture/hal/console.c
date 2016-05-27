@@ -7,6 +7,7 @@
 #include "hal/uart.h"
 #include "hal/display.h"
 #include "hal/motorled.h"
+#include "hal/board.h"
 #include "../../crypto/crypto.h"
 #include "../app/fixture.h"
 #include <stdarg.h>
@@ -314,6 +315,7 @@ static void SetVBAT(void)
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &mv);
   VBATMillivolts(mv);
+  EnableBAT();
 }
 
 static void SetLotCode(void)

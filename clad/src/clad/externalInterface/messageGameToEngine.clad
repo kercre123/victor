@@ -292,6 +292,17 @@ message VisionRunMode {
   bool isSync
 }
 
+// Save the enrolled face album to a file
+message SaveFaceAlbumToFile {
+  string path,
+  bool   isRelativePath=1  // If true, use 'path' relative to internal album path
+}
+
+// Load the face album from a file (this clears all faces stored on the robot!)
+message LoadFaceAlbumFromFile {
+  string path,
+  bool   isRelativePath=1  // If true, use 'path' relative to internal album path
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Behavior Commands
@@ -420,6 +431,11 @@ message ReadAnimationFile {
 
 // RequestAvailableAnimations
 message RequestAvailableAnimations{
+  
+}
+
+// RequestAvailableAnimationGroups
+message RequestAvailableAnimationGroups{
   
 }
 

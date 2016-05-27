@@ -33,18 +33,10 @@ factory.on('discovered', function(info) {
 	color_b = PALETTE[color_b];
 
 	var message = [
-		0x03, 
-		0x00, 0x00, 0x00, 0x00,	0x00, 0x00, 0x00, 0x00, 
-		
-		color_a & 0xFF, color_a >> 8, color_a & 0xFF, color_a >> 8, 0x20, 0x20, 0x00, 0x00, 
-		color_b & 0xFF, color_b >> 8, color_b & 0xFF, color_b >> 8, 0x20, 0x20, 0x00, 0x00, 
-		color_a & 0xFF, color_a >> 8, color_a & 0xFF, color_a >> 8, 0x20, 0x20, 0x00, 0x00, 
-		
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+		0x27, 
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0
 	];
-
-	//info.interface.send(message, key);
-	info.interface.send(message);
 
 	info.interface.on('data', (data, encrypted) => {
 		if (encrypted) {
@@ -53,6 +45,8 @@ factory.on('discovered', function(info) {
 		}
 
 		console.log("RECV:", data.length, data) 
+
+		info.interface.send(message);
 	});
 	info.interface.on('disconnect', (data) => console.log("disconnected", info.name) );
 });

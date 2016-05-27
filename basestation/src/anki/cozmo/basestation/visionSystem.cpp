@@ -1601,7 +1601,7 @@ namespace Cozmo {
       {
         Quad2f imgQuad;
         _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography,
-                                              image.GetNumCols(), image.GetNumRows(),
+                                              imageIn.GetNumCols(), imageIn.GetNumRows(),
                                               imgQuad);
         
         imgQuad *= 1.f / scaleMultiplier;

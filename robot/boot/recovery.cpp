@@ -220,7 +220,7 @@ void EnterRecovery(bool force) {
   
   if (~GPIO_POWEREN->PDDR & PIN_POWEREN) {
     UART::writeByte(COMMAND_PAUSE);
-    Power::enableEspressif();
+    Power::enableEspressif(false);
     SPI::init();
     UART::writeByte(COMMAND_RESUME);
   }

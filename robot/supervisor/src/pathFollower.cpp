@@ -15,6 +15,11 @@
 
 #define DEBUG_PATH_FOLLOWER 0
 
+// At low speeds Cozmo was stuttering/struggling while following a path which was due to resetting
+// wheelcontroller's integral gains, this enables or disables resetting those gains. If Cozmo suddenly
+// has trouble following paths this can be reenabled
+#define RESET_INTEGRAL_GAINS_AT_END_OF_SEGMENT 0
+
 // The number of tics desired in between debug prints
 #define DBG_PERIOD 200
 
@@ -479,7 +484,10 @@ namespace Anki
                 path_[currPathSegment_].GetAccel(),
                 path_[currPathSegment_].GetDecel());
 #endif
+
+#if(RESET_INTEGRAL_GAINS_AT_END_OF_SEGMENT)
           WheelController::ResetIntegralGainSums();
+#endif
 
         }
 

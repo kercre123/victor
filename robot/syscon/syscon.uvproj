@@ -357,7 +357,7 @@
               <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/ble/ble_dtm;./components/toolchain;./components/drivers_nrf/hal;./components/libraries/util/;./components/drivers_nrf/config/;./components/drivers_nrf/common/;./components/drivers_nrf/rng;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/ble/ble_services/ble_bas;./components/ble/ble_services/ble_dis;./components/ble/ble_advertising;../include;.;./components/libraries/trace;./components/drivers_nrf/pstorage;./components/drivers_nrf/pstorage/config;./components/ble/device_manager;./components/ble/device_manager/config;./components/libraries/timer;./components/softdevice/s110/headers;./components/ble/ble_services/ble_bps;../generated/clad/robot;./crypto;./hal;./cubes</IncludePath>
+              <IncludePath>./components/toolchain;./components/drivers_nrf/hal;./components/device;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../include;../../crypto;./hal;./cubes;.</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -529,29 +529,34 @@
               <FilePath>.\hal\crypto.cpp</FilePath>
             </File>
             <File>
-              <FileName>bignum.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\bignum.cpp</FilePath>
-            </File>
-            <File>
               <FileName>aes.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\crypto\aes.cpp</FilePath>
+              <FilePath>..\..\crypto\aes.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
+              <FileName>bignum.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\crypto\sha1.cpp</FilePath>
+              <FilePath>..\..\crypto\bignum.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crc32.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\crypto\crc32.cpp</FilePath>
             </File>
             <File>
               <FileName>diffie.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\crypto\diffie.cpp</FilePath>
+              <FilePath>..\..\crypto\diffie.cpp</FilePath>
             </File>
             <File>
               <FileName>random.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\crypto\random.cpp</FilePath>
+              <FilePath>..\..\crypto\random.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sha1.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\crypto\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>

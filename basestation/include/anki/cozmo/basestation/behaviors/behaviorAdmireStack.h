@@ -67,6 +67,8 @@ private:
 
   // last time we saw the last block (based on the block ID in the whiteboard)
   TimeStamp_t _topBlockLastSeentime = 0;
+  
+  const int numFramesToWaitForBeforeFlip = 5;
 };
 
 }

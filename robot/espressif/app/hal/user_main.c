@@ -90,8 +90,7 @@ void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
 void user_rf_pre_init(void)
 {
   crashHandlerInit(); // Set up our own crash handler, so we can record crashes in more detail
-  system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
-  system_phy_set_max_tpw(48); // Set the maximum  TX power allowed
+  //system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
 }
 
 /// Forward declarations
@@ -144,7 +143,9 @@ void user_init(void)
   int8 err;
 
   wifi_status_led_uninstall();
-
+  //system_phy_set_tpw_via_vdd33(system_get_vdd33());
+  system_phy_set_max_tpw(MAX_TPW);
+  
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
 

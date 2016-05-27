@@ -129,6 +129,7 @@ enum flash_size_map {
 
 enum flash_size_map system_get_flash_size_map(void);
 
+uint16 system_get_vdd33(void);
 void system_phy_set_max_tpw(uint8 max_tpw);
 void system_phy_set_tpw_via_vdd33(uint16 vdd33);
 void system_phy_set_rfoption(uint8 option);

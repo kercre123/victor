@@ -31,15 +31,23 @@ CozmoMat {
 LightCube {
   translation 0.156 0 0.022
 }
-BlockWorldComms {
-}
-DEF Cozmo_1 CozmoBot {
+DEF CozmoViz_1 CozmoBot {
   name "CozmoBot_1"
+  
+  # Move robot off mat
+  translation 0 1 0
+
+  # Enable vizMode
   vizMode TRUE
 }
-WebotsKeyboardController {
-  behaviorName "DockingTestSimple"
-  forceAddRobot TRUE
+DEF WorldComms BlockWorldComms {
 }
 CozmoVizDisplay {
+  moodViz TRUE
+  behaviorSelectionViz TRUE
+}
+WebotsKeyboardController{
+  forcedRobotIsSimulated FALSE
+  forcedRobotIP "172.31.1.1"
+  behaviorName "DockingTestSimple"
 }

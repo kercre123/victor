@@ -48,6 +48,78 @@ namespace Anki {
       }
     }
     
+    bool ImuDataHistory::GetImuDataBeforeAndAfter(TimeStamp_t t,
+                                                  ImuDataHistory::ImuData& before,
+                                                  ImuDataHistory::ImuData& after)
+    {
+      if(_history.size() < 2)
+      {
+        return false;
+      }
+    
+      for(auto iter = _history.begin(); iter != _history.end(); ++iter)
+      {
+        // If we get to the imu data after the timestamp
+        // or We have gotten to the imu data that has yet to be given a timestamp and
+        // our last known timestamped imu data is fairly close the time we are looking for
+        // so use it and the data after it that doesn't have a timestamp
+        if(iter->timestamp > t ||
+           (iter->timestamp == 0 &&
+            ABS((int)((iter - 1)->timestamp - t)) < RollingShutterCorrector::timeBetweenFrames_ms))
+        {
+          if(iter == _history.begin())
+          {
+            return false;
+          }
+          after = *iter;
+          before = *(iter - 1);
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    bool ImuDataHistory::IsImuDataBeforeTimeGreaterThan(const TimeStamp_t t,
+                                                        const int numToLookBack,
+                                                        const f32 rateX, const f32 rateY, const f32 rateZ)
+    {
+      if(_history.size() == 0)
+      {
+        return false;
+      }
+      
+      for(auto iter = _history.begin(); iter != _history.end(); ++iter)
+      {
+        // If we get to the imu data after the timestamp
+        // or We have gotten to the imu data that has yet to be given a timestamp and
+        // our last known timestamped imu data is fairly close the time we are looking for
+        if(iter->timestamp > t ||
+           (iter->timestamp == 0 &&
+            ABS((int)((iter - 1)->timestamp - t)) < RollingShutterCorrector::timeBetweenFrames_ms))
+        {
+          if(iter == _history.begin())
+          {
+            return false;
+          }
+          
+          // Once we get to the imu data after the timestamp look at the numToLookBack imu data before it
+          for(int i = 0; i < numToLookBack; i++)
+          {
+            if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
+            {
+              return true;
+            }
+            if(iter-- == _history.begin())
+            {
+              return false;
+            }
+          }
+          return false;
+        }
+      }
+      return false;
+    }
+    
     void RollingShutterCorrector::ComputePixelShifts(const VisionPoseData& poseData,
                                                      const VisionPoseData& prevPoseData)
     {

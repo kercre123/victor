@@ -201,12 +201,16 @@ namespace Anki {
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
+
+      if( _robot.GetMoveComponent().AreWheelsMoving()) {
+        _turnStarted = true;
+      }
       
       // Wait to get a state message back from the physical robot saying its body
       // is in the commanded position
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
-        result = ActionResult::SUCCESS;
+        result = _robot.GetMoveComponent().AreWheelsMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
                          "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
@@ -216,16 +220,14 @@ namespace Anki {
                          _variability.getDegrees(),
                          _angleTolerance.ToFloat(),
                          _robot.GetPoseFrameID());
-      }
-      
-      if( _robot.GetMoveComponent().IsMoving() ) {
-        _turnStarted = true;
-      }
-      else if( _turnStarted ) {
-        PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
-                            "[%d] giving up since we stopped moving",
-                            GetTag());
-        result = ActionResult::FAILURE_RETRY;
+        
+
+        if( _turnStarted && !_robot.GetMoveComponent().AreWheelsMoving()) {
+          PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::FAILURE_RETRY;
+        }
       }
       
       return result;
@@ -413,10 +415,10 @@ namespace Anki {
       if(!_hasStarted) {
         PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
-        if( _hasStarted ) {
+        if( _hasStarted && _shouldPlayDrivingAnimation) {
           _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
         }
-      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath()) {
+      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath() && _shouldPlayDrivingAnimation) {
         if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
           return ActionResult::RUNNING;
         }
@@ -567,7 +569,7 @@ namespace Anki {
       // is in the commanded position
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
-        result = ActionResult::SUCCESS;
+        result = _robot.GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
                          "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
@@ -747,7 +749,7 @@ namespace Anki {
       }
       
       if(_inPosition) {
-        result = ActionResult::SUCCESS;
+        result = _robot.GetMoveComponent().IsLiftMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
                          "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",

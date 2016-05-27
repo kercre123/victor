@@ -368,6 +368,23 @@ namespace AnimationController {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
           AnkiWarn( 169, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
+          
+          // Failsafe: make sure body stops moving.
+          // We don't have to do this with lift/head, because they will stop
+          // when the controller reaches its desired value.
+          if(_tracksInUse & BODY_TRACK) {
+            #ifdef TARGET_ESPRESSIF
+            RobotInterface::EngineToRobot msg;
+            msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
+            msg.animBodyMotion.speed = 0;
+            msg.animBodyMotion.curvatureRadius_mm = 0;
+            RTIP::SendMessage(msg);
+            #else
+            SteeringController::ExecuteDirectDrive(0, 0);
+            #endif
+            _tracksInUse &= ~BODY_TRACK;
+          }
+          
         }
       } else {
         _isBufferStarved = false;
@@ -603,7 +620,7 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
                 RTIP::SendMessage(msg);
               #else
-                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
+                HeadController::SetDesiredAngle(DEG_TO_RAD_F32(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
               #endif
               _tracksInUse |= HEAD_TRACK;

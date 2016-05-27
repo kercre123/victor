@@ -191,7 +191,14 @@ namespace Anki
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
       ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                          f32 zTolerance) const;
+                                          f32 zTolerance,
+                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
+      // Same as above, but in revers: find object directly underneath given object
+      ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                             f32 zTolerance,
+                                             const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+    
       
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried

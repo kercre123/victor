@@ -12,6 +12,9 @@ extern int os_printf_plus(const char * format, ...) __attribute__ ((format (prin
 /// Based on 1MB flash map
 #define FLASH_MEMORY_MAP (0x40200000)
 
+/// Must drop 6dBm below max for FCC
+#define MAX_TPW (82-24)
+
 #define AP_MAX_CONNECTIONS 4
 #define AP_KEY      "2manysecrets"
 #define AP_IP       "172.31.1.1"

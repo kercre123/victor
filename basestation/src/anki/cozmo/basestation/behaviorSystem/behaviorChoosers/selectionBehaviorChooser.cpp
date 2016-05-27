@@ -108,6 +108,10 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
       if( selectedBehavior != nullptr ) {
         PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehavior.SelectBehavior",
                          "selecting behavior name '%s'", msg.behaviorName.c_str() );
+      } else {
+        PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehavior.UnknownBehavior",
+                            "Unknown behavior %s",
+                            msg.behaviorName.c_str());
       }
 
       break;

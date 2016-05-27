@@ -22,17 +22,23 @@ void delayms(u8 delay)
   } while(--delay);
 }
 
-u8 xdata _whichTest;
+u8 xdata _whichTest;  // In xdata so we preserve our value between reboots
 void main(void)
 {
-  delayms(100);
+  // Set all LEDs to high-drive
+  P0CON = HIGH_DRIVE | 0;
+  P0CON = HIGH_DRIVE | 1;
+  P0CON = HIGH_DRIVE | 2;
+  P0CON = HIGH_DRIVE | 3;
+  P0CON = HIGH_DRIVE | 5;
+  P0CON = HIGH_DRIVE | 6;
+  
+  delayms(100);   // Debounce time - so we don't double-increment
   
   _whichTest++;
   _whichTest &= 7;
   
-  if (!_whichTest || _whichTest > 5)
-    _whichTest = 1;
-  
   CLKLFCTRL = 1;  // Turn on RC LF
+  delayms(5);  
   TransmitData();
 }

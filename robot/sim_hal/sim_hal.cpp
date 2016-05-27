@@ -170,6 +170,8 @@ namespace Anki {
       TimeStamp_t audioEndTime_ = 0;    // Expected end of audio
       u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
       bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
+      
+      u32 imageFrameID_ = 1;
 
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -1042,9 +1044,35 @@ namespace Anki {
       cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
 #     endif
 
+      imageFrameID_++;
+
     } // CameraGetFrame()
-
-
+    
+    void HAL::IMUGetCameraTime(uint32_t* const frameNumber, uint8_t* const line2Number)
+    {
+      static uint32_t prevImageID_ = 0;
+      static uint8_t line2Number_ = 0;
+      
+      // line2Number number increases while a frame is being captured so subsequent calls to this function where
+      // imageFrameID_ hasn't changed should increase line2Number_
+      // This function is not called more than 4 times per frame so line2Number_ will never exceed (60 + 1) * 4 = 244
+      // where the max value it could be is 250 (500 scanlines per frame / 2)
+      uint8_t line2NumberIncrement = HAL::GetTimeStamp() % 60 + 1;
+      if(prevImageID_ == imageFrameID_)
+      {
+        line2Number_ += line2NumberIncrement;
+      }
+      else
+      {
+        line2Number_ = line2NumberIncrement;
+      }
+    
+      *frameNumber = imageFrameID_;
+      *line2Number = line2Number_;
+      
+      prevImageID_ = imageFrameID_;
+    }
+    
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
     {

@@ -92,6 +92,16 @@ void Exec(os_event_t *event)
       UpgradeController::Update();
       break;
     }
+    case 5:
+    {
+      static uint32_t lastErrorReport = 0;
+      if (i2spiPhaseErrorCount - lastErrorReport > 2)
+      {
+        lastErrorReport = i2spiPhaseErrorCount;
+        AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, i2spiPhaseErrorCount, i2spiIntegralDrift);
+      }
+      break;
+    }
     // Add new "long execution" tasks as switch cases here.
     default:
     {

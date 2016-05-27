@@ -23,6 +23,7 @@ static const uint32_t		 HEAD_RECOVERY_NOTICE = 0x49485a43;
 
 #define SPECIAL_BLOCK     (0xFF000000)
 #define CERTIFICATE_BLOCK (0xFFFFffff)
+#define HEADER_BLOCK      (0xFFFFfffe)
 #define COMMENT_BLOCK     (0xFFFFfffc)
 #define ESPRESSIF_BLOCK   (0x40000000)
 #define BODY_BLOCK        (0x80000000)
@@ -32,6 +33,11 @@ typedef struct {
   uint32_t   blockAddress;
   uint32_t   checkSum;
 } FirmwareBlock;
+
+typedef struct {
+  uint32_t   length;
+  uint8_t    data[2044];
+} CertificateData;
 
 enum RECOVERY_COMMAND {
   COMMAND_DONE        = 0x00,
