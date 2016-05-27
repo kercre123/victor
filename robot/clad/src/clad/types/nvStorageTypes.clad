@@ -14,11 +14,16 @@ namespace NVStorage {
 
     // Single blob entries start here
     // Upper 16 bits must be zero
+
+    // Reserved tags (i.e. nothing may actually be written to these slots)
     NVEntry_Invalid           = 0xFFFFffff,
-    NVEntry_EraseAll          = 0,  // The only operation that can be done on this tag is erase
-                                    // and doing so ERASES ALL non-factory entries.
-    //NVEntry_CameraCalibration = 1,  // NOTE: This will eventually be removed and replaced by NVEntry_CameraCalib
+    NVEntry_EraseAll          = 0x0,  // The only operation that can be done on this tag is erase
+                                      // and doing so ERASES ALL non-factory entries.
+    NVEntry_ReallyEraseAll    = 0x1,  // Erase everything including factory entries.
+                                      // NOTE: Not sure we want to expose these to game/SDK
+
     NVEntry_GameSkillLevels = 2,
+
 
 
 
