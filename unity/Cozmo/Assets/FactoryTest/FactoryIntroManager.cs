@@ -14,6 +14,9 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Image _Background;
 
   [SerializeField]
+  private UnityEngine.UI.Image _RestartOverlay;
+
+  [SerializeField]
   private UnityEngine.UI.Button _LogsButton;
 
   [SerializeField]
@@ -60,7 +63,7 @@ public class FactoryIntroManager : MonoBehaviour {
   private List<string> _LogList = new List<string>();
 
   void Start() {
-
+    _RestartOverlay.gameObject.SetActive(false);
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
     _LogFilter = PlayerPrefs.GetString("LogFilter");
     SetStatusText("Not Connected");
@@ -195,6 +198,7 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private void RestartTestApp() {
     _RestartButton.gameObject.SetActive(false);
+    _RestartOverlay.gameObject.SetActive(true);
     SOSLogManager.Instance.CleanUp();
     CozmoBinding.Shutdown();
     UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
@@ -231,9 +235,9 @@ public class FactoryIntroManager : MonoBehaviour {
       _PingStatusText.text = "Ping Status: Connected";
     }
     else {
-      _StartButton.image.color = Color.gray;
-      _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
-      _StartButton.interactable = false;
+      //_StartButton.image.color = Color.gray;
+      //_StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
+      //_StartButton.interactable = false;
       _PingStatusText.text = "Ping Status: Not Connected";
     }
 
