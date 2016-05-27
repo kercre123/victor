@@ -23,9 +23,7 @@ public class InitialCubesState : State {
 
   public override void Enter() {
     base.Enter();
-    _CurrentRobot.SetLiftHeight(0f);
-    _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-    _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+    SetupRobot();
 
     _Game = _StateMachine.GetGame();
 
@@ -56,6 +54,21 @@ public class InitialCubesState : State {
       _NumValidCubes = _ValidCubeIds.Count;
       UpdateUI();
     }
+  }
+
+  public override void Pause() {
+    // Do nothing
+  }
+
+  public override void Resume() {
+    // Reset cozmo's head
+    SetupRobot();
+  }
+
+  private void SetupRobot() {
+    _CurrentRobot.SetLiftHeight(0f);
+    _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+    _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
   }
 
   private void RemoveTimedOutCubes() {

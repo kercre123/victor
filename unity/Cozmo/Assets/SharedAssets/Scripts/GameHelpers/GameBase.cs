@@ -86,11 +86,9 @@ public abstract class GameBase : MonoBehaviour {
     public Color[] originalColor;
   }
 
-  private bool _IsStateMachinePaused = false;
-
   public bool Paused {
     get {
-      return _IsStateMachinePaused;
+      return _StateMachine.IsPaused;
     }
   }
 
@@ -117,6 +115,8 @@ public abstract class GameBase : MonoBehaviour {
 
     SkillSystem.Instance.StartGame(_ChallengeData);
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
+
+    RegisterInterruptionStartedEvents();
   }
 
   private void FinishTurnToFace(bool success) {
@@ -161,20 +161,16 @@ public abstract class GameBase : MonoBehaviour {
     UpdateStateMachine();
   }
 
-  protected virtual void UpdateStateMachine() {
-    if (!_IsStateMachinePaused) {
-      _StateMachine.UpdateStateMachine();
-    }
+  private void UpdateStateMachine() {
+    _StateMachine.UpdateStateMachine();
   }
 
-  public virtual void PauseStateMachine() {
-    _IsStateMachinePaused = true;
-
-    // Do we need to add ability to pause / unpause the states inside the machine?
+  public void PauseStateMachine() {
+    _StateMachine.Pause();
   }
 
-  public virtual void ResumeStateMachine() {
-    _IsStateMachinePaused = false;
+  public void ResumeStateMachine() {
+    _StateMachine.Resume();
   }
 
   #endregion
@@ -329,7 +325,8 @@ public abstract class GameBase : MonoBehaviour {
     SkillSystem.Instance.EndGame();
     //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
 
-    DeregisterUnwantedInterruptionEvents();
+    DeregisterInterruptionStartedEvents();
+    DeregisterInterruptionEndedEvents();
   }
 
   public void CloseMinigameImmediately() {
@@ -342,7 +339,8 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void SoftEndGameRobotReset() {
-    DeregisterUnwantedInterruptionEvents();
+    DeregisterInterruptionStartedEvents();
+    DeregisterInterruptionEndedEvents();
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
@@ -666,43 +664,30 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Cliff or Pickup handling
 
-  public virtual void RegisterUnwantedInterruptionEvents() {
-    RegisterForUnwantedCliffEvent();
-    RegisterForUnwantedOnBackEvent();
-    RegisterForUnwantedPickUpEvent();
-  }
-
-  public virtual void DeregisterUnwantedInterruptionEvents() {
-    DeregisterForUnwantedCliffEvent();
-    DeregisterForUnwantedOnBackEvent();
-    DeregisterForUnwantedPickUpEvent();
-  }
-
-  protected void RegisterForUnwantedCliffEvent() {
-    RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
+  protected void RegisterInterruptionStartedEvents() {
+    DeregisterInterruptionStartedEvents();
     RobotEngineManager.Instance.OnCliffEvent += HandleRobotCliffEventStarted;
-  }
-
-  protected void DeregisterForUnwantedCliffEvent() {
-    RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
-  }
-
-  protected void RegisterForUnwantedPickUpEvent() {
-    RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
     RobotEngineManager.Instance.OnRobotPickedUp += HandleRobotPickedUpStarted;
-  }
-
-  protected void DeregisterForUnwantedPickUpEvent() {
-    RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
-  }
-
-  protected void RegisterForUnwantedOnBackEvent() {
-    RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
     RobotEngineManager.Instance.OnRobotOnBack += HandleRobotOnBackEventStarted;
   }
 
-  protected void DeregisterForUnwantedOnBackEvent() {
+  protected void DeregisterInterruptionStartedEvents() {
+    RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
+    RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
     RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
+  }
+
+  protected void RegisterInterruptionEndedEvents() {
+    DeregisterInterruptionEndedEvents();
+    RobotEngineManager.Instance.OnCliffEventFinished += HandleRobotInterruptionEventEnded;
+    RobotEngineManager.Instance.OnRobotPutDown += HandleRobotInterruptionEventEnded;
+    RobotEngineManager.Instance.OnRobotOnBackFinished += HandleRobotInterruptionEventEnded;
+  }
+
+  protected void DeregisterInterruptionEndedEvents() {
+    RobotEngineManager.Instance.OnCliffEventFinished -= HandleRobotInterruptionEventEnded;
+    RobotEngineManager.Instance.OnRobotPutDown -= HandleRobotInterruptionEventEnded;
+    RobotEngineManager.Instance.OnRobotOnBackFinished -= HandleRobotInterruptionEventEnded;
   }
 
   private void HandleRobotPickedUpStarted() {
@@ -718,9 +703,20 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void HandleRobotInterruptionEventStarted() {
-    DeregisterUnwantedInterruptionEvents();
+    DeregisterInterruptionStartedEvents();
+    RegisterInterruptionEndedEvents();
 
     PauseStateMachine();
+  }
+
+  protected virtual void HandleRobotInterruptionEventEnded() {
+    DeregisterInterruptionEndedEvents();
+    RegisterInterruptionStartedEvents();
+
+    ResumeStateMachine();
+  }
+
+  public void ShowDontMoveCozmoAlertView() {
     ShowInterruptionQuitGameView(LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
   }
 

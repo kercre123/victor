@@ -29,6 +29,14 @@ public class SelectDifficultyState : State {
       _HighestLevelCompleted, HandleInitialDifficultySelected);
   }
 
+  public override void Pause() {
+    // Do nothing
+  }
+
+  public override void Resume() {
+    // Do nothing
+  }
+
   public override void Exit() {
     _DifficultySelectButtonPanel.OnDifficultySelected -= HandleDifficultySelected;
   }
@@ -64,8 +72,6 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.ShelfWidget.ShrinkShelfBackground();
     _Game.SharedMinigameView.HideDifficultySelectButtonPanel();
     _Game.SharedMinigameView.HideContinueButton();
-
-    _Game.RegisterUnwantedInterruptionEvents();
 
     _StateMachine.SetNextState(_NextState);
   }

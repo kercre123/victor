@@ -360,22 +360,6 @@ namespace SpeedTap {
       }
     }
 
-    private void ShowCubeMovedQuitGameView(string titleKey, string descriptionKey) {
-      EndGameRobotReset();
-
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, HandleCubeMovedQuitGameViewClosed);
-      alertView.ViewClosed += HandleCubeMovedQuitGameViewClosed;
-      alertView.TitleLocKey = titleKey;
-      alertView.DescriptionLocKey = descriptionKey;
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
-    }
-
-    private void HandleCubeMovedQuitGameViewClosed() {
-      RaiseMiniGameQuit();
-    }
-
     public void ClearWinningLightPatterns() {
       StopCycleCube(PlayerBlock);
       PlayerBlock.SetLEDsOff();
