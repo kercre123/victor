@@ -136,6 +136,8 @@ private:
     { }
     
     u32  numTagsLeftToAck;
+    u32  numFailedWrites;
+    
     NVStorageWriteEraseCallback callback;
     bool writeNotErase;
     bool broadcastResultToGame;
@@ -253,6 +255,9 @@ private:
   
   // Queue of data to be sent to robot for writing
   std::queue<WriteDataObject> _writeDataQueue;
+  
+  // Gating flag to make sure that the previous write was acked before another is sent
+  bool _wasLastWriteAcked;
   
   // Map of NVEntryTag to ACK handling struct for write and erase requests
   std::unordered_map<u32, WriteDataAckInfo > _writeDataAckMap;
