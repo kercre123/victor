@@ -12,6 +12,8 @@ namespace SpeedTap {
     private float _PeekDelayStartTimestamp_sec;
     private float _PeekDelay_sec;
 
+    private bool _IsPlayingPeekAnimation = false;
+
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
@@ -59,6 +61,7 @@ namespace SpeedTap {
         // Don't send another peek animation
         _PeekDelayStartTimestamp_sec = float.MinValue;
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapIdle);
+        _IsPlayingPeekAnimation = true;
       }
     }
 
@@ -67,15 +70,13 @@ namespace SpeedTap {
     }
 
     private void HandleAdjustEnd(bool success) {
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      _CurrentRobot.SetLiftHeight(1.0f);
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      _IsPlayingPeekAnimation = false;
       StartPeekAnimationCycle();
     }
 
     private void CheckExitCubeOffState() {
       // Exit state after allotted off time
-      if ((Time.time - _CubeOffStartTimestamp_sec) > _OffDuration_sec) {
+      if ((Time.time - _CubeOffStartTimestamp_sec) > _OffDuration_sec && !_IsPlayingPeekAnimation) {
         RollForMatch();
       }
     }
