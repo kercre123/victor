@@ -31,7 +31,10 @@
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-#define DEBUG_PRINT_CUBE_STATE_CHANGES 1
+#define DEBUG_PRINT_CUBE_STATE_CHANGES 0
+
+#define DEBUG_SKIP_DIRECTLY_TO_CUBES 0
+#define DEBUG_HOLD_IN_CUBES_STATE 0
 
 namespace Anki {
 namespace Cozmo {
@@ -108,7 +111,9 @@ unsigned int DemoBehaviorChooser::GetUISceneNumForState(State state)
 
 void DemoBehaviorChooser::OnSelected()
 {
-  // TransitionToCubes();
+  if( DEBUG_SKIP_DIRECTLY_TO_CUBES ) {
+    TransitionToCubes();
+  }
 }
 
 Result DemoBehaviorChooser::Update()
@@ -307,7 +312,13 @@ void DemoBehaviorChooser::TransitionToCubes()
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);
 
   _cubesUprightTime_s = -1.0f;
-  _checkTransition = std::bind(&DemoBehaviorChooser::ShouldTransitionOutOfCubesState, this);
+
+  if( DEBUG_HOLD_IN_CUBES_STATE ) {
+    _checkTransition = nullptr;
+  }
+  else {
+    _checkTransition = std::bind(&DemoBehaviorChooser::ShouldTransitionOutOfCubesState, this);
+  }
 }
 
 void DemoBehaviorChooser::TransitionToMiniGame()
