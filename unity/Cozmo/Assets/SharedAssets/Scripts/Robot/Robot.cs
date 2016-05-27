@@ -549,7 +549,7 @@ public class Robot : IRobot {
   }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
-    float[] dummyDistortionCoeffs = {0,0,0,0,0,0,0,0};
+    float[] dummyDistortionCoeffs = { 0, 0, 0, 0, 0, 0, 0, 0 };
     RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320, dummyDistortionCoeffs);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -1374,6 +1374,11 @@ public class Robot : IRobot {
 
   public void EraseAllEnrolledFaces() {
     RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
+    RobotEngineManager.Instance.Message.LoadFaceAlbumFromFile = Singleton<LoadFaceAlbumFromFile>.Instance.Initialize(path, isPathRelative);
     RobotEngineManager.Instance.SendMessage();
   }
 }
