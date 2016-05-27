@@ -37,6 +37,9 @@
 
 #define TEST_CHARGER_CONNECT 0
 
+// Whether or not to end the test before the actual block pickup
+#define SKIP_BLOCK_PICKUP 0
+
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
 #define ENABLE_NVSTORAGE_WRITES 1
@@ -132,6 +135,7 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
+    _toolCodeImagesStored = false;
     
     robot.GetActionList().Cancel();
  
@@ -155,6 +159,10 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
+    if (ENABLE_NVSTORAGE_WRITES) {
+      // Erase all entries in flash
+      robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_ReallyEraseAll);
+    }
 
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
@@ -554,6 +562,7 @@ namespace Cozmo {
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
                         // Save tool code images to robot (whether it succeeded to read code or not)
+                        _toolCodeImagesStored = false;
                         if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
                                                                                     // Clear tool code images from VisionSystem
                                                                                     robot.GetVisionComponent().ClearToolCodeImages();
@@ -570,6 +579,7 @@ namespace Cozmo {
                                                                                       EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
                                                                                     } else {
                                                                                       PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
+                                                                                      _toolCodeImagesStored = true;
                                                                                     }
                                                                                   }) != RESULT_OK)
                         {
@@ -612,7 +622,7 @@ namespace Cozmo {
                         
                         
                         // Verify tool code data is in range
-                        static const f32 pixelDistThresh = 30.f;
+                        static const f32 pixelDistThresh = 35.f;
                         f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
                                                            Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
                         f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
@@ -751,6 +761,21 @@ namespace Cozmo {
       }
       case FactoryTestState::PickingUpBlock:
       {
+        
+        if (SKIP_BLOCK_PICKUP) {
+          if (ENABLE_NVSTORAGE_WRITES) {
+            if (!_toolCodeImagesStored) {
+              break;
+            }
+          }
+          
+          // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
+          EndTest(robot, FactoryTestResultCode::SUCCESS);
+          return Status::Complete;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        }
+        
+        
         auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");
