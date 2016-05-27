@@ -622,17 +622,17 @@ namespace Cozmo {
                         
                         
                         // Verify tool code data is in range
-                        static const f32 pixelDistThresh = 35.f;
-                        f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
-                                                           Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
-                        f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
-                                                           Point2f(info.observedCalibDotRight_x, info.observedCalibDotRight_y));
+                        static const f32 pixelDistThresh_x = 20.f;
+                        static const f32 pixelDistThresh_y = 35.f;
+                        f32 distL_x = std::fabsf(info.expectedCalibDotLeft_x - info.observedCalibDotLeft_x);
+                        f32 distL_y = std::fabsf(info.expectedCalibDotLeft_y - info.observedCalibDotLeft_y);
+                        f32 distR_x = std::fabsf(info.expectedCalibDotRight_x - info.observedCalibDotRight_x);
+                        f32 distR_y = std::fabsf(info.expectedCalibDotRight_y - info.observedCalibDotRight_y);
                         
-                        if (distL > pixelDistThresh || distR > pixelDistThresh) {
+                        if (distL_x > pixelDistThresh_x || distL_y > pixelDistThresh_y || distR_x > pixelDistThresh_x || distR_y > pixelDistThresh_y) {
                           EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
                           return false;
                         }
-                        
                         
                         return true;
                       });

@@ -566,33 +566,12 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     }
 
     // Possibly increment the failed write count based on the result
-    switch(payload.report.result) {
-      case NVStorage::NVResult::NV_OKAY:
-      case NVStorage::NVResult::NV_NO_DO:
-      {
-        // Do nothing
-        break;
-      }
-      case NVStorage::NVResult::NV_NO_ROOM:
-      case NVStorage::NVResult::NV_ERROR:
-      case NVStorage::NVResult::NV_TIMEOUT:
-      case NVStorage::NVResult::NV_BUSY:
-      case NVStorage::NVResult::NV_BAD_ARGS:
-      case NVStorage::NVResult::NV_NO_MEM:
-      {
-        ++_writeDataAckMap[baseTag].numFailedWrites;
-        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
-                            "Tag: 0x%x, writeNotErase: %d, result: %s, numWriteFails: %u",
-                            tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result), _writeDataAckMap[baseTag].numFailedWrites);
-        break;
-      }
-      default:
-      {
-        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.UnexpectedWriteResult",
-                            "Tag: 0x%x, writeNotErase: %d, result: %s, numWriteFails: %u",
-                            tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result), _writeDataAckMap[baseTag].numFailedWrites);
-        break;
-      }
+    // Negative results == bad
+    if (static_cast<s8>(payload.report.result) < 0) {
+      ++_writeDataAckMap[baseTag].numFailedWrites;
+      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
+                          "Tag: 0x%x, writeNotErase: %d, result: %s, numWriteFails: %u",
+                          tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result), _writeDataAckMap[baseTag].numFailedWrites);
     }
           
     // Check if all writes have been confirmed for this write request
