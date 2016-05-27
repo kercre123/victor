@@ -40,7 +40,7 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
-  float _maxPounceDist = 160.0f;
+  float _maxPounceDist = 100.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
   
@@ -53,7 +53,7 @@ protected:
   
   // Overwritten by config.
   float _maxTimeSinceNoMotion_sec = 30.0;
-  float _maxTimeBeforeRotate = 8.f;
+  float _maxTimeBeforeRotate = 5.f;
   
   
 private:
@@ -69,6 +69,7 @@ private:
     RelaxingLift,
     PlayingFinalReaction,
     BackUp,
+    GetOutBored,
     Complete,
   };
 
@@ -96,6 +97,7 @@ private:
   void TransitionToRelaxLift(Robot& robot);
   void TransitionToResultAnim(Robot& robot);
   void TransitionToBackUp(Robot& robot);
+  void TransitionToGetOutBored(Robot& robot);
 };
 
 }
