@@ -396,8 +396,13 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;
 
   // assert we are not turning more than PI in one iteration (because of Radian rescaling)
-  ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
-    "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
+  if( FLT_GT(doneThisIteration_rad,0.0f) != FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f) ) {
+    // this can happen if the robot gets turned / messed with. Eventually, we should handle this in a reaction
+    PRINT_NAMED_WARNING("BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign",
+                        "doneThisIterationRad = %f, TurnSign=%f",
+                        doneThisIteration_rad,
+                        GetTurnSign(_mainTurnDirection));
+  }
 
   // while not completed a whole turn start another iteration
   if ( fabsf(_behaviorBodyFacingDone_rad) < 2*PI )
