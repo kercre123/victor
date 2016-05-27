@@ -23,6 +23,8 @@ namespace Cozmo {
 CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg, "Behavior.PutDownBlock", -20.0f);
 
 static const char* const kLookAtFaceAnimGroup = "ag_lookAtFace_keepAlive";
+static const float kScoreIncreaseDuringPutDown = 5.0f;
+static const float kScoreIncreasePostPutdown = 0.6f;
 
 BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -37,6 +39,7 @@ bool BehaviorPutDownBlock::IsRunnableInternal(const Robot& robot) const
 Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
   StartActing(new PlayAnimationGroupAction(robot, _putDownAnimGroup),
+              kScoreIncreaseDuringPutDown,
               &BehaviorPutDownBlock::LookDownAtBlock);
   return Result::RESULT_OK;
 }
@@ -44,7 +47,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
-  StartActing(CreateLookAfterPlaceAction(robot));
+  StartActing(CreateLookAfterPlaceAction(robot), kScoreIncreasePostPutdown);
 }
 
 IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot)

@@ -74,7 +74,7 @@ public:
   void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
 
   // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
-  void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID) { _topOfStackToAdmire = topBlockID; _bottomOfStackToAdmire = bottomBlockID; }
+  void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID);
   void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); _bottomOfStackToAdmire.UnSet(); }
   
   bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
