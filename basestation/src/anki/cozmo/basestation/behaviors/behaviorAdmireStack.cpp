@@ -63,7 +63,16 @@ BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config
 
 bool BehaviorAdmireStack::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.GetBehaviorManager().GetWhiteboard().HasStackToAdmire();
+  if( robot.GetBehaviorManager().GetWhiteboard().HasStackToAdmire() ) {
+    ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
+    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(bottomBlockID);
+    if( nullptr != obj ) {
+      // run if we have a stack to admire and we know where it is
+      return obj->IsPoseStateKnown();
+    }
+  }
+
+  return false;
 }
 
 Result BehaviorAdmireStack::InitInternal(Robot& robot)
@@ -281,7 +290,6 @@ void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
       else {
         PRINT_NAMED_DEBUG("BehaviorAdmireStack.Searching.Failed",
                           "couldn't find stack, leaving behavior");
-        robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
       }
     });
 }
