@@ -80,6 +80,6 @@ fi
 echo "Entering directory \`${DERIVED_DATA}/${BUILD_TYPE}}'"
 cd $DERIVED_DATA/$BUILD_TYPE
 tar czf utilUnitGoogleTest.tar.gz googleTest_*
-
+mv utilUnitGoogleTest.tar.gz $TOPLEVEL/build/utilUnitGoogleTest.tar.gz
 # exit
 exit $EXIT_STATUS

@@ -83,6 +83,6 @@ fi
 #tarball files together
 cd $DERIVED_DATA/$BUILD_TYPE
 tar czf ${TESTNAME}GoogleTest.tar.gz ${TESTNAME}GoogleTest_*
-
+mv ${TESTNAME}GoogleTest.tar.gz $TOPLEVEL/build/${TESTNAME}GoogleTest.tar.gz
 # exit
 exit $EXIT_STATUS
