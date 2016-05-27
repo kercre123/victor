@@ -29,6 +29,14 @@ public class SelectDifficultyState : State {
       _HighestLevelCompleted, HandleInitialDifficultySelected);
   }
 
+  public override void Pause() {
+    // Do nothing
+  }
+
+  public override void Resume() {
+    // Do nothing
+  }
+
   public override void Exit() {
     _DifficultySelectButtonPanel.OnDifficultySelected -= HandleDifficultySelected;
   }

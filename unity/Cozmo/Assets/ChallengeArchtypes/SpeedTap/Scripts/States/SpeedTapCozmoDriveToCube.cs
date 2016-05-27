@@ -23,7 +23,6 @@ namespace SpeedTap {
       if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
         Cozmo.CubePalette.TapMeColor.lightColors, 
@@ -33,23 +32,49 @@ namespace SpeedTap {
       _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
 
-      _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
-        AnimationGroupName.kSpeedTap_Driving_Loop, null);
-      if (IsFarAwayFromCube()) {
-        DriveToPreDockPose();
-      }
-      else if (IsReallyCloseToCube()) {
-        CompleteDriveToCube();
-      }
-      else {
-        RaiseLift();
-      }
+      TryDrivingToCube(forceRaiseLift: false);
     }
 
     public override void Exit() {
       base.Exit();
       _CurrentRobot.ResetDrivingAnimations();
       _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
+    }
+
+    public override void Pause() {
+      // TODO COZMO-2081: Need to just use parent behavior for now
+      // because TryDrivingToCube doesn't work if he ends up 
+      // in a place where he can't see his cube; Use SearchForCube action
+      // base.Pause();
+
+      // Cancel all callbacks
+      // _CurrentRobot.ResetDrivingAnimations();
+      // _CurrentRobot.CancelAllCallbacks();
+    }
+
+    public override void Resume() {
+      // TODO COZMO-2081: Need to just use parent behavior for now
+      // because TryDrivingToCube doesn't work if he ends up 
+      // in a place where he can't see his cube; Use SearchForCube action
+      // base.Resume();
+
+      // Try driving up to the cube again
+      // TryDrivingToCube(forceRaiseLift: true);
+    }
+
+    private void TryDrivingToCube(bool forceRaiseLift) {
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
+        AnimationGroupName.kSpeedTap_Driving_Loop, null);
+      if (IsFarAwayFromCube()) {
+        DriveToPreDockPose();
+      }
+      else if (IsReallyCloseToCube() && !forceRaiseLift) {
+        CompleteDriveToCube();
+      }
+      else {
+        RaiseLift();
+      }
     }
 
     private bool IsFarAwayFromCube() {
