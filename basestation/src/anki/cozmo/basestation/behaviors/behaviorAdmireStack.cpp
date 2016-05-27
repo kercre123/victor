@@ -80,6 +80,7 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
 {
   //_topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
   TransitionToWatchingStack(robot);
+  _didKnockOverStack = false;
 
   return Result::RESULT_OK;
 }
@@ -266,6 +267,7 @@ void BehaviorAdmireStack::TransitionToReactingToTopple(Robot& robot)
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 
   robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
+  _didKnockOverStack = true;
 }
 
 void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)

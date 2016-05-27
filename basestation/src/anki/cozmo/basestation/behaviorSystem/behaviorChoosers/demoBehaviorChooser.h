@@ -22,6 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class BehaviorAdmireStack;
 class BehaviorDemoFearEdge;
 class BlockWorldFilter;
 class ObservableObject;
@@ -100,6 +101,7 @@ private:
 
   IBehavior* _faceSearchBehavior = nullptr;
   BehaviorDemoFearEdge* _fearEdgeBehavior = nullptr;
+  BehaviorAdmireStack* _admireStackBehavior = nullptr;
 
   bool _encourageFaceBehavior = false;
   
