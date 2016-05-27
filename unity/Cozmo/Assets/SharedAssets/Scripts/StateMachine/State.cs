@@ -25,7 +25,7 @@ public class State {
 
   public virtual void Pause() {
     // Show an alert view that quits the game
-    _StateMachine.GetGame().ShowDontMoveCozmoAlertView();
+    // _StateMachine.GetGame().ShowDontMoveCozmoAlertView();
   }
 
   public virtual void Resume() {
