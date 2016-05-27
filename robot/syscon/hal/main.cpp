@@ -64,25 +64,30 @@ extern "C" void HardFault_Handler(void) {
   NVIC_SystemReset();
 }
 
-void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
-  using namespace Anki::Cozmo::RobotInterface;
+using namespace Anki::Cozmo::RobotInterface;
+
+static BodyRadioMode current_operating_mode = -1;
+static BodyRadioMode active_operating_mode = -1;
+
+void enterOperatingMode(BodyRadioMode mode) {
+  current_operating_mode = mode;
+}
+
+static void setupOperatingMode() { 
+  if (active_operating_mode == current_operating_mode) {
+    return ;
+  }
   
-  switch (mode) {
+  active_operating_mode = current_operating_mode;
+  switch (active_operating_mode) {
     case BODY_BLUETOOTH_OPERATING_MODE:
       DTM::stop();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       Radio::shutdown();
 
-      // Reconfigure stack so the softdevice doesn't choke on it.
-      NVIC_SetPriority(RADIO_IRQn, 0);
-      NVIC_DisableIRQ(GPIOTE_IRQn);
-
-      for (int i = 0; i < MOTOR_COUNT; i++) {
-        Motors::setPower(i, 0);
-      }
-    
       // Start advertising
+      Motors::stop();
       Bluetooth::advertise();
       break ;
     
@@ -95,6 +100,7 @@ void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
       Radio::advertise();
       Backpack::lightMode(TIMER_LEDS);
       Timer::lowPowerMode(false);
+      Motors::start();
       break ;
 
     case BODY_DTM_OPERATING_MODE:
@@ -104,6 +110,7 @@ void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
       Backpack::lightMode(RTC_LEDS);
 
       DTM::start();
+      Motors::start();
       break ;
   }
 }
@@ -145,6 +152,8 @@ int main(void)
 
   // Run forever, because we are awesome.
   for (;;) {
+    setupOperatingMode();
+    
     // This means that if the crypto engine is running, the lights will stop pulsing. 
     Crypto::manage();
     Lights::manage();

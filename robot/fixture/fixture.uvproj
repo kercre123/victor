@@ -355,7 +355,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F2XX,USE_STM322xG_EVAL,USE_USB_OTG_FS,FIXTURE</Define>
+              <Define>REV1,USE_STDPERIPH_DRIVER,FIXTURE</Define>
               <Undefine></Undefine>
               <IncludePath>lib;hal;usb;.</IncludePath>
             </VariousControls>
@@ -371,7 +371,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls>--cpreproc</MiscControls>
-              <Define>FIXTURE_MAIN</Define>
+              <Define></Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
@@ -518,6 +518,16 @@
               <FileType>8</FileType>
               <FilePath>.\app\robotTest.c</FilePath>
             </File>
+            <File>
+              <FileName>extrasTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\extrasTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>motorTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\motorTest.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -592,6 +602,21 @@
               <FileName>testport.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\testport.c</FilePath>
+            </File>
+            <File>
+              <FileName>motorled.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\motorled.c</FilePath>
+            </File>
+            <File>
+              <FileName>radio.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\radio.c</FilePath>
+            </File>
+            <File>
+              <FileName>swdnrf.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\swdnrf.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1119,6 +1144,16 @@
               <FileType>8</FileType>
               <FilePath>.\app\robotTest.c</FilePath>
             </File>
+            <File>
+              <FileName>extrasTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\extrasTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>motorTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\motorTest.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1193,6 +1228,21 @@
               <FileName>testport.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\testport.c</FilePath>
+            </File>
+            <File>
+              <FileName>motorled.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\motorled.c</FilePath>
+            </File>
+            <File>
+              <FileName>radio.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\radio.c</FilePath>
+            </File>
+            <File>
+              <FileName>swdnrf.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\swdnrf.c</FilePath>
             </File>
           </Files>
         </Group>

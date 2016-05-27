@@ -3,8 +3,15 @@
 #define FIXTURE_H
 
 #define FIXTURE_NONE          0     // No ID resistors
-#define FIXTURE_BODY_TEST     1     // ID 1
-#define FIXTURE_HEAD_TEST     2     // ID 2  
+
+#define FIXTURE_BODY1_TEST    1     // ID 1
+#define FIXTURE_BODY2_TEST    9     // ID 4 + 1
+
+#define FIXTURE_HEAD1_TEST    2     // ID 2  
+#define FIXTURE_HEAD2_TEST    10    // ID 4 + 2  
+
+#define FIXTURE_EXTRAS_TEST   3     // ID 2 + 1
+#define FIXTURE_MOTOR_TEST    11    // ID 4 + 2 + 1
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
 #define FIXTURE_CHARGER_TEST  4     // ID 3
@@ -12,14 +19,18 @@
 #define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
 #define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
 
-#define FIXTURE_PLAYPEN_TEST  9     // ID 4 + 1
-#define FIXTURE_CUBEFCC_TEST  13    // ID 4 + 3 + 1
+#define FIXTURE_ROBOT_TEST    8     // ID 4
+#define FIXTURE_FINAL_TEST    12    // ID 4 + 3
+
+#define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
 #define FIXTURE_DEBUG         16
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID", "BODY", "HEAD", "?", "CHARGE", "CUBE1", "CUBE2", "CUBE3", \
-                        "?", "PLAYPEN", "?", "?",  "?", "CUBEFCC", "?", "?", "DEBUG" }
+#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1", "EXTRAS", "CHARGER", "CUBE1", "CUBE2", "CUBE3", \
+                        "ROBOT", "BODY2", "HEAD2", "MOTOR",  "FINAL",  "?", "?", "PLAYPEN", "DEBUG" }
+
+extern FixtureType g_fixtureType;
 
 extern char g_lotCode[15];
 extern u32 g_time;

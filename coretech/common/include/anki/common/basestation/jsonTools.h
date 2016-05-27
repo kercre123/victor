@@ -31,6 +31,21 @@ namespace Anki
   
   namespace JsonTools
   {
+  
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Set of functions that asserts the expected key with the expected type to be present
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    // config: input json
+    // key:  key to look for
+    // debugName: name of place calling the function, to append to the assert event (for logging/debugging)
+    // ParseX: find the given key in the given json and assert that it's present and matches the given type
+    float ParseFloat(const Json::Value& config, const char* key, const std::string& debugName);
+    uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string& debugName);
+    bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName);
+    std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName);
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
     // Define a specialization of this template (in jsonTools.cpp) for each
     // type T you want to be able to handle

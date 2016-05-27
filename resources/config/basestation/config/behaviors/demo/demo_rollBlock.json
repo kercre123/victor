@@ -3,6 +3,7 @@
   "name": "demo_RollBlock",
   "requiredUnlockId": "CubeRollAction",
   "flatScore": 1.0,
+  "put_down_animation_group": "ag_putDownBlock",
   "behaviorGroups": [
     "AffectsBlocks",
     "Unlock_CubeRoll",

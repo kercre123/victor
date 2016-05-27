@@ -8,6 +8,9 @@
 namespace Anki {
 namespace Cozmo {
 
+// Indicates that an active object is advertising, but not connected.
+// This message is received by engine and then translated into ObjectAvailable
+// that is sent up to game.
 message ObjectDiscovered
 {
   uint_32     factory_id,
@@ -15,6 +18,7 @@ message ObjectDiscovered
   int_8       rssi
 }
 
+// Indicates that an active object has connected or disconnected
 message ObjectConnectionState
 {  
   uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!

@@ -309,7 +309,7 @@
             <InterruptVectorAddress>0</InterruptVectorAddress>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>EP3</Define>
               <Undefine></Undefine>
               <IncludePath>..\_include</IncludePath>
             </VariousControls>

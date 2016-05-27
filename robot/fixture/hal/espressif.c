@@ -149,7 +149,7 @@ void DeinitEspressif(void)
   PIN_IN(GPIOA, PINA_TX);
   
   // XXX: I'm at a loss who is driving PINA_BOOT high - but make sure it's not!
-  GPIO_RESET(GPIOA, PINA_BOOT);
+  PIN_RESET(GPIOA, PINA_BOOT);
 }
 
 static inline int BlockCount(int length) {

@@ -66,6 +66,7 @@ message EngineRobotCLADVersionMismatch {
   string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
 }
 
+// Indicates that the active object is advertising, but not connected
 message ObjectAvailable
 {
   uint_32     factory_id,
@@ -73,6 +74,7 @@ message ObjectAvailable
   int_8       rssi,
 }
 
+// Indicates that a previously advertising object is no longer advertising
 message ObjectUnavailable
 {
   uint_32      factory_id,
@@ -328,6 +330,10 @@ message StopSound {
 
 message AnimationAvailable {
   string animName
+}
+
+message AnimationGroupAvailable {
+  string animGroupName
 }
 
 // Broadcast by AnimationStreamer when a new streaming animation is requested

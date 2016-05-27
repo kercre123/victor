@@ -27,6 +27,10 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
+
+
 namespace Anki {
   namespace Vision {
     
@@ -212,6 +216,8 @@ namespace Anki {
       void SetPoseState(PoseState newState) { _poseState = newState; }
       bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
       bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
+
+      static const char* PoseStateToString(const PoseState& state);
       
     protected:
       
@@ -273,7 +279,7 @@ namespace Anki {
       
       if (!skipStateUpdate)
       {
-        _poseState = PoseState::Known;
+        SetPoseState(PoseState::Known);
       }
       
       std::string poseName("Object");

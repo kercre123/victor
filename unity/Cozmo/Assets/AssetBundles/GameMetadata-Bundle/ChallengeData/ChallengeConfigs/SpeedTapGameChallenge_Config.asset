@@ -103,10 +103,10 @@ MonoBehaviour:
   DifficultySettings:
   - DifficultyID: 0
     Colors:
-    - {r: 1, g: 0.5176471, b: 0, a: 1}
-    - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 0}
-    - {r: 1, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0.87843144, b: 0, a: 1}
+    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 0, g: 0.36078432, b: 1, a: 1}
+    - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
@@ -122,10 +122,10 @@ MonoBehaviour:
       SecondsHandDisplayed: 1
   - DifficultyID: 1
     Colors:
-    - {r: 1, g: 0.5176471, b: 0, a: 1}
-    - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 1}
-    - {r: 1, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0.87843144, b: 0, a: 1}
+    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 0, g: 0.36078432, b: 1, a: 1}
+    - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
@@ -141,10 +141,10 @@ MonoBehaviour:
       SecondsHandDisplayed: 1
   - DifficultyID: 2
     Colors:
-    - {r: 1, g: 0.5176471, b: 0, a: 1}
-    - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 1}
-    - {r: 1, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0.878, b: 0, a: 1}
+    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 0, g: 0.36078432, b: 1, a: 1}
+    - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
@@ -160,10 +160,10 @@ MonoBehaviour:
       SecondsHandDisplayed: 1
   - DifficultyID: 3
     Colors:
-    - {r: 1, g: 0.5176471, b: 0, a: 1}
-    - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 1}
-    - {r: 1, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0.87843144, b: 0, a: 1}
+    - {r: 0, g: 0.7960785, b: 0.32941177, a: 1}
+    - {r: 0, g: 0.36078432, b: 1, a: 1}
+    - {r: 1, g: 0.26666668, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0

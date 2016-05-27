@@ -14,13 +14,14 @@
 #include "lib/stm32f2xx.h"
 
 // Basic abstractions for low level I/O on our processor
-#define GPIO_SET(gp, index)             (gp)->BSRRL = (1 << (index))
-#define GPIO_RESET(gp, index)           (gp)->BSRRH = (1 << (index))
+#define PIN_SET(gp, index)             (gp)->BSRRL = (1 << (index))
+#define PIN_RESET(gp, index)           (gp)->BSRRH = (1 << (index))
 #define GPIO_READ(gp)                   (gp)->IDR
 
 #define PIN_IN(gp, index)               (gp)->MODER = ((gp)->MODER & ~(GPIO_MODER_MODER0 << ((index) * 2))) | (GPIO_Mode_IN << ((index) * 2))
 #define PIN_OUT(gp, index)              (gp)->MODER = ((gp)->MODER & ~(GPIO_MODER_MODER0 << ((index) * 2))) | (GPIO_Mode_OUT << ((index) * 2))
 #define PIN_AF(gp, index)               (gp)->MODER = ((gp)->MODER & ~(GPIO_MODER_MODER0 << ((index) * 2))) | (GPIO_Mode_AF << ((index) * 2))
+#define PIN_ANA(gp, index)              (gp)->MODER = ((gp)->MODER & ~(GPIO_MODER_MODER0 << ((index) * 2))) | (GPIO_Mode_AN << ((index) * 2))
 
 #define PIN_PULL_NONE(gp, index)        (gp)->PUPDR = ((gp)->PUPDR & ~(GPIO_PUPDR_PUPDR0 << ((index) * 2))) | ((GPIO_PuPd_NOPULL) << ((index) * 2))
 #define PIN_PULL_UP(gp, index)          (gp)->PUPDR = ((gp)->PUPDR & ~(GPIO_PUPDR_PUPDR0 << ((index) * 2))) | ((GPIO_PuPd_UP) << ((index) * 2))

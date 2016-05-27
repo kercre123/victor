@@ -40,7 +40,7 @@ static int UUIDDirectCompare(const UUIDBytes& first, const UUIDBytes& second)
 }
 
 BLESystem::BLESystem()
-  : _queue(Util::Dispatch::Create())
+  : _queue(Util::Dispatch::Create("BLESystem"))
   , _bleMessageInProgress(new BLECozmoMessage())
   , _connectedCozmos(UUIDDirectCompare)
 {

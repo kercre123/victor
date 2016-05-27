@@ -265,6 +265,13 @@ protected:
   // complete, or the behavior is no longer running
   void IncreaseScoreWhileActing(float extraScore);
   
+  // Convenience wrappers that combine IncreaseScoreWhileActing with StartActing,
+  // including any of the callback types above
+  bool StartActing(IActionRunner* action, float extraScoreWhileActing);
+  
+  template<typename CallbackType>
+  bool StartActing(IActionRunner* action, float extraScoreWhileActing, CallbackType callback);
+  
   // This function cancels the action started by StartActing (if there is one). Returns true if an action
   // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
   // cancellation unless you set allowCallback to false
@@ -332,6 +339,17 @@ bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(void))
 
 inline bool IBehavior::IsActing() const {
   return _lastActionTag != ActionConstants::INVALID_TAG;
+}
+
+inline bool IBehavior::StartActing(IActionRunner* action, float extraScoreWhileActing) {
+  IncreaseScoreWhileActing(extraScoreWhileActing);
+  return StartActing(action);
+}
+
+template<typename CallbackType>
+inline bool IBehavior::StartActing(IActionRunner* action, float extraScoreWhileActing, CallbackType callback) {
+  IncreaseScoreWhileActing(extraScoreWhileActing);
+  return StartActing(action, callback);
 }
   
 template<class EventType>

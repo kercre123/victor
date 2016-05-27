@@ -47,14 +47,24 @@ namespace Anki {
       
       auto broadcastAvailableAnimationsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
       {
-          this->BroadcastAvailableAnimations();
+        this->BroadcastAvailableAnimations();
       };
-      
-      MessageGameToEngineTag tag = MessageGameToEngineTag::RequestAvailableAnimations;
+      auto broadcastAvailableAnimationGroupsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
+      {
+        this->BroadcastAvailableAnimationGroups();
+      };
+        
       IExternalInterface* externalInterface = context->GetExternalInterface();
+
+      MessageGameToEngineTag tagAnims = MessageGameToEngineTag::RequestAvailableAnimations;
+      MessageGameToEngineTag tagGroups = MessageGameToEngineTag::RequestAvailableAnimationGroups;
+        
       if (externalInterface != nullptr){
-        _signalHandles.push_back( externalInterface->Subscribe(tag, broadcastAvailableAnimationsCallback) );
+        _signalHandles.push_back( externalInterface->Subscribe(tagGroups, broadcastAvailableAnimationGroupsCallback) );
+        _signalHandles.push_back( externalInterface->Subscribe(tagAnims, broadcastAvailableAnimationsCallback) );
       }
+
+
     }
     
     RobotManager::~RobotManager() = default;
@@ -406,6 +416,17 @@ namespace Anki {
         
         ASSERT_NAMED(nullptr != _cannedAnimations, "RobotManager.ReadAnimationGroupFile.NullCannedAnimations");
         _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
+      }
+    }
+    
+    void RobotManager::BroadcastAvailableAnimationGroups()
+    {
+      Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimationGroups");
+      if (nullptr != _context->GetExternalInterface()) {
+        std::vector<std::string> animNames(_animationGroups->GetAnimationGroupNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationGroupAvailable>(*i);
+        }
       }
     }
     

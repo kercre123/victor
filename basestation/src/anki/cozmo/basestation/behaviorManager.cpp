@@ -13,11 +13,12 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -125,16 +126,20 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                    case BehaviorChooserType::Freeplay:
                                    {
                                      SetBehaviorChooser( _freeplayChooser );
+                                     _robot.GetLightsComponent().SetEnableComponent(true);
                                      break;
                                    }
                                    case BehaviorChooserType::Selection:
                                    {
                                      SetBehaviorChooser( _selectionChooser );
+                                     // TODO:(bn) do this elsewhere?
+                                     _robot.GetLightsComponent().SetEnableComponent(false);
                                      break;
                                    }
                                    case BehaviorChooserType::Demo:
                                    {
                                      SetBehaviorChooser(_demoChooser);
+                                     _robot.GetLightsComponent().SetEnableComponent(true);
                                      break;
                                    }
                                    default:

@@ -41,7 +41,7 @@
 // Prints the IDs of the active blocks that are on but not currently
 // talking to a robot whose rssi is less than this threshold.
 // Prints roughly once/sec.
-#define DISCOVERED_OBJECTS_RSSI_PRINT_THRESH 55
+#define DISCOVERED_OBJECTS_RSSI_PRINT_THRESH 50
 
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0
@@ -293,7 +293,7 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
   
   // Check object type
-  ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(payload.device_type);
+  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
   switch(objType) {
     case ObjectType::Charger_Basic:
     {
@@ -350,20 +350,25 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       SendRobotMessage<CubeLights>(lights, payload.objectID);
       
       // if a charger, and robot is on the charger, add a pose for the charager
-      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER && IsOnCharger() )
+      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
       {
         SetCharger(objID);
-        Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(objID, ObjectFamily::Charger));
-        if( charger )
+        if( IsOnCharger() )
         {
-          charger->SetPoseToRobot(GetPose());
+          Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(objID, ObjectFamily::Charger));
+          if( charger )
+          {
+            charger->SetPoseToRobot(GetPose());
+          }
         }
       }
       
+      // Remove from the list of discovered objects since we are connecting to it
+      _discoveredObjects.erase(payload.factoryID);
     }
   } else {
     // Remove active object from blockworld if it exists
-    ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+    ActiveObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
       objID = obj->GetID();
       GetBlockWorld().ClearObject(objID);
@@ -373,7 +378,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     }
   }
   
-  PRINT_NAMED_INFO("Robot.HandleActiveObjecConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
+  PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
   
   if (objID.IsSet()) {
     // Update the objectID to be blockworld ID
@@ -393,7 +398,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -404,14 +409,25 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // Ignore move messages for objects we are docking to, since we expect to bump them
   else if(object->GetID() != GetDockObject())
   {
+    if( object->GetID() == _chargerID )
+    {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.Charger","Charger sending garbage move messages");
+      return;
+    }
     ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
+
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ObjectMoved",
+                     "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
+                     object->GetID().GetValue(), object->GetActiveID(),
+                     EnumToString(object->GetType()), EnumToString(payload.upAxis));
+
     
     if(object->GetPoseState() == ObservableObject::PoseState::Known)
     {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ActiveObjectMoved",
-                       "Received message that %s %d (Active ID %d) moved. Delocalizing it.",
-                       EnumToString(object->GetType()),
-                       object->GetID().GetValue(), object->GetActiveID());
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
+                       "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
+                       object->GetID().GetValue(), object->GetActiveID(),
+                       EnumToString(object->GetType()), EnumToString(payload.upAxis));
       
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it
@@ -438,7 +454,6 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
           SetLocalizedTo(nullptr);
         }
       }
-      
     }
     
     // Don't notify game about moving objects that are being carried
@@ -463,7 +478,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -476,7 +491,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   {
     ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
 
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.MessageActiveObjectStoppedMoving",
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.ObjectStoppedMoving",
                      "Received message that %s %d (Active ID %d) stopped moving.",
                      EnumToString(object->GetType()),
                      object->GetID().GetValue(), payload.objectID);
@@ -506,6 +521,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
           SetLocalizedTo(nullptr);
         }
       }
+
     }
     
     // Update the ID to be the blockworld ID before broadcasting
@@ -521,7 +537,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -564,12 +580,6 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
   if( !_enableCliffSensor ) {
     return;
   }
-  
-  // Abort any running animation. This will be cleaner than letting a PlayAnimationAction
-  // get deleted during the ActionList.Cancel() below because the action will get notified
-  // of the abort first, and not generate a warning about being deleted without
-  // getting notified about a stop or abort.
-  _animationStreamer.SetStreamingAnimation(nullptr);
   
   // Stop whatever we were doing
   GetActionList().Cancel();

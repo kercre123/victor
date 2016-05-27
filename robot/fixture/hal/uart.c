@@ -2,6 +2,7 @@
 #include "lib/stm32f2xx.h"
 #include "hal/uart.h"
 #include "hal/timers.h"
+#include "hal/board.h"
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -36,23 +37,23 @@ void InitUART(void)
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
 
-  // Configure DUART_TX for Push/Pull output (until gpio.c turns it into an LED)
+  // Configure Debug TX for Push/Pull output
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;   // You laugh, but there's a ton of capacitance on those LEDs!
+  GPIO_InitStructure.GPIO_Pin =  GPIOB_DEBUGTX;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1);
+  GPIO_PinAFConfig(GPIOB, PINB_DEBUGTX, GPIO_AF_USART1);
     
-  // XXX
+  // DUT_TRX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_12;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;   // You laugh, but there's a ton of capacitance on those LEDs!
+  GPIO_InitStructure.GPIO_Pin =  GPIOC_TRX;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource12, GPIO_AF_UART5);
+  GPIO_PinAFConfig(GPIOC, PINC_TRX, GPIO_AF_UART5);
   
   // DUART config
   USART_Cmd(DUART, DISABLE);

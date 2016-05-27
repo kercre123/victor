@@ -25,13 +25,15 @@ namespace Vision {
   
 # if !SHOW_TIMING
   
+  void Profiler::SetProfileGroupName(const char* name) {}
+  
   void Profiler::Tic(const char*) { }
   
   double Profiler::Toc(const char*) { return 0.; }
   
   double Profiler::AverageToc(const char* timerName) { return 0.; }
   
-  void Profiler::Print() const { }
+  void Profiler::PrintAverageTiming() const { }
 
 # else
   

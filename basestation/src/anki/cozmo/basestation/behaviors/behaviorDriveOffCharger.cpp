@@ -37,6 +37,16 @@ bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
   return robot.IsOnChargerPlatform();
 }
 
+// Only want to run first if we're on the charger contacts, once running use the flat score in base EvaluateRunningScore
+float BehaviorDriveOffCharger::EvaluateScoreInternal(const Robot& robot) const
+{
+  if( robot.IsOnCharger())
+  {
+    return IBehavior::EvaluateScoreInternal(robot);
+  }
+  return 0.f;
+}
+
 Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   TransitionToDrivingForward(robot);

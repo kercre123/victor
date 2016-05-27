@@ -256,7 +256,9 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
         
         // If the actual deceleration neccessary to slow down over this segment is greater than our desired deceleration
         // calculate a new final speed for this segment (target speed)
-        if(actualSegDecel > motionProfile.decel_mmps2)
+        // And the difference between the two decelerations is greater than 1, this is to prevent potentially splitting
+        // the segment into two segments where one of them has a near zero length
+        if(actualSegDecel > motionProfile.decel_mmps2 && ABS(actualSegDecel - motionProfile.decel_mmps2) > diffInDecel)
         {
           // Our new target speed will be the speed reached if applying the deceleration over the entire segment
           f32 newTargetSpeed = sqrtf(-(motionProfile.decel_mmps2*(-2*seg.GetLength()) - finalSpeed*finalSpeed));

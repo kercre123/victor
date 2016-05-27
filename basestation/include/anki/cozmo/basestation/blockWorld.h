@@ -120,12 +120,12 @@ namespace Anki
       
       // Dynamically cast the given object ID into the templated active object type
       // Return nullptr on failure to find ActiveObject
-      ObservableObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ObservableObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      ActiveObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ActiveObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
       // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
-      ObservableObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ObservableObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      ActiveObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ActiveObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
       
       // returns (in arguments) all objects matching a filter
@@ -191,7 +191,14 @@ namespace Anki
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
       ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                          f32 zTolerance) const;
+                                          f32 zTolerance,
+                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
+      // Same as above, but in revers: find object directly underneath given object
+      ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                             f32 zTolerance,
+                                             const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+    
       
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
@@ -273,8 +280,8 @@ namespace Anki
       // Note these are marked const but return non-const pointers.
       ObservableObject* GetObjectByIdHelper(const ObjectID objectID) const;
       ObservableObject* GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
-      ObservableObject* GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
-      ObservableObject* GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const;
+      ActiveObject* GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
+      ActiveObject* GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const;
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -479,19 +486,19 @@ namespace Anki
       return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns non-const*
     }
 
-    inline ObservableObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) {
+    inline ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) {
       return GetActiveObjectByIDHelper(objectID, inFamily); // returns non-const*
     }
     
-    inline const ObservableObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) const {
+    inline const ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) const {
       return GetActiveObjectByIDHelper(objectID, inFamily); // returns const*
     }
     
-    inline ObservableObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) {
+    inline ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) {
       return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns non-const*
     }
     
-    inline const ObservableObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) const {
+    inline const ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) const {
       return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns const*
     }
     

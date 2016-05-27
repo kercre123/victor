@@ -72,6 +72,7 @@ private:
   std::function<bool(void)> _checkTransition;
 
   bool DidBehaviorRunAndStop(const char* behaviorName) const;
+  bool IsBehaviorRunning(const char* behaviorName) const;
   
   enum class State {
     None,
@@ -88,7 +89,7 @@ private:
   State _state = State::None;
 
   // for the UI to know which state, we need to convert state to an int
-  static unsigned int GetStateNum(State state);
+  static unsigned int GetUISceneNumForState(State state);
 
   std::string _name;
 

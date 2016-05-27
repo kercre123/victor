@@ -86,11 +86,11 @@ public abstract class GameBase : MonoBehaviour {
     public Color[] originalColor;
   }
 
-  private bool _IsPaused = false;
+  private bool _IsStateMachinePaused = false;
 
   public bool Paused {
     get {
-      return _IsPaused;
+      return _IsStateMachinePaused;
     }
   }
 
@@ -110,7 +110,7 @@ public abstract class GameBase : MonoBehaviour {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
-    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: FinishTurnToFace);
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
@@ -142,7 +142,7 @@ public abstract class GameBase : MonoBehaviour {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.Icon = data.ChallengeIcon;
+    titleWidget.Icon = data.ChallengeIconPlainStyle;
     newView.ShowQuitButton();
 
     // TODO use different color for activities vs games
@@ -162,19 +162,19 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void UpdateStateMachine() {
-    if (!_IsPaused) {
+    if (!_IsStateMachinePaused) {
       _StateMachine.UpdateStateMachine();
     }
+  }
+
+  public virtual void PauseStateMachine() {
+    _IsStateMachinePaused = true;
 
     // Do we need to add ability to pause / unpause the states inside the machine?
   }
 
-  public virtual void PauseGame() {
-    _IsPaused = true;
-  }
-
-  public virtual void UnpauseGame() {
-    _IsPaused = false;
+  public virtual void ResumeStateMachine() {
+    _IsStateMachinePaused = false;
   }
 
   #endregion
@@ -328,6 +328,10 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Info(this, "Finished GameBase On Destroy");
     SkillSystem.Instance.EndGame();
     //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
+
+    DeregisterForUnwantedCliffEvent();
+    DeregisterForUnwantedOnBackEvent();
+    DeregisterForUnwantedOnBackEvent();
   }
 
   public void CloseMinigameImmediately() {
@@ -655,4 +659,72 @@ public abstract class GameBase : MonoBehaviour {
   #endregion
 
   // end DAS
+
+  #region Cliff or Pickup handling
+
+  public void RegisterForUnwantedCliffEvent() {
+    RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
+    RobotEngineManager.Instance.OnCliffEvent += HandleRobotCliffEventStarted;
+  }
+
+  public void DeregisterForUnwantedCliffEvent() {
+    RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
+  }
+
+  public void RegisterForUnwantedPickUpEvent() {
+    RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
+    RobotEngineManager.Instance.OnRobotPickedUp += HandleRobotPickedUpStarted;
+  }
+
+  public void DeregisterForUnwantedPickUpEvent() {
+    RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
+  }
+
+  public void RegisterForUnwantedOnBackEvent() {
+    RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
+    RobotEngineManager.Instance.OnRobotOnBack += HandleRobotOnBackEventStarted;
+  }
+
+  public void DeregisterForUnwantedOnBackEvent() {
+    RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
+  }
+
+  private void HandleRobotPickedUpStarted() {
+    HandleRobotInterruptionEventStarted();
+  }
+
+  private void HandleRobotCliffEventStarted(Anki.Cozmo.CliffEvent cliffEvent) {
+    HandleRobotInterruptionEventStarted();
+  }
+
+  private void HandleRobotOnBackEventStarted(Anki.Cozmo.ExternalInterface.RobotOnBack robotOnBackMessage) {
+    HandleRobotInterruptionEventStarted();
+  }
+
+  protected virtual void HandleRobotInterruptionEventStarted() {
+    DeregisterForUnwantedPickUpEvent();
+    DeregisterForUnwantedCliffEvent();
+    DeregisterForUnwantedOnBackEvent();
+
+    PauseStateMachine();
+    ShowInterruptionQuitGameView(LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
+  }
+
+  protected void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
+    EndGameRobotReset();
+
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    alertView.SetCloseButtonEnabled(false);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, null);
+    alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
+    alertView.TitleLocKey = titleKey;
+    alertView.DescriptionLocKey = descriptionKey;
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+  }
+
+  private void HandleInterruptionQuitGameViewClosed() {
+    RaiseMiniGameQuit();
+  }
+
+  #endregion
 }

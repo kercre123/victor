@@ -120,6 +120,7 @@ protected:
   Planning::Path _path;
   static const int finalPathSegmentSpeed_mmps = 20;
   static const int distToDecelSegLenTolerance_mm = 5;
+  static const int diffInDecel = 1;
   
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                         Planning::Path &path);

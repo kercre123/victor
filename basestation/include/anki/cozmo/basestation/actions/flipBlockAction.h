@@ -54,14 +54,15 @@ namespace Anki {
     class FlipBlockAction : public CompoundActionSequential
     {
     public:
-      FlipBlockAction(Robot& robot);
+      FlipBlockAction(Robot& robot, ObjectID objectID);
       
       virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
     
     private:
       const f32 kDrivingSpeed_mmps = 150;
       const f32 kDrivingDist_mm = 100;
-      const f32 kTimeToWaitToFlip_sec = 0.5;
+      const f32 kExtraDrivingDist_mm = 20;
+      const f32 kTimeToWaitToFlip_sec = 0.7;
       const f32 kInitialLiftHeight_mm = 45;
     };
   }

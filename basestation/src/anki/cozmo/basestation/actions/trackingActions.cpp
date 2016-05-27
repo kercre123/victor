@@ -497,8 +497,11 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 # endif
   
   const f32 xyDistSq = xDist*xDist + yDist*yDist;
-  
-  ASSERT_NAMED(xyDistSq > 0.f, "Distance to tracked face should be > 0.");
+  if (xyDistSq <= 0.f)
+  {
+    ASSERT_NAMED(false, "TrackFaceAction.GetAngles.ZeroDistance");
+    return false;
+  }
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
