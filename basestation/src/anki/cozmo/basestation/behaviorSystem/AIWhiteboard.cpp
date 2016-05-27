@@ -96,6 +96,16 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID)
+{
+  _topOfStackToAdmire = topBlockID;
+  _bottomOfStackToAdmire = bottomBlockID;
+  PRINT_NAMED_DEBUG("AIWhiteboard.StackToAdmire", "admiring stack [%d, %d] (bottom, top)",
+                    _bottomOfStackToAdmire.GetValue(),
+                    _topOfStackToAdmire.GetValue());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::AddBeacon( const Pose3d& beaconPos )
 {
   _beacons.emplace_back( beaconPos );

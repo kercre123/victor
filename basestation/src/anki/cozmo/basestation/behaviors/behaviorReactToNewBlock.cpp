@@ -100,8 +100,18 @@ void BehaviorReactToNewBlock::HandleObjectObserved(const Robot& robot, const Ext
   
   static const std::set<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };  
   if (familyList.count(msg.objectFamily) > 0) {
-    // always react to a high block or a block we haven't seen
-    if( ShouldAskForBlock(robot, msg.objectID) || _reactedBlocks.count( msg.objectID ) == 0 ) {
+
+    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID( msg.objectID );
+    if( nullptr == obj ) {
+      PRINT_NAMED_ERROR("BehaviorReactToNewBlock.HandleObjectObserved.NullObject",
+                        "Robot observed object %d, but can't get pointer",
+                        msg.objectID);
+      return;
+    }
+    
+    // always react to a high block or a block we haven't seen that's on the ground
+    if( ShouldAskForBlock(robot, msg.objectID) ||
+        ( _reactedBlocks.count( msg.objectID ) == 0 && robot.CanPickUpObjectFromGround( *obj ) ) ) {
 
       // don't change target blocks unless we didn't have one before, or we haven't seen it in a while
       TimeStamp_t currTS = robot.GetLastMsgTimestamp();

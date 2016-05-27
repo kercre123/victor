@@ -1,7 +1,7 @@
 {
   "behaviorType": "AdmireStack",
   "name": "AdmireStack",
-  "flatScore": 0.9,
+  "flatScore": 1.0,
   
   "behaviorGroups": [
     "AffectsBlocks",
