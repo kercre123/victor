@@ -2545,7 +2545,6 @@ namespace Anki {
 
       // check that the object is ready to place on top of
       if( object.IsPoseStateUnknown() ||
-          object.IsMoving() ||
           !object.IsRestingFlat() ||
           (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
         return false;
