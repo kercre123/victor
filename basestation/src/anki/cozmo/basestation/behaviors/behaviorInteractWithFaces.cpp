@@ -491,8 +491,8 @@ namespace Cozmo {
       else {
         // He's happy to see you so play an anim first
         compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
-        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, true);
-        sayTextAction->SetGameEvent(Anki::Cozmo::GameEvent::OnSawNewNamedFace);
+        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
+        sayTextAction->SetGameEvent(GameEvent::OnSawNewNamedFace);
         compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
 
@@ -511,11 +511,10 @@ namespace Cozmo {
       if( face->GetName().empty() ) {
         compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnSawOldUnnamedFace) );
         robot.GetMoodManager().TriggerEmotionEvent("OldUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
-        EnumToString(GameEvent::OnSawNewNamedFace);
       }
       else {
-        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, true);
-        sayTextAction->SetGameEvent(Anki::Cozmo::GameEvent::OnSawOldNamedFace);
+        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
+        sayTextAction->SetGameEvent(GameEvent::OnSawOldNamedFace);
         compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
         
@@ -664,6 +663,10 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
       }
     }
 
+    if(faceData->_numTimesSeenFrontal < kMinTimesSeenFrontalBeforeEnroll) {
+      return false;
+    }
+    
     // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this
     // will work in the shipping game
 

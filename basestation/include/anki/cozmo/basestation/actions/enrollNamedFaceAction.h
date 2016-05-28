@@ -47,6 +47,8 @@ namespace Cozmo {
     // Set to true to save the enrolled face to the robot's NVStorage when done (default is true)
     void EnableSaveToRobot(bool enable) { _saveToRobot = enable; }
     
+    void SetSayNameWhenDone(bool tf) { _sayNameWhenDone = tf; }
+    
     //void SetIdleAnimation(const std::string& name) { _idleAnimName = name; }
     
     template<typename T>
@@ -81,6 +83,7 @@ namespace Cozmo {
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
     bool                      _idlePushed = false;
+    bool                      _sayNameWhenDone = false;
     
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;

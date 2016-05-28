@@ -458,10 +458,12 @@ namespace Cozmo {
             
             _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName);
             
-            // Play success animation which says player's name
-            SayTextAction* sayTextAction = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
-            sayTextAction->SetGameEvent(GameEvent::OnLearnedPlayerName);
-            _action = sayTextAction;
+            if(_sayNameWhenDone) {
+              // Play success animation which says player's name
+              SayTextAction* sayTextAction = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
+              sayTextAction->SetGameEvent(GameEvent::OnLearnedPlayerName);
+              _action = sayTextAction;
+            }
             
             //  // Test: trying saying name twice
             //  SayTextAction* sayTextAction2 = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
@@ -564,7 +566,6 @@ namespace Cozmo {
       _lastFaceSeen_ms = msg.timestamp;
     }
   }
-  
   
   
 } // namespace Cozmo
