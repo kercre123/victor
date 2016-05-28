@@ -26,7 +26,7 @@ namespace FaceEnrollment {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // make cozmo look up
-      CurrentRobot.SetHeadAngle(0.5f);
+      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {

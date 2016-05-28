@@ -22,6 +22,8 @@ namespace Simon {
       base.Enter();
       List<LightCube> cubesForGame = new List<LightCube>();
       GameBase game = _StateMachine.GetGame();
+      game.SharedMinigameView.HideMiddleBackground();
+
       IRobot robot = game.CurrentRobot;
       foreach (int id in game.CubeIdsForGame) {
         cubesForGame.Add(robot.LightCubes[id]);

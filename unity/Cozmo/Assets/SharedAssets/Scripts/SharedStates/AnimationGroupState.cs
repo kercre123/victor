@@ -18,6 +18,10 @@ public class AnimationGroupState : State {
     _CurrentRobot.SendAnimationGroup(_AnimationGroupName, HandleAnimationDone);
   }
 
+  public override void Pause() {
+    // Do nothing
+  }
+
   private void HandleAnimationDone(bool success) {
     if (_AnimationFinishedCallback != null) {
       _AnimationFinishedCallback(success);
