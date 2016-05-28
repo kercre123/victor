@@ -19,6 +19,7 @@ namespace RobotInterface {
     FTM_EncoderInfo = 5,
     FTM_motorLifeTest = 6,
     FTM_PlayPenTest = 7,
+    FTM_cubeTest,
     FTM_BLE_Menu,
     FTM_BLE_On,
     FTM_BLE_Off

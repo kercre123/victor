@@ -216,6 +216,7 @@ namespace Cozmo {
     
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
+    bool _wasAnimationInterruptedWithNothing = false;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time

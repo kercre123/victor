@@ -43,13 +43,13 @@ u8 code TESTS[] = {
   
   PWR_UP,         RF_PWR1|PLL_LOCK, 2,  0,
   PWR_UP,         RF_PWR1|PLL_LOCK, 42, 0,
-  PWR_UP,         RF_PWR1|PLL_LOCK, 82, 0,
+  PWR_UP,         RF_PWR1|PLL_LOCK, 81, 0,
   
-  PRIM_RX|PWR_UP, RF_PWR1|PLL_LOCK, 82, 0,
+  PRIM_RX|PWR_UP, RF_PWR1|PLL_LOCK, 81, 0,
   
   PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 2,  0,
   PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 42, 0,
-  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 82, 0,
+  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 81, 0,
 };
 
 extern u8 xdata _whichTest;

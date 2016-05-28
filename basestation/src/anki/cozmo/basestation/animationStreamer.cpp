@@ -147,7 +147,10 @@ namespace Cozmo {
   
   AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops, bool interruptRunning)
   {
-    if(nullptr != _streamingAnimation)
+    const bool wasStreamingSomething = nullptr != _streamingAnimation;
+    const bool wasIdling = nullptr != _idleAnimation;
+    
+    if(wasStreamingSomething)
     {
       if(nullptr != anim && !interruptRunning) {
         PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.NotInterrupting",
@@ -164,21 +167,25 @@ namespace Cozmo {
     }
     
     // If there's something already streaming or we're purposefully clearing the buffer, abort
-    if(nullptr != _streamingAnimation || nullptr != _idleAnimation || nullptr == anim)
+    if(wasStreamingSomething || wasIdling || nullptr == anim)
     {
-      if (_tag != NotAnimatingTag) {
-        using namespace ExternalInterface;        
-        _context->GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
-      }
       Abort();
     }
     
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
+      // Set flag if we are interrupting a streaming animation with nothing.
+      // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
+      if(wasStreamingSomething) {
+        _wasAnimationInterruptedWithNothing = true;
+      } else {
+        _wasAnimationInterruptedWithNothing = false;
+      }
       return NotAnimatingTag;
-    } else {
-      
+    }
+    else
+    {
       _lastPlayedAnimationId = _streamingAnimation->GetName();
       
       IncrementTagCtr();
@@ -228,6 +235,11 @@ namespace Cozmo {
   
   void AnimationStreamer::Abort()
   {
+    if (_tag != NotAnimatingTag) {
+      using namespace ExternalInterface;
+      _context->GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+    }
+    
     if(nullptr != _streamingAnimation || nullptr != _idleAnimation)
     {
       const char *type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
@@ -703,6 +715,14 @@ namespace Cozmo {
   void AnimationStreamer::KeepFaceAlive(Robot& robot)
   {
     using Param = LiveIdleAnimationParameter;
+    
+    // If we were interrupted from streaming an animation and we've met all the
+    // conditions to even be in this function, then we should make sure we've
+    // got neutral face back on the screen
+    if(_wasAnimationInterruptedWithNothing) {
+      SetStreamingAnimation(NeutralFaceAnimName);
+      _wasAnimationInterruptedWithNothing = false;
+    }
     
     _nextBlink_ms   -= BS_TIME_STEP;
     _nextEyeDart_ms -= BS_TIME_STEP;
@@ -1288,10 +1308,15 @@ namespace Cozmo {
     // sequenced.
     // NOTE: lastStreamTime>0 check so that we dont' start keeping face alive before
     //       first animation of any kind is sent.
+    const bool haveStreamingAnimation = _streamingAnimation != nullptr;
+    const bool haveStreamedAnything   = _lastStreamTime > 0.f;
+    const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
+    const bool haveIdleAnimation      = _idleAnimation != nullptr;
+    const bool longEnoughSinceStream  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f;
     if(GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive) &&
-       _streamingAnimation == nullptr && _lastStreamTime > 0.f &&
-       (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
-       BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
+       !haveStreamingAnimation &&
+       haveStreamedAnything &&
+       (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
     {
       KeepFaceAlive(robot);
     }

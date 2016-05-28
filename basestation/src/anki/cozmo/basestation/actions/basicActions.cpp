@@ -1180,7 +1180,9 @@ namespace Anki {
       const f32 kFullBiasDist_mm = 150;
       const f32 kNoBiasDist_mm = 300;
       const f32 biasScaleFactor = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
-      const Radians headAngle = std::atan2(heightDiff, distanceXY) + DEG_TO_RAD(5) * biasScaleFactor;
+      
+      // Adds 4 degrees to account for 4 degree lookdown on EP3
+      const Radians headAngle = std::atan2(heightDiff, distanceXY) + DEG_TO_RAD(5) * biasScaleFactor + DEG_TO_RAD(4);
 
       return headAngle;
     }

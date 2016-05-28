@@ -551,7 +551,9 @@ uint32_t Bluetooth::init() {
   err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
   APP_ERROR_CHECK(err_code);
 
-  m_sd_enabled      = true;
+  // Immediately disable (we only want it to bootstrap itself)
+  sd_softdevice_disable();
+  m_sd_enabled = false;
 
   task = RTOS::create(manage_ble);
 
@@ -632,6 +634,9 @@ void Bluetooth::advertise(void) {
   // Initialize connection parameters
   err_code = ble_conn_params_init(&cp_init);
   APP_ERROR_CHECK(err_code);
+  
+  // Set BLE power to +0db
+  sd_ble_gap_tx_power_set(0);
   
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);
