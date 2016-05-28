@@ -1277,6 +1277,15 @@ namespace Anki {
       
     }
     
+    VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
+    {
+      if(_waitForImagesAction != nullptr)
+      {
+        _waitForImagesAction->PrepForCompletion();
+      }
+      Util::SafeDelete(_waitForImagesAction);
+    }
+    
     const std::string& VisuallyVerifyObjectAction::GetName() const
     {
       static const std::string name("VisuallyVerifyObject" + std::to_string(_objectID.GetValue())
@@ -1286,6 +1295,9 @@ namespace Anki {
     
     ActionResult VisuallyVerifyObjectAction::Init()
     {
+      _waitForImagesAction = new WaitForImagesAction(_robot, GetNumImagesToWaitFor());
+      _waitForImagesAction->ShouldEmitCompletionSignal(false);
+    
       using namespace ExternalInterface;
       
       _objectSeen = false;
@@ -1332,8 +1344,6 @@ namespace Anki {
     ActionResult VisuallyVerifyObjectAction::CheckIfDone()
     {
       ActionResult actionRes = ActionResult::RUNNING;
-      
-      const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       if(_objectSeen)
       {
@@ -1394,24 +1404,13 @@ namespace Anki {
           }
           _moveLiftToHeightActionDone = true;
         }
-        
-        // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-        // TODO: Should this check if it's moving at all?
-        if (_robot.GetMoveComponent().IsHeadMoving()) {
-          _waitToVerifyTime = -1;
-        }
-        
-        if(_waitToVerifyTime < 0.f) {
-          _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
-        }
-        
       } // if/else(objectSeen)
       
-      if(currentTime > _waitToVerifyTime)
+      if(!_robot.GetMoveComponent().IsMoving() && _waitForImagesAction->Update() != ActionResult::RUNNING)
       {
         PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.TimedOut",
-                            "Did not see object %d and current time > waitUntilTime (%.3f>%.3f)",
-                            _objectID.GetValue(), currentTime, _waitToVerifyTime);
+                            "Did not see object %d before processing %d images",
+                            _objectID.GetValue(), GetNumImagesToWaitFor());
         return ActionResult::FAILURE_ABORT;
       }
       

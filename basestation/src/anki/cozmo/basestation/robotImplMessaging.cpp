@@ -501,7 +501,11 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
                      "Received message that %s %d (Active ID %d) stopped moving.",
                      EnumToString(object->GetType()),
                      object->GetID().GetValue(), payload.objectID);
-    
+    if( object->GetID() == _chargerID )
+    {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.Charger","Charger sending garbage stop messages");
+      return;
+    }
     if(object->GetPoseState() == ObservableObject::PoseState::Known) {
       // Not sure how an object could have a known pose before it stopped moving,
       // but just to be safe, re-delocalize and force a re-localization now
@@ -551,7 +555,11 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
                         "Could not find match for active object ID %d", payload.objectID);
   } else {
     assert(object->IsActive());
-    
+    if( object->GetID() == _chargerID )
+    {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.Charger","Charger sending garbage tap messages");
+      return;
+    }
     PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.MessageActiveObjectTapped",
                      "Received message that %s %d (Active ID %d) was tapped %d times.",
                      EnumToString(object->GetType()),
