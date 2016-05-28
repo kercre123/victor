@@ -13,12 +13,16 @@
 
 #include "anki/cozmo/robot/rec_protocol.h"
 
-// These are all the magic numbers for the boot loader
-static const int target_pin = PIN_TX_HEAD;
-static bool UartWritting;
-static const int UART_TIMEOUT = 0x2000 << 8;
+enum TRANSMIT_MODE {
+  TRANSMIT_NONE,
+  TRANSMIT_SEND,
+  TRANSMIT_RECEIVE,
+  TRANSMIT_CHARGER_RX
+};
 
-void setTransmit(bool tx);
+// These are all the magic numbers for the boot loader
+static TRANSMIT_MODE uart_mode = TRANSMIT_NONE;
+static const int UART_TIMEOUT = 0x2000 << 8;
 
 void setLight(uint8_t clr) {
   int channel = (clr >> 3) & 3;
@@ -34,54 +38,76 @@ void UARTInit(void) {
 
   // Enable the peripheral and start the tasks
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
-  NRF_UART0->TASKS_STARTTX = 1;
-  NRF_UART0->TASKS_STARTRX = 1;
-  NRF_UART0->EVENTS_TXDRDY = 0;
-  NRF_UART0->EVENTS_RXDRDY = 0;
-
-  // Initialize the UART for the specified baudrate
-  NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
-
-  // We begin in receive mode (slave)
-  setTransmit(false);
+  NRF_UART0->INTENCLR = ~0;
+  
+  nrf_gpio_pin_set(PIN_TX_HEAD);
 }
 
-void setTransmit(bool tx) {
-  if (UartWritting == tx) return ;
-
-  UartWritting = tx;
-
-  if (tx) {
-    NRF_UART0->PSELRXD = 0xFFFFFFFF;
-    MicroWait(10);
-    NRF_UART0->PSELTXD = target_pin;
-
-    // Configure pin so it is open-drain
-    nrf_gpio_cfg_output(target_pin);
-
-    NRF_GPIO->PIN_CNF[target_pin] = 
-      (NRF_GPIO->PIN_CNF[target_pin] & ~GPIO_PIN_CNF_DRIVE_Msk) |
-      (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
-  } else {
-    nrf_gpio_cfg_input(target_pin, NRF_GPIO_PIN_NOPULL);
-
-    NRF_UART0->PSELTXD = 0xFFFFFFFF;
-    MicroWait(10);
-    NRF_UART0->PSELRXD = target_pin;
+static void setTransmitMode(TRANSMIT_MODE mode) {
+  if (uart_mode == mode) {
+    return ;
   }
 
-  // Clear our UART interrupts
-  while (NRF_UART0->EVENTS_RXDRDY) {
-    NRF_UART0->EVENTS_RXDRDY = 0;
+  // Shut it down (because reasons)
+  NRF_UART0->TASKS_STOPRX = 1;
+  NRF_UART0->TASKS_STOPTX = 1;
+    
+  uart_mode = mode;
+
+  switch (mode) {
+    case TRANSMIT_SEND:
+      // Configure pin so it is open-drain
+      NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
+                                    | (GPIO_PIN_CNF_DRIVE_H0S1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                    | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
+                                    | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
+                                    | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
+
+      // Prevent debug words from transmitting
+      NRF_UART0->PSELRXD = 0xFFFFFFFF;
+      NRF_UART0->PSELTXD = PIN_TX_HEAD;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
+
+      MicroWait(5);
+      NRF_UART0->TASKS_STARTTX = 1;
+
+      break ;
+    case TRANSMIT_RECEIVE:
+      nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
+
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->PSELRXD = PIN_TX_HEAD;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
+
+      MicroWait(5);
+      NRF_UART0->TASKS_STARTRX = 1;
+      break ;
+    case TRANSMIT_CHARGER_RX:
+      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
+
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->PSELRXD = PIN_TX_VEXT;
+      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
+
+      MicroWait(5);
+      NRF_UART0->TASKS_STARTRX = 1;
+      break ;
+
+    default:
+      break ;
+  }
+
+  for (int i = 0; i < 6; i++) {
     uint8_t temp = NRF_UART0->RXD;
   }
-
+  
+  NRF_UART0->EVENTS_RXDRDY = 0;
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
 static void readUart(void* p, int length, bool timeout = true) {
   uint8_t* data = (uint8_t*) p;
-  setTransmit(false);
+  setTransmitMode(TRANSMIT_RECEIVE);
 
   while (length-- > 0) {
     int waitTime = GetCounter() + UART_TIMEOUT;
@@ -110,7 +136,7 @@ static void readUart(void* p, int length, bool timeout = true) {
 
 static void writeUart(const void* p, int length) {
   uint8_t* data = (uint8_t*) p;
-  setTransmit(true);
+  setTransmitMode(TRANSMIT_SEND);
 
   while (length-- > 0) {
     NRF_UART0->TXD = *(data++);
@@ -119,6 +145,7 @@ static void writeUart(const void* p, int length) {
 
     NRF_UART0->EVENTS_TXDRDY = 0;
   }
+  
 }
 
 static uint8_t readByte(bool timeout = true) {
@@ -132,17 +159,35 @@ static void writeByte(const uint8_t byte) {
   writeUart(&byte, sizeof(byte));
 }
 
-static void SyncToHead(void) {
-  // Write our recovery sync signal
-  writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
-  setTransmit(false);
+static bool EscapeFixture(void) {
+  nrf_gpio_pin_set(PIN_TX_VEXT);
+  nrf_gpio_cfg_output(PIN_TX_VEXT);
 
+  MicroWait(15);
+
+  setTransmitMode(TRANSMIT_CHARGER_RX);
+  
+  int waitTime = GetCounter() + (int)(0.0002f * 0x8000);
+  
+  do {
+    while (!NRF_UART0->EVENTS_RXDRDY) {
+      if (GetCounter() >= waitTime) {
+        return false;
+      }
+    }
+  } while (NRF_UART0->RXD != 0xA5);
+
+  return true;
+}
+
+
+static void SyncToHead(void) {
   uint32_t recoveryWord = 0;
 
-  // This will read a word, and attempt to sync to head
+  // Write our recovery sync signal
+  writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
   readUart(&recoveryWord, sizeof(recoveryWord));
 
-  // Simply restart when we receive bad data
   if (recoveryWord != HEAD_RECOVERY_NOTICE) {
     NVIC_SystemReset();
   }
@@ -239,6 +284,16 @@ static inline bool FlashBlock() {
 
 void EnterRecovery(void) {
   UARTInit();
+  
+  *FIXTURE_HOOK = EscapeFixture() ? 1 : 0;
+
+  // Disconnect input so we don't dump current into the charge pin
+  NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
+
+  if (*FIXTURE_HOOK) {
+    return ;
+  }
+  
   SyncToHead();
 
   for (;;) {

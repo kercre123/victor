@@ -383,7 +383,7 @@ void FTM2_IRQHandler(void)
   
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
-#ifdef ENABLE_JPEG
+#if defined(ENABLE_JPEG) and !defined(FACTORY_FIRMWARE)
   if (line < 498)   // XXX: This is apparently compensating for a JPEGCompress bug
     JPEGCompress(line, TOTAL_ROWS);
   else
