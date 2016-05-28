@@ -45,7 +45,9 @@ public class PingStatus : MonoBehaviour {
 
   private void SendPing() {
     _LastPingTime = Time.time;
-    _Ping.DestroyPing();
+    if (_Ping != null) {
+      _Ping.DestroyPing();
+    }
     _Ping = new Ping(RobotEngineManager.kRobotIP);
   }
 }
