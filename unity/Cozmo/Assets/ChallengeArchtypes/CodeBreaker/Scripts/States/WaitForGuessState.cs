@@ -195,7 +195,7 @@ namespace CodeBreaker {
       };
 
       _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
-      _CurrentRobot.SetHeadAngle(-0.6f);
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(0.0f);
     }
 

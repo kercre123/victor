@@ -26,6 +26,8 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private int _ExplicitFaceID = -1;
 
+  private bool _FirstRequestSpeedTap = true;
+
   private Cozmo.UI.AlertView _RequestDialog = null;
 
   private void Awake() {
@@ -99,12 +101,17 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+    _FirstRequestSpeedTap = message.firstRequest;
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleMiniGameYesAnimEnd);
+  }
+
+  private void HandleMiniGameYesAnimEnd(bool success) {
     DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
 
-    if (message.firstRequest) {
+    if (_FirstRequestSpeedTap) {
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
       alertView.TitleLocKey = "pressDemo.speedTapRequestTitle";
