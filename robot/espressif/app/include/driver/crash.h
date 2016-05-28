@@ -49,4 +49,7 @@ uint32_t getSerialNumber(void);
 /// Returns the robot's model number or 0xffff if not set
 uint16_t getModelNumber(void);
 
+/// Retrieves the random seed populated in flash by the factory fixture
+bool getFactoryRandomSeed(uint32_t* dest, const int len);
+
 #endif

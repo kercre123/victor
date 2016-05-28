@@ -16,73 +16,6 @@
 #include "user_config.h"
 #include "flash_map.h"
 
-/** Handle wifi events passed by the OS
- */
-void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
-{
-  switch (evt->event)
-  {
-    case EVENT_STAMODE_CONNECTED:
-    {
-      os_printf("Station connected to %s %d\r\n", evt->event_info.connected.ssid, evt->event_info.connected.channel);
-#ifndef COZMO_AS_AP
-      // Create ip config
-      struct ip_info ipinfo;
-      ipinfo.gw.addr = ipaddr_addr(STATION_GATEWAY);
-      ipinfo.ip.addr = ipaddr_addr(STATION_IP);
-      ipinfo.netmask.addr = ipaddr_addr(STATION_NETMASK);
-
-      // Assign ip config
-      if (wifi_set_ip_info(STATION_IF, &ipinfo) == false)
-      {
-        os_printf("Couldn't set IP info\r\n");
-      }
-#endif
-      break;
-    }
-    case EVENT_STAMODE_DISCONNECTED:
-    {
-      os_printf("Station disconnected from %s because %d\r\n",
-                evt->event_info.disconnected.ssid,
-                evt->event_info.disconnected.reason);
-      break;
-    }
-    case EVENT_STAMODE_AUTHMODE_CHANGE:
-    {
-      os_printf("Station authmode %d -> %d\r\n",
-                evt->event_info.auth_change.old_mode,
-                evt->event_info.auth_change.new_mode);
-      break;
-    }
-    case EVENT_STAMODE_GOT_IP:
-    {
-      os_printf("Station got IP " IPSTR ", " IPSTR ", " IPSTR "\r\n",
-                IP2STR(&evt->event_info.got_ip.ip),
-                IP2STR(&evt->event_info.got_ip.mask),
-                IP2STR(&evt->event_info.got_ip.gw));
-      break;
-    }
-    case EVENT_SOFTAPMODE_STACONNECTED:
-    {
-      os_printf("AP station %d jointed: " MACSTR "\r\n",
-                evt->event_info.sta_connected.aid,
-                MAC2STR(evt->event_info.sta_connected.mac));
-      break;
-    }
-    case EVENT_SOFTAPMODE_STADISCONNECTED:
-    {
-      os_printf("AP station %d left: " MACSTR "\r\n",
-                evt->event_info.sta_connected.aid,
-                MAC2STR(evt->event_info.sta_connected.mac));
-      break;
-    }
-    default:
-    {
-      os_printf("Unhandled wifi event: %d\r\n", evt->event);
-    }
-  }
-}
-
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
  * I think everything else should still happen in user_init and system_init_done
@@ -158,15 +91,18 @@ void user_init(void)
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);
   
+  unsigned int randomSeed = macaddr[0];
+  getFactoryRandomSeed(&randomSeed, 4);
+  srand(randomSeed);
   
   if (getSerialNumber() == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
-    os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
+    os_sprintf(ssid, "Cozmo_%03d%03d", macaddr[4], macaddr[5]);
   }
   else
   {
-    os_sprintf(ssid, "3p%04x", getSerialNumber() & 0xFFFF);
+    os_sprintf(ssid, "Cozmo_%04d", getSerialNumber() % 1000);
   }
 
   struct softap_config ap_config;
@@ -179,7 +115,7 @@ void user_init(void)
   }
 
   os_sprintf((char*)ap_config.ssid, ssid);
-  os_sprintf((char*)ap_config.password, AP_KEY);
+  os_sprintf((char*)ap_config.password, "%08d", rand() % 100000000);
   ap_config.ssid_len = 0;
   ap_config.channel = (macaddr[5]/24) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
@@ -236,5 +172,4 @@ void user_init(void)
 
   // Register callbacks
   system_init_done_cb(&system_init_done);
-  //wifi_set_event_handler_cb(wifi_event_callback);
 }

@@ -136,5 +136,7 @@ void ets_intr_lock();
 void ets_intr_unlock();
 int ets_vsnprintf(char * s, size_t n, const char * format, va_list arg)  __attribute__ ((format (printf, 3, 0)));
 int ets_vprintf(const char * format, va_list arg) __attribute__ ((format (printf, 1, 0)));
+int rand(void);
+void srand(unsigned seed);
 
 #endif /* _ETS_SYS_H */

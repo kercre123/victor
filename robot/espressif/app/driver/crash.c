@@ -19,6 +19,9 @@
 
 static const unsigned int CRASH_DUMP_STORAGE_HEADER = 0xCDFAF320;
 
+#define RANDOM_DATA_OFFSET FACTORY_DATA_SIZE
+#define MAX_RANDOM_DATA (8*sizeof(uint32_t))
+
 #define FACTORY_DATA_SIZE (8)
 
 static uint32_t factoryData[FACTORY_DATA_SIZE/sizeof(uint32_t)];
@@ -292,4 +295,10 @@ uint32_t ICACHE_FLASH_ATTR getSerialNumber(void)
 uint16_t ICACHE_FLASH_ATTR getModelNumber(void)
 {
   return factoryData[1] & 0xffff;
+}
+
+bool ICACHE_FLASH_ATTR getFactoryRandomSeed(uint32_t* dest, const int len)
+{
+  if (len > MAX_RANDOM_DATA) return false;
+  else return (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE + RANDOM_DATA_OFFSET, dest, len) == SPI_FLASH_RESULT_OK);
 }
