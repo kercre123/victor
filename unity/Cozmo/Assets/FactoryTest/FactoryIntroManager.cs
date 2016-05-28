@@ -236,8 +236,8 @@ public class FactoryIntroManager : MonoBehaviour {
     }
     else {
       _StartButton.image.color = Color.gray;
-      _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT (CONNECT ANYWAY)";
-      //_StartButton.interactable = false;
+      _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
+      _StartButton.interactable = false;
       _PingStatusText.text = "Ping Status: Not Connected";
     }
 
