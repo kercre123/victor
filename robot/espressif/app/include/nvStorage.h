@@ -105,6 +105,15 @@ namespace Anki {
         * @return either scheduled or busy
         */
       NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, MultiOpDoneCB finishedCallback=0);
+      
+      /** Wipe all contents of NVStorage
+       * This does more than erase all entries, it actually erases all the sectors of flash which store NVData
+       * @param includeFactory whether or not to also wipe factory NVStorage.
+       * @param callback a function to call when the wipe is complete, default none
+       * @param fork whether to run the wipe in a task or in the calling task, default true
+       * @return either scheduled or busy
+       */
+      NVResult WipeAll(const bool includeFactory, EraseDoneCB callback=0, const bool fork=true);
        
        extern "C" {
          /** Run garbage collection
@@ -121,11 +130,6 @@ namespace Anki {
           * @return 0 If the integrity check was successfully started or something else on error.
           */
         int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
-        
-        /** Erase the entire contents of NV storage destroying all data.
-         * This function will interfere with CPU scheduling so it should only be called during startup or shutown.
-         */
-        void NVWipeAll(void);
        }
     }
   }

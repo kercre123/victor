@@ -193,6 +193,25 @@ namespace Anki {
               else SendNVOpResult(&result, msg.readNV.to);
               break;
             }
+            case RobotInterface::EngineToRobot::Tag_wipeAllNV:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              NVStorage::NVOpResult result;
+              result.tag = NVStorage::NVEntry_Invalid;
+              result.write = false;
+              if (os_strncmp(msg.wipeAllNV.key, "Yes I really want to do this!", msg.wipeAllNV.key_length) != 0)
+              {
+                result.result = NVStorage::NV_BAD_ARGS;
+                SendNVOpResult(&result, msg.wipeAllNV.to);
+              }
+              else
+              {
+                result.result = NVStorage::WipeAll(msg.wipeAllNV.includeFactory, NVEraseDoneCallback);
+                if (result.result >= 0) nvOpReportTo = msg.wipeAllNV.to;
+                else SendNVOpResult(&result, msg.wipeAllNV.to);
+              }
+              break;
+            }
             case RobotInterface::EngineToRobot::Tag_rtipVersion:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct

@@ -12,6 +12,7 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "foregroundTask.h"
+#include "driver/i2spi.h"
 }
 #include "face.h"
 #include "anki/cozmo/robot/logging.h"
@@ -380,9 +381,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
   resetErase();
   resetRead();
   nv.lastReadTime = system_get_time();
-  
-  //NVWipeAll();
-  
+    
   for (area=0; area<NV_STORAGE_NUM_AREAS; ++area)
   {
     const u32 addr = NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * area);
@@ -413,7 +412,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
     dah.journalNumber = 1;
     os_printf("NVInit initalizing flash to (%d, %d) at %x\r\n", dah.nvStorageVersion, dah.journalNumber, addr);
-    NVWipeAll();
+    WipeAll(true, 0, false);
     const SpiFlashOpResult flashResult = spi_flash_write(addr, reinterpret_cast<u32*>(&dah), sizeof(NVDataAreaHeader));
     if (flashResult != SPI_FLASH_RESULT_OK)
     {
@@ -898,22 +897,116 @@ NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, Mult
   return NV_SCHEDULED;
 }
 
-extern "C" void NVWipeAll(void)
+typedef enum {
+  WAT_pause,
+  WAT_segments,
+  WAT_factory,
+  WAT_resume,
+  WAT_callback,
+  WAT_done,
+} WipeAllTaskPhase;
+
+struct WipeAllTaskState {
+  EraseDoneCB callback;
+  uint32_t sectorCount;
+  int8_t   retries;
+  bool     includeFactory;
+  WipeAllTaskPhase phase;
+};
+
+bool WipeAllTask(uint32_t param)
 {
-  int retries = FLASH_OP_RETRIES_BEFORE_FAIL;
-  // TODO: should use larger erase segment than sector
-  u16 sector = NV_STORAGE_START_ADDRESS / SECTOR_SIZE;
-  while ((sector < (NV_STORAGE_END_ADDRESS / SECTOR_SIZE)) && (retries > 0))
+  WipeAllTaskState* state = reinterpret_cast<WipeAllTaskState*>(param);
+  switch(state->phase)
   {
-    const SpiFlashOpResult flashResult = spi_flash_erase_sector(sector);
-    if (flashResult == SPI_FLASH_RESULT_OK)
+    case WAT_pause:
     {
-      sector++;
-      retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+      if (i2spiMessageQueueIsEmpty())
+      {
+        i2spiSwitchMode(I2SPI_PAUSED);
+        state->sectorCount = 0;
+        state->phase = WAT_segments;
+      }
+      return true;
     }
-    else retries--;
+    case WAT_segments:
+    {
+      if (state->sectorCount < (NV_STORAGE_AREA_SIZE * NV_STORAGE_NUM_AREAS / SECTOR_SIZE))
+      {
+        const SpiFlashOpResult rslt = spi_flash_erase_sector(NV_STORAGE_SECTOR + state->sectorCount);
+        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount += 1;
+      }
+      else
+      {
+        state->sectorCount = 0;
+        state->phase = WAT_factory;
+      }
+      return true;
+    }
+    case WAT_factory:
+    {
+      if (state->includeFactory && (state->sectorCount < (NV_STORAGE_AREA_SIZE / SECTOR_SIZE)))
+      {
+        const SpiFlashOpResult rslt = spi_flash_erase_sector(FACTORY_NV_STORAGE_SECTOR + state->sectorCount);
+        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount += 1;
+      }
+      else
+      {
+        state->sectorCount = 0;
+        state->phase = WAT_resume;
+      }
+      return true;
+    }
+    case WAT_resume:
+    {
+      i2spiSwitchMode(I2SPI_RESUME);
+      state->phase = WAT_callback;
+      return true;
+    }
+    case WAT_callback:
+    {
+      if (state->callback) state->callback(NVEntry_Invalid, NV_OKAY);
+      state->phase = WAT_done;
+      return true;
+    }
+    case WAT_done:
+    default:
+    {
+      return false;
+    }
   }
-  if (retries == 0) os_printf("NVWipeAll failed on sector %x\r\n", sector);
+}
+
+NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool fork)
+{
+  if (isBusy()) return NV_BUSY;
+  else
+  {
+    WipeAllTaskState* wats = reinterpret_cast<WipeAllTaskState*>(os_malloc(sizeof(WipeAllTaskState)));
+    if (wats == NULL) return NV_NO_MEM;
+    else
+    {
+      wats->callback = callback;
+      wats->includeFactory = includeFactory;
+      wats->sectorCount = 0;
+      wats->retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+      wats->phase = WAT_pause;
+      if (fork)
+      {
+        if (foregroundTaskPost(WipeAllTask, reinterpret_cast<uint32_t>(wats)) == false)
+        {
+          os_free(wats);
+          return NV_BUSY;
+        }
+        else return NV_SCHEDULED;
+      }
+      else
+      {
+        while (WipeAllTask(reinterpret_cast<uint32_t>(wats)));
+        return NV_OKAY;
+      }
+    }
+  }
 }
 
 } // NVStorage
