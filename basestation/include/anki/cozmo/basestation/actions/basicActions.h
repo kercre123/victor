@@ -394,8 +394,42 @@ namespace Cozmo {
       
       
     }; // class TurnTowardsPoseAction
-    
-    
+  
+  
+    // Wait for some number of images to be processed by the robot.
+    // Optionally specify to only start counting images after a given timestamp.
+    class WaitForImagesAction : public IAction
+    {
+    public:
+      
+      WaitForImagesAction(Robot& robot, u32 numFrames, TimeStamp_t afterTimeStamp = 0);
+      virtual ~WaitForImagesAction() { }
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_IMAGES; }
+      
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+      
+      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      
+      virtual ActionResult CheckIfDone() override;
+      
+      std::string _name = "WaitForImages";
+      
+    private:
+      u32 _numFramesSeen;
+      u32 _numFramesToWaitFor;
+      TimeStamp_t _afterTimeStamp;
+      
+      Signal::SmartHandle        _imageProcSignalHandle;
+      
+    }; // WaitForImagesAction()
+  
+  
     // Verify that an object exists by facing tilting the head to face its
     // last-known pose and verify that we can still see it. Optionally, you can
     // also require that a specific marker be seen as well.
@@ -406,19 +440,19 @@ namespace Cozmo {
                                  ObjectID objectID,
                                  Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
       
+      virtual ~VisuallyVerifyObjectAction();
+      
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
       
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
       
+      virtual int GetNumImagesToWaitFor() const { return _numImagesToWaitFor; }
+      void SetNumImagesToWaitFor(int numImages) { _numImagesToWaitFor = numImages; }
+      
     protected:
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      
-      // Max amount of time to wait before verifying after moving head that we are
-      // indeed seeing the object/marker we expect.
-      // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.5f; }
       
       ObjectID                _objectID;
       Vision::Marker::Code    _whichCode;
@@ -428,6 +462,8 @@ namespace Cozmo {
       MoveLiftToHeightAction  _moveLiftToHeightAction;
       bool                    _moveLiftToHeightActionDone;
       Signal::SmartHandle     _observedObjectHandle;
+      WaitForImagesAction*    _waitForImagesAction = nullptr;
+      int                     _numImagesToWaitFor = 10;
       
     }; // class VisuallyVerifyObjectAction
     
@@ -628,39 +664,6 @@ namespace Cozmo {
       std::function<bool(Robot&)> _lambda;
 
     };
-
-    // Wait for some number of images to be processed by the robot.
-    // Optionally specify to only start counting images after a given timestamp.
-    class WaitForImagesAction : public IAction
-    {
-    public:
-      
-      WaitForImagesAction(Robot& robot, u32 numFrames, TimeStamp_t afterTimeStamp = 0);
-      virtual ~WaitForImagesAction() { }
-      
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_IMAGES; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
-      
-      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
-
-    protected:
-      
-      virtual ActionResult Init() override;
-      
-      virtual ActionResult CheckIfDone() override;
-      
-      std::string _name = "WaitForImages";
-      
-    private:
-      u32 _numFramesSeen;
-      u32 _numFramesToWaitFor;
-      TimeStamp_t _afterTimeStamp;
-
-      Signal::SmartHandle        _imageProcSignalHandle;
-      
-    }; // WaitForImagesAction()
     
     
     class ReadToolCodeAction : public IAction
