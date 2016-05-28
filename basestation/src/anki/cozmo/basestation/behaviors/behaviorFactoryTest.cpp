@@ -751,6 +751,19 @@ namespace Cozmo {
       }
       case FactoryTestState::StartPickup:
       {
+        if (SKIP_BLOCK_PICKUP) {
+          if (ENABLE_NVSTORAGE_WRITES) {
+            if (!_toolCodeImagesStored) {
+              break;
+            }
+          }
+          
+          // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
+          EndTest(robot, FactoryTestResultCode::SUCCESS);
+          return Status::Complete;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        }
+        
         auto pickupCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
@@ -777,20 +790,6 @@ namespace Cozmo {
       }
       case FactoryTestState::PickingUpBlock:
       {
-        
-        if (SKIP_BLOCK_PICKUP) {
-          if (ENABLE_NVSTORAGE_WRITES) {
-            if (!_toolCodeImagesStored) {
-              break;
-            }
-          }
-          
-          // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
-          EndTest(robot, FactoryTestResultCode::SUCCESS);
-          return Status::Complete;
-          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        }
-        
         
         auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
