@@ -145,11 +145,27 @@ namespace Cozmo {
     _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, &robot.GetPose().FindOrigin());
     _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-50, 250, 0}, &robot.GetPose().FindOrigin());
     _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
+
+    // Mute volume
+    auto audioClient = robot.GetRobotAudioClient();
+    if (audioClient) {
+      audioClient->SetRobotVolume(0);
+    }
     
+    // Set blind docking mode
+    ExternalInterface::SetDebugConsoleVarMessage dockMethodMsg;
+    dockMethodMsg.varName = "DockingMethod";
+    dockMethodMsg.tryValue = "0";  // Blind docking
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(dockMethodMsg));
+
+    // Disable driving animations
+    ExternalInterface::SetDebugConsoleVarMessage driveAnimsMsg;
+    driveAnimsMsg.varName = "EnableDrivingAnimations";
+    driveAnimsMsg.tryValue = "false";
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
     
     // Disable reactionary behaviors
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
-    
     
     // Disable keep face alive animation
     robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
@@ -426,7 +442,7 @@ namespace Cozmo {
           // Drive off charger
           StartActing(robot, new DriveStraightAction(robot, 250, 100),
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.3;
                         return true;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);

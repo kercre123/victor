@@ -477,6 +477,15 @@ namespace Vision {
   
   void FaceRecognizer::Run()
   {
+    
+    const char* threadName = "FaceRecognizer";
+    #if defined(LINUX) || defined(ANDROID)
+    pthread_setname_np(pthread_self(), threadName);
+    #else
+    pthread_setname_np(threadName);
+    #endif
+    
+    
     while(_isRunningAsync)
     {
       _mutex.lock();
