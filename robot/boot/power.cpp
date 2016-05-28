@@ -45,7 +45,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
 {
   if (!fixture) {
     // Set MISO - "recovery boot mode" signal
-    GPIO_SET(GPIO_MISO, PIN_MISO);
+    GPIO_RESET(GPIO_MISO, PIN_MISO);
     GPIO_OUT(GPIO_MISO, PIN_MISO);
     SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
 
@@ -55,7 +55,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
   } else {
     // Pull hard down to ground
-    GPIO_RESET(GPIO_MOSI, PIN_MOSI);
+    GPIO_SET(GPIO_MOSI, PIN_MOSI);
     GPIO_OUT(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO);
     
@@ -81,7 +81,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
   SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
 
   // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < 32 * 512; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;

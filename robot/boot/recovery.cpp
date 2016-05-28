@@ -85,7 +85,15 @@ static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length
 
   RECOVERY_STATE body_state = (RECOVERY_STATE) UART::readByte();
 
-  return (body_state == STATE_ACK);
+  if (body_state == STATE_ACK) {
+    return true;
+  } else if (body_state == STATE_NACK) {
+    return false;
+  }
+
+  // Transmission error: Reboot
+  NVIC_SystemReset();
+  return false;
 }
 
 static bool SetLight(uint8_t colors) {

@@ -47,6 +47,9 @@ static const FTMenuItem rootMenuItems[] = {
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
   {"Playpen test",    RobotInterface::FTM_PlayPenTest,   30000000 },
+  // #ifdef FACTORY_FIRMWARE
+  {"Cube test",       RobotInterface::FTM_cubeTest,      30000000 },
+  // #endif
   {"BLE",             RobotInterface::FTM_BLE_Menu,      15000000 },
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
@@ -200,6 +203,13 @@ void Update()
         }
         break;
       }
+      // #ifdef FACTORY_FIRMWARE
+      case RobotInterface::FTM_cubeTest:
+      {
+        Face::FacePrintf("Auto cube");
+        break ;
+      }
+      // #endif
       case RobotInterface::FTM_motorLifeTest:
       {
         if ((now - lastExecTime) > 1000000)
@@ -308,6 +318,49 @@ void Process_TestState(const RobotInterface::TestState& state)
   }
 }
 
+// #ifdef FACTORY_FIRMWARE
+static void cubeMessageHook(const u8* buffer, int bufferSize) {
+  using namespace Anki::Cozmo;
+
+  if (buffer[0] != RobotInterface::RobotToEngine::Tag_activeObjectDiscovered) {
+    return ;
+  }
+  
+  RobotInterface::RobotToEngine msg;
+  memcpy(msg.GetBuffer(), buffer, bufferSize);
+
+  uint32_t id = msg.activeObjectDiscovered.factory_id;
+
+  static uint32_t slots[7];
+  static int slot = 0;
+
+  for (int i = 0; i < slot; i++) {
+    if (slots[i] == id) return ;
+  }
+
+  RobotInterface::EngineToRobot out;
+
+  out.tag = RobotInterface::EngineToRobot::Tag_setCubeLights; 
+  out.setCubeLights.objectID = slot;
+  for(int i = 0; i < 4; i++) {
+    out.setCubeLights.lights[i].onColor = 
+    out.setCubeLights.lights[i].offColor = 0x3DEF;
+  }
+
+  if (!RTIP::SendMessage(out)) return ;
+
+  out.tag = RobotInterface::EngineToRobot::Tag_setPropSlot;
+  out.setPropSlot.slot = slot;
+  out.setPropSlot.factory_id = id;
+
+  if (!RTIP::SendMessage(out)) return ;
+
+  slots[slot] = id;
+
+  if (++slot > 7) SetMode(RobotInterface::FTM_entry);
+}
+// #endif
+
 RobotInterface::FactoryTestMode GetMode()
 {
   return mode;
@@ -353,6 +406,13 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
+    // #ifdef FACTORY_FIRMWARE
+    case RobotInterface::FTM_cubeTest:
+    {
+      RTIP::HookWifi(NULL);
+      break;
+    }
+    // #endif
     case RobotInterface::FTM_motorLifeTest:
     {
       msg.tag = RobotInterface::EngineToRobot::Tag_stop;
@@ -397,6 +457,13 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
+    // #ifdef FACTORY_FIRMWARE
+    case RobotInterface::FTM_cubeTest:
+    {
+      RTIP::HookWifi(cubeMessageHook);
+      break;
+    }
+    // #endif
     default:
     {
       // Nothing to do

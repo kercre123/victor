@@ -23,6 +23,14 @@ u32 Version;
 u32 Date;
 char VersionDescription[VERSION_DESCRIPTION_SIZE]; 
 
+// #ifdef FACTORY_FIRMWARE
+static WifiHookCalback wifi_tag_hook = NULL;
+
+void HookWifi(WifiHookCalback hook) {
+  wifi_tag_hook = hook;
+}
+// #endif
+
 bool Init()
 {
   return true;
@@ -88,6 +96,12 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
         }
         else // This message is above us
         {
+          // #ifdef FACTORY_FIRMWARE
+          if (wifi_tag_hook) {
+            wifi_tag_hook(relayBuffer + 1, size);
+          }
+          // #endif
+
           if (clientConnected())
           {
             if ((tag == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))

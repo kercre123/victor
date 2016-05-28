@@ -24,7 +24,7 @@ using namespace Anki::Cozmo;
 
 #define MAX(a, b) ((a > b) ? a : b)
 
-uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
+uint8_t   txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
 
 enum TRANSMIT_MODE {
   TRANSMIT_UNKNOWN,
@@ -36,7 +36,6 @@ enum TRANSMIT_MODE {
 static int txRxIndex;
 static TRANSMIT_MODE uart_mode;
 static bool m_enabled;
-static const int charger_baud_rate = 100000;
 
 bool Head::spokenTo = false;
 
@@ -140,6 +139,15 @@ static inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
+  if (*FIXTURE_HOOK) {
+    nrf_gpio_pin_set(PIN_TX_VEXT);
+    nrf_gpio_cfg_output(PIN_TX_VEXT);
+    MicroWait(15);
+    setTransmitMode(TRANSMIT_CHARGER_RX);
+    
+    return ;
+  }
+
   // Head body sync is disabled, so just kick the watchdog
   if (!m_enabled) {
     return ;

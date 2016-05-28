@@ -88,6 +88,7 @@ structure RobotState
 structure PowerState {
   int_32 VBatFixed,
   int_32 VExtFixed,
+  uint_8 batteryLevel,
   uint_8 chargeStat,
 }
 
