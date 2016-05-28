@@ -4,7 +4,7 @@ using System.Collections;
 public class PingStatus : MonoBehaviour {
 
   private UnityEngine.Ping _Ping;
-  private bool _PingSuccess = true;
+  private bool _PingSuccess = false;
   private float _LastPingTime = 0.0f;
 
   public bool GetPingStatus() {
