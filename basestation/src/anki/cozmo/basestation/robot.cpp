@@ -2576,6 +2576,7 @@ namespace Anki {
       }
             
       // check if it's too high to stack on
+      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
       const float topZ = relPos.GetTranslation().z() + objectToStackOn.GetSize().z() * 0.5f;
       const float isTooHigh = topZ > (objectToStackOn.GetSize().z() + STACKED_HEIGHT_TOL_MM);
       if ( isTooHigh ) {
@@ -2594,6 +2595,7 @@ namespace Anki {
       }
       
       // check if it's too high to pick up
+      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
       const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
       const float isTooHigh = topZ > ( 2 * objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
       if ( isTooHigh ) {
