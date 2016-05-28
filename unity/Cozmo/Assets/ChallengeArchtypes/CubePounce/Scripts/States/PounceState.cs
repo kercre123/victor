@@ -37,6 +37,15 @@ namespace CubePounce {
       }
     }
 
+    public override void Pause() {
+      if (_DidPounce) {
+        // Do nothing
+      }
+      else {
+        base.Pause();
+      }
+    }
+
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
       if ((!_AttemptTriggered || !_DidPounce) && id == _CubePounceGame.GetCurrentTarget().ID) {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);

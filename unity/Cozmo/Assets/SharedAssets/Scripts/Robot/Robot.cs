@@ -1050,6 +1050,21 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
+  public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SearchForObject(cube.Family, cube.ID, false, callback, queueActionPosition);
+  }
+
+  public void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(
+      Singleton<SearchForObject>.Instance.Initialize(
+        desiredObjectFamily: objectFamily,
+        desiredObjectID: objectId,
+        matchAnyObject: matchAnyObject
+      ), 
+      callback, 
+      queueActionPosition);
+  }
+
   // Height factor should be between 0.0f and 1.0f
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {

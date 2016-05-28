@@ -268,7 +268,7 @@ namespace WhackAMole {
     public void FixCozmoAngles() {
 
       if (CurrentRobot.HeadAngle != -0.8f) {
-        CurrentRobot.SetHeadAngle(-0.8f, null, Anki.Cozmo.QueueActionPosition.NEXT);
+        CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue, null, Anki.Cozmo.QueueActionPosition.NEXT);
       }
       if (CurrentRobot.LiftHeight != 1.0f) { 
         CurrentRobot.SetLiftHeight(1.0f, null, Anki.Cozmo.QueueActionPosition.NEXT);

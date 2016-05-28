@@ -13,6 +13,8 @@ namespace SpeedTap {
 
     private bool _IsFirstTime = false;
 
+    private bool _ForceRaiseLift = false;
+
     public SpeedTapCozmoDriveToCube(bool isFirstTime) {
       _IsFirstTime = isFirstTime;
     }
@@ -39,33 +41,37 @@ namespace SpeedTap {
       base.Exit();
       _CurrentRobot.ResetDrivingAnimations();
       _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
+      _CurrentRobot.CancelAllCallbacks();
     }
 
     public override void Pause() {
-      // TODO COZMO-2081: Need to just use parent behavior for now
-      // because TryDrivingToCube doesn't work if he ends up 
-      // in a place where he can't see his cube; Use SearchForCube action
-      // base.Pause();
-
       // Cancel all callbacks
-      // _CurrentRobot.ResetDrivingAnimations();
-      // _CurrentRobot.CancelAllCallbacks();
+      _CurrentRobot.ResetDrivingAnimations();
+      _CurrentRobot.CancelAllCallbacks();
     }
 
     public override void Resume() {
-      // TODO COZMO-2081: Need to just use parent behavior for now
-      // because TryDrivingToCube doesn't work if he ends up 
-      // in a place where he can't see his cube; Use SearchForCube action
-      // base.Resume();
-
       // Try driving up to the cube again
-      // TryDrivingToCube(forceRaiseLift: true);
+      TryDrivingToCube(forceRaiseLift: true);
     }
 
     private void TryDrivingToCube(bool forceRaiseLift) {
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      _ForceRaiseLift = forceRaiseLift;
+      _CurrentRobot.SearchForCube(_SpeedTapGame.CozmoBlock, HandleSearchForCubeEnd);
       _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
         AnimationGroupName.kSpeedTap_Driving_Loop, null);
+    }
+
+    private void HandleSearchForCubeEnd(bool success) {
+      if (success) {
+        HandleFoundCube(_ForceRaiseLift);
+      }
+      else {
+        TryDrivingToCube(_ForceRaiseLift);
+      }
+    }
+
+    private void HandleFoundCube(bool forceRaiseLift) {
       if (IsFarAwayFromCube()) {
         DriveToPreDockPose();
       }
