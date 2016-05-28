@@ -96,6 +96,9 @@ class DigestFile:
         # write out our certificate block
         self.write(self.sign(key), CERTIFICATE_BLOCK)
         self.hash = self.digestType.new()
+        
+    def close(self):
+        return self.fo.close()
 
 def MGF1(a, b, digestType = SHA512):
     a, index, counter = bytearray(a), 0, 0
@@ -237,6 +240,8 @@ if __name__ == '__main__':
             fo.write(data, block+base_addr)
 
     fo.writeCert(key)
+    
+    fo.close()
 
     if args.prepend_size_word:
         fw = open(args.output, 'rb').read()
