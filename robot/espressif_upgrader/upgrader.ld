@@ -3,9 +3,8 @@
 MEMORY
 {
   dport0_0_seg :                        org = 0x3FF00000, len = 0x10
-  dram0_0_seg :                         org = 0x3FFF8000, len = 0x04000
+  dram0_0_seg :                         org = 0x3FFE8000, len = 0x1000
   iram1_0_seg :                         org = 0x40100000, len = 0x8000
-  iram2_0_seg :                         org = 0x4010FEE0, len = 0x120
   irom0_0_seg :                         org = 0x40240000, len = 0x3C000
 }
 

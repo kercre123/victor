@@ -43,6 +43,7 @@ typedef enum {
   SPI_FLASH_RESULT_TIMEOUT,
 } SpiFlashOpResult;
 
+static int magic = 42; /// If we don't have any variables initalized to non-zero, gen_appbin.py generates invalid files.
 
 #define SECTOR_SIZE (0x1000)
 
@@ -57,7 +58,7 @@ void NOINLINE setupSerial(void)
   // Update the clock rate here since it's the first function we call
   uart_div_modify(0, (50*1000000)/230400);
   // Debugging delay
-  ets_delay_us(2000000);
+  //ets_delay_us(2000000);
   
   ets_printf("\r\n\r\nYou will be upgraded\r\n\r\n");
 }
@@ -100,6 +101,7 @@ void copy_sector(uint32 srcAddress, uint32 dstSector)
 void call_user_start() {
   uint32 firmwareSize = 0;
   uint32 sectorCount  = 0;
+  magic = 0;
   
   setupSerial();
   
@@ -120,4 +122,12 @@ void call_user_start() {
   copy_sector(NEW_BOOTLOADER_ADDRESS, 0);
   
   ets_printf("Upgrade complete\r\n");
+  
+  ets_printf("Clearing flash for safety\r\n");
+  for (sectorCount = 0x60; sectorCount < 0x1fc; sectorCount++)
+  {
+    spi_erase_wrap(sectorCount);
+    ets_printf(".");
+  }
+
 }

@@ -216,6 +216,11 @@ extern "C" void backgroundTaskOnConnect(void)
   
   sendWifiConnectionState(true);
   
+  if (FACTORY_FIRMWARE)
+  {
+    AnkiEvent( 186, "FactoryFirmware", 487, "Running factory firmware", 0);
+  }
+  
   // Send our version information to the engine
   {
     Anki::Cozmo::RobotInterface::FWVersionInfo vi;

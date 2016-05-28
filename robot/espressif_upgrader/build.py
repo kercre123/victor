@@ -7,6 +7,7 @@ import sys, os, subprocess, struct
 SECTOR_SIZE = 0x1000
 
 def loadAndPadFirmware(fpn, size=SECTOR_SIZE):
+    print("Including", fpn)
     fw = open(fpn, 'rb').read()
     assert len(fw) <= size
     fw = fw + (b"\xff" * (size - len(fw)))
@@ -32,6 +33,7 @@ def build():
     subprocess.call(['make', 'SDK_BASE=../espressif/', 'COMPILE=gcc'], shell=False, env=e)
     makeImage()
     subprocess.call(['python3', 'tools/sign.py', '--wifi', 'espressif_upgrader/build/upgrader-unified-image.bin', 'staging/upgrader.safe'], cwd='..', env=e)
+    subprocess.call(['ls', '-l', 'staging/upgrader.safe'], cwd='..', env=e)
 
 if __name__ == '__main__':
     build()

@@ -34,7 +34,6 @@ namespace Anki {
 namespace Cozmo {
 namespace Factory {
 
-static const u32 faceSpinner[] ICACHE_RODATA_ATTR STORE_ATTR = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
 static RobotInterface::FactoryTestMode mode;
 static u32 lastExecTime;
 static u32 modeTimeout;
@@ -119,8 +118,6 @@ void Update()
     {
       case RobotInterface::FTM_entry:
       {
-        const u32 phase = (now >> 16) & 0x7;
-        Face::FacePrintf("\n\n\n\n     %c         %c\n", faceSpinner[phase], faceSpinner[7-((phase-1) & 0x7)]);
         break;
       }
       case RobotInterface::FTM_menus:
@@ -182,7 +179,15 @@ void Update()
       }
       case RobotInterface::FTM_WiFiInfo:
       {
-        static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi-V: %x\nWiFi-D: %s\nRTIP-V: %x\nRTIP-D: %s\n          %c";
+        static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
+                                                                          "PSK:  %s\n"
+                                                                          "Chan: %d  Stas: %d\n"
+                                                                          "WiFi-V: %x\nWiFi-D: %s\n"
+                                                                          "RTIP-V: %x\nRTIP-D: %s\n"
+                                                                          #if FACTORY_FIRMWARE
+                                                                          "FACTORY FIRMWARE"
+                                                                          #endif
+                                                                          ;
         const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
         if (!clientConnected())
         {
@@ -196,7 +201,7 @@ void Update()
           Face::FacePrintf(fmtBuf,
                            ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                            COZMO_VERSION_COMMIT, BUILD_DATE + 5,
-                           RTIP::Version, RTIP::VersionDescription, faceSpinner[system_get_time() >> 16 & 0x7]);
+                           RTIP::Version, RTIP::VersionDescription);
         }
         break;
       }
