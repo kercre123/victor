@@ -39,6 +39,7 @@ namespace Cozmo {
 // distance from the possible cube to go visit
 CONSOLE_VAR(float, kEvpm_DistanceFromPossibleCubeMin_mm, "BehaviorExploreLookAroundInPlace", 100.0f);
 CONSOLE_VAR(float, kEvpm_DistanceFromPossibleCubeMax_mm, "BehaviorExploreLookAroundInPlace", 150.0f);
+CONSOLE_VAR(float, kBEVPM_backupSpeed_mmps, "BehaviorExploreLookAroundInPlace", 90.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreVisitPossibleMarker::BehaviorExploreVisitPossibleMarker(Robot& robot, const Json::Value& config)
@@ -78,10 +79,11 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
     // pick closest marker to us
     const Vec3f& dirToMarker = marker.pose.GetTranslation() - robot.GetPose().GetTranslation();
     const float distToMarkerSQ = dirToMarker.LengthSq();
-    if( distToMarkerSQ < std::pow( kEvpm_DistanceFromPossibleCubeMin_mm, 2) ) {
-      // ignore cubes which we are already close to
-      continue;
-    }
+    // don't think we need this anymore since we remove them once we look at them
+    // if( distToMarkerSQ < std::pow( kEvpm_DistanceFromPossibleCubeMin_mm, 2) ) {      
+    //   // ignore cubes which we are already close to and facing
+    //   continue;
+    // }
     if ( (nullptr==closestMarker) || (distToMarkerSQ<distToClosestSQ) )
     {
       closestMarker = &marker;
@@ -210,22 +212,31 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
     approachAction->AddAction( new DriveToPoseAction(robot, goalPose, false) );
   }
   else {
-    // drive directly to the cube
-    const Pose2d relPose2d(relPose);
-    Vec3f newTranslation = relPose.GetTranslation();
-    float oldLength = newTranslation.MakeUnitLength();
+
+    // if we're too close, back up
+    if( std::pow(kEvpm_DistanceFromPossibleCubeMin_mm, 2) > relPose.GetTranslation().LengthSq() ) {
+      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
+      const float backupDist = distanceRand - relPose.GetTranslation().Length();
+      approachAction->AddAction( new DriveStraightAction(robot, -backupDist, kBEVPM_backupSpeed_mmps) );
+    }
+    else {    
+      // drive directly to the cube
+      const Pose2d relPose2d(relPose);
+      Vec3f newTranslation = relPose.GetTranslation();
+      float oldLength = newTranslation.MakeUnitLength();
       
-    Pose3d newTargetPose(RotationVector3d{},
-                         newTranslation * (oldLength - distanceRand),
-                         &robot.GetPose());
+      Pose3d newTargetPose(RotationVector3d{},
+                           newTranslation * (oldLength - distanceRand),
+                           &robot.GetPose());
 
-    // turn first to signal intent
-    approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
-    approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
+      // turn first to signal intent
+      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
+      approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
 
-    // This requires us to bail out of this behavior if we see one, but that's not currently happening
-    // // add a search action after driving / facing, in case we don't see the object
-    // approachAction->AddAction(new SearchSideToSideAction(robot));
+      // This requires us to bail out of this behavior if we see one, but that's not currently happening
+      // // add a search action after driving / facing, in case we don't see the object
+      // approachAction->AddAction(new SearchSideToSideAction(robot));
+    }
   }
 
   // TODO Either set head up at end, or at start and as soon as we see the cube, react

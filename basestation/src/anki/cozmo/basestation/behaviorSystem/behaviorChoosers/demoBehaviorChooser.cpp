@@ -16,6 +16,8 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -27,7 +29,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -87,6 +88,15 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
     PRINT_NAMED_ERROR("DemoBehaviorChooser.NoFearEdgeBehavior",
                       "couldn't find behavior '%s', demo won't work",
                       kFearEdgeBehavior);
+  }
+
+  _admireStackBehavior = static_cast<BehaviorAdmireStack*>(
+    _robot.GetBehaviorFactory().FindBehaviorByName(kKnockOverStackBehavior));
+
+  if( nullptr == _admireStackBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
+                      "couldn't find behavior '%s', demo won't work",
+                      kKnockOverStackBehavior);
   }
     
   _name = "Demo[]";
@@ -347,7 +357,7 @@ bool DemoBehaviorChooser::ShouldTransitionOutOfCubesState()
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) ) {
+  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) || ! _admireStackBehavior->DidKnockOverStack() ) {
     return false;
   }
   else {

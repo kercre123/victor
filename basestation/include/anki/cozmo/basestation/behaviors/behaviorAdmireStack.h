@@ -24,6 +24,11 @@ class Robot;
 
 class BehaviorAdmireStack : public IBehavior
 {
+public:
+
+  // for demo to know if this worked
+  bool DidKnockOverStack() const { return _didKnockOverStack; }
+  
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -67,6 +72,8 @@ private:
 
   // last time we saw the last block (based on the block ID in the whiteboard)
   TimeStamp_t _topBlockLastSeentime = 0;
+
+  bool _didKnockOverStack = false;
   
   const int numFramesToWaitForBeforeFlip = 5;
 };

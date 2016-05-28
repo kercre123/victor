@@ -3037,6 +3037,10 @@ static const f32 STACKED_HEIGHT_TOL_MM = 15.f;
                            object->GetID().GetValue());
           _selectedObject.UnSet();
         }
+
+
+        // Setting pose to unknown makes the object no longer "existence confirmed", so save value now
+        bool wasExistenceConfirmed = object->IsExistenceConfirmed();
         
         object->SetPoseState(ObservableObject::PoseState::Unknown);
         
@@ -3044,7 +3048,7 @@ static const f32 STACKED_HEIGHT_TOL_MM = 15.f;
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(object->IsExistenceConfirmed())
+        if(wasExistenceConfirmed)
         {
           using namespace ExternalInterface;
           _robot->Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(
