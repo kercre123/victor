@@ -3,9 +3,9 @@ using System.Collections;
 
 public class PingStatus : MonoBehaviour {
 
-  private UnityEngine.Ping _Ping;
+  //private UnityEngine.Ping _Ping;
   private bool _PingSuccess = true;
-  private float _LastPingTime = 0.0f;
+  //private float _LastPingTime = 0.0f;
 
   public bool GetPingStatus() {
     return _PingSuccess;
@@ -44,7 +44,7 @@ public class PingStatus : MonoBehaviour {
   }
 
   private void SendPing() {
-    _LastPingTime = Time.time;
-    _Ping = new Ping(RobotEngineManager.kRobotIP);
+    //_LastPingTime = Time.time;
+    //_Ping = new Ping(RobotEngineManager.kRobotIP);
   }
 }
