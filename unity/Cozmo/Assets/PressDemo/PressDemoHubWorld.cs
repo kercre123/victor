@@ -28,6 +28,10 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private Cozmo.UI.AlertView _RequestDialog = null;
 
+  private void Awake() {
+    RobotEngineManager.Instance.CurrentRobot.LoadFaceAlbumFromFile("prDemo", true);
+  }
+
   public override bool LoadHubWorld() {
     DebugMenuManager.Instance.EnableLatencyPopup(false);
     LoadPressDemoView();

@@ -278,6 +278,9 @@ public interface IRobot : IDisposable {
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendDemoResetState();
+
   void EraseAllEnrolledFaces();
+
+  void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
 }

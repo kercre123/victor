@@ -822,4 +822,8 @@ public class MockRobot : IRobot {
   public void SendDemoResetState() {
     
   }
+
+  public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
+    
+  }
 }
