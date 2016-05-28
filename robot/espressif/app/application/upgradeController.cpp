@@ -581,6 +581,7 @@ namespace UpgradeController {
       }
       case OTAT_Wait_For_Reboot:
       {
+        i2spiBootloaderCommandDone();
         break;
       }
       default:
