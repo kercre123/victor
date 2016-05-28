@@ -1433,6 +1433,10 @@ namespace Anki {
         Util::SafeDelete(_action);
       }
       _action = action;
+      if(nullptr != _action) {
+        _action->ShouldEmitCompletionSignal(false);
+        _action->ShouldSuppressTrackLocking(true);
+      }
     }
     
     TurnTowardsLastFacePoseAction::~TurnTowardsLastFacePoseAction()
@@ -1530,9 +1534,7 @@ namespace Anki {
         if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
           // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
           // require too large of an adjustment.
-          TurnTowardsPoseAction* fineTune = new TurnTowardsPoseAction(_robot, pose, DEG_TO_RAD(45));
-          fineTune->ShouldSuppressTrackLocking(true); // We're already locking... would cause conflict.
-          SetAction(fineTune);
+          SetAction(new TurnTowardsPoseAction(_robot, pose, DEG_TO_RAD(45)));
         }
       } else {
         SetAction(nullptr);
@@ -1566,9 +1568,7 @@ namespace Anki {
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
               ASSERT_NAMED(nullptr == _action, "TurnTowardsLastFacePoseAction.CheckIfDone.ActionPointerShouldStillBeNull");
-              auto waitAction = new WaitForImagesAction(_robot, _maxFramesToWait);
-              waitAction->ShouldSuppressTrackLocking(true);
-              SetAction(waitAction);
+              SetAction(new WaitForImagesAction(_robot, _maxFramesToWait));
               _state = State::WaitingForFace;
             } else {
               // ...if we've already seen a face, jump straight to turning
