@@ -12,14 +12,14 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.InputField _NameInputField;
 
-  private void Start() {
-    _SubmitName.onClick.AddListener(HandleSubmitNameButton);
+  private void Awake() {
+    _SubmitName.Initialize(HandleSubmitNameButton, "face_enrollment_name_enter_done", "face_enrollment_name_slide");
     _SubmitName.Interactable = false;
-    _NameInputField.onValueChanged.AddListener(HandleInputFieldDone);
+    _NameInputField.onValueChanged.AddListener(HandleInputFieldChange);
     _NameInputField.ActivateInputField();
   }
 
-  private void HandleInputFieldDone(string input) {
+  private void HandleInputFieldChange(string input) {
     if (string.IsNullOrEmpty(input)) {
       _SubmitName.Interactable = false;
     }
