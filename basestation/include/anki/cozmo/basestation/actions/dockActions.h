@@ -84,6 +84,38 @@ namespace Anki {
       
       void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
+      struct PreActionPoseInfo
+      {
+        // Inputs
+        ObjectID objectID;
+        PreActionPose::ActionType preActionPoseType;
+        bool doNearPreDockPoseCheck;
+        f32 placementOffsetX_mm;
+        f32 preActionPoseAngleTolerance;
+        
+        // Outputs
+        ActionResult actionResult;
+        ObjectInteractionResult interactionResult;
+        std::vector<PreActionPose> preActionPoses;
+        size_t closestIndex;
+        Point2f closestPoint;
+        
+        PreActionPoseInfo(ObjectID objectID,
+                          PreActionPose::ActionType preActionPoseType,
+                          bool doNearPreDockPoseCheck,
+                          f32 placementOffsetX_mm,
+                          f32 preActionPoseAngleTolerance)
+        : objectID(objectID)
+        , preActionPoseType(preActionPoseType)
+        , doNearPreDockPoseCheck(doNearPreDockPoseCheck)
+        , placementOffsetX_mm(placementOffsetX_mm)
+        , preActionPoseAngleTolerance(preActionPoseAngleTolerance)
+        {
+          
+        }
+      };
+      static void IsCloseEnoughToPreActionPose(Robot& robot, PreActionPoseInfo& preActionPoseInfo);
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its

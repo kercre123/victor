@@ -108,8 +108,19 @@ void BehaviorReactToCliff::TransitionToBackingUp(Robot& robot)
 {
   // if the animation doesn't drive us backwards enough, do it manually
   if( robot.IsCliffDetected() ) {
-    StartActing(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps));
+      StartActing(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
+                  [this,&robot](){
+                      SendFinishedReactToCliffMessage(robot);
+                  });
   }
+  else {
+    SendFinishedReactToCliffMessage(robot);
+  }
+}
+    
+void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
+  // Send message that we're done reacting
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
 
 void BehaviorReactToCliff::StopInternal(Robot& robot)

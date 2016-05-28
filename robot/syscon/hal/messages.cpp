@@ -36,6 +36,11 @@ static void Process_setCubeLights(const CubeLights& msg)
   Radio::setPropLights(msg.objectID, msg.lights);
 }
 
+static void Process_setCubeGamma(const SetCubeGamma& msg)
+{
+  Radio::setLightGamma(msg.gamma);
+}
+
 static void Process_setPropSlot(const SetPropSlot& msg)
 {
   Radio::assignProp(msg.slot, msg.factory_id);

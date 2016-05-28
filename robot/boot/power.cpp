@@ -79,7 +79,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
   SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
 
   // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 32*512; i++)
+  for (int i = 0; i < 32 * 512; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;

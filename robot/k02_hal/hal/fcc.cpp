@@ -62,13 +62,13 @@ struct DTM_Mode_Settings {
 };
 
 static const DTM_Mode_Settings DTM_MODE[] = {
-  { TEST_LEDS,      LE_RECEIVER_TEST,      0,                   0xFF,         0xFF },   // 0 = listen
-  { TEST_NONE,      LE_TRANSMITTER_TEST,   0,           DTM_PKT_0X55,         0xFF },   // 1..3 = tx 02,42,82
-  { TEST_NONE,      LE_TRANSMITTER_TEST,  20,           DTM_PKT_0X55,         0xFF },
-  { TEST_NONE,      LE_TRANSMITTER_TEST,  40,           DTM_PKT_0X55,         0xFF },
-  { TEST_NONE,      LE_TRANSMITTER_TEST,   0, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4..7 = carrier 02,42,82
-  { TEST_NONE,      LE_TRANSMITTER_TEST,  20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
-  { TEST_NONE,      LE_TRANSMITTER_TEST,  40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { TEST_LEDS,      LE_RECEIVER_TEST,      2,                   0xFF,         0xFF },   // 0 = listen/rx 02
+  { TEST_NONE,      LE_TRANSMITTER_TEST,   2,           DTM_PKT_0X55,         0xFF },   // 1..3 = tx 02,42,81
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  42,           DTM_PKT_0X55,         0xFF },
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  81,           DTM_PKT_0X55,         0xFF },
+  { TEST_NONE,      LE_TRANSMITTER_TEST,   2, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4..7 = carrier 02,42,81
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  42, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { TEST_NONE,      LE_TRANSMITTER_TEST,  81, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { TEST_MOTOR,     LE_RESET,              0,                   0xFF,         0xFF },   // 7 = motor test
   { TEST_LOW_NOISE, LE_RESET,              0,                   0xFF,         0xFF },   // 8 = low speaker noise
   { TEST_HI_NOISE,  LE_RESET,              0,                   0xFF,         0xFF },   // 9 = high speaker noise

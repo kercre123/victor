@@ -120,9 +120,13 @@ namespace Cozmo {
     struct FaceData
     {
       FaceData() = default;
-      explicit FaceData(float currTime_sec) : FaceData() {_lastSeen_sec = currTime_sec;}
+      explicit FaceData(float currTime_sec) : FaceData()
+      {
+        _lastSeen_sec = currTime_sec;
+      }
       float _lastSeen_sec = 0;
       float _coolDownUntil_sec = 0;
+      int   _numTimesSeenFrontal = 0;
       bool  _playedNewFaceAnim = false;
       bool  _deleted = false;
     };
@@ -144,7 +148,8 @@ namespace Cozmo {
 
     // ID of face we are currently interested int
     FaceID_t _currentFace = Vision::UnknownFaceID;
-
+    s32 _currentFaceNumTimesSeen = 0;
+    
     // For the demo, we want to only enroll a face after we've "said the name" of a face we know, so track
     // that here
     bool _readyToEnrollFace = false;

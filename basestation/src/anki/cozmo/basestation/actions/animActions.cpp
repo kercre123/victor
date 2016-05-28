@@ -222,7 +222,10 @@ namespace Anki {
    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
     _animGroupName(animGroupName)
     {
-      
+      if(_animGroupName.empty()) {
+        // This is going to fail at Init() time
+        PRINT_NAMED_WARNING("PlayAnimationGroupAction.EmptyAnimaGroupName", "");
+      }
     }
     
     PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
@@ -236,8 +239,15 @@ namespace Anki {
       if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
       {
         _animGroupName = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        if(_animGroupName.empty()) {
+          PRINT_NAMED_WARNING("PlayAnimationGroupAction.EmptyAnimGroupNameForEvent",
+                              "Event: %s", EnumToString(animEvent));
+        }
         // Let game know this was triggered if something else needed to happen
         robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
+      } else {
+        PRINT_NAMED_WARNING("PlayAnimationGroupAction.NoAnimationForEvent",
+                            "Event: %s", EnumToString(animEvent));
       }
       // will FAILURE_ABORT on Init if not an event
     }

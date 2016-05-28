@@ -388,6 +388,17 @@ namespace Vision {
                             DEG_TO_RAD(pitch_deg),
                             DEG_TO_RAD(yaw_deg));
     
+    if(std::abs(roll_deg)  <= FaceEnrollParams::kLookingStraightMaxAngle_deg &&
+       std::abs(pitch_deg) <= FaceEnrollParams::kLookingStraightMaxAngle_deg &&
+       std::abs(yaw_deg)   <= FaceEnrollParams::kLookingStraightMaxAngle_deg)
+    {
+      face.SetIsFacingCamera(true);
+    }
+    else
+    {
+      face.SetIsFacingCamera(false);
+    }
+    
     return true;
   }
   
@@ -650,9 +661,7 @@ namespace Vision {
         case FaceEnrollmentPose::LookingStraight:
         {
           if(detectionInfo.nPose == POSE_YAW_FRONT &&
-             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadYaw().getDegrees())   <= kLookingStraightMaxAngle_deg &&
+             face.IsFacingCamera() &&
              d >= kFarDistanceBetweenEyesMin)
           {
             enableEnrollment = true;
@@ -670,10 +679,8 @@ namespace Vision {
           // Close enough and not too much head angle
           if(d >= kCloseDistanceBetweenEyesMin &&
              d <= kCloseDistanceBetweenEyesMax &&
-             detectionInfo.nPose == POSE_YAW_FRONT /*&&
-             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadYaw().getDegrees())   <= kLookingStraightMaxAngle_deg*/)
+             detectionInfo.nPose == POSE_YAW_FRONT &&
+             face.IsFacingCamera())
           {
             enableEnrollment = true;
           }
@@ -693,10 +700,8 @@ namespace Vision {
           // Far enough and not too much head angle
           if(d >= kFarDistanceBetweenEyesMin &&
              d <= kFarDistanceBetweenEyesMax &&
-             detectionInfo.nPose == POSE_YAW_FRONT /*&&
-             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadYaw().getDegrees())   <= kLookingStraightMaxAngle_deg*/)
+             detectionInfo.nPose == POSE_YAW_FRONT &&
+             face.IsFacingCamera())
           {
             enableEnrollment = true;
           }

@@ -835,6 +835,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_setCubeGamma(const SetCubeGamma& msg)
+      {
+        // Nothing to do here
+      }
       void Process_assignCubeSlots(const CubeSlots& msg)
       {
         HAL::AssignCubeSlots(7, msg.factory_id);

@@ -57,6 +57,7 @@ private:
   void TransitionToPlayingStopReaction(Robot& robot);
   void TransitionToPlayingCliffReaction(Robot& robot);
   void TransitionToBackingUp(Robot& robot);
+  void SendFinishedReactToCliffMessage(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
 

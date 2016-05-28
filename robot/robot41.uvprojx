@@ -573,6 +573,11 @@
           <GroupName>clad</GroupName>
           <Files>
             <File>
+              <FileName>messages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\messages.cpp</FilePath>
+            </File>
+            <File>
               <FileName>clad.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\generated\clad\clad.cpp</FilePath>
@@ -586,11 +591,6 @@
               <FileName>cozmoBot.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\cozmoBot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>messages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\messages.cpp</FilePath>
             </File>
             <File>
               <FileName>liftController.cpp</FileName>

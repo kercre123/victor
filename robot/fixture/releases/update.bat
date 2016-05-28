@@ -10,4 +10,6 @@ copy ..\..\syscon\build\radio\radio.bin .
 copy ..\..\build\robot_boot.bin .
 copy ..\..\build\robot.fcc.bin .
 copy ..\..\build\robot.bin .
-copy ..\..\espressif\bin\upgrade\user1.2048.new.3.bin esp.user.bin
+copy ..\..\releases\esp.user.bin .
+copy ..\..\accessories\fcc\build\xsfcc.bin .
+pause
