@@ -12,6 +12,7 @@
 
 #include "flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
 
@@ -57,6 +58,12 @@ namespace Anki {
       AddAction(driveToObjectAction);
     }
     
+    const std::string& DriveToFlipBlockPoseAction::GetName() const
+    {
+      static const std::string name("DriveToFlipBlockPoseAction");
+      return name;
+    }
+    
     void DriveToFlipBlockPoseAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
@@ -67,38 +74,84 @@ namespace Anki {
     
     
     FlipBlockAction::FlipBlockAction(Robot& robot, ObjectID objectID)
-    : CompoundActionSequential(robot)
+    : IAction(robot)
+    , _objectID(objectID)
+    , _compoundAction(robot)
     {
-      // Need to suppress track locking so the two lift actions don't fail because the other locked the lift track
-      // A little dangerous as animations playing in parallel to this action could move lift
-      ShouldSuppressTrackLocking(true);
       
-      f32 drivingDist = kDrivingDist_mm;
-      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(objectID));
-      Pose3d p;
-      if(object->GetPose().GetWithRespectTo(_robot.GetPose(), p))
+    }
+    
+    FlipBlockAction::~FlipBlockAction()
+    {
+      if(_flipTag != -1)
       {
-        drivingDist = p.GetTranslation().Length() + kExtraDrivingDist_mm;
+        _robot.GetActionList().Cancel(_flipTag);
+      }
+    }
+    
+    const std::string& FlipBlockAction::GetName() const
+    {
+      static const std::string name("FlipBlockAction");
+      return name;
+    }
+    
+    ActionResult FlipBlockAction::Init()
+    {
+      IDockAction::PreActionPoseInfo preActionPoseInfo(_objectID,
+                                                       PreActionPose::FLIPPING,
+                                                       true,
+                                                       0,
+                                                       kPreDockPoseAngleTolerance);
+      IDockAction::IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
+      
+      if(preActionPoseInfo.actionResult != ActionResult::SUCCESS)
+      {
+        return preActionPoseInfo.actionResult;
       }
       
+      ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
+      Pose3d p;
+      object->GetPose().GetWithRespectTo(_robot.GetPose(), p);
+    
+      // Need to suppress track locking so the two lift actions don't fail because the other locked the lift track
+      // A little dangerous as animations playing in parallel to this action could move lift
+      _compoundAction.ShouldSuppressTrackLocking(true);
+      
       // Drive through the block
-      DriveStraightAction* drive = new DriveStraightAction(robot, drivingDist, kDrivingSpeed_mmps);
-      
-      // Lift movement to actually flip
-      MoveLiftToHeightAction* moveLift = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::CARRY);
-      
-      // We need to wait a bit until we start moving the lift and flip
-      CompoundActionSequential* flip = new CompoundActionSequential(robot, {new WaitAction(robot, kTimeToWaitToFlip_sec), moveLift});
+      DriveStraightAction* drive = new DriveStraightAction(_robot, p.GetTranslation().Length() + kDrivingDist_mm, kDrivingSpeed_mmps);
       
       // Need to set the initial lift height to fit lift base into block corner edge
-      MoveLiftToHeightAction* initialLift = new MoveLiftToHeightAction(robot, kInitialLiftHeight_mm);
+      MoveLiftToHeightAction* initialLift = new MoveLiftToHeightAction(_robot, kInitialLiftHeight_mm);
       
-      // Drive and flip run in parallel (this is why flip needs to wait a bit to start running
-      // Is parallel so lift can be moving while we are driving
-      CompoundActionParallel* driveAndFlip = new CompoundActionParallel(robot, {drive, flip});
+      _compoundAction.AddAction(initialLift);
+      _compoundAction.AddAction(drive);
+      _compoundAction.Update();
+      return ActionResult::SUCCESS;
+    }
+    
+    ActionResult FlipBlockAction::CheckIfDone()
+    {
+      ActionResult result = _compoundAction.Update();
+      if(result != ActionResult::RUNNING)
+      {
+        return result;
+      }
       
-      CompoundActionSequential* action = new CompoundActionSequential(robot, {initialLift, driveAndFlip});
-      AddAction(action);
+      ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+      Pose3d p;
+      object->GetPose().GetWithRespectTo(_robot.GetPose(), p);
+      if(p.GetTranslation().Length() < kDistToObjectToFlip_mm && _flipTag == -1)
+      {
+        IAction* action = new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::CARRY);
+        action->ShouldEmitCompletionSignal(false);
+        
+        // FlipBlockAction is already locking all tracks so this lift action doesn't need to lock
+        action->ShouldSuppressTrackLocking(true);
+        _flipTag = action->GetTag();
+        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action);
+      }
+    
+      return ActionResult::RUNNING;
     }
     
   }

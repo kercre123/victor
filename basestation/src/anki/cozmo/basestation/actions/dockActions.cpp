@@ -141,60 +141,68 @@ namespace Anki {
     {
       _liftMovingAnimation = animName;
     }
-
-    ActionResult IDockAction::Init()
+    
+    void IDockAction::IsCloseEnoughToPreActionPose(Robot& robot, PreActionPoseInfo& preActionPoseInfo)
     {
-      _waitToVerifyTime = -1.f;
-      
+      ObjectID objectID                           = preActionPoseInfo.objectID;
+      PreActionPose::ActionType preActionPoseType = preActionPoseInfo.preActionPoseType;
+      bool doNearPredockPoseCheck                 = preActionPoseInfo.doNearPreDockPoseCheck;
+      f32 placementOffsetX_mm                     = preActionPoseInfo.placementOffsetX_mm;
+      Radians preActionPoseAngleTolerance             = preActionPoseInfo.preActionPoseAngleTolerance;
+      std::vector<PreActionPose>& preActionPoses  = preActionPoseInfo.preActionPoses;
+      size_t& closestIndex                        = preActionPoseInfo.closestIndex;
+      Point2f& closestPoint                       = preActionPoseInfo.closestPoint;
+    
+    
       // Make sure the object we were docking with still exists in the world
-      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
+      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
       if(dockObject == nullptr) {
-        PRINT_NAMED_ERROR("IDockAction.Init.ActionObjectNotFound",
+        PRINT_NAMED_ERROR("IsCloseEnoughToPreActionPose.ActionObjectNotFound",
                           "Action object with ID=%d no longer exists in the world.",
-                          _dockObjectID.GetValue());
-        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
-        return ActionResult::FAILURE_ABORT;
+                          objectID.GetValue());
+        preActionPoseInfo.actionResult = ActionResult::FAILURE_ABORT;
+        preActionPoseInfo.interactionResult = ObjectInteractionResult::INVALID_OBJECT;
+        return;
       }
       
-      if(_dockObjectID == _robot.GetCarryingObject())
+      if(objectID == robot.GetCarryingObject())
       {
-        PRINT_NAMED_ERROR("IDockAction.Init.CarryingSelectedObject",
+        PRINT_NAMED_ERROR("IsCloseEnoughToPreActionPose.CarryingSelectedObject",
                           "Robot is currently carrying action object with ID=%d",
-                          _dockObjectID.GetValue());
-        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
-        return ActionResult::FAILURE_ABORT;
+                          objectID.GetValue());
+        preActionPoseInfo.actionResult = ActionResult::FAILURE_ABORT;
+        preActionPoseInfo.interactionResult = ObjectInteractionResult::INVALID_OBJECT;
+        return;
       }
       
       // select the object so it shows up properly in viz
-      _robot.GetBlockWorld().SelectObject(_dockObjectID);
+      robot.GetBlockWorld().SelectObject(objectID);
       
       // Verify that we ended up near enough a PreActionPose of the right type
-      std::vector<PreActionPose> preActionPoses;
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
-      _robot.GetBlockWorld().GetObstacles(obstacles);
-      dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()},
-                                           std::set<Vision::Marker::Code>(), obstacles, nullptr, _placementOffsetX_mm);
+      robot.GetBlockWorld().GetObstacles(obstacles);
+      dockObject->GetCurrentPreActionPoses(preActionPoses, {preActionPoseType},
+                                           std::set<Vision::Marker::Code>(), obstacles, nullptr, placementOffsetX_mm);
       
       if(preActionPoses.empty()) {
-        PRINT_NAMED_ERROR("IDockAction.Init.NoPreActionPoses",
+        PRINT_NAMED_ERROR("IsCloseEnoughToPreActionPose.NoPreActionPoses",
                           "Action object with ID=%d returned no pre-action poses of the given type.",
-                          _dockObjectID.GetValue());
-        _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
-        return ActionResult::FAILURE_ABORT;
+                          objectID.GetValue());
+        preActionPoseInfo.actionResult = ActionResult::FAILURE_ABORT;
+        preActionPoseInfo.interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
+        return;
       }
       
-      const Point2f currentXY(_robot.GetPose().GetTranslation().x(),
-                              _robot.GetPose().GetTranslation().y());
+      const Point2f currentXY(robot.GetPose().GetTranslation().x(),
+                              robot.GetPose().GetTranslation().y());
       
-      //float closestDistSq = std::numeric_limits<float>::max();
-      Point2f closestPoint(std::numeric_limits<float>::max());
-      size_t closestIndex = preActionPoses.size();
+      closestIndex = preActionPoses.size();
       float closestDistSq = std::numeric_limits<float>::max();
       
       for(size_t index=0; index < preActionPoses.size(); ++index) {
         Pose3d preActionPose;
-        if(preActionPoses[index].GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), preActionPose) == false) {
-          PRINT_NAMED_WARNING("IDockAction.Init.PreActionPoseOriginProblem",
+        if(preActionPoses[index].GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), preActionPose) == false) {
+          PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.PreActionPoseOriginProblem",
                               "Could not get pre-action pose w.r.t. robot parent.");
         }
         
@@ -203,7 +211,7 @@ namespace Anki {
         const Point2f dist = (currentXY - preActionXY);
         const float distSq = dist.LengthSq();
         
-        PRINT_NAMED_DEBUG("IDockAction.Init.CheckPoint",
+        PRINT_NAMED_DEBUG("IsCloseEnoughToPreActionPose.CheckPoint",
                           "considering point (%f, %f) dist = %f",
                           dist.x(), dist.y(),
                           dist.Length());
@@ -215,30 +223,52 @@ namespace Anki {
         }
       }
       
-      PRINT_NAMED_INFO("IDockAction.Init.ClosestPoint",
+      PRINT_NAMED_INFO("IsCloseEnoughToPreActionPose.ClosestPoint",
                        "Closest point (%f, %f) robot (%f, %f) dist = %f",
                        closestPoint.x(), closestPoint.y(),
                        currentXY.x(), currentXY.y(),
                        closestPoint.Length());
       
-      //const f32 closestDist = sqrtf(closestDistSq);
-      
       // by default, even if we aren't checking for pre-dock poses, we shouldn't be too far away, otherwise we
       // may be selecting a different marker / face to dock with
       f32 preActionPoseDistThresh = DEFAULT_PREDOCK_POSE_DISTANCE_MM * 1.1f;
       
-      if (_doNearPredockPoseCheck) {
-        preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot.GetPose(), dockObject,
-                                                                    _preActionPoseAngleTolerance);
+      if (doNearPredockPoseCheck) {
+        preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(),
+                                                                    dockObject,
+                                                                    preActionPoseAngleTolerance);
       }
       
       if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
-        PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
-                        "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
-                        closestPoint.x(), closestPoint.y());
-        _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-        return ActionResult::FAILURE_RETRY;
+        PRINT_NAMED_INFO("IsCloseEnoughToPreActionPose.TooFarFromGoal",
+                         "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                         closestPoint.x(), closestPoint.y());
+        preActionPoseInfo.actionResult = ActionResult::FAILURE_RETRY;
+        preActionPoseInfo.interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
+        return;
       }
+      preActionPoseInfo.actionResult = ActionResult::SUCCESS;
+      preActionPoseInfo.interactionResult = ObjectInteractionResult::SUCCESS;
+    }
+
+    ActionResult IDockAction::Init()
+    {
+      _waitToVerifyTime = -1.f;
+
+      PreActionPoseInfo preActionPoseInfo(_dockObjectID,
+                                          GetPreActionType(),
+                                          _doNearPredockPoseCheck,
+                                          _placementOffsetX_mm,
+                                          _preActionPoseAngleTolerance.ToFloat());
+      IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
+      _interactionResult = preActionPoseInfo.interactionResult;
+      
+      if(preActionPoseInfo.actionResult != ActionResult::SUCCESS)
+      {
+        return preActionPoseInfo.actionResult;
+      }
+      
+      ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       
       if(SelectDockAction(dockObject) != RESULT_OK) {
         PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
@@ -294,15 +324,15 @@ namespace Anki {
       if (_doNearPredockPoseCheck) {
         PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
                          "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
-                         "proceeding with docking.", closestPoint.x(), closestPoint.y());
+                         "proceeding with docking.", preActionPoseInfo.closestPoint.x(), preActionPoseInfo.closestPoint.y());
       } else {
         PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
                          "Proceeding with docking.");
       }
       
       // Set dock markers
-      _dockMarker = preActionPoses[closestIndex].GetMarker();
-      _dockMarker2 = GetDockMarker2(preActionPoses, closestIndex);
+      _dockMarker = preActionPoseInfo.preActionPoses[preActionPoseInfo.closestIndex].GetMarker();
+      _dockMarker2 = GetDockMarker2(preActionPoseInfo.preActionPoses, preActionPoseInfo.closestIndex);
 
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding

@@ -20,7 +20,8 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg, "Behavior.PutDownBlock", -20.0f);
+CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg, "Behavior.PutDownBlock.HeadAngle",  -20.0f);
+CONSOLE_VAR(f32, kBPDB_backupDist_mm,      "Behavior.PutDownBlock.BackupDist", -30.0f);
 
 static const char* const kLookAtFaceAnimGroup = "ag_lookAtFace_keepAlive";
 static const float kScoreIncreaseDuringPutDown = 5.0f;
@@ -57,7 +58,10 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot)
     // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
     
-    action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)));
+    CompoundActionParallel* parallel = new CompoundActionParallel(robot,
+                                                                  {new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
+                                                                   new DriveStraightAction(robot, kBPDB_backupDist_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps)});
+    action->AddAction(parallel);
     action->AddAction(new WaitForImagesAction(robot, kNumFrames));
   }
 
