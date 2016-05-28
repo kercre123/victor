@@ -134,6 +134,8 @@ namespace Anki {
       ActionResult result = _compoundAction.Update();
       if(result != ActionResult::RUNNING)
       {
+        // By clearing the bottom block the entire stack will get cleared
+        _robot.GetBlockWorld().ClearObject(_objectID);
         return result;
       }
       
