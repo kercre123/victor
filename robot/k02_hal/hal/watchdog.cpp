@@ -10,7 +10,7 @@ static const int totalReset = (1 << WDOG_TOTAL_CHANNELS) - 1;
 static int watchdogChannels = 0;
 
 static const uint32_t TARGET_MAGIC = 'ANKI';
-static const uint32_t MAXIMUM_RESET_COUNT = 5;
+static const uint32_t MAXIMUM_RESET_COUNT = 25;
 
 static uint32_t reset_magic __attribute__((section("UNINIT"),zero_init));
 static uint32_t reset_count __attribute__((section("UNINIT"),zero_init));
@@ -68,6 +68,6 @@ void WDOG_EWM_IRQHandler(void)
 {
   if (++reset_count > MAXIMUM_RESET_COUNT) {
     reset_count = 0;
-    //Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
   }
 }
