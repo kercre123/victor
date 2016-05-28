@@ -136,6 +136,7 @@ int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
+  Bootloader::init();
   Storage::init();
 
   // Initialize our scheduler
