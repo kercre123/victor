@@ -42,6 +42,19 @@ namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
 
+#if FACTORY_FIRMWARE
+static bool factoryLockout;
+extern "C" bool hasFactoryLockout(void) { return factoryLockout; }
+void checkFactoryLockoutResult(NVStorage::NVStorageBlob* data, const NVStorage::NVResult result)
+{
+  if (result == NVStorage::NV_NOT_FOUND) factoryLockout = false;
+}
+extern "C" void backgroundTaskNVInitDone(void)
+{
+  NVStorage::Read(NVStorage::NVEntry_FactoryLock, checkFactoryLockoutResult);
+}
+#endif
+
 /** The OS task which dispatches subtasks.
 */
 void Exec(os_event_t *event)
@@ -141,6 +154,10 @@ bool readAndSendCrashReport(uint32_t param)
 
 extern "C" int8_t backgroundTaskInit(void)
 {
+  #if FACTORY_FIRMWARE
+  Anki::Cozmo::BackgroundTask::factoryLockout = true;
+  #endif
+
   //os_printf("backgroundTask init\r\n");
   if (system_os_task(Anki::Cozmo::BackgroundTask::Exec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
   {
