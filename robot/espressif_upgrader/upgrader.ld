@@ -3,9 +3,9 @@
 MEMORY
 {
   dport0_0_seg :                        org = 0x3FF00000, len = 0x10
-  dram0_0_seg :                         org = 0x3FFE8000, len = 0x14000
+  dram0_0_seg :                         org = 0x3FFE8000, len = 0x1000
   iram1_0_seg :                         org = 0x40100000, len = 0x8000
-  irom0_0_seg :                         org = 0x40251000, len = 0x2B000
+  irom0_0_seg :                         org = 0x40240000, len = 0x3C000
 }
 
 PHDRS
@@ -14,6 +14,7 @@ PHDRS
   dram0_0_phdr PT_LOAD;
   dram0_0_bss_phdr PT_LOAD;
   iram1_0_phdr PT_LOAD;
+  iram2_0_phdr PT_LOAD;
   irom0_0_phdr PT_LOAD;
 }
 
@@ -205,6 +206,13 @@ SECTIONS
     *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)
     _irom0_text_end = ABSOLUTE(.);
   } >irom0_0_seg :irom0_0_phdr
+  
+  .iram2.text : ALIGN(4)
+  {
+    _iram2_text_start = ABSOLUTE(.);
+    *(.iram2.literal .iram2.literal .iram2.text.literal .iram2.text .iram2.text)
+    _iram2_text_end = ABSOLUTE(.);
+  } >iram2_0_seg :iram2_0_phdr
 }
 
 /* get ROM code address */

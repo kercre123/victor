@@ -353,7 +353,7 @@ union EngineToRobot
   AppConnectConfigResult        wifiCfgResult               = 0x2f,
 
   // 0x30 to 0x7f: To RTIP
-  // Available for future use                               = 0x31,
+  OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
   RadioState                    radioConnected              = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
@@ -398,7 +398,8 @@ union EngineToRobot
   // Available for future use                               = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
-  // Available for future use                               = 0x85,
+  NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
+  // Available for future use                               = 0x86,
   RTIPVersionInfo               rtipVersion                 = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,

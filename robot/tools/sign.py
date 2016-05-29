@@ -29,6 +29,9 @@ parser.add_argument("-s", "--sign", type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", action="store_true",
                     help="Add version information comment block")
+parser.add_argument("--prepend_size_word", action="store_true",
+                    help="Put a single u32 size word at the front of the file for recovery images.")
+args = parser.parse_args()
 
 FILE_TYPE_VERSION   = 0x00000001
 
@@ -91,8 +94,11 @@ class DigestFile:
             return
         
         # write out our certificate block
-        self.write(self.sign(key), CERTIFICATE_BLOCK)        
+        self.write(self.sign(key), CERTIFICATE_BLOCK)
         self.hash = self.digestType.new()
+        
+    def close(self):
+        return self.fo.close()
 
 def MGF1(a, b, digestType = SHA512):
     a, index, counter = bytearray(a), 0, 0
@@ -234,3 +240,11 @@ if __name__ == '__main__':
             fo.write(data, block+base_addr)
 
     fo.writeCert(key)
+    
+    fo.close()
+
+    if args.prepend_size_word:
+        fw = open(args.output, 'rb').read()
+        with open(args.output, "wb") as fo:
+            fo.write(pack("I", len(fw)))
+            fo.write(fw)

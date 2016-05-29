@@ -5,6 +5,7 @@
 
 #include "watchdog.h"
 #include "spi.h"
+#include "uart.h"
 
 static const int totalReset = (1 << WDOG_TOTAL_CHANNELS) - 1;
 static int watchdogChannels = 0;
@@ -66,6 +67,7 @@ void Anki::Cozmo::HAL::Watchdog::pet() {
 extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
+	Anki::Cozmo::HAL::UART::DebugPutc(0xaa);
   if (++reset_count > MAXIMUM_RESET_COUNT) {
     reset_count = 0;
     Anki::Cozmo::HAL::SPI::EnterRecoveryMode();

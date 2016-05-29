@@ -10,7 +10,7 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 #include "sha1.h"
-#include "rboot.h"
+#include "flash_map.h"
 }
 #include "upgradeController.h"
 #include "anki/cozmo/robot/esp.h"
@@ -24,9 +24,8 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-#define ESP_FW_WRITE_ADDRESS (0x100004)
-#define ESP_FW_MAX_SIZE      (0x080000)
-#define ESP_FW_ADDR_MASK     (0x07FFFF)
+#define ESP_FW_MAX_SIZE  (0x07c000)
+#define ESP_FW_ADDR_MASK (0x07FFFF)
 
 #define WRITE_DATA_SIZE (1024)
 
@@ -62,8 +61,18 @@ namespace UpgradeController {
     OTAT_Wait_For_RTIP_Ack,
     OTAT_Reboot,
     OTAT_Wait_For_Reboot,
+    OTATR_Set_Evil_A,
+    OTATR_Set_Evil_B,
+    OTATR_Delay,
+    OTATR_Get_Size,
+    OTATR_Read,
+    OTATR_Write,
+    OTATR_Wait,
+    OTATR_Apply,
   } OTATaskPhase;
 
+  uint32_t fwWriteAddress; ///< Where we will write the next image
+  uint32_t nextImageNumber; ///< Image number for the next upgrade
   uint8_t* buffer; ///< Pointer to RX buffer
   int32_t  bufferSize; ///< Number of bytes of storage at buffer
   int32_t  bufferUsed; ///< Number of bytes of storage buffer currently filled
@@ -77,7 +86,6 @@ namespace UpgradeController {
 
   bool Init()
   {
-    
     buffer = NULL;
     bufferSize = 0;
     bufferUsed = 0;
@@ -85,9 +93,47 @@ namespace UpgradeController {
     counter = system_get_time();
     acceptedPacketNumber = -1;
     retries = MAX_RETRIES;
-    phase = OTAT_Ready;
     didEsp = false;
-    haveTermination = false;
+    haveTermination = false;  
+    
+    // No matter which of the three images we're loading, we can get a header here
+    const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE);
+    
+    if (FACTORY_FIRMWARE)
+    {
+      // Factory firmware can read A segment header so it's still valid
+      fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
+      nextImageNumber = ourHeader->imageNumber + 2; // In case slot B was higher
+    }
+    else
+    {
+      uint32 selectedImage;
+      system_rtc_mem_read(RTC_IMAGE_SELECTION, &selectedImage, 4);
+      nextImageNumber = ourHeader->imageNumber + 1;
+      switch (selectedImage)
+      {
+        case FW_IMAGE_A:
+        {
+          os_printf("Am image A\r\n");
+          fwWriteAddress = APPLICATION_B_SECTOR * SECTOR_SIZE;
+          break;
+        }
+        case FW_IMAGE_B:
+        {
+          os_printf("Am image B\r\n");
+          fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
+          break;
+        }
+        default:
+        {
+          os_printf("UPC: Unexpected selectedImage key %08x. Not enabling OTA\r\n", selectedImage);
+          phase = OTAT_Uninitalized;
+          return false;
+        }
+      }
+    }
+    
+    phase = OTAT_Ready;
     return true;
   }
   
@@ -105,7 +151,8 @@ namespace UpgradeController {
     haveTermination = false;
     AnimationController::ResumeAndRestoreBuffer();
     i2spiBootloaderCommandDone();
-    //i2spiSwitchMode(I2SPI_REBOOT);
+    i2spiSwitchMode(I2SPI_REBOOT);
+    system_restart();
   }
 
   LOCAL uint32_t calc_crc32(const uint8_t* data, int length)
@@ -164,6 +211,8 @@ namespace UpgradeController {
           Face::FacePrintf("Starting FOTA\nupgrade...");
           counter = system_get_time() + 100000; /// 100 ms delay
           phase = OTAT_Delay;
+          const int8_t mode = OTA_Mode;
+          RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode);
           // Explicit fallthrough to next case
         }
       }
@@ -181,7 +230,7 @@ namespace UpgradeController {
           ack.result = ERR_NO_MEM;
           RobotInterface::SendMessage(ack);
         }
-        else if (msg.packetNumber == -1) // End of data flag
+        else if (msg.packetNumber == -2) // End of data flag
         {
           #if DEBUG_OTA
           os_printf("\tTermination\r\n");
@@ -205,13 +254,7 @@ namespace UpgradeController {
         }
         break;
       }
-      case OTAT_Sig_Check:
-      case OTAT_Reject:
-      case OTAT_Apply_WiFi:
-      case OTAT_Apply_RTIP:
-      case OTAT_Wait_For_RTIP_Ack:
-      case OTAT_Reboot:
-      case OTAT_Wait_For_Reboot:
+      default:
       {
         ack.result = BUSY;
         RobotInterface::SendMessage(ack);
@@ -237,7 +280,7 @@ namespace UpgradeController {
       {
         if ((system_get_time() > counter) && i2spiMessageQueueIsEmpty())
         {
-          i2spiSwitchMode(I2SPI_RECOVERY);
+          i2spiSwitchMode(I2SPI_PAUSED);
           phase = OTAT_Flash_Erase;
           retries = MAX_RETRIES;
           counter = 0;
@@ -249,7 +292,7 @@ namespace UpgradeController {
       {
         if (counter < ESP_FW_MAX_SIZE)
         {
-          const uint32 sector = (ESP_FW_WRITE_ADDRESS + counter) / SECTOR_SIZE;
+          const uint32 sector = (fwWriteAddress + counter) / SECTOR_SIZE;
           #if DEBUG_OTA
           os_printf("Erase sector 0x%x\r\n", sector);
           #endif
@@ -359,7 +402,7 @@ namespace UpgradeController {
 	    }
             else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
             {
-              const uint32 destAddr = ESP_FW_WRITE_ADDRESS + (fwb->blockAddress & ESP_FW_ADDR_MASK);
+              const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
               #if DEBUG_OTA
               os_printf("WF 0x%x\r\n", destAddr);
               #endif
@@ -396,7 +439,7 @@ namespace UpgradeController {
                   if (i2spiBootloaderPushChunk(fwb))
                   {
                     #if DEBUG_OTA
-                    os_printf("Write RTIP 0x%x\t", fwb->blockAddress);
+                    os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
                     #endif
                     phase = OTAT_Wait;
                   }
@@ -436,9 +479,10 @@ namespace UpgradeController {
             break;
           }
           case STATE_ACK:
-          case STATE_BUSY:
           {
+            #if DEBUG_OTA
             os_printf("Done\r\n");
+            #endif
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
             bytesProcessed += sizeof(FirmwareBlock);
@@ -453,7 +497,7 @@ namespace UpgradeController {
           }
           default:
           {
-            os_printf("OW %d\r\n", i2spiGetRtipBootloaderState());
+            //os_printf("OW %d\r\n", i2spiGetRtipBootloaderState());
             break;
           }
         }
@@ -475,20 +519,13 @@ namespace UpgradeController {
       }
       case OTAT_Apply_WiFi:
       {
-        SpiFlashOpResult rslt;
+        SpiFlashOpResult rslt = SPI_FLASH_RESULT_OK;
         if (didEsp)
         {
-          BootloaderConfig blcfg;
-          blcfg.header        = BOOT_CONFIG_HEADER;
-          blcfg.newImageStart = ESP_FW_WRITE_ADDRESS / SECTOR_SIZE;
-          blcfg.newImageSize  = ESP_FW_MAX_SIZE      / SECTOR_SIZE;
-          blcfg.version       = 0;
-          blcfg.chksum        = calc_chksum((uint8*)&blcfg, &blcfg.chksum);
-          rslt = spi_flash_write(BOOT_CONFIG_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32*>(&blcfg), sizeof(BootloaderConfig));
-        }
-        else
-        {
-          rslt = SPI_FLASH_RESULT_OK;
+          uint32_t headerUpdate[2];
+          headerUpdate[0] = nextImageNumber; // Image number
+          headerUpdate[1] = 0; // Evil
+          rslt = spi_flash_write(fwWriteAddress + 4, headerUpdate, 8);
         }
         if (rslt != SPI_FLASH_RESULT_OK)
         {
@@ -564,6 +601,9 @@ namespace UpgradeController {
           default: // If the RTIP has booted we'll get other gibberish
           {
             AnkiDebug( 172, "UpgradeController.state", 463, "Reboot", 0);
+            #if DEBUG_OTA
+            os_printf("Done programming, send command done\r\n");
+            #endif
             phase = OTAT_Reboot;
             break;
           }
@@ -584,12 +624,172 @@ namespace UpgradeController {
         i2spiBootloaderCommandDone();
         break;
       }
+      case OTATR_Set_Evil_A:
+      {
+        uint32_t invalidNumber = 0;
+        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        {
+          phase = OTATR_Set_Evil_B;
+        }
+        break;
+      }
+      case OTATR_Set_Evil_B:
+      {
+        uint32_t invalidNumber = 0;
+        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + 5, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        {
+          counter = system_get_time() + 1000000; // 1s second delay
+          phase = OTATR_Delay;
+        }
+        break;
+      }
+      case OTATR_Delay:
+      {
+        if (system_get_time() > counter) phase = OTATR_Get_Size;
+        break;
+      }
+      case OTATR_Get_Size:
+      {
+        if (spi_flash_read(FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE, &counter, 4) == SPI_FLASH_RESULT_OK)
+        {
+          if (counter == 0xFFFFffff || counter < sizeof(FirmwareBlock))
+          {
+            os_printf("Invalid recovery firmware for RTIP and Body, size %x reported at %x\r\n", counter, FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE);
+            phase = OTAT_Ready;
+          }
+          else
+          {
+            os_printf("Have %d bytes of recovery firmware to send\r\n", counter);
+            bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
+            phase      = OTATR_Read;
+            retries    = MAX_RETRIES;
+          }
+        }
+        break;
+      }
+      case OTATR_Read:
+      {
+        const uint32 readPos = (FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE) + counter + 4 - sizeof(FirmwareBlock);
+        const SpiFlashOpResult rslt = spi_flash_read(readPos, reinterpret_cast<uint32*>(buffer), sizeof(FirmwareBlock));
+        if (rslt != SPI_FLASH_RESULT_OK)
+        {
+          os_printf("Trouble reading recovery firmware from %x, %d\r\n", readPos, rslt);
+        }
+        else
+        {
+          counter -= sizeof(FirmwareBlock);
+          retries = MAX_RETRIES;
+          phase = OTATR_Write;
+        }
+        break;
+      }
+      case OTATR_Write:
+      {
+        switch (i2spiGetRtipBootloaderState())
+        {
+          case STATE_NACK:
+          case STATE_ACK:
+          case STATE_IDLE:
+          {
+            FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+            if (i2spiBootloaderPushChunk(fwb))
+            {
+              #if DEBUG_OTA
+              os_printf("Write RTIP 0x%08x\t", fwb->blockAddress);
+              #endif
+              phase = OTATR_Wait;
+            }
+            break;
+          }
+          case STATE_BUSY:
+          {
+            break;
+          }
+          default:
+          {
+            #if DEBUG_OTA
+            os_printf("OTATR WFR %x\r\n", i2spiGetRtipBootloaderState());
+            #endif
+            break;
+          }
+        }
+        break;
+      }
+      case OTATR_Wait:
+      {
+        switch(i2spiGetRtipBootloaderState())
+        {
+          case STATE_NACK:
+          {
+            os_printf("RTIP NACK!\r\n");
+            phase = OTATR_Write; // try again
+            break;
+          }
+          case STATE_ACK:
+          {
+            #if DEBUG_OTA
+            os_printf("Done\r\n");
+            #endif
+            if (counter > 0)
+            { // Have more to write
+              phase = OTATR_Read; // Finished operation
+            }
+            else
+            { // Just wrote the last one
+              #if DEBUG_OTA
+              os_printf("Done programming, send command done\r\n");
+              #endif
+              phase = OTATR_Apply;
+            }
+            break;
+          }
+          case STATE_BUSY:
+          case STATE_IDLE:
+          {
+            break;
+          }
+          default:
+          {
+            //os_printf("OW %d\r\n", i2spiGetRtipBootloaderState());
+            break;
+          }
+        }
+        break;
+      }
+      case OTATR_Apply:
+      {
+        switch (i2spiGetRtipBootloaderState())
+        {
+          case STATE_ACK:
+          case STATE_IDLE:
+            i2spiBootloaderCommandDone();
+            break;
+          case STATE_NACK:
+            os_printf("NACK, attempting again\r\n");
+            phase = OTATR_Get_Size;
+            break;
+          case STATE_BUSY:
+            break;
+          default:
+            os_printf("%04x\r\n", i2spiGetRtipBootloaderState());
+        }
+        break;
+      }
       default:
       {
         AnkiAssert(false, 465);
       }
     }
   }
+
+  #if FACTORY_FIRMWARE
+  extern "C" bool i2spiRecoveryCallback(uint32 param)
+  {
+    os_printf("I2SPI Recovery Synchronized\r\n");
+    phase = OTATR_Set_Evil_A;
+    return false;
+  }
+  #endif
 
 }
 }
