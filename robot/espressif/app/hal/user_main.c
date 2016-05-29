@@ -60,7 +60,7 @@ static void system_init_done(void)
 
   // Check the file system integrity
   // Must be called after backgroundTaskInit and foregroundTaskInit
-  NVInit(true, nv_init_done);
+  NVInit(false, nv_init_done);
 }
 
 /** User initialization function

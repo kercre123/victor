@@ -54,8 +54,8 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
     GPIO_IN(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
   } else {
-    // Pull hard up
-    GPIO_SET(GPIO_MOSI, PIN_MOSI);
+    // Pull down hard
+    GPIO_RESET(GPIO_MOSI, PIN_MOSI);
     GPIO_OUT(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO);
     
