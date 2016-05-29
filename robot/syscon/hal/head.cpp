@@ -139,7 +139,7 @@ static inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
-  if (*FIXTURE_HOOK) {
+  if (*FIXTURE_HOOK == 0xDEADFACE) {
     nrf_gpio_pin_set(PIN_TX_VEXT);
     nrf_gpio_cfg_output(PIN_TX_VEXT);
     MicroWait(15);

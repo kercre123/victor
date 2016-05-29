@@ -8,7 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
-#include "storage.h"
+//#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
@@ -136,7 +136,8 @@ int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
-  Storage::init();
+  Bootloader::init();
+  //Storage::init();
 
   // Initialize our scheduler
   RTOS::init();

@@ -285,7 +285,7 @@ static inline bool FlashBlock() {
 void EnterRecovery(void) {
   UARTInit();
   
-  *FIXTURE_HOOK = EscapeFixture() ? 1 : 0;
+  *FIXTURE_HOOK = EscapeFixture() ? 0xDEADFACE : 0;
 
   // Disconnect input so we don't dump current into the charge pin
   NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
