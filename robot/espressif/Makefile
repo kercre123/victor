@@ -265,7 +265,7 @@ endif
 
 all: .subdirs $(OBJS) $(OLIBS) $(OIMAGES) $(OBINS) $(SPECIAL_MKTARGETS)
 
-/lib/libmain_w.a: /lib/libmain.a
+lib/libmain_w.a: lib/libmain.a
 	$(OBJCOPY) -W Cache_Read_Enable_New $< $@
 
 clean:
