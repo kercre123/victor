@@ -75,6 +75,7 @@ namespace Anki {
       void Update();
       void Write(Anki::Cozmo::NVStorage::NVStorageWrite const& msg);
       void Read(Anki::Cozmo::NVStorage::NVStorageRead const& msg);
+      void WipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg);
     }
   }
 }

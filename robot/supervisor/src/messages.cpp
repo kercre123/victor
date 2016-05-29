@@ -787,6 +787,10 @@ namespace Anki {
       {
         SimNVStorageSpace::Read(msg);
       }
+      void Process_wipeAllNV(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
+      {
+        SimNVStorageSpace::WipeAll(msg);
+      }
       void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
       {
         // Nothing to do here
