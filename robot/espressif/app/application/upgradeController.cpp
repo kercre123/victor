@@ -230,7 +230,7 @@ namespace UpgradeController {
           ack.result = ERR_NO_MEM;
           RobotInterface::SendMessage(ack);
         }
-        else if (msg.packetNumber == -1) // End of data flag
+        else if (msg.packetNumber == -2) // End of data flag
         {
           #if DEBUG_OTA
           os_printf("\tTermination\r\n");

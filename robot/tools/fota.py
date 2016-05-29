@@ -42,7 +42,7 @@ class OTAStreamer:
             self.packetNumber += 1
             if eof:
                 # Send EOF marker to robot
-                robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(-1, b"\xFF" * self.MESSAGE_PAYLOAD_SIZE)))
+                robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(-2, b"\xFF" * self.MESSAGE_PAYLOAD_SIZE)))
                 self.doneSending = True
                 sys.stdout.write("Finished sending firmware image to robot")
                 sys.stdout.write(os.linesep)

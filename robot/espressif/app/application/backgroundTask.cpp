@@ -235,7 +235,7 @@ extern "C" void backgroundTaskOnConnect(void)
   
   if (FACTORY_FIRMWARE)
   {
-    AnkiEvent( 186, "FactoryFirmware", 487, "Running factory firmware", 0);
+    AnkiEvent( 186, "FactoryFirmware", 487, "Running factory firmware, EP3F", 0);
   }
   
   // Send our version information to the engine
