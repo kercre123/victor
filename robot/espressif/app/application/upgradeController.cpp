@@ -97,7 +97,7 @@ namespace UpgradeController {
     haveTermination = false;  
     
     // No matter which of the three images we're loading, we can get a header here
-    const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE);
+    const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
     
     if (FACTORY_FIRMWARE)
     {
@@ -525,7 +525,7 @@ namespace UpgradeController {
           uint32_t headerUpdate[2];
           headerUpdate[0] = nextImageNumber; // Image number
           headerUpdate[1] = 0; // Evil
-          rslt = spi_flash_write(fwWriteAddress + 4, headerUpdate, 8);
+          rslt = spi_flash_write(fwWriteAddress + APP_IMAGE_HEADER_OFFSET + 4, headerUpdate, 8);
         }
         if (rslt != SPI_FLASH_RESULT_OK)
         {
@@ -627,7 +627,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_A:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
           phase = OTATR_Set_Evil_B;
         }
@@ -636,7 +636,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_B:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + 5, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
           counter = system_get_time() + 1000000; // 1s second delay
           phase = OTATR_Delay;

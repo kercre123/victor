@@ -51,7 +51,7 @@ NOINLINE int verify_firmware_hash(const AppImageHeader* header, const uint32 ima
   SHA1_CTX ctx; // SHA1 calculation state
   uint8 digest[SHA1_DIGEST_LENGTH]; // Where to put the ultimate sha1 digest we calculate
   int i;
-  uint32 index = sizeof(AppImageHeader); // Current read index
+  uint32 index = sizeof(AppImageHeader) + APP_IMAGE_HEADER_OFFSET; // Current read index
   
   //ets_printf("AIH @ %x: size=%x, image#=%x, evil=%x\r\n", imageStart, header->size, header->imageNumber, header->evil);
   
@@ -64,7 +64,7 @@ NOINLINE int verify_firmware_hash(const AppImageHeader* header, const uint32 ima
   
   while (index < header->size)
   {
-    const uint32 remaining  = header->size - index;
+    const uint32 remaining  = APP_IMAGE_HEADER_OFFSET + header->size - index;
     const uint32 readPos    = imageStart + index;
     const uint32 readLength = SHA_CHECK_READ_LENGTH < remaining ? SHA_CHECK_READ_LENGTH : remaining;
     
@@ -128,11 +128,11 @@ NOINLINE uint32 select_image(uint8* const buffer)
   {
     AppImageHeader aihA, aihB;
     
-    if (SPIRead(APPLICATION_A_SECTOR * SECTOR_SIZE, &aihA, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
+    if (SPIRead(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET, &aihA, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
     {
       ets_printf("Failed to read application image A header\r\nFalling back to factory image\r\n");
     }
-    else if (SPIRead(APPLICATION_B_SECTOR * SECTOR_SIZE, &aihB, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
+    else if (SPIRead(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET, &aihB, sizeof(AppImageHeader)) != SPI_FLASH_RESULT_OK)
     {
       ets_printf("Failed to read application image B header\r\n");
     }
@@ -160,13 +160,13 @@ NOINLINE uint32 select_image(uint8* const buffer)
       if (verify_firmware_hash(preferredHeader, preferredImage, buffer))
       {
         ets_printf("Selecting newest image\r\n");
-        retImage = preferredImage + sizeof(AppImageHeader);
+        retImage = preferredImage;
         retSelection = preferredEnum;
       }
       else if (verify_firmware_hash(secondHeader, secondImage, buffer))
       {
         ets_printf("Selecting older image\r\n");
-        retImage = secondImage + sizeof(AppImageHeader);
+        retImage = secondImage;
         retSelection = secondEnum;
       }
       else

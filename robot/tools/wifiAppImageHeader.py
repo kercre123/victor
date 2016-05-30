@@ -14,16 +14,35 @@ class AppImageHeader(struct.Struct):
         "Calculates fields from an image file"
         struct.Struct.__init__(self, "iii20B")
         self.imageSize = len(image)
+        assert (len(image) % BLOCK_SIZE) == 0
         self.sha1 = hashlib.sha1(image).digest()
 
     def serialize(self):
         return self.pack(self.size + self.imageSize, -1, -1, *self.sha1)
 
+class EspressifNewStyleHeader(struct.Struct):
+    """Python reflection of Espressif's new style ROM bootloader header."""
+    
+    def __init__(self, image):
+        struct.Struct.__init__(self, "BBBBIII")
+        self.fields = list(self.unpack(image[:self.size]))
+        self.image  = image[self.size:]
+    
+    @property
+    def header(self):
+        return self.pack(*self.fields)
+
 def fix_image(inFile, outFile):
-    fw = open(inFile, 'rb').read()
-    fw += b"\xff" * (BLOCK_SIZE - (len(fw) % BLOCK_SIZE))
-    assert (len(fw) % BLOCK_SIZE) == 0
-    open(outFile, 'wb').write(AppImageHeader(fw).serialize() + fw)
+    eh = EspressifNewStyleHeader(open(inFile, 'rb').read())
+    eh.image += b"\xff" * (BLOCK_SIZE - (len(eh.image) % BLOCK_SIZE))
+    aih = AppImageHeader(eh.image)
+    eh.fields[-1] += aih.size # Length is last field, add size of our additional header
+    of = open(outFile, 'wb')
+    of.write(eh.header)
+    of.write(aih.serialize())
+    of.write(eh.image)
+    
+    
     
 if __name__ == '__main__':
     fix_image(sys.argv[1], sys.argv[2])
