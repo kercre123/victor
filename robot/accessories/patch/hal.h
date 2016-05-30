@@ -53,8 +53,9 @@ void LedSetValues(void);
 #define LedInit ((void (code *) (void)) 0x3B5F)
 
 // Return the model/type from the advertising packet
-#define GetModel ((u8 (code *) (void)) 0x3A52)
-  
+// XXX: Didn't link properly #define GetModel ((u8 (code *) (void)) 0x3A52)
+u8 GetModel(void);
+
 // Am I a charger?
 #define IsCharger() (!GetModel())
 
