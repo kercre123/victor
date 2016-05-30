@@ -28,7 +28,8 @@ SUBDIRS=    \
   clad \
   application \
 	factory \
-  supervisor
+  supervisor \
+  crypto
 endif # } PDIR
 
 APPDIR = .
@@ -66,8 +67,8 @@ LINKFLAGS_eagle.app.v6 = \
 	-u call_user_start -u Cache_Read_Enable_New	\
 	-Wl,-static						\
 	-Wl,--start-group					\
-	-lc					\
-  -lgcc					\
+	-lc \
+    -lgcc					\
 	-lhal					\
 	$(DEP_LIBS_eagle.app.v6) \
 	-lphy	\

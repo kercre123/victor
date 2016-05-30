@@ -77,10 +77,21 @@ void Crypto::manage(void) {
       aes_ecb((ecb_data_t*) task->state);
       break ;
     case CRYPTO_AES_DECODE:
-      length = aes_decode(aes_key(), (uint8_t*) task->state, task->length);
-      break ;
+      {
+        uint8_t* data = (uint8_t*) task->state;
+
+        aes_cfb_decode(aes_key(), data, data + AES_KEY_LENGTH, data, task->length);
+        length = task->length - AES_KEY_LENGTH;
+        break ;
+      }
     case CRYPTO_AES_ENCODE:
-      length = aes_encode(aes_key(), (uint8_t*) task->state, task->length);
+      {
+        uint8_t* data = (uint8_t*) task->state;
+        
+        aes_fix_block(data, task->length);
+        aes_cfb_encode(aes_key(), data, data, data + AES_KEY_LENGTH, task->length);
+        length = task->length + AES_KEY_LENGTH;
+      }
       break ;
     case CRYPTO_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);

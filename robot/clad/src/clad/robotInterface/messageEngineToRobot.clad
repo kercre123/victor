@@ -241,7 +241,7 @@ message EnableLiftPower
 
 enum int_8 BodyRadioMode {
   BODY_BLUETOOTH_OPERATING_MODE = 0,
-  BODY_WIFI_OPERATING_MODE,
+  BODY_ACCESSORY_OPERATING_MODE,
   BODY_DTM_OPERATING_MODE,
   BODY_IDLE_OPERATING_MODE
 }
@@ -249,6 +249,11 @@ enum int_8 BodyRadioMode {
 message SetBodyRadioMode
 {
   BodyRadioMode radioMode
+}
+
+message SetHeadDeviceLock
+{
+  bool enable
 }
 
 message SendDTMCommand
@@ -391,6 +396,7 @@ union EngineToRobot
   PropState                     getPropState                = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
+  SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
   
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,  

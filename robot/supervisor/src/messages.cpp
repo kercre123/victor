@@ -40,6 +40,8 @@
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
+extern bool Anki::Cozmo::HAL::UnlockDevices;
+
 namespace Anki {
   namespace Cozmo {
 #ifndef TARGET_K02
@@ -761,6 +763,13 @@ namespace Anki {
       void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
       {
         sendTestStateMessages = msg.enable;
+      }
+      
+      void Process_setHeadDeviceLock(const RobotInterface::SetHeadDeviceLock& msg) {
+#ifdef TARGET_K02
+        // Remapped for EP3
+        HAL::UnlockDevices = msg.enable;
+#endif
       }
       
       void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)

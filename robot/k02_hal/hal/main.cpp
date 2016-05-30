@@ -39,6 +39,7 @@ namespace Anki
       void CameraInit(void);
       void CameraStart(void);
 
+      bool UnlockDevices = false;
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
@@ -89,7 +90,7 @@ int main (void)
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
-  //update_bootloader();
+  update_bootloader();
   
   Power::enableEspressif();
 
@@ -128,20 +129,24 @@ int main (void)
 
     // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
   
-    #if defined(FACTORY_FIRMWARE)
-      // Run the main thread (lite)
-      for(;;) {
-        // Wait for head body sync to occur
-        UART::WaitForSync();
-        Spine::Manage();
-        WiFi::Update();
+  // Run the main thread (lite)
+  for(;;)
+  {
+    // Wait for head body sync to occur
+    UART::WaitForSync();
+  
+    if (UnlockDevices)
+    {
+      if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
+      {
+        NVIC_SystemReset();
       }
-   #else
-      // Run the main thread
-      do {
-        // Wait for head body sync to occur
-        UART::WaitForSync();
-      } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
-    #endif
+    }
+    else
+    {
+      Spine::Manage();
+      WiFi::Update();
+    }
+  }
   #endif
 }

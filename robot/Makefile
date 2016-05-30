@@ -15,6 +15,7 @@ RELEASE_DIR=releases
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 DEVELOPMENT_KEY=tools/development.pem
+AES_KEY=FA67CE138A376CD21A26118615326AA5
 
 .PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app
 
@@ -55,7 +56,7 @@ staging_dir:
 
 export_key:
 	mkdir -p generated
-	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) ./generated/publickey.h
+	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickey.h
 	g++ -o generated/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
 	./generated/calcMont >> ./generated/publickey.h
 
@@ -81,7 +82,7 @@ stage_factory_upgrade:
 
 release: stage_binaries
 	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	#python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
+	python3 ./tools/sign.py -c --sign $(AES_KEY) ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"

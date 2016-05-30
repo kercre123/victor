@@ -24,6 +24,10 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+#include "sha512.h"
+#include "aes.h"
+#include "bignum.h"
+#include "publickey.h"
 #define ESP_FW_MAX_SIZE  (0x07c000)
 #define ESP_FW_ADDR_MASK (0x07FFFF)
 
@@ -39,6 +43,11 @@ extern "C" {
 
 #define DEBUG_OTA 1
 
+void gen_random(void* ptr, int length)
+{
+  os_get_random((unsigned char *)ptr, length);
+}
+
 namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
@@ -53,6 +62,7 @@ namespace UpgradeController {
     OTAT_Delay,
     OTAT_Flash_Erase,
     OTAT_Sync_Recovery,
+    OTAT_Flash_Verify,
     OTAT_Flash_Write,
     OTAT_Wait,
     OTAT_Sig_Check,
@@ -84,6 +94,10 @@ namespace UpgradeController {
   OTATaskPhase phase; ///< Keeps track of our current task state
   bool didEsp; ///< We have new firmware for the Espressif
   bool haveTermination; ///< Have received termination
+  
+  static sha512_state firmware_digest;
+  static uint8_t aes_iv[AES_KEY_LENGTH];
+  static bool aes_enabled;
 
   void FactoryUpgrade()
   {
@@ -119,7 +133,9 @@ namespace UpgradeController {
     acceptedPacketNumber = -1;
     retries = MAX_RETRIES;
     didEsp = false;
-    haveTermination = false;  
+    haveTermination = false;
+    sha512_init(firmware_digest);
+    aes_enabled = false;
     
     if (FACTORY_FIRMWARE == 0) FactoryUpgrade();
     
@@ -241,6 +257,7 @@ namespace UpgradeController {
       case OTAT_Delay:
       case OTAT_Flash_Erase:
       case OTAT_Sync_Recovery:
+      case OTAT_Flash_Verify:      
       case OTAT_Flash_Write:
       case OTAT_Wait:
       {
@@ -363,7 +380,7 @@ namespace UpgradeController {
         if (i2spiGetRtipBootloaderState() == STATE_IDLE)
         {
           AnkiDebug( 172, "UpgradeController.state", 470, "flash write", 0);
-          phase = OTAT_Flash_Write;
+          phase = OTAT_Flash_Verify;
           counter = 0; // 2 second timeout
           retries = MAX_RETRIES;
           ack.result = OKAY;
@@ -380,7 +397,7 @@ namespace UpgradeController {
         }
         break;
       }
-      case OTAT_Flash_Write:
+      case OTAT_Flash_Verify:
       {
         if (bufferUsed < (int)sizeof(FirmwareBlock)) // We've reached the end of the buffer
         {
@@ -395,6 +412,7 @@ namespace UpgradeController {
         else
         {
           FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+
           if (VerifyFirmwareBlock(fwb) == false)
           {
             #if DEBUG_OTA
@@ -406,97 +424,173 @@ namespace UpgradeController {
           }
           else
           {
-            if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
+            sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
+            if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
+              aes_cfb_decode(
+                AES_KEY, 
+                aes_iv, 
+                (uint8_t*) fwb->flashBlock, 
+                (uint8_t*) fwb->flashBlock, 
+                sizeof(fwb->flashBlock), 
+                aes_iv);
+            }
+            
+            phase = OTAT_Flash_Write;
+          }
+        }
+        break;
+      }
+      case OTAT_Flash_Write:
+      {
+        FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+
+        if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
+        {
+          if (fwb->blockAddress == CERTIFICATE_BLOCK)
+          {
+            // TODO: VERIFY SIGNATURE WITH CURRENT DIGEST
+            // TODO: RESET DIGEST USING sha512_init
+
+            #if DEBUG_OTA
+            os_printf("OTA Sig header\r\n");
+            #endif
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+          }
+          else if (fwb->blockAddress == COMMENT_BLOCK)
+          {
+            #if DEBUG_OTA
+            os_printf("OTA comment\r\n");
+            #endif
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+          }
+          else if (fwb->blockAddress == HEADER_BLOCK)
+          {
+            FirmwareHeaderBlock* head = reinterpret_cast<FirmwareHeaderBlock*>(fwb->flashBlock);
+            
+            #if DEBUG_OTA
+            os_printf("OTA header block: %s\r\n", head->c_time);
+            #endif
+
+            memcpy(aes_iv, head->aes_iv, AES_KEY_LENGTH);
+            aes_enabled = true;
+
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+          }
+          #if FACTORY_FIRMWARE == 0
+          else if ((fwb->blockAddress & 0xFFF00000) == FACTORY_FIRMWARE_INSTALL)
+          {
+            const uint32 destAddr = 0x80000 + (fwb->blockAddress & 0x7ffff);
+            os_printf("WFF 0x%x\r\n", destAddr);
+            const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+            if (rslt != SPI_FLASH_RESULT_OK)
             {
-              if (fwb->blockAddress == CERTIFICATE_BLOCK)
+              if (retries-- <= 0)
               {
-                // TODO something with signature header
-                #if DEBUG_OTA
-                os_printf("OTA Sig header\r\n");
-                #endif
-                retries = MAX_RETRIES;
-                bufferUsed -= sizeof(FirmwareBlock);
-                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-                bytesProcessed += sizeof(FirmwareBlock);
-                ack.bytesProcessed = bytesProcessed;
-                ack.result = OKAY;
+                ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
                 RobotInterface::SendMessage(ack);
-              }
-              else if (fwb->blockAddress == COMMENT_BLOCK)
-              {
-                #if DEBUG_OTA
-                os_printf("OTA comment\r\n");
-                #endif
-                retries = MAX_RETRIES;
-                bufferUsed -= sizeof(FirmwareBlock);
-                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-                bytesProcessed += sizeof(FirmwareBlock);
-                ack.bytesProcessed = bytesProcessed;
-                ack.result = OKAY;
-                RobotInterface::SendMessage(ack);
+                Reset();
               }
             }
-            else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
+            else
             {
-              const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
-              #if DEBUG_OTA
-              os_printf("WF 0x%x\r\n", destAddr);
-              #endif
-              const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
-              if (rslt != SPI_FLASH_RESULT_OK)
-              {
-                if (retries-- <= 0)
-                {
-                  ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
-                  RobotInterface::SendMessage(ack);
-                  Reset();
-                }
-              }
-              else
-              {
-                didEsp = true;
-                retries = MAX_RETRIES;
-                bufferUsed -= sizeof(FirmwareBlock);
-                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-                bytesProcessed += sizeof(FirmwareBlock);
-                ack.bytesProcessed = bytesProcessed;
-                ack.result = OKAY;
-                RobotInterface::SendMessage(ack);
-              }
+              retries = MAX_RETRIES;
+              bufferUsed -= sizeof(FirmwareBlock);
+              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+              bytesProcessed += sizeof(FirmwareBlock);
+              ack.bytesProcessed = bytesProcessed;
+              ack.result = OKAY;
+              RobotInterface::SendMessage(ack);
             }
-            else // This is bound for the RTIP or body
+          }
+          else
+          {
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+          }
+          #endif
+        }
+        else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
+        {
+          const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
+          #if DEBUG_OTA
+          os_printf("WF 0x%x\r\n", destAddr);
+          #endif
+          const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+          if (rslt != SPI_FLASH_RESULT_OK)
+          {
+            if (retries-- <= 0)
             {
-              switch (i2spiGetRtipBootloaderState())
+              ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+              RobotInterface::SendMessage(ack);
+              Reset();
+            }
+          }
+          else
+          {
+            didEsp = true;
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+          }
+        }
+        else // This is bound for the RTIP or body
+        {
+          switch (i2spiGetRtipBootloaderState())
+          {
+            case STATE_NACK:
+            case STATE_ACK:
+            case STATE_IDLE:
+            {
+              if (i2spiBootloaderPushChunk(fwb))
               {
-                case STATE_NACK:
-                case STATE_ACK:
-                case STATE_IDLE:
-                {
-                  if (i2spiBootloaderPushChunk(fwb))
-                  {
-                    #if DEBUG_OTA
-                    os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
-                    #endif
+                #if DEBUG_OTA
+                os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
+                #endif
                     counter = system_get_time() + 20000; // 20ms
-                    phase = OTAT_Wait;
-                  }
-                  // Else try again next time
-                  break;
-                }
-                case STATE_BUSY:
-                case STATE_SYNC:
-                default:
-                {
-                  // Just wait for this to clear
-                  #if DEBUG_OTA > 2
-                  os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
-                  #endif
-                  break;
-                }
+                phase = OTAT_Wait;
               }
+              // Else try again next time
+              break;
+            }
+            case STATE_BUSY:
+            case STATE_SYNC:
+            default:
+            {
+              // Just wait for this to clear
+              #if DEBUG_OTA > 2
+              os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
+              #endif
+              break;
             }
           }
         }
+
         break;
       }
       case OTAT_Wait:

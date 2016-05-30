@@ -18,6 +18,7 @@ extern "C" {
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
+#include "random.h"
 #include "crypto.h"
 #include "bluetooth.h"
 #include "dtm.h"
@@ -83,7 +84,7 @@ static void setupOperatingMode() {
 //      Bluetooth::shutdown();
       break ;
     
-    case BODY_WIFI_OPERATING_MODE:
+    case BODY_ACCESSORY_OPERATING_MODE:
       Motors::stop();
       Radio::shutdown();
       break ;
@@ -111,7 +112,7 @@ static void setupOperatingMode() {
 //      Bluetooth::advertise();
       break ;
     
-    case BODY_WIFI_OPERATING_MODE:
+    case BODY_ACCESSORY_OPERATING_MODE:
       Backpack::lightMode(TIMER_LEDS);
 
       Radio::advertise();
@@ -164,7 +165,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(BODY_WIFI_OPERATING_MODE);
+  enterOperatingMode(BODY_IDLE_OPERATING_MODE);
   setupOperatingMode();
 
   Timer::start();
