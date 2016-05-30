@@ -96,6 +96,9 @@ esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.factory.bin
 	python3 ./tools/sign.py --prepend_size_word --rtip ./binaries/robot.axf --body ./binaries/syscon.axf ./staging/factory.safe
 
+esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
+	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
+  
 onBuildServer: esp
 
 clean:

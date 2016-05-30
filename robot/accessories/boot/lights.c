@@ -11,6 +11,11 @@
 u8 code LED_FROM_PAYLOAD[] = {    // Note: This is incorrectly typed to help the code generator
   &_radioPayload[1+0*3], &_radioPayload[1+2*3], &_radioPayload[1+3*3], &_radioPayload[1+1*3],   // Reds
   &_radioPayload[2+0*3], &_radioPayload[2+2*3], &_radioPayload[2+3*3], &_radioPayload[2+1*3],   // Greens
+  &_radioPayload[3+0*3], &_radioPayload[3+3*3], &_radioPayload[3+2*3], &_radioPayload[3+1*3],   // Blues
+  0, 0, 0, 0,
+  // This duplicate copy supports chargers
+  &_radioPayload[1+0*3], &_radioPayload[1+2*3], &_radioPayload[1+3*3], &_radioPayload[1+1*3],   // Reds
+  &_radioPayload[2+0*3], &_radioPayload[2+2*3], &_radioPayload[2+3*3], &_radioPayload[2+1*3],   // Greens
   &_radioPayload[3+0*3], &_radioPayload[3+3*3], &_radioPayload[3+2*3], &_radioPayload[3+1*3]    // Blues
 };
 
@@ -20,7 +25,7 @@ u8 code LED_DIR[] = {
   DEFDIR-LED3-LED2, DEFDIR-LED1-LED0, DEFDIR-LED2-LED3, DEFDIR-LED0-LED1, // G4 G2 G3 G1
   DEFDIR-LED3-LED1, DEFDIR-LED2-LED0, DEFDIR-LED1-LED3, DEFDIR-LED0-LED2, // B4 B3 B2 B1
   DEFDIR-LED5-LED3, DEFDIR-LED4-LED1, DEFDIR-LED5-LED2, DEFDIR-LED4-LED0, // I4 I2 I3 I1 (Dx-4)
-  // XXX:  EP3 chargers are wired differently than EP3 cubes - here are the charger LEDs
+  // Chargers are wired differently than cubes - here are the charger LEDs
   DEFDIR,           DEFDIR-LEC1-LEC4, DEFDIR-LEC2-LEC5, DEFDIR-LEC0-LEC4, // -- R2 R3 R1
   DEFDIR,           DEFDIR-LEC1-LEC0, DEFDIR-LEC2-LEC0, DEFDIR-LEC0-LEC1, // -- G2 G3 G1  - XXX: All 3 unpairable!
   DEFDIR,           DEFDIR-LEC2-LEC3, DEFDIR-LEC1-LEC3, DEFDIR-LEC0-LEC2, // -- B3 B2 B1
@@ -33,7 +38,7 @@ u8 code LED_PORT[] = {
   LED3+LED1,  LED3+LED1,  LED2+LED0,  LED2+LED0,  // G4 G2 G3 G1
   LED3+LED2,  LED3+LED2,  LED1+LED0,  LED1+LED0,  // B4 B3 B2 B1
   LED4+LED5,  LED4+LED5,  LED4+LED5,  LED4+LED5,  // I4 I2 I3 I1 (Dx-4)
-  // XXX:  EP3 chargers are wired differently than EP3 cubes - here are the charger LEDs
+  // Chargers are wired differently than cubes - here are the charger LEDs
   0,          LEC1,       LEC2+LEC0,  LEC2+LEC0,  // -- R2 R3 R1
   0,          LEC1,       LEC2,       LEC0,       // -- G2 G3 G1  - XXX: All 3 unpairable!
   0,          LEC2,       LEC1+LEC0,  LEC1+LEC0,  // -- B3 B2 B1
@@ -43,8 +48,7 @@ u8 code LED_PORT[] = {
 // Turn on a single LED (0-15)
 void LightOn(u8 i)
 {
-  // XXX: If I'm an EP3 charger, use EP3 charger wiring
-  if (IsCharger())    
+  if (IsCharger())      // Chargers are wired differently
     i += CHARGER_LED;
   LEDPORT = LED_PORT[i];
   LEDDIR = LED_DIR[i];
@@ -62,10 +66,9 @@ void LedSetValues()
   LedValue idata *led = _leds;
   u8 i, v, dir, left;
 
-  // XXX: If I'm an EP3 charger, use EP3 charger wiring
   i = 0;
-  if (IsCharger())
-    i = CHARGER_LED;
+  if (IsCharger())      // Chargers are wired differently
+    i = CHARGER_LED; 
   
   // Gamma-correct 8-bit payload values and look for pairs (to boost brightness)
   dir = 0;
@@ -169,14 +172,12 @@ TICK_ISR() using 1
 void LedInit(void)
 {
   // Set all LEDs to high-drive
-  u8 drive = HIGH_DRIVE;
-  u8 leds = LED0 | LED1 | LED2 | LED3 | LED4 | LED5 | LEC5; // XXX: LEC5 for EP3 charger
-  do {
-    if (leds & 1)
-      LEDCON = drive;
-    drive++;
-    leds >>= 1;
-  } while (leds);
+  P0CON = HIGH_DRIVE | 0;
+  P0CON = HIGH_DRIVE | 1;
+  P0CON = HIGH_DRIVE | 2;
+  P0CON = HIGH_DRIVE | 3;
+  P0CON = HIGH_DRIVE | 5;
+  P0CON = HIGH_DRIVE | 6;
   
   // Get ISR in sane state before starting it
   LedSetValues();

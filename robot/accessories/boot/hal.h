@@ -53,6 +53,9 @@ void OTABurn();
 // Return the model/type from the advertising packet
 u8 GetModel();
 
+// At 2mbaud on P1.0, UART-print a 1 character note followed by len bytes of hex data
+void DebugPrint(u8 note, u8 idata *hex, u8 len);
+  
 // Am I a charger?
 #define IsCharger() (!GetModel())
 

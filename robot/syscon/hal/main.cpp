@@ -164,11 +164,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  #ifdef FACTORY_FIRMWARE
-  enterOperatingMode(BODY_IDLE_OPERATING_MODE);
-  #else
   enterOperatingMode(BODY_WIFI_OPERATING_MODE);
-  #endif
   setupOperatingMode();
 
   Timer::start();
