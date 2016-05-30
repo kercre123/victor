@@ -104,8 +104,6 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   }
 }
 
-static char factoryAPPhase = 0;
-
 void Update()
 {
   if (mode != RobotInterface::FTM_None) 
@@ -154,30 +152,15 @@ void Update()
       }
       case RobotInterface::FTM_PlayPenTest:
       {
-        // First time in this mode, switch our AP name to the fixture's
-        switch (factoryAPPhase)
-        {
-          case 0:
-            i2spiSwitchMode(I2SPI_PAUSED);    // Scary - but cool that it works!
-            break;
-          case 1:    
-            // Create config for test fixture open AP
-            struct softap_config ap_config;
-            wifi_softap_get_config(&ap_config);
-            os_sprintf((char*)ap_config.ssid, "Afix01");
-            ap_config.authmode = AUTH_OPEN;
-            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-            ap_config.beacon_interval = 100;
-            wifi_softap_set_config_current(&ap_config);
-            break;
-          case 2:
-            i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
-            break;
-          case 3:
-            SetMode(RobotInterface::FTM_WiFiInfo);
-            break;
-        }
-        factoryAPPhase++;
+        // Create config for test fixture open AP
+        struct softap_config ap_config;
+        wifi_softap_get_config(&ap_config);
+        os_sprintf((char*)ap_config.ssid, "Afix01");
+        ap_config.authmode = AUTH_OPEN;
+        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+        ap_config.beacon_interval = 100;
+        wifi_softap_set_config_current(&ap_config);
+        SetMode(RobotInterface::FTM_WiFiInfo);
         break;
       }
       case RobotInterface::FTM_WiFiInfo:

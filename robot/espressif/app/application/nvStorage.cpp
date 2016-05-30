@@ -75,7 +75,11 @@ static NVStorageState nv;
 static s32 getStartOfSegment(void)
 {
   if (nv.segment & NV_SEGMENT_F) return FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE;
-  else return NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * nv.segment) + sizeof(NVDataAreaHeader);
+  else
+  {
+    int segment = nv.segment & (NV_STORAGE_NUM_AREAS-1); // Mask for safety
+    return NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * segment) + sizeof(NVDataAreaHeader);
+  }
 }
 
 static inline s32 getEndOfSegment(void)
@@ -107,7 +111,7 @@ static void resetWrite()
   nv.pendingOverwriteHeaderAddress = 0;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.segment |= ~NV_SEGMENT_F;
+  nv.segment &= ~NV_SEGMENT_F;
   nv.flashPointer = getStartOfSegment();
 }
 
@@ -132,7 +136,7 @@ static void resetRead()
   nv.multiReadFoundAny = false;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.segment |= ~NV_SEGMENT_F;
+  nv.segment &= ~NV_SEGMENT_F;
   nv.flashPointer = getStartOfSegment();
 }
 
@@ -846,8 +850,8 @@ NVResult Write(NVStorageBlob* entry, WriteDoneCB callback)
   if (entry->tag & FACTORY_DATA_BIT) 
   {
     nv.segment |= NV_SEGMENT_F;
-    nv.flashPointer = getStartOfSegment();
   }
+  nv.flashPointer = getStartOfSegment();
   nv.pendingWrite = reinterpret_cast<NVStorageBlob*>(os_zalloc(sizeof(NVStorageBlob)));
   if (nv.pendingWrite == NULL) return NV_NO_MEM;
   os_memcpy(nv.pendingWrite, entry, sizeof(NVStorageBlob));
@@ -866,6 +870,7 @@ NVResult EraseRange(const u32 start, const u32 end, EraseDoneCB eachCallback, Mu
 {
   if (isBusy()) return NV_BUSY; // Already have something queued
   else if (start & FACTORY_DATA_BIT) return NV_BAD_ARGS; // Cannot erase factory storage
+  nv.flashPointer = getStartOfSegment();
   nv.pendingEraseStart = start;
   nv.pendingEraseEnd   = end;
   nv.pendingEraseCallback = eachCallback;
@@ -887,8 +892,8 @@ NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, Mult
   if (start & FACTORY_DATA_BIT)
   {
     nv.segment |= NV_SEGMENT_F;
-    nv.flashPointer = getStartOfSegment();
   }
+  nv.flashPointer = getStartOfSegment();
   nv.pendingReadStart = start;
   nv.pendingReadEnd   = end;
   nv.pendingReadCallback = readCallback;

@@ -115,7 +115,7 @@ void user_init(void)
   os_sprintf((char*)ap_config.ssid, ssid);
   os_sprintf((char*)ap_config.password, "%08d", rand() % 100000000);
   ap_config.ssid_len = 0;
-  ap_config.channel = (macaddr[5]/24) + 1;
+  ap_config.channel = 11; //(macaddr[5]/24) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
   ap_config.max_connection = AP_MAX_CONNECTIONS;
   ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
