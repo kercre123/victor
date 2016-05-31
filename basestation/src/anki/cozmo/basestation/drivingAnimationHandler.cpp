@@ -14,9 +14,14 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
   namespace Cozmo {
+
+    // Which docking method actions should use
+    CONSOLE_VAR(bool, kEnableDrivingAnimations, "DrivingAnimationHandler", true);
+    
     
     DrivingAnimationHandler::DrivingAnimationHandler(Robot& robot)
     : _robot(robot)
@@ -102,6 +107,10 @@ namespace Anki {
     
     void DrivingAnimationHandler::PlayStartAnim(u8 tracksToUnlock)
     {
+      if (!kEnableDrivingAnimations) {
+        return;
+      }
+      
       // If we have already been inited do nothing
       if(_startedPlayingAnimation)
       {
@@ -129,6 +138,10 @@ namespace Anki {
     
     bool DrivingAnimationHandler::PlayEndAnim()
     {
+      if (!kEnableDrivingAnimations) {
+        return false;
+      }
+      
       _robot.GetActionList().Cancel(_drivingStartAnimTag);
       _robot.GetActionList().Cancel(_drivingLoopAnimTag);
       
