@@ -30,6 +30,9 @@
   "button.quit": {
     "translation": "Quit"
   },
+  "button.cancel": {
+    "translation": "Cancel"
+  },
   "button.startChallenge": {
     "translation": "Start"
   },
