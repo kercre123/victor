@@ -40,7 +40,7 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
-  float _maxPounceDist = 100.0f;
+  float _maxPounceDist = 120.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
   
@@ -65,6 +65,7 @@ private:
     RotateToWatchingNewArea,
     WaitingForMotion,
     TurnToMotion,
+    CreepForward,
     Pouncing,
     RelaxingLift,
     PlayingFinalReaction,
@@ -81,6 +82,7 @@ private:
 
   bool  _cliffReactEnabled = true;
   float _stopRelaxingTime = 0.0f;
+  float _backUpDistance = 0.f;
   float GetDriveDistance();
   void  EnableCliffReacts(bool enable,Robot& robot);
 
@@ -93,6 +95,7 @@ private:
   void TransitionToRotateToWatchingNewArea(Robot& robot);
   void TransitionToWaitForMotion(Robot& robot);
   void TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y);
+  void TransitionToCreepForward(Robot& robot);
   void TransitionToPounce(Robot& robot);
   void TransitionToRelaxLift(Robot& robot);
   void TransitionToResultAnim(Robot& robot);
