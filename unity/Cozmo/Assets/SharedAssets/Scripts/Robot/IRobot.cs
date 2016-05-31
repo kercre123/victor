@@ -285,4 +285,6 @@ public interface IRobot : IDisposable {
 
   void EraseAllEnrolledFaces();
 
+  void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
+
 }

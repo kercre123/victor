@@ -1391,4 +1391,9 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
+
+  public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
+    RobotEngineManager.Instance.Message.LoadFaceAlbumFromFile = Singleton<LoadFaceAlbumFromFile>.Instance.Initialize(path, isPathRelative);
+    RobotEngineManager.Instance.SendMessage();
+  }
 }
