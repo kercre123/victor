@@ -26,8 +26,6 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private int _ExplicitFaceID = -1;
 
-  private bool _FirstRequestSpeedTap = true;
-
   private Cozmo.UI.AlertView _RequestDialog = null;
 
   private void Awake() {
@@ -80,7 +78,7 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
-    DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Face Enroll");
+    DAS.Info("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Face Enroll");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     alertView.SetIcon(_FaceEnrollmentChallengeData.ChallengeIcon);
@@ -101,17 +99,12 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
-    _FirstRequestSpeedTap = message.firstRequest;
-    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleMiniGameYesAnimEnd);
-  }
-
-  private void HandleMiniGameYesAnimEnd(bool success) {
-    DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
+    DAS.Info("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
 
-    if (_FirstRequestSpeedTap) {
+    if (message.firstRequest) {
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
       alertView.TitleLocKey = "pressDemo.speedTapRequestTitle";
@@ -132,7 +125,7 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleForceProgressPressed() {
-    DAS.Debug(this, "Force Progress Pressed");
+    DAS.Info(this, "Force Progress Pressed");
     RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
   }
 
@@ -142,7 +135,7 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void StartFaceEnrollmentActivity() {
-    DAS.Debug(this, "Starting Face Enrollment Activity");
+    DAS.Info(this, "Starting Face Enrollment Activity");
     FaceEnrollment.FaceEnrollmentGame faceEnrollment = PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: false) as FaceEnrollment.FaceEnrollmentGame;
     _RequestDialog = null;
     // demo mode should not be saving faces to the actual robot.
@@ -150,11 +143,15 @@ public class PressDemoHubWorld : HubWorldBase {
     faceEnrollment.SetFixedFaceID(_ExplicitFaceID);
   }
 
-  private void StartSpeedTapGame() {
-    DAS.Debug(this, "Starting Speed Tap Game");
+  private void HandleSpeedTapYesAnimationEnd(bool success) {
+    DAS.Info(this, "Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: true);
     int maxLevel = _SpeedTapChallengeData.MinigameConfig.SkillConfig.GetMaxLevel();
     SkillSystem.Instance.SetDebugSkillsForGame(maxLevel, maxLevel, maxLevel);
+  }
+
+  private void StartSpeedTapGame() {
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleSpeedTapYesAnimationEnd);
   }
 
   private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver, bool playGameSpecificMusic) {
