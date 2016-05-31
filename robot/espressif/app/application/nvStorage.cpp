@@ -654,18 +654,27 @@ Result Update()
         
         else if (nv.pendingReadStart != NVEntry_Invalid)
         { // We were reading anything 
-          if (nv.pendingReadStart == nv.pendingReadEnd)
+          if (nv.segment & NV_SEGMENT_F) // Keep looking in normal region.
           {
-            NVStorageBlob entry;
-            entry.tag = nv.pendingReadStart;
-            entry.blob_length = 0;
-            nv.pendingReadCallback(&entry, NV_NOT_FOUND);
+            nv.segment &= ~NV_SEGMENT_F;
+            nv.flashPointer = getStartOfSegment();
+            nv.phase = 0;
           }
-          else if (nv.pendingMultiReadDoneCallback != NULL)
-          {
-            nv.pendingMultiReadDoneCallback(nv.pendingReadStart, nv.multiReadFoundAny ? NV_OKAY : NV_NOT_FOUND);
+          else
+          { 
+            if (nv.pendingReadStart == nv.pendingReadEnd)
+            {
+              NVStorageBlob entry;
+              entry.tag = nv.pendingReadStart;
+              entry.blob_length = 0;
+              nv.pendingReadCallback(&entry, NV_NOT_FOUND);
+            }
+            else if (nv.pendingMultiReadDoneCallback != NULL)
+            {
+              nv.pendingMultiReadDoneCallback(nv.pendingReadStart, nv.multiReadFoundAny ? NV_OKAY : NV_NOT_FOUND);
+            }
+            resetRead();
           }
-          resetRead();
         } // Done with read operations at end of flash
         
         else
