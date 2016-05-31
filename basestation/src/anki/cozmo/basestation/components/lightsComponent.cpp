@@ -154,7 +154,7 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
     case CubeLightsState::Interacting:
       _robot.SetObjectLights(object,
                              WhichCubeLEDs::ALL,
-                             NamedColors::YELLOW, NamedColors::YELLOW,
+                             NamedColors::ORANGE, NamedColors::ORANGE,
                              1000, 0,
                              500, 500,
                              true,
