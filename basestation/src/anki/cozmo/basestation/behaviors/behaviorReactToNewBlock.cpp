@@ -51,9 +51,11 @@ BehaviorReactToNewBlock::BehaviorReactToNewBlock(Robot& robot, const Json::Value
 {
   SetDefaultName("ReactToNewBlock");
 
-  SubscribeToTags({
-    EngineToGameTag::RobotObservedObject
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedObject,
+    EngineToGameTag::RobotMarkedObjectPoseUnknown,
+  }});
+
 }
 
 Result BehaviorReactToNewBlock::InitInternal(Robot& robot)
@@ -82,6 +84,10 @@ void BehaviorReactToNewBlock::AlwaysHandle(const EngineToGameEvent& event, const
   {
     case EngineToGameTag::RobotObservedObject:
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
+      break;
+      
+    case EngineToGameTag::RobotMarkedObjectPoseUnknown:
+      HandleObjectChanged(event.GetData().Get_RobotMarkedObjectPoseUnknown().objectID);
       break;
 
     default:
@@ -133,6 +139,19 @@ void BehaviorReactToNewBlock::HandleObjectObserved(const Robot& robot, const Ext
   }
 }
 
+  
+void BehaviorReactToNewBlock::HandleObjectChanged(ObjectID objectID)
+{
+  if(objectID != _targetBlock)
+  {
+    size_t N = _reactedBlocks.erase(objectID);
+    if(N > 0) {
+      PRINT_NAMED_DEBUG("BehaviorReactToNewBlock.HandleObjectChanged",
+                        "Removing Object %d from reacted set because it moved",
+                        objectID.GetValue());
+    }
+  }
+}
   
   
 bool BehaviorReactToNewBlock::ShouldAskForBlock(const Robot& robot, ObjectID blockID)
