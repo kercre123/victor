@@ -26,8 +26,6 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private int _ExplicitFaceID = -1;
 
-  private bool _FirstRequestSpeedTap = true;
-
   private Cozmo.UI.AlertView _RequestDialog = null;
 
   private void Awake() {
@@ -101,17 +99,12 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
-    _FirstRequestSpeedTap = message.firstRequest;
-    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleMiniGameYesAnimEnd);
-  }
-
-  private void HandleMiniGameYesAnimEnd(bool success) {
     DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
 
-    if (_FirstRequestSpeedTap) {
+    if (message.firstRequest) {
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
       alertView.TitleLocKey = "pressDemo.speedTapRequestTitle";
@@ -150,11 +143,15 @@ public class PressDemoHubWorld : HubWorldBase {
     faceEnrollment.SetFixedFaceID(_ExplicitFaceID);
   }
 
-  private void StartSpeedTapGame() {
+  private void HandleSpeedTapYesAnimationEnd(bool success) {
     DAS.Debug(this, "Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: true);
     int maxLevel = _SpeedTapChallengeData.MinigameConfig.SkillConfig.GetMaxLevel();
     SkillSystem.Instance.SetDebugSkillsForGame(maxLevel, maxLevel, maxLevel);
+  }
+
+  private void StartSpeedTapGame() {
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleSpeedTapYesAnimationEnd);
   }
 
   private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver, bool playGameSpecificMusic) {
