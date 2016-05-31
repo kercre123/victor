@@ -151,6 +151,9 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void StartSpeedTapGame() {
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+
     RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleSpeedTapYesAnimationEnd);
   }
 
@@ -161,8 +164,6 @@ public class PressDemoHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnStartButton -= HandleStartButtonPressed;
     UIManager.CloseView(_PressDemoViewInstance);
 
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-    RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
     GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
