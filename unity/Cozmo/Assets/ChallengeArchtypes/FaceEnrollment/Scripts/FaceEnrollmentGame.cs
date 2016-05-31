@@ -31,9 +31,11 @@ namespace FaceEnrollment {
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.InitializeView(newView, data);
+      _EnterNameSlideInstance = newView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide", NameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+    }
 
-      // create enter name dialog
-      _EnterNameSlideInstance = newView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide").GetComponent<FaceEnrollmentEnterNameSlide>();
+    public void NameInputSlideInDone() {
+      _EnterNameSlideInstance.RegisterInputFocus();
       _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
     }
 

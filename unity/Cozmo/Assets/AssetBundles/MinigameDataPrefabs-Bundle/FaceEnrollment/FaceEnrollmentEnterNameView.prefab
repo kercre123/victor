@@ -101,6 +101,15 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    JsonValue: 100
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 1
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 100
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Done"'
   ModifiedLocalReferences:
@@ -324,7 +333,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 559, y: 242}
-  m_SizeDelta: {x: 800, y: 351}
+  m_SizeDelta: {x: 800, y: 285}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22456464
 RectTransform:
@@ -343,7 +352,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -400, y: 250}
-  m_SizeDelta: {x: 1000, y: 300}
+  m_SizeDelta: {x: 1000, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22473256
 RectTransform:
