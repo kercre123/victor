@@ -57,7 +57,7 @@ private:
     
     CubeLightsState desiredState;
     CubeLightsState currState;
-    TimeStamp_t lastObservedTime_ms;
+    TimeStamp_t     lastObservedTime_ms;
   };
   
   std::map< ObjectID, ObjectInfo > _cubeInfo;

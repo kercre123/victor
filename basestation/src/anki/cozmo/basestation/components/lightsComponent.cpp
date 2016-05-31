@@ -50,11 +50,15 @@ void LightsComponent::Update()
       continue;
     }
 
-    u32 age = currTS - cubeInfoPair.second.lastObservedTime_ms;
-    if( age > kTimeToMarkCubeNonVisible_ms ) {
-      cubeInfoPair.second.desiredState = CubeLightsState::Connected;
+    // Ignore age timeout for carried object
+    if(_robot.GetCarryingObject() != cubeInfoPair.first)
+    {
+      u32 age = currTS - cubeInfoPair.second.lastObservedTime_ms;
+      if( age > kTimeToMarkCubeNonVisible_ms ) {
+        cubeInfoPair.second.desiredState = CubeLightsState::Connected;
+      }
     }
-  }    
+  }
 
   UpdateToDesiredLights();
 }
