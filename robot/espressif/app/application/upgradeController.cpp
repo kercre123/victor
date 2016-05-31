@@ -84,6 +84,37 @@ namespace UpgradeController {
   bool didEsp; ///< We have new firmware for the Espressif
   bool haveTermination; ///< Have received termination
 
+  void FactoryUpgrade()
+  {
+    #include "cboot.bin.h"
+    uint32_t buffer[(firmware_cboot_bin_len/4)+1];
+    if (spi_flash_read(0, buffer, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("Couldn't read back existing bootloader aborting.\r\n");
+    }
+    else
+    {
+      uint8_t* charBuffer = (uint8_t*)buffer;
+      if (os_memcmp(charBuffer, firmware_cboot_bin, firmware_cboot_bin_len))
+      {
+        os_printf("Bootloader doesn't match\r\nValidating our own header\r\n");
+        uint32_t headerValidation[] = {1, 0};
+        while (spi_flash_write((APPLICATION_A_SECTOR * SECTOR_SIZE) + APP_IMAGE_HEADER_OFFSET + 4, headerValidation, 8));
+        os_printf("Upgrading bootloader\r\n");
+        while (spi_flash_erase_sector(0) != SPI_FLASH_RESULT_OK);
+        while (spi_flash_write(0, (uint32_t*)firmware_cboot_bin, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK);
+        os_printf("Bootloader upgraded. Preparing for factory firmware install\r\n");
+        unsigned int i;
+        for (i=FACTORY_WIFI_FW_SECTOR; i<NV_STORAGE_SECTOR; ++i)
+        {
+          os_printf("Erasing sector 0x%x\r\n", i);
+          while (spi_flash_erase_sector(i) != SPI_FLASH_RESULT_OK) { os_printf("."); }
+          os_printf("\r\n");
+        }
+      }
+    }
+  }
+
   bool Init()
   {
     buffer = NULL;
@@ -96,8 +127,10 @@ namespace UpgradeController {
     didEsp = false;
     haveTermination = false;  
     
+    if (FACTORY_FIRMWARE == 0) FactoryUpgrade();
+    
     // No matter which of the three images we're loading, we can get a header here
-    const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE);
+    const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
     
     if (FACTORY_FIRMWARE)
     {
@@ -131,6 +164,7 @@ namespace UpgradeController {
           return false;
         }
       }
+      
     }
     
     phase = OTAT_Ready;
@@ -230,7 +264,7 @@ namespace UpgradeController {
           ack.result = ERR_NO_MEM;
           RobotInterface::SendMessage(ack);
         }
-        else if (msg.packetNumber == -2) // End of data flag
+        else if (msg.packetNumber == -1) // End of data flag
         {
           #if DEBUG_OTA
           os_printf("\tTermination\r\n");
@@ -370,7 +404,7 @@ namespace UpgradeController {
           }
           else
           {
-	    if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
+            if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
             {
               if (fwb->blockAddress == CERTIFICATE_BLOCK)
               {
@@ -399,7 +433,43 @@ namespace UpgradeController {
                 ack.result = OKAY;
                 RobotInterface::SendMessage(ack);
               }
-	    }
+              #if FACTORY_FIRMWARE == 0
+              else if ((fwb->blockAddress & 0xFFF00000) == FACTORY_FIRMWARE_INSTALL)
+              {
+                const uint32 destAddr = 0x80000 + (fwb->blockAddress & 0x7ffff);
+                os_printf("WFF 0x%x\r\n", destAddr);
+                const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+                if (rslt != SPI_FLASH_RESULT_OK)
+                {
+                  if (retries-- <= 0)
+                  {
+                    ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+                    RobotInterface::SendMessage(ack);
+                    Reset();
+                  }
+                }
+                else
+                {
+                  retries = MAX_RETRIES;
+                  bufferUsed -= sizeof(FirmwareBlock);
+                  os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+                  bytesProcessed += sizeof(FirmwareBlock);
+                  ack.bytesProcessed = bytesProcessed;
+                  ack.result = OKAY;
+                  RobotInterface::SendMessage(ack);
+                }
+              }
+              else
+              {
+                bufferUsed -= sizeof(FirmwareBlock);
+                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+                bytesProcessed += sizeof(FirmwareBlock);
+                ack.bytesProcessed = bytesProcessed;
+                ack.result = OKAY;
+                RobotInterface::SendMessage(ack);
+              }
+              #endif
+            }
             else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
             {
               const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
@@ -525,7 +595,7 @@ namespace UpgradeController {
           uint32_t headerUpdate[2];
           headerUpdate[0] = nextImageNumber; // Image number
           headerUpdate[1] = 0; // Evil
-          rslt = spi_flash_write(fwWriteAddress + 4, headerUpdate, 8);
+          rslt = spi_flash_write(fwWriteAddress + APP_IMAGE_HEADER_OFFSET + 4, headerUpdate, 8);
         }
         if (rslt != SPI_FLASH_RESULT_OK)
         {
@@ -627,7 +697,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_A:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
           phase = OTATR_Set_Evil_B;
         }
@@ -636,7 +706,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_B:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + 5, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
           counter = system_get_time() + 1000000; // 1s second delay
           phase = OTATR_Delay;

@@ -19,17 +19,13 @@
 typedef enum {
   BOOTLOADER_SECTOR           = 0x000, ///< Where the boot loader (this code) lives.
   FACTORY_SECTOR              = 0x001, ///< Where factory build information will be stored
-  FACTORY_WIFI_FW_SECTOR      = 0x002, ///< Where the factory firmware starts
-  FACTORY_NV_STORAGE_SECTOR   = 0x060, ///< A region used for storing large factory test data
-  APPLICATION_A_SECTOR        = 0x080, ///< Start of application image A region
-  RESERVED1_SECTOR            = 0x0fc, ///< Reserved region for future use
-  RESERVED2_SECTOR            = 0x0fd, ///< Reserved region for future use
-  RESERVED3_SECTOR            = 0x0fe, ///< Reserved region for future use
-  RESERVED4_SECTOR            = 0x0ff, ///< Reserved region for future use
-  NV_STORAGE_SECTOR           = 0x100, ///< Start of NV Storage region
-  ASSET_SECTOR                = 0x140, ///< Start of Asset storage region
-  APPLICATION_B_SECTOR        = 0x180, ///< Start of application image B region
-  FACTORY_RTIP_BODY_FW_SECTOR = 0x047, ///< Where the image for the RTIP and Body firmware is stored
+  CRASH_DUMP_SECTOR           = 0x002, ///< Where we will store crash dumps for reporting
+  APPLICATION_A_SECTOR        = 0x003, ///< Start of application image A region
+  APPLICATION_B_SECTOR        = 0x103, ///< Start of application image B region
+  FACTORY_WIFI_FW_SECTOR      = 0x080, ///< Where the factory firmware starts
+  FACTORY_RTIP_BODY_FW_SECTOR = 0x0c5, ///< Where the image for the RTIP and Body firmware is stored
+  FACTORY_NV_STORAGE_SECTOR   = 0x0de, ///< A region used for storing large factory test data
+  NV_STORAGE_SECTOR           = 0x1c0, ///< Start of NV Storage region
   ESP_INIT_DATA_SECTOR        = 0x1fc, ///< Where the Espressif OS keeps it's init data, two sectors long
   ESP_WIFI_CFG_SECTOR         = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long
 } FlashSector;
@@ -48,6 +44,9 @@ typedef enum {
   FW_IMAGE_A       = 0x00C0DE00,
   FW_IMAGE_B       = 0xC0DE0000,
 } FWImageSelection;
+
+/// Offset from the start of the image area where the header can be found
+#define APP_IMAGE_HEADER_OFFSET 0x10
 
 /** Header placed at the start of each application image
  * Size must be a multiple of 4 to keep firmware image on word boundary.
