@@ -344,9 +344,9 @@ public abstract class GameBase : MonoBehaviour {
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
-      // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
-      // if appropriate.
-      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
+      // Disable all Request game behavior groups so we don't request games at the 
+      // end of game screen.
+      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
     }
   }
 
