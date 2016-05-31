@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -271,7 +272,10 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
   // Check if we can pick up the block from wherever it is and go grab it if so
   if( CanPickUpBlock(robot, newBlock) )
   {
-    StartActing(new PickupObjectAction(robot, _targetBlock), kBRTNB_ScoreIncreaseForPickup,
+    const Radians maxTurnToFaceAngle(DEG_TO_RAD_F32(30.f));
+    const bool sayName = true;
+    StartActing(new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,
+                                              maxTurnToFaceAngle, sayName), kBRTNB_ScoreIncreaseForPickup,
                 [this,&robot](ActionResult res) {
                   if(ActionResult::SUCCESS == res) {
                     // Picked up block! Mark target block as reacted to, and unset target block,
