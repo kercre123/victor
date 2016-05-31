@@ -25,7 +25,7 @@ typedef enum {
   FACTORY_WIFI_FW_SECTOR      = 0x080, ///< Where the factory firmware starts
   FACTORY_RTIP_BODY_FW_SECTOR = 0x0c5, ///< Where the image for the RTIP and Body firmware is stored
   FACTORY_NV_STORAGE_SECTOR   = 0x0de, ///< A region used for storing large factory test data
-  NV_STORAGE_SECTOR           = 0x1bc, ///< Start of NV Storage region
+  NV_STORAGE_SECTOR           = 0x1c0, ///< Start of NV Storage region
   ESP_INIT_DATA_SECTOR        = 0x1fc, ///< Where the Espressif OS keeps it's init data, two sectors long
   ESP_WIFI_CFG_SECTOR         = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long
 } FlashSector;

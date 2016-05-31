@@ -25,6 +25,7 @@ static const uint32_t		 HEAD_RECOVERY_NOTICE = 0x49485a43;
 #define CERTIFICATE_BLOCK (0xFFFFffff)
 #define HEADER_BLOCK      (0xFFFFfffe)
 #define COMMENT_BLOCK     (0xFFFFfffc)
+#define FACTORY_FIRMWARE_INSTALL (0xFF400000)
 #define ESPRESSIF_BLOCK   (0x40000000)
 #define BODY_BLOCK        (0x80000000)
 
