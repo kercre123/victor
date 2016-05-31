@@ -84,7 +84,6 @@ namespace UpgradeController {
   bool didEsp; ///< We have new firmware for the Espressif
   bool haveTermination; ///< Have received termination
 
-#if FACTORY_FIRMWARE == 0
   void FactoryUpgrade()
   {
     #include "cboot.bin.h"
@@ -115,7 +114,6 @@ namespace UpgradeController {
       }
     }
   }
-#endif
 
   bool Init()
   {
@@ -460,6 +458,15 @@ namespace UpgradeController {
                   ack.result = OKAY;
                   RobotInterface::SendMessage(ack);
                 }
+              }
+              else
+              {
+                bufferUsed -= sizeof(FirmwareBlock);
+                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+                bytesProcessed += sizeof(FirmwareBlock);
+                ack.bytesProcessed = bytesProcessed;
+                ack.result = OKAY;
+                RobotInterface::SendMessage(ack);
               }
               #endif
             }
