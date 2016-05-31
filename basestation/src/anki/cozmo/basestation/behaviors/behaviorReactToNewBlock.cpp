@@ -33,7 +33,7 @@ namespace Cozmo {
 
 CONSOLE_VAR(f32, kBRTNB_ScoreIncreaseForReaction, "Behavior.ReactToBlock", 0.3f);
 CONSOLE_VAR(f32, kBRTNB_ScoreIncreaseForPickup, "Behavior.ReactToBlock", 0.8f);
-CONSOLE_VAR(f32, kBRTNB_MinHeightForBigReact_mm, "Behavior.ReactToBlock", 40.0f);
+CONSOLE_VAR(f32, kBRTNB_MinHeightForBigReact_mm, "Behavior.ReactToBlock", 35.0f);
 CONSOLE_VAR(u32, kBRTNB_minAgeToIgnoreBlock_ms, "Behavior.ReactToBlock", 10000);
 CONSOLE_VAR(u32, kBRTNB_minAgeToLookDown_ms, "Behavior.ReactToBlock", 700);
 CONSOLE_VAR(f32, kBRTNB_lookDownHeadAngle_deg, "Behavior.ReactToBlock", -10.0f);
