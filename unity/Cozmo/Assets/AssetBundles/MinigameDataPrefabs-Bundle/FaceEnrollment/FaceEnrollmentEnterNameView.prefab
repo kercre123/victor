@@ -165,6 +165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SubmitName: {fileID: 0}
   _NameInputField: {fileID: 11493992}
+  _NameInputPlaceholder: {fileID: 11429310}
 --- !u!114 &11462468
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -235,7 +236,7 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 11497524}
   m_TextComponent: {fileID: 11462468}
-  m_Placeholder: {fileID: 11429310}
+  m_Placeholder: {fileID: 0}
   m_ContentType: 5
   m_InputType: 0
   m_AsteriskChar: 42
@@ -243,7 +244,7 @@ MonoBehaviour:
   m_LineType: 0
   m_HideMobileInput: 1
   m_CharacterValidation: 4
-  m_CharacterLimit: 0
+  m_CharacterLimit: 32
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []

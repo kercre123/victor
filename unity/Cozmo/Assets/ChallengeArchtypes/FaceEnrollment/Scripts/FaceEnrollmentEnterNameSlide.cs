@@ -12,6 +12,9 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.InputField _NameInputField;
 
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _NameInputPlaceholder;
+
   private void Awake() {
     _SubmitName.Initialize(HandleSubmitNameButton, "face_enrollment_name_enter_done", "face_enrollment_name_slide");
     _SubmitName.Interactable = false;
@@ -25,8 +28,10 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   private void HandleInputFieldChange(string input) {
     if (string.IsNullOrEmpty(input)) {
       _SubmitName.Interactable = false;
+      _NameInputPlaceholder.enabled = true;
     }
     else {
+      _NameInputPlaceholder.enabled = false;
       _SubmitName.Interactable = true;
     }
   }
