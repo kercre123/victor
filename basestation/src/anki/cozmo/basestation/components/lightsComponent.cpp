@@ -129,7 +129,7 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
     case CubeLightsState::Visible:
       _robot.SetObjectLights(object,
                              WhichCubeLEDs::ALL,
-                             0x888888, 0x888888,
+                             NamedColors::CYAN, NamedColors::CYAN,
                              1000, 0,
                              500, 500,
                              true,
