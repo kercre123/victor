@@ -177,7 +177,15 @@ namespace Cozmo {
     
     if (ENABLE_NVSTORAGE_WRITES) {
       // Erase all entries in flash
-      robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_ReallyEraseAll);
+      robot.GetNVStorageComponent().WipeAll(true,
+                                            [this,&robot](NVStorage::NVResult res){
+                                              if (res != NVStorage::NVResult::NV_OKAY) {
+                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.WipeAll.Failed",
+                                                                    "Result: %s", EnumToString(res));
+                                              } else {
+                                                PRINT_NAMED_INFO("BehaviorFactoryTest.WipeAll.Succeeded", "");
+                                              }
+                                            });
     }
 
     _stateTransitionTimestamps.resize(16);

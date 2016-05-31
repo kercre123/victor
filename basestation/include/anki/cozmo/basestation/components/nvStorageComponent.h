@@ -72,6 +72,15 @@ public:
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
+  // Erases all data from robot flash.
+  // IF includeFactory == true, THE FACTORY PARTITION IS ALSO ERASED
+  // WHICH WIPES CAMERA CALIBRATION AMONG OTHER THINGS.
+  // IF YOU'RE NOT COMPLETELY SURE YOU SHOULD DO IT, THEN YOU ABSOLUTELY SHOULDN'T!!!
+  // NOTE: THIS FUNCTION FORCES A ROBOT REBOOT CAUSING DISCONNECT.
+  bool WipeAll(bool includeFactory = false,
+               NVStorageWriteEraseCallback callback = {},
+               bool broadcastResultToGame = false);
+  
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
   //
@@ -131,6 +140,7 @@ private:
     : numTagsLeftToAck(0)
     , callback({})
     , writeNotErase(true)
+    , isWipeAll(false)
     , broadcastResultToGame(false)
     , timeoutTimeStamp(0)
     { }
@@ -140,6 +150,7 @@ private:
     
     NVStorageWriteEraseCallback callback;
     bool writeNotErase;
+    bool isWipeAll;
     bool broadcastResultToGame;
     TimeStamp_t timeoutTimeStamp;
   };
@@ -186,6 +197,7 @@ private:
     , tag(tag)
     , writeCallback(callback)
     , data(data)
+    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -194,6 +206,15 @@ private:
     : op(NVStorage::NVOperation::NVOP_ERASE)
     , tag(tag)
     , writeCallback(callback)
+    , wipeFactory(false)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    // WipeAll request
+    NVStorageRequest(bool includeFactory, NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_WIPEALL)
+    , writeCallback(callback)
+    , wipeFactory(includeFactory)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -203,6 +224,7 @@ private:
     , tag(tag)
     , readCallback(callback)
     , data(data)
+    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -211,6 +233,7 @@ private:
     NVStorageWriteEraseCallback writeCallback;
     NVStorageReadCallback readCallback;
     std::vector<u8>* data;
+    bool wipeFactory;
     bool broadcastResultToGame;
   };
   
@@ -224,6 +247,7 @@ private:
   void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageWipeAll(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
   void SendRequest(NVStorageRequest req);

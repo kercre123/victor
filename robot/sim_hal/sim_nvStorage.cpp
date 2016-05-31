@@ -302,6 +302,32 @@ namespace Anki {
       }
     }
     
+    void SimNVStorage::NVWipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
+    {
+      RobotInterface::NVOpResultToEngine m;
+      m.robotAddress = 1;
+      m.report.tag = NVStorage::NVEntry_WipeAll;
+      m.report.write = true;
+      
+      if ( strncmp(msg.key, "Yes I really want to do this!", msg.key_length) != 0 ) {
+        m.report.result = NVStorage::NV_BAD_ARGS;
+      } else {
+        if (msg.includeFactory) {
+          nvStorage_.clear();
+        } else {
+          // Find first and last non-factory entry
+          auto firstEntry = nvStorage_.begin();
+          if (firstEntry->first < 0x80000000) {
+            auto lastEntry = nvStorage_.lower_bound(0x80000000);
+            nvStorage_.erase(firstEntry, lastEntry);
+          }
+        }
+        m.report.result = NVStorage::NV_OKAY;
+      }
+
+      nvOpResultMsgQueue_.push(m);
+    }
+    
     namespace SimNVStorageSpace
     {
       namespace
@@ -326,7 +352,7 @@ namespace Anki {
         
       void WipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
       {
-        // XXX
+        simNVStorage.NVWipeAll(msg);
       }
     }
   }

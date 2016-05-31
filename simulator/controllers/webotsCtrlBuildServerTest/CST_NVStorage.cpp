@@ -36,10 +36,10 @@ namespace Anki {
       WritingToInvalidMultiTag,
       
       WriteData,
-      EraseAll,
+      WipeAll,
       
-      WriteEraseAll,
-      ReadEraseAll,
+      WriteWipeAll,
+      ReadWipeAll,
       
       Final
     };
@@ -338,11 +338,11 @@ namespace Anki {
               SendMessage(message);
             }
             
-            _testState = TestState::EraseAll;
+            _testState = TestState::WipeAll;
           }
           break;
         }
-        case TestState::EraseAll:
+        case TestState::WipeAll:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(_numWrites == numMultiBlobs + 1, 20)
           {
@@ -350,7 +350,7 @@ namespace Anki {
             
             // Erase all
             ExternalInterface::NVStorageEraseEntry msg1;
-            msg1.tag = NVStorage::NVEntryTag::NVEntry_EraseAll;
+            msg1.tag = NVStorage::NVEntryTag::NVEntry_WipeAll;
             
             ExternalInterface::MessageGameToEngine message1;
             message1.Set_NVStorageEraseEntry(msg1);
@@ -364,11 +364,11 @@ namespace Anki {
             message.Set_NVStorageReadEntry(msg);
             SendMessage(message);
             
-            _testState = TestState::ReadEraseAll;
+            _testState = TestState::ReadWipeAll;
           }
           break;
         }
-        case TestState::ReadEraseAll:
+        case TestState::ReadWipeAll:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(_readAckd && _eraseAckd && _lastResult == NVStorage::NVResult::NV_NOT_FOUND, DEFAULT_TIMEOUT)
           {
@@ -377,17 +377,17 @@ namespace Anki {
             _lastResult = NVStorage::NVResult::NV_OKAY;
             
             ExternalInterface::NVStorageReadEntry msg;
-            msg.tag = (Tag)0;
+            msg.tag = NVStorage::NVEntryTag::NVEntry_WipeAll;
             
             ExternalInterface::MessageGameToEngine message;
             message.Set_NVStorageReadEntry(msg);
             SendMessage(message);
             
-            _testState = TestState::WriteEraseAll;
+            _testState = TestState::WriteWipeAll;
           }
           break;
         }
-        case TestState::WriteEraseAll:
+        case TestState::WriteWipeAll:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(_readAckd && _lastResult == NVStorage::NVResult::NV_ERROR, DEFAULT_TIMEOUT)
           {
@@ -395,7 +395,7 @@ namespace Anki {
             
             ExternalInterface::NVStorageWriteEntry msg;
             RandomData(5, msg.data.data());
-            msg.tag = (Tag)0;
+            msg.tag = NVStorage::NVEntryTag::NVEntry_WipeAll;
             msg.data_length = 5;
             msg.index = 0;
             msg.numTotalBlobs = 1;
