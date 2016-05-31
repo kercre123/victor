@@ -66,11 +66,7 @@ Result BehaviorReactToNewBlock::InitInternal(Robot& robot)
 
 void BehaviorReactToNewBlock::StopInternal(Robot& robot)
 {
-  if( _state == State::AskingLoop ) {
-    // if we get interrupted while we were acting, then we are done reacting to the given block
-    _reactedBlocks.insert(_targetBlock);
-    _targetBlock.UnSet();
-  }
+  
 }
 
 bool BehaviorReactToNewBlock::IsRunnableInternal(const Robot& robot) const
@@ -278,8 +274,9 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
     StartActing(new PickupObjectAction(robot, _targetBlock), kBRTNB_ScoreIncreaseForPickup,
                 [this,&robot](ActionResult res) {
                   if(ActionResult::SUCCESS == res) {
-                    // Picked up block! Unset target block, indicating this behavior is
-                    // no longer runnable
+                    // Picked up block! Mark target block as reacted to, and unset target block,
+                    // indicating this behavior is no longer runnable
+                    _reactedBlocks.insert(_targetBlock);
                     _targetBlock.UnSet();
                     
                     StartActing(new PlayAnimationGroupAction(robot, _pickupSuccessAnimGroup),
