@@ -13,6 +13,8 @@
 #define __Cozmo_Basestation_BehaviorSystem_AIGoal_H__
 
 #include "json/json-forwards.h"
+#include "clad/types/unlockTypes.h"
+
 
 #include <memory>
 
@@ -50,6 +52,9 @@ public:
 
   // choose next behavior for this goal
   IBehavior* ChooseNextBehavior(const Robot& robot) const;
+  
+  
+  UnlockId GetRequiresSpark() { return _requiresSpark; }
 
 private:
 
@@ -70,6 +75,8 @@ private:
   
   // behavior chooser associated to this goal
   std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
+  
+  UnlockId _requiresSpark;
 
 };
   
