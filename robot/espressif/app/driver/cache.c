@@ -32,7 +32,7 @@ void Cache_Read_Enable_New(void) {
       }
       default:
       {
-        ets_printf("Cache_Read_Enable_New Override, invalid rom selection %x\r\nAssuming A map\r\n", romSelection);
+        //ets_printf("Cache_Read_Enable_New Override, invalid rom selection %x\r\nAssuming A map\r\n", romSelection);
         odd_even = 0;
       }
     }
