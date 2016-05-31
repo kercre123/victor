@@ -45,18 +45,27 @@ void LightsComponent::Update()
   // check if any cubes are no longer visible
   TimeStamp_t currTS = _robot.GetLastImageTimeStamp();
   
-  for( auto& cubeInfoPair : _cubeInfo ) {
-    if( ! ShouldOverrideState( cubeInfoPair.second.desiredState, CubeLightsState::Visible ) ){
-      continue;
+  for( auto& cubeInfoPair : _cubeInfo )
+  {
+    CubeLightsState newState = CubeLightsState::Visible;
+    
+    // If we're interacting with this object, put it in interacting state
+    if(cubeInfoPair.first == _robot.GetDockObject())
+    {
+      newState = CubeLightsState::Interacting;
     }
-
+    
     // Ignore age timeout for carried object
-    if(_robot.GetCarryingObject() != cubeInfoPair.first)
+    else if(_robot.GetCarryingObject() != cubeInfoPair.first)
     {
       u32 age = currTS - cubeInfoPair.second.lastObservedTime_ms;
       if( age > kTimeToMarkCubeNonVisible_ms ) {
-        cubeInfoPair.second.desiredState = CubeLightsState::Connected;
+        newState = CubeLightsState::Connected;
       }
+    }
+    
+    if( ShouldOverrideState( cubeInfoPair.second.currState, newState )) {
+      cubeInfoPair.second.desiredState = newState;
     }
   }
 
@@ -138,6 +147,22 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
 
       PRINT_NAMED_DEBUG("LightsComponent.SetLights",
                         "Object %d set to visible",
+                        object.GetValue());
+
+      break;
+      
+    case CubeLightsState::Interacting:
+      _robot.SetObjectLights(object,
+                             WhichCubeLEDs::ALL,
+                             NamedColors::YELLOW, NamedColors::YELLOW,
+                             1000, 0,
+                             500, 500,
+                             true,
+                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+                             Point2f{0.0, 0.0});
+      
+      PRINT_NAMED_DEBUG("LightsComponent.SetLights",
+                        "Object %d set to interacting",
                         object.GetValue());
 
       break;

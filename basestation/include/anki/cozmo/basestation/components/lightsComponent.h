@@ -46,7 +46,8 @@ private:
   enum class CubeLightsState {
     Off,
     Connected,
-    Visible
+    Visible,
+    Interacting
   };
 
   struct ObjectInfo {
