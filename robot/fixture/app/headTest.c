@@ -80,12 +80,7 @@ void HeadESP(void)
   EnableBAT();
 
   // Program espressif, which will start up following the program
-  ProgramEspressif();
-  
-#ifndef FCC
-  // Set serial number in Espressif
-  ESPFlashLoad(0x1000, 4, (uint8_t*)&serial_);
-#endif
+  ProgramEspressif(serial_);
 }
 
 void HeadTest(void)

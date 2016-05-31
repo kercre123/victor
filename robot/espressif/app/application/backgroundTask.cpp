@@ -12,7 +12,6 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 #include "driver/crash.h"
-#include "rboot.h"
 }
 #include "rtip.h"
 #include "activeObjectManager.h"
@@ -42,6 +41,19 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
+
+#if FACTORY_FIRMWARE
+static bool factoryLockout;
+extern "C" bool hasFactoryLockout(void) { return factoryLockout; }
+void checkFactoryLockoutResult(NVStorage::NVStorageBlob* data, const NVStorage::NVResult result)
+{
+  if (result == NVStorage::NV_NOT_FOUND) factoryLockout = false;
+}
+extern "C" void backgroundTaskNVInitDone(void)
+{
+  NVStorage::Read(NVStorage::NVEntry_FactoryLock, checkFactoryLockoutResult);
+}
+#endif
 
 /** The OS task which dispatches subtasks.
 */
@@ -142,6 +154,10 @@ bool readAndSendCrashReport(uint32_t param)
 
 extern "C" int8_t backgroundTaskInit(void)
 {
+  #if FACTORY_FIRMWARE
+  Anki::Cozmo::BackgroundTask::factoryLockout = true;
+  #endif
+
   //os_printf("backgroundTask init\r\n");
   if (system_os_task(Anki::Cozmo::BackgroundTask::Exec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
   {
@@ -210,14 +226,17 @@ static bool sendWifiConnectionState(const bool state)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
-  const uint32_t* const factoryData = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
-
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
   
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_None);
   
   sendWifiConnectionState(true);
+  
+  if (FACTORY_FIRMWARE)
+  {
+    AnkiEvent( 186, "FactoryFirmware", 487, "Running factory firmware, EP3F", 0);
+  }
   
   // Send our version information to the engine
   {
@@ -229,15 +248,15 @@ extern "C" void backgroundTaskOnConnect(void)
     os_memcpy(vi.toEngineCLADHash, messageRobotToEngineHash, sizeof(vi.toEngineCLADHash));
     Anki::Cozmo::RobotInterface::SendMessage(vi);
   }
-  
+
   // Send our serial number to the engine
   {
     Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
-    idMsg.robotID = factoryData[0];
-    idMsg.modelID = factoryData[1] & 0xFFFF;
+    idMsg.robotID = getSerialNumber();
+    idMsg.modelID = getModelNumber();
     Anki::Cozmo::RobotInterface::SendMessage(idMsg);
   }
-  
+
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();

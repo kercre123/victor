@@ -1,7 +1,6 @@
 extern "C" {
 #include "client.h"
 #include "foregroundTask.h"
-#include "rboot.h"
 // Forward declaration
 void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 }
@@ -38,7 +37,7 @@ namespace Anki {
           case NVStorage::ENGINE:
           {
             RobotInterface::NVOpResultToEngine msg;
-            msg.robotAddress = *SERIAL_NUMBER;
+            msg.robotAddress = getSerialNumber();
             os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
             RobotInterface::SendMessage(msg);
             break;
@@ -92,7 +91,7 @@ namespace Anki {
             case NVStorage::ENGINE:
             {
               RobotInterface::NVReadResultToEngine msg;
-              msg.robotAddress = *SERIAL_NUMBER;
+              msg.robotAddress = getSerialNumber();
               os_memcpy(&msg.blob, entry, sizeof(NVStorage::NVStorageBlob));
               RobotInterface::SendMessage(msg);
               break;
@@ -192,6 +191,25 @@ namespace Anki {
               }
               if (result.result >= 0) nvOpReportTo = msg.readNV.to;
               else SendNVOpResult(&result, msg.readNV.to);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_wipeAllNV:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              NVStorage::NVOpResult result;
+              result.tag = NVStorage::NVEntry_Invalid;
+              result.write = false;
+              if (os_strncmp(msg.wipeAllNV.key, "Yes I really want to do this!", msg.wipeAllNV.key_length) != 0)
+              {
+                result.result = NVStorage::NV_BAD_ARGS;
+                SendNVOpResult(&result, msg.wipeAllNV.to);
+              }
+              else
+              {
+                result.result = NVStorage::WipeAll(msg.wipeAllNV.includeFactory, NVEraseDoneCallback);
+                if (result.result >= 0) nvOpReportTo = msg.wipeAllNV.to;
+                else SendNVOpResult(&result, msg.wipeAllNV.to);
+              }
               break;
             }
             case RobotInterface::EngineToRobot::Tag_rtipVersion:

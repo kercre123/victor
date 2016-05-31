@@ -80,10 +80,6 @@ namespace Cozmo {
 CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
 CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // kDebugRenderOverheadEdges: enables/disables debug render
 
-// TODO: put this somewhere more appropriate?
-static const f32 STACKED_HEIGHT_TOL_MM = 15.f;
-
-
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
@@ -3043,6 +3039,12 @@ static const f32 STACKED_HEIGHT_TOL_MM = 15.f;
         bool wasExistenceConfirmed = object->IsExistenceConfirmed();
         
         object->SetPoseState(ObservableObject::PoseState::Unknown);
+        
+        ObservableObject* objectOnTop = FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+        if(objectOnTop != nullptr)
+        {
+          ClearObject(objectOnTop);
+        }
         
         // Notify any listeners that this object no longer has a valid Pose
         // (Only notify for objects that were broadcast in the first place, meaning

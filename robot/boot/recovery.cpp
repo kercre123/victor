@@ -207,6 +207,8 @@ static void SyncToBody(void) {
 }
 
 void EnterRecovery(bool force) {  
+  __disable_irq();
+  
   // Pin to our body
   UART::receive();
   SyncToBody();
@@ -243,6 +245,9 @@ void EnterRecovery(bool force) {
       UART::writeByte(COMMAND_IDLE);
       next_idle = count + 50000;
     }
+    
+    WDOG_REFRESH = 0xA602;
+    WDOG_REFRESH = 0xB480;
     
     // Wait for a command from the host
     if (WaitForWord() != COMMAND_HEADER) {

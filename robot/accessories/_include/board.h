@@ -28,6 +28,14 @@
 #define LEC3 (1<<2)
 #define LEC4 (1<<5)
 #define LEC5 (1<<6)   
+
+// SPI bus
+#define CSB   P11
+#define SCK   P01
+#define SDI   P03
+#define SPIInit() { CSB = 1; P1DIR = 255-2;               /* CSB defaults high and driven */ \
+                    SCK = 1; SDI = 1; P0DIR = 0xFF-2-8; } /* SCK and SDI default high and driven */
+#define SPIRead() P0DIR = 0xFF-2;           // Just drive SCK, let SDI be an input
 #endif
 
 // Support EP3 for a little while
@@ -52,7 +60,7 @@
 #define DriveSDA(x)   do { if (x) P1DIR = 0xFF-2; else P1DIR = 0xFF-2-1; } while(0) // 1=float, 0=drive
 #define I2CInit()     { P1CON = PULL_UP | 0;    /* Pull up SDA (there isn't one on board */ \
                         P10 = 0;                /* Default SDA low when driven */ \
-                        P0DIR = 0xFF-2; }       /* Default SCL driven */
+                        P1DIR = 255-2; }        /* Default SCL driven */
 #endif
 
 // Default direction for LEDs

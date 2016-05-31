@@ -95,3 +95,5 @@
 #define I2C_WRITE_BIT 0
 
 #define LPU_DEEP_SUSPEND 32
+
+#define SPI_READ 128

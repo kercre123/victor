@@ -51,36 +51,36 @@ endif
 COMPONENTS_eagle.app.v6 = \
 	hal/libuserhal.a  \
 	driver/libdriver.a \
-  transport/libtransport.a \
-  clad/libclad.a \
-  application/libapplication.a \
+	transport/libtransport.a \
+	clad/libclad.a \
+	application/libapplication.a \
 	factory/libfactory.a \
-  supervisor/libsupervisor.a
+	supervisor/libsupervisor.a
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
 	-L/opt/xtensa-lx106-elf/xtensa-lx106-elf/sysroot/usr/lib/ \
 	-nostdlib	\
-    -T$(LD_FILE)   \
+	-T$(LD_FILE) \
 	-Wl,--no-check-sections	\
-    -u call_user_start	\
+	-u call_user_start -u Cache_Read_Enable_New	\
 	-Wl,-static						\
 	-Wl,--start-group					\
 	-lc					\
   -lgcc					\
 	-lhal					\
+	$(DEP_LIBS_eagle.app.v6) \
 	-lphy	\
 	-lpp	\
 	-lnet80211	\
 	-lcrypto \
 	-llwip	\
 	-lwpa	\
-	-lmain	\
+	-lmain_w	\
 	-ljson	\
 	-lssl	\
 	-lpwm	\
 	-lsmartconfig \
-	$(DEP_LIBS_eagle.app.v6)					\
 	-Wl,--end-group \
   -Xlinker --Map=esp.map
 
@@ -107,7 +107,8 @@ CONFIGURATION_DEFINES =	-DICACHE_FLASH
 DEFINES +=				\
 	$(UNIVERSAL_TARGET_DEFINES)	\
 	$(CONFIGURATION_DEFINES) \
-  -DTARGET_ESPRESSIF
+  -DTARGET_ESPRESSIF \
+	-DFACTORY_FIRMWARE=$(FACTORY_FIRMWARE)
 
 DDEFINES +=				\
 	$(UNIVERSAL_TARGET_DEFINES)	\

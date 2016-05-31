@@ -37,8 +37,8 @@ uint32_t GetMicroCounter(void)
   static uint16_t high = 0; // Supply the missing high bits
   static uint16_t last = 0; // Last read of SysTick/US_DIVISOR
 
-  // NOTE:  This must be interrupt-safe, so take care below
-  __disable_irq();
+  // NOTE:  NO IRQS IN BOOTLOADER
+  // This must be interrupt-safe, so take care below
   uint32_t now = ((uint64_t)(MAX_COUNT - SysTick->VAL) * SYSTICK_RECIP) >> 32;
   
   if (now < last)       // Each time we wrap the low part, increase the high part by 1
@@ -46,8 +46,6 @@ uint32_t GetMicroCounter(void)
   
   last = now;
   now |= (high << 16);
-  
-  __enable_irq();
-
+ 
   return now;
 }

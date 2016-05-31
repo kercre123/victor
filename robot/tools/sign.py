@@ -25,10 +25,15 @@ parser.add_argument("-b", "--body", type=str,
                     help="NRF ELF Image")
 parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
+parser.add_argument('--factory_restore', type=str,
+                    help="Factory restore firmware for WiFi")
 parser.add_argument("-s", "--sign", type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", action="store_true",
                     help="Add version information comment block")
+parser.add_argument("--prepend_size_word", action="store_true",
+                    help="Put a single u32 size word at the front of the file for recovery images.")
+args = parser.parse_args()
 
 FILE_TYPE_VERSION   = 0x00000001
 
@@ -91,8 +96,11 @@ class DigestFile:
             return
         
         # write out our certificate block
-        self.write(self.sign(key), CERTIFICATE_BLOCK)        
+        self.write(self.sign(key), CERTIFICATE_BLOCK)
         self.hash = self.digestType.new()
+        
+    def close(self):
+        return self.fo.close()
 
 def MGF1(a, b, digestType = SHA512):
     a, index, counter = bytearray(a), 0, 0
@@ -232,5 +240,22 @@ if __name__ == '__main__':
 
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block+base_addr)
+    
+    if args.factory_restore is not None:
+        wifi,rtip = args.factory_restore.split(',')
+        rom_data = open(wifi, 'rb').read()
+        for block, data in chunk(rom_data, BLOCK_LENGTH):
+            fo.write(data, block + 0xFF400000)
+        rom_data = open(rtip, 'rb').read()
+        for block, data in chunk(rom_data, BLOCK_LENGTH):
+            fo.write(data, block + 0xFF400000 + 0x45000)
 
     fo.writeCert(key)
+    
+    fo.close()
+
+    if args.prepend_size_word:
+        fw = open(args.output, 'rb').read()
+        with open(args.output, "wb") as fo:
+            fo.write(pack("I", len(fw)))
+            fo.write(fw)

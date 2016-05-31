@@ -6,7 +6,7 @@
 void InitEspressif(void);
 void DeinitEspressif(void);
 
-void ProgramEspressif(void);
+void ProgramEspressif(int serial);
 bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data);
 
 #endif

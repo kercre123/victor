@@ -323,6 +323,11 @@ namespace Anki {
       {
         simNVStorage.NVRead(msg);
       }
+        
+      void WipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
+      {
+        // XXX
+      }
     }
   }
 }

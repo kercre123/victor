@@ -52,6 +52,8 @@ void Sleep()
   _beatCount--;   // We should never miss >1 beat, but this catches us up if we do
 }
 
+extern u8 _tapTime;   // Hack until we get hopping sync in place
+
 // Perform a radio handshake, then interpret and execute the message
 void MainExecution()
 {
@@ -62,6 +64,7 @@ void MainExecution()
   {
     LedSetValues();
     _radioIn[0] = 255;
+    _tapTime = _radioIn[13];
   }
 
   // Do this first:  If we're ready for a handshake, talk to the robot
@@ -77,6 +80,7 @@ void MainExecution()
       
       // Process future commands here
     }
+    _tapTime++;    // Whether we get a packet or not, increment tap timer
   }
   
   // If we're ready for the accelerometer, drain its FIFO

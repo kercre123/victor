@@ -8,7 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
-#include "storage.h"
+//#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
@@ -136,7 +136,8 @@ int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
-  Storage::init();
+  Bootloader::init();
+  //Storage::init();
 
   // Initialize our scheduler
   RTOS::init();
@@ -163,11 +164,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  #ifdef FACTORY_FIRMWARE
-  enterOperatingMode(BODY_IDLE_OPERATING_MODE);
-  #else
   enterOperatingMode(BODY_WIFI_OPERATING_MODE);
-  #endif
   setupOperatingMode();
 
   Timer::start();

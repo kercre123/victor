@@ -44,7 +44,7 @@ void Anki::Cozmo::HAL::Power::init()
 void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
 {
   if (!fixture) {
-    // Set MISO - "recovery boot mode" signal
+    // Reset MISO - "recovery boot mode" signal
     GPIO_RESET(GPIO_MISO, PIN_MISO);
     GPIO_OUT(GPIO_MISO, PIN_MISO);
     SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
@@ -54,8 +54,8 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
     GPIO_IN(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
   } else {
-    // Pull hard down to ground
-    GPIO_SET(GPIO_MOSI, PIN_MOSI);
+    // Pull down hard
+    GPIO_RESET(GPIO_MOSI, PIN_MOSI);
     GPIO_OUT(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO);
     
@@ -72,8 +72,6 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
   // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
   GPIO_IN(GPIO_WS, PIN_WS);
   SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp);
-
-  MicroWait(10000);
 
   // Turn on 2v8 and 3v3 rails
   GPIO_SET(GPIO_POWEREN, PIN_POWEREN);

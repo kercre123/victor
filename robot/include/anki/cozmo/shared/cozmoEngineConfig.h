@@ -66,6 +66,8 @@ namespace Anki {
     
     const f32 READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM = 2.f;
     
+    constexpr f32 STACKED_HEIGHT_TOL_MM = 15.f;
+    
     /***************************************************************************
      *
      *                          Timing (non-comms)

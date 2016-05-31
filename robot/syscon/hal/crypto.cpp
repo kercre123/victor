@@ -15,7 +15,7 @@ extern "C" {
 #include "crypto.h"
 #include "diffie.h"
 #include "random.h"
-#include "storage.h"
+//#include "storage.h"
 
 static volatile int fifoHead;
 static volatile int fifoTail;
@@ -34,12 +34,20 @@ void Crypto::init() {
   
   uint8_t key[AES_KEY_LENGTH];
   gen_random(key, AES_KEY_LENGTH);
-  Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
+  //Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
 }
 
 // Top 16 bytes of application space
 const void* Crypto::aes_key() {
-  return Storage::get_lazy(STORAGE_AES_KEY);
+  static const uint8_t AES_KEY[] = {
+    0xFF, 0xFE, 0xFD, 0xFC,
+    0xFB, 0xFA, 0xF9, 0xF8,
+    0xF7, 0xF6, 0xF5, 0xF4,
+    0xF3, 0xF2, 0xF1, 0xF0
+  };
+  
+  return AES_KEY;
+  //return Storage::get_lazy(STORAGE_AES_KEY);
 }
 
 void Crypto::execute(const CryptoTask* task) {

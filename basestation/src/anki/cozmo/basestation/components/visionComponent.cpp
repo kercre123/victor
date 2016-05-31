@@ -601,6 +601,14 @@ namespace Cozmo {
     ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
                  "VisionComponent.Processor.VisionSystemNotReady");
     
+    
+    const char* threadName = "VisionSystem";
+    #if defined(LINUX) || defined(ANDROID)
+    pthread_setname_np(pthread_self(), threadName);
+    #else
+    pthread_setname_np(threadName);
+    #endif
+    
     while (_running) {
       
       if(_paused) {
