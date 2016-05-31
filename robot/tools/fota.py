@@ -91,6 +91,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         if os.path.isfile(sys.argv[1]):
             fwi = sys.argv[1]
+        elif sys.argv[1] == 'factory':
+            fwi = os.path.join("releases", "cozmo_factory_install.safe")
         else:
             sys.exit("No such file as {1}".format(*sys.argv))
     
