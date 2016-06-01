@@ -10,6 +10,8 @@ public class SpeedTapGameConfig : MinigameConfigBase {
     return 1;
   }
 
+  [Tooltip("The amount of time in seconds that remaining 'Cubes On' time is cut to if a tap message is received")]
+  public float TapResolutionDelay;
   public int Rounds;
   public int MaxScorePerRound;
   [Range(0.0f, 1.0f)]

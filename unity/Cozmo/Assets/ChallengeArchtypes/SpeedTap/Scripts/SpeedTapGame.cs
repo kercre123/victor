@@ -56,6 +56,7 @@ namespace SpeedTap {
     private float _LastCozmoTimeStamp = -1;
     public float CozmoTapLatency_sec = 0.0f;
     public float CozmoTapLatencyCheckTimestamp = 0.0f;
+    public float TapResolutionDelay = 0.0f;
 
     #region Config Values
 
@@ -158,6 +159,7 @@ namespace SpeedTap {
       MinIdleInterval_percent = speedTapConfig.MinIdleInterval_percent;
       MaxIdleInterval_percent = speedTapConfig.MaxIdleInterval_percent;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
+      TapResolutionDelay = speedTapConfig.TapResolutionDelay;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
