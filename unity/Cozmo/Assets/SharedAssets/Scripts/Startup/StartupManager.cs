@@ -199,7 +199,7 @@ public class StartupManager : MonoBehaviour {
   private void AddComponents() {
     // Add managers to this object here
     // gameObject.AddComponent<ManagerTypeName>();
-    gameObject.AddComponent<HockeyAppManager>();
+    gameObject.AddComponent<ExceptionReportManager>();
     gameObject.AddComponent<ObjectTagRegistryManager>();
     AnimationManager.Instance.Initialize();
 
