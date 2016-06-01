@@ -39,6 +39,5 @@
     "Demo",
     "DemoFingerPounce"
   ],
-  "maxNoGroundMotionBeforeBored_Sec": 15.0,
-  "backUpDistance": -50.0
+  "maxNoGroundMotionBeforeBored_Sec": 15.0
 }

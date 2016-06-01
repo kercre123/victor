@@ -1127,17 +1127,19 @@ public class Robot : IRobot {
   }
 
   public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
-    RobotEngineManager.Instance.Message.EnableSparkUnlock = Singleton<EnableSparkUnlock>.Instance.Initialize(id);
-    RobotEngineManager.Instance.SendMessage();
-    IsSparked = true;
+    IsSparked = (id != UnlockId.Count);
     SparkUnlockId = id;
+
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID, 
+      Singleton<SetActiveSpark>.Instance.Initialize(SparkUnlockId)
+    ); 
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void StopSparkUnlock() {
-    RobotEngineManager.Instance.Message.StopSparkUnlock = Singleton<StopSparkUnlock>.Instance;
-    RobotEngineManager.Instance.SendMessage();
-    IsSparked = false;
-    SparkUnlockId = UnlockId.Count;
+    EnableSparkUnlock(UnlockId.Count);
   }
 
   private void SparkUnlockEnded() {
