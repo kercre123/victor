@@ -12,9 +12,9 @@ namespace Cozmo {
 
       private const float kMinScale = 1.0f;
       private const float kMaxScale = 1.25f;
-      private const float kMaxShake = 4.0f;
+      private const float kMaxShake = 3.0f;
       private const float kShakeInterval = 0.02f;
-      private const float kShakeDecay = 0.01f;
+      private const float kShakeDecay = 0.015f;
 
       private const float kChargePerTap = 0.15f;
       private const float kChargeDecay = 0.005f;
@@ -28,6 +28,7 @@ namespace Cozmo {
       private string _LootMidKey;
       [SerializeField]
       private string _LootAlmostKey;
+
       private const float kLootMidTreshold = 0.3f;
       private const float kLootAlmostThreshold = 0.6f;
 
@@ -104,7 +105,7 @@ namespace Cozmo {
       }
 
       private void ShakeTheBox() {
-        if (_currentCharge > 0.0f) {
+        if ((_currentCharge > 0.0f) && (_BoxOpened == false)) {
           // Keep Shaking, Update scale and glow alpha
           // Target Scale determined by current charge and constants.
           float scaleDiff = kMaxScale - kMinScale;
@@ -121,12 +122,12 @@ namespace Cozmo {
           //2 loops in order for _LootBox to return to where it begins
           _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
           UpdateLootText();
-        }
-        if (_currentCharge >= 1.0f) {
-          // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
-          _BoxOpened = true;
-          _LootBox.gameObject.SetActive(false);
-          _ChargeBar.SetProgress(1.0f);
+          if (_currentCharge >= 1.0f) {
+            // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
+            _BoxOpened = true;
+            _LootBox.gameObject.SetActive(false);
+            _ChargeBar.SetProgress(1.0f);
+          }
         }
       }
 
@@ -143,6 +144,11 @@ namespace Cozmo {
         else {
           LootText = _LootStartKey;
         }
+      }
+
+      private void RewardLoot() {
+        // TODO: Start Reward Animation Sequence and create LootDoobers
+        CloseView();
       }
 
       protected override void CleanUp() {
