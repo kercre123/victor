@@ -197,8 +197,8 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               NVStorage::NVOpResult result;
-              result.tag = NVStorage::NVEntry_Invalid;
-              result.write = false;
+              result.tag = NVStorage::NVEntry_WipeAll;
+              result.write = true;
               if (os_strncmp(msg.wipeAllNV.key, "Yes I really want to do this!", msg.wipeAllNV.key_length) != 0)
               {
                 result.result = NVStorage::NV_BAD_ARGS;
