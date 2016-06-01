@@ -64,6 +64,11 @@ namespace Cozmo {
         _LootBox.DOScale(kMinScale, 0.0f);
         _BoxOpened = false;
         _ShakeStarted = false;
+        _LootButton.onClick.AddListener(HandleButtonTap);
+      }
+
+      private void HandleButtonTap() {
+        _currentCharge += kChargePerTap;
       }
 
       private void Update() {
@@ -88,7 +93,7 @@ namespace Cozmo {
 
       private void ShakeTheBox() {
         if (_currentCharge >= 1.0f) {
-          // TODO: complete sequence, hide box, play sounds/effects/ 
+          // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
           _BoxOpened = true;
           _LootBox.gameObject.SetActive(false);
           _ChargeBar.SetProgress(1.0f);
@@ -128,6 +133,7 @@ namespace Cozmo {
       }
 
       protected override void CleanUp() {
+        _LootButton.onClick.RemoveAllListeners();
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
