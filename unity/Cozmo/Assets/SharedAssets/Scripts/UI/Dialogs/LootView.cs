@@ -127,6 +127,7 @@ namespace Cozmo {
             _BoxOpened = true;
             _LootBox.gameObject.SetActive(false);
             _ChargeBar.SetProgress(1.0f);
+            RewardLoot();
           }
         }
       }
