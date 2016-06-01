@@ -117,7 +117,7 @@ namespace Anki {
         {
           // Verify robot has turned back towards the face
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(41), DEG_TO_RAD(2)) &&
+                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(45), DEG_TO_RAD(2)) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
                                            _prevFaceSeenTime < _faceSeenTime &&
                                            _prevFaceSeenTime != 0, DEFAULT_TIMEOUT)

@@ -392,6 +392,9 @@ namespace Cozmo {
       bool      _isPoseSet   = false;
       bool      _nothingToDo = false;
       
+      const f32 kHeadAngleDistBias_rad = DEG_TO_RAD_F32(5);
+      const f32 kHeadAngleHeightBias_rad = DEG_TO_RAD_F32(7.5);
+      
       
     }; // class TurnTowardsPoseAction
   

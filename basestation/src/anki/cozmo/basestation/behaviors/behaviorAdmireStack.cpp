@@ -26,6 +26,9 @@
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
+// Whether or not we need to have recently seen the 2nd block when watching stack for 3rd block
+#define NEED_TO_SEE_SECOND_BLOCK 0
+
 namespace Anki {
 namespace Cozmo {
 
@@ -96,7 +99,7 @@ void BehaviorAdmireStack::StopInternal(Robot& robot)
 
 IBehavior::Status BehaviorAdmireStack::UpdateInternal(Robot& robot)
 {
-  if( _state == State::WatchingStack ) {
+  if( NEED_TO_SEE_SECOND_BLOCK && _state == State::WatchingStack ) {
     // make sure we have seen the second cube recently enough
     TimeStamp_t currTime = robot.GetLastImageTimeStamp();
     if( currTime > _topBlockLastSeentime + kBAS_maxBlockAge_ms ) {

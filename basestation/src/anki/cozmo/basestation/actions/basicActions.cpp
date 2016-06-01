@@ -1179,10 +1179,16 @@ namespace Anki {
       // Ramp bias down to 0 for distanceXY values from 150mm to 300mm.
       const f32 kFullBiasDist_mm = 150;
       const f32 kNoBiasDist_mm = 300;
-      const f32 biasScaleFactor = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
+      const f32 biasScaleFactorDist = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
+      
+      // Adding bias to account for the fact that we don't look high enough when turning towards objects off the ground
+      // Apply full bias for object 10mm above neck joint and 0 for objects below neck joint
+      const f32 kFullBiasHeight_mm = 10;
+      const f32 kNoBiasHeight_mm = 0;
+      const f32 biasScaleFactorHeight = CLIP((kNoBiasHeight_mm - heightDiff) / (kNoBiasHeight_mm - kFullBiasHeight_mm), 0, 1);
       
       // Adds 4 degrees to account for 4 degree lookdown on EP3
-      const Radians headAngle = std::atan2(heightDiff, distanceXY) + DEG_TO_RAD(5) * biasScaleFactor + DEG_TO_RAD(4);
+      const Radians headAngle = std::atan2(heightDiff, distanceXY) + (kHeadAngleDistBias_rad * biasScaleFactorDist) + (kHeadAngleHeightBias_rad * biasScaleFactorHeight) + DEG_TO_RAD(4);
 
       return headAngle;
     }

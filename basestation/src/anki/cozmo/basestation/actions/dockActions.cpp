@@ -1366,7 +1366,12 @@ namespace Anki {
             
             // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
-              _rollVerifyAction = new VisuallyVerifyObjectAction(_robot, _dockObjectID, _expectedMarkerPostRoll->GetCode());
+              // Since rolling is the only action that moves the block and then immediatly needs to visually verify
+              // The head needs to look down more to account for the fact the block pose moved towards us and then we can
+              // do the verification
+              _rollVerifyAction = new CompoundActionSequential(_robot,
+                                                               {new MoveHeadToAngleAction(_robot, kAngleToLookDown),
+                                                                new VisuallyVerifyObjectAction(_robot, _dockObjectID, _expectedMarkerPostRoll->GetCode())});
               _rollVerifyAction->ShouldSuppressTrackLocking(true);
               
               // Disable completion signals since this is inside another action

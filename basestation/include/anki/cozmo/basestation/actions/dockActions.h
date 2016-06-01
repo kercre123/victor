@@ -415,6 +415,10 @@ namespace Anki {
       
       IActionRunner*             _rollVerifyAction = nullptr;
       
+    private:
+      // How much we should look down to be able to see the marker of the object we just rolled
+      const f32 kAngleToLookDown = DEG_TO_RAD_F32(-15);
+      
     }; // class RollObjectAction
 
     
