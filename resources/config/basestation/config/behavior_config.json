@@ -55,7 +55,27 @@
     // goals to create
     "goals" :
     [
-    
+      // Sparks only
+      {
+        "name" : "sparksRollCube",
+        "requireSpark":"CubeRollAction",
+        "behaviorChooser" :
+        {
+          "type" : "simple",
+          // this are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "SparksRollCube" ]
+        }
+      },
+      {
+        "name" : "sparksStackCube",
+        "requireSpark":"CubeStackAction",
+        "behaviorChooser" :
+        {
+          "type" : "simple",
+          // this are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "SparksStackCube" ]
+        }
+      },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // FreeplayOne : old freeplay with game requests
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

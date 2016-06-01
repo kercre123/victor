@@ -84,7 +84,7 @@ namespace Vision {
     bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face);
     
     bool _isInitialized = false;
-    bool _detectEmotion = true;
+    bool _detectEmotion = false;
     
     Json::Value _config;
     

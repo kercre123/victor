@@ -133,6 +133,7 @@ namespace Cozmo {
 #   endif
     
     Profiler::SetProfileGroupName("VisionSystem");
+    Profiler::SetPrintFrequency(5000);
     
     VisionMarker::SetDataPath(_dataPath);
     
@@ -2516,12 +2517,6 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
       }
-    }
-
-    static s32 profilePrintCtr = 600;
-    if(--profilePrintCtr == 0) {
-      Profiler::PrintAverageTiming();
-      profilePrintCtr = 60;
     }
 
     /*

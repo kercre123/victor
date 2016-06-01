@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -24,9 +25,11 @@ namespace Anki {
 namespace Cozmo {
 
 const char* AIGoal::kBehaviorChooserConfigKey = "behaviorChooser";
-
+static const char* kRequiresSparkKey      = "requireSpark";
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIGoal::AIGoal()
+  AIGoal::AIGoal()
+  : _requiresSpark(UnlockId::Count)
 {
 
 }
@@ -42,6 +45,16 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
 {
   // read info from config
 
+  // - - - - - - - - - -
+  // Needs Sparks
+  // - - - - - - - - - -
+  
+  std::string sparkString;
+  if( JsonTools::GetValueOptional(config,kRequiresSparkKey,sparkString) )
+  {
+    _requiresSpark = UnlockIdsFromString(sparkString.c_str());
+  }
+  
   // configure chooser and set in out pointer
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);

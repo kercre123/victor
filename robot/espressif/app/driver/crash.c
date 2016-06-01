@@ -13,7 +13,7 @@
 #include "anki/cozmo/robot/version.h" // Must only be included in one place
 
 #define DUMP_TO_UART 1
-#define DUMP_TO_RTC_MEM 1
+#define DUMP_TO_RTC_MEM 0
 
 #define RTC_MEM_START (64)
 

@@ -57,6 +57,14 @@ namespace Vision {
     if(timerIter != _timers.end()) {
       Timer& timer = timerIter->second;
       timer.Update();
+      const auto currentTime = std::chrono::system_clock::now();
+      const auto timeDiff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - timer.lastPrintTime);
+      if (_timeBetweenPrints_ms >= 0 &&
+          timeDiff_ms.count() > _timeBetweenPrints_ms)
+      {
+        PrintTimerData(timerName, timer);
+        timer.lastPrintTime = currentTime;
+      }
       return timer.currentTime.count();
     } else {
       return 0;
@@ -89,12 +97,16 @@ namespace Vision {
   {
     for(auto & timerPair : _timers)
     {
-      const Timer& timer = timerPair.second;
-      PRINT_NAMED_INFO(_eventName.c_str(), "%s averaged %.2fms over %d calls",
-                       timerPair.first,
-                       (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0),
-                       timer.count);
+      PrintTimerData(timerPair.first, timerPair.second);
     }
+  }
+  
+  void Profiler::PrintTimerData(const char* name, const Timer& timer) const
+  {
+    PRINT_NAMED_INFO(_eventName.c_str(), "%s averaged %.2fms over %d calls",
+                     name,
+                     (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0),
+                     timer.count);
   }
   
 # endif // SHOW_TIMING

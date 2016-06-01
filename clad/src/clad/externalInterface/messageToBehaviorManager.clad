@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2016
 
 #include "clad/types/behaviorTypes.clad"
+#include "clad/types/unlockTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -25,7 +26,7 @@ structure SetAvailableGames
 // specific behavior sets, for example "stacking and destacking cubes nonstop for 30 seconds"
 structure SetActiveSpark
 {
-  BehaviorSpark behaviorSpark
+  UnlockId behaviorSpark
 }
 
 union BehaviorManagerMessageUnion {

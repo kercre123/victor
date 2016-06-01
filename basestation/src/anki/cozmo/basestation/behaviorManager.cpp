@@ -447,7 +447,7 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SetActiveSpark(BehaviorSpark spark)
+void BehaviorManager::SetActiveSpark(UnlockId spark)
 {
   _activeSpark = spark;
 }
