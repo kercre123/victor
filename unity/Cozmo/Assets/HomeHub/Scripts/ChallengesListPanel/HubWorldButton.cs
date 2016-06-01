@@ -17,19 +17,29 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private Anki.UI.AnkiTextLabel _ChallengeTitle;
 
+    [SerializeField]
+    private Image _CircuitImage;
+
     private string _ChallengeId;
 
-    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName) {
+    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false) {
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
         _IconImage.overrideSprite = challengeData.ChallengeIcon;
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
+      }
+      if (isEnd) {
+        _CircuitImage.enabled = false;
       }
       _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);
     }
 
     private void Update() {
       OnUpdate();
+    }
+
+    public void SetIsEnd(bool endCap) {
+      _CircuitImage.enabled = !endCap;
     }
 
     protected virtual void OnUpdate() {
