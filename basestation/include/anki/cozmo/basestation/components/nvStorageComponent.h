@@ -55,12 +55,12 @@ public:
   // is acked with MessageEngineToGame::NVStorageOpResult.
   using NVStorageWriteEraseCallback = std::function<void(NVStorage::NVResult res)>;
   bool Write(NVStorage::NVEntryTag tag,
-             u8* data, size_t size,
+             const u8* data, size_t size,
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
   bool Write(NVStorage::NVEntryTag tag,
-             std::vector<u8>* data,
+             const std::vector<u8>* data,
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
@@ -108,6 +108,10 @@ public:
   // Returns the word-aligned size that nvStorage automaticaly rounds up to on all saved content.
   // e.g. If you write 10 bytes to tag 2 and then read back tag 2, you will receive 12 bytes.
   static size_t MakeWordAligned(size_t size);
+
+  // Event/Message handling
+  template<typename T>
+  void HandleMessage(const T& msg);
   
   // Kevin's sandbox function for testing
   // For dev only!
@@ -140,7 +144,6 @@ private:
     : numTagsLeftToAck(0)
     , callback({})
     , writeNotErase(true)
-    , isWipeAll(false)
     , broadcastResultToGame(false)
     , timeoutTimeStamp(0)
     { }
@@ -150,7 +153,6 @@ private:
     
     NVStorageWriteEraseCallback callback;
     bool writeNotErase;
-    bool isWipeAll;
     bool broadcastResultToGame;
     TimeStamp_t timeoutTimeStamp;
   };
@@ -243,17 +245,11 @@ private:
   void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
-  // Game event handlers
-  void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageWipeAll(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
   void SendRequest(NVStorageRequest req);
   
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
-  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
+  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, const u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
   
   // Clear any data that was received from game (via NVStorageWriteEntry) for writing
   void ClearPendingWriteEntry();
