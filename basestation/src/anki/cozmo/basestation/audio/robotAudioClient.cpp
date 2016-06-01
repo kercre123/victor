@@ -133,6 +133,13 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
   if ( animationState != RobotAudioAnimation::AnimationState::AnimationCompleted &&
        animationState != RobotAudioAnimation::AnimationState::AnimationError ) {
     
+    if ( _currentAnimation != nullptr ) {
+      PRINT_NAMED_ERROR("RobotAudioClient.CreateAudioAnimation",
+                        "CurrentAnimation state: %hhu is NOT Null when creating a new animation",
+                        _currentAnimation->GetAnimationState() );
+      ClearCurrentAnimation();
+    }
+    
     _currentAnimation = audioAnimation;
   }
   else {
