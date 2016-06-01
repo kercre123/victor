@@ -50,35 +50,35 @@ namespace Anki {
 
         // Unity doesn't like uints for some reason
         [SerializeField]
-        private int _Event;
+        private string _Event;
 
         [SerializeField]
-        private int _EventType;
+        private string _EventType;
 
         [SerializeField]
         private int _GameObjectType;
 
         private AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType, GameObjectType gameObjectType) {
-          _Event = (int)(uint)evt;
-          _EventType = (int)(uint)evtType;
+          _Event = evt.ToString();
+          _EventType = evtType.ToString();
           _GameObjectType = (int)(uint)gameObjectType;
         }
 
         public GameEvent.GenericEvent Event {
           get {
-            return (GameEvent.GenericEvent)(uint)_Event;
+            return (GameEvent.GenericEvent)Enum.Parse(typeof(GameEvent.GenericEvent), _Event);
           }
           set {
-            _Event = (int)(uint)value;
+            _Event = value.ToString();
           }
         }
 
         public GameEvent.EventGroupType EventType {
           get {
-            return (GameEvent.EventGroupType)(uint)_EventType;
+            return (GameEvent.EventGroupType)Enum.Parse(typeof(GameEvent.EventGroupType), _EventType);
           }
           set {
-            _EventType = (int)(uint)value;
+            _EventType = value.ToString();
           }
         }
 

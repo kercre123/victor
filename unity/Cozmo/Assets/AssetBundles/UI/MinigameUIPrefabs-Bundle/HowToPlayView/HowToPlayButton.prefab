@@ -325,8 +325,8 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0.259}
   _GlintAnimator: {fileID: 11458032}
   _UISoundEvent:
-    _Event: 1425451874
-    _EventType: 7
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
   _PressedTintImage: {fileID: 11459758}

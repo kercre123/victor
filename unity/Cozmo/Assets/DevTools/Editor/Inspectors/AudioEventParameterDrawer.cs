@@ -32,14 +32,6 @@ namespace Anki.Cozmo.Audio {
       }
     }
 
-    // We want to limit choices
-    private List<EventTypeOption> _Options = new List<EventTypeOption>() {
-      new EventTypeOption("VO", EventGroupType.GenericEvent, GameObjectType.Aria),
-      new EventTypeOption("UI", EventGroupType.UI, GameObjectType.UI),
-      new EventTypeOption("SFX", EventGroupType.SFX, GameObjectType.SFX)
-    };
-
-
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
       return base.GetPropertyHeight(property, label) * 2;
     }
@@ -53,24 +45,19 @@ namespace Anki.Cozmo.Audio {
 
       var eventProp = property.FindPropertyRelative("_Event");
       var eventTypeProp = property.FindPropertyRelative("_EventType");
-      var gameObjectTypeProp = property.FindPropertyRelative("_GameObjectType");
 
-      var options = _Options.Select(x => x.OptionName).ToArray();
-      var values = _Options.Select(x => (int)(uint)x.EventType).ToArray();
-      eventTypeProp.intValue = EditorGUI.IntPopup(position, eventTypeProp.intValue, options, values);
+      eventTypeProp.stringValue = EditorGUI.EnumPopup(position, (EventGroupType)Enum.Parse(typeof(EventGroupType), eventTypeProp.stringValue)).ToString();
 
-      var eventType = (EventGroupType)(uint)(eventTypeProp.intValue);
-
-      gameObjectTypeProp.intValue = (int)(uint)_Options.FirstOrDefault(x => x.EventType == eventType).GameObjectType;
+      var eventType = (EventGroupType)Enum.Parse(typeof(EventGroupType), eventTypeProp.stringValue);
 
       var type = _EventTypeDictionary[eventType];
 
-      options = Enum.GetNames(type);
-      values = Enum.GetValues(type).Cast<Enum>().Select(x => (int)(uint)(object)x).ToArray();
-
+      var options = Enum.GetNames(type);
+      var values = Enum.GetValues(type).Cast<Enum>().Select(x => (int)(uint)(object)x).ToArray();
       position.y += position.height;
 
-      eventProp.intValue = EditorGUI.IntPopup(position, eventProp.intValue, options, values);
+      int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)Enum.Parse(typeof(GameEvent.GenericEvent), eventProp.stringValue), options, values);
+      eventProp.stringValue = ((GameEvent.GenericEvent)intEnumValue).ToString();
 
       EditorGUI.EndProperty();
     }
