@@ -39,9 +39,9 @@ MonoBehaviour:
     _Levels:
     - SkillsArray:
       - name: TapDelayMin
-        val: 0.2
+        val: 0.4
       - name: TapDelayMax
-        val: 0.45
+        val: 0.7
       - name: WrongTapChance
         val: 0.1
       UpperBoundThreshold: 1
@@ -91,7 +91,7 @@ MonoBehaviour:
         val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
-  TapResolutionDelay: 0.075
+  TapResolutionDelay: 0.1
   Rounds: 3
   MaxScorePerRound: 5
   MinIdleInterval_percent: 0

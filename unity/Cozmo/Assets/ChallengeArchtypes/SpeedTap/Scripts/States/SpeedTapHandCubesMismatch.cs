@@ -9,7 +9,7 @@ namespace SpeedTap {
     private float _LightsOnDuration_sec;
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
-    private float _EndTimestamp_sec;
+    private float _EndTimestamp_sec = -1;
     private bool _IsCozmoMoving;
 
     public override void Enter() {
