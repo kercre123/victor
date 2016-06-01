@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/charger.h"
@@ -93,6 +94,7 @@ namespace Anki {
       }
       
       _robot.UnsetDockObjectID();
+      _robot.GetLightsComponent().UnSetInteractionObject();
       
       // Stop squinting
       _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
@@ -348,6 +350,8 @@ namespace Anki {
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
       _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
+
+      _robot.GetLightsComponent().SetInteractionObject(_dockObjectID);
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing

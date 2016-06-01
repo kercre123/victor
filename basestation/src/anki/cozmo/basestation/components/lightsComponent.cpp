@@ -117,17 +117,17 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
       break;
       
     case CubeLightsState::Connected:
-      // _robot.SetObjectLights(object,
-      //                        WhichCubeLEDs::ALL,
-      //                        0x333333, 0x111111,
-      //                        300, 900,
-      //                        500, 500,
-      //                        true,
-      //                        MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-      //                        Point2f{0.0, 0.0});
+      _robot.SetObjectLights(object,
+                             WhichCubeLEDs::ALL,
+                             ColorRGBA(0.6f,0.6f,0.6f), ColorRGBA(0.35f, 0.35f, 0.35f),
+                             250, 100,
+                             2000, 2000,
+                             true,
+                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+                             Point2f{0.0, 0.0});
 
       // TODO:(bn) need to set this to cubes I haven't seen yet, but can't figure out how
-      _robot.TurnOffObjectLights(object);
+      //_robot.TurnOffObjectLights(object);
       
       PRINT_NAMED_DEBUG("LightsComponent.SetLights",
                         "Object %d set to connected",
