@@ -137,5 +137,14 @@
   },
   "dailyGoal.description.WinSpeedTapHands": {
     "translation": "This goal has no description set."
+  },
+  "loot.Start": {
+    "translation": "Tap Repeatedly!"
+  },
+  "loot.Mid": {
+    "translation": "Keep Going!"
+  },
+  "loot.Almost": {
+    "translation": "Almost There!"
   }
 }

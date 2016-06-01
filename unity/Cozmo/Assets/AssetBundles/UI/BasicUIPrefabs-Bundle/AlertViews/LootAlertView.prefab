@@ -27,8 +27,9 @@ GameObject:
   - 224: {fileID: 22466988}
   - 222: {fileID: 22273566}
   - 114: {fileID: 11497132}
+  - 114: {fileID: 11488180}
   m_Layer: 5
-  m_Name: Image
+  m_Name: LootBoxButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -95,7 +96,7 @@ GameObject:
   - 222: {fileID: 22219860}
   - 114: {fileID: 11411324}
   m_Layer: 5
-  m_Name: TitleText
+  m_Name: LootText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -110,6 +111,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22468726}
   - 225: {fileID: 22536050}
+  - 114: {fileID: 11429958}
   m_Layer: 5
   m_Name: LootAlertView
   m_TagString: Untagged
@@ -179,6 +181,31 @@ MonoBehaviour:
   m_Text: TAP REPEATEDLY!
   _AllUppercase: 1
   GlowText: 0
+--- !u!114 &11429958
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 199250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73c2fe72024e4462a988635858b7a680, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _DASEventViewName: LootAlert
+  _DASEventViewType: 2
+  _CloseDialogOnTapOutside: 0
+  _OptionalCloseDialogButton: {fileID: 0}
+  DimBackground: 1
+  _LootStartKey: loot.Start
+  _LootMidKey: loot.Mid
+  _LootAlmostKey: loot.Almost
+  _LootText: {fileID: 11411324}
+  _LootButton: {fileID: 11488180}
+  _LootBox: {fileID: 22481126}
+  _LootGlow: {fileID: 11407584}
+  _AlphaController: {fileID: 22536050}
+  _ChargeBar: {fileID: 11437304}
 --- !u!114 &11437304
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -221,6 +248,47 @@ MonoBehaviour:
   m_FillAmount: 0.23
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11488180
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 120228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1392445389, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 0
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 11497132}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
+      Culture=neutral, PublicKeyToken=null
 --- !u!114 &11497132
 MonoBehaviour:
   m_ObjectHideFlags: 1

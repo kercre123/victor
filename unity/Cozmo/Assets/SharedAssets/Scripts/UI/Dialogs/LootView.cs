@@ -41,7 +41,7 @@ namespace Cozmo {
       private AnkiTextLabel _LootText;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _LootButton;
+      private Button _LootButton;
 
       [SerializeField]
       private Transform _LootBox;
