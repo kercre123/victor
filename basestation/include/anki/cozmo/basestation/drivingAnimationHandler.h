@@ -36,13 +36,20 @@ namespace Anki {
         // Subscribes to ActionCompleted and SetDrivingAnimations messages
         DrivingAnimationHandler(Robot& robot);
       
+        // Container for the various driving animations
+        struct DrivingAnimations
+        {
+          std::string drivingStartAnim;
+          std::string drivingLoopAnim;
+          std::string drivingEndAnim;
+        };
+      
         // Sets the driving animations
-        void SetDrivingAnimations(const std::string& drivingStartAnim,
-                                  const std::string& drivingLoopAnim,
-                                  const std::string& drivingEndAnim);
+        void PushDrivingAnimations(const DrivingAnimations& drivingAnimations);
+        void PopDrivingAnimations();
 
         // Resets the driving animations to default
-        void ResetDrivingAnimations();
+        void ClearAllDrivingAnimations();
       
         // Returns true if the drivingEnd animation is playing
         bool IsPlayingEndAnim() const { return _endAnimStarted && !_endAnimCompleted; }
@@ -56,6 +63,8 @@ namespace Anki {
         // Called when the Driving action is being destroyed
         void ActionIsBeingDestroyed();
       
+        bool IsCurrentlyPlayingAnimation() const { return (_startedPlayingAnimation || _endAnimStarted); }
+      
       private:
       
         // Listens for driving animations to complete and handles what animation to play next
@@ -68,6 +77,9 @@ namespace Anki {
       
         Robot& _robot;
       
+        std::vector<DrivingAnimations> _drivingAnimationStack;
+        const DrivingAnimations kDefaultDrivingAnimations;
+      
         bool _startedPlayingAnimation = false;
       
         u8 _tracksToUnlock = (u8)AnimTrackFlag::NO_TRACKS;
@@ -75,9 +87,6 @@ namespace Anki {
         std::vector<Signal::SmartHandle> _signalHandles;
         bool _endAnimStarted = false;
         bool _endAnimCompleted = false;
-        std::string _drivingStartAnim = kDefaultDrivingStartAnim;
-        std::string _drivingLoopAnim = kDefaultDrivingLoopAnim;
-        std::string _drivingEndAnim = kDefaultDrivingEndAnim;
         int _drivingStartAnimTag = -1;
         int _drivingLoopAnimTag = -1;
         int _drivingEndAnimTag = -1;

@@ -76,6 +76,10 @@ private:
   bool _didKnockOverStack = false;
   
   const int numFramesToWaitForBeforeFlip = 5;
+  
+  std::string _prevDrivingStartAnim;
+  std::string _prevDrivingLoopAnim;
+  std::string _prevDrivingEndAnim;
 };
 
 }

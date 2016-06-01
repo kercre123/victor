@@ -458,11 +458,15 @@ message DisplayProceduralFace {
   uint_8   robotID
 }
 
-// SetDrivingAnimations
-message SetDrivingAnimations {
+// PushDrivingAnimations
+message PushDrivingAnimations {
     string drivingStartAnim,
     string drivingLoopAnim,
     string drivingEndAnim
+}
+
+message PopDrivingAnimations {
+
 }
 
 

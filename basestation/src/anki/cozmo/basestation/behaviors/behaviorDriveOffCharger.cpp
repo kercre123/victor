@@ -56,7 +56,7 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   
 void BehaviorDriveOffCharger::StopInternal(Robot& robot)
 {
-  robot.GetDrivingAnimationHandler().ResetDrivingAnimations();
+  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
 }
 
@@ -85,9 +85,9 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
   SET_STATE(DrivingForward);
   if( robot.IsOnChargerPlatform() )
   {
-    robot.GetDrivingAnimationHandler().SetDrivingAnimations(_startDrivingAnimGroup,
-                                                            _drivingLoopAnimGroup,
-                                                            _stopDrivingAnimGroup);
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations({_startDrivingAnimGroup,
+                                                              _drivingLoopAnimGroup,
+                                                              _stopDrivingAnimGroup});
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(robot, 100.0f, kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);

@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
@@ -54,6 +55,10 @@ CONSOLE_VAR(f32, kBAS_minDistanceFromStack_mm, "Behavior.AdmireStack", 130.0f);
 CONSOLE_VAR(f32, kBAS_ScoreIncreaseForAction, "Behavior.AdmireStack", 0.8f);
 
 const char* const kFocusEyesForKnockOverAnim = "anim_ReactToBlock_focusedEyes_01";
+
+const std::string kDrivingAngryStartAnim = "ag_driving_upset_start";
+const std::string kDrivingAngryLoopAnim  = "ag_driving_upset_Loop";
+const std::string kDrivingAngryEndAnim   = "ag_driving_upset_end";
 
 BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -211,6 +216,11 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
 
   ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
   
+  // Push angry driving animations
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({kDrivingAngryStartAnim,
+                                                            kDrivingAngryLoopAnim,
+                                                            kDrivingAngryEndAnim});
+  
   // Backup
   DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
   backupAction->SetAccel(kBAS_backupAccel_mmps2);
@@ -257,6 +267,9 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
       // else {
       //   TransitionToSearchingForStack(robot);
       // }
+    
+      // Pop the angry driving animations
+      robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     });
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }

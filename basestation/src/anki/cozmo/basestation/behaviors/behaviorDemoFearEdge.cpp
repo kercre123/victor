@@ -52,8 +52,7 @@ Result BehaviorDemoFearEdge::InitInternal(Robot& robot)
 
 void BehaviorDemoFearEdge::StopInternal(Robot& robot)
 {
-  // TODO:(bn) driving animations should be push/pop
-  robot.GetDrivingAnimationHandler().ResetDrivingAnimations();
+  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
 }
 
 void BehaviorDemoFearEdge::TransitionToDrivingForward(Robot& robot)
@@ -64,9 +63,9 @@ void BehaviorDemoFearEdge::TransitionToDrivingForward(Robot& robot)
   // interrupted by the cliff behavior
 
   // TODO:(bn) a better path here
-  robot.GetDrivingAnimationHandler().SetDrivingAnimations(_startDrivingAnimGroup,
-                                                          _drivingLoopAnimGroup,
-                                                          _stopDrivingAnimGroup);
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({_startDrivingAnimGroup,
+                                                            _drivingLoopAnimGroup,
+                                                            _stopDrivingAnimGroup});
 
   DriveStraightAction* action = new DriveStraightAction(robot, 1000.0f, kInitialDriveSpeed);
   action->SetAccel(kInitialDriveAccel);

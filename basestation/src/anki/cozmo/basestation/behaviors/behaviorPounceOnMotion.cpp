@@ -427,9 +427,9 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
   
   robot.GetAnimationStreamer().PushIdleAnimation(s_pounceDriveFaceAnimGroup);
   
-  robot.GetDrivingAnimationHandler().SetDrivingAnimations(s_PounceSneakDriveStartAnimGroup,
-                                                          s_PounceSneakDriveLoopAnimGroup,
-                                                          s_PounceSneakDriveEndAnimGroup);
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({s_PounceSneakDriveStartAnimGroup,
+                                                            s_PounceSneakDriveLoopAnimGroup,
+                                                            s_PounceSneakDriveEndAnimGroup});
   
   TransitionToInitialWarningAnim(robot);
   
@@ -513,7 +513,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   _lastValidPouncePoseTime = 0.0f;
   
   robot.GetAnimationStreamer().PopIdleAnimation();
-  robot.GetDrivingAnimationHandler().ResetDrivingAnimations();
+  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
 }
 
 

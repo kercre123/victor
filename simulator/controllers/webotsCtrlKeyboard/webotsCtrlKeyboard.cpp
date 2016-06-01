@@ -489,7 +489,6 @@ namespace Anki {
           const std::string drivingLoopAnim = root_->getField("drivingLoopAnim")->getSFString();
           const std::string drivingEndAnim = root_->getField("drivingEndAnim")->getSFString();
           if(_drivingStartAnim.compare(drivingStartAnim) != 0 ||
-          
              _drivingLoopAnim.compare(drivingLoopAnim) != 0 ||
              _drivingEndAnim.compare(drivingEndAnim) != 0)
           {
@@ -497,14 +496,19 @@ namespace Anki {
             _drivingLoopAnim = drivingLoopAnim;
             _drivingEndAnim = drivingEndAnim;
           
-            ExternalInterface::SetDrivingAnimations m;
+            // Pop whatever driving animations were being used and push the new ones
+            ExternalInterface::MessageGameToEngine msg1;
+            msg1.Set_PopDrivingAnimations(ExternalInterface::PopDrivingAnimations());
+            SendMessage(msg1);
+          
+            ExternalInterface::PushDrivingAnimations m;
             m.drivingStartAnim = _drivingStartAnim;
             m.drivingLoopAnim = _drivingLoopAnim;
             m.drivingEndAnim = _drivingEndAnim;
             
-            ExternalInterface::MessageGameToEngine msg;
-            msg.Set_SetDrivingAnimations(m);
-            SendMessage(msg);
+            ExternalInterface::MessageGameToEngine msg2;
+            msg2.Set_PushDrivingAnimations(m);
+            SendMessage(msg2);
           }
           
           
