@@ -12,7 +12,7 @@ namespace Cozmo {
 
       private const float kMinScale = 1.0f;
       private const float kMaxScale = 1.25f;
-      private const float kMaxShake = 3.0f;
+      private const float kMaxShake = 4.5f;
       private const float kShakeInterval = 0.02f;
       private const float kShakeDecay = 0.015f;
 
