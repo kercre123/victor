@@ -10,13 +10,17 @@ namespace Cozmo {
   namespace UI {
     public class LootView : BaseView {
 
-      private const float kMinScale = 0.8f;
-      private const float kMaxScale = 1.2f;
-      private const float kMaxShake = 6.0f;
-      private const float kShakeInterval = 0.01f;
+      private const float kMinScale = 1.0f;
+      private const float kMaxScale = 1.25f;
+      private const float kMaxShake = 4.0f;
+      private const float kShakeInterval = 0.02f;
+      private const float kShakeDecay = 0.01f;
+
       private const float kChargePerTap = 0.15f;
       private const float kChargeDecay = 0.005f;
+
       private float _currentCharge = 0.0f;
+      private float _currentShake = 0.0f;
 
       [SerializeField]
       private string _LootStartKey;
@@ -70,6 +74,7 @@ namespace Cozmo {
 
       private void HandleButtonTap() {
         _currentCharge += kChargePerTap;
+        _currentShake += kChargePerTap;
       }
 
       private void Update() {
@@ -88,18 +93,18 @@ namespace Cozmo {
               }
             }
           }
+          if (_currentShake > 0.0f) {
+            _currentShake -= kShakeDecay;
+            if (_currentShake <= 0.0f) {
+              _currentShake = 0.0f;
+            }
+          }
           _ChargeBar.SetProgress(_currentCharge);
         }
       }
 
       private void ShakeTheBox() {
-        if (_currentCharge >= 1.0f) {
-          // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
-          _BoxOpened = true;
-          _LootBox.gameObject.SetActive(false);
-          _ChargeBar.SetProgress(1.0f);
-        }
-        else if (_currentCharge > 0.0f) {
+        if (_currentCharge > 0.0f) {
           // Keep Shaking, Update scale and glow alpha
           // Target Scale determined by current charge and constants.
           float scaleDiff = kMaxScale - kMinScale;
@@ -110,12 +115,18 @@ namespace Cozmo {
           _LootGlow.DOFade(_currentCharge, kShakeInterval * 2);
 
           // Shake Power determined by current charge and constants.
-          float currShake = _currentCharge * kMaxShake;
+          float currShake = _currentShake * kMaxShake;
           float shakeX = UnityEngine.Random.Range(-currShake, currShake);
           float shakeY = UnityEngine.Random.Range(-currShake, currShake);
           //2 loops in order for _LootBox to return to where it begins
           _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
           UpdateLootText();
+        }
+        if (_currentCharge >= 1.0f) {
+          // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
+          _BoxOpened = true;
+          _LootBox.gameObject.SetActive(false);
+          _ChargeBar.SetProgress(1.0f);
         }
       }
 
