@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/speedChooser.h"
@@ -105,6 +106,11 @@ namespace Anki {
     , _approachAngle_rad(0)
     {
 
+    }
+    
+    DriveToObjectAction::~DriveToObjectAction()
+    {
+      _robot.GetLightsComponent().UnSetInteractionObject();
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -355,6 +361,10 @@ namespace Anki {
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(object);
       } // if/else object==nullptr
+      
+      // Mark this object as one we are docking with (e.g. so its lights indicate
+      // it is being interacted with)
+      _robot.GetLightsComponent().SetInteractionObject(_objectID);
       
       return result;
     }

@@ -38,6 +38,9 @@ public:
   // again. Disabling turns them all to "off"
   void SetEnableComponent(bool enable);
 
+  void SetInteractionObject(ObjectID objectID) { _interactionObject = objectID; }
+  void UnSetInteractionObject() { _interactionObject.UnSet(); }
+  
   template<typename T>
   void HandleMessage(const T& msg);
   
@@ -72,6 +75,8 @@ private:
   Robot& _robot;
 
   bool _enabled = true;
+  
+  ObjectID _interactionObject;
   
   std::list<Signal::SmartHandle> _eventHandles;
 };

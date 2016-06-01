@@ -126,7 +126,7 @@ namespace Anki {
                           const ObjectID& objectID,
                           const f32 distance_mm,
                           const bool useManualSpeed = false);
-      virtual ~DriveToObjectAction() { };
+      virtual ~DriveToObjectAction();
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);

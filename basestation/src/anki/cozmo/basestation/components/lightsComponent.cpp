@@ -50,7 +50,7 @@ void LightsComponent::Update()
     CubeLightsState newState = CubeLightsState::Visible;
     
     // If we're interacting with this object, put it in interacting state
-    if(cubeInfoPair.first == _robot.GetDockObject())
+    if(cubeInfoPair.first == _interactionObject)
     {
       newState = CubeLightsState::Interacting;
     }
