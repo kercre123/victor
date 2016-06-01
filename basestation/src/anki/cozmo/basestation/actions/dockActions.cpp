@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/charger.h"
@@ -26,7 +27,10 @@ namespace Anki {
   namespace Cozmo {
   
     // Which docking method actions should use
-    CONSOLE_VAR(u32, kDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
+    CONSOLE_VAR(u32, kDefaultDockingMethod,"DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
+    CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
+    CONSOLE_VAR(u32, kRollDockingMethod,   "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
+    CONSOLE_VAR(u32, kStackDockingMethod,  "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
@@ -66,7 +70,7 @@ namespace Anki {
     : IAction(robot)
     , _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
-    , _dockingMethod((DockingMethod)kDockingMethod)
+    , _dockingMethod((DockingMethod)kDefaultDockingMethod)
     {
       
     }
@@ -90,6 +94,7 @@ namespace Anki {
       }
       
       _robot.UnsetDockObjectID();
+      _robot.GetLightsComponent().UnSetInteractionObject();
       
       // Stop squinting
       _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
@@ -345,6 +350,8 @@ namespace Anki {
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
       _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
+
+      _robot.GetLightsComponent().SetInteractionObject(_dockObjectID);
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
@@ -695,6 +702,7 @@ namespace Anki {
     PickupObjectAction::PickupObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
     : IDockAction(robot, objectID, useManualSpeed)
     {
+      _dockingMethod = (DockingMethod)kPickupDockingMethod;
       SetPostDockLiftMovingAnimation("LiftEffortPickup");
     }
     
@@ -1129,6 +1137,10 @@ namespace Anki {
       
       _dockAction = _placeObjectOnGroundIfCarrying ? DockAction::DA_PLACE_LOW : DockAction::DA_PLACE_HIGH;
       
+      if(_dockAction == DockAction::DA_PLACE_HIGH) {
+        _dockingMethod = (DockingMethod)kStackDockingMethod;
+      }
+      
       // Need to record the object we are currently carrying because it
       // will get unset when the robot unattaches it during placement, and
       // we want to be able to verify that we're seeing what we just placed.
@@ -1253,6 +1265,7 @@ namespace Anki {
     RollObjectAction::RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
     : IDockAction(robot, objectID, useManualSpeed)
     {
+      _dockingMethod = (DockingMethod)kRollDockingMethod;
       _dockAction = DockAction::DA_ROLL_LOW;
       SetPostDockLiftMovingAnimation("LiftEffortRoll");
     }

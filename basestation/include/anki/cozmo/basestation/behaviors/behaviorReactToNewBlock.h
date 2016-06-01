@@ -72,6 +72,7 @@ private:
   static bool CanPickUpBlock(const Robot& robot, const ObservableObject* object);
   
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
+  void HandleObjectChanged(ObjectID objectID);
   
   ObjectID    _targetBlock;
   TimeStamp_t _targetBlockLastSeen = 0;

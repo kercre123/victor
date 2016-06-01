@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -33,7 +34,7 @@ namespace Cozmo {
 
 CONSOLE_VAR(f32, kBRTNB_ScoreIncreaseForReaction, "Behavior.ReactToBlock", 0.3f);
 CONSOLE_VAR(f32, kBRTNB_ScoreIncreaseForPickup, "Behavior.ReactToBlock", 0.8f);
-CONSOLE_VAR(f32, kBRTNB_MinHeightForBigReact_mm, "Behavior.ReactToBlock", 40.0f);
+CONSOLE_VAR(f32, kBRTNB_MinHeightForBigReact_mm, "Behavior.ReactToBlock", 35.0f);
 CONSOLE_VAR(u32, kBRTNB_minAgeToIgnoreBlock_ms, "Behavior.ReactToBlock", 10000);
 CONSOLE_VAR(u32, kBRTNB_minAgeToLookDown_ms, "Behavior.ReactToBlock", 700);
 CONSOLE_VAR(f32, kBRTNB_lookDownHeadAngle_deg, "Behavior.ReactToBlock", -10.0f);
@@ -51,9 +52,11 @@ BehaviorReactToNewBlock::BehaviorReactToNewBlock(Robot& robot, const Json::Value
 {
   SetDefaultName("ReactToNewBlock");
 
-  SubscribeToTags({
-    EngineToGameTag::RobotObservedObject
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedObject,
+    EngineToGameTag::RobotMarkedObjectPoseUnknown,
+  }});
+
 }
 
 Result BehaviorReactToNewBlock::InitInternal(Robot& robot)
@@ -64,11 +67,7 @@ Result BehaviorReactToNewBlock::InitInternal(Robot& robot)
 
 void BehaviorReactToNewBlock::StopInternal(Robot& robot)
 {
-  if( _state == State::AskingLoop ) {
-    // if we get interrupted while we were acting, then we are done reacting to the given block
-    _reactedBlocks.insert(_targetBlock);
-    _targetBlock.UnSet();
-  }
+  
 }
 
 bool BehaviorReactToNewBlock::IsRunnableInternal(const Robot& robot) const
@@ -82,6 +81,10 @@ void BehaviorReactToNewBlock::AlwaysHandle(const EngineToGameEvent& event, const
   {
     case EngineToGameTag::RobotObservedObject:
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
+      break;
+      
+    case EngineToGameTag::RobotMarkedObjectPoseUnknown:
+      HandleObjectChanged(event.GetData().Get_RobotMarkedObjectPoseUnknown().objectID);
       break;
 
     default:
@@ -133,6 +136,19 @@ void BehaviorReactToNewBlock::HandleObjectObserved(const Robot& robot, const Ext
   }
 }
 
+  
+void BehaviorReactToNewBlock::HandleObjectChanged(ObjectID objectID)
+{
+  if(objectID != _targetBlock)
+  {
+    size_t N = _reactedBlocks.erase(objectID);
+    if(N > 0) {
+      PRINT_NAMED_DEBUG("BehaviorReactToNewBlock.HandleObjectChanged",
+                        "Removing Object %d from reacted set because it moved",
+                        objectID.GetValue());
+    }
+  }
+}
   
   
 bool BehaviorReactToNewBlock::ShouldAskForBlock(const Robot& robot, ObjectID blockID)
@@ -256,21 +272,35 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
   // Check if we can pick up the block from wherever it is and go grab it if so
   if( CanPickUpBlock(robot, newBlock) )
   {
-    StartActing(new PickupObjectAction(robot, _targetBlock), kBRTNB_ScoreIncreaseForPickup,
-                [this,&robot](ActionResult res) {
-                  if(ActionResult::SUCCESS == res) {
-                    // Picked up block! Unset target block, indicating this behavior is
-                    // no longer runnable
+    const Radians maxTurnToFaceAngle(DEG_TO_RAD_F32(30.f));
+    const bool sayName = true;
+    StartActing(new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,
+                                              maxTurnToFaceAngle, sayName), kBRTNB_ScoreIncreaseForPickup,
+                [this,&robot](const ExternalInterface::RobotCompletedAction& completionEvent) {
+                  if(ActionResult::SUCCESS == completionEvent.result)
+                  {
+                    // Picked up block! Mark target block as reacted to, and unset target block,
+                    // indicating this behavior is no longer runnable
+                    _reactedBlocks.insert(_targetBlock);
                     _targetBlock.UnSet();
                     
                     StartActing(new PlayAnimationGroupAction(robot, _pickupSuccessAnimGroup),
                                 kBRTNB_ScoreIncreaseForPickup);
-                    
                   } else {
-                    // Pickup failed, play retry animation, finish, and let behavior
-                    // be selected again
-                    StartActing(new PlayAnimationGroupAction(robot, _retryPickeupAnimGroup),
-                                kBRTNB_ScoreIncreaseForPickup);
+                    auto& completionInfo = completionEvent.completionInfo.Get_objectInteractionCompleted();
+                    switch(completionInfo.result)
+                    {
+                      case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+                        // Did not reach pre-action pose: don't play retry animation in this case
+                        break;
+                        
+                      default:
+                        // Pickup failed, play retry animation, finish, and let behavior
+                        // be selected again
+                        StartActing(new PlayAnimationGroupAction(robot, _retryPickeupAnimGroup),
+                                    kBRTNB_ScoreIncreaseForPickup);
+                        break;
+                    }
                   }
                 });
     return;

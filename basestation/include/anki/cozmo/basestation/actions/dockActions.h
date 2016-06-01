@@ -166,7 +166,7 @@ namespace Anki {
       f32                        _dockDecel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockDecel_mmps2;
       ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       bool                       _doNearPredockPoseCheck         = true;
-      u8                         _numDockingRetries              = 2;
+      u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       
     private:
