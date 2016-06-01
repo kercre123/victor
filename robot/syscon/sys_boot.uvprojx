@@ -10,12 +10,12 @@
       <TargetName>sys_boot</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
+      <pCCUsed>5060061::V5.06 update 1 (build 61)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>nRF51822_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.6.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.5.0</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
           <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x4000) CPUTYPE("Cortex-M0") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -328,8 +328,6 @@
             <v6LangP>0</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
-            <v6Lto>0</v6Lto>
-            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
@@ -429,8 +427,6 @@
                     <v6LangP>0</v6LangP>
                     <vShortEn>2</vShortEn>
                     <vShortWch>2</vShortWch>
-                    <v6Lto>0</v6Lto>
-                    <v6WtE>0</v6WtE>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>
@@ -447,11 +443,6 @@
               <FilePath>.\boot\timer.cpp</FilePath>
             </File>
             <File>
-              <FileName>startup_nrf51.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\boot\startup_nrf51.s</FilePath>
-            </File>
-            <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\lights.cpp</FilePath>
@@ -466,6 +457,11 @@
         <Group>
           <GroupName>lib</GroupName>
           <Files>
+            <File>
+              <FileName>startup_nrf51.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\boot\startup_nrf51.s</FilePath>
+            </File>
             <File>
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
