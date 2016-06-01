@@ -29,8 +29,8 @@ namespace Cozmo {
       [SerializeField]
       private string _LootAlmostKey;
 
-      private const float kLootMidTreshold = 0.3f;
-      private const float kLootAlmostThreshold = 0.6f;
+      private const float kLootMidTreshold = 0.2f;
+      private const float kLootAlmostThreshold = 0.7f;
 
       public string LootText {
         get { return _LootText != null ? _LootText.text : null; }
