@@ -610,7 +610,7 @@ namespace Cozmo {
                         
                         // Verify tool code data is in range
                         static const f32 pixelDistThresh_x = 20.f;
-                        static const f32 pixelDistThresh_y = 35.f;
+                        static const f32 pixelDistThresh_y = 40.f;
                         f32 distL_x = std::fabsf(info.expectedCalibDotLeft_x - info.observedCalibDotLeft_x);
                         f32 distL_y = std::fabsf(info.expectedCalibDotLeft_y - info.observedCalibDotLeft_y);
                         f32 distR_x = std::fabsf(info.expectedCalibDotRight_x - info.observedCalibDotRight_x);

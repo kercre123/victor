@@ -81,6 +81,12 @@ bool NVStorageComponent::IsValidEntryTag(u32 tag) {
     return tag != static_cast<u32>(NVStorage::NVEntryTag::NVEntry_Invalid);
   }
 }
+ 
+bool NVStorageComponent::IsFactoryEntryTag(u32 tag)
+{
+  return (tag & 0x80000000) > 0;
+}
+  
   
 // Returns the base (i.e. lowest) tag of the multi-blob entry range
 // in which the given tag falls.
@@ -150,11 +156,13 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
   // If this is a multi-blob write...
   if (IsMultiBlobEntryTag(static_cast<u32>(tag))) {
     
-    // Queue an erase first in case this write has fewer blobs
-    // than what is already stored in the robot.
-    PRINT_NAMED_DEBUG("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
-                      "Tag: %s", EnumToString(tag));
-    _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+    if (!IsFactoryEntryTag(static_cast<u32>(tag))) {
+      // Queue an erase first in case this write has fewer blobs
+      // than what is already stored in the robot.
+      PRINT_NAMED_DEBUG("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
+                        "Tag: %s", EnumToString(tag));
+      _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+    }
   }
   
   // If this is a single blob write
@@ -402,15 +410,14 @@ void NVStorageComponent::Update()
     _wasLastWriteAcked = false;
     WriteDataObject* sendData = &_writeDataQueue.front();
 
-    // Start constructing write message
-    NVStorage::NVStorageWrite writeMsg;
-    writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
-    writeMsg.writeNotErase = true;
-    writeMsg.reportEach = true;  // Note: Write is ackd (with NVOpResult) if reportEach || reportDone.
-    writeMsg.reportDone = true;  //       Erase is acked iff reportEach.
+    // Fill out write message
+    _writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
+    _writeMsg.writeNotErase = true;
+    _writeMsg.reportEach = true;  // Note: Write is ackd (with NVOpResult) if reportEach || reportDone.
+    _writeMsg.reportDone = true;  //       Erase is acked iff reportEach.
                                  //       MultiErase is acked per blob if reportEach and at the end if reportDone.
-    writeMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(sendData->baseTag));
-    writeMsg.entry.tag = sendData->nextTag;
+    _writeMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(sendData->baseTag));
+    _writeMsg.entry.tag = sendData->nextTag;
     
 
     // Send the next blob of data to send for this multi-blob message
@@ -418,8 +425,8 @@ void NVStorageComponent::Update()
     u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
     ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
     
-    writeMsg.entry.blob = std::vector<u8>(sendData->data->begin() + sendData->sendIndex,
-                                          sendData->data->begin() + sendData->sendIndex + bytesToSend);
+    _writeMsg.entry.blob = std::vector<u8>(sendData->data->begin() + sendData->sendIndex,
+                                               sendData->data->begin() + sendData->sendIndex + bytesToSend);
 
     ++sendData->nextTag;
     sendData->sendIndex += bytesToSend;
@@ -428,8 +435,8 @@ void NVStorageComponent::Update()
       PRINT_NAMED_DEBUG("NVStorageComponent.Update.SendingWriteMsg",
                         "BaseTag: %s, tag: 0x%x, write: %d, bytesSent: %d",
                         EnumToString(sendData->baseTag),
-                        writeMsg.entry.tag,
-                        writeMsg.writeNotErase,
+                        _writeMsg.entry.tag,
+                        _writeMsg.writeNotErase,
                         bytesToSend);
     }
     
@@ -438,10 +445,24 @@ void NVStorageComponent::Update()
       _writeDataQueue.pop();
     }
     
-    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(writeMsg)));
-
+    _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
+    _numWriteMsgAttempts = 0;
   }
   
+}
+  
+bool NVStorageComponent::ResendLastWrite()
+{
+  if (++_numWriteMsgAttempts > _kNumWriteRetryAttempts) {
+    PRINT_NAMED_WARNING("NVStorageComponent.ResendLastWrite.NumRetriesExceeded",
+                        "Tag: 0x%x, retryAttempts: %d", _writeMsg.entry.tag, _kNumWriteRetryAttempts );
+    return false;
+  }
+  
+  PRINT_NAMED_INFO("NVStorageComponent.ResendLastWrite.Retry",
+                   "Tag: 0x%x, retryNum: %d", _writeMsg.entry.tag, _numWriteMsgAttempts);
+  _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
+  return true;
 }
 
 void NVStorageComponent::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -547,6 +568,27 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     
     AnkiAssert(_writeDataAckMap[baseTag].numTagsLeftToAck > 0);
    
+    // Possibly increment the failed write count based on the result
+    // Negative results == bad
+    if (static_cast<s8>(payload.report.result) < 0) {
+      
+      // Under these cases, attempt to resend the failed write message.
+      // If the allowed number of retries fails
+      if (_writeDataAckMap[baseTag].writeNotErase &&
+          (payload.report.result == NVStorage::NVResult::NV_NO_MEM ||
+           payload.report.result == NVStorage::NVResult::NV_BUSY)) {
+        if (ResendLastWrite()) {
+          PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ResentFailedWrite",
+                           "Tag 0x%x resent due to %s", tag, EnumToString(payload.report.result));
+          return;
+        }
+      }
+
+      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
+                          "Tag: 0x%x, writeNotErase: %d, result: %s, numWriteFails: %u",
+                          tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result), _writeDataAckMap[baseTag].numFailedWrites);
+      ++_writeDataAckMap[baseTag].numFailedWrites;
+    }
 
     // On writes, count each one.
     // On erases, only count the ones that match the base tag since we don't know how many
@@ -571,15 +613,6 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
                                    payload.report.result,
                                    _writeDataAckMap[baseTag].writeNotErase ? NVStorage::NVOperation::NVOP_WRITE : NVStorage::NVOperation::NVOP_ERASE);
       }
-    }
-
-    // Possibly increment the failed write count based on the result
-    // Negative results == bad
-    if (static_cast<s8>(payload.report.result) < 0) {
-      ++_writeDataAckMap[baseTag].numFailedWrites;
-      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
-                          "Tag: 0x%x, writeNotErase: %d, result: %s, numWriteFails: %u",
-                          tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result), _writeDataAckMap[baseTag].numFailedWrites);
     }
           
     // Check if all writes have been confirmed for this write request
