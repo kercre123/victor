@@ -15,7 +15,7 @@ namespace Cozmo {
       private const float kMaxShake = 6.0f;
       private const float kShakeInterval = 0.01f;
       private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.01f;
+      private const float kChargeDecay = 0.005f;
       private float _currentCharge = 0.0f;
 
       [SerializeField]
@@ -104,14 +104,16 @@ namespace Cozmo {
           // Target Scale determined by current charge and constants.
           float scaleDiff = kMaxScale - kMinScale;
           float currScale = kMinScale + _currentCharge * scaleDiff;
-          _LootBox.DOScale(currScale, kShakeInterval);
+          // kShakeInterval is doubled to accomodate for the DoMove loops to allow pingpong effect
+          _LootBox.DOScale(currScale, kShakeInterval * 2);
           // Loot Glow alpha determined by current charge
-          _LootGlow.DOFade(_currentCharge, kShakeInterval);
+          _LootGlow.DOFade(_currentCharge, kShakeInterval * 2);
 
           // Shake Power determined by current charge and constants.
           float currShake = _currentCharge * kMaxShake;
           float shakeX = UnityEngine.Random.Range(-currShake, currShake);
           float shakeY = UnityEngine.Random.Range(-currShake, currShake);
+          //2 loops in order for _LootBox to return to where it begins
           _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
           UpdateLootText();
         }
