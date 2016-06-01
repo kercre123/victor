@@ -19,6 +19,8 @@
 #include "anki/common/types.h"
 
 #include "clad/types/behaviorTypes.h"
+#include "clad/types/unlockTypes.h"
+
 
 #include "util/helpers/templateHelpers.h"
 #include "util/random/randomGenerator.h"
@@ -75,6 +77,7 @@ public:
   // get if the given flags are available, you can check for all or if any is set
   inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
   inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
+  UnlockId GetActiveSpark() const { return _activeSpark; };
   
   // sets which games are available by setting the mask/flag combination
   void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
@@ -147,7 +150,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // sets the given spark as currently active
-  void SetActiveSpark(BehaviorSpark spark);
+  void SetActiveSpark(UnlockId spark);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -203,7 +206,7 @@ private:
   BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::NoGame );
   
   // current active spark (this does guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
-  BehaviorSpark _activeSpark = BehaviorSpark::NoSpark;
+  UnlockId _activeSpark = UnlockId::Count;
 
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;

@@ -175,10 +175,22 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
+    
+    // NOTE: Playpen fixutre will do the memory wipe since WipeAll reboots the robot
+    /*
     if (ENABLE_NVSTORAGE_WRITES) {
       // Erase all entries in flash
-      robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_ReallyEraseAll);
+      robot.GetNVStorageComponent().WipeAll(true,
+                                            [this,&robot](NVStorage::NVResult res){
+                                              if (res != NVStorage::NVResult::NV_OKAY) {
+                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.WipeAll.Failed",
+                                                                    "Result: %s", EnumToString(res));
+                                              } else {
+                                                PRINT_NAMED_INFO("BehaviorFactoryTest.WipeAll.Succeeded", "");
+                                              }
+                                            });
     }
+     */
 
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
@@ -312,55 +324,14 @@ namespace Cozmo {
     {
       case FactoryTestState::InitRobot:
       {
+        // Too much stuff is changing now.
+        // Maybe put this back later.
+        /*
         // Check for mismatched CLAD
         if (robot.HasMismatchedCLAD()) {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
-        
-        
-        /*
-        // Check for past test results
-        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
-                                           [this](u8* data, size_t size, NVStorage::NVResult res) {
-                                             if (res == NVStorage::NVResult::NV_OKAY) {
-                                               FactoryTestResultEntry resultEntry;
-                                               if (size != NVStorageComponent::MakeWordAligned(resultEntry.Size())) {
-                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ReadPastTestResultSizeMismatch",
-                                                                     "Expected %zu, got %zu", resultEntry.Size(), size);
-                                                 return;
-                                               }
-                                               resultEntry.Unpack(data, resultEntry.Size());
-                                               time_t rawTime = static_cast<time_t>(resultEntry.utcTime);
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastTestResults",
-                                                                "Result: %s, Time: %s", EnumToString(resultEntry.result), ctime(&rawTime) );
-                                             } else {
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastTestResultsFound", "");
-                                             }
-                                           });
-        
-        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo,
-                                           [this](u8* data, size_t size, NVStorage::NVResult res) {
-                                             if (res == NVStorage::NVResult::NV_OKAY) {
-                                               ToolCodeInfo info;
-                                               if (size != NVStorageComponent::MakeWordAligned(info.Size())) {
-                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ReadToolCodeInfoSizeMismatch",
-                                                                    "Expected %zu, got %zu", info.Size(), size);
-                                                 return;
-                                               }
-                                               info.Unpack(data, info.Size());
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastToolCodeInfo",
-                                                                "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
-                                                                EnumToString(info.code),
-                                                                info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
-                                                                info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
-                                                                info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
-                                                                info.observedCalibDotRight_x, info.observedCalibDotRight_y);
-
-                                             } else {
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastToolCodeInfoFound", "");
-                                             }
-                                           });
-        */
+         */
         
         if (TEST_CHARGER_CONNECT) {
           // Check if charger is discovered
