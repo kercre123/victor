@@ -12,12 +12,12 @@ namespace Cozmo {
 
       private const float kMinScale = 1.0f;
       private const float kMaxScale = 1.25f;
-      private const float kMaxShake = 4.5f;
-      private const float kShakeInterval = 0.02f;
-      private const float kShakeDecay = 0.015f;
+      private const float kMaxShake = 3.5f;
+      private const float kShakeInterval = 0.025f;
+      private const float kShakeDecay = 0.0075f;
 
       private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.005f;
+      private const float kChargeDecay = 0.0025f;
 
       private float _currentCharge = 0.0f;
       private float _currentShake = 0.0f;
