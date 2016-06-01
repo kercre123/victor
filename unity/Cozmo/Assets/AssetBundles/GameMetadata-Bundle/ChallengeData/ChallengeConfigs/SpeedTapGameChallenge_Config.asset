@@ -91,6 +91,7 @@ MonoBehaviour:
         val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
+  TapResolutionDelay: 0.075
   Rounds: 3
   MaxScorePerRound: 5
   MinIdleInterval_percent: 0

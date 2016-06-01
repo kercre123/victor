@@ -5,7 +5,6 @@ namespace SpeedTap {
   public class SpeedTapHandCubesMatch : State {
 
     private SpeedTapGame _SpeedTapGame;
-    private const float kResultsCheckDelay_sec = 0.01f;
 
     private float _CozmoTapDelay_sec;
     private float _StartTimestamp_sec;
@@ -46,11 +45,11 @@ namespace SpeedTap {
                && _EndTimestamp_sec == -1) {
         // If any taps have been registered immediately set the end timestamp
         // in order to make Resolve hand more responsive when receiving player taps significantly before Cozmo
-        // taps. Still we use the kResultsCheckDelay in order to prevent issues with messages being received
+        // taps. Still we use the TapResolutionDelay in order to prevent issues with messages being received
         // in a different order than their actual timestamps.
         _EndTimestamp_sec = Time.time;
       }
-      else if (_EndTimestamp_sec != -1 && Time.time - _EndTimestamp_sec > kResultsCheckDelay_sec) {
+      else if (_EndTimestamp_sec != -1 && Time.time - _EndTimestamp_sec > _SpeedTapGame.TapResolutionDelay) {
         ResolveHand();
       }
     }
