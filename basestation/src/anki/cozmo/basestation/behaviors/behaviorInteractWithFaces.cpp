@@ -489,11 +489,11 @@ namespace Cozmo {
         robot.GetMoodManager().TriggerEmotionEvent("NewUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
-        // He's happy to see you so play an anim first
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
+        // Say text and then play a happy animation
         SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
         sayTextAction->SetGameEvent(GameEvent::OnSawNewNamedFace);
         compoundAction->AddAction( sayTextAction );
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
 
         if( _faceEnrollEnabled ) {
