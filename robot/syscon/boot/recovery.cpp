@@ -184,6 +184,8 @@ static bool EscapeFixture(void) {
 static void SyncToHead(void) {
   uint32_t recoveryWord = 0;
 
+  MicroWait(10000);
+
   // Write our recovery sync signal
   writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
   readUart(&recoveryWord, sizeof(recoveryWord));
@@ -285,15 +287,9 @@ static inline bool FlashBlock() {
 void EnterRecovery(void) {
   UARTInit();
   
-  *FIXTURE_HOOK = EscapeFixture() ? 0xDEADFACE : 0;
-
   // Disconnect input so we don't dump current into the charge pin
   NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
 
-  if (*FIXTURE_HOOK) {
-    return ;
-  }
-  
   SyncToHead();
 
   for (;;) {

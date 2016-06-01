@@ -16,10 +16,15 @@ namespace NVStorage {
     // Upper 16 bits must be zero
 
     // Reserved tags (i.e. nothing may actually be written to these slots)
+    // All tags >= 0xF0000000 are reserved for these special uses
     NVEntry_Invalid           = 0xFFFFffff,
-    NVEntry_EraseAll          = 0x0,  // The only operation that can be done on this tag is erase
+    NVEntry_WipeAll           = 0xFFFE0000,  // Can't actually send this with NVStorageWrite,
+                                             // but it will come back as the tag in the NVOpResult
+                                             // when NVWipeAll is sent.
+
+    //NVEntry_EraseAll          = 0x0,  // The only operation that can be done on this tag is erase
                                       // and doing so ERASES ALL non-factory entries.
-    NVEntry_ReallyEraseAll    = 0x1,  // Erase everything including factory entries.
+    //NVEntry_ReallyEraseAll    = 0x1,  // Erase everything including factory entries.
                                       // NOTE: Not sure we want to expose these to game/SDK
 
     NVEntry_GameSkillLevels = 2,
@@ -82,7 +87,8 @@ namespace NVStorage {
   enum uint_8 NVOperation {
     NVOP_READ = 0,
     NVOP_WRITE,
-    NVOP_ERASE,
+    NVOP_ERASE,    // Erase a single entry (can be multi-blob tag)
+    NVOP_WIPEALL   // Erase entire non-volatile storage
   }
 
 }

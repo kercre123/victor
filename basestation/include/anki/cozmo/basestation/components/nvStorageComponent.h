@@ -55,12 +55,12 @@ public:
   // is acked with MessageEngineToGame::NVStorageOpResult.
   using NVStorageWriteEraseCallback = std::function<void(NVStorage::NVResult res)>;
   bool Write(NVStorage::NVEntryTag tag,
-             u8* data, size_t size,
+             const u8* data, size_t size,
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
   bool Write(NVStorage::NVEntryTag tag,
-             std::vector<u8>* data,
+             const std::vector<u8>* data,
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
@@ -71,6 +71,15 @@ public:
   bool Erase(NVStorage::NVEntryTag tag,
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
+  
+  // Erases all data from robot flash.
+  // IF includeFactory == true, THE FACTORY PARTITION IS ALSO ERASED
+  // WHICH WIPES CAMERA CALIBRATION AMONG OTHER THINGS.
+  // IF YOU'RE NOT COMPLETELY SURE YOU SHOULD DO IT, THEN YOU ABSOLUTELY SHOULDN'T!!!
+  // NOTE: THIS FUNCTION FORCES A ROBOT REBOOT CAUSING DISCONNECT.
+  bool WipeAll(bool includeFactory = false,
+               NVStorageWriteEraseCallback callback = {},
+               bool broadcastResultToGame = false);
   
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
@@ -99,6 +108,10 @@ public:
   // Returns the word-aligned size that nvStorage automaticaly rounds up to on all saved content.
   // e.g. If you write 10 bytes to tag 2 and then read back tag 2, you will receive 12 bytes.
   static size_t MakeWordAligned(size_t size);
+
+  // Event/Message handling
+  template<typename T>
+  void HandleMessage(const T& msg);
   
   // Kevin's sandbox function for testing
   // For dev only!
@@ -186,6 +199,7 @@ private:
     , tag(tag)
     , writeCallback(callback)
     , data(data)
+    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -194,6 +208,15 @@ private:
     : op(NVStorage::NVOperation::NVOP_ERASE)
     , tag(tag)
     , writeCallback(callback)
+    , wipeFactory(false)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    // WipeAll request
+    NVStorageRequest(bool includeFactory, NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_WIPEALL)
+    , writeCallback(callback)
+    , wipeFactory(includeFactory)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -203,6 +226,7 @@ private:
     , tag(tag)
     , readCallback(callback)
     , data(data)
+    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -211,6 +235,7 @@ private:
     NVStorageWriteEraseCallback writeCallback;
     NVStorageReadCallback readCallback;
     std::vector<u8>* data;
+    bool wipeFactory;
     bool broadcastResultToGame;
   };
   
@@ -220,16 +245,11 @@ private:
   void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
-  // Game event handlers
-  void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
   void SendRequest(NVStorageRequest req);
   
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
-  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
+  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, const u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
   
   // Clear any data that was received from game (via NVStorageWriteEntry) for writing
   void ClearPendingWriteEntry();

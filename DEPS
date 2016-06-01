@@ -11,11 +11,11 @@
                 "subdirs": [
                     "animations"
                 ],
-                "version": "355"
+                "version": "361"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "46"
+                "version": "47"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
