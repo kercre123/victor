@@ -21,9 +21,9 @@ public class GameSkillLevelConfig: ISerializationCallbackReceiver {
 
   public Dictionary<string,float> SkillMap = new Dictionary<string,float>();
   // Level down if winning more than 70% of the time, Level up if we're winning less than 30%
-  [Range(0.0f, 1.0f)]
+  [Range(0.0f, 1.0f), Tooltip("Cozmo becomes worse if winning more than UpperBound %")]
   public float UpperBoundThreshold = 0.7f;
-  [Range(0.0f, 1.0f)]
+  [Range(0.0f, 1.0f), Tooltip("Cozmo becomes better if losing more than LowerBound %")]
   public float LowerBoundThreshold = 0.3f;
 
   public void OnBeforeSerialize() {
@@ -47,13 +47,13 @@ public class GameSkillConfig {
   // Can't save gameEvents since they save as enums... Write custom serielizer and display...
   // Display for the dictionaries, String for serielizer
 
-  [SerializeField]
+  [SerializeField, Tooltip("Event that evaluates win rate to determine if skill should raise/lower")]
   private List<SerializableGameEvents> _EvaluateLevelChangeEvent;
-  [SerializeField]
+  [SerializeField, Tooltip("Event that counts as a win for Cozmo")]
   private List<SerializableGameEvents> _GainChallengePointEvent;
-  [SerializeField]
+  [SerializeField, Tooltip("Event that counts as a loss for Cozmo")]
   private List<SerializableGameEvents> _LoseChallengePointEvent;
-  [SerializeField]
+  [SerializeField, Tooltip("Event that clears recorded points, usually when you start game")]
   private List<SerializableGameEvents> _ResetPointsEvent;
 
   public bool IsLevelChangeEvent(Anki.Cozmo.GameEvent gameEvent) {
@@ -99,10 +99,10 @@ public class GameSkillConfig {
     return _Levels != null ? _Levels.Length : 0;
   }
 
-  [SerializeField]
+  [SerializeField, Tooltip("Only evaluate after a certain number of points scored if desired so players can't just quit.")]
   private bool _UsePointThreshold;
   // for when you only compare after X points scored.
-  [SerializeField]
+  [SerializeField, Tooltip("Points scored total needed in order to attempt an evaluation")]
   private int _ComparedPointThreshold;
 
 
