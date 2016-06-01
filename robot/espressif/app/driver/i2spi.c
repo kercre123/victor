@@ -702,7 +702,6 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     {
       os_printf("I2Spi mode Normal\r\n");
       outgoingPhase = UNINITALIZED_PHASE;
-      txFillCount = 0;
       return;
     }
     case I2SPI_BOOTLOADER:

@@ -11,6 +11,7 @@
 extern "C" {
 #include "osapi.h"
 #include "mem.h"
+#include "client.h"
 #include "foregroundTask.h"
 #include "driver/i2spi.h"
 }
@@ -24,7 +25,7 @@ extern "C" {
 
 #define DEBUG_NVS 0
 
-#if DEBUG_NVS
+#if DEBUG_NVS > 0
 #define db_printf(...) os_printf(__VA_ARGS__)
 #else
 #define db_printf(...)
@@ -67,6 +68,7 @@ struct NVStorageState {
   s8             segment;
   bool           multiEraseDidAny;
   bool           multiReadFoundAny;
+  bool           waitingForGC;
 };
 
 static NVStorageState nv;
@@ -144,13 +146,15 @@ static inline bool isBusy()
 {
   return ((nv.pendingWrite      != NULL)            ||
           (nv.pendingEraseStart != NVEntry_Invalid) ||
-          (nv.pendingReadStart  != NVEntry_Invalid));
+          (nv.pendingReadStart  != NVEntry_Invalid) ||
+           nv.waitingForGC);
 }
 
 typedef enum
 {
   GC_init,
   GC_erase,
+  GC_seekEndOfFactory,
   GC_rewrite,
   GC_finalize,
 } GCPhase;
@@ -162,18 +166,18 @@ struct GarbageCollectionState
   u32 areaStart;
   s32 readPointer;
   s32 writePointer;
+  s32 factoryPointer;
   int entryCount;
   int flashOpRetries;
   u16 sectorCounter;
   GCPhase phase;
 };
 
-/*static void printGCState(const GarbageCollectionState* const state)
-{
-  os_printf("as = %x\trp = %x\twp = %x\r\nec = %d\tr  = %d\tsc = %d\r\nphase = %d\r\n",
-  state->areaStart, state->readPointer, state->writePointer,
-  state->entryCount, state->flashOpRetries, state->sectorCounter, state->phase);
-}*/
+#define PRINT_GC_STATE(state) { \
+  os_printf("as = %x\trp = %x\twp = %x\r\nec = %d\tr  = %d\tsc = %d\r\nphase = %d\r\n", \
+  state->areaStart, state->readPointer, state->writePointer, \
+  state->entryCount, state->flashOpRetries, state->sectorCounter, state->phase); \
+}
 
 #define FLASH_RESULT_TO_NV_RESULT(fr) (fr == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT)
 
@@ -185,8 +189,8 @@ struct GarbageCollectionState
     } \
     else { \
       os_printf("GF at %d failed: %x\r\n", __LINE__, r); \
-      gc->finishedCallback(FLASH_RESULT_TO_NV_RESULT(r)); \
       os_free(gc); \
+      nv.waitingForGC = false; \
       return false; \
     } \
   } \
@@ -201,8 +205,8 @@ struct GarbageCollectionState
     } \
     else { \
       os_printf("PF at %d failed: %x\r\n", __LINE__, r); \
-      gc->finishedCallback(FLASH_RESULT_TO_NV_RESULT(r)); \
       os_free(gc); \
+      nv.waitingForGC = false; \
       return false; \
     } \
   } \
@@ -219,30 +223,25 @@ static bool GarbageCollectionTask(uint32_t param)
     case GC_init:
     {
       GET_FLASH(getStartOfSegment() - sizeof(NVDataAreaHeader), reinterpret_cast<uint32*>(&gc->dah), sizeof(NVDataAreaHeader));
-      if (gc->dah.nvStorageVersion != NV_STORAGE_FORMAT_VERSION)
+      if (gc->dah.nvStorageVersion != NV_STORAGE_FORMAT_VERSION && gc->dah.nvStorageVersion != 1)
       {
         os_printf("NVS GC format conversion from %d to %d not supported\r\n", gc->dah.nvStorageVersion, NV_STORAGE_FORMAT_VERSION);
         gc->finishedCallback(NV_ERROR);
         break;
       }
-      else if (getStartOfSegment() == (NV_STORAGE_START_ADDRESS + sizeof(NVDataAreaHeader)))
-      {
-        gc->areaStart = NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE;
-      }
-      else if (getStartOfSegment() == (NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE + sizeof(NVDataAreaHeader)))
-      {
-        gc->areaStart = NV_STORAGE_START_ADDRESS;
-      }
+      if (nv.segment == NV_SEGMENT_A) gc->areaStart = NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE; // Selected segment A, write to segment B
+      else if (nv.segment == NV_SEGMENT_B) gc->areaStart = NV_STORAGE_START_ADDRESS;
       else
       {
         os_printf("NVS GC unexpected start of data %x fail!\r\n", getStartOfSegment());
         gc->finishedCallback(NV_ERROR);
         break;
       }
-      gc->readPointer   = getStartOfSegment();
-      gc->writePointer  = gc->areaStart + sizeof(NVDataAreaHeader);
-      gc->entryCount    = 0;
-      gc->sectorCounter = 0;
+      gc->readPointer    = getStartOfSegment();
+      gc->writePointer   = gc->areaStart + sizeof(NVDataAreaHeader);
+      gc->factoryPointer = FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE;
+      gc->entryCount     = 0;
+      gc->sectorCounter  = 0;
       gc->phase = GC_erase;
       return true;
     }
@@ -266,14 +265,31 @@ static bool GarbageCollectionTask(uint32_t param)
         gc->sectorCounter++;
         if ((gc->sectorCounter * SECTOR_SIZE) >= NV_STORAGE_AREA_SIZE)
         {
-          gc->phase = GC_rewrite;
+          gc->phase = GC_seekEndOfFactory;
+          gc->finishedCallback(NV_OKAY);
         }
         return true;
       }
     }
+    case GC_seekEndOfFactory:
+    {
+      NVEntryHeader header;
+      GET_FLASH(gc->factoryPointer, reinterpret_cast<uint32_t*>(&header), sizeof(NVEntryHeader));
+      if (header.tag == NVEntry_Invalid)
+      { // End of stored factory data;
+        gc->phase = GC_rewrite;
+      }
+      else
+      {
+        gc->factoryPointer += header.size;
+      }
+      return true;
+    }
     case GC_rewrite:
     {
-      //printGCState(gc);
+      #if DEBUG_NVS > 1
+      PRINT_GC_STATE(gc);
+      #endif
       if ((gc->readPointer - getStartOfSegment()) >= static_cast<s32>(NV_STORAGE_CAPACITY))
       {
         os_printf("NV GarbageCollect WARNING: read pointer hit end of capacity %x %x\r\n", gc->readPointer, getStartOfSegment());
@@ -317,9 +333,18 @@ static bool GarbageCollectionTask(uint32_t param)
             }
             else
             { // Copy this to new area
-              PUT_FLASH(gc->writePointer, buffer, header.size);
+              if ((header.tag & FACTORY_DATA_BIT) &&
+                  ((gc->factoryPointer + header.size) < (FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE + NV_STORAGE_AREA_SIZE)))
+              { // This belongs in the factory segment and there is room, put it there
+                PUT_FLASH(gc->factoryPointer, buffer, header.size);
+                gc->factoryPointer += header.size;
+              }
+              else
+              {
+                PUT_FLASH(gc->writePointer, buffer, header.size);
+                gc->writePointer += header.size;
+              }
               gc->readPointer  += header.size;
-              gc->writePointer += header.size;
               gc->entryCount++;
               return true;
             }
@@ -333,9 +358,11 @@ static bool GarbageCollectionTask(uint32_t param)
       gc->dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
       gc->dah.journalNumber += 1;
       PUT_FLASH(gc->areaStart, reinterpret_cast<uint32_t*>(&gc->dah), sizeof(NVDataAreaHeader));
+      nv.segment = nv.segment == NV_SEGMENT_A ? NV_SEGMENT_B : NV_SEGMENT_A; // Swap active segment
       nv.flashPointer = getStartOfSegment();
+      #if DEBUG_NVS > 0
       printNVSS();
-      gc->finishedCallback(NV_OKAY);
+      #endif
       break;
     }
     default:
@@ -346,6 +373,7 @@ static bool GarbageCollectionTask(uint32_t param)
   
   os_printf("GarbageCollectionTask exiting\r\n");
   os_free(gc);
+  nv.waitingForGC = false;
   return false;
 }
 #else
@@ -378,8 +406,8 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
   NVDataAreaHeader dah;
   s32 newestJournalNumber  = -1;
   s32 newestJournalVersion = NV_STORAGE_FORMAT_VERSION;
-  s8 newestJournalSegment  = NV_SEGMENT_UNINITALIZED;
-  int area;
+  s8  newestJournalSegment = NV_SEGMENT_UNINITALIZED;
+  s8 area;
   nv.pendingWrite = NULL;
   resetWrite();
   resetErase();
@@ -416,7 +444,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
     dah.journalNumber = 1;
     os_printf("NVInit initalizing flash to (%d, %d) at %x\r\n", dah.nvStorageVersion, dah.journalNumber, addr);
-    WipeAll(true, 0, false);
+    WipeAll(true, 0, false, false);
     const SpiFlashOpResult flashResult = spi_flash_write(addr, reinterpret_cast<u32*>(&dah), sizeof(NVDataAreaHeader));
     if (flashResult != SPI_FLASH_RESULT_OK)
     {
@@ -453,17 +481,20 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     {
       os_printf("NVInit: Couldn't start garbage collection: %d\r\n", ret);
       finishedCallback(ret);
+      nv.waitingForGC = false;
       return ret;
     }
     else
     {
       // Don't call finishedCallback here, GarbageCollect will call it when it's done
+      nv.waitingForGC = true;
       return ret;
     }
   }
   else
   {
     //printNVSS();
+    nv.waitingForGC = false;
     finishedCallback(NV_OKAY);
     return 0;
   }
@@ -716,17 +747,25 @@ Result Update()
       { // A valid entry  
         if ((nv.pendingWrite != NULL) && (header.tag == nv.pendingWrite->tag))
         { // This is something we need to invalidate to "overwrite"
-          if (nv.pendingOverwriteHeaderAddress != 0)
-          {
-            AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
+          if (nv.segment & NV_SEGMENT_F)
+          { // We don't allow overwrite in factory space
+            endWrite(NV_BAD_ARGS);
           }
-          else 
+          else
           {
-            nv.pendingOverwriteHeaderAddress = nv.flashPointer;
-            db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
+            
+            if (nv.pendingOverwriteHeaderAddress != 0)
+            {
+              AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
+            }
+            else 
+            {
+              nv.pendingOverwriteHeaderAddress = nv.flashPointer;
+              db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
+            }
+            nv.flashPointer += header.size;
+            nv.phase = 0;
           }
-          nv.flashPointer += header.size;
-          nv.phase = 0;
         } //  Done queing overwrite
         
         else if (nv.pendingEraseStart <= header.tag && header.tag <= nv.pendingEraseEnd)
@@ -917,6 +956,7 @@ typedef enum {
   WAT_factory,
   WAT_resume,
   WAT_callback,
+  WAT_reboot,
   WAT_done,
 } WipeAllTaskPhase;
 
@@ -925,12 +965,15 @@ struct WipeAllTaskState {
   uint32_t sectorCount;
   int8_t   retries;
   bool     includeFactory;
+  bool     reboot;
   WipeAllTaskPhase phase;
 };
 
 bool WipeAllTask(uint32_t param)
 {
   WipeAllTaskState* state = reinterpret_cast<WipeAllTaskState*>(param);
+  clientUpdate();
+  db_printf("wat %d, %x\r\n", state->phase, state->sectorCount);
   switch(state->phase)
   {
     case WAT_pause:
@@ -980,7 +1023,17 @@ bool WipeAllTask(uint32_t param)
     case WAT_callback:
     {
       if (state->callback) state->callback(NVEntry_Invalid, NV_OKAY);
-      state->phase = WAT_done;
+      if (state->reboot) state->phase = WAT_reboot;
+      else state->phase = WAT_done;
+      return true;
+    }
+    case WAT_reboot:
+    {
+      if (i2spiMessageQueueIsEmpty()) 
+      {
+        i2spiSwitchMode(I2SPI_REBOOT);
+        state->phase = WAT_done;
+      }
       return true;
     }
     case WAT_done:
@@ -991,7 +1044,7 @@ bool WipeAllTask(uint32_t param)
   }
 }
 
-NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool fork)
+NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)
 {
   if (isBusy()) return NV_BUSY;
   else
@@ -1002,6 +1055,7 @@ NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool for
     {
       wats->callback = callback;
       wats->includeFactory = includeFactory;
+      wats->reboot = reboot;
       wats->sectorCount = 0;
       wats->retries = FLASH_OP_RETRIES_BEFORE_FAIL;
       wats->phase = WAT_pause;
