@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using UnityEngine.UI;
 using Anki.UI;
+using Anki.Cozmo;
 using DG.Tweening;
 
 namespace Cozmo {
@@ -11,11 +12,10 @@ namespace Cozmo {
 
       private const float kMinScale = 0.8f;
       private const float kMaxScale = 1.2f;
-      private const float kMinShake = 5.0f;
-      private const float kMaxShake = 15.0f;
+      private const float kMaxShake = 6.0f;
       private const float kShakeInterval = 0.01f;
       private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.05f;
+      private const float kChargeDecay = 0.01f;
       private float _currentCharge = 0.0f;
 
       [SerializeField]
@@ -65,6 +65,7 @@ namespace Cozmo {
         _BoxOpened = false;
         _ShakeStarted = false;
         _LootButton.onClick.AddListener(HandleButtonTap);
+        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
       }
 
       private void HandleButtonTap() {
@@ -81,11 +82,11 @@ namespace Cozmo {
             }
             else {
               _currentCharge -= kChargeDecay;
+              if (_currentCharge <= 0.0f) {
+                _ShakeStarted = false;
+                _currentCharge = 0.0f;
+              }
             }
-          }
-          else {
-            _ShakeStarted = false;
-            _currentCharge = 0.0f;
           }
           _ChargeBar.SetProgress(_currentCharge);
         }
@@ -108,11 +109,10 @@ namespace Cozmo {
           _LootGlow.DOFade(_currentCharge, kShakeInterval);
 
           // Shake Power determined by current charge and constants.
-          float shakeDiff = kMaxShake - kMinShake;
-          float currShake = kMinShake + _currentCharge * shakeDiff;
+          float currShake = _currentCharge * kMaxShake;
           float shakeX = UnityEngine.Random.Range(-currShake, currShake);
           float shakeY = UnityEngine.Random.Range(-currShake, currShake);
-          _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetRelative(true).OnComplete(ShakeTheBox);
+          _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
           UpdateLootText();
         }
       }
@@ -134,6 +134,7 @@ namespace Cozmo {
 
       protected override void CleanUp() {
         _LootButton.onClick.RemoveAllListeners();
+        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {

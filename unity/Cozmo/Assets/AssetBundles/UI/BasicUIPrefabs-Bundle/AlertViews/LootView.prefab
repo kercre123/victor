@@ -113,7 +113,7 @@ GameObject:
   - 225: {fileID: 22536050}
   - 114: {fileID: 11429958}
   m_Layer: 5
-  m_Name: LootAlertView
+  m_Name: LootView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -192,7 +192,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73c2fe72024e4462a988635858b7a680, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: LootAlert
+  _DASEventViewName: LootView
   _DASEventViewType: 2
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
@@ -497,7 +497,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: _DASEventViewName
-      value: icon_alert_view
+      value: LootView
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DASEventViewType
