@@ -153,9 +153,8 @@ void BehaviorAdmireStack::TransitionToWatchingStack(Robot& robot)
   // TODO:(bn) looping animation?
   action->AddAction(new HangAction(robot));
 
-  StartActing(action);
   // will hang in this state until we see the third cube
-  // don't increase score here (??)
+  StartActing(action, kBAS_ScoreIncreaseForAction);
 }
 
 void BehaviorAdmireStack::TransitionToReactingToThirdBlock(Robot& robot)
