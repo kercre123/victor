@@ -276,8 +276,9 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
     const bool sayName = true;
     StartActing(new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,
                                               maxTurnToFaceAngle, sayName), kBRTNB_ScoreIncreaseForPickup,
-                [this,&robot](ActionResult res) {
-                  if(ActionResult::SUCCESS == res) {
+                [this,&robot](const ExternalInterface::RobotCompletedAction& completionEvent) {
+                  if(ActionResult::SUCCESS == completionEvent.result)
+                  {
                     // Picked up block! Mark target block as reacted to, and unset target block,
                     // indicating this behavior is no longer runnable
                     _reactedBlocks.insert(_targetBlock);
@@ -285,12 +286,21 @@ void BehaviorReactToNewBlock::TransitionToAskingLoop(Robot& robot)
                     
                     StartActing(new PlayAnimationGroupAction(robot, _pickupSuccessAnimGroup),
                                 kBRTNB_ScoreIncreaseForPickup);
-                    
                   } else {
-                    // Pickup failed, play retry animation, finish, and let behavior
-                    // be selected again
-                    StartActing(new PlayAnimationGroupAction(robot, _retryPickeupAnimGroup),
-                                kBRTNB_ScoreIncreaseForPickup);
+                    auto& completionInfo = completionEvent.completionInfo.Get_objectInteractionCompleted();
+                    switch(completionInfo.result)
+                    {
+                      case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+                        // Did not reach pre-action pose: don't play retry animation in this case
+                        break;
+                        
+                      default:
+                        // Pickup failed, play retry animation, finish, and let behavior
+                        // be selected again
+                        StartActing(new PlayAnimationGroupAction(robot, _retryPickeupAnimGroup),
+                                    kBRTNB_ScoreIncreaseForPickup);
+                        break;
+                    }
                   }
                 });
     return;
