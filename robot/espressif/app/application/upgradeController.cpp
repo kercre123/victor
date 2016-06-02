@@ -103,14 +103,7 @@ namespace UpgradeController {
         os_printf("Upgrading bootloader\r\n");
         while (spi_flash_erase_sector(0) != SPI_FLASH_RESULT_OK);
         while (spi_flash_write(0, (uint32_t*)firmware_cboot_bin, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK);
-        os_printf("Bootloader upgraded. Preparing for factory firmware install\r\n");
-        unsigned int i;
-        for (i=FACTORY_WIFI_FW_SECTOR; i<NV_STORAGE_SECTOR; ++i)
-        {
-          os_printf("Erasing sector 0x%x\r\n", i);
-          while (spi_flash_erase_sector(i) != SPI_FLASH_RESULT_OK) { os_printf("."); }
-          os_printf("\r\n");
-        }
+        os_printf("Bootloader upgraded.\r\n");
       }
     }
   }
