@@ -23,7 +23,7 @@ public class GameSkillLevelConfig: ISerializationCallbackReceiver {
   // Level down if winning more than 70% of the time, Level up if we're winning less than 30%
   [Range(0.0f, 1.0f), Tooltip("Cozmo becomes worse if winning more than UpperBound %")]
   public float UpperBoundThreshold = 0.7f;
-  [Range(0.0f, 1.0f), Tooltip("Cozmo becomes better if losing more than LowerBound %")]
+  [Range(0.0f, 1.0f), Tooltip("Cozmo becomes better if winning less than LowerBound %")]
   public float LowerBoundThreshold = 0.3f;
 
   public void OnBeforeSerialize() {

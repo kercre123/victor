@@ -54,8 +54,6 @@ namespace SpeedTap {
 
     private float _LastPlayerTimeStamp = -1;
     private float _LastCozmoTimeStamp = -1;
-    public float CozmoTapLatency_sec = 0.0f;
-    public float CozmoTapLatencyCheckTimestamp = 0.0f;
     public float TapResolutionDelay = 0.0f;
 
     #region Config Values
@@ -272,9 +270,6 @@ namespace SpeedTap {
     private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
       if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
-        if (CozmoTapLatency_sec == 0.0f && CozmoTapLatencyCheckTimestamp != 0.0f) {
-          CozmoTapLatency_sec = (animEvent.timestamp * 0.00001f - CozmoTapLatencyCheckTimestamp * 0.001f);
-        }
         _LastCozmoTimeStamp = animEvent.timestamp;
       }
     }
