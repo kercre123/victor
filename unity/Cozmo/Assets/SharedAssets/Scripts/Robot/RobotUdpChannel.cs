@@ -83,39 +83,19 @@ public class RobotMessageIn : IMessageWrapper {
 }
 
 public class RobotUdpChannel : UdpChannel<RobotMessageIn, RobotMessageOut> {
-  private const float PingTick = 0.1f;
-  private float lastPingTime = 0;
-
-
-  private readonly RobotMessageOut pingMessage;
   private readonly RobotMessageOut disconnectionMessage;
 
 
   public RobotUdpChannel() : base() {
-    pingMessage = new RobotMessageOut();
-    pingMessage.Message.Ping = new Anki.Cozmo.ExternalInterface.Ping();
     disconnectionMessage = new RobotMessageOut();
     disconnectionMessage.Message.DisconnectFromUiDevice = new DisconnectFromUiDevice( Anki.Cozmo.UiConnectionType.UI, 0);
   }
 
 
   protected override void BeforeConnect(byte deviceID) {
-    pingMessage.Message.Ping.counter = 0;
     disconnectionMessage.Message.DisconnectFromUiDevice.deviceID = deviceID;
   }
-
-  protected override void UpdatePing(float lastUpdateTime) {
-    if (lastPingTime + PingTick < lastUpdateTime) {
-      lastPingTime = lastUpdateTime;
-      SendInternal(pingMessage);
-      pingMessage.Message.Ping.counter++;
-    }
-  }
-
-  protected override void UpdateLastPingTime(float lastUpdateTime) {
-    lastPingTime = lastUpdateTime - PingTick * 2;
-  }
-
+    
   protected override bool SendDisconnect() {
     SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
     bool success = false;

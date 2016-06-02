@@ -13,6 +13,8 @@ namespace SpeedTap {
 
     private bool _IsFirstTime = false;
 
+    private bool _ForceRaiseLift = false;
+
     public SpeedTapCozmoDriveToCube(bool isFirstTime) {
       _IsFirstTime = isFirstTime;
     }
@@ -23,7 +25,6 @@ namespace SpeedTap {
       if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
         Cozmo.CubePalette.TapMeColor.lightColors, 
@@ -33,23 +34,53 @@ namespace SpeedTap {
       _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
 
-      _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
+      TryDrivingToCube(forceRaiseLift: false);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.PopDrivingAnimations();
+      _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
+      _CurrentRobot.CancelAllCallbacks();
+    }
+
+    public override void Pause() {
+      // Cancel all callbacks
+      _CurrentRobot.PopDrivingAnimations();
+      _CurrentRobot.CancelAllCallbacks();
+    }
+
+    public override void Resume() {
+      // Try driving up to the cube again
+      TryDrivingToCube(forceRaiseLift: true);
+    }
+
+    private void TryDrivingToCube(bool forceRaiseLift) {
+      _ForceRaiseLift = forceRaiseLift;
+      _CurrentRobot.SearchForCube(_SpeedTapGame.CozmoBlock, HandleSearchForCubeEnd);
+      _CurrentRobot.PushDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
         AnimationGroupName.kSpeedTap_Driving_Loop, null);
+    }
+
+    private void HandleSearchForCubeEnd(bool success) {
+      if (success) {
+        HandleFoundCube(_ForceRaiseLift);
+      }
+      else {
+        TryDrivingToCube(_ForceRaiseLift);
+      }
+    }
+
+    private void HandleFoundCube(bool forceRaiseLift) {
       if (IsFarAwayFromCube()) {
         DriveToPreDockPose();
       }
-      else if (IsReallyCloseToCube()) {
+      else if (IsReallyCloseToCube() && !forceRaiseLift) {
         CompleteDriveToCube();
       }
       else {
         RaiseLift();
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
-      _CurrentRobot.ResetDrivingAnimations();
-      _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
     }
 
     private bool IsFarAwayFromCube() {

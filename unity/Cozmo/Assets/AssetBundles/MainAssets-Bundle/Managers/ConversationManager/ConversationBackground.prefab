@@ -217,8 +217,8 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0.134}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 6
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
     _GameObjectType: 2
 --- !u!222 &22214964
 CanvasRenderer:

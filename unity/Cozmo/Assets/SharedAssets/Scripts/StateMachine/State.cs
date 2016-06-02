@@ -23,4 +23,12 @@ public class State {
     DAS.Info("State.Exit", this.GetType().ToString());
   }
 
+  public virtual void Pause() {
+    // Show an alert view that quits the game
+    _StateMachine.GetGame().ShowDontMoveCozmoAlertView();
+  }
+
+  public virtual void Resume() {
+    // Do nothing
+  }
 }

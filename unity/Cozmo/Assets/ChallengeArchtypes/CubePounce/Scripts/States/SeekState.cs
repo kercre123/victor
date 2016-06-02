@@ -15,10 +15,15 @@ namespace CubePounce {
       _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
       _CubeSlapGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
-      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-      _CurrentRobot.SetLiftHeight(0.8f);
       _CubeSlapGame.ResetPounceChance();
       _CubeSlapGame.UpdateScoreboard();
+      _CubeSlapGame.SharedMinigameView.HideMiddleBackground();
+      SetupRobot();
+    }
+
+    private void SetupRobot() {
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValueWithoutLift);
+      _CurrentRobot.SetLiftHeight(0.8f, queueActionPosition: Anki.Cozmo.QueueActionPosition.IN_PARALLEL);
     }
 
     // Target cube is marked as Red if not in the right position, and green if in the right position.
@@ -51,6 +56,14 @@ namespace CubePounce {
         }
         ResetSeenTimestamp();
       }
+    }
+
+    public override void Pause() {
+      // Do nothing
+    }
+
+    public override void Resume() {
+      SetupRobot();
     }
 
     private void ResetSeenTimestamp() {

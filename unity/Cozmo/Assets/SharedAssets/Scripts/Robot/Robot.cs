@@ -549,7 +549,7 @@ public class Robot : IRobot {
   }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
-    float[] dummyDistortionCoeffs = {0,0,0,0,0,0,0,0};
+    float[] dummyDistortionCoeffs = { 0, 0, 0, 0, 0, 0, 0, 0 };
     RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320, dummyDistortionCoeffs);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -752,13 +752,14 @@ public class Robot : IRobot {
 
   }
 
-  public void ResetDrivingAnimations() {
-    SetDrivingAnimations(null, null, null);
+  public void PushDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
+    RobotEngineManager.Instance.Message.PushDrivingAnimations = 
+      Singleton<PushDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+    RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
-    RobotEngineManager.Instance.Message.SetDrivingAnimations = 
-      Singleton<SetDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+  public void PopDrivingAnimations() {
+    RobotEngineManager.Instance.Message.PopDrivingAnimations = Singleton<PopDrivingAnimations>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1050,6 +1051,21 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
+  public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SearchForObject(cube.Family, cube.ID, false, callback, queueActionPosition);
+  }
+
+  public void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(
+      Singleton<SearchForObject>.Instance.Initialize(
+        desiredObjectFamily: objectFamily,
+        desiredObjectID: objectId,
+        matchAnyObject: matchAnyObject
+      ), 
+      callback, 
+      queueActionPosition);
+  }
+
   // Height factor should be between 0.0f and 1.0f
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1112,17 +1128,19 @@ public class Robot : IRobot {
   }
 
   public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
-    RobotEngineManager.Instance.Message.EnableSparkUnlock = Singleton<EnableSparkUnlock>.Instance.Initialize(id);
-    RobotEngineManager.Instance.SendMessage();
-    IsSparked = true;
+    IsSparked = (id != UnlockId.Count);
     SparkUnlockId = id;
+
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID, 
+      Singleton<SetActiveSpark>.Instance.Initialize(SparkUnlockId)
+    ); 
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void StopSparkUnlock() {
-    RobotEngineManager.Instance.Message.StopSparkUnlock = Singleton<StopSparkUnlock>.Instance;
-    RobotEngineManager.Instance.SendMessage();
-    IsSparked = false;
-    SparkUnlockId = UnlockId.Count;
+    EnableSparkUnlock(UnlockId.Count);
   }
 
   private void SparkUnlockEnded() {
@@ -1374,6 +1392,11 @@ public class Robot : IRobot {
 
   public void EraseAllEnrolledFaces() {
     RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
+    RobotEngineManager.Instance.Message.LoadFaceAlbumFromFile = Singleton<LoadFaceAlbumFromFile>.Instance.Initialize(path, isPathRelative);
     RobotEngineManager.Instance.SendMessage();
   }
 }

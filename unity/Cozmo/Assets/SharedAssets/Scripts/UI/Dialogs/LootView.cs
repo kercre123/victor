@@ -1,0 +1,268 @@
+﻿using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.UI;
+using Anki.UI;
+using Anki.Cozmo;
+using DG.Tweening;
+
+namespace Cozmo {
+  namespace UI {
+    public class LootView : BaseView {
+
+      private const float kMinScale = 0.75f;
+      private const float kMaxScale = 1.25f;
+      private const float kMaxShake = 1.75f;
+      private const float kShakeInterval = 0.035f;
+      private const float kShakeDecay = 0.005f;
+      private const float kShakePerTap = 0.25f;
+
+      private const float kChargePerTap = 0.15f;
+      private const float kChargeDecay = 0.0025f;
+      // How long the Reward animation takes to tween the reward doobers to their initial positions
+      private const float kDooberExplosionDuration = 0.25f;
+      // How long the Rewards remain visible before leaving
+      private const float kDooberStayDuration = 0.5f;
+      // How long the Reward animation takes to tween the reward doobers to their final positions
+      private const float kDooberReturnDuration = 0.75f;
+      // The maximum amount of variance in seconds that Doobers are randomly staggered by to create
+      // less uniform movements
+      private const float kDooberStaggerMax = 1.0f;
+
+      private float _currentCharge = 0.0f;
+      private float _currentShake = 0.0f;
+
+      [SerializeField]
+      private string _LootStartKey;
+      [SerializeField]
+      private string _LootMidKey;
+      [SerializeField]
+      private string _LootAlmostKey;
+      [SerializeField]
+      private List<Transform> _MultRewardsTransforms;
+      [SerializeField]
+      private List<Transform> _ActiveDooberTransforms;
+      [SerializeField]
+      private Transform _SingleRewardTransform;
+      [SerializeField]
+      private Transform _DooberStart;
+      [SerializeField]
+      private Transform _FinalRewardTarget;
+      [SerializeField]
+      private GameObject _RewardDooberPrefab;
+
+      private const float kLootMidTreshold = 0.2f;
+      private const float kLootAlmostThreshold = 0.7f;
+
+      public string LootText {
+        get { return _LootText != null ? _LootText.text : null; }
+        set {
+          if (_LootText != null) {
+            _LootText.text = Localization.Get(value);
+          }
+        }
+      }
+
+
+      [SerializeField]
+      private AnkiTextLabel _LootText;
+
+      [SerializeField]
+      private Button _LootButton;
+
+      [SerializeField]
+      private Transform _LootBox;
+
+      [SerializeField]
+      private Image _LootGlow;
+
+      [SerializeField]
+      private CanvasGroup _AlphaController;
+
+      [SerializeField]
+      private ProgressBar _ChargeBar;
+
+      private bool _BoxOpened;
+      private bool _ShakeStarted;
+
+      private void Awake() {
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+        _LootGlow.DOFade(0.0f, 0.0f);
+        _LootBox.DOScale(kMinScale, 0.0f);
+        _BoxOpened = false;
+        _ShakeStarted = false;
+        _LootButton.onClick.AddListener(HandleButtonTap);
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
+        }
+      }
+
+      // TODO: Particle Burst
+      private void HandleButtonTap() {
+        _currentCharge += kChargePerTap;
+        _currentShake += kShakePerTap;
+        if (_currentShake > 1.0f) {
+          _currentShake = 1.0f;
+        }
+      }
+
+      private void Update() {
+        // Decay charge if the box hasn't been opened yet, update the progressbar.
+        if (_BoxOpened == false) {
+          if (_currentCharge > 0.0f) {
+            if (_ShakeStarted == false) {
+              ShakeTheBox();
+              _ShakeStarted = true;
+            }
+            else {
+              _currentCharge -= kChargeDecay;
+              if (_currentCharge <= 0.0f) {
+                _ShakeStarted = false;
+                _currentCharge = 0.0f;
+              }
+            }
+          }
+          if (_currentShake > 0.0f) {
+            _currentShake -= kShakeDecay;
+            if (_currentShake <= 0.0f) {
+              _currentShake = 0.0f;
+            }
+          }
+          _ChargeBar.SetProgress(_currentCharge);
+        }
+      }
+
+      private void ShakeTheBox() {
+        if ((_currentCharge > 0.0f) && (_BoxOpened == false)) {
+          // Keep Shaking, Update scale and glow alpha
+          // Target Scale determined by current charge and constants.
+          float scaleDiff = kMaxScale - kMinScale;
+          float currScale = kMinScale + _currentCharge * scaleDiff;
+          // kShakeInterval is doubled to accomodate for the DoMove loops to allow pingpong effect
+          _LootBox.DOScale(currScale, kShakeInterval * 2);
+          // Loot Glow alpha determined by current charge
+          _LootGlow.DOFade(_currentCharge, kShakeInterval * 2);
+
+          // Shake Power determined by current charge and constants.
+          float currShake = _currentShake * kMaxShake;
+          float shakeX = UnityEngine.Random.Range(-currShake, currShake);
+          float shakeY = UnityEngine.Random.Range(-currShake, currShake);
+          //2 loops in order for _LootBox to return to where it begins
+          _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
+          // TODO: Potentially test out doshake to see if it looks nicer.
+          UpdateLootText();
+          if (_currentCharge >= 1.0f) {
+            // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
+            _BoxOpened = true;
+            _LootBox.gameObject.SetActive(false);
+            _ChargeBar.SetProgress(1.0f);
+            RewardLoot();
+          }
+        }
+      }
+
+      /// <summary>
+      /// Updates the loot text based on the current charge level.
+      /// </summary>
+      private void UpdateLootText() {
+        if (_currentCharge >= kLootAlmostThreshold) {
+          LootText = _LootAlmostKey;
+        }
+        else if (_currentCharge >= kLootMidTreshold) {
+          LootText = _LootMidKey;
+        }
+        else {
+          LootText = _LootStartKey;
+        }
+      }
+
+      private void RewardLoot(/*TODO : pass in full information about the rewards received from the current chest*/) {
+        // TODO: Start Reward Animation Sequence and create LootDoobers
+        // TODO: Currently is not using Reward information to determine the doobers looted.
+        // purely hardcoded bullshit for testing.-R.A.
+        UnleashTheDoobers(3);
+      }
+
+      private Transform SpawnDoober(/*TODO : pass in the name of the rewardID for this Doobster*/) {
+
+        Transform newDoob = UIManager.CreateUIElement(_RewardDooberPrefab.gameObject, _DooberStart).transform;
+        // TODO: Initialize Doober with appropriate values
+        _ActiveDooberTransforms.Add(newDoob);
+        return newDoob;
+      }
+
+      /// <summary>
+      /// Unleashes the doobers. Creates all necessary doobers and tweens them outwards to scattered positions.
+      /// </summary>
+      /// <param name="doobCount">Doob count.</param>
+      private void UnleashTheDoobers(int doobCount /*TODO : pass in full information about the rewards received from the current chest*/) {
+        List<Transform> doobTargets = new List<Transform>();
+        doobTargets.AddRange(_MultRewardsTransforms);
+        // TODO : Create targets dynamically limited by doobCount, not other way around
+        if (doobCount > doobTargets.Count) {
+          doobCount = doobTargets.Count;
+        }
+        Sequence dooberSequence = DOTween.Sequence();
+        // If there's only one reward, put it directly in the middle where the box was
+        if (doobCount == 1) {
+          Transform newDoob = SpawnDoober();
+          dooberSequence.Join(newDoob.DOScale(0.0f, kDooberExplosionDuration).From().SetEase(Ease.OutBack));
+        }
+        else {
+          // If there's more than one reward, give each of them a unique transform to tween out to
+          for (int i = 0; i < doobCount; i++) {
+            Transform newDoob = SpawnDoober();
+            Transform toRemove = doobTargets[UnityEngine.Random.Range(0, doobTargets.Count)];
+            Vector3 doobTarget = toRemove.position;
+            doobTargets.Remove(toRemove);
+            dooberSequence.Join(newDoob.DOScale(0.0f, kDooberExplosionDuration).From().SetEase(Ease.OutBack));
+            dooberSequence.Join(newDoob.DOMove(doobTarget, kDooberExplosionDuration).SetEase(Ease.OutBack));
+          }
+        }
+
+        dooberSequence.InsertCallback(kDooberExplosionDuration + kDooberStayDuration, SendDoobersAway);
+        dooberSequence.Play();
+      }
+
+      // BEGONE DOOBERS! OUT OF MY SIGHT! Staggering their start times slightly, send all active doobers to the
+      // FinalRewardTarget position
+      private void SendDoobersAway() {
+        Sequence dooberSequence = DOTween.Sequence();
+        // If there's more than one reward, give each of them a unique transform to tween out to
+        for (int i = 0; i < _ActiveDooberTransforms.Count; i++) {
+          Transform currDoob = _ActiveDooberTransforms[i];
+          float doobStagger = UnityEngine.Random.Range(0, kDooberStaggerMax);
+          dooberSequence.Insert(doobStagger, currDoob.DOScale(0.0f, kDooberReturnDuration).SetEase(Ease.InBack));
+          dooberSequence.Insert(doobStagger, currDoob.DOMove(_FinalRewardTarget.position, kDooberReturnDuration).SetEase(Ease.InBack));
+        }
+        dooberSequence.OnComplete(CloseView);
+        dooberSequence.Play();
+      }
+
+      protected override void CleanUp() {
+        _LootButton.onClick.RemoveAllListeners();
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
+        }
+      }
+
+      protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        openAnimation.Append(transform.DOLocalMoveY(
+          50, 0.15f).From().SetEase(Ease.OutQuad).SetRelative());
+        if (_AlphaController != null) {
+          _AlphaController.alpha = 0;
+          openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
+        }
+      }
+
+      protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+        closeAnimation.Append(transform.DOLocalMoveY(
+          -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
+        if (_AlphaController != null) {
+          closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
+        }
+      }
+    }
+  }
+}

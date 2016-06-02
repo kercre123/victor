@@ -468,8 +468,8 @@ MonoBehaviour:
   ButtonGraphics: []
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 5
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
     _GameObjectType: 2
 --- !u!114 &11415374
 MonoBehaviour:
@@ -623,8 +623,8 @@ MonoBehaviour:
   ButtonGraphics: []
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 5
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
     _GameObjectType: 2
 --- !u!114 &11436700
 MonoBehaviour:
@@ -882,8 +882,8 @@ MonoBehaviour:
   ButtonGraphics: []
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 5
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
     _GameObjectType: 2
 --- !u!114 &11472900
 MonoBehaviour:
@@ -1140,8 +1140,8 @@ MonoBehaviour:
   ButtonGraphics: []
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 5
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
     _GameObjectType: 2
 --- !u!114 &11490168
 MonoBehaviour:

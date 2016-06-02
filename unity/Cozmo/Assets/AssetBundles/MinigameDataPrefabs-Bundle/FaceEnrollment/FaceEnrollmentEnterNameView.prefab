@@ -101,6 +101,15 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    JsonValue: 100
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 1
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 100
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Done"'
   ModifiedLocalReferences:
@@ -156,6 +165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SubmitName: {fileID: 0}
   _NameInputField: {fileID: 11493992}
+  _NameInputPlaceholder: {fileID: 11429310}
 --- !u!114 &11462468
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -226,7 +236,7 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 11497524}
   m_TextComponent: {fileID: 11462468}
-  m_Placeholder: {fileID: 11429310}
+  m_Placeholder: {fileID: 0}
   m_ContentType: 5
   m_InputType: 0
   m_AsteriskChar: 42
@@ -234,7 +244,7 @@ MonoBehaviour:
   m_LineType: 0
   m_HideMobileInput: 1
   m_CharacterValidation: 4
-  m_CharacterLimit: 0
+  m_CharacterLimit: 32
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
@@ -324,7 +334,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 559, y: 242}
-  m_SizeDelta: {x: 800, y: 351}
+  m_SizeDelta: {x: 800, y: 285}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22456464
 RectTransform:
@@ -336,14 +346,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22499850}
   - {fileID: 22473256}
+  - {fileID: 22499850}
   m_Father: {fileID: 22498164}
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -400, y: 250}
-  m_SizeDelta: {x: 1000, y: 300}
+  m_SizeDelta: {x: 1000, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22473256
 RectTransform:
@@ -356,7 +366,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22456464}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -0.5}
@@ -392,7 +402,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22456464}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -0.5}

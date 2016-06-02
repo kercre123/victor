@@ -172,9 +172,9 @@ public interface IRobot : IDisposable {
 
   void SetIdleAnimation(string default_anim);
 
-  void ResetDrivingAnimations();
+  void PopDrivingAnimations();
 
-  void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim);
+  void PushDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim);
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
 
@@ -218,6 +218,10 @@ public interface IRobot : IDisposable {
   void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
@@ -278,6 +282,9 @@ public interface IRobot : IDisposable {
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendDemoResetState();
+
   void EraseAllEnrolledFaces();
+
+  void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
 }

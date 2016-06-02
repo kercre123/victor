@@ -59,10 +59,6 @@ MonoBehaviour:
     disabledSprite: {fileID: 0}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.334}
   _GlintAnimator: {fileID: 0}
-  _UISoundEvent:
-    _Event: 352968677
-    _EventType: 7
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11423004
 MonoBehaviour:
@@ -91,6 +87,11 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+  _UISoundEvent:
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
+    _GameObjectType: 2
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!222 &22253698
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -139,14 +140,6 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 0}
-      propertyPath: _UISoundEvent._Event
-      value: 352968677
-      objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _UISoundEvent._GameObjectType
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _TextLabelOffset
       value: 0

@@ -1,15 +1,17 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &139190
+--- !u!1 &122140
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22436396}
+  - 224: {fileID: 22409366}
+  - 222: {fileID: 22222854}
+  - 114: {fileID: 11456194}
   m_Layer: 5
-  m_Name: IconContainer
+  m_Name: Circuit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17,16 +19,16 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &146308
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22435126}
   - 222: {fileID: 22226564}
-  - 114: {fileID: 11456194}
+  - 114: {fileID: 11429270}
   m_Layer: 5
-  m_Name: BackgroundImage
+  m_Name: ChallengeIconContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,41 +48,6 @@ GameObject:
   - 114: {fileID: 11440696}
   m_Layer: 5
   m_Name: HomeHubUnlockedChallengeButton
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &164936
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22443288}
-  - 222: {fileID: 22239072}
-  - 114: {fileID: 11494354}
-  - 114: {fileID: 11427750}
-  m_Layer: 5
-  m_Name: ButtonGlint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &194822
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22422770}
-  - 222: {fileID: 22286324}
-  - 114: {fileID: 11437970}
-  m_Layer: 5
-  m_Name: IconImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -114,7 +81,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ButtonScript: {fileID: 11440696}
-  _IconImage: {fileID: 11437970}
+  _IconImage: {fileID: 0}
   _ChallengeTitle: {fileID: 0}
 --- !u!114 &11420562
 MonoBehaviour:
@@ -130,49 +97,31 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: 400
   m_MinHeight: -1
-  m_PreferredWidth: 600
+  m_PreferredWidth: 450
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &11427750
+--- !u!114 &11429270
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 164936}
+  m_GameObject: {fileID: 146308}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a41bbe99256a64d469e220319b895431, type: 3}
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _MaskImage: {fileID: 11494354}
---- !u!114 &11437970
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194822}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
+  Prefab: {fileID: 116638, guid: 44454b3ff11754c71b8b19311c580825, type: 2}
+  ModifiedValues: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:targetImage
+    ReferencePath: BackgroundImage
+  - ObjectPath: ../
+    FieldName: Cozmo.HubWorld.HubWorldButton:_IconImage
+    ReferencePath: BackgroundImage/IconImage
+  ModifiedGlobalReferences: []
 --- !u!114 &11440696
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -187,50 +136,44 @@ MonoBehaviour:
   _Interactable: 1
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
-  TextEnabledColor: {r: 0, g: 0, b: 0, a: 1}
+  TextEnabledColor: {r: 0.50980395, g: 0.5058824, b: 0.43529412, a: 1}
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
-  - targetImage: {fileID: 11456194}
+  - targetImage: {fileID: 0}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.62352943, g: 0.45882356, b: 0.13725491, a: 1}
+    pressedColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: 0.62352943, g: 0.45882356, b: 0.13725491, a: 0.284}
-  - targetImage: {fileID: 11437970}
-    ignoreSprite: 1
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.6313726, g: 0.6313726, b: 0.6313726, a: 1}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 1, g: 1, b: 1, a: 0}
-  _GlintAnimator: {fileID: 11427750}
+    disabledColor: {r: 0.6691177, g: 0.6691177, b: 0.6691177, a: 0.284}
+  _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 6
-    _GameObjectType: 3
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
+    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11456194
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 146308}
+  m_GameObject: {fileID: 122140}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.7372549, b: 0.22745098, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: a567dd2ca848f4d39b88526de7ccc21f, type: 3}
+  m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
@@ -261,73 +204,40 @@ MonoBehaviour:
     FieldName: Cozmo.HubWorld.HubWorldButton:_ChallengeTitle
     ReferencePath: 
   ModifiedGlobalReferences: []
---- !u!114 &11494354
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 164936}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
-  m_Type: 1
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!222 &22217178
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 157454}
+--- !u!222 &22222854
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 122140}
 --- !u!222 &22226564
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 146308}
---- !u!222 &22239072
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 164936}
---- !u!222 &22286324
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194822}
---- !u!224 &22422770
+--- !u!224 &22409366
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194822}
+  m_GameObject: {fileID: 122140}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22436396}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0.2, y: 0.2}
-  m_AnchorMax: {x: 0.8, y: 0.8}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_Father: {fileID: 22475634}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 245, y: 0}
+  m_SizeDelta: {x: 175, y: 328}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22435126
 RectTransform:
@@ -339,49 +249,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22436396}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22436396
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 139190}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 22435126}
-  - {fileID: 22422770}
-  - {fileID: 22443288}
   m_Father: {fileID: 22475634}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 200, y: 0}
-  m_SizeDelta: {x: 300, y: 300}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22443288
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 164936}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 22436396}
-  m_RootOrder: 2
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.00006866455, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 400, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22475634
 RectTransform:
@@ -393,12 +266,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22436396}
+  - {fileID: 22409366}
+  - {fileID: 22435126}
   - {fileID: 22476496}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -413,10 +287,10 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22475634}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 200, y: -190}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -238}
   m_SizeDelta: {x: 400, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
@@ -517,7 +391,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_PreferredWidth
-      value: 600
+      value: 450
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_MinWidth
@@ -530,6 +404,30 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _UISoundEvent._GameObjectType
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].pressedColor.r
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].pressedColor.g
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].pressedColor.b
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].disabledColor.r
+      value: 0.6691177
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].disabledColor.g
+      value: 0.6691177
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ButtonGraphics.Array.data[0].disabledColor.b
+      value: 0.6691177
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
