@@ -48,7 +48,7 @@ class OTAStreamer:
                 sys.stdout.write(os.linesep)
                 break
         self.writing = False
-    
+
     def OnConnect(self, connectionInfo):
         "Handles robot connected event, starts upgrade"
         self.writing = True
@@ -84,7 +84,7 @@ class OTAStreamer:
                 self.Write()
             else:
                 time.sleep(0.1)
-        
+
 # Script entry point
 if __name__ == '__main__':
     fwi = DEFAULT_FIRMWARE_IMAGE
