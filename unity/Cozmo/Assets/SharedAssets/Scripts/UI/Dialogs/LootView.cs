@@ -11,12 +11,12 @@ namespace Cozmo {
   namespace UI {
     public class LootView : BaseView {
 
-      private const float kMinScale = 1.0f;
+      private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.25f;
-      private const float kMaxShake = 1.5f;
+      private const float kMaxShake = 1.75f;
       private const float kShakeInterval = 0.035f;
       private const float kShakeDecay = 0.005f;
-      private const float kShakePerTap = 0.15f;
+      private const float kShakePerTap = 0.25f;
 
       private const float kChargePerTap = 0.15f;
       private const float kChargeDecay = 0.0025f;
@@ -102,6 +102,9 @@ namespace Cozmo {
       private void HandleButtonTap() {
         _currentCharge += kChargePerTap;
         _currentShake += kShakePerTap;
+        if (_currentShake > 1.0f) {
+          _currentShake = 1.0f;
+        }
       }
 
       private void Update() {
