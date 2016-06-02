@@ -11,7 +11,7 @@ GameObject:
   - 198: {fileID: 19810676}
   - 199: {fileID: 19939524}
   m_Layer: 5
-  m_Name: BackgroundParticlesSoft
+  m_Name: MinigameParticlesSoft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

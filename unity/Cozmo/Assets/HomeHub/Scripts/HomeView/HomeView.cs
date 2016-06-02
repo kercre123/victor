@@ -111,6 +111,10 @@ namespace Cozmo.HomeHub {
         // Avoid dupes
         return;
       }
+      if (_LootViewPrefab == null) {
+        DAS.Error("HomeView.OpenLootView", "LootViewPrefab is NULL");
+        return;
+      }
 
       // Create alert view with Icon
       LootView alertView = UIManager.OpenView(_LootViewPrefab);

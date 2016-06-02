@@ -1,28 +1,28 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &198998
+--- !u!1 &186374
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22422982}
-  - 198: {fileID: 19823308}
-  - 199: {fileID: 19909812}
+  - 224: {fileID: 22499858}
+  - 198: {fileID: 19810676}
+  - 199: {fileID: 19939524}
   m_Layer: 5
-  m_Name: MinigameParticlesHard
+  m_Name: RewardParticlesDrift
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!198 &19823308
+--- !u!198 &19810676
 ParticleSystem:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 198998}
+  m_GameObject: {fileID: 186374}
   serializedVersion: 2
   lengthInSec: 5
   startDelay:
@@ -65,13 +65,13 @@ ParticleSystem:
   looping: 1
   prewarm: 0
   playOnAwake: 1
-  moveWithTransform: 1
+  moveWithTransform: 0
   scalingMode: 1
   InitialModule:
     serializedVersion: 2
     enabled: 1
     startLifetime:
-      scalar: 20
+      scalar: 15
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -106,7 +106,7 @@ ParticleSystem:
         m_RotationOrder: 4
       minMaxState: 0
     startSpeed:
-      scalar: 0.2
+      scalar: 2
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -232,10 +232,10 @@ ParticleSystem:
         rgba: 4294967295
       maxColor:
         serializedVersion: 2
-        rgba: 4294967295
+        rgba: 4279041792
       minMaxState: 0
     startSize:
-      scalar: 1
+      scalar: 2.5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -457,10 +457,15 @@ ParticleSystem:
       maxCurve:
         serializedVersion: 2
         m_Curve:
-        - time: 0
-          value: 0.96850395
-          inSlope: 0.5637814
-          outSlope: 0.5637814
+        - time: 0.0072202166
+          value: 0.86614174
+          inSlope: 0.9659168
+          outSlope: 0.9659168
+          tangentMode: 0
+        - time: 0.15884477
+          value: 1
+          inSlope: 0.5452757
+          outSlope: 0.5452757
           tangentMode: 0
         - time: 1
           value: 0.9330709
@@ -474,14 +479,14 @@ ParticleSystem:
         serializedVersion: 2
         m_Curve:
         - time: 0
-          value: 0.27941346
-          inSlope: 1.1587106
-          outSlope: 1.1587106
+          value: 0.25436497
+          inSlope: 1.4553581
+          outSlope: 1.4553581
           tangentMode: 0
-        - time: 0.9964538
-          value: 0.714196
-          inSlope: 0
-          outSlope: 0
+        - time: 1
+          value: 0.56099504
+          inSlope: -0.5142481
+          outSlope: -0.5142481
           tangentMode: 0
         m_PreInfinity: 2
         m_PostInfinity: 2
@@ -770,7 +775,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-      minMaxState: 1
+      minMaxState: 2
     y:
       scalar: 1
       maxCurve:
@@ -805,7 +810,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-      minMaxState: 1
+      minMaxState: 2
     z:
       scalar: 1
       maxCurve:
@@ -840,8 +845,8 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-      minMaxState: 1
-    inWorldSpace: 1
+      minMaxState: 2
+    inWorldSpace: 0
   InheritVelocityModule:
     enabled: 0
     m_Mode: 1
@@ -1085,7 +1090,7 @@ ParticleSystem:
         m_RotationOrder: 4
       minMaxState: 1
     magnitude:
-      scalar: 0.1
+      scalar: 0.2
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -1121,7 +1126,7 @@ ParticleSystem:
       minMaxState: 0
     separateAxis: 0
     inWorldSpace: 0
-    dampen: 1
+    dampen: 0.05
   SizeBySpeedModule:
     enabled: 0
     curve:
@@ -1501,17 +1506,17 @@ ParticleSystem:
     subEmitterCollision1: {fileID: 0}
     subEmitterDeath: {fileID: 0}
     subEmitterDeath1: {fileID: 0}
---- !u!199 &19909812
+--- !u!199 &19939524
 ParticleSystemRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 198998}
+  m_GameObject: {fileID: 186374}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_Materials:
-  - {fileID: 2100000, guid: a33679b15bd9a4b56941f4600fe7596d, type: 2}
+  - {fileID: 2100000, guid: b7730c55122764a1397d3b098fb37258, type: 2}
   m_SubsetIndices: 
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 1
@@ -1542,15 +1547,15 @@ ParticleSystemRenderer:
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
   m_Mesh3: {fileID: 0}
---- !u!224 &22422982
+--- !u!224 &22499858
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 198998}
+  m_GameObject: {fileID: 186374}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 100}
-  m_LocalScale: {x: 2.5, y: 2.5, z: 2.5}
+  m_LocalPosition: {x: 0, y: 0, z: 100.00038}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -1568,5 +1573,5 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 198998}
+  m_RootGameObject: {fileID: 186374}
   m_IsPrefabParent: 1

@@ -13,13 +13,20 @@ namespace Cozmo {
 
       private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.25f;
-      private const float kMaxShake = 1.75f;
-      private const float kShakeInterval = 0.035f;
+
+      private const float kMaxShake = 1.0f;
+      private const float kShakeInterval = 0.05f;
       private const float kShakeDecay = 0.005f;
-      private const float kShakePerTap = 0.25f;
+      private const float kShakePerTap = 0.2f;
+      private const float kShakeRotation = 90.0f;
+      private const int kShakeRotationVibrato = 60;
+      private const float kShakeRotationRandomness = 45f;
+
+      private const int kMinBurst = 3;
+      private const int kMaxBurst = 10;
 
       private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.0025f;
+      private const float kChargeDecay = 0.003f;
       // How long the Reward animation takes to tween the reward doobers to their initial positions
       private const float kDooberExplosionDuration = 0.25f;
       // How long the Rewards remain visible before leaving
@@ -28,7 +35,7 @@ namespace Cozmo {
       private const float kDooberReturnDuration = 0.75f;
       // The maximum amount of variance in seconds that Doobers are randomly staggered by to create
       // less uniform movements
-      private const float kDooberStaggerMax = 1.0f;
+      private const float kDooberStaggerMax = 0.75f;
 
       private float _currentCharge = 0.0f;
       private float _currentShake = 0.0f;
@@ -51,6 +58,8 @@ namespace Cozmo {
       private Transform _FinalRewardTarget;
       [SerializeField]
       private GameObject _RewardDooberPrefab;
+      [SerializeField]
+      private ParticleSystem _BurstParticles;
 
       private const float kLootMidTreshold = 0.2f;
       private const float kLootAlmostThreshold = 0.7f;
@@ -96,6 +105,7 @@ namespace Cozmo {
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
         }
+
       }
 
       // TODO: Particle Burst
@@ -105,6 +115,8 @@ namespace Cozmo {
         if (_currentShake > 1.0f) {
           _currentShake = 1.0f;
         }
+        float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
+        _BurstParticles.Emit((int)toBurst);
       }
 
       private void Update() {
@@ -130,6 +142,14 @@ namespace Cozmo {
             }
           }
           _ChargeBar.SetProgress(_currentCharge);
+          UpdateLootText();
+          if (_currentCharge >= 1.0f) {
+            // TODO: play sounds/effects
+            _BoxOpened = true;
+            _LootBox.gameObject.SetActive(false);
+            _ChargeBar.SetProgress(1.0f);
+            RewardLoot();
+          }
         }
       }
 
@@ -145,20 +165,14 @@ namespace Cozmo {
           _LootGlow.DOFade(_currentCharge, kShakeInterval * 2);
 
           // Shake Power determined by current charge and constants.
-          float currShake = _currentShake * kMaxShake;
+          float currShake = Mathf.Lerp(0, kMaxShake, _currentShake);
           float shakeX = UnityEngine.Random.Range(-currShake, currShake);
           float shakeY = UnityEngine.Random.Range(-currShake, currShake);
+          float shakeZ = UnityEngine.Random.Range(-currShake, currShake);
           //2 loops in order for _LootBox to return to where it begins
           _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
-          // TODO: Potentially test out doshake to see if it looks nicer.
-          UpdateLootText();
-          if (_currentCharge >= 1.0f) {
-            // TODO: complete sequence, hide box, play sounds/effects, start reward animation.
-            _BoxOpened = true;
-            _LootBox.gameObject.SetActive(false);
-            _ChargeBar.SetProgress(1.0f);
-            RewardLoot();
-          }
+          _LootBox.DOShakeRotation(kShakeInterval, new Vector3(0, 0, shakeZ * kShakeRotation), kShakeRotationVibrato, kShakeRotationRandomness);
+
         }
       }
 
@@ -166,7 +180,10 @@ namespace Cozmo {
       /// Updates the loot text based on the current charge level.
       /// </summary>
       private void UpdateLootText() {
-        if (_currentCharge >= kLootAlmostThreshold) {
+        if (_BoxOpened) {
+          LootText = string.Empty;
+        }
+        else if (_currentCharge >= kLootAlmostThreshold) {
           LootText = _LootAlmostKey;
         }
         else if (_currentCharge >= kLootMidTreshold) {
