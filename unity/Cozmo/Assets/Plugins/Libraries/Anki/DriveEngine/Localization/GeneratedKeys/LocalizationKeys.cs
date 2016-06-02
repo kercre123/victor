@@ -242,6 +242,9 @@ public static class LocalizationKeys {
   public const string kDailyGoalDescriptionPlaySpeedTap = "dailyGoal.description.PlaySpeedTap";
   public const string kDailyGoalTitleWinSpeedTapHands = "dailyGoal.title.WinSpeedTapHands";
   public const string kDailyGoalDescriptionWinSpeedTapHands = "dailyGoal.description.WinSpeedTapHands";
+  public const string kLootStart = "loot.Start";
+  public const string kLootMid = "loot.Mid";
+  public const string kLootAlmost = "loot.Almost";
 
   #endregion
 

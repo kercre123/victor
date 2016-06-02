@@ -1155,6 +1155,7 @@ MonoBehaviour:
   _CurrentRequirementPointsLabel: {fileID: 11417262}
   _RequirementPointsNeededLabel: {fileID: 11474242}
   _ScrollRect: {fileID: 11465266}
+  _LootViewPrefab: {fileID: 11429958, guid: 3fdd92544c58b4b3dbb0a5543e9024b9, type: 2}
 --- !u!114 &11476532
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1989,6 +1990,11 @@ Prefab:
       propertyPath: _DASEventViewName
       value: home_view
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _LootViewPrefab
+      value: 
+      objectReference: {fileID: 11429958, guid: 3fdd92544c58b4b3dbb0a5543e9024b9,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 121000}
