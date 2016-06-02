@@ -265,6 +265,7 @@ static bool GarbageCollectionTask(uint32_t param)
         gc->sectorCounter++;
         if ((gc->sectorCounter * SECTOR_SIZE) >= NV_STORAGE_AREA_SIZE)
         {
+          os_printf("GC Erase done\r\n");
           gc->phase = GC_seekEndOfFactory;
           gc->finishedCallback(NV_OKAY);
         }

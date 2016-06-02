@@ -49,10 +49,6 @@ void checkFactoryLockoutResult(NVStorage::NVStorageBlob* data, const NVStorage::
 {
   if (result == NVStorage::NV_NOT_FOUND) factoryLockout = false;
 }
-extern "C" void backgroundTaskNVInitDone(void)
-{
-  NVStorage::Read(NVStorage::NVEntry_FactoryLock, checkFactoryLockoutResult);
-}
 #endif
 
 /** The OS task which dispatches subtasks.
@@ -155,7 +151,7 @@ bool readAndSendCrashReport(uint32_t param)
 extern "C" int8_t backgroundTaskInit(void)
 {
   #if FACTORY_FIRMWARE
-  Anki::Cozmo::BackgroundTask::factoryLockout = true;
+  Anki::Cozmo::BackgroundTask::factoryLockout = false; /// XXX initalize this somewhere
   #endif
 
   //os_printf("backgroundTask init\r\n");
