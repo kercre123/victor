@@ -60,6 +60,11 @@ public class StartupManager : MonoBehaviour {
   // Use this for initialization
   private IEnumerator Start() {
 
+    string buildScene = BuildFlags.kDefaultBuildScene;
+    if (buildScene == "FactoryTest") {
+      UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
+    }
+
     // Initialize DAS first so we can have error messages during intialization
     #if ANIMATION_TOOL
     DAS.AddTarget(new ConsoleDasTarget());
@@ -194,7 +199,7 @@ public class StartupManager : MonoBehaviour {
   private void AddComponents() {
     // Add managers to this object here
     // gameObject.AddComponent<ManagerTypeName>();
-    gameObject.AddComponent<HockeyAppManager>();
+    gameObject.AddComponent<ExceptionReportManager>();
     gameObject.AddComponent<ObjectTagRegistryManager>();
     AnimationManager.Instance.Initialize();
 

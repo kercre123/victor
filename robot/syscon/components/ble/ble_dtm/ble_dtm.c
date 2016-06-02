@@ -34,7 +34,8 @@
 #define RX_MODE          true   /**< Constant defining RX mode for radio during dtm test. */
 #define TX_MODE          false  /**< Constant defining TX mode for radio during dtm test. */
 
-#define PHYS_CH_MAX      39     /**< Maximum number of valid channels in BLE. */
+#define PHYS_CH_MIN      2
+#define PHYS_CH_MAX      81     /**< Maximum number of valid channels in BLE + Anki accessories */
 
 // Values that for now are "constants" - they could be configured by a function setting them,
 // but most of these are set by the BLE DTM standard, so changing them is not relevant.
@@ -236,7 +237,7 @@ static void radio_prepare(bool rx)
     NRF_RADIO->TEST         = 0;
     NRF_RADIO->CRCPOLY      = m_crc_poly;
     NRF_RADIO->CRCINIT      = m_crc_init;
-    NRF_RADIO->FREQUENCY    = (m_phys_ch << 1) + 2;                  // Actual frequency (MHz): 2400 + register value
+    NRF_RADIO->FREQUENCY    = m_phys_ch;                             // Actual frequency (MHz): 2400 + register value
     NRF_RADIO->PACKETPTR    = (uint32_t)&m_pdu;                      // Setting packet pointer will start the radio
     NRF_RADIO->EVENTS_READY = 0;
     NRF_RADIO->SHORTS       = (1 << RADIO_SHORTS_READY_START_Pos) |  // Shortcut between READY event and START task
@@ -465,7 +466,7 @@ uint32_t dtm_cmd(dtm_cmd_t cmd, dtm_freq_t freq, uint32_t length, dtm_pkt_type_t
         return DTM_ERROR_INVALID_STATE;   
     }
 
-    if (m_phys_ch > PHYS_CH_MAX)
+    if (m_phys_ch > PHYS_CH_MAX || m_phys_ch < PHYS_CH_MIN)
     {
         // Parameter error
         // Note: State is unchanged; ongoing test not affected

@@ -6,6 +6,7 @@ __author__ = "Mark Wesley"
 
 import os
 import sys
+import time
 from verboseLevel import VerboseLevel
 
 
@@ -24,6 +25,7 @@ class INetConnection:
         self.verboseLevel = verboseLevel
         self.GToEI = GToEI
         self.GToEM = GToEM
+        self.pingCount = 0
 
     def IsConnected(self):
         "IsConnected: Only true if fully connected (with ack)"
@@ -40,9 +42,12 @@ class INetConnection:
 
     def SendPing(self):
         outPingMsg = self.GToEI.Ping()
-        outPingMsg.counter = 1 # [MARKW:TODO] - should increase for duration of connection, also add timing info etc
-        toEngMsg = self.GToEM(Ping = outPingMsg);
+        outPingMsg.counter = self.pingCount 
+        outPingMsg.timeSent = time.time()
+        outPingMsg.isResponse = False
+        toEngMsg = self.GToEM(Ping = outPingMsg)
         self.SendMessage(toEngMsg, False)
+        self.pingCount += 1
 
     def Disconnect(self):
         "Disconnect from any subclass's underlying network connection and reset any connection state"

@@ -67,6 +67,7 @@ namespace Cozmo {
 
   CONSOLE_VAR(f32, kMinFaceDistanceForBonus_m, "Behavior.InteractWithFaces", 0.0f);
   CONSOLE_VAR(f32, kMaxFaceDistanceForBonus_m, "Behavior.InteractWithFaces", 2.0f);
+  CONSOLE_VAR(s32, kMinTimesSeenFrontalBeforeEnroll, "Behavior.InteractWithFaces", 4);
   
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -150,6 +151,7 @@ namespace Cozmo {
                         "FaceWorld returned null face for ID %d", _currentFace);
       MarkFaceDeleted(_currentFace);
       _currentFace = Vision::UnknownFaceID;
+      _currentFaceNumTimesSeen = 0;
       return false;
     }
     
@@ -195,6 +197,7 @@ namespace Cozmo {
     }
 
     _currentFace = bestFace;
+    _currentFaceNumTimesSeen = 0;
     
     TransitionToRecognizingFace(robot);
   }
@@ -400,19 +403,25 @@ namespace Cozmo {
     if( ! GetCurrentFace(robot, face, faceData) ) {
       return;
     }
-
-    CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-        
+    
     // Always turn to look at the face before any reaction
     TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot,
                                                                              face->GetHeadPose(),
                                                                              DEG_TO_RAD(179));
     turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(2.0) );
 
-    compoundAction->AddAction(turnTowardsPoseAction);
-    compoundAction->AddAction( new PlayAnimationGroupAction(robot, _initialTakeAnimGroup) );
+    if(face->GetName().empty()) {
+      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+      compoundAction->AddAction(turnTowardsPoseAction);
+      compoundAction->AddAction( new PlayAnimationGroupAction(robot, _initialTakeAnimGroup) );
+      StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToWaitingForRecognition);
+    } else {
+      // Face already has a name, skip past all the waiting for recognition stuff and
+      // go straight to reacting (after turning towards the face first)
+      StartActing(turnTowardsPoseAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
+    }
 
-    StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToWaitingForRecognition);
+
   }
 
   void BehaviorInteractWithFaces::TransitionToWaitingForRecognition(Robot& robot)
@@ -426,16 +435,22 @@ namespace Cozmo {
       return;
     }
 
-    // TODO:(bn/as) use some confidence here? Want to wait to see if a "new session only" id is going to merge
-    // into a known name
-    if( _currentFace < 0 ) {
-      // continue to look
-      const Face* face = nullptr;
-      FaceData* faceData = nullptr;
-      if( ! GetCurrentFace(robot, face, faceData) ) {
-        return;
-      }
-
+    const Face* face = nullptr;
+    FaceData* faceData = nullptr;
+    if( ! GetCurrentFace(robot, face, faceData) ) {
+      return;
+    }
+    
+    if( _currentFace < 0 || faceData->_numTimesSeenFrontal < kMinTimesSeenFrontalBeforeEnroll)
+    {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.TransitionToWaitingForRecognition.Waiting",
+                             "CurrentFace:%d, NumTimesSeenFrontal:%d",
+                             _currentFace, faceData->_numTimesSeenFrontal);
+      
+      // This is still just a tracked face (negative ID) or a "session-only" face
+      // that we haven't seen enough times to trust that the recognizer just hasn't
+      // recognized it yet: continue to look.
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
         
       // Always turn to look at the face before any reaction
@@ -450,6 +465,9 @@ namespace Cozmo {
       StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
     }
     else {
+      // This is a "session-only" face with positive ID that we've seen enough times
+      // to be convinced the recognizer has had a chance to match it and didn't.
+      // TODO: It's still possible we simply haven't seen the face in a recognizable pose yet
       if( ShouldEnrollCurrentFace(robot) ) {
         TransitionToRequestingFaceEnrollment(robot);
       }
@@ -482,11 +500,11 @@ namespace Cozmo {
         robot.GetMoodManager().TriggerEmotionEvent("NewUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
-        // He's happy to see you so play an anim first
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
-        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, true);
-        sayTextAction->SetGameEvent(Anki::Cozmo::GameEvent::OnSawNewNamedFace);
+        // Say text and then play a happy animation
+        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
+        sayTextAction->SetGameEvent(GameEvent::OnSawNewNamedFace);
         compoundAction->AddAction( sayTextAction );
+        //compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
 
         if( _faceEnrollEnabled ) {
@@ -504,11 +522,10 @@ namespace Cozmo {
       if( face->GetName().empty() ) {
         compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnSawOldUnnamedFace) );
         robot.GetMoodManager().TriggerEmotionEvent("OldUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
-        EnumToString(GameEvent::OnSawNewNamedFace);
       }
       else {
-        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, true);
-        sayTextAction->SetGameEvent(Anki::Cozmo::GameEvent::OnSawOldNamedFace);
+        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
+        sayTextAction->SetGameEvent(GameEvent::OnSawOldNamedFace);
         compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
         
@@ -613,23 +630,33 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
   bool BehaviorInteractWithFaces::ShouldEnrollCurrentFace(const Robot& robot)
   {
     if( !_readyToEnrollFace ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.NotReady", "");
       return false;
     }
 
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     if( _requestEnrollOnCooldownUntil_s >= 0.0f && currTime_s < _requestEnrollOnCooldownUntil_s ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.OnCoolDown",
+                             "currTime:%.2f coolDownUntil:%.2f",
+                             currTime_s, _requestEnrollOnCooldownUntil_s);
       return false;
     }
       
     // never enroll "temporary" face IDs
     if( _currentFace <= 0 ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.TrackedFace", "");
       return false;
     }
     
     const Face* face = nullptr;
     FaceData* faceData = nullptr;
     if( ! GetCurrentFace(robot, face, faceData) ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.GetCurrentFaceFailed", "");
       return false;
     }
     
@@ -640,6 +667,10 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
       const float eyeDistance = face->GetIntraEyeDistance();
       // if your eye distance is smaller than the threshold, you are further away than we allow for enrollment
       if ( eyeDistance < kMinEyeDistanceForEnrollment ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                               "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.EyeDistTooSmall",
+                               "EyeDist:%.1f MinDist:%.1f",
+                               eyeDistance, kMinEyeDistanceForEnrollment);
         return false;
       }
     }
@@ -647,21 +678,43 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     {
       Pose3d distanceToYourFace;
       if ( !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), distanceToYourFace) ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                               "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.FacePoseOriginFail","");
         return false;
       }
       
       // check your face is close enough
       const float kMaxDistanceFromRobotForEnrollment_mmSQ = kMaxDistanceFromRobotForEnrollment_mm * kMaxDistanceFromRobotForEnrollment_mm;
       if ( distanceToYourFace.GetTranslation().LengthSq() > kMaxDistanceFromRobotForEnrollment_mmSQ ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                               "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.FaceTooFar",
+                               "dist:%.1f thresh:%.1f",
+                               distanceToYourFace.GetTranslation().Length(),
+                               kMaxDistanceFromRobotForEnrollment_mm);
         return false;
       }
     }
 
+    if(faceData->_numTimesSeenFrontal < kMinTimesSeenFrontalBeforeEnroll) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.TooFewFrontalViews",
+                             "numTimesSeenFrontal:%d minThresh:%d",
+                             faceData->_numTimesSeenFrontal,
+                             kMinTimesSeenFrontalBeforeEnroll);
+      return false;
+    }
+    
     // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this
     // will work in the shipping game
 
     // if we've said a name we know and we are looking at a face we don't know, enroll it
-    return face->GetName().empty();
+    const bool noName = face->GetName().empty();
+    if(!noName) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.AlreadyNamed",
+                             "Name: %s", face->GetName().c_str());
+    }
+    return noName;
   }
 
 
@@ -753,6 +806,9 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
       if(!outsideFarRange) {
         dataIter->second._lastSeen_sec = event.GetCurrentTime();
         dataIter->second._deleted = false;
+        if(face->IsFacingCamera()) {
+          dataIter->second._numTimesSeenFrontal++;
+        }
       } else {
         PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.RemoveFace",
                           "face %d is too far (%f > %f), marking as deleted",
@@ -765,7 +821,11 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
     } else if(withinCloseRange) {
       // This is not a face we already knew about, but it's close enough. Add it as one we could choose to
       // track
-      _interestingFacesData.insert( { faceID, FaceData(event.GetCurrentTime()) } );
+      FaceData newData(event.GetCurrentTime());
+      if(face->IsFacingCamera()) {
+        newData._numTimesSeenFrontal = 1;
+      }
+      _interestingFacesData.insert( { faceID, std::move(newData) } );
       PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.NewFace",
                         "Added new face %d observed at t=%f",
                         faceID,

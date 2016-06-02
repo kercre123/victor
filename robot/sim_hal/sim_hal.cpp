@@ -749,6 +749,7 @@ namespace Anki {
               ObjectConnectionState msg;
               msg.objectID = i;
               msg.factoryID = activeObjectSlots_[i].assignedFactoryID;
+              msg.device_type = activeObjectSlots_[i].device_type;
               msg.connected = true;
               RobotInterface::SendMessage(msg);
             }
@@ -765,6 +766,7 @@ namespace Anki {
             ObjectConnectionState msg;
             msg.objectID = i;
             msg.factoryID = cubeInfo->assignedFactoryID;
+            msg.device_type = cubeInfo->device_type;
             msg.connected = false;
             RobotInterface::SendMessage(msg);
           }
@@ -788,7 +790,8 @@ namespace Anki {
               if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.device_type)) {
                 for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                   if (activeObjectSlots_[i].assignedFactoryID == 0) {
-                    printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x in slot %d\n", odMsg.factory_id, i);
+                    printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%hx, slot %d\n",
+                           odMsg.factory_id, odMsg.device_type, i);
                     activeObjectSlots_[i].assignedFactoryID = odMsg.factory_id;
                     activeObjectSlots_[i].device_type = odMsg.device_type;
                     activeObjectSlots_[i].receiver->setChannel(odMsg.factory_id);

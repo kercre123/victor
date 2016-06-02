@@ -228,7 +228,7 @@ namespace Anki {
           // Verify robot is facing pose
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
+                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD_F32(4), HEAD_ANGLE_TOL), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;

@@ -16,6 +16,7 @@
 #include <chrono>
 #include <unordered_map>
 #include <string>
+#include <cstdint>
 
 namespace Anki {
 namespace Vision {
@@ -45,10 +46,14 @@ namespace Vision {
     // Print average time per tic/toc pair for each registered timer
     void PrintAverageTiming() const;
     
+    // Set the minimum time between automatic average timing prints in milliseconds
+    void SetPrintFrequency(int64_t printFrequency_ms) { _timeBetweenPrints_ms = printFrequency_ms; }
+    
   private:
     
     struct Timer {
       std::chrono::time_point<std::chrono::system_clock> startTime;
+      std::chrono::time_point<std::chrono::system_clock> lastPrintTime = std::chrono::system_clock::now();
       std::chrono::milliseconds currentTime;
       std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
       int count = 0;
@@ -61,6 +66,10 @@ namespace Vision {
     TimerContainer _timers;
     
     std::string _eventName = "Profiler";
+    
+    int64_t _timeBetweenPrints_ms = -1;
+    
+    void PrintTimerData(const char* name, const Timer& timer) const;
     
   }; // class Profiler
   

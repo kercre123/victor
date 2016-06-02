@@ -36,6 +36,8 @@ namespace SpeedTap {
     private float _CubeCycleDurationSeconds = 0;
     private float _CubeFlashingDurationSeconds = 0;
 
+    private bool _IsPlayingWinGameAnimation = false;
+
     private CubeLightState _CurrentCubeLightState = CubeLightState.None;
 
     public SpeedTapHandReactToPoint(PointWinner winner, bool mistakeMade) {
@@ -97,6 +99,14 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       AnimationManager.Instance.RemoveAnimationEndedCallback(_AnimationEventSent, _AnimationCallbackUsed);
+    }
+
+    public override void Pause() {
+      // COZMO-2033; some of the win game animations cause Cozmo's cliff sensor to trigger
+      // So in those cases don't show the "Cozmo Moved; Quit Game" dialog
+      if (!_IsPlayingWinGameAnimation) {
+        base.Pause();
+      }
     }
 
     private void UpdateBlockLights(PointWinner winner, bool wasMistakeMade) {
@@ -179,6 +189,7 @@ namespace SpeedTap {
         animationEventToSend = (highIntensity) ? 
           GameEvent.OnSpeedtapGameCozmoWinHighIntensity : GameEvent.OnSpeedtapGameCozmoWinLowIntensity;
       }
+      _IsPlayingWinGameAnimation = true;
       ListenForAnimationEnd(animationEventToSend, HandleEndGameAnimDone);
     }
 

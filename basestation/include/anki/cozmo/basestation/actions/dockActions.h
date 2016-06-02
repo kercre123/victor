@@ -84,6 +84,38 @@ namespace Anki {
       
       void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
+      struct PreActionPoseInfo
+      {
+        // Inputs
+        ObjectID objectID;
+        PreActionPose::ActionType preActionPoseType;
+        bool doNearPreDockPoseCheck;
+        f32 placementOffsetX_mm;
+        f32 preActionPoseAngleTolerance;
+        
+        // Outputs
+        ActionResult actionResult;
+        ObjectInteractionResult interactionResult;
+        std::vector<PreActionPose> preActionPoses;
+        size_t closestIndex;
+        Point2f closestPoint;
+        
+        PreActionPoseInfo(ObjectID objectID,
+                          PreActionPose::ActionType preActionPoseType,
+                          bool doNearPreDockPoseCheck,
+                          f32 placementOffsetX_mm,
+                          f32 preActionPoseAngleTolerance)
+        : objectID(objectID)
+        , preActionPoseType(preActionPoseType)
+        , doNearPreDockPoseCheck(doNearPreDockPoseCheck)
+        , placementOffsetX_mm(placementOffsetX_mm)
+        , preActionPoseAngleTolerance(preActionPoseAngleTolerance)
+        {
+          
+        }
+      };
+      static void IsCloseEnoughToPreActionPose(Robot& robot, PreActionPoseInfo& preActionPoseInfo);
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its
@@ -134,7 +166,7 @@ namespace Anki {
       f32                        _dockDecel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockDecel_mmps2;
       ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       bool                       _doNearPredockPoseCheck         = true;
-      u8                         _numDockingRetries              = 2;
+      u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       
     private:
@@ -382,6 +414,10 @@ namespace Anki {
       const Vision::KnownMarker* _expectedMarkerPostRoll = nullptr;
       
       IActionRunner*             _rollVerifyAction = nullptr;
+      
+    private:
+      // How much we should look down to be able to see the marker of the object we just rolled
+      const f32 kAngleToLookDown = DEG_TO_RAD_F32(-15);
       
     }; // class RollObjectAction
 

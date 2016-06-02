@@ -103,24 +103,8 @@ int main (void)
   I2C::Init();
   IMU::Init();
   OLED::Init();
-  #ifndef ENABLE_FCC_TEST
-  CameraInit();
-
-  Anki::Cozmo::Robot::Init();
-
-  // We can now safely start camera DMA, which shortly after starts HALExec
-  // This function returns after the first call to HALExec is complete
-  SPI::Init();
-  CameraStart();
-
-  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
-
-  // Run the main thread
-  do {
-    // Wait for head body sync to occur
-    UART::WaitForSync();
-  } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
-  #else
+  
+  #ifdef ENABLE_FCC_TEST
   UART::Init();
   FCC::start();
   I2C::Enable();
@@ -132,6 +116,32 @@ int main (void)
       FCC::mainDTMExecution();
     }
   }
+  #else
+    CameraInit();
 
+    Anki::Cozmo::Robot::Init();
+
+    // We can now safely start camera DMA, which shortly after starts HALExec
+    // This function returns after the first call to HALExec is complete
+    SPI::Init();
+    CameraStart();
+
+    // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
+  
+    #if defined(FACTORY_FIRMWARE)
+      // Run the main thread (lite)
+      for(;;) {
+        // Wait for head body sync to occur
+        UART::WaitForSync();
+        Spine::Manage();
+        WiFi::Update();
+      }
+   #else
+      // Run the main thread
+      do {
+        // Wait for head body sync to occur
+        UART::WaitForSync();
+      } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
+    #endif
   #endif
 }

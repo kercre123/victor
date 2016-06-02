@@ -3,9 +3,9 @@ using System.Collections;
 
 public class PingStatus : MonoBehaviour {
 
-  private UnityEngine.Ping _Ping;
-  private bool _PingSuccess = false;
-  private float _LastPingTime = 0.0f;
+  //private UnityEngine.Ping _Ping;
+  private bool _PingSuccess = true;
+  //private float _LastPingTime = 0.0f;
 
   public bool GetPingStatus() {
     return _PingSuccess;
@@ -13,12 +13,12 @@ public class PingStatus : MonoBehaviour {
 
   // Use this for initialization
   void Start() {
-    SendPing();
+    //SendPing();
   }
 	
   // Update is called once per frame
   void Update() {
-    if (Time.time - _LastPingTime > 2.0f) {
+    /*if (Time.time - _LastPingTime > 2.0f) {
       // it's been 2 seconds since we've heard anything. try again.
       // this handles the edge case of Ping throwing a routing exception
       // unity is dumb and doesn't mark isDone as true if it throws an exception so there's
@@ -40,11 +40,14 @@ public class PingStatus : MonoBehaviour {
         SendPing();
       }
 
-    }
+    }*/
   }
 
   private void SendPing() {
-    _LastPingTime = Time.time;
-    _Ping = new Ping(RobotEngineManager.kRobotIP);
+    /*_LastPingTime = Time.time;
+    if (_Ping != null) {
+      _Ping.DestroyPing();
+    }
+    _Ping = new Ping(RobotEngineManager.kRobotIP);*/
   }
 }

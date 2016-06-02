@@ -25,7 +25,6 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
-
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -36,6 +35,8 @@
 #include <anki/messaging/basestation/advertisementService.h>
 
 #include "util/enums/enumOperators.h"
+#include "util/time/universalTime.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -217,12 +218,36 @@ namespace Anki {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
       #endif
-      
-      // Send out this message to anyone that's subscribed
-      Broadcast(std::move(message));
+      // We must handle pings at this level because they are a connection type specific message
+      // and must be dealt with at the transport level rather than at the app level
+      if ( message.GetTag() == ExternalInterface::MessageGameToEngineTag::Ping )
+      {
+        ISocketComms* socketComms = GetSocketComms(connectionType);
+        if (socketComms)
+        {
+          if (message.Get_Ping().isResponse){
+            socketComms->HandlePingResponse(message);
+          }
+          else
+          {
+            ExternalInterface::Ping outPing( message.Get_Ping().counter,
+                                             message.Get_Ping().timeSent,
+                                             true);
+            ExternalInterface::MessageEngineToGame toSend;
+            toSend.Set_Ping(outPing);
+            DeliverToGame(std::move(toSend), (DestinationId)connectionType);
+          }
+        }
+      }
+      else{
+        // Send out this message to anyone that's subscribed
+        Broadcast(std::move(message));
+      }
       
       return RESULT_OK;
     }
+    
+    
     
     
     Result UiMessageHandler::ProcessMessageBytes(const Comms::MsgPacket& packet, UiConnectionType connectionType)
@@ -348,7 +373,9 @@ namespace Anki {
             // Ping the connection to let them know we're still here
             
             ExternalInterface::MessageEngineToGame message;
-            ExternalInterface::Ping outPing( socketComms->NextPingCounter() );
+            
+            ExternalInterface::Ping outPing( socketComms->NextPingCounter(),
+                                            Util::Time::UniversalTime::GetCurrentTimeInSeconds(), false );
             message.Set_Ping(outPing);
             DeliverToGame(message, (DestinationId)i);
           }

@@ -249,11 +249,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void ResetDrivingAnimations() {
+  public void PopDrivingAnimations() {
     // Do nothing
   }
 
-  public void SetDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
+  public void PushDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
     // Do nothing
   }
 
@@ -437,10 +437,18 @@ public class MockRobot : IRobot {
     QueueCallback(3f, callback);
   }
 
+  public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    QueueCallback(3f, callback);
+  }
+
+  public void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    QueueCallback(3f, callback);
+  }
+
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     LiftHeight = heightFactor;
 
-    QueueCallback(0.2f, callback);
+    QueueCallback(0.5f, callback);
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
@@ -462,7 +470,7 @@ public class MockRobot : IRobot {
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     Rotation *= Quaternion.Euler(0, 0, angle_rad);
 
-    QueueCallback(0.5f, callback);
+    QueueCallback(1f, callback);
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
@@ -820,6 +828,10 @@ public class MockRobot : IRobot {
   }
 
   public void SendDemoResetState() {
+    
+  }
+
+  public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
     
   }
 }

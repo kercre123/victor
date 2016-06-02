@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/actions/searchForObjectAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -72,6 +73,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::ReadToolCode,
       MessageGameToEngineTag::RollObject,
       MessageGameToEngineTag::SayText,
+      MessageGameToEngineTag::SearchForObject,
       MessageGameToEngineTag::SetHeadAngle,
       MessageGameToEngineTag::SetLiftHeight,
       MessageGameToEngineTag::TrackToFace,
@@ -557,6 +559,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& ms
 }
 
   
+IActionRunner* CreateSearchForObjectAction(Robot& robot, const ExternalInterface::SearchForObject& msg)
+{
+  SearchForObjectAction* newAction = new SearchForObjectAction(robot, msg.desiredObjectFamily, msg.desiredObjectID, msg.matchAnyObject );
+  return newAction;
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -647,6 +655,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
 
     case RobotActionUnionTag::searchSideToSide:
       return new SearchSideToSideAction(robot);
+
+    case RobotActionUnionTag::searchForObject:
+      return CreateSearchForObjectAction(robot, actionUnion.Get_searchForObject());
 
     case RobotActionUnionTag::readToolCode:
       return new ReadToolCodeAction(robot);
@@ -794,6 +805,11 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     {
       const ExternalInterface::PlayAnimationGroup& msg = event.GetData().Get_PlayAnimationGroup();
       newAction = new PlayAnimationGroupAction(robot, msg.animationGroupName, msg.numLoops);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SearchForObject:
+    {
+      newAction = CreateSearchForObjectAction(robot, event.GetData().Get_SearchForObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsObject:

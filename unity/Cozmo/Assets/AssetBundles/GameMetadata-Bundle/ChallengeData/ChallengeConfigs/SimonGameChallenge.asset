@@ -15,7 +15,7 @@ MonoBehaviour:
   _ChallengeID: SimonGame
   _ChallengeTitleLocKey: simonGame01.title
   _ChallengeDescriptionLocKey: simonGame01.description
-  _ChallengeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 5be5d4048f1134a24962d4e50f3d6c14, type: 3}
   _ChallengeIconPlainStyle: {fileID: 0}
   _UnlockId:
     _EnumValueAsString: SimonGame

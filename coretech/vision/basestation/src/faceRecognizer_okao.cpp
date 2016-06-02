@@ -158,6 +158,8 @@ namespace Vision {
       _featureExtractionThread = std::thread(&FaceRecognizer::Run, this);
     }
     
+    Profiler::SetPrintFrequency(5000);
+    
     _isInitialized = true;
     
     return RESULT_OK;
@@ -477,6 +479,15 @@ namespace Vision {
   
   void FaceRecognizer::Run()
   {
+    
+    const char* threadName = "FaceRecognizer";
+    #if defined(LINUX) || defined(ANDROID)
+    pthread_setname_np(pthread_self(), threadName);
+    #else
+    pthread_setname_np(threadName);
+    #endif
+    
+    
     while(_isRunningAsync)
     {
       _mutex.lock();
@@ -487,11 +498,9 @@ namespace Vision {
         
         // Note: this puts us in FeaturesReady state when done (or Idle if failure)
         ExtractFeatures();
-        
-      } else {
-        // Nothing to do: just sleep
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
       }
+      // Sleep for a bit
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
   } // Run()
   

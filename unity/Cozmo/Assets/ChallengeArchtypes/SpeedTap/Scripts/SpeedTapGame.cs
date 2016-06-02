@@ -54,8 +54,7 @@ namespace SpeedTap {
 
     private float _LastPlayerTimeStamp = -1;
     private float _LastCozmoTimeStamp = -1;
-    public float CozmoTapLatency_sec = 0.0f;
-    public float CozmoTapLatencyCheckTimestamp = 0.0f;
+    public float TapResolutionDelay = 0.0f;
 
     #region Config Values
 
@@ -158,6 +157,7 @@ namespace SpeedTap {
       MinIdleInterval_percent = speedTapConfig.MinIdleInterval_percent;
       MaxIdleInterval_percent = speedTapConfig.MaxIdleInterval_percent;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
+      TapResolutionDelay = speedTapConfig.TapResolutionDelay;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
@@ -270,9 +270,6 @@ namespace SpeedTap {
     private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
       if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
-        if (CozmoTapLatency_sec == 0.0f && CozmoTapLatencyCheckTimestamp != 0.0f) {
-          CozmoTapLatency_sec = (animEvent.timestamp * 0.00001f - CozmoTapLatencyCheckTimestamp * 0.001f);
-        }
         _LastCozmoTimeStamp = animEvent.timestamp;
       }
     }
@@ -358,22 +355,6 @@ namespace SpeedTap {
       else {
         GameAudioClient.SetMusicState(GetDefaultMusicState());
       }
-    }
-
-    private void ShowCubeMovedQuitGameView(string titleKey, string descriptionKey) {
-      EndGameRobotReset();
-
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
-      alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, HandleCubeMovedQuitGameViewClosed);
-      alertView.ViewClosed += HandleCubeMovedQuitGameViewClosed;
-      alertView.TitleLocKey = titleKey;
-      alertView.DescriptionLocKey = descriptionKey;
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
-    }
-
-    private void HandleCubeMovedQuitGameViewClosed() {
-      RaiseMiniGameQuit();
     }
 
     public void ClearWinningLightPatterns() {

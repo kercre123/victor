@@ -126,7 +126,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: d07b9ca7864d14c95a9f284f157b8d92, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -153,7 +153,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 6ef9a10eba7364e88ac644c8032951cc, type: 3}
   m_Type: 3
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 1
   m_FillAmount: 1
@@ -171,9 +171,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _FilledForegroundImage: {fileID: 11434002}
-  _NormalColor: {r: 0, g: 0, b: 0, a: 0}
-  _DecreasingColor: {r: 0, g: 0, b: 0, a: 0}
-  _IncreasingColor: {r: 0, g: 0, b: 0, a: 0}
+  _UseEndCap: 0
+  _EndCap: {fileID: 0}
+  _NormalColor: {r: 1, g: 1, b: 1, a: 1}
+  _DecreasingColor: {r: 1, g: 1, b: 1, a: 1}
+  _IncreasingColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &11453836
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -244,8 +246,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 50, y: 0}
-  m_SizeDelta: {x: 250, y: 250}
+  m_AnchoredPosition: {x: 100, y: 0}
+  m_SizeDelta: {x: 149, y: 154}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22421266
 RectTransform:
@@ -261,7 +263,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -52.1, y: 3.7}
+  m_AnchoredPosition: {x: -49.7, y: 3.7}
   m_SizeDelta: {x: 95.7, y: 104.7}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22463648
@@ -296,7 +298,7 @@ RectTransform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

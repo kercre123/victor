@@ -48,8 +48,8 @@ namespace Cozmo {
         AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText);
         // Hook up callbacks
         alertView.SetCloseButtonEnabled(false);
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
-        alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
+        alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed);
+        alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
         alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
         // Listen for dialog close
         alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;

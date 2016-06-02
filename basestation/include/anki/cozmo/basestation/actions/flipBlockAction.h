@@ -43,6 +43,7 @@ namespace Anki {
     public:
       DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID);
       
+      virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -51,19 +52,28 @@ namespace Anki {
     };
     
     // Drives straight and move lift to flip block
-    class FlipBlockAction : public CompoundActionSequential
+    class FlipBlockAction : public IAction
     {
     public:
       FlipBlockAction(Robot& robot, ObjectID objectID);
+      virtual ~FlipBlockAction();
       
+      virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
+      
+    protected:
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
     
     private:
+      ObjectID _objectID;
+      CompoundActionSequential _compoundAction;
       const f32 kDrivingSpeed_mmps = 150;
-      const f32 kDrivingDist_mm = 100;
-      const f32 kExtraDrivingDist_mm = 20;
-      const f32 kTimeToWaitToFlip_sec = 0.7;
+      const f32 kDrivingDist_mm = 20;
       const f32 kInitialLiftHeight_mm = 45;
+      const f32 kDistToObjectToFlip_mm = 40;
+      const f32 kPreDockPoseAngleTolerance = DEG_TO_RAD_F32(5);
+      u32 _flipTag = -1;
     };
   }
 }

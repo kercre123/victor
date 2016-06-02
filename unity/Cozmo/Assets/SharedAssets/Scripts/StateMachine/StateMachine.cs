@@ -10,6 +10,14 @@ public class StateMachine {
 
   private GameBase _Game = null;
 
+  private bool _IsPaused = false;
+
+  public bool IsPaused {
+    get {
+      return _IsPaused;
+    }
+  }
+
   public GameBase GetGame() {
     return _Game;
   }
@@ -38,7 +46,7 @@ public class StateMachine {
     _NextState.SetStateMachine(this);
     _CurrState = null;
   }
-    
+
   public void PopState() {
     var oldState = _CurrState;
 
@@ -52,6 +60,10 @@ public class StateMachine {
   }
 
   public void UpdateStateMachine() {
+    if (_IsPaused) {
+      return;
+    }
+
     if (_NextState != null) {
       if (_CurrState != null) {
         _CurrState.Exit();
@@ -64,7 +76,7 @@ public class StateMachine {
         _CurrState.Enter();
       }
     }
-    else if(_CurrState != null) {
+    else if (_CurrState != null) {
       _CurrState.Update();
     }
   }
@@ -75,6 +87,24 @@ public class StateMachine {
       _CurrState = null;
     }
     _NextState = null;
+  }
+
+  public void Pause() {
+    if (!_IsPaused) {
+      _IsPaused = true;
+      if (_CurrState != null) {
+        _CurrState.Pause();
+      }
+    }
+  }
+
+  public void Resume() {
+    if (_IsPaused) {
+      _IsPaused = false;
+      if (_CurrState != null) {
+        _CurrState.Resume();
+      }
+    }
   }
 }
   

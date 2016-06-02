@@ -63,6 +63,7 @@ static void ota_ack_timeout(void* userdata);
 static const int OTA_ACK_TIMEOUT = CYCLES_MS(2);
 static const int MAX_ACK_TIMEOUTS = CYCLES_MS(500) / OTA_ACK_TIMEOUT;
 static int ack_timeouts;
+static int lightGamma;
 
 // Variables for talking to an accessory
 static uint8_t currentAccessory;
@@ -79,7 +80,7 @@ void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
     RADIO_MODE_MODE_Nrf_1Mbit,
     UESB_CRC_16BIT,
-    RADIO_TXPOWER_TXPOWER_Pos4dBm,
+    RADIO_TXPOWER_TXPOWER_0dBm,
     4,    // Address length
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
@@ -87,12 +88,17 @@ void Radio::advertise(void) {
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
+  lightGamma = 0x100;
 
   uesb_init(&uesb_config);
   
   #ifdef NATHAN_CUBE_JUNK
   assignProp(0, 0xca11ab1e);
   #endif
+}
+
+void Radio::setLightGamma(uint8_t gamma) {
+  lightGamma = gamma + 1;
 }
 
 void Radio::shutdown(void) {
@@ -372,7 +378,7 @@ void Radio::prepare(void* userdata) {
       uint8_t* rgbi = lightController.cube[currentAccessory][channel_order[light]].values;
 
       for (int ch = 0; ch < 3; ch++) {
-        tx_state.ledStatus[tx_index++] = rgbi[ch];
+        tx_state.ledStatus[tx_index++] = (rgbi[ch] * lightGamma) >> 8;
       }
     }
 

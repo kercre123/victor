@@ -45,16 +45,29 @@ void LightsComponent::Update()
   // check if any cubes are no longer visible
   TimeStamp_t currTS = _robot.GetLastImageTimeStamp();
   
-  for( auto& cubeInfoPair : _cubeInfo ) {
-    if( ! ShouldOverrideState( cubeInfoPair.second.desiredState, CubeLightsState::Visible ) ){
-      continue;
+  for( auto& cubeInfoPair : _cubeInfo )
+  {
+    CubeLightsState newState = CubeLightsState::Visible;
+    
+    // If we're interacting with this object, put it in interacting state
+    if(cubeInfoPair.first == _interactionObject)
+    {
+      newState = CubeLightsState::Interacting;
     }
-
-    u32 age = currTS - cubeInfoPair.second.lastObservedTime_ms;
-    if( age > kTimeToMarkCubeNonVisible_ms ) {
-      cubeInfoPair.second.desiredState = CubeLightsState::Connected;
+    
+    // Ignore age timeout for carried object
+    else if(_robot.GetCarryingObject() != cubeInfoPair.first)
+    {
+      u32 age = currTS - cubeInfoPair.second.lastObservedTime_ms;
+      if( age > kTimeToMarkCubeNonVisible_ms ) {
+        newState = CubeLightsState::Connected;
+      }
     }
-  }    
+    
+    if( ShouldOverrideState( cubeInfoPair.second.currState, newState )) {
+      cubeInfoPair.second.desiredState = newState;
+    }
+  }
 
   UpdateToDesiredLights();
 }
@@ -104,17 +117,17 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
       break;
       
     case CubeLightsState::Connected:
-      // _robot.SetObjectLights(object,
-      //                        WhichCubeLEDs::ALL,
-      //                        0x333333, 0x111111,
-      //                        300, 900,
-      //                        500, 500,
-      //                        true,
-      //                        MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-      //                        Point2f{0.0, 0.0});
+      _robot.SetObjectLights(object,
+                             WhichCubeLEDs::ALL,
+                             ColorRGBA(0.6f,0.6f,0.6f), ColorRGBA(0.35f, 0.35f, 0.35f),
+                             250, 100,
+                             2000, 2000,
+                             true,
+                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+                             Point2f{0.0, 0.0});
 
       // TODO:(bn) need to set this to cubes I haven't seen yet, but can't figure out how
-      _robot.TurnOffObjectLights(object);
+      //_robot.TurnOffObjectLights(object);
       
       PRINT_NAMED_DEBUG("LightsComponent.SetLights",
                         "Object %d set to connected",
@@ -125,7 +138,7 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
     case CubeLightsState::Visible:
       _robot.SetObjectLights(object,
                              WhichCubeLEDs::ALL,
-                             0x888888, 0x888888,
+                             NamedColors::CYAN, NamedColors::CYAN,
                              1000, 0,
                              500, 500,
                              true,
@@ -134,6 +147,22 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
 
       PRINT_NAMED_DEBUG("LightsComponent.SetLights",
                         "Object %d set to visible",
+                        object.GetValue());
+
+      break;
+      
+    case CubeLightsState::Interacting:
+      _robot.SetObjectLights(object,
+                             WhichCubeLEDs::ALL,
+                             NamedColors::GREEN, NamedColors::GREEN,
+                             1000, 0,
+                             500, 500,
+                             true,
+                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+                             Point2f{0.0, 0.0});
+      
+      PRINT_NAMED_DEBUG("LightsComponent.SetLights",
+                        "Object %d set to interacting",
                         object.GetValue());
 
       break;

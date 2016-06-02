@@ -25,6 +25,8 @@
 //#include "util/math/numericCast.h"
 //#include "util/random/randomGenerator.h"
 
+#define DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS 0
+
 namespace Anki {
 namespace Cozmo {
 
@@ -34,6 +36,7 @@ CONSOLE_VAR(float, kBW_PossibleMarkerClose_rad, "AIWhiteboard", PI_F); // curren
 // limit to how many pending possible markers we have stored
 CONSOLE_VAR(uint32_t, kBW_MaxPossibleMarkers, "AIWhiteboard", 10);
 CONSOLE_VAR(float, kFlatPosisbleObjectTol_deg, "AIWhiteboard", 10.0f);
+CONSOLE_VAR(float, kBW_MaxHeightForPossibleMarker_mm, "AIWhiteboard", 30.0f);
 // debug render
 CONSOLE_VAR(bool, kBW_DebugRenderPossibleMarkers, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleMarkersZ, "AIWhiteboard", 35.0f);
@@ -58,6 +61,7 @@ void AIWhiteboard::Init()
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotMarkedObjectPoseUnknown>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
@@ -92,7 +96,21 @@ void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose)
 {
+  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.FinishedSearch",
+                      "finished search, so removing possible marker");
+  }
   RemovePossibleMarkersMatching(objectType, pose);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID)
+{
+  _topOfStackToAdmire = topBlockID;
+  _bottomOfStackToAdmire = bottomBlockID;
+  PRINT_NAMED_DEBUG("AIWhiteboard.StackToAdmire", "admiring stack [%d, %d] (bottom, top)",
+                    _bottomOfStackToAdmire.GetValue(),
+                    _topOfStackToAdmire.GetValue());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -141,7 +159,7 @@ bool AIWhiteboard::IsCliffReactionEnabled() const
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose)
-{
+{        
   // iterate all current possible markers
   auto possibleMarkerIt = _possibleMarkers.begin();
   while ( possibleMarkerIt != _possibleMarkers.end() )
@@ -155,6 +173,14 @@ void AIWhiteboard::RemovePossibleMarkersMatching(ObjectType objectType, const Po
       const bool closePossibleMarker = IsNearlyEqual( newLocation, entryLocation, kBW_PossibleMarkerClose_mm );
       if ( closePossibleMarker )
       {
+        if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+          PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.Remove",
+                            "removing possible marker that was at (%f, %f, %f)",
+                            entryLocation.x(),
+                            entryLocation.y(),
+                            entryLocation.z());
+        }
+
         // they are close, remove old entry
         possibleMarkerIt = _possibleMarkers.erase( possibleMarkerIt );
         // jump up to not increment iterator after erase
@@ -205,27 +231,104 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   const Rotation3d obsRot(obsQuat);
   const Pose3d obsPose( obsRot, {possibleObject.world_x, possibleObject.world_y, possibleObject.world_z}, _robot.GetWorldOrigin());
 
+  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+    PRINT_NAMED_DEBUG("AIWhiteboard.ObservedPossible", "robot observed a possible marker");
+  }
+
+  ConsiderNewPossibleMarker(possibleObject.objectType, obsPose);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void AIWhiteboard::HandleMessage(const ExternalInterface::RobotMarkedObjectPoseUnknown& msg)
+{
+  const ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  if( nullptr == obj ) {
+    PRINT_NAMED_WARNING("AIWhiteboard.HandleMessage.RobotMarkedObjectPoseUnknown.NoBlock",
+                        "couldnt get object with id %d",
+                        msg.objectID);
+    return;
+  }
+
+  PRINT_NAMED_DEBUG("AIWhiteboard.MarkedUnknown",
+                    "marked %d unknown, adding to possible markers",
+                    msg.objectID);
+
+  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+    PRINT_NAMED_DEBUG("AIWhiteboard.PoseMarkedUnknown", "considering old pose from object %d as possible object",
+                      msg.objectID);
+  }
+  
+  ConsiderNewPossibleMarker(obj->GetType(), obj->GetPose());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::ConsiderNewPossibleMarker(ObjectType objectType, const Pose3d& obsPose)
+{
+  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.Consider",
+                      "considering pose (%f, %f, %f)",
+                      obsPose.GetTranslation().x(),
+                      obsPose.GetTranslation().y(),
+                      obsPose.GetTranslation().z());
+  }
+  
   // only add relatively flat markers
   const RotationMatrix3d Rmat = obsPose.GetRotationMatrix();
   const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < DEG_TO_RAD(kFlatPosisbleObjectTol_deg));
 
   if( ! isFlat ) {
+    if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+      PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.NotFlat",
+                        "pose isn't flat, so not adding to list (angle %fdeg)",
+                        Rmat.GetAngularDeviationFromParentAxis<'Z'>().getDegrees());
+    }
+
     return;
   }
 
+  Pose3d relPose;
+  if( ! obsPose.GetWithRespectTo(_robot.GetPose(), relPose) ) {
+    PRINT_NAMED_WARNING("AIWhiteboard.PossibleMarker.NoRelPose",
+                        "Couldnt get pose WRT to robot");
+    return;
+  }
+
+  // can't really use size since this is just a pose
+  // TODO:(bn) get the size based on obectType so this can be relative to the bottom of the object?
+  if( relPose.GetTranslation().z() > kBW_MaxHeightForPossibleMarker_mm ) {
+    if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+      PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.TooHigh",
+                        "pose is too high, not considering. relativeZ = %f",
+                        relPose.GetTranslation().z());
+    }
+
+    return;
+  }
+
+  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.RemovingOldMarkers",
+                      "removing any old possible markers that are nearby");
+  }
+
   // remove any markers that are similar to this
-  RemovePossibleMarkersMatching(possibleObject.objectType, obsPose);
+  RemovePossibleMarkersMatching(objectType, obsPose);
   
   // check with the world if this a marker for an object we have already recognized, because in that case we
   // are not interested in storing it again
   Vec3f maxLocDist(kBW_PossibleMarkerClose_mm);
   Radians maxLocAngle(kBW_PossibleMarkerClose_rad);
   ObservableObject* prevObservedObject =
-    _robot.GetBlockWorld().FindClosestMatchingObject( possibleObject.objectType, obsPose, maxLocDist, maxLocAngle);
+    _robot.GetBlockWorld().FindClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
   
   // found object nearby, no need
   if ( nullptr != prevObservedObject && prevObservedObject->IsExistenceConfirmed() )
   {
+    if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+      PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.NearbyObject",
+                        "already had a real object nearby, not adding a new one");
+    }
+
     return;
   }
 
@@ -237,13 +340,22 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
     _possibleMarkers.pop_front();
     // PRINT_NAMED_INFO("AIWhiteboard.HandleMessage.BeyondMarkerLimit", "Reached limit of pending markers, removing oldest one");
   }
+
+  if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
+    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleMarker.Add",
+                      "added possible object. rot=%fdeg, z=%f",
+                      Rmat.GetAngularDeviationFromParentAxis<'Z'>().getDegrees(),
+                      relPose.GetTranslation().z());
+  }
+
   
   // always add new entry
-  _possibleMarkers.emplace_back( obsPose, possibleObject.objectType );
+  _possibleMarkers.emplace_back( obsPose, objectType );
   
   // update render
   UpdatePossibleMarkerRender();
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::UpdatePossibleMarkerRender()

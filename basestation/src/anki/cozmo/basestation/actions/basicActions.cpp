@@ -415,10 +415,10 @@ namespace Anki {
       if(!_hasStarted) {
         PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
-        if( _hasStarted ) {
+        if( _hasStarted && _shouldPlayDrivingAnimation) {
           _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
         }
-      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath()) {
+      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath() && _shouldPlayDrivingAnimation) {
         if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
           return ActionResult::RUNNING;
         }
@@ -1179,8 +1179,16 @@ namespace Anki {
       // Ramp bias down to 0 for distanceXY values from 150mm to 300mm.
       const f32 kFullBiasDist_mm = 150;
       const f32 kNoBiasDist_mm = 300;
-      const f32 biasScaleFactor = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
-      const Radians headAngle = std::atan2(heightDiff, distanceXY) + DEG_TO_RAD(5) * biasScaleFactor;
+      const f32 biasScaleFactorDist = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
+      
+      // Adding bias to account for the fact that we don't look high enough when turning towards objects off the ground
+      // Apply full bias for object 10mm above neck joint and 0 for objects below neck joint
+      const f32 kFullBiasHeight_mm = 10;
+      const f32 kNoBiasHeight_mm = 0;
+      const f32 biasScaleFactorHeight = CLIP((kNoBiasHeight_mm - heightDiff) / (kNoBiasHeight_mm - kFullBiasHeight_mm), 0, 1);
+      
+      // Adds 4 degrees to account for 4 degree lookdown on EP3
+      const Radians headAngle = std::atan2(heightDiff, distanceXY) + (kHeadAngleDistBias_rad * biasScaleFactorDist) + (kHeadAngleHeightBias_rad * biasScaleFactorHeight) + DEG_TO_RAD(4);
 
       return headAngle;
     }
@@ -1275,6 +1283,15 @@ namespace Anki {
       
     }
     
+    VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
+    {
+      if(_waitForImagesAction != nullptr)
+      {
+        _waitForImagesAction->PrepForCompletion();
+      }
+      Util::SafeDelete(_waitForImagesAction);
+    }
+    
     const std::string& VisuallyVerifyObjectAction::GetName() const
     {
       static const std::string name("VisuallyVerifyObject" + std::to_string(_objectID.GetValue())
@@ -1284,6 +1301,9 @@ namespace Anki {
     
     ActionResult VisuallyVerifyObjectAction::Init()
     {
+      _waitForImagesAction = new WaitForImagesAction(_robot, GetNumImagesToWaitFor());
+      _waitForImagesAction->ShouldEmitCompletionSignal(false);
+    
       using namespace ExternalInterface;
       
       _objectSeen = false;
@@ -1330,8 +1350,6 @@ namespace Anki {
     ActionResult VisuallyVerifyObjectAction::CheckIfDone()
     {
       ActionResult actionRes = ActionResult::RUNNING;
-      
-      const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       if(_objectSeen)
       {
@@ -1392,24 +1410,13 @@ namespace Anki {
           }
           _moveLiftToHeightActionDone = true;
         }
-        
-        // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-        // TODO: Should this check if it's moving at all?
-        if (_robot.GetMoveComponent().IsHeadMoving()) {
-          _waitToVerifyTime = -1;
-        }
-        
-        if(_waitToVerifyTime < 0.f) {
-          _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
-        }
-        
       } // if/else(objectSeen)
       
-      if(currentTime > _waitToVerifyTime)
+      if(!_robot.GetMoveComponent().IsMoving() && _waitForImagesAction->Update() != ActionResult::RUNNING)
       {
         PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.TimedOut",
-                            "Did not see object %d and current time > waitUntilTime (%.3f>%.3f)",
-                            _objectID.GetValue(), currentTime, _waitToVerifyTime);
+                            "Did not see object %d before processing %d images",
+                            _objectID.GetValue(), GetNumImagesToWaitFor());
         return ActionResult::FAILURE_ABORT;
       }
       
@@ -1433,6 +1440,10 @@ namespace Anki {
         Util::SafeDelete(_action);
       }
       _action = action;
+      if(nullptr != _action) {
+        _action->ShouldEmitCompletionSignal(false);
+        _action->ShouldSuppressTrackLocking(true);
+      }
     }
     
     TurnTowardsLastFacePoseAction::~TurnTowardsLastFacePoseAction()
@@ -1530,9 +1541,7 @@ namespace Anki {
         if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
           // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
           // require too large of an adjustment.
-          TurnTowardsPoseAction* fineTune = new TurnTowardsPoseAction(_robot, pose, DEG_TO_RAD(45));
-          fineTune->ShouldSuppressTrackLocking(true); // We're already locking... would cause conflict.
-          SetAction(fineTune);
+          SetAction(new TurnTowardsPoseAction(_robot, pose, DEG_TO_RAD(45)));
         }
       } else {
         SetAction(nullptr);
@@ -1566,9 +1575,7 @@ namespace Anki {
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
               ASSERT_NAMED(nullptr == _action, "TurnTowardsLastFacePoseAction.CheckIfDone.ActionPointerShouldStillBeNull");
-              auto waitAction = new WaitForImagesAction(_robot, _maxFramesToWait);
-              waitAction->ShouldSuppressTrackLocking(true);
-              SetAction(waitAction);
+              SetAction(new WaitForImagesAction(_robot, _maxFramesToWait));
               _state = State::WaitingForFace;
             } else {
               // ...if we've already seen a face, jump straight to turning

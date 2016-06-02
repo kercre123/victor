@@ -763,6 +763,11 @@ namespace Anki {
         sendTestStateMessages = msg.enable;
       }
       
+      void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
+      {
+        // Handled directly in spi to bypass main execution.
+      }
+      
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
@@ -781,6 +786,10 @@ namespace Anki {
       void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const& msg)
       {
         SimNVStorageSpace::Read(msg);
+      }
+      void Process_wipeAllNV(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
+      {
+        SimNVStorageSpace::WipeAll(msg);
       }
       void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
       {
@@ -827,6 +836,10 @@ namespace Anki {
         // TODO honor this in simulator
       }
       void Process_setPropSlot(const SetPropSlot& msg)
+      {
+        // Nothing to do here
+      }
+      void Process_setCubeGamma(const SetCubeGamma& msg)
       {
         // Nothing to do here
       }

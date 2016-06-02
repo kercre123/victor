@@ -59,13 +59,20 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
   return calcResult(scale);
 }
 
+uint8_t Battery::getLevel(void) {
+  return (vBat - VBAT_CHGD_LO_THRESHOLD) * 100 / (VBAT_CHGD_HI_THRESHOLD - VBAT_CHGD_LO_THRESHOLD);
+}
+
 static void SendPowerStateUpdate(void *userdata)
 {
-  Anki::Cozmo::PowerState msg;
+  using namespace Anki::Cozmo;
+  
+  PowerState msg;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
   msg.chargeStat = Battery::onContacts;
-  Anki::Cozmo::RobotInterface::SendMessage(msg);
+  msg.batteryLevel = Battery::getLevel();
+  RobotInterface::SendMessage(msg);
 }
 
 void Battery::init()
@@ -156,10 +163,6 @@ static inline void sampleCliffSensor() {
   }
   
   ledOn = !ledOn;
-}
-
-uint8_t Battery::getLevel(void) {
-  return (vBat - VBAT_CHGD_LO_THRESHOLD) * 100 / (VBAT_CHGD_HI_THRESHOLD - VBAT_CHGD_LO_THRESHOLD);
 }
 
 void Battery::manage(void* userdata)

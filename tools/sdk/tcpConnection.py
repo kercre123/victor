@@ -51,6 +51,11 @@ class TcpConnection(INetConnection):
         self._CloseSocket()
         super().Disconnect()
 
+    # In this case, we do not need to completely close the socket and recreate a connection,
+    # we can just begin searching again for a connection on the existing socket
+    def ResetConnection(self):
+        super().Disconnect()
+
     def _Reconnect(self):
         self.Disconnect()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -15,11 +15,11 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/game/comms/iSocketComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/uiConnectionTypes.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <memory>

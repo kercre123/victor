@@ -9,6 +9,7 @@ namespace SpeedTap {
     private float _LightsOnDuration_sec;
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
+    private float _EndTimestamp_sec = -1;
     private bool _IsCozmoMoving;
 
     public override void Enter() {
@@ -18,7 +19,7 @@ namespace SpeedTap {
 
       _StartTimestamp_sec = Time.time;
       _LightsOnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
-      _CozmoMovementDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent)) - _SpeedTapGame.CozmoTapLatency_sec;
+      _CozmoMovementDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent));
       _IsCozmoMoving = false;
 
       // Set lights on cubes
@@ -35,10 +36,15 @@ namespace SpeedTap {
         _IsCozmoMoving = true;
         DoCozmoMovement();
       }
-
-      // Check to turn off cubes after some time
-      if (secondsElapsed > _LightsOnDuration_sec) {
-        // Move to turn off state
+      else if (((_SpeedTapGame.FirstTapper != FirstToTap.NoTaps) || (secondsElapsed > _LightsOnDuration_sec))
+               && _EndTimestamp_sec == -1) {
+        // If any taps have been registered immediately set the end timestamp
+        // in order to make Resolve hand more responsive when receiving player taps significantly before Cozmo
+        // taps. Still we use the TapResolutionDelay in order to prevent issues with messages being received
+        // in a different order than their actual timestamps.
+        _EndTimestamp_sec = Time.time;
+      }
+      else if (_EndTimestamp_sec != -1 && Time.time - _EndTimestamp_sec > _SpeedTapGame.TapResolutionDelay) {
         ResolveHand();
       }
     }

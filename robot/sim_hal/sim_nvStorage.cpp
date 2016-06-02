@@ -174,7 +174,7 @@ namespace Anki {
         // Erasing single blob
         if(!multiErase || msg.rangeEnd == NVStorage::NVEntry_Invalid)
         {
-          printf("Sim_Robot.NVErase: Erasing tag %u\n", msg.entry.tag);
+          printf("Sim_Robot.NVErase: Erasing tag 0x%x\n", msg.entry.tag);
           nvStorage_.erase(msg.entry.tag);
           
           if(msg.reportEach)
@@ -201,13 +201,13 @@ namespace Anki {
             return;
           }
         
-          for(auto iter = nvStorage_.begin(); iter != nvStorage_.end(); ++iter)
+          for(auto iter = nvStorage_.begin(); iter != nvStorage_.end(); )
           {
             if(iter->first >= msg.entry.tag && iter->first <= msg.rangeEnd)
             {
               uint32_t tag = iter->first;
               iter = nvStorage_.erase(iter);
-              printf("Sim_Robot.NVErase: Erasing tag %u\n", tag);
+              printf("Sim_Robot.NVErase: Erasing tag 0x%x\n", tag);
               
               if(msg.reportEach)
               {
@@ -218,6 +218,8 @@ namespace Anki {
                 m.report.write = true;
                 nvOpResultMsgQueue_.push(m);
               }
+            } else {
+              ++iter;
             }
           }
           
@@ -256,7 +258,7 @@ namespace Anki {
         
         while(lower != upper)
         {
-          printf("Sim_Robot.NVRead: Reading tag %u\n", lower->first);
+          printf("Sim_Robot.NVRead: Reading tag 0x%x\n", lower->first);
           RobotInterface::NVReadResultToEngine m;
           m.robotAddress = 1;
           m.blob = lower->second;
@@ -274,7 +276,7 @@ namespace Anki {
       // Single tag
       else
       {
-        printf("Sim_Robot.NVRead: Reading tag %u\n", msg.tag);
+        printf("Sim_Robot.NVRead: Reading tag 0x%x\n", msg.tag);
         RobotInterface::NVReadResultToEngine m;
         m.robotAddress = 1;
         m.blob = nvStorage_[msg.tag];
@@ -300,6 +302,32 @@ namespace Anki {
       }
     }
     
+    void SimNVStorage::NVWipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
+    {
+      RobotInterface::NVOpResultToEngine m;
+      m.robotAddress = 1;
+      m.report.tag = NVStorage::NVEntry_WipeAll;
+      m.report.write = true;
+      
+      if ( strncmp(msg.key, "Yes I really want to do this!", msg.key_length) != 0 ) {
+        m.report.result = NVStorage::NV_BAD_ARGS;
+      } else {
+        if (msg.includeFactory) {
+          nvStorage_.clear();
+        } else {
+          // Find first and last non-factory entry
+          auto firstEntry = nvStorage_.begin();
+          if (firstEntry->first < 0x80000000) {
+            auto lastEntry = nvStorage_.lower_bound(0x80000000);
+            nvStorage_.erase(firstEntry, lastEntry);
+          }
+        }
+        m.report.result = NVStorage::NV_OKAY;
+      }
+
+      nvOpResultMsgQueue_.push(m);
+    }
+    
     namespace SimNVStorageSpace
     {
       namespace
@@ -320,6 +348,11 @@ namespace Anki {
       void Read(Anki::Cozmo::NVStorage::NVStorageRead const& msg)
       {
         simNVStorage.NVRead(msg);
+      }
+        
+      void WipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
+      {
+        simNVStorage.NVWipeAll(msg);
       }
     }
   }

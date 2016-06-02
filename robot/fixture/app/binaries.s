@@ -2,7 +2,7 @@
   AREA    ER_BINARIES, DATA, READONLY
 
 // Uncomment this line to build a mini-version without binaries (to speed debugging)
-#define INCBIN ;
+//#define INCBIN ;
     
   ; Note:  Cube and charger share the same binary
   ALIGN
@@ -10,9 +10,9 @@
   EXPORT g_CubeEnd
 g_Cube
 #ifdef FCC
-  INCBIN releases\\cube31.fcc.bin
+  INCBIN releases\\xsfcc.bin
 #else
-  INCBIN releases\\cube31.bin
+  INCBIN releases\\xsboot.bin
 #endif
 g_CubeEnd
 
@@ -90,7 +90,7 @@ g_EspUser
 g_EspUserEnd
 
 #else
-  INCBIN releases\\esp.user.bin
+  INCBIN releases\\esp.factory.bin
 g_EspUserEnd
 
   ALIGN
@@ -106,6 +106,13 @@ g_EspBootEnd
 g_EspInit
   INCBIN releases\\esp.init.bin
 g_EspInitEnd
+
+  ALIGN
+  EXPORT g_EspSafe
+  EXPORT g_EspSafeEnd
+g_EspSafe
+  INCBIN releases\\esp.safe.bin
+g_EspSafeEnd
 
 
   ALIGN

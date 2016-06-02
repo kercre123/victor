@@ -35,6 +35,8 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     
 private:
 
@@ -65,7 +67,7 @@ private:
   void TransitionToWaitForBlocksToBeValid(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
-  void ResetBehavior(Robot& robot);
+  void ResetBehavior(const Robot& robot);
 
   bool FilterBlocksForTop(const ObservableObject* obj) const;
   bool FilterBlocksForBottom(const ObservableObject* obj) const;
