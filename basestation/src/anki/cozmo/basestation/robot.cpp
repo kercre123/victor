@@ -3233,6 +3233,11 @@ namespace Anki {
         
         CubeSlots msg;
 
+        // HACK: For some reason the lights on the cube in slot 0 get messed up sometimes
+        //       (e.g. When pulsing all leds white, one of them is yellow.)
+        //       Keeping slot 0 seems to prevent this, but Vandiver should look into this issue.
+        msg.factory_id.push_back(0);
+        
         for (const auto & obj : _connectedObjects) {
           PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.FactoryID",
                            "0x%x (slot %zu)",
