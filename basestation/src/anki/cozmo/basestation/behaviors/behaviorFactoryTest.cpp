@@ -154,7 +154,7 @@ namespace Cozmo {
     
     // Set blind docking mode
     ExternalInterface::SetDebugConsoleVarMessage dockMethodMsg;
-    dockMethodMsg.varName = "DockingMethod";
+    dockMethodMsg.varName = "PickupDockingMethod";
     dockMethodMsg.tryValue = "0";  // Blind docking
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(dockMethodMsg));
 
@@ -522,7 +522,7 @@ namespace Cozmo {
         // Move head down to line up for readToolCode.
         // Hopefully this reduces some readToolCode errors
         MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
-        DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
+        DriveStraightAction* backupAction = new DriveStraightAction(robot, -20.0, -100.f);
         backupAction->SetAccel(1000);
         backupAction->SetDecel(1000);
         CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {headAction, backupAction});
@@ -751,8 +751,9 @@ namespace Cozmo {
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
-        DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
+        //DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
         //action->SetMotionProfile(_motionProfile);
+        PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectID);
         StartActing(robot,
                     action,
                     pickupCallback);
