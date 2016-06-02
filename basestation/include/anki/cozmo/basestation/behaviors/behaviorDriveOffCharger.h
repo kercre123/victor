@@ -48,6 +48,7 @@ private:
   };
 
   State _state = State::DrivingForward;
+  int   _timesResumed = 0;
 
   std::string _startDrivingAnimGroup = "ag_launch_startDriving";
   std::string _drivingLoopAnimGroup = "ag_launch_drivingLoop";

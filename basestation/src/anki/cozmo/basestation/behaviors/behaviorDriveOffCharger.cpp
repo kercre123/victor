@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/charger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -50,6 +51,7 @@ float BehaviorDriveOffCharger::EvaluateScoreInternal(const Robot& robot) const
 Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   TransitionToDrivingForward(robot);
+  _timesResumed = 0;
   robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
   return Result::RESULT_OK;
 }
@@ -72,7 +74,9 @@ Result BehaviorDriveOffCharger::ResumeInternal(Robot& robot)
   
 IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
 {
-  if( robot.IsOnChargerPlatform() )
+  // Emergency counter for demo rare bug. Usually we just get the chargerplatform message.
+  // HACK: figure out why IsOnChargerPlatform might be incorrect.
+  if( robot.IsOnChargerPlatform() && _timesResumed <= 2)
   {
     return Status::Running;
   }
@@ -85,11 +89,13 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
   SET_STATE(DrivingForward);
   if( robot.IsOnChargerPlatform() )
   {
+    _timesResumed++;
+    // Numbers shared with demoFearEdge but will move here since this is in freeplay
     robot.GetDrivingAnimationHandler().PushDrivingAnimations({_startDrivingAnimGroup,
                                                               _drivingLoopAnimGroup,
                                                               _stopDrivingAnimGroup});
     // probably interrupted by getting off the charger platform
-    DriveStraightAction* action = new DriveStraightAction(robot, 100.0f, kInitialDriveSpeed);
+    DriveStraightAction* action = new DriveStraightAction(robot, Charger::GetLength(), kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);
     StartActing(action, &BehaviorDriveOffCharger::TransitionToDrivingForward);
   }
