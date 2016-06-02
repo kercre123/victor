@@ -98,20 +98,11 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
-      //HACK
-      hackthing();
     }
-
-    [SerializeField]
-    private Button hackButton;
-
-    private void hackthing() {
-      hackButton.onClick.AddListener(OpenLootView);
-    }
-    //HACK
 
     private void HandleChestGained() {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      OpenLootView();
     }
 
     // Opens loot view and fires and relevant events

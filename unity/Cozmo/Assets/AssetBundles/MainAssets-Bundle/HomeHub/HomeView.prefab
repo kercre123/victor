@@ -1155,6 +1155,8 @@ MonoBehaviour:
   _CurrentRequirementPointsLabel: {fileID: 11417262}
   _RequirementPointsNeededLabel: {fileID: 11474242}
   _ScrollRect: {fileID: 11465266}
+  _LootViewPrefab: {fileID: 11429958, guid: 3fdd92544c58b4b3dbb0a5543e9024b9, type: 2}
+  hackButton: {fileID: 0}
 --- !u!114 &11476532
 MonoBehaviour:
   m_ObjectHideFlags: 1
