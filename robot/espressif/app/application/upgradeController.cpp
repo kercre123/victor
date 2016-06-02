@@ -511,6 +511,7 @@ namespace UpgradeController {
                     #if DEBUG_OTA
                     os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
                     #endif
+                    counter = system_get_time() + 10000; // 10ms
                     phase = OTAT_Wait;
                   }
                   // Else try again next time
@@ -560,9 +561,15 @@ namespace UpgradeController {
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
             phase = OTAT_Flash_Write; // Finished operation
+            break;
           }
           case STATE_IDLE:
           {
+            if (system_get_time() > counter)
+            {
+              os_printf("RTIP TO\r\n");
+              phase = OTAT_Flash_Write;
+            }
             break;
           }
           default:
