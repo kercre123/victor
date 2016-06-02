@@ -241,7 +241,21 @@ private:
   
   Robot&       _robot;
   
-  // Robot event handlers
+  // ====== Message retry ========
+  // Last write message sent
+  NVStorage::NVStorageWrite _writeMsg;
+  
+  // Number of retries attempted for last write message
+  u8 _numWriteMsgAttempts;
+  
+  // Max num of retry attempts allowed for a write message
+  const u8 _kNumWriteRetryAttempts = 2;
+
+  // Returns false if number of allowable retries exceeded
+  bool ResendLastWrite();
+  
+  
+  // ======= Robot event handlers ======
   void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
@@ -263,6 +277,9 @@ private:
   
   // Whether or not this is a legal entry tag
   bool IsValidEntryTag(u32 tag);
+  
+  // Whether or not this is a factory entry tag
+  bool IsFactoryEntryTag(u32 tag);
   
   // Given any tag, returns the assumed base tag
   u32 GetBaseEntryTag(u32 tag) const;
