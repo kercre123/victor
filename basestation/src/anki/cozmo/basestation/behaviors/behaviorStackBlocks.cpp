@@ -30,9 +30,8 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
-CONSOLE_VAR(f32, kBSB_TimeToWaitForValidBlocks_s, "Behavior.StackBlocks", 0.3f);
 CONSOLE_VAR(f32, kMaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
-  
+
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _blockworldFilterForTop( new BlockWorldFilter )
@@ -51,6 +50,10 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
   _blockworldFilterForBottom->SetFilterFcn( std::bind( &BehaviorStackBlocks::FilterBlocksForBottom,
                                                        this,
                                                        std::placeholders::_1) );
+  
+  SubscribeToTags({
+    EngineToGameTag::RobotPutDown
+  });
 }
 
 bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
@@ -140,7 +143,7 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
   const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
-  return obj->GetFamily() == ObjectFamily::LightCube && upAxisOk;
+  return obj->GetFamily() == ObjectFamily::LightCube && obj->IsPoseStateKnown() && upAxisOk;
 }
 
 bool BehaviorStackBlocks::FilterBlocksForTop(const ObservableObject* obj) const
@@ -223,9 +226,8 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
 
   // workaround for bugs that leave us stuck with a cube in our hands
-
-  if( ret != Status::Running && robot.IsCarryingObject() ) {
-    StartActing(new PlaceObjectOnGroundAction(robot));
+  if( ret != Status::Running && robot.IsCarryingObject() && _state != State::WaitForBlocksToBeValid ) {
+    TransitionToWaitForBlocksToBeValid(robot);
     return Status::Running;
   }
   
@@ -279,20 +281,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                     }
                   }
                   else if( res == ActionResult::FAILURE_ABORT ) {
-                    StartActing(new SearchSideToSideAction(robot),
-                                [this](Robot& robot) {
-                                  StartActing(new TurnTowardsObjectAction(robot,
-                                                                          _targetBlockTop,
-                                                                          Radians(PI_F),
-                                                                          true,
-                                                                          false),
-                                              [this, &robot](ActionResult res) {
-                                                if( res == ActionResult::SUCCESS ) {
-                                                  TransitionToPickingUpBlock(robot);
-                                                }
-                                                // else end behavior (lost the block)
-                                              });
-                                });
+                    TransitionToWaitForBlocksToBeValid(robot);
                   }
                   // else end the behavior (other failure type)
                 });
@@ -342,13 +331,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     }
                   }
                   else if( res == ActionResult::FAILURE_ABORT ) {
-
-                    if( robot.IsCarryingObject() ) {
-                      // we are still carrying the object, so maybe we lost the one we are trying to stack on
-                      // top of?
-                      CompoundActionSequential* action = new CompoundActionSequential(robot, {new DriveStraightAction(robot, -_distToBackupOnStackFailure_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps), new PlaceObjectOnGroundAction(robot)});
-                      StartActing(action);
-                    }
+                    TransitionToWaitForBlocksToBeValid(robot);
                     // else we lost the block, but somehow still failed the placement action, so stop the behavior
                   }
                   // else end the behavior (other failure type)
@@ -363,7 +346,11 @@ void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
 
   // wait a bit to see if things settle and the cubes become valid (e.g. they were moving, so give them some
   // time to settle). If they become stable, Update will transition us out
-  StartActing(new WaitAction(robot, kBSB_TimeToWaitForValidBlocks_s));
+  if (robot.IsCarryingObject())
+  {
+    CompoundActionSequential* action = new CompoundActionSequential(robot, {new DriveStraightAction(robot, -_distToBackupOnStackFailure_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps), new PlaceObjectOnGroundAction(robot)});
+    StartActing(action);
+  }
 }
 
 
@@ -384,7 +371,7 @@ void BehaviorStackBlocks::SetState_internal(State state, const std::string& stat
   SetStateName(stateName);
 }
 
-void BehaviorStackBlocks::ResetBehavior(Robot& robot)
+void BehaviorStackBlocks::ResetBehavior(const Robot& robot)
 {
   _state = State::PickingUpBlock;
   _targetBlockTop.UnSet();
@@ -411,6 +398,21 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
                     obj->IsRestingFlat());
 }
 
+void BehaviorStackBlocks::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch (event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotPutDown:
+    {
+      ResetBehavior(robot);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+}
 
 }
 }
