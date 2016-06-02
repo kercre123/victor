@@ -22,7 +22,7 @@ namespace SpeedTap {
       _EndTimestamp_sec = -1;
 
       // Reaction time should be relative to the LightsOnDuration
-      _CozmoTapDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent)) - _SpeedTapGame.CozmoTapLatency_sec;
+      _CozmoTapDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent));
       _DidCozmoTap = false;
 
       // Set lights on cubes
