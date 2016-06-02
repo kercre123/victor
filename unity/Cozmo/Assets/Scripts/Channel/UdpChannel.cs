@@ -292,20 +292,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
         InternalUpdate();
 
-        if (connectionState == ConnectionState.Connected) {
-          UpdatePing(lastUpdateTime);
-        }
       }
     }
   }
 
   protected virtual void BeforeConnect(byte deviceID) {
-  }
-
-  protected virtual void UpdatePing(float lastUpdateTime) {
-  }
-
-  protected virtual void UpdateLastPingTime(float lastUpdateTime) {
   }
 
   // synchronous
@@ -582,7 +573,6 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
             connectionState = ConnectionState.Connected;
             mainEndPoint = ipEndPoint;
             lastReceiveTime = lastUpdateTime;
-            UpdateLastPingTime(lastUpdateTime);
 
             // ignore first message
           }
