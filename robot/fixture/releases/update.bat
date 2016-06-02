@@ -11,8 +11,10 @@ copy ..\..\binaries\robot_boot.bin .
 copy ..\..\build\robot.fcc.bin .
 copy ..\..\build\robot.bin .
 copy ..\..\accessories\fcc\build\xsfcc.bin .
+copy ..\..\accessories\boot\build\xsboot.bin .
 copy ..\..\staging\factory.safe esp.safe.bin
 copy ..\..\staging\esp.factory.bin .
+copy ..\..\espressif_bootloader\firmware\cboot.bin esp.boot.bin
 @echo.
 @echo ===========================================
 @echo Note:  Remember to make esp_factory_safe ^&^&

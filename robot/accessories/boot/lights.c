@@ -27,8 +27,8 @@ u8 code LED_DIR[] = {
   DEFDIR-LED5-LED3, DEFDIR-LED4-LED1, DEFDIR-LED5-LED2, DEFDIR-LED4-LED0, // I4 I2 I3 I1 (Dx-4)
   // Chargers are wired differently than cubes - here are the charger LEDs
   DEFDIR,           DEFDIR-LEC1-LEC4, DEFDIR-LEC2-LEC5, DEFDIR-LEC0-LEC4, // -- R2 R3 R1
-  DEFDIR,           DEFDIR-LEC1-LEC0, DEFDIR-LEC2-LEC0, DEFDIR-LEC0-LEC1, // -- G2 G3 G1  - XXX: All 3 unpairable!
-  DEFDIR,           DEFDIR-LEC2-LEC3, DEFDIR-LEC1-LEC3, DEFDIR-LEC0-LEC2, // -- B3 B2 B1
+  DEFDIR,           DEFDIR-LEC1-LEC0, DEFDIR-LEC2-LEC3, DEFDIR-LEC0-LEC1, // -- G2 G3 G1
+  DEFDIR,           DEFDIR-LEC2-LEC0, DEFDIR-LEC1-LEC3, DEFDIR-LEC0-LEC2, // -- B3 B2 B1
   DEFDIR,           DEFDIR,           DEFDIR-LED5-LED2, DEFDIR-LED4-LED0, // -- -- I3 I1 (Dx-4)
 };
 
@@ -40,7 +40,7 @@ u8 code LED_PORT[] = {
   LED4+LED5,  LED4+LED5,  LED4+LED5,  LED4+LED5,  // I4 I2 I3 I1 (Dx-4)
   // Chargers are wired differently than cubes - here are the charger LEDs
   0,          LEC1,       LEC2+LEC0,  LEC2+LEC0,  // -- R2 R3 R1
-  0,          LEC1,       LEC2,       LEC0,       // -- G2 G3 G1  - XXX: All 3 unpairable!
+  0,          LEC1,       LEC2+LEC0,  LEC2+LEC0,  // -- G2 G3 G1
   0,          LEC2,       LEC1+LEC0,  LEC1+LEC0,  // -- B3 B2 B1
   0,          0,          LEC4+LEC5,  LEC4+LEC5,  // -- -- I3 I1 (Dx-4)
 };

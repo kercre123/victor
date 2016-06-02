@@ -9,7 +9,8 @@
 #define AWAKE_TIME_US      1200     // Empirically need 1200uS for reliable OTA
 #define BEACON_INTERVAL_US 1000000  // Send beacons about once a second
 
-// This is the advertising packet - it gets patched by 
+// This is the advertising packet - it gets patched by the bootloader
+// XXX: Correctly set MSBs on to avoid packet errors - once you figure out WHICH IS THE MSB!
 code u8 ADVERTISEMENT[] = {
   10,W_TX_PAYLOAD_NOACK,0x1e,0xab,0x11,0xca,    // Broadcast payload - private address REVERSE ORDER
   /* 0x3ff4 */          0xff,0xff,              // Little-endian model (0 = charger, 1 = cube 1, etc)
@@ -59,11 +60,11 @@ void Advertise()
     RTC2CMP1 = US_TO_TICK(BEACON_INTERVAL_US) >> 8;   // MSB, since interval is long
     PetSlowWatchdog();    
     
-    P0DIR = ~PWR_BIT;     // Float GPIO, force power off
+    P0DIR = 255-PWR_BIT-SPI_PINS;     // Float GPIO, force power off
     P1DIR = ~0;
-    P0 = 0;
+    P0 = SPI_PINS;        // Forcing SPI_PINS high saves power due to BMA222 restless legs (kicking SCL/SDA every 20ms)
     PWRDWN = RETENTION;   // Sleep HARD
-    P0 = PWR_BIT;         // Start to restore power
+    P0 = PWR_BIT+SPI_PINS;// Start to restore power
     PWRDWN = STANDBY;     // Doze a bit more after the alarm goes off
     PWRDWN = 0;           // Finally, I'm awake with crystal ready
   }

@@ -79,7 +79,7 @@ static uint32_t          m_current_time = 0;                                 /**
 
 // Nordic specific configuration values (not defined by BLE standard).
 // Definition of initial values found in ble_dtm.h
-static int32_t           m_tx_power          = RADIO_TXPOWER_TXPOWER_0dBm;   /**< TX power for transmission test . */
+static int32_t           m_tx_power          = RADIO_TXPOWER_TXPOWER_Neg4dBm;   /**< TX power for transmission test . */
 static NRF_TIMER_Type *  mp_timer            = DEFAULT_TIMER;                /**< Timer to be used. */
 static IRQn_Type         m_timer_irq         = DEFAULT_TIMER_IRQn;           /**< which interrupt line to clear on every timeout */
 
@@ -528,7 +528,7 @@ uint32_t dtm_cmd(dtm_cmd_t cmd, dtm_freq_t freq, uint32_t length, dtm_pkt_type_t
 
         // Initialize CRC value, set channel:
         radio_prepare(TX_MODE);
-        
+
         NRF_RADIO->TEST = (RADIO_TEST_PLL_LOCK_Enabled << RADIO_TEST_PLL_LOCK_Pos);
         NRF_RADIO->SHORTS |= RADIO_SHORTS_DISABLED_TXEN_Msk;
 
