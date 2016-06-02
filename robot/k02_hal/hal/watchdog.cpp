@@ -16,7 +16,7 @@ static const uint32_t TARGET_MAGIC = 'ANKI';
 static const uint32_t MAXIMUM_RESET_COUNT = 10;
 
 void Anki::Cozmo::HAL::Watchdog::init(void) {
-  static const uint32_t RESET_TIME = 1 * 1024;  // 5 seconds (1khz LPO)
+  static const uint32_t RESET_TIME = 2 * 1024;  // 5 seconds (1khz LPO)
   volatile uint16_t* ctrlh = &WDOG_STCTRLH;
   
   __disable_irq();
