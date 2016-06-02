@@ -91,8 +91,11 @@ static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length
     return false;
   }
 
-  // Transmission error: Reboot
-  NVIC_SystemReset();
+  // Transmission error: Flush
+  UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
+  UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
+  uint8_t c = UART0->D;
+  UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
   return false;
 }
 
