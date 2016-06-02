@@ -193,7 +193,7 @@ namespace Anki {
       {
         static const f32 MIN_BACKOUT_DIST = 15.f;
 
-        if (action_ == DA_PLACE_LOW_BLIND) {
+        if (action_ == DA_PLACE_LOW_BLIND || action_ == DA_ROLL_LOW) {
           lastMarkerDist_ = 30.f;
         } else {
           lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
@@ -544,30 +544,6 @@ namespace Anki {
             if (LiftController::IsInPosition() ||
                 (transitionTime_ > 0 && transitionTime_ < HAL::GetTimeStamp())) {
               LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-
-              // Backup after picking or placing,
-              // and move the head to a position to admire our work
-
-              // Set head angle
-              switch(action_)
-              {
-                case DA_PICKUP_HIGH:
-                case DA_PLACE_HIGH:
-                {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD_F32(20));
-                  break;
-                } // HIGH
-                case DA_PICKUP_LOW:
-                case DA_PLACE_LOW:
-                case DA_PLACE_LOW_BLIND:
-                case DA_ROLL_LOW:
-                {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD_F32(-15));
-                  break;
-                } // LOW
-                default:
-                  AnkiError( 14, "PAP", 132, "Reached default switch statement in MOVING_LIFT_POSTDOCK case.", 0);
-              } // switch(action_)
 
               // Send pickup or place message.  Assume success, let BaseStation
               // verify once we've backed out.

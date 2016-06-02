@@ -18,6 +18,8 @@
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 #include "json/json.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -87,7 +89,18 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(const Robot& robot) const
     ret = currentGoal->ChooseNextBehavior(robot);
   }
   else {
-    ASSERT_NAMED(false, "AIGoalEvaluator.ChooseNextBehavior.NotImplemented");
+    // Just get sparks working for now, there should only be "freeplay" that requires "none"
+    UnlockId currentSpark = robot.GetBehaviorManager().GetActiveSpark();
+    for (const auto& currentGoal : _goals)
+    {
+      if( currentGoal.get()->GetRequiresSpark() == currentSpark )
+      {
+        ret = currentGoal->ChooseNextBehavior(robot);
+        break;
+      }
+    }
+    
+    
   }
   return ret;
 }

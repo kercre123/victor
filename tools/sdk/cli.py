@@ -213,20 +213,20 @@ class EngineRemoteCmd(cmd.Cmd):
     def do_Turn(self,line):
         "Turn (90 degrees by default, accepts anyup to 4 args for [angleToTurn [radsPerSec [accRPS2 [isAbsolute]]]]"
         inputSplit = line.split()
-        angleToTurn = float(inputSplit[0]) if (len(inputSplit) >= 1) else 1.57 
-        radsPerSec  = float(inputSplit[1]) if (len(inputSplit) >= 2) else 1.0
-        accRPS2     = float(inputSplit[2]) if (len(inputSplit) >= 3) else 1.0
-        isAbsolute  = int(  inputSplit[3]) if (len(inputSplit) >= 4) else 0
-        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["TurnInPlace", str(angleToTurn), str(radsPerSec), str(accRPS2), str(isAbsolute), "1" ]) )
+        angleToTurn = inputSplit[0] if (len(inputSplit) >= 1) else "1.57"
+        radsPerSec  = inputSplit[1] if (len(inputSplit) >= 2) else "1.0"
+        accRPS2     = inputSplit[2] if (len(inputSplit) >= 3) else "1.0"
+        isAbsolute  = inputSplit[3] if (len(inputSplit) >= 4) else "0"
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["TurnInPlace", angleToTurn, radsPerSec, accRPS2, isAbsolute, "1" ]) )
 
     def do_Drive(self,line):
         "Drive (forwards by default, accepts anyup to 4 args for [lWheelSpeed [rWheelSpeed [lWheelAcc [rWheeelAcc]]]]"
         inputSplit = line.split()
-        lWheelSpeed = float(inputSplit[0]) if (len(inputSplit) >= 1) else 20.0
-        rWheelSpeed = float(inputSplit[1]) if (len(inputSplit) >= 2) else 20.0
-        lWheelAcc   = float(inputSplit[2]) if (len(inputSplit) >= 3) else 20.0
-        rWheelAcc   = float(inputSplit[3]) if (len(inputSplit) >= 4) else 20.0
-        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["DriveWheels", str(lWheelSpeed), str(rWheelSpeed), str(lWheelAcc), str(rWheelAcc) ]) )
+        lWheelSpeed = inputSplit[0] if (len(inputSplit) >= 1) else "20.0"
+        rWheelSpeed = inputSplit[1] if (len(inputSplit) >= 2) else "20.0"
+        lWheelAcc   = inputSplit[2] if (len(inputSplit) >= 3) else "20.0"
+        rWheelAcc   = inputSplit[3] if (len(inputSplit) >= 4) else "20.0"
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["DriveWheels", lWheelSpeed, rWheelSpeed, lWheelAcc, rWheelAcc ]) )
 
     def do_StopCozmo(self,line):
         "Stop Cozmo from driving or moving their head"

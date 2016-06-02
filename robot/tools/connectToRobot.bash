@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 
+SSID=Proto_$1
+
 networksetup -setairportpower en0 on
-if test -z `system_profiler SPAirPortDataType | grep $1`; then
-  echo "Scanning for $1"
+if test -z `system_profiler SPAirPortDataType | grep $SSID`; then
+  echo "Scanning for $SSID"
   networksetup -setairportpower en0 off
   sleep 5
   networksetup -setairportpower en0 on
   sleep 2
-  while test -z `system_profiler SPAirPortDataType | grep $1`; do
-    echo "Scanning for $1"
+  while test -z `system_profiler SPAirPortDataType | grep $SSID`; do
+    echo "Scanning for $SSID"
     sleep 1
   done
 fi
 
-echo "Connecting to $1"
-networksetup -setairportnetwork en0 $1 2manysecrets
+echo "Connecting to $SSID"
+networksetup -setairportnetwork en0 $SSID 50583551
 
 echo "Waiting for IP address"
 ping -o -q 172.31.1.1

@@ -16,11 +16,6 @@ enum uint_8 BehaviorGameFlag {
   All = 0xff
 }
 
-// These are sparks recognized by the engine
-enum uint_8 BehaviorSpark {
-  NoSpark
-}
-
 // Actual types of behaviors
 enum uint_8 BehaviorType {
   NoneBehavior, // Named differently to not conflict with the Python keyword

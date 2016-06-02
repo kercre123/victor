@@ -22,6 +22,7 @@ extern "C" {
   extern const uint8_t g_EspUser[], g_EspUserEnd[];
   extern const uint8_t g_EspBoot[], g_EspBootEnd[];
   extern const uint8_t g_EspInit[], g_EspInitEnd[];
+  extern const uint8_t g_EspSafe[], g_EspSafeEnd[];
   
   // SWD stubs - these are used to flash MCUs via SWD
   extern const uint8_t g_stubK02[], g_stubK02End[];

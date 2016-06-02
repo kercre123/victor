@@ -34,6 +34,10 @@ bool FlashSector(int target, const uint32_t* data)
 
 int main(void)
 {  
+  // The nRF51 may have already started running, so try to get SOME control of it
+  __disable_irq();
+  NRF_GPIO->DIR = 0;    // Float all I/Os
+  
   // Wait for the external oscillator to start (simple crystal test)
   NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
   NRF_CLOCK->TASKS_HFCLKSTART = 1;
@@ -57,7 +61,10 @@ int main(void)
   // Poll for incoming blocks, flash them as they arrive
   while (1)
   {
-    if (address_ != WAITING_FO12R_BLOCK)
+    NRF_WDT->RR[0] = WDT_RR_RR_Reload;  // In case we were already running
+    NRF_WDT->RR[1] = WDT_RR_RR_Reload;
+    
+    if (address_ != WAITING_FOR_BLOCK)
     {
       FlashSector(address_, block_);
       address_ = WAITING_FOR_BLOCK;

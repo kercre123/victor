@@ -20,11 +20,15 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
+
+// Whether or not we need to have recently seen the 2nd block when watching stack for 3rd block
+#define NEED_TO_SEE_SECOND_BLOCK 0
 
 namespace Anki {
 namespace Cozmo {
@@ -33,7 +37,7 @@ CONSOLE_VAR(u32, kBAS_maxBlockAge_ms, "Behavior.AdmireStack", 500);
 
 CONSOLE_VAR(f32, kBAS_backupAccel_mmps2, "Behavior.AdmireStack", 100.0f);
 CONSOLE_VAR(f32, kBAS_backupDecel_mmps2, "Behavior.AdmireStack", 500.0f);
-CONSOLE_VAR(f32, kBAS_backupDist_mm, "Behavior.AdmireStack", 70.0f);
+CONSOLE_VAR(f32, kBAS_backupDist_mm, "Behavior.AdmireStack", 100.0f);
 CONSOLE_VAR(f32, kBAS_backupForSearchDist_mm, "Behavior.AdmireStack", 50.0f);
 CONSOLE_VAR(f32, kBAS_backupForSearchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
 CONSOLE_VAR(f32, kBAS_backupSpeed_mmps, "Behavior.AdmireStack", 50.0f);
@@ -46,10 +50,15 @@ CONSOLE_VAR(f32, kBAS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f)
 CONSOLE_VAR(f32, kBAS_minHeadAngleForSearch_deg, "Behavior.AdmireStack", 10.0f);
 CONSOLE_VAR(f32, kBAS_maxHeadAngleForSearch_deg, "Behavior.AdmireStack", 25.0f);
 CONSOLE_VAR(f32, kBAS_betweenHeadAnglePause_s, "Behavior.AdmireStack", 1.0f);
-CONSOLE_VAR(f32, kBAS_lookAtFaceDelay_s, "Behavior.AdmireStack", 0.4f);
 CONSOLE_VAR(f32, kBAS_minDistanceFromStack_mm, "Behavior.AdmireStack", 130.0f);
 
 CONSOLE_VAR(f32, kBAS_ScoreIncreaseForAction, "Behavior.AdmireStack", 0.8f);
+
+const char* const kFocusEyesForKnockOverAnim = "anim_ReactToBlock_focusedEyes_01";
+
+const std::string kDrivingAngryStartAnim = "ag_driving_upset_start";
+const std::string kDrivingAngryLoopAnim  = "ag_driving_upset_Loop";
+const std::string kDrivingAngryEndAnim   = "ag_driving_upset_end";
 
 BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -63,13 +72,23 @@ BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config
 
 bool BehaviorAdmireStack::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.GetBehaviorManager().GetWhiteboard().HasStackToAdmire();
+  if( robot.GetBehaviorManager().GetWhiteboard().HasStackToAdmire() ) {
+    ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
+    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(bottomBlockID);
+    if( nullptr != obj ) {
+      // run if we have a stack to admire and we know where it is
+      return obj->IsPoseStateKnown();
+    }
+  }
+
+  return false;
 }
 
 Result BehaviorAdmireStack::InitInternal(Robot& robot)
 {
   //_topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
   TransitionToWatchingStack(robot);
+  _didKnockOverStack = false;
 
   return Result::RESULT_OK;
 }
@@ -85,7 +104,7 @@ void BehaviorAdmireStack::StopInternal(Robot& robot)
 
 IBehavior::Status BehaviorAdmireStack::UpdateInternal(Robot& robot)
 {
-  if( _state == State::WatchingStack ) {
+  if( NEED_TO_SEE_SECOND_BLOCK && _state == State::WatchingStack ) {
     // make sure we have seen the second cube recently enough
     TimeStamp_t currTime = robot.GetLastImageTimeStamp();
     if( currTime > _topBlockLastSeentime + kBAS_maxBlockAge_ms ) {
@@ -124,7 +143,9 @@ void BehaviorAdmireStack::TransitionToWatchingStack(Robot& robot)
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() < kBAS_minDistanceFromStack_mm + fudgeFactor) {
       float distToDrive = kBAS_minDistanceFromStack_mm - poseWrtRobot.GetTranslation().x();
-      action->AddAction(new DriveStraightAction(robot, -distToDrive, kBAS_backupForSearchSpeed_mmps));
+      DriveStraightAction* driveAction = new DriveStraightAction(robot, -distToDrive, kBAS_backupForSearchSpeed_mmps);
+      driveAction->SetShouldPlayDrivingAnimation(false);
+      action->AddAction(driveAction);
     }
   }
 
@@ -140,9 +161,8 @@ void BehaviorAdmireStack::TransitionToWatchingStack(Robot& robot)
   // TODO:(bn) looping animation?
   action->AddAction(new HangAction(robot));
 
-  StartActing(action);
   // will hang in this state until we see the third cube
-  // don't increase score here (??)
+  StartActing(action, kBAS_ScoreIncreaseForAction);
 }
 
 void BehaviorAdmireStack::TransitionToReactingToThirdBlock(Robot& robot)
@@ -196,6 +216,11 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
 
   ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
   
+  // Push angry driving animations
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({kDrivingAngryStartAnim,
+                                                            kDrivingAngryLoopAnim,
+                                                            kDrivingAngryEndAnim});
+  
   // Backup
   DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
   backupAction->SetAccel(kBAS_backupAccel_mmps2);
@@ -206,9 +231,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   action->AddAction(new DriveToFlipBlockPoseAction(robot, bottomBlockID));
   
   // Look at face
-  action->AddAction(new TurnTowardsFaceWrapperAction(robot, 
-                                                     // TODO:(bn) animation here?
-                                                     new WaitAction(robot, kBAS_lookAtFaceDelay_s)));
+  action->AddAction(new TurnTowardsFaceWrapperAction(robot,
+                                                     new PlayAnimationAction(robot, kFocusEyesForKnockOverAnim)));
   
   // Turn towards bottom block of stack
   action->AddAction(new TurnTowardsObjectAction(robot,
@@ -243,6 +267,9 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
       // else {
       //   TransitionToSearchingForStack(robot);
       // }
+    
+      // Pop the angry driving animations
+      robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     });
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
@@ -255,6 +282,7 @@ void BehaviorAdmireStack::TransitionToReactingToTopple(Robot& robot)
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 
   robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
+  _didKnockOverStack = true;
 }
 
 void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
@@ -279,7 +307,6 @@ void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
       else {
         PRINT_NAMED_DEBUG("BehaviorAdmireStack.Searching.Failed",
                           "couldn't find stack, leaving behavior");
-        robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
       }
     });
 }
@@ -342,7 +369,8 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
 
       const float kZTolerance_mm = 15.0f;
       
-      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj && ! obj->IsMoving() ) {
+      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj ) {
+        // TODO:(bn) should check ! IsMoving here, but it's slow / unreliable
         PRINT_NAMED_INFO("BehaviorAdmireStack.HandleObjectObserved.FoundThirdBlock",
                          "Found that block %d appears to be the top of a 3 stack",
                          msg.objectID);

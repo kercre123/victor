@@ -2,18 +2,6 @@
   "behaviorType": "ExploreVisitPossibleMarker",
   "name": "demo_visitPossibleMarker",
   "flatScore": 0.6,
-  "repetitionPenalty": {
-    "nodes": [
-      {
-        "x": 2.0,
-        "y": 0.1
-      },
-      {
-        "x": 5.0,
-        "y": 1.0
-      }
-    ]
-  },
   "behaviorGroups": [
     "Demo",
     "DemoCubes"

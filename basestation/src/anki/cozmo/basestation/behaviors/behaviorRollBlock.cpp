@@ -32,6 +32,7 @@ namespace Cozmo {
 static const char* const kPutDownAnimGroupKey = "put_down_animation_group";
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
+CONSOLE_VAR(f32, kBRB_MaxTowardFaceAngle_deg, "Behavior.RollBlock", 90.f);
 
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -136,9 +137,7 @@ void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
   }
 
   if( !_initialAnimGroup.empty() ) {
-    StartActing(new TurnTowardsFaceWrapperAction(
-                  robot,
-                  new PlayAnimationGroupAction(robot, _initialAnimGroup)),                  
+    StartActing(new PlayAnimationGroupAction(robot, _initialAnimGroup),                  
                 &BehaviorRollBlock::TransitionToPerformingAction);
   }
   else {
@@ -156,7 +155,11 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
     return;
   }
 
-  DriveToRollObjectAction* action = new DriveToRollObjectAction(robot, _targetBlock);
+  const Radians maxTurnToFaceAngle( DEG_TO_RAD(90) );
+  const bool sayName = true;
+  DriveToRollObjectAction* action = new DriveToRollObjectAction(robot, _targetBlock,
+                                                                false, 0, false,
+                                                                maxTurnToFaceAngle, sayName);
   action->RollToUpright();
 
   StartActing(action,

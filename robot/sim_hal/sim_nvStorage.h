@@ -38,6 +38,9 @@ namespace Anki {
       
       // Sends the data in NVStorage at the requested tags in msg to engine
       void NVRead(Anki::Cozmo::NVStorage::NVStorageRead const& msg);
+
+      // Wipes all data, optionally including factory, as long as the key is correct
+      void NVWipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg);
       
     private:
     
@@ -75,6 +78,7 @@ namespace Anki {
       void Update();
       void Write(Anki::Cozmo::NVStorage::NVStorageWrite const& msg);
       void Read(Anki::Cozmo::NVStorage::NVStorageRead const& msg);
+      void WipeAll(Anki::Cozmo::NVStorage::NVWipeAll const& msg);
     }
   }
 }

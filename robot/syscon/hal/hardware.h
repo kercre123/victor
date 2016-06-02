@@ -3,6 +3,8 @@
 
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
+static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
+
 enum watchdog_channels {
   WDOG_RTOS,
   WDOG_UART,

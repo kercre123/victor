@@ -458,11 +458,15 @@ message DisplayProceduralFace {
   uint_8   robotID
 }
 
-// SetDrivingAnimations
-message SetDrivingAnimations {
+// PushDrivingAnimations
+message PushDrivingAnimations {
     string drivingStartAnim,
     string drivingLoopAnim,
     string drivingEndAnim
+}
+
+message PopDrivingAnimations {
+
 }
 
 
@@ -594,14 +598,6 @@ message RequestSetUnlock {
   bool unlocked
 }
 
-message EnableSparkUnlock {
-  UnlockId enableSparkId
-}
-
-message StopSparkUnlock {
-
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Debug / Logging
 ///////////////////////////////////////////////////////////////////////////////
@@ -686,9 +682,16 @@ message ComputeCameraCalibration {
 //       for a multi-blob message since these don't actually get sent to robot
 //       until all blobs have been received by engine.
 
-
+// Erase an entry from non-volatile storage
 message NVStorageEraseEntry {
   NVStorage::NVEntryTag tag
+}
+
+// Erase all entries from non-volatile storage
+// (not including factory partition)
+// NOTE: THIS MESSAGE FORCES A ROBOT REBOOT CAUSING DISCONNECT.
+message NVStorageWipeAll {
+  string key            // This must be "Yes I really want to do this!" otherwise the operation will fail.
 }
 
 // Multi-blob messages (determined by tag) are queued on engine

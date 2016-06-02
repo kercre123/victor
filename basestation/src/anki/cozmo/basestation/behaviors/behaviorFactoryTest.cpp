@@ -37,6 +37,9 @@
 
 #define TEST_CHARGER_CONNECT 0
 
+// Whether or not to end the test before the actual block pickup
+#define SKIP_BLOCK_PICKUP 0
+
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
 #define ENABLE_NVSTORAGE_WRITES 1
@@ -132,6 +135,7 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
+    _toolCodeImagesStored = false;
     
     robot.GetActionList().Cancel();
  
@@ -141,11 +145,27 @@ namespace Cozmo {
     _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, &robot.GetPose().FindOrigin());
     _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-50, 250, 0}, &robot.GetPose().FindOrigin());
     _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
+
+    // Mute volume
+    auto audioClient = robot.GetRobotAudioClient();
+    if (audioClient) {
+      audioClient->SetRobotVolume(0);
+    }
     
+    // Set blind docking mode
+    ExternalInterface::SetDebugConsoleVarMessage dockMethodMsg;
+    dockMethodMsg.varName = "PickupDockingMethod";
+    dockMethodMsg.tryValue = "0";  // Blind docking
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(dockMethodMsg));
+
+    // Disable driving animations
+    ExternalInterface::SetDebugConsoleVarMessage driveAnimsMsg;
+    driveAnimsMsg.varName = "EnableDrivingAnimations";
+    driveAnimsMsg.tryValue = "false";
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
     
     // Disable reactionary behaviors
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
-    
     
     // Disable keep face alive animation
     robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
@@ -155,6 +175,22 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
+    
+    // NOTE: Playpen fixutre will do the memory wipe since WipeAll reboots the robot
+    /*
+    if (ENABLE_NVSTORAGE_WRITES) {
+      // Erase all entries in flash
+      robot.GetNVStorageComponent().WipeAll(true,
+                                            [this,&robot](NVStorage::NVResult res){
+                                              if (res != NVStorage::NVResult::NV_OKAY) {
+                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.WipeAll.Failed",
+                                                                    "Result: %s", EnumToString(res));
+                                              } else {
+                                                PRINT_NAMED_INFO("BehaviorFactoryTest.WipeAll.Succeeded", "");
+                                              }
+                                            });
+    }
+     */
 
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
@@ -288,55 +324,14 @@ namespace Cozmo {
     {
       case FactoryTestState::InitRobot:
       {
+        // Too much stuff is changing now.
+        // Maybe put this back later.
+        /*
         // Check for mismatched CLAD
         if (robot.HasMismatchedCLAD()) {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
-        
-        
-        /*
-        // Check for past test results
-        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
-                                           [this](u8* data, size_t size, NVStorage::NVResult res) {
-                                             if (res == NVStorage::NVResult::NV_OKAY) {
-                                               FactoryTestResultEntry resultEntry;
-                                               if (size != NVStorageComponent::MakeWordAligned(resultEntry.Size())) {
-                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ReadPastTestResultSizeMismatch",
-                                                                     "Expected %zu, got %zu", resultEntry.Size(), size);
-                                                 return;
-                                               }
-                                               resultEntry.Unpack(data, resultEntry.Size());
-                                               time_t rawTime = static_cast<time_t>(resultEntry.utcTime);
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastTestResults",
-                                                                "Result: %s, Time: %s", EnumToString(resultEntry.result), ctime(&rawTime) );
-                                             } else {
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastTestResultsFound", "");
-                                             }
-                                           });
-        
-        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo,
-                                           [this](u8* data, size_t size, NVStorage::NVResult res) {
-                                             if (res == NVStorage::NVResult::NV_OKAY) {
-                                               ToolCodeInfo info;
-                                               if (size != NVStorageComponent::MakeWordAligned(info.Size())) {
-                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ReadToolCodeInfoSizeMismatch",
-                                                                    "Expected %zu, got %zu", info.Size(), size);
-                                                 return;
-                                               }
-                                               info.Unpack(data, info.Size());
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastToolCodeInfo",
-                                                                "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
-                                                                EnumToString(info.code),
-                                                                info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
-                                                                info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
-                                                                info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
-                                                                info.observedCalibDotRight_x, info.observedCalibDotRight_y);
-
-                                             } else {
-                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastToolCodeInfoFound", "");
-                                             }
-                                           });
-        */
+         */
         
         if (TEST_CHARGER_CONNECT) {
           // Check if charger is discovered
@@ -418,7 +413,7 @@ namespace Cozmo {
           // Drive off charger
           StartActing(robot, new DriveStraightAction(robot, 250, 100),
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.3;
                         return true;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);
@@ -527,7 +522,7 @@ namespace Cozmo {
         // Move head down to line up for readToolCode.
         // Hopefully this reduces some readToolCode errors
         MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
-        DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
+        DriveStraightAction* backupAction = new DriveStraightAction(robot, -20.0, -100.f);
         backupAction->SetAccel(1000);
         backupAction->SetDecel(1000);
         CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {headAction, backupAction});
@@ -554,6 +549,7 @@ namespace Cozmo {
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
                         // Save tool code images to robot (whether it succeeded to read code or not)
+                        _toolCodeImagesStored = false;
                         if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
                                                                                     // Clear tool code images from VisionSystem
                                                                                     robot.GetVisionComponent().ClearToolCodeImages();
@@ -570,6 +566,7 @@ namespace Cozmo {
                                                                                       EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
                                                                                     } else {
                                                                                       PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
+                                                                                      _toolCodeImagesStored = true;
                                                                                     }
                                                                                   }) != RESULT_OK)
                         {
@@ -612,17 +609,17 @@ namespace Cozmo {
                         
                         
                         // Verify tool code data is in range
-                        static const f32 pixelDistThresh = 30.f;
-                        f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
-                                                           Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
-                        f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
-                                                           Point2f(info.observedCalibDotRight_x, info.observedCalibDotRight_y));
+                        static const f32 pixelDistThresh_x = 20.f;
+                        static const f32 pixelDistThresh_y = 40.f;
+                        f32 distL_x = std::fabsf(info.expectedCalibDotLeft_x - info.observedCalibDotLeft_x);
+                        f32 distL_y = std::fabsf(info.expectedCalibDotLeft_y - info.observedCalibDotLeft_y);
+                        f32 distR_x = std::fabsf(info.expectedCalibDotRight_x - info.observedCalibDotRight_x);
+                        f32 distR_y = std::fabsf(info.expectedCalibDotRight_y - info.observedCalibDotRight_y);
                         
-                        if (distL > pixelDistThresh || distR > pixelDistThresh) {
+                        if (distL_x > pixelDistThresh_x || distL_y > pixelDistThresh_y || distR_x > pixelDistThresh_x || distR_y > pixelDistThresh_y) {
                           EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
                           return false;
                         }
-                        
                         
                         return true;
                       });
@@ -725,6 +722,19 @@ namespace Cozmo {
       }
       case FactoryTestState::StartPickup:
       {
+        if (SKIP_BLOCK_PICKUP) {
+          if (ENABLE_NVSTORAGE_WRITES) {
+            if (!_toolCodeImagesStored) {
+              break;
+            }
+          }
+          
+          // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
+          EndTest(robot, FactoryTestResultCode::SUCCESS);
+          return Status::Complete;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        }
+        
         auto pickupCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
@@ -741,8 +751,9 @@ namespace Cozmo {
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
-        DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
+        //DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
         //action->SetMotionProfile(_motionProfile);
+        PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectID);
         StartActing(robot,
                     action,
                     pickupCallback);
@@ -751,6 +762,7 @@ namespace Cozmo {
       }
       case FactoryTestState::PickingUpBlock:
       {
+        
         auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");

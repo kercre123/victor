@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/speedChooser.h"
@@ -105,6 +106,11 @@ namespace Anki {
     , _approachAngle_rad(0)
     {
 
+    }
+    
+    DriveToObjectAction::~DriveToObjectAction()
+    {
+      _robot.GetLightsComponent().UnSetInteractionObject();
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -355,6 +361,10 @@ namespace Anki {
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(object);
       } // if/else object==nullptr
+      
+      // Mark this object as one we are docking with (e.g. so its lights indicate
+      // it is being interacted with)
+      _robot.GetLightsComponent().SetInteractionObject(_objectID);
       
       return result;
     }
@@ -906,7 +916,9 @@ namespace Anki {
                                                            const f32 predockOffsetDistX_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
-                                                           const bool useManualSpeed)
+                                                           const bool useManualSpeed,
+                                                           Radians maxTurnTowardsFaceAngle_rad,
+                                                           const bool sayName)
     : CompoundActionSequential(robot)
     {
       if(objectID == robot.GetCarryingObject())
@@ -926,6 +938,12 @@ namespace Anki {
                                                      useManualSpeed);
 
       AddAction(_driveToObjectAction);
+      
+      if(maxTurnTowardsFaceAngle_rad > 0.f)
+      {
+        AddAction(new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName));
+        AddAction(new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad));
+      }
     }
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)
@@ -970,14 +988,18 @@ namespace Anki {
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
                                                                const AlignmentType alignmentType,
-                                                               const bool useManualSpeed)
+                                                               const bool useManualSpeed,
+                                                               Radians maxTurnTowardsFaceAngle_rad,
+                                                               const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(robot,
                                                                 objectID,
@@ -993,14 +1015,18 @@ namespace Anki {
                                                          const ObjectID& objectID,
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
-                                                         const bool useManualSpeed)
+                                                         const bool useManualSpeed,
+                                                         Radians maxTurnTowardsFaceAngle_rad,
+                                                         const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::DOCKING,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
       AddAction(action);
@@ -1022,14 +1048,18 @@ namespace Anki {
                                                            const ObjectID& objectID,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
-                                                           const bool useManualSpeed)
+                                                           const bool useManualSpeed,
+                                                           Radians maxTurnTowardsFaceAngle_rad,
+                                                           const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                               objectID,
@@ -1046,14 +1076,18 @@ namespace Anki {
                                                              const f32 placementOffsetX_mm,
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
-                                                             const bool useManualSpeed)
+                                                             const bool useManualSpeed,
+                                                             Radians maxTurnTowardsFaceAngle_rad,
+                                                             const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                               objectID,
@@ -1069,14 +1103,18 @@ namespace Anki {
                                                      const ObjectID& objectID,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
-                                                     const bool useManualSpeed)
+                                                     const bool useManualSpeed,
+                                                     Radians maxTurnTowardsFaceAngle_rad,
+                                                     const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ROLLING,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     , _objectID(objectID)
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
@@ -1145,14 +1183,18 @@ namespace Anki {
                                                        const ObjectID& objectID,
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
-                                                       const bool useManualSpeed)
+                                                       const bool useManualSpeed,
+                                                       Radians maxTurnTowardsFaceAngle_rad,
+                                                       const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ROLLING,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
       AddAction(action);
@@ -1162,14 +1204,18 @@ namespace Anki {
     
     DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(Robot& robot,
                                                                    const ObjectID& objectID,
-                                                                   const bool useManualSpeed)
+                                                                   const bool useManualSpeed,
+                                                                   Radians maxTurnTowardsFaceAngle_rad,
+                                                                   const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ENTRY,
                                  0,
                                  false,
                                  0,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
       AddAction(action);
@@ -1179,14 +1225,18 @@ namespace Anki {
     
     DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
                                                                const ObjectID& objectID,
-                                                               const bool useManualSpeed)
+                                                               const bool useManualSpeed,
+                                                               Radians maxTurnTowardsFaceAngle_rad,
+                                                               const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ENTRY,
                                  0,
                                  false,
                                  0,
-                                 useManualSpeed)
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
     {
       // Get DriveToObjectAction
       DriveToObjectAction* driveAction = nullptr;

@@ -342,7 +342,7 @@
             <CClasses></CClasses>
             <UserClasses></UserClasses>
             <CSection></CSection>
-            <UserSection>?PR?TICK_ISR?LIGHTS(C:0x3F60),?C_C51STARTUP(C:0x3FE0),?CO?ADVERTISE(C:0x3FEE)</UserSection>
+            <UserSection>?PR?TICK_ISR?LIGHTS(C:0x3F60),?C_C51STARTUP(C:0x3FDF),?CO?ADVERTISE(C:0x3FEE)</UserSection>
             <CodeBaseAddress>0x800-0x1000</CodeBaseAddress>
             <XDataBaseAddress></XDataBaseAddress>
             <PDataBaseAddress></PDataBaseAddress>

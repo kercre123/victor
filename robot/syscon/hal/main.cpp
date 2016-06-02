@@ -8,7 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
-#include "storage.h"
+//#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
@@ -30,7 +30,6 @@ extern "C" {
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-__attribute((at(0x20003FFC))) static uint32_t MAGIC_LOCATION = 0;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -77,35 +76,51 @@ static void setupOperatingMode() {
   if (active_operating_mode == current_operating_mode) {
     return ;
   }
-  
-  active_operating_mode = current_operating_mode;
+
+  // Tear down existing mode
   switch (active_operating_mode) {
-    case BODY_BLUETOOTH_OPERATING_MODE:
+    case BODY_BLUETOOTH_OPERATING_MODE:      
+      Bluetooth::shutdown();
+      break ;
+    
+    case BODY_WIFI_OPERATING_MODE:
+      Motors::stop();
+      Radio::shutdown();
+      break ;
+
+    case BODY_DTM_OPERATING_MODE:
+      Motors::stop();
       DTM::stop();
+      break ;
+
+    case BODY_IDLE_OPERATING_MODE:
+      break ;
+  }
+
+  // Setup new mode
+  switch(current_operating_mode) {
+    case BODY_IDLE_OPERATING_MODE:
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
-      Radio::shutdown();
+      break ;
+    
+    case BODY_BLUETOOTH_OPERATING_MODE:
+      Timer::lowPowerMode(true);
+      Backpack::lightMode(RTC_LEDS);
 
-      // Start advertising
-      Motors::stop();
       Bluetooth::advertise();
       break ;
     
     case BODY_WIFI_OPERATING_MODE:
-      DTM::stop();
-      Bluetooth::shutdown();
-
-      Motors::init();
+      Backpack::lightMode(TIMER_LEDS);
 
       Radio::advertise();
-      Backpack::lightMode(TIMER_LEDS);
+
       Timer::lowPowerMode(false);
       Motors::start();
       break ;
 
     case BODY_DTM_OPERATING_MODE:
-      Bluetooth::shutdown();
-      Radio::shutdown();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
 
@@ -113,13 +128,16 @@ static void setupOperatingMode() {
       Motors::start();
       break ;
   }
+  
+  active_operating_mode = current_operating_mode;
 }
 
 int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
-  Storage::init();
+  Bootloader::init();
+  //Storage::init();
 
   // Initialize our scheduler
   RTOS::init();
@@ -147,16 +165,16 @@ int main(void)
   #endif
 
   enterOperatingMode(BODY_WIFI_OPERATING_MODE);
+  setupOperatingMode();
 
   Timer::start();
 
   // Run forever, because we are awesome.
   for (;;) {
-    setupOperatingMode();
-    
     // This means that if the crypto engine is running, the lights will stop pulsing. 
     Crypto::manage();
     Lights::manage();
     Backpack::manage();
+    setupOperatingMode();
   }
 }

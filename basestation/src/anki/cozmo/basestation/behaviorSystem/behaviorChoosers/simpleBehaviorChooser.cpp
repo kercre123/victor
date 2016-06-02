@@ -172,6 +172,9 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
   Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
   
   VIZ_BEHAVIOR_SELECTION_ONLY( VizInterface::RobotBehaviorSelectData robotBehaviorSelectData );
+
+  const IBehavior* runningBehavior = nullptr;
+  float runningBehaviorScore = 0.0f;
   
   IBehavior* bestBehavior = nullptr;
   float bestScore = 0.0f;
@@ -238,6 +241,17 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
         bestBehavior = behavior;
         bestScore    = scoreData.totalScore;
       }
+
+      if( behavior->IsRunning() ) {
+        if( nullptr != runningBehavior ) {
+          PRINT_NAMED_WARNING("BehaviorChooser.MultipleRunningBehaviors",
+                              "Looks like more than one behavior returned IsRunning(). One of them is '%s'",
+                              behavior->GetName().c_str());
+        }
+        runningBehavior = behavior;
+        runningBehaviorScore = scoreData.totalScore;
+      }
+        
     }
     else if( DEBUG_SHOW_ALL_SCORES ) {
       PRINT_NAMED_DEBUG("BehaviorChooser.Score.Zero",
@@ -253,6 +267,15 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
   if (bestBehavior == nullptr)
   {
     bestBehavior = _behaviorNone;
+  }
+
+  if( runningBehavior != nullptr && bestBehavior != runningBehavior ) {
+    PRINT_NAMED_DEBUG("BehaviorChooser.SwitchBehaviors",
+                      "behavior '%s' has score of %f, so is interrupting running behavior '%s' which scored %f",
+                      bestBehavior->GetName().c_str(),
+                      bestScore,
+                      runningBehavior->GetName().c_str(),
+                      runningBehaviorScore);
   }
 
   return bestBehavior;

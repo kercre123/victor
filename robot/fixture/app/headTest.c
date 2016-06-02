@@ -68,24 +68,19 @@ void HeadESP(void)
   DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
   SWDDeinit();
   DisableBAT();     // This has a built-in delay while battery power leaches out
-  
-  InitEspressif();
-
+  /*
+  // Let head discharge (this takes a while)
   for (int i = 5; i > 0; i--)
   {
     MicroWait(1000000);
     ConsolePrintf("%d..", i);
-  }
-
+  } 
+  */
+  InitEspressif();
   EnableBAT();
 
-  // Program espressif, which will start up
-  ProgramEspressif();
-  
-#ifndef FCC
-  // Set serial number in Espressif
-  ESPFlashLoad(0x1000, 4, (uint8_t*)&serial_);
-#endif
+  // Program espressif, which will start up following the program
+  ProgramEspressif(serial_);
 }
 
 void HeadTest(void)

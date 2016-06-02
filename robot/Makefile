@@ -54,6 +54,7 @@ staging_dir:
 	mkdir -p ./staging
 
 export_key:
+	mkdir -p generated
 	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) ./generated/publickey.h
 	g++ -o generated/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
 	./generated/calcMont >> ./generated/publickey.h
@@ -61,6 +62,9 @@ export_key:
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
 	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
+
+k02_fcc_fix: staging_dir
+	python3 ./tools/boot_header.py ./build/fcc/robot.axf
 
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
@@ -71,23 +75,43 @@ stage_binaries:
 	@if test ./syscon/build/app/syscon.axf -nt ./binaries/syscon.axf; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf; fi
 	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
+stage_factory_upgrade:
+	cp -v staging/esp.factory.bin binaries/esp.factory.bin
+	cp -v staging/factory.safe    binaries/factory.safe
+
 release: stage_binaries
-	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
+	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	#python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
 
 esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
 	make $@ -C clad -j4
-	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
-	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
+	make -C espressif lib/libmain_w.a
+	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld FACTORY_FIRMWARE=0
+	python3 ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
 	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
-onBuildServer: esp
+esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
+	make -C espressif clean
+	cd espressif_bootloader; ./build.sh; cd ..
+	make esp -C clad -j4
+	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_factory.ld FACTORY_FIRMWARE=1
+	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.factory.bin
+	python3 ./tools/sign.py --prepend_size_word --rtip ./binaries/robot.axf --body ./binaries/syscon.axf ./staging/factory.safe
+	make -C espressif clean
 
+esp_factory_installer:
+	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --factory_restore binaries/esp.factory.bin,binaries/factory.safe ./staging/cozmo.safe
+
+esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
+	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
+  
+onBuildServer: esp
 
 clean:
 	make -C clad clean
 	make -C espressif/app clean
+	make -C espressif_bootloader clean
 	rm -f $(VERSION_HEADER)

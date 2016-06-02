@@ -44,8 +44,8 @@ void Anki::Cozmo::HAL::Power::init()
 void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
 {
   if (!fixture) {
-    // Pull-down SCK during ESP8266 boot
-    GPIO_SET(GPIO_MISO, PIN_MISO);
+    // Reset MISO - "recovery boot mode" signal
+    GPIO_RESET(GPIO_MISO, PIN_MISO);
     GPIO_OUT(GPIO_MISO, PIN_MISO);
     SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
 
@@ -54,10 +54,13 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
     GPIO_IN(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
   } else {
-    // Pull hard down to ground
+    // Pull down hard
     GPIO_RESET(GPIO_MOSI, PIN_MOSI);
     GPIO_OUT(GPIO_MOSI, PIN_MOSI);
     SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO);
+    
+    // Let UART work
+    GPIO_IN(GPIO_MISO, PIN_MISO);
   }
 
   // Pull-down SCK during ESP8266 boot
@@ -70,15 +73,13 @@ void Anki::Cozmo::HAL::Power::enableEspressif(bool fixture)
   GPIO_IN(GPIO_WS, PIN_WS);
   SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp);
 
-  MicroWait(10000);
-
   // Turn on 2v8 and 3v3 rails
   GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
   GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
   SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
 
   // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < 32 * 512; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;

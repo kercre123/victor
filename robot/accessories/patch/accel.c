@@ -16,8 +16,8 @@ u8 idata _readings[33];
 #define TAP_THRESH    20        // Equivalent to EP1 10 (since I shift less)
 #define TAP_DEBOUNCE  45        // 45/500 = 90ms before tap is recognized
 #define TAP_DURATION  5         // 5/100 = 10ms is max length of a tap (anything slower is rejected)
-u8 _debounce, _taps;
-s8 _last;
+u8 _debounce, _taps, _tapTime;
+s8 _last, _tapPos, _tapNeg;
 bit _posFirst;
 void SimpleTap(u8 readings)
 {
@@ -33,19 +33,21 @@ void SimpleTap(u8 readings)
     p += 3;                   // Z axis only
     readings -= 3;
     
+    // If not debouncing...
     if (!_debounce)
     {
+      // Look for something big enough to start the debounce
       if (diff > TAP_THRESH)
-      {
-        _debounce = TAP_DEBOUNCE;
         _posFirst = 1;
-      }
       else if (diff < -TAP_THRESH)
-      {
-        _debounce = TAP_DEBOUNCE;
         _posFirst = 0;
-      }
+      else
+        continue;   // Nothing, just continue looking
+      
+      _debounce = TAP_DEBOUNCE;
+      _tapPos = _tapNeg = 0;      // New potential tap, reset min/max
     }
+    // If debouncing, look for a tap
     else 
     {
       if (_debounce > (TAP_DEBOUNCE-TAP_DURATION) && 
@@ -54,9 +56,18 @@ void SimpleTap(u8 readings)
       {
         _taps++;
         _debounce = TAP_DEBOUNCE-TAP_DURATION;
+        _radioOut[5] = _tapTime;  // As soon as we call it a tap, save timestamp
       }
       _debounce--;
     }
+    
+    // If we get here, we are in a potential tap, track min/max absolute acceleration
+    if (_tapNeg < diff)
+      _tapNeg = diff;
+    if (_tapPos > diff)
+      _tapPos = diff;
+    _radioOut[6] = _tapPos;
+    _radioOut[7] = _tapNeg;
   }
   
   // Set up outbound message
@@ -120,4 +131,17 @@ void AccelInit()
   DataWrite(PMU_RANGE, RANGE_2G);
   DataWrite(PMU_BW, BW_250);
   DataWrite(FIFO_CONFIG_1, FIFO_STREAM);
+}
+
+// XXX: Didn't work when borrowed from bootloader (wrong linkage address?)
+// Return the model/type from the advertising packet
+u8 GetModel()
+{
+  // If MSB is not set (0xff), our model is the lsb
+  // This allows us to change model once at the factory
+  u8 lsb = *(u8 code*)(0x3ff4);
+  u8 msb = *(u8 code*)(0x3ff5);
+  if (0xff == msb)
+    return lsb;
+  return msb;
 }

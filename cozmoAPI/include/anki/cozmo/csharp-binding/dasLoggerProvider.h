@@ -15,7 +15,7 @@
 
 #include "util/logging/iLoggerProvider.h"
 #include "util/logging/iEventProvider.h"
-#include <DAS/Das.h>
+#include <DAS/DAS.h>
 
 namespace Anki {
 namespace Util {

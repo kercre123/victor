@@ -38,6 +38,9 @@ public:
   // again. Disabling turns them all to "off"
   void SetEnableComponent(bool enable);
 
+  void SetInteractionObject(ObjectID objectID) { _interactionObject = objectID; }
+  void UnSetInteractionObject() { _interactionObject.UnSet(); }
+  
   template<typename T>
   void HandleMessage(const T& msg);
   
@@ -46,7 +49,8 @@ private:
   enum class CubeLightsState {
     Off,
     Connected,
-    Visible
+    Visible,
+    Interacting
   };
 
   struct ObjectInfo {
@@ -57,7 +61,7 @@ private:
     
     CubeLightsState desiredState;
     CubeLightsState currState;
-    TimeStamp_t lastObservedTime_ms;
+    TimeStamp_t     lastObservedTime_ms;
   };
   
   std::map< ObjectID, ObjectInfo > _cubeInfo;
@@ -71,6 +75,8 @@ private:
   Robot& _robot;
 
   bool _enabled = true;
+  
+  ObjectID _interactionObject;
   
   std::list<Signal::SmartHandle> _eventHandles;
 };

@@ -34,7 +34,6 @@ namespace Anki {
 namespace Cozmo {
 namespace Factory {
 
-static const u32 faceSpinner[] ICACHE_RODATA_ATTR STORE_ATTR = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
 static RobotInterface::FactoryTestMode mode;
 static u32 lastExecTime;
 static u32 modeTimeout;
@@ -47,6 +46,9 @@ static const FTMenuItem rootMenuItems[] = {
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
   {"Playpen test",    RobotInterface::FTM_PlayPenTest,   30000000 },
+  // #ifdef FACTORY_FIRMWARE
+  {"Cube test",       RobotInterface::FTM_cubeTest,      30000000 },
+  // #endif
   {"BLE",             RobotInterface::FTM_BLE_Menu,      15000000 },
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
@@ -102,8 +104,6 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   }
 }
 
-static char factoryAPPhase = 0;
-
 void Update()
 {
   if (mode != RobotInterface::FTM_None) 
@@ -119,8 +119,6 @@ void Update()
     {
       case RobotInterface::FTM_entry:
       {
-        const u32 phase = (now >> 16) & 0x7;
-        Face::FacePrintf("\n\n\n\n     %c         %c\n", faceSpinner[phase], faceSpinner[7-((phase-1) & 0x7)]);
         break;
       }
       case RobotInterface::FTM_menus:
@@ -154,35 +152,28 @@ void Update()
       }
       case RobotInterface::FTM_PlayPenTest:
       {
-        // First time in this mode, switch our AP name to the fixture's
-        switch (factoryAPPhase)
-        {
-          case 0:
-            i2spiSwitchMode(I2SPI_PAUSED);    // Scary - but cool that it works!
-            break;
-          case 1:    
-            // Create config for test fixture open AP
-            struct softap_config ap_config;
-            wifi_softap_get_config(&ap_config);
-            os_sprintf((char*)ap_config.ssid, "Afix01");
-            ap_config.authmode = AUTH_OPEN;
-            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-            ap_config.beacon_interval = 100;
-            wifi_softap_set_config_current(&ap_config);
-            break;
-          case 2:
-            i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
-            break;
-          case 3:
-            SetMode(RobotInterface::FTM_WiFiInfo);
-            break;
-        }
-        factoryAPPhase++;
+        // Create config for test fixture open AP
+        struct softap_config ap_config;
+        wifi_softap_get_config(&ap_config);
+        os_sprintf((char*)ap_config.ssid, "Afix01");
+        ap_config.authmode = AUTH_OPEN;
+        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+        ap_config.beacon_interval = 100;
+        wifi_softap_set_config_current(&ap_config);
+        SetMode(RobotInterface::FTM_WiFiInfo);
         break;
       }
       case RobotInterface::FTM_WiFiInfo:
       {
-        static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi-V: %x\nWiFi-D: %s\nRTIP-V: %x\nRTIP-D: %s\n          %c";
+        static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
+                                                                          "PSK:  %s\n"
+                                                                          "Chan: %d  Stas: %d\n"
+                                                                          "WiFi-V: %x\nWiFi-D: %s\n"
+                                                                          "RTIP-V: %x\nRTIP-D: %s\n"
+                                                                          #if FACTORY_FIRMWARE
+                                                                          "FACTORY FIRMWARE"
+                                                                          #endif
+                                                                          ;
         const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
         if (!clientConnected())
         {
@@ -196,10 +187,17 @@ void Update()
           Face::FacePrintf(fmtBuf,
                            ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                            COZMO_VERSION_COMMIT, BUILD_DATE + 5,
-                           RTIP::Version, RTIP::VersionDescription, faceSpinner[system_get_time() >> 16 & 0x7]);
+                           RTIP::Version, RTIP::VersionDescription);
         }
         break;
       }
+      // #ifdef FACTORY_FIRMWARE
+      case RobotInterface::FTM_cubeTest:
+      {
+        Face::FacePrintf("Auto cube");
+        break ;
+      }
+      // #endif
       case RobotInterface::FTM_motorLifeTest:
       {
         if ((now - lastExecTime) > 1000000)
@@ -308,6 +306,49 @@ void Process_TestState(const RobotInterface::TestState& state)
   }
 }
 
+// #ifdef FACTORY_FIRMWARE
+static void cubeMessageHook(const u8* buffer, int bufferSize) {
+  using namespace Anki::Cozmo;
+
+  if (buffer[0] != RobotInterface::RobotToEngine::Tag_activeObjectDiscovered) {
+    return ;
+  }
+  
+  RobotInterface::RobotToEngine msg;
+  memcpy(msg.GetBuffer(), buffer, bufferSize);
+
+  uint32_t id = msg.activeObjectDiscovered.factory_id;
+
+  static uint32_t slots[7];
+  static int slot = 0;
+
+  for (int i = 0; i < slot; i++) {
+    if (slots[i] == id) return ;
+  }
+
+  RobotInterface::EngineToRobot out;
+
+  out.tag = RobotInterface::EngineToRobot::Tag_setCubeLights; 
+  out.setCubeLights.objectID = slot;
+  for(int i = 0; i < 4; i++) {
+    out.setCubeLights.lights[i].onColor = 
+    out.setCubeLights.lights[i].offColor = 0x3DEF;
+  }
+
+  if (!RTIP::SendMessage(out)) return ;
+
+  out.tag = RobotInterface::EngineToRobot::Tag_setPropSlot;
+  out.setPropSlot.slot = slot;
+  out.setPropSlot.factory_id = id;
+
+  if (!RTIP::SendMessage(out)) return ;
+
+  slots[slot] = id;
+
+  if (++slot > 7) SetMode(RobotInterface::FTM_entry);
+}
+// #endif
+
 RobotInterface::FactoryTestMode GetMode()
 {
   return mode;
@@ -353,6 +394,13 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
+    // #ifdef FACTORY_FIRMWARE
+    case RobotInterface::FTM_cubeTest:
+    {
+      RTIP::HookWifi(NULL);
+      break;
+    }
+    // #endif
     case RobotInterface::FTM_motorLifeTest:
     {
       msg.tag = RobotInterface::EngineToRobot::Tag_stop;
@@ -397,6 +445,13 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
+    // #ifdef FACTORY_FIRMWARE
+    case RobotInterface::FTM_cubeTest:
+    {
+      RTIP::HookWifi(cubeMessageHook);
+      break;
+    }
+    // #endif
     default:
     {
       // Nothing to do

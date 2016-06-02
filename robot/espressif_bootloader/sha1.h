@@ -32,6 +32,6 @@ extern void SHA1Update(SHA1_CTX *context, const uint8_t * data, unsigned int len
  * @param[in] data_len Length of the data area
  * @param[out] mac Buffer for the hash (20 bytes) Returns: 0 on success, -1 of failure
  */
-extern int hmac_sha1 (const u8* key, size_t key_len, const u8* data, size_t data_len, u8* mac);
+extern int hmac_sha1 (const uint8_t* key, uint32_t key_len, const uint8_t* data, uint32_t data_len, uint8_t* mac);
 
 #endif

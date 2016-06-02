@@ -47,6 +47,13 @@ namespace NVStorage {
     bool       write,
   }
 
+  message NVWipeAll
+  {
+    NVReportDest to,
+    bool includeFactory,
+    string key, // Key must be "Yes I really want to do this!"
+  }
+
 }
 
 }

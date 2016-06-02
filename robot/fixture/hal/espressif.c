@@ -87,7 +87,8 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
   { "FCC",  0x000000, g_EspUserEnd - g_EspUser, g_EspUser },
 #else
   { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
-  { "USER",  0x003000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "USER",  0x002000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "SAFE",  0x047000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
   { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
   { "BLANK", 0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
 #endif
@@ -101,7 +102,7 @@ void InitEspressif(void)
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
   
-  // Pull PA4 (CS#) low.  This MUST happen before ProgramEspressif()
+  // Pull PA4 (CS#) low to select ESP BOOT.  This MUST happen before ProgramEspressif()
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_ResetBits(GPIOA, GPIO_Pin_4);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
@@ -111,6 +112,15 @@ void InitEspressif(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+  // Pull PC12 (DUT_TRX) low to select "esptool" mode in bootloader.
+  GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
   // Reset the UARTs since they tend to clog with framing errors
   RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART2, ENABLE);
   RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART2, DISABLE);
@@ -388,7 +398,7 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
   return true;
 }
 
-void ProgramEspressif(void)
+void ProgramEspressif(int serial)
 {
   SlowPrintf("ESP Syncronizing...");
 
@@ -397,11 +407,21 @@ void ProgramEspressif(void)
     throw ERROR_HEAD_RADIO_SYNC;
   }
   
+  bool setserial = false;
   for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
     SlowPrintf("Load ROM %s\n", rom->name);
 
     if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
       throw ERROR_HEAD_RADIO_ERASE;
     }
+      
+  #ifndef FCC
+    // Set serial number, model number, random data in Espressif
+    if (!setserial) {
+      SlowPrintf("Load SERIAL data\n");
+      ESPFlashLoad(0x1000, 4, (uint8_t*)&serial);
+      setserial = true;
+    }
+  #endif
   }
 }

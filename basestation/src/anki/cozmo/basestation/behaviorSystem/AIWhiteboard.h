@@ -74,7 +74,7 @@ public:
   void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
 
   // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
-  void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID) { _topOfStackToAdmire = topBlockID; _bottomOfStackToAdmire = bottomBlockID; }
+  void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID);
   void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); _bottomOfStackToAdmire.UnSet(); }
   
   bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
@@ -87,6 +87,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of possible markers
+  // TODO:(bn) this is more like "possible objects" now than markers, since I also look at unknown pose obejcts
   const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
 
   // beacons
@@ -122,6 +123,9 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // consider adding an object to possible markers list
+  void ConsiderNewPossibleMarker(ObjectType objectType, const Pose3d& pose);
+  
   // remove possible markers currently stored that
   void RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose);
   

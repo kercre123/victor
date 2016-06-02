@@ -14,8 +14,8 @@
 #ifndef __Cozmo_Game_Comms_ISocketComms_H__
 #define __Cozmo_Game_Comms_ISocketComms_H__
 
-
 #include "clad/types/uiConnectionTypes.h"
+#include "util/stats/recentStatsAccumulator.h"
 #include <stddef.h>
 #include <vector>
 
@@ -35,7 +35,10 @@ namespace Comms {
 namespace Anki {
 namespace Cozmo {
 
-
+namespace ExternalInterface{
+  class MessageGameToEngine;
+}
+  
 class ISocketComms
 {
 public:
@@ -67,9 +70,12 @@ public:
   }
 
   uint32_t NextPingCounter() { return _pingCounter++; }
+  void HandlePingResponse(const ExternalInterface::MessageGameToEngine& message);
+  
+private:
+  Util::Stats::RecentStatsAccumulator _latencyStats;
   
 protected:
-  
   uint32_t  _pingCounter;
   uint32_t  _desiredNumDevices = 0;
 };

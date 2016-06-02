@@ -384,16 +384,6 @@ namespace Anki {
         }
       }
       
-      // TODO: Implement external interface
-      /*
-       // Tell UI about available animationGroups
-       if (nullptr != _context->GetExternalInterface()) {
-       std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
-       for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
-       }
-       }
-       */
     }
     
     // Read the animation groups in a dir

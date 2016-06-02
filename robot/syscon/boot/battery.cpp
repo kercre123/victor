@@ -5,6 +5,7 @@
 
 #include "hal/hardware.h"
 #include "battery.h"
+#include "timer.h"
 
 static inline void startADCsample(AnalogInput channel)
 {
@@ -54,6 +55,8 @@ void Battery::powerOn() {
   // Encoder and headboard power
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
+
+  MicroWait(10000);
 }
 
 int32_t Battery::read(void) {

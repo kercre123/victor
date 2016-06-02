@@ -16,6 +16,8 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -27,11 +29,13 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-#define DEBUG_PRINT_CUBE_STATE_CHANGES 1
+#define DEBUG_PRINT_CUBE_STATE_CHANGES 0
+
+#define DEBUG_SKIP_DIRECTLY_TO_CUBES 0
+#define DEBUG_HOLD_IN_CUBES_STATE 0
 
 namespace Anki {
 namespace Cozmo {
@@ -85,6 +89,15 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
                       "couldn't find behavior '%s', demo won't work",
                       kFearEdgeBehavior);
   }
+
+  _admireStackBehavior = static_cast<BehaviorAdmireStack*>(
+    _robot.GetBehaviorFactory().FindBehaviorByName(kKnockOverStackBehavior));
+
+  if( nullptr == _admireStackBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
+                      "couldn't find behavior '%s', demo won't work",
+                      kKnockOverStackBehavior);
+  }
     
   _name = "Demo[]";
 
@@ -108,7 +121,9 @@ unsigned int DemoBehaviorChooser::GetUISceneNumForState(State state)
 
 void DemoBehaviorChooser::OnSelected()
 {
-  // TransitionToCubes();
+  if( DEBUG_SKIP_DIRECTLY_TO_CUBES ) {
+    TransitionToCubes();
+  }
 }
 
 Result DemoBehaviorChooser::Update()
@@ -307,7 +322,13 @@ void DemoBehaviorChooser::TransitionToCubes()
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);
 
   _cubesUprightTime_s = -1.0f;
-  _checkTransition = std::bind(&DemoBehaviorChooser::ShouldTransitionOutOfCubesState, this);
+
+  if( DEBUG_HOLD_IN_CUBES_STATE ) {
+    _checkTransition = nullptr;
+  }
+  else {
+    _checkTransition = std::bind(&DemoBehaviorChooser::ShouldTransitionOutOfCubesState, this);
+  }
 }
 
 void DemoBehaviorChooser::TransitionToMiniGame()
@@ -336,7 +357,7 @@ bool DemoBehaviorChooser::ShouldTransitionOutOfCubesState()
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) ) {
+  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) || ! _admireStackBehavior->DidKnockOverStack() ) {
     return false;
   }
   else {

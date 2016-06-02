@@ -126,7 +126,7 @@ namespace Anki {
                           const ObjectID& objectID,
                           const f32 distance_mm,
                           const bool useManualSpeed = false);
-      virtual ~DriveToObjectAction() { };
+      virtual ~DriveToObjectAction();
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -208,6 +208,8 @@ namespace Anki {
     
     // Interface for all classes below which first drive to an object and then
     // do something with it.
+    // If maxTurnTowardsFaceAngle > 0, robot will turn a maximum of that angle towards
+    // last face after driving to the object (and say name if that is specified).
     class IDriveToInteractWithObject : public CompoundActionSequential
     {
     protected:
@@ -218,7 +220,9 @@ namespace Anki {
                                  const f32 predockOffsetDistX_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
-                                 const bool useManualSpeed);
+                                 const bool useManualSpeed,
+                                 Radians maxTurnTowardsFaceAngle_rad,
+                                 const bool sayName);
 
     public:
       
@@ -252,7 +256,9 @@ namespace Anki {
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
                                    const AlignmentType alignmentType = AlignmentType::CUSTOM,
-                                   const bool useManualSpeed = false);
+                                   const bool useManualSpeed = false,
+                                   Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                                   const bool sayName = false);
       
       // GetType returns the type from the AlignWithObjectAction
       virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
@@ -280,7 +286,9 @@ namespace Anki {
                                 const ObjectID& objectID,
                                 const bool useApproachAngle = false,
                                 const f32 approachAngle_rad = 0,
-                                const bool useManualSpeed = false);
+                                const bool useManualSpeed = false,
+                                Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                                const bool sayName = false);
       
       // GetType returns the type from the PickupObjectAction, which is
       // determined dynamically
@@ -319,7 +327,9 @@ namespace Anki {
                                  const ObjectID& objectID,
                                  const bool useApproachAngle = false,
                                  const f32 approachAngle_rad = 0,
-                                 const bool useManualSpeed = false);
+                                 const bool useManualSpeed = false,
+                                 Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                                 const bool sayName = false);
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -361,7 +371,9 @@ namespace Anki {
                                   const f32 placementOffsetX_mm = 0,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
-                                  const bool useManualSpeed = false);
+                                  const bool useManualSpeed = false,
+                                  Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                                  const bool sayName = false);
       
       
       // GetType returns the type from the PlaceRelObjectAction, which is
@@ -398,7 +410,9 @@ namespace Anki {
                               const ObjectID& objectID,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
-                              const bool useManualSpeed = false);
+                              const bool useManualSpeed = false,
+                              Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                              const bool sayName = false);
 
       // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
       // the block is upside down or already upright, and roll action will be allowed
@@ -440,7 +454,9 @@ namespace Anki {
                                const ObjectID& objectID,
                                const bool useApproachAngle = false,
                                const f32 approachAngle_rad = 0,
-                               const bool useManualSpeed = false);
+                               const bool useManualSpeed = false,
+                               Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                               const bool sayName = false);
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -469,7 +485,9 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(Robot& robot,
                                      const ObjectID& objectID,
-                                     const bool useManualSpeed = false);
+                                     const bool useManualSpeed = false,
+                                     Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                                     const bool sayName = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
@@ -481,7 +499,9 @@ namespace Anki {
     public:
       DriveToAndMountChargerAction(Robot& robot,
                                    const ObjectID& objectID,
-                                   const bool useManualSpeed = false);
+                                   const bool useManualSpeed = false,
+                                   Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                                   const bool sayName = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
       

@@ -114,45 +114,6 @@ BOOL gWaitingForCrashUpload = NO;
     // do normal initialization
     [self setupApplication];
   }
-  
-  // Logging unity exceptions, When callint directly to unity it only supports one string param.
-  std::string comma_string(hockeyAppId.UTF8String);
-  
-  NSString *versionCode = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-  comma_string += ",";
-  if( versionCode )
-  {
-    comma_string += [versionCode UTF8String];
-  }
-  NSString *versionName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
-  comma_string += ",";
-  if( versionName )
-  {
-    comma_string += [versionName UTF8String];
-  }
-  NSString *bundleIdentifier = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
-  comma_string += ",";
-  if( bundleIdentifier )
-  {
-    comma_string += [bundleIdentifier UTF8String];
-  }
-  // SDK Name... that is apparently not defined in the SDK according to the example source
-  comma_string += ",3.8.5,HockeySDK,";
-  // DAS data like apprun
-  NSString* deviceID = [DASClientInfo deviceID] ;
-  if( deviceID )
-  {
-    comma_string += [deviceID UTF8String];
-  }
-  comma_string += ",";
-  // Unity uses this to write upcoming crashes to disk, so use current, not last.
-  NSString *appRun = [[DASClientInfo sharedInfo] appRunID];
-  if( appRun )
-  {
-    comma_string += [appRun UTF8String];
-  }
-  // Because Unity will log exceptions that are non-fatal but still bad, call every startup
-  UnitySendMessage("StartupManager", "UploadUnityCrashInfo", comma_string.c_str());
 }
 
 -(void)setupApplication {
