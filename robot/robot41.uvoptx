@@ -149,34 +149,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>72</LineNumber>
+          <LineNumber>45</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>37236</Address>
+          <Address>40380</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\unicd\GitHub\products-cozmo\robot\syscon\k02_hal\hal\spine.cpp</Filename>
+          <Filename>&lt;2&gt;.\k02_hal\hal\watchdog.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\robot\k02_hal/hal/spine.cpp\72</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>167</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>G:\products-cozmo\robot\hal\main.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression></Expression>
+          <Expression>\\robot\k02_hal/hal/watchdog.cpp\45</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -195,12 +179,32 @@
           <WinNumber>1</WinNumber>
           <ItemText>SVC_Vector</ItemText>
         </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>reset_count</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>ctrlh</ItemText>
+        </Ww>
+        <Ww>
+          <count>5</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>&amp;reset_magic</ItemText>
+        </Ww>
+        <Ww>
+          <count>6</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>TARGET_MAGIC</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>
           <WinNumber>1</WinNumber>
           <SubType>2</SubType>
-          <ItemText>0x0</ItemText>
+          <ItemText>0x20001FF0</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>
@@ -480,7 +484,7 @@
 
   <Group>
     <GroupName>startup</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -512,7 +516,7 @@
 
   <Group>
     <GroupName>clad</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -544,7 +548,7 @@
 
   <Group>
     <GroupName>supervisor</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -804,7 +808,7 @@
 
   <Group>
     <GroupName>bootloader</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>

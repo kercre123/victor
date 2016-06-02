@@ -18,7 +18,7 @@ extern bool CheckSig(void);
 static union {
   FirmwareBlock packet;
   commandWord rawWords[1];
-};
+} flash;
 
 static inline commandWord WaitForWord(void) {
   while(~SPI0_SR & SPI_SR_RFDF_MASK) ;  // Wait for a byte
@@ -155,27 +155,27 @@ static inline bool FlashBlock() {
   
   // Load raw packet into memory
   for (int i = 0; i < length; i++) {
-    rawWords[i] = WaitForWord();
+    flash.rawWords[i] = WaitForWord();
+  }
+
+  // Verify block before writting to flash
+  uint32_t crc = calc_crc32((uint8_t*)flash.packet.flashBlock, sizeof(flash.packet.flashBlock));
+
+  if (crc != flash.packet.checkSum) {
+    return false;
   }
 
   // Upper 2gB is body space
-  if (packet.blockAddress >= 0x80000000) {
+  if (flash.packet.blockAddress >= 0x80000000) {
     SetChannelBlink(2);
-    packet.blockAddress &= ~0x80000000;
-    return SendBodyCommand(COMMAND_FLASH, &packet, sizeof(packet));
+    flash.packet.blockAddress &= ~0x80000000;
+    return SendBodyCommand(COMMAND_FLASH, &flash.packet, sizeof(flash.packet));
   } else {
     SetChannelBlink(3);
   }
 
   // We will not override the boot loader
-  if (packet.blockAddress < ROBOT_BOOTLOADER || packet.blockAddress >= 0x10000) {
-    return false;
-  }
-
-  // Verify block before writting to flash
-  uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
-
-  if (crc != packet.checkSum) {
+  if (flash.packet.blockAddress < ROBOT_BOOTLOADER || flash.packet.blockAddress >= 0x10000) {
     return false;
   }
 
@@ -183,7 +183,7 @@ static inline bool FlashBlock() {
 
   // Write sectors to flash
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
-    if (!FlashSector(packet.blockAddress + i, &packet.flashBlock[i / sizeof(uint32_t)])) {
+    if (!FlashSector(flash.packet.blockAddress + i, &flash.packet.flashBlock[i / sizeof(uint32_t)])) {
       return false;
     }
   }
