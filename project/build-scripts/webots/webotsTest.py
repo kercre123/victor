@@ -186,6 +186,8 @@ def runAll(options):
   testNames = config.sections()
   testStatuses = {}
   allTestsPassed = True
+  totalErrorCount = 0
+  totalWarningCount = 0
 
   for test in testNames:
     if not config.has_option(test, 'world_file'):
@@ -235,9 +237,8 @@ def runAll(options):
       logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
 
     (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
-    # UtilLog.info("webot error count %d warning count %d" % (errorCount, warningCount))
-    print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (errorCount)
-    print '##teamcity[buildStatisticValue key=\'WebotsWarningCount\' value=\'%d\']' % (warningCount)
+    totalErrorCount += errorCount
+    totalWarningCount += warningCount
 
     # Check for crashes
     if crashCount > 0:
@@ -252,8 +253,8 @@ def runAll(options):
       continue
     
     allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
-      
-  return (allTestsPassed, testStatuses)
+
+  return (allTestsPassed, testStatuses, totalErrorCount, totalWarningCount, len (testNames))
 
 
 
@@ -360,7 +361,7 @@ def main(scriptArgs):
     stopWebots(options)
     
     # run the tests
-    (testsSucceeded, testResults) = runAll(options)
+    (testsSucceeded, testResults, totalErrorCount, totalWarningCount, testCount) = runAll(options)
     tarball(options)
 
     print 'Test results: '
@@ -373,6 +374,9 @@ def main(scriptArgs):
       # how do we notify the build system that there is something wrong, but it is not this build specific?
       returnValue = returnValue + 1
 
+    print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (totalErrorCount)
+    print '##teamcity[buildStatisticValue key=\'WebotsWarningCount\' value=\'%d\']' % (totalWarningCount)
+    print '##teamcity[buildStatisticValue key=\'WebotsTestCount\' value=\'%d\']' % (testCount)
 
     if not testsSucceeded:
       UtilLog.error("*************************")
