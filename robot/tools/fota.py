@@ -48,7 +48,7 @@ class OTAStreamer:
                 sys.stdout.write(os.linesep)
                 break
         self.writing = False
-    
+
     def OnConnect(self, connectionInfo):
         "Handles robot connected event, starts upgrade"
         self.writing = True
@@ -67,8 +67,11 @@ class OTAStreamer:
         else:
             sys.exit("OTA Error:{linesep}\t{ack}{linesep}".format(ack=repr(ack), linesep=os.linesep))
     
-    def __init__(self, firmwareFileName):
-        self.fw = open(firmwareFileName, "rb")
+    def __init__(self, firmwareFile):
+        if type(firmwareFile) in (str, bytes):
+            self.fw = open(firmwareFile, "rb")
+        else:
+            self.fw = firmwareFile
         self.bytesSent    = 0
         self.bytesProcessed = 0;
         self.packetNumber = 0
@@ -84,7 +87,7 @@ class OTAStreamer:
                 self.Write()
             else:
                 time.sleep(0.1)
-        
+
 # Script entry point
 if __name__ == '__main__':
     fwi = DEFAULT_FIRMWARE_IMAGE

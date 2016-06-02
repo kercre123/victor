@@ -5,6 +5,7 @@
 static u8 Read()
 { 
   u8 b, i;
+  SPIRead();
   for (i = 0; i < 8; i++)
   {
     SCK = 0;            // Change on falling edge
@@ -32,6 +33,7 @@ static u8 DataRead(u8 addr)
 {
   u8 val;
   
+  SPIInit();
   CSB = 0;
   Write(SPI_READ | addr);  
   val = Read();
@@ -40,9 +42,10 @@ static u8 DataRead(u8 addr)
   return val;
 }
 
-// Write one byte reg
+// Write one byte reg - must wait 2uS (32 CPU cycles) between writes
 static void DataWrite(u8 addr, u8 dataByte)
 {
+  SPIInit();
   CSB = 0;
   Write(addr);  // Write is default
   Write(dataByte);
@@ -56,11 +59,11 @@ bit AccelInit()
     return 1;
   
   // Set up SPI, check chip ID
-  SPIInit();
-  DataWrite(BGW_SPI3_WDT, 1);   // 3 wire mode
+  DataWrite(BGW_SPI3_WDT, 1);   // 3 wire mode 
   if (CHIPID != DataRead(BGW_CHIPID))
-    return 0;   // Fail self-test
-    
+    return 0;                   // Fail self-test
+  DataWrite(BGW_SPI3_WDT, 0);   // Disable 3 wire mode (saves like 1uA)
+   
   // Put the chip to sleep - must perform a soft reset to use it again
   DataWrite(PMU_LPW, LPU_DEEP_SUSPEND);
   return 1;     // Pass self-test

@@ -224,6 +224,11 @@ sbit  RFCKEN       = RFCON^2;
 #define T2_24         (1 << 7)
 #define T2_RUN        (1 << 0)
 #define T2_STOP       (0 << 0)
+// ADC
+#define ADC_START(chan) ((1 << 7) | (chan << 2))
+#define ADC_BUSY        (1 << 6)
+#define ADC_8BIT        (1 << 6)
+#define ADC_10BIT       (2 << 6)
 
 //-----------------------------------------------------------------------------
 // Interrupt Vector Definitions

@@ -107,6 +107,8 @@ class _EngineInterfaceImpl:
         self.debugConsoleManager = DebugConsoleManager()
         self.moodManager = MoodManager()
         self.animationManager = AnimationManager()
+        self.lastMsgRecvTime = 0.0
+
         
         
     def __del__(self):
@@ -156,6 +158,8 @@ class _EngineInterfaceImpl:
                     
                     #sys.stdout.write("Recv: ... " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(srcAddr) +  os.linesep);
                     #sys.stdout.write("     " + str(messageData) + os.linesep);
+
+                    self.lastMsgRecvTime = time.time()
                         
                     if fromEngMsg.tag == fromEngMsg.Tag.UiDeviceConnected:
                         msg = fromEngMsg.UiDeviceConnected
@@ -210,12 +214,17 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.ObjectStoppedMoving:
                         pass
                     elif fromEngMsg.tag == fromEngMsg.Tag.Ping:
-                         msg = fromEngMsg.Ping
-                         #UpdateBlah
+                        msg = fromEngMsg.Ping
+                        if not msg.isResponse:
+                            # Send it back to the engine so it can calculate latency
+                            self.PingBack(msg)
+                        else:
+                            latency = time.time() - msg.timeSent
+
                     elif fromEngMsg.tag == fromEngMsg.Tag.DebugString:
-                         #From Robot::SendDebugString() summary of moving (lift/head/body), carrying, simpleMood, imageProc framerate and behavior
-                         msg = fromEngMsg.DebugString
-                         #sys.stdout.write("Recv: DebugString = '" + str(msg.text) + "'" + os.linesep)
+                        #From Robot::SendDebugString() summary of moving (lift/head/body), carrying, simpleMood, imageProc framerate and behavior
+                        msg = fromEngMsg.DebugString
+                        #sys.stdout.write("Recv: DebugString = '" + str(msg.text) + "'" + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.AnimationAvailable:
                         msg = fromEngMsg.AnimationAvailable
                         self.animationManager.UpdateAnimations(msg)
@@ -558,6 +567,15 @@ class _EngineInterfaceImpl:
         else:
             sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
             return False
+
+    def PingBack(self, msg):
+        "When receiving a ping from the engine, reply so it can calculate latency"
+        outPingMsg = GToEI.Ping()
+        outPingMsg.counter = msg.counter
+        outPingMsg.timeSent = msg.timeSent
+        outPingMsg.isResponse = True
+        toEngMsg = GToEM(Ping = outPingMsg)
+        self.engineConnection.SendMessage(toEngMsg, False)
         
     def Update(self):
         "Update internals (currently just the network connection)"
@@ -570,7 +588,12 @@ class _EngineInterfaceImpl:
         
     def Disconnect(self):
         "Disconnect any network connections"
-        self.engineConnection.CloseSocket()
+        self.engineConnection.Disconnect()
+
+    def ResetConnection(self):
+        "Try to connect to engine again on the current connection"
+        sys.stdout.write("Deteceted disconnect, trying to reconnect..." + os.linesep)
+        self.engineConnection.ResetConnection()
 
 
 # ================================================================================    
@@ -613,9 +636,15 @@ class AsyncEngineInterface(threading.Thread):
                     sys.stderr.write("[AsyncEngineInterface.Update] Exception: " + str(e) + os.linesep)
                 self.updateLock.release()
                 
-                time.sleep(0.1)
+                time.sleep(0.01)
             except Exception as e:
                 sys.stderr.write("[AsyncEngineInterface.Run] Exception: " + str(e) + os.linesep)
+            # If we don't hear anything back from the engine in 5 seconds and we aren't currently trying to
+            # connect, then delete the current connection and attempt to reconnect.
+            if (self.engineInterface.lastMsgRecvTime and 
+                ((time.time() - self.engineInterface.lastMsgRecvTime) > 5.0)):
+                self.engineInterface.lastMsgRecvTime = 0.0
+                self.engineInterface.ResetConnection()
 
     def KillThread(self):
         "Clean up the thread"

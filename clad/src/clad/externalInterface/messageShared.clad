@@ -11,7 +11,9 @@ namespace Cozmo {
 namespace ExternalInterface {
 
 message Ping {
-    uint_32 counter        // should count sequentially if no drops
+    uint_32 counter,        // should count sequentially if no drops
+    float_64 timeSent,
+    bool isResponse
 }
 
 // Either the engine or the game have decided that the recent game request has been denied

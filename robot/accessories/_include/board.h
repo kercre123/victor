@@ -33,6 +33,7 @@
 #define CSB   P11
 #define SCK   P01
 #define SDI   P03
+#define SPI_PINS (2+8)  // SCK and SDI
 #define SPIInit() { CSB = 1; P1DIR = 255-2;               /* CSB defaults high and driven */ \
                     SCK = 1; SDI = 1; P0DIR = 0xFF-2-8; } /* SCK and SDI default high and driven */
 #define SPIRead() P0DIR = 0xFF-2;           // Just drive SCK, let SDI be an input
