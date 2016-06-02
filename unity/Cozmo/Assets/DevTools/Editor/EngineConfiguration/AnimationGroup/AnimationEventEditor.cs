@@ -215,11 +215,12 @@ public class AnimationEventEditor : EditorWindow {
     EditorGUILayout.BeginHorizontal();
     string eventName = pair.CladEvent.ToString();
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField)) {
+      EditorGUILayout.LabelField(eventName, GUILayout.ExpandWidth(true));
       if (string.IsNullOrEmpty(_AnimSearchField) || pair.AnimName == "" || pair.AnimName.Contains(_AnimSearchField)) {
-        pair.AnimName = _FilteredAnimationOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_FilteredAnimationOptions, pair.AnimName)), _FilteredAnimationOptions)];
+        pair.AnimName = _FilteredAnimationOptions[EditorGUILayout.Popup(Mathf.Max(0, Array.IndexOf(_FilteredAnimationOptions, pair.AnimName)), _FilteredAnimationOptions)];
       }
       else if (!string.IsNullOrEmpty(_AnimSearchField) && !pair.AnimName.Contains(_AnimSearchField)) {
-        pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
+        pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
       }
       if (GUILayout.Button("X", GUILayout.Width(30))) {
         pair.AnimName = "";

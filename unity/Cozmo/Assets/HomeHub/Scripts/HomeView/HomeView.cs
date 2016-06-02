@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
@@ -56,6 +57,10 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
 
+    [SerializeField]
+    private LootView _LootViewPrefab;
+    private LootView _LootViewInstance = null;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
@@ -97,6 +102,19 @@ namespace Cozmo.HomeHub {
 
     private void HandleChestGained() {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      OpenLootView();
+    }
+
+    // Opens loot view and fires and relevant events
+    private void OpenLootView() {
+      if (_LootViewInstance != null) {
+        // Avoid dupes
+        return;
+      }
+
+      // Create alert view with Icon
+      LootView alertView = UIManager.OpenView(_LootViewPrefab);
+      _LootViewInstance = alertView;
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {

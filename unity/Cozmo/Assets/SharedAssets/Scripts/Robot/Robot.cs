@@ -752,13 +752,14 @@ public class Robot : IRobot {
 
   }
 
-  public void ResetDrivingAnimations() {
-    SetDrivingAnimations(null, null, null);
+  public void PushDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
+    RobotEngineManager.Instance.Message.PushDrivingAnimations = 
+      Singleton<PushDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+    RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
-    RobotEngineManager.Instance.Message.SetDrivingAnimations = 
-      Singleton<SetDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+  public void PopDrivingAnimations() {
+    RobotEngineManager.Instance.Message.PopDrivingAnimations = Singleton<PopDrivingAnimations>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
 

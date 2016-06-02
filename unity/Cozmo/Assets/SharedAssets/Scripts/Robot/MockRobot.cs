@@ -249,11 +249,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void ResetDrivingAnimations() {
+  public void PopDrivingAnimations() {
     // Do nothing
   }
 
-  public void SetDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
+  public void PushDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
     // Do nothing
   }
 

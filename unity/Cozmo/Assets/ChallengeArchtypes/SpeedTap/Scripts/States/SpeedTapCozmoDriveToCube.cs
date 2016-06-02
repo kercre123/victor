@@ -39,14 +39,14 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.ResetDrivingAnimations();
+      _CurrentRobot.PopDrivingAnimations();
       _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
       _CurrentRobot.CancelAllCallbacks();
     }
 
     public override void Pause() {
       // Cancel all callbacks
-      _CurrentRobot.ResetDrivingAnimations();
+      _CurrentRobot.PopDrivingAnimations();
       _CurrentRobot.CancelAllCallbacks();
     }
 
@@ -58,7 +58,7 @@ namespace SpeedTap {
     private void TryDrivingToCube(bool forceRaiseLift) {
       _ForceRaiseLift = forceRaiseLift;
       _CurrentRobot.SearchForCube(_SpeedTapGame.CozmoBlock, HandleSearchForCubeEnd);
-      _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
+      _CurrentRobot.PushDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
         AnimationGroupName.kSpeedTap_Driving_Loop, null);
     }
 

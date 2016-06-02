@@ -103,4 +103,5 @@ public class ChestRewardManager {
     inventory.ItemRemoved -= HandleItemValueChanged;
     inventory.ItemCountSet -= HandleItemValueChanged;
   }
+
 }

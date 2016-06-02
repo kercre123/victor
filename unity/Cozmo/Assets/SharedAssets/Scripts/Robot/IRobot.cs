@@ -172,9 +172,9 @@ public interface IRobot : IDisposable {
 
   void SetIdleAnimation(string default_anim);
 
-  void ResetDrivingAnimations();
+  void PopDrivingAnimations();
 
-  void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim);
+  void PushDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim);
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
 

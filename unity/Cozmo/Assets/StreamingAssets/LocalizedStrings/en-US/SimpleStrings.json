@@ -140,5 +140,14 @@
   },
   "dailyGoal.completedText": {
     "translation": "{0} / {1} Complete"
+  },
+  "loot.Start": {
+    "translation": "Tap Repeatedly!"
+  },
+  "loot.Mid": {
+    "translation": "Keep Going!"
+  },
+  "loot.Almost": {
+    "translation": "Almost There!"
   }
 }
