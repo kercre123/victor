@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: bee2fad410c8042c290e100dde7b56d6
-timeCreated: 1464732111
+guid: 9127e6b1a4b524c86b4112a2a9c1f184
+timeCreated: 1464732115
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -51,7 +51,7 @@ TextureImporter:
   spriteSheet:
     sprites: []
     outline: []
-  spritePackingTag: debugIcons
+  spritePackingTag: basicUIAtlasHD
   userData: 
   assetBundleName: 
   assetBundleVariant: 
