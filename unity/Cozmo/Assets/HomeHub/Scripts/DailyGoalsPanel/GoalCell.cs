@@ -35,12 +35,13 @@ namespace Cozmo {
           if (_GoalProg != value) {
             _GoalProg = value;
             _GoalProgressBar.SetProgress(value);
+            Debug.Log("goal progress value: " + _GoalProg);
             if (_GoalProg >= 1.0f) {
               _GoalLabel.text = Localization.Get(LocalizationKeys.kDailyGoalComplete);
               _GoalLabel.color = UIColorPalette.CompleteTextColor;
             }
             else {
-              _GoalLabel.text = _Goal.Title;
+              SetGoalLabelText();
               _GoalLabel.color = UIColorPalette.NeutralTextColor;
             }
             if (OnProgChanged != null) {
@@ -67,14 +68,16 @@ namespace Cozmo {
         if (update) {
           goal.OnDailyGoalUpdated += OnGoalUpdate;
         }
-        // TODO: Load by string? Or set up a config file for mapping icons to enums?
-        //_GoalIcon.sprite = goal.GoalIcon;
-        _GoalLabel.text = goal.Title;
+        SetGoalLabelText();
         SetProgress((float)goal.Progress / (float)goal.Target);
       }
 
       private void OnGoalUpdate(DailyGoal goal) {
         SetProgress((float)goal.Progress / (float)goal.Target);
+      }
+
+      private void SetGoalLabelText() {
+        _GoalLabel.text = _Goal.Title + " (" + _Goal.Progress + "/" + _Goal.Target + ")";
       }
 
       void OnDestroy() {
