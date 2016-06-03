@@ -83,6 +83,7 @@ MonoBehaviour:
   _ButtonScript: {fileID: 11440696}
   _IconImage: {fileID: 0}
   _ChallengeTitle: {fileID: 0}
+  _CircuitImage: {fileID: 11456194}
 --- !u!114 &11420562
 MonoBehaviour:
   m_ObjectHideFlags: 1

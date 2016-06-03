@@ -575,11 +575,6 @@ public class Robot : IRobot {
   }
 
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
-    if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
-      DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
-      return;
-    }
-
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.LightCube) {
       AddLightCube(LightCubes.ContainsKey(message.objectID) ? LightCubes[message.objectID] : null, message);
     }
@@ -622,7 +617,6 @@ public class Robot : IRobot {
   }
 
   public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
-    //DAS.Debug ("Robot", "saw a face at " + message.faceID);
     Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
   }

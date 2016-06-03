@@ -346,7 +346,7 @@ void NOINLINE setupSerial(void)
   // Update the clock rate here since it's the first function we call
   uart_div_modify(0, (50*1000000)/230400);
   // Debugging delay
-  ets_delay_us(2000000);
+  //ets_delay_us(2000000);
   
   ets_printf("Welcome to cboot\r\nVersion 2.0\r\n");
 }

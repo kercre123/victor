@@ -370,7 +370,7 @@
             this.MaximumSize = new System.Drawing.Size(640, 436);
             this.MinimumSize = new System.Drawing.Size(640, 436);
             this.Name = "Main";
-            this.Text = "COZMO LOG - v13";
+            this.Text = " ";
             this.tabs.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();

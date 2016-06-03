@@ -157,16 +157,8 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
             
             PRINT_NAMED_INFO("BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
                              dist, _numValidPouncePoses);
-            // Average the last two distances just to try to smooth out bogus numbers
-            if( _numValidPouncePoses > 1 )
-            {
-              _lastPoseDist = (dist + _lastPoseDist) / 2;
-              TransitionToTurnToMotion(robot, motionObserved.img_x, motionObserved.img_y);
-            }
-            else
-            {
-              _lastPoseDist = dist;
-            }
+            _lastPoseDist = dist;
+            TransitionToTurnToMotion(robot, motionObserved.img_x, motionObserved.img_y);
           }
           else
           {
@@ -322,16 +314,10 @@ void BehaviorPounceOnMotion::TransitionToCreepForward(Robot& robot)
   SET_STATE(CreepForward);
   // Sneak... Sneak... Sneak...
   _backUpDistance = GetDriveDistance();
-  
-  // Play the react to motion only if you see far away motion
-  
   DriveStraightAction* driveAction = new DriveStraightAction(robot, _backUpDistance, DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps);
   driveAction->SetAccel(DEFAULT_PATH_MOTION_PROFILE.dockAccel_mmps2);
-  IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceReactToMotionAnimGroup);
-  IActionRunner* actionToRun = new CompoundActionSequential(robot, {animAction,driveAction});
-
-  _waitForActionTag = actionToRun->GetTag();
-  robot.GetActionList().QueueActionNow(actionToRun);
+  _waitForActionTag = driveAction->GetTag();
+  robot.GetActionList().QueueActionNow(driveAction);
 }
 
 void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
@@ -363,8 +349,8 @@ void BehaviorPounceOnMotion::TransitionToRelaxLift(Robot& robot)
 
 void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
 {
-  // Arbitrarily tuned for robot A0
-  const float liftHeightThresh = 37.5f;
+  // Tuned down for EP3
+  const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
 
   float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
@@ -400,7 +386,7 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 {
   SET_STATE(BackUp);
   // back up some of the way
-  IActionRunner* driveAction = new DriveStraightAction(robot, -_backUpDistance * 0.75f, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps);
+  IActionRunner* driveAction = new DriveStraightAction(robot, -_backUpDistance, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps);
   _waitForActionTag = driveAction->GetTag();
   robot.GetActionList().QueueActionNow(driveAction);
 }

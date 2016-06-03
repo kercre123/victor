@@ -84,9 +84,9 @@ And the mome raths outgrabe.""".encode()
             sys.stderr.write("Received unexpected nvResult:{linesep}\t{}{linesep}".format(repr(msg.report), linesep=os.linesep))
         else:
             if self.pendingOps[tag][1] == "read":
-                sys.stdout.write("Pending read of {0} returned {1}{linesep}".format(tag, repr(msg.report), linesep=os.linesep))
+                sys.stdout.write("Pending read of {0:x} returned {1}{linesep}".format(tag, repr(msg.report), linesep=os.linesep))
             else:
-                sys.stdout.write("Pending {} of {} returned {}{linesep}".format(self.pendingOps[tag][1], tag, repr(msg.report), linesep=os.linesep))
+                sys.stdout.write("Pending {} of {:x} returned {}{linesep}".format(self.pendingOps[tag][1], tag, repr(msg.report), linesep=os.linesep))
                 self.estimate.append(tag, self.pendingOps[tag][0], self.pendingOps[tag][1] == "write")
                 del self.pendingOps[tag]
         self.lastResult = msg.report.result
@@ -97,9 +97,11 @@ And the mome raths outgrabe.""".encode()
         if tag == NVS.NVEntryTag.NVEntry_Invalid:
             sys.stderr.write("Recieved nvData for invalid tag:{linesep}\t{}{linesep}".format(repr(msg.blob), linesep=os.linesep))
         elif tag not in self.pendingOps or self.pendingOps[tag][1] != "read":
-            sys.stderr.write("Received unexpected nvData: tag = {}{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
+            sys.stderr.write("Received unexpected nvData: tag = {:x}{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore")[:100], linesep=os.linesep))
         else:
-            sys.stdout.write("Pending read of {} returned{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
+            sys.stdout.write("Pending read of {:x} returned{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
+            if self.pendingOps[tag][2]:
+                open("{:x}.nvstorage".format(tag), 'wb').write(bytes(msg.blob.blob))
             del self.pendingOps[tag]
     
     def write(self, tag, blob):
@@ -124,13 +126,13 @@ And the mome raths outgrabe.""".encode()
         )))
         self.pendingOps[tag] = (None, "erase")
         
-    def read(self, tag, tagEnd=NVS.NVEntryTag.NVEntry_Invalid):
+    def read(self, tag, tagEnd=NVS.NVEntryTag.NVEntry_Invalid, record=False):
         robotInterface.Send(RI.EngineToRobot(readNV=NVS.NVStorageRead(
             tag,
             tagEnd,
             NVS.NVReportDest.ENGINE
         )))
-        self.pendingOps[tag] = (None, "read")
+        self.pendingOps[tag] = (None, "read", record)
     
     @property
     def done(self):
@@ -212,21 +214,46 @@ And the mome raths outgrabe.""".encode()
                 print("Reading back")
                 self.read(tag)
     
-    def test_overflow(self):
-        tag = self.randomTag
+    def overflow(self, useTag=None):
         count = 0
+        if useTag is None:
+            tag = self.randomTag
+        else:
+            tag = useTag
         self.write(tag, self.BIG_BLOB)
         while self.waitForPending() == 0:
             count += 1
             self.write(tag, self.BIG_BLOB)
+            if useTag is None:
+                tag = self.randomTag
+            time.sleep(0.1)
         print("Saved {} copies for a total of {} bytes of payload".format(count, len(self.BIG_BLOB)*count))
+    
+    def test_overflow(self):
+        self.overflow(self.randomTag)
+        
+    def test_overflowUnique(self):
+        self.overflow()
         
     def test_readAll(self):
         self.read(0, 0xFFFFfffe)
         self.waitForPending()
         
+    def test_readFactory(self):
+        self.read(0x80000000, 0xFFFFfffe)
+        self.waitForPending()
+        
     def test_eraseAll(self):
         self.erase(0, 0xFFFFfffe)
+        self.waitForPending()
+        
+    def test_wipeAll(self):
+        to = Anki.Cozmo.NVStorage.NVReportDest.ENGINE
+        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, True, "Yes I really want to do this!")))
+        time.sleep(30)
+        
+    def test_readCameraCalib(self):
+        self.read(NVS.NVEntryTag.NVEntry_CameraCalib, record=True)
         self.waitForPending()
 
 if __name__ == "__main__":
@@ -246,4 +273,7 @@ if __name__ == "__main__":
         while t.done == False:
             time.sleep(0.050)
     except KeyboardInterrupt:
-        sys.exit()
+        pass
+    robotInterface.Disconnect()
+    time.sleep(0.015)
+    sys.exit()

@@ -112,15 +112,18 @@ namespace BackpackLightController {
   //       until the robot comes off the charger. This may or may not be what we want.
   void SetCurrParams()
   {
-    if (HAL::BatteryIsOnCharger()) {
+    static bool wasOnCharger = false;
+    
+    if (HAL::BatteryIsOnCharger() && !wasOnCharger) {
       // Reset current lights and switch to charging lights
       SetParams(_chargingParams);
     }
-    else if (!HAL::BatteryIsOnCharger() && _currParams != &_ledParams)
+    else if (!HAL::BatteryIsOnCharger() && wasOnCharger)
     {
       // Reset current lights and switch to user-defined lights
       SetParams(_ledParams);
     }
+    wasOnCharger = HAL::BatteryIsOnCharger();
   }
 
   Result Update()

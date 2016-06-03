@@ -981,7 +981,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
-              <Define>FCC,USE_STDPERIPH_DRIVER,STM32F2XX,USE_STM322xG_EVAL,USE_USB_OTG_FS,FIXTURE</Define>
+              <Define>FCC,REV1,USE_STDPERIPH_DRIVER,FIXTURE</Define>
               <Undefine></Undefine>
               <IncludePath>lib;hal;usb;.</IncludePath>
             </VariousControls>

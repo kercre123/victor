@@ -80,7 +80,7 @@ static void setupOperatingMode() {
   // Tear down existing mode
   switch (active_operating_mode) {
     case BODY_BLUETOOTH_OPERATING_MODE:      
-      Bluetooth::shutdown();
+//      Bluetooth::shutdown();
       break ;
     
     case BODY_WIFI_OPERATING_MODE:
@@ -108,7 +108,7 @@ static void setupOperatingMode() {
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
 
-      Bluetooth::advertise();
+//      Bluetooth::advertise();
       break ;
     
     case BODY_WIFI_OPERATING_MODE:
