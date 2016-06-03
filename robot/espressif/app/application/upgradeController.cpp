@@ -257,7 +257,7 @@ namespace UpgradeController {
       case OTAT_Delay:
       case OTAT_Flash_Erase:
       case OTAT_Sync_Recovery:
-      case OTAT_Flash_Verify:      
+      case OTAT_Flash_Verify:
       case OTAT_Flash_Write:
       case OTAT_Wait:
       {
@@ -381,7 +381,7 @@ namespace UpgradeController {
         {
           AnkiDebug( 172, "UpgradeController.state", 470, "flash write", 0);
           phase = OTAT_Flash_Verify;
-          counter = 0; // 2 second timeout
+          counter = 0;
           retries = MAX_RETRIES;
           ack.result = OKAY;
           RobotInterface::SendMessage(ack);
@@ -422,19 +422,20 @@ namespace UpgradeController {
             RobotInterface::SendMessage(ack);
             Reset();
           }
-          else
+          else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
             sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
             if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
-                AES_KEY, 
-                aes_iv, 
+                AES_KEY,
+                aes_iv,
                 (uint8_t*) fwb->flashBlock, 
                 (uint8_t*) fwb->flashBlock, 
                 sizeof(fwb->flashBlock), 
                 aes_iv);
             }
             
+            retries = MAX_RETRIES;
             phase = OTAT_Flash_Write;
           }
         }
@@ -494,32 +495,6 @@ namespace UpgradeController {
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
           }
-          #if FACTORY_FIRMWARE == 0
-          else if ((fwb->blockAddress & 0xFFF00000) == FACTORY_FIRMWARE_INSTALL)
-          {
-            const uint32 destAddr = 0x80000 + (fwb->blockAddress & 0x7ffff);
-            os_printf("WFF 0x%x\r\n", destAddr);
-            const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
-            if (rslt != SPI_FLASH_RESULT_OK)
-            {
-              if (retries-- <= 0)
-              {
-                ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
-                RobotInterface::SendMessage(ack);
-                Reset();
-              }
-            }
-            else
-            {
-              retries = MAX_RETRIES;
-              bufferUsed -= sizeof(FirmwareBlock);
-              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-              bytesProcessed += sizeof(FirmwareBlock);
-              ack.bytesProcessed = bytesProcessed;
-              ack.result = OKAY;
-              RobotInterface::SendMessage(ack);
-            }
-          }
           else
           {
             bufferUsed -= sizeof(FirmwareBlock);
@@ -529,7 +504,6 @@ namespace UpgradeController {
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
           }
-          #endif
         }
         else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
         {
@@ -572,7 +546,7 @@ namespace UpgradeController {
                 #if DEBUG_OTA
                 os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
                 #endif
-                    counter = system_get_time() + 20000; // 20ms
+                counter = system_get_time() + 20000; // 20ms
                 phase = OTAT_Wait;
               }
               // Else try again next time
@@ -620,14 +594,16 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
-            phase = OTAT_Flash_Write; // Finished operation
+            phase = OTAT_Flash_Verify; // Finished operation
             break;
           }
           case STATE_IDLE:
           {
             if (system_get_time() > counter)
             {
-              os_printf("RTIP TO\r\n");
+              #if DEBUG_OTA
+              os_printf("Timeout\r\n");
+              #endif
               phase = OTAT_Flash_Write;
             }
             break;
