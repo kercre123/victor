@@ -535,7 +535,7 @@ namespace Cozmo {
 
       public void CloseHowToPlayView() {
         if (_HowToPlayButtonInstance != null) {
-          _HowToPlayButtonInstance.IsHowToPlayViewOpen = false;
+          _HowToPlayButtonInstance.CloseHowToPlayView();
         }
       }
 
