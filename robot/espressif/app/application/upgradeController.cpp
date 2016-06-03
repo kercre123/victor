@@ -424,7 +424,8 @@ namespace UpgradeController {
           }
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
-            sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
+	    /*
+	    sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
             if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
                 AES_KEY,
@@ -434,10 +435,10 @@ namespace UpgradeController {
                 sizeof(fwb->flashBlock), 
                 aes_iv);
             }
-            
-            retries = MAX_RETRIES;
-            phase = OTAT_Flash_Write;
-          }
+	    */
+	  }
+          retries = MAX_RETRIES;
+          phase = OTAT_Flash_Write;
         }
         break;
       }
@@ -497,6 +498,7 @@ namespace UpgradeController {
           }
           else
           {
+	    AnkiWarn( 171, "UpgradeController", 488, "Unhandled special block 0x%x", 1, fwb->blockAddress);
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
             bytesProcessed += sizeof(FirmwareBlock);
@@ -516,6 +518,9 @@ namespace UpgradeController {
           {
             if (retries-- <= 0)
             {
+	      #if DEBUG_OTA
+	      os_printf("\tRan out of retries writing to Espressif flash\r\n");
+	      #endif
               ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
               RobotInterface::SendMessage(ack);
               Reset();
@@ -531,6 +536,7 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
+	    phase = OTAT_Flash_Verify;
           }
         }
         else // This is bound for the RTIP or body
@@ -564,7 +570,6 @@ namespace UpgradeController {
             }
           }
         }
-
         break;
       }
       case OTAT_Wait:
