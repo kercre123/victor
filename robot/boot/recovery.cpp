@@ -199,7 +199,11 @@ static void SyncToBody(void) {
 
   while (recovery_header != BODY_RECOVERY_NOTICE) {
     UART0_S1 = UART0_S1;
-    while (!UART0_RCFIFO) ;
+
+    do { 
+      WDOG_REFRESH = 0xA602;
+      WDOG_REFRESH = 0xB480;
+    } while (!UART0_RCFIFO);
     
     recovery_header = (UART0_D << 24) | (recovery_header >> 8);
   }
