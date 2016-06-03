@@ -100,6 +100,8 @@ And the mome raths outgrabe.""".encode()
             sys.stderr.write("Received unexpected nvData: tag = {:x}{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore")[:100], linesep=os.linesep))
         else:
             sys.stdout.write("Pending read of {:x} returned{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
+            if self.pendingOps[tag][2]:
+                open("{:x}.nvstorage".format(tag), 'wb').write(bytes(msg.blob.blob))
             del self.pendingOps[tag]
     
     def write(self, tag, blob):
@@ -124,13 +126,13 @@ And the mome raths outgrabe.""".encode()
         )))
         self.pendingOps[tag] = (None, "erase")
         
-    def read(self, tag, tagEnd=NVS.NVEntryTag.NVEntry_Invalid):
+    def read(self, tag, tagEnd=NVS.NVEntryTag.NVEntry_Invalid, record=False):
         robotInterface.Send(RI.EngineToRobot(readNV=NVS.NVStorageRead(
             tag,
             tagEnd,
             NVS.NVReportDest.ENGINE
         )))
-        self.pendingOps[tag] = (None, "read")
+        self.pendingOps[tag] = (None, "read", record)
     
     @property
     def done(self):
@@ -251,7 +253,7 @@ And the mome raths outgrabe.""".encode()
         time.sleep(30)
         
     def test_readCameraCalib(self):
-        self.read(NVS.NVEntryTag.NVEntry_CameraCalib)
+        self.read(NVS.NVEntryTag.NVEntry_CameraCalib, record=True)
         self.waitForPending()
 
 if __name__ == "__main__":
