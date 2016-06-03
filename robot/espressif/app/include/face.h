@@ -29,6 +29,9 @@ namespace Anki {
       // Decompresses a new image from the basestation into the image buffer
       void Update(AnimKeyFrame::FaceImage img);
       
+      /// Returns the number of rects remaining to be transmitted
+      int GetRemainingRects();
+      
       extern "C"
       {
         // Check for screen updates when the screen is idle

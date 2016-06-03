@@ -469,6 +469,11 @@ namespace Face {
     m_rectLock = false;
   }
 
+  int GetRemainingRects()
+  {
+    return m_remainingRects;
+  }
+
 } // Face
 
 namespace HAL {

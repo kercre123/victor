@@ -22,6 +22,7 @@ int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_size(), r
 #define TxStalled() (0)       // Return true if transmission is not possible at this time (never on PC)
 #endif
 
+#define PRINT_FQ 0
 
 #ifdef ROBOT_HARDWARE
 // Disable printf when on the real robot
@@ -258,7 +259,9 @@ bool ICACHE_FLASH_ATTR SendPendingMessages(ReliableConnection* connection, bool 
   // If we can't safely send a packet, just leave everything queued up - maybe next time
   if (TxStalled())
   {
+    #if PRINT_FQ
     printf("FQPM\r\n");
+    #endif
     return false;
   }
   
@@ -464,7 +467,9 @@ bool ICACHE_FLASH_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, cons
     // If we can't safely send a packet, just throw away unreliable messages
     if (TxStalled())
     {
+      #if PRINT_FQ
       printf("FQUM\r\n");
+      #endif
       return false;
     }
     
@@ -486,7 +491,9 @@ bool ICACHE_FLASH_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, cons
     // If we can't safely send a packet, just throw away unreliable messages
     if (TxStalled())
     {
+      #if PRINT_FQ
       printf("FQU2\r\n");
+      #endif
       return false;
     }
     

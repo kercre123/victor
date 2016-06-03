@@ -38,7 +38,6 @@ static void ICACHE_FLASH_ATTR nv_init_done(const int8_t result)
 
   #if FACTORY_FIRMWARE
     os_printf("Factory Firmware Init Complete\r\n");
-    backgroundTaskNVInitDone();
   #else
     os_printf("Application Firmware Init Complete\r\n");
   #endif
@@ -60,7 +59,7 @@ static void system_init_done(void)
 
   // Check the file system integrity
   // Must be called after backgroundTaskInit and foregroundTaskInit
-  NVInit(false, nv_init_done);
+  NVInit(true, nv_init_done);
 }
 
 /** User initialization function

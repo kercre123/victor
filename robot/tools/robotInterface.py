@@ -100,7 +100,7 @@ class _Dispatcher(IDataReceiver):
         "Initiate reliable Connection"
         self.dest = dest
         self.state = ConnectionState.waitingToConnect
-        self.syncTime = 0
+        self.syncTime = syncTime
         return self.transport.Connect(self.dest)
 
     def Disconnect(self, dest=None):
