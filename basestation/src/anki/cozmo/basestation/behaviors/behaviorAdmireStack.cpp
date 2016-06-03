@@ -88,6 +88,8 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
   //_topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
   TransitionToWatchingStack(robot);
   _didKnockOverStack = false;
+  _topBlockLastSeentime = 0;
+  _thirdBlockID.UnSet();
 
   return Result::RESULT_OK;
 }

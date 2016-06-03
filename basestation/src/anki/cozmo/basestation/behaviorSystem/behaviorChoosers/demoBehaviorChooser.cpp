@@ -445,18 +445,63 @@ void DemoBehaviorChooser::HandleMessage(const ExternalInterface::TransitionToNex
 {
   PRINT_NAMED_INFO("DemoBehaviorChooser.TransitionFromUI",
                    "got message from UI to transition to next demo state");
-  TransitionToNextState();
+  
+  // We specifically want to not force transition to the sleep state from UI; we require the reactToCharger behavior to
+  // start to make that transition
+  if (State::MiniGame != _state)
+  {
+    TransitionToNextState();
+  }
 }
 
 template<>
 void DemoBehaviorChooser::HandleMessage(const ExternalInterface::StartDemoWithEdge& msg)
 {
   _hasEdge = msg.hasEdge;
+  
+  // If we're in the sleep state reset everything so we can start again
+  if (State::Sleep == _state)
+  {
+    ResetDemoRelatedState();
+  }
 
   // This serves as the "start demo" message, so also transition to the next state if we are at the start
   if( _state == State::None) { 
     TransitionToNextState();
   }
+}
+  
+void DemoBehaviorChooser::ResetDemoRelatedState()
+{
+  // Clean up the demo behavior chooser state
+  SET_STATE(None);
+  _hasSeenBlock = false;
+  
+  // Helper lambda for resetting the start count of a behavior
+  auto resetBehaviorStartCount = [this](const char* behaviorName)
+  {
+    auto behaviorPtr = _robot.GetBehaviorFactory().FindBehaviorByName(behaviorName);
+    ASSERT_NAMED(nullptr != behaviorPtr, std::string("DemoBehaviorChooser.HandleStartDemoWithEdge.MissingBehavior_").append(behaviorName).c_str());
+    if (nullptr != behaviorPtr)
+    {
+      behaviorPtr->ResetStartCount();
+    }
+  };
+  
+  // Clean up the wake up behavior
+  resetBehaviorStartCount(kWakeUpBehavior);
+  
+  // Clean up the drive off charger behavior
+  resetBehaviorStartCount(kDriveOffChargerBehavior);
+  
+  // Clean up the fear edge behavior state
+  resetBehaviorStartCount(kFearEdgeBehavior);
+  
+  // Clean up the flip down from back behavior
+  resetBehaviorStartCount(kFlipDownFromBackBehavior);
+  
+  // Clean up the knock blocks down behavior
+  resetBehaviorStartCount(kKnockOverStackBehavior);
 }
 
 void DemoBehaviorChooser::SetState_internal(State state, const std::string& stateName)

@@ -33,6 +33,10 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   SubscribeToTriggerTags({
     EngineToGameTag::ChargerEvent,
   });
+  
+  SubscribeToTags({
+    GameToEngineTag::StartDemoWithEdge
+  });
 }
 
 bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
@@ -42,6 +46,7 @@ bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
+  _shouldStopBehavior = false;
   StartActing(new PlayAnimationGroupAction(robot, kSleepStartAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
   
   return Result::RESULT_OK;
@@ -49,16 +54,12 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 {
-  if( robot.IsOnCharger() )
+  if( robot.IsOnCharger() && !_shouldStopBehavior )
   {
     return Status::Running;
   }
   
   return Status::Complete;
-}
-  
-void BehaviorReactToOnCharger::StopInternal(Robot& robot)
-{
 }
 
 bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
@@ -78,6 +79,22 @@ void BehaviorReactToOnCharger::TransitionToSleepLoop(Robot& robot)
   if( robot.IsOnCharger() )
   {
     StartActing(new PlayAnimationGroupAction(robot, kSleepLoopAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
+  }
+}
+  
+void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case GameToEngineTag::StartDemoWithEdge:
+    {
+      _shouldStopBehavior = true;
+      break;
+    }
+    default:
+    {
+      break;
+    }
   }
 }
 
