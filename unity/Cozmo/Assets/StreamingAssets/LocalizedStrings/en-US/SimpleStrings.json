@@ -139,7 +139,7 @@
     "translation": "This goal has no description set."
   },
   "dailyGoal.completedText": {
-    "translation": "{0} / {1} Complete"
+    "translation": "{0}/{1} Complete"
   },
   "loot.Start": {
     "translation": "Tap Repeatedly!"
