@@ -24,6 +24,7 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      DAS.Warn(this, "Enter");
     }
 
     public override void Update() {
@@ -74,6 +75,7 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      DAS.Warn(this, "Exit");
     }
 
     private void CozmoLoseGame() {
@@ -94,7 +96,7 @@ namespace Simon {
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {

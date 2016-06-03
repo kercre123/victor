@@ -40,30 +40,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CubeIdsForGame: 
+  CozmoScore: 0
+  PlayerScore: 0
+  MaxScorePerRound: 0
+  PlayerRoundsWon: 0
+  CozmoRoundsWon: 0
+  TotalRounds: 0
   _CubeColorsAndSounds:
   - soundName:
-      _Event: 1895821627
-      _EventType: 4
+      _Event: Sfx_Gp_Simon_Light_Red_Play
+      _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 1, g: 0, b: 0, a: 1}
   - soundName:
-      _Event: 1684077083
-      _EventType: 4
+      _Event: Sfx_Gp_Simon_Light_Green_Play
+      _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 0, g: 1, b: 0.2965517, a: 1}
   - soundName:
-      _Event: -1536128318
-      _EventType: 4
+      _Event: Sfx_Gp_Simon_Light_Blue_Play
+      _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 0, g: 0, b: 1, a: 1}
   - soundName:
-      _Event: -1063871600
-      _EventType: 4
+      _Event: Sfx_Gp_Simon_Light_Purple_Play
+      _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 1, g: 0, b: 1, a: 1}
   - soundName:
-      _Event: -874045390
-      _EventType: 4
+      _Event: Sfx_Gp_Simon_Light_Yellow_Play
+      _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 1, g: 0.76551723, b: 0, a: 1}
   BetweenRoundsMusic:
@@ -188,7 +194,7 @@ Prefab:
       objectReference: {fileID: 164994, guid: 48a1471431f3346dca78aa7f0389fa3d, type: 2}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._EventType
-      value: 4
+      value: SFX
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._GameObjectType
@@ -196,11 +202,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._Event
-      value: 1895821627
+      value: Sfx_Gp_Simon_Light_Red_Play
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._EventType
-      value: 4
+      value: SFX
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._GameObjectType
@@ -208,7 +214,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._Event
-      value: 1684077083
+      value: Sfx_Gp_Simon_Light_Green_Play
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._EventType
@@ -220,7 +226,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._Event
-      value: -1536128318
+      value: Sfx_Gp_Simon_Light_Blue_Play
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._EventType
@@ -232,7 +238,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._Event
-      value: -1063871600
+      value: Sfx_Gp_Simon_Light_Purple_Play
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.r
@@ -276,7 +282,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].soundName._Event
-      value: -874045390
+      value: Sfx_Gp_Simon_Light_Yellow_Play
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].cubeColor.g

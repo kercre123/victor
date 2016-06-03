@@ -10,9 +10,8 @@ public class SimonGameConfig : MinigameConfigBase {
     return 1;
   }
 
-  public int MinSequenceLength = 3;
-  public int MaxSequenceLength = 10;
-  public int MaxAttempts = 3;
+  public int MinSequenceLength = 1;
+  public int MaxSequenceLength = 20;
 
   [Range(2, 5)]
   public int NumCubesInPattern = 2;

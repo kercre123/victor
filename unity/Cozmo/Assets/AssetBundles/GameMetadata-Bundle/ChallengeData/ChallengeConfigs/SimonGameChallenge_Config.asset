@@ -19,8 +19,8 @@ MonoBehaviour:
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
-  MinSequenceLength: 3
-  MaxSequenceLength: 8
+  MinSequenceLength: 1
+  MaxSequenceLength: 20
   MaxAttempts: 3
   NumCubesInPattern: 3
   CozmoGuessCubeCorrectPercentage:

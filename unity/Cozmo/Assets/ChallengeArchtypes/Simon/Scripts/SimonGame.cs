@@ -9,7 +9,7 @@ namespace Simon {
     // TODO: Use animation events?
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;
 
-    // TODO: Remove
+    // TODO: Remove and replace with
     public const float kLightBlinkLengthSeconds = 0.3f;
 
     public const float kTurnSpeed_rps = 100f;
@@ -25,7 +25,7 @@ namespace Simon {
 
     private int _CurrentSequenceLength;
 
-    private PlayerType _FirstPlayer = PlayerType.Cozmo;
+    private PlayerType _FirstPlayer = PlayerType.Human;
 
     public AnimationCurve CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
 
@@ -44,12 +44,7 @@ namespace Simon {
     protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
-      if (Random.Range(0f, 1f) > 0.5f) {
-        _FirstPlayer = PlayerType.Human;
-      }
-      else {
-        _FirstPlayer = PlayerType.Cozmo;
-      }
+
       State nextState = new CozmoMoveCloserToCubesState(new WaitForNextRoundSimonState(_FirstPlayer));
       InitialCubesState initCubeState = new InitialCubesState(nextState, _Config.NumCubesRequired());
       _StateMachine.SetNextState(initCubeState);
@@ -62,12 +57,7 @@ namespace Simon {
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
-      if (playerPickingSequence == _FirstPlayer) {
-        _CurrentSequenceLength++;
-        if (_CurrentSequenceLength > MaxSequenceLength) {
-          _CurrentSequenceLength = MaxSequenceLength;
-        }
-      }
+      _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
       return _CurrentSequenceLength;
     }
 
@@ -108,21 +98,15 @@ namespace Simon {
     }
 
     public void GenerateNewSequence(int sequenceLength) {
-      _CurrentIDSequence.Clear();
-      for (int i = 0; i < sequenceLength; ++i) {
-        int pickedID = -1;
+      for (int i = _CurrentIDSequence.Count; i < sequenceLength; ++i) {
         int pickIndex = Random.Range(0, CubeIdsForGame.Count);
-        pickedID = CubeIdsForGame[pickIndex];
+        int pickedID = CubeIdsForGame[pickIndex];
         _CurrentIDSequence.Add(pickedID);
       }
     }
 
     public IList<int> GetCurrentSequence() {
       return _CurrentIDSequence.AsReadOnly();
-    }
-
-    public void SetCurrentSequence(List<int> newSequence) {
-      _CurrentIDSequence = newSequence;
     }
 
     protected override void CleanUpOnDestroy() {
@@ -152,7 +136,9 @@ namespace Simon {
       string infoText = Localization.Get(locKey);
       infoText += Localization.kNewLine;
       infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
-      SharedMinigameView.ShowNarrowInfoTextSlideWithKey(infoText);
+      //SharedMinigameView.ShowNarrowInfoTextSlideWithKey(infoText);
+      SharedMinigameView.InfoTitleText = infoText;
+      DAS.Warn(this, infoText);
     }
 
     protected override void RaiseMiniGameQuit() {

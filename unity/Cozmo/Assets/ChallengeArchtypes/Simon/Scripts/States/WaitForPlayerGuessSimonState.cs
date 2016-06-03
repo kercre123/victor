@@ -27,6 +27,7 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(1.0f);
       // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
       _LastTappedTime = Time.time;
+      DAS.Warn(this, "Enter");
     }
 
     public override void Update() {
@@ -38,9 +39,11 @@ namespace Simon {
         if (_TargetCube != -1) {
           _CurrentRobot.DriveWheels(0f, 0f);
           if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
+            DAS.Warn(this, "Update _CurrentSequenceIndex++");
             _CurrentSequenceIndex++;
           }
           else {
+            DAS.Warn(this, "Update PlayerLoseGame");
             PlayerLoseGame();
           }
           _TargetCube = -1;
@@ -55,10 +58,11 @@ namespace Simon {
       base.Exit();
       LightCube.TappedAction -= OnBlockTapped;
       _CurrentRobot.DriveWheels(0f, 0f);
+      DAS.Warn(this, "Exit");
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
@@ -84,6 +88,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
+      DAS.Warn(this, "Update OnBlockTapped");
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime != -1) {
         return;
@@ -95,7 +100,7 @@ namespace Simon {
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
       game.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(id));
-
+      DAS.Warn(this, "Update2 OnBlockTapped " + id);
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
