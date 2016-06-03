@@ -26,6 +26,8 @@
 namespace Anki {
   
   namespace Cozmo {
+    
+    class PickupObjectAction;
 
     class DriveToPoseAction : public IAction
     {
@@ -210,7 +212,7 @@ namespace Anki {
     // do something with it.
     // If maxTurnTowardsFaceAngle > 0, robot will turn a maximum of that angle towards
     // last face after driving to the object (and say name if that is specified).
-    class IDriveToInteractWithObject : public CompoundActionSequential
+    class IDriveToInteractWithObject : public IAction
     {
     protected:
       // Not directly instantiable
@@ -225,18 +227,52 @@ namespace Anki {
                                  const bool sayName);
 
     public:
+      virtual ~IDriveToInteractWithObject();
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
 
+      virtual RobotActionType GetType() const override {
+        return _compoundAction.GetType();
+      }
+      
+      virtual u8 GetTracksToLock() const override {
+        return (u8)AnimTrackFlag::NO_TRACKS;
+      }
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
+        _compoundAction.GetCompletionUnion(completionUnion);
+      }
+      
+      virtual const std::string& GetName() const override {
+        return _compoundAction.GetName();
+      }
+      
     protected:
 
+      virtual ActionResult Init() override final;
+      virtual ActionResult CheckIfDone() override final;
+      
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
       
+      void AddAction(IActionRunner* action, bool ignoreFailure = false) {
+        _compoundAction.AddAction(action, ignoreFailure);
+      }
+      
+      void SetAsProxy(IActionRunner* action) {
+        _compoundAction.SetProxyTag(action->GetTag());
+      }
+      
+      DriveToObjectAction* GetDriveToObjectAction() {
+        return _driveToObjectAction;
+      }
+      
     private:
-
+      CompoundActionSequential _compoundAction;
       DriveToObjectAction* _driveToObjectAction = nullptr;
+      ObjectID _objectID;
+      
     }; // class IDriveToInteractWithObject
         
     
@@ -260,17 +296,10 @@ namespace Anki {
                                    Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                    const bool sayName = false);
       
-      // GetType returns the type from the AlignWithObjectAction
-      virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
+      virtual ~DriveToAlignWithObjectAction() { }
       
-      // Use AlignWithObjectAction's completion info
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.back().first;
-        }
-      }
+    private:
+      IAction* _alignAction = nullptr;
     };
     
     
@@ -290,28 +319,12 @@ namespace Anki {
                                 Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                 const bool sayName = false);
       
-      // GetType returns the type from the PickupObjectAction, which is
-      // determined dynamically
-      virtual RobotActionType GetType() const override {
-        if(_actions.size() > 0) {
-          return _actions.back()->GetType();
-        } else {
-          return _completedActionInfoStack.back().second;
-        }
-      }
-      
-      // Use PickupObjectAction's completion info
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.back().first;
-        }
-      }
+      virtual ~DriveToPickupObjectAction() { }
       
       void SetDockingMethod(DockingMethod dockingMethod);
-      void SetMotionProfile(PathMotionProfile motionProfile);
       
+    private:
+      PickupObjectAction* _pickupAction = nullptr;
     };
     
     
@@ -331,25 +344,7 @@ namespace Anki {
                                  Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                  const bool sayName = false);
       
-      // GetType returns the type from the PlaceRelObjectAction, which is
-      // determined dynamically
-      virtual RobotActionType GetType() const override {
-        if(_actions.size() > 0) {
-          return _actions.back()->GetType();
-        } else {
-          return _completedActionInfoStack.back().second;
-        }
-      }
-      
-      // Use PlaceRelObjectAction's completion info
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.back().first;
-        }
-      }
-      
+      virtual ~DriveToPlaceOnObjectAction() { }
     };
     
     
@@ -375,26 +370,7 @@ namespace Anki {
                                   Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                   const bool sayName = false);
       
-      
-      // GetType returns the type from the PlaceRelObjectAction, which is
-      // determined dynamically
-      virtual RobotActionType GetType() const override {
-        if(_actions.size() > 0) {
-          return _actions.back()->GetType();
-        } else {
-          return _completedActionInfoStack.back().second;
-        }
-      }
-      
-      // Use PlaceRelObjectAction's completion info
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.back().first;
-        }
-      }
-      
+      virtual ~DriveToPlaceRelObjectAction() { }
     };
     
     
@@ -414,29 +390,12 @@ namespace Anki {
                               Radians maxTurnTowardsFaceAngle_rad = 0.f,
                               const bool sayName = false);
 
+      virtual ~DriveToRollObjectAction() { }
+      
       // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
       // the block is upside down or already upright, and roll action will be allowed
       void RollToUpright();
       
-      // GetType returns the type from the PlaceRelObjectAction, which is
-      // determined dynamically
-      virtual RobotActionType GetType() const override {
-        if(_actions.size() > 0) {
-          return _actions.back()->GetType();
-        } else {
-          return _completedActionInfoStack.back().second;
-        }
-      }
-      
-      // Use RollObjectAction's completion signal
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.back().first;
-        }
-      }
-
     private:
       ObjectID _objectID;
 
@@ -458,24 +417,7 @@ namespace Anki {
                                Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                const bool sayName = false);
       
-      // GetType returns the type from the PlaceRelObjectAction, which is
-      // determined dynamically
-      virtual RobotActionType GetType() const override {
-        if(_actions.size() > 0) {
-          return _actions.back()->GetType();
-        } else {
-          return _completedActionInfoStack.back().second;
-        }
-      }
-      
-      // Use RollObjectAction's completion signal
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.back().first;
-        }
-      }
+      virtual ~DriveToPopAWheelieAction() { }
     };
   
 
@@ -488,6 +430,8 @@ namespace Anki {
                                      const bool useManualSpeed = false,
                                      Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                      const bool sayName = false);
+      
+      virtual ~DriveToAndTraverseObjectAction() { }
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
@@ -502,6 +446,8 @@ namespace Anki {
                                    const bool useManualSpeed = false,
                                    Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                    const bool sayName = false);
+      
+      virtual ~DriveToAndMountChargerAction() { }
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
       

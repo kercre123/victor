@@ -27,14 +27,6 @@ namespace Anki {
       
       virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
       
-      // Use DriveToFlipBlockPoseAction's completion info
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        if(_actions.size() > 0) {
-          _actions.back()->GetCompletionUnion(completionUnion);
-        } else {
-          completionUnion = _completedActionInfoStack.front().first;
-        }
-      }
     };
     
     // Drive to the preDockPose that puts in position to flip a block

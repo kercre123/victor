@@ -47,6 +47,10 @@ namespace Anki {
     
     IActionRunner::~IActionRunner()
     {
+      if(!_preppedForCompletion) {
+        PRINT_NAMED_ERROR("IActionRunner.Destructor.NotPreppedForCompletion", "");
+      }
+      
       // Erase the tags as they are no longer in use
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
@@ -215,10 +219,16 @@ namespace Anki {
   
     void IActionRunner::PrepForCompletion()
     {
-      GetCompletionUnion(_completionUnion);
-      _type = GetType();
-      _name = GetName();
-      _tracks = GetTracksToLock();
+      if(!_preppedForCompletion)
+      {
+        GetCompletionUnion(_completionUnion);
+        _type = GetType();
+        _name = GetName();
+        _tracks = GetTracksToLock();
+        _preppedForCompletion = true;
+      } else {
+        PRINT_NAMED_DEBUG("IActionRunner.PrepForCompletion.AlreadyPrepped", "");
+      }
     }
     
     bool IActionRunner::RetriesRemain()

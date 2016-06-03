@@ -92,10 +92,71 @@ namespace Anki {
       }
     }
     
+    void ICompoundAction::StoreUnionAndDelete(std::list<IActionRunner*>::iterator& currentAction)
+    {
+      // Store this actions completion union before deleting it
+      ActionCompletedUnion actionUnion;
+      (*currentAction)->GetCompletionUnion(actionUnion);
+      _completedActionInfoStack[(*currentAction)->GetTag()] = CompletionData{
+        .completionUnion = actionUnion,
+        .type            = (*currentAction)->GetType(),
+      };
+      
+      // Delete completed action
+      Util::SafeDelete(*currentAction);
+      currentAction = _actions.erase(currentAction);
+    }
+
+    
     bool ICompoundAction::ShouldIgnoreFailure(IActionRunner* action) const
     {
       // We should ignore this action's failure if it's in our ignore set
       return _ignoreFailure.find(action) != _ignoreFailure.end();
+    }
+    
+    RobotActionType ICompoundAction::GetType() const
+    {
+      if(_proxySet)
+      {
+        for(auto action : _actions) {
+          if(action->GetTag() == _proxyTag) {
+            return action->GetType();
+          }
+        }
+
+        auto iter = _completedActionInfoStack.find(_proxyTag);
+        if(iter != _completedActionInfoStack.end()) {
+          return iter->second.type;
+        }
+        
+        PRINT_NAMED_WARNING("ICompoundAction.GetType.InvalidProxyTag",
+                            "Completion data with proxy tag=%d not found", _proxyTag);
+      }
+      
+      return RobotActionType::COMPOUND;
+    }
+    
+    void ICompoundAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      if(_proxySet)
+      {
+        for(auto action : _actions) {
+          if(action->GetTag() == _proxyTag) {
+            return action->GetCompletionUnion(completionUnion);
+          }
+        }
+
+        auto iter = _completedActionInfoStack.find(_proxyTag);
+        if(iter != _completedActionInfoStack.end()) {
+          completionUnion = iter->second.completionUnion;
+          return;
+        }
+        
+        PRINT_NAMED_WARNING("ICompoundAction.GetCompletionUnion.InvalidProxyTag",
+                            "CompletionData with proxy tag=%d not found", _proxyTag);
+      }
+      
+      IActionRunner::GetCompletionUnion(completionUnion);
     }
     
 #pragma mark ---- CompoundActionSequential ----
@@ -132,7 +193,7 @@ namespace Anki {
       }
       
       // Store this actions completion union and delete _currentActionPair
-      StoreUnionAndDelete();
+      StoreUnionAndDelete(_currentAction);
       
       // if that was the last action, we're done
       if(_currentAction == _actions.end()) {
@@ -156,7 +217,7 @@ namespace Anki {
         // immediately, don't return SUCCESS if there are more actions left!
         if(ActionResult::SUCCESS == subResult) {
           
-          StoreUnionAndDelete();
+          StoreUnionAndDelete(_currentAction);
           
           if(_currentAction == _actions.end()) {
             // no more actions, safe to return success for the compound action
@@ -252,17 +313,6 @@ namespace Anki {
       
     } // CompoundActionSequential::Update()
     
-    void CompoundActionSequential::StoreUnionAndDelete()
-    {
-      // Store this actions completion union before deleting it
-      ActionCompletedUnion actionUnion;
-      (*_currentAction)->GetCompletionUnion(actionUnion);
-      _completedActionInfoStack.push_back({actionUnion, (*_currentAction)->GetType()});
-      
-      // Delete completed action
-      Util::SafeDelete(*_currentAction);
-      _currentAction = _actions.erase(_currentAction);
-    }
 
     
 #pragma mark ---- CompoundActionParallel ----
@@ -301,8 +351,7 @@ namespace Anki {
         {
           case ActionResult::SUCCESS:
             // Just finished this action, delete it
-            Util::SafeDelete(*currentAction);
-            currentAction = _actions.erase(currentAction);
+            StoreUnionAndDelete(currentAction);
             break;
             
           case ActionResult::RUNNING:
@@ -337,8 +386,7 @@ namespace Anki {
             if(ShouldIgnoreFailure(*currentAction)) {
               // Ignore the fact that this action failed and just delete it
               (*currentAction)->PrepForCompletion(); // Just in case we were cancelled
-              Util::SafeDelete(*currentAction);
-              currentAction = _actions.erase(currentAction);
+              StoreUnionAndDelete(currentAction);
               break;
             } else {
               return subResult;

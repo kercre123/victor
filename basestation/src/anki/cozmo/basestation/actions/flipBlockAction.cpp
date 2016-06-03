@@ -23,7 +23,9 @@ namespace Anki {
     : CompoundActionSequential(robot)
     {
       AddAction(new DriveToFlipBlockPoseAction(robot, objectID));
-      AddAction(new FlipBlockAction(robot, objectID));
+      FlipBlockAction* flipAction = new FlipBlockAction(robot, objectID);
+      AddAction(flipAction);
+      SetProxyTag(flipAction->GetTag()); // Use flip action's completion info
     }
     
     void DriveAndFlipBlockAction::SetMotionProfile(const PathMotionProfile& motionProfile)

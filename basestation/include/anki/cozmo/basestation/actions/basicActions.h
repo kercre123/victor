@@ -495,6 +495,8 @@ namespace Cozmo {
                        bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
+      virtual ~TurnTowardsObjectAction();
+      
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_OBJECT; }
       
