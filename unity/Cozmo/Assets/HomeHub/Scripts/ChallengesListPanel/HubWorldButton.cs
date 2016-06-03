@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClickedId, Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
@@ -22,12 +22,15 @@ namespace Cozmo.HubWorld {
 
     private string _ChallengeId;
 
-    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false) {
+    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, Sprite circuitSprite, bool isEnd = false) {
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
         _IconImage.overrideSprite = challengeData.ChallengeIcon;
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
+
+      _CircuitImage.sprite = circuitSprite;
+
       if (isEnd) {
         _CircuitImage.enabled = false;
       }

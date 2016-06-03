@@ -17,6 +17,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _BottomChallengeContainer;
 
+    [SerializeField]
+    private Sprite[] _CircuitSprites;
+
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
     public override void Initialize(HomeView homeViewInstance) {
@@ -33,11 +36,14 @@ namespace Cozmo.HomeHub {
     private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab, 
                                              HubWorldButton.ButtonClickedHandler handler, string dasParentViewName) {
       RectTransform container;
+      int circuitOffset;
       if (_BottomChallengeContainer.childCount < _TopChallengeContainer.childCount) {
         container = _BottomChallengeContainer;
+        circuitOffset = 0;
       }
       else {
         container = _TopChallengeContainer;
+        circuitOffset = _CircuitSprites.Length / 2;
       }
       GameObject newButton = UIManager.CreateUIElement(prefab, container);
       HubWorldButton[] buttons = container.GetComponentsInChildren<HubWorldButton>();
@@ -45,7 +51,7 @@ namespace Cozmo.HomeHub {
         buttons[i].SetIsEnd(false);
       }
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData, dasParentViewName, true);
+      buttonScript.Initialize(challengeData, dasParentViewName, _CircuitSprites[(circuitOffset + buttons.Length) % _CircuitSprites.Length], true);
       buttonScript.OnButtonClicked += handler;
       return newButton;
     }
