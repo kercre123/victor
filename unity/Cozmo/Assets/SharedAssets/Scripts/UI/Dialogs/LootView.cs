@@ -12,18 +12,19 @@ namespace Cozmo {
     public class LootView : BaseView {
 
       private const float kMinScale = 0.75f;
-      private const float kMaxScale = 1.25f;
+      private const float kMaxScale = 1.0f;
 
       private const float kMaxShake = 1.0f;
       private const float kShakeInterval = 0.05f;
+      private const float kRotateShakeDuration = 1.25f;
       private const float kShakeDecay = 0.005f;
       private const float kShakePerTap = 0.2f;
-      private const float kShakeRotation = 90.0f;
-      private const int kShakeRotationVibrato = 60;
-      private const float kShakeRotationRandomness = 45f;
+      private const float kShakeRotation = 45.0f;
+      private const int kShakeRotationVibrato = 20;
+      private const float kShakeRotationRandomness = 45.0f;
 
       private const int kMinBurst = 3;
-      private const int kMaxBurst = 10;
+      private const int kMaxBurst = 12;
 
       private const float kChargePerTap = 0.15f;
       private const float kChargeDecay = 0.003f;
@@ -86,11 +87,10 @@ namespace Cozmo {
       [SerializeField]
       private Image _LootGlow;
 
-      [SerializeField]
-      private CanvasGroup _AlphaController;
+      private Tweener _ShakeTweener;
 
       [SerializeField]
-      private ProgressBar _ChargeBar;
+      private CanvasGroup _AlphaController;
 
       private bool _BoxOpened;
       private bool _ShakeStarted;
@@ -117,6 +117,12 @@ namespace Cozmo {
         }
         float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
         _BurstParticles.Emit((int)toBurst);
+        float currShake = Mathf.Lerp(0, kShakeRotation, _currentShake);
+        if (_ShakeTweener != null) {
+          _ShakeTweener.Complete();
+        }
+        _ShakeTweener = _LootBox.DOShakeRotation(kRotateShakeDuration, new Vector3(0, 0, currShake), kShakeRotationVibrato, kShakeRotationRandomness);
+
       }
 
       private void Update() {
@@ -141,13 +147,11 @@ namespace Cozmo {
               _currentShake = 0.0f;
             }
           }
-          _ChargeBar.SetProgress(_currentCharge);
           UpdateLootText();
           if (_currentCharge >= 1.0f) {
             // TODO: play sounds/effects
             _BoxOpened = true;
             _LootBox.gameObject.SetActive(false);
-            _ChargeBar.SetProgress(1.0f);
             RewardLoot();
           }
         }
@@ -168,10 +172,8 @@ namespace Cozmo {
           float currShake = Mathf.Lerp(0, kMaxShake, _currentShake);
           float shakeX = UnityEngine.Random.Range(-currShake, currShake);
           float shakeY = UnityEngine.Random.Range(-currShake, currShake);
-          float shakeZ = UnityEngine.Random.Range(-currShake, currShake);
           //2 loops in order for _LootBox to return to where it begins
           _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
-          _LootBox.DOShakeRotation(kShakeInterval, new Vector3(0, 0, shakeZ * kShakeRotation), kShakeRotationVibrato, kShakeRotationRandomness);
 
         }
       }
@@ -198,7 +200,7 @@ namespace Cozmo {
         // TODO: Start Reward Animation Sequence and create LootDoobers
         // TODO: Currently is not using Reward information to determine the doobers looted.
         // purely hardcoded bullshit for testing.-R.A.
-        UnleashTheDoobers(3);
+        UnleashTheDoobers(UnityEngine.Random.Range(1, 6));
       }
 
       private Transform SpawnDoober(/*TODO : pass in the name of the rewardID for this Doobster*/) {
