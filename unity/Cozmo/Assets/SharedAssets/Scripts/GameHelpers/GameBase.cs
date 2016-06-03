@@ -412,7 +412,10 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void OpenChallengeEndedDialog(string subtitleText = null) {
-    // Open confirmation dialog instead
+
+    // handles edge case of where the how to play is open.
+    _SharedMinigameViewInstance.CloseHowToPlayView();
+
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
                                      MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
                                      "challenge_end_slide");

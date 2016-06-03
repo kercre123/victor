@@ -32,7 +32,9 @@ namespace Cozmo {
       public bool IsHowToPlayViewOpen {
         get { return _IsHowToPlayViewOpen; }
         set {
-          _HowToPlayButtonInstance.ShowPressedStateOnRelease = value;
+          if (_HowToPlayButtonInstance != null) {
+            _HowToPlayButtonInstance.ShowPressedStateOnRelease = value;
+          }
           _IsHowToPlayViewOpen = value;
         }
       }
