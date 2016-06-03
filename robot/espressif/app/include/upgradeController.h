@@ -19,6 +19,9 @@ namespace Anki {
       
       /// Command writing data into flash on the Espressif or RTIP or Body
       void Write(RobotInterface::OTA::Write& msg);
+      
+      /// Callback on a network disconnect
+      void OnDisconnect();
     }
   }
 }

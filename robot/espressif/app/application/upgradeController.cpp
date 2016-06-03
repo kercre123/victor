@@ -168,19 +168,15 @@ namespace UpgradeController {
   LOCAL void Reset()
   {
     AnkiDebug( 170, "UpdateController", 466, "Reset()", 0);
-    buffer = NULL;
-    bufferSize = 0;
-    bufferUsed = 0;
-    bytesProcessed = 0;
-    acceptedPacketNumber = -1;
-    retries = MAX_RETRIES;
-    phase = OTAT_Ready;
-    didEsp = false;
-    haveTermination = false;
-    AnimationController::ResumeAndRestoreBuffer();
-    i2spiBootloaderCommandDone();
-    i2spiSwitchMode(I2SPI_REBOOT);
-    system_restart();
+    if (phase < OTAT_Enter_Recovery)
+    {
+      i2spiSwitchMode(I2SPI_REBOOT);
+      while (true);
+    }
+    else 
+    {
+      while (true) i2spiBootloaderCommandDone();
+    }
   }
 
   LOCAL uint32_t calc_crc32(const uint8_t* data, int length)
@@ -840,6 +836,14 @@ namespace UpgradeController {
     return false;
   }
   #endif
+
+  void OnDisconnect()
+  {
+    if (OTAT_Ready < phase && phase < OTATR_Set_Evil_A)
+    {
+      Reset();
+    }
+  }
 
 }
 }

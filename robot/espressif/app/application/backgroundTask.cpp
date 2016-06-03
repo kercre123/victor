@@ -261,6 +261,7 @@ extern "C" void backgroundTaskOnConnect(void)
 extern "C" void backgroundTaskOnDisconnect(void)
 {
   Anki::Cozmo::ActiveObjectManager::DisconnectAll();
+  Anki::Cozmo::UpgradeController::OnDisconnect();
   sendWifiConnectionState(false);
   if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
   {
