@@ -1046,8 +1046,6 @@ public:
     
     // =========  Active Object messages  ============
     Result SendFlashObjectIDs();
-    Result SendSetObjectLights(const ActiveCube* activeCube);
-    Result SendSetObjectLights(const ObjectID& objectID, const u32 onColor, const u32 offColor, const u32 onPeriod_ms, const u32 offPeriod_ms);
     void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
     
     
