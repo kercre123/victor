@@ -216,6 +216,7 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot)
 
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
+  StopActing(false);
 
   if( _shouldPopIdle ) {
     _shouldPopIdle = false;
