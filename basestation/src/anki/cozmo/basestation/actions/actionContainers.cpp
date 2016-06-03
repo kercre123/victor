@@ -312,6 +312,7 @@ namespace Anki {
         CORETECH_ASSERT(*iter != nullptr);
         
         if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
+          (*iter)->PrepForCompletion();
           Util::SafeDelete(*iter);
           iter = _queue.erase(iter);
           found = true;
@@ -345,6 +346,7 @@ namespace Anki {
                                 "Multiple actions with tag=%d found in queue.\n",
                                 idTag);
           }
+          (*iter)->PrepForCompletion();
           Util::SafeDelete(*iter);
           iter = _queue.erase(iter);
           found = true;
