@@ -18,7 +18,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
   private const float _kFadeTweenDuration = 0.25f;
 
-  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
+  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
   // Prefab for GoalCells
   [SerializeField]
@@ -84,6 +84,19 @@ public class DailyGoalPanel : MonoBehaviour {
     rewardIcons = null;
   }
 
+  private void OnGoalCellProgression(GoalCell goalCell) {
+    UpdateCompletedText();
+  }
+
+  private int GetGoalsCompletedCount() {
+    int completed = 0;
+    for (int i = 0; i < _GoalCells.Count; ++i) {
+      if (_GoalCells[i].GoalComplete()) {
+        completed++;
+      }
+    }
+    return completed;
+  }
 
   private void CompleteSession(TimelineEntryData timelineEntry) {
     
@@ -118,25 +131,22 @@ public class DailyGoalPanel : MonoBehaviour {
     _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
   }
 
-  private void UpdateFriendshipPoints(TimelineEntryData timelineEntry, int friendshipPoints) {
-
-  }
-
   private void HandleDailySummaryClosed() {
     DailyGoalManager.Instance.SetMinigameNeed();
   }
 
   // TODO: Flesh this out if necessary, do we want to salvage the rewardIcons?
   public void SetDailyGoals(List<DailyGoal> dailyGoals) {
-    int completedGoalCount = 0;
     for (int i = 0; i < dailyGoals.Count; i++) {
       CreateGoalCell(dailyGoals[i]);
-      if (dailyGoals[i].GoalComplete) {
-        ++completedGoalCount;
-      }
     }
-    _CompletedText.FormattingArgs = new object[] { completedGoalCount, dailyGoals.Count };
+    UpdateCompletedText();
     DailyGoalManager.Instance.SetMinigameNeed();
+  }
+
+
+  private void UpdateCompletedText() {
+    _CompletedText.FormattingArgs = new object[] { GetGoalsCompletedCount(), _GoalCells.Count };
   }
 
   // Creates a goal badge based on a specified DailyGoal, then hooks in to DailyGoalManager.
@@ -144,6 +154,7 @@ public class DailyGoalPanel : MonoBehaviour {
     DAS.Event(this, string.Format("CreateGoalCell({0})", goal.Title));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     newBadge.Initialize(goal);
+    newBadge.OnProgChanged += OnGoalCellProgression;
     _GoalCells.Add(newBadge);
     return newBadge;
   }

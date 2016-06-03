@@ -12,7 +12,7 @@ namespace Cozmo {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 
-      public Action OnProgChanged;
+      public Action<GoalCell> OnProgChanged;
 
       [SerializeField]
       private AnkiTextLabel _GoalLabel;
@@ -42,7 +42,7 @@ namespace Cozmo {
             UpdateProgressionUI();
 
             if (OnProgChanged != null) {
-              OnProgChanged.Invoke();
+              OnProgChanged(this);
             }
           }
         }
@@ -69,6 +69,10 @@ namespace Cozmo {
         SetProgress((float)goal.Progress / (float)goal.Target);
       }
 
+      public bool GoalComplete() {
+        return _GoalProg >= 1.0f;
+      }
+
       private void OnGoalUpdate(DailyGoal goal) {
         SetProgress((float)goal.Progress / (float)goal.Target);
       }
@@ -76,7 +80,7 @@ namespace Cozmo {
       private void UpdateProgressionUI() {
         _GoalLabel.text = _Goal.Title + " (" + _Goal.Progress + "/" + _Goal.Target + ")";
 
-        if (_GoalProg >= 1.0f) {
+        if (GoalComplete()) {
           _GoalLabel.color = UIColorPalette.CompleteTextColor;
           _CompletedBackground.enabled = true;
         }
