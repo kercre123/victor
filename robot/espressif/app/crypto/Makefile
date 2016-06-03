@@ -12,7 +12,7 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libcrypto.a
+GEN_LIBS = libusercrypto.a
 endif
 
 ESP_SRC_DIR:=../../../../crypto

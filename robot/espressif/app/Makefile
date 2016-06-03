@@ -56,7 +56,8 @@ COMPONENTS_eagle.app.v6 = \
 	clad/libclad.a \
 	application/libapplication.a \
 	factory/libfactory.a \
-	supervisor/libsupervisor.a
+	supervisor/libsupervisor.a \
+	crypto/libusercrypto.a
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
