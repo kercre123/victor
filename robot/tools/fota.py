@@ -101,6 +101,6 @@ if __name__ == '__main__':
     
     robotInterface.Init(True)
     up = OTAStreamer(fwi)
-    robotInterface.Connect()
+    robotInterface.Connect(syncTime = None)
     up.main()
     del up
