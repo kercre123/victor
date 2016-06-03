@@ -105,7 +105,7 @@ MonoBehaviour:
   - DifficultyID: 0
     Colors:
     - {r: 1, g: 1, b: 0, a: 1}
-    - {r: 0.11724138, g: 1, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
@@ -124,7 +124,7 @@ MonoBehaviour:
   - DifficultyID: 1
     Colors:
     - {r: 1, g: 1, b: 0, a: 1}
-    - {r: 0.11764707, g: 1, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
@@ -143,7 +143,7 @@ MonoBehaviour:
   - DifficultyID: 2
     Colors:
     - {r: 1, g: 1, b: 0, a: 1}
-    - {r: 0.11764707, g: 1, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
@@ -162,7 +162,7 @@ MonoBehaviour:
   - DifficultyID: 3
     Colors:
     - {r: 1, g: 1, b: 0, a: 1}
-    - {r: 0.11764707, g: 1, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
