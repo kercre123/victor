@@ -2614,8 +2614,9 @@ namespace Anki {
       }
       
       // check if it's too high to pick up
-      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
-      const float isTooHigh = topZ > (objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
+      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
+      const float maxHeight = objectToPickUp.GetSize().z()*0.5f + STACKED_HEIGHT_TOL_MM;
+      const float isTooHigh = relPos.GetTranslation().z() > maxHeight;
       if ( isTooHigh ) {
         return false;
       }

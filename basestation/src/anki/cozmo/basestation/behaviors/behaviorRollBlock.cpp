@@ -101,8 +101,9 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 
 bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
 {
-  return _robot.CanPickUpObjectFromGround(*obj) &&
-    obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS;
+  return (!obj->IsPoseStateUnknown() &&
+          _robot.CanPickUpObjectFromGround(*obj) &&
+          obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS);
 }
   
 void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
