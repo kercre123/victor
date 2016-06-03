@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "util/console/consoleInterface.h"
 
 
 namespace Anki {
@@ -28,6 +29,10 @@ using namespace ExternalInterface;
 
 // this is a stand-in for the real pickup animation
 static const char* kPickupReactAnimName = "reactToPickup";
+
+CONSOLE_VAR(f32, kMinTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 5.0f);
+CONSOLE_VAR(f32, kMaxTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 10.0f);
+CONSOLE_VAR(f32, kRepeatAnimMultIncrease, "Behavior.ReactToPickup", 0.33f);
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -54,17 +59,40 @@ bool BehaviorReactToPickup::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorReactToPickup::InitInternal(Robot& robot)
 {
-  StartActing(new PlayAnimationGroupAction(robot, kPickupReactAnimName));
+  _repeatAnimatingMultiplier = 1;
+  StartAnim(robot);
   return Result::RESULT_OK;
 }
-
+  
+void BehaviorReactToPickup::StartAnim(Robot& robot)
+{
+  StartActing(new PlayAnimationGroupAction(robot, kPickupReactAnimName));
+  
+  const double minTime = _repeatAnimatingMultiplier * kMinTimeBetweenPickupAnims_sec;
+  const double maxTime = _repeatAnimatingMultiplier * kMaxTimeBetweenPickupAnims_sec;
+  const double nextInterval = GetRNG().RandDblInRange(minTime, maxTime);
+  _nextRepeatAnimationTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + nextInterval;
+  _repeatAnimatingMultiplier += kRepeatAnimMultIncrease;
+}
+  
 IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
 {
-  if( IsActing() || _isInAir ) {
-    return Status::Running;
+  const bool isActing = IsActing();
+  if( !isActing && !_isInAir ) {
+    return Status::Complete;
   }
   
-  return Status::Complete;
+  // If we aren't acting, it might be time to play another reaction
+  if (!isActing)
+  {
+    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (currentTime > _nextRepeatAnimationTime)
+    {
+      StartAnim(robot);
+    }
+  }
+  
+  return Status::Running;
 }
   
 void BehaviorReactToPickup::StopInternal(Robot& robot)
