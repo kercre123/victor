@@ -39,6 +39,9 @@ public class DailyGoalPanel : MonoBehaviour {
   private DailySummaryPanel _DailySummaryPrefab;
   private DailySummaryPanel _DailySummaryInstance;
 
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _CompletedText;
+
   void Start() {
     UpdateDailySession(GetComponent<Cozmo.HomeHub.TabPanel>().GetHomeViewInstance().HomeHubInstance.RewardIcons);
   }
@@ -125,9 +128,14 @@ public class DailyGoalPanel : MonoBehaviour {
 
   // TODO: Flesh this out if necessary, do we want to salvage the rewardIcons?
   public void SetDailyGoals(List<DailyGoal> dailyGoals) {
+    int completedGoalCount = 0;
     for (int i = 0; i < dailyGoals.Count; i++) {
       CreateGoalCell(dailyGoals[i]);
+      if (dailyGoals[i].GoalComplete) {
+        ++completedGoalCount;
+      }
     }
+    _CompletedText.FormattingArgs = new object[] { completedGoalCount, dailyGoals.Count };
     DailyGoalManager.Instance.SetMinigameNeed();
   }
 

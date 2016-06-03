@@ -40,8 +40,12 @@ namespace Cozmo.HomeHub {
         container = _TopChallengeContainer;
       }
       GameObject newButton = UIManager.CreateUIElement(prefab, container);
+      HubWorldButton[] buttons = container.GetComponentsInChildren<HubWorldButton>();
+      for (int i = 0; i < buttons.Length; ++i) {
+        buttons[i].SetIsEnd(false);
+      }
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData, dasParentViewName);
+      buttonScript.Initialize(challengeData, dasParentViewName, true);
       buttonScript.OnButtonClicked += handler;
       return newButton;
     }
