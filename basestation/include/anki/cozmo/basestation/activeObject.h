@@ -80,6 +80,10 @@ namespace Cozmo {
     };
     const LEDstate& GetLEDState(s32 whichLED) const;
     
+    // Intensity scaler that should be sent down to robot before sending
+    // down the LEDState.
+    const u8 GetLEDGamma() const {return _ledGamma; }
+    
   protected:
     
     bool        _isMoving = false;
@@ -88,10 +92,10 @@ namespace Cozmo {
     // Keep track of flash rate and color of each LED
     std::array<LEDstate,NUM_LEDS> _ledState;
     
-    // Scaled version of _ledState so that it's playable by hardware without corrupting colors
-    std::array<LEDstate,NUM_LEDS> _scaledLedState;
+    // Gamma value to set on lights
+    u8 _ledGamma;
     
-    void ScaleLEDValuesForHardware();
+    void RecomputeGamma();
     
   }; // class ActiveObject
   
@@ -110,7 +114,7 @@ namespace Cozmo {
                           "LED index should be >= 0, not %d. Using 0.", whichLED);
       whichLED = 0;
     }
-    return _scaledLedState[whichLED];
+    return _ledState[whichLED];
   }
   
 } // namespace Cozmo

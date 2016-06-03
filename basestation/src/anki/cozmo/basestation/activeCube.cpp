@@ -344,7 +344,6 @@ namespace Anki {
       // Swap new state into place
       std::swap(newState, _ledState);
       
-      ScaleLEDValuesForHardware();
     } // RotatePatternAroundTopFace()
     
     
