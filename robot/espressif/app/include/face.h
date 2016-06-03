@@ -32,6 +32,9 @@ namespace Anki {
       /// Returns the number of rects remaining to be transmitted
       int GetRemainingRects();
       
+      /// Clears all content from the face
+      void Clear();
+
       extern "C"
       {
         // Check for screen updates when the screen is idle
