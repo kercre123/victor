@@ -3029,6 +3029,7 @@ namespace Anki {
         lights[i].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
         lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
         lights[i].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+        //PRINT_NAMED_DEBUG("BackpackLights", "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)", i, lights[i].onColor, onColor[i], lights[i].offColor, offColor[i]);
       }
 
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
@@ -3080,6 +3081,7 @@ namespace Anki {
           lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
           lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
           lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+          //PRINT_NAMED_DEBUG("SetObjectLights(1)", "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)", i, lights[i].onColor, ledState.onColor.AsRGBA(), lights[i].offColor, ledState.offColor.AsRGBA());
         }
 
         if( DEBUG_BLOCK_LIGHTS ) {
@@ -3088,6 +3090,7 @@ namespace Anki {
                             objectID.GetValue(), activeObject->GetActiveID());
         }
 
+        SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
     }
@@ -3130,6 +3133,15 @@ namespace Anki {
           lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
           lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
           lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+          /*
+          PRINT_NAMED_DEBUG("SetObjectLights(2)", "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
+                            i, lights[i].onColor, ledState.onColor.AsRGBA(),
+                            lights[i].offColor, ledState.offColor.AsRGBA(),
+                            lights[i].onFrames, ledState.onPeriod_ms,
+                            lights[i].offFrames, ledState.offPeriod_ms,
+                            lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
+                            lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
+           */
         }
 
         if( DEBUG_BLOCK_LIGHTS ) {
@@ -3137,7 +3149,8 @@ namespace Anki {
                             "Setting lights for object %d (activeID %d)",
                             objectID.GetValue(), activeObject->GetActiveID());
         }
-        
+
+        SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
 
@@ -3233,6 +3246,11 @@ namespace Anki {
         
         CubeSlots msg;
 
+        // HACK: For some reason the lights on the cube in slot 0 get messed up sometimes
+        //       (e.g. When pulsing all leds white, one of them is yellow.)
+        //       Keeping slot 0 seems to prevent this, but Vandiver should look into this issue.
+        msg.factory_id.push_back(0);
+        
         for (const auto & obj : _connectedObjects) {
           PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.FactoryID",
                            "0x%x (slot %zu)",
@@ -3342,78 +3360,7 @@ namespace Anki {
     {
       return SendMessage(RobotInterface::EngineToRobot(FlashObjectIDs()));
     }
-     
-      /*
-    Result Robot::SendSetBlockLights(const u8 blockID,
-                                     const std::array<u32,NUM_BLOCK_LEDS>& color,
-                                     const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
-                                     const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms)
-    {
-      MessageSetBlockLights m;
-      m.blockID = blockID;
-      m.color = color;
-      m.onPeriod_ms = onPeriod_ms;
-      m.offPeriod_ms = offPeriod_ms;
-
-      return _context->GetRobotManager()->GetMsgHandler()>SendMessage(GetID(), m);
-    }
-       */
-      
-    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 onColor, const u32 offColor,
-                                      const u32 onPeriod_ms, const u32 offPeriod_ms)
-    {
-      PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Deprecated.\n");
-      return RESULT_FAIL;
-      /*
-      // Need to determing the blockID (meaning its internal "active" ID) from the
-      // objectID known to the robot / UI
-      Vision::ObservableObject* object = _blockWorld.GetObjectByIDandFamily(objectID, ObjectFamily::ACTIVE_BLOCKS);
-      if(!object->IsActive()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
-                          "Object %d does not appear to be an active object.\n", objectID.GetValue());
-        return RESULT_FAIL;
-      }
-      
-      if(!object->IsIdentified()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
-                          "Object %d is active but has not been identified.\n", objectID.GetValue());
-        return RESULT_FAIL;
-      }
-      
-      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
-      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
-      if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
-                          "Object %d could not be cast to an ActiveCube.\n", objectID.GetValue());
-        return RESULT_FAIL;
-      }
-      
-      activeCube->SetLEDs(ActiveCube::WhichCubeLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
-      
-      return SendSetObjectLights(activeCube);
-      */
-    } // SendSetObjectLights()
-      
-    Result Robot::SendSetObjectLights(const ActiveCube* activeCube)
-    {
-      if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Null active object pointer provided.\n");
-        return RESULT_FAIL_INVALID_OBJECT;
-      }
-      std::array<Anki::Cozmo::LightState, 4> lights;
-      ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
-      for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-        const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
-        lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
-        lights[i].offColor = ENCODED_COLOR(ledState.offColor);
-        lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
-        lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
-        lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
-        lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
-      }
-      return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
-    }
-    
+         
     Result Robot::SendDebugString(const char* format, ...)
     {
       int len = 0;

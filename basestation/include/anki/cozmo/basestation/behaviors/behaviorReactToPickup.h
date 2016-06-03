@@ -38,10 +38,14 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  
+  void StartAnim(Robot& robot);
 
 private:
 
   bool _isInAir = false;
+  double _nextRepeatAnimationTime = 0;
+  double _repeatAnimatingMultiplier = 1;
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   

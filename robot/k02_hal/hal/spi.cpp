@@ -17,6 +17,8 @@
 #include "wifi.h"
 #include "watchdog.h"
 
+#include "hal/hardware.h"
+
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;  // Adjust this to fix screen - possibly at expense of camera
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
@@ -139,6 +141,7 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   static const uint32_t recovery_value = 0xCAFEBABE;
 
   *recovery_word = recovery_value;
+  *reset_count = 0;
   NVIC_SystemReset();
 }
 

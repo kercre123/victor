@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -262,11 +261,9 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   StartActing(action, [this, &robot](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
         TransitionToReactingToTopple(robot);
+      } else {
+        TransitionToKnockingOverStackFailed(robot);
       }
-      // disabled because this was triggering for some reason, don't really need to search from this state
-      // else {
-      //   TransitionToSearchingForStack(robot);
-      // }
     
       // Pop the angry driving animations
       robot.GetDrivingAnimationHandler().PopDrivingAnimations();
@@ -277,6 +274,10 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
 void BehaviorAdmireStack::TransitionToReactingToTopple(Robot& robot)
 {
   SET_STATE(ReactingToTopple);
+  
+  robot.GetBlockWorld().ClearObject(robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID());
+  robot.GetBlockWorld().ClearObject(robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID());
+  robot.GetBlockWorld().ClearObject(_thirdBlockID);
 
   StartActing(new PlayAnimationGroupAction(robot, _succesAnimGroup));
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
@@ -311,6 +312,20 @@ void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
     });
 }
 
+void BehaviorAdmireStack::TransitionToKnockingOverStackFailed(Robot& robot)
+{
+  SET_STATE(KnockingOverStackFailed);
+  
+  ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
+  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, bottomBlockID);
+  StartActing(action, [this, &robot](ActionResult res) {
+    if(res == ActionResult::SUCCESS)
+    {
+      TransitionToReactingToTopple(robot);
+    }
+  });
+}
+
 void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::RobotObservedObject,
@@ -332,7 +347,33 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
     return;
   }
 
-  if( msg.objectID == robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID() &&
+  if( _state == State::WatchingStack ){
+    // check if this could possibly be the 3rd stacked block
+    if( msg.markersVisible &&
+       msg.objectFamily == ObjectFamily::LightCube ) {
+      
+      ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID( secondBlockID );
+      if( nullptr == secondBlock ) {
+        PRINT_NAMED_ERROR("BehaviorAdmireStack.HandleBlockUpdate.NoSecondBlockPointer",
+                          "couldn't get object id %d pointer",
+                          secondBlockID.GetValue());
+        return;
+      }
+      
+      const float kZTolerance_mm = 15.0f;
+      
+      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj ) {
+        // TODO:(bn) should check ! IsMoving here, but it's slow / unreliable
+        PRINT_NAMED_INFO("BehaviorAdmireStack.HandleObjectObserved.FoundThirdBlock",
+                         "Found that block %d appears to be the top of a 3 stack",
+                         msg.objectID);
+        _thirdBlockID = msg.objectID;
+        StopActing(false);
+        TransitionToReactingToThirdBlock(robot);
+      }
+    }
+  }
+  else if( msg.objectID == robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID() &&
       msg.markersVisible ) {
     _topBlockLastSeentime = msg.timestamp;
 
@@ -354,33 +395,6 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
       TransitionToWatchingStack(robot);
     }
   }
-  else if( _state == State::WatchingStack ){
-    // check if this could possibly be the 3rd stacked block
-    if( msg.markersVisible &&
-        msg.objectFamily == ObjectFamily::LightCube ) {
-
-      ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID( secondBlockID );
-      if( nullptr == secondBlock ) {
-        PRINT_NAMED_ERROR("BehaviorAdmireStack.HandleBlockUpdate.NoSecondBlockPointer",
-                          "couldn't get object id %d pointer",
-                          secondBlockID.GetValue());
-        return;
-      }
-
-      const float kZTolerance_mm = 15.0f;
-      
-      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj ) {
-        // TODO:(bn) should check ! IsMoving here, but it's slow / unreliable
-        PRINT_NAMED_INFO("BehaviorAdmireStack.HandleObjectObserved.FoundThirdBlock",
-                         "Found that block %d appears to be the top of a 3 stack",
-                         msg.objectID);
-        StopActing(false);
-        TransitionToReactingToThirdBlock(robot);
-      }
-    }
-
-  }
-    
 }
 
 

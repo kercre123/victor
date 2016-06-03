@@ -24,22 +24,22 @@ namespace Anki {
   
     // The physical blocks are not capable of displaying
     // all light channels at full intensity so this is where
-    // we do smart scaling to make it work.
-    void ActiveObject::ScaleLEDValuesForHardware()
+    // we compute the gamma scaler based on the desired light pattern.
+    void ActiveObject::RecomputeGamma()
     {
-      _scaledLedState = _ledState;
-      
-      // TODO: Do smart scaling instead of this dumb scaling
-      const f32 scale = 0.5f;
-      for(u8 i=0; i<NUM_LEDS; ++i) {
-        _scaledLedState[i].onColor.SetR(_ledState[i].onColor.GetR() * scale);
-        _scaledLedState[i].onColor.SetG(_ledState[i].onColor.GetG() * scale);
-        _scaledLedState[i].onColor.SetB(_ledState[i].onColor.GetB() * scale);
-        
-        _scaledLedState[i].offColor.SetR(_ledState[i].offColor.GetR() * scale);
-        _scaledLedState[i].offColor.SetG(_ledState[i].offColor.GetG() * scale);
-        _scaledLedState[i].offColor.SetB(_ledState[i].offColor.GetB() * scale);
-      }
+      // TODO: To do this right, we need to actually simulate the animation cycle here and
+      //       get the peak value of L_t for all values of time t in the cycle where
+      //
+      //          L_t = maxRed_t*maxRed_t + maxGreen_t*maxGreen_t + maxBlue_t*maxBlue_t
+      //
+      //       and max<color> is the maximum value of a particular channel across all LEDs.
+      //       This value L_max needs to be less than 0xffff
+      //
+      //       Nathan says a simpler formula is to make sure
+      //
+      //          maxRed + maxGreen + maxBlue < 0xff
+      //
+      _ledGamma = 0x80;
     }
     
     void ActiveObject::SetLEDs(const WhichCubeLEDs whichLEDs,
@@ -73,7 +73,7 @@ namespace Anki {
         }
         shiftedLEDs = shiftedLEDs >> 1;
       }
-      ScaleLEDValuesForHardware();
+      RecomputeGamma();
     }
     
     void ActiveObject::SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
@@ -112,7 +112,7 @@ namespace Anki {
         _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
         _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
       }
-      ScaleLEDValuesForHardware();
+      RecomputeGamma();
     }
     
     

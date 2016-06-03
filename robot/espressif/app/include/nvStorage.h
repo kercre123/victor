@@ -28,7 +28,7 @@ struct NVDataAreaHeader
 #define NV_STORAGE_AREA_HEADER_MAGIC 0xDEADBEEF
 
 /// The version number for data in flash, magic to distinquish from all previous data
-#define NV_STORAGE_FORMAT_VERSION 1
+#define NV_STORAGE_FORMAT_VERSION 2
 
 #define NV_STORAGE_NUM_AREAS 2
 #define NV_STORAGE_START_ADDRESS (NV_STORAGE_SECTOR * SECTOR_SIZE)
@@ -111,9 +111,10 @@ namespace Anki {
        * @param includeFactory whether or not to also wipe factory NVStorage.
        * @param callback a function to call when the wipe is complete, default none
        * @param fork whether to run the wipe in a task or in the calling task, default true
+       * @param reboot whether to reboot after applying the update
        * @return either scheduled or busy
        */
-      NVResult WipeAll(const bool includeFactory, EraseDoneCB callback=0, const bool fork=true);
+      NVResult WipeAll(const bool includeFactory, EraseDoneCB callback=0, const bool fork=true, const bool reboot=false);
        
        extern "C" {
          /** Run garbage collection

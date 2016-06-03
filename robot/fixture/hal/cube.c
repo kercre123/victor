@@ -356,6 +356,8 @@ void ProgramCubeWithSerial()
     MicroWait(10000);
          
 #ifndef FCC
+    // XXX: Correctly set MSBs on to avoid packet errors - once you figure out WHICH IS THE MSB!
+    
     // Check serial number from (possibly) last time
     // We don't want to reserialize the same block
     u32 serial;
@@ -373,8 +375,8 @@ void ProgramCubeWithSerial()
     cubeboot[0x3ff4] = type; 
     
     // Patch each copy of the serial number
-    Patch(cubeboot+0x388d, __REV(0xca11ab1e), serial);
-    Patch(cubeboot+0x38a4, __REV(0xca11ab1e), serial);
+    Patch(cubeboot+0x3933, __REV(0xca11ab1e), serial);
+    Patch(cubeboot+0x394a, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x3ff0, 0xca11ab1e, __REV(serial));  // Reversed copy (thanks Vandiver)
 #endif
     

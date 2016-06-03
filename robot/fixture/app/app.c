@@ -17,8 +17,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 19;
-const char* BUILD_INFO = "NOT FOR FACTORY";
+u8 g_fixtureReleaseVersion = 22;
+const char* BUILD_INFO = "EP3F";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;

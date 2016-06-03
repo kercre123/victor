@@ -2,6 +2,11 @@
 #define __HARDWARE_H
 
 
+static const uint32_t recovery_value = 0xCAFEBABE;
+static volatile uint32_t * const reset_magic = (uint32_t*) 0x20001FF0;
+static volatile uint32_t * const reset_count = (uint32_t*) 0x20001FF4;
+static volatile uint32_t * const recovery_word = (uint32_t*) 0x20001FFC;
+
 // THESE SHOULD BE DONE IN THE PROJECT DEFINE LIST
 //#define ENABLE_FCC_TEST
 //#define GENERATE_WHITE_NOISE

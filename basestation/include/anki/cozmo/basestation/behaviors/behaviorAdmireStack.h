@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorAdmireStack_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/vision/basestation/observableObject.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -53,7 +54,8 @@ private:
     TryingToGrabThirdBlock,
     KnockingOverStack,
     ReactingToTopple,
-    SearchingForStack
+    SearchingForStack,
+    KnockingOverStackFailed,
   };
 
   State _state = State::WatchingStack;
@@ -64,6 +66,7 @@ private:
   void TransitionToKnockingOverStack(Robot& robot);
   void TransitionToReactingToTopple(Robot& robot);
   void TransitionToSearchingForStack(Robot& robot);
+  void TransitionToKnockingOverStackFailed(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(Robot& robot);  
@@ -77,9 +80,8 @@ private:
   
   const int numFramesToWaitForBeforeFlip = 5;
   
-  std::string _prevDrivingStartAnim;
-  std::string _prevDrivingLoopAnim;
-  std::string _prevDrivingEndAnim;
+  ObjectID _thirdBlockID;
+  
 };
 
 }
