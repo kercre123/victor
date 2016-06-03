@@ -427,6 +427,13 @@ namespace Face {
     Face::CreateRects((u64*) frame, x, top, x + number_width, bottom);
   }
 
+  void Clear()
+  {
+    u64 frame[COLS];
+    memset(frame, 0, sizeof(frame));
+    CreateRects((u64*) frame);
+  }
+
   // Display text on the screen until turned off
   extern "C" void FacePrintf(const char *format, ...)
   {
