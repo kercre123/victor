@@ -18,7 +18,7 @@ extern bool CheckSig(void);
 static union {
   FirmwareBlock packet;
   commandWord rawWords[1];
-};
+} flash;
 
 static inline commandWord WaitForWord(void) {
   while(~SPI0_SR & SPI_SR_RFDF_MASK) ;  // Wait for a byte
@@ -91,8 +91,11 @@ static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length
     return false;
   }
 
-  // Transmission error: Reboot
-  NVIC_SystemReset();
+  // Transmission error: Flush
+  UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
+  UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
+  uint8_t c = UART0->D;
+  UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
   return false;
 }
 
@@ -155,27 +158,27 @@ static inline bool FlashBlock() {
   
   // Load raw packet into memory
   for (int i = 0; i < length; i++) {
-    rawWords[i] = WaitForWord();
+    flash.rawWords[i] = WaitForWord();
+  }
+
+  // Verify block before writting to flash
+  uint32_t crc = calc_crc32((uint8_t*)flash.packet.flashBlock, sizeof(flash.packet.flashBlock));
+
+  if (crc != flash.packet.checkSum) {
+    return false;
   }
 
   // Upper 2gB is body space
-  if (packet.blockAddress >= 0x80000000) {
+  if (flash.packet.blockAddress >= 0x80000000) {
     SetChannelBlink(2);
-    packet.blockAddress &= ~0x80000000;
-    return SendBodyCommand(COMMAND_FLASH, &packet, sizeof(packet));
+    flash.packet.blockAddress &= ~0x80000000;
+    return SendBodyCommand(COMMAND_FLASH, &flash.packet, sizeof(flash.packet));
   } else {
     SetChannelBlink(3);
   }
 
   // We will not override the boot loader
-  if (packet.blockAddress < ROBOT_BOOTLOADER || packet.blockAddress >= 0x10000) {
-    return false;
-  }
-
-  // Verify block before writting to flash
-  uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
-
-  if (crc != packet.checkSum) {
+  if (flash.packet.blockAddress < ROBOT_BOOTLOADER || flash.packet.blockAddress >= 0x10000) {
     return false;
   }
 
@@ -183,7 +186,7 @@ static inline bool FlashBlock() {
 
   // Write sectors to flash
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
-    if (!FlashSector(packet.blockAddress + i, &packet.flashBlock[i / sizeof(uint32_t)])) {
+    if (!FlashSector(flash.packet.blockAddress + i, &flash.packet.flashBlock[i / sizeof(uint32_t)])) {
       return false;
     }
   }
@@ -196,7 +199,11 @@ static void SyncToBody(void) {
 
   while (recovery_header != BODY_RECOVERY_NOTICE) {
     UART0_S1 = UART0_S1;
-    while (!UART0_RCFIFO) ;
+
+    do { 
+      WDOG_REFRESH = 0xA602;
+      WDOG_REFRESH = 0xB480;
+    } while (!UART0_RCFIFO);
     
     recovery_header = (UART0_D << 24) | (recovery_header >> 8);
   }

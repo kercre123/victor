@@ -120,11 +120,6 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
         if (rx_source != SPI_SOURCE_BODY) {
           // Shifty header
           rx_source = (rx_source >> 8) | (data << 24);
-          
-          // The body isn't booted
-          if (rx_source == BODY_RECOVERY_NOTICE) {
-            NVIC_SystemReset();
-          }
           continue ;
         }	else {
           txRxBuffer[txRxIndex++] = data;

@@ -72,18 +72,12 @@ inline void transmit_mode(TRANSFER_MODE mode) {
 }
 
 void Anki::Cozmo::HAL::UART::read(void* p, int length) {
-  static const int MAXIMUM_READ_LENGTH = 1000000;
-  int read_retries = MAXIMUM_READ_LENGTH;
-  
   transmit_mode(TRANSMIT_RECEIVE);
 
   uint8_t* data = (uint8_t*) p;
   while (length-- > 0) {
     while (!UART0_RCFIFO) {
       MicroWait(1);
-      if (--read_retries <= 0) {
-        NVIC_SystemReset();
-      }
     }
     
     *(data++) = UART0_D;
