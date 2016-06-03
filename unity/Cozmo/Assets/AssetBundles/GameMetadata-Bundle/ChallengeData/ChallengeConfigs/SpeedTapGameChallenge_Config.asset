@@ -93,7 +93,7 @@ MonoBehaviour:
       LowerBoundThreshold: 0.3
   TapResolutionDelay: 0.1
   Rounds: 3
-  MaxScorePerRound: 5
+  MaxScorePerRound: 1
   MinIdleInterval_percent: 0
   MaxIdleInterval_percent: 0.3
   BaseMatchChance: 0.2
@@ -104,10 +104,10 @@ MonoBehaviour:
   DifficultySettings:
   - DifficultyID: 0
     Colors:
-    - {r: 1, g: 1, b: 0.334, a: 1}
-    - {r: 0, g: 1, b: 0.61041856, a: 1}
-    - {r: 0, g: 0.36078432, b: 1, a: 1}
-    - {r: 1, g: 0.26666668, b: 1, a: 1}
+    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 0.11724138, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
@@ -123,10 +123,10 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.2
   - DifficultyID: 1
     Colors:
-    - {r: 1, g: 1, b: 0.33333334, a: 1}
-    - {r: 0, g: 1, b: 0.6117647, a: 1}
-    - {r: 0, g: 0.36078432, b: 1, a: 1}
-    - {r: 1, g: 0.26666668, b: 1, a: 1}
+    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 0.11764707, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
@@ -142,10 +142,10 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.2
   - DifficultyID: 2
     Colors:
-    - {r: 1, g: 1, b: 0.33333334, a: 1}
-    - {r: 0, g: 1, b: 0.6117647, a: 1}
-    - {r: 0, g: 0.36078432, b: 1, a: 1}
-    - {r: 1, g: 0.26666668, b: 1, a: 1}
+    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 0.11764707, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
@@ -161,10 +161,10 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.2
   - DifficultyID: 3
     Colors:
-    - {r: 1, g: 1, b: 0.33333334, a: 1}
-    - {r: 0, g: 1, b: 0.6117647, a: 1}
-    - {r: 0, g: 0.36078432, b: 1, a: 1}
-    - {r: 1, g: 0.26666668, b: 1, a: 1}
+    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 0.11764707, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
