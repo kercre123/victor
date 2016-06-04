@@ -52,7 +52,7 @@ bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
 {
   UpdateTargetBlock(robot);
   
-  return _targetBlock.IsSet();
+  return _targetBlock.IsSet() || IsActing();
 }
 
 Result BehaviorRollBlock::InitInternal(Robot& robot)
@@ -121,7 +121,7 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
     StartActing(new PlayAnimationGroupAction(robot, _putDownAnimGroup),
                 [this](Robot& robot) {
                   // use same logic as put down block behavior
-                  StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot),
+                  StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot, false),
                                &BehaviorRollBlock::TransitionToReactingToBlock);
                 });
   }

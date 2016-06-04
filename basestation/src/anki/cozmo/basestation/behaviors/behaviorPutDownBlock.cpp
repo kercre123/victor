@@ -20,38 +20,50 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg, "Behavior.PutDownBlock.HeadAngle",  -20.0f);
-CONSOLE_VAR(f32, kBPDB_backupDist_mm,      "Behavior.PutDownBlock.BackupDist", -30.0f);
-
-static const char* const kLookAtFaceAnimGroup = "ag_lookAtFace_keepAlive";
-static const float kScoreIncreaseDuringPutDown = 5.0f;
-static const float kScoreIncreasePostPutdown = 0.6f;
+CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg,    "Behavior.PutDownBlock", -20.0f);
+CONSOLE_VAR(f32, kBPDB_verifyBackupDist_mm,   "Behavior.PutDownBlock", -30.0f);
+CONSOLE_VAR(f32, kBPDB_putDownBackupDist_mm,  "Behavior.PutDownBlock", -100.f);
+CONSOLE_VAR(f32, kBPDB_putDownBackupSpeed_mm, "Behavior.PutDownBlock", 100.f);
+CONSOLE_VAR(f32, kBPDB_scoreIncreaseDuringPutDown,   "Behavior.PutDownBlock", 5.0);
+CONSOLE_VAR(f32, kBPDB_scoreIncreasePostPutDown,     "Behavior.PutDownBlock", 5.0);
+  
+static const char* const kLookAtFaceAnimGroup  = "ag_lookAtFace_keepAlive";
+static const char* const kPutDownAnimGroup     = "ag_putDownBlock";
 
 BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
+
 }
 
 bool BehaviorPutDownBlock::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.IsCarryingObject();
+  return robot.IsCarryingObject() || IsActing();
 }
 
 Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
-  StartActing(new PlayAnimationGroupAction(robot, _putDownAnimGroup),
-              kScoreIncreaseDuringPutDown,
+  // Choose where to the block down
+  // TODO: Make this smarter and find a place away from other known objects
+  // For now, just back up blindly and play animation
+
+  StartActing(new CompoundActionSequential(robot, {
+                new DriveStraightAction(robot, kBPDB_putDownBackupDist_mm, kBPDB_putDownBackupSpeed_mm),
+                new PlayAnimationGroupAction(robot, kPutDownAnimGroup),
+              }),
+              kBPDB_scoreIncreaseDuringPutDown,
               &BehaviorPutDownBlock::LookDownAtBlock);
+  
   return Result::RESULT_OK;
 }
 
 
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
-  StartActing(CreateLookAfterPlaceAction(robot), kScoreIncreasePostPutdown);
+  StartActing(CreateLookAfterPlaceAction(robot), kBPDB_scoreIncreasePostPutDown);
 }
 
-IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot)
+IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bool doLookAtFaceAfter)
 {
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   if( robot.IsCarryingObject() ) {
@@ -60,23 +72,23 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot)
     
     CompoundActionParallel* parallel = new CompoundActionParallel(robot,
                                                                   {new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
-                                                                   new DriveStraightAction(robot, kBPDB_backupDist_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps)});
+                                                                   new DriveStraightAction(robot, kBPDB_verifyBackupDist_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps)});
     action->AddAction(parallel);
     action->AddAction(new WaitForImagesAction(robot, kNumFrames));
   }
 
-  // in any case, look back at the last face after this is done (to give them a chance to show another cube)
-  const bool sayName = true;
-  action->AddAction(new TurnTowardsFaceWrapperAction(robot,
-                                                     new PlayAnimationGroupAction(robot, kLookAtFaceAnimGroup),
-                                                     true, false, PI_F, sayName));
+  if(doLookAtFaceAfter)
+  {
+    // in any case, look back at the last face after this is done (to give them a chance to show another cube)
+    const bool sayName = true;
+    action->AddAction(new TurnTowardsFaceWrapperAction(robot,
+                                                       new PlayAnimationGroupAction(robot, kLookAtFaceAnimGroup),
+                                                       true, false, PI_F, sayName));
+  }
+  
   return action;
 }
 
-void BehaviorPutDownBlock::StopInternal(Robot& robot)
-{
-}
-
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
