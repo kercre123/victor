@@ -919,13 +919,9 @@ namespace Anki {
                                                            const bool useManualSpeed,
                                                            Radians maxTurnTowardsFaceAngle_rad,
                                                            const bool sayName)
-    : IAction(robot)
-    , _compoundAction(robot)
+    : CompoundActionSequential(robot)
     , _objectID(objectID)
     {
-      // This action will return the compound action's completion for it
-      _compoundAction.ShouldEmitCompletionSignal(false);
-      
       if(objectID == robot.GetCarryingObject())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
@@ -976,12 +972,12 @@ namespace Anki {
       if(nullptr != _driveToObjectAction) {
         _driveToObjectAction->SetMotionProfile(motionProfile);
       } else {
-        PRINT_STREAM_WARNING("IDriveToInteractWithObject.SetMotionProfile.NullDriveToAction", "");
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetMotionProfile.NullDriveToAction", "");
       }
       
       // If any of our children are dockActions (which they likely are) we need to update their
       // speeds/accels to use the ones specified in the motionProfile
-      for(auto& action : _compoundAction.GetActionList())
+      for(auto& action : GetActionList())
       {
         IDockAction* dockAction;
         if((dockAction = dynamic_cast<IDockAction*>(action)) != nullptr)
@@ -991,21 +987,21 @@ namespace Anki {
       }
     }
 
-    ActionResult IDriveToInteractWithObject::Init()
+    Result IDriveToInteractWithObject::UpdateDerived()
     {
-      _robot.GetLightsComponent().SetInteractionObject(_objectID);
-      return ActionResult::SUCCESS;
+      if(!_lightsSet) {
+        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _lightsSet = true;
+      }
+      return RESULT_OK;
     }
     
-    ActionResult IDriveToInteractWithObject::CheckIfDone()
-    {
-      return _compoundAction.Update();
-    }
-
     IDriveToInteractWithObject::~IDriveToInteractWithObject()
     {
-      _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
-      _compoundAction.PrepForCompletion();
+      if(_lightsSet) {
+        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+        _lightsSet = false;
+      }
     }
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
@@ -1035,7 +1031,7 @@ namespace Anki {
                                                alignmentType,
                                                useManualSpeed);
       AddAction(_alignAction);
-      SetAsProxy(_alignAction);
+      SetProxyTag(_alignAction->GetTag());
     }
     
 #pragma mark ---- DriveToPickupObjectAction ----
@@ -1059,7 +1055,7 @@ namespace Anki {
     {
       _pickupAction = new PickupObjectAction(robot, objectID, useManualSpeed);
       AddAction(_pickupAction);
-      SetAsProxy(_pickupAction);
+      SetProxyTag(_pickupAction->GetTag());
     }
     
     void DriveToPickupObjectAction::SetDockingMethod(DockingMethod dockingMethod)
@@ -1098,7 +1094,7 @@ namespace Anki {
                                                               0,
                                                               useManualSpeed);
       AddAction(action);
-      SetAsProxy(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToPlaceRelObjectAction ----
@@ -1127,7 +1123,7 @@ namespace Anki {
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
       AddAction(action);
-      SetAsProxy(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToRollObjectAction ----
@@ -1152,7 +1148,7 @@ namespace Anki {
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
       AddAction(action);
-      SetAsProxy(action);
+      SetProxyTag(action->GetTag());
     }
 
     void DriveToRollObjectAction::RollToUpright()
@@ -1232,7 +1228,7 @@ namespace Anki {
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
       AddAction(action);
-      SetAsProxy(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToAndTraverseObjectAction ----

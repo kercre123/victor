@@ -245,6 +245,12 @@ namespace Anki {
     {
       SetStatus(GetName());
       
+      Result derivedUpdateResult = UpdateDerived();
+      if(RESULT_OK != derivedUpdateResult) {
+        PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal.UpdateDerivedFailed", "");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
       if(_wasJustReset) {
         // In case actions were added after construction/reset
         _currentAction = _actions.begin();

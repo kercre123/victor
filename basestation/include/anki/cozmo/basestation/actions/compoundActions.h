@@ -96,6 +96,11 @@ namespace Anki {
       // ignore what they want to when running
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
+      // Called at the very beginning of UpdateInternal, so derived classes can
+      // do additional work. If this does not return RESULT_OK, then UpdateInternal
+      // will return ActionResult::FAILURE_ABORT.
+      virtual Result UpdateDerived() { return RESULT_OK; }
+      
     private:
       virtual void Reset(bool shouldUnlockTracks = true) override final;
       

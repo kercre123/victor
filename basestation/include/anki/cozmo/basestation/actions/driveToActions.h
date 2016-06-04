@@ -212,7 +212,7 @@ namespace Anki {
     // do something with it.
     // If maxTurnTowardsFaceAngle > 0, robot will turn a maximum of that angle towards
     // last face after driving to the object (and say name if that is specified).
-    class IDriveToInteractWithObject : public IAction
+    class IDriveToInteractWithObject : public CompoundActionSequential
     {
     protected:
       // Not directly instantiable
@@ -230,48 +230,23 @@ namespace Anki {
       virtual ~IDriveToInteractWithObject();
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
-
-      virtual RobotActionType GetType() const override {
-        return _compoundAction.GetType();
-      }
-      
-      virtual u8 GetTracksToLock() const override {
-        return (u8)AnimTrackFlag::NO_TRACKS;
-      }
-      
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
-        _compoundAction.GetCompletionUnion(completionUnion);
-      }
-      
-      virtual const std::string& GetName() const override {
-        return _compoundAction.GetName();
-      }
       
     protected:
 
-      virtual ActionResult Init() override final;
-      virtual ActionResult CheckIfDone() override final;
+      virtual Result UpdateDerived() override;
       
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
-      
-      void AddAction(IActionRunner* action, bool ignoreFailure = false) {
-        _compoundAction.AddAction(action, ignoreFailure);
-      }
-      
-      void SetAsProxy(IActionRunner* action) {
-        _compoundAction.SetProxyTag(action->GetTag());
-      }
       
       DriveToObjectAction* GetDriveToObjectAction() {
         return _driveToObjectAction;
       }
       
     private:
-      CompoundActionSequential _compoundAction;
       DriveToObjectAction* _driveToObjectAction = nullptr;
       ObjectID _objectID;
+      bool     _lightsSet = false;
       
     }; // class IDriveToInteractWithObject
         
