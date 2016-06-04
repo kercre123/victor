@@ -28,6 +28,7 @@ namespace Simon {
       // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
       _LastTappedTime = Time.time;
       DAS.Warn(this, "Enter");
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerTurnStarted);
     }
 
     public override void Update() {
@@ -74,6 +75,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessWrong();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
     }
 
@@ -81,6 +83,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
 
       // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
       // and feel a bit thwarted 

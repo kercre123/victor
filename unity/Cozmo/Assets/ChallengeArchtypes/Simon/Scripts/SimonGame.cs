@@ -62,21 +62,22 @@ namespace Simon {
     }
 
     public void InitColorsAndSounds() {
+      // Adds it so it's always R Y B based on Cozmo's left to right
       if (_BlockIdToSound.Count() == 0) {
-        List<int> usedIndices = new List<int>();
-        int randomIndex = 0;
-        SimonCube randomSimonSound;
+        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonSetupComplete);
+        List<LightCube> listCubes = new List<LightCube>();
         foreach (int cube in CubeIdsForGame) {
-          do {
-            randomIndex = Random.Range(0, _CubeColorsAndSounds.Length);
-          } while (usedIndices.Contains(randomIndex));
-          usedIndices.Add(randomIndex);
-          randomSimonSound = _CubeColorsAndSounds[randomIndex];
-          _BlockIdToSound.Add(cube, randomSimonSound);
+          listCubes.Add(CurrentRobot.LightCubes[cube]);
         }
-      }
+        listCubes.Sort(new BlockToCozmoPositionComparer(CurrentRobot));
+        int minCount = Mathf.Min(_CubeColorsAndSounds.Length, listCubes.Count);
+        for (int i = 0; i < minCount; ++i) {
+          LightCube cube = listCubes[i];
+          _BlockIdToSound.Add(cube.ID, _CubeColorsAndSounds[i]);
+        }
 
-      SetCubeLightsDefaultOn();
+        SetCubeLightsDefaultOn();
+      }
     }
 
     public void SetCubeLightsDefaultOn() {
@@ -146,6 +147,28 @@ namespace Simon {
       DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
     }
   }
+
+  // Sorts a list from left to right based on relative to Cozmo position
+  public class BlockToCozmoPositionComparer : Comparer<LightCube> {
+    IRobot CurrentRobot;
+
+    public BlockToCozmoPositionComparer(IRobot robot) {
+      CurrentRobot = robot;
+    }
+
+    public override int Compare(LightCube a, LightCube b) {
+      Vector3 cozmoSpaceA = CurrentRobot.WorldToCozmo(a.WorldPosition);
+      Vector3 cozmoSpaceB = CurrentRobot.WorldToCozmo(b.WorldPosition);
+      if (cozmoSpaceA.y > cozmoSpaceB.y) {
+        return 1;      
+      }
+      else if (cozmoSpaceA.y < cozmoSpaceB.y) {
+        return -1;
+      }
+      return 0;
+    }
+  }
+
 
   [System.Serializable]
   public class SimonCube {

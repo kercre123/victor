@@ -41,6 +41,7 @@ namespace Simon {
 
       _LastSequenceTime = Time.time;
       DAS.Warn(this, "Enter");
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonExampleStarted);
     }
 
     public override void Update() {
