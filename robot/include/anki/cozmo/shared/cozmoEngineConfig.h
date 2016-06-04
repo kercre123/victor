@@ -49,9 +49,9 @@ namespace Anki {
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
   
     // Apply a conservative negative padding when checking for collisions with known objects to
-    // see if they should be deleted..
-    // (A negative value means it _really_ has to intersect in order for the object to be deleted.)
-    const f32 ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION = -5.f;
+    // see if their pose should be marked as "dirty".
+    // (A negative value means it _really_ has to intersect in order for the object to be dirtied.)
+    const f32 ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION = -10.f;
 
     
     /***************************************************************************
