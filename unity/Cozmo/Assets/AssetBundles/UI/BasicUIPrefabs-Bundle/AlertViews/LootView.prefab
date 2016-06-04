@@ -2100,7 +2100,7 @@ ParticleSystem:
         m_RotationOrder: 0
       minMaxState: 3
     startSpeed:
-      scalar: 20
+      scalar: 15
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -2116,7 +2116,7 @@ ParticleSystem:
         serializedVersion: 2
         m_Curve:
         - time: 0
-          value: 0.25
+          value: 0.06666667
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -2383,7 +2383,7 @@ ParticleSystem:
     m_UseMeshColors: 1
     randomDirection: 0
   EmissionModule:
-    enabled: 1
+    enabled: 0
     serializedVersion: 2
     m_Type: 0
     rate:
@@ -3069,7 +3069,7 @@ ParticleSystem:
         m_RotationOrder: 4
       minMaxState: 1
     magnitude:
-      scalar: 0.5
+      scalar: 0.25
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -3105,7 +3105,7 @@ ParticleSystem:
       minMaxState: 0
     separateAxis: 0
     inWorldSpace: 0
-    dampen: 0.15
+    dampen: 0.1
   SizeBySpeedModule:
     enabled: 0
     curve:
@@ -3729,7 +3729,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22468726}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 260}
@@ -3804,7 +3804,7 @@ RectTransform:
   - {fileID: 22445366}
   - {fileID: 22473282}
   m_Father: {fileID: 22468726}
-  m_RootOrder: 5
+  m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -3821,7 +3821,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22468726}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -3856,10 +3856,10 @@ RectTransform:
   m_Children:
   - {fileID: 22405922}
   - {fileID: 22422646}
+  - {fileID: 22446516}
   - {fileID: 22481126}
   - {fileID: 22466988}
   - {fileID: 22419290}
-  - {fileID: 22446516}
   - {fileID: 22410096}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -3899,7 +3899,7 @@ RectTransform:
   - {fileID: 22417584}
   - {fileID: 22486050}
   m_Father: {fileID: 22468726}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}

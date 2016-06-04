@@ -26,6 +26,7 @@ namespace Cozmo {
 
       private const int kMinBurst = 3;
       private const int kMaxBurst = 10;
+      private const int kFinalBurst = 25;
 
       private const float kChargePerTap = 0.20f;
       private const float kChargeDecay = 0.005f;
@@ -221,6 +222,7 @@ namespace Cozmo {
         // TODO: Start Reward Animation Sequence and create LootDoobers
         // TODO: Currently is not using Reward information to determine the doobers looted.
         // purely hardcoded bullshit for testing.-R.A.
+        _BurstParticles.Emit(kFinalBurst);
         UnleashTheDoobers(UnityEngine.Random.Range(1, 6));
       }
 
