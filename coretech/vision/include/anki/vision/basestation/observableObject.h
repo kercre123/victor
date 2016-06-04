@@ -130,6 +130,18 @@ namespace Anki {
                          const u16     xBorderPad = 0,
                          const u16     yBorderPad = 0) const;
       
+      // Same as above, except requireSomethingBehind==true.
+      // If the function returns false, then hasNothingBehind contains whether
+      // or not any marker had nothing behind it. If so, then we would have
+      // returned true for this function if not for that reason.
+      bool IsVisibleFrom(const Camera& camera,
+                         const f32     maxFaceNormalAngle,
+                         const f32     minMarkerImageSize,
+                         const u16     xBorderPad,
+                         const u16     yBorderPad,
+                         bool& hasNothingBehind) const;
+                         
+      
       // Accessors:
       ObjectID           GetID()     const;
       const Pose3d&      GetPose()   const;
