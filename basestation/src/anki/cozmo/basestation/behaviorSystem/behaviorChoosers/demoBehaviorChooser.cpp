@@ -501,7 +501,13 @@ void DemoBehaviorChooser::ResetDemoRelatedState()
   resetBehaviorStartCount(kFlipDownFromBackBehavior);
   
   // Clean up the knock blocks down behavior
-  resetBehaviorStartCount(kKnockOverStackBehavior);
+  ASSERT_NAMED(nullptr != _admireStackBehavior, "DemoBehaviorChooser.HandleStartDemoWithEdge.MissingAdmireStackBehavior");
+  if (nullptr != _admireStackBehavior)
+  {
+    _admireStackBehavior->ResetDidKnockOverStack();
+    _admireStackBehavior->ResetStartCount();
+  }
+  
 }
 
 void DemoBehaviorChooser::SetState_internal(State state, const std::string& stateName)
