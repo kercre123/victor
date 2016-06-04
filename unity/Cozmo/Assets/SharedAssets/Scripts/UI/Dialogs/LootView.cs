@@ -14,20 +14,21 @@ namespace Cozmo {
       private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.0f;
 
-      private const float kMaxShake = 1.0f;
-      private const float kShakeInterval = 0.05f;
+      private const float kMaxShake = 1f;
+      private const float kShakeInterval = 0.10f;
       private const float kRotateShakeDuration = 1.25f;
-      private const float kShakeDecay = 0.005f;
-      private const float kShakePerTap = 0.2f;
-      private const float kShakeRotation = 45.0f;
-      private const int kShakeRotationVibrato = 20;
-      private const float kShakeRotationRandomness = 45.0f;
+      private const float kShakeDecay = 0.02f;
+      private const float kGlowDecay = 0.01f;
+      private const float kShakePerTap = 0.4f;
+      private const float kShakeRotation = 75.0f;
+      private const int kShakeRotationVibrato = 30;
+      private const float kShakeRotationRandomness = 25.0f;
 
       private const int kMinBurst = 3;
-      private const int kMaxBurst = 12;
+      private const int kMaxBurst = 10;
 
-      private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.003f;
+      private const float kChargePerTap = 0.20f;
+      private const float kChargeDecay = 0.005f;
       // How long the Reward animation takes to tween the reward doobers to their initial positions
       private const float kDooberExplosionDuration = 0.25f;
       // How long the Rewards remain visible before leaving
@@ -40,6 +41,8 @@ namespace Cozmo {
 
       private float _currentCharge = 0.0f;
       private float _currentShake = 0.0f;
+      private float _currentGlow = 0.0f;
+      private int _tronBurst = 1;
 
       [SerializeField]
       private string _LootStartKey;
@@ -52,13 +55,13 @@ namespace Cozmo {
       [SerializeField]
       private List<Transform> _ActiveDooberTransforms;
       [SerializeField]
-      private Transform _SingleRewardTransform;
-      [SerializeField]
       private Transform _DooberStart;
       [SerializeField]
       private Transform _FinalRewardTarget;
       [SerializeField]
       private GameObject _RewardDooberPrefab;
+      [SerializeField]
+      private GameObject _TronDooberPrefab;
       [SerializeField]
       private ParticleSystem _BurstParticles;
 
@@ -87,6 +90,9 @@ namespace Cozmo {
       [SerializeField]
       private Image _LootGlow;
 
+      [SerializeField]
+      private Image _BoxGlow;
+
       private Tweener _ShakeTweener;
 
       [SerializeField]
@@ -110,19 +116,23 @@ namespace Cozmo {
 
       // TODO: Particle Burst
       private void HandleButtonTap() {
-        _currentCharge += kChargePerTap;
-        _currentShake += kShakePerTap;
-        if (_currentShake > 1.0f) {
-          _currentShake = 1.0f;
-        }
-        float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
-        _BurstParticles.Emit((int)toBurst);
-        float currShake = Mathf.Lerp(0, kShakeRotation, _currentShake);
-        if (_ShakeTweener != null) {
-          _ShakeTweener.Complete();
-        }
-        _ShakeTweener = _LootBox.DOShakeRotation(kRotateShakeDuration, new Vector3(0, 0, currShake), kShakeRotationVibrato, kShakeRotationRandomness);
+        if (_BoxOpened == false) {
+          _currentCharge += kChargePerTap;
+          _currentShake += kShakePerTap;
+          _currentGlow = 1.0f;
+          if (_currentShake > 1.0f) {
+            _currentShake = 1.0f;
+          }
 
+          float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
+          _BurstParticles.Emit((int)toBurst);
+
+          float currShake = Mathf.Lerp(0, kShakeRotation, _currentShake);
+          if (_ShakeTweener != null) {
+            _ShakeTweener.Complete();
+          }
+          _ShakeTweener = _LootBox.DOShakeRotation(kRotateShakeDuration, new Vector3(0, 0, currShake), kShakeRotationVibrato, kShakeRotationRandomness);
+        }
       }
 
       private void Update() {
@@ -147,6 +157,14 @@ namespace Cozmo {
               _currentShake = 0.0f;
             }
           }
+          if (_currentGlow > 0.0f) {
+            _currentGlow -= kGlowDecay;
+            if (_currentGlow <= 0.0f) {
+              _currentGlow = 0.0f;
+            }
+            _LootGlow.color = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, _currentGlow);
+            _BoxGlow.color = _LootGlow.color;
+          }
           UpdateLootText();
           if (_currentCharge >= 1.0f) {
             // TODO: play sounds/effects
@@ -165,9 +183,9 @@ namespace Cozmo {
           float currScale = kMinScale + _currentCharge * scaleDiff;
           // kShakeInterval is doubled to accomodate for the DoMove loops to allow pingpong effect
           _LootBox.DOScale(currScale, kShakeInterval * 2);
-          // Loot Glow alpha determined by current charge
-          _LootGlow.DOFade(_currentCharge, kShakeInterval * 2);
 
+          // Tron Doober Effect
+          TronLineBurst(_tronBurst);
           // Shake Power determined by current charge and constants.
           float currShake = Mathf.Lerp(0, kMaxShake, _currentShake);
           float shakeX = UnityEngine.Random.Range(-currShake, currShake);
@@ -187,12 +205,15 @@ namespace Cozmo {
         }
         else if (_currentCharge >= kLootAlmostThreshold) {
           LootText = _LootAlmostKey;
+          _tronBurst = 8;
         }
         else if (_currentCharge >= kLootMidTreshold) {
           LootText = _LootMidKey;
+          _tronBurst = 4;
         }
         else {
           LootText = _LootStartKey;
+          _tronBurst = 2;
         }
       }
 
@@ -204,7 +225,7 @@ namespace Cozmo {
       }
 
       private Transform SpawnDoober(/*TODO : pass in the name of the rewardID for this Doobster*/) {
-
+        // TODO : This seems to be offset in a weird way, figure out why.
         Transform newDoob = UIManager.CreateUIElement(_RewardDooberPrefab.gameObject, _DooberStart).transform;
         // TODO: Initialize Doober with appropriate values
         _ActiveDooberTransforms.Add(newDoob);
@@ -242,6 +263,12 @@ namespace Cozmo {
 
         dooberSequence.InsertCallback(kDooberExplosionDuration + kDooberStayDuration, SendDoobersAway);
         dooberSequence.Play();
+      }
+
+      private void TronLineBurst(int count) {
+        for (int i = 0; i < count; i++) {
+          UIManager.CreateUIElement(_TronDooberPrefab.gameObject, _DooberStart);
+        }
       }
 
       // BEGONE DOOBERS! OUT OF MY SIGHT! Staggering their start times slightly, send all active doobers to the
