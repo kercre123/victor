@@ -114,6 +114,9 @@ namespace Cozmo {
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
   {
+    // Prevent us from glancing down immediately when this behavior starts
+    _lastGlanceTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
     TransitionToDispatch(robot);
     return RESULT_OK;
   }
@@ -174,7 +177,7 @@ namespace Cozmo {
     SET_STATE(Dispatch);
 
     // first check if we should glance down
-    if (kGlanceDownInterval_sec > 0 && currentTime_sec - _lastGlanceTime >= kGlanceDownInterval_sec)
+    if (kGlanceDownInterval_sec > 0 && ((currentTime_sec - _lastGlanceTime) >= kGlanceDownInterval_sec))
     {
       TransitionToGlancingDown(robot);
       return;
@@ -450,7 +453,8 @@ namespace Cozmo {
       
       // This is still just a tracked face (negative ID) or a "session-only" face
       // that we haven't seen enough times to trust that the recognizer just hasn't
-      // recognized it yet: continue to look.
+      // recognized it yet: continue to look (come back to this state).
+      
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
         
       // Always turn to look at the face before any reaction
@@ -462,7 +466,7 @@ namespace Cozmo {
       compoundAction->AddAction(turnTowardsPoseAction);
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _waitAnimGroup) );
 
-      StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
+      StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToWaitingForRecognition);
     }
     else {
       // This is a "session-only" face with positive ID that we've seen enough times
