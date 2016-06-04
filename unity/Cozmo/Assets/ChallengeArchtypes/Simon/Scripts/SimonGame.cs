@@ -6,10 +6,7 @@ using System.Linq;
 namespace Simon {
   
   public class SimonGame : GameBase {
-    // TODO: Use animation events?
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;
-
-    // TODO: Remove and replace with
     public const float kLightBlinkLengthSeconds = 0.3f;
 
     public const float kTurnSpeed_rps = 100f;
@@ -22,6 +19,10 @@ namespace Simon {
     private SimonGameConfig _Config;
 
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
+
+    public float TimeBetweenBeats { get { return _Config.TimeBetweenBeats; } }
+
+    public float TimeWaitFirstBeat { get { return _Config.TimeWaitFirstBeat; } }
 
     private int _CurrentSequenceLength;
 
@@ -42,7 +43,6 @@ namespace Simon {
 
     // Use this for initialization
     protected void InitializeMinigameObjects() { 
-      DAS.Info(this, "Game Created");
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
 
       State nextState = new CozmoMoveCloserToCubesState(new WaitForNextRoundSimonState(_FirstPlayer));

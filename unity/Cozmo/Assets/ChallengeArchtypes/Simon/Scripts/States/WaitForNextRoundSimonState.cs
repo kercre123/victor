@@ -29,7 +29,6 @@ namespace Simon {
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = (_NextPlayer != PlayerType.Human);
 
       _GameInstance.SetCubeLightsDefaultOn();
-      DAS.Warn(this, "Enter");
     }
 
     private void HandleContinuePressed() {
@@ -39,16 +38,6 @@ namespace Simon {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
 
       _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
-      /*if (_NextPlayer == PlayerType.Cozmo) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
-      }
-      else { // _NextPlayer == PlayerType.Human
-        _StateMachine.SetNextState(new PlayerSetSequenceSimonState());
-      }*/
     }
-
-    /*private void HandleOnCozmoStartAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoMoveCloserToCubesState(new CozmoSetSequenceSimonState()));
-    }*/
   }
 }

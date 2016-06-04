@@ -10,9 +10,6 @@ namespace Simon {
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
-    // TODO: move this to config ( based on turn number )
-    private const float kSequenceWaitDelay = 0.5f;
-    private const float kFirstWaitDelay = 1.0f;
     private float _LastSequenceTime = -1;
 
     private PlayerType _NextPlayer;
@@ -40,7 +37,6 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _LastSequenceTime = Time.time;
-      DAS.Warn(this, "Enter");
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonExampleStarted);
     }
 
@@ -48,7 +44,7 @@ namespace Simon {
       base.Update();
       if (_CurrentSequenceIndex == -1) {
         // First in sequence
-        if (Time.time - _LastSequenceTime > kFirstWaitDelay) {
+        if (Time.time - _LastSequenceTime > _GameInstance.TimeWaitFirstBeat) {
           LightUpNextCube();
         }
       }
@@ -62,7 +58,7 @@ namespace Simon {
         }
       }
       else {
-        if (Time.time - _LastSequenceTime > kSequenceWaitDelay) {
+        if (Time.time - _LastSequenceTime > _GameInstance.TimeBetweenBeats) {
           LightUpNextCube();
         }
       }
@@ -75,11 +71,8 @@ namespace Simon {
       _LastSequenceTime = Time.time;
 
       int cubeId = GetCurrentTarget().ID;
-      DAS.Warn(this, "LightUpNextCube cubeId " + cubeId);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
       _GameInstance.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
-      //_StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget()));
-      DAS.Warn(this, "LightUpNextCube" + _CurrentSequenceIndex);
     }
 
     public LightCube GetCurrentTarget() {
@@ -89,7 +82,6 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      DAS.Warn(this, "Exit");
     }
   }
 
