@@ -1344,8 +1344,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     {
       u32 numVisibleObjects = 0;
       
-      if(_robot->IsPickedUp()) {
-        // Don't bother if the robot is picked up
+      // Don't bother if the robot is picked up or if it was moving too fast to
+      // have been able to see the markers on the objects anyway.
+      // NOTE: Just using default speed thresholds, which should be conservative.
+      if(_robot->IsPickedUp() ||
+         _robot->GetVisionComponent().WasMovingTooFast(atTimestamp))
+      {
         return numVisibleObjects;
       }
       
