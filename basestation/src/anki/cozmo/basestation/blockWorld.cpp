@@ -1460,11 +1460,18 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         
         // If the object should _not_ be visible, but the reason was only that
         // it has nothing behind it to confirm that, _and_ the object has already
-        // been marked dirty (e.g., by being moved), then assume it's not there
-        // and go ahead and clear it
-        const bool nothingBehindAndDirty = (!shouldBeVisible && hasNothingBehind && isDirtyPoseState);
+        // been marked dirty (e.g., by being moved), then increment the number of
+        // times it has gone unobserved while dirty.
+        if(!shouldBeVisible && hasNothingBehind && isDirtyPoseState)
+        {
+          unobserved.object->IncrementNumTimesUnobserved();
+        }
         
-        if(isNotDockingObject && (shouldBeVisible || nothingBehindAndDirty))
+        // Once we haven't observed a dirty object enough times, clear it
+        const bool dirtyAndUnobservedTooManyTimes = (unobserved.object->GetNumTimesUnobserved() >
+                                                     MIN_TIMES_TO_NOT_OBSERVE_DIRTY_OBJECT);
+        
+        if(isNotDockingObject && (shouldBeVisible || dirtyAndUnobservedTooManyTimes))
         {
           // Make sure there are no currently-observed, (just-)identified objects
           // with the same active ID present. (If there are, we'll reassign IDs
@@ -2901,12 +2908,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                 // Collision check objects that
                 // - were not observed in the last image,
                 // - are not being carried
-                // - do not already have unknown pose state
+                // - still have known pose state (not dirtied already, nor unknown)
                 // - are not the obect we are docking with (since we are _trying_ to get close)
                 // - can intersect the robot (e.g. not charger)
                 if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                    !object->IsBeingCarried() &&
-                   !object->IsPoseStateUnknown() &&
+                   object->IsPoseStateKnown() &&
                    object->GetID() != _robot->GetDockObject() &&
                    !object->CanIntersectWithRobot())
                 {

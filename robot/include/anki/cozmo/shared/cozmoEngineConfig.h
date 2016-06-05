@@ -16,6 +16,9 @@ namespace Anki {
     // that we saw it.
     const s32 MIN_TIMES_TO_OBSERVE_OBJECT = 2;
     
+    // Minimum number of times not to observe an object marked dirty before clearing it.
+    const s32 MIN_TIMES_TO_NOT_OBSERVE_DIRTY_OBJECT = 2;
+    
     /***************************************************************************
      *
      *                          Localization
