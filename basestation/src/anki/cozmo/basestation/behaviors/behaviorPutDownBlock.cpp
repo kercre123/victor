@@ -22,7 +22,6 @@ namespace Cozmo {
 
 CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg,    "Behavior.PutDownBlock", -20.0f);
 CONSOLE_VAR(f32, kBPDB_verifyBackupDist_mm,   "Behavior.PutDownBlock", -30.0f);
-CONSOLE_VAR(f32, kBPDB_putDownBackupDist_mm,  "Behavior.PutDownBlock", -100.f);
 CONSOLE_VAR(f32, kBPDB_putDownBackupSpeed_mm, "Behavior.PutDownBlock", 100.f);
 CONSOLE_VAR(f32, kBPDB_scoreIncreaseDuringPutDown,   "Behavior.PutDownBlock", 5.0);
 CONSOLE_VAR(f32, kBPDB_scoreIncreasePostPutDown,     "Behavior.PutDownBlock", 5.0);
@@ -30,6 +29,24 @@ CONSOLE_VAR(f32, kBPDB_scoreIncreasePostPutDown,     "Behavior.PutDownBlock", 5.
 static const char* const kLookAtFaceAnimGroup  = "ag_lookAtFace_keepAlive";
 static const char* const kPutDownAnimGroup     = "ag_putDownBlock";
 
+// For now, just use a list of fixed backup distances to iterate through (circularly),
+// until we plan smarter put down positions based on obstacles, etc. (COZMO-2188)
+inline static float GetBackupDistance()
+{
+  static const std::vector<f32> kBackupDistances_mm = {-125.f, -50.f, -150.f, -75.f};
+  static auto backupDistIter = kBackupDistances_mm.begin();
+  
+  const float backupDist = *backupDistIter;
+  
+  // Wrapping iteration to get ready for next time:
+  ++backupDistIter;
+  if(backupDistIter == kBackupDistances_mm.end()) {
+    backupDistIter = kBackupDistances_mm.begin();
+  }
+  
+  return backupDist;
+}
+  
 BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -45,22 +62,34 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
   // Choose where to the block down
   // TODO: Make this smarter and find a place away from other known objects
-  // For now, just back up blindly and play animation
-
+  // For now, just back up blindly and play animation.
+  
   StartActing(new CompoundActionSequential(robot, {
-                new DriveStraightAction(robot, kBPDB_putDownBackupDist_mm, kBPDB_putDownBackupSpeed_mm),
+                new DriveStraightAction(robot, GetBackupDistance(), kBPDB_putDownBackupSpeed_mm),
                 new PlayAnimationGroupAction(robot, kPutDownAnimGroup),
               }),
               kBPDB_scoreIncreaseDuringPutDown,
               &BehaviorPutDownBlock::LookDownAtBlock);
-  
+
   return Result::RESULT_OK;
 }
 
 
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
-  StartActing(CreateLookAfterPlaceAction(robot), kBPDB_scoreIncreasePostPutDown);
+  StartActing(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,
+              [this,&robot]() {
+                if(robot.IsCarryingObject()) {
+                  // No matter what, even if we didn't see the object we were
+                  // putting down for some reason, mark the robot as not carrying
+                  // anything so we don't get stuck in a loop of trying to put
+                  // something down (i.e. assume the object is no longer on our lift)
+                  // TODO: We should really be using some kind of PlaceOnGroundAction instead of raw animation (see COZMO-2192)
+                  PRINT_NAMED_WARNING("BehaviorPutDownBlock.LookDownAtBlock.DidNotSeeBlock",
+                                      "Forcibly setting carried objects as unattached (See COZMO-2192)");
+                  robot.SetCarriedObjectAsUnattached();
+                }
+              });
 }
 
 IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bool doLookAtFaceAfter)

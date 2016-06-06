@@ -37,7 +37,7 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   
 private:
-
+  
   void LookDownAtBlock(Robot& robot);
 
 };
