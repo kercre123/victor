@@ -26,6 +26,9 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+//#define NATHAN_CUBE_JUNK
+//#define CUBE_HOP
+
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
@@ -42,6 +45,12 @@ extern "C" const CubeFirmware CUBE_UPDATE;
 
 // Number of 16-byte chunks available
 static const int CubeFirmwareBlocks = (CUBE_FIRMWARE_LENGTH+15) / 16 - 1;
+static const int wifiChannel = 1;
+
+static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
+static int next_resume  = next_prepare + SILENCE_PERIOD;
+
+static AccessorySlot* last_transmit;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -94,6 +103,9 @@ void Radio::advertise(void) {
   
   #ifdef NATHAN_CUBE_JUNK
   assignProp(0, 0xca11ab1e);
+  assignProp(1, 0x6D093D09);
+  assignProp(2, 0x250B3D09);
+  assignProp(3, 0x31093D09);
   #endif
 }
 
@@ -161,6 +173,12 @@ static void ota_ack_timeout(void* userdata) {
   ota_send_next_block();
 }
 
+static uint8_t random() {
+  static uint8_t c = GetCounter() / 256;
+  c = (c >> 1) ^ (c & 1 ? 0x2D : 0);
+  return c;
+}
+
 static void OTARemoteDevice(uint32_t id) {
   // Reset our block count
   ota_block_index = 0;
@@ -168,8 +186,7 @@ static void OTARemoteDevice(uint32_t id) {
   
   // This is address
   OTAAddress.address = id;
-  OTAAddress.rf_channel = (OTAAddress.rf_channel >> 1) ^ (OTAAddress.rf_channel & 1 ? 0x2D : 0);
-  OTAAddress.rf_channel = 80;
+  OTAAddress.rf_channel = (random() & 0x3F) + 4;
 
   EnterState(RADIO_OTA);
 
@@ -201,8 +218,6 @@ void uesb_event_handler(uint32_t flags)
   uesb_payload_t rx_payload;
   uesb_read_rx_payload(&rx_payload);
 
-  int slot;
-
   switch (radioState) {
   case RADIO_OTA:
     // Message acked, kill ota_task
@@ -218,92 +233,128 @@ void uesb_event_handler(uint32_t flags)
     ack_timeouts = 0;
     ota_send_next_block();
     break ;
-  case RADIO_PAIRING:      
-    AdvertisePacket advert;
-    memcpy(&advert, &rx_payload.data, sizeof(AdvertisePacket));
+  case RADIO_PAIRING:
+    {
+      AdvertisePacket advert;
+      memcpy(&advert, &rx_payload.data, sizeof(AdvertisePacket));
 
-    // Attempt to locate existing accessory and repair
-    slot = LocateAccessory(advert.id);
-    if (slot < 0) {     
-      ObjectDiscovered msg;
-      msg.device_type = advert.model;
-      msg.factory_id = advert.id;
-      msg.rssi = rx_payload.rssi;
-      RobotInterface::SendMessage(msg);
+      // Attempt to locate existing accessory and repair
+      int slot = LocateAccessory(advert.id);
+      if (slot < 0) {     
+        ObjectDiscovered msg;
+        msg.device_type = advert.model;
+        msg.factory_id = advert.id;
+        msg.rssi = rx_payload.rssi;
+        RobotInterface::SendMessage(msg);
 
-      // Do not auto allocate the cube
-      break ;
-    }
-
-    // Radio firmware header is valid
-    if (CUBE_UPDATE.magic == CUBE_FIRMWARE_MAGIC) {
-      // This is an invalid hardware version and we should not try to do anything with it
-      if (advert.hwVersion != CUBE_UPDATE.hwVersion) {
+        // Do not auto allocate the cube
         break ;
       }
 
-      // Check if the device firmware is out of date
-      if (advert.patchLevel & ~CUBE_UPDATE.patchLevel) {
-        OTARemoteDevice(advert.id);
-        break ;
+      // Radio firmware header is valid
+      if (CUBE_UPDATE.magic == CUBE_FIRMWARE_MAGIC) {
+        // This is an invalid hardware version and we should not try to do anything with it
+        if (advert.hwVersion != CUBE_UPDATE.hwVersion) {
+          break ;
+        }
+
+        // Check if the device firmware is out of date
+        if (advert.patchLevel & ~CUBE_UPDATE.patchLevel) {
+          OTARemoteDevice(advert.id);
+          break ;
+        }
       }
-    }
 
 
-    // We are loading the slot
-    accessories[slot].id = advert.id;
-    accessories[slot].last_received = 0;
-    if (accessories[slot].active == false)
-    {
-      accessories[slot].allocated = true;
-      accessories[slot].active = true;
+      // We are loading the slot
+      AccessorySlot* acc = &accessories[slot]; 
+      acc->id = advert.id;
+      acc->last_received = 0;
+      
+      if (acc->active == false)
+      {
+        acc->allocated = true;
+        acc->active = true;
+        
+        SendObjectConnectionState(slot, advert.model);
+      }
 
-      SendObjectConnectionState(slot, advert.model);
-    }
-
-    // Send a pairing packet
-    // XXX: FIX ALL THIS SO IT'S NOT DUMB
-    {
       // This is where the cube shall live
-      uesb_address_desc_t* new_addr = &accessories[slot].address;
+      uesb_address_desc_t* new_addr = &acc->address;
 
       new_addr->address = advert.id;
       new_addr->payload_length = sizeof(AccessoryHandshake);
-      new_addr->rf_channel = (new_addr->rf_channel >> 1) ^ (new_addr->rf_channel & 1 ? 0 : 0x2D);
 
       // Tell the cube to start listening
       uesb_address_desc_t address = { ADV_CHANNEL, advert.id };
       CapturePacket pair;
+           
+      #ifndef CUBE_HOP
+      new_addr->rf_channel = (random() & 0x3F) + 0x4;
       
       pair.ticksUntilStart = 132; // Lowest legal value
       pair.hopIndex = 0;
       pair.hopBlackout = new_addr->rf_channel;
-      pair.ticksPerBeat = 164;    // 32768/164 = 200Hz
-      pair.beatsPerHandshake = 7; // 1 out of 7 beats handshakes with this cube
+      #else
+      // Find the next time accessory will be contacted
+      int target_slot = slot - currentAccessory;
+      
+      if (target_slot <= 0) {
+        target_slot += TICK_LOOP;
+      }
+      
+      int ticks_to_next = 
+        (target_slot * SCHEDULE_PERIOD) +
+        (next_resume - GetCounter());
+
+      if (ticks_to_next < SCHEDULE_PERIOD) {
+        ticks_to_next += RADIO_TOTAL_PERIOD;
+        acc->hopSkip = true;
+      }
+
+      acc->hopSkip = false;
+      acc->hopIndex = (random() & 0xF) + 0x12;
+      acc->hopBlackout = (wifiChannel * 5) - 9;
+      if (acc->hopBlackout < 0) {
+        acc->hopBlackout = 0;
+      }
+      acc->hopChannel = 0;
+
+      pair.ticksUntilStart = CYCLES_TO_COUNT(ticks_to_next) - NEXT_CYCLE_FUDGE;
+      pair.hopIndex = acc->hopIndex;
+      pair.hopBlackout = acc->hopBlackout;
+      #endif
+
+      pair.ticksPerBeat = CYCLES_TO_COUNT(SCHEDULE_PERIOD);
+      pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
+
       pair.ticksToListen = 0;     // Currently unused
       pair.beatsPerRead = 4;
       pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
       pair.patchStart = CUBE_UPDATE.patchStart;
       
+      // Send a pairing packet
       uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
     }
     break ;
-    
+
   case RADIO_TALKING:
-    AccessorySlot* acc = &accessories[currentAccessory];
-    AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
+    {
+      AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
 
-    acc->last_received = 0;
+      last_transmit->last_received = 0;
 
-    PropState msg;
-    msg.slot = currentAccessory;
-    msg.x = ap->x;
-    msg.y = ap->y;
-    msg.z = ap->z;
-    msg.shockCount = ap->tap_count;
-    RobotInterface::SendMessage(msg);
+      PropState msg;
+      msg.slot = currentAccessory;
+      msg.x = ap->x;
+      msg.y = ap->y;
+      msg.z = ap->z;
+      msg.shockCount = ap->tap_count;
+      RobotInterface::SendMessage(msg);
 
-    EnterState(RADIO_PAIRING);
+      EnterState(RADIO_PAIRING);
+    }
+
     break ;
   }
 }
@@ -351,24 +402,24 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 void Radio::prepare(void* userdata) {
   uesb_stop();
 
-  // Transmit to accessories round-robin
-  if (++currentAccessory >= TICK_LOOP) {
-    currentAccessory = 0;
-  }
+  last_transmit = &accessories[currentAccessory];
 
-  if (currentAccessory >= MAX_ACCESSORIES) return ;
+  if (last_transmit->active && ++last_transmit->last_received < ACCESSORY_TIMEOUT) {
+    #ifdef CUBE_HOP
+    if (last_transmit->hopSkip) {
+      last_transmit->hopSkip = false;
+      
+      // This just send garbage and return to pairing mode when finished
+      EnterState(RADIO_PAIRING);
+      uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
+      
+      return ;
+    }
+    #endif
 
-  AccessorySlot* acc = &accessories[currentAccessory];
-
-  if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
-    // We send the previous LED state (so we don't get jitter on radio)
-    uesb_address_desc_t& address = accessories[currentAccessory].address;
-    
-    RobotHandshake        tx_state;
+    // We send the previous LED state (so we don't get jitter on radio)    
+    RobotHandshake tx_state;
     tx_state.msg_id = 0;
-
-    // Broadcast to the appropriate device
-    EnterState(RADIO_TALKING);
 
     // Update the color status of the lights   
     static const int channel_order[] = { 3, 2, 1, 0 };
@@ -378,22 +429,42 @@ void Radio::prepare(void* userdata) {
       uint8_t* rgbi = lightController.cube[currentAccessory][channel_order[light]].values;
 
       for (int ch = 0; ch < 3; ch++) {
-        tx_state.ledStatus[tx_index++] = (rgbi[ch] * lightGamma) >> 8;
+        #ifndef NATHAN_CUBE_JUNK
+        tx_state.ledStatus[tx_index++] = (rgbi[ch] * (lightGamma + 1)) >> 8;
+        #else
+        tx_state.ledStatus[tx_index++] = 0x80;
+        #endif
       }
+      tx_state._reserved[0] = last_transmit->last_received;
     }
 
-    uesb_prepare_tx_payload(&address, &tx_state, sizeof(tx_state));
+    #ifdef CUBE_HOP
+    // Perform first RF Hop
+    last_transmit->hopChannel += last_transmit->hopIndex;
+    if (last_transmit->hopChannel >= 53) {
+      last_transmit->hopChannel -= 53;
+    }
+    last_transmit->address.rf_channel = last_transmit->hopChannel + 4;
+    if (last_transmit->address.rf_channel >= last_transmit->hopBlackout) {
+      last_transmit->address.rf_channel += 22;
+    }
+    #endif
+
+    // Broadcast to the appropriate device
+    EnterState(RADIO_TALKING);
+    uesb_prepare_tx_payload(&last_transmit->address, &tx_state, sizeof(tx_state));
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
-    if (acc->active)
+    if (last_transmit->active)
     {
       // Spread the remaining accessories forward as a patch fix
       // Simply reset the timeout of all accessories
       for (int i = 0; i < MAX_ACCESSORIES; i++) {
-        acc->last_received = 0;
+        last_transmit->last_received = 0;
       }
 
-      acc->active = false;
+      last_transmit->active = false;
+
       SendObjectConnectionState(currentAccessory);
     }
     
@@ -404,6 +475,13 @@ void Radio::prepare(void* userdata) {
 }
 
 void Radio::resume(void* userdata) {
+  // Transmit to accessories round-robin
+  if (++currentAccessory >= TICK_LOOP) {
+    currentAccessory = 0;
+  }
+
+  if (currentAccessory >= MAX_ACCESSORIES) return ;
+
   // Reenable the radio
   uesb_start();
 }
@@ -419,8 +497,6 @@ void Radio::manage(void) {
     return ;
   }
 
-  static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
-  static int next_resume  = next_prepare + SILENCE_PERIOD;
   int count = GetCounter();
     
   if (next_prepare - count < 0) {

@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
+#define CYCLES_TO_COUNT(c) (((c) + 128) / 256)
 
 #ifndef MAX
 #define MAX(a,b) ((a > b) ? a : b)
