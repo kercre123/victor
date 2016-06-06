@@ -34,8 +34,8 @@ namespace Cozmo {
       private const int kFinalBurst = 15;
 
       // Total Charge per Tap and rate at which Charge decays
-      private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.001f;
+      private const float kChargePerTap = 0.125f;
+      private const float kChargeDecay = 0.0025f;
 
       // How long the Reward animation takes to tween the reward doobers to their initial positions
       private const float kDooberExplosionDuration = 0.35f;
