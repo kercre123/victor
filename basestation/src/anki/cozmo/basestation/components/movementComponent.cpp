@@ -76,18 +76,23 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   {
     // Flip logic from enabled to locked here, since robot stores bits as enabled and 1 means locked here.
     u8 robotLockedTracks = ~_robot.GetEnabledAnimationTracks();
-    bool isRobotLiftTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::LIFT_TRACK) != 0;
-    if( isRobotLiftTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) )
-    {
-      // index, not bitflag.
-      PRINT_NAMED_WARNING("MovementComponent.Update.LiftLockUnmatched",
-                       "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[1]);
-    }
-    bool isRobotHeadTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::HEAD_TRACK) != 0;
+    const bool isRobotHeadTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::HEAD_TRACK) != 0;
     if( isRobotHeadTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) )
     {
       PRINT_NAMED_WARNING("MovementComponent.Update.HeadLockUnmatched",
-                       "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[0]);
+                          "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::HEAD_TRACK)]);
+    }
+    const bool isRobotLiftTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::LIFT_TRACK) != 0;
+    if( isRobotLiftTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) )
+    {
+      PRINT_NAMED_WARNING("MovementComponent.Update.LiftLockUnmatched",
+                       "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::LIFT_TRACK)]);
+    }
+    const bool isRobotBodyTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::BODY_TRACK) != 0;
+    if( isRobotBodyTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) )
+    {
+      PRINT_NAMED_WARNING("MovementComponent.Update.HeadLockUnmatched",
+                          "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::BODY_TRACK)]);
     }
   }
   
