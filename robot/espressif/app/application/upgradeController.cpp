@@ -183,6 +183,7 @@ namespace UpgradeController {
   
   LOCAL void Reset()
   {
+    os_printf("upgradeController Reset!!!\r\n");
     AnkiDebug( 170, "UpdateController", 466, "Reset()", 0);
     if (phase < OTAT_Enter_Recovery)
     {
@@ -248,7 +249,9 @@ namespace UpgradeController {
           os_printf("\tStarting upgrade\r\n");
           #endif
           bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
+          #if FACTORY_FIRMWARE == 0
           Face::FacePrintf("Starting FOTA\nupgrade...");
+          #endif
           phase = OTAT_Enter_Recovery;
           // Explicit fallthrough to next case
         }
@@ -424,8 +427,8 @@ namespace UpgradeController {
           }
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
-	    /*
-	    sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
+            /*
+            sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
             if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
                 AES_KEY,
@@ -435,10 +438,10 @@ namespace UpgradeController {
                 sizeof(fwb->flashBlock), 
                 aes_iv);
             }
-	    */
-	  }
-          retries = MAX_RETRIES;
-          phase = OTAT_Flash_Write;
+            */
+            retries = MAX_RETRIES;
+            phase = OTAT_Flash_Write;
+          }
         }
         break;
       }
