@@ -17,7 +17,7 @@ VERSION_HEADER=include/anki/cozmo/robot/version.h
 DEVELOPMENT_KEY=tools/development.pem
 AES_KEY=FA67CE138A376CD21A26118615326AA5
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app
+.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app export_key sign_test
 
 all: k02 esp sim
 
@@ -57,8 +57,14 @@ staging_dir:
 export_key:
 	mkdir -p generated
 	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickey.h
-	g++ -o generated/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
-	./generated/calcMont >> ./generated/publickey.h
+	g++ -o build/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
+	build/calcMont >> ./generated/publickey.h
+
+sign_test_files = ./test/signtest.cpp ../crypto/bignum.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp
+
+sign_test: export_key $(sign_test_files)
+	g++ -o ./build/signtest $(sign_test_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
+	build/signtest $(AES_KEY) ./releases/cozmo.safe ./releases/cozmo.signed.safe
 
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
@@ -81,7 +87,7 @@ stage_factory_upgrade:
 	cp -v staging/factory.safe    binaries/factory.safe
 
 release: stage_binaries
-	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
 	python3 ./tools/sign.py -c --sign $(AES_KEY) ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:

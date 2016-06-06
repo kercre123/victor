@@ -13,7 +13,6 @@ import subprocess
 
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_PSS
 from Crypto.Cipher import AES
 from Crypto import Random
 
@@ -56,12 +55,11 @@ class DigestFile:
         self.iv = Random.get_random_bytes(AES_BLOCK_LENGTH)
 
     def cfb(self, data, key):
-        cipher = AES.AESCipher(key, AES.MODE_ECB)
+        cipher = AES.AESCipher(key[::-1], AES.MODE_ECB)
         result = b''
 
-        for i, block in chunk(data, AES_BLOCK_LENGTH):
-            out = [block[i] ^ b for i, b in enumerate(cipher.encrypt(self.iv))]
-            self.iv = bytes(out)
+        for _, block in chunk(data, AES_BLOCK_LENGTH):
+            self.iv = bytes([block[i] ^ b for i, b in enumerate(cipher.encrypt(self.iv))])
             result += self.iv
 
         return result
@@ -266,8 +264,7 @@ if __name__ == '__main__':
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block + 0xFF400000 + 0x45000)
 
-    fo.writeCert(cert)
-    
+    fo.writeCert(cert)    
     fo.close()
 
     if args.prepend_size_word:
