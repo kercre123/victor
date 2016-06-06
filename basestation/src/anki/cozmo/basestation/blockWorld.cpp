@@ -1374,9 +1374,14 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
               objectIter != objectIdMap.end(); )
           {
             ObservableObject* object = objectIter->second;
-            
+           
+            // Look for blocks not seen atTimestamp, but skip objects
+            // - with unknown pose state
+            // - that are currently being carried
+            // - whose pose origin does not match the robot's
             if(object->GetPoseState() != ObservableObject::PoseState::Unknown &&
                object->GetLastObservedTime() < atTimestamp &&
+               _robot->GetCarryingObject() != object->GetID() &&
                &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
