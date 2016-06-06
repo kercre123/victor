@@ -204,6 +204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _GoalCellPrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
+  _EmptyGoalCellPrefab: {fileID: 186958, guid: 081c2633fffc94b47aac94bcc114f447, type: 2}
   _GoalContainer: {fileID: 22416974}
   _Title: {fileID: 22424134}
   _TitleScaleCurve:
@@ -650,6 +651,10 @@ Prefab:
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _EmptyGoalCellPrefab
+      value: 
+      objectReference: {fileID: 186958, guid: 081c2633fffc94b47aac94bcc114f447, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130834}
