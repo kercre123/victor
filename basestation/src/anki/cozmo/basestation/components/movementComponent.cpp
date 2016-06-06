@@ -91,7 +91,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     const bool isRobotBodyTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::BODY_TRACK) != 0;
     if( isRobotBodyTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) )
     {
-      PRINT_NAMED_WARNING("MovementComponent.Update.HeadLockUnmatched",
+      PRINT_NAMED_WARNING("MovementComponent.Update.BodyLockUnmatched",
                           "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::BODY_TRACK)]);
     }
   }
