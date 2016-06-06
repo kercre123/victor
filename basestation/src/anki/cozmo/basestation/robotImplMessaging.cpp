@@ -378,8 +378,8 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       }
 
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
-                       "Object %d (activeID %d, factoryID 0x%x) cleared?%d",
-                       objID.GetValue(), payload.objectID, payload.factoryID, clearedObject);
+                       "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx) cleared? %d",
+                       objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type, clearedObject);
 
     }
   }

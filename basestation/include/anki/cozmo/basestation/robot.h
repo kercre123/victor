@@ -101,7 +101,7 @@ class MoodManager;
 class PathDolerOuter;
 class ProgressionUnlockComponent;
 class VisionComponent;
-class BlockFilter;
+class   BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -612,12 +612,12 @@ public:
     void SetHeadlight(bool on);
   
     // =========  Block messages  ============
-  
-    // Assign which blocks the robot should connect to.
+
+    // Assign which objects the robot should connect to.
     // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
-    Result ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids);
+    Result ConnectToObjects(const FactoryIDArray& factory_ids);
   
-    // Set whether or not to broadcast to game which blocks are available for connection
+    // Set whether or not to broadcast to game which objects are available for connection
     void BroadcastAvailableObjects(bool enable);
   
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
@@ -938,24 +938,48 @@ public:
     //////// Block pool ////////
     BlockFilter*         _blockFilter;
   
-    // Set of desired blocks to connect to. Set by BlockFilter.
-    std::unordered_set<FactoryID> _blocksToConnectTo;
+    // Set of desired objects to connect to. Set by BlockFilter.
+    struct ObjectToConnectToInfo {
+      FactoryID factoryID;
+      bool      pending;
+      
+      ObjectToConnectToInfo() {
+        Reset();
+      }
+      
+      void Reset() {
+        factoryID = 0;
+        pending = false;
+      }
+    };
+    std::array<ObjectToConnectToInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _objectsToConnectTo;
 
     // Map of discovered objects and the last time that they were heard from
     struct ActiveObjectInfo {
       FactoryID   factoryID;
       ObjectType  objectType;
       TimeStamp_t lastDiscoveredTimeStamp;
+      
+      ActiveObjectInfo()
+      {
+        Reset();
+      }
+      
+      void Reset() {
+        factoryID = 0;
+        objectType = ObjectType::Invalid;
+        lastDiscoveredTimeStamp = 0;
+      }
     };
     std::unordered_map<FactoryID, ActiveObjectInfo> _discoveredObjects;
     bool _enableDiscoveredObjectsBroadcasting = false;
 
-    // Vector of currently connected blocks by active slot index
-    std::vector<ActiveObjectInfo> _connectedObjects;
+    // Vector of currently connected objects by active slot index
+    std::array<ActiveObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _connectedObjects;
 
-    // Called in Update(), checks if there are blocksToConnectTo that
+    // Called in Update(), checks if there are objectsToConnectTo that
     // have been discovered and should be connected to
-    u8 ConnectToRequestedObjects();
+    void ConnectToRequestedObjects();
 
   
     ///////// Messaging ////////
