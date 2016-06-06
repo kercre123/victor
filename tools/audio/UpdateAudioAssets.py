@@ -7,25 +7,24 @@ import json
 import os
 from os import path
 
-__scripDir = path.dirname(path.realpath(__file__))
-__projectRoot = path.join(__scripDir , '..', '..')
-__engineDir = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine')
-__projectScripDir = path.join(__projectRoot, 'project', 'build-scripts')
-__engineScripDir = path.join(__engineDir, 'project', 'buildScripts')
-sys.path.append(__projectScripDir)
-sys.path.append(__engineScripDir)
+__scriptDir = path.dirname(path.realpath(__file__))
+__projectRoot = path.join(__scriptDir , '..', '..')
+__projectScriptDir = path.join(__projectRoot, 'project', 'build-scripts')
+__engineScriptDir = path.join(__projectRoot, 'project', 'buildScripts')
+sys.path.append(__projectScriptDir)
+sys.path.append(__engineScriptDir)
 import dependencies
 
 
 # Project specific files and directors to perform scripts
-__externalsDir = path.join(__engineDir, 'EXTERNALS')
-__wwiseToAppMetadataScript = path.join(__engineDir, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
+__externalsDir = path.join(__projectRoot, 'EXTERNALS')
+__wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
 __wwiseIdsFilePath = path.join(__externalsDir, 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
 __audioMetadataFileName= "audioEventMetadata.csv"
-__audioMetadataFilePath = path.join(__scripDir, __audioMetadataFileName)
-__audioCladDir = path.join(__engineDir, 'clad', 'src', 'clad', 'audio')
-__depsFilePath = path.join(__engineDir, 'DEPS')
+__audioMetadataFilePath = path.join(__scriptDir, __audioMetadataFileName)
+__audioCladDir = path.join(__projectRoot, 'clad', 'src', 'clad', 'audio')
+__depsFilePath = path.join(__projectRoot, 'DEPS')
 
 __errorMsg = "%s DOES NOT EXIST. Find your closest project Nerd!!"
 
@@ -131,8 +130,8 @@ def __updateSoundbanks(version, mergeMetadataPath):
         deps_json[svn_key][repo_names_key][cozmosoundbanks_key][version_key] = version
          # Write file
         with open(__depsFilePath, "w") as deps_file:
-            json.dump(deps_json, deps_file, indent = 4, sort_keys = True)
-            print "DEPS file has been updated"
+            json.dump(deps_json, deps_file, indent=4, sort_keys=True, separators=(',', ': '))
+            print("DEPS file has been updated (%s)" % path.realpath(__depsFilePath))
 
         # Download Soundbanks
         dependencies.extract_dependencies(__depsFilePath, __externalsDir)
@@ -148,15 +147,19 @@ def __updateSoundbanks(version, mergeMetadataPath):
         __abort((__errorMsg % __wwiseIdsFilePath))
 
     # Update Audio Metadata.csv
-    subprocess.call([__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, __audioMetadataFilePath, '-m', previousMetadataFilePath])
-    print 'Metadata CSV has been updated and is ready for manual updates, file is located at:\n%s' % path.realpath(__audioMetadataFilePath)
-
+    updateMetadataCmd = [__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, __audioMetadataFilePath, '-m', previousMetadataFilePath]
+    #print("Running: %s" % ' '.join(updateMetadataCmd))
+    subprocess.call(updateMetadataCmd)
+    print("Metadata CSV has been updated and is ready for manual updates, file "
+          "is located at:%s%s" % (os.linesep, path.realpath(__audioMetadataFilePath)))
 
 
 def __generateProjectFiles():
     # Update Project Clad files
-    subprocess.call([__wwiseToAppMetadataScript, 'clad', __wwiseIdsFilePath, __audioMetadataFilePath, __audioCladDir])
-    print 'Project has been updated'
+    generateCladCmd = [__wwiseToAppMetadataScript, 'clad', __wwiseIdsFilePath, __audioMetadataFilePath, __audioCladDir]
+    #print("Running: %s" % ' '.join(generateCladCmd))
+    subprocess.call(generateCladCmd)
+    print("Project has been updated")
 
 
 def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
