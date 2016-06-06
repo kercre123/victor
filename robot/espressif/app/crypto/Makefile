@@ -52,4 +52,3 @@ PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 
 CCFLAGS += -Os -DESP8266
-CXXFLAGS += -std=gnu++11
