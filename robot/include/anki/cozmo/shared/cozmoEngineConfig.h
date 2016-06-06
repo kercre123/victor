@@ -71,6 +71,8 @@ namespace Anki {
     
     constexpr f32 STACKED_HEIGHT_TOL_MM = 15.f;
     
+    constexpr f32 ON_GROUND_HEIGHT_TOL_MM = 10.f; 
+    
     /***************************************************************************
      *
      *                          Timing (non-comms)
