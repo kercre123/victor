@@ -10,10 +10,10 @@
 
 struct sha512_state
 {
-    uint64_t length;
-    uint64_t state[8];
-    uint32_t curlen;
-    unsigned char buf[128];
+    uint64_t    length;
+    uint64_t    state[8];
+    uint32_t    curlen;
+    uint8_t     buf[128];
 };
 
 void sha512_init(sha512_state& md);
