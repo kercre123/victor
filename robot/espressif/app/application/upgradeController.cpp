@@ -427,9 +427,9 @@ namespace UpgradeController {
           }
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
-            /*
+            
             sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
-            if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
+            /*if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
                 AES_KEY,
                 aes_iv,
@@ -453,19 +453,11 @@ namespace UpgradeController {
         {
           if (fwb->blockAddress == CERTIFICATE_BLOCK)
           {
-            // TODO: VERIFY SIGNATURE WITH CURRENT DIGEST
-            // TODO: RESET DIGEST USING sha512_init
-
             #if DEBUG_OTA
             os_printf("OTA Sig header\r\n");
             #endif
-            retries = MAX_RETRIES;
-            bufferUsed -= sizeof(FirmwareBlock);
-            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-            bytesProcessed += sizeof(FirmwareBlock);
-            ack.bytesProcessed = bytesProcessed;
-            ack.result = OKAY;
-            RobotInterface::SendMessage(ack);
+            counter = 0;
+            phase = OTAT_Sig_Check;
           }
           else if (fwb->blockAddress == COMMENT_BLOCK)
           {
@@ -501,7 +493,7 @@ namespace UpgradeController {
           }
           else
           {
-	    AnkiWarn( 171, "UpgradeController", 488, "Unhandled special block 0x%x", 1, fwb->blockAddress);
+            AnkiWarn( 171, "UpgradeController", 488, "Unhandled special block 0x%x", 1, fwb->blockAddress);
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
             bytesProcessed += sizeof(FirmwareBlock);
@@ -521,9 +513,9 @@ namespace UpgradeController {
           {
             if (retries-- <= 0)
             {
-	      #if DEBUG_OTA
-	      os_printf("\tRan out of retries writing to Espressif flash\r\n");
-	      #endif
+              #if DEBUG_OTA
+              os_printf("\tRan out of retries writing to Espressif flash\r\n");
+              #endif
               ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
               RobotInterface::SendMessage(ack);
               Reset();
@@ -539,7 +531,7 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
-	    phase = OTAT_Flash_Verify;
+            phase = OTAT_Flash_Verify;
           }
         }
         else // This is bound for the RTIP or body
@@ -629,11 +621,22 @@ namespace UpgradeController {
       }
       case OTAT_Sig_Check:
       {
-        AnkiWarn( 171, "UpgradeController", 458, "Signature check not implemented", 0);
-        AnkiDebug( 172, "UpgradeController.state", 459, "Apply WiFi", 0)
-        phase   = OTAT_Apply_WiFi;
-        retries = MAX_RETRIES;
-        break;
+        if (counter++ < 20)
+        {
+          // blah blah blach
+        }
+        else
+        {
+          retries = MAX_RETRIES;
+          bufferUsed -= sizeof(FirmwareBlock);
+          os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+          bytesProcessed += sizeof(FirmwareBlock);
+          ack.bytesProcessed = bytesProcessed;
+          ack.result = OKAY;
+          RobotInterface::SendMessage(ack);
+          counter = 0;
+          phase = OTAT_Flash_Write;
+        }
       }
       case OTAT_Reject:
       {
