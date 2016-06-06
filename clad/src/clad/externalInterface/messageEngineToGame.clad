@@ -429,7 +429,7 @@ message UpdateEngineState {
 ///////////////////////////////////////////////////////////////////////////////
 
 structure BlockPoolBlockData {
-  uint_32 id,
+  uint_32 factory_id,
   bool enabled
 }
 

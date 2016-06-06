@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_Blocks_BlockFilter_H__
 
 #include "anki/cozmo/basestation/activeCube.h"
+#include "clad/types/activeObjectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <string>
@@ -36,22 +37,15 @@ namespace ExternalInterface {
 class BlockFilter
 {
 public: 
-  using FactoryIDSet = std::unordered_set<FactoryID>;
-
   BlockFilter(Robot* inRobot = nullptr);
-  explicit BlockFilter(const FactoryIDSet &factoryIds, Robot* inRobot = nullptr);
   explicit BlockFilter(const std::string &path, Robot* inRobot = nullptr);
 
   void AddFactoryId(const FactoryID factoryId);
-  void AddFactoryIds(const FactoryIDSet &factoryIds);
 
   void RemoveFactoryId(const FactoryID factoryId);
-  void RemoveFactoryIds(const FactoryIDSet &factoryIds);
   void RemoveAllFactoryIds();
 
-  void GetFactoryIds(FactoryIDSet &factoryIds) const;
   bool ContainsFactoryId(FactoryID factoryId) const;
-  bool IsEmpty() const { return _blocks.empty(); }
 
   bool Save(const std::string &path) const;
   bool Save() const;
@@ -69,10 +63,10 @@ private:
   
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
-  Robot*       _robot;
-  FactoryIDSet _blocks;
-  std::string _path;
-  bool        _enabled;
+  Robot*          _robot;
+  FactoryIDArray  _blocks;
+  std::string     _path;
+  bool            _enabled;
   
   std::vector<Signal::SmartHandle> _signalHandles;
   IExternalInterface* _externalInterface;
