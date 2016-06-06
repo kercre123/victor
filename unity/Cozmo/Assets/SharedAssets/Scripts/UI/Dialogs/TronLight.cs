@@ -9,7 +9,7 @@ using DG.Tweening;
 
 namespace Cozmo {
   namespace UI {
-    public class TronDoober : MonoBehaviour {
+    public class TronLight : MonoBehaviour {
 
       enum DIR {
         UP = 0,
@@ -22,14 +22,18 @@ namespace Cozmo {
       private float _currLifeSpan;
       private float _lifeSpan = 1.25f;
       private int _MinTurns = 1;
-      private int _MaxTurns = 4;
-      private float _MinTurnDist = 3.0f;
+      private int _MaxTurns = 5;
+      private float _MinTurnDist = 0.75f;
       private float _MaxTurnDist = 8.0f;
 
       private float _currDist = 0.0f;
       private float _currInterval = 0.0f;
       private int _currTurns = 0;
       private int _turnsDone = 0;
+      [SerializeField]
+      private TrailRenderer _trail;
+      [SerializeField]
+      private Image _spark;
       private Tweener _currTween = null;
 
       private void Awake() {
@@ -45,13 +49,17 @@ namespace Cozmo {
 
       private void OnDestroy() {
         if (_currTween != null) {
-          _currTween.Complete();
+          _currTween.Kill(false);
         }
+      }
+
+      private void FinishEffect() {
+        GameObject.Destroy(gameObject);
       }
 
       private void HandleTween() {
         if (_currLifeSpan <= 0) {
-          GameObject.Destroy(gameObject);
+          _currTween = _spark.DOFade(0.0f, _trail.time).OnComplete(FinishEffect);
         }
         else {
           _currDist = UnityEngine.Random.Range(_MinTurnDist, _MaxTurnDist);

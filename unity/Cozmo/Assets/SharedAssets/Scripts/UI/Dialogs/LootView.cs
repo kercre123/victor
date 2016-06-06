@@ -11,27 +11,34 @@ namespace Cozmo {
   namespace UI {
     public class LootView : BaseView {
 
+      // Rotation and Position Shaking
+      private const float kShakeDuration = 1.25f;
+      private const float kShakeRotationMin = 20.0f;
+      private const float kShakeRotationMax = 45.0f;
+      private const int kShakeRotationVibrato = 60;
+      private const float kShakeRotationRandomness = 60.0f;
+      private const float kShakePositionMin = 15f;
+      private const float kShakePositionMax = 25f;
+      private const int kShakePositionVibrato = 45;
+      private const float kShakePositionRandomness = 30.0f;
+
+      // Rate at which "Recent Tap" Effects decay - includes glow and scaling
+      private const float kTapDecay = 0.01f;
       private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.0f;
+      private const float kUpdateInterval = 0.25f;
 
-      private const float kMaxShake = 1f;
-      private const float kShakeInterval = 0.10f;
-      private const float kRotateShakeDuration = 1.25f;
-      private const float kShakeDecay = 0.02f;
-      private const float kGlowDecay = 0.01f;
-      private const float kShakePerTap = 0.4f;
-      private const float kShakeRotation = 75.0f;
-      private const int kShakeRotationVibrato = 30;
-      private const float kShakeRotationRandomness = 25.0f;
-
+      // Particle Burst settings for tap burst
       private const int kMinBurst = 3;
-      private const int kMaxBurst = 10;
-      private const int kFinalBurst = 25;
+      private const int kMaxBurst = 6;
+      private const int kFinalBurst = 15;
 
-      private const float kChargePerTap = 0.20f;
-      private const float kChargeDecay = 0.005f;
+      // Total Charge per Tap and rate at which Charge decays
+      private const float kChargePerTap = 0.15f;
+      private const float kChargeDecay = 0.001f;
+
       // How long the Reward animation takes to tween the reward doobers to their initial positions
-      private const float kDooberExplosionDuration = 0.25f;
+      private const float kDooberExplosionDuration = 0.35f;
       // How long the Rewards remain visible before leaving
       private const float kDooberStayDuration = 0.5f;
       // How long the Reward animation takes to tween the reward doobers to their final positions
@@ -40,9 +47,13 @@ namespace Cozmo {
       // less uniform movements
       private const float kDooberStaggerMax = 0.75f;
 
+      // Tron Line settings
+      private const int kTronBurstLow = 3;
+      private const int kTronBurstMed = 6;
+      private const int kTronBurstHigh = 10;
+
       private float _currentCharge = 0.0f;
-      private float _currentShake = 0.0f;
-      private float _currentGlow = 0.0f;
+      private float _recentTapCharge = 0.0f;
       private int _tronBurst = 1;
 
       [SerializeField]
@@ -62,12 +73,12 @@ namespace Cozmo {
       [SerializeField]
       private GameObject _RewardDooberPrefab;
       [SerializeField]
-      private GameObject _TronDooberPrefab;
+      private GameObject _TronLinePrefab;
       [SerializeField]
       private ParticleSystem _BurstParticles;
 
-      private const float kLootMidTreshold = 0.2f;
-      private const float kLootAlmostThreshold = 0.7f;
+      private const float kLootMidTreshold = 0.20f;
+      private const float kLootAlmostThreshold = 0.55f;
 
       public string LootText {
         get { return _LootText != null ? _LootText.text : null; }
@@ -94,20 +105,22 @@ namespace Cozmo {
       [SerializeField]
       private Image _BoxGlow;
 
-      private Tweener _ShakeTweener;
+      private Tweener _ShakeRotationTweener;
+      private Tweener _ShakePositionTweener;
+      //private Tweener _ScaleTweener;
 
       [SerializeField]
       private CanvasGroup _AlphaController;
 
       private bool _BoxOpened;
-      private bool _ShakeStarted;
+      private bool _ChargeStarted;
 
       private void Awake() {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
         _LootGlow.DOFade(0.0f, 0.0f);
         _LootBox.DOScale(kMinScale, 0.0f);
         _BoxOpened = false;
-        _ShakeStarted = false;
+        _ChargeStarted = false;
         _LootButton.onClick.AddListener(HandleButtonTap);
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
@@ -115,24 +128,37 @@ namespace Cozmo {
 
       }
 
-      // TODO: Particle Burst
+      // Handle each tap
       private void HandleButtonTap() {
         if (_BoxOpened == false) {
-          _currentCharge += kChargePerTap;
-          _currentShake += kShakePerTap;
-          _currentGlow = 1.0f;
-          if (_currentShake > 1.0f) {
-            _currentShake = 1.0f;
+
+          if (_currentCharge >= 1.0f) {
+            _BoxOpened = true;
+
+            StopTweens();
+            _LootBox.gameObject.SetActive(false);
+            RewardLoot();
+          }
+          else {
+            _currentCharge += kChargePerTap;
+            _recentTapCharge = 1.0f;
+
+            float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
+            _BurstParticles.Emit((int)toBurst);
+            TronLineBurst(_tronBurst);
+
+            float currShake = Mathf.Lerp(kShakeRotationMin, kShakeRotationMax, _currentCharge);
+            if (_ShakeRotationTweener != null) {
+              _ShakeRotationTweener.Complete();
+            }
+            _ShakeRotationTweener = _LootBox.DOShakeRotation(kShakeDuration, new Vector3(0, 0, currShake), kShakeRotationVibrato, kShakeRotationRandomness);
+            currShake = Mathf.Lerp(kShakePositionMin, kShakePositionMax, _recentTapCharge);
+            if (_ShakePositionTweener != null) {
+              _ShakePositionTweener.Complete();
+            }
+            _ShakePositionTweener = _LootBox.DOShakePosition(kShakeDuration, currShake, kShakePositionVibrato, kShakePositionRandomness);
           }
 
-          float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
-          _BurstParticles.Emit((int)toBurst);
-
-          float currShake = Mathf.Lerp(0, kShakeRotation, _currentShake);
-          if (_ShakeTweener != null) {
-            _ShakeTweener.Complete();
-          }
-          _ShakeTweener = _LootBox.DOShakeRotation(kRotateShakeDuration, new Vector3(0, 0, currShake), kShakeRotationVibrato, kShakeRotationRandomness);
         }
       }
 
@@ -140,62 +166,50 @@ namespace Cozmo {
         // Decay charge if the box hasn't been opened yet, update the progressbar.
         if (_BoxOpened == false) {
           if (_currentCharge > 0.0f) {
-            if (_ShakeStarted == false) {
-              ShakeTheBox();
-              _ShakeStarted = true;
+            if (_ChargeStarted == false) {
+              //BoxChargeUpdate();
+              _ChargeStarted = true;
             }
             else {
               _currentCharge -= kChargeDecay;
               if (_currentCharge <= 0.0f) {
-                _ShakeStarted = false;
+                _ChargeStarted = false;
                 _currentCharge = 0.0f;
               }
             }
           }
-          if (_currentShake > 0.0f) {
-            _currentShake -= kShakeDecay;
-            if (_currentShake <= 0.0f) {
-              _currentShake = 0.0f;
+          if (_recentTapCharge > 0.0f) {
+            _recentTapCharge -= kTapDecay;
+            if (_recentTapCharge <= 0.0f) {
+              _recentTapCharge = 0.0f;
             }
-          }
-          if (_currentGlow > 0.0f) {
-            _currentGlow -= kGlowDecay;
-            if (_currentGlow <= 0.0f) {
-              _currentGlow = 0.0f;
-            }
-            _LootGlow.color = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, _currentGlow);
+            _LootGlow.color = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, _recentTapCharge);
+            float newScale = Mathf.Lerp(kMinScale, kMaxScale, _recentTapCharge);
+            _LootBox.localScale = new Vector3(newScale, newScale, 1.0f);
             _BoxGlow.color = _LootGlow.color;
           }
           UpdateLootText();
-          if (_currentCharge >= 1.0f) {
-            // TODO: play sounds/effects
-            _BoxOpened = true;
-            _LootBox.gameObject.SetActive(false);
-            RewardLoot();
-          }
         }
       }
 
-      private void ShakeTheBox() {
+      /*
+      private void BoxChargeUpdate() {
         if ((_currentCharge > 0.0f) && (_BoxOpened == false)) {
+
+          // Tron Line Effect
+
           // Keep Shaking, Update scale and glow alpha
           // Target Scale determined by current charge and constants.
-          float scaleDiff = kMaxScale - kMinScale;
-          float currScale = kMinScale + _currentCharge * scaleDiff;
-          // kShakeInterval is doubled to accomodate for the DoMove loops to allow pingpong effect
-          _LootBox.DOScale(currScale, kShakeInterval * 2);
-
-          // Tron Doober Effect
-          TronLineBurst(_tronBurst);
-          // Shake Power determined by current charge and constants.
-          float currShake = Mathf.Lerp(0, kMaxShake, _currentShake);
-          float shakeX = UnityEngine.Random.Range(-currShake, currShake);
-          float shakeY = UnityEngine.Random.Range(-currShake, currShake);
-          //2 loops in order for _LootBox to return to where it begins
-          _LootBox.DOMove(new Vector2(shakeX, shakeY), kShakeInterval, false).SetEase(Ease.InOutCubic).SetLoops(2, LoopType.Yoyo).SetRelative(true).OnComplete(ShakeTheBox);
+          float currScale = Mathf.Lerp(kMinScale, kMaxScale, _recentTapCharge);
+          if (_ScaleTweener != null) {
+            _ScaleTweener.Complete();
+          }
+          // Scale Tween
+          _ScaleTweener = _LootBox.DOScale(currScale, kUpdateInterval).OnComplete(BoxChargeUpdate);
 
         }
       }
+      */
 
       /// <summary>
       /// Updates the loot text based on the current charge level.
@@ -206,15 +220,15 @@ namespace Cozmo {
         }
         else if (_currentCharge >= kLootAlmostThreshold) {
           LootText = _LootAlmostKey;
-          _tronBurst = 8;
+          _tronBurst = kTronBurstHigh;
         }
         else if (_currentCharge >= kLootMidTreshold) {
           LootText = _LootMidKey;
-          _tronBurst = 4;
+          _tronBurst = kTronBurstMed;
         }
         else {
           LootText = _LootStartKey;
-          _tronBurst = 2;
+          _tronBurst = kTronBurstLow;
         }
       }
 
@@ -269,7 +283,7 @@ namespace Cozmo {
 
       private void TronLineBurst(int count) {
         for (int i = 0; i < count; i++) {
-          UIManager.CreateUIElement(_TronDooberPrefab.gameObject, _DooberStart);
+          UIManager.CreateUIElement(_TronLinePrefab.gameObject, _DooberStart);
         }
       }
 
@@ -293,6 +307,20 @@ namespace Cozmo {
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
         }
+        StopTweens();
+      }
+
+      private void StopTweens() {
+        if (_ShakePositionTweener != null) {
+          _ShakePositionTweener.Complete();
+        }
+        if (_ShakeRotationTweener != null) {
+          _ShakeRotationTweener.Complete();
+        }
+        /*
+        if (_ScaleTweener != null) {
+          _ScaleTweener.Complete();
+        }*/
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {

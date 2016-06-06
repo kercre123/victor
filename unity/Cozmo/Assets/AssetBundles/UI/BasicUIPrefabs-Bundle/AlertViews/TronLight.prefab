@@ -14,7 +14,7 @@ GameObject:
   - 96: {fileID: 9608962}
   - 223: {fileID: 22319684}
   m_Layer: 5
-  m_Name: TronDoober
+  m_Name: TronLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -52,21 +52,21 @@ TrailRenderer:
   m_Colors:
     m_Color[0]:
       serializedVersion: 2
-      rgba: 1512964055
+      rgba: 1261305815
     m_Color[1]:
       serializedVersion: 2
-      rgba: 1009647575
+      rgba: 841875415
     m_Color[2]:
       serializedVersion: 2
-      rgba: 757989335
+      rgba: 674103255
     m_Color[3]:
       serializedVersion: 2
-      rgba: 422445015
+      rgba: 506331095
     m_Color[4]:
       serializedVersion: 2
       rgba: 3014615
   m_MinVertexDistance: 0.25
-  m_Autodestruct: 1
+  m_Autodestruct: 0
 --- !u!114 &11408100
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -102,9 +102,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 125416}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e7c9284d51d421fab6dce26133b58c, type: 3}
+  m_Script: {fileID: 11500000, guid: 425a485dfa5fb4675b4133274ec765b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _trail: {fileID: 9608962}
+  _spark: {fileID: 11408100}
 --- !u!222 &22286458
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -216,19 +218,19 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Colors.m_Color[0].rgba
-      value: 1009647575
+      value: 1261305815
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Colors.m_Color[1].rgba
-      value: 1009647575
+      value: 841875415
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Colors.m_Color[2].rgba
-      value: 757989335
+      value: 674103255
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Colors.m_Color[3].rgba
-      value: 422445015
+      value: 506331095
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Colors.m_Color[4].rgba
@@ -254,6 +256,18 @@ Prefab:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_Autodestruct
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _trail
+      value: 
+      objectReference: {fileID: 9608962}
+    - target: {fileID: 0}
+      propertyPath: _spark
+      value: 
+      objectReference: {fileID: 11408100}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 125416}

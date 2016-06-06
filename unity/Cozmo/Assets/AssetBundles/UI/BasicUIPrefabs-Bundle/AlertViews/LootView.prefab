@@ -412,7 +412,7 @@ MonoBehaviour:
   _DooberStart: {fileID: 22486736}
   _FinalRewardTarget: {fileID: 22410096}
   _RewardDooberPrefab: {fileID: 125416, guid: da949a90c3ec547bfb567d613a9396a5, type: 2}
-  _TronDooberPrefab: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
+  _TronLinePrefab: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
   _BurstParticles: {fileID: 19874792}
   _LootText: {fileID: 11411324}
   _LootButton: {fileID: 11488180}
@@ -3997,6 +3997,10 @@ Prefab:
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TronLinePrefab
+      value: 
+      objectReference: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 199250}
