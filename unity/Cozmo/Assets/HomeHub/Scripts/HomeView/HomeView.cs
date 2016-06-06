@@ -47,6 +47,14 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private Cozmo.UI.ProgressBar _RequirementPointsProgressBar;
+    [SerializeField]
+    private Image _EmotionChipTag;
+    [SerializeField]
+    private Sprite _EmotionChipSprite_Empty;
+    [SerializeField]
+    private Sprite _EmotionChipSprite_Mid;
+    [SerializeField]
+    private Sprite _EmotionChipSprite_Full;
 
     [SerializeField]
     private UnityEngine.UI.Text _CurrentRequirementPointsLabel;
@@ -60,6 +68,7 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private LootView _LootViewPrefab;
     private LootView _LootViewInstance = null;
+    private bool _LootViewReady = false;
 
     private HomeHub _HomeHubInstance;
 
@@ -98,11 +107,12 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
     }
 
     private void HandleChestGained() {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
-      OpenLootView();
+      _LootViewReady = true;
     }
 
     // Opens loot view and fires and relevant events
@@ -126,9 +136,27 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded) {
-      _RequirementPointsProgressBar.SetProgress((float)currentPoints / (float)numPointsNeeded);
+      float progress = ((float)currentPoints / (float)numPointsNeeded);
+      _RequirementPointsProgressBar.SetProgress(progress);
       _CurrentRequirementPointsLabel.text = currentPoints.ToString();
       _RequirementPointsNeededLabel.text = numPointsNeeded.ToString();
+      if (progress <= 0.0f) {
+        _EmotionChipTag.overrideSprite = _EmotionChipSprite_Empty;
+      }
+      else if (progress >= 1.0f) {
+        _EmotionChipTag.overrideSprite = _EmotionChipSprite_Full;
+      }
+      else {
+        _EmotionChipTag.overrideSprite = _EmotionChipSprite_Mid;
+      }
+
+    }
+
+    private void HandleProgressUpdated() {
+      if (_LootViewReady) {
+        OpenLootView();
+      }
+      _LootViewReady = false;
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -211,6 +239,7 @@ namespace Cozmo.HomeHub {
     protected override void CleanUp() {
       ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
+      _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
     }
 
   }

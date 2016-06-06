@@ -146,16 +146,11 @@ namespace Cozmo {
             float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
             _BurstParticles.Emit((int)toBurst);
             TronLineBurst(_tronBurst);
+            StopTweens();
 
             float currShake = Mathf.Lerp(kShakeRotationMin, kShakeRotationMax, _currentCharge);
-            if (_ShakeRotationTweener != null) {
-              _ShakeRotationTweener.Complete();
-            }
             _ShakeRotationTweener = _LootBox.DOShakeRotation(kShakeDuration, new Vector3(0, 0, currShake), kShakeRotationVibrato, kShakeRotationRandomness);
             currShake = Mathf.Lerp(kShakePositionMin, kShakePositionMax, _recentTapCharge);
-            if (_ShakePositionTweener != null) {
-              _ShakePositionTweener.Complete();
-            }
             _ShakePositionTweener = _LootBox.DOShakePosition(kShakeDuration, currShake, kShakePositionVibrato, kShakePositionRandomness);
           }
 
@@ -191,25 +186,6 @@ namespace Cozmo {
           UpdateLootText();
         }
       }
-
-      /*
-      private void BoxChargeUpdate() {
-        if ((_currentCharge > 0.0f) && (_BoxOpened == false)) {
-
-          // Tron Line Effect
-
-          // Keep Shaking, Update scale and glow alpha
-          // Target Scale determined by current charge and constants.
-          float currScale = Mathf.Lerp(kMinScale, kMaxScale, _recentTapCharge);
-          if (_ScaleTweener != null) {
-            _ScaleTweener.Complete();
-          }
-          // Scale Tween
-          _ScaleTweener = _LootBox.DOScale(currScale, kUpdateInterval).OnComplete(BoxChargeUpdate);
-
-        }
-      }
-      */
 
       /// <summary>
       /// Updates the loot text based on the current charge level.
@@ -277,7 +253,7 @@ namespace Cozmo {
           }
         }
 
-        dooberSequence.InsertCallback(kDooberExplosionDuration + kDooberStayDuration, SendDoobersAway);
+        dooberSequence.InsertCallback(kDooberExplosionDuration + kDooberStayDuration, CloseView);
         dooberSequence.Play();
       }
 
@@ -289,8 +265,8 @@ namespace Cozmo {
 
       // BEGONE DOOBERS! OUT OF MY SIGHT! Staggering their start times slightly, send all active doobers to the
       // FinalRewardTarget position
-      private void SendDoobersAway() {
-        Sequence dooberSequence = DOTween.Sequence();
+      private void SendDoobersAway(Sequence closeAnimation) {
+        Sequence dooberSequence = closeAnimation;
         // If there's more than one reward, give each of them a unique transform to tween out to
         for (int i = 0; i < _ActiveDooberTransforms.Count; i++) {
           Transform currDoob = _ActiveDooberTransforms[i];
@@ -298,8 +274,6 @@ namespace Cozmo {
           dooberSequence.Insert(doobStagger, currDoob.DOScale(0.0f, kDooberReturnDuration).SetEase(Ease.InBack));
           dooberSequence.Insert(doobStagger, currDoob.DOMove(_FinalRewardTarget.position, kDooberReturnDuration).SetEase(Ease.InBack));
         }
-        dooberSequence.OnComplete(CloseView);
-        dooberSequence.Play();
       }
 
       protected override void CleanUp() {
@@ -317,27 +291,21 @@ namespace Cozmo {
         if (_ShakeRotationTweener != null) {
           _ShakeRotationTweener.Complete();
         }
-        /*
-        if (_ScaleTweener != null) {
-          _ScaleTweener.Complete();
-        }*/
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
-        openAnimation.Append(transform.DOLocalMoveY(
-          50, 0.15f).From().SetEase(Ease.OutQuad).SetRelative());
         if (_AlphaController != null) {
           _AlphaController.alpha = 0;
           openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         }
+        // TODO: Set up Box Tween
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-        closeAnimation.Append(transform.DOLocalMoveY(
-          -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
         if (_AlphaController != null) {
           closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
         }
+        SendDoobersAway(closeAnimation);
       }
     }
   }
