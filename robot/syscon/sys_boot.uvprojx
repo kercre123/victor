@@ -328,6 +328,8 @@
             <v6LangP>0</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
@@ -427,6 +429,8 @@
                     <v6LangP>0</v6LangP>
                     <vShortEn>2</vShortEn>
                     <vShortWch>2</vShortWch>
+                    <v6Lto>0</v6Lto>
+                    <v6WtE>0</v6WtE>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>
