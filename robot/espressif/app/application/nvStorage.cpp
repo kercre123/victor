@@ -22,6 +22,10 @@ extern "C" {
 #define READ_BACKOFF_INTERVAL_us (1000000)
 
 #define FACTORY_DATA_BIT (0x80000000)
+#define FIXTURE_DATA_BIT (0xC0000000)
+#define FIXTURE_DATA_NUM_ENTRIES (16)
+#define FIXTURE_DATA_ADDRESS_MASK (FIXTURE_DATA_NUM_ENTRIES - 1)
+#define FIXTURE_DATA_READ_SIZE (1024)
 
 #define DEBUG_NVS 0
 
@@ -38,7 +42,8 @@ namespace NVStorage {
 typedef enum {
   NV_SEGMENT_A = 0,
   NV_SEGMENT_B = 1,
-  NV_SEGMENT_F = 0x40,
+  NV_SEGMENT_F = 0x20,
+  NV_SEGMENT_X = 0x40,
   NV_SEGMENT_UNINITALIZED = -128
 } NVSegment;
 
@@ -61,7 +66,6 @@ struct NVStorageState {
   u32            pendingReadEnd; // Highest tag we are searching to read
   ReadDoneCB     pendingReadCallback;
   MultiOpDoneCB  pendingMultiReadDoneCallback;
-  u32            lastReadTime; // The last time we returned a read result, use to back off and leave room for transport to clear
   s32            flashPointer;
   s8             phase;
   s8             retries;
@@ -76,7 +80,8 @@ static NVStorageState nv;
 
 static s32 getStartOfSegment(void)
 {
-  if (nv.segment & NV_SEGMENT_F) return FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE;
+  if (nv.segment & NV_SEGMENT_X) return FIXTURE_STORAGE_SECTOR * SECTOR_SIZE;
+  else if (nv.segment & NV_SEGMENT_F) return FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE;
   else
   {
     int segment = nv.segment & (NV_STORAGE_NUM_AREAS-1); // Mask for safety
@@ -113,7 +118,7 @@ static void resetWrite()
   nv.pendingOverwriteHeaderAddress = 0;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.segment &= ~NV_SEGMENT_F;
+  nv.segment &= ~NV_SEGMENT_F & ~NV_SEGMENT_X;
   nv.flashPointer = getStartOfSegment();
 }
 
@@ -138,7 +143,7 @@ static void resetRead()
   nv.multiReadFoundAny = false;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.segment &= ~NV_SEGMENT_F;
+  nv.segment &= ~NV_SEGMENT_F & ~NV_SEGMENT_X;
   nv.flashPointer = getStartOfSegment();
 }
 
@@ -148,6 +153,11 @@ static inline bool isBusy()
           (nv.pendingEraseStart != NVEntry_Invalid) ||
           (nv.pendingReadStart  != NVEntry_Invalid) ||
            nv.waitingForGC);
+}
+
+static inline bool isReadBlocked()
+{
+  return ((int)clientQueueAvailable() <= (int)sizeof(Anki::Cozmo::NVStorage::NVStorageBlob)) || (xPortGetFreeHeapSize() < 1680);
 }
 
 typedef enum
@@ -413,7 +423,6 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
   resetWrite();
   resetErase();
   resetRead();
-  nv.lastReadTime = system_get_time();
     
   for (area=0; area<NV_STORAGE_NUM_AREAS; ++area)
   {
@@ -540,12 +549,43 @@ static void endWrite(const NVResult writeResult)
 
 Result Update()
 {
-  const u32 now = system_get_time();
-  if (isBusy() && (now - nv.lastReadTime > READ_BACKOFF_INTERVAL_us))
+  if (isBusy() && !isReadBlocked())
   { // If we have anything to do
     static NVEntryHeader header;
     SpiFlashOpResult flashResult;
-    if (nv.flashPointer >= getEndOfSegment()) // Handle wrap around edge case here
+    if (nv.segment & NV_SEGMENT_X) // Special case, reading fixture data
+    {
+      if (nv.pendingReadStart > nv.pendingReadEnd)
+      { // We've finished with reading factory data
+        if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(nv.pendingReadEnd, NV_OKAY);
+        resetRead();
+      }
+      else
+      {
+        const u32 address = FIXTURE_STORAGE_SECTOR * SECTOR_SIZE + ((nv.pendingReadStart & FIXTURE_DATA_ADDRESS_MASK) * FIXTURE_DATA_READ_SIZE);
+        NVStorageBlob entry;
+        entry.tag = nv.pendingReadStart;
+        flashResult = spi_flash_read(address, reinterpret_cast<uint32*>(entry.blob), FIXTURE_DATA_READ_SIZE);
+        if (flashResult != SPI_FLASH_RESULT_OK)
+        {
+          if (nv.retries-- <= 0)
+          {
+            const NVResult fail = flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT;
+            entry.blob_length = 0;
+            if (nv.pendingReadCallback != NULL) nv.pendingReadCallback(&entry, fail);
+            if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(nv.pendingReadStart, fail);
+            resetRead();
+          }
+        }
+        else
+        {
+          entry.blob_length = FIXTURE_DATA_READ_SIZE;
+          if (nv.pendingReadCallback != NULL) nv.pendingReadCallback(&entry, NV_OKAY);
+          nv.pendingReadStart += 1;
+        }
+      }
+    }
+    else if (nv.flashPointer >= getEndOfSegment()) // Handle wrap around edge case here
     {
       header.tag = NVEntry_Invalid;
       flashResult = SPI_FLASH_RESULT_OK;
@@ -858,7 +898,6 @@ Result Update()
                 AnkiAssert(nv.pendingReadCallback != NULL, 422);
                 db_printf("Found something to read, sending it over\r\n");
                 nv.pendingReadCallback(&entry, NV_OKAY);
-                nv.lastReadTime = now;
                 if (nv.pendingReadStart == nv.pendingReadEnd) resetRead(); // This was a single read and we did it
                 else
                 {
@@ -896,7 +935,11 @@ NVResult Write(NVStorageBlob* entry, WriteDoneCB callback)
   if (entry == NULL) return NV_BAD_ARGS;
   if (entry->tag == NVEntry_Invalid) return NV_BAD_ARGS;
   if (isBusy()) return NV_BUSY; // Already have something queued
-  if (entry->tag & FACTORY_DATA_BIT) 
+  if ((entry->tag & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT)
+  {
+    return NV_BAD_ARGS; // Can't write fixture data through this interface
+  }
+  else if (entry->tag & FACTORY_DATA_BIT) 
   {
     nv.segment |= NV_SEGMENT_F;
   }
@@ -938,7 +981,13 @@ NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, Mult
 {
   if (readCallback == NULL) return NV_BAD_ARGS;
   if (isBusy()) return NV_BUSY; // Already have something queued
-  if (start & FACTORY_DATA_BIT)
+  if ((start & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT)
+  {
+    if ((start - FIXTURE_DATA_BIT) >= FIXTURE_DATA_NUM_ENTRIES) return NV_BAD_ARGS;
+    else if ((end - FIXTURE_DATA_BIT) >= FIXTURE_DATA_NUM_ENTRIES) return NV_BAD_ARGS;
+    else nv.segment |= NV_SEGMENT_X;
+  }
+  else if (start & FACTORY_DATA_BIT)
   {
     nv.segment |= NV_SEGMENT_F;
   }
