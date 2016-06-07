@@ -178,7 +178,7 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               NVStorage::NVOpResult result;
-              result.tag    = msg.writeNV.entry.tag;
+              result.tag    = msg.readNV.tag;
               result.write  = false;
               if (msg.readNV.tagRangeEnd == NVStorage::NVEntry_Invalid)
               {

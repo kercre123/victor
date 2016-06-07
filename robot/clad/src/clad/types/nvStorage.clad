@@ -13,7 +13,7 @@ namespace NVStorage {
   structure NVStorageBlob
   {
     uint_32 tag,
-    uint_8  blob[uint_32:1024],
+    uint_8  blob[uint_32:1024], // Index has to be uint_32 to keep blob data 4 byte aligned for firmware requirements
   }
 
   enum int_8 NVReportDest

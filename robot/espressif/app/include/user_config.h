@@ -9,6 +9,8 @@
 /// Add missing prototype of os_printf_plus
 extern int os_printf_plus(const char * format, ...) __attribute__ ((format (printf, 1, 2)));
 
+extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_size(), reads the same global
+
 /// Based on 1MB flash map
 #define FLASH_MEMORY_MAP (0x40200000)
 

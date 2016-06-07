@@ -85,6 +85,8 @@ And the mome raths outgrabe.""".encode()
         else:
             if self.pendingOps[tag][1] == "read":
                 sys.stdout.write("Pending read of {0:x} returned {1}{linesep}".format(tag, repr(msg.report), linesep=os.linesep))
+                if (msg.report.result < 0):
+                    del self.pendingOps[tag]
             else:
                 sys.stdout.write("Pending {} of {:x} returned {}{linesep}".format(self.pendingOps[tag][1], tag, repr(msg.report), linesep=os.linesep))
                 self.estimate.append(tag, self.pendingOps[tag][0], self.pendingOps[tag][1] == "write")
@@ -97,9 +99,9 @@ And the mome raths outgrabe.""".encode()
         if tag == NVS.NVEntryTag.NVEntry_Invalid:
             sys.stderr.write("Recieved nvData for invalid tag:{linesep}\t{}{linesep}".format(repr(msg.blob), linesep=os.linesep))
         elif tag not in self.pendingOps or self.pendingOps[tag][1] != "read":
-            sys.stderr.write("Received unexpected nvData: tag = {:x}{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore")[:100], linesep=os.linesep))
+            sys.stderr.write("Received unexpected nvData: tag = {:x} ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), bytes(msg.blob.blob).decode(errors="ignore")[:100], linesep=os.linesep))
         else:
-            sys.stdout.write("Pending read of {:x} returned{linesep}\t{:s}{linesep}".format(tag, bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
+            sys.stdout.write("Pending read of {:x} returned ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
             if self.pendingOps[tag][2]:
                 open("{:x}.nvstorage".format(tag), 'wb').write(bytes(msg.blob.blob))
             del self.pendingOps[tag]
@@ -133,6 +135,8 @@ And the mome raths outgrabe.""".encode()
             NVS.NVReportDest.ENGINE
         )))
         self.pendingOps[tag] = (None, "read", record)
+        if tagEnd != NVS.NVEntryTag.NVEntry_Invalid:
+            self.pendingOps[tagEnd] = (None, "read", False)
     
     @property
     def done(self):
@@ -254,6 +258,24 @@ And the mome raths outgrabe.""".encode()
         
     def test_readCameraCalib(self):
         self.read(NVS.NVEntryTag.NVEntry_CameraCalib, record=True)
+        self.waitForPending()
+        
+    def test_readRandomFixture(self):
+        self.read(0xC0000000 + int(random.uniform(0, 16)))
+        self.waitForPending()
+        
+    def test_readInvalidFixture(self):
+        invalid1 = 0xC0001000
+        print("Attempting to read 0x{0:x} ({0:d}), should fail".format(invalid1))
+        self.read(invalid1)
+        self.waitForPending()
+        invalid2 = 0xC0000010
+        print("Attempting to read from 0xC0000000 to 0x{0:x} ({0:d}), should fail".format(invalid2))
+        self.read(0xC0000000, invalid2)
+        self.waitForPending()
+        
+    def test_readAllFixture(self):
+        self.read(0xC0000000, 0xC000000F)
         self.waitForPending()
 
 if __name__ == "__main__":
