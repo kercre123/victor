@@ -25,8 +25,8 @@ namespace Simon {
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoPattern);
-      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
+      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameLabelWatchPattern);
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
         0, _SequenceLength);
 
       _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = _NextPlayer == PlayerType.Human;
@@ -66,7 +66,7 @@ namespace Simon {
 
     private void LightUpNextCube() {
       _CurrentSequenceIndex++;
-      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
         _CurrentSequenceIndex + 1, _SequenceLength);
       _LastSequenceTime = Time.time;
 
