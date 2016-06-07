@@ -30,6 +30,8 @@ public class ObservedObject {
 
   public int ID { get; private set; }
 
+  public uint FactoryID { get;  set; }
+
   public bool MarkersVisible { get { return Time.time - TimeLastSeen < kRemoveDelay; } }
 
   public Rect VizRect { get; private set; }
@@ -79,29 +81,25 @@ public class ObservedObject {
   public ObservedObject() {
   }
 
-  public ObservedObject(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
-    Constructor(objectID, objectFamily, objectType);
+  public ObservedObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
+    Constructor(objectID, factoryID, objectFamily, objectType);
   }
 
-  protected void Constructor(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
+  protected void Constructor(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
     TimeCreated = Time.time;
     Family = objectFamily;
     ObjectType = objectType;
     ID = objectID;
+    FactoryID = factoryID;
     
-    InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
-    SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+    InfoString = "ObjectID: " + ID + " FactoryID = " + FactoryID.ToString("X") + " Family: " + Family + " Type: " + ObjectType;
+    SelectInfoString = "Select ObjectID: " + ID + " FactoryID = " + FactoryID.ToString("X") + " Family: " + Family + " Type: " + ObjectType;
 
     if (objectFamily == ObjectFamily.LightCube) {
       CubeType = CubeType.LightCube;
     }
-    else {
-      CubeType = CubeType.Unknown;
-      DAS.Warn("ObservedObject.Unsupported", "Object " + ID + " with type " + objectType + " is unsupported"); 
-    }
 
     DAS.Debug("ObservedObject.Constructed", "ObservedObject cubeType(" + CubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
-
   }
 
   public static implicit operator uint(ObservedObject observedObject) {
