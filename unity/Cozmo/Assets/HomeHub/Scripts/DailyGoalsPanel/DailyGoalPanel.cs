@@ -154,12 +154,18 @@ public class DailyGoalPanel : MonoBehaviour {
 
   public void SetDailyGoals(List<DailyGoal> dailyGoals) {
     for (int i = 0; i < dailyGoals.Count; i++) {
-      CreateGoalCell(dailyGoals[i]);
+      GoalCell cell = CreateGoalCell(dailyGoals[i]);
+      if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1) {
+        cell.GetComponent<GoalCellHorizontalBar>().SetHorizontalMarker(false);
+      }
     }
 
     // putting in empty slots for empty goals.
     for (int i = dailyGoals.Count; i < DailyGoalManager.Instance.GetConfigMaxGoalCount(); ++i) {
-      CreateEmptyGoalCell();
+      GameObject cell = CreateEmptyGoalCell();
+      if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1) {
+        cell.GetComponent<GoalCellHorizontalBar>().SetHorizontalMarker(false);
+      }
     }
 
     UpdateCompletedText();
@@ -181,8 +187,10 @@ public class DailyGoalPanel : MonoBehaviour {
     return newBadge;
   }
 
-  private void CreateEmptyGoalCell() {
-    _EmptyGoalCells.Add(UIManager.CreateUIElement(_EmptyGoalCellPrefab, _GoalContainer));
+  private GameObject CreateEmptyGoalCell() {
+    GameObject newEmptyBadge = (UIManager.CreateUIElement(_EmptyGoalCellPrefab, _GoalContainer));
+    _EmptyGoalCells.Add(newEmptyBadge);
+    return newEmptyBadge;
   }
 
 }
