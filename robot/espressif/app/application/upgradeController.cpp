@@ -190,11 +190,10 @@ namespace UpgradeController {
     if (phase < OTAT_Enter_Recovery)
     {
       i2spiSwitchMode(I2SPI_REBOOT);
-      while (true);
     }
     else 
     {
-      while (true) i2spiBootloaderCommandDone();
+      while (i2spiBootloaderCommandDone() == false);
     }
   }
 
@@ -254,6 +253,7 @@ namespace UpgradeController {
           #if FACTORY_FIRMWARE == 0
           Face::FacePrintf("Starting FOTA\nupgrade...");
           #endif
+          counter = system_get_time() + 20000; // 20 ms
           phase = OTAT_Enter_Recovery;
           // Explicit fallthrough to next case
         }
@@ -322,21 +322,20 @@ namespace UpgradeController {
       }
       case OTAT_Enter_Recovery:
       {
-        const int8_t mode = OTA_Mode;
-        if (RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode))
+        if ((system_get_time() > counter) && (Face::GetRemainingRects() == 0))
         {
-          counter = 0xFFFFffff;
-          phase = OTAT_Delay;
+          const int8_t mode = OTA_Mode;
+          if (RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode))
+          {
+            counter = system_get_time() + 20000;
+            phase = OTAT_Delay;
+          }
         }
         break;
       }
       case OTAT_Delay:
       {
-        if ((counter == 0xFFFFffff) && i2spiMessageQueueIsEmpty() && (Face::GetRemainingRects() == 0))
-        {
-          counter = system_get_time() + 20000; // Wait for i2c
-        }
-        else if (system_get_time() > counter)
+        if ((system_get_time() > counter) && i2spiMessageQueueIsEmpty())
         {
           i2spiSwitchMode(I2SPI_PAUSED);
           phase = OTAT_Flash_Erase;
@@ -444,20 +443,28 @@ namespace UpgradeController {
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
             haveValidCert = false;
-            sha512_process(firmware_digest, fwb, sizeof(FirmwareBlock));
-            
-            if (aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
-              aes_cfb_decode(
-                AES_KEY,
-                aes_iv,
-                (uint8_t*) fwb->flashBlock, 
-                (uint8_t*) fwb->flashBlock, 
-                sizeof(fwb->flashBlock), 
-                aes_iv);
+            const int remaining = sizeof(FirmwareBlock) - (int)counter;
+            if (remaining > SHA512_BLOCK_SIZE)
+            {
+              sha512_process(firmware_digest, buffer + counter, SHA512_BLOCK_SIZE);
+              counter += SHA512_BLOCK_SIZE;
             }
+            else
+            {
+              sha512_process(firmware_digest, buffer + counter, remaining);
+              /*if (aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
+                aes_cfb_decode(
+                  AES_KEY,
+                  aes_iv,
+                  (uint8_t*) fwb->flashBlock, 
+                  (uint8_t*) fwb->flashBlock, 
+                  sizeof(fwb->flashBlock), 
+                  aes_iv);
+              }*/
 
-            retries = MAX_RETRIES;
-            phase = OTAT_Flash_Write;
+              retries = MAX_RETRIES;
+              phase = OTAT_Flash_Write;
+            }
           }
         }
         break;
@@ -550,6 +557,7 @@ namespace UpgradeController {
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
             phase = OTAT_Flash_Verify;
+            counter = 0;
           }
         }
         else // This is bound for the RTIP or body
@@ -613,6 +621,7 @@ namespace UpgradeController {
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
             phase = OTAT_Flash_Verify; // Finished operation
+            counter = 0;
             break;
           }
           case STATE_IDLE:
