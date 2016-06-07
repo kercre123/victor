@@ -1,0 +1,22 @@
+{
+  "Animations": [
+    {
+      "Name": "anim_speedTap_wait_long",
+      "Weight": 1.0,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    },
+    {
+      "Name": "anim_speedTap_wait_medium",
+      "Weight": 1.0,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    },
+    {
+      "Name": "anim_speedTap_wait_short",
+      "Weight": 1.0,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    }
+  ]
+}
