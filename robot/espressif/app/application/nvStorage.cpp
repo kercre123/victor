@@ -54,6 +54,8 @@ struct NVEntryHeader {
                       replaced. @warning MUST be the last member of the struct. */
 };
 
+#define MAX_ENTRY_SIZE (sizeof(NVEntryHeader) + 1024 + 4)
+
 struct NVStorageState {
   NVStorageBlob* pendingWrite;
   WriteDoneCB    pendingWriteDoneCallback;
@@ -290,6 +292,12 @@ static bool GarbageCollectionTask(uint32_t param)
       { // End of stored factory data;
         gc->phase = GC_rewrite;
       }
+      else if (header.size > MAX_ENTRY_SIZE)
+      {
+        os_printf("NVGC invalid header size, %d, in factory NVStorage!\r\n", header.size);
+        gc->factoryPointer = FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE + NV_STORAGE_AREA_SIZE; // Put pointer at end of region so we don't try to write anything into it.
+        gc->phase = GC_rewrite;
+      }
       else
       {
         gc->factoryPointer += header.size;
@@ -323,6 +331,13 @@ static bool GarbageCollectionTask(uint32_t param)
         GET_FLASH(gc->readPointer, buffer, sizeof(NVEntryHeader));
         if (header.tag == NVEntry_Invalid)
         { // End of stored data
+          db_printf("NVS %d entries, 0x%x bytes used after GC\r\n", gc->entryCount, gc->writePointer-gc->areaStart);
+          gc->phase = GC_finalize;
+          return true;
+        }
+        else if (header.size > MAX_ENTRY_SIZE)
+        {
+          os_printf("NVGC, invalid header size! Skipping everything after\r\n");
           db_printf("NVS %d entries, 0x%x bytes used after GC\r\n", gc->entryCount, gc->writePointer-gc->areaStart);
           gc->phase = GC_finalize;
           return true;
