@@ -70,7 +70,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
               }),
               kBPDB_scoreIncreaseDuringPutDown,
               &BehaviorPutDownBlock::LookDownAtBlock);
-
+  
   return Result::RESULT_OK;
 }
 
