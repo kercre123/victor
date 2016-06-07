@@ -42,6 +42,27 @@ namespace Anki {
       _ledGamma = 0x80;
     }
     
+
+    // TEMP (Kevin): WhiteBalancing is eventually to be done in body so just doing something simple here to get us by.
+    //               Basically if there is any red at all, then blue and green channels are scaled down to 60%.
+    void ActiveObject::DoWhiteBalancing()
+    {
+      for(auto iLED=0; iLED<NUM_LEDS; ++iLED) {
+        
+        if(_ledState[iLED].onColor.GetR() > 0) {
+          _ledState[iLED].onColor.SetB( 0.6f * _ledState[iLED].onColor.GetB());
+          _ledState[iLED].onColor.SetG( 0.6f * _ledState[iLED].onColor.GetG());
+        }
+
+        if(_ledState[iLED].offColor.GetR() > 0) {
+          _ledState[iLED].offColor.SetB( 0.6f * _ledState[iLED].offColor.GetB());
+          _ledState[iLED].offColor.SetG( 0.6f * _ledState[iLED].offColor.GetG());
+        }
+        
+      }
+    }
+
+    
     void ActiveObject::SetLEDs(const WhichCubeLEDs whichLEDs,
                              const ColorRGBA& onColor,
                              const ColorRGBA& offColor,
@@ -74,6 +95,7 @@ namespace Anki {
         shiftedLEDs = shiftedLEDs >> 1;
       }
       RecomputeGamma();
+      DoWhiteBalancing();
     }
     
     void ActiveObject::SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
@@ -113,6 +135,7 @@ namespace Anki {
         _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
       }
       RecomputeGamma();
+      DoWhiteBalancing();
     }
     
     
