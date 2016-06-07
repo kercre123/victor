@@ -12,7 +12,7 @@ namespace Cozmo {
     public class LootView : BaseView {
 
       // Initial Box Tween settings
-      private const float kBoxIntroDuration = 1.75f;
+      private const float kBoxIntroDuration = 1.25f;
       private const float kBoxIntroMinScale = 0.15f;
 
       // Rotation and Position Shaking
@@ -286,8 +286,13 @@ namespace Cozmo {
         }
       }
 
+      // Finish open animation, enable LootButton, create initial shake and flourish
       private void HandleOpenFinished() {
         _LootButton.onClick.AddListener(HandleButtonTap);
+        _ShakeRotationTweener = _LootBox.DOShakeRotation(kShakeDuration, new Vector3(0, 0, kShakeRotationMax), kShakeRotationVibrato, kShakeRotationRandomness);
+        _ShakePositionTweener = _LootBox.DOShakePosition(kShakeDuration, kShakePositionMax, kShakePositionVibrato, kShakePositionRandomness);
+        _BurstParticles.Emit(kFinalBurst);
+        TronLineBurst(kFinalBurst);
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -296,8 +301,8 @@ namespace Cozmo {
           openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         }
         // TODO: Set up Box Tween
-        openAnimation.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InOutBack));
-        openAnimation.Join(_LootBox.DOMove(_BoxSource.position, kBoxIntroDuration).From().SetEase(Ease.InOutBack));
+        openAnimation.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InExpo));
+        openAnimation.Join(_LootBox.DOMove(_BoxSource.position, kBoxIntroDuration).From().SetEase(Ease.InExpo));
         openAnimation.OnComplete(HandleOpenFinished);
       }
 
