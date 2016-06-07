@@ -96,6 +96,14 @@ public class MockRobot : IRobot {
     // won't get called
   }
 
+  public LightCube GetLightCubeWithFactoryID(uint factoryID) {
+    return null;
+  }
+
+  public ObservedObject GetObservedObjectWithFactoryID(uint factoryID) {
+    return null;
+  }
+
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
     // Do nothing
   }
@@ -133,8 +141,15 @@ public class MockRobot : IRobot {
 
   }
 
-  public void UpdateObservedObjectInfo(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
+  public void RobotDeletedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
+    
+  }
+
+  public void UpdateObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
     // Won't be called
+  }
+
+  public void RobotMarkedObjectPoseUnknown(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown message) {
   }
 
   public void UpdateObservedFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {

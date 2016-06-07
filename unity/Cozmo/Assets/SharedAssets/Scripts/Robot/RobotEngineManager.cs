@@ -528,6 +528,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     int ID = (int)message.objectID;
 
+    // We only care about light cubes moving. Chargers aren't supposed to detect that
     if (CurrentRobot.LightCubes.ContainsKey(ID)) {
       LightCube lightCube = CurrentRobot.LightCubes[ID];
 
@@ -554,6 +555,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     int ID = (int)message.objectID;
     
+    // We only care about light cubes moving. Chargers aren't supposed to detect that
     if (CurrentRobot.LightCubes.ContainsKey(ID)) {
       LightCube lightCube = CurrentRobot.LightCubes[ID];
       
@@ -577,7 +579,7 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotObservedObject message) {
     if (CurrentRobot == null)
       return;
-    CurrentRobot.UpdateObservedObjectInfo(message);
+    CurrentRobot.UpdateObservedObject(message);
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
@@ -608,22 +610,14 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
 
-    DAS.Debug("RobotEngineManager.DeletedObject", "Deleted ID " + message.objectID);
-
-    CurrentRobot.SeenObjects.Remove(CurrentRobot.SeenObjects.Find(x => x == message.objectID));
-    CurrentRobot.VisibleObjects.Remove(CurrentRobot.VisibleObjects.Find(x => x == message.objectID));
-    CurrentRobot.DirtyObjects.Remove(CurrentRobot.DirtyObjects.Find(x => x == message.objectID));
-    CurrentRobot.LightCubes.Remove((int)message.objectID);
-
+    CurrentRobot.RobotDeletedObject(message);
   }
 
   private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
-    ObservedObject deleted = CurrentRobot.SeenObjects.Find(x => x == message.objectID);
-
-    CurrentRobot.SeenObjects.Remove(deleted);
-    CurrentRobot.VisibleObjects.Remove(deleted);
-    CurrentRobot.DirtyObjects.Remove(deleted);
-
+    if (CurrentRobot == null)
+      return;
+    
+    CurrentRobot.RobotMarkedObjectPoseUnknown(message);
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {

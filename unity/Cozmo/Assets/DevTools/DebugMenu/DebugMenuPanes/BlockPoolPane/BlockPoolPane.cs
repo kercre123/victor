@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Anki.UI;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
+using Anki.Cozmo;
 
 public class BlockPoolPane : MonoBehaviour {
 
@@ -17,10 +18,10 @@ public class BlockPoolPane : MonoBehaviour {
   private Toggle _EnabledCheckbox;
 
   [SerializeField]
-  private Toggle _UpdateCheckbox;
+  private RectTransform _AvailableScrollView;
 
   [SerializeField]
-  private RectTransform _UIContainer;
+  private RectTransform _EnabledScrollView;
 
   [SerializeField]
   private InputField _FilterInput;
@@ -30,9 +31,9 @@ public class BlockPoolPane : MonoBehaviour {
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
   private class BlockData {
-    public BlockData(Anki.Cozmo.ObjectType type, uint id, bool is_enabled, sbyte rssi, Button button) {
+    public BlockData(Anki.Cozmo.ObjectType type, uint factoryID, bool is_enabled, sbyte rssi, Button button) {
       this.ObjectType = type;
-      this.Id = id;
+      this.FactoryID = factoryID;
       this.IsEnabled = is_enabled;
       this.RSSI = rssi;
       this.BlockButton = button;
@@ -40,7 +41,7 @@ public class BlockPoolPane : MonoBehaviour {
 
     public Anki.Cozmo.ObjectType ObjectType { get; set; }
 
-    public uint Id { get; set; }
+    public uint FactoryID { get; set; }
 
     public bool IsEnabled { get; set; }
 
@@ -59,7 +60,6 @@ public class BlockPoolPane : MonoBehaviour {
     _FilterInput.onValueChanged.AddListener(HandleFilterUpdate);
 
     _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
-    _UpdateCheckbox.onValueChanged.AddListener(HandleUpdateListValueChanged);
 
     _BlockPoolEnabledMessage = new U2G.BlockPoolEnabledMessage();
     _BlockSelectedMessage = new U2G.BlockSelectedMessage();
@@ -82,36 +82,50 @@ public class BlockPoolPane : MonoBehaviour {
     }
 
     foreach (KeyValuePair<uint, BlockData> kvp in _BlockStatesById) {
-      if (kvp.Value.RSSI < _FilterRSSI) {
-        kvp.Value.BlockButton.gameObject.SetActive(true);
-      }
-      else {
-        kvp.Value.BlockButton.gameObject.SetActive(false);
-      }
+      // Don't filter out enabled objects
+      bool active = kvp.Value.IsEnabled || kvp.Value.RSSI <= _FilterRSSI;
+      kvp.Value.BlockButton.gameObject.SetActive(active);
     }
   }
 
   private void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
 
-    // clear the lights we've turned blue to show connections.
     // Might stomp game setup but hopefully people are using this debug menu before playing.
     foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
       kvp.Value.SetLEDs(0, 0, 0, 0);
     }
+
     // Gets the previous ones enabled...
     _EnabledCheckbox.isOn = initMsg.blockPoolEnabled > 0;
-    
+
     // Clear any old ones 
-    foreach (Transform child in _UIContainer) {
+    foreach (Transform child in _AvailableScrollView) {
       Destroy(child);
     }
  
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
-      // Never get an rssi value for things that were previously connected and won't be discovered 
-      // if they connected to something else properly, so just indicate with a 0.
-      AddButton(initMsg.blockData[i].factory_id, Anki.Cozmo.ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
+      // See if we already know about the object. This happens when the blockpool pane is opened after the robot
+      // has already connected to some objects.
+      LightCube lc = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(initMsg.blockData[i].factory_id);
+      if (lc != null) {
+        AddButton(initMsg.blockData[i].factory_id, lc.ObjectType, initMsg.blockData[i].enabled, 0);
+
+        // Show all our enabled lights to blue so we can see what is currently connected
+        lc.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
+      } else {
+        ObservedObject oo = RobotEngineManager.Instance.CurrentRobot.GetObservedObjectWithFactoryID(initMsg.blockData[i].factory_id);
+        if (oo != null) {
+          // Create the button with the information that we know
+          AddButton(initMsg.blockData[i].factory_id, oo.ObjectType, initMsg.blockData[i].enabled, 0);
+        } else {
+          // Create the button with the information that we know
+          AddButton(initMsg.blockData[i].factory_id, ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
+        }
+      }
     }
+
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
+    RobotEngineManager.Instance.OnObjectConnectionState += HandleObjectConnectionState;
     RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
     RobotEngineManager.Instance.OnObjectUnavailableMsg += HandleObjectUnavailableMsg;
     SendAvailableObjects(true);
@@ -119,16 +133,30 @@ public class BlockPoolPane : MonoBehaviour {
 
   private void OnDestroy() {
     RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
+    RobotEngineManager.Instance.OnObjectConnectionState -= HandleObjectConnectionState;
     RobotEngineManager.Instance.OnObjectAvailableMsg -= HandleObjectAvailableMsg;
     RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
     SendAvailableObjects(false);
-    // clear the lights we've turned blue to show connections
+
+    // clear the lights we've turned blue to show connections. Force the values right away since we are
+    // being destroyed
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
         kvp.Value.SetLEDs(0, 0, 0, 0);
+        kvp.Value.SetAllLEDs();
       }
     }
+  }
 
+  private void HandleObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+    // Turn on or off the lights depending on whether we are connecting or disconnecting
+    LightCube lc = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(message.factoryID);
+    if (lc != null) {
+      uint onColor = message.connected ? Color.blue.ToUInt() : 0;
+      uint offColor = message.connected ? Color.cyan.ToUInt() : 0;
+      uint period_ms = message.connected ? uint.MaxValue : 0;
+      lc.SetLEDs(onColor, offColor, period_ms);
+    }
   }
 
   private void HandleObjectAvailableMsg(Anki.Cozmo.ExternalInterface.ObjectAvailable objAvailableMsg) {
@@ -152,21 +180,21 @@ public class BlockPoolPane : MonoBehaviour {
 
       _BlockStatesById.Remove(objUnAvailableMsg.factory_id);
 
-      int index = _BlockStates.FindIndex((BlockData obj) => { 
-        return objUnAvailableMsg.factory_id == obj.Id; 
-      });
+      int index = _BlockStates.FindIndex(obj => objUnAvailableMsg.factory_id == obj.FactoryID);
       _BlockStates.RemoveAt(index);
     }
   }
 
-  private void HandleButtonClick(uint id) {
+  private void HandleButtonClick(uint factoryID) {
     BlockPoolPane.BlockData data;
-    if (_BlockStatesById.TryGetValue(id, out data)) {
+    if (_BlockStatesById.TryGetValue(factoryID, out data)) {
       bool is_enabled = !data.IsEnabled;
       data.IsEnabled = is_enabled;
       UpdateButton(data);
-      _BlockSelectedMessage.factoryId = id;
-      _BlockSelectedMessage.selected = is_enabled;
+
+      // Send the message to engine
+      _BlockSelectedMessage.factoryId = factoryID;
+      _BlockSelectedMessage.selected = data.IsEnabled;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
       RobotEngineManager.Instance.SendMessage();
     }
@@ -187,23 +215,20 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void HandleUpdateListValueChanged(bool val) {
-    SendAvailableObjects(val);
-  }
-
-  private void AddButton(uint id, Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength) {
+  private void AddButton(uint factoryID, Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength) {
     BlockPoolPane.BlockData data;
-    if (!_BlockStatesById.TryGetValue(id, out data)) {
-      GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
-      gameObject.name = "block_" + id.ToString("X");
+    if (!_BlockStatesById.TryGetValue(factoryID, out data)) {
+      RectTransform parentTransform = is_enabled ? _EnabledScrollView : _AvailableScrollView;
+      GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, parentTransform);
+      gameObject.name = "object_" + factoryID.ToString("X");
       Button button = gameObject.GetComponent<Button>();
 
-      data = new BlockPoolPane.BlockData(type, id, is_enabled, signal_strength, button);
-      _BlockStatesById.Add(id, data);
+      data = new BlockPoolPane.BlockData(type, factoryID, is_enabled, signal_strength, button);
+      _BlockStatesById.Add(factoryID, data);
       _BlockStates.Add(data);
 
       UpdateButton(data);
-      button.onClick.AddListener(() => HandleButtonClick(id));
+      button.onClick.AddListener(() => HandleButtonClick(factoryID));
     }
     else if (data.RSSI != signal_strength || data.ObjectType != type) {
       // enabled is only changed form unity.
@@ -216,35 +241,47 @@ public class BlockPoolPane : MonoBehaviour {
   }
 
   private void UpdateButton(BlockData data) {
-    if (data.RSSI < _FilterRSSI) {
-      data.BlockButton.gameObject.SetActive(true);
-    }
-    else {
-      data.BlockButton.gameObject.SetActive(false);
-    }
+    // Don't filter out enabled objects
+    bool active = data.IsEnabled || data.RSSI <= _FilterRSSI;
+    data.BlockButton.gameObject.SetActive(active);
+
     Text txt = data.BlockButton.GetComponentInChildren<Text>();
     if (txt) {
-      txt.text = "ID: " + data.Id.ToString("X") + " \n " +
+      txt.text = "ID: " + data.FactoryID.ToString("X") + " \n " +
       "type: " + data.ObjectType + "\n" +
       "enabled: " + (data.IsEnabled ? "Y" : "N") + "\n" +
       "rssi: " + data.RSSI;
     }
-    // Show all our enabled lights to blue so we can see what is currently connected
-    foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-      kvp.Value.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
+
+    // Move the button to the correct list depending on whether it is enabled or not
+    if (data.IsEnabled && (data.BlockButton.transform.parent != _EnabledScrollView)) {
+      data.BlockButton.transform.SetParent(_EnabledScrollView);
+    } else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
+      data.BlockButton.transform.SetParent(_AvailableScrollView);
     }
+
+    // Sort the list after buttons have been moved between lists
+    SortList();
   }
 
   private void SortList() {
     // Sort the list by RSSI
     _BlockStates.Sort((BlockData x, BlockData y) => {
-      return x.RSSI.CompareTo(y.RSSI);
+      // In order to have a more stable sort that doesn't continuously switch around 
+      // two elements with the same RSSI, if the RSSI are equal then we sort based
+      // on the ID
+      int comparison = x.RSSI.CompareTo(y.RSSI);
+      return (comparison != 0) ? comparison : x.FactoryID.CompareTo(y.FactoryID);
     });
 
-    // Now reorder the UI elements. We reorder a transform children but every child can be told its index
+    // Now reorder the UI elements. We can't reorder a transform's children but every child can be told its index
     for (int i = 0; i < _BlockStates.Count; i++) {
-      BlockData bd = _BlockStates[i];
-      bd.BlockButton.gameObject.transform.SetSiblingIndex(i);
+      BlockData data = _BlockStates[i];
+
+      // Don't reorder enabled objects
+      if (!data.IsEnabled) {
+        data.BlockButton.gameObject.transform.SetSiblingIndex(i);
+      }
     }
   }
 }
