@@ -331,7 +331,7 @@ namespace Cozmo {
         if (robot.HasMismatchedCLAD()) {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
-         */
+        */
         
         if (TEST_CHARGER_CONNECT) {
           // Check if charger is discovered
@@ -406,8 +406,9 @@ namespace Cozmo {
             }
             
             // Connect to charger
-            const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
-            robot.ConnectToBlocks(connectToIDs);
+            std::array<FactoryID, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> connectToIDs;
+            connectToIDs[0] = _kChargerFactoryID;
+            robot.ConnectToObjects(connectToIDs);
           }
           
           // Drive off charger

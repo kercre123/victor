@@ -1012,6 +1012,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor
   
   if (nullptr != robot)
   {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleMessage.EnableCliffSensor","Setting to %s", msg.enable ? "true" : "false");
     robot->SetEnableCliffSensor(msg.enable);
   }
 }

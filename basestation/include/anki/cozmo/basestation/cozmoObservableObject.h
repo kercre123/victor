@@ -31,6 +31,8 @@ namespace Cozmo {
   using ActiveID = s32;  // TODO: Change this to u32 and use 0 as invalid
   using FactoryID = u32;
   
+  using FactoryIDArray = std::array<FactoryID, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS>;
+
   class ObservableObject : public Vision::ObservableObject, private Util::noncopyable
   {
   public:

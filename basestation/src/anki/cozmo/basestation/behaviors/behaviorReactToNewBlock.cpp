@@ -40,7 +40,7 @@ CONSOLE_VAR(u32, kBRTNB_minAgeToIgnoreBlock_ms, "Behavior.ReactToBlock", 10000);
 CONSOLE_VAR(u32, kBRTNB_minAgeToLookDown_ms, "Behavior.ReactToBlock", 700);
 CONSOLE_VAR(f32, kBRTNB_lookDownHeadAngle_deg, "Behavior.ReactToBlock", -10.0f);
 CONSOLE_VAR(f32, kBRTNB_lookUpHeadAngle_deg, "Behavior.ReactToBlock", 25.f);
-CONSOLE_VAR(u32, kBRTNB_numImagesToWaitWhileLookingDown, "Behavior.ReactToBlock", 3);
+CONSOLE_VAR(u32, kBRTNB_numImagesToWaitWhileLookingDown, "Behavior.ReactToBlock", 5);
 CONSOLE_VAR(f32, kBRTNB_maxAgeToTrackWithHead_ms, "Behavior.ReactToBlock", 150);
 CONSOLE_VAR(u32, kBRTNB_minTimeToSwitchBlocks_ms, "Behavior.ReactToBlock", 2000);
 CONSOLE_VAR(u32, kBRTNB_waitForDispatchNumFrames, "Behavior.ReactToBlock", 3);
@@ -88,11 +88,11 @@ void BehaviorReactToNewBlock::AlwaysHandle(const EngineToGameEvent& event, const
       break;
       
     case EngineToGameTag::ObjectMoved:
-      HandleObjectChanged(event.GetData().Get_ObjectMoved().objectID);
+      HandleObjectChanged(robot, event.GetData().Get_ObjectMoved().objectID);
       break;
       
     case EngineToGameTag::RobotMarkedObjectPoseUnknown:
-      HandleObjectChanged(event.GetData().Get_RobotMarkedObjectPoseUnknown().objectID);
+      HandleObjectChanged(robot, event.GetData().Get_RobotMarkedObjectPoseUnknown().objectID);
       break;
 
     default:
@@ -135,11 +135,11 @@ void BehaviorReactToNewBlock::HandleObjectObserved(const Robot& robot, const Ext
   if (familyList.count(msg.objectFamily) > 0)
   {
   
-    // always react to a block we could pick up or want to
+    // Always react to any block we "want" to pick up or that we have not yet reacted to
     bool wantToPickUp = false;
-    const bool canPickUp = CanPickUpBlock(robot, msg.objectID, wantToPickUp);
+    CanPickUpBlock(robot, msg.objectID, wantToPickUp);
     
-    if(wantToPickUp || canPickUp)
+    if(wantToPickUp || _reactedBlocks.count(msg.objectID)==0)
     {
       // don't change target blocks unless we didn't have one before, or we haven't seen it in a while
       TimeStamp_t currTS = robot.GetLastMsgTimestamp();
@@ -162,27 +162,31 @@ void BehaviorReactToNewBlock::HandleObjectObserved(const Robot& robot, const Ext
 }
 
   
-void BehaviorReactToNewBlock::HandleObjectChanged(ObjectID objectID)
+void BehaviorReactToNewBlock::HandleObjectChanged(const Robot& robot, ObjectID objectID)
 {
-  if(objectID != _targetBlock)
+  if(objectID != _targetBlock &&
+     objectID != robot.GetCarryingObject() &&
+     objectID != robot.GetDockObject())
   {
-    size_t N = _reactedBlocks.erase(objectID);
+    const size_t N = _reactedBlocks.erase(objectID);
     if(N > 0) {
       PRINT_NAMED_DEBUG("BehaviorReactToNewBlock.HandleObjectChanged",
-                        "Removing Object %d from reacted set because it moved",
+                        "Removing Object %d from reacted set because it moved or was marked unknown",
                         objectID.GetValue());
     }
   }
 }
-  
+
 
 void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
 {
   SET_STATE(DoingInitialReaction);
 
   // First, always turns towards object to acknowledge it
+  // Note: visually verify is true, so if we don't see the object anymore
+  // this compound action will fail and we will not contionue this behavior.
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlock, PI_F));
+  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlock, Radians(PI_F), true));
 
   // Then, three options
   // 1. If he can't reach the block or it's not pick-up-able, then ask for it
@@ -199,7 +203,13 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
       // React and then go get it!
       action->AddAction(new PlayAnimationGroupAction(robot, _bigReactAnimGroup));
       StartActing(action, kBRTNB_ScoreIncreaseForReaction,
-                  [this,&robot]() { TransitionToPickingUp(robot); });
+                  [this,&robot](ActionResult res) {
+                    if(ActionResult::SUCCESS != res) {
+                      _targetBlock.UnSet();
+                    } else {
+                      TransitionToPickingUp(robot);
+                    }
+                  });
     }
     else
     {
@@ -207,7 +217,13 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
       action->AddAction(CreateAskForAction(robot));
                         
       StartActing(action, kBRTNB_ScoreIncreaseForReaction,
-                  &BehaviorReactToNewBlock::TransitionToAskingLoop);
+                  [this,&robot](ActionResult res) {
+                    if(ActionResult::SUCCESS != res) {
+                      _targetBlock.UnSet();
+                    } else {
+                      TransitionToAskingLoop(robot);
+                    }
+                  });
     }
 
   }
@@ -217,9 +233,12 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
     action->AddAction(new PlayAnimationGroupAction(robot, _smallReactAnimGroup));
     
     StartActing(action, kBRTNB_ScoreIncreaseForReaction,
-                [this]() {
-                  // we're done, just mark the block done and move on
-                  _reactedBlocks.insert(_targetBlock);
+                [this](ActionResult res) {
+                  if(ActionResult::SUCCESS == res) {
+                    // we're done, just mark the block done and move on
+                    _reactedBlocks.insert(_targetBlock);
+                  }
+                  // Whether or not we succeeded, unset the target block
                   _targetBlock.UnSet();
                 });
   }
@@ -363,7 +382,7 @@ IActionRunner* BehaviorReactToNewBlock::CreateAskForAction(Robot& robot)
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     new TurnTowardsObjectAction(robot, _targetBlock, PI_F),                 // Look towards object
     new PlayAnimationGroupAction(robot, _askForBlockAnimGroup),             // Play "ask for" animation
-    new PlayAnimationGroupAction(robot, _askingLoopGroup),                  // Play "asksing" loop (?)
+    //new PlayAnimationGroupAction(robot, _askingLoopGroup),                  // Play "asksing" loop (?)
     moveHeadAndLift,                                                        // Make sure head and lift are down
     new WaitForImagesAction(robot, kBRTNB_numImagesToWaitWhileLookingDown), // Wait for a few images to see the object
   });
@@ -423,12 +442,9 @@ bool BehaviorReactToNewBlock::CanPickUpBlock(const Robot& robot, ObjectID object
     const bool isPickUpStackedBlockUnlocked = true; // TODO: robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::PickUpStackedBlock);
     
     if(height_mm <= kBRTNB_maxHeightForPickupFromGround_mm) {
-      // Can only pick it up if it's not in the reacted set, never "want" to pick up a low block.
-      // This prevents us from reacting to blocks on the ground we've already reacted to,
-      // but still allows us to pick them up if they are put on the ground after asking (in
-      // which case they are not yet in the reacted set).
-      // wantToPickup = false;
-      return _reactedBlocks.count(objectID) == 0;;
+      // "Can" always pick up a block from ground, but never "want" to.
+      // NOTE: wantToPickup = false;
+      return true;
     }
     else if(!isOnTopOfAnotherObject && isTakeFromHandUnlocked) {
       // Object is not on ground, not on top of another object, and we are allowed

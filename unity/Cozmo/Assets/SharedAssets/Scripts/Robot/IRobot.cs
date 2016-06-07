@@ -125,6 +125,10 @@ public interface IRobot : IDisposable {
 
   void UpdateDirtyList(ObservedObject dirty);
 
+  LightCube GetLightCubeWithFactoryID(uint factoryID);
+
+  ObservedObject GetObservedObjectWithFactoryID(uint factoryID);
+
   void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight);
 
   void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue, string source);
@@ -144,7 +148,11 @@ public interface IRobot : IDisposable {
 
   void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
 
-  void UpdateObservedObjectInfo(G2U.RobotObservedObject message);
+  void RobotDeletedObject(G2U.RobotDeletedObject message);
+
+  void UpdateObservedObject(G2U.RobotObservedObject message);
+
+  void RobotMarkedObjectPoseUnknown(G2U.RobotMarkedObjectPoseUnknown message);
 
   void UpdateObservedFaceInfo(G2U.RobotObservedFace message);
 

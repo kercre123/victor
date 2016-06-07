@@ -425,6 +425,7 @@ public class Robot : IRobot {
 
     SeenObjects.Clear();
     VisibleObjects.Clear();
+    DirtyObjects.Clear();
     LightCubes.Clear();
     RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
     GameStatus = GameStatusFlag.Nothing;
@@ -484,6 +485,20 @@ public class Robot : IRobot {
     if (!DirtyObjects.Contains(dirty)) {
       DirtyObjects.Add(dirty);
     }
+  }
+
+  public LightCube GetLightCubeWithFactoryID(uint factoryID) {
+    foreach(LightCube lc in LightCubes.Values) {
+      if (lc.FactoryID == factoryID) {
+        return lc;
+      }
+    }
+
+    return null;
+  }
+
+  public ObservedObject GetObservedObjectWithFactoryID(uint factoryID) {
+    return SeenObjects.Find(x => x.FactoryID == factoryID);
   }
 
   private void SendQueueSingleAction<T>(T action, RobotCallback callback, QueueActionPosition queueActionPosition) {
@@ -566,43 +581,92 @@ public class Robot : IRobot {
   #endregion
 
   public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
-    DAS.Debug(this, "ObjectConnectionState: " + message.objectID);
-    int id = (int)message.objectID;
-    if (!LightCubes.ContainsKey(id)) {
-      LightCube lightCube = new LightCube(id, ObjectFamily.LightCube, ObjectType.Block_LIGHTCUBE1);
-      LightCubes.Add(id, lightCube);
+    DAS.Debug(this, "ObjectConnectionState. " + (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factory ID " + message.factoryID.ToString("X"));
+
+    if (message.connected) {
+      // We are only interested on cubes and chargers for connection messages. 
+      bool isCube = message.device_type == ActiveObjectType.OBJECT_CUBE1 || message.device_type == ActiveObjectType.OBJECT_CUBE2 || message.device_type == ActiveObjectType.OBJECT_CUBE3;
+      bool isCharger = message.device_type == ActiveObjectType.OBJECT_CHARGER;
+      if (isCube || isCharger) {
+
+        // Find the correct object type given the information in the message.
+        ObjectType objectType = ObjectType.Invalid;
+        ObjectFamily objectFamily = ObjectFamily.Invalid;
+        switch (message.device_type) {
+        case ActiveObjectType.OBJECT_CUBE1:
+          objectType = ObjectType.Block_LIGHTCUBE1;
+          objectFamily = ObjectFamily.LightCube;
+          break;
+
+        case ActiveObjectType.OBJECT_CUBE2:
+          objectType = ObjectType.Block_LIGHTCUBE2;
+          objectFamily = ObjectFamily.LightCube;
+          break;
+
+        case ActiveObjectType.OBJECT_CUBE3:
+          objectType = ObjectType.Block_LIGHTCUBE3;
+          objectFamily = ObjectFamily.LightCube;
+          break;
+
+        case ActiveObjectType.OBJECT_CHARGER:
+          objectType = ObjectType.Charger_Basic;
+          objectFamily = ObjectFamily.Charger;
+          break;
+        }
+
+
+        int objectID = (int)message.objectID;
+        if (objectFamily == ObjectFamily.LightCube) {
+          AddLightCube(objectID, message.factoryID, objectType);
+        } else {
+          AddObservedObject(objectID, message.factoryID, objectFamily, objectType);
+        }
+      } else {
+        // This is not a cube or a charger so let's make sure it is not in our lists of objects
+        DeleteObservedObject((int)message.objectID);
+      }
+    } else {
+      // For disconnects, the robot doesn't send the device type so try to remove the object from all our lists
+      DeleteObservedObject((int)message.objectID);
     }
   }
 
-  public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
+  public void RobotDeletedObject(G2U.RobotDeletedObject message) {
+    DAS.Debug(this, "RobotDeletedObject", "Deleted ID " + message.objectID);
+
+    DeleteObservedObject((int)message.objectID);
+  }
+
+  public void UpdateObservedObject(G2U.RobotObservedObject message) {
+//    DAS.Debug(this, "UpdateObservedObjectInfo. ", "Updating ID " + message.objectID);
+    if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
+      DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
+      return;
+    }
+
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.LightCube) {
-      AddLightCube(LightCubes.ContainsKey(message.objectID) ? LightCubes[message.objectID] : null, message);
-    }
-    else {
-      ObservedObject knownObject = SeenObjects.Find(x => x == message.objectID);
+      LightCube lightCube = AddLightCube(message.objectID, 0, message.objectType);
 
-      AddObservedObject(knownObject, message);
+      UpdateObservedObject(lightCube, message);
+    } else {
+      ObservedObject observedObject = AddObservedObject(message.objectID, 0, message.objectFamily, message.objectType);
+
+      UpdateObservedObject(observedObject, message);
     }
   }
 
-  private void AddLightCube(LightCube lightCube, G2U.RobotObservedObject message) {
-    if (lightCube == null) {
-      lightCube = new LightCube(message.objectID, message.objectFamily, message.objectType);
+  public void RobotMarkedObjectPoseUnknown(G2U.RobotMarkedObjectPoseUnknown message) {
+    DAS.Debug(this, "RobotMarkedObjectPoseUnknown", "Object ID " + message.objectID);
 
-      LightCubes.Add(message.objectID, lightCube);
-      SeenObjects.Add(lightCube);
-    }
-
-    AddObservedObject(lightCube, message);
+    DeleteObservedObject((int)message.objectID);
   }
 
-  private void AddObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message) {
-    if (knownObject == null) {
-      knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
-      SeenObjects.Add(knownObject);
-    }
-    else {
-      DirtyObjects.Remove(knownObject);
+  private void UpdateObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message) {
+    UnityEngine.Assertions.Assert.IsNotNull(knownObject);
+
+    int index = DirtyObjects.FindIndex(x => x == knownObject.ID);
+    if (index != -1) {
+      DirtyObjects.RemoveAt(index);
     }
 
     knownObject.UpdateInfo(message);
@@ -616,7 +680,57 @@ public class Robot : IRobot {
     }
   }
 
+  private LightCube AddLightCube(int objectID, uint factoryID, ObjectType objectType) {
+    LightCube lightCube = null;
+    if (!LightCubes.TryGetValue(objectID, out lightCube)) {
+      lightCube = new LightCube(objectID, factoryID, ObjectFamily.LightCube, objectType);
+
+      DAS.Debug(this, "Adding cube " + objectID + " factoryID " + factoryID.ToString("X") + " Objectype " + objectType.ToString());
+      LightCubes.Add(objectID, lightCube);
+      SeenObjects.Add(lightCube);
+    } if ((lightCube.FactoryID == 0) && (factoryID != 0)) {
+      // So far we received messages about the cube without a factory ID. This is because it was seen 
+      // before we connected to it. This message has the factory ID so we need to update its information
+      // so we can find it in the future
+      DAS.Debug(this, "Updating cube " + objectID + " factoryID to " + factoryID.ToString("X"));
+      lightCube.FactoryID = factoryID;
+    }
+
+    return lightCube;
+  }
+
+  private ObservedObject AddObservedObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
+    ObservedObject observedObject = SeenObjects.Find(x => x == objectID);
+    if (observedObject == null) {
+      observedObject = new ObservedObject(objectID, factoryID, objectFamily, objectType);
+      SeenObjects.Add(observedObject);
+    }
+
+    return observedObject;
+  }
+
+  private void DeleteObservedObject(int objectID) {
+    DAS.Debug(this, "Deleting observed object " + objectID);
+    LightCubes.Remove(objectID);
+
+    int index = SeenObjects.FindIndex(x => x.ID == objectID);
+    if (index != -1) {
+      SeenObjects.RemoveAt(index);
+    }
+
+    index = DirtyObjects.FindIndex(x => x.ID == objectID);
+    if (index != -1) {
+      DirtyObjects.RemoveAt(index);
+    }
+
+    index = VisibleObjects.FindIndex(x => x.ID == objectID);
+    if (index != -1) {
+      VisibleObjects.RemoveAt(index);
+    }
+  }
+
   public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
+    //DAS.Debug ("Robot", "saw a face at " + message.faceID);
     Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
   }

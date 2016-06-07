@@ -147,7 +147,26 @@ namespace Anki {
       void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
-            
+      
+      using GetPossiblePosesFunc = std::function<ActionResult(ActionableObject* object,
+                                                              std::vector<Pose3d>& possiblePoses,
+                                                              bool& alreadyInPosition)>;
+      
+      template<typename T>
+      void SetGetPossiblePosesFunc(ActionResult(T::*func)(ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition))
+      {
+        _getPossiblePosesFunc = std::bind(func,
+                                          (T*)(this),
+                                          std::placeholders::_1,
+                                          std::placeholders::_2,
+                                          std::placeholders::_3);
+      }
+      
+      void SetGetPossiblePosesFunc(GetPossiblePosesFunc func)
+      {
+        _getPossiblePosesFunc = func;
+      }
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -173,6 +192,13 @@ namespace Anki {
       
       PathMotionProfile          _pathMotionProfile;
       bool _hasMotionProfile = false;
+      
+    private:
+      GetPossiblePosesFunc _getPossiblePosesFunc = std::bind(&DriveToObjectAction::GetPossiblePoses,
+                                                             this,
+                                                             std::placeholders::_1,
+                                                             std::placeholders::_2,
+                                                             std::placeholders::_3);
     }; // DriveToObjectAction
 
   

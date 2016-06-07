@@ -122,7 +122,19 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
                 [this](Robot& robot) {
                   // use same logic as put down block behavior
                   StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot, false),
-                               &BehaviorRollBlock::TransitionToReactingToBlock);
+                              [this, &robot]() {
+                                if(robot.IsCarryingObject()) {
+                                  // No matter what, even if we didn't see the object we were
+                                  // putting down for some reason, mark the robot as not carrying
+                                  // anything so we don't get stuck in a loop of trying to put
+                                  // something down (i.e. assume the object is no longer on our lift)
+                                  // TODO: We should really be using some kind of PlaceOnGroundAction instead of raw animation (see COZMO-2192)
+                                  PRINT_NAMED_WARNING("BehaviorRollBlock.TransitionToSettingDownBlock.DidNotSeeBlock",
+                                                      "Forcibly setting carried objects as unattached (See COZMO-2192)");
+                                  robot.SetCarriedObjectAsUnattached();
+                                }
+                                TransitionToReactingToBlock(robot);
+                              });
                 });
   }
 }
@@ -134,11 +146,16 @@ void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
   if( robot.IsCarryingObject() ) {
     PRINT_NAMED_ERROR("BehaviorRollBlock.ReactWhileHolding",
                       "block should be put down at this point. Bailing from behavior");
+    _targetBlock.UnSet();
     return;
   }
 
   if( !_initialAnimGroup.empty() ) {
-    StartActing(new PlayAnimationGroupAction(robot, _initialAnimGroup),                  
+    // Turn towards the object and then react to it before performing the roll action
+    StartActing(new CompoundActionSequential(robot, {
+                  new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
+                  new PlayAnimationGroupAction(robot, _initialAnimGroup),
+                }),
                 &BehaviorRollBlock::TransitionToPerformingAction);
   }
   else {
@@ -158,12 +175,14 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
 
   const Radians maxTurnToFaceAngle( DEG_TO_RAD(90) );
   const bool sayName = true;
-  DriveToRollObjectAction* action = new DriveToRollObjectAction(robot, _targetBlock,
-                                                                false, 0, false,
-                                                                maxTurnToFaceAngle, sayName);
-  action->RollToUpright();
-
-  StartActing(action,
+  DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
+                                                                    false, 0, false,
+                                                                    maxTurnToFaceAngle, sayName);
+  rollAction->RollToUpright();
+  
+  
+  // Roll the object and then look at a person
+  StartActing(new TurnTowardsFaceWrapperAction(robot, rollAction, false, true, PI_F, true),
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
                 if( msg.result == ActionResult::SUCCESS ) {
                   // check if we want to run again
@@ -203,7 +222,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
                       }
                       break;
                     }
-            
+                      
                     default: {
                       if( ! _retryActionAnimGroup.empty() ) {
                         animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
