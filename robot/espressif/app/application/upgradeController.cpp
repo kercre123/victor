@@ -85,30 +85,6 @@ namespace UpgradeController {
   bool didEsp; ///< We have new firmware for the Espressif
   bool haveTermination; ///< Have received termination
 
-  void FactoryUpgrade()
-  {
-    #include "cboot.bin.h"
-    uint32_t buffer[(firmware_cboot_bin_len/4)+1];
-    if (spi_flash_read(0, buffer, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK)
-    {
-      os_printf("Couldn't read back existing bootloader aborting.\r\n");
-    }
-    else
-    {
-      uint8_t* charBuffer = (uint8_t*)buffer;
-      if (os_memcmp(charBuffer, firmware_cboot_bin, firmware_cboot_bin_len))
-      {
-        os_printf("Bootloader doesn't match\r\nValidating our own header\r\n");
-        uint32_t headerValidation[] = {1, 0};
-        while (spi_flash_write((APPLICATION_A_SECTOR * SECTOR_SIZE) + APP_IMAGE_HEADER_OFFSET + 4, headerValidation, 8));
-        os_printf("Upgrading bootloader\r\n");
-        while (spi_flash_erase_sector(0) != SPI_FLASH_RESULT_OK);
-        while (spi_flash_write(0, (uint32_t*)firmware_cboot_bin, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK);
-        os_printf("Bootloader upgraded\r\n");
-      }
-    }
-  }
-
   bool Init()
   {
     buffer = NULL;
@@ -120,8 +96,6 @@ namespace UpgradeController {
     retries = MAX_RETRIES;
     didEsp = false;
     haveTermination = false;  
-    
-    if (FACTORY_FIRMWARE == 0) FactoryUpgrade();
     
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
