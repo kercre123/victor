@@ -428,7 +428,7 @@ namespace UpgradeController {
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
             
-            sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
+            //sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
             /*if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
                 AES_KEY,
@@ -637,6 +637,7 @@ namespace UpgradeController {
           counter = 0;
           phase = OTAT_Flash_Write;
         }
+        break;
       }
       case OTAT_Reject:
       {
