@@ -30,7 +30,10 @@ namespace Cozmo {
       private const float kTapDecay = 0.01f;
       private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.0f;
-      private const float kUpdateInterval = 0.25f;
+      private const float kUpdateIntervalMin = 0.20f;
+      private const float kUpdateIntervalMax = 1.0f;
+      private float _UpdateTimeStamp = -1;
+      private float _CurrInterval = -1;
 
       // Particle Burst settings for tap burst
       private const int kMinBurst = 3;
@@ -38,7 +41,7 @@ namespace Cozmo {
       private const int kFinalBurst = 15;
 
       // Total Charge per Tap and rate at which Charge decays
-      private const float kChargePerTap = 0.125f;
+      private const float kChargePerTap = 0.15f;
       private const float kChargeDecay = 0.0025f;
 
       // How long the Reward animation takes to tween the reward doobers to their initial positions
@@ -52,9 +55,12 @@ namespace Cozmo {
       private const float kDooberStaggerMax = 0.75f;
 
       // Tron Line settings
-      private const int kTronBurstLow = 3;
-      private const int kTronBurstMed = 6;
+      private const int kTronBurstLow = 2;
+      private const int kTronBurstMed = 4;
       private const int kTronBurstHigh = 10;
+
+      private const float kLootMidTreshold = 0.25f;
+      private const float kLootAlmostThreshold = 0.6f;
 
       private float _currentCharge = 0.0f;
       private float _recentTapCharge = 0.0f;
@@ -84,9 +90,6 @@ namespace Cozmo {
       private GameObject _TronLinePrefab;
       [SerializeField]
       private ParticleSystem _BurstParticles;
-
-      private const float kLootMidTreshold = 0.20f;
-      private const float kLootAlmostThreshold = 0.55f;
 
       public string LootText {
         get { return _LootText != null ? _LootText.text : null; }
@@ -145,10 +148,6 @@ namespace Cozmo {
           else {
             _currentCharge += kChargePerTap;
             _recentTapCharge = 1.0f;
-
-            float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
-            _BurstParticles.Emit((int)toBurst);
-            TronLineBurst(_tronBurst);
             StopTweens();
 
             float currShake = Mathf.Lerp(kShakeRotationMin, kShakeRotationMax, _currentCharge);
@@ -164,6 +163,15 @@ namespace Cozmo {
         if (_BoxOpened == false) {
           if (_currentCharge > 0.0f) {
             _currentCharge -= kChargeDecay;
+            if (Time.time - _UpdateTimeStamp > _CurrInterval) {
+              _UpdateTimeStamp = Time.time;
+              float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
+              _BurstParticles.Emit((int)toBurst);
+              TronLineBurst(_tronBurst);
+              // Makes the Current Interval have variance that becomes more narrow the more charged the box is.
+              _CurrInterval = Mathf.Lerp(kUpdateIntervalMax, kUpdateIntervalMin, _currentCharge);
+              _CurrInterval = UnityEngine.Random.Range(kUpdateIntervalMin, _CurrInterval);
+            }
             if (_currentCharge <= 0.0f) {
               _currentCharge = 0.0f;
             }
