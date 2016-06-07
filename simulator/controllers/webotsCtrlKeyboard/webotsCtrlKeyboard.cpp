@@ -2105,6 +2105,21 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)';':
+              {
+                // Toggle enabling of reactionary behaviors
+                static bool enable = false;
+                printf("Enable reactionary behaviors: %d\n", enable);
+                ExternalInterface::EnableReactionaryBehaviors m;
+                m.enabled = enable;
+                ExternalInterface::MessageGameToEngine message;
+                message.Set_EnableReactionaryBehaviors(m);
+                SendMessage(message);
+                
+                enable = !enable;
+                break;
+              }
+                
               case (s32)'"':
               {
                 webots::Field* sayStringField = root_->getField("sayString");
