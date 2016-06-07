@@ -111,6 +111,7 @@ namespace Anki {
     DriveToObjectAction::~DriveToObjectAction()
     {
       _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+      _compoundAction.PrepForCompletion();
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -294,7 +295,7 @@ namespace Anki {
         }
       } else {
         
-        result = GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+        result = _getPossiblePosesFunc(object, possiblePoses, alreadyInPosition);
       }
       
       // In case we are re-running this action, make sure compound actions are cleared.
