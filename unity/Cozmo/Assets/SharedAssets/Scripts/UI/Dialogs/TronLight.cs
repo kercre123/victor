@@ -20,7 +20,8 @@ namespace Cozmo {
 
       private DIR _currDir = DIR.UP;
       private float _currLifeSpan;
-      private float _lifeSpan = 1.25f;
+      private float _lifeSpanMin = 0.75f;
+      private float _lifeSpanMax = 1.5f;
       private int _MinTurns = 1;
       private int _MaxTurns = 5;
       private float _MinTurnDist = 0.75f;
@@ -42,8 +43,9 @@ namespace Cozmo {
         if (_currTurns < 1) {
           _currTurns = 1;
         }
-        _currLifeSpan = _lifeSpan;
+        _currLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
         _currDir = (DIR)UnityEngine.Random.Range(0, (int)DIR.DOWN);
+        _currInterval = (_lifeSpanMax / (_currTurns + 1));
         HandleTween();
       }
 
@@ -63,7 +65,6 @@ namespace Cozmo {
         }
         else {
           _currDist = UnityEngine.Random.Range(_MinTurnDist, _MaxTurnDist);
-          _currInterval = (_lifeSpan / (_currTurns + 1));
           _currLifeSpan -= _currInterval;
           _currTween = transform.DOMove(NewTarget(), _currInterval).SetRelative().OnComplete(HandleTween).SetEase(Ease.Linear);
           _turnsDone++;

@@ -11,6 +11,10 @@ namespace Cozmo {
   namespace UI {
     public class LootView : BaseView {
 
+      // Initial Box Tween settings
+      private const float kBoxIntroDuration = 1.75f;
+      private const float kBoxIntroMinScale = 0.15f;
+
       // Rotation and Position Shaking
       private const float kShakeDuration = 1.25f;
       private const float kShakeRotationMin = 20.0f;
@@ -71,6 +75,8 @@ namespace Cozmo {
       [SerializeField]
       private Transform _FinalRewardTarget;
       [SerializeField]
+      private Transform _BoxSource;
+      [SerializeField]
       private GameObject _RewardDooberPrefab;
       [SerializeField]
       private GameObject _TronLinePrefab;
@@ -113,25 +119,20 @@ namespace Cozmo {
       private CanvasGroup _AlphaController;
 
       private bool _BoxOpened;
-      private bool _ChargeStarted;
 
       private void Awake() {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
         _LootGlow.DOFade(0.0f, 0.0f);
-        _LootBox.DOScale(kMinScale, 0.0f);
+        _LootBox.localScale = new Vector3(kMinScale, kMinScale);
         _BoxOpened = false;
-        _ChargeStarted = false;
-        _LootButton.onClick.AddListener(HandleButtonTap);
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
         }
-
       }
 
       // Handle each tap
       private void HandleButtonTap() {
         if (_BoxOpened == false) {
-
           if (_currentCharge >= 1.0f) {
             _BoxOpened = true;
 
@@ -153,7 +154,6 @@ namespace Cozmo {
             currShake = Mathf.Lerp(kShakePositionMin, kShakePositionMax, _recentTapCharge);
             _ShakePositionTweener = _LootBox.DOShakePosition(kShakeDuration, currShake, kShakePositionVibrato, kShakePositionRandomness);
           }
-
         }
       }
 
@@ -161,16 +161,9 @@ namespace Cozmo {
         // Decay charge if the box hasn't been opened yet, update the progressbar.
         if (_BoxOpened == false) {
           if (_currentCharge > 0.0f) {
-            if (_ChargeStarted == false) {
-              //BoxChargeUpdate();
-              _ChargeStarted = true;
-            }
-            else {
-              _currentCharge -= kChargeDecay;
-              if (_currentCharge <= 0.0f) {
-                _ChargeStarted = false;
-                _currentCharge = 0.0f;
-              }
+            _currentCharge -= kChargeDecay;
+            if (_currentCharge <= 0.0f) {
+              _currentCharge = 0.0f;
             }
           }
           if (_recentTapCharge > 0.0f) {
@@ -259,7 +252,7 @@ namespace Cozmo {
 
       private void TronLineBurst(int count) {
         for (int i = 0; i < count; i++) {
-          UIManager.CreateUIElement(_TronLinePrefab.gameObject, _DooberStart);
+          UIManager.CreateUIElement(_TronLinePrefab.gameObject, _AlphaController.transform);
         }
       }
 
@@ -293,18 +286,26 @@ namespace Cozmo {
         }
       }
 
+      private void HandleOpenFinished() {
+        _LootButton.onClick.AddListener(HandleButtonTap);
+      }
+
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
         if (_AlphaController != null) {
           _AlphaController.alpha = 0;
           openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         }
         // TODO: Set up Box Tween
+        openAnimation.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InOutBack));
+        openAnimation.Join(_LootBox.DOMove(_BoxSource.position, kBoxIntroDuration).From().SetEase(Ease.InOutBack));
+        openAnimation.OnComplete(HandleOpenFinished);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
         if (_AlphaController != null) {
           closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
         }
+        
         SendDoobersAway(closeAnimation);
       }
     }

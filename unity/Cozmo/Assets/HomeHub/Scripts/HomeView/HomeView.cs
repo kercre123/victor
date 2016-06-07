@@ -111,8 +111,8 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       _LootViewReady = true;
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetCurrentRequirementPoints());
     }
 
     // Opens loot view and fires and relevant events
@@ -126,13 +126,14 @@ namespace Cozmo.HomeHub {
         return;
       }
 
-      // Create alert view with Icon
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
       _LootViewInstance = alertView;
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
-      UpdateChestProgressBar(currentPoints, numPointsNeeded);
+      if (_LootViewReady == false) {
+        UpdateChestProgressBar(currentPoints, numPointsNeeded);
+      }
     }
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded) {
@@ -153,10 +154,12 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleProgressUpdated() {
+      Debug.Log("ProgressUpdated End Event Triggered");
       if (_LootViewReady) {
+        _LootViewReady = false;
         OpenLootView();
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       }
-      _LootViewReady = false;
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
