@@ -34,15 +34,9 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/console/consoleInterface.h"
 
 #define TEST_CHARGER_CONNECT 0
-
-// Whether or not to end the test before the actual block pickup
-#define SKIP_BLOCK_PICKUP 0
-
-// Set to 1 if you want the test to actually be able to write
-// new camera calibration, calibration images, and test results to flash.
-#define ENABLE_NVSTORAGE_WRITES 1
 
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
@@ -51,6 +45,26 @@
 namespace Anki {
 namespace Cozmo {
 
+  ////////////////////////////
+  // Console vars
+  ////////////////////////////
+  
+  // Does the test without doing any of the writing to NVStorage
+  CONSOLE_VAR(bool, kBFT_EnableNVStorageWrites,   "BehaviorFactoryTest",  true);
+  
+  // Skips the final block pickup.
+  // Eventually, it's possible we might not need to do this part of the test and that
+  // checking the block location is sufficient, but for now keep this to false!
+  CONSOLE_VAR(bool, kBFT_SkipBlockPickup,         "BehaviorFactoryTest",  false);
+  
+  // Should be set to true once pilot build begins.
+  // EP3 robots in the office however will not have this data so skip this check.
+  CONSOLE_VAR(bool, kBFT_CheckPrevFixtureResults, "BehaviorFactoryTest",  false);
+  
+  // Station ID
+  CONSOLE_VAR(u32,  kBFT_StationID,               "BehaviorFactoryTest",  0);
+  
+  
   ////////////////////////////
   // Static consts
   ////////////////////////////
@@ -178,7 +192,7 @@ namespace Cozmo {
     
     // NOTE: Playpen fixutre will do the memory wipe since WipeAll reboots the robot
     /*
-    if (ENABLE_NVSTORAGE_WRITES) {
+    if (kBFT_EnableNVStorageWrites) {
       // Erase all entries in flash
       robot.GetNVStorageComponent().WipeAll(true,
                                             [this,&robot](NVStorage::NVResult res){
@@ -252,10 +266,10 @@ namespace Cozmo {
       _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
       
-      testRes.stationID = 0;   // TODO: How to get this?
+      testRes.stationID = kBFT_StationID;
 
       
-      if (ENABLE_NVSTORAGE_WRITES) {
+      if (kBFT_EnableNVStorageWrites) {
         u8 buf[testRes.Size()];
         size_t numBytes = testRes.Pack(buf, sizeof(buf));
         
@@ -556,7 +570,7 @@ namespace Cozmo {
           StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
-                        if (ENABLE_NVSTORAGE_WRITES) {
+                        if (kBFT_EnableNVStorageWrites) {
                           // Save tool code images to robot (whether it succeeded to read code or not)
                           _toolCodeImagesStored = false;
                           if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
@@ -600,7 +614,7 @@ namespace Cozmo {
                                          info.observedCalibDotRight_x, info.observedCalibDotRight_y);
                         
                         // Store results to nvStorage
-                        if (ENABLE_NVSTORAGE_WRITES) {
+                        if (kBFT_EnableNVStorageWrites) {
                           u8 buf[info.Size()];
                           size_t numBytes = info.Pack(buf, sizeof(buf));
                           if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
@@ -732,8 +746,8 @@ namespace Cozmo {
       }
       case FactoryTestState::StartPickup:
       {
-        if (SKIP_BLOCK_PICKUP) {
-          if (ENABLE_NVSTORAGE_WRITES) {
+        if (kBFT_SkipBlockPickup) {
+          if (kBFT_EnableNVStorageWrites) {
             if (!_toolCodeImagesStored) {
               break;
             }
@@ -1106,7 +1120,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     
-    if (ENABLE_NVSTORAGE_WRITES) {
+    if (kBFT_EnableNVStorageWrites) {
       
       // Save calibration to robot
       CameraCalibration calibMsg;
