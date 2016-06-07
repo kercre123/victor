@@ -115,6 +115,10 @@
     {
       "CladEvent": "OnWiggle",
       "AnimName": "ag_faceEnrollment_Wiggle"
+    },
+    {
+      "CladEvent": "OnWaitForCubesMinigameSetup",
+      "AnimName": "ag_speedTap_wait"
     }
   ]
 }

@@ -44,6 +44,14 @@ public class InitialCubesState : State {
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
     }
+
+    string waitAnimGroup = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnWaitForCubesMinigameSetup);
+    if (waitAnimGroup != null) {
+      Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
+      pushIdleAnimMsg.animationName = waitAnimGroup;
+      RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
+      RobotEngineManager.Instance.SendMessage();
+    }
   }
 
   public override void Update() {
@@ -169,6 +177,13 @@ public class InitialCubesState : State {
     }
 
     _Game.SharedMinigameView.HideGameStateSlide();
+
+    string waitAnimGroup = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnWaitForCubesMinigameSetup);
+    if (waitAnimGroup != null) {
+      RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
+      RobotEngineManager.Instance.SendMessage();
+    }
+
   }
 
   private void HandleContinueButtonClicked() {
