@@ -94,6 +94,7 @@ namespace UpgradeController {
   OTATaskPhase phase; ///< Keeps track of our current task state
   bool didEsp; ///< We have new firmware for the Espressif
   bool haveTermination; ///< Have received termination
+  bool haveValidCert; ///< Have a valid certificate for the image
   
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
@@ -134,6 +135,7 @@ namespace UpgradeController {
     retries = MAX_RETRIES;
     didEsp = false;
     haveTermination = false;
+    haveValidCert = false;
     sha512_init(firmware_digest);
     aes_enabled = false;
     
@@ -406,10 +408,24 @@ namespace UpgradeController {
         {
           if (haveTermination) // If there's no more, advance now
           {
-            AnkiDebug( 172, "UpgradeController.state", 457, "Sig check", 0);
-            counter = 0;
-            retries = MAX_RETRIES;
-            phase = OTAT_Sig_Check;
+            if (true || haveValidCert)
+            {
+              #if DEBUG_OTA
+              os_printf("Valid certificate, applying\r\n");
+              #endif
+              AnkiDebug( 172, "UpgradeController.state", 457, "Apply Wifi", 0);
+              counter = 0;
+              retries = MAX_RETRIES;
+              phase = OTAT_Apply_WiFi;
+            }
+            else
+            {
+              #if DEBUG_OTA
+              os_printf("No valid certificate, resetting\r\n");
+              #endif
+              AnkiError( 187, "UpgradeController.termination", 489, "No valid certificate!", 0);
+              Reset();
+            }
           }
         }
         else
@@ -427,7 +443,7 @@ namespace UpgradeController {
           }
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
-            
+            haveValidCert = false;
             //sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
             /*if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
@@ -453,6 +469,7 @@ namespace UpgradeController {
         {
           if (fwb->blockAddress == CERTIFICATE_BLOCK)
           {
+            AnkiDebug( 172, "UpgradeController.state", 490, "Sig Check", 0);
             #if DEBUG_OTA
             os_printf("OTA Sig header\r\n");
             #endif
@@ -624,6 +641,8 @@ namespace UpgradeController {
         if (counter++ < 20)
         {
           // blah blah blach
+          haveValidCert = true;
+          // If cert invalid, break to new state....
         }
         else
         {
@@ -635,7 +654,7 @@ namespace UpgradeController {
           ack.result = OKAY;
           RobotInterface::SendMessage(ack);
           counter = 0;
-          phase = OTAT_Flash_Write;
+          phase = OTAT_Flash_Verify;
         }
         break;
       }
