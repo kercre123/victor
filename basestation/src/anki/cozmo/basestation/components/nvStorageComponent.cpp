@@ -361,7 +361,10 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
   
 }
   
-  
+bool NVStorageComponent::HasPendingRequests()
+{
+  return !_requestQueue.empty() || !_recvDataMap.empty() || !_writeDataAckMap.empty();
+}
   
 void NVStorageComponent::Update()
 {
@@ -679,7 +682,7 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
   }
 }
   
-  void NVStorageComponent::BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op)
+void NVStorageComponent::BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op)
 {
   ExternalInterface::NVStorageOpResult msg;
   msg.tag = tag;

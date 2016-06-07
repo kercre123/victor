@@ -36,8 +36,13 @@
 #define WRITE_PERI_REG(addr, val) (*((volatile uint32 *)ETS_UNCACHED_ADDR(addr))) = (uint32)(val)
 #define PERIPHS_RTC_BASEADDR     0x60000700
 #define REG_GPIO_BASE            0x60000300
-#define GPIO_IN_ADDRESS          (REG_GPIO_BASE + 0x18)
+#define GPIO_OUT_ADDRESS         (REG_GPIO_BASE + 0x00)
+#define GPIO_SET_OUT_ADDRESS     (REG_GPIO_BASE + 0x04)
+#define GPIO_CLEAR_OUT_ADDRESS   (REG_GPIO_BASE + 0x08)
 #define GPIO_ENABLE_OUT_ADDRESS  (REG_GPIO_BASE + 0x0c)
+#define GPIO_DIR_OUT_ADDRESS     (REG_GPIO_BASE + 0x10)
+#define GPIO_DIR_IN_ADDRESS      (REG_GPIO_BASE + 0x14)
+#define GPIO_IN_ADDRESS          (REG_GPIO_BASE + 0x18)
 #define REG_IOMUX_BASE           0x60000800
 #define IOMUX_PULLUP_MASK        (1<<7)
 #define IOMUX_FUNC_MASK          0x0130
@@ -46,11 +51,9 @@ const uint8 IOMUX_GPIO_FUNC[] = {0x00, 0x30, 0x00, 0x30, 0x00, 0x00, 0x30, 0x30,
 
 static int get_gpio(int gpio_num) {
   // disable output buffer if set
-  uint32 old_out = READ_PERI_REG(GPIO_ENABLE_OUT_ADDRESS);
-  uint32 new_out = old_out & ~ (1<<gpio_num);
-  WRITE_PERI_REG(GPIO_ENABLE_OUT_ADDRESS, new_out);
+  WRITE_PERI_REG(GPIO_DIR_IN_ADDRESS, 1<<gpio_num);
 
-  // set GPIO function, enable soft pullup
+  // set GPIO function
   uint32 iomux_reg = REG_IOMUX_BASE + IOMUX_REG_OFFS[gpio_num];
   uint32 old_iomux = READ_PERI_REG(iomux_reg);
   uint32 gpio_func = IOMUX_GPIO_FUNC[gpio_num];
@@ -61,11 +64,14 @@ static int get_gpio(int gpio_num) {
   ets_delay_us(10);
   int result = READ_PERI_REG(GPIO_IN_ADDRESS) & (1<<gpio_num);
 
-  // set iomux & GPIO output mode back to initial values
-  WRITE_PERI_REG(iomux_reg, old_iomux);
-  WRITE_PERI_REG(GPIO_ENABLE_OUT_ADDRESS, old_out);
   return (result ? TRUE : FALSE);
 }
 
+static void set_gpio(int gpio_num, int val)
+{
+  WRITE_PERI_REG(GPIO_DIR_OUT_ADDRESS, 1<<gpio_num); // Set pin to output
+  if (val) WRITE_PERI_REG(GPIO_SET_OUT_ADDRESS, 1<<gpio_num); // write pin
+  else   WRITE_PERI_REG(GPIO_CLEAR_OUT_ADDRESS, 1<<gpio_num);
+}
 
 #endif
