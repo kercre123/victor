@@ -55,6 +55,7 @@ namespace NVStorage {
     NVEntry_ToolCodeInfo       = 0x80000002,
     NVEntry_CalibPose          = 0x80000003,
     NVEntry_CalibImagesUsed    = 0x80000004, // bit mask for which calibration images had dots found
+    NVEntry_ObservedCubePose   = 0x80000005,
     NVEntry_PlaypenTestResults = 0x80000010,
     NVEntry_FactoryLock        = 0x80000011, // If present, locks out most robot functions.
 

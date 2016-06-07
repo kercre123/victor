@@ -716,8 +716,42 @@ namespace Cozmo {
           break;
         }
 
-        // Verify that block is approximately where expected
+        // Write cube's pose to nv storage
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        
+        if (kBFT_EnableNVStorageWrites) {
+          f32 poseData[6] = {0,0,0,0,0,0};
+          
+          // Serialize the cube's pose
+          const Pose3d& cubePose = oObject->GetPose();
+          Radians angleX, angleY, angleZ;
+          cubePose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+          poseData[0] = angleX.ToFloat();
+          poseData[1] = angleY.ToFloat();
+          poseData[2] = angleZ.ToFloat();
+          poseData[3] = cubePose.GetTranslation().x();
+          poseData[4] = cubePose.GetTranslation().y();
+          poseData[5] = cubePose.GetTranslation().z();
+          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.WritingCubePose",
+                           "rot: %f %f %f, trans: %f %f %f",
+                           poseData[0], poseData[1], poseData[2],
+                           poseData[3], poseData[4], poseData[5]);
+          
+          if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ObservedCubePose,
+                                                                   (u8*)poseData, sizeof(poseData),
+                                                                   [this,&robot](NVStorage::NVResult res) {
+                                                                     if (res != NVStorage::NVResult::NV_OKAY) {
+                                                                       EndTest(robot, FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
+                                                                     } else {
+                                                                       PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCubePose.Success", "");
+                                                                     }
+                                                                   })) {
+                                                                     END_TEST(FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
+                                                                   }
+          
+        }
+        
+        // Verify that block is approximately where expected
         Vec3f Tdiff;
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
