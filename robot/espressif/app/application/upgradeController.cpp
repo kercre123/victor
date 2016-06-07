@@ -444,8 +444,9 @@ namespace UpgradeController {
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
             haveValidCert = false;
-            sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
-            /*if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
+            sha512_process(firmware_digest, fwb, sizeof(FirmwareBlock));
+            
+            if (aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
                 AES_KEY,
                 aes_iv,
@@ -454,7 +455,7 @@ namespace UpgradeController {
                 sizeof(fwb->flashBlock), 
                 aes_iv);
             }
-            */
+
             retries = MAX_RETRIES;
             phase = OTAT_Flash_Write;
           }

@@ -113,7 +113,7 @@ static void TransformFunction( sha512_state& md, const uint8_t* Buffer ) {
   // Copy the state into 1024-bits into W[0..15]
   for( i=0; i<16; i++ )
   {
-    BIGSWAP(&W[i], Buffer + (8*i));
+    BIGSWAP(&W[i], &Buffer[8*i]);
   }
 
   // Fill W[16..79]
