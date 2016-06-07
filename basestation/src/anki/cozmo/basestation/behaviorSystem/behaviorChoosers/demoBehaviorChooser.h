@@ -74,6 +74,7 @@ private:
 
   bool DidBehaviorRunAndStop(const char* behaviorName) const;
   bool IsBehaviorRunning(const char* behaviorName) const;
+  void ResetDemoRelatedState();
   
   enum class State {
     None,

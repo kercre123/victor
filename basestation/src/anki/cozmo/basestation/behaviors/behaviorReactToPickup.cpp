@@ -30,8 +30,8 @@ using namespace ExternalInterface;
 // this is a stand-in for the real pickup animation
 static const char* kPickupReactAnimName = "reactToPickup";
 
-CONSOLE_VAR(f32, kMinTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 5.0f);
-CONSOLE_VAR(f32, kMaxTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 10.0f);
+CONSOLE_VAR(f32, kMinTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 3.0f);
+CONSOLE_VAR(f32, kMaxTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 6.0f);
 CONSOLE_VAR(f32, kRepeatAnimMultIncrease, "Behavior.ReactToPickup", 0.33f);
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)

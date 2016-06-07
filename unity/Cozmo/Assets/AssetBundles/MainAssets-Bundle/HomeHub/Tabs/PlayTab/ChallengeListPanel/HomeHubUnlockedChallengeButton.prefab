@@ -84,6 +84,11 @@ MonoBehaviour:
   _IconImage: {fileID: 0}
   _ChallengeTitle: {fileID: 0}
   _CircuitImage: {fileID: 11456194}
+  _CircuitSprites:
+  - {fileID: 21300000, guid: 5c8995ab49e0e4595bda311e41bdcbea, type: 3}
+  - {fileID: 21300000, guid: a567dd2ca848f4d39b88526de7ccc21f, type: 3}
+  - {fileID: 21300000, guid: af13b9d7353be4f0cbe48d1684aaeff9, type: 3}
+  - {fileID: 21300000, guid: 5438f70dfabf540ad888c2fdc399a6e9, type: 3}
 --- !u!114 &11420562
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -302,6 +307,10 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: m_Color.r
       value: 0
       objectReference: {fileID: 0}
@@ -430,6 +439,26 @@ Prefab:
       propertyPath: ButtonGraphics.Array.data[0].disabledColor.b
       value: 0.6691177
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5c8995ab49e0e4595bda311e41bdcbea,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: a567dd2ca848f4d39b88526de7ccc21f,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[2]
+      value: 
+      objectReference: {fileID: 21300000, guid: af13b9d7353be4f0cbe48d1684aaeff9,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[3]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5438f70dfabf540ad888c2fdc399a6e9,
+        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 157454}

@@ -157,6 +157,7 @@ namespace Anki {
       std::string          _name;
       u8                   _tracks          = (u8)AnimTrackFlag::ALL_TRACKS;
       
+      bool          _preppedForCompletion   = false;
       bool          _suppressTrackLocking   = false;
       bool          _displayMessages        = true;
       bool          _emitCompletionSignal   = true;

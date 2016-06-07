@@ -19,6 +19,7 @@
 #include "util/signals/simpleSignal.hpp"
 #include <map>
 #include <list>
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -38,8 +39,8 @@ public:
   // again. Disabling turns them all to "off"
   void SetEnableComponent(bool enable);
 
-  void SetInteractionObject(ObjectID objectID) { _interactionObject = objectID; }
-  void UnSetInteractionObject() { _interactionObject.UnSet(); }
+  void SetInteractionObject(ObjectID objectID);
+  void UnSetInteractionObject(ObjectID objectID);
   
   template<typename T>
   void HandleMessage(const T& msg);
@@ -65,7 +66,9 @@ private:
   };
   
   std::map< ObjectID, ObjectInfo > _cubeInfo;
-
+  
+  std::multiset<ObjectID> _interactionObjects;
+  
   void UpdateToDesiredLights();
   void SetLights(ObjectID object, CubeLightsState state);
 
@@ -76,12 +79,23 @@ private:
 
   bool _enabled = true;
   
-  ObjectID _interactionObject;
-  
   std::list<Signal::SmartHandle> _eventHandles;
-};
+  
+}; // class LightsComponent
 
+  
+inline void LightsComponent::SetInteractionObject(ObjectID objectID) {
+  _interactionObjects.insert(objectID);
 }
+  
+inline void LightsComponent::UnSetInteractionObject(ObjectID objectID) {
+  auto iter = _interactionObjects.find(objectID);
+  if(iter != _interactionObjects.end()) {
+    _interactionObjects.erase(iter);
+  }
 }
+  
+} // namespace Cozmo
+} // namespace Anki
 
 #endif

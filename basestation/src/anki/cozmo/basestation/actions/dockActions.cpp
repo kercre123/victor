@@ -94,7 +94,7 @@ namespace Anki {
       }
       
       _robot.UnsetDockObjectID();
-      _robot.GetLightsComponent().UnSetInteractionObject();
+      _robot.GetLightsComponent().UnSetInteractionObject(_dockObjectID);
       
       // Stop squinting
       _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
@@ -723,8 +723,8 @@ namespace Anki {
           return RobotActionType::PICKUP_OBJECT_LOW;
           
         default:
-          PRINT_NAMED_WARNING("PickupObjectAction.GetType",
-                              "Dock action not set before determining action type.");
+          PRINT_NAMED_INFO("PickupObjectAction.GetType.DockActionNotSet",
+                           "Dock action not set before determining action type.");
           return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
       }
     }
@@ -739,8 +739,7 @@ namespace Anki {
         case DockAction::DA_PICKUP_LOW:
         {
           if(!_robot.IsCarryingObject()) {
-            PRINT_NAMED_ERROR("PickupObjectAction.EmitCompletionSignal",
-                              "Expecting robot to think it's carrying object for pickup action.");
+            PRINT_NAMED_INFO("PickupObjectAction.GetCompletionUnion.NotCarrying", "");
           } else {
             const std::set<ObjectID> carriedObjects = _robot.GetCarryingObjects();
             info.numObjects = carriedObjects.size();
@@ -756,8 +755,8 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_ERROR("PickupObjectAction.EmitCompletionSignal",
-                            "Dock action not set before filling completion signal.");
+          PRINT_NAMED_INFO("PickupObjectAction.GetCompletionUnion.DockActionNotSet", "");
+          break;
       }
       
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
@@ -1015,33 +1014,29 @@ namespace Anki {
                                                                      const bool useManualSpeed,
                                                                      const bool checkFreeDestination,
                                                                      const float destinationObjectPadding_mm)
-    : CompoundActionSequential(robot, {
-      new DriveToPlaceCarriedObjectAction(robot,
-                                          placementPose,
-                                          true,
-                                          useExactRotation,
-                                          useManualSpeed,
-                                          checkFreeDestination,
-                                          destinationObjectPadding_mm),
-      new PlaceObjectOnGroundAction(robot)})
+    : CompoundActionSequential(robot)
     {
+      _driveAction = new DriveToPlaceCarriedObjectAction(robot,
+                                                         placementPose,
+                                                         true,
+                                                         useExactRotation,
+                                                         useManualSpeed,
+                                                         checkFreeDestination,
+                                                         destinationObjectPadding_mm);
+      AddAction(_driveAction);
       
-    }
-    
-    void PlaceObjectOnGroundAtPoseAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      // Use the completion union of the constituent PlaceObjectOnGround action
-      if(_actions.size() > 0) {
-        _actions.back()->GetCompletionUnion(completionUnion);
-      } else {
-        completionUnion = _completedActionInfoStack.back().first;
-      }
+      PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
+      AddAction(action);
+      SetProxyTag(action->GetTag());
     }
     
     void PlaceObjectOnGroundAtPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
-      DriveToPlaceCarriedObjectAction* driveAction = dynamic_cast<DriveToPlaceCarriedObjectAction*>(GetActionList().front());
-      driveAction->SetMotionProfile(motionProfile);
+      if(nullptr != _driveAction) {
+        _driveAction->SetMotionProfile(motionProfile);
+      } else {
+        PRINT_NAMED_WARNING("PlaceObjectOnGroundAtPoseAction.SetMotionProfile.NullDriveAction", "");
+      }
     }
     
 #pragma mark ---- PlaceRelObjectAction ----

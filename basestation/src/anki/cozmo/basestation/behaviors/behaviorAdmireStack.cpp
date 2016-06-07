@@ -87,7 +87,8 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
 {
   //_topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
   TransitionToWatchingStack(robot);
-  _didKnockOverStack = false;
+  _topBlockLastSeentime = 0;
+  _thirdBlockID.UnSet();
 
   return Result::RESULT_OK;
 }
@@ -317,7 +318,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStackFailed(Robot& robot)
   SET_STATE(KnockingOverStackFailed);
   
   ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
-  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, bottomBlockID);
+  // When retrying the FlipBlockAction we want to use the closest preAction pose and not drive anywhere
+  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, bottomBlockID, true);
   StartActing(action, [this, &robot](ActionResult res) {
     if(res == ActionResult::SUCCESS)
     {

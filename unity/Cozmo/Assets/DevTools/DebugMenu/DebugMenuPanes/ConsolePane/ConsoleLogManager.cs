@@ -41,9 +41,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private const int kClipboardLogMaximum = 9000;
 
-  private Queue<LogPacket> _LogToClipboard;
-  private Queue<LogPacket> _MostRecentLogs;
-  private Queue<LogPacket> _ReceivedPackets;
+  private Queue<LogPacket> _LogToClipboard = new Queue<LogPacket>();
+  private Queue<LogPacket> _MostRecentLogs = new Queue<LogPacket>();
+  private Queue<LogPacket> _ReceivedPackets = new Queue<LogPacket>();
 
   private ConsoleLogPane _ConsoleLogPaneView;
 
@@ -56,9 +56,6 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     Instance = this;
 
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
-    _MostRecentLogs = new Queue<LogPacket>();
-    _ReceivedPackets = new Queue<LogPacket>();
-    _LogToClipboard = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();

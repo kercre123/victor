@@ -78,6 +78,7 @@ public:
   // returns the number of times this behavior has been started (number of times Init was called and returned
   // OK, not counting calls to Resume)
   int GetNumTimesBehaviorStarted() const { return _startCount; }
+  void ResetStartCount() { _startCount = 0; }
     
   double GetRunningDuration() const;
     
@@ -175,7 +176,7 @@ protected:
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
   // return Running while IsActing, and Complete otherwise
   virtual Status UpdateInternal(Robot& robot);
-  virtual void   StopInternal(Robot& robot) = 0;
+  virtual void   StopInternal(Robot& robot) { };
     
   bool ReadFromJson(const Json::Value& config);
 

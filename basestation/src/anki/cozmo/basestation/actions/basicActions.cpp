@@ -943,6 +943,11 @@ namespace Anki {
       
     }
     
+    TurnTowardsObjectAction::~TurnTowardsObjectAction()
+    {
+      _visuallyVerifyAction.PrepForCompletion();
+    }
+    
     ActionResult TurnTowardsObjectAction::Init()
     {
       ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);

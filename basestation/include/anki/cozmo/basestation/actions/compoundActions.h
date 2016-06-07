@@ -38,9 +38,14 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       
-      virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
+      virtual RobotActionType GetType() const override;
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+
+      // The proxy action, if set, is the one whose type and completion info are used.
+      // Specify it by the constituent action's tag.
+      void SetProxyTag(u32 tag) { _proxyTag = tag; _proxySet = true; }
 
     protected:
       
@@ -53,10 +58,24 @@ namespace Anki {
       
       bool ShouldIgnoreFailure(IActionRunner* action) const;
       
+      // Stack of pairs of actionCompletionUnions and actionTypes of the already completed actions
+      struct CompletionData {
+        ActionCompletedUnion  completionUnion;
+        RobotActionType       type;
+      };
+      
+      // Map of action tag to completion data
+      std::map<u32, CompletionData> _completedActionInfoStack;
+      
+      // NOTE: Moves currentAction iterator to next action after deleting
+      void StoreUnionAndDelete(std::list<IActionRunner*>::iterator& currentAction);
+      
     private:
       
       // If actions are in this list, we ignore their failures
       std::set<IActionRunner*> _ignoreFailure;
+      u32  _proxyTag;
+      bool _proxySet = false;
       
       void DeleteActions();
     };
@@ -77,17 +96,15 @@ namespace Anki {
       // ignore what they want to when running
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
-    protected:
-      // Stack of pairs of actionCompletionUnions and actionTypes of the already completed actions
-      std::list<std::pair<ActionCompletedUnion, RobotActionType>> _completedActionInfoStack;
+      // Called at the very beginning of UpdateInternal, so derived classes can
+      // do additional work. If this does not return RESULT_OK, then UpdateInternal
+      // will return ActionResult::FAILURE_ABORT.
+      virtual Result UpdateDerived() { return RESULT_OK; }
       
     private:
       virtual void Reset(bool shouldUnlockTracks = true) override final;
       
       virtual ActionResult UpdateInternal() override final;
-      
-      // Stores the _currentActionPair's completion union and then deletes _currentActionPair
-      void StoreUnionAndDelete();
       
       ActionResult MoveToNextAction(double currentTime);
       

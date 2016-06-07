@@ -34,6 +34,7 @@ namespace Anki {
     // Forward Declarations:
     class Robot;
     class Animation;
+    class DriveToPlaceCarriedObjectAction;
     
     f32 ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
                                           const ActionableObject* actionObject,
@@ -323,8 +324,8 @@ namespace Anki {
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
-    protected:
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+    private:
+      DriveToPlaceCarriedObjectAction* _driveAction = nullptr;
     };
     
     

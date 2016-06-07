@@ -27,9 +27,9 @@ public class MockRobotTray : MonoBehaviour {
   public void Initialize(MockRobot robot) {
 
     var cubes = new[] {
-      new LightCube(1, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE1),
-      new LightCube(2, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE2),
-      new LightCube(3, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE3)
+      new LightCube(1, 0, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE1),
+      new LightCube(2, 0, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE2),
+      new LightCube(3, 0, Anki.Cozmo.ObjectFamily.LightCube, Anki.Cozmo.ObjectType.Block_LIGHTCUBE3)
     };
 
     robot.LightCubes.Clear();
