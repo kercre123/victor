@@ -21,8 +21,8 @@ MonoBehaviour:
     _Levels: []
   MinSequenceLength: 1
   MaxSequenceLength: 20
-  MaxAttempts: 3
-  NumCubesInPattern: 3
+  TimeBetweenBeats: 0.25
+  TimeWaitFirstBeat: 1
   CozmoGuessCubeCorrectPercentage:
     serializedVersion: 2
     m_Curve:

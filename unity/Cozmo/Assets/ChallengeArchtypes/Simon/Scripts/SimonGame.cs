@@ -99,11 +99,21 @@ namespace Simon {
     }
 
     public void GenerateNewSequence(int sequenceLength) {
-      for (int i = _CurrentIDSequence.Count; i < sequenceLength; ++i) {
-        int pickIndex = Random.Range(0, CubeIdsForGame.Count);
-        int pickedID = CubeIdsForGame[pickIndex];
-        _CurrentIDSequence.Add(pickedID);
+
+      int pickIndex = Random.Range(0, CubeIdsForGame.Count);
+      int pickedID = CubeIdsForGame[pickIndex];
+      // Attempt to decrease chance of 3 in a row
+      if (_CurrentIDSequence.Count > 2 && CubeIdsForGame.Count > 1) {
+        if (pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 2] &&
+            pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
+          List<int> validIDs = new List<int>(CubeIdsForGame);
+          validIDs.RemoveAt(pickIndex);
+          pickIndex = Random.Range(0, validIDs.Count); 
+          pickedID = validIDs[pickIndex];
+        }
       }
+      
+      _CurrentIDSequence.Add(pickedID);
     }
 
     public IList<int> GetCurrentSequence() {
