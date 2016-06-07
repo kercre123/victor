@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Name: DailyGoalGenConfig
   m_EditorClassIdentifier: 
   DailyGoalFileName: DailyGoalGeneration.json
-  MaxGoals: 4
+  MaxGoals: 3
   MinGoals: 1
