@@ -8,6 +8,12 @@
 
 #define SHA512_OID          0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03
 
+#ifdef TARGET_ESPRESSIF
+#define FLASH_STORE ICACHE_RODATA_ATTR STORE_ATTR
+#else
+#define FLASH_STORE
+#endif
+
 struct sha512_state
 {
     uint64_t    length;

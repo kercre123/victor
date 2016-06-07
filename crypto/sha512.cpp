@@ -4,30 +4,14 @@
 #include <string.h>
 #include <stdint.h>
 
-#define ROR64( value, bits ) (((value) >> (bits)) | ((value) << (64 - (bits))))
-
 #define MIN( x, y ) ( ((x)<(y))?(x):(y) )
-
-#define LOAD64H( x, y )                                                      \
-   { x = (((uint64_t)((y)[0] & 255))<<56)|(((uint64_t)((y)[1] & 255))<<48) | \
-     (((uint64_t)((y)[2] & 255))<<40)|(((uint64_t)((y)[3] & 255))<<32) | \
-     (((uint64_t)((y)[4] & 255))<<24)|(((uint64_t)((y)[5] & 255))<<16) | \
-     (((uint64_t)((y)[6] & 255))<<8)|(((uint64_t)((y)[7] & 255))); }
-
-#define STORE64H( x, y )                                                                     \
-   { (y)[0] = (uint8_t)(((x)>>56)&255); (y)[1] = (uint8_t)(((x)>>48)&255);     \
-   (y)[2] = (uint8_t)(((x)>>40)&255); (y)[3] = (uint8_t)(((x)>>32)&255);     \
-   (y)[4] = (uint8_t)(((x)>>24)&255); (y)[5] = (uint8_t)(((x)>>16)&255);     \
-   (y)[6] = (uint8_t)(((x)>>8)&255); (y)[7] = (uint8_t)((x)&255); }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  CONSTANTS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // The K array
-static const uint64_t K[80] = {
+static const uint64_t FLASH_STORE K[80] = {
   0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL, 0xb5c0fbcfec4d3b2fULL, 0xe9b5dba58189dbbcULL,
   0x3956c25bf348b538ULL, 0x59f111f1b605d019ULL, 0x923f82a4af194f9bULL, 0xab1c5ed5da6d8118ULL,
   0xd807aa98a3030242ULL, 0x12835b0145706fbeULL, 0x243185be4ee4b28cULL, 0x550c7dc3d5ffb4e2ULL,
@@ -56,32 +40,68 @@ static const uint64_t K[80] = {
 //  INTERNAL FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Various logical functions
-#define Ch( x, y, z )     (z ^ (x & (y ^ z)))
-#define Maj(x, y, z )     (((x | y) & z) | (x & y))
-#define S( x, n )         ROR64( x, n )
-#define R( x, n )         (((x)&0xFFFFFFFFFFFFFFFFULL)>>((uint64_t)n))
-#define Sigma0( x )       (S(x, 28) ^ S(x, 34) ^ S(x, 39))
-#define Sigma1( x )       (S(x, 14) ^ S(x, 18) ^ S(x, 41))
-#define Gamma0( x )       (S(x, 1) ^ S(x, 8) ^ R(x, 7))
-#define Gamma1( x )       (S(x, 19) ^ S(x, 61) ^ R(x, 6))
+static void BIGSWAP (void* out, const void* in) {
+  uint8_t* target = (uint8_t*)out;
+  uint8_t* source = (uint8_t*)in;
 
-#define Sha512Round( a, b, c, d, e, f, g, h, i )       \
-   t0 = h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i];   \
-   t1 = Sigma0(a) + Maj(a, b, c);                    \
+  for (unsigned int i = 0; i < sizeof(uint64_t); i++) {
+    target[i^7] = source[i];
+  }
+}
+
+static uint64_t Ch(uint64_t x, uint64_t y, uint64_t z) {
+  return z ^ (x & (y ^ z));
+}
+
+static uint64_t Maj(uint64_t x, uint64_t y, uint64_t z) {
+  return ((x | y) & z) | (x & y);
+}
+
+static uint64_t Rt(uint64_t x, uint64_t n) {
+  return (x >> n) | (x << (64 - (n)));
+}        
+
+static uint64_t Rs(uint64_t x, uint64_t n) {
+  return ( x & 0xFFFFFFFFFFFFFFFFULL) >> (uint64_t) n;
+}
+
+static uint64_t Sigma0(uint64_t x) {
+  return Rt(x, 28) ^ Rt(x, 34) ^ Rt(x, 39);
+}
+
+static uint64_t Sigma1(uint64_t x) {
+  return Rt(x, 14) ^ Rt(x, 18) ^ Rt(x, 41);
+} 
+
+static uint64_t Gamma0(uint64_t x) {
+  return Rt(x, 1)  ^ Rt(x, 8)  ^ Rs(x, 7);
+}
+
+static uint64_t Gamma1(uint64_t x) {
+  return Rt(x, 19) ^ Rt(x, 61) ^ Rs(x, 6);
+}        
+
+static void Sha512Round( 
+  uint64_t* W, uint64_t  i,
+  uint64_t  a, uint64_t  b, uint64_t  c, uint64_t& d, 
+  uint64_t  e, uint64_t  f, uint64_t  g, uint64_t& h )
+{
+
+  uint64_t    t0 = h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i];
+  uint64_t    t1 = Sigma0(a) + Maj(a, b, c);
+
    d += t0;                                          \
    h  = t0 + t1;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  TransformFunction
 //
 //  Compress 1024-bits
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static void TransformFunction( sha512_state& md, uint8_t* Buffer ) {
+static void TransformFunction( sha512_state& md, const uint8_t* Buffer ) {
   uint64_t    S[8];
   uint64_t    W[80];
-  uint64_t    t0;
-  uint64_t    t1;
   int         i;
 
   // Copy state into S
@@ -93,7 +113,7 @@ static void TransformFunction( sha512_state& md, uint8_t* Buffer ) {
   // Copy the state into 1024-bits into W[0..15]
   for( i=0; i<16; i++ )
   {
-    LOAD64H(W[i], Buffer + (8*i));
+    BIGSWAP(&W[i], Buffer + (8*i));
   }
 
   // Fill W[16..79]
@@ -103,17 +123,17 @@ static void TransformFunction( sha512_state& md, uint8_t* Buffer ) {
   }
 
   // Compress
-   for( i=0; i<80; i+=8 )
-   {
-     Sha512Round(S[0],S[1],S[2],S[3],S[4],S[5],S[6],S[7],i+0);
-     Sha512Round(S[7],S[0],S[1],S[2],S[3],S[4],S[5],S[6],i+1);
-     Sha512Round(S[6],S[7],S[0],S[1],S[2],S[3],S[4],S[5],i+2);
-     Sha512Round(S[5],S[6],S[7],S[0],S[1],S[2],S[3],S[4],i+3);
-     Sha512Round(S[4],S[5],S[6],S[7],S[0],S[1],S[2],S[3],i+4);
-     Sha512Round(S[3],S[4],S[5],S[6],S[7],S[0],S[1],S[2],i+5);
-     Sha512Round(S[2],S[3],S[4],S[5],S[6],S[7],S[0],S[1],i+6);
-     Sha512Round(S[1],S[2],S[3],S[4],S[5],S[6],S[7],S[0],i+7);
-   }
+  for( i=0; i<80; i+=8 )
+  {
+    Sha512Round(W,i+0,S[0],S[1],S[2],S[3],S[4],S[5],S[6],S[7]);
+    Sha512Round(W,i+1,S[7],S[0],S[1],S[2],S[3],S[4],S[5],S[6]);
+    Sha512Round(W,i+2,S[6],S[7],S[0],S[1],S[2],S[3],S[4],S[5]);
+    Sha512Round(W,i+3,S[5],S[6],S[7],S[0],S[1],S[2],S[3],S[4]);
+    Sha512Round(W,i+4,S[4],S[5],S[6],S[7],S[0],S[1],S[2],S[3]);
+    Sha512Round(W,i+5,S[3],S[4],S[5],S[6],S[7],S[0],S[1],S[2]);
+    Sha512Round(W,i+6,S[2],S[3],S[4],S[5],S[6],S[7],S[0],S[1]);
+    Sha512Round(W,i+7,S[1],S[2],S[3],S[4],S[5],S[6],S[7],S[0]);
+  }
 
   // Feedback
   for( i=0; i<8; i++ )
@@ -153,7 +173,7 @@ void sha512_process(sha512_state& md, const void* in, uint32_t inlen) {
     {
        TransformFunction( md, (uint8_t *)in );
        md.length += BLOCK_SIZE * 8;
-       in = (uint8_t*)in + BLOCK_SIZE;
+       in = (const uint8_t*)in + BLOCK_SIZE;
        inlen -= BLOCK_SIZE;
     }
     else
@@ -210,12 +230,12 @@ void sha512_done(sha512_state& md, void* out) {
   }
 
   // Store length
-  STORE64H( md.length, md.buf+120 );
+  BIGSWAP( md.buf+120, &md.length );
   TransformFunction( md, md.buf );
 
   // Copy output
   for( i=0; i<8; i++ ) 
   {
-    STORE64H( md.state[i], digest+(8*i) );
+    BIGSWAP( digest+(8*i), &md.state[i] );
   }
 }

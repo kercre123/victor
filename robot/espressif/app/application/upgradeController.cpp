@@ -444,7 +444,7 @@ namespace UpgradeController {
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
             haveValidCert = false;
-            //sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
+            sha512_process(firmware_digest, &fwb, sizeof(FirmwareBlock));
             /*if ((fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
               aes_cfb_decode(
                 AES_KEY,
@@ -646,6 +646,9 @@ namespace UpgradeController {
         }
         else
         {
+          uint8_t digest[SHA512_DIGEST_SIZE];
+          sha512_done(firmware_digest, digest);
+
           retries = MAX_RETRIES;
           bufferUsed -= sizeof(FirmwareBlock);
           os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);

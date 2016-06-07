@@ -27,13 +27,13 @@ bool comparePlain(FILE* plain, int address, uint8_t* data) {
 
 	do {
 		if (!fread(&p, sizeof(p), 1, plain)) {
-			printf("Block missing\n\r");
+			printf("\n\r%08x: Block missing\n\r", address);
 			return false;
 		}
 	} while (address != p.blockAddress);
 	
 	if (memcmp(p.flashBlock, data, sizeof(p.flashBlock)) != 0) {
-		printf("AES decode failure\n\r");
+		printf("\n\r%08x: AES decode failure\n\r", address);
 		return false;
 	}
 
@@ -64,11 +64,9 @@ int main (int argc, char** argv) {
 	encoded = fopen(argv[3], "rb");
 
 	while (fread(&block, sizeof(block), 1, encoded)) {
-		printf("%08x: ", block.blockAddress);
-
 		if (!crcValid(block)) {
 			failure = true;
-			printf("CRC Failed\n\r");
+			printf("\n\r%08x: CRC Failed\n\r", block.blockAddress);
 			continue ;
 		}
 
@@ -88,7 +86,7 @@ int main (int argc, char** argv) {
 
 			if (!verify_cert(RSA_CERT_MONT, CERT_RSA, digest, cert.data, cert.length)) {
 				failure = true;
-				printf("CERT FAIL\n\r");
+				printf("\n\r%08x: CERT FAIL\n\r", block.blockAddress);
 				continue ;
 			}
 
@@ -107,8 +105,11 @@ int main (int argc, char** argv) {
 			break ;
 		}
 
-		printf("PASSED\n\r");
+		printf(".");
 	}
+	printf("\n\r");
+
+	printf(failure ? "\n\rFAILED\n\r" : "\n\rPASSED\n\r");
 
 	return failure ? -1 : 0;
 }
