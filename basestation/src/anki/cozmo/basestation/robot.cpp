@@ -275,6 +275,12 @@ namespace Anki {
     
     void Robot::SetPickedUp(bool t)
     {
+      // We use the cliff sensor to help determine if we're picked up; if it's disabled then ignore when it is
+      // reported as true. If it's false we want to be able to go through the put down logic below.
+      if (!IsCliffSensorEnabled() && t) {
+        return;
+      }
+      
       if(_isPickedUp == false && t == true) {
         // Robot is being picked up: de-localize it
         Delocalize();

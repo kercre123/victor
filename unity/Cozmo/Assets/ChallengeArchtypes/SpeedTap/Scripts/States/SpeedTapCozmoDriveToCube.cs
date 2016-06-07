@@ -33,6 +33,8 @@ namespace SpeedTap {
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
+      
+      RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
 
       TryDrivingToCube(forceRaiseLift: false);
     }
