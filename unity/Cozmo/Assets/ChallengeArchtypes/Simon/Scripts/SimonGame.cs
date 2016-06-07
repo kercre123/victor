@@ -147,9 +147,7 @@ namespace Simon {
       string infoText = Localization.Get(locKey);
       infoText += Localization.kNewLine;
       infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
-      //SharedMinigameView.ShowNarrowInfoTextSlideWithKey(infoText);
       SharedMinigameView.InfoTitleText = infoText;
-      DAS.Warn(this, infoText);
     }
 
     protected override void RaiseMiniGameQuit() {

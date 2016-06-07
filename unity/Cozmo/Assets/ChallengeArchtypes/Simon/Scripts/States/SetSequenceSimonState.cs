@@ -25,7 +25,6 @@ namespace Simon {
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameLabelWatchPattern);
       _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
         0, _SequenceLength);
 

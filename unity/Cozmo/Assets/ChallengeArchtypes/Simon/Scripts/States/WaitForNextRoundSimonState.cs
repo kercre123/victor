@@ -33,10 +33,7 @@ namespace Simon {
 
     private void HandleContinuePressed() {
       _GameInstance.SharedMinigameView.HideContinueButton();
-
-      
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
-
       _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
     }
   }
