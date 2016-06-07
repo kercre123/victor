@@ -295,6 +295,32 @@ namespace Cozmo {
         TronLineBurst(kFinalBurst);
       }
 
+      // TODO: Loot BannerAnimation
+      /*
+      public void PlayBannerAnimation(Sequence openAnimation) {
+        _BannerContainer.gameObject.SetActive(true);
+        Vector3 localPos = _BannerContainer.gameObject.transform.localPosition;
+        localPos.x = _BannerLeftOffscreenLocalXPos;
+        _BannerContainer.gameObject.transform.localPosition = localPos;
+
+        // set text
+        _BannerTextLabel.text = textToDisplay;
+
+        float slowDuration = (customSlowDurationSeconds != 0) ? customSlowDurationSeconds : _BannerSlowAnimationDurationSeconds;
+
+        // build sequence
+        if (_BannerTween != null) {
+          _BannerTween.Kill();
+        }
+        _BannerTween = DOTween.Sequence();
+        float midpoint = (_BannerRightOffscreenLocalXPos + _BannerLeftOffscreenLocalXPos) * 0.5f;
+        _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint - _BannerSlowDistance, _BannerInOutAnimationDurationSeconds).SetEase(Ease.OutQuad));
+        _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint, slowDuration));
+        _BannerTween.Append(_BannerContainer.DOLocalMoveX(_BannerRightOffscreenLocalXPos, _BannerInOutAnimationDurationSeconds).SetEase(Ease.InQuad));
+        _BannerTween.AppendCallback(HandleBannerAnimationEnd);
+      }
+      */
+
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
         if (_AlphaController != null) {
           _AlphaController.alpha = 0;
@@ -304,6 +330,7 @@ namespace Cozmo {
         openAnimation.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InExpo));
         openAnimation.Join(_LootBox.DOMove(_BoxSource.position, kBoxIntroDuration).From().SetEase(Ease.InExpo));
         openAnimation.OnComplete(HandleOpenFinished);
+        // PlayBannerAnimation(openAnimation);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
