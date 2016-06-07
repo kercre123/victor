@@ -1344,8 +1344,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     {
       u32 numVisibleObjects = 0;
       
-      if(_robot->IsPickedUp()) {
-        // Don't bother if the robot is picked up
+      // Don't bother if the robot is picked up or if it was moving too fast to
+      // have been able to see the markers on the objects anyway.
+      // NOTE: Just using default speed thresholds, which should be conservative.
+      if(_robot->IsPickedUp() ||
+         _robot->GetVisionComponent().WasMovingTooFast(atTimestamp))
+      {
         return numVisibleObjects;
       }
       
@@ -1370,9 +1374,14 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
               objectIter != objectIdMap.end(); )
           {
             ObservableObject* object = objectIter->second;
-            
+           
+            // Look for blocks not seen atTimestamp, but skip objects
+            // - with unknown pose state
+            // - that are currently being carried
+            // - whose pose origin does not match the robot's
             if(object->GetPoseState() != ObservableObject::PoseState::Unknown &&
                object->GetLastObservedTime() < atTimestamp &&
+               _robot->GetCarryingObject() != object->GetID() &&
                &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
@@ -1381,7 +1390,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                 // connection has not been established yet
                 if (!object->IsActive() || object->GetActiveID() < 0) {
                   PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
-                                   "Deleting %s object %d that was only observed %d time(s).\n",
+                                   "Deleting %s object %d that was only observed %d time(s).",
                                    ObjectTypeToString(object->GetType()),
                                    object->GetID().GetValue(),
                                    object->GetNumTimesObserved());
@@ -1444,9 +1453,30 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // that location:
         const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
         const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
-        if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true,
-                                            xBorderPad, yBorderPad) &&
-           (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
+        bool hasNothingBehind = false;
+        const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f,
+                                                                      xBorderPad, yBorderPad,
+                                                                      hasNothingBehind);
+        
+        // NOTE: We expect a docking block to disappear from view!
+        const bool isNotDockingObject = (_robot->GetDockObject() != unobserved.object->GetID());
+        
+        const bool isDirtyPoseState = (ObservableObject::PoseState::Dirty == unobserved.object->GetPoseState());
+        
+        // If the object should _not_ be visible, but the reason was only that
+        // it has nothing behind it to confirm that, _and_ the object has already
+        // been marked dirty (e.g., by being moved), then increment the number of
+        // times it has gone unobserved while dirty.
+        if(!shouldBeVisible && hasNothingBehind && isDirtyPoseState)
+        {
+          unobserved.object->IncrementNumTimesUnobserved();
+        }
+        
+        // Once we haven't observed a dirty object enough times, clear it
+        const bool dirtyAndUnobservedTooManyTimes = (unobserved.object->GetNumTimesUnobserved() >
+                                                     MIN_TIMES_TO_NOT_OBSERVE_DIRTY_OBJECT);
+        
+        if(isNotDockingObject && (shouldBeVisible || dirtyAndUnobservedTooManyTimes))
         {
           // Make sure there are no currently-observed, (just-)identified objects
           // with the same active ID present. (If there are, we'll reassign IDs
@@ -1463,14 +1493,17 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           }
           
           if(!matchingActiveIdFound) {
-            // We "should" have seen the object! Delete it.
+            // We "should" have seen the object! Clear it.
             PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.RemoveUnobservedObject",
-                             "Removing object %d, which should have been seen, "
-                             "but wasn't.\n", unobserved.object->GetID().GetValue());
+                             "Clearing object %d, which should have been seen, but wasn't.",
+                             unobserved.object->GetID().GetValue());
             
             ClearObject(unobserved.object);
           }
-        } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
+        }
+        else if(unobserved.family != ObjectFamily::Mat &&
+                _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0)
+        {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
@@ -2846,39 +2879,48 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
       
-      // Check for unobserved, uncarried objects that overlap with any robot's position
-      // TODO: better way of specifying which objects are obstacles and which are not
-      // TODO: Move this giant loop to its own method
-      for(auto & objectsByFamily : _existingObjects)
+      // Don't worry about collision with the robot while picking or placing since we
+      // are trying to get close to objects in these modes.
+      // TODO: Enable collision checking while picking and placing too
+      // (I feel like we should be able to always do this, since we _do_ check that the
+      //  object is not the docking object below, and we do height checks as well. But
+      //  I'm wary of changing it now either...)
+      if(!_robot->IsPickingOrPlacing())
       {
-        // For now, look for collision with anything other than Mat objects
-        // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
-        // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::Mat &&
-           objectsByFamily.first != ObjectFamily::MarkerlessObject)
+        // Check for unobserved, uncarried objects that overlap with any robot's position
+        // TODO: better way of specifying which objects are obstacles and which are not
+        // TODO: Move this giant loop to its own method
+        for(auto & objectsByFamily : _existingObjects)
         {
-          for(auto & objectsByType : objectsByFamily.second)
+          // For now, look for collision with anything other than Mat objects
+          // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
+          // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
+          if(objectsByFamily.first != ObjectFamily::Mat &&
+             objectsByFamily.first != ObjectFamily::MarkerlessObject)
           {
-            for(auto & objectIdPair : objectsByType.second)
+            for(auto & objectsByType : objectsByFamily.second)
             {
-              ActionableObject* object = dynamic_cast<ActionableObject*>(objectIdPair.second);
-              if(object == nullptr) {
-                PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingActionableObject",
-                                  "In robot/object collision check, can currently only "
-                                  "handle ActionableObjects.");
-                continue;
-              }
-              
-              if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
-                 !object->IsBeingCarried() &&
-                 !object->IsPoseStateUnknown() &&
-                 object->GetID() != _robot->GetDockObject() &&
-                 !object->CanIntersectWithRobot())
+              for(auto & objectIdPair : objectsByType.second)
               {
-                // Don't worry about collision while picking or placing since we
-                // are trying to get close to blocks in these modes.
-                // TODO: specify whether we are picking/placing _this_ block
-                if(!_robot->IsPickingOrPlacing())
+                ActionableObject* object = dynamic_cast<ActionableObject*>(objectIdPair.second);
+                if(object == nullptr) {
+                  PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingActionableObject",
+                                    "In robot/object collision check, can currently only "
+                                    "handle ActionableObjects.");
+                  continue;
+                }
+                
+                // Collision check objects that
+                // - were not observed in the last image,
+                // - are not being carried
+                // - still have known pose state (not dirtied already, nor unknown)
+                // - are not the obect we are docking with (since we are _trying_ to get close)
+                // - can intersect the robot (e.g. not charger)
+                if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
+                   !object->IsBeingCarried() &&
+                   object->IsPoseStateKnown() &&
+                   object->GetID() != _robot->GetDockObject() &&
+                   !object->CanIntersectWithRobot())
                 {
                   // Check block's bounding box in same coordinates as this robot to
                   // see if it intersects with the robot's bounding box. Also check to see
@@ -2886,7 +2928,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                   // entirely if the block isn't in the same coordinate tree as the
                   // robot.
                   Pose3d objectPoseWrtRobotOrigin;
-                  if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true)
+                  if(true == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
                   {
                     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                     const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -2910,35 +2952,33 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                      */
                     
                     const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
-                                                                       ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION);
+                                                                       ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION);
                     
                     const bool bboxIntersects = robotBBox.Intersects(objectBBox);
                     
                     if( inSamePlane && bboxIntersects )
                     {
                       PRINT_NAMED_INFO("BlockWorld.Update",
-                                       "Removing object %d, which intersects robot %d's bounding quad.",
+                                       "Marking object %d as 'dirty', because it intersects robot %d's bounding quad.",
                                        object->GetID().GetValue(), _robot->GetID());
                       
-                      // Erase the vizualized block and its projected quad
-                      //V_robot->GetContext()->GetVizManager()->EraseCuboid(object->GetID());
-
-                      // Clear object and everything on top of it, indicating we don't know where it went
+                      // Mark object and everything on top of it as "dirty". Next time we look
+                      // for it and don't see it, we will fully clear it and mark it as "unknown"
                       ObservableObject* objectOnTop = object;
                       BOUNDED_WHILE(20, objectOnTop != nullptr) {
-                        ClearObject(objectOnTop);
+                        objectOnTop->SetPoseState(ObservableObject::PoseState::Dirty);
                         objectOnTop = FindObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
                       }
                     } // if quads intersect
                   } // if we got block pose wrt robot origin
-                } // if robot is not picking or placing
-
-              } // if block was not observed
-              
-            } // for each object of this type
-          } // for each object type
-        } // if not in the Mat family
-      } // for each object family
+                  
+                } // if block was not observed
+                
+              } // for each object of this type
+            } // for each object type
+          } // if not in the Mat family
+        } // for each object family
+      } // if robot is not picking or placing
       
       if(numUnusedMarkers > 0) {
         if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {

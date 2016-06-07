@@ -79,7 +79,8 @@ private:
   bool CanPickUpBlock(const Robot& robot, ObjectID objectID, bool& wantToPickup);
   
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
-  void HandleObjectChanged(ObjectID objectID);
+  void HandleObjectChanged(const Robot& robot, ObjectID objectID);
+  
   IActionRunner* CreateAskForAction(Robot& robot);
   
   ObjectID    _targetBlock;
