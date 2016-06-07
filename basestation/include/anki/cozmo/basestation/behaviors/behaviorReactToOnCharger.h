@@ -32,6 +32,9 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) override;
   
+  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+  
 protected:
     
   virtual Result InitInternal(Robot& robot) override;
@@ -42,6 +45,7 @@ protected:
 private:
   
   bool _shouldStopBehavior = false;
+  bool _isReactionEnabled = true;
 }; // class BehaviorReactToOnCharger
   
 
