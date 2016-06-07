@@ -68,7 +68,6 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private LootView _LootViewPrefab;
     private LootView _LootViewInstance = null;
-    private bool _LootViewReady = false;
 
     private HomeHub _HomeHubInstance;
 
@@ -87,7 +86,7 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
-
+      Debug.Log("HOMEVIEW INITIALIZE");
       _HomeHubInstance = homeHubInstance;
 
       DASEventViewName = "home_view";
@@ -106,12 +105,16 @@ namespace Cozmo.HomeHub {
 
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
+      if (ChestRewardManager.Instance.ChestPending) {
+        HandleChestGained();
+      }
+      else {
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      }
     }
 
     private void HandleChestGained() {
-      _LootViewReady = true;
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetCurrentRequirementPoints());
     }
 
@@ -127,11 +130,13 @@ namespace Cozmo.HomeHub {
       }
 
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
+      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingRewards;
       _LootViewInstance = alertView;
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
-      if (_LootViewReady == false) {
+      // Ignore updating if we are in the process of showing a new LootView
+      if (ChestRewardManager.Instance.ChestPending == false) {
         UpdateChestProgressBar(currentPoints, numPointsNeeded);
       }
     }
@@ -154,9 +159,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleProgressUpdated() {
-      Debug.Log("ProgressUpdated End Event Triggered");
-      if (_LootViewReady) {
-        _LootViewReady = false;
+      if (ChestRewardManager.Instance.ChestPending) {
         OpenLootView();
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       }

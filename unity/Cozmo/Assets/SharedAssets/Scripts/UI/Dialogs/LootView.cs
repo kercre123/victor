@@ -60,6 +60,8 @@ namespace Cozmo {
       private float _recentTapCharge = 0.0f;
       private int _tronBurst = 1;
 
+      public Dictionary<string, int> LootBoxRewards = new Dictionary<string, int>();
+
       [SerializeField]
       private string _LootStartKey;
       [SerializeField]
@@ -201,18 +203,20 @@ namespace Cozmo {
         }
       }
 
-      private void RewardLoot(/*TODO : pass in full information about the rewards received from the current chest*/) {
-        // TODO: Start Reward Animation Sequence and create LootDoobers
-        // TODO: Currently is not using Reward information to determine the doobers looted.
-        // purely hardcoded bullshit for testing.-R.A.
+      private void RewardLoot() {
         _BurstParticles.Emit(kFinalBurst);
-        UnleashTheDoobers(UnityEngine.Random.Range(1, 6));
+        UnleashTheDoobers();
       }
 
-      private Transform SpawnDoober(/*TODO : pass in the name of the rewardID for this Doobster*/) {
-        // TODO : This seems to be offset in a weird way, figure out why.
+      private Transform SpawnDoober(string rewardID) {
         Transform newDoob = UIManager.CreateUIElement(_RewardDooberPrefab.gameObject, _DooberStart).transform;
         // TODO: Initialize Doober with appropriate values
+        if (ItemDataConfig.GetData(rewardID) != null) {
+          Sprite rewardIcon = ItemDataConfig.GetData(rewardID).Icon;
+          if (rewardIcon != null) {
+            newDoob.GetComponent<Image>().overrideSprite = rewardIcon;
+          }
+        }
         _ActiveDooberTransforms.Add(newDoob);
         return newDoob;
       }
@@ -221,33 +225,36 @@ namespace Cozmo {
       /// Unleashes the doobers. Creates all necessary doobers and tweens them outwards to scattered positions.
       /// </summary>
       /// <param name="doobCount">Doob count.</param>
-      private void UnleashTheDoobers(int doobCount /*TODO : pass in full information about the rewards received from the current chest*/) {
+      private void UnleashTheDoobers() {
         List<Transform> doobTargets = new List<Transform>();
+        int doobCount = 0;
         doobTargets.AddRange(_MultRewardsTransforms);
-        // TODO : Create targets dynamically limited by doobCount, not other way around
-        if (doobCount > doobTargets.Count) {
-          doobCount = doobTargets.Count;
-        }
         Sequence dooberSequence = DOTween.Sequence();
-        // If there's only one reward, put it directly in the middle where the box was
-        if (doobCount == 1) {
-          Transform newDoob = SpawnDoober();
-          dooberSequence.Join(newDoob.DOScale(0.0f, kDooberExplosionDuration).From().SetEase(Ease.OutBack));
-        }
-        else {
-          // If there's more than one reward, give each of them a unique transform to tween out to
-          for (int i = 0; i < doobCount; i++) {
-            Transform newDoob = SpawnDoober();
-            Transform toRemove = doobTargets[UnityEngine.Random.Range(0, doobTargets.Count)];
-            Vector3 doobTarget = toRemove.position;
-            doobTargets.Remove(toRemove);
+        foreach (string itemID in LootBoxRewards.Keys) {
+          doobCount += LootBoxRewards[itemID];
+          if (doobCount == 1) {
+            Transform newDoob = SpawnDoober(itemID);
             dooberSequence.Join(newDoob.DOScale(0.0f, kDooberExplosionDuration).From().SetEase(Ease.OutBack));
-            dooberSequence.Join(newDoob.DOMove(doobTarget, kDooberExplosionDuration).SetEase(Ease.OutBack));
+          }
+          else {
+            for (int i = 0; i < LootBoxRewards[itemID]; i++) {
+              if (doobTargets.Count <= 0) {
+                break;
+              }
+              Transform newDoob = SpawnDoober(itemID);
+              Transform toRemove = doobTargets[UnityEngine.Random.Range(0, doobTargets.Count)];
+              Vector3 doobTarget = toRemove.position;
+              doobTargets.Remove(toRemove);
+              dooberSequence.Join(newDoob.DOScale(0.0f, kDooberExplosionDuration).From().SetEase(Ease.OutBack));
+              dooberSequence.Join(newDoob.DOMove(doobTarget, kDooberExplosionDuration).SetEase(Ease.OutBack));
+            }
           }
         }
 
         dooberSequence.InsertCallback(kDooberExplosionDuration + kDooberStayDuration, CloseView);
         dooberSequence.Play();
+
+        ChestRewardManager.Instance.PendingRewards.Clear();
       }
 
       private void TronLineBurst(int count) {
