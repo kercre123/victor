@@ -55,7 +55,7 @@ staging_dir:
 	mkdir -p ./staging
 
 export_key:
-	mkdir -p generated
+	mkdir -p generated build
 	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickey.h
 	g++ -o build/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
 	build/calcMont >> ./generated/publickey.h
