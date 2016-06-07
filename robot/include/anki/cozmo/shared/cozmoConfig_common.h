@@ -5,37 +5,41 @@
  **************************************************************************/
 #include "anki/common/constantsAndMacros.h"
 
-const f32 WHEEL_DIAMETER_MM  = 29.f;
-const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
-const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
-const f32 WHEEL_DIST_MM      = 46.f; // approx distance b/w the center of the front treads
-const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
-const f32 WHEEL_BASE_MM      = 48.f;
+constexpr f32 WHEEL_DIAMETER_MM  = 29.f;
+constexpr f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
+constexpr f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
+constexpr f32 WHEEL_DIST_MM      = 46.f; // approx distance b/w the center of the front treads
+constexpr f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
+constexpr f32 WHEEL_BASE_MM      = 48.f;
 
 // Tolerances on commanded target angles
 // i.e. If motor is within this tolerance of the target angle, it is done moving.
-const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
-const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
+constexpr f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
+constexpr f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
 
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-24.5f);
-const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
+constexpr f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-24.5f);
+constexpr f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
+
+constexpr f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
+constexpr f32 kIdealViewBlockLiftUpHeadAngle = DEG_TO_RAD(-22.5f);
+constexpr f32 kIdealViewFaceHeadAngle = DEG_TO_RAD(12.5f);
 
 // Head angle may exceed limits by this amount before
 // it is considered to be out of calibration.
-const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(3.f);
+constexpr f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(3.f);
 
 // Safe head angle for the proximity sensors to be usable with the lift
 // either up or down
-const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = DEG_TO_RAD(-15.f);
+constexpr f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = DEG_TO_RAD(-15.f);
 
 // Theoretically equivalent to ORIGIN_TO_LOW_LIFT_DIST_MM...
-const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
+constexpr f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 
 // The x-offset from robot origin that the robot's drive center is
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = -20.f;
+constexpr f32 DRIVE_CENTER_OFFSET = -20.f;
 
 // Length of the forward collision sensor (with respect to origin)
 const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
@@ -45,42 +49,42 @@ const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
 // issue with moving the lift when it is at a limit. The lift arm
 // flies off of the robot and comes back! So for now, we just don't
 // drive the lift down that far. We also skip calibration in sim.
-const f32 LIFT_HEIGHT_LOWDOCK  = 32.f;
-const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
-const f32 LIFT_HEIGHT_CARRY    = 92.f;
-const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
+constexpr f32 LIFT_HEIGHT_LOWDOCK  = 32.f;
+constexpr f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
+constexpr f32 LIFT_HEIGHT_CARRY    = 92.f;
+constexpr f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 
 // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
-const f32 LIFT_ARM_LENGTH = 66.f;
+constexpr f32 LIFT_ARM_LENGTH = 66.f;
 
 // Height of the lifter front assembly above the gripper, used to compute
 // the overall height of the robot when the lift is up (i.e. the height is
 // is the lift height plus this)
-const f32 LIFT_HEIGHT_ABOVE_GRIPPER = 5.f; // approximate
+constexpr f32 LIFT_HEIGHT_ABOVE_GRIPPER = 5.f; // approximate
 
 // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
-const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
+constexpr f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
 
 // The height of the top of the lift crossbar with respect to the wrist joint
-const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
+constexpr f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
 
 // The distance along the x axis from the wrist joint to the front of the lifter plate
-const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
+constexpr f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
 
 // Neck joint relative to robot origin
-const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
+constexpr f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 
 // camera relative to neck joint
-const f32 HEAD_CAM_POSITION[3]   = {17.52f, 0.f, -8.f};
+constexpr f32 HEAD_CAM_POSITION[3]   = {17.52f, 0.f, -8.f};
 
 // Upper shoulder joint relative to robot origin
-const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
+constexpr f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
 
 // IMU position relative to neck joint
-const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
+constexpr f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
 
 // Face LCD Screen size
-const f32 SCREEN_SIZE[2] = {26.f, 13.f};
+constexpr f32 SCREEN_SIZE[2] = {26.f, 13.f};
 
 /***************************************************************************
  *
@@ -90,24 +94,24 @@ const f32 SCREEN_SIZE[2] = {26.f, 13.f};
 
 
 // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
-const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
+constexpr f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
 
 // The distance to the bridge ground marker that the robot must
 // achieve before we can consider it aligned with the bridge enough
 // to start driving straight. This should be the minimum distance that
 // the robot can reliably "dock" to the marker.
-const f32 BRIDGE_ALIGNED_MARKER_DISTANCE = 60.f;
+constexpr f32 BRIDGE_ALIGNED_MARKER_DISTANCE = 60.f;
 
 // Distance between the marker at the end of the bridge
 // and the desired pose of the robot when it is considered
 // to be off the bridge.
-const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
+constexpr f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
 
 
 // Distance to the charger ramp marker that the robot must
 // achieve before we can consider it aligned with the charger enough
 // to reverse on to it.
-const f32 CHARGER_ALIGNED_MARKER_DISTANCE = 140.f;
+constexpr f32 CHARGER_ALIGNED_MARKER_DISTANCE = 140.f;
 
 
 /***************************************************************************
@@ -127,14 +131,14 @@ const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
 
 // Motor speed / accel limits
 // TODO: These were plucked out of the sky.
-const f32 MAX_HEAD_SPEED_RAD_PER_S = 1000;
-const f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 10000;
-const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
-const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
+constexpr f32 MAX_HEAD_SPEED_RAD_PER_S = 1000;
+constexpr f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 10000;
+constexpr f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
+constexpr f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 
 // How fast (in mm/sec) can a wheel spin at max
-const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
-const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
+constexpr f32 MAX_WHEEL_SPEED_MMPS = 220.f;
+constexpr f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
 
 // Maximum angular velocity
 // Determined experimentally by turning robot in place at max speed.
@@ -142,9 +146,9 @@ const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
 // the robot can actually achieve this top speed. If it can't, point turns could look jerky because
 // the robot can't keep up with the rotation profile.
 // Ideally, speed, in radians, should be (MAX_WHEEL_SPEED_MMPS / WHEEL_DIST_HALF_MM), but tread slip makes this not true.
-const f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 300;
-const f32 MAX_BODY_ROTATION_SPEED_RAD_PER_SEC = DEG_TO_RAD_F32(MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-const f32 MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC * MAX_WHEEL_ACCEL_MMPS2 / MAX_WHEEL_SPEED_MMPS;
+constexpr f32 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC = 300;
+constexpr f32 MAX_BODY_ROTATION_SPEED_RAD_PER_SEC = DEG_TO_RAD_F32(MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+constexpr f32 MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC * MAX_WHEEL_ACCEL_MMPS2 / MAX_WHEEL_SPEED_MMPS;
 
 
 /***************************************************************************
@@ -156,9 +160,9 @@ const f32 MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 = MAX_BODY_ROTATION_SPEED_RAD_PER
 // Cozmo control loop is 200Hz.
 const s32 TIME_STEP = 5;
 
-const f32 CONTROL_DT = TIME_STEP*0.001f;
+constexpr f32 CONTROL_DT = TIME_STEP*0.001f;
 
-const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
+constexpr f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
 // how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
 const u32 CLIFF_EVENT_DELAY_MS = 500;
@@ -208,13 +212,13 @@ const u16 ROBOT_RADIO_BASE_PORT = 5551;
  // It is assumed that this value does not fluctuate greatly.
  // The more inaccurate this value is, the more invalid our
  // handling of messages will be.
- const f32 MSG_RECEIVE_LATENCY_SEC = 0.03;
+ constexpr f32 MSG_RECEIVE_LATENCY_SEC = 0.03;
 
  // The effective latency of vehicle messages for basestation modelling purposes
  // This is twice the MSG_RECEIVE_LATENCY_SEC so that the basestation maintains a model
  // of the system one message cycle latency in the future. This way, commanded actions are applied
  // at the time they are expected in the physical world.
- const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
+ constexpr f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
  */
 
 // Header required at front of all AdvertisementRegistrationMsg CLAD messages sent to a Robot Ad Service
@@ -247,10 +251,10 @@ const u32 SDK_ON_DEVICE_TCP_PORT = 5106;
 
 // If most recent advertisement message is older than this,
 // then it is no longer considered to be advertising.
-const f32 ROBOT_ADVERTISING_TIMEOUT_S = 0.25;
+constexpr f32 ROBOT_ADVERTISING_TIMEOUT_S = 0.25;
 
 // Time in between robot advertisements
-const f32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
+constexpr f32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
 
 // How frequently to send robot state messages (in number of main execution
 // loop increments).  So, 6 --> every 30ms, since our loop timestep is 5ms.
