@@ -231,8 +231,15 @@ namespace Anki {
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
       PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
-      
+
       HandleAnimationAvailable(msg);
+    }
+
+    void UiGameController::HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg)
+    {
+      PRINT_NAMED_INFO("HandleAnimationAborted", "Tag: %u", msg.tag);
+
+      HandleAnimationAborted(msg);
     }
     
     void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
@@ -417,6 +424,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
             HandleFactoryTestResultBase(message.Get_FactoryTestResult());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAborted:
+            HandleAnimationAborted(message.Get_AnimationAborted());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::EndOfMessage:
             HandleEndOfMessage(message.Get_EndOfMessage());

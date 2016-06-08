@@ -30,11 +30,13 @@ namespace Cozmo {
   class CST_Animations : public CozmoSimTestController {
     
   private:
-    const u32 NUM_ANIMS_TO_PLAY = 1;
+    // const u32 NUM_ANIMS_TO_PLAY = 1;
     
     virtual s32 UpdateInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
+    virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg) override;
+    virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg) override;
     virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg) override;
     
     TestState _testState = TestState::InitCheck;
@@ -42,6 +44,9 @@ namespace Cozmo {
     std::string _lastAnimPlayed = "";
     double _lastAnimPlayedTime = 0;
     u32 _numAnimsPlayed = 0;
+    bool _receivedAllAnimations = false;
+
+    std::vector<std::string> _availableAnimations;
   };
   
   // Register class with factory
@@ -50,8 +55,8 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   
-  static const char* kTestAnimationName = "ANIMATION_TEST";
-  
+//  static const char* kTestAnimationName = "anim_speedTap_ask2play_01";
+
   s32 CST_Animations::UpdateInternal()
   {
     switch (_testState) {
@@ -63,28 +68,29 @@ namespace Cozmo {
         ExternalInterface::MessageGameToEngine message;
         message.Set_SetRobotAudioOutputSource(m);
         SendMessage(message);
-       
-        // TODO: This used to be where we asserted there were available animations to be played, but by moving our animation
-        // loading to be earlier we no longer get information on available animations. If we want that, or if there is some
-        // other initialization that needs to happen, it should go here.
-        
+
+
+
         _testState = TestState::ReadyForNextCommand;
         break;
       }
       case TestState::ReadyForNextCommand:
       {
-        if (_numAnimsPlayed == NUM_ANIMS_TO_PLAY) {
-          _testState = TestState::TestDone;
-          PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
-          break;
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, 10){
+          if (_numAnimsPlayed == _availableAnimations.size()) {
+            _testState = TestState::TestDone;
+            PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
+            break;
+          }
+          // auto animToPlay = kTestAnimationName;
+          auto animToPlay = _availableAnimations[_numAnimsPlayed];
+          PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, animToPlay.c_str());
+          SendAnimation(animToPlay.c_str(), 1);
+          _lastAnimPlayed = animToPlay;
+          ++_numAnimsPlayed;
+          _lastAnimPlayedTime = GetSupervisor()->getTime();
+          _testState = TestState::ExecutingTestAnimation;
         }
-        auto animToPlay = kTestAnimationName;
-        PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, animToPlay);
-        SendAnimation(animToPlay, 1);
-        _lastAnimPlayed = animToPlay;
-        ++_numAnimsPlayed;
-        _lastAnimPlayedTime = GetSupervisor()->getTime();
-        _testState = TestState::ExecutingTestAnimation;
         
         break;
       }
@@ -132,6 +138,16 @@ namespace Cozmo {
    
   }
 
+  void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
+  {
+    _result = 255;
+    CST_EXIT();
+  }
+
+  void CST_Animations::HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg)
+  {
+    _availableAnimations.push_back(msg.animName);
+  }
 
   void CST_Animations::HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg)
   {
