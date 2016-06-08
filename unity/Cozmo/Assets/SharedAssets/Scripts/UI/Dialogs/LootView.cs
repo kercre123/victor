@@ -59,13 +59,13 @@ namespace Cozmo {
       #region Particle Update Settings
 
       // Tron Line settings
-      private const int kTronBurstLow = 1;
-      private const int kTronBurstMed = 4;
-      private const int kTronBurstHigh = 6;
+      private const int kTronBurstLow = 3;
+      private const int kTronBurstMed = 5;
+      private const int kTronBurstHigh = 8;
 
       // Particle Burst settings for tap burst
-      private const int kMinBurst = 2;
-      private const int kMaxBurst = 8;
+      private const int kMinBurst = 4;
+      private const int kMaxBurst = 10;
       private const int kFinalBurst = 15;
 
       #endregion
