@@ -87,9 +87,9 @@ namespace Anki {
         std::vector<Signal::SmartHandle> _signalHandles;
         bool _endAnimStarted = false;
         bool _endAnimCompleted = false;
-        int _drivingStartAnimTag = -1;
-        int _drivingLoopAnimTag = -1;
-        int _drivingEndAnimTag = -1;
+        u32 _drivingStartAnimTag = ActionConstants::INVALID_TAG;
+        u32 _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
+        u32 _drivingEndAnimTag = ActionConstants::INVALID_TAG;
     };
   }
 }
