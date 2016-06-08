@@ -38,10 +38,8 @@ namespace Cozmo {
       private const float kTapDecay = 0.02f;
       private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.0f;
-      private const float kUpdateIntervalMin = 0.1f;
-      private const float kUpdateIntervalMax = 0.25f;
+      private const float kUpdateInterval = 0.35f;
       private float _UpdateTimeStamp = -1;
-      private float _CurrInterval = -1;
 
       // Total Charge per Tap and rate at which Charge decays
       // Charge opens the box at 1.0f and also controls TronBurst and Particle emission rates
@@ -188,14 +186,11 @@ namespace Cozmo {
         if (_BoxOpened == false) {
           if (_currentCharge > 0.0f) {
             _currentCharge -= kChargeDecay;
-            if (Time.time - _UpdateTimeStamp > _CurrInterval) {
+            if (Time.time - _UpdateTimeStamp > kUpdateInterval) {
               _UpdateTimeStamp = Time.time;
               float toBurst = Mathf.Lerp(kMinBurst, kMaxBurst, _currentCharge);
               _BurstParticles.Emit((int)toBurst);
               TronLineBurst(_tronBurst);
-              // Makes the Current Interval have variance that becomes more narrow the more charged the box is.
-              _CurrInterval = Mathf.Lerp(kUpdateIntervalMax, kUpdateIntervalMin, _currentCharge);
-              _CurrInterval = UnityEngine.Random.Range(kUpdateIntervalMin, _CurrInterval);
             }
             if (_currentCharge <= 0.0f) {
               _currentCharge = 0.0f;
