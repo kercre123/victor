@@ -115,8 +115,8 @@ MonoBehaviour:
   _BannerTextLabel: {fileID: 11426870}
   _BannerInOutAnimationDurationSeconds: 0.3
   _BannerSlowAnimationDurationSeconds: 0.75
-  _BannerLeftOffscreenLocalXPos: 0
-  _BannerRightOffscreenLocalXPos: 0
+  _BannerLeftOffscreenLocalXPos: -3000
+  _BannerRightOffscreenLocalXPos: 3000
   _BannerSlowDistance: 100
 --- !u!114 &11475574
 MonoBehaviour:
@@ -234,7 +234,15 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _BannerLeftOffscreenLocalXPos
+      value: -3000
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _BannerRightOffscreenLocalXPos
+      value: 3000
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 186396}

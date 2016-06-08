@@ -16,6 +16,7 @@ namespace Cozmo {
 
       // Initial Box Tween settings
       private const float kBoxIntroDuration = 0.75f;
+      private const float kBoxSettleDuration = 0.10f;
       private const float kBoxIntroMinScale = 0.15f;
 
       #region Shake Settings
@@ -339,6 +340,7 @@ namespace Cozmo {
         Sequence boxSequence = DOTween.Sequence();
         boxSequence.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InExpo));
         boxSequence.Join(_LootBox.DOLocalMove(_BoxSource.localPosition, kBoxIntroDuration).From());
+        boxSequence.Append(_LootBox.DOScale(kMinScale, kBoxSettleDuration).SetEase(Ease.InExpo));
         boxSequence.OnComplete(HandleBoxFinished);
         boxSequence.Play();
         boxSequence.TogglePause();
