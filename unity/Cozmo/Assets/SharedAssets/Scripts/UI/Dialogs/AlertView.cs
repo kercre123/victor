@@ -31,13 +31,17 @@ namespace Cozmo {
       private CanvasGroup _AlphaController;
 
       [SerializeField]
-      private IconProxy _Icon;
+      private ChallengeIconProxy _Icon;
 
       public void SetIcon(Sprite icon) {
         if (_Icon != null) {
           _Icon.gameObject.SetActive(true);
           _Icon.SetIcon(icon);
         }
+      }
+
+      public void SetChallengeType(bool isGame) {
+        _Icon.SetChallengeIconAsGame(isGame);
       }
 
       private string _TitleKey;
@@ -56,12 +60,12 @@ namespace Cozmo {
 
       public string DescriptionLocKey {
         get { return _AlertMessageText != null ? _AlertMessageText.text : null; }
-        set { 
+        set {
           if (_DescriptionKey != value && _AlertMessageText != null) {
             _DescriptionKey = value;
             _AlertMessageText.text = Localization.Get(value);
             UpdateButtonViewControllerNames();
-          } 
+          }
         }
       }
 
@@ -153,12 +157,12 @@ namespace Cozmo {
         }
       }
 
-      public void SetPrimaryButton(string titleKey, Action action = null, 
+      public void SetPrimaryButton(string titleKey, Action action = null,
                                    Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_PrimaryButton, titleKey, action, audioParam);
       }
 
-      public void SetSecondaryButton(string titleKey, Action action = null, 
+      public void SetSecondaryButton(string titleKey, Action action = null,
                                      Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_SecondaryButton, titleKey, action, audioParam);
 
@@ -186,7 +190,7 @@ namespace Cozmo {
         }
       }
 
-      private void SetupButton(Cozmo.UI.CozmoButton button, string titleKey, Action action, 
+      private void SetupButton(Cozmo.UI.CozmoButton button, string titleKey, Action action,
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           string title = Localization.Get(titleKey);

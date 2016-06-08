@@ -212,8 +212,8 @@ public class DailyGoalManager : MonoBehaviour {
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
     if (goals.Count > 0) {
       for (int i = 0; i < goals.Count; i++) {
-        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today), 
-          new Dictionary<string,string> { {
+        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
+          new Dictionary<string, string> { {
               "$data",
               DASUtil.FormatGoal(goals[i])
             }
@@ -227,7 +227,7 @@ public class DailyGoalManager : MonoBehaviour {
       // Avoid dupes
       return;
     }
-   
+
     ChallengeData data = _LastChallengeData;
     // Do not send the minigame message if the challenge is invalid.
     if (data == null) {
@@ -241,6 +241,7 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
     alertView.SetIcon(_LastChallengeData.ChallengeIcon);
+    alertView.SetChallengeType(_LastChallengeData.IsMinigame);
     alertView.ViewClosed += HandleRequestDialogClose;
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
