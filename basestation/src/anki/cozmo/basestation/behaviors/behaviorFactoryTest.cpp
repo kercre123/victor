@@ -69,9 +69,39 @@ namespace Cozmo {
   // Static consts
   ////////////////////////////
   
+  static Pose3d _cliffDetectPose;
+  static Pose3d _camCalibPose;
+  static Pose3d _prePickupPose;
+  static Pose3d _expectedLightCubePose;
+  static Pose3d _actualLightCubePose;
+  static Pose3d _expectedChargerPose;
+  
+  // Pan and tilt angles to command robot to look at calibration targets
+  static const std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles =
+   {{0,               0},
+    {0,               DEG_TO_RAD(25)},
+    {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
+    {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
+    {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
+  };
+
+  static constexpr f32 _kCalibrationTimeout_sec = 8.f;
+  static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
+  static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
+  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
+  static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
+  static constexpr u32 _kNumPickupRetries = 1;
+  static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
+  static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
+  static constexpr FactoryID _kChargerFactoryID = 0x80000001;
+  
+  // If no change in behavior state for this long then trigger failure
+  static constexpr f32 _kWatchdogTimeout = 20;
+
+  
   // Rotation ambiguities for observed blocks.
   // We only care that the block is upright.
-  const std::vector<RotationMatrix3d> BehaviorFactoryTest::_kBlockRotationAmbiguities({
+  const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities({
     RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
     RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
   });
@@ -98,22 +128,6 @@ namespace Cozmo {
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
     _motionProfile.reverseSpeed_mmps = 80.0f;
     _motionProfile.isCustom = true;
-
-    /*
-    _camCalibPanAndTiltAngles = {{0,               0},
-                                 {0,               DEG_TO_RAD(20)},
-                                 {DEG_TO_RAD(-90), 0},
-                                 {DEG_TO_RAD(-40), 0},
-                                 {DEG_TO_RAD( 45), 0},
-     */
-    
-     // Fixture targets were smaller and lower than spec
-     _camCalibPanAndTiltAngles = {{0,               0},
-                                 {0,               DEG_TO_RAD(25)},
-                                 {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
-                                 {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
-                                 {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
-    };
     
     
     SubscribeToTags({{
@@ -189,22 +203,6 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
-    
-    // NOTE: Playpen fixutre will do the memory wipe since WipeAll reboots the robot
-    /*
-    if (kBFT_EnableNVStorageWrites) {
-      // Erase all entries in flash
-      robot.GetNVStorageComponent().WipeAll(true,
-                                            [this,&robot](NVStorage::NVResult res){
-                                              if (res != NVStorage::NVResult::NV_OKAY) {
-                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.WipeAll.Failed",
-                                                                    "Result: %s", EnumToString(res));
-                                              } else {
-                                                PRINT_NAMED_INFO("BehaviorFactoryTest.WipeAll.Succeeded", "");
-                                              }
-                                            });
-    }
-     */
 
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
@@ -336,6 +334,7 @@ namespace Cozmo {
     
     switch(_currentState)
     {
+      // - - - - - - - - - - - - - - INIT ROBOT - - - - - - - - - - - - - - -
       case FactoryTestState::InitRobot:
       {
         // Too much stuff is changing now.
@@ -381,6 +380,8 @@ namespace Cozmo {
         
         break;
       }
+
+      // - - - - - - - - - - - - - - CHARGER AND IMU CHECK - - - - - - - - - - - - - - -
       case FactoryTestState::ChargerAndIMUCheck:
       {
         
@@ -449,6 +450,8 @@ namespace Cozmo {
         }
         break;
       }
+        
+      // - - - - - - - - - - - - - - DRIVE TO SLOT - - - - - - - - - - - - - - -
       case FactoryTestState::DriveToSlot:
       {
         if (!robot.IsCliffSensorOn()) {
@@ -495,6 +498,7 @@ namespace Cozmo {
         break;
       }
         
+      // - - - - - - - - - - - - - - GOTO CALIBRATION POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoCalibrationPose:
       {
         // Check that robot is in correct pose
@@ -515,6 +519,7 @@ namespace Cozmo {
         break;
       }
         
+      // - - - - - - - - - - - - - - TAKE CALIBRATION IMAGES - - - - - - - - - - - - - - -
       case FactoryTestState::TakeCalibrationImages:
       {
         // All calibration images acquired. (NOTE: the "+1" is for the initial image taken on the charger,
@@ -546,6 +551,7 @@ namespace Cozmo {
         break;
       }
         
+      // - - - - - - - - - - - - - - COMPUTE CAMERA CALIBRATION - - - - - - - - - - - - - - -
       case FactoryTestState::ComputeCameraCalibration:
       {
         // Move head down to line up for readToolCode.
@@ -567,6 +573,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::WaitForCameraCalibration);
         break;
       }
+        
+      // - - - - - - - - - - - - - - WAIT FOR CAMERA CALIBRATION - - - - - - - - - - - - - - -
       case FactoryTestState::WaitForCameraCalibration:
       {
         if (_calibrationReceived) {
@@ -662,6 +670,8 @@ namespace Cozmo {
         }
         break;
       }
+        
+      // - - - - - - - - - - - - - - READ LIFT TOOL CODE - - - - - - - - - - - - - - -
       case FactoryTestState::ReadLiftToolCode:
       {
         // Wait for it to finish backing up
@@ -697,6 +707,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::GotoPickupPose);
         break;
       }
+        
+      // - - - - - - - - - - - - - - GOTO PICKUP POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
@@ -785,6 +797,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::StartPickup);
         break;
       }
+        
+      // - - - - - - - - - - - - - - START PICKUP - - - - - - - - - - - - - - -
       case FactoryTestState::StartPickup:
       {
         if (kBFT_SkipBlockPickup) {
@@ -825,6 +839,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::PickingUpBlock);
         break;
       }
+        
+      // - - - - - - - - - - - - - - PICKING UP BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PickingUpBlock:
       {
         
@@ -847,6 +863,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::PlacingBlock);
         break;
       }
+        
+      // - - - - - - - - - - - - - - PLACING BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PlacingBlock:
       {
         // Verify that block is where expected
@@ -887,6 +905,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::DockToCharger);
         break;
       }
+        
+      // - - - - - - - - - - - - - - DOCK TO CHARGER - - - - - - - - - - - - - - -
       case FactoryTestState::DockToCharger:
       {
         if (!_chargerObjectID.IsSet()) {
