@@ -13,8 +13,6 @@ using Anki.Cozmo;
 /// </summary>
 public class DailyGoalManager : MonoBehaviour {
 
-  // List of current Daily Goals
-  private List<DailyGoal> _DailyGoalList;
   // List of Current Generation Data
   private DailyGoalGenerationData _CurrentGenData;
 
