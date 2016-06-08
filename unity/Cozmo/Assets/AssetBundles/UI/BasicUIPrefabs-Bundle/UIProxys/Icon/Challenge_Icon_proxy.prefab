@@ -25,8 +25,8 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22442816}
-  - 114: {fileID: 11474228}
   - 114: {fileID: 11473208}
+  - 114: {fileID: 11468064}
   m_Layer: 5
   m_Name: Challenge_Icon_proxy
   m_TagString: Untagged
@@ -122,6 +122,22 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11468064
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 116638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a559a32f4b8e4d43960f1ed02ca2cf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _IconImage: {fileID: 11471792}
+  _ShowBackground: 1
+  _BackgroundImage: {fileID: 11456304}
+  _ActivitySprite: {fileID: 21300000, guid: 4ccce4b95febe46da9467c2212dcc0de, type: 3}
+  _GameSprite: {fileID: 21300000, guid: b8b22cd5a744241a39ab514bcf0d028e, type: 3}
 --- !u!114 &11471792
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -161,20 +177,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Image: {fileID: 11463104}
---- !u!114 &11474228
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 116638}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 242e6fa335cc0498dbfce8a9c7b0697d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _IconImage: {fileID: 11471792}
-  _ShowBackground: 1
-  _BackgroundImage: {fileID: 11456304}
 --- !u!222 &22241544
 CanvasRenderer:
   m_ObjectHideFlags: 1
