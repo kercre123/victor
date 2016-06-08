@@ -131,6 +131,20 @@ message SetRobotVolume {
   float_32 volume
 }
 
+
+// !!! Be sure to update RobotAudioOutputSource in robotAudioClient.h if this enum is updated. !!!
+enum uint_8 RobotAudioOutputSourceCLAD
+{
+  NoDevice,       // No audio
+  PlayOnDevice,   // Play on Device - This is not perfectly synced to animations
+  PlayOnRobot     // Play on Robot by using Hijack Audio plug-in to get audio stream from Wwise
+}
+
+message SetRobotAudioOutputSource
+{
+  RobotAudioOutputSourceCLAD source
+}
+
 // Enable/Disable paralysis of motors on pickup
 message EnableRobotPickupParalysis
 {

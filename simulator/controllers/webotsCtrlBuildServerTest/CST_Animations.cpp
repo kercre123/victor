@@ -56,6 +56,12 @@ namespace Cozmo {
     switch (_testState) {
 
       case TestState::InitCheck:
+      {
+        ExternalInterface::SetRobotAudioOutputSource m;
+        m.source = ExternalInterface::RobotAudioOutputSourceCLAD::PlayOnRobot;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetRobotAudioOutputSource(m);
+        SendMessage(message);
        
         // TODO: This used to be where we asserted there were available animations to be played, but by moving our animation
         // loading to be earlier we no longer get information on available animations. If we want that, or if there is some
@@ -63,7 +69,7 @@ namespace Cozmo {
         
         _testState = TestState::ReadyForNextCommand;
         break;
-
+      }
       case TestState::ReadyForNextCommand:
       {
         if (_numAnimsPlayed == NUM_ANIMS_TO_PLAY) {
