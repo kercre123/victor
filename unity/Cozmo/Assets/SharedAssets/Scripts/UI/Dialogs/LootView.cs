@@ -17,13 +17,13 @@ namespace Cozmo {
       private const float kBoxIntroMinScale = 0.15f;
 
       // Rotation and Position Shaking
-      private const float kShakeDuration = 1.25f;
-      private const float kShakeRotationMin = 20.0f;
-      private const float kShakeRotationMax = 45.0f;
-      private const int kShakeRotationVibrato = 60;
-      private const float kShakeRotationRandomness = 60.0f;
+      private const float kShakeDuration = 1.0f;
+      private const float kShakeRotationMin = 15.0f;
+      private const float kShakeRotationMax = 30.0f;
+      private const int kShakeRotationVibrato = 45;
+      private const float kShakeRotationRandomness = 45.0f;
       private const float kShakePositionMin = 15f;
-      private const float kShakePositionMax = 25f;
+      private const float kShakePositionMax = 45f;
       private const int kShakePositionVibrato = 45;
       private const float kShakePositionRandomness = 30.0f;
 
@@ -46,11 +46,11 @@ namespace Cozmo {
       private const float kChargeDecay = 0.0025f;
 
       // How long the Reward animation takes to tween the reward doobers to their initial positions
-      private const float kDooberExplosionDuration = 0.35f;
+      private const float kDooberExplosionDuration = 0.5f;
       // How long the Rewards remain visible before leaving
-      private const float kDooberStayDuration = 1.75f;
+      private const float kDooberStayDuration = 1.5f;
       // How long the Reward animation takes to tween the reward doobers to their final positions
-      private const float kDooberReturnDuration = 0.25f;
+      private const float kDooberReturnDuration = 0.75f;
       // The maximum amount of variance in seconds that Doobers are randomly staggered by to create
       // less uniform movements
       private const float kDooberStaggerMax = 0.5f;
@@ -134,7 +134,6 @@ namespace Cozmo {
       private void Awake() {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
         _LootGlow.DOFade(0.0f, 0.0f);
-        _LootBox.localScale = new Vector3(kMinScale, kMinScale);
         CreateBoxAnimation();
         _BoxOpened = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {

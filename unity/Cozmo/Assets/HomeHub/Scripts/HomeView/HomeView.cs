@@ -86,7 +86,6 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
-      Debug.Log("HOMEVIEW INITIALIZE");
       _HomeHubInstance = homeHubInstance;
 
       DASEventViewName = "home_view";
