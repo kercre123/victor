@@ -352,6 +352,9 @@ def main(scriptArgs):
     global runningMultipleTests
     runningMultipleTests= True
 
+  num_of_failed_tests = 0
+  num_of_passed_tests = 0
+
   for _ in range(0, int(options.numRuns)):
     # save current time for logs
     global curTime
@@ -383,10 +386,20 @@ def main(scriptArgs):
       UtilLog.error("SOME TESTS FAILED")
       UtilLog.error("*************************")
       returnValue = returnValue + 1
+      num_of_failed_tests += 1
     else:
       UtilLog.info("*************************")
       UtilLog.info("ALL " + str(len(testResults)) + " TESTS PASSED")
       UtilLog.info("*************************")
+      num_of_passed_tests += 1
+
+
+  num_of_total_tests = num_of_failed_tests + num_of_passed_tests
+  UtilLog.info(
+    "{0}/{1} ({2:.1f}%) runs failed".format(num_of_failed_tests,
+                                            num_of_total_tests,
+                                            float(num_of_failed_tests)/num_of_total_tests*100)
+  )
 
   return returnValue
 
