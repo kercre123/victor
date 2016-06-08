@@ -39,6 +39,7 @@ enum uint_8 GameEvent
   OnSawOldUnnamedFace,
   OnSawOldNamedFace,
   OnWiggle,
+  OnWaitForCubesMinigameSetup,
   OnSimonSetupComplete,
   OnSimonExampleStarted,
   OnSimonCozmoTurnStarted,

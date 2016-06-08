@@ -82,11 +82,11 @@ namespace Cozmo {
 
         if (GoalComplete()) {
           _GoalLabel.color = UIColorPalette.CompleteTextColor;
-          _CompletedBackground.enabled = true;
+          _CompletedBackground.gameObject.SetActive(true);
         }
         else {
           _GoalLabel.color = UIColorPalette.NeutralTextColor;
-          _CompletedBackground.enabled = false;
+          _CompletedBackground.gameObject.SetActive(false);
         }
       }
 

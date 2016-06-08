@@ -130,6 +130,18 @@ namespace Anki {
                          const u16     xBorderPad = 0,
                          const u16     yBorderPad = 0) const;
       
+      // Same as above, except requireSomethingBehind==true.
+      // If the function returns false, then hasNothingBehind contains whether
+      // or not any marker had nothing behind it. If so, then we would have
+      // returned true for this function if not for that reason.
+      bool IsVisibleFrom(const Camera& camera,
+                         const f32     maxFaceNormalAngle,
+                         const f32     minMarkerImageSize,
+                         const u16     xBorderPad,
+                         const u16     yBorderPad,
+                         bool& hasNothingBehind) const;
+                         
+      
       // Accessors:
       ObjectID           GetID()     const;
       const Pose3d&      GetPose()   const;
@@ -147,6 +159,12 @@ namespace Anki {
       void SetLastObservedTime(TimeStamp_t t);
       const TimeStamp_t GetLastObservedTime() const;
       u32 GetNumTimesObserved() const;
+      
+      // For tracking how many times we expected to see this object but didn't.
+      // Counter will reset each time SetLastObservedTime is called (i.e. at the same
+      // time that num times _observed_ gets incremented).
+      u32 GetNumTimesUnobserved() const;
+      void IncrementNumTimesUnobserved();
       
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
@@ -228,6 +246,7 @@ namespace Anki {
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime = 0;
       u32          _numTimesObserved = 0;
+      u32          _numTimesUnobserved = 0;
       ColorRGBA    _color;
       PoseState    _poseState = PoseState::Unknown;
       
@@ -345,6 +364,15 @@ namespace Anki {
     inline void ObservableObject::SetLastObservedTime(TimeStamp_t t) {
       _lastObservedTime = t;
       ++_numTimesObserved;
+      _numTimesUnobserved = 0;
+    }
+
+    inline u32 ObservableObject::GetNumTimesUnobserved() const {
+      return _numTimesUnobserved;
+    }
+    
+    inline void ObservableObject::IncrementNumTimesUnobserved() {
+      ++_numTimesUnobserved;
     }
     
     inline void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {

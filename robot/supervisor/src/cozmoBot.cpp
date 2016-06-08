@@ -33,6 +33,13 @@
 #include <math.h>
 #endif
 
+#define ACTIVE_OBJECT_DISCONNECT_ON_ENGINE_DISCONNECT
+#ifdef ACTIVE_OBJECT_DISCONNECT_ON_ENGINE_DISCONNECT
+#include "clad/types/activeObjectTypes.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#endif
+
 ///////// TESTING //////////
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
@@ -292,6 +299,20 @@ namespace Anki {
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::Init();
+
+#ifdef ACTIVE_OBJECT_DISCONNECT_ON_ENGINE_DISCONNECT
+          // TEMP: Disconnecting active objects from K02 because it seems the Espressif's
+          //       backgroundTaskOnDisconnect(), which is supposed to do this, is not getting called.
+          for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
+            SetPropSlot cubeSlotMsg;
+            cubeSlotMsg.slot = i;
+            cubeSlotMsg.factory_id = 0;
+            RobotInterface::SendMessage(cubeSlotMsg);
+          }
+#endif
+
+          
+          
 #ifndef TARGET_K02
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);

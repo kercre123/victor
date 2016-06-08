@@ -14,6 +14,10 @@ namespace SpeedTap {
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm);
     }
 
+    public override void Exit() {
+      RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(false);
+    }
+
     private void HandleTapDone(bool success) {
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm, HandleTapDone);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);

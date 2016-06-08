@@ -47,6 +47,18 @@ public:
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
+  
+  enum class State : uint8_t {
+    None,
+    WakeUp,
+    DriveOffCharger,
+    FearEdge,
+    Pounce,
+    Faces,
+    Cubes,
+    MiniGame,
+    Sleep
+  };
 
 protected:
 
@@ -75,18 +87,6 @@ private:
   bool DidBehaviorRunAndStop(const char* behaviorName) const;
   bool IsBehaviorRunning(const char* behaviorName) const;
   void ResetDemoRelatedState();
-  
-  enum class State {
-    None,
-    WakeUp,
-    DriveOffCharger,
-    FearEdge,
-    Pounce,
-    Faces,
-    Cubes,
-    MiniGame,
-    Sleep
-  };
 
   State _state = State::None;
 

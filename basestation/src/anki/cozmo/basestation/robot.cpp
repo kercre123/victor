@@ -275,6 +275,12 @@ namespace Anki {
     
     void Robot::SetPickedUp(bool t)
     {
+      // We use the cliff sensor to help determine if we're picked up; if it's disabled then ignore when it is
+      // reported as true. If it's false we want to be able to go through the put down logic below.
+      if (!IsCliffSensorEnabled() && t) {
+        return;
+      }
+      
       if(_isPickedUp == false && t == true) {
         // Robot is being picked up: de-localize it
         Delocalize();
@@ -2564,6 +2570,21 @@ namespace Anki {
       return true;
     }
   
+    // Helper for the following functions to reason about the object's height (mid or top)
+    // relative to specified threshold
+    inline static bool IsTooHigh(const ObservableObject& object, const Pose3d& poseWrtRobot,
+                                 float heightMultiplier, float heightTol, bool useTop)
+    {
+      const Point3f rotatedSize( object.GetPose().GetRotation() * object.GetSize() );
+      const float rotatedHeight = std::abs( rotatedSize.z() );
+      float z = poseWrtRobot.GetTranslation().z();
+      if(useTop) {
+        z += rotatedHeight*0.5f;
+      }
+      const bool isTooHigh = z > (heightMultiplier * rotatedHeight + heightTol);
+      return isTooHigh;
+    }
+    
     bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
     {
       // Note rsam/kevin: this only works currently for original cubes. Doing height checks would require more
@@ -2576,10 +2597,7 @@ namespace Anki {
       }
             
       // check if it's too high to stack on
-      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
-      const float topZ = relPos.GetTranslation().z() + objectToStackOn.GetSize().z() * 0.5f;
-      const float isTooHigh = topZ > (objectToStackOn.GetSize().z() + STACKED_HEIGHT_TOL_MM);
-      if ( isTooHigh ) {
+      if ( IsTooHigh(objectToStackOn, relPos, 1.f, STACKED_HEIGHT_TOL_MM, true) ) {
         return false;
       }
     
@@ -2595,10 +2613,7 @@ namespace Anki {
       }
       
       // check if it's too high to pick up
-      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
-      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
-      const float isTooHigh = topZ > ( 2 * objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
-      if ( isTooHigh ) {
+      if ( IsTooHigh(objectToPickUp, relPos, 2.f, STACKED_HEIGHT_TOL_MM, true) ) {
         return false;
       }
     
@@ -2614,10 +2629,7 @@ namespace Anki {
       }
       
       // check if it's too high to pick up
-      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
-      const float maxHeight = objectToPickUp.GetSize().z()*0.5f + STACKED_HEIGHT_TOL_MM;
-      const float isTooHigh = relPos.GetTranslation().z() > maxHeight;
-      if ( isTooHigh ) {
+      if ( IsTooHigh(objectToPickUp, relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, false) ) {
         return false;
       }
     

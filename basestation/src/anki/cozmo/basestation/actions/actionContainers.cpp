@@ -286,11 +286,11 @@ namespace Anki {
     {
       DeleteCurrentAction();
       
-      while(!_queue.empty()) {
-        IActionRunner* action = _queue.front();
-        CORETECH_ASSERT(action != nullptr);
-        Util::SafeDelete(action);
-        _queue.pop_front();
+      for (auto listIter = _queue.begin(); listIter != _queue.end(); ) {
+        CORETECH_ASSERT(*listIter != nullptr);
+        (*listIter)->PrepForCompletion();
+        Util::SafeDelete(*listIter);
+        listIter = _queue.erase(listIter);
       }
     }
 

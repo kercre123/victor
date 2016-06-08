@@ -13,7 +13,6 @@
 #define memcpy os_memcpy
 #define strncmp os_strncmp
 #define GetMicroCounter system_get_time
-int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_size(), reads the same global
 #define TxStalled() (xPortGetFreeHeapSize() < 1680)   // Return true if transmission is not possible at this time
 #else
 #include <string.h>

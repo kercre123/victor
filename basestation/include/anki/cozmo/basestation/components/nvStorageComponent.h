@@ -105,6 +105,9 @@ public:
 
   void Update();
 
+  // Returns true if this component is about to send a request or is currently waiting on a request
+  bool HasPendingRequests();
+  
   // Returns the word-aligned size that nvStorage automaticaly rounds up to on all saved content.
   // e.g. If you write 10 bytes to tag 2 and then read back tag 2, you will receive 12 bytes.
   static size_t MakeWordAligned(size_t size);
