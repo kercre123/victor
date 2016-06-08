@@ -181,8 +181,7 @@ def SetTestStatus(testName, status, totalResultFlag, testStatuses):
 def runAll(options):
   # Get list of tests and world files from config
   config = ConfigParser.ConfigParser()
-  webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
-  config.read(webotsTestCfgPath)
+  config.read(options.cfg_path)
   testNames = config.sections()
   testStatuses = {}
   allTestsPassed = True
@@ -285,8 +284,7 @@ def tarball(options):
   tar = tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz")
   
   config = ConfigParser.ConfigParser()
-  webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
-  config.read(webotsTestCfgPath)
+  config.read(options.cfg_path)
   testNames = config.sections()
   for test in testNames:
     if runningMultipleTests:
@@ -319,12 +317,16 @@ def main(scriptArgs):
                       help='display Webots window')
   parser.add_argument('--numRuns', dest='numRuns', action='store', default=1,
                       help='run the tests this many times also saves logs with timestamps so they arent overwritten')
+  parser.add_argument('--configFile', dest='configFile', action='store', default='webotsTests.cfg',
+                      help='Name of .cfg file to use, should be located in the same directory as this file.')
   (options, args) = parser.parse_known_args(scriptArgs)
 
   if options.debug:
     UtilLog.setLevel(logging.DEBUG)
   else:
     UtilLog.setLevel(logging.INFO)
+
+  options.cfg_path = os.path.join('project', 'build-scripts', 'webots', options.configFile)
 
   # if no project root fund - make one up
   if not options.projectRoot:
