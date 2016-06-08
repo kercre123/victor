@@ -1338,6 +1338,8 @@ MonoBehaviour:
   _RequirementPointsNeededLabel: {fileID: 11474242}
   _ScrollRect: {fileID: 11465266}
   _LootViewPrefab: {fileID: 11429958, guid: 3fdd92544c58b4b3dbb0a5543e9024b9, type: 2}
+  _DailyGoalsCompletionText: {fileID: 11413228}
+  _DailyGaolsCompletionTextDown: {fileID: 11437624}
 --- !u!114 &11477092
 MonoBehaviour:
   m_ObjectHideFlags: 1
