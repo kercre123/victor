@@ -8,19 +8,19 @@
   <WorkspaceName>WorkSpace</WorkspaceName>
 
   <project>
+    <PathAndName>.\robot_sideload.uvprojx</PathAndName>
+  </project>
+
+  <project>
     <PathAndName>.\robot_boot.uvprojx</PathAndName>
     <NodeIsExpanded>1</NodeIsExpanded>
     <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
   </project>
 
   <project>
-    <PathAndName>.\robot_sideload.uvprojx</PathAndName>
+    <PathAndName>.\robot41.uvprojx</PathAndName>
     <NodeIsActive>1</NodeIsActive>
     <NodeIsExpanded>1</NodeIsExpanded>
-  </project>
-
-  <project>
-    <PathAndName>.\robot41.uvprojx</PathAndName>
     <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
   </project>
 
