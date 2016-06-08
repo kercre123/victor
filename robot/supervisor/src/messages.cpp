@@ -799,6 +799,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_bodyRestart(RobotInterface::OTA::BodyRestart const&)
+      {
+        // Nothing to do here
+      }
       void Process_bleEncodedKey(Anki::Cozmo::BLE_EncodedKey const&)
       {
         // Nothing to do here

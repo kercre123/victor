@@ -15,7 +15,9 @@ __packed struct AccessoryHandshake {
   uint8_t msg_id;
   int8_t  x,y,z;
   uint8_t tap_count;
-  uint8_t _reserved[12];
+  uint8_t tapTime;
+  int8_t  tapNeg, tapPos;
+  uint8_t _reserved[9];
 };
 
 __packed struct AdvertisePacket {

@@ -247,6 +247,7 @@ namespace Anki {
         _robot.GetAnimationStreamer().PopIdleAnimation();
         _shouldPopIdle = false;
       }
+      _compoundAction.PrepForCompletion();
     }
   
     void SearchSideToSideAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
@@ -781,6 +782,11 @@ namespace Anki {
 
     }
     
+    PanAndTiltAction::~PanAndTiltAction()
+    {
+      _compoundAction.PrepForCompletion();
+    }
+    
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
     {
       if (maxSpeed_radPerSec == 0.f) {
@@ -1295,6 +1301,7 @@ namespace Anki {
         _waitForImagesAction->PrepForCompletion();
       }
       Util::SafeDelete(_waitForImagesAction);
+      _moveLiftToHeightAction.PrepForCompletion();
     }
     
     const std::string& VisuallyVerifyObjectAction::GetName() const
@@ -1771,6 +1778,7 @@ namespace Anki {
     ReadToolCodeAction::~ReadToolCodeAction()
     {
       _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
+      _headAndLiftDownAction.PrepForCompletion();
     }
     
     ActionResult ReadToolCodeAction::CheckIfDone()
