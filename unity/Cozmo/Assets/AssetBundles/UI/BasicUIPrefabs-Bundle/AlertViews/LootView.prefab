@@ -462,7 +462,8 @@ MonoBehaviour:
   _RewardDooberPrefab: {fileID: 125416, guid: da949a90c3ec547bfb567d613a9396a5, type: 2}
   _TronLinePrefab: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
   _BurstParticles: {fileID: 19874792}
-  _ShelfWidgetPrefab: {fileID: 11434798, guid: 67811252d71234c3bab17cbc8daea4a0, type: 2}
+  _BannerWidgetPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998,
+    type: 2}
   _LootText: {fileID: 11411324}
   _LootButton: {fileID: 11488180}
   _LootBox: {fileID: 22481126}

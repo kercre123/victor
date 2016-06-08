@@ -57,10 +57,16 @@ namespace Cozmo {
       private GameObject _ContentObject = null;
 
       [SerializeField]
-      private BannerWidget _BannerWidget;
+      private RectTransform _BannerContainer;
+      [SerializeField]
+      private BannerWidget _BannerWidgetPrefab;
+      private BannerWidget _BannerWidgetInstance;
 
       private void Start() {
         transform.SetAsFirstSibling();
+
+        GameObject newWidget = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer);
+        _BannerWidgetInstance = newWidget.GetComponent<BannerWidget>();
       }
 
       private void OnDestroy() {
@@ -182,7 +188,7 @@ namespace Cozmo {
       }
 
       public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
-        _BannerWidget.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds);
+        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds);
       }
 
       #region IMinigameWidget

@@ -107,8 +107,8 @@ namespace Cozmo {
       private ParticleSystem _BurstParticles;
 
       [SerializeField]
-      private ShelfWidget _ShelfWidgetPrefab;
-      private ShelfWidget _ShelfWidgetInstance;
+      private BannerWidget _BannerWidgetPrefab;
+      private BannerWidget _BannerWidgetInstance;
 
       public string LootText {
         get { return _LootText != null ? _LootText.text : null; }
@@ -153,9 +153,8 @@ namespace Cozmo {
         }
         _LootText.gameObject.SetActive(false);
 
-        GameObject newWidget = UIManager.CreateUIElement(_ShelfWidgetPrefab.gameObject, _BannerContainer);
-        _ShelfWidgetInstance = newWidget.GetComponent<ShelfWidget>();
-        _ShelfWidgetInstance.ShowBackground(false);
+        GameObject newWidget = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer);
+        _BannerWidgetInstance = newWidget.GetComponent<BannerWidget>();
       }
 
       // Handle each tap
@@ -328,7 +327,7 @@ namespace Cozmo {
         }
 
         openAnimation.OnComplete(() =>
-          (_ShelfWidgetInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce), StartBoxAnimation)));
+          (_BannerWidgetInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce), StartBoxAnimation)));
 
       }
 
