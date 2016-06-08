@@ -10,7 +10,7 @@ namespace CodeBreaker {
     public override void Enter() {
       base.Enter();
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
-      game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong, 
+      game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong,
         LocalizationKeys.kButtonReady, HandleReadyButtonClicked);
 
       // Play an idle animation on Cozmo; will be inturrupted by 
@@ -18,13 +18,11 @@ namespace CodeBreaker {
       _CurrentRobot.SetIdleAnimation("_LIVE_​");
       _CurrentRobot.TurnOffAllLights();
       List<LightCube> targetCubes = new List<LightCube>();
-      foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
-        if (obj is LightCube) {
-          targetCubes.Add(obj as LightCube);
+      foreach (ObservedObject obj in _CurrentRobot.VisibleLightCubes) {
+        targetCubes.Add(obj as LightCube);
 
-          if (targetCubes.Count >= game.NumCubesInCode) {
-            break;
-          }
+        if (targetCubes.Count >= game.NumCubesInCode) {
+          break;
         }
       }
       _TargetCubes = targetCubes.ToArray();

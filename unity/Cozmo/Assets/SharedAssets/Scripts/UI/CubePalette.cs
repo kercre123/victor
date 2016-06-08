@@ -15,6 +15,15 @@ namespace Cozmo {
     }
 
     [SerializeField]
+    private uint _FindCubesTimeoutFrames = 2;
+
+    public static uint FindCubesTimeoutFrames {
+      get {
+        return Instance._FindCubesTimeoutFrames;
+      }
+    }
+
+    [SerializeField]
     private CubeColor _OffColor;
 
     public static CubeColor OffColor {

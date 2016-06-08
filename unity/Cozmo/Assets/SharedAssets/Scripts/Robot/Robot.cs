@@ -156,13 +156,21 @@ public class Robot : IRobot {
 
   public float BatteryPercent { get; private set; }
 
-  public List<ObservedObject> VisibleObjects { get; private set; }
-
-  public List<ObservedObject> SeenObjects { get; private set; }
-
-  public List<ObservedObject> DirtyObjects { get; private set; }
-
   public Dictionary<int, LightCube> LightCubes { get; private set; }
+
+  public List<LightCube> VisibleLightCubes {
+    get {
+      List<LightCube> visibleLightCubes = new List<LightCube>();
+      foreach (LightCube cube in LightCubes.Values) {
+        if (cube.IsInFieldOfView) {
+          visibleLightCubes.Add(cube);
+        }
+      }
+      return visibleLightCubes;
+    }
+  }
+
+  public ObservedObject Charger { get; private set; }
 
   public List<Face> Faces { get; private set; }
 
@@ -200,30 +208,30 @@ public class Robot : IRobot {
 
   private int _CarryingObjectID;
 
-  public int CarryingObjectID { 
-    get { return _CarryingObjectID; } 
-    private set { 
+  public int CarryingObjectID {
+    get { return _CarryingObjectID; }
+    private set {
       if (_CarryingObjectID != value) {
-        _CarryingObjectID = value; 
+        _CarryingObjectID = value;
         if (OnCarryingObjectSet != null) {
           OnCarryingObjectSet(CarryingObject);
         }
       }
-    } 
+    }
   }
 
   private int _HeadTrackingObjectID;
 
-  public int HeadTrackingObjectID { 
-    get { return _HeadTrackingObjectID; } 
-    private set { 
+  public int HeadTrackingObjectID {
+    get { return _HeadTrackingObjectID; }
+    private set {
       if (_HeadTrackingObjectID != value) {
-        _HeadTrackingObjectID = value; 
+        _HeadTrackingObjectID = value;
         if (OnHeadTrackingObjectSet != null) {
           OnHeadTrackingObjectSet(HeadTrackingObject);
         }
       }
-    } 
+    }
   }
 
   private int _LastHeadTrackingObjectID;
@@ -236,12 +244,12 @@ public class Robot : IRobot {
 
   private uint _LastIdTag;
 
-  private ObservedObject _CarryingObject;
+  private ObservedObject _CarryingObject = null;
 
   public ObservedObject CarryingObject {
     get {
-      if (_CarryingObject != CarryingObjectID)
-        _CarryingObject = SeenObjects.Find(x => x == CarryingObjectID);
+      if (_CarryingObject == null || _CarryingObject.ID != CarryingObjectID)
+        _CarryingObject = GetObservedObjectById(CarryingObjectID);
 
       return _CarryingObject;
     }
@@ -250,13 +258,13 @@ public class Robot : IRobot {
   public event Action<ObservedObject> OnCarryingObjectSet;
 
 
-  private ObservedObject _HeadTrackingObject;
+  private ObservedObject _HeadTrackingObject = null;
 
   public ObservedObject HeadTrackingObject {
     get {
-      if (_HeadTrackingObject != HeadTrackingObjectID)
-        _HeadTrackingObject = SeenObjects.Find(x => x == HeadTrackingObjectID);
-      
+      if (_HeadTrackingObject == null || _HeadTrackingObject.ID != HeadTrackingObjectID)
+        _HeadTrackingObject = GetObservedObjectById(HeadTrackingObjectID);
+
       return _HeadTrackingObject;
     }
   }
@@ -285,7 +293,7 @@ public class Robot : IRobot {
       _LocalBusyOverride = value;
 
       if (value) {
-        DriveWheels(0, 0); 
+        DriveWheels(0, 0);
       }
     }
   }
@@ -298,13 +306,10 @@ public class Robot : IRobot {
     return (GameStatus & GameStatusFlag.IsLocalized) == GameStatusFlag.IsLocalized;
   }
 
+  private uint _LastProcessedVisionFrameEngineTimestamp;
 
   public Robot(byte robotID) : base() {
     ID = robotID;
-    const int initialSize = 8;
-    SeenObjects = new List<ObservedObject>(initialSize);
-    VisibleObjects = new List<ObservedObject>(initialSize);
-    DirtyObjects = new List<ObservedObject>(initialSize);
     LightCubes = new Dictionary<int, LightCube>();
     Faces = new List<global::Face>();
 
@@ -325,14 +330,12 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
-    RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
     RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
-    RobotEngineManager.Instance.OnObjectConnectionState -= ObjectConnectionState;
     RobotEngineManager.Instance.OnSparkUnlockEnded -= SparkUnlockEnded;
   }
 
@@ -377,7 +380,7 @@ public class Robot : IRobot {
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
     var bounds = new Bounds(
-                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f), 
+                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f),
                    Vector3.one * CozmoUtil.kBlockLengthMM);
 
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
@@ -423,9 +426,6 @@ public class Robot : IRobot {
       DAS.Debug(this, "Robot data cleared");
     }
 
-    SeenObjects.Clear();
-    VisibleObjects.Clear();
-    DirtyObjects.Clear();
     LightCubes.Clear();
     RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
     GameStatus = GameStatusFlag.Nothing;
@@ -444,19 +444,12 @@ public class Robot : IRobot {
     LiftHeight = float.MaxValue;
     BatteryPercent = float.MaxValue;
     _LocalBusyTimer = 0f;
+    _LastProcessedVisionFrameEngineTimestamp = 0;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();
     }
 
-  }
-
-  public void ClearVisibleObjects() {
-    for (int i = 0; i < VisibleObjects.Count; ++i) {
-      if (VisibleObjects[i].TimeLastSeen + ObservedObject.kRemoveDelay < Time.time) {
-        VisibleObjects.RemoveAt(i--);
-      }
-    }
   }
 
   public void UpdateInfo(G2U.RobotState message) {
@@ -477,18 +470,8 @@ public class Robot : IRobot {
 
   }
 
-  // Object moved, so remove it from the seen list
-  // and add it into the dirty list.
-  public void UpdateDirtyList(ObservedObject dirty) {
-    SeenObjects.Remove(dirty);
-
-    if (!DirtyObjects.Contains(dirty)) {
-      DirtyObjects.Add(dirty);
-    }
-  }
-
   public LightCube GetLightCubeWithFactoryID(uint factoryID) {
-    foreach(LightCube lc in LightCubes.Values) {
+    foreach (LightCube lc in LightCubes.Values) {
       if (lc.FactoryID == factoryID) {
         return lc;
       }
@@ -497,19 +480,15 @@ public class Robot : IRobot {
     return null;
   }
 
-  public ObservedObject GetObservedObjectWithFactoryID(uint factoryID) {
-    return SeenObjects.Find(x => x.FactoryID == factoryID);
-  }
-
   private void SendQueueSingleAction<T>(T action, RobotCallback callback, QueueActionPosition queueActionPosition) {
     var tag = GetNextIdTag();
-    RobotEngineManager.Instance.Message.QueueSingleAction = 
-      Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID, 
-      idTag: tag,  
-      numRetries: 0, 
-      position: queueActionPosition, 
+    RobotEngineManager.Instance.Message.QueueSingleAction =
+      Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID,
+      idTag: tag,
+      numRetries: 0,
+      position: queueActionPosition,
       actionState: action);
-    RobotEngineManager.Instance.SendMessage(); 
+    RobotEngineManager.Instance.SendMessage();
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
@@ -519,13 +498,13 @@ public class Robot : IRobot {
 
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
 
-    RobotEngineManager.Instance.Message.VisualizeQuad = 
+    RobotEngineManager.Instance.Message.VisualizeQuad =
       Singleton<VisualizeQuad>.Instance.Initialize(
       quadID: 0,
       color: Color.black.ToUInt(),
       xUpperLeft: lowerLeft.x,
       yUpperLeft: upperRight.y,
-        // not sure how to play z. Assume its constant between lower left and upper right?
+      // not sure how to play z. Assume its constant between lower left and upper right?
       zUpperLeft: lowerLeft.z,
 
       xLowerLeft: lowerLeft.x,
@@ -547,8 +526,8 @@ public class Robot : IRobot {
   // amount affected if it's coming too often from the same source.
   public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue, string source) {
 
-    RobotEngineManager.Instance.Message.MoodMessage = 
-      Singleton<MoodMessage>.Instance.Initialize(ID, 
+    RobotEngineManager.Instance.Message.MoodMessage =
+      Singleton<MoodMessage>.Instance.Initialize(ID,
       Singleton<AddToEmotion>.Instance.Initialize(type, deltaValue, source));
     RobotEngineManager.Instance.SendMessage();
   }
@@ -556,7 +535,7 @@ public class Robot : IRobot {
   // Only debug panels should be using set.
   // You should not be calling this from a minigame/challenge.
   public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
-    RobotEngineManager.Instance.Message.MoodMessage = 
+    RobotEngineManager.Instance.Message.MoodMessage =
       Singleton<MoodMessage>.Instance.Initialize(
       ID,
       Singleton<SetEmotion>.Instance.Initialize(type, value));
@@ -580,153 +559,183 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
-    DAS.Debug(this, "ObjectConnectionState. " + (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factory ID " + message.factoryID.ToString("X"));
+  public void RegisterNewObservedObject(int id, uint factoryId, ObjectType objectType) {
+    DAS.Debug("Robot.RegisterNewObservedObject", "id=" + id + " factoryId=" + factoryId + " objectType=" + objectType);
+    AddObservedObject(id, factoryId, objectType);
+  }
 
-    if (message.connected) {
-      // We are only interested on cubes and chargers for connection messages. 
-      bool isCube = message.device_type == ActiveObjectType.OBJECT_CUBE1 || message.device_type == ActiveObjectType.OBJECT_CUBE2 || message.device_type == ActiveObjectType.OBJECT_CUBE3;
-      bool isCharger = message.device_type == ActiveObjectType.OBJECT_CHARGER;
-      if (isCube || isCharger) {
+  public void DeleteObservedObject(int id) {
+    bool removedObject = false;
 
-        // Find the correct object type given the information in the message.
-        ObjectType objectType = ObjectType.Invalid;
-        ObjectFamily objectFamily = ObjectFamily.Invalid;
-        switch (message.device_type) {
-        case ActiveObjectType.OBJECT_CUBE1:
-          objectType = ObjectType.Block_LIGHTCUBE1;
-          objectFamily = ObjectFamily.LightCube;
-          break;
+    if (Charger != null && Charger.ID == id) {
+      removedObject = true;
+      Charger = null;
+    }
+    else {
+      removedObject = LightCubes.Remove(id);
+    }
 
-        case ActiveObjectType.OBJECT_CUBE2:
-          objectType = ObjectType.Block_LIGHTCUBE2;
-          objectFamily = ObjectFamily.LightCube;
-          break;
-
-        case ActiveObjectType.OBJECT_CUBE3:
-          objectType = ObjectType.Block_LIGHTCUBE3;
-          objectFamily = ObjectFamily.LightCube;
-          break;
-
-        case ActiveObjectType.OBJECT_CHARGER:
-          objectType = ObjectType.Charger_Basic;
-          objectFamily = ObjectFamily.Charger;
-          break;
-        }
-
-
-        int objectID = (int)message.objectID;
-        if (objectFamily == ObjectFamily.LightCube) {
-          AddLightCube(objectID, message.factoryID, objectType);
-        } else {
-          AddObservedObject(objectID, message.factoryID, objectFamily, objectType);
-        }
-      } else {
-        // This is not a cube or a charger so let's make sure it is not in our lists of objects
-        DeleteObservedObject((int)message.objectID);
-      }
-    } else {
-      // For disconnects, the robot doesn't send the device type so try to remove the object from all our lists
-      DeleteObservedObject((int)message.objectID);
+    if (removedObject) {
+      DAS.Debug("Robot.DeleteObservedObject", "Deleted ID " + id);
+    }
+    else {
+      DAS.Debug("Robot.DeleteObservedObject", "Tried to delete object with ID " + id + " but failed.");
     }
   }
 
-  public void RobotDeletedObject(G2U.RobotDeletedObject message) {
-    DAS.Debug(this, "RobotDeletedObject", "Deleted ID " + message.objectID);
+  public void FinishedProcessingImage(uint engineTimestamp) {
+    // Update the robot's current timestamp if the new one is newer
+    if (engineTimestamp >= _LastProcessedVisionFrameEngineTimestamp) {
+      _LastProcessedVisionFrameEngineTimestamp = engineTimestamp;
 
-    DeleteObservedObject((int)message.objectID);
+      // Iterate through cubes / charger and increase not seen frame count of cube if 
+      // cube's last seen timestamp is outdated / less than robot's current timestamp
+      if (Charger != null && Charger.LastSeenEngineTimestamp < engineTimestamp) {
+        Charger.MarkNotVisibleThisFrame();
+      }
+      foreach (var kvp in LightCubes) {
+        if (kvp.Value.LastSeenEngineTimestamp < engineTimestamp) {
+          kvp.Value.MarkNotVisibleThisFrame();
+        }
+      }
+    }
+    else {
+      DAS.Error("Robot.FinishedProcessingImage", "Received old RobotProcessedImage message with timestamp " + engineTimestamp
+      + " _after_ receiving a newer message with timestamp " + _LastProcessedVisionFrameEngineTimestamp + "!");
+    }
   }
 
-  public void UpdateObservedObject(G2U.RobotObservedObject message) {
-//    DAS.Debug(this, "UpdateObservedObjectInfo. ", "Updating ID " + message.objectID);
+  public void HandleSeeObservedObject(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
-      DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
+      DAS.Warn("Robot.HandleSeeObservedObject", "HandleSeeObservedObject received RobotObservedObject message about the Mat!");
       return;
     }
 
-    if (message.objectFamily == Anki.Cozmo.ObjectFamily.LightCube) {
-      LightCube lightCube = AddLightCube(message.objectID, 0, message.objectType);
-
-      UpdateObservedObject(lightCube, message);
-    } else {
-      ObservedObject observedObject = AddObservedObject(message.objectID, 0, message.objectFamily, message.objectType);
-
-      UpdateObservedObject(observedObject, message);
+    // Get the ObservedObject
+    ObservedObject objectSeen = GetObservedObjectById((int)message.objectID);
+    if (objectSeen != null) {
+      // Update its info if the new timestamp is newer or the same as the robot's current timestamp
+      if (message.timestamp >= objectSeen.LastSeenEngineTimestamp) {
+        objectSeen.UpdateInfo(message);
+      }
+      else {
+        DAS.Error("Robot.HandleSeeObservedObject", "Received old RobotObservedObject message with timestamp " + message.timestamp
+        + " _after_ receiving a newer message with timestamp " + objectSeen.LastSeenEngineTimestamp + "!");
+      }
+    }
+    else {
+      DAS.Error("Robot.HandleSeeObservedObject", "Received old RobotObservedObject message but could not find ObservedObject with id " + message.objectID + "!");
     }
   }
 
-  public void RobotMarkedObjectPoseUnknown(G2U.RobotMarkedObjectPoseUnknown message) {
-    DAS.Debug(this, "RobotMarkedObjectPoseUnknown", "Object ID " + message.objectID);
-
-    DeleteObservedObject((int)message.objectID);
-  }
-
-  private void UpdateObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message) {
-    UnityEngine.Assertions.Assert.IsNotNull(knownObject);
-
-    int index = DirtyObjects.FindIndex(x => x == knownObject.ID);
-    if (index != -1) {
-      DirtyObjects.RemoveAt(index);
-    }
-
-    knownObject.UpdateInfo(message);
-    
-    if (SeenObjects.Find(x => x == message.objectID) == null) {
-      SeenObjects.Add(knownObject);
-    }
-    
-    if (knownObject.MarkersVisible && VisibleObjects.Find(x => x == message.objectID) == null) {
-      VisibleObjects.Add(knownObject);
+  public void HandleObservedObjectMoved(ObjectMoved message) {
+    ObservedObject objectStartedMoving = GetObservedObjectById((int)message.objectID);
+    if (objectStartedMoving != null) {
+      // Mark pose dirty and is moving if the new timestamp is newer or the same as the robot's current timestamp
+      if (message.timestamp >= objectStartedMoving.LastMovementMessageEngineTimestamp) {
+        objectStartedMoving.HandleStartedMoving(message);
+      }
+      else {
+        DAS.Error("Robot.HandleObservedObjectMoved", "Received old ObjectMoved message with timestamp " + message.timestamp
+        + " _after_ receiving a newer message with timestamp " + objectStartedMoving.LastMovementMessageEngineTimestamp + "!");
+      }
     }
   }
 
-  private LightCube AddLightCube(int objectID, uint factoryID, ObjectType objectType) {
-    LightCube lightCube = null;
-    if (!LightCubes.TryGetValue(objectID, out lightCube)) {
-      lightCube = new LightCube(objectID, factoryID, ObjectFamily.LightCube, objectType);
-
-      DAS.Debug(this, "Adding cube " + objectID + " factoryID " + factoryID.ToString("X") + " Objectype " + objectType.ToString());
-      LightCubes.Add(objectID, lightCube);
-      SeenObjects.Add(lightCube);
-    } if ((lightCube.FactoryID == 0) && (factoryID != 0)) {
-      // So far we received messages about the cube without a factory ID. This is because it was seen 
-      // before we connected to it. This message has the factory ID so we need to update its information
-      // so we can find it in the future
-      DAS.Debug(this, "Updating cube " + objectID + " factoryID to " + factoryID.ToString("X"));
-      lightCube.FactoryID = factoryID;
+  public void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message) {
+    ObservedObject objectStoppedMoving = GetObservedObjectById((int)message.objectID);
+    if (objectStoppedMoving != null) {
+      // Mark is moving false if the new timestamp is newer or the same as the robot's current timestamp
+      if (message.timestamp >= objectStoppedMoving.LastMovementMessageEngineTimestamp) {
+        objectStoppedMoving.HandleStoppedMoving(message);
+      }
+      else {
+        DAS.Error("Robot.HandleObservedObjectStoppedMoving", "Received old ObjectStoppedMoving message with timestamp " + message.timestamp
+        + " _after_ receiving a newer message with timestamp " + objectStoppedMoving.LastMovementMessageEngineTimestamp + "!");
+      }
     }
-
-    return lightCube;
   }
 
-  private ObservedObject AddObservedObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
-    ObservedObject observedObject = SeenObjects.Find(x => x == objectID);
-    if (observedObject == null) {
-      observedObject = new ObservedObject(objectID, factoryID, objectFamily, objectType);
-      SeenObjects.Add(observedObject);
+  public void HandleObservedObjectPoseUnknown(int id) {
+    // TODO Do we need a timestamp here? (message doesn't have it)
+    // Update ObservedObject pose to unknown
+    ObservedObject objectPoseUnknown = GetObservedObjectById(id);
+    if (objectPoseUnknown != null) {
+      objectPoseUnknown.MarkPoseUnknown();
     }
-
-    return observedObject;
   }
 
-  private void DeleteObservedObject(int objectID) {
-    DAS.Debug(this, "Deleting observed object " + objectID);
-    LightCubes.Remove(objectID);
+  public void HandleObservedObjectTapped(ObjectTapped message) {
+    ObservedObject objectPoseUnknown = GetObservedObjectById((int)message.objectID);
+    if (objectPoseUnknown != null) {
+      objectPoseUnknown.HandleObjectTapped(message);
+    }
+  }
 
-    int index = SeenObjects.FindIndex(x => x.ID == objectID);
-    if (index != -1) {
-      SeenObjects.RemoveAt(index);
+  public ObservedObject GetObservedObjectById(int id) {
+    ObservedObject foundObject = null;
+    if (Charger != null && Charger.ID == id) {
+      foundObject = Charger;
+    }
+    else {
+      LightCube foundCube;
+      LightCubes.TryGetValue(id, out foundCube);
+      foundObject = foundCube;
     }
 
-    index = DirtyObjects.FindIndex(x => x.ID == objectID);
-    if (index != -1) {
-      DirtyObjects.RemoveAt(index);
+    if (foundObject == null) {
+      DAS.Warn("Robot.GetObservedObjectById", "Could not find registered ObservedObject with id " + id + "!");
     }
 
-    index = VisibleObjects.FindIndex(x => x.ID == objectID);
-    if (index != -1) {
-      VisibleObjects.RemoveAt(index);
+    return foundObject;
+  }
+
+  public ObservedObject GetObservedObjectWithFactoryID(uint factoryId) {
+    ObservedObject foundObject = null;
+    if (Charger != null && Charger.FactoryID == factoryId) {
+      foundObject = Charger;
     }
+    else {
+      foreach (var kvp in LightCubes) {
+        if (kvp.Value.FactoryID == factoryId) {
+          foundObject = kvp.Value;
+        }
+      }
+    }
+
+    if (foundObject == null) {
+      DAS.Warn("Robot.GetObservedObjectWithFactoryID", "Could not find registered ObservedObject with factoryId " + factoryId + "!");
+    }
+
+    return foundObject;
+  }
+
+  private ObservedObject AddObservedObject(int id, uint factoryId, ObjectType objectType) {
+    ObservedObject createdObject = null;
+    bool isCube = ((objectType == ObjectType.Block_LIGHTCUBE1)
+                  || (objectType == ObjectType.Block_LIGHTCUBE2)
+                  || (objectType == ObjectType.Block_LIGHTCUBE3));
+    if (isCube) {
+      if (!LightCubes.ContainsKey(id)) {
+        DAS.Debug("Robot.RegisterNewObject", "Registered LightCube: id=" + id + " objectType=" + objectType);
+        LightCube lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
+        LightCubes.Add(id, lightCube);
+        createdObject = lightCube;
+      }
+    }
+    else if (objectType == ObjectType.Charger_Basic) {
+      if (Charger == null) {
+        DAS.Debug("Robot.RegisterNewObject", "Registered Charger: id=" + id + " objectType=" + objectType);
+        Charger = new ObservedObject(id, factoryId, ObjectFamily.Charger, objectType);
+        createdObject = Charger;
+      }
+    }
+    else {
+      DAS.Warn("Robot.TryAddObservedObject", "Tried to add an object with unsupported ObjectType! id=" + id + " objectType=" + objectType);
+      DeleteObservedObject(id);
+    }
+
+    return createdObject;
   }
 
   public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
@@ -737,7 +746,7 @@ public class Robot : IRobot {
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
 
-    RobotEngineManager.Instance.Message.DisplayProceduralFace = 
+    RobotEngineManager.Instance.Message.DisplayProceduralFace =
       Singleton<DisplayProceduralFace>.Instance.Initialize(
       robotID: ID,
       faceAngle: faceAngle,
@@ -763,7 +772,7 @@ public class Robot : IRobot {
   }
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
-    RobotEngineManager.Instance.Message.DriveWheels = 
+    RobotEngineManager.Instance.Message.DriveWheels =
       Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps, 0, 0);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -787,7 +796,7 @@ public class Robot : IRobot {
       usePreDockPose: true,
       useManualSpeed: false,
       motionProf: PathMotionProfileDefault),
-      callback, 
+      callback,
       queueActionPosition);
   }
 
@@ -853,15 +862,15 @@ public class Robot : IRobot {
   }
 
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
-    
-    RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters = 
+
+    RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters =
       Singleton<SetLiveIdleAnimationParameters>.Instance.Initialize(paramNames, paramValues, ID, setUnspecifiedToDefault);
     RobotEngineManager.Instance.SendMessage();
 
   }
 
   public void PushDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
-    RobotEngineManager.Instance.Message.PushDrivingAnimations = 
+    RobotEngineManager.Instance.Message.PushDrivingAnimations =
       Singleton<PushDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -890,11 +899,11 @@ public class Robot : IRobot {
   /// </summary>
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (kMaxHeadAngle)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-  public void SetHeadAngle(float angleFactor = -0.8f, 
+  public void SetHeadAngle(float angleFactor = -0.8f,
                            RobotCallback callback = null,
                            QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                           bool useExactAngle = false, 
-                           float accelRadSec = 2f, 
+                           bool useExactAngle = false,
+                           float accelRadSec = 2f,
                            float maxSpeedFactor = 1f) {
 
     float radians = angleFactor;
@@ -917,11 +926,11 @@ public class Robot : IRobot {
 
     SendQueueSingleAction(
       Singleton<SetHeadAngle>.Instance.Initialize(
-        radians, 
-        maxSpeedFactor * CozmoUtil.kMaxSpeedRadPerSec, 
-        accelRadSec, 
-        0), 
-      callback, 
+        radians,
+        maxSpeedFactor * CozmoUtil.kMaxSpeedRadPerSec,
+        accelRadSec,
+        0),
+      callback,
       queueActionPosition);
   }
 
@@ -956,20 +965,20 @@ public class Robot : IRobot {
 
     DAS.Debug(this, "Track Head To Object " + objId);
 
-    RobotEngineManager.Instance.Message.TrackToObject = 
+    RobotEngineManager.Instance.Message.TrackToObject =
       Singleton<TrackToObject>.Instance.Initialize(objId, ID, headOnly);
     RobotEngineManager.Instance.SendMessage();
 
   }
 
   public ObservedObject GetCharger() {
-    return SeenObjects.Find(x => x.Family == ObjectFamily.Charger);
+    return Charger;
   }
 
   public void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
       Singleton<MountCharger>.Instance.Initialize(
-        charger.ID, PathMotionProfileDefault, false, false), 
+        charger.ID, PathMotionProfileDefault, false, false),
       callback, queueActionPosition
     );
   }
@@ -1002,9 +1011,9 @@ public class Robot : IRobot {
 
   }
 
-  public void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2, 
+  public void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                                   RobotCallback callback = null,
-                                  QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
+                                  QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(
       Singleton<TurnTowardsPose>.Instance.Initialize(
@@ -1022,7 +1031,7 @@ public class Robot : IRobot {
       ),
       callback,
       queueActionPosition);
-      
+
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1040,13 +1049,13 @@ public class Robot : IRobot {
       tiltTolerance_rad: 0f,
       sayName: sayName,
       robotID: ID
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
   }
 
   public void PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    
+
     DAS.Debug(this, "Pick And Place Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed);
 
     SendQueueSingleAction(
@@ -1057,7 +1066,7 @@ public class Robot : IRobot {
         useApproachAngle: useApproachAngle,
         useManualSpeed: useManualSpeed,
         usePreDockPose: usePreDockPose),
-      callback, 
+      callback,
       queueActionPosition);
 
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
@@ -1074,15 +1083,15 @@ public class Robot : IRobot {
       useApproachAngle: false,
       usePreDockPose: usePreDockPose,
       useManualSpeed: useManualSpeed
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
 
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    
+
     DAS.Debug(this, "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
 
 
@@ -1098,10 +1107,10 @@ public class Robot : IRobot {
       useManualSpeed: useManualSpeed,
       useExactRotation: false,
       checkDestinationFree: false
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
-    
+
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
@@ -1120,10 +1129,10 @@ public class Robot : IRobot {
       y_mm: y_mm,
       rad: rad,
       motionProf: PathMotionProfileDefault
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
-    
+
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
@@ -1134,10 +1143,10 @@ public class Robot : IRobot {
       useManualSpeed: false,
       usePreDockPose: goToPreDockPose,
       motionProf: PathMotionProfileDefault
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
-    
+
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
@@ -1152,11 +1161,26 @@ public class Robot : IRobot {
         useApproachAngle: useApproachAngle,
         usePreDockPose: usePreDockPose,
         useManualSpeed: false
-      ), 
-      callback, 
+      ),
+      callback,
       queueActionPosition);
 
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
+  }
+
+  public LightCube GetClosestLightCube() {
+    float minDist = float.MaxValue;
+    ObservedObject closest = null;
+    foreach (var kvp in LightCubes) {
+      if (kvp.Value.CurrentPoseState == ObservedObject.PoseState.Known) {
+        float d = Vector3.Distance(kvp.Value.WorldPosition, WorldPosition);
+        if (d < minDist) {
+          minDist = d;
+          closest = kvp.Value;
+        }
+      }
+    }
+    return closest as LightCube;
   }
 
   public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1169,8 +1193,8 @@ public class Robot : IRobot {
         desiredObjectFamily: objectFamily,
         desiredObjectID: objectId,
         matchAnyObject: matchAnyObject
-      ), 
-      callback, 
+      ),
+      callback,
       queueActionPosition);
   }
 
@@ -1191,20 +1215,20 @@ public class Robot : IRobot {
       accel_rad_per_sec2: 5f,
       max_speed_rad_per_sec: 10f,
       duration_sec: 0f
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
     DAS.Debug(this, "Set Robot Carrying Object: " + objectID);
 
-    RobotEngineManager.Instance.Message.SetRobotCarryingObject = 
+    RobotEngineManager.Instance.Message.SetRobotCarryingObject =
       Singleton<SetRobotCarryingObject>.Instance.Initialize(objectID, ID);
     RobotEngineManager.Instance.SendMessage();
 
     TargetLockedObject = null;
-    
+
     SetLiftHeight(0f);
     SetHeadAngle();
   }
@@ -1214,7 +1238,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
     RobotEngineManager.Instance.SendMessage();
     Reset();
-    
+
     SetLiftHeight(0f);
     SetHeadAngle();
   }
@@ -1239,11 +1263,11 @@ public class Robot : IRobot {
     IsSparked = (id != UnlockId.Count);
     SparkUnlockId = id;
 
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
+      ID,
       Singleton<SetActiveSpark>.Instance.Initialize(SparkUnlockId)
-    ); 
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1258,31 +1282,31 @@ public class Robot : IRobot {
 
   // enable/disable games available for Cozmo to request
   public void SetAvailableGames(BehaviorGameFlag games) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
+      ID,
       Singleton<SetAvailableGames>.Instance.Initialize(games)
-    ); 
+    );
     RobotEngineManager.Instance.SendMessage();
   }
 
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
-      angle_rad, 
+      angle_rad,
       speed_rad_per_sec,
       accel_rad_per_sec2,
       0,
       ID
-    ), 
-      callback, 
+    ),
+      callback,
       queueActionPosition);
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
     DAS.Debug(this, "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
 
-    RobotEngineManager.Instance.Message.TraverseObject = 
+    RobotEngineManager.Instance.Message.TraverseObject =
       Singleton<TraverseObject>.Instance.Initialize(PathMotionProfileDefault, usePreDockPose, useManualSpeed);
     RobotEngineManager.Instance.SendMessage();
 
@@ -1381,14 +1405,14 @@ public class Robot : IRobot {
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
-  private void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+  private void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
                                uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     for (int i = 0; i < BackpackLights.Length; ++i) {
       SetBackpackLED(i, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
     }
   }
 
-  private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+  private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     // Special case for arrow lights; they only accept red as a color
     if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
@@ -1405,7 +1429,7 @@ public class Robot : IRobot {
     BackpackLights[index].TransitionOffPeriodMs = transitionOffPeriod_ms;
 
     if (index == (int)LEDId.LED_BACKPACK_RIGHT) {
-      
+
     }
   }
 

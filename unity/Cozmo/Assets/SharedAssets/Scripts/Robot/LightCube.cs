@@ -67,8 +67,6 @@ public class LightCube : ObservedObject {
 
   #endregion
 
-  public bool IsMoving { get; private set; }
-
   public UpAxis UpAxis { get; private set; }
 
   public float XAccel { get; private set; }
@@ -119,7 +117,6 @@ public class LightCube : ObservedObject {
     XAccel = byte.MaxValue;
     YAccel = byte.MaxValue;
     ZAccel = byte.MaxValue;
-    IsMoving = false;
 
     SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
@@ -131,8 +128,8 @@ public class LightCube : ObservedObject {
 
   }
 
-  public void Moving(ObjectMoved message) {
-    IsMoving = true;
+  public override void HandleStartedMoving(ObjectMoved message) {
+    base.HandleStartedMoving(message);
 
     UpAxis = message.upAxis;
     XAccel = message.accel.x;
@@ -144,8 +141,8 @@ public class LightCube : ObservedObject {
     }
   }
 
-  public void StoppedMoving(ObjectStoppedMoving message) {
-    IsMoving = false;
+  public override void HandleStoppedMoving(ObjectStoppedMoving message) {
+    base.HandleStoppedMoving(message);
 
     if (message.rolled) {
       if (OnAxisChange != null)
@@ -156,7 +153,8 @@ public class LightCube : ObservedObject {
     }
   }
 
-  public void Tapped(ObjectTapped message) {
+  public override void HandleObjectTapped(ObjectTapped message) {
+    base.HandleObjectTapped(message);
     DAS.Debug(this, "Tapped Message Received for LightCube(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps, message.timestamp);

@@ -44,24 +44,17 @@ namespace TreasureHunt {
     }
 
     private bool HasGoldBlockInView() {
-      foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
-        if (obj is LightCube) {
-          return true;
-        }
-      }
-      return false;
+      return (_CurrentRobot.VisibleLightCubes.Count > 0);
     }
 
     private ObservedObject FollowClosest() {
       ObservedObject closest = null;
       float dist = float.MaxValue;
-      foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
-        if (obj is LightCube) {
-          float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
-          if (d < dist) {
-            dist = d;
-            closest = obj;
-          }
+      foreach (ObservedObject obj in _CurrentRobot.VisibleLightCubes) {
+        float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
+        if (d < dist) {
+          dist = d;
+          closest = obj;
         }
       }
 

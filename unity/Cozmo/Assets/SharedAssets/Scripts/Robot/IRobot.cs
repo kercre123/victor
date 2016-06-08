@@ -11,17 +11,17 @@ public delegate void RobotCallback(bool success);
 public delegate void FriendshipLevelUp(int newLevel);
 
 public interface ILight {
-  uint OnColor{ get; set; }
+  uint OnColor { get; set; }
 
-  uint OffColor{ get; set; }
+  uint OffColor { get; set; }
 
-  uint OnPeriodMs{ get; set; }
+  uint OnPeriodMs { get; set; }
 
-  uint OffPeriodMs{ get; set; }
+  uint OffPeriodMs { get; set; }
 
-  uint TransitionOnPeriodMs{ get; set; }
+  uint TransitionOnPeriodMs { get; set; }
 
-  uint TransitionOffPeriodMs{ get; set; }
+  uint TransitionOffPeriodMs { get; set; }
 
   void SetLastInfo();
 
@@ -63,13 +63,9 @@ public interface IRobot : IDisposable {
 
   float BatteryPercent { get; }
 
-  List<ObservedObject> VisibleObjects { get; }
-
-  List<ObservedObject> SeenObjects { get; }
-
-  List<ObservedObject> DirtyObjects { get; }
-
   Dictionary<int, LightCube> LightCubes { get; }
+
+  List<LightCube> VisibleLightCubes { get; }
 
   List<Face> Faces { get; }
 
@@ -119,15 +115,34 @@ public interface IRobot : IDisposable {
 
   void ClearData(bool initializing = false);
 
-  void ClearVisibleObjects();
 
-  void UpdateInfo(G2U.RobotState message);
+  #region Process ObservedObjects
 
-  void UpdateDirtyList(ObservedObject dirty);
+  void RegisterNewObservedObject(int id, uint factoryId, ObjectType objectType);
+
+  void DeleteObservedObject(int id);
+
+  void FinishedProcessingImage(uint engineTimestamp);
+
+  void HandleSeeObservedObject(G2U.RobotObservedObject message);
+
+  void HandleObservedObjectMoved(ObjectMoved message);
+
+  void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message);
+
+  void HandleObservedObjectPoseUnknown(int id);
+
+  void HandleObservedObjectTapped(ObjectTapped message);
+
+  ObservedObject GetObservedObjectById(int id);
+
+  #endregion
 
   LightCube GetLightCubeWithFactoryID(uint factoryID);
 
   ObservedObject GetObservedObjectWithFactoryID(uint factoryID);
+
+  void UpdateInfo(G2U.RobotState message);
 
   void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight);
 
@@ -145,14 +160,6 @@ public interface IRobot : IDisposable {
 
   // enable/disable games available for Cozmo to request
   void SetAvailableGames(BehaviorGameFlag games);
-
-  void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
-
-  void RobotDeletedObject(G2U.RobotDeletedObject message);
-
-  void UpdateObservedObject(G2U.RobotObservedObject message);
-
-  void RobotMarkedObjectPoseUnknown(G2U.RobotMarkedObjectPoseUnknown message);
 
   void UpdateObservedFaceInfo(G2U.RobotObservedFace message);
 
@@ -188,11 +195,11 @@ public interface IRobot : IDisposable {
 
   float GetHeadAngleFactor();
 
-  void SetHeadAngle(float angleFactor = -0.8f, 
+  void SetHeadAngle(float angleFactor = -0.8f,
                     RobotCallback callback = null,
                     QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                    bool useExactAngle = false, 
-                    float accelRadSec = 2f, 
+                    bool useExactAngle = false,
+                    float accelRadSec = 2f,
                     float maxSpeedFactor = 1f);
 
   void SetRobotVolume(float volume);
@@ -226,6 +233,8 @@ public interface IRobot : IDisposable {
   void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  LightCube GetClosestLightCube();
 
   void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
