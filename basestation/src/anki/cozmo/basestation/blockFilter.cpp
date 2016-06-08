@@ -22,6 +22,13 @@
 //
 #include <sys/stat.h>
 
+
+// WORKAROUND: For some reason objects in slot 0 display lights incorrectly.
+//             For now, reserving slot 0 for charger because we care less about its lights.
+//             The real fix belongs in robot body firmware.
+#define RESERVE_SLOT0_FOR_CHARGER 1
+
+
 namespace Anki {
 namespace Cozmo {
     
@@ -69,7 +76,20 @@ bool BlockFilter::ContainsFactoryId(FactoryID factoryId) const
 void BlockFilter::AddFactoryId(const FactoryID factoryId)
 {
   // Find an available slot
-  FactoryIDArray::iterator it = std::find(std::begin(_blocks), std::end(_blocks), 0);
+  auto startIter = std::begin(_blocks);
+
+  if (RESERVE_SLOT0_FOR_CHARGER) {
+    // If this is a charger,
+    ObjectType objType = _robot->GetDiscoveredObjectType(factoryId);
+    if (objType == ObjectType::Invalid) {
+      PRINT_NAMED_WARNING("BlockFilter.AddFactoryId.InvalidType",
+                          "How did we get here without the object being a valid discovered object?");
+    } else if (objType != ObjectType::Charger_Basic) {
+      ++startIter;
+    }
+  }
+  
+  FactoryIDArray::iterator it = std::find(startIter, std::end(_blocks), 0);
   if (it != _blocks.end()) {
     *it = factoryId;
     ConnectToBlocks();
@@ -122,7 +142,7 @@ bool BlockFilter::Save(const std::string &path) const
     for (FactoryIDArray::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
     {
       const FactoryID &factoryId = *it;
-      if (factoryId != 0) {
+      if (factoryId != 0 || (RESERVE_SLOT0_FOR_CHARGER && it == _blocks.begin())) {
         outputFileSteam << "0x";
         outputFileSteam << std::hex << factoryId;
         outputFileSteam << "\n";

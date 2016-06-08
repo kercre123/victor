@@ -3516,5 +3516,15 @@ namespace Anki {
         
       return _context->GetRobotManager()->GetMsgHandler();
     }
+    
+    ObjectType Robot::GetDiscoveredObjectType(FactoryID id)
+    {
+      auto it = _discoveredObjects.find(id);
+      if (it != _discoveredObjects.end()) {
+        return it->second.objectType;
+      }
+      return ObjectType::Unknown;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

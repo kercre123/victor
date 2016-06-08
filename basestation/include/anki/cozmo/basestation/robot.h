@@ -731,6 +731,11 @@ public:
   
     ExternalInterface::RobotState GetRobotState();
   
+    // Returns type of discovered object by factoryID.
+    // If the factoryID is not in the list of discovered objects it returns Invalid.
+    // NOTE: Connected objects are not in the discovered objects list.
+    ObjectType GetDiscoveredObjectType(FactoryID id);
+  
   protected:
   
     const CozmoContext* _context;
