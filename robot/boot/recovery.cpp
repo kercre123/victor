@@ -7,6 +7,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "power.h"
+#include "sideload.h"
 
 #include "portable.h"
 #include "../../k02_hal/hal/hardware.h"
@@ -194,6 +195,33 @@ static inline bool FlashBlock() {
   return true;
 }
 
+static inline bool LoadMemory() {
+  commandWord address = WaitForWord();
+  commandWord size = WaitForWord();
+
+  if (address + size * sizeof(commandWord) > SIDELOAD_SPACE_LENGTH) {
+    return false;
+  }
+  
+  uint16_t* target = (uint16_t*)(address + SIDELOAD_SPACE_START);
+
+  while (size-- > 0) {
+    *(target++) = WaitForWord();
+  }
+
+  return true;
+}
+
+static inline bool ExecuteSideLoad() {
+  commandWord call = WaitForWord();
+
+  if (call * sizeof(sideload_call) > SIDELOAD_SPACE_LENGTH) {
+    return false;
+  }
+  
+  return SIDELOAD_DATABASE[call]();
+}
+
 static void SyncToBody(void) {
   uint32_t recovery_header = 0;
 
@@ -295,6 +323,15 @@ void EnterRecovery(bool force) {
       case COMMAND_FLASH:
         SPI0_PUSHR_SLAVE = FlashBlock() ? STATE_IDLE : STATE_NACK;
         break ;
+
+      case COMMAND_LOAD:
+        SPI0_PUSHR_SLAVE = LoadMemory() ? STATE_IDLE : STATE_NACK;
+        break ;
+      
+      case COMMAND_SIDE_EXEC:
+        SPI0_PUSHR_SLAVE = ExecuteSideLoad() ? STATE_IDLE : STATE_NACK;
+        break ;
+
     }
   }
 }
