@@ -55,6 +55,8 @@ CONSOLE_VAR(f32, kBAS_minDistanceFromStack_mm, "Behavior.AdmireStack", 130.0f);
 
 CONSOLE_VAR(f32, kBAS_ScoreIncreaseForAction, "Behavior.AdmireStack", 0.8f);
 
+CONSOLE_VAR(f32, kBAS_LookDownToSecond_deg, "Behavior.AdmireStack", 10.0f);
+
 const char* const kFocusEyesForKnockOverAnim = "anim_ReactToBlock_focusedEyes_01";
 
 const std::string kDrivingAngryStartAnim = "ag_driving_upset_start";
@@ -309,6 +311,7 @@ void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
         TransitionToWatchingStack(robot);
       }
       else {
+        robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
         PRINT_NAMED_DEBUG("BehaviorAdmireStack.Searching.Failed",
                           "couldn't find stack, leaving behavior");
       }
@@ -326,6 +329,39 @@ void BehaviorAdmireStack::TransitionToKnockingOverStackFailed(Robot& robot)
     if(res == ActionResult::SUCCESS)
     {
       TransitionToReactingToTopple(robot);
+    }
+  });
+}
+
+void BehaviorAdmireStack::TransitionToLookDownAndUp(Robot& robot)
+{
+  SET_STATE(LookDownAndUp);
+  
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  
+  // Moves head to look down at second block in stack
+  action->AddAction(new MoveHeadToAngleAction(robot, robot.GetHeadAngle()-DEG_TO_RAD_F32(kBAS_LookDownToSecond_deg)));
+  
+  // Verify we are seeing the second block, if we aren't then something is very wrong
+  action->AddAction(new VisuallyVerifyObjectAction(robot, robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID()));
+  
+  // Move head back to starting position to react to third block
+  action->AddAction(new MoveHeadToAngleAction(robot, robot.GetHeadAngle()));
+  
+  // If this compound action fails it will more than likely be due to the visual verify in
+  // which case we are probably not able to see the second block in which case something is wrong
+  // and we will search for the stack
+  // Otherwise we verified the second block is there and updated its pose so we should go back to
+  // watching the stack so the GetBlockOnTopOf check can hopefully succeed
+  StartActing(action, kBAS_ScoreIncreaseForAction, [this, &robot](ActionResult res)
+  {
+    if(res == ActionResult::SUCCESS)
+    {
+      TransitionToWatchingStack(robot);
+    }
+    else
+    {
+      TransitionToSearchingForStack(robot);
     }
   });
 }
@@ -354,9 +390,10 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
   if( _state == State::WatchingStack )
   {
     // check if this could possibly be the 3rd stacked block
-    if( msg.markersVisible &&
+    if(msg.markersVisible &&
        msg.objectFamily == ObjectFamily::LightCube &&
-       msg.objectID != secondBlockID)
+       msg.objectID != secondBlockID &&
+       msg.objectID != robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID())
     {
       if(DEBUG_ADMIRE_STACK_BEHAVIOR && secondBlockID.IsUnknown())
       {
@@ -382,17 +419,25 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
         _thirdBlockID = msg.objectID;
         StopActing(false);
         TransitionToReactingToThirdBlock(robot);
-      } else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
-        PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.NewBlockNotOnTopBlock",
-                          "%s with ID %d at (%.1f,%.1f,%.1f) not on top of second block %s %d at(%.1f,%.1f,%.1f)",
-                          EnumToString(msg.objectType), msg.objectID,
-                          obj->GetPose().GetTranslation().x(),
-                          obj->GetPose().GetTranslation().y(),
-                          obj->GetPose().GetTranslation().z(),
-                          EnumToString(secondBlock->GetType()), secondBlockID.GetValue(),
-                          secondBlock->GetPose().GetTranslation().x(),
-                          secondBlock->GetPose().GetTranslation().y(),
-                          secondBlock->GetPose().GetTranslation().z());
+      } else {
+        // We are seeing the third block but for whatever reason we don't think it is on top of the second
+        // we should look down and up to update the pose of the second and verify it is there
+        StopActing(false);
+        TransitionToLookDownAndUp(robot);
+        
+        if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
+          PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.NewBlockNotOnTopBlock",
+                            "%s with ID %d at (%.1f,%.1f,%.1f) not on top of second block %s %d at(%.1f,%.1f,%.1f) looking down at second block",
+                            EnumToString(msg.objectType), msg.objectID,
+                            obj->GetPose().GetTranslation().x(),
+                            obj->GetPose().GetTranslation().y(),
+                            obj->GetPose().GetTranslation().z(),
+                            EnumToString(secondBlock->GetType()), secondBlockID.GetValue(),
+                            secondBlock->GetPose().GetTranslation().x(),
+                            secondBlock->GetPose().GetTranslation().y(),
+                            secondBlock->GetPose().GetTranslation().z());
+        
+        }
       }
     }
     else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
