@@ -1786,7 +1786,7 @@ namespace Anki {
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
-                
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
                 
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
@@ -2105,6 +2105,21 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)';':
+              {
+                // Toggle enabling of reactionary behaviors
+                static bool enable = false;
+                printf("Enable reactionary behaviors: %d\n", enable);
+                ExternalInterface::EnableReactionaryBehaviors m;
+                m.enabled = enable;
+                ExternalInterface::MessageGameToEngine message;
+                message.Set_EnableReactionaryBehaviors(m);
+                SendMessage(message);
+                
+                enable = !enable;
+                break;
+              }
+                
               case (s32)'"':
               {
                 webots::Field* sayStringField = root_->getField("sayString");
@@ -2381,6 +2396,35 @@ namespace Anki {
                        poseData[0], poseData[1], poseData[2], poseData[3], poseData[4], poseData[5] );
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose","%s", buf);
+              
+              AppendToFile(_mfgDataSaveFile, buf);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_ObservedCubePose:
+            {
+              
+              // Pose data is stored like this. (See BehaviorFactoryTest.cpp)
+              //const f32 poseData[6] = {
+              //  angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
+              //  calibPose.GetTranslation().x(),
+              //  calibPose.GetTranslation().y(),
+              //  calibPose.GetTranslation().z(),
+              //};
+              
+              const u32 sizeOfPoseData = 6 * sizeof(f32);
+              if (recvdData->size() != MakeWordAligned(sizeOfPoseData)) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(sizeOfPoseData), recvdData->size());
+                break;
+              }
+              
+              char buf[128];
+              f32* poseData = (f32*)(recvdData->data());
+              snprintf(buf, sizeof(buf),
+                       "[ObservedCubePose]\nRot: %f %f %f\nTrans: %f %f %f\n",
+                       poseData[0], poseData[1], poseData[2], poseData[3], poseData[4], poseData[5] );
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.ObservedCubePose","%s", buf);
               
               AppendToFile(_mfgDataSaveFile, buf);
               break;

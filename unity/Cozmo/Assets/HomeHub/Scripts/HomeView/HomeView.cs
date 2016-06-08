@@ -69,6 +69,12 @@ namespace Cozmo.HomeHub {
     private LootView _LootViewPrefab;
     private LootView _LootViewInstance = null;
 
+    [SerializeField]
+    private AnkiTextLabel _DailyGoalsCompletionText;
+
+    [SerializeField]
+    private AnkiTextLabel _DailyGaolsCompletionTextDown;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
@@ -111,6 +117,9 @@ namespace Cozmo.HomeHub {
       else {
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       }
+
+      GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
+      UpdatePlayTabText();
     }
 
     private void HandleChestGained() {
@@ -232,19 +241,38 @@ namespace Cozmo.HomeHub {
     public void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnLockedChallengeClicked != null) {
         OnLockedChallengeClicked(challengeClicked, buttonTransform);
-      } 
+      }
     }
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnUnlockedChallengeClicked != null) {
         OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
-      } 
+      }
+    }
+
+    private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
+      if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
+        UpdatePlayTabText();
+      }
+    }
+
+    private void UpdatePlayTabText() {
+      int totalGoals = DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count;
+      int goalsCompleted = 0;
+      for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; ++i) {
+        if (DataPersistenceManager.Instance.CurrentSession.DailyGoals[i].GoalComplete) {
+          goalsCompleted++;
+        }
+      }
+      _DailyGoalsCompletionText.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
+      _DailyGaolsCompletionTextDown.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
     }
 
     protected override void CleanUp() {
       ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
+      GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
     }
 
   }
