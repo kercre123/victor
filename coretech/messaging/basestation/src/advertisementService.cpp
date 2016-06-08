@@ -21,6 +21,12 @@
 #include "util/debug/messageDebugging.h"
 #include "util/logging/logging.h"
 
+
+// Enable define to see warnings from malformed adverts etc.
+// We ignore these by default as they're likely spurios network traffic etc.
+#define DEBUG_AD_SERVICE  0
+
+
 namespace Anki {
   namespace Comms {
 
@@ -93,6 +99,7 @@ namespace Anki {
           }
           else
           {
+          #if DEBUG_AD_SERVICE
             namespace CoEx = Cozmo::ExternalInterface;
             using GToETag = CoEx::MessageGameToEngineTag;
             PRINT_NAMED_WARNING("AdvertisementService.Recv.BadTag",
@@ -100,14 +107,17 @@ namespace Anki {
                                 serviceName_, bytes_recvd, (int)messageTag, CoEx::MessageGameToEngineTagToString((GToETag)messageTag),
                                 (int)_regMsgTag, CoEx::MessageGameToEngineTagToString((GToETag)_regMsgTag),
                                 Util::ConvertMessageBufferToString(messageData, bytes_recvd, Util::eBTTT_Ascii).c_str());
+          #endif // DEBUG_AD_SERVICE
           }
         }
         else if (bytes_recvd > 0)
         {
+        #if DEBUG_AD_SERVICE
           PRINT_NAMED_WARNING("AdvertisementService.Recv.AdRegTooSmall",
                               "%s: Received datagram with %d bytes. < %zu bytes min\n%s",
                               serviceName_, bytes_recvd, kMinAdRegMsgSize,
                               Util::ConvertMessageBufferToString(messageData, bytes_recvd, Util::eBTTT_Ascii).c_str());
+        #endif // DEBUG_AD_SERVICE
         }
         
       } while (bytes_recvd > 0);
