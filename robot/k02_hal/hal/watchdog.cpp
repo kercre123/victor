@@ -50,9 +50,11 @@ void Anki::Cozmo::HAL::Watchdog::suspend(void) {
   WDOG_UNLOCK = 0xC520;
   WDOG_UNLOCK = 0xD928;
 
+  static const uint32_t RESET_TIME = 120 * 128; // 2 minutes (1khz LPO)
+
   WDOG_PRESC  = WDOG_PRESC_PRESCVAL(7);
-  WDOG_TOVALL = 0xFFFF;
-  WDOG_TOVALH = 0xFFFF;
+  WDOG_TOVALL = RESET_TIME & 0xFFFF;
+  WDOG_TOVALH = RESET_TIME >> 16;
   
   WDOG_STCTRLH = WDOG_STCTRLH_BYTESEL(0x00) |
                  WDOG_STCTRLH_ALLOWUPDATE_MASK |
