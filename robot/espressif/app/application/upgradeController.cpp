@@ -148,7 +148,7 @@ namespace UpgradeController {
     }
     else 
     {
-      while (i2spiBootloaderCommandDone() == false);
+      phase = OTAT_Reject;
     }
   }
 
@@ -532,8 +532,7 @@ namespace UpgradeController {
       }
       case OTAT_Reject:
       {
-        AnkiError( 171, "UpgradeController", 460, "Factory reset not yet implemented", 0);
-        Reset();
+        i2spiBootloaderCommandDone();
         break;
       }
       case OTAT_Apply_WiFi:
