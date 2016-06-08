@@ -29,6 +29,8 @@
 // Whether or not we need to have recently seen the 2nd block when watching stack for 3rd block
 #define NEED_TO_SEE_SECOND_BLOCK 0
 
+#define DEBUG_ADMIRE_STACK_BEHAVIOR 1
+
 namespace Anki {
 namespace Cozmo {
 
@@ -349,11 +351,19 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
     return;
   }
 
-  if( _state == State::WatchingStack ){
+  if( _state == State::WatchingStack )
+  {
     // check if this could possibly be the 3rd stacked block
     if( msg.markersVisible &&
-       msg.objectFamily == ObjectFamily::LightCube ) {
-      
+       msg.objectFamily == ObjectFamily::LightCube &&
+       msg.objectID != secondBlockID)
+    {
+      if(DEBUG_ADMIRE_STACK_BEHAVIOR && secondBlockID.IsUnknown())
+      {
+        PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleObjectObserved.SecondBlockUnSet",
+                          "In WatchingStack state with no second block ID set");
+      }
+
       ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID( secondBlockID );
       if( nullptr == secondBlock ) {
         PRINT_NAMED_ERROR("BehaviorAdmireStack.HandleBlockUpdate.NoSecondBlockPointer",
@@ -372,11 +382,28 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
         _thirdBlockID = msg.objectID;
         StopActing(false);
         TransitionToReactingToThirdBlock(robot);
+      } else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
+        PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleBlockUpdate.NewBlockNotOnTopBlock",
+                          "%s with ID %d at (%.1f,%.1f,%.1f) not on top of second block %s %d at(%.1f,%.1f,%.1f)",
+                          EnumToString(msg.objectType), msg.objectID,
+                          obj->GetPose().GetTranslation().x(),
+                          obj->GetPose().GetTranslation().y(),
+                          obj->GetPose().GetTranslation().z(),
+                          EnumToString(secondBlock->GetType()), secondBlockID.GetValue(),
+                          secondBlock->GetPose().GetTranslation().x(),
+                          secondBlock->GetPose().GetTranslation().y(),
+                          secondBlock->GetPose().GetTranslation().z());
       }
     }
+    else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
+      PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleBlockUpdate.SawNewBlockWhileWatching",
+                        "Saw %s with ID %d with %smarkers visible while watching stack",
+                        EnumToString(msg.objectType), msg.objectID,
+                        (msg.markersVisible ? "" : "no "));
+    }
   }
-  else if( msg.objectID == robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID() &&
-      msg.markersVisible ) {
+  else if( msg.objectID == secondBlockID && msg.markersVisible )
+  {
     _topBlockLastSeentime = msg.timestamp;
 
     const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||

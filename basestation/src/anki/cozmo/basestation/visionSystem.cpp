@@ -106,6 +106,8 @@ namespace Cozmo {
   CONSOLE_VAR(float, kMinCalibBlobPixelArea,         "Vision.Calibration", 20.f);
   CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f);
   
+  CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceDetection", true);
+  
   using namespace Embedded;
   
   VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
@@ -1418,8 +1420,10 @@ namespace Cozmo {
       _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
     }
     
-    for(auto & currentFace : _currentResult.faces)
+    for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); )
     {
+      auto & currentFace = *faceIter;
+      
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
                    "VisionSystem.DetectFaces.BadFaceTimestamp");
       
@@ -1432,7 +1436,17 @@ namespace Cozmo {
       Pose3d headPose = currentFace.GetHeadPose();
       headPose.SetParent(&_poseData.cameraPose);
       headPose = headPose.GetWithRespectToOrigin();
-      currentFace.SetHeadPose(headPose);
+
+      if(kIgnoreFacesBelowRobot && headPose.GetTranslation().z() < 0.f) {
+        // Don't report faces that are below the origin (which we are assuming is on the ground plane)
+        //PRINT_NAMED_DEBUG("VisionSystem.DetectFaces.IgnoreFaceBelowRobot",
+        //                  "z=%.2f", headPose.GetTranslation().z());
+        faceIter = _currentResult.faces.erase(faceIter);
+      }
+      else {
+        currentFace.SetHeadPose(headPose);
+        ++faceIter;
+      }
     }
     
     return RESULT_OK;
