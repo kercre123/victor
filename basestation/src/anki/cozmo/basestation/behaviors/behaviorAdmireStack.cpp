@@ -103,6 +103,14 @@ void BehaviorAdmireStack::StopInternal(Robot& robot)
     robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
   }
   
+  // If we are being stopped while in the ReactingToTopple state we want to make sure to set _didKnockOverStack to true
+  // so we can transition out of this behavior
+  if(_state == State::ReactingToTopple)
+  {
+    PRINT_NAMED_INFO("BehaviorAdmireStack.StopInternal", "Stopping in state ReactToTopple, setting did knock over stack");
+    _didKnockOverStack = true;
+  }
+  
   ResetBehavior(robot);
 }
 
@@ -284,11 +292,15 @@ void BehaviorAdmireStack::TransitionToReactingToTopple(Robot& robot)
   robot.GetBlockWorld().ClearObject(robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID());
   robot.GetBlockWorld().ClearObject(_thirdBlockID);
 
-  StartActing(new PlayAnimationGroupAction(robot, _succesAnimGroup));
+  // Only consider the stack knocked over when the knock over success animation has completed
+  StartActing(new PlayAnimationGroupAction(robot, _succesAnimGroup), [this]()
+  {
+    PRINT_NAMED_INFO("BehaviorAdmireStack.TransitionToReactingToTopple.Callback", "Setting did knock over stack");
+    _didKnockOverStack = true;
+  });
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 
   robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
-  _didKnockOverStack = true;
 }
 
 void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
