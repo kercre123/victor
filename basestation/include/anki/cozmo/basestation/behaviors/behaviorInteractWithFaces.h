@@ -90,7 +90,8 @@ namespace Cozmo {
     void HandleRobotDeletedFace(const EngineToGameEvent& event);
     void HandleRobotChangedObservedFaceID(const EngineToGameEvent& event);
     void HandleGameDeniedRequest(Robot& robot);
-
+    void HandleEnrollNamedFaceCompleted(const EngineToGameEvent& event);
+    
     void MarkFaceDeleted(FaceID_t faceID);
       
     enum class State {

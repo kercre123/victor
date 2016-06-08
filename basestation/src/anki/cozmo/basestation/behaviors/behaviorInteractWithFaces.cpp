@@ -82,7 +82,8 @@ namespace Cozmo {
     SubscribeToTags({{
       EngineToGameTag::RobotObservedFace,
       EngineToGameTag::RobotDeletedFace,
-      EngineToGameTag::RobotChangedObservedFaceID
+      EngineToGameTag::RobotChangedObservedFaceID,
+      EngineToGameTag::RobotCompletedAction,
     }});
 
     SubscribeToTags({
@@ -742,6 +743,10 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
         HandleRobotChangedObservedFaceID(event);
         break;
         
+      case EngineToGameTag::RobotCompletedAction:
+        HandleEnrollNamedFaceCompleted(event);
+        break;
+        
       default:
         PRINT_NAMED_ERROR("BehaviorInteractWithFaces.AlwaysHandle.InvalidTag",
                           "Received event with unhandled tag %hhu.",
@@ -943,6 +948,47 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
       // go to the reacting state, which should choose the "suspicious" animation for an unknown person
       TransitionToReactingToFace(robot);
     }
+  }
+  
+  void BehaviorInteractWithFaces::HandleEnrollNamedFaceCompleted(const EngineToGameEvent& event)
+  {
+    auto msg = event.GetData();
+    if(msg.GetTag() != ExternalInterface::MessageEngineToGameTag::RobotCompletedAction) {
+      PRINT_NAMED_WARNING("BehaviorInteractWithFaces.HandleEnrollNamedFaceCompleted.WrongActionTag",
+                          "Expecting RobotCompletedAction, got tag %hhu",
+                          msg.GetTag());
+      return;
+    }
+    
+    auto completedAction = msg.Get_RobotCompletedAction();
+    
+    switch(completedAction.actionType)
+    {
+      case RobotActionType::ENROLL_NAMED_FACE:
+      {
+        auto completionInfo = completedAction.completionInfo.Get_faceEnrollmentCompleted();
+        
+        if( ActionResult::SUCCESS == completedAction.result && completionInfo.saidName )
+        {
+          auto dataIter = _interestingFacesData.find( completionInfo.faceID );
+          if (_interestingFacesData.end() != dataIter)
+          {
+            PRINT_NAMED_INFO("BehaciorInteractWithFaces.HandleEnrollNamedFaceCompleted.JustEnrolled",
+                             "Just successfully enrolled face %d, putting it on cooldown",
+                             completionInfo.faceID);
+            
+            dataIter->second._coolDownUntil_sec = event.GetCurrentTime() + kFaceCooldownDuration_sec;
+            dataIter->second._playedNewFaceAnim = true;
+          }
+        }
+      }
+        break;
+        
+      default:
+        PRINT_NAMED_WARNING("BehaviorInteractWithFaces.HandleEnrollNamedFaceCompleted.UnexpectedActionType",
+                            "No handler for %s", EnumToString(completedAction.actionType));
+    }
+    
   }
   
   void BehaviorInteractWithFaces::MarkFaceDeleted(FaceID_t faceID)
