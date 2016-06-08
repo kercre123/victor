@@ -40,6 +40,12 @@ enum uint_8 GameEvent
   OnSawOldNamedFace,
   OnWiggle,
   OnWaitForCubesMinigameSetup,
+  OnSimonSetupComplete,
+  OnSimonExampleStarted,
+  OnSimonCozmoTurnStarted,
+  OnSimonPlayerTurnStarted,
+  OnSimonCozmoWin,
+  OnSimonPlayerWin,
   Count, // Keep count at end.
 }
 
