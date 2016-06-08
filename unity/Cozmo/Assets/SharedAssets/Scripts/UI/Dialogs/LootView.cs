@@ -12,38 +12,41 @@ namespace Cozmo {
   namespace UI {
     public class LootView : BaseView {
 
+      #region Constants
+
       // Initial Box Tween settings
-      private const float kBoxIntroDuration = 1.25f;
+      private const float kBoxIntroDuration = 0.75f;
       private const float kBoxIntroMinScale = 0.15f;
 
-      // Rotation and Position Shaking
+      #region Shake Settings
+
       private const float kShakeDuration = 1.0f;
+      // Rotation Shake Settings
       private const float kShakeRotationMin = 15.0f;
       private const float kShakeRotationMax = 30.0f;
       private const int kShakeRotationVibrato = 45;
       private const float kShakeRotationRandomness = 45.0f;
+      // Position Shake Settings
       private const float kShakePositionMin = 15f;
       private const float kShakePositionMax = 45f;
       private const int kShakePositionVibrato = 45;
       private const float kShakePositionRandomness = 30.0f;
 
+      #endregion
+
       // Rate at which "Recent Tap" Effects decay - includes glow and scaling
-      private const float kTapDecay = 0.01f;
+      private const float kTapDecay = 0.02f;
       private const float kMinScale = 0.75f;
       private const float kMaxScale = 1.0f;
-      private const float kUpdateIntervalMin = 0.20f;
-      private const float kUpdateIntervalMax = 1.0f;
+      private const float kUpdateIntervalMin = 0.1f;
+      private const float kUpdateIntervalMax = 0.25f;
       private float _UpdateTimeStamp = -1;
       private float _CurrInterval = -1;
 
-      // Particle Burst settings for tap burst
-      private const int kMinBurst = 3;
-      private const int kMaxBurst = 6;
-      private const int kFinalBurst = 15;
-
       // Total Charge per Tap and rate at which Charge decays
+      // Charge opens the box at 1.0f and also controls TronBurst and Particle emission rates
       private const float kChargePerTap = 0.15f;
-      private const float kChargeDecay = 0.0025f;
+      private const float kChargeDecay = 0.0045f;
 
       // How long the Reward animation takes to tween the reward doobers to their initial positions
       private const float kDooberExplosionDuration = 0.5f;
@@ -55,13 +58,24 @@ namespace Cozmo {
       // less uniform movements
       private const float kDooberStaggerMax = 0.5f;
 
-      // Tron Line settings
-      private const int kTronBurstLow = 2;
-      private const int kTronBurstMed = 4;
-      private const int kTronBurstHigh = 10;
+      #region Particle Update Settings
 
-      private const float kLootMidTreshold = 0.25f;
+      // Tron Line settings
+      private const int kTronBurstLow = 1;
+      private const int kTronBurstMed = 4;
+      private const int kTronBurstHigh = 6;
+
+      // Particle Burst settings for tap burst
+      private const int kMinBurst = 2;
+      private const int kMaxBurst = 8;
+      private const int kFinalBurst = 15;
+
+      #endregion
+
+      private const float kLootMidTreshold = 0.3f;
       private const float kLootAlmostThreshold = 0.6f;
+
+      #endregion
 
       private float _currentCharge = 0.0f;
       private float _recentTapCharge = 0.0f;

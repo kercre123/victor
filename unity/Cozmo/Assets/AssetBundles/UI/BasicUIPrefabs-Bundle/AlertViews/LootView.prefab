@@ -371,8 +371,8 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: TAP REPEATEDLY!
-  _AllUppercase: 1
+  m_Text: Tap Repeatedly!
+  _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11411860
 MonoBehaviour:
