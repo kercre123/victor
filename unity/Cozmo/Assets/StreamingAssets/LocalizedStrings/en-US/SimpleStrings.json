@@ -149,5 +149,8 @@
   },
   "loot.Almost": {
     "translation": "Almost There!"
+  },
+  "loot.Announce": {
+    "translation": "Emotion Chip Charged!"
   }
 }

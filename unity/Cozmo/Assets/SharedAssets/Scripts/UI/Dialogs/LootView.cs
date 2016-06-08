@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Anki.UI;
 using Anki.Cozmo;
 using DG.Tweening;
+using Cozmo.MinigameWidgets;
 
 namespace Cozmo {
   namespace UI {
@@ -47,12 +48,12 @@ namespace Cozmo {
       // How long the Reward animation takes to tween the reward doobers to their initial positions
       private const float kDooberExplosionDuration = 0.35f;
       // How long the Rewards remain visible before leaving
-      private const float kDooberStayDuration = 0.5f;
+      private const float kDooberStayDuration = 1.75f;
       // How long the Reward animation takes to tween the reward doobers to their final positions
-      private const float kDooberReturnDuration = 0.75f;
+      private const float kDooberReturnDuration = 0.25f;
       // The maximum amount of variance in seconds that Doobers are randomly staggered by to create
       // less uniform movements
-      private const float kDooberStaggerMax = 0.75f;
+      private const float kDooberStaggerMax = 0.5f;
 
       // Tron Line settings
       private const int kTronBurstLow = 2;
@@ -85,11 +86,17 @@ namespace Cozmo {
       [SerializeField]
       private Transform _BoxSource;
       [SerializeField]
+      private Transform _BannerContainer;
+      [SerializeField]
       private GameObject _RewardDooberPrefab;
       [SerializeField]
       private GameObject _TronLinePrefab;
       [SerializeField]
       private ParticleSystem _BurstParticles;
+
+      [SerializeField]
+      private ShelfWidget _ShelfWidgetPrefab;
+      private ShelfWidget _ShelfWidgetInstance;
 
       public string LootText {
         get { return _LootText != null ? _LootText.text : null; }
@@ -99,7 +106,6 @@ namespace Cozmo {
           }
         }
       }
-
 
       [SerializeField]
       private AnkiTextLabel _LootText;
@@ -118,7 +124,7 @@ namespace Cozmo {
 
       private Tweener _ShakeRotationTweener;
       private Tweener _ShakePositionTweener;
-      //private Tweener _ScaleTweener;
+      private Sequence _BoxSequence;
 
       [SerializeField]
       private CanvasGroup _AlphaController;
@@ -129,10 +135,16 @@ namespace Cozmo {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
         _LootGlow.DOFade(0.0f, 0.0f);
         _LootBox.localScale = new Vector3(kMinScale, kMinScale);
+        CreateBoxAnimation();
         _BoxOpened = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
         }
+        _LootText.gameObject.SetActive(false);
+
+        GameObject newWidget = UIManager.CreateUIElement(_ShelfWidgetPrefab.gameObject, _BannerContainer);
+        _ShelfWidgetInstance = newWidget.GetComponent<ShelfWidget>();
+        _ShelfWidgetInstance.ShowBackground(false);
       }
 
       // Handle each tap
@@ -301,51 +313,39 @@ namespace Cozmo {
         }
       }
 
-      // Finish open animation, enable LootButton, create initial shake and flourish
-      private void HandleOpenFinished() {
-        _LootButton.onClick.AddListener(HandleButtonTap);
-        _ShakeRotationTweener = _LootBox.DOShakeRotation(kShakeDuration, new Vector3(0, 0, kShakeRotationMax), kShakeRotationVibrato, kShakeRotationRandomness);
-        _ShakePositionTweener = _LootBox.DOShakePosition(kShakeDuration, kShakePositionMax, kShakePositionVibrato, kShakePositionRandomness);
-        _BurstParticles.Emit(kFinalBurst);
-        TronLineBurst(kFinalBurst);
-      }
-
-      // TODO: Loot BannerAnimation
-      /*
-      public void PlayBannerAnimation(Sequence openAnimation) {
-        _BannerContainer.gameObject.SetActive(true);
-        Vector3 localPos = _BannerContainer.gameObject.transform.localPosition;
-        localPos.x = _BannerLeftOffscreenLocalXPos;
-        _BannerContainer.gameObject.transform.localPosition = localPos;
-
-        // set text
-        _BannerTextLabel.text = textToDisplay;
-
-        float slowDuration = (customSlowDurationSeconds != 0) ? customSlowDurationSeconds : _BannerSlowAnimationDurationSeconds;
-
-        // build sequence
-        if (_BannerTween != null) {
-          _BannerTween.Kill();
-        }
-        _BannerTween = DOTween.Sequence();
-        float midpoint = (_BannerRightOffscreenLocalXPos + _BannerLeftOffscreenLocalXPos) * 0.5f;
-        _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint - _BannerSlowDistance, _BannerInOutAnimationDurationSeconds).SetEase(Ease.OutQuad));
-        _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint, slowDuration));
-        _BannerTween.Append(_BannerContainer.DOLocalMoveX(_BannerRightOffscreenLocalXPos, _BannerInOutAnimationDurationSeconds).SetEase(Ease.InQuad));
-        _BannerTween.AppendCallback(HandleBannerAnimationEnd);
-      }
-      */
-
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
         if (_AlphaController != null) {
           _AlphaController.alpha = 0;
           openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         }
-        // TODO: Set up Box Tween
-        openAnimation.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InExpo));
-        openAnimation.Join(_LootBox.DOMove(_BoxSource.position, kBoxIntroDuration).From().SetEase(Ease.InExpo));
-        openAnimation.OnComplete(HandleOpenFinished);
-        // PlayBannerAnimation(openAnimation);
+
+        openAnimation.OnComplete(() =>
+          (_ShelfWidgetInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce), StartBoxAnimation)));
+
+      }
+
+      public void StartBoxAnimation() {
+        _BoxSequence.TogglePause();
+      }
+
+      public void CreateBoxAnimation() {
+        Sequence boxSequence = DOTween.Sequence();
+        boxSequence.Append(_LootBox.DOScale(kBoxIntroMinScale, kBoxIntroDuration).From().SetEase(Ease.InExpo));
+        boxSequence.Join(_LootBox.DOLocalMove(_BoxSource.localPosition, kBoxIntroDuration).From());
+        boxSequence.OnComplete(HandleBoxFinished);
+        boxSequence.Play();
+        boxSequence.TogglePause();
+        _BoxSequence = boxSequence;
+      }
+
+      // Finish open animation, enable LootButton, create initial shake and flourish
+      private void HandleBoxFinished() {
+        _LootButton.onClick.AddListener(HandleButtonTap);
+        _ShakeRotationTweener = _LootBox.DOShakeRotation(kShakeDuration, new Vector3(0, 0, kShakeRotationMax), kShakeRotationVibrato, kShakeRotationRandomness);
+        _ShakePositionTweener = _LootBox.DOShakePosition(kShakeDuration, kShakePositionMax, kShakePositionVibrato, kShakePositionRandomness);
+        _BurstParticles.Emit(kFinalBurst);
+        TronLineBurst(kFinalBurst);
+        _LootText.gameObject.SetActive(true);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {

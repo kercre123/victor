@@ -16,6 +16,9 @@ namespace Cozmo {
       private RectTransform _BackgroundImageContainer;
 
       [SerializeField]
+      private Image _BackgroundImage;
+
+      [SerializeField]
       private float _StartYLocalPos = -300f;
 
       [SerializeField]
@@ -195,6 +198,11 @@ namespace Cozmo {
           Destroy(_ContentObject);
           _ContentObject = null;
         }
+      }
+
+      public void ShowBackground(bool show) {
+        _BackgroundImage.gameObject.SetActive(show);
+        _CaratContainer.gameObject.SetActive(show);
       }
 
       public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
