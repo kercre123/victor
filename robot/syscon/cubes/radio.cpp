@@ -377,10 +377,13 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   AccessorySlot* acc = &accessories[slot];
   if (accessory != 0)
   {
-    // Send disconnect message if this slot was already active    
-    // with a different device.
-    if (acc->active && acc->id != accessory) {
-      acc->active = false;
+    // If the slot is active send disconnect message if it's occupied by a different
+    // device than the one requested. If it's the same as the one requested, send
+    // a connect message.
+    if (acc->active) {
+      if(acc->id != accessory) {
+        acc->active = false;
+      }
       SendObjectConnectionState(slot);
     }
     
@@ -391,11 +394,13 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   {
     acc->allocated = false;
     acc->active    = false;
-    if (acc->id != 0)
-    {
-      SendObjectConnectionState(slot);
-      acc->id = 0;
-    }
+
+    // Send disconnect response
+    // NOTE: The id is that of the currently connected object if there was one.
+    //       Otherwise the id is 0.
+    SendObjectConnectionState(slot);
+    acc->id = 0;
+    
   }
 }
 
