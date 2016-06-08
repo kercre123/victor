@@ -113,15 +113,13 @@ public static class LocalizationKeys {
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";
-  public const string kSimonGameLabelWatchCozmoPattern = "simonGame.label.watchCozmoPattern";
+  public const string kSimonGameLabelWatchPattern = "simonGame.label.watchPattern";
   public const string kSimonGameLabelWatchCozmoGuess = "simonGame.label.watchCozmoGuess";
-  public const string kSimonGameLabelCreateYourPattern = "simonGame.label.createYourPattern";
   public const string kSimonGameLabelMakeYourGuess = "simonGame.label.makeYourGuess";
   public const string kSimonGameLabelYourTurn = "simonGame.label.yourTurn";
   public const string kSimonGameLabelCozmoTurn = "simonGame.label.cozmoTurn";
-  public const string kSimonGameHeaderWatchCozmoPattern = "simonGame.header.watchCozmoPattern";
+  public const string kSimonGameHeaderWatchPattern = "simonGame.header.watchPattern";
   public const string kSimonGameHeaderWatchCozmoGuess = "simonGame.header.watchCozmoGuess";
-  public const string kSimonGameHeaderCreateYourPattern = "simonGame.header.createYourPattern";
   public const string kSimonGameHeaderMakeYourGuess = "simonGame.header.makeYourGuess";
   public const string kSimonGameLabelStepsLeft = "simonGame.label.stepsLeft";
   public const string kSimonGameTextPatternLength = "simonGame.text.patternLength";
@@ -242,6 +240,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalDescriptionPlaySpeedTap = "dailyGoal.description.PlaySpeedTap";
   public const string kDailyGoalTitleWinSpeedTapHands = "dailyGoal.title.WinSpeedTapHands";
   public const string kDailyGoalDescriptionWinSpeedTapHands = "dailyGoal.description.WinSpeedTapHands";
+  public const string kDailyGoalCompletedText = "dailyGoal.completedText";
   public const string kLootStart = "loot.Start";
   public const string kLootMid = "loot.Mid";
   public const string kLootAlmost = "loot.Almost";

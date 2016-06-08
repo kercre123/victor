@@ -21,7 +21,7 @@
     "behavior_AngleOfFocus_deg": 60.0,
     
     // shared speeds
-    "sx_BodyTurnSpeed_degPerSec": 75.0,   // turn speed
+    "sx_BodyTurnSpeed_degPerSec": 150.0,   // turn speed
     "sxt_HeadTurnSpeed_degPerSec": 60.0,  // head tilt speed while turning body
     "sxh_HeadTurnSpeed_degPerSec": 90.0,  // head tilt speed for states that don't turn body
     
@@ -35,8 +35,8 @@
     "s1_HeadAngleRangeMax_deg":  42.0,  // head max back turn
     
     // state 2 - wait at that location
-    "s2_WaitMin_sec": 0.50,
-    "s2_WaitMax_sec": 1.75,
+    "s2_WaitMin_sec": 0.30,
+    "s2_WaitMax_sec": 0.70,
     "s2_WaitAnimGroupName": "ag_lookInPlaceForFaces_bodyMovePause",
     
     // state 3 - body turn in fwd direction (#1/2)
@@ -53,7 +53,7 @@
     "s4_HeadAngleChangesMin":  3,
     "s4_HeadAngleChangesMax":  5,
     "s4_WaitBetweenChangesMin_sec" : 0.01,
-    "s4_WaitBetweenChangesMax_sec" : 0.4,
+    "s4_WaitBetweenChangesMax_sec" : 0.2,
     "s4_WaitAnimGroupName": "ag_lookInPlaceForFaces_headMovePauses",
     
     // state 5 - head angle change (can have body mini-turn), here to undo what state 4 does randomly, resetting head angle before 6

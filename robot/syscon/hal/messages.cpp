@@ -46,6 +46,10 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
+static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
+  NVIC_SystemReset();
+}
+
 static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {
   enterOperatingMode(msg.radioMode);
 }

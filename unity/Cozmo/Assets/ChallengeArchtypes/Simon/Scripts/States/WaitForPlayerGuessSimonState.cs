@@ -27,6 +27,7 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(1.0f);
       // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
       _LastTappedTime = Time.time;
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerTurnStarted);
     }
 
     public override void Update() {
@@ -58,7 +59,7 @@ namespace Simon {
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
@@ -70,6 +71,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessWrong();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
     }
 
@@ -77,6 +79,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
 
       // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
       // and feel a bit thwarted 
@@ -95,7 +98,6 @@ namespace Simon {
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
       game.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(id));
-
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);

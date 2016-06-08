@@ -56,6 +56,7 @@ namespace Cozmo {
       _robot.GetAnimationStreamer().PopIdleAnimation();
       _shouldPopIdle = false;
     }
+    _compoundAction.PrepForCompletion();
   }
 
   

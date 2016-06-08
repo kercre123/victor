@@ -166,6 +166,8 @@ namespace Cozmo {
       PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                        bool isPanAbsolute, bool isTiltAbsolute);
       
+      virtual ~PanAndTiltAction();
+      
       virtual const std::string& GetName() const override { return _name; }
       
       virtual RobotActionType GetType() const override { return RobotActionType::PAN_AND_TILT; }

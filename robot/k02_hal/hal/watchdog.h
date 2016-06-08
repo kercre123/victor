@@ -17,6 +17,7 @@ namespace Anki {
         void init(void);
         void kick(const uint8_t channel);
         void pet(void);
+        void suspend(void);
       }
     }
   }

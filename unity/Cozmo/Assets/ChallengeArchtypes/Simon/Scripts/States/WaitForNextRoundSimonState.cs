@@ -22,7 +22,7 @@ namespace Simon {
 
       string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
         LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
-      _GameInstance.SharedMinigameView.InfoTitleText = null;
+      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(headerTextKey);
       _GameInstance.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(headerTextKey);
 
       _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = (_NextPlayer != PlayerType.Cozmo);
@@ -34,16 +34,7 @@ namespace Simon {
     private void HandleContinuePressed() {
       _GameInstance.SharedMinigameView.HideContinueButton();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
-      if (_NextPlayer == PlayerType.Cozmo) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
-      }
-      else { // _NextPlayer == PlayerType.Human
-        _StateMachine.SetNextState(new PlayerSetSequenceSimonState());
-      }
-    }
-
-    private void HandleOnCozmoStartAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoMoveCloserToCubesState(new CozmoSetSequenceSimonState()));
+      _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
     }
   }
 }

@@ -24,6 +24,7 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoTurnStarted);
     }
 
     public override void Update() {
@@ -81,6 +82,7 @@ namespace Simon {
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleOnCozmoLoseAnimationDone));
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
     }
 
     private void CozmoWinGame() {
@@ -91,10 +93,11 @@ namespace Simon {
       // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
       // and feel a bit thwarted 
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnCozmoWinAnimationDone));
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {

@@ -9,7 +9,7 @@ using Anki.Cozmo;
 
 public class BlockPoolPane : MonoBehaviour {
 
-  private const int _DefaultRSSIFilter = 60;
+  private const int _DefaultRSSIFilter = 50;
 
   [SerializeField]
   private GameObject _ButtonPrefab;

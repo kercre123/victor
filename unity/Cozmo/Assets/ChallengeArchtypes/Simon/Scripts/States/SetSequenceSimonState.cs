@@ -4,48 +4,60 @@ using System.Collections.Generic;
 
 namespace Simon {
 
-  public class CozmoSetSequenceSimonState : State {
+  public class SetSequenceSimonState : State {
 
     private SimonGame _GameInstance;
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
-    private const float kSequenceWaitDelay = 0.3f;
     private float _LastSequenceTime = -1;
+
+    private PlayerType _NextPlayer;
+
+    public SetSequenceSimonState(PlayerType nextPlayer) {
+      _NextPlayer = nextPlayer;
+    }
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _SequenceLength = _GameInstance.GetNewSequenceLength(PlayerType.Cozmo);
+      _SequenceLength = _GameInstance.GetNewSequenceLength(_NextPlayer);
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoPattern);
-      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
         0, _SequenceLength);
 
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = false;
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = true;
+      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = _NextPlayer == PlayerType.Human;
+      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = _NextPlayer != PlayerType.Human;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+
+      _LastSequenceTime = Time.time;
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonExampleStarted);
     }
 
     public override void Update() {
       base.Update();
       if (_CurrentSequenceIndex == -1) {
         // First in sequence
-        LightUpNextCube();
+        if (Time.time - _LastSequenceTime > _GameInstance.TimeWaitFirstBeat) {
+          LightUpNextCube();
+        }
       }
       else if (_CurrentSequenceIndex >= _CurrentSequence.Count - 1) {
         // Last in sequence
-        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
+        if (_NextPlayer == PlayerType.Human) {
+          _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
+        }
+        else {
+          _StateMachine.SetNextState(new CozmoGuessSimonState());        
+        }
       }
       else {
-        bool differentCube = (_CurrentSequence[_CurrentSequenceIndex]
-                             == _CurrentSequence[_CurrentSequenceIndex + 1]);
-        if (differentCube || Time.time - _LastSequenceTime > kSequenceWaitDelay) {
+        if (Time.time - _LastSequenceTime > _GameInstance.TimeBetweenBeats) {
           LightUpNextCube();
         }
       }
@@ -53,10 +65,13 @@ namespace Simon {
 
     private void LightUpNextCube() {
       _CurrentSequenceIndex++;
-      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchCozmoPattern,
+      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
         _CurrentSequenceIndex + 1, _SequenceLength);
       _LastSequenceTime = Time.time;
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(GetCurrentTarget()));
+
+      int cubeId = GetCurrentTarget().ID;
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
+      _GameInstance.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
     }
 
     public LightCube GetCurrentTarget() {

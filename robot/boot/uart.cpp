@@ -52,7 +52,6 @@ void Anki::Cozmo::HAL::UART::shutdown(void) {
   SIM_SOPT5 &= ~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK);
 }
 
-
 inline void transmit_mode(TRANSFER_MODE mode) { 
   if (mode == current_mode) {
     return ;
