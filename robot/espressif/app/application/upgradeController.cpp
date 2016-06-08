@@ -66,7 +66,7 @@ namespace UpgradeController {
     OTAT_Flash_Write,
     OTAT_Wait,
     OTAT_Sig_Check,
-    OTAT_Reject,
+    OTAT_Abort,
     OTAT_Apply_WiFi,
     OTAT_Apply_RTIP,
     OTAT_Wait_For_RTIP_Ack,
@@ -92,7 +92,8 @@ namespace UpgradeController {
   int16_t  acceptedPacketNumber; ///< Highest packet number we have accepted
   int8_t   retries; ///< Flash operation retries
   OTATaskPhase phase; ///< Keeps track of our current task state
-  bool didEsp; ///< We have new firmware for the Espressif
+  bool didWiFi; ///< We have new firmware for the Espressif
+  bool didRTIP; ///< We have written new firmare for the RTIP
   bool haveTermination; ///< Have received termination
   bool haveValidCert; ///< Have a valid certificate for the image
   
@@ -109,7 +110,8 @@ namespace UpgradeController {
     counter = system_get_time();
     acceptedPacketNumber = -1;
     retries = MAX_RETRIES;
-    didEsp = false;
+    didWiFi = false;
+    didRTIP = false;
     haveTermination = false;
     haveValidCert = false;
     sha512_init(firmware_digest);
@@ -165,9 +167,13 @@ namespace UpgradeController {
     {
       i2spiSwitchMode(I2SPI_REBOOT);
     }
-    else 
+    else if (didRTIP)
     {
-      phase = OTAT_Reject;
+      phase = OTATR_Set_Evil_A;
+    }
+    else
+    {
+      phase = OTAT_Abort;
     }
   }
 
@@ -523,7 +529,7 @@ namespace UpgradeController {
           }
           else
           {
-            didEsp = true;
+            didWiFi = true;
             retries = MAX_RETRIES;
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
@@ -545,6 +551,7 @@ namespace UpgradeController {
             {
               if (i2spiBootloaderPushChunk(fwb))
               {
+                didRTIP = true;
                 #if DEBUG_OTA
                 os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
                 #endif
@@ -646,7 +653,7 @@ namespace UpgradeController {
         }
         break;
       }
-      case OTAT_Reject:
+      case OTAT_Abort:
       {
         i2spiBootloaderCommandDone();
         break;
@@ -654,7 +661,7 @@ namespace UpgradeController {
       case OTAT_Apply_WiFi:
       {
         SpiFlashOpResult rslt = SPI_FLASH_RESULT_OK;
-        if (didEsp)
+        if (didWiFi)
         {
           uint32_t headerUpdate[2];
           headerUpdate[0] = nextImageNumber; // Image number
