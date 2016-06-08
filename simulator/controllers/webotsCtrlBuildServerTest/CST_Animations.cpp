@@ -60,9 +60,11 @@ namespace Cozmo {
   s32 CST_Animations::UpdateInternal()
   {
     switch (_testState) {
-
       case TestState::InitCheck:
       {
+        // Sends a CLAD message to robot so that RobotAudioOutputSource is set to PlayOnRobot,
+        // otherwise a lot of the audio bugs will not occur. See robotAudioClient.h on the robot
+        // side for more information
         ExternalInterface::SetRobotAudioOutputSource m;
         m.source = ExternalInterface::RobotAudioOutputSourceCLAD::PlayOnRobot;
         ExternalInterface::MessageGameToEngine message;
