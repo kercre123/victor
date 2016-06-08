@@ -82,6 +82,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ButtonScript: {fileID: 11440696}
   _IconImage: {fileID: 0}
+  _IconContainer: {fileID: 22435126}
   _ChallengeTitle: {fileID: 0}
   _CircuitImage: {fileID: 11456194}
 --- !u!114 &11420562
@@ -120,6 +121,9 @@ MonoBehaviour:
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:targetImage
     ReferencePath: BackgroundImage
   - ObjectPath: ../
+    FieldName: Cozmo.HubWorld.HubWorldButton:_IconContainer
+    ReferencePath: 
+  - ObjectPath: ../
     FieldName: Cozmo.HubWorld.HubWorldButton:_IconImage
     ReferencePath: BackgroundImage/IconImage
   ModifiedGlobalReferences: []
@@ -138,14 +142,14 @@ MonoBehaviour:
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 0.50980395, g: 0.5058824, b: 0.43529412, a: 1}
-  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextPressedColor: {r: 0.50980395, g: 0.5058824, b: 0.43529415, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 0}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 0}
     disabledColor: {r: 0.6691177, g: 0.6691177, b: 0.6691177, a: 0.284}
   _GlintAnimator: {fileID: 0}
@@ -302,6 +306,10 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: m_Color.r
       value: 0
       objectReference: {fileID: 0}
@@ -408,15 +416,15 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: ButtonGraphics.Array.data[0].pressedColor.r
-      value: 0.75
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: ButtonGraphics.Array.data[0].pressedColor.g
-      value: 0.75
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: ButtonGraphics.Array.data[0].pressedColor.b
-      value: 0.75
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: ButtonGraphics.Array.data[0].disabledColor.r
@@ -429,6 +437,38 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: ButtonGraphics.Array.data[0].disabledColor.b
       value: 0.6691177
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5c8995ab49e0e4595bda311e41bdcbea,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: a567dd2ca848f4d39b88526de7ccc21f,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[2]
+      value: 
+      objectReference: {fileID: 21300000, guid: af13b9d7353be4f0cbe48d1684aaeff9,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[3]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5438f70dfabf540ad888c2fdc399a6e9,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: TextPressedColor.r
+      value: 0.50980395
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: TextPressedColor.g
+      value: 0.5058824
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: TextPressedColor.b
+      value: 0.43529415
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

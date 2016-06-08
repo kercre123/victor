@@ -12,10 +12,13 @@ namespace Cozmo {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 
-      public Action OnProgChanged;
+      public Action<GoalCell> OnProgChanged;
 
       [SerializeField]
       private AnkiTextLabel _GoalLabel;
+
+      [SerializeField]
+      private Image _CompletedBackground;
 
       public AnkiTextLabel GoalLabel {
         get {
@@ -35,16 +38,11 @@ namespace Cozmo {
           if (_GoalProg != value) {
             _GoalProg = value;
             _GoalProgressBar.SetProgress(value);
-            if (_GoalProg >= 1.0f) {
-              _GoalLabel.text = Localization.Get(LocalizationKeys.kDailyGoalComplete);
-              _GoalLabel.color = UIColorPalette.CompleteTextColor;
-            }
-            else {
-              _GoalLabel.text = _Goal.Title;
-              _GoalLabel.color = UIColorPalette.NeutralTextColor;
-            }
+
+            UpdateProgressionUI();
+
             if (OnProgChanged != null) {
-              OnProgChanged.Invoke();
+              OnProgChanged(this);
             }
           }
         }
@@ -67,14 +65,29 @@ namespace Cozmo {
         if (update) {
           goal.OnDailyGoalUpdated += OnGoalUpdate;
         }
-        // TODO: Load by string? Or set up a config file for mapping icons to enums?
-        //_GoalIcon.sprite = goal.GoalIcon;
-        _GoalLabel.text = goal.Title;
+        UpdateProgressionUI();
         SetProgress((float)goal.Progress / (float)goal.Target);
+      }
+
+      public bool GoalComplete() {
+        return _GoalProg >= 1.0f;
       }
 
       private void OnGoalUpdate(DailyGoal goal) {
         SetProgress((float)goal.Progress / (float)goal.Target);
+      }
+
+      private void UpdateProgressionUI() {
+        _GoalLabel.text = _Goal.Title + " (" + _Goal.Progress + "/" + _Goal.Target + ")";
+
+        if (GoalComplete()) {
+          _GoalLabel.color = UIColorPalette.CompleteTextColor;
+          _CompletedBackground.gameObject.SetActive(true);
+        }
+        else {
+          _GoalLabel.color = UIColorPalette.NeutralTextColor;
+          _CompletedBackground.gameObject.SetActive(false);
+        }
       }
 
       void OnDestroy() {

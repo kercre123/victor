@@ -76,12 +76,8 @@ public class AnimationManager {
   }
 
   public void GameEventReceived(GameEventWrapper cozEvent) {
-    string animGroup = "";
-    // Not containing an event just means this might be only used for game logic not animation.
-    if (!AnimationGroupDict.ContainsKey(cozEvent.GameEventEnum)) {
-      return;
-    }
-    if (AnimationGroupDict.TryGetValue(cozEvent.GameEventEnum, out animGroup)) {
+    string animGroup = GetAnimGroupForEvent(cozEvent.GameEventEnum);
+    if (animGroup != null) {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
         AnimationCallbackDict.TryGetValue(cozEvent.GameEventEnum, out newCallback);
@@ -92,6 +88,18 @@ public class AnimationManager {
         newCallback.Invoke(true);
       }
     }
+  }
+
+  public string GetAnimGroupForEvent(GameEvent cozEventEnum) {
+    // Not containing an event just means this might be only used for game logic not animation.
+    if (!AnimationGroupDict.ContainsKey(cozEventEnum)) {
+      return null;
+    }
+    string animGroup = "";
+    if (AnimationGroupDict.TryGetValue(cozEventEnum, out animGroup)) {
+      return animGroup;
+    }
+    return null;
   }
 
   /// <summary>

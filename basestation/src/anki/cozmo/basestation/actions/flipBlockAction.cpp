@@ -5,6 +5,11 @@
  * Date:   5/18/16
  *
  * Description: Action which flips blocks
+ *              By default, when driving to the flipping preAction pose, we will drive to one of the two poses that is closest
+ *              to Cozmo and farthest from the last known face. In order to maximize the chances of the person being able to see
+ *              Cozmo's face and reactions while he is flipping the block
+ *                - Should there not be a last known face, of the two closest preAction poses the left most will be chosen
+ *
  *
  *
  * Copyright: Anki, Inc. 2016
@@ -18,58 +23,157 @@
 
 namespace Anki {
   namespace Cozmo {
+  
+    static constexpr f32 kPreDockPoseAngleTolerance = DEG_TO_RAD_F32(5);
     
-    DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot, ObjectID objectID)
-    : CompoundActionSequential(robot)
+    DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
+                                                     const ObjectID objectID,
+                                                     const bool shouldDriveToClosestPreActionPose,
+                                                     const bool useApproachAngle,
+                                                     const f32 approachAngle_rad,
+                                                     const bool useManualSpeed,
+                                                     Radians maxTurnTowardsFaceAngle_rad,
+                                                     const bool sayName)
+    : IDriveToInteractWithObject(robot,
+                                 objectID,
+                                 PreActionPose::FLIPPING,
+                                 0,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
+    , _flipBlockAction(new FlipBlockAction(robot, objectID))
+    , _shouldDriveToClosestPreActionPose(shouldDriveToClosestPreActionPose)
     {
-      AddAction(new DriveToFlipBlockPoseAction(robot, objectID));
-      AddAction(new FlipBlockAction(robot, objectID));
+      GetDriveToObjectAction()->SetGetPossiblePosesFunc(&DriveAndFlipBlockAction::GetPossiblePoses);
+
+      AddAction(_flipBlockAction);
+      SetProxyTag(_flipBlockAction->GetTag()); // Use flip action's completion info
     }
     
-    void DriveAndFlipBlockAction::SetMotionProfile(const PathMotionProfile& motionProfile)
+    ActionResult DriveAndFlipBlockAction::GetPossiblePoses(ActionableObject* object,
+                                                           std::vector<Pose3d>& possiblePoses,
+                                                           bool& alreadyInPosition)
     {
-      if(GetActionList().size() == 2)
+      IDockAction::PreActionPoseInfo preActionPoseInfo(object->GetID(),
+                                                       PreActionPose::FLIPPING,
+                                                       false,
+                                                       0,
+                                                       kPreDockPoseAngleTolerance);
+      
+      IDockAction::IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
+      
+      if(preActionPoseInfo.actionResult == ActionResult::FAILURE_ABORT)
       {
-        (static_cast<DriveToObjectAction*>(GetActionList().front()))->SetMotionProfile(motionProfile);
+        PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction.Constructor", "Failed to find closest preAction pose");
+        return ActionResult::FAILURE_ABORT;
       }
+      
+      Pose3d facePose;
+      TimeStamp_t faceTime = _robot.GetFaceWorld().GetLastObservedFace(facePose);
+      
+      if(preActionPoseInfo.preActionPoses.size() == 0)
+      {
+        PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction.Constructor", "No preAction poses");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(_shouldDriveToClosestPreActionPose)
+      {
+        possiblePoses.push_back(preActionPoseInfo.preActionPoses[preActionPoseInfo.closestIndex].GetPose());
+        return ActionResult::SUCCESS;
+      }
+      
+      Pose3d firstClosestPose;
+      Pose3d secondClosestPose;
+      f32 firstClosestDist = std::numeric_limits<float>::max();
+      f32 secondClosestDist = firstClosestDist;
+      
+      for(auto iter = preActionPoseInfo.preActionPoses.begin(); iter != preActionPoseInfo.preActionPoses.end(); ++iter)
+      {
+        Pose3d poseWrtRobot;
+        if(!iter->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot))
+        {
+          continue;
+        }
+        
+        f32 dist = poseWrtRobot.GetTranslation().Length();
+        
+        
+        if(dist < firstClosestDist)
+        {
+          secondClosestDist = firstClosestDist;
+          secondClosestPose = firstClosestPose;
+          
+          firstClosestDist = dist;
+          firstClosestPose = poseWrtRobot;
+        }
+        else if(dist < secondClosestDist)
+        {
+          secondClosestDist = dist;
+          secondClosestPose = poseWrtRobot;
+        }
+      }
+      
+      Pose3d poseToDriveTo;
+      
+      // There is only one preaction pose so it will be the first closest
+      if(preActionPoseInfo.preActionPoses.size() == 1)
+      {
+        poseToDriveTo = firstClosestPose;
+      }
+      // No last known face so pick the preaction pose that is left most relative to Cozmo
+      else if(faceTime == 0)
+      {
+        if(firstClosestPose.GetTranslation().y() >= secondClosestPose.GetTranslation().y())
+        {
+          poseToDriveTo = firstClosestPose;
+        }
+        else
+        {
+          poseToDriveTo = secondClosestPose;
+        }
+      }
+      // Otherwise pick one of the two preaction poses closest to the robot and farthest from the last known face
+      else
+      {
+        if(!firstClosestPose.GetWithRespectTo(facePose, firstClosestPose))
+        {
+          PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction", "Couldn't get firstClosestPose wrt facePose");
+          return ActionResult::FAILURE_ABORT;
+        }
+        if(!secondClosestPose.GetWithRespectTo(facePose, secondClosestPose))
+        {
+          PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction", "Couldn't get secondClosestPose wrt facePose");
+          return ActionResult::FAILURE_ABORT;
+        }
+        
+        if(firstClosestPose.GetTranslation().Length() > secondClosestPose.GetTranslation().Length())
+        {
+          firstClosestPose.GetWithRespectTo(_robot.GetPose(), poseToDriveTo);
+        }
+        else
+        {
+          secondClosestPose.GetWithRespectTo(_robot.GetPose(), poseToDriveTo);
+        }
+      }
+      
+      possiblePoses.push_back(poseToDriveTo);
+      return ActionResult::SUCCESS;
     }
     
     
     DriveToFlipBlockPoseAction::DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID)
-    : CompoundActionSequential(robot)
-    , _blockToFlipID(objectID)
+    : DriveToObjectAction(robot, objectID, PreActionPose::FLIPPING)
     {
-      if(objectID == robot.GetCarryingObject())
-      {
-        PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
-                            "Robot is currently carrying action object with ID=%d",
-                            objectID.GetValue());
-        return;
-      }
-      
-      DriveToObjectAction* driveToObjectAction = new DriveToObjectAction(robot,
-                                                                         objectID,
-                                                                         PreActionPose::FLIPPING,
-                                                                         0,
-                                                                         false,
-                                                                         0,
-                                                                         false);
-      
-      AddAction(driveToObjectAction);
+      SetGetPossiblePosesFunc(&DriveAndFlipBlockAction::GetPossiblePoses);
     }
     
     const std::string& DriveToFlipBlockPoseAction::GetName() const
     {
       static const std::string name("DriveToFlipBlockPoseAction");
       return name;
-    }
-    
-    void DriveToFlipBlockPoseAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      ObjectInteractionCompleted info;
-      info.numObjects = 1;
-      info.objectIDs[0] = _blockToFlipID;
-      completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
     
@@ -83,6 +187,7 @@ namespace Anki {
     
     FlipBlockAction::~FlipBlockAction()
     {
+      _compoundAction.PrepForCompletion();
       if(_flipTag != -1)
       {
         _robot.GetActionList().Cancel(_flipTag);

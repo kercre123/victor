@@ -102,10 +102,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: -100
+    m_Left: -150
     m_Right: 0
     m_Top: 0
-    m_Bottom: 0
+    m_Bottom: 80
   m_ChildAlignment: 4
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
@@ -122,14 +122,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
+    m_Left: -30
     m_Right: 0
-    m_Top: 0
+    m_Top: 100
     m_Bottom: 0
-  m_ChildAlignment: 0
-  m_Spacing: 80
+  m_ChildAlignment: 3
+  m_Spacing: 40
   m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
 --- !u!114 &11446838
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -214,7 +214,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 180
+  m_MinHeight: 125
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
@@ -252,6 +252,11 @@ MonoBehaviour:
     type: 2}
   _TopChallengeContainer: {fileID: 22401556}
   _BottomChallengeContainer: {fileID: 22413684}
+  _CircuitSprites:
+  - {fileID: 21300000, guid: 5c8995ab49e0e4595bda311e41bdcbea, type: 3}
+  - {fileID: 21300000, guid: a567dd2ca848f4d39b88526de7ccc21f, type: 3}
+  - {fileID: 21300000, guid: af13b9d7353be4f0cbe48d1684aaeff9, type: 3}
+  - {fileID: 21300000, guid: 5438f70dfabf540ad888c2fdc399a6e9, type: 3}
 --- !u!114 &11490628
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -264,14 +269,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
+    m_Left: -30
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
-  m_Spacing: 80
+  m_ChildAlignment: 3
+  m_Spacing: 40
   m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
 --- !u!114 &11494066
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -425,6 +430,10 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: _UnlockedChallengeButtonPrefab
       value: 
       objectReference: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
@@ -460,16 +469,36 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Padding.m_Bottom
-      value: 100
+      value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_Padding.m_Left
-      value: -100
+      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_MinWidth
       value: 1400
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5c8995ab49e0e4595bda311e41bdcbea,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: a567dd2ca848f4d39b88526de7ccc21f,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[2]
+      value: 
+      objectReference: {fileID: 21300000, guid: af13b9d7353be4f0cbe48d1684aaeff9,
+        type: 3}
+    - target: {fileID: 0}
+      propertyPath: _CircuitSprites.Array.data[3]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5438f70dfabf540ad888c2fdc399a6e9,
+        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187040}

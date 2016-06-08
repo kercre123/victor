@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClickedId, Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
@@ -15,6 +15,9 @@ namespace Cozmo.HubWorld {
     private Image _IconImage;
 
     [SerializeField]
+    private Transform _IconContainer;
+
+    [SerializeField]
     private Anki.UI.AnkiTextLabel _ChallengeTitle;
 
     [SerializeField]
@@ -22,16 +25,29 @@ namespace Cozmo.HubWorld {
 
     private string _ChallengeId;
 
-    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false) {
+    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, Sprite circuitSprite, bool isEnd = false) {
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
         _IconImage.overrideSprite = challengeData.ChallengeIcon;
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
+
+      _CircuitImage.sprite = circuitSprite;
+
       if (isEnd) {
         _CircuitImage.enabled = false;
       }
       _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);
+      _ButtonScript.onPress.AddListener(HandlePointerDown);
+      _ButtonScript.onRelease.AddListener(HandlePointerUp);
+    }
+
+    private void HandlePointerDown() {
+      _IconContainer.localScale = new Vector3(0.9f, 0.9f, 1.0f);
+    }
+
+    private void HandlePointerUp() {
+      _IconContainer.localScale = new Vector3(1.0f, 1.0f, 1.0f);
     }
 
     private void Update() {

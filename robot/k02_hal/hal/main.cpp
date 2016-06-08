@@ -39,7 +39,6 @@ namespace Anki
       void CameraInit(void);
       void CameraStart(void);
 
-      bool UnlockDevices = false;
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
@@ -96,7 +95,6 @@ int main (void)
 
   UART::DebugInit();
   #ifndef ENABLE_FCC_TEST
-  Watchdog::init();
   SPI::Init();
   #endif
   DAC::Init();
@@ -125,6 +123,7 @@ int main (void)
     // We can now safely start camera DMA, which shortly after starts HALExec
     // This function returns after the first call to HALExec is complete
     SPI::Init();
+    Watchdog::init();
     CameraStart();
 
     // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
@@ -134,18 +133,10 @@ int main (void)
   {
     // Wait for head body sync to occur
     UART::WaitForSync();
-  
-    if (UnlockDevices)
+
+    if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
     {
-      if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
-      {
-        NVIC_SystemReset();
-      }
-    }
-    else
-    {
-      Spine::Manage();
-      WiFi::Update();
+      NVIC_SystemReset();
     }
   }
   #endif

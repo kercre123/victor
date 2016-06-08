@@ -347,6 +347,7 @@ union EngineToRobot
   SendDTMCommand                sendDTMCommand              = 0x0A,
   SetHeadlight                  setHeadlight                = 0x0B,
   SetCubeGamma                  setCubeGamma                = 0x0C,
+  OTA::BodyRestart              bodyRestart                 = 0x0D,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,

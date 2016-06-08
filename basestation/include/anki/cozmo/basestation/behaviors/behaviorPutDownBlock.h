@@ -22,9 +22,10 @@ class BehaviorPutDownBlock : public IBehavior
 {
 public:
 
+  // TODO: Use a PlaceObjectOnGround action (with animatino) and use its VisuallyVerify
   // helper for creating an action to make sure that the "put down" animation is working. It looks down at the
   // block to make sure we have a chance to see it
-  static IActionRunner* CreateLookAfterPlaceAction(Robot& robot);
+  static IActionRunner* CreateLookAfterPlaceAction(Robot& robot, bool doLookAtFaceAfter=true);
 
 protected:
   // Enforce creation through BehaviorFactory
@@ -34,17 +35,14 @@ protected:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual Result InitInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
-
+  
 private:
 
   void LookDownAtBlock(Robot& robot);
-  
-  std::string _putDownAnimGroup = "ag_putDownBlock";
 
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Cozmo_Basestation_Behaviors_BehaviorPutDownBlock_H__

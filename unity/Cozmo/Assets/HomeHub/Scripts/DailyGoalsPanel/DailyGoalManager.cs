@@ -188,7 +188,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   public List<DailyGoal> GenerateDailyGoals() {
     List<DailyGoal> newGoals = new List<DailyGoal>();
-    int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals));
+    int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals + 1));
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
     // Look at a list of exclusively goals that have their conditions met
     for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
@@ -245,7 +245,7 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetTitleArgs(new object[] { Localization.Get(_LastChallengeData.ChallengeTitleLocKey) });
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRequestGame);
     _RequestPending = false;
     _RequestDialog = alertView;
   }
@@ -293,4 +293,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   #endregion
 
+  public int GetConfigMaxGoalCount() {
+    return _DailyGoalGenConfig.MaxGoals;
+  }
 }

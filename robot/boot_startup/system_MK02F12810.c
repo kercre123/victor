@@ -80,7 +80,6 @@ void SystemInit (void)
                  WDOG_STCTRLH_WAITEN_MASK |
                  WDOG_STCTRLH_STOPEN_MASK |
                  WDOG_STCTRLH_ALLOWUPDATE_MASK |
-                 WDOG_STCTRLH_CLKSRC_MASK |
                  0x0100U;
 #endif /* (DISABLE_WDOG) */
 

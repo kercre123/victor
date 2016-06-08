@@ -50,7 +50,7 @@ void LightsComponent::Update()
     CubeLightsState newState = CubeLightsState::Visible;
     
     // If we're interacting with this object, put it in interacting state
-    if(cubeInfoPair.first == _interactionObject)
+    if(_interactionObjects.count(cubeInfoPair.first) > 0)
     {
       newState = CubeLightsState::Interacting;
     }
@@ -195,5 +195,7 @@ LightsComponent::ObjectInfo::ObjectInfo()
 {
 }
 
-}
-}
+
+} // namespace Cozmo
+} // namespace Anki
+

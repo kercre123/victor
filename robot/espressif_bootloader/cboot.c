@@ -38,6 +38,7 @@
 #define DEBUG 0
 
 #define RECOVERY_MODE_PIN (3)
+#define HANDSHAKE_PIN (12)
 #define FACTORY_FW_START (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE)
 
 /** Check that the hash of the image matches it's header
@@ -343,6 +344,7 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
  */
 void NOINLINE setupSerial(void)
 {
+  set_gpio(HANDSHAKE_PIN, 0);
   // Update the clock rate here since it's the first function we call
   uart_div_modify(0, (50*1000000)/230400);
   // Debugging delay

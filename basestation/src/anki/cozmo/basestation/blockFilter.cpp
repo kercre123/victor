@@ -26,17 +26,12 @@ namespace Anki {
 namespace Cozmo {
     
 BlockFilter::BlockFilter(Robot* inRobot)
-  : BlockFilter(FactoryIDSet(), inRobot)
-{
-}
-
-BlockFilter::BlockFilter(const FactoryIDSet &factoryIds, Robot* inRobot)
   : _robot(inRobot)
-  , _blocks(factoryIds)
   , _path()
   , _enabled(false)
   , _externalInterface(nullptr)
 {
+  _blocks.fill(0);
 }
 
 BlockFilter::BlockFilter(const std::string &path, Robot* inRobot)
@@ -66,51 +61,48 @@ void BlockFilter::Init(const std::string &path, IExternalInterface* externalInte
   }
 }
 
-void BlockFilter::GetFactoryIds(FactoryIDSet &factoryIds) const
-{
-  factoryIds.insert(_blocks.begin(), _blocks.end());
-}
-
 bool BlockFilter::ContainsFactoryId(FactoryID factoryId) const
 {
-  return !_enabled || (_blocks.find(factoryId) != std::end(_blocks));
+  return !_enabled || (std::find(_blocks.begin(), _blocks.end(), factoryId) != std::end(_blocks));
 }
 
 void BlockFilter::AddFactoryId(const FactoryID factoryId)
 {
-  _blocks.insert(factoryId);
-  ConnectToBlocks();
-}
-
-void BlockFilter::AddFactoryIds(const FactoryIDSet &factoryIds)
-{
-  _blocks.insert(factoryIds.begin(), factoryIds.end());
-  ConnectToBlocks();
+  // Find an available slot
+  FactoryIDArray::iterator it = std::find(std::begin(_blocks), std::end(_blocks), 0);
+  if (it != _blocks.end()) {
+    *it = factoryId;
+    ConnectToBlocks();
+  } else {
+    PRINT_NAMED_ERROR("BlockFilter.AddFactoryId", "There is no available slot to add factory ID %#08x", factoryId);
+  }
 }
 
 void BlockFilter::RemoveFactoryId(const FactoryID factoryId)
 {
-  _blocks.erase(factoryId);
-  ConnectToBlocks();
-}
-
-void BlockFilter::RemoveFactoryIds(const FactoryIDSet &factoryIds)
-{
-  for (const FactoryID &factoryID : factoryIds)
-  {
-    _blocks.erase(factoryID);
+  FactoryIDArray::iterator it = std::find(std::begin(_blocks), std::end(_blocks), factoryId);
+  if (it != _blocks.end()) {
+    *it = 0;
+    ConnectToBlocks();
+  } else {
+    PRINT_NAMED_ERROR("BlockFilter.RemoveFactoryId", "Coudn't find factory ID %#08x", factoryId);
   }
-  ConnectToBlocks();
 }
 
 void BlockFilter::RemoveAllFactoryIds()
 {
-  _blocks.clear();
+  _blocks.fill(0);
+  ConnectToBlocks();
 }
 
 bool BlockFilter::Save(const std::string &path) const
 {
-  if (_blocks.empty())
+  // Find if there is any block connnected
+  FactoryIDArray::const_iterator it = std::find_if(std::begin(_blocks), std::end(_blocks), [](FactoryID id) {
+    return id != 0;
+  });
+  
+  if (it == std::end(_blocks))
   {
     // list is empty, delete the file if is exists
     struct stat buf;
@@ -127,13 +119,15 @@ bool BlockFilter::Save(const std::string &path) const
   try
   {
     outputFileSteam.open(path);
-    for (FactoryIDSet::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
+    for (FactoryIDArray::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
     {
       const FactoryID &factoryId = *it;
-      outputFileSteam << "0x";
-      outputFileSteam << std::hex << factoryId;
-      outputFileSteam << "\n";
-      PRINT_NAMED_DEBUG("BlockFilter.Save", "%#08x", factoryId);
+      if (factoryId != 0) {
+        outputFileSteam << "0x";
+        outputFileSteam << std::hex << factoryId;
+        outputFileSteam << "\n";
+        PRINT_NAMED_DEBUG("BlockFilter.Save", "%#08x", factoryId);
+      }
     }
     outputFileSteam.close();
   }
@@ -156,8 +150,6 @@ bool BlockFilter::Save() const
 
 bool BlockFilter::Load(const std::string &path)
 {
-  FactoryIDSet blocks;
-
   std::ifstream inputFileSteam;
   inputFileSteam.open(path);
   if (!inputFileSteam.good())
@@ -166,18 +158,25 @@ bool BlockFilter::Load(const std::string &path)
     return false;
   }
 
+  int lineIndex = 0;
   std::string line;
   while (std::getline(inputFileSteam, line))
   {
     if (line.length() == 0)
       continue;
+    
+    if (lineIndex > (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
+      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+      break;
+    }
 
     if (line.compare(0,2,"0x") == 0)
     {
       try
       {
         FactoryID v = (FactoryID)std::stoul(line, nullptr, 16);
-        blocks.insert(v);
+        _blocks[lineIndex] = v;
+        ++lineIndex;
         PRINT_NAMED_DEBUG("BlockFilter.Load", "%#08x", v);
       }
       catch (std::exception e)
@@ -187,7 +186,6 @@ bool BlockFilter::Load(const std::string &path)
     }
   }
 
-  _blocks = blocks;
   inputFileSteam.close();
 
   ConnectToBlocks();
@@ -198,7 +196,7 @@ bool BlockFilter::Load(const std::string &path)
 bool BlockFilter::ConnectToBlocks() const
 {
   if (_robot) {
-    if( _robot->ConnectToBlocks(_blocks) == RESULT_OK )
+    if( _robot->ConnectToObjects(_blocks) == RESULT_OK )
     {
       Save();
       return true;
@@ -222,10 +220,12 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       
       std::vector<ExternalInterface::BlockPoolBlockData> allBlocks;
       for (const FactoryID &factoryId : _blocks ) {
-        ExternalInterface::BlockPoolBlockData blockData;
-        blockData.enabled = true;
-        blockData.id = factoryId;
-        allBlocks.push_back(blockData);
+        if (factoryId != 0) {
+          ExternalInterface::BlockPoolBlockData blockData;
+          blockData.enabled = true;
+          blockData.factory_id = factoryId;
+          allBlocks.push_back(blockData);
+        }
       }
       // TODO: push in all discovered by robot but unlisted blocks here as well.
       
@@ -243,7 +243,7 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     case ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage:
     {
       const Anki::Cozmo::ExternalInterface::BlockSelectedMessage& msg = event.GetData().Get_BlockSelectedMessage();
-      if( msg.selected != 0 )
+      if (msg.selected)
       {
         AddFactoryId( msg.factoryId );
       }

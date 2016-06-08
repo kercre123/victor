@@ -331,7 +331,7 @@ namespace Cozmo {
         if (robot.HasMismatchedCLAD()) {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
-         */
+        */
         
         if (TEST_CHARGER_CONNECT) {
           // Check if charger is discovered
@@ -384,7 +384,14 @@ namespace Cozmo {
           
           // Take photo for checking starting pose
           robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
-        } else if (currentTime_sec > _holdUntilTime) {
+          
+        }
+        // When drift detection period has expired, and NVStorage has no pending requests in case we're
+        // in the middle of pulling down lots of data (like face data) that could slow down other unreliable image data
+        // from coming through, proceed to checking the drift amount and whether or not an image was stored
+        // for camera calibration. For factory robots, the NVStorage pulldown shouldn't affect this since
+        // there's no face data to pull.
+        else if (currentTime_sec > _holdUntilTime && !robot.GetNVStorageComponent().HasPendingRequests()) {
           f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
           if(angleChange > _kIMUDriftAngleThreshDeg) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
@@ -406,8 +413,9 @@ namespace Cozmo {
             }
             
             // Connect to charger
-            const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
-            robot.ConnectToBlocks(connectToIDs);
+            std::array<FactoryID, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> connectToIDs;
+            connectToIDs[0] = _kChargerFactoryID;
+            robot.ConnectToObjects(connectToIDs);
           }
           
           // Drive off charger
@@ -548,30 +556,32 @@ namespace Cozmo {
           StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
-                        // Save tool code images to robot (whether it succeeded to read code or not)
-                        _toolCodeImagesStored = false;
-                        if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
-                                                                                    // Clear tool code images from VisionSystem
-                                                                                    robot.GetVisionComponent().ClearToolCodeImages();
-                                                                                    
-                                                                                    u32 numFailures = 0;
-                                                                                    for (auto r : results) {
-                                                                                      if (r != NVStorage::NVResult::NV_OKAY) {
-                                                                                        ++numFailures;
+                        if (ENABLE_NVSTORAGE_WRITES) {
+                          // Save tool code images to robot (whether it succeeded to read code or not)
+                          _toolCodeImagesStored = false;
+                          if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
+                                                                                      // Clear tool code images from VisionSystem
+                                                                                      robot.GetVisionComponent().ClearToolCodeImages();
+                                                                                      
+                                                                                      u32 numFailures = 0;
+                                                                                      for (auto r : results) {
+                                                                                        if (r != NVStorage::NVResult::NV_OKAY) {
+                                                                                          ++numFailures;
+                                                                                        }
                                                                                       }
-                                                                                    }
-                                                                                    
-                                                                                    if (numFailures > 0) {
-                                                                                      PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToolCodeImages.FAILED", "%d failures", numFailures);
-                                                                                      EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
-                                                                                    } else {
-                                                                                      PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
-                                                                                      _toolCodeImagesStored = true;
-                                                                                    }
-                                                                                  }) != RESULT_OK)
-                        {
-                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
-                          return false;
+                                                                                      
+                                                                                      if (numFailures > 0) {
+                                                                                        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToolCodeImages.FAILED", "%d failures", numFailures);
+                                                                                        EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+                                                                                      } else {
+                                                                                        PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
+                                                                                        _toolCodeImagesStored = true;
+                                                                                      }
+                                                                                    }) != RESULT_OK)
+                          {
+                            EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+                            return false;
+                          }
                         }
                         
                         // Check result of tool code read

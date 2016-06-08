@@ -17,6 +17,9 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+// DEMO HACK
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/demoBehaviorChooser.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -33,15 +36,24 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   SubscribeToTriggerTags({
     EngineToGameTag::ChargerEvent,
   });
+  
+  SubscribeToTags({
+    GameToEngineTag::StartDemoWithEdge
+  });
+  SubscribeToTags({
+    EngineToGameTag::DemoState
+  });
+  
 }
-
+// It's pretty easy for him to get nudged off and back on the charger, so make sure he has left the platform at least once
 bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.IsOnCharger();
+  return robot.IsOnCharger() && _isReactionEnabled;
 }
 
 Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
+  _shouldStopBehavior = false;
   StartActing(new PlayAnimationGroupAction(robot, kSleepStartAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
   
   return Result::RESULT_OK;
@@ -49,22 +61,16 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 {
-  if( robot.IsOnCharger() )
+  if( robot.IsOnCharger() && !_shouldStopBehavior )
   {
     return Status::Running;
   }
   
   return Status::Complete;
 }
-  
-void BehaviorReactToOnCharger::StopInternal(Robot& robot)
-{
-}
 
 bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
 {
-  // Don't restart the behavior unless we got off the platform
-  // This will prevents little bumps causing us to restart
   if(event.GetTag() == MessageEngineToGameTag::ChargerEvent)
   {
     return event.Get_ChargerEvent().onCharger;
@@ -78,6 +84,62 @@ void BehaviorReactToOnCharger::TransitionToSleepLoop(Robot& robot)
   if( robot.IsOnCharger() )
   {
     StartActing(new PlayAnimationGroupAction(robot, kSleepLoopAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
+  }
+}
+
+void BehaviorReactToOnCharger::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    // DEMO HACK ( obviously )
+    case EngineToGameTag::DemoState:
+    {
+      if( event.GetData().Get_DemoState().stateNum >= Util::EnumToUnderlying(DemoBehaviorChooser::State::FearEdge) )
+      {
+        _isReactionEnabled = true;
+      }
+      
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+}
+  
+void BehaviorReactToOnCharger::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    // DEMO HACK ( obviously )
+    // This is to make it more reliable in the demo that his wake up animation doesn't force him back
+    // on the charger to go to sleep.
+    case GameToEngineTag::StartDemoWithEdge:
+    {
+      _isReactionEnabled = false;
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+}
+  
+void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case GameToEngineTag::StartDemoWithEdge:
+    {
+      _shouldStopBehavior = true;
+      break;
+    }
+    default:
+    {
+      break;
+    }
   }
 }
 

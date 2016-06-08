@@ -112,8 +112,8 @@ public class LightCube : ObservedObject {
   public static Action<int, float, float, float> OnMovedAction;
   public static Action<int> OnStoppedAction;
 
-  public LightCube(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
-    Constructor(objectID, objectFamily, objectType);
+  public LightCube(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
+    Constructor(objectID, factoryID, objectFamily, objectType);
 
     UpAxis = UpAxis.Unknown;
     XAccel = byte.MaxValue;

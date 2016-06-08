@@ -110,7 +110,8 @@ namespace Anki {
     
     DriveToObjectAction::~DriveToObjectAction()
     {
-      _robot.GetLightsComponent().UnSetInteractionObject();
+      _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+      _compoundAction.PrepForCompletion();
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -294,7 +295,7 @@ namespace Anki {
         }
       } else {
         
-        result = GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+        result = _getPossiblePosesFunc(object, possiblePoses, alreadyInPosition);
       }
       
       // In case we are re-running this action, make sure compound actions are cleared.
@@ -920,6 +921,7 @@ namespace Anki {
                                                            Radians maxTurnTowardsFaceAngle_rad,
                                                            const bool sayName)
     : CompoundActionSequential(robot)
+    , _objectID(objectID)
     {
       if(objectID == robot.GetCarryingObject())
       {
@@ -954,18 +956,25 @@ namespace Anki {
         return;
       }
 
-      PRINT_NAMED_INFO("IDriveToInteractWithObject.SetApproachingAngle",
-                       "[%d] %f rad",
-                       GetTag(),
-                       angle_rad);
-
-      assert(nullptr != _driveToObjectAction);
-      _driveToObjectAction->SetApproachAngle(angle_rad);
+      if(nullptr != _driveToObjectAction) {
+        PRINT_NAMED_INFO("IDriveToInteractWithObject.SetApproachingAngle",
+                         "[%d] %f rad",
+                         GetTag(),
+                         angle_rad);
+        
+        _driveToObjectAction->SetApproachAngle(angle_rad);
+      } else {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.NullDriveToAction", "");
+      }
     }
     
     void IDriveToInteractWithObject::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
-      _driveToObjectAction->SetMotionProfile(motionProfile);
+      if(nullptr != _driveToObjectAction) {
+        _driveToObjectAction->SetMotionProfile(motionProfile);
+      } else {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetMotionProfile.NullDriveToAction", "");
+      }
       
       // If any of our children are dockActions (which they likely are) we need to update their
       // speeds/accels to use the ones specified in the motionProfile
@@ -979,6 +988,22 @@ namespace Anki {
       }
     }
 
+    Result IDriveToInteractWithObject::UpdateDerived()
+    {
+      if(!_lightsSet) {
+        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _lightsSet = true;
+      }
+      return RESULT_OK;
+    }
+    
+    IDriveToInteractWithObject::~IDriveToInteractWithObject()
+    {
+      if(_lightsSet) {
+        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+        _lightsSet = false;
+      }
+    }
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
@@ -1001,12 +1026,13 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      AlignWithObjectAction* action = new AlignWithObjectAction(robot,
-                                                                objectID,
-                                                                distanceFromMarker_mm,
-                                                                alignmentType,
-                                                                useManualSpeed);
-      AddAction(action);
+      _alignAction = new AlignWithObjectAction(robot,
+                                               objectID,
+                                               distanceFromMarker_mm,
+                                               alignmentType,
+                                               useManualSpeed);
+      AddAction(_alignAction);
+      SetProxyTag(_alignAction->GetTag());
     }
     
 #pragma mark ---- DriveToPickupObjectAction ----
@@ -1028,19 +1054,21 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
-      AddAction(action);
+      _pickupAction = new PickupObjectAction(robot, objectID, useManualSpeed);
+      AddAction(_pickupAction);
+      SetProxyTag(_pickupAction->GetTag());
     }
     
     void DriveToPickupObjectAction::SetDockingMethod(DockingMethod dockingMethod)
     {
-      ((IDockAction*)(GetActionList().back()))->SetDockingMethod(dockingMethod);
+      if(nullptr != _pickupAction) {
+        _pickupAction->SetDockingMethod(dockingMethod);
+      } else {
+        PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetDockingMethod.NullPickupAction", "");
+      }
     }
     
-    void DriveToPickupObjectAction::SetMotionProfile(PathMotionProfile motionProfile)
-    {
-      ((DriveToObjectAction*)(GetActionList().front()))->SetMotionProfile(motionProfile);
-    }
+
     
 #pragma mark ---- DriveToPlaceOnObjectAction ----
     
@@ -1067,6 +1095,7 @@ namespace Anki {
                                                               0,
                                                               useManualSpeed);
       AddAction(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToPlaceRelObjectAction ----
@@ -1095,6 +1124,7 @@ namespace Anki {
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
       AddAction(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToRollObjectAction ----
@@ -1119,6 +1149,7 @@ namespace Anki {
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
       AddAction(action);
+      SetProxyTag(action->GetTag());
     }
 
     void DriveToRollObjectAction::RollToUpright()
@@ -1198,6 +1229,7 @@ namespace Anki {
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
       AddAction(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToAndTraverseObjectAction ----
@@ -1239,17 +1271,9 @@ namespace Anki {
                                  sayName)
     {
       // Get DriveToObjectAction
-      DriveToObjectAction* driveAction = nullptr;
-      for (auto a : GetActionList()) {
-        if (a->GetType() == RobotActionType::DRIVE_TO_OBJECT) {
-          driveAction = dynamic_cast<DriveToObjectAction*>(a);
-          if (driveAction) {
-            driveAction->DoPositionCheckOnPathCompletion(false);
-            break;
-          }
-        }
-      }
+      DriveToObjectAction* driveAction = GetDriveToObjectAction();
       ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
+      driveAction->DoPositionCheckOnPathCompletion(false);
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       AddAction(action);

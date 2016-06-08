@@ -30,14 +30,22 @@ public:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
+  virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) override;
+  
+  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
   
 protected:
     
   virtual Result InitInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   
   void TransitionToSleepLoop(Robot& robot);
+  
+private:
+  
+  bool _shouldStopBehavior = false;
+  bool _isReactionEnabled = true;
 }; // class BehaviorReactToOnCharger
   
 

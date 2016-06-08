@@ -12,8 +12,8 @@ static const int NUM_PROP_LIGHTS = 4;
 
 static const int RADIO_TOTAL_PERIOD = CYCLES_MS(35.0f);
 static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
-static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
 static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
+static const int NEXT_CYCLE_FUDGE = 78;
 
 static const int TICK_LOOP = RADIO_TOTAL_PERIOD / SCHEDULE_PERIOD;
 
@@ -35,6 +35,12 @@ struct AccessorySlot {
   bool                  active;
   bool                  allocated;
   int                   last_received;
+
+  bool                  hopSkip;
+  uint8_t               hopIndex;
+  int8_t                hopBlackout;
+  uint8_t               hopChannel;
+  
   uint32_t              id;
   
   uesb_address_desc_t   address;

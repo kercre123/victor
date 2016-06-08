@@ -100,30 +100,6 @@ namespace UpgradeController {
   static uint8_t aes_iv[AES_KEY_LENGTH];
   static bool aes_enabled;
 
-  void FactoryUpgrade()
-  {
-    #include "cboot.bin.h"
-    uint32_t buffer[(firmware_cboot_bin_len/4)+1];
-    if (spi_flash_read(0, buffer, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK)
-    {
-      os_printf("Couldn't read back existing bootloader aborting.\r\n");
-    }
-    else
-    {
-      uint8_t* charBuffer = (uint8_t*)buffer;
-      if (os_memcmp(charBuffer, firmware_cboot_bin, firmware_cboot_bin_len))
-      {
-        os_printf("Bootloader doesn't match\r\nValidating our own header\r\n");
-        uint32_t headerValidation[] = {1, 0};
-        while (spi_flash_write((APPLICATION_A_SECTOR * SECTOR_SIZE) + APP_IMAGE_HEADER_OFFSET + 4, headerValidation, 8));
-        os_printf("Upgrading bootloader\r\n");
-        while (spi_flash_erase_sector(0) != SPI_FLASH_RESULT_OK);
-        while (spi_flash_write(0, (uint32_t*)firmware_cboot_bin, firmware_cboot_bin_len) != SPI_FLASH_RESULT_OK);
-        os_printf("Bootloader upgraded\r\n");
-      }
-    }
-  }
-
   bool Init()
   {
     buffer = NULL;
@@ -138,8 +114,6 @@ namespace UpgradeController {
     haveValidCert = false;
     sha512_init(firmware_digest);
     aes_enabled = false;
-    
-    if (FACTORY_FIRMWARE == 0) FactoryUpgrade();
     
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
@@ -193,7 +167,7 @@ namespace UpgradeController {
     }
     else 
     {
-      while (i2spiBootloaderCommandDone() == false);
+      phase = OTAT_Reject;
     }
   }
 
@@ -255,6 +229,7 @@ namespace UpgradeController {
           #endif
           counter = system_get_time() + 20000; // 20 ms
           phase = OTAT_Enter_Recovery;
+          RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_bodyRestart);
           // Explicit fallthrough to next case
         }
       }
@@ -327,7 +302,7 @@ namespace UpgradeController {
           const int8_t mode = OTA_Mode;
           if (RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode))
           {
-            counter = system_get_time() + 20000;
+            counter = system_get_time() + 30000;
             phase = OTAT_Delay;
           }
         }
@@ -374,7 +349,7 @@ namespace UpgradeController {
           AnkiDebug( 172, "UpgradeController.state", 469, "sync recovery", 0);
           i2spiSwitchMode(I2SPI_BOOTLOADER); // Start synchronizing with the bootloader
           phase = OTAT_Sync_Recovery;
-          counter = system_get_time() + 2000000; // 2 second timeout
+          counter = system_get_time() + 5000000; // 5 second timeout
           retries = MAX_RETRIES;
         }
         break;
@@ -673,8 +648,7 @@ namespace UpgradeController {
       }
       case OTAT_Reject:
       {
-        AnkiError( 171, "UpgradeController", 460, "Factory reset not yet implemented", 0);
-        Reset();
+        i2spiBootloaderCommandDone();
         break;
       }
       case OTAT_Apply_WiFi:

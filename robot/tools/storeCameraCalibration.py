@@ -18,17 +18,17 @@ class CameraCalibStorer:
             True,
             False,
             Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_Invalid,
-            Anki.Cozmo.NVStorage.NVStorageBlob(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalibration, self.camCalib.pack()))))
+            Anki.Cozmo.NVStorage.NVStorageBlob(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalib, self.camCalib.pack()))))
         
     def onOpResult(self, msg):
         "Callback when receiving an operation result"
-        if msg.report.tag != Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalibration:
-            print("Result for unexpected tag 0x{:x}, {:d}".format(msg.tag, msg.result))
+        if msg.report.tag != Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalib:
+            print("Result for unexpected tag 0x{:x}, {:d}".format(msg.tag, msg.report.result))
         else:
             if msg.report.result == Anki.Cozmo.NVStorage.NVResult.NV_OKAY:
                 print("Success :-)")
             else:
-                print("Failure :-(  {:d}".format(msg.result))
+                print("Failure :-(  {:d}".format(msg.report.result))
             robotInterface.Disconnect()
             sys.exit()
         

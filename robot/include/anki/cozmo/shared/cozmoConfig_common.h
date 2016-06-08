@@ -20,6 +20,10 @@ const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
 const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-24.5f);
 const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
 
+const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
+const f32 kIdealViewBlockLiftUpHeadAngle = DEG_TO_RAD(-22.5f);
+const f32 kIdealViewFaceHeadAngle = DEG_TO_RAD(12.5f);
+
 // Head angle may exceed limits by this amount before
 // it is considered to be out of calibration.
 const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(3.f);

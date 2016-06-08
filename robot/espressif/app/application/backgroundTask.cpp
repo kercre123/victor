@@ -277,5 +277,6 @@ extern "C" void backgroundTaskOnDisconnect(void)
   if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
   {
     Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
+    Anki::Cozmo::Face::Clear();
   }
 }

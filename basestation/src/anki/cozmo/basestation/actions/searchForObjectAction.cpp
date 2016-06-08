@@ -56,6 +56,7 @@ namespace Cozmo {
       _robot.GetAnimationStreamer().PopIdleAnimation();
       _shouldPopIdle = false;
     }
+    _compoundAction.PrepForCompletion();
   }
 
   
@@ -67,7 +68,7 @@ namespace Cozmo {
     
     // Move head to look straight forward
     {
-      MoveHeadToAngleAction* moveHead = new MoveHeadToAngleAction(_robot, 0.0f);
+      MoveHeadToAngleAction* moveHead = new MoveHeadToAngleAction(_robot, kIdealViewBlockHeadAngle);
       _compoundAction.AddAction(moveHead);
     }
 

@@ -77,7 +77,11 @@ namespace Anki {
       
       ExternalInterface::RobotState _robotState;
       
+      bool _placeActionCompleted = false;
+      u32 _placeActionTag = 1000;
+      
       virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg) override;
+      virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
     };
     
     // Register class with factory
@@ -253,7 +257,7 @@ namespace Anki {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
-            m.idTag = 1;
+            m.idTag = _placeActionTag;
             m.numRetries = 3;
             // Pickup object 0
             m.action.Set_placeObjectOnGroundHere(ExternalInterface::PlaceObjectOnGroundHere());
@@ -261,6 +265,8 @@ namespace Anki {
             message.Set_QueueSingleAction(m);
             SendMessage(message);
             _testState = TestState::VerifyPlaced;
+            
+            _placeActionCompleted = false;
           }
           break;
         }
@@ -269,10 +275,40 @@ namespace Anki {
           Pose3d pose0 = GetLightCubePoseActual(0);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
+                                           _placeActionCompleted &&
                                            NEAR(pose0.GetTranslation().z(), 0.02, 0.01), 40)
           {
             ResetTest();
-            SendMoveHeadToAngle(0, 100, 100);
+            
+            // This wait is for things to settle down after resetting the world
+            ExternalInterface::QueueSingleAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
+            m.idTag = 10;
+            m.action.Set_waitForImages(ExternalInterface::WaitForImages(10,0));
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+            
+            ExternalInterface::QueueSingleAction m1;
+            m1.robotID = 1;
+            m1.position = QueueActionPosition::NEXT;
+            m1.idTag = 20;
+            m1.action.Set_setHeadAngle(ExternalInterface::SetHeadAngle(0,100,100,0));
+            ExternalInterface::MessageGameToEngine message1;
+            message1.Set_QueueSingleAction(m1);
+            SendMessage(message1);
+            
+            // This wait is to ensure block pose is stable before trying to pickup
+            ExternalInterface::QueueSingleAction m2;
+            m2.robotID = 1;
+            m2.position = QueueActionPosition::NEXT;
+            m2.idTag = 30;
+            m2.action.Set_waitForImages(ExternalInterface::WaitForImages(10,0));
+            ExternalInterface::MessageGameToEngine message2;
+            message2.Set_QueueSingleAction(m2);
+            SendMessage(message2);
+            
             _testState = TestState::ResetTest;
           }
           break;
@@ -295,12 +331,19 @@ namespace Anki {
     {
       SetLightCubePose(0, _startingCubePose);
       SetActualRobotPose(_startingRobotPose);
-      sleep(2); // Wait for 2 seconds for simulation to stabalize after things have moved
     }
     
     void CST_DockingSpeeds::HandleRobotStateUpdate(const ExternalInterface::RobotState &msg)
     {
       _robotState = msg;
+    }
+    
+    void CST_DockingSpeeds::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+    {
+      if(msg.idTag == _placeActionTag)
+      {
+        _placeActionCompleted = true;
+      };
     }
     
   } // end namespace Cozmo

@@ -161,7 +161,7 @@ namespace Anki {
       _frameId = 0;
       
       _lastDebugStringHash = 0;
-
+      
       if (_context->GetDataPlatform() != nullptr)
       {
         FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
@@ -275,6 +275,12 @@ namespace Anki {
     
     void Robot::SetPickedUp(bool t)
     {
+      // We use the cliff sensor to help determine if we're picked up; if it's disabled then ignore when it is
+      // reported as true. If it's false we want to be able to go through the put down logic below.
+      if (!IsCliffSensorEnabled() && t) {
+        return;
+      }
+      
       if(_isPickedUp == false && t == true) {
         // Robot is being picked up: de-localize it
         Delocalize();
@@ -1032,7 +1038,7 @@ namespace Anki {
       }
 
       
-      // Connect to objects requested via ConnectToBlocks;
+      // Connect to objects requested via ConnectToObjects
       ConnectToRequestedObjects();
       
       /////////// Update visualization ////////////
@@ -1116,7 +1122,7 @@ namespace Anki {
       {
         // This state is useful for knowing not to play a cliff react when just driving off the charger.
         bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-        if(isOnChargerPlatform != _isOnChargerPlatform)
+        if( isOnChargerPlatform != _isOnChargerPlatform)
         {
           _isOnChargerPlatform = isOnChargerPlatform;
           Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
@@ -2564,6 +2570,21 @@ namespace Anki {
       return true;
     }
   
+    // Helper for the following functions to reason about the object's height (mid or top)
+    // relative to specified threshold
+    inline static bool IsTooHigh(const ObservableObject& object, const Pose3d& poseWrtRobot,
+                                 float heightMultiplier, float heightTol, bool useTop)
+    {
+      const Point3f rotatedSize( object.GetPose().GetRotation() * object.GetSize() );
+      const float rotatedHeight = std::abs( rotatedSize.z() );
+      float z = poseWrtRobot.GetTranslation().z();
+      if(useTop) {
+        z += rotatedHeight*0.5f;
+      }
+      const bool isTooHigh = z > (heightMultiplier * rotatedHeight + heightTol);
+      return isTooHigh;
+    }
+    
     bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
     {
       // Note rsam/kevin: this only works currently for original cubes. Doing height checks would require more
@@ -2576,10 +2597,7 @@ namespace Anki {
       }
             
       // check if it's too high to stack on
-      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
-      const float topZ = relPos.GetTranslation().z() + objectToStackOn.GetSize().z() * 0.5f;
-      const float isTooHigh = topZ > (objectToStackOn.GetSize().z() + STACKED_HEIGHT_TOL_MM);
-      if ( isTooHigh ) {
+      if ( IsTooHigh(objectToStackOn, relPos, 1.f, STACKED_HEIGHT_TOL_MM, true) ) {
         return false;
       }
     
@@ -2595,10 +2613,7 @@ namespace Anki {
       }
       
       // check if it's too high to pick up
-      // TODO: can't just check GetSize().z() for non-symmetric objects if they are rotated!
-      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
-      const float isTooHigh = topZ > ( 2 * objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
-      if ( isTooHigh ) {
+      if ( IsTooHigh(objectToPickUp, relPos, 2.f, STACKED_HEIGHT_TOL_MM, true) ) {
         return false;
       }
     
@@ -2614,9 +2629,7 @@ namespace Anki {
       }
       
       // check if it's too high to pick up
-      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
-      const float isTooHigh = topZ > (objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
-      if ( isTooHigh ) {
+      if ( IsTooHigh(objectToPickUp, relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, false) ) {
         return false;
       }
     
@@ -3059,7 +3072,7 @@ namespace Anki {
         
         ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
         if(activeCube != nullptr) {
-          // NOTE: if make relative mode is "off", this call doesn't do anything:
+        // NOTE: if make relative mode is "off", this call doesn't do anything:
           rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs, relativeToPoint, makeRelative);
         } else if (makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
           PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
@@ -3149,124 +3162,135 @@ namespace Anki {
                             "Setting lights for object %d (activeID %d)",
                             objectID.GetValue(), activeObject->GetActiveID());
         }
-
+        
         SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
 
     }
     
-    Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
+    Result Robot::ConnectToObjects(const FactoryIDArray& factory_ids)
     {
-      ASSERT_NAMED_EVENT(static_cast<u32>(factory_ids.size()) <= static_cast<u32>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS),
-                         "Robot.ConnectToBlocks.TooManySlotsRequested",
-                         "%zu slots requested. Max %d",
-                         factory_ids.size(), ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
-
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.ConnectionRequested", "%zu objects", factory_ids.size());
+      ASSERT_NAMED_EVENT(factory_ids.size() == _objectsToConnectTo.size(),
+                         "Robot.ConnectToObjects.InvalidArrayLength",
+                         "%zu slots requested. Max %zu",
+                         factory_ids.size(), _objectsToConnectTo.size());
       
-      // Save the requested ids
-      _blocksToConnectTo = factory_ids;
+      std::stringstream strs;
+      for (auto it = factory_ids.begin(); it != factory_ids.end(); ++it) {
+        strs << "0x" << std::hex << *it << ", ";
+      }
+      std::stringstream strs2;
+      for (auto it = _objectsToConnectTo.begin(); it != _objectsToConnectTo.end(); ++it) {
+        strs2 << "0x" << std::hex << it->factoryID << ", pending = " << it->pending << ", ";
+      }
+      PRINT_NAMED_INFO("Robot.ConnectToObjects", "Before processing factory_ids = %s. _objectsToConnectTo = %s", strs.str().c_str(), strs2.str().c_str());
       
-      // Send empty object now to disconnect from whatever we were connected to
-      SendMessage(RobotInterface::EngineToRobot(CubeSlots()));
-      
-      // Delete all active objects in BlockWorld
-      _blockWorld.DeleteObjectsByFamily(ObjectFamily::LightCube);
-      _blockWorld.DeleteObjectsByFamily(ObjectFamily::Charger);
-
-      _connectedObjects.clear();
+      // Save the new list so we process it during the update loop. Note that we compare
+      // against the list of current connected objects but we store it in the list of
+      // objects to connect to.
+      for (int i = 0; i < _connectedObjects.size(); ++i) {
+        if (factory_ids[i] != _connectedObjects[i].factoryID) {
+          _objectsToConnectTo[i].factoryID = factory_ids[i];
+          _objectsToConnectTo[i].pending = true;
+        }
+      }
       
       return RESULT_OK;
     }
     
-    u8 Robot::ConnectToRequestedObjects()
+    void Robot::ConnectToRequestedObjects()
     {
-      // Just run this every second
-      static TimeStamp_t nextRunTime = 0;
-      if (GetLastMsgTimestamp() < nextRunTime) {
-        return 0;
-      }
-      nextRunTime += 1000;
+      // Check if there is any new petition to connect to a new block
+      auto it = std::find_if(_objectsToConnectTo.begin(), _objectsToConnectTo.end(), [](ObjectToConnectToInfo obj) {
+        return obj.pending;
+      });
       
-      
-      if (_blocksToConnectTo.empty()) {
-        return 0;
+      if (it == _objectsToConnectTo.end()) {
+        return;
       }
       
-      u8 numCubesToAdd = 0;
-      for (auto fid = _blocksToConnectTo.begin(); fid != _blocksToConnectTo.end(); ) {
+//      std::stringstream strs;
+//      for (auto it = _objectsToConnectTo.begin(); it != _objectsToConnectTo.end(); ++it) {
+//        strs << "0x" << std::hex << it->factoryID << ", pending = " << it->pending << ", ";
+//      }
+//      std::stringstream strs2;
+//      for (auto it = _connectedObjects.begin(); it != _connectedObjects.end(); ++it) {
+//        strs2 << "0x" << std::hex << it->factoryID << ", ";
+//      }
+//      
+//      PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.BeforeProcessing", "_objectsToConnectTo = %s. _connectedObjects = %s", strs.str().c_str(), strs2.str().c_str());
+      
+      // Iterate over the connected objects and the new factory IDs to see what we need to send in the
+      // message for every slot.
+      ASSERT_NAMED(_objectsToConnectTo.size() == _connectedObjects.size(), "Robot.ConnectToRequestedObjects.InvalidArraySize");
+      for (int i = 0; i < _objectsToConnectTo.size(); ++i) {
         
-        // Zero is not a valid factoryID
-        if (*fid == 0) {
-          PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.ZeroID", "Skipping");
-          _blocksToConnectTo.erase(fid++);
+        ObjectToConnectToInfo& newObjectToConnectTo = _objectsToConnectTo[i];
+        ActiveObjectInfo& activeObjectInfo = _connectedObjects[i];
+        
+        // If there is nothing to do with this slot, continue
+        if (!newObjectToConnectTo.pending) {
           continue;
         }
         
-        // Check if the object is discovered yet
-        auto discoveredObjIt = _discoveredObjects.find(*fid);
+        // If we have already connected to the object in the given slot, we don't have to do anything
+        if (newObjectToConnectTo.factoryID == activeObjectInfo.factoryID) {
+          newObjectToConnectTo.Reset();
+          continue;
+        }
+        
+        // If the new factory ID is 0 then we want to disconnect from the object
+        if (newObjectToConnectTo.factoryID == 0) {
+          PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.Sending", "Sending message for slot %d with factory ID = %d", i, 0);
+          activeObjectInfo.Reset();
+          newObjectToConnectTo.Reset();
+          SendMessage(RobotInterface::EngineToRobot(SetPropSlot((FactoryID)0, i)));
+          continue;
+        }
+        
+        // We are connecting to a new object. Check if the object is discovered yet
+        // If it is not, don't clear it from the list of requested objects in case
+        // we find it in the next execution of this loop
+        auto discoveredObjIt = _discoveredObjects.find(newObjectToConnectTo.factoryID);
         if (discoveredObjIt == _discoveredObjects.end()) {
-          ++fid;
           continue;
         }
-
-        // Check if there is already an object of the same type that is connected
-        bool sameTypeAlreadyConnected = false;
+        
         for (const auto & connectedObj : _connectedObjects) {
           if (connectedObj.objectType == discoveredObjIt->second.objectType) {
             PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.SameTypeAlreadyConnected",
                                 "Object with factory ID 0x%x matches type (%s) of another connected object. Only one of each type may be connected.",
-                                *fid, EnumToString(connectedObj.objectType));
-            sameTypeAlreadyConnected = true;
-            break;
+                                newObjectToConnectTo.factoryID, EnumToString(connectedObj.objectType));
+
+            // If we can't connect to the new object we keep the one we have now
+            newObjectToConnectTo.Reset();
+            continue;
           }
         }
-        if (sameTypeAlreadyConnected) {
-          _blocksToConnectTo.erase(fid++);
-          continue;
-        }
-
-        // Check if there is still space for more connections
-        if (_connectedObjects.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-          PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.ArrayFull", "Too many objects specified (limit: %zu)", _connectedObjects.size());
-          _blocksToConnectTo.clear();
-          break;
-        }
         
-        // Add object to list of objects to connect to
-        _connectedObjects.push_back(discoveredObjIt->second);
-        _blocksToConnectTo.erase(fid++);
+        // This is valid object to connect to.
+        PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.Sending", "Sending message for slot %d with factory ID = 0x%x", i, newObjectToConnectTo.factoryID);
+        SendMessage(RobotInterface::EngineToRobot(SetPropSlot(newObjectToConnectTo.factoryID, i)));
         
-        ++numCubesToAdd;
-      }
-
-      // If there are cubes to add, generate message and send.
-      if (numCubesToAdd > 0) {
-        
-        CubeSlots msg;
-
-        // HACK: For some reason the lights on the cube in slot 0 get messed up sometimes
-        //       (e.g. When pulsing all leds white, one of them is yellow.)
-        //       Keeping slot 0 seems to prevent this, but Vandiver should look into this issue.
-        msg.factory_id.push_back(0);
-        
-        for (const auto & obj : _connectedObjects) {
-          PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.FactoryID",
-                           "0x%x (slot %zu)",
-                           obj.factoryID, msg.factory_id.size());
-          msg.factory_id.push_back(obj.factoryID);
-        }
-
-        
-        PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.Sending", "Num objects %zu", msg.factory_id.size());
-        SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
-        
+        // We are done with this slot
+        _connectedObjects[i] = discoveredObjIt->second;
+        newObjectToConnectTo.Reset();
       }
       
-      return numCubesToAdd;
+//      std::stringstream strs3;
+//      for (auto it = _objectsToConnectTo.begin(); it != _objectsToConnectTo.end(); ++it) {
+//        strs3 << "0x" << std::hex << it->factoryID << ", pending = " << it->pending << ", ";
+//      }
+//      std::stringstream strs4;
+//      for (auto it = _connectedObjects.begin(); it != _connectedObjects.end(); ++it) {
+//        strs4 << "0x" << std::hex << it->factoryID << ", ";
+//      }
+//      
+//      PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.AfterProcessing", "_objectsToConnectTo = %s. _connectedObjects = %s", strs3.str().c_str(), strs4.str().c_str());
+
+      return;
     }
-    
     
     void Robot::BroadcastAvailableObjects(bool enable)
     {
@@ -3360,7 +3384,7 @@ namespace Anki {
     {
       return SendMessage(RobotInterface::EngineToRobot(FlashObjectIDs()));
     }
-         
+     
     Result Robot::SendDebugString(const char* format, ...)
     {
       int len = 0;

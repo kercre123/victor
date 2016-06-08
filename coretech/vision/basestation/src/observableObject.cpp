@@ -47,7 +47,7 @@ namespace Vision {
   {
     // Return true if any of this object's markers are visible from the
     // given camera
-    for(auto & marker : _markers) {
+    for(auto const& marker : _markers) {
       if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize,
                               requireSomethingBehind, xBorderPad, yBorderPad)) {
         return true;
@@ -58,6 +58,33 @@ namespace Vision {
     
   } // ObservableObject::IsObservableBy()
   
+  bool ObservableObject::IsVisibleFrom(const Camera& camera,
+                                       const f32     maxFaceNormalAngle,
+                                       const f32     minMarkerImageSize,
+                                       const u16     xBorderPad,
+                                       const u16     yBorderPad,
+                                       bool& hasNothingBehind) const
+  {
+    KnownMarker::NotVisibleReason reason;
+    hasNothingBehind = false;
+    for(auto const& marker : _markers) {
+      
+      if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize,
+                              true, xBorderPad, yBorderPad, reason))
+      {
+        // As soon as any marker is visible from the camera, the object is visible from this camera
+        return true;
+      } else if(reason == KnownMarker::NotVisibleReason::NOTHING_BEHIND) {
+        // The marker is not visible from this camera and the reason given is
+        // that nothing was behind it. That means the _only_ reason we didn't mark
+        // it visible is the lack of something behind it. This only has to be true
+        // for a single marker.
+        hasNothingBehind |= true;
+      }
+    }
+    
+    return false;
+  }
   
   Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                          const Pose3d&        atPose,

@@ -78,17 +78,14 @@
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
   },
-  "simonGame.label.watchCozmoPattern": {
-    "translation": "Watch Cozmo make a pattern."
+  "simonGame.label.watchPattern": {
+    "translation": "Watch the pattern."
   },
   "simonGame.label.watchCozmoGuess": {
     "translation": "Watch Cozmo copy your pattern."
   },
-  "simonGame.label.createYourPattern": {
-    "translation": "Tap the cubes to create a pattern."
-  },
   "simonGame.label.makeYourGuess": {
-    "translation": "Tap the cubes to copy Cozmo's pattern."
+    "translation": "Tap the cubes to copy the pattern."
   },
   "simonGame.label.yourTurn": {
     "translation": "Your Turn!"
@@ -96,14 +93,11 @@
   "simonGame.label.cozmoTurn": {
     "translation": "Cozmo's Turn!"
   },
-  "simonGame.header.watchCozmoPattern": {
-    "translation": "Watch Cozmo Make a Pattern"
+  "simonGame.header.watchPattern": {
+    "translation": "Watch the Pattern"
   },
   "simonGame.header.watchCozmoGuess": {
     "translation": "Watch Cozmo Guess"
-  },
-  "simonGame.header.createYourPattern": {
-    "translation": "Make a Pattern"
   },
   "simonGame.header.makeYourGuess": {
     "translation": "Copy Cozmo's Pattern"

@@ -143,7 +143,7 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
   const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
-  return obj->GetFamily() == ObjectFamily::LightCube && obj->IsPoseStateKnown() && upAxisOk;
+  return obj->GetFamily() == ObjectFamily::LightCube && !obj->IsPoseStateUnknown() && upAxisOk;
 }
 
 bool BehaviorStackBlocks::FilterBlocksForTop(const ObservableObject* obj) const
