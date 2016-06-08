@@ -565,10 +565,26 @@ namespace Vision {
       s32 enrollmentCompleted = 0;
       auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID, enrollmentCompleted);
       
-      if(recognitionData.faceID != recognitionData.prevID) {
-        //face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
+      if(recognitionData.faceID != recognitionData.prevID)
+      {
+        // We either just assigned a recognition ID to a tracker ID or we updated
+        // the recognition ID (e.g. due to merging)
         UpdatedFaceID update{
           .oldID = (recognitionData.prevID == UnknownFaceID ? -detectionInfo.nID : recognitionData.prevID),
+          .newID = recognitionData.faceID
+        };
+        
+        updatedIDs.push_back(std::move(update));
+      }
+      
+      if(recognitionData.faceID != UnknownFaceID &&
+         recognitionData.trackID != recognitionData.prevTrackID)
+      {
+        // We just updated the track ID for a recognized face.
+        // So we should notify listeners that tracking ID is now
+        // associated with this recognized ID.
+        UpdatedFaceID update{
+          .oldID = -recognitionData.trackID,
           .newID = recognitionData.faceID
         };
         updatedIDs.push_back(std::move(update));

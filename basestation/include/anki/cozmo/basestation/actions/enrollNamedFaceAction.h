@@ -99,7 +99,8 @@ namespace Cozmo {
     // Member methods:
     Result InitSequence();
     Result InitCurrentStep();
-      
+    void SetAction(IActionRunner* action);
+    
   }; // class SayTextAction
 
 

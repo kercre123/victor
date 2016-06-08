@@ -35,7 +35,8 @@ struct EnrolledFaceEntry
   FaceID_t                  faceID;                 // The ID used for recognition
   FaceID_t                  prevID = UnknownFaceID; // The previous ID if the ID just changed (e.g. due to merge)
   
-  s32                       trackID;                // The last associated tracker ID
+  s32                       trackID;                      // The last associated tracker ID
+  s32                       prevTrackID = UnknownFaceID;  // The previous track ID in case it changed
   
   std::string               name;
   
