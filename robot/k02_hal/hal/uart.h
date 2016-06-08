@@ -40,7 +40,8 @@ namespace Anki
         void DebugPrintProfile(int value);
         void DebugPutc(char c);
         void WaitForSync();
-
+        void pause(void);
+        
         extern volatile bool HeadDataReceived;
         extern volatile uint16_t RecoveryStateUpdated;
         extern volatile RECOVERY_STATE recoveryMode;

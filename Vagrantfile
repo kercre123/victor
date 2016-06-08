@@ -75,7 +75,7 @@ Vagrant.configure(2) do |config|
 
     # Install pyserial for programming
     sudo pip install pyserial  # for python2 for programming the Espressif
-    sudo pip3 install pyserial # Optionally for python3 for running test scripts etc.
+    sudo pip3 install pyserial pycrypto pyelftools # Optionally for python3 for running test scripts etc.
 
     # Move binaries into place
     sudo mkdir -p /opt

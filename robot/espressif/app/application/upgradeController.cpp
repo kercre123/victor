@@ -145,11 +145,10 @@ namespace UpgradeController {
     if (phase < OTAT_Enter_Recovery)
     {
       i2spiSwitchMode(I2SPI_REBOOT);
-      while (true);
     }
     else 
     {
-      while (true) i2spiBootloaderCommandDone();
+      while (i2spiBootloaderCommandDone() == false);
     }
   }
 
@@ -208,6 +207,7 @@ namespace UpgradeController {
           bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
           Face::FacePrintf("Starting FOTA\nupgrade...");
           phase = OTAT_Enter_Recovery;
+          RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_bodyRestart);
           // Explicit fallthrough to next case
         }
       }
@@ -274,21 +274,20 @@ namespace UpgradeController {
       }
       case OTAT_Enter_Recovery:
       {
-        const int8_t mode = OTA_Mode;
-        if (RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode))
+        if ((system_get_time() > counter) && (Face::GetRemainingRects() == 0))
         {
-          counter = 0xFFFFffff;
-          phase = OTAT_Delay;
+          const int8_t mode = OTA_Mode;
+          if (RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode))
+          {
+            counter = system_get_time() + 30000;
+            phase = OTAT_Delay;
+          }
         }
         break;
       }
       case OTAT_Delay:
       {
-        if ((counter == 0xFFFFffff) && i2spiMessageQueueIsEmpty() && (Face::GetRemainingRects() == 0))
-        {
-          counter = system_get_time() + 20000; // Wait for i2c
-        }
-        else if (system_get_time() > counter)
+        if ((system_get_time() > counter) && i2spiMessageQueueIsEmpty())
         {
           i2spiSwitchMode(I2SPI_PAUSED);
           phase = OTAT_Flash_Erase;
@@ -327,7 +326,7 @@ namespace UpgradeController {
           AnkiDebug( 172, "UpgradeController.state", 469, "sync recovery", 0);
           i2spiSwitchMode(I2SPI_BOOTLOADER); // Start synchronizing with the bootloader
           phase = OTAT_Sync_Recovery;
-          counter = system_get_time() + 2000000; // 2 second timeout
+          counter = system_get_time() + 5000000; // 5 second timeout
           retries = MAX_RETRIES;
         }
         break;
@@ -338,7 +337,7 @@ namespace UpgradeController {
         {
           AnkiDebug( 172, "UpgradeController.state", 470, "flash write", 0);
           phase = OTAT_Flash_Write;
-          counter = 0; // 2 second timeout
+          counter = 0;
           retries = MAX_RETRIES;
           ack.result = OKAY;
           RobotInterface::SendMessage(ack);

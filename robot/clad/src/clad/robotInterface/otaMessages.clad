@@ -53,6 +53,11 @@ namespace OTA {
     OTA_Mode,
   }
 
+  message BodyRestart
+  {
+  
+  }
+
   message EnterRecoveryMode
   {
     RecoveryMode mode
