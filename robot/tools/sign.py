@@ -89,6 +89,7 @@ class DigestFile:
 
         # digest used for signing
         digest =  self.hash.digest()
+        print (''.join(["%02x" % x for x in digest]))
 
         salt = Random.get_random_bytes(salt_length)
 

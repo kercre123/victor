@@ -296,6 +296,7 @@ namespace UpgradeController {
     Ack ack;
     ack.bytesProcessed = bytesProcessed;
     ack.packetNumber   = acceptedPacketNumber;
+    os_printf("%d\n\r", phase);
     switch (phase)
     {
       case OTAT_Uninitalized:
@@ -428,12 +429,15 @@ namespace UpgradeController {
           }
           else if (fwb->blockAddress != CERTIFICATE_BLOCK)
           {
+            static const int sha_per_tick = SHA512_BLOCK_SIZE;
             haveValidCert = false;
+
             const int remaining = sizeof(FirmwareBlock) - counter;
-            if (remaining > SHA512_BLOCK_SIZE)
+
+            if (remaining > sha_per_tick)
             {
-              sha512_process(firmware_digest, buffer + counter, SHA512_BLOCK_SIZE);
-              counter += SHA512_BLOCK_SIZE;
+              sha512_process(firmware_digest, buffer + counter, sha_per_tick);
+              counter += sha_per_tick;
             }
             else
             {
@@ -452,6 +456,9 @@ namespace UpgradeController {
               phase = OTAT_Flash_Write;
             }
           }
+          else
+          {
+          }
         }
         break;
       }
@@ -463,6 +470,14 @@ namespace UpgradeController {
         {
           if (fwb->blockAddress == CERTIFICATE_BLOCK)
           {
+            uint8_t digest[SHA512_DIGEST_SIZE];
+            sha512_done(firmware_digest, digest);
+
+            for (int i = 0; i < SHA512_DIGEST_SIZE; i++)
+              os_printf("%02x", digest[i]);
+            os_printf("\n\r");
+
+
             AnkiDebug( 172, "UpgradeController.state", 490, "Sig Check", 0);
             #if DEBUG_OTA
             os_printf("OTA Sig header\r\n");
@@ -483,6 +498,10 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
+            
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
           }
           else if (fwb->blockAddress == HEADER_BLOCK)
           {
@@ -502,6 +521,10 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
+
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
           }
           else
           {
@@ -512,6 +535,10 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
+
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
           }
         }
         else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
