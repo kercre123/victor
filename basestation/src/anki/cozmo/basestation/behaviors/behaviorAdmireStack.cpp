@@ -360,7 +360,7 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
     {
       if(DEBUG_ADMIRE_STACK_BEHAVIOR && secondBlockID.IsUnknown())
       {
-        PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleObjectObserved.SecondBlockUnSet",
+        PRINT_NAMED_INFO("BehaviorAdmireStack.HandleObjectObserved.SecondBlockUnSet",
                           "In WatchingStack state with no second block ID set");
       }
 
@@ -383,7 +383,7 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
         StopActing(false);
         TransitionToReactingToThirdBlock(robot);
       } else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
-        PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleBlockUpdate.NewBlockNotOnTopBlock",
+        PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.NewBlockNotOnTopBlock",
                           "%s with ID %d at (%.1f,%.1f,%.1f) not on top of second block %s %d at(%.1f,%.1f,%.1f)",
                           EnumToString(msg.objectType), msg.objectID,
                           obj->GetPose().GetTranslation().x(),
@@ -396,7 +396,7 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
       }
     }
     else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
-      PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleBlockUpdate.SawNewBlockWhileWatching",
+      PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.SawNewBlockWhileWatching",
                         "Saw %s with ID %d with %smarkers visible while watching stack",
                         EnumToString(msg.objectType), msg.objectID,
                         (msg.markersVisible ? "" : "no "));
