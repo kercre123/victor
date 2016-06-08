@@ -797,7 +797,14 @@ namespace UpgradeController {
       }
       case OTAT_Wait_For_Reboot:
       {
-        i2spiBootloaderCommandDone();
+        if (i2spiGetRtipBootloaderState() == STATE_NACK)
+        {
+          phase = OTATR_Set_Evil_A;
+        }
+        else
+        {
+          i2spiBootloaderCommandDone();
+        }
         break;
       }
       case OTATR_Set_Evil_A:
