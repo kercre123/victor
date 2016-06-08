@@ -465,7 +465,9 @@ namespace Vision {
         _origEnrollmentCount = 0; // signifies we've already returned it
       } 
       
-      enrolledEntry.prevID = enrolledEntry.faceID; // no longer "new" or "updated"
+      // no longer "new" or "updated"
+      enrolledEntry.prevID = enrolledEntry.faceID;
+      enrolledEntry.prevTrackID = enrolledEntry.trackID;
     }
     
     return entryToReturn;
@@ -746,6 +748,7 @@ namespace Vision {
                        "Update trackID for face %d: %d -> %d",
                        userID, -enrollDataIter->second.trackID, -_detectionInfo.nID);
       _trackingToFaceID.erase(enrollDataIter->second.trackID);
+      enrollDataIter->second.prevTrackID = enrollDataIter->second.trackID;
       enrollDataIter->second.trackID = _detectionInfo.nID;
     }
     
