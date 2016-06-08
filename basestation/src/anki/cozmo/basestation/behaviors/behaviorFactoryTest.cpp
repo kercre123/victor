@@ -431,9 +431,16 @@ namespace Cozmo {
             connectToIDs[0] = _kChargerFactoryID;
             robot.ConnectToObjects(connectToIDs);
           }
+        
+          // 1) Drive off charger towards slot.
+          // 2) Move head down slowly. If head is stiff, hopefully this will catch it
+          //    by triggering a motor calibration.
+          auto driveAction = new DriveStraightAction(robot, 250, 100);
+          auto headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
+          headAction->SetMaxSpeed(DEG_TO_RAD_F32(20));
+          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction});
           
-          // Drive off charger
-          StartActing(robot, new DriveStraightAction(robot, 250, 100),
+          StartActing(robot, compoundAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.3;
                         return true;
@@ -1258,7 +1265,18 @@ namespace Cozmo {
   Result BehaviorFactoryTest::HandleMotorCalibration(Robot& robot, const MotorCalibration &msg)
   {
     // This should never happen during the test!
-    EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+    switch(msg.motorID) {
+      case MotorID::MOTOR_HEAD:
+        EndTest(robot, FactoryTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
+        break;
+      case MotorID::MOTOR_LIFT:
+        EndTest(robot, FactoryTestResultCode::LIFT_MOTOR_CALIB_UNEXPECTED);
+        break;
+      default:
+        EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+        break;
+    }
+
     return RESULT_OK;
   }
   
