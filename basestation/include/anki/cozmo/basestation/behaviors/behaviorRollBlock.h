@@ -49,6 +49,8 @@ private:
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
   // UpdateWhileNotRunning
   mutable ObjectID _targetBlock;
+  
+  s32 _numRollActionRetries = 0;
 
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
 
@@ -64,8 +66,10 @@ private:
 
   void TransitionToSettingDownBlock(Robot& robot);
   void TransitionToReactingToBlock(Robot& robot);
-  void TransitionToPerformingAction(Robot& robot);
+  void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
 
+  void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
+  
   void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(Robot& robot);
 
