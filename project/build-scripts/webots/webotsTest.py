@@ -327,6 +327,7 @@ def main(scriptArgs):
     UtilLog.setLevel(logging.INFO)
 
   options.cfg_path = os.path.join('project', 'build-scripts', 'webots', options.configFile)
+  assert(os.path.isfile(options.cfg_path))
 
   # if no project root fund - make one up
   if not options.projectRoot:
