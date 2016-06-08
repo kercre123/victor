@@ -214,7 +214,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
-      if (gameEvent.GameEventEnum != Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
+      if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
         UpdatePlayTabText();
       }
     }
