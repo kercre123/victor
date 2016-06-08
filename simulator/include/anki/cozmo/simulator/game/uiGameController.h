@@ -102,6 +102,7 @@ protected:
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   virtual void HandleFactoryTestResult(ExternalInterface::FactoryTestResult const& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
+  virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -317,6 +318,7 @@ private:
   void HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg);
   void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   void HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg);
+  void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();

@@ -35,6 +35,7 @@ namespace Cozmo {
     virtual s32 UpdateInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
+    virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg) override;
     
     TestState _testState = TestState::InitCheck;
 
@@ -130,7 +131,15 @@ namespace Cozmo {
     }
    
   }
-   
+
+
+  void CST_Animations::HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg)
+  {
+    if (msg.messageType == ExternalInterface::MessageType::AnimationAvailable) {
+      PRINT_NAMED_INFO("CST_Animations.HandleEndOfMessage", "Received `EndOfMessage`; messageType: %s", ExternalInterface::MessageTypeToString(msg.messageType));
+      _receivedAllAnimations = true;
+    }
+  }
   // ============== End of message handlers =================
 
   

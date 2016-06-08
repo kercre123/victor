@@ -273,8 +273,16 @@ namespace Anki {
     {
       PRINT_NAMED_INFO("HandleFactoryTestResult",
                        "Test result: %s", EnumToString(msg.resultEntry.result));
-      
+
       HandleFactoryTestResult(msg);
+    }
+
+    void UiGameController::HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg)
+    {
+      PRINT_NAMED_INFO("HandleEndOfMessage",
+                       "messageType: %s", EnumToString(msg.messageType));
+
+      HandleEndOfMessage(msg);
     }
     
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
@@ -410,6 +418,10 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
             HandleFactoryTestResultBase(message.Get_FactoryTestResult());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::EndOfMessage:
+            HandleEndOfMessage(message.Get_EndOfMessage());
+            break;
+
           default:
             // ignore
             break;
