@@ -1760,6 +1760,11 @@ namespace Anki {
       }
       return size;
     }
+
+    const std::string UiGameController::GetAnimationTestName()
+    {
+      return _robotNode->getField("animationTestName")->getSFString();
+    }
     
   } // namespace Cozmo
 } // namespace Anki

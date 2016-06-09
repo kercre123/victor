@@ -59,6 +59,9 @@ PROTO CozmoBot [
   
   # Autoconnect to all blocks in world (as if they were paired in flash)
   field SFBool autoConnectToBlocks TRUE
+
+  # Used for animation tests, specify animation to test
+  field SFString animationTestName ""
 ]
 {
 

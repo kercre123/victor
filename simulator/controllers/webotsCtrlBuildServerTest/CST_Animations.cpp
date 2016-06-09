@@ -62,6 +62,9 @@ namespace Cozmo {
     switch (_testState) {
       case TestState::InitCheck:
       {
+        _animationToPlay = UiGameController::GetAnimationTestName();
+        PRINT_NAMED_DEBUG("CST_Animations.InitCheck",
+                          "Specified animation from .wbt world file: %s", _animationToPlay.c_str());
         // Sends a CLAD message to robot so that RobotAudioOutputSource is set to PlayOnRobot,
         // otherwise a lot of the audio bugs will not occur. See robotAudioClient.h on the robot
         // side for more information

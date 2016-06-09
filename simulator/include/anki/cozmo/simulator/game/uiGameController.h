@@ -299,6 +299,7 @@ protected:
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   
   static size_t MakeWordAligned(size_t size);
+  const std::string GetAnimationTestName();
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
