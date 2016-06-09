@@ -398,6 +398,15 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
                       msg.objectID);
     return;
   }
+  
+  // If we're in the states following or during the knock-over-stack actions, ignore objects we're observing
+  if (State::KnockingOverStack == _state ||
+      State::KnockingOverStackFailed == _state ||
+      State::ReactingToTopple == _state)
+  {
+    PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.NotRightState","Not right state to respond to object observed");
+    return;
+  }
 
   if( _state == State::WatchingStack )
   {

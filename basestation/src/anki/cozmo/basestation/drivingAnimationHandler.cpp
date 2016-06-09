@@ -72,7 +72,15 @@ namespace Anki {
                             "Popping animations while currently playing");
       }
     
-      _drivingAnimationStack.pop_back();
+      if (_drivingAnimationStack.empty())
+      {
+        PRINT_NAMED_WARNING("DrivingAnimationHandler.PopDrivingAnimations",
+                            "Tried to pop animations but the stack is empty!");
+      }
+      else
+      {
+        _drivingAnimationStack.pop_back();
+      }
       
       if(_drivingAnimationStack.empty())
       {
