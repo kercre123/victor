@@ -21,8 +21,10 @@ namespace Cozmo {
   
   enum class TestState {
     InitCheck,
+    Setup,
     ReadyForNextCommand,
     ExecutingTestAnimation,
+    WaitUntilEndOfMessage,
     TestDone
   };
   
@@ -36,17 +38,14 @@ namespace Cozmo {
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
     virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg) override;
-    virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg) override;
     virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg) override;
     
     TestState _testState = TestState::InitCheck;
 
     std::string _lastAnimPlayed = "";
     double _lastAnimPlayedTime = 0;
-    u32 _numAnimsPlayed = 0;
     bool _receivedAllAnimations = false;
-
-    std::vector<std::string> _availableAnimations;
+    std::string _animationToPlay = "";
   };
   
   // Register class with factory
@@ -65,6 +64,21 @@ namespace Cozmo {
         _animationToPlay = UiGameController::GetAnimationTestName();
         PRINT_NAMED_DEBUG("CST_Animations.InitCheck",
                           "Specified animation from .wbt world file: %s", _animationToPlay.c_str());
+
+        // If the sepcified animation is empty, wait until all the availalble animations have been
+        // broadcasted by the robot and exit. Useful to fetch and log available animations by
+        // running this test once without specifying animation to test.
+        if (_animationToPlay == "%ANIMATION_TEST_NAME%") {
+          _testState = TestState::WaitUntilEndOfMessage;
+        } else {
+          _testState = TestState::Setup;
+        }
+
+        break;
+      }
+
+      case TestState::Setup:
+      {
         // Sends a CLAD message to robot so that RobotAudioOutputSource is set to PlayOnRobot,
         // otherwise a lot of the audio bugs will not occur. See robotAudioClient.h on the robot
         // side for more information
@@ -74,38 +88,33 @@ namespace Cozmo {
         message.Set_SetRobotAudioOutputSource(m);
         SendMessage(message);
 
-
-
         _testState = TestState::ReadyForNextCommand;
-        break;
       }
+
       case TestState::ReadyForNextCommand:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, 10){
-          if (_numAnimsPlayed == _availableAnimations.size()) {
-            _testState = TestState::TestDone;
-            PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
-            break;
-          }
-          // auto animToPlay = kTestAnimationName;
-          auto animToPlay = _availableAnimations[_numAnimsPlayed];
-          PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, animToPlay.c_str());
-          SendAnimation(animToPlay.c_str(), 1);
-          _lastAnimPlayed = animToPlay;
-          ++_numAnimsPlayed;
-          _lastAnimPlayedTime = GetSupervisor()->getTime();
-          _testState = TestState::ExecutingTestAnimation;
-        }
-        
+        PRINT_NAMED_INFO("CST_Animations.PlayingAnimation", "%s", _animationToPlay.c_str());
+        SendAnimation(_animationToPlay.c_str(), 1);
+        _lastAnimPlayed = _animationToPlay;
+        _lastAnimPlayedTime = GetSupervisor()->getTime();
+        _testState = TestState::ExecutingTestAnimation;
+
         break;
       }
         
       case TestState::ExecutingTestAnimation:
         // If no action complete message, this will timeout with assert.
-        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 10)) {
-          _testState = TestState::ReadyForNextCommand;
+        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 99)) {
+          _testState = TestState::TestDone;
         }
         break;
+
+      case TestState::WaitUntilEndOfMessage:
+      {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, 10){
+          _testState = TestState::TestDone;
+        }
+      }
 
       case TestState::TestDone:
         CST_EXIT();
@@ -146,12 +155,10 @@ namespace Cozmo {
   void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
   {
     _result = 255;
-    CST_EXIT();
-  }
-
-  void CST_Animations::HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg)
-  {
-    _availableAnimations.push_back(msg.animName);
+    PRINT_NAMED_WARNING("CST_Animations.HandleAnimationAborted",
+                      "'%s' was aborted.",
+                      _animationToPlay.c_str());
+    _testState = TestState::TestDone;
   }
 
   void CST_Animations::HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg)
