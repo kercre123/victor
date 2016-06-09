@@ -981,13 +981,15 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
             dataIter->second._playedNewFaceAnim = true;
           }
         }
-      }
+        
         break;
+      }
         
       default:
-        PRINT_NAMED_WARNING("BehaviorInteractWithFaces.HandleEnrollNamedFaceCompleted.UnexpectedActionType",
-                            "No handler for %s", EnumToString(completedAction.actionType));
-    }
+        // Nothing to do: just ignore any other RobotCompletedAction messages
+        break;
+        
+    } // switch(actionType)
     
   }
   
