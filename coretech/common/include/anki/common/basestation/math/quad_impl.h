@@ -27,6 +27,8 @@
 
 #include "kazmath/src/kazmath.h"
 
+#include "util/logging/logging.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp" // for minAreaRect
@@ -361,13 +363,40 @@ namespace Anki {
       cvPoints[i_corner].y = static_cast<f32>(points[i_corner].y());
     }
     
-    cv::RotatedRect cvRotatedRect = cv::minAreaRect(cvPoints);
+    cv::RotatedRect cvRotatedRect;
+  
+    try {
+      cvRotatedRect = cv::minAreaRect(cvPoints);
+    }
+    catch(...) {
+      // No idea how this happens, but we dont' want to die when it does.
+      // Instead, I'm catching it here and using a simpler bounding rectangle if
+      // the rotated rect doesn't work.
+      // COZMO-1916
+      std::string pointsStr;
+      for(auto const& pt : cvPoints) {
+        pointsStr += " (" + std::to_string(pt.x)  + "," + std::to_string(pt.y) + ")";
+      }
+      PRINT_NAMED_ERROR("GetBoundingQuad.CvMinAreaRectFailed.COZMO-1916",
+                        "cvPoints.size=%zu%s",
+                        cvPoints.size(), pointsStr.c_str());
+      
+      Rectangle<T> boundingRect(points);
+      
+      cvRotatedRect.center.x = boundingRect.GetXmid();
+      cvRotatedRect.center.y = boundingRect.GetYmid();
+      cvRotatedRect.size.width  = boundingRect.GetWidth();
+      cvRotatedRect.size.height = boundingRect.GetHeight();
+      cvRotatedRect.angle = 0.f;
+      
+    } // try/catch
+    
     cv::Point2f cvQuad[4];
     cvRotatedRect.points(cvQuad);
-    Quad2f boundingQuad(Point<2,T>(static_cast<T>(cvQuad[0].x), static_cast<T>(cvQuad[0].y)),
-                        Point<2,T>(static_cast<T>(cvQuad[1].x), static_cast<T>(cvQuad[1].y)),
-                        Point<2,T>(static_cast<T>(cvQuad[2].x), static_cast<T>(cvQuad[2].y)),
-                        Point<2,T>(static_cast<T>(cvQuad[3].x), static_cast<T>(cvQuad[3].y)));
+    Quadrilateral<2,T> boundingQuad(Point<2,T>(static_cast<T>(cvQuad[0].x), static_cast<T>(cvQuad[0].y)),
+                                    Point<2,T>(static_cast<T>(cvQuad[1].x), static_cast<T>(cvQuad[1].y)),
+                                    Point<2,T>(static_cast<T>(cvQuad[2].x), static_cast<T>(cvQuad[2].y)),
+                                    Point<2,T>(static_cast<T>(cvQuad[3].x), static_cast<T>(cvQuad[3].y)));
     
     boundingQuad = boundingQuad.SortCornersClockwise();
     
