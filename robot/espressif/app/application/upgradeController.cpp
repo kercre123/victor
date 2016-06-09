@@ -665,14 +665,15 @@ namespace UpgradeController {
         if (counter++ < 20)
         {
           // blah blah blach
-          haveValidCert = true;
-          // If cert invalid, break to new state....
+          // If cert invalid, Reset()
         }
         else
         {
           uint8_t digest[SHA512_DIGEST_SIZE];
           sha512_done(firmware_digest, digest);
           sha512_init(firmware_digest);
+
+          haveValidCert = true;
 
           // TODO: VALIDATE HERE
 
