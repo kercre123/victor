@@ -52,10 +52,10 @@ namespace Cozmo {
       // Rate at which "Recent Tap" Effects decay - includes glow and scaling
       [SerializeField]
       private float _TapDecayRate = 0.02f;
-      [SerializeField]
-      private float _MinScale = 0.75f;
-      [SerializeField]
-      private float _MaxScale = 1.0f;
+      [SerializeField, Tooltip("Resting scale of the box")]
+      private float _MinBoxScale = 0.75f;
+      [SerializeField, Tooltip("Recently tapped scale of the box")]
+      private float _MaxBoxScale = 1.0f;
       [SerializeField]
       private float _ChargeVFXUpdateInterval = 0.35f;
 
@@ -98,9 +98,9 @@ namespace Cozmo {
       [SerializeField]
       private int _OpenChestBurst = 15;
 
-      [SerializeField]
+      [SerializeField, Tooltip("Charge % where TronBurst and Text go to Midtier")]
       private float _LootMidThreshold = 0.3f;
-      [SerializeField]
+      [SerializeField, Tooltip("Charge % where TronBurst and Text go to almost tier")]
       private float _LootAlmostThreshold = 0.6f;
 
       #endregion
@@ -116,13 +116,7 @@ namespace Cozmo {
 
       SimpleObjectPool<TronLight> _TronPool;
 
-      private Dictionary<string, int> _LootBoxRewards = new Dictionary<string, int>();
-
-      public Dictionary<string, int> LootBoxRewards {
-        set {
-          _LootBoxRewards = value;
-        }
-      }
+      public Dictionary<string, int> LootBoxRewards = new Dictionary<string, int>();
 
       [SerializeField]
       private string _LootStartKey;
@@ -271,7 +265,7 @@ namespace Cozmo {
               _recentTapCharge = 0.0f;
             }
             _LootGlow.color = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, _recentTapCharge);
-            float newScale = Mathf.Lerp(_MinScale, _MaxScale, _recentTapCharge);
+            float newScale = Mathf.Lerp(_MinBoxScale, _MaxBoxScale, _recentTapCharge);
             _LootBox.localScale = new Vector3(newScale, newScale, 1.0f);
             _BoxGlow.color = _LootGlow.color;
           }
@@ -327,14 +321,14 @@ namespace Cozmo {
         int doobCount = 0;
         doobTargets.AddRange(_MultRewardsTransforms);
         Sequence dooberSequence = DOTween.Sequence();
-        foreach (string itemID in _LootBoxRewards.Keys) {
-          doobCount += _LootBoxRewards[itemID];
+        foreach (string itemID in LootBoxRewards.Keys) {
+          doobCount += LootBoxRewards[itemID];
           if (doobCount == 1) {
             Transform newDoob = SpawnDoober(itemID);
             dooberSequence.Join(newDoob.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
           }
           else {
-            for (int i = 0; i < _LootBoxRewards[itemID]; i++) {
+            for (int i = 0; i < LootBoxRewards[itemID]; i++) {
               if (doobTargets.Count <= 0) {
                 break;
               }
@@ -410,7 +404,7 @@ namespace Cozmo {
         Sequence boxSequence = DOTween.Sequence();
         boxSequence.Append(_LootBox.DOScale(_BoxIntroStartScale, _BoxIntroTweenDuration).From().SetEase(Ease.InExpo));
         boxSequence.Join(_LootBox.DOLocalMove(_BoxSource.localPosition, _BoxIntroTweenDuration).From());
-        boxSequence.Append(_LootBox.DOScale(_MinScale, _BoxIntroSettleDuration).SetEase(Ease.InExpo));
+        boxSequence.Append(_LootBox.DOScale(_MinBoxScale, _BoxIntroSettleDuration).SetEase(Ease.InExpo));
         boxSequence.OnComplete(HandleBoxFinished);
         boxSequence.Play();
         boxSequence.TogglePause();

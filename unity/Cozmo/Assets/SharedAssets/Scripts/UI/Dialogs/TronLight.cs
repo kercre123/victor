@@ -18,9 +18,8 @@ namespace Cozmo {
         Down = 3
       }
 
-      public Action<TronLight> OnLifeSpanEnd;
-      private Direction _currDir = Direction.Up;
-      private float _currLifeSpan;
+      #region Settings
+
       [SerializeField]
       private float _lifeSpanMin = 0.75f;
       [SerializeField]
@@ -34,38 +33,43 @@ namespace Cozmo {
       [SerializeField]
       private float _MaxTurnDist = 8.0f;
 
-      private float _currDist = 0.0f;
-      private float _currInterval = 0.0f;
-      private int _currTurns = 0;
+      [SerializeField]
+      private TrailRenderer _Trail;
+      [SerializeField]
+      private Image _Spark;
 
-      [SerializeField]
-      private TrailRenderer _trail;
-      [SerializeField]
-      private Image _spark;
-      private Tweener _currTween = null;
+      #endregion
+
+      public Action<TronLight> OnLifeSpanEnd;
+      private Direction _CurrDir = Direction.Up;
+      private float _CurrLifeSpan;
+      private float _CurrDist = 0.0f;
+      private float _CurrInterval = 0.0f;
+      private int _CurrTurns = 0;
+      private Tweener _CurrTween = null;
 
       public void Initialize() {
-        _currTurns = UnityEngine.Random.Range(_MinTurns, _MaxTurns);
+        _CurrTurns = UnityEngine.Random.Range(_MinTurns, _MaxTurns);
         // Don't destroy the universe by dividing by 0
-        if (_currTurns < 1) {
-          _currTurns = 1;
+        if (_CurrTurns < 1) {
+          _CurrTurns = 1;
         }
-        _spark.DOFade(1.0f, 0.0f);
+        _Spark.DOFade(1.0f, 0.0f);
         transform.position = transform.parent.position;
-        _currLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
-        _currDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
-        _currInterval = (_lifeSpanMax / (_currTurns + 1));
-        _trail.Clear();
+        _CurrLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
+        _CurrDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
+        _CurrInterval = (_lifeSpanMax / (_CurrTurns + 1));
+        _Trail.Clear();
         HandleTween();
-        _trail.enabled = true;
+        _Trail.enabled = true;
       }
 
       public void OnPool() {
-        if (_currTween != null) {
-          _currTween.Kill(false);
+        if (_CurrTween != null) {
+          _CurrTween.Kill(false);
         }
-        _trail.Clear();
-        _trail.enabled = false;
+        _Trail.Clear();
+        _Trail.enabled = false;
         transform.position = transform.parent.position;
       }
 
@@ -76,34 +80,34 @@ namespace Cozmo {
       }
 
       private void HandleTween() {
-        if (_currTween != null) {
-          _currTween.Kill(false);
+        if (_CurrTween != null) {
+          _CurrTween.Kill(false);
         }
-        if (_currLifeSpan <= 0) {
-          _currTween = _spark.DOFade(0.0f, _trail.time).OnComplete(FinishEffect);
+        if (_CurrLifeSpan <= 0) {
+          _CurrTween = _Spark.DOFade(0.0f, _Trail.time).OnComplete(FinishEffect);
         }
         else {
-          _currDist = UnityEngine.Random.Range(_MinTurnDist, _MaxTurnDist);
-          _currLifeSpan -= _currInterval;
-          _currTween = transform.DOMove(NewTarget(), _currInterval).SetRelative().OnComplete(HandleTween).SetEase(Ease.Linear);
+          _CurrDist = UnityEngine.Random.Range(_MinTurnDist, _MaxTurnDist);
+          _CurrLifeSpan -= _CurrInterval;
+          _CurrTween = transform.DOMove(NewTarget(), _CurrInterval).SetRelative().OnComplete(HandleTween).SetEase(Ease.Linear);
         }
       }
 
       private Vector3 NewTarget() {
         Vector3 newT = new Vector3();
-        _currDir = NewDir(_currDir);
-        switch (_currDir) {
+        _CurrDir = NewDir(_CurrDir);
+        switch (_CurrDir) {
         case Direction.Up:
-          newT = new Vector3(0, _currDist, 0);
+          newT = new Vector3(0, _CurrDist, 0);
           break;
         case Direction.Right:
-          newT = new Vector3(_currDist, 0, 0);
+          newT = new Vector3(_CurrDist, 0, 0);
           break;
         case Direction.Down:
-          newT = new Vector3(0, -_currDist, 0);
+          newT = new Vector3(0, -_CurrDist, 0);
           break;
         case Direction.Left:
-          newT = new Vector3(-_currDist, 0, 0);
+          newT = new Vector3(-_CurrDist, 0, 0);
           break;
         }
         return newT;

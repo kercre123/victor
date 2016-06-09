@@ -111,8 +111,8 @@ MonoBehaviour:
   _MaxTurns: 4
   _MinTurnDist: 1
   _MaxTurnDist: 8
-  _trail: {fileID: 9608962}
-  _spark: {fileID: 11408100}
+  _Trail: {fileID: 9608962}
+  _Spark: {fileID: 11408100}
 --- !u!222 &22286458
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -286,6 +286,14 @@ Prefab:
       propertyPath: _MaxTurns
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _Trail
+      value: 
+      objectReference: {fileID: 9608962}
+    - target: {fileID: 0}
+      propertyPath: _Spark
+      value: 
+      objectReference: {fileID: 11408100}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 125416}
