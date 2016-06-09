@@ -25,9 +25,9 @@ namespace Audio {
 RobotAudioMessageStream::~RobotAudioMessageStream()
 {
   // Delete all key frames
-  while ( !_messageQueue.empty() ) {
-    Util::SafeDelete( _messageQueue.front() );
-    _messageQueue.pop();
+  while ( !_audioFrameQueue.empty() ) {
+    Util::SafeDelete( _audioFrameQueue.front() );
+    _audioFrameQueue.pop();
   }
 }
 
@@ -36,16 +36,16 @@ void RobotAudioMessageStream::PushRobotAudioFrame( AudioFrameData* audioFrame )
 {
   std::lock_guard<std::mutex> lock( _lock );
   ASSERT_NAMED( !_isComplete, "Do NOT add key frames after the stream is set to isComplete" );
-  _messageQueue.push( audioFrame );
+  _audioFrameQueue.push( audioFrame );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioFrameData* RobotAudioMessageStream::PopRobotAudioFrame()
 {
   std::lock_guard<std::mutex> lock( _lock );
-  ASSERT_NAMED( !_messageQueue.empty(), "Do Not call this methods if Key Frame Queue is empty" );
-  AudioFrameData* audioFrame = _messageQueue.front();
-  _messageQueue.pop();
+  ASSERT_NAMED( !_audioFrameQueue.empty(), "Do Not call this methods if Key Frame Queue is empty" );
+  AudioFrameData* audioFrame = _audioFrameQueue.front();
+  _audioFrameQueue.pop();
   
   return audioFrame;
 }
