@@ -245,10 +245,10 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
   union {
     struct {
       big_num_cell_t lower;
-      int16_t upper;
+      big_num_signed_cell_t upper;
     } parts;
 
-    uint32_t word;
+    big_num_double_cell_t word;
   };
 
   int idx;

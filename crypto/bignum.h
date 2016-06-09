@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
-typedef uint16_t big_num_cell_t;
+typedef uint16_t  big_num_cell_t;
+typedef int16_t   big_num_signed_cell_t;
+typedef uint32_t  big_num_double_cell_t;
 
 #ifdef NRF51
 // 1024-bit safe (DH keys)
@@ -15,9 +17,9 @@ static const int CELL_SIZE = 257;
 static const int CELL_BITS = (sizeof(big_num_cell_t) * 8);
 
 struct big_num_t {
-  bool      negative;
-  int       used;
-  uint16_t  digits[CELL_SIZE];
+  bool            negative;
+  int             used;
+  big_num_cell_t  digits[CELL_SIZE];
 };
 
 struct big_mont_t {
@@ -42,7 +44,7 @@ union big_overflow_t {
     big_num_cell_t upper;
   };
 
-  uint32_t word;
+  big_num_double_cell_t word;
 };
 
 static const big_num_t BIG_ZERO = {false, 0};

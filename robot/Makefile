@@ -15,8 +15,8 @@ RELEASE_DIR=releases
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 
-DIFFIE_KEY=tools/diffie.pem
-DEVELOPMENT_KEY=tools/development.pem
+DIFFIE_KEY=certs/diffie.pem
+DEVELOPMENT_KEY=certs/development.pem
 AES_KEY=FA67CE138A376CD21A26118615326AA5
 
 .PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app export_key sign_test
