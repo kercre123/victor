@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
-#include "anki/cozmo/basestation/imageDeChunker.h"
+#include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -73,7 +73,7 @@ namespace Anki {
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
         
-        ImageDeChunker _imageDeChunker;
+        EncodedImage _encodedImage;
         
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
@@ -94,29 +94,23 @@ namespace Anki {
     // Sends complete images to VizManager for visualization (and possible saving).
     void WebotsKeyboardController::HandleImageChunk(ImageChunk const& msg)
     {
-      const u16 width  = Vision::CameraResInfo[(int)msg.resolution].width;
-      const u16 height = Vision::CameraResInfo[(int)msg.resolution].height;
-      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, height, width,
-        msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data.data(), (uint32_t)msg.data.size());
-      
+      const bool isImageReady = _encodedImage.AddChunk(msg);
       
       if(isImageReady)
       {
-        cv::Mat img = _imageDeChunker.GetImage();
-        if(img.channels() == 1) {
-          cvtColor(img, img, CV_GRAY2RGB);
-        }
+        Vision::ImageRGB img = _encodedImage.DecodeImageRGB();
+        cv::Mat cvImg = img.get_CvMat_();
         
         const s32 outputColor = 1; // 1 for Green, 2 for Blue
         
-        for(s32 i=0; i<img.rows; ++i) {
+        for(s32 i=0; i<cvImg.rows; ++i) {
           
           if(i % 2 == 0) {
-            cv::Mat img_i = img.row(i);
+            cv::Mat img_i = cvImg.row(i);
             img_i.setTo(0);
           } else {
-            u8* img_i = img.ptr(i);
-            for(s32 j=0; j<img.cols; ++j) {
+            u8* img_i = cvImg.ptr(i);
+            for(s32 j=0; j<cvImg.cols; ++j) {
               img_i[3*j+outputColor] = std::max(std::max(img_i[3*j], img_i[3*j + 1]), img_i[3*j + 2]);
               
               img_i[3*j+(3-outputColor)] /= 2;
@@ -135,7 +129,7 @@ namespace Anki {
           cozmoCam_->imageDelete(img_);
         }
         
-        img_ = cozmoCam_->imageNew(img.cols, img.rows, img.data, webots::Display::RGB);
+        img_ = cozmoCam_->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
         cozmoCam_->imagePaste(img_, 0, 0);
         
         // Save image to file
@@ -807,25 +801,30 @@ namespace Anki {
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
-                SaveMode_t mode = SAVE_ONE_SHOT;
+                ImageSendMode mode = ImageSendMode::Off;
                 
                 const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   static bool streamOn = false;
                   if (streamOn) {
-                    mode = SAVE_OFF;
+                    mode = ImageSendMode::Off;
                     printf("Saving robot image/state stream OFF.\n");
                   } else {
-                    mode = SAVE_CONTINUOUS;
+                    mode = ImageSendMode::Stream;
                     printf("Saving robot image %sstream ON.\n", alsoSaveState ? "and state " : "");
                   }
                   streamOn = !streamOn;
                 } else {
+                  mode = ImageSendMode::SingleShot;
                   printf("Saving single robot image%s.\n", alsoSaveState ? " and state message" : "");
                 }
                 
-                SendSaveImages(mode, alsoSaveState);
+                SendSaveImages(mode);
+                if(alsoSaveState) {
+                  // NOTE: saving robot state does not support "one-shot", so it will just toggle on and off
+                  SendSaveState(mode != ImageSendMode::Off);
+                }
                 break;
               }
                 

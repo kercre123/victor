@@ -99,8 +99,6 @@ public:
   // TODO: Add IsConnected methods
   // Check to see if a specified robot / UI device is connected
   // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
-
-  virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
   
   void ListenForRobotConnections(bool listen);
   

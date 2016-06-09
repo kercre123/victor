@@ -231,7 +231,8 @@ EXTERNALS
 # Webots
 *.wbproj
 simulator/controllers/webotsCtrlViz/webotsCtrlViz
-simulator/controllers/webotsCtrlViz/images_*
+simulator/controllers/webotsCtrlViz/saved_images
+simulator/controllers/webotsCtrlViz/saved_state
 simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
 simulator/controllers/webotsCtrlRobot/nvStorage
 simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube

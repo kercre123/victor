@@ -199,15 +199,16 @@ message SetRobotImageSendMode {
     ImageResolution resolution
 }
 
-// SaveImages
+// SaveImages (via VizController)
 message SaveImages {
-    uint_8 mode // See SaveMode_t in cozmoTypes.h
+    ImageSendMode mode,
+    string        path
 }
 
-
-// SaveRobotState
+// SaveRobotState (via VizController)
 message SaveRobotState {
-    uint_8 mode // See SaveMode_t in cozmoTypes.h
+    bool    enabled,
+    string  path
 }
 
 // EnableDisplay
