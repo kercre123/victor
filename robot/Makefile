@@ -95,7 +95,7 @@ stage_factory_upgrade:
 
 release: stage_binaries
 	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	python3 ./tools/sign.py -c --sign $(AES_KEY) ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
+	python3 ./tools/sign.py -c --sign $(AES_KEY) $(DEVELOPMENT_KEY) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"

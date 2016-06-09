@@ -28,7 +28,9 @@ extern "C" {
 #include "sha512.h"
 #include "aes.h"
 #include "bignum.h"
+#include "rsa_pss.h"
 #include "publickeys.h"
+
 #define ESP_FW_MAX_SIZE  (0x07c000)
 #define ESP_FW_ADDR_MASK (0x07FFFF)
 
@@ -662,32 +664,56 @@ namespace UpgradeController {
       }
       case OTAT_Sig_Check:
       {
-        if (counter++ < 20)
+
+        switch (counter++)
         {
-          // blah blah blach
-          // If cert invalid, Reset()
+        case 0: // Setup
+          {
+            i2spiSwitchMode(I2SPI_PAUSED);
+            break ;
+          }
+        case 1: // Run
+          {
+            uint8_t digest[SHA512_DIGEST_SIZE];
+            sha512_done(firmware_digest, digest);
+            sha512_init(firmware_digest);
+
+            big_mont_t mont;
+            big_rsa_t rsa;
+            memcpy(&mont, &RSA_CERT_MONT, sizeof(big_mont_t));
+            memcpy(&rsa, &CERT_RSA, sizeof(big_rsa_t));
+
+            os_printf("START CERT");
+
+            FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+            CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
+            haveValidCert = verify_cert(mont, rsa, digest, cert->data, cert->length);
+
+            os_printf("DONE CERT");
+
+            if (!haveValidCert) {
+              Reset();
+              break ;
+            }
+            break ;
+          }
+        case 2: // Teardown
+          {
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
+
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+            counter = 0;
+            phase = OTAT_Flash_Verify;
+            break;
+          }
         }
-        else
-        {
-          uint8_t digest[SHA512_DIGEST_SIZE];
-          sha512_done(firmware_digest, digest);
-          sha512_init(firmware_digest);
-
-          haveValidCert = true;
-
-          // TODO: VALIDATE HERE
-
-          retries = MAX_RETRIES;
-          bufferUsed -= sizeof(FirmwareBlock);
-          os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-          bytesProcessed += sizeof(FirmwareBlock);
-          ack.bytesProcessed = bytesProcessed;
-          ack.result = OKAY;
-          RobotInterface::SendMessage(ack);
-          counter = 0;
-          phase = OTAT_Flash_Verify;
-        }
-        break;
+        break ;
       }
       case OTAT_Abort:
       {
