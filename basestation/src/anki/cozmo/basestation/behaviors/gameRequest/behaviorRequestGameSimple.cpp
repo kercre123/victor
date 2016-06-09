@@ -438,7 +438,8 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
-  StartActing(new TurnTowardsLastFacePoseAction(robot),
+  const bool sayName = true;
+  StartActing(new TurnTowardsLastFacePoseAction(robot, PI_F, sayName),
               &BehaviorRequestGameSimple::TransitionToVerifyingFace);
   SET_STATE(State::LookingAtFace);
 }

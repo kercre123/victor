@@ -184,10 +184,10 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 
   // Only turn towards face if this is _not_ a retry
   const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
-  const bool sayName = true;
+  const bool sayNameBefore = true;
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
                                                                     false, 0, false,
-                                                                    maxTurnToFaceAngle, sayName);
+                                                                    maxTurnToFaceAngle, sayNameBefore);
   rollAction->RollToUpright();
   
   WaitForLambdaAction* waitAction = new WaitForLambdaAction(robot, [this](Robot& robot) {
@@ -199,9 +199,10 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
     }
   });
   
+  const bool sayNameAfter = false;
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     rollAction,
-    new TurnTowardsLastFacePoseAction(robot, PI_F, true),
+    new TurnTowardsLastFacePoseAction(robot, PI_F, sayNameAfter),
     waitAction,
   });
   
