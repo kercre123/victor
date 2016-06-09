@@ -24,6 +24,7 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+#include "crc32.h"
 #include "sha512.h"
 #include "aes.h"
 #include "bignum.h"
@@ -178,20 +179,6 @@ namespace UpgradeController {
     {
       phase = OTAT_Abort;
     }
-  }
-
-  LOCAL uint32_t calc_crc32(const uint8_t* data, int length)
-  {
-    uint32_t checksum = 0xFFFFFFFF;
-
-    while (length-- > 0) {
-      checksum ^= *(data++);
-      for (int b = 0; b < 8; b++) {
-        checksum = (checksum >> 1) ^ ((checksum & 1) ? CRC32_POLYNOMIAL : 0);
-      }
-    }
-
-    return ~checksum;
   }
 
   LOCAL bool VerifyFirmwareBlock(const FirmwareBlock* fwb)
@@ -471,29 +458,19 @@ namespace UpgradeController {
         static const int AES_CHUNK_SIZE = AES_KEY_LENGTH * 16;
         FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
 
-        if ((unsigned)counter < sizeof(fwb->flashBlock))
+        if ((unsigned)counter < TRANSMIT_BLOCK_SIZE)
         {
           uint8_t* address = counter + (uint8_t*)fwb->flashBlock;
-          aes_cfb_decode( AES_KEY, aes_iv, address, address, AES_CHUNK_SIZE,  aes_iv);
+          aes_cfb_decode( AES_KEY, aes_iv, address, address, AES_CHUNK_SIZE, aes_iv);
           
           counter += AES_CHUNK_SIZE;
         }
         else
         {
-          os_printf("%08x: ", fwb->blockAddress);
-          for (int i = 0; i < 16; i++)
-          os_printf(" %02x", ((uint8_t*)fwb->flashBlock)[i]);
-          os_printf("\n\r");
+          // Correct the checksum and send it down the wire
+          fwb->checkSum = calc_crc32(reinterpret_cast<const uint8*>(fwb->flashBlock), sizeof(fwb->flashBlock));
 
-          // THIS SKIPS THE BLOCK INSTEAD OF FLASHING IT
-          bufferUsed -= sizeof(FirmwareBlock);
-          os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-          bytesProcessed += sizeof(FirmwareBlock);
-          ack.bytesProcessed = bytesProcessed;
-          ack.result = OKAY;
-          RobotInterface::SendMessage(ack);
-
-          phase = OTAT_Flash_Verify;
+          phase = OTAT_Flash_Write;
           counter = 0;
           timer = 0;
         }

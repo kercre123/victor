@@ -55,7 +55,7 @@ class DigestFile:
         self.iv = Random.get_random_bytes(AES_BLOCK_LENGTH)
 
     def cfb(self, data, key):
-        cipher = AES.AESCipher(key[::-1], AES.MODE_ECB)
+        cipher = AES.AESCipher(key, AES.MODE_ECB)
         result = b''
 
         for _, block in chunk(data, AES_BLOCK_LENGTH):

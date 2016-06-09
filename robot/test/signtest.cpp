@@ -54,14 +54,10 @@ int main (int argc, char** argv) {
 
 	sha512_init(hash);
 
-	if (argc < 4) { return -1; }
+	if (argc < 3) { return -1; }
 
-	for (int i = 0; i < sizeof(aes_key); i++) {
-		sscanf (&argv[1][i*2], "%02x", &aes_key[i]);
-	}
-
-	plain = fopen(argv[2], "rb");
-	encoded = fopen(argv[3], "rb");
+	plain = fopen(argv[1], "rb");
+	encoded = fopen(argv[2], "rb");
 
 	while (fread(&block, sizeof(block), 1, encoded)) {
 		if (!crcValid(block)) {
@@ -92,7 +88,7 @@ int main (int argc, char** argv) {
 
 			break ;
 		default: // FLASH BLOCK
-			aes_cfb_decode(aes_key, aes_iv, 
+			aes_cfb_decode(AES_KEY, aes_iv, 
 				(uint8_t*)block.flashBlock,
 				(uint8_t*)block.flashBlock, 
 				sizeof(block.flashBlock), aes_iv);

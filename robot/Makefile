@@ -64,7 +64,7 @@ sign_test_files = ./test/signtest.cpp ../crypto/bignum.cpp ../crypto/rsa_pss.cpp
 
 sign_test: export_key $(sign_test_files)
 	g++ -o ./build/signtest $(sign_test_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
-	build/signtest $(AES_KEY) ./releases/cozmo.safe ./releases/cozmo.signed.safe
+	build/signtest ./releases/cozmo.safe ./releases/cozmo.signed.safe
 
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
