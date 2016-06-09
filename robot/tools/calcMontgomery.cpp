@@ -3,11 +3,35 @@
 #include "bignum.h"
 #include "publickeys.h"
 
-void print(uint16_t num) {
-	printf("0x%04x", num);
+void print(uint32_t num) {
+	printf("0x%x", num);
+}
+
+void print(uint8_t* numbers, int count) {
+	printf("{ ");
+	
+	for (int i = 1; i < count; i++) {
+		print(*(numbers++)); printf(", ");
+	}
+
+	if (count) print(*numbers);
+
+	printf(" }");
 }
 
 void print(uint16_t* numbers, int count) {
+	printf("{ ");
+	
+	for (int i = 1; i < count; i++) {
+		print(*(numbers++)); printf(", ");
+	}
+
+	if (count) print(*numbers);
+
+	printf(" }");
+}
+
+void print(uint32_t* numbers, int count) {
 	printf("{ ");
 	
 	for (int i = 1; i < count; i++) {
