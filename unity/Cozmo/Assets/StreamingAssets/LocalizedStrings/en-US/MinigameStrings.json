@@ -226,10 +226,10 @@
     "translation": "Same rules as Easy mode, but with light patterns! Cubes may have up to 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
-    "translation": "More complexity! Patterns may have 1-2 colors and any number of lights."
+    "translation": "More complexity! Cubes may have 1-3 colors."
   },
   "speedTap.difficulty.expertDescription": {
-    "translation": "Experts only: Patterns may have any number of colors and lights."
+    "translation": "Experts only: Cubes may have 1-4 colors."
   },
   "button.retry": {
     "translation": "Try Again"
