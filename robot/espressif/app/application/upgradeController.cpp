@@ -28,7 +28,7 @@ extern "C" {
 #include "sha512.h"
 #include "aes.h"
 #include "bignum.h"
-#include "publickey.h"
+#include "publickeys.h"
 #define ESP_FW_MAX_SIZE  (0x07c000)
 #define ESP_FW_ADDR_MASK (0x07FFFF)
 

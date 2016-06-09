@@ -14,6 +14,8 @@ RELEASE_DIR=releases
 
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
+
+DIFFIE_KEY=tools/diffie.pem
 DEVELOPMENT_KEY=tools/development.pem
 AES_KEY=FA67CE138A376CD21A26118615326AA5
 
@@ -56,14 +58,19 @@ staging_dir:
 
 export_key:
 	mkdir -p generated build
-	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickey.h
+	python3 ./tools/export_public.py -d $(DIFFIE_KEY) -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickeys.h
 	g++ -o build/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
-	build/calcMont >> ./generated/publickey.h
+	build/calcMont >> ./generated/publickeys.h
 
-sign_test_files = ./test/signtest.cpp ../crypto/bignum.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp
+crypto_files = ../crypto/bignum.cpp
+sign_test_files = ./test/signtest.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp 
+diffie_test_files = ./test/diffietest.cpp ../crypto/sha1.cpp
 
 sign_test: export_key $(sign_test_files)
-	g++ -o ./build/signtest $(sign_test_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
+	g++ -o ./build/diffietest $(diffie_test_files) $(crypto_files) -I ../crypto -I ./generated
+	build/diffietest
+
+	g++ -o ./build/signtest $(sign_test_files) $(crypto_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
 	build/signtest ./releases/cozmo.safe ./releases/cozmo.signed.safe
 
 k02_fix: staging_dir
@@ -116,6 +123,13 @@ esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
   
 onBuildServer: esp
+
+bryon_test: export_key sign_test esp release
+	./tools/connectToRobot.bash 0489
+	python3 ./tools/fota.py
+	sleep 3
+	./tools/connectToRobot.bash 0489
+	python3 ./tools/fota.py ./releases/cozmo.signed.safe
 
 clean:
 	make -C clad clean

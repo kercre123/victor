@@ -7,7 +7,7 @@
 #include "crc32.h"
 #include "rsa_pss.h"
 
-#include "publickey.h"
+#include "publickeys.h"
 
 #include "rec_protocol.h"
 

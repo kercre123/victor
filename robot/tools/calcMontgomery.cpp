@@ -1,9 +1,7 @@
 #include <stdio.h>
 
 #include "bignum.h"
-#include "publickey.h"
-
-big_mont_t mont;
+#include "publickeys.h"
 
 void print(uint16_t num) {
 	printf("0x%04x", num);
@@ -26,7 +24,7 @@ void print(big_num_t& num) {
 	printf(num.negative ? "true, " : "false, ");
 	print(num.used);
 	printf(", ");
-	print(num.digits, CELL_SIZE);
+	print(num.digits, num.used);
 	printf(" }");
 }
 
@@ -42,9 +40,23 @@ void print(big_mont_t& mont) {
 }
 
 int main(int argc, char** argv) {
+	big_mont_t mont;
+	big_num_t exp;
+
 	mont_init(mont, CERT_RSA.modulo);
 
-	printf("static const big_mont_t FLASH_STORE RSA_CERT_MONT =\n");
+	printf("\nstatic const big_mont_t FLASH_STORE RSA_CERT_MONT =\n");
 	print(mont);
+	printf(";\n");
+
+	mont_init(mont, DIFFIE_RSA.modulo);
+
+	printf("\nstatic const big_mont_t FLASH_STORE RSA_DIFFIE_MONT =\n");
+	print(mont);
+	printf(";\n");
+
+	mont_to(mont, exp, DIFFIE_RSA.exp);
+	printf("\nstatic const big_num_t FLASH_STORE RSA_DIFFIE_EXP_MONT =\n");
+	print(exp);
 	printf(";\n");
 }
