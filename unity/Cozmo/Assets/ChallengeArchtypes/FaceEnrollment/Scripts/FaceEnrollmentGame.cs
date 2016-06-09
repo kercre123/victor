@@ -28,21 +28,6 @@ namespace FaceEnrollment {
 
     private bool _UseFixedFaceID = false;
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // make cozmo look up
-      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
-    }
-
-    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
-      base.InitializeView(newView, data);
-      _EnterNameSlideInstance = newView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide", NameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
-    }
-
-    public void NameInputSlideInDone() {
-      _EnterNameSlideInstance.RegisterInputFocus();
-      _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
-    }
-
     public void SetSaveToRobot(bool saveToRobot) {
       _SaveToRobot = saveToRobot;
     }
@@ -50,6 +35,26 @@ namespace FaceEnrollment {
     public void SetFixedFaceID(int id) {
       _FixedFaceID = id;
       _UseFixedFaceID = true;
+    }
+
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
+      // make cozmo look up
+      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
+    }
+
+    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
+      base.InitializeView(newView, data);
+      _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
+      _FaceListSlideInstance.OnEditNameRequested += ShowEnterNameSlide;
+    }
+
+    private void ShowEnterNameSlide(string nameToEdit) {
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide", NameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+    }
+
+    private void NameInputSlideInDone() {
+      _EnterNameSlideInstance.RegisterInputFocus();
+      _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
     }
 
     private void HandleNameEntered(string name) {
