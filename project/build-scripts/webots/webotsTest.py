@@ -32,9 +32,16 @@ curTime = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 worldFileTestNamePlaceHolder = '%COZMO_SIM_TEST%'
 generatedWorldFileName = '__generated__.wbt'
 
+# The path after project root where the webots world files are located.
+WEBOTS_WORLD_SUBPATH = os.path.join('simulator', 'worlds')
+BUILD_SUBPATH = os.path.join('build', 'mac')
+
 
 class WorkContext(object): pass
-
+class TemplateStringNotFoundException(Exception): 
+  def __init__(self, template_string, source_data):
+    print("Template string was not found in source data!")
+    print("Template String: {0}\nSource Data: {1}".format(template_string, source_data))
 
 def mkdir_p(path):
   try:
@@ -81,7 +88,7 @@ def runWebots(options, resultQueue, test):
     '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
-    os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
+    os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName),
     ]
 
   if options.showGraphics:
@@ -92,13 +99,10 @@ def runWebots(options, resultQueue, test):
 
   UtilLog.debug('run command ' + ' '.join(runCommand))
 
-  buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
+  buildFolder = get_build_folder(options)
   mkdir_p(buildFolder)
 
-  if runningMultipleTests:
-    logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
-  else:
-    logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+  logFileName = get_log_file_path(buildFolder, test, curTime)
 
   logFile = open(logFileName, 'w')
   startedTimeS = time.time()
@@ -176,6 +180,75 @@ def SetTestStatus(testName, status, totalResultFlag, testStatuses):
   return True
 
 
+def generate_file_with_replace(generated_file_path, source_file_path, 
+                               template_string, replacement_string):
+  """Generates a new file by copying a existing file and replacing a string inside.
+
+  Args:
+    generated_file_path (string) --
+      Path of the file to be generated
+
+    source_file_path (string) --
+      Path of the existing file to be copied with a portion replaced
+
+    template_string (string) --
+      The string to look for inside source_file_path to be replaced. TemplateStringNotFoundException
+      will be raised if the string cannot be found.
+
+    replacement_string (string) --
+      The string to replace template_string with.
+
+  Raises:
+    TemplateStringNotFoundException -- 
+      if `template_string` does not exist inside `source_file_path`, see 
+      generate_file_with_replace_pass_data()
+  """
+
+  with open(source_file_path, 'r') as source_file:
+    source_data = source_file.read()
+
+  generate_file_with_replace_pass_data(generated_file_path, source_data, 
+                                       template_string, replacement_string)
+
+def generate_file_with_replace_pass_data(generated_file_path, source_data, 
+                                         template_string, replacement_string):
+  """Generates a new file by replacing a string inside given data.
+
+  See generate_file_with_replace(). This function is useful if there are many files to be generated
+  from the same source file, albeit with different replacement_string(s). This function allows
+  source_data to be passed in directly instead of passing a file path so that the IO operation to
+  open the source file only needs to happen once, preceding the call of this funciton. 
+
+  Args:
+    generated_file_path (string) --
+      Path of the file to be generated
+
+    source_data (string) --
+      Data of the source file.
+
+    template_string (string) --
+      The string to look for inside source_file_path to be replaced. TemplateStringNotFoundException
+      will be raised if the string cannot be found.
+
+    replacement_string (string) --
+      The string to replace template_string with.
+
+  Raises:
+    TemplateStringNotFoundException -- 
+      if `template_string` does not exist inside `source_data`
+  """
+
+  # import pdb;pdb.set_trace()
+  if template_string not in source_data:
+    raise TemplateStringNotFoundException(template_string, source_data)
+
+  # Generate world file with appropriate args passed into test controller
+  generated_data = source_data.replace(template_string, replacement_string)
+
+  with open(generated_file_path, 'w+') as generated_file:
+    generated_file.write(generated_data)
+
+
 # runs all threads groups
 # returns true if all tests suceeded correctly
 def runAll(options):
@@ -197,20 +270,18 @@ def runAll(options):
     baseWorldFile = config.get(test, 'world_file')
     UtilLog.info('Running test: ' + test + ' in world ' + baseWorldFile)
     
-    # Check if world file contains valid test name place holder
-    baseWorldFile = open('simulator/worlds/' + baseWorldFile, 'r')
-    baseWorldData = baseWorldFile.read()
-    baseWorldFile.close()
-    if worldFileTestNamePlaceHolder not in baseWorldData:
+
+    try:
+      source_file_path = os.path.join(WEBOTS_WORLD_SUBPATH, baseWorldFile)
+      generated_file_path = os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName)
+
+      generate_file_with_replace(generated_file_path, source_file_path,
+                                 worldFileTestNamePlaceHolder, test)
+
+    except TemplateStringNotFoundException:
       UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
       allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
-      continue
 
-    # Generate world file with appropriate args passed into test controller
-    generatedWorldData = baseWorldData.replace(worldFileTestNamePlaceHolder, test)
-    generatedWorldFile = open(os.path.join(options.projectRoot, 'simulator/worlds/' + generatedWorldFileName), 'w+')
-    generatedWorldFile.write(generatedWorldData)
-    generatedWorldFile.close()
 
     # Run test in thread
     testResultQueue = Queue.Queue(1)
@@ -228,12 +299,8 @@ def runAll(options):
 
     # Check log for crashes, errors, and warnings
     # TODO: Crashes affect test result, but errors and warnings do not. Should they?
-    buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
-    
-    if runningMultipleTests:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
-    else:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+    buildFolder = get_build_folder(options)
+    logFileName = get_log_file_path(buildFolder, test, curTime)
 
     (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
     totalErrorCount += errorCount
@@ -280,21 +347,51 @@ def parseOutput(options, logFile):
 
 # tarball valgrind output files together
 def tarball(options):
-  buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
+  buildFolder = get_build_folder(options)
   tar = tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz")
   
   config = ConfigParser.ConfigParser()
   config.read(options.cfg_path)
   testNames = config.sections()
   for test in testNames:
-    if runningMultipleTests:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
-    else:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+    logFileName = get_log_file_path(buildFolder, test, curTime)
     tar.add(logFileName, arcname=os.path.basename(logFileName))
   
   tar.close()
       
+def find_project_root():
+  # go to the script dir, so that we can find the project dir
+  # in the future replace this with command line param
+  selfPath = os.path.dirname(os.path.realpath(__file__))
+  os.chdir(selfPath)
+
+  # find project root path
+  projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+  return projectRoot
+
+def get_build_folder(options):
+  """Build the build folder path (where the logs are exported)"""
+  return os.path.join(options.projectRoot, BUILD_SUBPATH, options.buildType)
+
+def get_log_file_path(log_folder, test_name, timestamp = ""):
+  """Returns what the log file names should be.
+
+  log_folder (string) --
+    the path where the log files should live
+
+  test_name (string) --
+    name of the controller class for the test that is outputting the logs
+
+  timestamp (string, optional)-- 
+    timestamp of the test run; needs to be provided if runningMultipleTests is true
+  """
+  if runningMultipleTests:
+    logFileName = os.path.join(log_folder, 'webots_out_' + test_name + '_' + timestamp + '.txt')
+  else:
+    logFileName = os.path.join(log_folder, 'webots_out_' + test_name + '.txt')
+
+  return logFileName
+
 
 # executes main script logic
 def main(scriptArgs):
@@ -326,22 +423,18 @@ def main(scriptArgs):
   else:
     UtilLog.setLevel(logging.INFO)
 
-  options.cfg_path = os.path.join('project', 'build-scripts', 'webots', options.configFile)
-  assert(os.path.isfile(options.cfg_path))
 
-  # if no project root fund - make one up
-  if not options.projectRoot:
-    # go to the script dir, so that we can find the project dir
-  	# in the future replace this with command line param
-  	selfPath = os.path.dirname(os.path.realpath(__file__))
-  	os.chdir(selfPath)
 
-  	# find project root path
-  	projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
-  	options.projectRoot = projectRoot
-  else:
+  if options.projectRoot:
     options.projectRoot = os.path.normpath(os.path.join(os.getcwd(), options.projectRoot))
+  else:
+    options.projectRoot = find_project_root()
+
+
   os.chdir(options.projectRoot)
+
+  options.cfg_path = os.path.join('project', 'build-scripts', 'webots', options.configFile)
+  assert(os.path.isfile(os.path.join(options.projectRoot, options.cfg_path)))
 
   UtilLog.debug(options)
 
