@@ -23,10 +23,9 @@
 #include <sys/stat.h>
 
 
-// WORKAROUND: For some reason objects in slot 0 display lights incorrectly.
-//             For now, reserving slot 0 for charger because we care less about its lights.
+// WORKAROUND: For some reason objects in slot 0 display lights incorrectly so don't use it.
 //             The real fix belongs in robot body firmware.
-#define RESERVE_SLOT0_FOR_CHARGER 1
+#define DONT_USE_SLOT0 1
 
 
 namespace Anki {
@@ -78,15 +77,8 @@ void BlockFilter::AddFactoryId(const FactoryID factoryId)
   // Find an available slot
   auto startIter = std::begin(_blocks);
 
-  if (RESERVE_SLOT0_FOR_CHARGER) {
-    // If this is a charger,
-    ObjectType objType = _robot->GetDiscoveredObjectType(factoryId);
-    if (objType == ObjectType::Invalid) {
-      PRINT_NAMED_WARNING("BlockFilter.AddFactoryId.InvalidType",
-                          "How did we get here without the object being a valid discovered object?");
-    } else if (objType != ObjectType::Charger_Basic) {
-      ++startIter;
-    }
+  if (DONT_USE_SLOT0) {
+    ++startIter;
   }
   
   FactoryIDArray::iterator it = std::find(startIter, std::end(_blocks), 0);
@@ -142,7 +134,7 @@ bool BlockFilter::Save(const std::string &path) const
     for (FactoryIDArray::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
     {
       const FactoryID &factoryId = *it;
-      if (factoryId != 0 || (RESERVE_SLOT0_FOR_CHARGER && it == _blocks.begin())) {
+      if (factoryId != 0) {
         outputFileSteam << "0x";
         outputFileSteam << std::hex << factoryId;
         outputFileSteam << "\n";
@@ -179,6 +171,11 @@ bool BlockFilter::Load(const std::string &path)
   }
 
   int lineIndex = 0;
+  
+  if (DONT_USE_SLOT0) {
+    lineIndex = 1;
+  }
+  
   std::string line;
   while (std::getline(inputFileSteam, line))
   {
