@@ -11,14 +11,15 @@ namespace Cozmo {
   namespace UI {
     public class TronLight : MonoBehaviour {
 
-      enum DIR {
-        UP = 0,
-        RIGHT = 1,
-        LEFT = 2,
-        DOWN = 3
+      enum Direction {
+        Up = 0,
+        Right = 1,
+        Left = 2,
+        Down = 3
       }
 
-      private DIR _currDir = DIR.UP;
+      public Action<TronLight> OnLifeSpanEnd;
+      private Direction _currDir = Direction.Up;
       private float _currLifeSpan;
       private float _lifeSpanMin = 0.75f;
       private float _lifeSpanMax = 1.5f;
@@ -44,7 +45,7 @@ namespace Cozmo {
           _currTurns = 1;
         }
         _currLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
-        _currDir = (DIR)UnityEngine.Random.Range(0, (int)DIR.DOWN);
+        _currDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
         _currInterval = (_lifeSpanMax / (_currTurns + 1));
         HandleTween();
       }
@@ -56,7 +57,12 @@ namespace Cozmo {
       }
 
       private void FinishEffect() {
-        GameObject.Destroy(gameObject);
+        if (_currTween != null) {
+          _currTween.Kill(false);
+        }
+        if (OnLifeSpanEnd != null) {
+          OnLifeSpanEnd.Invoke(this);
+        }
       }
 
       private void HandleTween() {
@@ -75,57 +81,57 @@ namespace Cozmo {
         Vector3 newT = new Vector3();
         _currDir = NewDir(_currDir);
         switch (_currDir) {
-        case DIR.UP:
+        case Direction.Up:
           newT = new Vector3(0, _currDist, 0);
           break;
-        case DIR.RIGHT:
+        case Direction.Right:
           newT = new Vector3(_currDist, 0, 0);
           break;
-        case DIR.DOWN:
+        case Direction.Down:
           newT = new Vector3(0, -_currDist, 0);
           break;
-        case DIR.LEFT:
+        case Direction.Left:
           newT = new Vector3(-_currDist, 0, 0);
           break;
         }
         return newT;
       }
 
-      private DIR NewDir(DIR oldD) {
-        DIR newD = oldD;
+      private Direction NewDir(Direction oldD) {
+        Direction newD = oldD;
         float coinFlip = UnityEngine.Random.Range(0.0f, 1.0f);
         bool turnRight = (coinFlip > 0.5f);
         switch (oldD) {
-        case DIR.UP:
+        case Direction.Up:
           if (turnRight) {
-            newD = DIR.RIGHT;
+            newD = Direction.Right;
           }
           else {
-            newD = DIR.LEFT;
+            newD = Direction.Left;
           }
           break;
-        case DIR.RIGHT:
+        case Direction.Right:
           if (turnRight) {
-            newD = DIR.DOWN;
+            newD = Direction.Down;
           }
           else {
-            newD = DIR.UP;
+            newD = Direction.Up;
           }
           break;
-        case DIR.DOWN:
+        case Direction.Down:
           if (turnRight) {
-            newD = DIR.LEFT;
+            newD = Direction.Left;
           }
           else {
-            newD = DIR.RIGHT;
+            newD = Direction.Right;
           }
           break;
-        case DIR.LEFT:
+        case Direction.Left:
           if (turnRight) {
-            newD = DIR.UP;
+            newD = Direction.Up;
           }
           else {
-            newD = DIR.DOWN;
+            newD = Direction.Down;
           }
           break;
         }

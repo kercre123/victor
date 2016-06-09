@@ -140,6 +140,8 @@ namespace Cozmo.HomeHub {
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
       alertView.LootBoxRewards = ChestRewardManager.Instance.PendingRewards;
       _LootViewInstance = alertView;
+      _LootViewInstance.ViewCloseAnimationFinished += (() => (
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints())));
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
@@ -169,7 +171,6 @@ namespace Cozmo.HomeHub {
     private void HandleProgressUpdated() {
       if (ChestRewardManager.Instance.ChestPending) {
         OpenLootView();
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       }
     }
 

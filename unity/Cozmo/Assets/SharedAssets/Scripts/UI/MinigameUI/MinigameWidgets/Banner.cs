@@ -6,7 +6,7 @@ using Anki.UI;
 namespace Cozmo {
   namespace MinigameWidgets {
 
-    public class BannerWidget : MinigameWidget {
+    public class Banner : MonoBehaviour {
 
       private const float kAnimXOffset = 0.0f;
       private const float kAnimYOffset = -476.0f;
@@ -77,21 +77,6 @@ namespace Cozmo {
         _BannerContainer.gameObject.SetActive(false);
       }
 
-      #region IMinigameWidget
-
-      public override void DestroyWidgetImmediately() {
-        Destroy(gameObject);
-      }
-
-      public override Sequence CreateOpenAnimSequence() {
-        return CreateOpenAnimSequence(kAnimXOffset, kAnimYOffset, kAnimDur);
-      }
-
-      public override Sequence CreateCloseAnimSequence() {
-        return CreateCloseAnimSequence(kAnimXOffset, kAnimYOffset, kAnimDur);
-      }
-
-      #endregion
     }
   }
 }

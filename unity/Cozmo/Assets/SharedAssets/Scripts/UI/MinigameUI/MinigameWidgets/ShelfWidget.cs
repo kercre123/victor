@@ -59,14 +59,14 @@ namespace Cozmo {
       [SerializeField]
       private RectTransform _BannerContainer;
       [SerializeField]
-      private BannerWidget _BannerWidgetPrefab;
-      private BannerWidget _BannerWidgetInstance;
+      private Banner _BannerWidgetPrefab;
+      private Banner _BannerWidgetInstance;
 
       private void Start() {
         transform.SetAsFirstSibling();
 
         GameObject newWidget = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer);
-        _BannerWidgetInstance = newWidget.GetComponent<BannerWidget>();
+        _BannerWidgetInstance = newWidget.GetComponent<Banner>();
       }
 
       private void OnDestroy() {
