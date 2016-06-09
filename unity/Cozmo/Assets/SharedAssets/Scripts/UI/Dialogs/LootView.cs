@@ -207,6 +207,7 @@ namespace Cozmo {
         TronLight light = GameObject.Instantiate<GameObject>(_TronLightPrefab).GetComponent<TronLight>();
         light.transform.SetParent(_AlphaController.transform, false);
         light.OnLifeSpanEnd += HandleTronLightEnd;
+        light.Initialize();
         return light;
       }
 
@@ -218,6 +219,7 @@ namespace Cozmo {
       private void ResetTronLight(TronLight entry, bool spawned) {
         entry.gameObject.transform.position = _AlphaController.transform.position;
         entry.gameObject.SetActive(spawned);
+        entry.Initialize();
       }
 
       #endregion

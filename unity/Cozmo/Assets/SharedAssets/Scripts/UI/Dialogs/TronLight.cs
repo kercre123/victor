@@ -21,32 +21,40 @@ namespace Cozmo {
       public Action<TronLight> OnLifeSpanEnd;
       private Direction _currDir = Direction.Up;
       private float _currLifeSpan;
+      [SerializeField]
       private float _lifeSpanMin = 0.75f;
+      [SerializeField]
       private float _lifeSpanMax = 1.5f;
+      [SerializeField]
       private int _MinTurns = 1;
+      [SerializeField]
       private int _MaxTurns = 5;
+      [SerializeField]
       private float _MinTurnDist = 0.75f;
+      [SerializeField]
       private float _MaxTurnDist = 8.0f;
 
       private float _currDist = 0.0f;
       private float _currInterval = 0.0f;
+
       private int _currTurns = 0;
-      private int _turnsDone = 0;
       [SerializeField]
       private TrailRenderer _trail;
       [SerializeField]
       private Image _spark;
       private Tweener _currTween = null;
 
-      private void Awake() {
+      public void Initialize() {
         _currTurns = UnityEngine.Random.Range(_MinTurns, _MaxTurns);
         // Don't destroy the universe by dividing by 0
         if (_currTurns < 1) {
           _currTurns = 1;
         }
+        _spark.DOFade(1.0f, 1.0f);
         _currLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
         _currDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
         _currInterval = (_lifeSpanMax / (_currTurns + 1));
+        _trail.Clear();
         HandleTween();
       }
 
@@ -73,7 +81,6 @@ namespace Cozmo {
           _currDist = UnityEngine.Random.Range(_MinTurnDist, _MaxTurnDist);
           _currLifeSpan -= _currInterval;
           _currTween = transform.DOMove(NewTarget(), _currInterval).SetRelative().OnComplete(HandleTween).SetEase(Ease.Linear);
-          _turnsDone++;
         }
       }
 

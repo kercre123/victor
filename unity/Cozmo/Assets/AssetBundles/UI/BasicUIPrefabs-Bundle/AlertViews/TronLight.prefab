@@ -105,6 +105,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 425a485dfa5fb4675b4133274ec765b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _lifeSpanMin: 0.75
+  _lifeSpanMax: 1.5
+  _MinTurns: 1
+  _MaxTurns: 5
+  _MinTurnDist: 0.75
+  _MaxTurnDist: 8
   _trail: {fileID: 9608962}
   _spark: {fileID: 11408100}
 --- !u!222 &22286458
@@ -121,11 +127,11 @@ Canvas:
   m_GameObject: {fileID: 125416}
   m_Enabled: 1
   serializedVersion: 2
-  m_RenderMode: 2
+  m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
-  m_ReceivesEvents: 1
+  m_ReceivesEvents: 0
   m_OverrideSorting: 1
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
@@ -268,6 +274,14 @@ Prefab:
       propertyPath: _spark
       value: 
       objectReference: {fileID: 11408100}
+    - target: {fileID: 0}
+      propertyPath: m_RenderMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_ReceivesEvents
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 125416}

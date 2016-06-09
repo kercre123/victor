@@ -444,6 +444,36 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
+  _BoxIntroTweenDuration: 0.75
+  _BoxIntroSettleDuration: 0.1
+  _BoxIntroStartScale: 0.15
+  _ShakeDuration: 1
+  _ShakeRotationMinAngle: 15
+  _ShakeRotationMaxAngle: 30
+  _ShakeRotationVibrato: 45
+  _ShakeRotationRandomness: 45
+  _ShakePositionMin: 15
+  _ShakePositionMax: 45
+  _ShakePositionVibrato: 45
+  _ShakePositionRandomness: 30
+  _TapDecayRate: 0.02
+  _MinScale: 0.75
+  _MaxScale: 1
+  _ChargeVFXUpdateInterval: 0.35
+  _ChargePerTap: 0.15
+  _ChargeDecayRate: 0.0045
+  _RewardExplosionDuration: 0.5
+  _RewardExplosionStayDuration: 1.5
+  _RewardExplosionFinalDuration: 0.75
+  _RewardExplosionFinalVariance: 0.5
+  _TronBurstLow: 3
+  _TronBurstMid: 5
+  _TronBurstAlmost: 8
+  _MinParticleBurst: 4
+  _MaxParticleBurst: 10
+  _OpenChestBurst: 15
+  _LootMidThreshold: 0.3
+  _LootAlmostThreshold: 0.6
   _LootStartKey: loot.Start
   _LootMidKey: loot.Mid
   _LootAlmostKey: loot.Almost
@@ -454,16 +484,14 @@ MonoBehaviour:
   - {fileID: 22489430}
   - {fileID: 22445366}
   - {fileID: 22473282}
-  _ActiveDooberTransforms: []
   _DooberStart: {fileID: 22486736}
   _FinalRewardTarget: {fileID: 22410096}
   _BoxSource: {fileID: 22412946}
   _BannerContainer: {fileID: 22405272}
   _RewardDooberPrefab: {fileID: 125416, guid: da949a90c3ec547bfb567d613a9396a5, type: 2}
-  _TronLinePrefab: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
+  _TronLightPrefab: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
   _BurstParticles: {fileID: 19874792}
-  _BannerWidgetPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998,
-    type: 2}
+  _BannerPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998, type: 2}
   _LootText: {fileID: 11411324}
   _LootButton: {fileID: 11488180}
   _LootBox: {fileID: 22481126}
