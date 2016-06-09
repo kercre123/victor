@@ -43,13 +43,13 @@ namespace Anki
 
         uint8_t count = shocks - g_shockCount[id];
 
+        g_shockCount[id] = shocks;
+
         // Do not mis-report taps / cube movement (filtering)
         if (count > 8) {
           return ;
         }
         
-        g_shockCount[id] = shocks;
-
         //DisplayStatus(id);
 
         u32 currTime_ms = HAL::GetTimeStamp();
