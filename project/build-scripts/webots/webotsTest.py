@@ -450,6 +450,7 @@ def main(scriptArgs):
 
   num_of_failed_tests = 0
   num_of_passed_tests = 0
+  num_of_total_tests = 0
 
   for _ in range(0, int(options.numRuns)):
     # save current time for logs
@@ -489,8 +490,9 @@ def main(scriptArgs):
       UtilLog.info("*************************")
       num_of_passed_tests += 1
 
+    num_of_total_tests = num_of_failed_tests + num_of_passed_tests
+    UtilLog.info("Run #{0}".format(num_of_total_tests))
 
-  num_of_total_tests = num_of_failed_tests + num_of_passed_tests
   UtilLog.info(
     "{0}/{1} ({2:.1f}%) runs failed".format(num_of_failed_tests,
                                             num_of_total_tests,
