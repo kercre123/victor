@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "util/logging/logging.h"
+#include "util/time/universalTime.h"
 
 
 namespace Anki {
@@ -27,6 +28,7 @@ void RobotAudioBuffer::PrepareAudioBuffer()
   // Prep new Continuous Stream Buffer
   _streamQueue.emplace();
   _currentStream = &_streamQueue.back();
+  _currentStream->SetCreatedTime_ms( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() );
   _isActive = true;
 }
 

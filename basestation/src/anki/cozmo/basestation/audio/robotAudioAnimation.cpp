@@ -31,8 +31,8 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimation::RobotAudioAnimation()
 {
-  // This base calss is not intended to be used, use a sub-class
-  _state = AnimationState::AnimationError;
+  // This base class is not intended to be used, use a sub-class
+  SetAnimationState( AnimationState::AnimationError );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,7 +67,55 @@ void RobotAudioAnimation::AbortAnimation()
   
   _audioBuffer->ClearBufferStreams();
   
-  _state = AnimationState::AnimationAbort;
+  SetAnimationState( AnimationState::AnimationAbort );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::string& RobotAudioAnimation::GetStringForAnimationState( AnimationState state )
+{
+  static const std::vector<std::string> animationStateStrings = {
+    "Preparing",
+    "LoadingStream",
+    "LoadingStreamFrames",
+    "AudioFramesReady",
+    "AnimationAbort",
+    "AnimationCompleted",
+    "AnimationError",
+    "AnimationStateCount"
+  };
+  ASSERT_NAMED(animationStateStrings.size() == (size_t)AnimationState::AnimationStateCount + 1,
+               "animationStateStrings.missingEnum");
+  
+  return animationStateStrings[ (size_t)state ];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint32_t RobotAudioAnimation::GetNextEventTime_ms()
+{
+  const AnimationEvent* event = GetNextEvent();
+  if ( event != nullptr ) {
+    return event->TimeInMS;
+  }
+  
+  return kInvalidEventTime;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioAnimation::SetAnimationState( AnimationState state )
+{
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_INFO("RobotAudioAnimation.SetAnimationState", "State: %s", GetStringForAnimationState(state).c_str() );
+  }
+  _state = state;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const RobotAudioAnimation::AnimationEvent* RobotAudioAnimation::GetNextEvent()
+{
+  if ( GetEventIndex() < _animationEvents.size() ) {
+    return &_animationEvents[ GetEventIndex() ];
+  }
+  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,7 +124,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   // Load animation audio events
   _animationName = anAnimation->GetName();
  
-  _state = AnimationState::Preparing;
+  SetAnimationState( AnimationState::Preparing );
   
   // Loop through tracks
   // Prep animation audio events
@@ -96,7 +144,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   }
   
   if ( _animationEvents.empty() ) {
-    _state = AnimationState::AnimationCompleted;
+    SetAnimationState( AnimationState::AnimationCompleted );
     return;
   }
   
@@ -107,7 +155,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   
   // Return error
   if ( _audioClient == nullptr || _audioBuffer == nullptr ) {
-    _state = AnimationState::AnimationError;
+    SetAnimationState( AnimationState::AnimationError );
     PRINT_NAMED_ERROR("RobotAudioAnimation.InitAnimation", "Must set _audioClient and _audioBuffer pointers");
     return;
   }
@@ -120,7 +168,11 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
     PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events Size: %lu - Enter", (unsigned long)_animationEvents.size());
     for (size_t idx = 0; idx < _animationEvents.size(); ++idx ) {
-      PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Event Id: %d AudioEvent: %d TimeInMS: %d", _animationEvents[idx].EventId, _animationEvents[idx].AudioEvent, _animationEvents[idx].TimeInMS);
+      PRINT_NAMED_INFO( "RobotAudioAnimation::LoadAnimation",
+                        "Event Id: %d AudioEvent: %s TimeInMS: %d",
+                        _animationEvents[idx].EventId,
+                        EnumToString( _animationEvents[idx].AudioEvent ),
+                        _animationEvents[idx].TimeInMS );
     }
     PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events - Exit");
   }
@@ -161,6 +213,24 @@ void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEve
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioAnimation::IsAnimationDone() const
+{
+  // Compare completed event count with number of events && there are no more audio streams
+  const bool isDone = GetCompletedEventCount() >= _animationEvents.size() && !_audioBuffer->HasAudioBufferStream();
+  
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_INFO( "RobotAudioAnimation.IsAnimationDone",
+                      "eventCount: %zu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d | Result %s",
+                      _animationEvents.size(),
+                      GetEventIndex(),
+                      GetCompletedEventCount(),
+                      _audioBuffer->HasAudioBufferStream(),
+                      isDone ? "T" : "F" );
+  }
+  
+  return isDone;
+}
 
 } // Audio
 } // Cozmo

@@ -76,25 +76,31 @@ RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot( Animation* anAnimation, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
 {
-  switch ( _state ) {
+  switch ( GetAnimationState() ) {
     case AnimationState::Preparing:
     {
       // Check if animation buffer is ready to start streaming audio
       if ( !_audioBuffer->IsWaitingForReset() ) {
-        BeginBufferingAudioOnRobotMode();  // Set state to BufferLoading
+        BeginBufferingAudioOnRobotMode();  // Set state to LoadingStream
       }
     }
       break;
       
-    case AnimationState::BufferLoading:
+    case AnimationState::LoadingStream:
     {
-      UpdateBufferLoading( startTime_ms, streamingTime_ms );
+      UpdateLoadingStream( startTime_ms, streamingTime_ms );
     }
       break;
       
-    case AnimationState::BufferReady:
+    case AnimationState::LoadingStreamFrames:
     {
-      UpdateBufferReady( startTime_ms, streamingTime_ms );
+      UpdateLoadingStreamFrames( startTime_ms, streamingTime_ms );
+    }
+      break;
+      
+    case AnimationState::AudioFramesReady:
+    {
+      UpdateAudioFramesReady( startTime_ms, streamingTime_ms );
     }
       break;
       
@@ -102,8 +108,9 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
     {
       // If in animation mode wait for buffer to be ready before completing
       // If you hit this assert it is safe to comment out, please just let me know - Jordan R.
-      ASSERT_NAMED( _state != RobotAudioAnimation::AnimationState::AnimationAbort, "Don't expect to get update calls after abort has been called.");
-      _state = AnimationState::AnimationCompleted;
+      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationAbort,
+                    "Don't expect to get update calls after abort has been called.");
+      SetAnimationState( AnimationState::AnimationCompleted );
     }
       break;
       
@@ -114,11 +121,17 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
     case AnimationState::AnimationError:
     {
       // Should not end up in this state
-      ASSERT_NAMED( _state != RobotAudioAnimation::AnimationState::AnimationError, "Should never fall into Error state!");
+      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationError,
+                    "Should never fall into Error state!" );
     }
       break;
       
-    default:
+    case AnimationState::AnimationStateCount:
+    {
+      // Should not end up in this state
+      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationStateCount,
+                    "Should never fall into AnimationStateCount state!" );
+    }
       break;
   }
   
@@ -127,47 +140,78 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
     size_t frameCount = 0;
     hasBuffer = _audioBuffer->HasAudioBufferStream();
     if ( hasBuffer ) {
-      frameCount = _audioBuffer->GetFrontAudioBufferStream()->RobotAudioMessageCount();
+      frameCount = _audioBuffer->GetFrontAudioBufferStream()->AudioFrameCount();
     }
     
-    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot.Update", "EXIT State: %hhu - HasBuffer: %d - FrameCount: %zu - HasCurrentBuffer: %d", _state, hasBuffer, frameCount, HasCurrentBufferStream() );
+    PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.Update",
+                      "EXIT time_ms: %d State: %s - HasBufferStream: %d <- FrameCount: %zu | HasCurrentStream: %d \
+                      <- FrameCount: %zu",
+                      streamingTime_ms - startTime_ms,
+                      GetStringForAnimationState( GetAnimationState() ).c_str(),
+                      hasBuffer,
+                      frameCount,
+                      HasCurrentBufferStream(),
+                      HasCurrentBufferStream() ? _currentBufferStream->AudioFrameCount() : 0 );
   }
   
-  return _state;
+  return GetAnimationState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioAnimationOnRobot::UpdateBufferLoading( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
-{  
-  // Check if there is a buffer stream & it has messages
-  if ( _audioBuffer->HasAudioBufferStream() && _audioBuffer->GetFrontAudioBufferStream()->HasRobotAudioMessage() ) {
-    _state = AnimationState::BufferReady;
+void RobotAudioAnimationOnRobot::UpdateLoadingStream( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
+{
+  // Wait for new stream
+  if ( _audioBuffer->HasAudioBufferStream() &&
+      _audioBuffer->GetFrontAudioBufferStream()->HasAudioFrame() ) {
+    // Has audio frames
+    SetAnimationState( AnimationState::AudioFramesReady );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioAnimationOnRobot::UpdateBufferReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
+void RobotAudioAnimationOnRobot::UpdateLoadingStreamFrames( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
+{
+  ASSERT_NAMED( HasCurrentBufferStream(),
+                "RobotAudioAnimationOnRobot.UpdateLoadingStreamFrames._currentBufferStream.IsNull" );
+  if ( _currentBufferStream->HasAudioFrame() ) {
+    // Has audio frames
+    SetAnimationState( AnimationState::AudioFramesReady );
+  }
+  else if ( _currentBufferStream->IsComplete() ) {
+    // Buffer stream is completed
+    _currentBufferStream = nullptr;
+    _audioBuffer->PopAudioBufferStream();
+    
+    // Check if animation audio is completed
+    if ( IsAnimationDone() ) {
+      SetAnimationState( AnimationState::AnimationCompleted );
+    }
+    else {
+      // Waiting for the next audio stream to load
+      SetAnimationState( AnimationState::LoadingStream );
+    }
+  }
+  // Else wait for more frames
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
 {
   // Check if current stream is ready for next update lap
   if ( HasCurrentBufferStream() ) {
     
     // Check if the current stream has frames left
-    if ( !_currentBufferStream->HasRobotAudioMessage() ) {
+    if ( !_currentBufferStream->HasAudioFrame() ) {
       
       // No frames in buffer stream, check if buffer is completed
-      if ( _currentBufferStream->IsComplete()) {
+      if ( _currentBufferStream->IsComplete() ) {
         // Buffer stream is completed
         _currentBufferStream = nullptr;
         _audioBuffer->PopAudioBufferStream();
-        
-        // Check if animation audio is completed
-        if ( IsAnimationDone() ) {
-          _state = AnimationState::AnimationCompleted;
-        }
       }
       else {
         // Need to wait for more frames
-        _state = AnimationState::BufferLoading;
+        SetAnimationState( AnimationState::LoadingStreamFrames );
       }
     }
     else {
@@ -176,44 +220,67 @@ void RobotAudioAnimationOnRobot::UpdateBufferReady( TimeStamp_t startTime_ms, Ti
     }
   }
   
-  // If there isn't a current stream, check if it's time to send the next buffer or send silence messages
+  // If there isn't a current stream, check if it's time to set the next audio stream or send silence messages
   if ( !HasCurrentBufferStream() ) {
-    
     // Check if animation audio is done
     if ( IsAnimationDone() ) {
-      _state = AnimationState::AnimationCompleted;
+      SetAnimationState( AnimationState::AnimationCompleted );
       return;
     }
     
     // Check if it's time for the next event
-    const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
-    while ( GetEventIndex() < _animationEvents.size() ) {
-
-      const AnimationEvent* anEvent = &_animationEvents[GetEventIndex()];
-      if ( anEvent->TimeInMS <= relevantTimeMS ) {
-       // Check if the event is valid
-        if ( anEvent->State == AnimationEvent::AnimationEventState::Error ) {
-          // Ignore invalid event, move on to next event
-          IncrementEventIndex();
-          continue;
-        }
-        
-        // Check if the buffer stream is ready
-        if ( _audioBuffer->HasAudioBufferStream() && _audioBuffer->GetFrontAudioBufferStream()->HasRobotAudioMessage() ) {
-          // Set current buffer stream
-          _currentBufferStream = _audioBuffer->GetFrontAudioBufferStream();
-        }
-        else {
-          // Wait for buffer stream to get more frames
-          _state = AnimationState::BufferLoading;
-        }
-        // Either we have set the current buffer or we are waiting for the buffer to load,
-        // therefore break out of while loop
+    const TimeStamp_t relevantTime_ms = streamingTime_ms - startTime_ms;
+    
+    // Prepare next audio stream
+    const bool isAudioStreamReady = _audioBuffer->HasAudioBufferStream() && _audioBuffer->GetFrontAudioBufferStream()->HasAudioFrame();
+    RobotAudioMessageStream* nextStream = nullptr;
+    if ( isAudioStreamReady ) {
+      nextStream = _audioBuffer->GetFrontAudioBufferStream();
+    }
+    
+    // First check if there is a stream that is overdue to play
+    if ( _didPlayFirstStream && isAudioStreamReady ) {
+      const uint32_t streamRelevantTime_ms = floor( nextStream->GetCreatedTime_ms() - _firstStreamStartTime_ms + _firstAudioEventTime_ms );
+      if ( streamRelevantTime_ms <= relevantTime_ms ) {
+        // Start playing this stream
+        _currentBufferStream = nextStream;
+        return;
+      }
+    }
+    
+    // Second if there is not an overdue stream check if it's time to play the next stream
+    const AnimationEvent* nextEvent = GetNextEvent();
+    // Loop thorugh events to remove invalid events and get next vaile event
+    while ( nextEvent != nullptr ) {
+      if ( nextEvent->State != AnimationEvent::AnimationEventState::Error ) {
+        // Valid event
         break;
       }
-      else {
-        // It not time for the next event
-        break;
+      // Else
+      // Ignore invalid event, move on to next event
+      IncrementEventIndex();
+      nextEvent = GetNextEvent();
+    }
+    
+    if ( nextEvent != nullptr ) {
+      // Have next valid event
+      // Check if it's time for play the next valid event
+      if ( nextEvent->TimeInMS <= relevantTime_ms ) {
+        if ( isAudioStreamReady ) {
+          // Determine the first valid event
+          if ( !_didPlayFirstStream ) {
+            // Setup inital contition for the fist event
+            _didPlayFirstStream = true;
+            _firstStreamStartTime_ms = nextStream->GetCreatedTime_ms();
+            _firstAudioEventTime_ms = nextEvent->TimeInMS;
+          }
+          // Setup stream
+          _currentBufferStream = nextStream;
+        }
+        else {
+          // Wait for next buffer stream
+          SetAnimationState( AnimationState::LoadingStream );
+        }
       }
     }
   }
@@ -272,10 +339,16 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     bool hasBuffer = _audioBuffer->HasAudioBufferStream();
     size_t frameCount = 0;
     if ( hasBuffer ) {
-      
-      frameCount = _audioBuffer->GetFrontAudioBufferStream()->RobotAudioMessageCount();
+      frameCount = _audioBuffer->GetFrontAudioBufferStream()->AudioFrameCount();
     }
-    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot.PopRobotAudioMessage", "EXIT PopMsg: %d - HasBuffer: %d - FrameCount: %zu - HasCurrentBuffer: %d", (out_RobotAudioMessagePtr != nullptr), hasBuffer, frameCount, HasCurrentBufferStream() );
+    PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.PopRobotAudioMessage",
+                      "EXIT PopMsg: %d - EXIT State: %s - HasBufferStream: %d <- FrameCount: %zu | HasCurrentStream: %d <- FrameCount: %zu",
+                      (out_RobotAudioMessagePtr != nullptr),
+                      GetStringForAnimationState( GetAnimationState() ).c_str(),
+                      hasBuffer,
+                      frameCount,
+                      HasCurrentBufferStream(),
+                      HasCurrentBufferStream() ? _currentBufferStream->AudioFrameCount() : 0 );
   }
 }
 
@@ -294,25 +367,10 @@ void RobotAudioAnimationOnRobot::PrepareAnimation()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioAnimationOnRobot::IsAnimationDone() const
-{
-  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation.AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", (unsigned long)_animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
-  }
-  
-  // Compare completed event count with number of events
-  if ( GetCompletedEventCount() >= _animationEvents.size() && !_audioBuffer->HasAudioBufferStream() ) {
-    return true;
-  }
-  
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
 {
  // Begin Loading robot audio buffer by posting animation audio events
-  _state = AnimationState::BufferLoading;
+  SetAnimationState( AnimationState::LoadingStream );
   
   const uint32_t firstAudioEventOffset = _animationEvents.front().TimeInMS;
   for ( auto& anEvent : _animationEvents ) {

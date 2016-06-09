@@ -156,7 +156,7 @@ void RobotAudioClient::ClearCurrentAnimation()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::UpdateAnimationIsReady()
+bool RobotAudioClient::UpdateAnimationIsReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
 {
   // No Animation allow animation to proceed
   if ( !HasAnimation() ) {
@@ -164,8 +164,16 @@ bool RobotAudioClient::UpdateAnimationIsReady()
   }
   
   // Buffer is ready to get the next frame from
-  if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::BufferReady ) {
+  if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::AudioFramesReady ) {
     return true;
+  }
+  
+  if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::LoadingStream ) {
+    const TimeStamp_t relavantTime_ms = streamingTime_ms - startTime_ms;
+    const TimeStamp_t nextEventTime_ms = _currentAnimation->GetNextEventTime_ms();
+    if ( relavantTime_ms < nextEventTime_ms ) {
+      return true;
+    }
   }
   
   // Animation is completed or has error, clear it and proceed
