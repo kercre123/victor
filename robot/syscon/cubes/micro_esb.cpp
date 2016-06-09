@@ -282,7 +282,9 @@ extern "C" void RADIO_IRQHandler()
     
       m_rx_payload->length = m_config_local.rx_address.payload_length;
       m_rx_payload->rssi = NRF_RADIO->RSSISAMPLE;
-    
+      m_rx_payload->address.rf_channel = NRF_RADIO->FREQUENCY;
+      m_rx_payload->address.address = bytewise_bit_swap((NRF_RADIO->PREFIX0 << 24) | (NRF_RADIO->BASE0 >> 8));
+
       uesb_event_handler(UESB_INT_RX_DR_MSK);
     }
     

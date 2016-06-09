@@ -29,8 +29,6 @@ const u32 MOVE_CHECK_PERIOD_MS = 250;
 // by this much, the block is considered to be moving.
 const int ACC_MOVE_THRESH = 3;
 
-
-
 namespace Anki
 {
   namespace Cozmo

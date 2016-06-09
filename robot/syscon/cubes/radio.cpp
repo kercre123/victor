@@ -407,6 +407,11 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 void Radio::prepare(void* userdata) {
   uesb_stop();
 
+    // Transmit to accessories round-robin
+  if (++currentAccessory >= TICK_LOOP) {
+    currentAccessory = 0;
+  }
+
   last_transmit = &accessories[currentAccessory];
 
   if (last_transmit->active && ++last_transmit->last_received < ACCESSORY_TIMEOUT) {
@@ -480,11 +485,6 @@ void Radio::prepare(void* userdata) {
 }
 
 void Radio::resume(void* userdata) {
-  // Transmit to accessories round-robin
-  if (++currentAccessory >= TICK_LOOP) {
-    currentAccessory = 0;
-  }
-
   if (currentAccessory >= MAX_ACCESSORIES) return ;
 
   // Reenable the radio
