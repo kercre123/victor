@@ -541,6 +541,7 @@ namespace Cozmo {
     FaceEnrollmentCompleted info;
     info.faceID = _faceID;
     info.name   = _faceName;
+    info.saidName = _sayNameWhenDone; // Assumes name was said (invalid if action does not complete succesfully)
     completionUnion.Set_faceEnrollmentCompleted(std::move( info ));
   }
   

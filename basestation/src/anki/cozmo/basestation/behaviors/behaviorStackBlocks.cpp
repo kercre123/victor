@@ -30,8 +30,9 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
-CONSOLE_VAR(f32, kMaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
-
+CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
+CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 1);
+  
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _blockworldFilterForTop( new BlockWorldFilter )
@@ -234,10 +235,10 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   return ret;
 }
 
-void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
+void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot, bool isRetry)
 {
   SET_STATE(PickingUpBlock);
-
+  
   // check that blocks are still good
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
@@ -261,29 +262,54 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     TransitionToStackingBlock(robot);
   }
   else {
+    
+    if(isRetry) {
+      ++_numPickupRetries;
+      PRINT_NAMED_INFO("BehaviorStackBlocks.TransitionToPickingUpBlock.Retrying",
+                       "Retry %d of %d", _numPickupRetries, kBSB_MaxNumPickupRetries);
+    } else {
+      _numPickupRetries = 0;
+    }
+    
+    // Don't turn towards face if this is a retry
+    const Radians maxTurnTowardsFaceAngle( (isRetry ? 0 : DEG_TO_RAD(kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg)) );
     const bool sayName = true;
-    const Radians maxTurnTowardsFaceAngle(DEG_TO_RAD(kMaxTurnTowardsFaceBeforePickupAngle_deg) );
     
     StartActing(new DriveToPickupObjectAction(robot, _targetBlockTop,
                                               false, 0, false,
                                               maxTurnTowardsFaceAngle, sayName),
                 [this,&robot](ActionResult res) {
-                  if( res == ActionResult::SUCCESS ) {
-                    TransitionToStackingBlock(robot);
+                  switch(res)
+                  {
+                    case ActionResult::SUCCESS:
+                      TransitionToStackingBlock(robot);
+                      break;
+                      
+                    case ActionResult::FAILURE_RETRY:
+                      if(_numPickupRetries < kBSB_MaxNumPickupRetries) {
+                        if( ! _retryActionAnimGroup.empty() ) {
+                          StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
+                                      [this,&robot] {
+                                        this->TransitionToPickingUpBlock(robot, true);
+                                      });
+                        }
+                        else {
+                          TransitionToPickingUpBlock(robot, true);
+                        }
+                        break;
+                      }
+                      
+                      // else fall through to FAILURE_ABORT:
+
+                    case ActionResult::FAILURE_ABORT:
+                      TransitionToWaitForBlocksToBeValid(robot);
+                      break;
+                      
+                    default:
+                      PRINT_NAMED_INFO("BehaviorStackBlock.TransitionToPickingUpBlock.UnhandledFailure",
+                                       "Pickup failed with '%s'",
+                                       EnumToString(res));
                   }
-                  else if( res == ActionResult::FAILURE_RETRY ) {
-                    if( ! _retryActionAnimGroup.empty() ) {                      
-                      StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
-                                  &BehaviorStackBlocks::TransitionToPickingUpBlock);
-                    }
-                    else {
-                      TransitionToPickingUpBlock(robot);
-                    }
-                  }
-                  else if( res == ActionResult::FAILURE_ABORT ) {
-                    TransitionToWaitForBlocksToBeValid(robot);
-                  }
-                  // else end the behavior (other failure type)
                 });
     IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   }

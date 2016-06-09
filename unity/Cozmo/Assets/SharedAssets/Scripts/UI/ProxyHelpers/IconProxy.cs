@@ -12,7 +12,7 @@ namespace Cozmo {
       private bool _ShowBackground = true;
 
       [SerializeField]
-      private Image _BackgroundImage;
+      protected Image _BackgroundImage;
 
       private void Start() {
         if (_BackgroundImage != null) {

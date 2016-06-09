@@ -45,7 +45,7 @@ app: $(ANKI_LOG_TABLE_JSON)
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
 
-nrf: $(ANKI_LOG_TABLE_JSON)
+nrf: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
@@ -98,7 +98,7 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
 	make -C espressif lib/libmain_w.a
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld FACTORY_FIRMWARE=0
 	python3 ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
-	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
+	python3 ./tools/sign.py -c --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
 esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	make -C espressif clean

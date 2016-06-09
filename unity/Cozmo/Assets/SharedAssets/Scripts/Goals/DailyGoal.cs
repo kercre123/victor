@@ -10,7 +10,7 @@ namespace Cozmo {
   namespace UI {
     [System.Serializable]
     public class DailyGoal : IDisposable {
-      
+
       public GameEvent GoalEvent;
       public LocalizedString Title;
       public LocalizedString Description;
@@ -101,7 +101,7 @@ namespace Cozmo {
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
-        
+
       }
 
       public void DebugUndoGoalProgress() {
@@ -115,7 +115,7 @@ namespace Cozmo {
             OnDailyGoalUpdated.Invoke(this);
           }
         }
-        
+
       }
 
       public void DebugResetGoalProgress() {
@@ -142,6 +142,7 @@ namespace Cozmo {
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }
+          GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnDailyGoalCompleted);
           _Completed = true;
           GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }

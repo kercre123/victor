@@ -33,7 +33,8 @@ static const char* const kPutDownAnimGroupKey = "put_down_animation_group";
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 CONSOLE_VAR(f32, kBRB_MaxTowardFaceAngle_deg, "Behavior.RollBlock", 90.f);
-
+CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
+  
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _blockworldFilter( new BlockWorldFilter )
@@ -156,14 +157,14 @@ void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
                   new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
                   new PlayAnimationGroupAction(robot, _initialAnimGroup),
                 }),
-                &BehaviorRollBlock::TransitionToPerformingAction);
+                [this,&robot]{ this->TransitionToPerformingAction(robot); });
   }
   else {
     TransitionToPerformingAction(robot);
   }
 }
 
-void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
+void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
   SET_STATE(PerformingAction);
   if( ! _targetBlock.IsSet() ) {
@@ -172,95 +173,125 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
                         GetName().c_str());
     return;
   }
+  
+  if(isRetry) {
+    ++_numRollActionRetries;
+    PRINT_NAMED_INFO("BehaviorRollBlock.TransitionToPerformingAction.Retrying",
+                     "Retry %d of %d", _numRollActionRetries, kBRB_MaxRollRetries);
+  } else {
+    _numRollActionRetries = 0;
+  }
 
-  const Radians maxTurnToFaceAngle( DEG_TO_RAD(90) );
-  const bool sayName = true;
+  // Only turn towards face if this is _not_ a retry
+  const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
+  const bool sayNameBefore = true;
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
                                                                     false, 0, false,
-                                                                    maxTurnToFaceAngle, sayName);
+                                                                    maxTurnToFaceAngle, sayNameBefore);
   rollAction->RollToUpright();
   
+  WaitForLambdaAction* waitAction = new WaitForLambdaAction(robot, [this](Robot& robot) {
+    auto block = robot.GetBlockWorld().GetActiveObjectByID(_targetBlock);
+    if(nullptr == block || !block->IsMoving()) {
+      return true;
+    } else {
+      return false;
+    }
+  });
+  
+  const bool sayNameAfter = false;
+  CompoundActionSequential* action = new CompoundActionSequential(robot, {
+    rollAction,
+    new TurnTowardsLastFacePoseAction(robot, PI_F, sayNameAfter),
+    waitAction,
+  });
+  
+  action->SetProxyTag(rollAction->GetTag());
   
   // Roll the object and then look at a person
-  StartActing(new TurnTowardsFaceWrapperAction(robot, rollAction, false, true, PI_F, true),
+  StartActing(action,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
-                if( msg.result == ActionResult::SUCCESS ) {
-                  // check if we want to run again
-
-                  // TODO:(bn) this sometimes fails because the block is still reporting that it's moving, but
-                  // in a few ticks it won't be. We should consider adding a delay here, or better yet, having
-                  // an extra state where if a cube is valid for other reasons, but is moving or not flat, we
-                  // "track" it for a while
-                  if( IsRunnable(robot) ) {
-                    TransitionToPerformingAction(robot);
-                  }
-                  else {
-                    // play success animation, but then double check if we are really done or not
-                    auto animCompleteBlock = [this](Robot& robot) {
-                      if( IsRunnable(robot) ) {
-                        TransitionToPerformingAction(robot);
-                      }
-                    };
-
+                switch(msg.result)
+                {
+                  case ActionResult::SUCCESS:
                     if( !_successAnimGroup.empty() ) {
-                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup), animCompleteBlock);
+                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
                     }
-                    else {
-                      animCompleteBlock(robot);
-                    }
-                  }
-                }
-                else if( msg.result == ActionResult::FAILURE_RETRY ) {
-                  IActionRunner* animAction = nullptr;
-                  switch(msg.completionInfo.Get_objectInteractionCompleted().result)
-                  {
-                    case ObjectInteractionResult::INCOMPLETE:
-                    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+                    break;
+                  
+                  case ActionResult::FAILURE_RETRY:
+                    if(_numRollActionRetries < kBRB_MaxRollRetries)
                     {
-                      if( ! _realignAnimGroup.empty() ) {
-                        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
-                      }
+                      SetupRetryAction(robot, msg);
                       break;
                     }
-                      
-                    default: {
-                      if( ! _retryActionAnimGroup.empty() ) {
-                        animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
-                      }
-                      break;
-                    }
-                  }
-
-                  if( nullptr != animAction ) {
-                    StartActing(animAction, &BehaviorRollBlock::TransitionToPerformingAction);
-                  }
-                  else {
-                    TransitionToPerformingAction(robot);
-                  }
-                }
-                else if( msg.result == ActionResult::FAILURE_ABORT ) {
-                  // assume that failure is because we didn't visually verify (although it could be due to an
-                  // error)
-                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
-                                   "Failed to verify roll, searching for block");
-                  StartActing(new SearchSideToSideAction(robot),
-                              [this](Robot& robot) {
-                                if( IsRunnable(robot) ) {
-                                  TransitionToPerformingAction(robot);
-                                }
-                                // TODO:(bn) if we actually succeeded here, we should play the success anim,
-                                // or at least a recognition anim
-                              });
-                }
-                else {
-                  // other failure, just end
-                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedActionNoRetry",
-                                   "action failed without retry, behavior ending");
-                }
+                    
+                    // else: too many retries, fall through to failure abort
+                    
+                  case ActionResult::FAILURE_ABORT:
+                    // assume that failure is because we didn't visually verify (although it could be due to an
+                    // error)
+                    PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
+                                     "Failed to verify roll, searching for block");
+                    StartActing(new SearchSideToSideAction(robot),
+                                [this](Robot& robot) {
+                                  if( IsRunnable(robot) ) {
+                                    TransitionToPerformingAction(robot);
+                                  }
+                                  // TODO:(bn) if we actually succeeded here, we should play the success anim,
+                                  // or at least a recognition anim
+                                });
+                    break;
+                    
+                  default:
+                    // other failure, just end
+                    PRINT_NAMED_INFO("BehaviorRollBlock.FailedRollAction",
+                                     "action failed with %s, behavior ending",
+                                     EnumToString(msg.result));
+                } // switch(msg.result)
+                
               });
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
 }
+  
+  
+void BehaviorRollBlock::SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg)
+{
+  // Pick which retry animation, if any, to play. Then try performing the action again,
+  // with "isRetry" set to true.
+  
+  IActionRunner* animAction = nullptr;
+  switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+  {
+    case ObjectInteractionResult::INCOMPLETE:
+    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+    {
+      if( ! _realignAnimGroup.empty() ) {
+        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
+      }
+      break;
+    }
+      
+    default: {
+      if( ! _retryActionAnimGroup.empty() ) {
+        animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
+      }
+      break;
+    }
+  }
+  
+  if( nullptr != animAction ) {
+    StartActing(animAction, [this,&robot]() {
+      this->TransitionToPerformingAction(robot, true);
+    });
+  }
+  else {
+    TransitionToPerformingAction(robot, true);
+  }
 
+}
+
+  
 void BehaviorRollBlock::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;

@@ -16,10 +16,12 @@ MonoBehaviour:
   _ChallengeTitleLocKey: minesweeper01.title
   _ChallengeDescriptionLocKey: minesweeper01.description
   _ChallengeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  _ChallengeIconPlainStyle: {fileID: 0}
   _UnlockId:
     _EnumValueAsString: BurpAction
     _EnumValue: 0
   _Music:
     _Music: -527946100
   MinigameConfig: {fileID: 11400000, guid: 1f7d236a9073a4bf285e4d9e7a481d35, type: 2}
+  IsMinigame: 1
   DifficultyOptions: []

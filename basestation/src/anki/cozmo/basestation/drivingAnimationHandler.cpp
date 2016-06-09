@@ -72,7 +72,15 @@ namespace Anki {
                             "Popping animations while currently playing");
       }
     
-      _drivingAnimationStack.pop_back();
+      if (_drivingAnimationStack.empty())
+      {
+        PRINT_NAMED_WARNING("DrivingAnimationHandler.PopDrivingAnimations",
+                            "Tried to pop animations but the stack is empty!");
+      }
+      else
+      {
+        _drivingAnimationStack.pop_back();
+      }
       
       if(_drivingAnimationStack.empty())
       {
@@ -147,9 +155,9 @@ namespace Anki {
       
       _endAnimCompleted = false;
       _endAnimStarted = false;
-      _drivingStartAnimTag = -1;
-      _drivingLoopAnimTag = -1;
-      _drivingEndAnimTag = -1;
+      _drivingStartAnimTag = ActionConstants::INVALID_TAG;
+      _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
+      _drivingEndAnimTag = ActionConstants::INVALID_TAG;
       _tracksToUnlock = tracksToUnlock;
       
       if(!_drivingAnimationStack.back().drivingStartAnim.empty())

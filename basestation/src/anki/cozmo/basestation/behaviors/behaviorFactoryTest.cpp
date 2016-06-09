@@ -34,15 +34,9 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/console/consoleInterface.h"
 
 #define TEST_CHARGER_CONNECT 0
-
-// Whether or not to end the test before the actual block pickup
-#define SKIP_BLOCK_PICKUP 0
-
-// Set to 1 if you want the test to actually be able to write
-// new camera calibration, calibration images, and test results to flash.
-#define ENABLE_NVSTORAGE_WRITES 1
 
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
@@ -52,12 +46,62 @@ namespace Anki {
 namespace Cozmo {
 
   ////////////////////////////
+  // Console vars
+  ////////////////////////////
+  
+  // Does the test without doing any of the writing to NVStorage
+  CONSOLE_VAR(bool, kBFT_EnableNVStorageWrites,   "BehaviorFactoryTest",  true);
+  
+  // Skips the final block pickup.
+  // Eventually, it's possible we might not need to do this part of the test and that
+  // checking the block location is sufficient, but for now keep this to false!
+  CONSOLE_VAR(bool, kBFT_SkipBlockPickup,         "BehaviorFactoryTest",  false);
+  
+  // Should be set to true once pilot build begins.
+  // EP3 robots in the office however will not have this data so skip this check.
+  CONSOLE_VAR(bool, kBFT_CheckPrevFixtureResults, "BehaviorFactoryTest",  false);
+  
+  // Station ID
+  CONSOLE_VAR(u32,  kBFT_StationID,               "BehaviorFactoryTest",  0);
+  
+  
+  ////////////////////////////
   // Static consts
   ////////////////////////////
   
+  static Pose3d _cliffDetectPose;
+  static Pose3d _camCalibPose;
+  static Pose3d _prePickupPose;
+  static Pose3d _expectedLightCubePose;
+  static Pose3d _actualLightCubePose;
+  static Pose3d _expectedChargerPose;
+  
+  // Pan and tilt angles to command robot to look at calibration targets
+  static const std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles =
+   {{0,               0},
+    {0,               DEG_TO_RAD(25)},
+    {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
+    {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
+    {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
+  };
+
+  static constexpr f32 _kCalibrationTimeout_sec = 8.f;
+  static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
+  static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
+  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
+  static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
+  static constexpr u32 _kNumPickupRetries = 1;
+  static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
+  static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
+  static constexpr FactoryID _kChargerFactoryID = 0x80000001;
+  
+  // If no change in behavior state for this long then trigger failure
+  static constexpr f32 _kWatchdogTimeout = 20;
+
+  
   // Rotation ambiguities for observed blocks.
   // We only care that the block is upright.
-  const std::vector<RotationMatrix3d> BehaviorFactoryTest::_kBlockRotationAmbiguities({
+  const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities({
     RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
     RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
   });
@@ -84,22 +128,6 @@ namespace Cozmo {
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
     _motionProfile.reverseSpeed_mmps = 80.0f;
     _motionProfile.isCustom = true;
-
-    /*
-    _camCalibPanAndTiltAngles = {{0,               0},
-                                 {0,               DEG_TO_RAD(20)},
-                                 {DEG_TO_RAD(-90), 0},
-                                 {DEG_TO_RAD(-40), 0},
-                                 {DEG_TO_RAD( 45), 0},
-     */
-    
-     // Fixture targets were smaller and lower than spec
-     _camCalibPanAndTiltAngles = {{0,               0},
-                                 {0,               DEG_TO_RAD(25)},
-                                 {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
-                                 {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
-                                 {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
-    };
     
     
     SubscribeToTags({{
@@ -175,22 +203,6 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
-    
-    // NOTE: Playpen fixutre will do the memory wipe since WipeAll reboots the robot
-    /*
-    if (ENABLE_NVSTORAGE_WRITES) {
-      // Erase all entries in flash
-      robot.GetNVStorageComponent().WipeAll(true,
-                                            [this,&robot](NVStorage::NVResult res){
-                                              if (res != NVStorage::NVResult::NV_OKAY) {
-                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.WipeAll.Failed",
-                                                                    "Result: %s", EnumToString(res));
-                                              } else {
-                                                PRINT_NAMED_INFO("BehaviorFactoryTest.WipeAll.Succeeded", "");
-                                              }
-                                            });
-    }
-     */
 
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
@@ -252,10 +264,10 @@ namespace Cozmo {
       _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
       
-      testRes.stationID = 0;   // TODO: How to get this?
+      testRes.stationID = kBFT_StationID;
 
       
-      if (ENABLE_NVSTORAGE_WRITES) {
+      if (kBFT_EnableNVStorageWrites) {
         u8 buf[testRes.Size()];
         size_t numBytes = testRes.Pack(buf, sizeof(buf));
         
@@ -322,6 +334,7 @@ namespace Cozmo {
     
     switch(_currentState)
     {
+      // - - - - - - - - - - - - - - INIT ROBOT - - - - - - - - - - - - - - -
       case FactoryTestState::InitRobot:
       {
         // Too much stuff is changing now.
@@ -367,6 +380,8 @@ namespace Cozmo {
         
         break;
       }
+
+      // - - - - - - - - - - - - - - CHARGER AND IMU CHECK - - - - - - - - - - - - - - -
       case FactoryTestState::ChargerAndIMUCheck:
       {
         
@@ -417,9 +432,16 @@ namespace Cozmo {
             connectToIDs[0] = _kChargerFactoryID;
             robot.ConnectToObjects(connectToIDs);
           }
+        
+          // 1) Drive off charger towards slot.
+          // 2) Move head down slowly. If head is stiff, hopefully this will catch it
+          //    by triggering a motor calibration.
+          auto driveAction = new DriveStraightAction(robot, 250, 100);
+          auto headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
+          headAction->SetMaxSpeed(DEG_TO_RAD_F32(20));
+          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction});
           
-          // Drive off charger
-          StartActing(robot, new DriveStraightAction(robot, 250, 100),
+          StartActing(robot, compoundAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.3;
                         return true;
@@ -428,6 +450,8 @@ namespace Cozmo {
         }
         break;
       }
+        
+      // - - - - - - - - - - - - - - DRIVE TO SLOT - - - - - - - - - - - - - - -
       case FactoryTestState::DriveToSlot:
       {
         if (!robot.IsCliffSensorOn()) {
@@ -474,6 +498,7 @@ namespace Cozmo {
         break;
       }
         
+      // - - - - - - - - - - - - - - GOTO CALIBRATION POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoCalibrationPose:
       {
         // Check that robot is in correct pose
@@ -494,6 +519,7 @@ namespace Cozmo {
         break;
       }
         
+      // - - - - - - - - - - - - - - TAKE CALIBRATION IMAGES - - - - - - - - - - - - - - -
       case FactoryTestState::TakeCalibrationImages:
       {
         // All calibration images acquired. (NOTE: the "+1" is for the initial image taken on the charger,
@@ -525,6 +551,7 @@ namespace Cozmo {
         break;
       }
         
+      // - - - - - - - - - - - - - - COMPUTE CAMERA CALIBRATION - - - - - - - - - - - - - - -
       case FactoryTestState::ComputeCameraCalibration:
       {
         // Move head down to line up for readToolCode.
@@ -546,6 +573,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::WaitForCameraCalibration);
         break;
       }
+        
+      // - - - - - - - - - - - - - - WAIT FOR CAMERA CALIBRATION - - - - - - - - - - - - - - -
       case FactoryTestState::WaitForCameraCalibration:
       {
         if (_calibrationReceived) {
@@ -556,7 +585,7 @@ namespace Cozmo {
           StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
-                        if (ENABLE_NVSTORAGE_WRITES) {
+                        if (kBFT_EnableNVStorageWrites) {
                           // Save tool code images to robot (whether it succeeded to read code or not)
                           _toolCodeImagesStored = false;
                           if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
@@ -600,7 +629,7 @@ namespace Cozmo {
                                          info.observedCalibDotRight_x, info.observedCalibDotRight_y);
                         
                         // Store results to nvStorage
-                        if (ENABLE_NVSTORAGE_WRITES) {
+                        if (kBFT_EnableNVStorageWrites) {
                           u8 buf[info.Size()];
                           size_t numBytes = info.Pack(buf, sizeof(buf));
                           if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
@@ -641,6 +670,8 @@ namespace Cozmo {
         }
         break;
       }
+        
+      // - - - - - - - - - - - - - - READ LIFT TOOL CODE - - - - - - - - - - - - - - -
       case FactoryTestState::ReadLiftToolCode:
       {
         // Wait for it to finish backing up
@@ -676,6 +707,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::GotoPickupPose);
         break;
       }
+        
+      // - - - - - - - - - - - - - - GOTO PICKUP POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
@@ -702,8 +735,42 @@ namespace Cozmo {
           break;
         }
 
-        // Verify that block is approximately where expected
+        // Write cube's pose to nv storage
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        
+        if (kBFT_EnableNVStorageWrites) {
+          f32 poseData[6] = {0,0,0,0,0,0};
+          
+          // Serialize the cube's pose
+          const Pose3d& cubePose = oObject->GetPose();
+          Radians angleX, angleY, angleZ;
+          cubePose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+          poseData[0] = angleX.ToFloat();
+          poseData[1] = angleY.ToFloat();
+          poseData[2] = angleZ.ToFloat();
+          poseData[3] = cubePose.GetTranslation().x();
+          poseData[4] = cubePose.GetTranslation().y();
+          poseData[5] = cubePose.GetTranslation().z();
+          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.WritingCubePose",
+                           "rot: %f %f %f, trans: %f %f %f",
+                           poseData[0], poseData[1], poseData[2],
+                           poseData[3], poseData[4], poseData[5]);
+          
+          if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ObservedCubePose,
+                                                                   (u8*)poseData, sizeof(poseData),
+                                                                   [this,&robot](NVStorage::NVResult res) {
+                                                                     if (res != NVStorage::NVResult::NV_OKAY) {
+                                                                       EndTest(robot, FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
+                                                                     } else {
+                                                                       PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCubePose.Success", "");
+                                                                     }
+                                                                   })) {
+                                                                     END_TEST(FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
+                                                                   }
+          
+        }
+        
+        // Verify that block is approximately where expected
         Vec3f Tdiff;
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
@@ -730,10 +797,12 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::StartPickup);
         break;
       }
+        
+      // - - - - - - - - - - - - - - START PICKUP - - - - - - - - - - - - - - -
       case FactoryTestState::StartPickup:
       {
-        if (SKIP_BLOCK_PICKUP) {
-          if (ENABLE_NVSTORAGE_WRITES) {
+        if (kBFT_SkipBlockPickup) {
+          if (kBFT_EnableNVStorageWrites) {
             if (!_toolCodeImagesStored) {
               break;
             }
@@ -770,6 +839,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::PickingUpBlock);
         break;
       }
+        
+      // - - - - - - - - - - - - - - PICKING UP BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PickingUpBlock:
       {
         
@@ -792,6 +863,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::PlacingBlock);
         break;
       }
+        
+      // - - - - - - - - - - - - - - PLACING BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PlacingBlock:
       {
         // Verify that block is where expected
@@ -832,6 +905,8 @@ namespace Cozmo {
         SetCurrState(FactoryTestState::DockToCharger);
         break;
       }
+        
+      // - - - - - - - - - - - - - - DOCK TO CHARGER - - - - - - - - - - - - - - -
       case FactoryTestState::DockToCharger:
       {
         if (!_chargerObjectID.IsSet()) {
@@ -1106,7 +1181,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     
-    if (ENABLE_NVSTORAGE_WRITES) {
+    if (kBFT_EnableNVStorageWrites) {
       
       // Save calibration to robot
       CameraCalibration calibMsg;
@@ -1210,7 +1285,18 @@ namespace Cozmo {
   Result BehaviorFactoryTest::HandleMotorCalibration(Robot& robot, const MotorCalibration &msg)
   {
     // This should never happen during the test!
-    EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+    switch(msg.motorID) {
+      case MotorID::MOTOR_HEAD:
+        EndTest(robot, FactoryTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
+        break;
+      case MotorID::MOTOR_LIFT:
+        EndTest(robot, FactoryTestResultCode::LIFT_MOTOR_CALIB_UNEXPECTED);
+        break;
+      default:
+        EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+        break;
+    }
+
     return RESULT_OK;
   }
   

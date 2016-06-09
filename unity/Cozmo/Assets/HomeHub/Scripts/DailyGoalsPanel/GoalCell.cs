@@ -20,6 +20,12 @@ namespace Cozmo {
       [SerializeField]
       private Image _CompletedBackground;
 
+      [SerializeField]
+      private Image _BoltMark;
+
+      [SerializeField]
+      private AnkiTextLabel _RewardTextLabel;
+
       public AnkiTextLabel GoalLabel {
         get {
           return _GoalLabel;
@@ -67,6 +73,7 @@ namespace Cozmo {
         }
         UpdateProgressionUI();
         SetProgress((float)goal.Progress / (float)goal.Target);
+        _RewardTextLabel.text = "+" + goal.PointsRewarded;
       }
 
       public bool GoalComplete() {
@@ -83,10 +90,14 @@ namespace Cozmo {
         if (GoalComplete()) {
           _GoalLabel.color = UIColorPalette.CompleteTextColor;
           _CompletedBackground.gameObject.SetActive(true);
+          _BoltMark.gameObject.SetActive(false);
+          _RewardTextLabel.gameObject.SetActive(false);
         }
         else {
           _GoalLabel.color = UIColorPalette.NeutralTextColor;
           _CompletedBackground.gameObject.SetActive(false);
+          _BoltMark.gameObject.SetActive(true);
+          _RewardTextLabel.gameObject.SetActive(true);
         }
       }
 
