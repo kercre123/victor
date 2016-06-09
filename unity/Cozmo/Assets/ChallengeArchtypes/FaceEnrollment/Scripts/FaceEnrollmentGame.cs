@@ -7,6 +7,10 @@ namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
     [SerializeField]
+    private FaceEnrollmentListSlide _FaceListSlidePrefab;
+    private FaceEnrollmentListSlide _FaceListSlideInstance;
+
+    [SerializeField]
     private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
