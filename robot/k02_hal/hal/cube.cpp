@@ -29,8 +29,6 @@ const u32 MOVE_CHECK_PERIOD_MS = 250;
 // by this much, the block is considered to be moving.
 const int ACC_MOVE_THRESH = 3;
 
-
-
 namespace Anki
 {
   namespace Cozmo
@@ -44,12 +42,18 @@ namespace Anki
         }
 
         uint8_t count = shocks - g_shockCount[id];
+
         g_shockCount[id] = shocks;
 
+        // Do not mis-report taps / cube movement (filtering)
+        if (count > 8) {
+          return ;
+        }
+        
         //DisplayStatus(id);
 
         u32 currTime_ms = HAL::GetTimeStamp();
-        if (count > 0 && count < 16) {
+        if (count > 0) {
           ObjectTapped m;
           m.timestamp = currTime_ms;
           m.numTaps = count;
