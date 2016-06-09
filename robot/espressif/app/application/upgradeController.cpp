@@ -63,6 +63,7 @@ namespace UpgradeController {
     OTAT_Flash_Erase,
     OTAT_Sync_Recovery,
     OTAT_Flash_Verify,
+    OTAT_Flash_Decrypt,
     OTAT_Flash_Write,
     OTAT_Wait,
     OTAT_Sig_Check,
@@ -246,6 +247,7 @@ namespace UpgradeController {
       case OTAT_Flash_Erase:
       case OTAT_Sync_Recovery:
       case OTAT_Flash_Verify:
+      case OTAT_Flash_Decrypt:
       case OTAT_Flash_Write:
       case OTAT_Wait:
       {
@@ -296,7 +298,7 @@ namespace UpgradeController {
     Ack ack;
     ack.bytesProcessed = bytesProcessed;
     ack.packetNumber   = acceptedPacketNumber;
-    os_printf("%d\n\r", phase);
+
     switch (phase)
     {
       case OTAT_Uninitalized:
@@ -441,26 +443,62 @@ namespace UpgradeController {
             }
             else
             {
+              bool encrypted = aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK;
               sha512_process(firmware_digest, buffer + counter, remaining);
-              /*if (aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK) {
-                aes_cfb_decode(
-                  AES_KEY,
-                  aes_iv,
-                  (uint8_t*) fwb->flashBlock, 
-                  (uint8_t*) fwb->flashBlock, 
-                  sizeof(fwb->flashBlock), 
-                  aes_iv);
-              }*/
 
               retries = MAX_RETRIES;
-              phase = OTAT_Flash_Write;
+              counter = 0;
+              timer = 0;
+              phase = encrypted ? OTAT_Flash_Decrypt : OTAT_Flash_Write;
             }
           }
           else
           {
+            AnkiDebug( 172, "UpgradeController.state", 490, "Sig Check", 0);
+            #if DEBUG_OTA
+            os_printf("OTA Sig header\r\n");
+            #endif
+
+            counter = 0;
+            timer = 0;
+            phase = OTAT_Sig_Check;
           }
         }
         break;
+      }
+      case OTAT_Flash_Decrypt:
+      {
+        static const int AES_CHUNK_SIZE = AES_KEY_LENGTH * 16;
+        FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+
+        if ((unsigned)counter < sizeof(fwb->flashBlock))
+        {
+          uint8_t* address = counter + (uint8_t*)fwb->flashBlock;
+          aes_cfb_decode( AES_KEY, aes_iv, address, address, AES_CHUNK_SIZE,  aes_iv);
+          
+          counter += AES_CHUNK_SIZE;
+        }
+        else
+        {
+          os_printf("%08x: ", fwb->blockAddress);
+          for (int i = 0; i < 16; i++)
+          os_printf(" %02x", ((uint8_t*)fwb->flashBlock)[i]);
+          os_printf("\n\r");
+
+          // THIS SKIPS THE BLOCK INSTEAD OF FLASHING IT
+          bufferUsed -= sizeof(FirmwareBlock);
+          os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+          bytesProcessed += sizeof(FirmwareBlock);
+          ack.bytesProcessed = bytesProcessed;
+          ack.result = OKAY;
+          RobotInterface::SendMessage(ack);
+
+          phase = OTAT_Flash_Verify;
+          counter = 0;
+          timer = 0;
+        }
+
+        break ;
       }
       case OTAT_Flash_Write:
       {
@@ -468,25 +506,7 @@ namespace UpgradeController {
 
         if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
         {
-          if (fwb->blockAddress == CERTIFICATE_BLOCK)
-          {
-            uint8_t digest[SHA512_DIGEST_SIZE];
-            sha512_done(firmware_digest, digest);
-
-            for (int i = 0; i < SHA512_DIGEST_SIZE; i++)
-              os_printf("%02x", digest[i]);
-            os_printf("\n\r");
-
-
-            AnkiDebug( 172, "UpgradeController.state", 490, "Sig Check", 0);
-            #if DEBUG_OTA
-            os_printf("OTA Sig header\r\n");
-            #endif
-            counter = 0;
-            timer = 0;
-            phase = OTAT_Sig_Check;
-          }
-          else if (fwb->blockAddress == COMMENT_BLOCK)
+          if (fwb->blockAddress == COMMENT_BLOCK)
           {
             #if DEBUG_OTA
             os_printf("OTA comment\r\n");
@@ -675,6 +695,9 @@ namespace UpgradeController {
         {
           uint8_t digest[SHA512_DIGEST_SIZE];
           sha512_done(firmware_digest, digest);
+          sha512_init(firmware_digest);
+
+          // TODO: VALIDATE HERE
 
           retries = MAX_RETRIES;
           bufferUsed -= sizeof(FirmwareBlock);

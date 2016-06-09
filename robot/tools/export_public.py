@@ -41,7 +41,7 @@ with open (args.key, "r") as fo:
 #define FLASH_STORE
 #endif
 
-static const uint8_t FLASH_STORE AES_KEY[] = {
+static const uint8_t AES_KEY[] = {
 	%s	
 };
 
