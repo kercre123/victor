@@ -4,10 +4,14 @@
  * Author: Jordan Rivas
  * Created: 11/13/2015
  *
- * Description: This consists of a circular buffer to cache the audio samples from the Cozmo Plugin update. When there
- *              is enough cached the data packed into a EngineToRobot audio sample message and is pushed into a
- *              RobotAudioMessageStream. The RobotAudioMessageStreams are stored in a FIFO queue until they are ready
- *              to be sent to the robot.
+ * Description: This is a FIFO queue of RobotAudioFrameStreams which contain a continues stream of audio frames. The
+ *              RobotAudioAnimation class will pop frames out of the RobotAudioFrameStreams and sync them with the rest
+ *              of the animation tracks. Once a RobotAudioFrameStreams is empty it will be popped of the queue. The
+ *              Audio Controller passes audio frames provided by the audio engine. First,  PrepareAudioBuffer() is
+ *              called by the Audio Controller a new stream is created and pushed onto the back of the _streamQueue.
+ *              Next, UpdateBuffer() is called by the Audio Controller to provide audio frames to the _currentStream.
+ *              When all audio frames have been added to the stream the Audio Controller will called CloseAudioBuffer()
+ *              to complete that stream.
  *
  * Copyright: Anki, Inc. 2015
  */
@@ -15,10 +19,9 @@
 #ifndef __Basestation_Audio_RobotAudioBuffer_H__
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
-#include "anki/cozmo/basestation/audio/robotAudioMessageStream.h"
+#include "anki/cozmo/basestation/audio/robotAudioFrameStream.h"
 #include "anki/cozmo/basestation/audio/audioDataTypes.h"
 #include "util/helpers/templateHelpers.h"
-#include "util/container/circularBuffer.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -48,8 +51,8 @@ public:
   // Write samples to buffer
   void UpdateBuffer( const AudioSample* samples, const size_t sampleCount );
   
-  // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
-  void ClearCache();
+  // This is called when the plug-in is terminated.
+  void CloseAudioBuffer();
 
   /*****************************************
    * Audio Client methods
@@ -60,7 +63,7 @@ public:
   bool HasAudioBufferStream() const { return !_streamQueue.empty(); }
   
   // Get the front / top Audio Buffer stream in the queue
-  RobotAudioMessageStream* GetFrontAudioBufferStream();
+  RobotAudioFrameStream* GetFrontAudioBufferStream();
   
   // Pop the front / top Audio buffer stream in the queue
   void PopAudioBufferStream() { _streamQueue.pop(); }
@@ -78,11 +81,11 @@ public:
 
 private:
   
-  // A queue of robot audio messages (continuous audio data)
-  std::queue< RobotAudioMessageStream > _streamQueue;
+  // A queue of robot audio frames (continuous audio data)
+  std::queue< RobotAudioFrameStream > _streamQueue;
   
   // Track what stream is in uses
-  RobotAudioMessageStream* _currentStream = nullptr;
+  RobotAudioFrameStream* _currentStream = nullptr;
   
   bool _isActive = false;
   

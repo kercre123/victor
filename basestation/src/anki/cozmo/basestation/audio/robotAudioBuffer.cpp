@@ -4,10 +4,14 @@
  * Author: Jordan Rivas
  * Created: 11/13/2015
  *
- * Description: This consists of a circular buffer to cache the audio samples from the Cozmo Plugin update. When there
- *              is enough cached the data packed into a EngineToRobot audio sample message and is pushed into a
- *              RobotAudioMessageStream. The RobotAudioMessageStreams are stored in a FIFO queue until they are ready
- *              to be sent to the robot.
+ * Description: This is a FIFO queue of RobotAudioFrameStreams which contain a continues stream of audio frames. The
+ *              RobotAudioAnimation class will pop frames out of the RobotAudioFrameStreams and sync them with the rest
+ *              of the animation tracks. Once a RobotAudioFrameStreams is empty it will be popped of the queue. The
+ *              Audio Controller passes audio frames provided by the audio engine. First,  PrepareAudioBuffer() is
+ *              called by the Audio Controller a new stream is created and pushed onto the back of the _streamQueue.
+ *              Next, UpdateBuffer() is called by the Audio Controller to provide audio frames to the _currentStream.
+ *              When all audio frames have been added to the stream the Audio Controller will called CloseAudioBuffer()
+ *              to complete that stream.
  *
  * Copyright: Anki, Inc. 2015
  */
@@ -49,8 +53,22 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
   _currentStream->PushRobotAudioFrame( audioFrame );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioBuffer::CloseAudioBuffer()
+{
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_NAMED_WARNING("RobotAudioBuffer.ClearCache", "CLEAR!");
+  }
+  
+  // No more samples to cache, create final Audio Message
+  _currentStream->SetIsComplete();
+  _currentStream = nullptr;
+  _isActive = false;
+  _isWaitingForReset = false;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-RobotAudioMessageStream* RobotAudioBuffer::GetFrontAudioBufferStream()
+RobotAudioFrameStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 {
   ASSERT_NAMED( !_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue befor calling this method") ;
   
@@ -71,20 +89,6 @@ void RobotAudioBuffer::ResetAudioBuffer()
   if ( _currentStream != nullptr ) {
     _isWaitingForReset = true;
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioBuffer::ClearCache()
-{
-  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_WARNING("RobotAudioBuffer.ClearCache", "CLEAR!");
-  }
-  
-  // No more samples to cache, create final Audio Message
-  _currentStream->SetIsComplete();
-  _currentStream = nullptr;
-  _isActive = false;
-  _isWaitingForReset = false;
 }
 
   

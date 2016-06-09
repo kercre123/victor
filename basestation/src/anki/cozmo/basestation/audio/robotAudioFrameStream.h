@@ -1,19 +1,19 @@
 /*
- * File: robotAudioMessageStream.h
+ * File: robotAudioFrameStream.h
  *
  * Author: Jordan Rivas
  * Created: 12/06/2015
  *
- * Description: A stream is a continuous stream of audio frames provided by the RobotAudioBuffer. The
- *              stream is thread safe to allow messages to be pushed and popped from different threads. The stream takes
- *              responsibility for the messages’s memory when they are pushed into the queue and relinquished ownership
- *              when it is popped.
+ * Description: A stream is a continuous stream of audio frames provided by the RobotAudioBuffer. The stream is thread
+ *              safe to allow messages to be pushed and popped from different threads. The stream takes responsibility
+ *              for the messages’s memory when they are pushed into the queue and relinquished ownership when it is
+ *              popped.
  *
  * Copyright: Anki, Inc. 2015
  */
 
-#ifndef __Basestation_Audio_RobotAudioMessageStream_H__
-#define __Basestation_Audio_RobotAudioMessageStream_H__
+#ifndef __Basestation_Audio_RobotAudioFrameStream_H__
+#define __Basestation_Audio_RobotAudioFrameStream_H__
 
 #include "anki/cozmo/basestation/audio/audioDataTypes.h"
 #include "util/helpers/noncopyable.h"
@@ -26,12 +26,12 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
   
-class RobotAudioMessageStream : Util::noncopyable  {
+class RobotAudioFrameStream : Util::noncopyable  {
   
 public:
   
   // Delete message left in queue
-  ~RobotAudioMessageStream();
+  ~RobotAudioFrameStream();
   
   //  Push Robot Audio Message into buffer stream, this will take ownership of message's memory
   void PushRobotAudioFrame( AudioFrameData* audioFrame );
@@ -56,15 +56,16 @@ public:
   
   // Get created time
   double GetCreatedTime_ms() const { return _createdTime_ms; }
-  
+
+
 private:
-  
+
   bool _isComplete = false;
   double _createdTime_ms = 0.0;
   using AudioFrameQueueType = std::queue< AudioFrameData* >;
   AudioFrameQueueType _audioFrameQueue;
   std::mutex _lock;
-  
+
 };
 
 
@@ -72,4 +73,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* __Basestation_Audio_RobotAudioMessageStream_H__ */
+#endif /* __Basestation_Audio_RobotAudioFrameStream_H__ */

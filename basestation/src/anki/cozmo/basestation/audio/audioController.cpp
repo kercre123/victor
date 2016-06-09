@@ -399,7 +399,7 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
                   "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetDestroyPluginCallback.RobotAudioBufferNull");
     // Done with voice clear audio buffer
     if ( buffer != nullptr ) {
-      buffer->ClearCache();
+      buffer->CloseAudioBuffer();
     }
     
     

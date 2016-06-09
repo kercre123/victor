@@ -31,7 +31,7 @@ namespace Audio {
 
 class RobotAudioClient;
 class RobotAudioBuffer;
-class RobotAudioMessageStream;
+class RobotAudioFrameStream;
 
 
 

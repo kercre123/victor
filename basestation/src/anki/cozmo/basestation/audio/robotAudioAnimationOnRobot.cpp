@@ -233,7 +233,7 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
     
     // Prepare next audio stream
     const bool isAudioStreamReady = _audioBuffer->HasAudioBufferStream() && _audioBuffer->GetFrontAudioBufferStream()->HasAudioFrame();
-    RobotAudioMessageStream* nextStream = nullptr;
+    RobotAudioFrameStream* nextStream = nullptr;
     if ( isAudioStreamReady ) {
       nextStream = _audioBuffer->GetFrontAudioBufferStream();
     }
