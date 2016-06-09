@@ -28,16 +28,16 @@ namespace Cozmo {
       [SerializeField]
       private int _MinTurns = 1;
       [SerializeField]
-      private int _MaxTurns = 5;
+      private int _MaxTurns = 4;
       [SerializeField]
-      private float _MinTurnDist = 0.75f;
+      private float _MinTurnDist = 1.0f;
       [SerializeField]
       private float _MaxTurnDist = 8.0f;
 
       private float _currDist = 0.0f;
       private float _currInterval = 0.0f;
-
       private int _currTurns = 0;
+
       [SerializeField]
       private TrailRenderer _trail;
       [SerializeField]
@@ -50,30 +50,35 @@ namespace Cozmo {
         if (_currTurns < 1) {
           _currTurns = 1;
         }
-        _spark.DOFade(1.0f, 1.0f);
+        _spark.DOFade(1.0f, 0.0f);
+        transform.position = transform.parent.position;
         _currLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
         _currDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
         _currInterval = (_lifeSpanMax / (_currTurns + 1));
         _trail.Clear();
         HandleTween();
+        _trail.enabled = true;
       }
 
-      private void OnDestroy() {
+      public void OnPool() {
         if (_currTween != null) {
           _currTween.Kill(false);
         }
+        _trail.Clear();
+        _trail.enabled = false;
+        transform.position = transform.parent.position;
       }
 
       private void FinishEffect() {
-        if (_currTween != null) {
-          _currTween.Kill(false);
-        }
         if (OnLifeSpanEnd != null) {
           OnLifeSpanEnd.Invoke(this);
         }
       }
 
       private void HandleTween() {
+        if (_currTween != null) {
+          _currTween.Kill(false);
+        }
         if (_currLifeSpan <= 0) {
           _currTween = _spark.DOFade(0.0f, _trail.time).OnComplete(FinishEffect);
         }

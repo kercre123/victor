@@ -108,8 +108,8 @@ MonoBehaviour:
   _lifeSpanMin: 0.75
   _lifeSpanMax: 1.5
   _MinTurns: 1
-  _MaxTurns: 5
-  _MinTurnDist: 0.75
+  _MaxTurns: 4
+  _MinTurnDist: 1
   _MaxTurnDist: 8
   _trail: {fileID: 9608962}
   _spark: {fileID: 11408100}
@@ -180,7 +180,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _MinTurnDist
-      value: 500
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _MaxTurnDist
@@ -281,6 +281,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: m_ReceivesEvents
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MaxTurns
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

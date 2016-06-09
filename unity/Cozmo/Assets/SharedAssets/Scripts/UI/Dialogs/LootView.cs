@@ -213,13 +213,16 @@ namespace Cozmo {
 
       private void HandleTronLightEnd(TronLight light) {
         light.OnLifeSpanEnd -= HandleTronLightEnd;
+        light.OnPool();
         _TronPool.ReturnToPool(light);
       }
 
       private void ResetTronLight(TronLight entry, bool spawned) {
-        entry.gameObject.transform.position = _AlphaController.transform.position;
         entry.gameObject.SetActive(spawned);
-        entry.Initialize();
+        if (spawned) {
+          entry.OnLifeSpanEnd += HandleTronLightEnd;
+          entry.Initialize();
+        }
       }
 
       #endregion

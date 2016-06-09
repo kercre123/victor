@@ -459,21 +459,21 @@ MonoBehaviour:
   _TapDecayRate: 0.02
   _MinScale: 0.75
   _MaxScale: 1
-  _ChargeVFXUpdateInterval: 0.35
+  _ChargeVFXUpdateInterval: 0.25
   _ChargePerTap: 0.15
   _ChargeDecayRate: 0.0045
   _RewardExplosionDuration: 0.5
   _RewardExplosionStayDuration: 1.5
   _RewardExplosionFinalDuration: 0.75
   _RewardExplosionFinalVariance: 0.5
-  _TronBurstLow: 3
-  _TronBurstMid: 5
-  _TronBurstAlmost: 8
-  _MinParticleBurst: 4
+  _TronBurstLow: 1
+  _TronBurstMid: 3
+  _TronBurstAlmost: 9
+  _MinParticleBurst: 2
   _MaxParticleBurst: 10
   _OpenChestBurst: 15
-  _LootMidThreshold: 0.3
-  _LootAlmostThreshold: 0.6
+  _LootMidThreshold: 0.25
+  _LootAlmostThreshold: 0.5
   _LootStartKey: loot.Start
   _LootMidKey: loot.Mid
   _LootAlmostKey: loot.Almost
@@ -3793,7 +3793,7 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 484, y: 624}
+  m_AnchoredPosition: {x: 410, y: 624}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22413246
@@ -4144,6 +4144,42 @@ Prefab:
       propertyPath: _TronLinePrefab
       value: 
       objectReference: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _BoxIntroTweenDuration
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _ChargeVFXUpdateInterval
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TronBurstLow
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TronBurstMid
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TronBurstAlmost
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MaxParticleBurst
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MinParticleBurst
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _LootMidThreshold
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _LootAlmostThreshold
+      value: 0.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 199250}
