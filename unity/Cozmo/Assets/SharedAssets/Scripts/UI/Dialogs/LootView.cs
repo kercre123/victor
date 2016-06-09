@@ -204,7 +204,7 @@ namespace Cozmo {
       #region tronlight pool logic
 
       private TronLight CreateTronLight() {
-        TronLight light = GameObject.Instantiate<TronLight>(_TronLightPrefab);
+        TronLight light = GameObject.Instantiate<GameObject>(_TronLightPrefab).GetComponent<TronLight>();
         light.transform.SetParent(_AlphaController.transform, false);
         light.OnLifeSpanEnd += HandleTronLightEnd;
         return light;
