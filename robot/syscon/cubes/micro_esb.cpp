@@ -168,10 +168,7 @@ uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
   if(m_rx_fifo.count == 0) return UESB_ERROR_RX_FIFO_EMPTY;
 
   DISABLE_RF_IRQ;
-  payload->length = m_rx_fifo.payload[m_rx_fifo.exit_point].length;
-  payload->rssi   = m_rx_fifo.payload[m_rx_fifo.exit_point].rssi;
-
-  memcpy(payload->data, m_rx_fifo.payload[m_rx_fifo.exit_point].data, payload->length);
+  memcpy(payload, &m_rx_fifo.payload[m_rx_fifo.exit_point], sizeof(uesb_payload_t));
 
   if(++m_rx_fifo.exit_point >= UESB_CORE_RX_FIFO_SIZE) m_rx_fifo.exit_point = 0;
   
