@@ -21,9 +21,9 @@ namespace Cozmo {
       #region Settings
 
       [SerializeField]
-      private float _lifeSpanMin = 0.75f;
+      private float _LifeSpanMin = 0.75f;
       [SerializeField]
-      private float _lifeSpanMax = 1.5f;
+      private float _LifeSpanMax = 1.5f;
       [SerializeField]
       private int _MinTurns = 1;
       [SerializeField]
@@ -56,11 +56,11 @@ namespace Cozmo {
         }
         _Spark.DOFade(1.0f, 0.0f);
         transform.position = transform.parent.position;
-        _CurrLifeSpan = UnityEngine.Random.Range(_lifeSpanMin, _lifeSpanMax);
+        _CurrLifeSpan = UnityEngine.Random.Range(_LifeSpanMin, _LifeSpanMax);
         _CurrDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
-        _CurrInterval = (_lifeSpanMax / (_CurrTurns + 1));
+        _CurrInterval = (_LifeSpanMax / (_CurrTurns + 1));
         _Trail.Clear();
-        HandleTween();
+        HandleTweenEnd();
         _Trail.enabled = true;
       }
 
@@ -79,7 +79,14 @@ namespace Cozmo {
         }
       }
 
-      private void HandleTween() {
+      // If lifespan is remaining, turn towards a new target and tween to it.
+      // If lifespan is exhausted, fade out over the time that trail will take to
+      // disappear, then trigger FinishEffect.
+      private void HandleTweenEnd() {
+        // R.A. -  Not sure why this is what fixes this instead of all the other code that should.
+        // Before we got tons of extra trails shooting across the screen with pooling.
+        // So I built this shrine and killed a Tween as an sacrificial offering
+        // this appeases Unitron the Magnanimous.
         if (_CurrTween != null) {
           _CurrTween.Kill(false);
         }
@@ -89,7 +96,7 @@ namespace Cozmo {
         else {
           _CurrDist = UnityEngine.Random.Range(_MinTurnDist, _MaxTurnDist);
           _CurrLifeSpan -= _CurrInterval;
-          _CurrTween = transform.DOMove(NewTarget(), _CurrInterval).SetRelative().OnComplete(HandleTween).SetEase(Ease.Linear);
+          _CurrTween = transform.DOMove(NewTarget(), _CurrInterval).SetRelative().OnComplete(HandleTweenEnd).SetEase(Ease.Linear);
         }
       }
 
