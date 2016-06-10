@@ -129,7 +129,7 @@ bryon_test: export_key sign_test esp release
 	python3 ./tools/fota.py
 	sleep 3
 	./tools/connectToRobot.bash 0489
-	python3 ./tools/fota.py -w ./releases/cozmo.signed.safe
+	python3 ./tools/fota.py ./releases/cozmo.signed.safe -w 0.75
 
 clean:
 	make -C clad clean

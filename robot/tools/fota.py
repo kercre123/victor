@@ -9,8 +9,9 @@ import sys, os, time, hashlib, struct, argparse
 DEFAULT_FIRMWARE_IMAGE = os.path.join("releases", "cozmo.safe")
 
 parser = argparse.ArgumentParser(description="Upgrade firmware")
-parser.add_argument("-w", "--wait", help="increase delay between blocks",
-                    action="store_true")
+parser.add_argument("-w", "--wait", type=float,
+                    nargs='?', const="2.0",
+                    help="increase delay between blocks")
 parser.add_argument("image", type=str,
                     nargs='?',
                     default=DEFAULT_FIRMWARE_IMAGE,
@@ -47,7 +48,7 @@ class OTAStreamer:
                 sys.stdout.write("Finished sending firmware image to robot")
                 sys.stdout.write(os.linesep)
                 break
-            if argv.wait: time.sleep(2)
+            if argv.wait: time.sleep(argv.wait)
         self.writing = False
 
     def OnConnect(self, connectionInfo):
