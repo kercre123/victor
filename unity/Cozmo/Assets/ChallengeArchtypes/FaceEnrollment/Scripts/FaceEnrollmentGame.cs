@@ -24,6 +24,8 @@ namespace FaceEnrollment {
 
     private string _NameForFace;
 
+    //private int _FaceIDToEdit;
+
     private int _FixedFaceID = -1;
 
     private bool _UseFixedFaceID = false;
@@ -55,8 +57,10 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
     }
 
-    private void EditExisitingName(string exisitingName) {
+    private void EditExisitingName(int faceID, string exisitingName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+      // TODO: pre fill text field with exisitng name
+      //_FaceIDToEdit = faceID;
     }
 
     private void EnterNameForNewFace() {
@@ -80,9 +84,10 @@ namespace FaceEnrollment {
       SharedMinigameView.ShowSpinnerWidget();
     }
 
-    private void HandleUpdatedNameEntered(string name) {
+    private void HandleUpdatedNameEntered(string newName) {
       HandleEnrolledFace(true);
-      // manually trigger say new name?
+      // TODO: Tell engine about the updated name
+      // TODO: manually trigger say new name?
     }
 
     private void HandleInstructionsSlideEntered() {
