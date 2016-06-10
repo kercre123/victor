@@ -8,7 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
-//#include "storage.h"
+#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
