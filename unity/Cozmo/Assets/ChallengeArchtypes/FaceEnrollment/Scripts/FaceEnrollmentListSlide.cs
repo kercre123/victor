@@ -27,4 +27,10 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
       OnEditNameRequested(faceName);
     }
   }
+
+  private void HandleNewEnrollmentRequested() {
+    if (OnEnrollNewFaceRequested != null) {
+      OnEnrollNewFaceRequested();
+    }
+  }
 }

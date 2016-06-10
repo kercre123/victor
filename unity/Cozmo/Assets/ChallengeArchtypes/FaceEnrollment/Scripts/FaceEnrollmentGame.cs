@@ -28,6 +28,8 @@ namespace FaceEnrollment {
 
     private bool _UseFixedFaceID = false;
 
+    // selects if we should save to the actual robot or only keep faces
+    // for this session. used by press demo to not save to the actual robot.
     public void SetSaveToRobot(bool saveToRobot) {
       _SaveToRobot = saveToRobot;
     }
@@ -44,24 +46,43 @@ namespace FaceEnrollment {
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.InitializeView(newView, data);
-      _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
-      _FaceListSlideInstance.OnEditNameRequested += ShowEnterNameSlide;
+      ShowFaceListSlide();
     }
 
-    private void ShowEnterNameSlide(string nameToEdit) {
-      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide", NameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+    private void ShowFaceListSlide() {
+      _FaceListSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
+      _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
+      _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
     }
 
-    private void NameInputSlideInDone() {
+    private void EditExisitingName(string exisitingName) {
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+    }
+
+    private void EnterNameForNewFace() {
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+    }
+
+    private void NewNameInputSlideInDone() {
       _EnterNameSlideInstance.RegisterInputFocus();
-      _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
+      _EnterNameSlideInstance.OnNameEntered += HandleNewNameEntered;
     }
 
-    private void HandleNameEntered(string name) {
+    private void EditNameInputSlideInDone() {
+      _EnterNameSlideInstance.RegisterInputFocus();
+      _EnterNameSlideInstance.OnNameEntered += HandleUpdatedNameEntered;
+    }
+
+    private void HandleNewNameEntered(string name) {
       _NameForFace = name;
       SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
       SharedMinigameView.ShowShelf();
       SharedMinigameView.ShowSpinnerWidget();
+    }
+
+    private void HandleUpdatedNameEntered(string name) {
+      HandleEnrolledFace(true);
+      // manually trigger say new name?
     }
 
     private void HandleInstructionsSlideEntered() {
@@ -93,7 +114,7 @@ namespace FaceEnrollment {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
       }
 
-      base.RaiseMiniGameQuit();
+      ShowFaceListSlide();
     }
 
     protected override void CleanUpOnDestroy() {
