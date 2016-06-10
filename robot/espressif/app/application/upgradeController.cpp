@@ -101,8 +101,6 @@ namespace UpgradeController {
   bool didRTIP; ///< We have written new firmare for the RTIP
   bool haveTermination; ///< Have received termination
   bool haveValidCert; ///< Have a valid certificate for the image
-  cert_state_t* cert_state;
-
 
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
@@ -386,7 +384,7 @@ namespace UpgradeController {
         {
           if (haveTermination) // If there's no more, advance now
           {
-            if (true || haveValidCert)
+            if (!aes_enabled || haveValidCert)
             {
               #if DEBUG_OTA
               os_printf("Valid certificate, applying\r\n");
@@ -666,38 +664,84 @@ namespace UpgradeController {
       }
       case OTAT_Sig_Check:
       {
-        static int ticks;
+        cert_state_t* cert_state = (cert_state_t*) Anki::Cozmo::Face::m_frame;
+        static uint32_t start_tick;
 
         switch (counter++)
         {
         case 0: // Setup
           {
             os_printf("START CERT\n\r");
+            start_tick = system_get_time();
+
+            if (cert_state == NULL) {
+              Reset();
+              break ;
+            }
+
+            haveValidCert = true;
 
             FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
             CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
-
-            ticks = system_get_time();
 
             uint8_t digest[SHA512_DIGEST_SIZE];
             sha512_done(firmware_digest, digest);
             sha512_init(firmware_digest);
 
-            //verify_init(*cert_state, RSA_CERT_MONT, CERT_RSA, digest, cert->data, cert->length);
+            verify_init(*cert_state, RSA_CERT_MONT, CERT_RSA, digest, cert->data, cert->length);
             
-            i2spiSwitchMode(I2SPI_PAUSED);
             break ;
           }
-        case 1: // Run
+        case 10000: // Stage 1
           {
-            haveValidCert = true;
+            int ticks = system_get_time();
+            
+            //i2spiSwitchMode(I2SPI_PAUSED);
+            //verify_stage1(*cert_state);
+            //i2spiSwitchMode(I2SPI_BOOTLOADER);
 
+            os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
             break ;
           }
-        case 2000: // Teardown
+        case 20000: // Stage 2
           {
+            int ticks = system_get_time();
+            
+            /*
+            //i2spiSwitchMode(I2SPI_PAUSED);
+            //verify_stage2(*cert_state);
+            //i2spiSwitchMode(I2SPI_BOOTLOADER);
+            */
+
             os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
+            break ;
+          }
+        case 30000: // Stage 3
+          {
+            int ticks = system_get_time();
+            
+            /*
+            i2spiSwitchMode(I2SPI_PAUSED);
+            verify_stage3(*cert_state);
             i2spiSwitchMode(I2SPI_BOOTLOADER);
+            */
+
+            os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
+            break ;
+          }
+        case 40000: // Stage 4
+          {
+            int ticks = system_get_time();
+            
+            /*
+            i2spiSwitchMode(I2SPI_PAUSED);
+            if (!verify_stage4(*cert_state)) {
+              Reset();
+            }
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
+            */
+
+            os_printf("DONE CERT ALL %d\n\r", system_get_time() - start_tick);
 
             retries = MAX_RETRIES;
             bufferUsed -= sizeof(FirmwareBlock);

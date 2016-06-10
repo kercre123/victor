@@ -8,8 +8,8 @@ struct cert_state_t {
   big_num_t rsa_decoded;
   big_num_t temp;
 
-  big_mont_t mont;
-  big_rsa_t rsa;
+  const big_mont_t* mont;
+  const big_rsa_t* rsa;
 
   uint8_t checksum[SHA512_DIGEST_SIZE];
 };

@@ -34,8 +34,9 @@ static void MGF1(uint8_t* db, const uint8_t* checksum, int length) {
 void verify_init(cert_state_t& state, 
   const big_mont_t& mont, const big_rsa_t& rsa, const uint8_t* checksum, const uint8_t* cert, int size) {
  
-  memcpy(&state.mont, &mont, sizeof(mont));
-  memcpy(&state.rsa, &rsa, sizeof(rsa));
+  state.mont = &mont;
+  state.rsa = &rsa;
+
   memcpy(state.checksum, checksum, SHA512_DIGEST_SIZE);
 
   state.temp.used = (size + sizeof(big_num_cell_t) - 1) / sizeof(big_num_cell_t);
@@ -46,23 +47,38 @@ void verify_init(cert_state_t& state,
 
 // Convert to montgomery domain
 void verify_stage1(cert_state_t& state) {
-  mont_to(state.mont, state.rsa_decoded, state.temp);
+  big_mont_t mont;
+
+  memcpy(&mont, state.mont, sizeof(mont));
+  mont_to(mont, state.rsa_decoded, state.temp);
 }
 
 // Exponentiate
 void verify_stage2(cert_state_t& state) {
-  mont_power(state.mont, state.temp, state.rsa_decoded, state.rsa.exp);
+  big_mont_t mont;
+  big_rsa_t rsa;
+
+  memcpy(&mont, state.mont, sizeof(mont));
+  memcpy(&rsa, state.rsa, sizeof(rsa));
+
+  mont_power(mont, state.temp, state.rsa_decoded, rsa.exp);
 }
 
 // Convert from montgomery domain
 void verify_stage3(cert_state_t& state) {
-  mont_from(state.mont, state.rsa_decoded, state.temp);
+  big_mont_t mont;
+
+  memcpy(&mont, state.mont, sizeof(mont));
+  mont_from(mont, state.rsa_decoded, state.temp);
 }
 
 // Shift off padding
 bool verify_stage4(cert_state_t& state) {
+  big_rsa_t rsa;
+  memcpy(&rsa, state.rsa, sizeof(rsa));
+
   // Calculate constants
-  const int key_length  = big_msb(state.rsa.modulo);
+  const int key_length  = big_msb(rsa.modulo);
   const int mod_length  = key_length / 8;
   const int db_length   = mod_length - SHA512_DIGEST_SIZE;
   const int salt_length = db_length - sizeof(PADDING);

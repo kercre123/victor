@@ -160,7 +160,7 @@ namespace Face {
     }
   };
 
-  u64 m_frame[COLS];
+  u64 m_frame[COLS + 12]; // OVERALLOCATE FOR OTA BECAUSE REASONS
   ScreenRect m_rects[WORKING_RECTS]; // Extra rect for working
   ScreenRect *m_activeRect;
   RectScanStatus m_scanStatus;

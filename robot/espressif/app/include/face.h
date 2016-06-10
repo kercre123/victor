@@ -22,7 +22,7 @@
 namespace Anki {
   namespace Cozmo {
     namespace Face {
-      extern u64 m_frame[128];
+      extern u64 m_frame[128+12];
 
       // Sets up data structures, call before any other methods
       Result Init();
