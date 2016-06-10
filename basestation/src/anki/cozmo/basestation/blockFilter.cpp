@@ -182,8 +182,8 @@ bool BlockFilter::Load(const std::string &path)
     if (line.length() == 0)
       continue;
     
-    if (lineIndex > (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+    if (lineIndex >= _blocks.size()) {
+      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)_blocks.size());
       break;
     }
 
