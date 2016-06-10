@@ -80,7 +80,7 @@ static void setupOperatingMode() {
   // Tear down existing mode
   switch (active_operating_mode) {
     case BODY_BLUETOOTH_OPERATING_MODE:      
-//      Bluetooth::shutdown();
+      Bluetooth::shutdown();
       break ;
     
     case BODY_WIFI_OPERATING_MODE:
@@ -100,18 +100,21 @@ static void setupOperatingMode() {
   // Setup new mode
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
+      Battery::powerOff();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       break ;
     
     case BODY_BLUETOOTH_OPERATING_MODE:
+      Battery::powerOn();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
 
-//      Bluetooth::advertise();
+      Bluetooth::advertise();
       break ;
     
     case BODY_WIFI_OPERATING_MODE:
+      Battery::powerOn();
       Backpack::lightMode(TIMER_LEDS);
 
       Radio::advertise();
@@ -137,7 +140,7 @@ int main(void)
   using namespace Anki::Cozmo::RobotInterface;
 
   Bootloader::init();
-  //Storage::init();
+  Storage::init();
 
   // Initialize our scheduler
   RTOS::init();
