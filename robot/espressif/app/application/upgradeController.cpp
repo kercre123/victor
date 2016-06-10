@@ -101,7 +101,9 @@ namespace UpgradeController {
   bool didRTIP; ///< We have written new firmare for the RTIP
   bool haveTermination; ///< Have received termination
   bool haveValidCert; ///< Have a valid certificate for the image
-  
+  cert_state_t* cert_state;
+
+
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
   static bool aes_enabled;
@@ -664,41 +666,37 @@ namespace UpgradeController {
       }
       case OTAT_Sig_Check:
       {
+        static int ticks;
 
         switch (counter++)
         {
         case 0: // Setup
           {
+            os_printf("START CERT\n\r");
+
+            FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+            CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
+
+            ticks = system_get_time();
+
+            uint8_t digest[SHA512_DIGEST_SIZE];
+            sha512_done(firmware_digest, digest);
+            sha512_init(firmware_digest);
+
+            //verify_init(*cert_state, RSA_CERT_MONT, CERT_RSA, digest, cert->data, cert->length);
+            
             i2spiSwitchMode(I2SPI_PAUSED);
             break ;
           }
         case 1: // Run
           {
-            uint8_t digest[SHA512_DIGEST_SIZE];
-            sha512_done(firmware_digest, digest);
-            sha512_init(firmware_digest);
+            haveValidCert = true;
 
-            big_mont_t mont;
-            big_rsa_t rsa;
-            memcpy(&mont, &RSA_CERT_MONT, sizeof(big_mont_t));
-            memcpy(&rsa, &CERT_RSA, sizeof(big_rsa_t));
-
-            os_printf("START CERT");
-
-            FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
-            CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
-            haveValidCert = verify_cert(mont, rsa, digest, cert->data, cert->length);
-
-            os_printf("DONE CERT");
-
-            if (!haveValidCert) {
-              Reset();
-              break ;
-            }
             break ;
           }
-        case 2: // Teardown
+        case 2000: // Teardown
           {
+            os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
             i2spiSwitchMode(I2SPI_BOOTLOADER);
 
             retries = MAX_RETRIES;

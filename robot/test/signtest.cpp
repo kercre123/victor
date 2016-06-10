@@ -86,6 +86,18 @@ int main (int argc, char** argv) {
 				continue ;
 			}
 
+			cert_state_t state;
+			verify_init(state, RSA_CERT_MONT, CERT_RSA, digest, cert.data, cert.length);
+			verify_stage1(state);
+			verify_stage2(state);
+			verify_stage3(state);
+			
+			if (!verify_stage4(state)) {
+				failure = true;
+				printf("\n\r%08x: STAGED CERT FAIL\n\r", block.blockAddress);
+				continue ;
+			}
+
 			break ;
 		default: // FLASH BLOCK
 			aes_cfb_decode(AES_KEY, aes_iv, 
