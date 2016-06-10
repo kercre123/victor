@@ -18,6 +18,8 @@ import logging
 import ConfigParser
 import Queue
 from datetime import datetime
+import collections
+import json
 
 #set up default logger
 UtilLog = logging.getLogger('webots.test')
@@ -267,58 +269,60 @@ def runAll(options):
       allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
       continue
     
-    baseWorldFile = config.get(test, 'world_file')
-    UtilLog.info('Running test: ' + test + ' in world ' + baseWorldFile)
-    
+    world_files = json.JSONDecoder().decode(config.get(test, 'world_file'))
+    for world_file in world_files:
+      # world_file = config.get(test, 'world_file')
+      UtilLog.info('Running test: ' + test + ' in world ' + world_file)
+      
 
-    try:
-      source_file_path = os.path.join(WEBOTS_WORLD_SUBPATH, baseWorldFile)
-      generated_file_path = os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName)
+      try:
+        source_file_path = os.path.join(WEBOTS_WORLD_SUBPATH, world_file)
+        generated_file_path = os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName)
 
-      generate_file_with_replace(generated_file_path, source_file_path,
-                                 worldFileTestNamePlaceHolder, test)
+        generate_file_with_replace(generated_file_path, source_file_path,
+                                   worldFileTestNamePlaceHolder, test)
 
-    except TemplateStringNotFoundException:
-      UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
-      allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
+      except TemplateStringNotFoundException:
+        UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
+        allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
 
 
-    # Run test in thread
-    testResultQueue = Queue.Queue(1)
-    runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test])
-    runWebotsThread.start()
-    runWebotsThread.join(120) # with timeout
-    
-    # Check if timeout exceeded
-    if runWebotsThread.isAlive():
-      UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
-      stopWebots(options)
-      allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
-      print 'allTestsPassed ' + str(allTestsPassed)
-      continue
+      # Run test in thread
+      testResultQueue = Queue.Queue(1)
+      runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test])
+      runWebotsThread.start()
+      runWebotsThread.join(120) # with timeout
+      
+      # Check if timeout exceeded
+      if runWebotsThread.isAlive():
+        UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
+        stopWebots(options)
+        allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
+        print 'allTestsPassed ' + str(allTestsPassed)
+        continue
 
-    # Check log for crashes, errors, and warnings
-    # TODO: Crashes affect test result, but errors and warnings do not. Should they?
-    buildFolder = get_build_folder(options)
-    logFileName = get_log_file_path(buildFolder, test, curTime)
+      # Check log for crashes, errors, and warnings
+      # TODO: Crashes affect test result, but errors and warnings do not. Should they?
+      buildFolder = get_build_folder(options)
+      logFileName = get_log_file_path(buildFolder, test, curTime)
 
-    (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
-    totalErrorCount += errorCount
-    totalWarningCount += warningCount
+      (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
+      totalErrorCount += errorCount
+      totalWarningCount += warningCount
 
-    # Check for crashes
-    if crashCount > 0:
-      UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
-      allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
-      continue
+      # Check for crashes
+      if crashCount > 0:
+        UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
+        allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
+        continue
 
-    # Get return code from test
-    if testResultQueue.empty():
-      UtilLog.error('ERROR: No result code received from ' + test)
-      allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
-      continue
-    
-    allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
+      # Get return code from test
+      if testResultQueue.empty():
+        UtilLog.error('ERROR: No result code received from ' + test)
+        allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
+        continue
+      
+      allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
 
   return (allTestsPassed, testStatuses, totalErrorCount, totalWarningCount, len (testNames))
 
