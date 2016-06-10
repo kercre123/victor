@@ -11,17 +11,17 @@ public delegate void RobotCallback(bool success);
 public delegate void FriendshipLevelUp(int newLevel);
 
 public interface ILight {
-  uint OnColor{ get; set; }
+  uint OnColor { get; set; }
 
-  uint OffColor{ get; set; }
+  uint OffColor { get; set; }
 
-  uint OnPeriodMs{ get; set; }
+  uint OnPeriodMs { get; set; }
 
-  uint OffPeriodMs{ get; set; }
+  uint OffPeriodMs { get; set; }
 
-  uint TransitionOnPeriodMs{ get; set; }
+  uint TransitionOnPeriodMs { get; set; }
 
-  uint TransitionOffPeriodMs{ get; set; }
+  uint TransitionOffPeriodMs { get; set; }
 
   void SetLastInfo();
 
@@ -188,11 +188,11 @@ public interface IRobot : IDisposable {
 
   float GetHeadAngleFactor();
 
-  void SetHeadAngle(float angleFactor = -0.8f, 
+  void SetHeadAngle(float angleFactor = -0.8f,
                     RobotCallback callback = null,
                     QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                    bool useExactAngle = false, 
-                    float accelRadSec = 2f, 
+                    bool useExactAngle = false,
+                    float accelRadSec = 2f,
                     float maxSpeedFactor = 1f);
 
   void SetRobotVolume(float volume);
@@ -290,6 +290,8 @@ public interface IRobot : IDisposable {
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendDemoResetState();
+
+  void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName);
 
   void EraseAllEnrolledFaces();
 

@@ -24,7 +24,8 @@ namespace FaceEnrollment {
 
     private string _NameForFace;
 
-    //private int _FaceIDToEdit;
+    private int _FaceIDToEdit;
+    private string _FaceOldNameEdit;
 
     private int _FixedFaceID = -1;
 
@@ -60,7 +61,8 @@ namespace FaceEnrollment {
     private void EditExisitingName(int faceID, string exisitingName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
       // TODO: pre fill text field with exisitng name
-      //_FaceIDToEdit = faceID;
+      _FaceIDToEdit = faceID;
+      _FaceOldNameEdit = exisitingName;
     }
 
     private void EnterNameForNewFace() {
@@ -86,7 +88,7 @@ namespace FaceEnrollment {
 
     private void HandleUpdatedNameEntered(string newName) {
       HandleEnrolledFace(true);
-      // TODO: Tell engine about the updated name
+      RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
       // TODO: manually trigger say new name?
     }
 

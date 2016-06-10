@@ -142,7 +142,7 @@ public class MockRobot : IRobot {
   }
 
   public void RobotDeletedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
-    
+
   }
 
   public void UpdateObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
@@ -165,7 +165,7 @@ public class MockRobot : IRobot {
   }
 
   private void QueueCallback(float delay, RobotCallback callback) {
-    _Callbacks.Add(new CallbackWrapper(){ CallbackTime = Time.time + delay, Callback = callback });
+    _Callbacks.Add(new CallbackWrapper() { CallbackTime = Time.time + delay, Callback = callback });
   }
 
   public void PlaceObjectOnGroundHere(RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -610,7 +610,7 @@ public class MockRobot : IRobot {
 
 
   public byte ID {
-    get ;
+    get;
     private set;
   }
 
@@ -839,14 +839,18 @@ public class MockRobot : IRobot {
   }
 
   public void EraseAllEnrolledFaces() {
-    
+
+  }
+
+  public void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName) {
+
   }
 
   public void SendDemoResetState() {
-    
+
   }
 
   public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
-    
+
   }
 }
