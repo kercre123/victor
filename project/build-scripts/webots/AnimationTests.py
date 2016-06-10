@@ -34,13 +34,27 @@ def main(cli_args):
     description="Runs tests on all available animations in webots"
     )
 
-  parser.add_argument("--numRuns", dest="num_runs", action="store", default=1,
+  parser.add_argument('--numRuns',
+                      dest='numRuns',
+                      action='store',
+                      default=1,
                       help="Number of runs through all available animations.")
+
+  parser.add_argument('--password',
+                      dest='password',
+                      action='store',
+                      help="""Your password is needed to add the webots executables to the firewall exception list. Can
+                      be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
+                      easily and also for build server/steps reasons.""")
 
   (options, _) = parser.parse_known_args(cli_args)
 
   # Run a test once to populate the logs and search for the available animations
-  assert webotsTest.main(["--buildType", build_type, "--configFile", "get_animations.cfg"]) == 0
+  assert webotsTest.main([
+    "--buildType", build_type,
+    "--configFile", "get_animations.cfg",
+    "--password", options.password
+    ]) == 0
 
   project_root = webotsTest.find_project_root()
   build_folder = os.path.join(project_root, webotsTest.BUILD_SUBPATH, build_type, '')
@@ -84,7 +98,8 @@ def main(cli_args):
   assert webotsTest.main([
     "--buildType", build_type,
     "--configFile", generated_cfg_name,
-    "--numRuns", str(options.num_runs)
+    "--numRuns", str(options.numRuns),
+    "--password", options.password
     ]) == 0
 
 
