@@ -19,9 +19,9 @@ MonoBehaviour:
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
-  MinSequenceLength: 1
-  MaxSequenceLength: 20
-  TimeBetweenBeats: 0.35
+  MinSequenceLength: 3
+  MaxSequenceLength: 30
+  TimeBetweenBeats: 0.6
   TimeWaitFirstBeat: 1
   CozmoGuessCubeCorrectPercentage:
     serializedVersion: 2
