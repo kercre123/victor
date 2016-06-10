@@ -64,14 +64,14 @@ class INetConnection:
             # Send it back to the engine so it can calculate latency
             self._SendPingResponse(msg)
         else:
-            #latency = time.time() - msg.timeSent
+            #latency = (1000.0 * time.time()) - msg.timeSent_ms
             pass
 
     def _SendPing(self):
         "Send a Ping message to the engine with the current time"
         outPingMsg = self.GToEI.Ping()
         outPingMsg.counter = self.pingCount 
-        outPingMsg.timeSent = time.time()
+        outPingMsg.timeSent_ms = (1000.0 * time.time())
         outPingMsg.isResponse = False
         toEngMsg = self.GToEM(Ping = outPingMsg)
         self.SendMessage(toEngMsg, False)
@@ -81,7 +81,7 @@ class INetConnection:
         "When receiving a ping from the engine, reply with an identical response (so that that engine can calculate latency etc.)"
         outPingMsg = self.GToEI.Ping()
         outPingMsg.counter = msg.counter
-        outPingMsg.timeSent = msg.timeSent
+        outPingMsg.timeSent_ms = msg.timeSent_ms
         outPingMsg.isResponse = True
         toEngMsg = self.GToEM(Ping = outPingMsg)
         self.SendMessage(toEngMsg, False)

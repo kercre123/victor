@@ -34,6 +34,9 @@ struct IncomingPacket;
   
 namespace Util {
   class TransportAddress;
+  namespace Stats {
+    class StatsAccumulator;
+  }
 }
 
 namespace Cozmo {
@@ -69,6 +72,8 @@ public:
   void HandleMessage(const T& msg);
   
   Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
+  
+  const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
 protected:
   void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);

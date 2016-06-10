@@ -237,6 +237,11 @@ Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobo
   
   return RESULT_OK;
 }
+ 
+const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
+{
+  return _channel->GetQueuedTimes_ms();
+}
   
 template<>
 void MessageHandler::HandleMessage(const ExternalInterface::ReliableTransportRunMode& msg)

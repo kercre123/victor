@@ -30,6 +30,11 @@ namespace Comms {
   class AdvertisementService;
   class MsgPacket;
 }
+namespace Util {
+  namespace Stats {
+    class StatsAccumulator;
+  }
+}
 }
 
 namespace Anki {
@@ -67,6 +72,8 @@ namespace Anki {
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame>& GetEventMgrToGame() { return _eventMgrToGame; }
       AnkiEventMgr<ExternalInterface::MessageGameToEngine>& GetEventMgrToEngine() { return _eventMgrToEngine; }
+      
+      const Util::Stats::StatsAccumulator& GetLatencyStats(UiConnectionType type) const;
       
       bool HasDesiredNumUiDevices() const;
 

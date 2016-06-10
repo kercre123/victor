@@ -34,7 +34,8 @@ public:
   PendingMessage(PendingMessage&& rhs) noexcept = default;
   PendingMessage& operator=(PendingMessage&& rhs) noexcept = default;
   
-  void Set(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId, bool flushPacket);
+  void Set(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId,
+           bool flushPacket, NetTimeStamp externalQueuedTime);
 
   void DestroyMessage();
 
@@ -44,9 +45,14 @@ public:
   EReliableMessageType  GetType()         const { return (EReliableMessageType)_messageType; }
   
   bool                  IsReliable()      const { return (_sequenceNumber != k_InvalidReliableSeqId); }
-
+  
+  bool                  HasExternalQueuedTime() const     { return (_externalQueuedTime != kNetTimeStampZero); }
+  NetTimeStamp          GetExternalQueuedDuration() const { return HasExternalQueuedTime() ? (_queuedTime - _externalQueuedTime) : kNetTimeStampZero; }
+  
+  NetTimeStamp          GetQueuedTime()    const { return _queuedTime; }
   NetTimeStamp          GetFirstSentTime() const { return _firstSentTime; }
   NetTimeStamp          GetLastSentTime()  const { return _lastSentTime; }
+  bool                  HasBeenSent() const      { return (_lastSentTime != kNetTimeStampZero); }
   void                  UpdateLatestSentTime(NetTimeStamp newVal);
   
   bool                  ShouldFlushPacket() const { return _flushPacket; }
@@ -57,8 +63,10 @@ private:
   PendingMessage(const PendingMessage& rhs);
   PendingMessage& operator=(const PendingMessage& rhs);
 
-  NetTimeStamp        _firstSentTime;
-  NetTimeStamp        _lastSentTime;
+  NetTimeStamp        _externalQueuedTime; // Time that async request to queue was made
+  NetTimeStamp        _queuedTime;         // Time that we processed the request and queued the message
+  NetTimeStamp        _firstSentTime;      // Very first time that message was sent over a socket
+  NetTimeStamp        _lastSentTime;       // Most recent time that message was sent over a socket
   uint8_t*            _message;
   uint32_t            _messageSize;
   ReliableSequenceId  _sequenceNumber;
