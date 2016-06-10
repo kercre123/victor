@@ -61,6 +61,7 @@ __heap_limit
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
+                IMPORT  EnterRecovery
 
 __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler
@@ -112,6 +113,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
+                DCD     EnterRecovery
 
 __Vectors_End	
 __Vectors_Size  EQU     __Vectors_End - __Vectors

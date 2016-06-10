@@ -188,7 +188,7 @@ bool big_shl(big_num_t& out, const big_num_t& a, const int bits) {
     carry.upper = carry.lower;
     carry.lower = (index-- >= 0) ? a.digits[index] : 0;
 
-    out.digits[write--] = carry.word >> (16 - shift);
+    out.digits[write--] = carry.word >> (CELL_BITS - shift);
   }
 
   bit_reduce(out);
@@ -245,10 +245,10 @@ bool big_unsigned_subtract(big_num_t& out, const big_num_t& a, const big_num_t& 
   union {
     struct {
       big_num_cell_t lower;
-      int16_t upper;
+      big_num_signed_cell_t upper;
     } parts;
 
-    uint32_t word;
+    big_num_double_cell_t word;
   };
 
   int idx;

@@ -10,7 +10,7 @@ struct BootLoaderSignature {
   uint8_t   *rom_start;
   uint32_t  rom_length;
   uint32_t  checksum;
-	uint32_t	evil_word;
+  uint32_t	evil_word;
 };
   
 static const int          BOOT_HEADER_LOCATION = 0x18000;
@@ -20,6 +20,6 @@ static const BootLoaderSignature* IMAGE_HEADER = (BootLoaderSignature*) BOOT_HEA
 
 static const int MAX_TIMEOUT = 1000000;
 
-void EnterRecovery(void);
+extern "C" void EnterRecovery(void);
 
 #endif

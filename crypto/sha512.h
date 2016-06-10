@@ -5,15 +5,22 @@
 #include <stdint.h>
 
 #define SHA512_DIGEST_SIZE  64
+#define SHA512_BLOCK_SIZE  128
 
 #define SHA512_OID          0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03
 
+#ifdef TARGET_ESPRESSIF
+#define FLASH_STORE ICACHE_RODATA_ATTR STORE_ATTR
+#else
+#define FLASH_STORE
+#endif
+
 struct sha512_state
 {
-    uint64_t length;
-    uint64_t state[8];
-    uint32_t curlen;
-    unsigned char buf[128];
+    uint64_t    length;
+    uint64_t    state[8];
+    uint32_t    curlen;
+    uint8_t     buf[128];
 };
 
 void sha512_init(sha512_state& md);

@@ -83,7 +83,7 @@ class ConnectionState:
 
 class _Dispatcher(IDataReceiver):
     "An IDataReciver interface implementation which dispatches messages to / from the robot"
-    def __init__(self, transport, warnMsgErrors):
+    def __init__(self, transport, warnMsgErrors, forkTransportThread=True):
         transport.OpenSocket()
         self.warnMsgErrors = warnMsgErrors
         self.state = ConnectionState.notConnected
@@ -93,7 +93,7 @@ class _Dispatcher(IDataReceiver):
         self.OnDisconnectedSubscribers = []
         self.ReceiveDataSubscribers = {} # Dict for message tags
         self.transport = ReliableTransport(transport, self)
-        self.transport.start()
+        if forkTransportThread: self.transport.start()
         self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE_LOCAL if os.path.isfile(ANKI_LOG_STRING_TABLE_LOCAL) else ANKI_LOG_STRING_TABLE_GLOBAL)
 
     def Connect(self, dest=("172.31.1.1", 5551), syncTime=0):
@@ -215,11 +215,11 @@ class _Dispatcher(IDataReceiver):
     def send(self, msg):
         return self.transport.SendData(True, False, self.dest, msg.pack())
 
-def Init(warnMsgErrors=True, transport=UDPTransport()):
+def Init(warnMsgErrors=True, transport=UDPTransport(), forkTransportThread=True):
     "Initalize the robot interface. Must be called before any other methods"
     global dispatcher
     if dispatcher is None:
-        dispatcher = _Dispatcher(transport, warnMsgErrors)
+        dispatcher = _Dispatcher(transport, warnMsgErrors, forkTransportThread)
     elif warnMsgErrors:
         dispatcher.warnMsgErrors = True
     return dispatcher
@@ -273,3 +273,8 @@ def SubscribeToTag(tag, callback):
         dispatcher.ReceiveDataSubscribers[tag].append(callback)
     else:
         dispatcher.ReceiveDataSubscribers[tag] = [callback]
+
+def Step():
+    "Step transport thread if not forked"
+    global dispatcher
+    dispatcher.transport.step()

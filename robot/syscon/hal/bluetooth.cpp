@@ -8,6 +8,8 @@
 #include "messages.h"
 #include "storage.h"
 
+#include "publickeys.h"
+
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -62,8 +64,8 @@ static bool tx_pending;
 static bool tx_buffered;
 
 static DiffieHellman dh_state = {
-  &DEFAULT_DIFFIE_GROUP,
-  &DEFAULT_DIFFIE_GENERATOR,
+  &RSA_DIFFIE_MONT,
+  &RSA_DIFFIE_EXP_MONT,
 };
 
 extern "C" void conn_params_error_handler(uint32_t nrf_error)

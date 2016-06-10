@@ -3,7 +3,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "../crypto/bignum.h"
+#include "bignum.h"
+
+#include "publickeys.h"
 
 // This is not crypto secure
 void random_big(big_num_t& num, int size) {
@@ -81,7 +83,7 @@ void print_hex(const big_num_t& num) {
 int main(int argc, char** argv) {
 	big_num_t x, y;
 
-	big_num_t t1, t2;
+	big_num_t t1, t2_a, t2_b;
 
 	srand(time(NULL));
 	random_big(x, 128 / CELL_BITS);
@@ -91,18 +93,26 @@ int main(int argc, char** argv) {
 
 	// Attempt to do a montgomery power (p ** x ** y)
 	printf("---\r\n");
-	mont_power(DEFAULT_DIFFIE_GROUP, t1, DEFAULT_DIFFIE_GENERATOR, x);
-	mont_power(DEFAULT_DIFFIE_GROUP, t1, t1, y);
-	mont_from(DEFAULT_DIFFIE_GROUP, t2, t1);
-	print_hex(t2);
+	mont_power(RSA_DIFFIE_MONT, t1, RSA_DIFFIE_EXP_MONT, x);
+	mont_power(RSA_DIFFIE_MONT, t1, t1, y);
+	mont_from(RSA_DIFFIE_MONT, t2_a, t1);
+	print_hex(t2_a);
 
 	// Attempt to do a montgomery power (p ** y ** x)
 	printf("---\r\n");
-	mont_power(DEFAULT_DIFFIE_GROUP, t1, DEFAULT_DIFFIE_GENERATOR, y);
-	mont_power(DEFAULT_DIFFIE_GROUP, t1, t1, x);
-	mont_from(DEFAULT_DIFFIE_GROUP, t2, t1);
-	print_hex(t2);
+	mont_power(RSA_DIFFIE_MONT, t1, RSA_DIFFIE_EXP_MONT, y);
+	mont_power(RSA_DIFFIE_MONT, t1, t1, x);
+	mont_from(RSA_DIFFIE_MONT, t2_b, t1);
+	print_hex(t2_b);
 
-	return 0;
+	// Zero out unused space so we can do a memcmp
+	for (int i = t2_a.used; i < CELL_SIZE; i++) {
+		t2_a.digits[i] = 0;
+	}
+
+	for (int i = t2_b.used; i < CELL_SIZE; i++) {
+		t2_b.digits[i] = 0;
+	}
+
+	return memcmp(&t2_a, &t2_b, sizeof(big_num_t));
 }
-

@@ -102,16 +102,19 @@ class ReliableTransport(threading.Thread):
         self.KillThread()
         self.ClearConnections()
 
+    def step(self):
+        workToDo = self.lock.acquire(False) # Don't block on mutex, just declare false
+        if workToDo:
+            workToDo = len(self.queue) > 0
+            self.lock.release()
+        else:
+            rlist, wlist, xlist = select.select([self.unreliable], [], [], 0.100)
+        self.Update()
+
     def run(self):
         while self._continue:
-            workToDo = self.lock.acquire(False) # Don't block on mutex, just declare false
-            if workToDo:
-                workToDo = len(self.queue) > 0
-                self.lock.release()
-            else:
-                rlist, wlist, xlist = select.select([self.unreliable], [], [], 0.100)
-            self.Update()
-
+            self.step()
+            
     def KillThread(self):
         "Clean up the thread"
         self._continue = False

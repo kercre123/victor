@@ -441,7 +441,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
     case RobotInterface::FTM_BLE_Off:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_WIFI_OPERATING_MODE;
+      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
