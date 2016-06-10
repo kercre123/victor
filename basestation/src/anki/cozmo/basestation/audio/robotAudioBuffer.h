@@ -50,7 +50,6 @@ public:
   
   // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
   void ClearCache();
-  
 
   /*****************************************
    * Audio Client methods
@@ -58,7 +57,7 @@ public:
 
   bool IsActive() const { return _isActive; }
   
-  bool HasAudioBufferStream() const { return _streamQueue.size() > 0; }
+  bool HasAudioBufferStream() const { return !_streamQueue.empty(); }
   
   // Get the front / top Audio Buffer stream in the queue
   RobotAudioMessageStream* GetFrontAudioBufferStream();
@@ -75,7 +74,8 @@ public:
   
   // Check if the buffer is in the reset audio buffer state
   bool IsWaitingForReset() const { return _isWaitingForReset; }
-  
+
+
 private:
   
   // A queue of robot audio messages (continuous audio data)

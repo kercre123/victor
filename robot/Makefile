@@ -47,7 +47,7 @@ app: $(ANKI_LOG_TABLE_JSON)
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
 
-nrf: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
+nrf: export_key $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)

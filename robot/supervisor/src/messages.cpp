@@ -72,7 +72,8 @@ namespace Anki {
         // Cache for power state information
         float vBat;
         float vExt;
-        u8 chargeStat;
+        bool onCharger;
+        bool isCharging;
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -212,8 +213,6 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
-        //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
-        //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
@@ -750,7 +749,8 @@ namespace Anki {
       {
         vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
         vExt = static_cast<float>(msg.VExtFixed)/65536.0f;
-        chargeStat = msg.chargeStat;
+        onCharger  = msg.onCharger;
+        isCharging = msg.isCharging;
       }
       void Process_getPropState(const PropState& msg)
       {
@@ -921,7 +921,7 @@ namespace Anki {
           tsm.cliffLevel = g_dataToHead.cliffLevel,
           tsm.battVolt10x = static_cast<uint8_t>(vBat * 10.0f);
           tsm.extVolt10x  = static_cast<uint8_t>(vExt * 10.0f);
-          tsm.chargeStat  = chargeStat;
+          tsm.chargeStat  = (onCharger << 0) | (isCharging << 1);
           RobotInterface::SendMessage(tsm);
         }
 #endif
@@ -1073,12 +1073,12 @@ namespace Anki {
       }
       bool BatteryIsCharging()
       {
-        return false;
+        return Messages::isCharging;
       }
       bool BatteryIsOnCharger()
       {
-        return Messages::vExt > 4.0f;
-      }  
+        return Messages::onCharger;
+      }
 #else
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {

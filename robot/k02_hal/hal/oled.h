@@ -62,7 +62,7 @@ namespace Anki
         void Init(void);
         void ClearFace(void);
         void FeedFace(bool rect, const uint8_t *face_bytes);
-        void DisplayDigit(int x, int y, int current_mode);
+        void DisplayDigit(int x, int y, char c);
       }
     }
   }

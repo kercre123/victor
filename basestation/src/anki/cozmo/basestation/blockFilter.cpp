@@ -22,6 +22,12 @@
 //
 #include <sys/stat.h>
 
+
+// WORKAROUND: For some reason objects in slot 0 display lights incorrectly so don't use it.
+//             The real fix belongs in robot body firmware.
+#define DONT_USE_SLOT0 1
+
+
 namespace Anki {
 namespace Cozmo {
     
@@ -69,7 +75,13 @@ bool BlockFilter::ContainsFactoryId(FactoryID factoryId) const
 void BlockFilter::AddFactoryId(const FactoryID factoryId)
 {
   // Find an available slot
-  FactoryIDArray::iterator it = std::find(std::begin(_blocks), std::end(_blocks), 0);
+  auto startIter = std::begin(_blocks);
+
+  if (DONT_USE_SLOT0) {
+    ++startIter;
+  }
+  
+  FactoryIDArray::iterator it = std::find(startIter, std::end(_blocks), 0);
   if (it != _blocks.end()) {
     *it = factoryId;
     ConnectToBlocks();
@@ -159,14 +171,19 @@ bool BlockFilter::Load(const std::string &path)
   }
 
   int lineIndex = 0;
+  
+  if (DONT_USE_SLOT0) {
+    lineIndex = 1;
+  }
+  
   std::string line;
   while (std::getline(inputFileSteam, line))
   {
     if (line.length() == 0)
       continue;
     
-    if (lineIndex > (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+    if (lineIndex >= _blocks.size()) {
+      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)_blocks.size());
       break;
     }
 

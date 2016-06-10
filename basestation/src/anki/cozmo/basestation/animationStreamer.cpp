@@ -35,7 +35,7 @@ namespace Cozmo {
   const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
-  CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 1000);
+  CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context,
@@ -1235,7 +1235,7 @@ namespace Cozmo {
         // Update the RobotAudioAnimation object
         _audioClient.GetCurrentAnimation()->Update(startTime_ms, streamingTime_ms);
         // Check if audio is ready to proceed.
-        result = _audioClient.UpdateAnimationIsReady();
+        result = _audioClient.UpdateAnimationIsReady( startTime_ms, streamingTime_ms );
         
         // If audio takes too long abort animation
         if ( !result ) {
@@ -1245,7 +1245,12 @@ namespace Cozmo {
           }
           else {
             if ( (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms) > kAnimationAudioAllowedBufferTime_ms ) {
-              PRINT_NAMED_WARNING("AnimationStreamer.ShouldProcessAnimationFrame", "Abort animation '%s' due to audio issue", anim->GetName().c_str());
+              PRINT_NAMED_ERROR("AnimationStreamer.ShouldProcessAnimationFrame",
+                                "Abort animation '%s' due to audio issue @ relTime_ms %d buffer State %s",
+                                anim->GetName().c_str(),
+                                (streamingTime_ms - startTime_ms),
+                                Audio::RobotAudioAnimation::GetStringForAnimationState( _audioClient.GetCurrentAnimation()->GetAnimationState() ).c_str() );
+              
               if (kFullAnimationAbortOnAudioTimeout) {
                 // Abort the entire animation
                 Abort();

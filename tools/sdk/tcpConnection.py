@@ -51,10 +51,10 @@ class TcpConnection(INetConnection):
         self._CloseSocket()
         super().Disconnect()
 
-    # In this case, we do not need to completely close the socket and recreate a connection,
-    # we can just begin searching again for a connection on the existing socket
+    # We must ensure we destroy the TCP connection otherwise we will dangle the socket
     def ResetConnection(self):
-        super().Disconnect()
+        "Reset the connection and allow it to attempt to reconnect on future updates"
+        self._Reconnect()
 
     def _Reconnect(self):
         self.Disconnect()
@@ -146,7 +146,7 @@ class TcpConnection(INetConnection):
                 # We have the whole message
                 data = self.recvBuffer[2:2+messageSize]
                 self.recvBuffer = self.recvBuffer[2+messageSize: ]
-                return data, self.addr
+                return self._FilterReceivedMessage(data, self.addr)
         
         return None, None 
 

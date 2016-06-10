@@ -19,7 +19,7 @@ namespace DataPersistence {
       }
     }
 
-    private DataPersistenceManager() { 
+    private DataPersistenceManager() {
       if (File.Exists(sSaveFilePath)) {
         try {
           string fileData = File.ReadAllText(sSaveFilePath);
@@ -67,20 +67,28 @@ namespace DataPersistence {
 
     public readonly SaveData Data;
 
-    public TimelineEntryData CurrentSession { 
-      get { 
+    public TimelineEntryData CurrentSession {
+      get {
         var lastSession = Data.DefaultProfile.Sessions.LastOrDefault();
-        if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {            
+        if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {
           return lastSession;
         }
-        return null;
-      } 
+
+        // create a new session
+        TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
+        newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
+        DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
+        DataPersistenceManager.Instance.Save();
+
+        return newSession;
+      }
     }
+
 
     public void Save() {
       try {
         if (File.Exists(sSaveFilePath)) {
-          if (File.Exists(sBackupSaveFilePath)) { 
+          if (File.Exists(sBackupSaveFilePath)) {
             File.Delete(sBackupSaveFilePath);
           }
 
@@ -104,7 +112,7 @@ namespace DataPersistence {
     public void DebugSave(string jsonValue) {
       try {
         if (File.Exists(sSaveFilePath)) {
-          if (File.Exists(sBackupSaveFilePath)) { 
+          if (File.Exists(sBackupSaveFilePath)) {
             File.Delete(sBackupSaveFilePath);
           }
 

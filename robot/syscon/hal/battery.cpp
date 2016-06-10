@@ -26,10 +26,13 @@ const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
 
 const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
+static int ContactTime = 0;
+
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
-Fixed vBat, vExt;
+static Fixed vBat, vExt;
+static bool isCharging;
 
 // Which pin is currently being used in the ADC mux
 AnalogInput m_pinIndex;
@@ -70,8 +73,9 @@ static void SendPowerStateUpdate(void *userdata)
   PowerState msg;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
-  msg.chargeStat = Battery::onContacts;
   msg.batteryLevel = Battery::getLevel();
+  msg.onCharger  = ContactTime > MinContactTime;
+  msg.isCharging = isCharging;
   RobotInterface::SendMessage(msg);
 }
 
@@ -141,7 +145,6 @@ void Battery::powerOff()
   // Shutdown the extra things
   nrf_gpio_pin_clear(PIN_PWR_EN);
   MicroWait(10000);
-  NVIC_SystemReset();
 }
 
 static inline void sampleCliffSensor() {
@@ -183,6 +186,7 @@ void Battery::manage(void* userdata)
       if (vBat < VBAT_CHGD_LO_THRESHOLD) {
         if (++lowBatTimer >= LOW_BAT_TIME) {
           powerOff();
+          NVIC_SystemReset();
         }
       } else {
         lowBatTimer = 0;
@@ -197,7 +201,7 @@ void Battery::manage(void* userdata)
         if (NRF_ADC->RESULT < 0x30) {
           if (++ground_short > 30) {
             Battery::powerOff();
-            for (;;) ;
+            NVIC_SystemReset();
           }
         } else {
           ground_short = 0;
@@ -206,8 +210,6 @@ void Battery::manage(void* userdata)
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
         startADCsample(ANALOG_CLIFF_SENSE);
-                
-        static int ContactTime = 0;
         
         if (!onContacts) {
           ContactTime = 0;
@@ -217,8 +219,10 @@ void Battery::manage(void* userdata)
 
         if (ContactTime < MaxContactTime && ContactTime > MinContactTime) {
           nrf_gpio_pin_set(PIN_CHARGE_EN);
+          isCharging = true;
         } else {
           nrf_gpio_pin_clear(PIN_CHARGE_EN);
+          isCharging = false;
         }
       }
       break ;
