@@ -238,7 +238,6 @@ def generate_file_with_replace_pass_data(generated_file_path, source_data,
       if `template_string` does not exist inside `source_data`
   """
 
-  # import pdb;pdb.set_trace()
   if template_string not in source_data:
     raise TemplateStringNotFoundException(template_string, source_data)
 
