@@ -27,7 +27,6 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(1.0f);
       // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
       _LastTappedTime = Time.time;
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerTurnStarted);
     }
 
     public override void Update() {
@@ -68,22 +67,25 @@ namespace Simon {
     }
 
     private void PlayerLoseGame() {
-      _GameInstance.SetCubeLightsGuessWrong();
+      _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      _StateMachine.SetNextState(new AnimationGroupState(
+                                        AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnSimonCozmoWin),
+                                        HandleOnPlayerLoseAnimationDone));
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
     }
 
     private void PlayerWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
 
-      // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
-      // and feel a bit thwarted 
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnPlayerWinAnimationDone));
+      // AnimationManager will send callback to HandleOnPlayerWinAnimationDone
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete);
+      _StateMachine.SetNextState(new AnimationGroupState(
+                                              AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnSimonPlayerWin),
+                                              HandleOnPlayerWinAnimationDone));
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {

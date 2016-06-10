@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Anki.Debug;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,10 +35,21 @@ namespace Simon {
 
     public MusicStateWrapper BetweenRoundsMusic;
 
+    private static bool _sShowWrongCubeTap = false;
+    private void HandleDebugShowWrongTapColor(System.Object setvar) {
+      _sShowWrongCubeTap = !_sShowWrongCubeTap;
+    }
+
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       _Config = (SimonGameConfig)minigameConfigData;
       BetweenRoundsMusic = _Config.BetweenRoundsMusic;
       InitializeMinigameObjects();
+
+      DebugConsoleData.Instance.AddConsoleFunctionUnity("Simon Toggle Debug Show Wrong", "Minigames", HandleDebugShowWrongTapColor);
+    }
+
+    protected override void CleanUpOnDestroy() {
+      DebugConsoleData.Instance.RemoveConsoleFunctionUnity("Simon Toggle Debug Show Wrong", "Minigames");
     }
 
     // Use this for initialization
@@ -75,9 +86,11 @@ namespace Simon {
         for (int i = 0; i < minCount; ++i) {
           LightCube cube = listCubes[i];
           _BlockIdToSound.Add(cube.ID, _CubeColorsAndSounds[i]);
+          // Now just for easyID, set the normal list to the sorted order
+          CubeIdsForGame[i] = cube.ID;
         }
 
-        SetCubeLightsDefaultOn();
+        CurrentRobot.TurnOffAllLights();
       }
     }
 
@@ -87,9 +100,17 @@ namespace Simon {
       }
     }
 
-    public void SetCubeLightsGuessWrong() {
+    public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
       foreach (int cubeId in CubeIdsForGame) {
-        CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(Color.red, 100, 100, 0);
+        if (_sShowWrongCubeTap && cubeId == wrongTapCubeID) {
+          CurrentRobot.LightCubes[wrongTapCubeID].SetFlashingLEDs(Color.magenta, 100, 100, 0);
+        }
+        else if (cubeId == correctCubeID) {
+          CurrentRobot.LightCubes[correctCubeID].SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);
+        }
+        else {
+          CurrentRobot.LightCubes[cubeId].SetLEDsOff();
+        }
       }
     }
 
@@ -119,10 +140,6 @@ namespace Simon {
 
     public IList<int> GetCurrentSequence() {
       return _CurrentIDSequence.AsReadOnly();
-    }
-
-    protected override void CleanUpOnDestroy() {
-
     }
 
     public Color GetColorForBlock(int blockId) {

@@ -16,27 +16,37 @@ namespace Simon {
     private Color _CubeTooFarColor;
     private Color _CubeTooCloseColor;
     private const string _kLookInPlaceForCubesBehaviorName = "simon_lookInPlaceForCubes";
+    private bool _SeenFirstCube;
 
     public ScanForInitialCubeState(State nextState, int cubesRequired, Color CubeTooFar, Color CubeTooClose) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
       _CubeTooFarColor = CubeTooFar;
       _CubeTooCloseColor = CubeTooClose;
+      _SeenFirstCube = false;
     }
 
     public override void Enter() {
       base.Enter();
-      // being in SetEnableFreeplayBehaviorChooser already forces us to be in the selection chooser.
-      _CurrentRobot.ExecuteBehaviorByName(_kLookInPlaceForCubesBehaviorName);
+
     }
 
     public override void Update() {
       // Intentionally avoid base class since that will only check currently visible cubes
-      UpdateScannedCubes();
-      if (_ValidCubeIds.Count != _NumValidCubes || _CubesStateUpdated) {
-        _NumValidCubes = _ValidCubeIds.Count;
-        _CubesStateUpdated = false;
-        UpdateUI();
+      if (!_SeenFirstCube) {
+        if (_CurrentRobot.VisibleObjects.Count > 0) {
+          _SeenFirstCube = true;
+          // being in SetEnableFreeplayBehaviorChooser already forces us to be in the selection chooser.
+          _CurrentRobot.ExecuteBehaviorByName(_kLookInPlaceForCubesBehaviorName);
+        }
+      }
+      else {
+        UpdateScannedCubes();
+        if (_ValidCubeIds.Count != _NumValidCubes || _CubesStateUpdated) {
+          _NumValidCubes = _ValidCubeIds.Count;
+          _CubesStateUpdated = false;
+          UpdateUI();
+        }
       }
     }
 
