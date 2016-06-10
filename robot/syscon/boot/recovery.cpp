@@ -284,7 +284,7 @@ static inline bool FlashBlock() {
 }
 
 
-void EnterRecovery(void) {
+extern "C" void EnterRecovery(void) {
   UARTInit();
   
   // Disconnect input so we don't dump current into the charge pin
