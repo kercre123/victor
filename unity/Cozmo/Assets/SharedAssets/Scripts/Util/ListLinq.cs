@@ -3,7 +3,7 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 
-namespace Cozmo.Util { 
+namespace Cozmo.Util {
   public static class IListLinq {
 
     #region Int Math
@@ -319,7 +319,7 @@ namespace Cozmo.Util {
       }
       return result;
     }
-      
+
     public static List<T> ToList<T>(IList<T> list) {
       // passing the list into the constructor treats it as an IEnumerable, which allocates
       List<T> result = new List<T>(list.Count);
@@ -336,12 +336,12 @@ namespace Cozmo.Util {
     }
 
     public static void ForEach<T>(this IEnumerable<T> list, Action<T> action) {
-      foreach(var element in list) {
+      foreach (var element in list) {
         action(element);
       }
     }
 
-    public static void UpdateEach<T>(this IList<T> list, Func<T,T> action) {
+    public static void UpdateEach<T>(this IList<T> list, Func<T, T> action) {
       for (int i = 0, len = list.Count; i < len; i++) {
         list[i] = action(list[i]);
       }
@@ -393,9 +393,8 @@ namespace Cozmo.Util {
         yield return list[i];
       }
     }
-      
-    public static bool SequenceEquals<T>(this IList<T> a1, IList<T> a2, EqualityComparer<T> comparer = null)
-    {
+
+    public static bool SequenceEquals<T>(this IList<T> a1, IList<T> a2, EqualityComparer<T> comparer = null) {
       if (ReferenceEquals(a1, a2))
         return true;
 
@@ -405,12 +404,22 @@ namespace Cozmo.Util {
       if (a1.Count != a2.Count)
         return false;
 
-      if(comparer == null ) comparer = EqualityComparer<T>.Default;
-      for (int i = 0; i < a1.Count; i++)
-      {
+      if (comparer == null) comparer = EqualityComparer<T>.Default;
+      for (int i = 0; i < a1.Count; i++) {
         if (!comparer.Equals(a1[i], a2[i])) return false;
       }
       return true;
+    }
+
+    public static void Shuffle<T>(this IList<T> list) {
+      int n = list.Count;
+      while (n > 1) {
+        n--;
+        int k = UnityEngine.Random.Range(0, n + 1);
+        T value = list[k];
+        list[k] = list[n];
+        list[n] = value;
+      }
     }
 
     #endregion

@@ -2,6 +2,7 @@
 using Anki.Debug;
 using System.Collections.Generic;
 using System.Linq;
+using Cozmo.Util;
 
 namespace Simon {
 
@@ -116,26 +117,46 @@ namespace Simon {
 
     public void SetCubeLightsGuessRight() {
       foreach (int cubeId in CubeIdsForGame) {
-        CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
+        if (CurrentRobot.LightCubes.ContainsKey(cubeId)) {
+          CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
+        }
+        else {
+          List<int> validIDs = CurrentRobot.LightCubes.Keys.ToList<int>();
+          string str = "";
+          for (int i = 0; i < validIDs.Count; ++i) {
+            str += validIDs[i] + ",";
+          }
+
+          DAS.Error("Simon.CubeDisconnect", "Cube Lost! " + cubeId + " valid are: " + str);
+        }
       }
     }
 
     public void GenerateNewSequence(int sequenceLength) {
-
-      int pickIndex = Random.Range(0, CubeIdsForGame.Count);
-      int pickedID = CubeIdsForGame[pickIndex];
-      // Attempt to decrease chance of 3 in a row
-      if (_CurrentIDSequence.Count > 2 && CubeIdsForGame.Count > 1) {
-        if (pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 2] &&
-            pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
-          List<int> validIDs = new List<int>(CubeIdsForGame);
-          validIDs.RemoveAt(pickIndex);
-          pickIndex = Random.Range(0, validIDs.Count);
-          pickedID = validIDs[pickIndex];
+      // First time is special
+      if (sequenceLength <= _Config.MinSequenceLength) {
+        List<int> shuffledAllIDs = new List<int>(CubeIdsForGame);
+        sequenceLength = sequenceLength > CubeIdsForGame.Count ? CubeIdsForGame.Count : sequenceLength;
+        shuffledAllIDs.Shuffle();
+        for (int i = 0; i < sequenceLength; ++i) {
+          _CurrentIDSequence.Add(shuffledAllIDs[i]);
         }
       }
-
-      _CurrentIDSequence.Add(pickedID);
+      else {
+        int pickIndex = Random.Range(0, CubeIdsForGame.Count);
+        int pickedID = CubeIdsForGame[pickIndex];
+        // Attempt to decrease chance of 3 in a row
+        if (_CurrentIDSequence.Count > 2 && CubeIdsForGame.Count > 1) {
+          if (pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 2] &&
+              pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
+            List<int> validIDs = new List<int>(CubeIdsForGame);
+            validIDs.RemoveAt(pickIndex);
+            pickIndex = Random.Range(0, validIDs.Count);
+            pickedID = validIDs[pickIndex];
+          }
+        }
+        _CurrentIDSequence.Add(pickedID);
+      }
     }
 
     public IList<int> GetCurrentSequence() {

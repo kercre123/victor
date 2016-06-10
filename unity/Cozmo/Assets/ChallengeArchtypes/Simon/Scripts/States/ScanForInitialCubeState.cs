@@ -84,12 +84,11 @@ namespace Simon {
           cube.SetLEDs(Cozmo.CubePalette.ReadyColor.lightColor);
         }
       }
-
     }
 
     private ScannedSetupCubeState UpdateSetupCubeState(LightCube cubeA, LightCube cubeB) {
-      float minDistMM = 70.0f;
-      float maxDistMM = 115.0f;
+      float minDistMM = 60.0f;
+      float maxDistMM = 140.0f;
       float d = Vector3.Distance(cubeA.WorldPosition, cubeB.WorldPosition);
       if (d < minDistMM) {
         return ScannedSetupCubeState.TooClose;

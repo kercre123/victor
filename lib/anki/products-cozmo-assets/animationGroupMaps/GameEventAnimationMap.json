@@ -137,6 +137,10 @@
       "AnimName": "ag_simon_failgame_player"
     },
     {
+      "CladEvent": "OnSimonPointCube",
+      "AnimName": "ag_simon_point"
+    },
+    {
       "CladEvent": "OnSimonCozmoWin",
       "AnimName": "ag_simon_failgame_player"
     },

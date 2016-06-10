@@ -7,6 +7,7 @@ namespace Simon {
     public const float kTargetDistance = 125f;
     public const float kDistanceThreshold = 20f;
     float kAngleTolerance = 2.5f;
+    private const float _kCubeIntroBlinkTimes = 0.5f;
 
     private State _NextState;
     private SimonGame _GameInstance;
@@ -65,10 +66,9 @@ namespace Simon {
       base.Update();
 
       if (_EndFlashTime < Time.time && _FlashingIndex < _GameInstance.CubeIdsForGame.Count) {
-        _EndFlashTime = Time.time + SimonGame.kLightBlinkLengthSeconds;
+        _EndFlashTime = Time.time + _kCubeIntroBlinkTimes;
         int id = _GameInstance.CubeIdsForGame[_FlashingIndex];
-        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(id));
-        _GameInstance.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
+        _GameInstance.BlinkLight(id, _kCubeIntroBlinkTimes, Color.black, _GameInstance.GetColorForBlock(id));
         ++_FlashingIndex;
         if (_FlashingIndex >= _GameInstance.CubeIdsForGame.Count) {
           GoToNextState();
