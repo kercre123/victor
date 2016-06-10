@@ -286,7 +286,14 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
   _s4HeadMovesLeft = _s4HeadMovesRolled;
   
   // request action with transition to proper state
-  StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
+  if( _s4HeadMovesLeft != 0 )
+  {
+    StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
+  }
+  else // avoid uint overflow and skip to turning back.
+  {
+    StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

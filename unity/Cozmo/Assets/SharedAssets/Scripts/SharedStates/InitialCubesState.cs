@@ -5,15 +5,15 @@ using System.Collections.Generic;
 public class InitialCubesState : State {
 
   private State _NextState;
-  private int _CubesRequired;
-  private ShowCozmoCubeSlide _ShowCozmoCubesSlide;
-  private int _NumValidCubes;
-  private GameBase _Game;
+  protected int _CubesRequired;
+  protected ShowCozmoCubeSlide _ShowCozmoCubesSlide;
+  protected GameBase _Game;
 
   // TODO: Use RobotProcessedImage to count how many ticks / vision frames a cube
   // is not visible instead of using a time-based timeout
   private const float kCubeTimeoutSeconds = 0.4f;
-  private List<int> _ValidCubeIds;
+  protected List<int> _ValidCubeIds;
+  protected int _NumValidCubes;
   private Dictionary <int, float> _CubeIdToTimeout;
 
   public InitialCubesState(State nextState, int cubesRequired) {
@@ -129,7 +129,7 @@ public class InitialCubesState : State {
 
   }
 
-  private void UpdateUI() {
+  virtual protected void UpdateUI() {
     _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
     if (_NumValidCubes >= _CubesRequired) {
@@ -153,12 +153,12 @@ public class InitialCubesState : State {
     }
   }
 
-  private string GetCubesReadyText(int numCubes) {
+  protected string GetCubesReadyText(int numCubes) {
     string cubesReadyKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelCubesReadyPlural : LocalizationKeys.kMinigameLabelCubesReadySingular;
     return Localization.GetWithArgs(cubesReadyKey, numCubes);
   }
 
-  private string GetWaitingForCubesText(int numCubes) {
+  protected string GetWaitingForCubesText(int numCubes) {
     string waitingForCubesKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelWaitingForCubesPlural : LocalizationKeys.kMinigameLabelWaitingForCubesSingular;
     return Localization.Get(waitingForCubesKey);
   }

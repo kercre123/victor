@@ -41,3 +41,5 @@ MonoBehaviour:
     m_RotationOrder: 4
   BetweenRoundsMusic:
     _Music: -527946100
+  CubeTooFarColor: {r: 1, g: 1, b: 0, a: 1}
+  CubeTooCloseColor: {r: 1, g: 0, b: 0, a: 1}

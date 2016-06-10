@@ -488,7 +488,7 @@ public class Robot : IRobot {
   }
 
   public LightCube GetLightCubeWithFactoryID(uint factoryID) {
-    foreach(LightCube lc in LightCubes.Values) {
+    foreach (LightCube lc in LightCubes.Values) {
       if (lc.FactoryID == factoryID) {
         return lc;
       }
@@ -618,14 +618,17 @@ public class Robot : IRobot {
         int objectID = (int)message.objectID;
         if (objectFamily == ObjectFamily.LightCube) {
           AddLightCube(objectID, message.factoryID, objectType);
-        } else {
+        }
+        else {
           AddObservedObject(objectID, message.factoryID, objectFamily, objectType);
         }
-      } else {
+      }
+      else {
         // This is not a cube or a charger so let's make sure it is not in our lists of objects
         DeleteObservedObject((int)message.objectID);
       }
-    } else {
+    }
+    else {
       // For disconnects, the robot doesn't send the device type so try to remove the object from all our lists
       DeleteObservedObject((int)message.objectID);
     }
@@ -648,7 +651,8 @@ public class Robot : IRobot {
       LightCube lightCube = AddLightCube(message.objectID, 0, message.objectType);
 
       UpdateObservedObject(lightCube, message);
-    } else {
+    }
+    else {
       ObservedObject observedObject = AddObservedObject(message.objectID, 0, message.objectFamily, message.objectType);
 
       UpdateObservedObject(observedObject, message);
@@ -688,7 +692,8 @@ public class Robot : IRobot {
       DAS.Debug(this, "Adding cube " + objectID + " factoryID " + factoryID.ToString("X") + " Objectype " + objectType.ToString());
       LightCubes.Add(objectID, lightCube);
       SeenObjects.Add(lightCube);
-    } if ((lightCube.FactoryID == 0) && (factoryID != 0)) {
+    }
+    if ((lightCube.FactoryID == 0) && (factoryID != 0)) {
       // So far we received messages about the cube without a factory ID. This is because it was seen 
       // before we connected to it. This message has the factory ID so we need to update its information
       // so we can find it in the future
@@ -1310,6 +1315,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "Execute Behavior " + type);
 
     RobotEngineManager.Instance.Message.ExecuteBehavior = Singleton<ExecuteBehavior>.Instance.Initialize(type);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void ExecuteBehaviorByName(string behaviorName) {
+    DAS.Debug(this, "Execute Behavior by Name" + behaviorName);
+
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
     RobotEngineManager.Instance.SendMessage();
   }
 

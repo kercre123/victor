@@ -253,6 +253,8 @@ public interface IRobot : IDisposable {
 
   void ExecuteBehavior(BehaviorType type);
 
+  void ExecuteBehaviorByName(string behaviorName);
+
   void SetEnableFreeplayBehaviorChooser(bool enable);
 
   void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType);

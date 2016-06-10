@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Simon {
-  
+
   public class SimonGame : GameBase {
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;
     public const float kLightBlinkLengthSeconds = 0.3f;
@@ -35,18 +35,19 @@ namespace Simon {
 
     public MusicStateWrapper BetweenRoundsMusic;
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
-      _Config = (SimonGameConfig)minigameConfig;
+    protected override void Initialize(MinigameConfigBase minigameConfigData) {
+      _Config = (SimonGameConfig)minigameConfigData;
       BetweenRoundsMusic = _Config.BetweenRoundsMusic;
       InitializeMinigameObjects();
     }
 
     // Use this for initialization
-    protected void InitializeMinigameObjects() { 
+    protected void InitializeMinigameObjects() {
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
 
       State nextState = new CozmoMoveCloserToCubesState(new WaitForNextRoundSimonState(_FirstPlayer));
-      InitialCubesState initCubeState = new InitialCubesState(nextState, _Config.NumCubesRequired());
+      InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
+                                                                    _Config.CubeTooFarColor, _Config.CubeTooCloseColor);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -108,11 +109,11 @@ namespace Simon {
             pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
           List<int> validIDs = new List<int>(CubeIdsForGame);
           validIDs.RemoveAt(pickIndex);
-          pickIndex = Random.Range(0, validIDs.Count); 
+          pickIndex = Random.Range(0, validIDs.Count);
           pickedID = validIDs[pickIndex];
         }
       }
-      
+
       _CurrentIDSequence.Add(pickedID);
     }
 
@@ -134,7 +135,7 @@ namespace Simon {
     }
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
-      Anki.Cozmo.Audio.AudioEventParameter audioEvent = 
+      Anki.Cozmo.Audio.AudioEventParameter audioEvent =
         Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       SimonCube simonCube;
       if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
