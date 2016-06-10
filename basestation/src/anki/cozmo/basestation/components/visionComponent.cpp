@@ -89,6 +89,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceEnrollmentPose>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
 
@@ -1907,6 +1908,12 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::LoadFaceAlbumFromFile& msg)
   {
     LoadFaceAlbumFromFile(GetFullFaceAlbumPath(_context, msg.path, msg.isRelativePath));
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::UpdateEnrolledFaceByID& msg)
+  {
+    RenameFace(msg.faceID, msg.oldName, msg.newName);
   }
   
 } // namespace Cozmo
