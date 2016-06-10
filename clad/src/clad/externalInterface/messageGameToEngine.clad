@@ -283,15 +283,18 @@ message EraseAllEnrolledFaces {
 
 }
 
+message EnableVisionMode {
+   VisionMode mode,
+   bool       enable
+}
+
+// Rename given ID+oldName pair to use newName. For safety if current face with given ID
+// does not match oldName, nothing happens.
+// On success, a RobotLoadedKnownFace message with faceID and newName will be sent.
 message UpdateEnrolledFaceByID {
   int_32 faceID,
   string oldName,
   string newName
-}
-
-message EnableVisionMode {
-   VisionMode mode,
-   bool       enable
 }
 
 message VisionRunMode {

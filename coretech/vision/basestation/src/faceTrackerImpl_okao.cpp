@@ -631,6 +631,11 @@ namespace Vision {
     return _recognizer.SaveAlbum(albumName);
   }
   
+  Result FaceTracker::Impl::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  {
+    return _recognizer.RenameFace(faceID, oldName, newName);
+  }
+  
   Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& names)
   {
     if(!_isInitialized) {
