@@ -273,6 +273,30 @@ namespace Anki {
       
     }
     
+    void Robot::SetOnCharger(bool onCharger)
+    {
+      if (onCharger && !_isOnCharger) {
+        PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
+        Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
+        
+        // Stop whatever we were doing
+        //GetActionList().Cancel();
+        
+        Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+        if( charger )
+        {
+          charger->SetPoseToRobot(GetPose());
+        }
+        
+      } else if (!onCharger && _isOnCharger) {
+        PRINT_NAMED_INFO("Robot.SetOnCharger.OffCharger", "");
+        Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
+      }
+      
+      _isOnCharger = onCharger;
+    }
+
+    
     void Robot::SetPickedUp(bool t)
     {
       // We use the cliff sensor to help determine if we're picked up; if it's disabled then ignore when it is
@@ -493,13 +517,6 @@ namespace Anki {
       // Update robot pitch angle
       _pitchAngle = msg.pose.pitch_angle;
       
-
-      // TODO: (KY/DS) remove SetProxSensorData
-      //// Update proximity sensor values
-      //SetProxSensorData(PROX_LEFT, msg. proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
-      //SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
-      //SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
-      
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
       
@@ -514,16 +531,16 @@ namespace Anki {
       
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
       SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
-      
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
+      SetOnCharger(static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER));
+      _isCliffSensorOn = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED);
 
       GetMoveComponent().Update(msg);
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
+      
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
-      _isCliffSensorOn = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED);
       
       _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
       
