@@ -3,9 +3,11 @@
 import os
 import re
 import json
+import argparse
+import sys
 import webotsTest
 
-def main():
+def main(cli_args):
   """Fetches available animations and generates all the needed files to run tests for all animations.
 
   First, a dummy test run occurs so that the logs for a run exist. This then crawls through that log
@@ -14,8 +16,11 @@ def main():
   here (python scripts) to the test controller. The animation names are passed as a parameter to the
   CozmoBot proto. A config file is then generated with all the newly generated .wbt files so
   webotsTest can run through them.
+
+  Args:
+    args -- command line arguments
   """
-  
+
   # build_type used to make sure to specify the webotsTest instead of relying on default; also used
   # to make sure we're accessing the right log/build folder
   build_type = "Debug"
@@ -23,6 +28,16 @@ def main():
   test_controller_name = "CST_Animations"
   wbt_file_name = "get_animations.wbt"
   generated_cfg_name = "__GENERATED_ANIMATIONS_TEST__.cfg"
+
+  parser = argparse.ArgumentParser(
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    description="Runs tests on all available animations in webots"
+    )
+
+  parser.add_argument("--numRuns", dest="num_runs", action="store", default=1,
+                      help="Number of runs through all available animations.")
+
+  (options, _) = parser.parse_known_args(cli_args)
 
   # Run a test once to populate the logs and search for the available animations
   assert webotsTest.main(["--buildType", build_type, "--configFile", "get_animations.cfg"]) == 0
@@ -66,8 +81,13 @@ def main():
     generated_cfg_file.write(generated_cfg_file_data)
 
   # Run all the webots animation tests with the newly generated cfg file.
-  assert webotsTest.main(["--buildType", build_type, "--configFile", generated_cfg_name, "--numRuns", "20"]) == 0
+  assert webotsTest.main([
+    "--buildType", build_type,
+    "--configFile", generated_cfg_name,
+    "--numRuns", str(options.num_runs)
+    ]) == 0
 
 
 if __name__ == '__main__':
-  main()
+  args = sys.argv
+  sys.exit(main(args))
