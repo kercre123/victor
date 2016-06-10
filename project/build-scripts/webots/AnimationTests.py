@@ -66,7 +66,7 @@ def main():
     generated_cfg_file.write(generated_cfg_file_data)
 
   # Run all the webots animation tests with the newly generated cfg file.
-  assert webotsTest.main(["--buildType", build_type, "--configFile", generated_cfg_name]) == 0
+  assert webotsTest.main(["--buildType", build_type, "--configFile", generated_cfg_name, "--numRuns", "20"]) == 0
 
 
 if __name__ == '__main__':
