@@ -40,22 +40,29 @@ public:
   AudioFrameData* PopRobotAudioFrame();
   
   // Check if Robot Audio Message frames are available
-  bool HasRobotAudioMessage() const { return ( _messageQueue.size() > 0 ); }
+  bool HasAudioFrame() const { return !_audioFrameQueue.empty(); }
   
-  // Get Robot Audio Message count
-  size_t RobotAudioMessageCount() const { return _messageQueue.size(); }
-  
+  // Get Robot Audio Frame count
+  size_t AudioFrameCount() const { return _audioFrameQueue.size(); }
+
+  // This is called by the RobotAudioBuffer after all the message for this stream have been pushed
+  void SetIsComplete() { _isComplete = true; }
+
   // Check if the stream has received all it's audio messages
   bool IsComplete() const { return _isComplete; }
   
-  // This is called by the RobotAudioBuffer after all the message for this stream have been pushed
-  void SetIsComplete() { _isComplete = true; }
+  // Set created time when the stream begins to get audio frames
+  void SetCreatedTime_ms( double time_ms ) { _createdTime_ms = time_ms; }
+  
+  // Get created time
+  double GetCreatedTime_ms() const { return _createdTime_ms; }
   
 private:
   
   bool _isComplete = false;
-  using RobotMessageQueueType = std::queue< AudioFrameData* >;
-  RobotMessageQueueType _messageQueue;
+  double _createdTime_ms = 0.0;
+  using AudioFrameQueueType = std::queue< AudioFrameData* >;
+  AudioFrameQueueType _audioFrameQueue;
   std::mutex _lock;
   
 };

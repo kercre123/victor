@@ -731,6 +731,11 @@ public:
   
     ExternalInterface::RobotState GetRobotState();
   
+    // Returns type of discovered object by factoryID.
+    // If the factoryID is not in the list of discovered objects it returns Invalid.
+    // NOTE: Connected objects are not in the discovered objects list.
+    ObjectType GetDiscoveredObjectType(FactoryID id);
+  
   protected:
   
     const CozmoContext* _context;
@@ -922,9 +927,8 @@ public:
     void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
     void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
     void SetPickedUp(bool t);
-    /*
-    void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
-    */
+    void SetOnCharger(bool onCharger);
+  
   
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
@@ -1014,7 +1018,6 @@ public:
     void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
     void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);

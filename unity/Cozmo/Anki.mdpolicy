@@ -10,6 +10,8 @@
     <NewLinesForBracesInTypes>False</NewLinesForBracesInTypes>
     <NewLinesForBracesInMethods>False</NewLinesForBracesInMethods>
     <NewLineForElse>True</NewLineForElse>
+    <NewLineForCatch>True</NewLineForCatch>
+    <NewLineForFinally>True</NewLineForFinally>
     <SpacingAfterMethodDeclarationName>False</SpacingAfterMethodDeclarationName>
     <SpaceAfterMethodCallName>False</SpaceAfterMethodCallName>
     <SpaceBeforeOpenSquareBracket>False</SpaceBeforeOpenSquareBracket>

@@ -195,6 +195,14 @@ class EngineRemoteCmd(cmd.Cmd):
         "requestDataDrivenLists - requests lists of anything non-CLAD data-driven e.g. all console vars, all animations"
         engineInterface.QueueCommand( (EngineCommand.sendMsg, ["GetAllDebugConsoleVarMessage"]) )  # get all the Console Var/Function entries
 
+    def do_setVerboseLevel(self, line):
+        "setVerboseLevel - sets the verbosity level at runtime (0 = Low, 1 = High, 2 = Max)"
+        engineInterface.QueueCommand( (EngineCommand.setVerboseLevel, line.split()) )
+
+    def do_resetConnection(self, line):
+        "resetConnection - reset the connection - e.g. if underlying engine has restarted and you want to reconnect"
+        engineInterface.QueueCommand( (EngineCommand.resetConnection, line.split()) )
+        
     # ================================================================================  
     # Common Actions
 

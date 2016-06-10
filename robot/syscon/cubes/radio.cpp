@@ -50,8 +50,6 @@ static const int wifiChannel = 1;
 static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
 static int next_resume  = next_prepare + SILENCE_PERIOD;
 
-static AccessorySlot* last_transmit;
-
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
   ADVERTISE_ADDRESS,
@@ -341,11 +339,14 @@ void uesb_event_handler(uint32_t flags)
   case RADIO_TALKING:
     {
       AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
-
-      last_transmit->last_received = 0;
+      int slot = LocateAccessory(rx_payload.address.address);
+      
+      AccessorySlot* acc = &accessories[slot];
+      
+      acc->last_received = 0;
 
       PropState msg;
-      msg.slot = currentAccessory;
+      msg.slot = slot;
       msg.x = ap->x;
       msg.y = ap->y;
       msg.z = ap->z;
@@ -407,12 +408,19 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 void Radio::prepare(void* userdata) {
   uesb_stop();
 
-  last_transmit = &accessories[currentAccessory];
+    // Transmit to accessories round-robin
+  if (++currentAccessory >= TICK_LOOP) {
+    currentAccessory = 0;
+  }
 
-  if (last_transmit->active && ++last_transmit->last_received < ACCESSORY_TIMEOUT) {
+  if (currentAccessory >= MAX_ACCESSORIES) return ;
+
+  AccessorySlot* target = &accessories[currentAccessory];
+  
+  if (target->active && ++target->last_received < ACCESSORY_TIMEOUT) {
     #ifdef CUBE_HOP
-    if (last_transmit->hopSkip) {
-      last_transmit->hopSkip = false;
+    if (target->hopSkip) {
+      target->hopSkip = false;
       
       // This just send garbage and return to pairing mode when finished
       EnterState(RADIO_PAIRING);
@@ -440,35 +448,35 @@ void Radio::prepare(void* userdata) {
         tx_state.ledStatus[tx_index++] = 0x80;
         #endif
       }
-      tx_state._reserved[0] = last_transmit->last_received;
+      tx_state._reserved[0] = target->last_received;
     }
 
     #ifdef CUBE_HOP
     // Perform first RF Hop
-    last_transmit->hopChannel += last_transmit->hopIndex;
-    if (last_transmit->hopChannel >= 53) {
-      last_transmit->hopChannel -= 53;
+    target->hopChannel += target->hopIndex;
+    if (target->hopChannel >= 53) {
+      target->hopChannel -= 53;
     }
-    last_transmit->address.rf_channel = last_transmit->hopChannel + 4;
-    if (last_transmit->address.rf_channel >= last_transmit->hopBlackout) {
-      last_transmit->address.rf_channel += 22;
+    target->address.rf_channel = target->hopChannel + 4;
+    if (target->address.rf_channel >= target->hopBlackout) {
+      target->address.rf_channel += 22;
     }
     #endif
 
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
-    uesb_prepare_tx_payload(&last_transmit->address, &tx_state, sizeof(tx_state));
+    uesb_prepare_tx_payload(&target->address, &tx_state, sizeof(tx_state));
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
-    if (last_transmit->active)
+    if (target->active)
     {
       // Spread the remaining accessories forward as a patch fix
       // Simply reset the timeout of all accessories
       for (int i = 0; i < MAX_ACCESSORIES; i++) {
-        last_transmit->last_received = 0;
+        target->last_received = 0;
       }
 
-      last_transmit->active = false;
+      target->active = false;
 
       SendObjectConnectionState(currentAccessory);
     }
@@ -480,13 +488,6 @@ void Radio::prepare(void* userdata) {
 }
 
 void Radio::resume(void* userdata) {
-  // Transmit to accessories round-robin
-  if (++currentAccessory >= TICK_LOOP) {
-    currentAccessory = 0;
-  }
-
-  if (currentAccessory >= MAX_ACCESSORIES) return ;
-
   // Reenable the radio
   uesb_start();
 }

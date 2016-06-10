@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 22;
+u8 g_fixtureReleaseVersion = 23;
 const char* BUILD_INFO = "EP3F";
 
 BOOL g_isDevicePresent = 0;

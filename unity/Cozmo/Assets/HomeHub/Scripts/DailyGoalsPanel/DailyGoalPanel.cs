@@ -32,7 +32,6 @@ public class DailyGoalPanel : MonoBehaviour {
   [SerializeField]
   private Transform _GoalContainer;
 
-
   [SerializeField]
   private RectTransform _Title;
 
@@ -70,32 +69,12 @@ public class DailyGoalPanel : MonoBehaviour {
   public void UpdateDailySession(Transform[] rewardIcons = null) {
     var currentSession = DataPersistenceManager.Instance.CurrentSession;
 
-    if (currentSession != null) {
+    SetDailyGoals(currentSession.DailyGoals);
 
-      SetDailyGoals(currentSession.DailyGoals);
-
-      if (currentSession.GoalsFinished == false &&
-          DailyGoalManager.Instance.AreAllDailyGoalsComplete()) {
-        currentSession.GoalsFinished = true;
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
-      }
-    }
-    else {
-      var lastSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-
-      if (lastSession != null && !lastSession.Complete) {
-        CompleteSession(lastSession);
-      }
-
-      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
-
-      newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-
-      SetDailyGoals(newSession.DailyGoals);
-
-      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
-
-      DataPersistenceManager.Instance.Save();
+    if (currentSession.GoalsFinished == false &&
+        DailyGoalManager.Instance.AreAllDailyGoalsComplete()) {
+      currentSession.GoalsFinished = true;
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
     }
 
     rewardIcons = null;
@@ -116,11 +95,11 @@ public class DailyGoalPanel : MonoBehaviour {
   }
 
   private void CompleteSession(TimelineEntryData timelineEntry) {
-    
+
     if (timelineEntry.DailyGoals.Count > 0) {
       for (int i = 0; i < timelineEntry.DailyGoals.Count; i++) {
-        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
-          new Dictionary<string,string> { {
+        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date),
+          new Dictionary<string, string> { {
               "$data",
               DASUtil.FormatGoal(timelineEntry.DailyGoals[i])
             }
@@ -138,7 +117,7 @@ public class DailyGoalPanel : MonoBehaviour {
       return;
     }
     DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
-    _DailySummaryInstance = UIManager.OpenView(_DailySummaryPrefab, 
+    _DailySummaryInstance = UIManager.OpenView(_DailySummaryPrefab,
       newView => {
         newView.Initialize(session);
       });

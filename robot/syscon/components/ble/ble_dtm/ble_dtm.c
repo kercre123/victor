@@ -420,6 +420,10 @@ uint32_t dtm_wait(void)
 
 uint32_t dtm_cmd(dtm_cmd_t cmd, dtm_freq_t freq, uint32_t length, dtm_pkt_type_t payload)
 {
+    // Split power out from payload parameter
+    m_tx_power = payload & ~3;
+    payload &= 3;
+  
     // Save specified packet in static variable for tx/rx functions to use.
     // Note that BLE conformance testers always use full length packets.
     m_packet_length = ((uint8_t)length & 0xFF);
@@ -529,8 +533,8 @@ uint32_t dtm_cmd(dtm_cmd_t cmd, dtm_freq_t freq, uint32_t length, dtm_pkt_type_t
         // Initialize CRC value, set channel:
         radio_prepare(TX_MODE);
 
-        NRF_RADIO->TEST = (RADIO_TEST_PLL_LOCK_Enabled << RADIO_TEST_PLL_LOCK_Pos);
-        NRF_RADIO->SHORTS |= RADIO_SHORTS_DISABLED_TXEN_Msk;
+        //NRF_RADIO->TEST = (RADIO_TEST_PLL_LOCK_Enabled << RADIO_TEST_PLL_LOCK_Pos);
+        //NRF_RADIO->SHORTS |= RADIO_SHORTS_DISABLED_TXEN_Msk;
 
         NRF_RADIO->TASKS_TXEN = 1;
         

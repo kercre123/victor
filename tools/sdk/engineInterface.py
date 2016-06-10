@@ -45,6 +45,8 @@ class EngineCommand:
     setEmotion         = 3
     playAnimation      = 4
     playAnimationGroup = 5
+    setVerboseLevel    = 6
+    resetConnection    = 7
 
 
 def ArgListToString(*args):
@@ -107,7 +109,6 @@ class _EngineInterfaceImpl:
         self.debugConsoleManager = DebugConsoleManager()
         self.moodManager = MoodManager()
         self.animationManager = AnimationManager()
-        self.lastMsgRecvTime = 0.0
 
         
         
@@ -214,13 +215,7 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.ObjectStoppedMoving:
                         pass
                     elif fromEngMsg.tag == fromEngMsg.Tag.Ping:
-                        msg = fromEngMsg.Ping
-                        if not msg.isResponse:
-                            # Send it back to the engine so it can calculate latency
-                            self.PingBack(msg)
-                        else:
-                            latency = time.time() - msg.timeSent
-
+                        self.engineConnection.HandlePingMessage(fromEngMsg.Ping)
                     elif fromEngMsg.tag == fromEngMsg.Tag.DebugString:
                         #From Robot::SendDebugString() summary of moving (lift/head/body), carrying, simpleMood, imageProc framerate and behavior
                         msg = fromEngMsg.DebugString
@@ -546,7 +541,27 @@ class _EngineInterfaceImpl:
         self.engineConnection.SendMessage(toEngMessage)
                         
         return True
+
+    def SetVerboseLevel(self, newLevel):
+        if (newLevel >= 0) and (newLevel <= VerboseLevel.Max):
+            self.verboseLevel = newLevel
+            self.engineConnection.verboseLevel = newLevel
+            return True 
+        else:
+            sys.stderr.write("[SetVerboseLevel] newLevel '" + str(newLevel) + "' out of range" + os.linesep)
+            return False
         
+    def HandleSetVerboseLevel(self, *args):
+        success = False
+        if (len(args) > 0):
+            try:
+                verboseLevel = int(args[0])
+                success = self.SetVerboseLevel(verboseLevel)
+            except:
+                sys.stderr.write("[HandleSetVerboseLevel] Error parsing '" + str(args[0]) + "' to an int" + os.linesep)
+        if not success:
+            sys.stderr.write("[HandleSetVerboseLevel] Improper usage - requires an int in range 0.." + str(VerboseLevel.Max) + " range " + os.linesep)
+        return success
         
     def DoCommand(self, inCommand):
         "Perform a single command"
@@ -564,18 +579,13 @@ class _EngineInterfaceImpl:
             return self.HandlePlayAnimationCommand(*inCommand[1])
         elif (commandType == EngineCommand.playAnimationGroup):
             return self.HandlePlayAnimationGroupCommand(*inCommand[1])
+        elif (commandType == EngineCommand.setVerboseLevel):
+            return self.HandleSetVerboseLevel(*inCommand[1])
+        elif (commandType == EngineCommand.resetConnection):
+            return self.ResetConnection()
         else:
             sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
             return False
-
-    def PingBack(self, msg):
-        "When receiving a ping from the engine, reply so it can calculate latency"
-        outPingMsg = GToEI.Ping()
-        outPingMsg.counter = msg.counter
-        outPingMsg.timeSent = msg.timeSent
-        outPingMsg.isResponse = True
-        toEngMsg = GToEM(Ping = outPingMsg)
-        self.engineConnection.SendMessage(toEngMsg, False)
         
     def Update(self):
         "Update internals (currently just the network connection)"
@@ -592,7 +602,7 @@ class _EngineInterfaceImpl:
 
     def ResetConnection(self):
         "Try to connect to engine again on the current connection"
-        sys.stdout.write("Deteceted disconnect, trying to reconnect..." + os.linesep)
+        sys.stdout.write("Forcing ResetConnection..." + os.linesep)
         self.engineConnection.ResetConnection()
 
 
@@ -639,12 +649,6 @@ class AsyncEngineInterface(threading.Thread):
                 time.sleep(0.01)
             except Exception as e:
                 sys.stderr.write("[AsyncEngineInterface.Run] Exception: " + str(e) + os.linesep)
-            # If we don't hear anything back from the engine in 5 seconds and we aren't currently trying to
-            # connect, then delete the current connection and attempt to reconnect.
-            if (self.engineInterface.lastMsgRecvTime and 
-                ((time.time() - self.engineInterface.lastMsgRecvTime) > 5.0)):
-                self.engineInterface.lastMsgRecvTime = 0.0
-                self.engineInterface.ResetConnection()
 
     def KillThread(self):
         "Clean up the thread"
