@@ -283,6 +283,12 @@ message EraseAllEnrolledFaces {
 
 }
 
+message UpdateEnrolledFaceByID {
+  int_32 faceID,
+  string oldName,
+  string newName
+}
+
 message EnableVisionMode {
    VisionMode mode,
    bool       enable
