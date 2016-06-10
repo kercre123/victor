@@ -47,6 +47,7 @@ class OTAStreamer:
                 sys.stdout.write("Finished sending firmware image to robot")
                 sys.stdout.write(os.linesep)
                 break
+            if '-w' in sys.argv: time.sleep(2)
         self.writing = False
 
     def OnConnect(self, connectionInfo):
