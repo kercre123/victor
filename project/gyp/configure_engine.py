@@ -442,7 +442,7 @@ def main(scriptArgs):
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
-                                das_library_type=static_library
+                                das_library_type=shared_library
                                 os_posix=1
                                 OS=android
                                 GYP_CROSSCOMPILE=1
