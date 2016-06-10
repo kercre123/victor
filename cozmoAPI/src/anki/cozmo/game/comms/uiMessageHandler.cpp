@@ -225,14 +225,14 @@ namespace Anki {
         ISocketComms* socketComms = GetSocketComms(connectionType);
         if (socketComms)
         {
-          if (message.Get_Ping().isResponse){
-            socketComms->HandlePingResponse(message);
+          const ExternalInterface::Ping& pingMsg = message.Get_Ping();
+          if (pingMsg.isResponse)
+          {
+            socketComms->HandlePingResponse(pingMsg);
           }
           else
           {
-            ExternalInterface::Ping outPing( message.Get_Ping().counter,
-                                             message.Get_Ping().timeSent,
-                                             true);
+            ExternalInterface::Ping outPing( pingMsg.counter, pingMsg.timeSent_ms, true );
             ExternalInterface::MessageEngineToGame toSend;
             toSend.Set_Ping(outPing);
             DeliverToGame(std::move(toSend), (DestinationId)connectionType);
@@ -375,7 +375,7 @@ namespace Anki {
             ExternalInterface::MessageEngineToGame message;
             
             ExternalInterface::Ping outPing( socketComms->NextPingCounter(),
-                                            Util::Time::UniversalTime::GetCurrentTimeInSeconds(), false );
+                                            Util::Time::UniversalTime::GetCurrentTimeInMilliseconds(), false );
             message.Set_Ping(outPing);
             DeliverToGame(message, (DestinationId)i);
           }
@@ -505,6 +505,20 @@ namespace Anki {
       }
       
       return false;
+    }
+    
+    const Util::Stats::StatsAccumulator& UiMessageHandler::GetLatencyStats(UiConnectionType type) const
+    {
+      const ISocketComms* socketComms = GetSocketComms(type);
+      if (socketComms)
+      {
+        return socketComms->GetLatencyStats();
+      }
+      else
+      {
+        static Util::Stats::StatsAccumulator sDummyStats;
+        return sDummyStats;
+      }
     }
     
   } // namespace Cozmo
