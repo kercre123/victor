@@ -31,6 +31,7 @@ class OTAStreamer:
     def Write(self):
         "Sends a write to the robot"
         while (self.bytesSent - self.bytesProcessed) < (self.ROBOT_BUFFER_SIZE - self.MESSAGE_PAYLOAD_SIZE):
+            robotInterface.Step()
             payload = self.fw.read(self.MESSAGE_PAYLOAD_SIZE)
             eof = len(payload) < self.MESSAGE_PAYLOAD_SIZE
             if eof:
@@ -88,7 +89,7 @@ class OTAStreamer:
             if self.writing:
                 self.Write()
             else:
-                time.sleep(0.1)
+                robotInterface.Step()
 
 # Script entry point
 if __name__ == '__main__':
@@ -99,9 +100,9 @@ if __name__ == '__main__':
     elif argv.image == 'factory':
         fwi = os.path.join("releases", "cozmo_factory_install.safe")
     else:
-        sys.exit("No such file as {1}".format(argv.image))
+        sys.exit("No such file as {0}".format(argv.image))
     
-    robotInterface.Init(True)
+    robotInterface.Init(True, forkTransportThread = False)
     up = OTAStreamer(fwi)
     robotInterface.Connect(syncTime = None)
     up.main()

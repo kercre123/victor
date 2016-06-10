@@ -239,6 +239,7 @@ namespace UpgradeController {
       case OTAT_Flash_Decrypt:
       case OTAT_Flash_Write:
       case OTAT_Wait:
+      case OTAT_Sig_Check:
       {
         if ((bufferSize - bufferUsed) < WRITE_DATA_SIZE)
         {
