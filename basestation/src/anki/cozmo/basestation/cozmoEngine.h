@@ -135,6 +135,8 @@ protected:
   
   Result AddRobot(RobotID_t robotID);
   
+  void SendLatencyInfo();
+  
   EngineState _engineState = EngineState::Stopped;
 
 #if ANKI_DEV_CHEATS && !ANDROID

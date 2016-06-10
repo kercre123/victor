@@ -9,7 +9,6 @@
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/types/powerMessages.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
 #include "clad/types/firmwareTypes.clad"
@@ -143,6 +142,11 @@ message RobotCliffEventFinished {
 
 // Tests a collision, not contacts.
 message RobotOnChargerPlatformEvent {
+  bool   onCharger
+}
+
+// Whether or not the robot's charge contacts are in contact with the charger contacts
+message ChargerEvent {
   bool   onCharger
 }
 
@@ -410,10 +414,20 @@ message VerifyDebugConsoleVarMessage {
   bool success
 }
 
+structure TimingInfo
+{
+  float_32  avgTime_ms,
+  float_32  minTime_ms,
+  float_32  maxTime_ms
+}
+
 message DebugLatencyMessage {
-  float_32 averageLatency,
-  float_32 minLatency,
-  float_32 maxLatency
+  TimingInfo wifiLatency,
+  TimingInfo extSendQueueTime,
+  TimingInfo sendQueueTime,
+  TimingInfo recvQueueTime,
+  TimingInfo unityEngineLatency,
+  TimingInfo sdkEngineLatency
 }
 
 ///////////////////////////////////////////////////////////////////////////////

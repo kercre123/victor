@@ -166,12 +166,24 @@ std::string DevLoggingSystem::PrepareMessage(const MsgType& message) const
 template<>
 void DevLoggingSystem::LogMessage(const ExternalInterface::MessageEngineToGame& message)
 {
+  // Ignore ping messages - they're spammy, show up in profiles, and are uninteresting for message debugging / analysis
+  if (ExternalInterface::MessageEngineToGameTag::Ping == message.GetTag())
+  {
+    return;
+  }
+
   _engineToGameLog->Write(PrepareMessage(message));
 }
   
 template<>
 void DevLoggingSystem::LogMessage(const ExternalInterface::MessageGameToEngine& message)
 {
+  // Ignore ping messages - they're spammy, show up in profiles, and are uninteresting for message debugging / analysis
+  if (ExternalInterface::MessageGameToEngineTag::Ping == message.GetTag())
+  {
+    return;
+  }
+  
   _gameToEngineLog->Write(PrepareMessage(message));
 }
 

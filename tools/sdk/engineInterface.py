@@ -249,8 +249,13 @@ class _EngineInterfaceImpl:
                         msg = fromEngMsg.MoodState
                         self.moodManager.UpdateMoodState(msg)         
                     elif fromEngMsg.tag == fromEngMsg.Tag.DebugLatencyMessage:
-                        # [MARKW:TODO], update this locally for anything that wants to query engine<->robot latency
-                        pass
+                        msg = fromEngMsg.DebugLatencyMessage
+                        # sys.stdout.write("wifiLatency = " + str(msg.wifiLatency) + os.linesep);
+                        # sys.stdout.write("extSendQueueTime = " + str(msg.extSendQueueTime) + os.linesep);
+                        # sys.stdout.write("sendQueueTime = " + str(msg.sendQueueTime) + os.linesep);
+                        # sys.stdout.write("recvQueueTime = " + str(msg.recvQueueTime) + os.linesep);
+                        # sys.stdout.write("unityEngineLatency = " + str(msg.unityEngineLatency) + os.linesep);
+                        # sys.stdout.write("sdkEngineLatency = " + str(msg.sdkEngineLatency) + os.linesep);
                     elif fromEngMsg.tag == fromEngMsg.Tag.UnlockStatus:
                          msg = fromEngMsg.UnlockStatus
                          #sys.stdout.write("Recv: UnlockStatus length=" + str(len(msg.unlocks)) + " c= " + str(msg.unlocks) + os.linesep)

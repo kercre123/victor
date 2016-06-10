@@ -13,6 +13,9 @@
 using namespace Anki::Comms;
 
 ChannelBase::ChannelBase()
+#if TRACK_INCOMING_PACKET_LATENCY
+  : _queuedTimes_ms(100) // max number of times to track (smaller = more jittery & recent sample)
+#endif // TRACK_INCOMING_PACKET_LATENCY
 {
 }
 
@@ -37,6 +40,14 @@ bool ChannelBase::PopIncomingPacket(IncomingPacket& packet)
   {
     packet = _incomingPacketQueue.front();
     _incomingPacketQueue.pop_front();
+    
+    #if TRACK_INCOMING_PACKET_LATENCY
+    if (packet._timeReceived_ms != Util::kNetTimeStampZero)
+    {
+      const double timeQueued_ms = Util::GetCurrentNetTimeStamp() - packet._timeReceived_ms;
+      _queuedTimes_ms.AddStat(timeQueued_ms);
+    }
+    #endif
     
     // assign address if there is one
     // may return false and still leave it as default
@@ -145,7 +156,8 @@ void ChannelBase::ReceiveData(const uint8_t *buffer, unsigned int bufferSize, co
   //                     "RECEIVING DATA SIZE " << bufferSize << " FROM " << sourceAddress);
 
   // will set sourceId on peek
-  EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::NormalMessage, buffer, bufferSize, DEFAULT_CONNECTION_ID, sourceAddress));
+  EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::NormalMessage, buffer, bufferSize, DEFAULT_CONNECTION_ID,
+                                       sourceAddress, TRACK_INCOMING_PACKET_LATENCY_TIMESTAMP_MS()));
 }
 
 void ChannelBase::ClearPacketsForAddress(const TransportAddress& address)
@@ -247,3 +259,16 @@ bool ChannelBase::RemoveConnectionInternal(TransportAddress& address, Connection
   }
   return false;
 }
+
+
+const Anki::Util::Stats::StatsAccumulator& ChannelBase::GetQueuedTimes_ms() const
+{
+#if TRACK_INCOMING_PACKET_LATENCY
+  return _queuedTimes_ms.GetPrimaryAccumulator();
+#else
+  static Anki::Util::Stats::StatsAccumulator sNullStats;
+  return sNullStats;
+#endif // TRACK_INCOMING_PACKET_LATENCY
+}
+
+

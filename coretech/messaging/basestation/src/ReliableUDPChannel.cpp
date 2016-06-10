@@ -7,9 +7,9 @@
 //
 
 #include "anki/messaging/basestation/ReliableUDPChannel.h"
+#include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
-#include "util/logging/logging.h"
 
 using namespace Anki::Comms;
 
@@ -296,13 +296,15 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
   if (buffer == Anki::Util::INetTransportDataReceiver::OnConnectRequest) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData", "on connect request - disconnecting from " << sourceAddress.ToString());
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
-    EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::ConnectionRequest, sourceAddress));
+    EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::ConnectionRequest, sourceAddress,
+                                         TRACK_INCOMING_PACKET_LATENCY_TIMESTAMP_MS() ));
   }
   else if (buffer == Anki::Util::INetTransportDataReceiver::OnConnected) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData", "on connect - disconnecting from " << sourceAddress.ToString());
     // why even do this??! this should be a no-op:
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
-    EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Connected, sourceAddress));
+    EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Connected, sourceAddress,
+                                         TRACK_INCOMING_PACKET_LATENCY_TIMESTAMP_MS() ));
 
     ConnectionData *data = GetConnectionData(sourceAddress);
     if (data != nullptr) {
@@ -531,7 +533,8 @@ void ReliableUDPChannel::QueueDisconnectionIfActuallyConnected(const TransportAd
   else if (data->isRealConnectionActive) {
     if (data->state == ConnectionData::State::Connected) {
       PRINT_STREAM_WARNING("ReliableUDPChannel.QueueDisconnectionIfActuallyConnected", "disconnecting from " << sourceAddress.ToString());
-      EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Disconnected, sourceAddress));
+      EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Disconnected, sourceAddress,
+                                           TRACK_INCOMING_PACKET_LATENCY_TIMESTAMP_MS() ));
       data->isDisconnectionQueued = true;
     } else {
       // no op:

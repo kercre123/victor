@@ -110,6 +110,8 @@ namespace Cozmo {
     virtual uint32_t GetMaxTotalBytesPerMessage() const override;
     
     void SetReliableTransportRunMode(bool isSync) { _reliableChannel.GetReliableTransport()->ChangeSyncMode(isSync); }
+    
+    const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const { return _reliableChannel.GetQueuedTimes_ms(); }
   
   private:
     

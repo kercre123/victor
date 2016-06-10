@@ -22,8 +22,8 @@ namespace Cozmo {
 
 CONSOLE_VAR(bool, kPrintUiMessageLatency, "GameToEngineConnection", false);
   
-const uint32_t kMaxLatencySamples = 2500;
-const uint32_t kReportFrequency = 250;
+const uint32_t kMaxLatencySamples = 250;
+const uint32_t kReportFrequency = 125;
 
 ISocketComms::ISocketComms(UiConnectionType connectionType)
   : _latencyStats(kMaxLatencySamples)
@@ -31,10 +31,10 @@ ISocketComms::ISocketComms(UiConnectionType connectionType)
 {
 }
 
-void ISocketComms::HandlePingResponse(const ExternalInterface::MessageGameToEngine& message)
+void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
 {
-  const double latency = (Util::Time::UniversalTime::GetCurrentTimeInSeconds() - message.Get_Ping().timeSent);
-  _latencyStats.AddStat(latency);
+  const double latency_ms = (Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() - pingMsg.timeSent_ms);
+  _latencyStats.AddStat(latency_ms);
   if (kPrintUiMessageLatency)
   {
     uint32_t numSamples = _latencyStats.GetNumDbl();

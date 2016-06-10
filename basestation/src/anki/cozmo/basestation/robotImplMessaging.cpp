@@ -79,7 +79,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotStopped,                &Robot::HandleRobotStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imageGyro,                   &Robot::HandleImageImuData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuDataChunk,                &Robot::HandleImuData);
@@ -659,31 +658,6 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
   SetForwardSensorValue(proxObs.distance_mm);
   
 #endif
-}
-  
-  
-void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  ChargerEvent chargerEvent = message.GetData().Get_chargerEvent();
-  if (chargerEvent.onCharger) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OnCharger", "");
-    
-    // Stop whatever we were doing
-    //GetActionList().Cancel();
-    
-    Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
-    if( charger )
-    {
-      charger->SetPoseToRobot(GetPose());
-    }
-    
-  } else {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OffCharger", "");
-  }
-  
-  // Forward on with EngineToGame event
-  ChargerEvent payload = message.GetData().Get_chargerEvent();
-  Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
 }
   
 
