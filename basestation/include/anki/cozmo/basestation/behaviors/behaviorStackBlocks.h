@@ -60,8 +60,9 @@ private:
   };
 
   State _state = State::PickingUpBlock;
+  s32   _numPickupRetries = 0;
 
-  void TransitionToPickingUpBlock(Robot& robot);
+  void TransitionToPickingUpBlock(Robot& robot, bool isRetry = false);
   void TransitionToStackingBlock(Robot& robot);
   void TransitionToPlayingFinalAnim(Robot& robot);
   void TransitionToWaitForBlocksToBeValid(Robot& robot);

@@ -36,7 +36,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace ExternalInterface{
-  class MessageGameToEngine;
+  struct Ping;
 }
   
 class ISocketComms
@@ -70,7 +70,9 @@ public:
   }
 
   uint32_t NextPingCounter() { return _pingCounter++; }
-  void HandlePingResponse(const ExternalInterface::MessageGameToEngine& message);
+  void HandlePingResponse(const ExternalInterface::Ping& message);
+  
+  const Util::Stats::StatsAccumulator& GetLatencyStats() const { return _latencyStats.GetPrimaryAccumulator(); }
   
 private:
   Util::Stats::RecentStatsAccumulator _latencyStats;

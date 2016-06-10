@@ -83,7 +83,7 @@ namespace Cozmo {
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
     bool                      _idlePushed = false;
-    bool                      _sayNameWhenDone = false;
+    bool                      _sayNameWhenDone = true;
     
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;
@@ -99,7 +99,8 @@ namespace Cozmo {
     // Member methods:
     Result InitSequence();
     Result InitCurrentStep();
-      
+    void SetAction(IActionRunner* action);
+    
   }; // class SayTextAction
 
 

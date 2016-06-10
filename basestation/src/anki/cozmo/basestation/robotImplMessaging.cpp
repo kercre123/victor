@@ -79,7 +79,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotStopped,                &Robot::HandleRobotStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imageGyro,                   &Robot::HandleImageImuData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuDataChunk,                &Robot::HandleImuData);
@@ -345,10 +344,6 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
                        objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
       
-      // Turn off lights upon connection
-      std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
-      SendRobotMessage<CubeLights>(lights, payload.objectID);
-      
       // if a charger, and robot is on the charger, add a pose for the charager
       if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER )
       {
@@ -371,8 +366,8 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     ActiveObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
       bool clearedObject = false;
+      objID = obj->GetID();
       if( ! obj->IsPoseStateKnown() ) {
-        objID = obj->GetID();
         GetBlockWorld().ClearObject(objID);
         clearedObject = true;
       }
@@ -380,7 +375,10 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
                        "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx) cleared? %d",
                        objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type, clearedObject);
-
+    } else {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.SlotAlreadyDisconnected",
+                       "Received disconnected for activeID %d, factoryID 0x%x, but slot is already disconnected",
+                       payload.objectID, payload.factoryID);
     }
   }
   
@@ -660,31 +658,6 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
   SetForwardSensorValue(proxObs.distance_mm);
   
 #endif
-}
-  
-  
-void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  ChargerEvent chargerEvent = message.GetData().Get_chargerEvent();
-  if (chargerEvent.onCharger) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OnCharger", "");
-    
-    // Stop whatever we were doing
-    //GetActionList().Cancel();
-    
-    Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
-    if( charger )
-    {
-      charger->SetPoseToRobot(GetPose());
-    }
-    
-  } else {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OffCharger", "");
-  }
-  
-  // Forward on with EngineToGame event
-  ChargerEvent payload = message.GetData().Get_chargerEvent();
-  Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
 }
   
 

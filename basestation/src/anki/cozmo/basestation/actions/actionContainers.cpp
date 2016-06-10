@@ -128,6 +128,12 @@ namespace Anki {
     
     bool ActionList::Cancel(RobotActionType withType)
     {
+      // Don't bother cancelling actions if we are in the process of clearing the queues
+      if(_currentlyClearing)
+      {
+        return true;
+      }
+    
       bool found = false;
       
       // Clear specified slot / type
@@ -139,6 +145,12 @@ namespace Anki {
     
     bool ActionList::Cancel(u32 idTag)
     {
+      // Don't bother cancelling actions if we are in the process of clearing the queues
+      if(_currentlyClearing)
+      {
+        return true;
+      }
+    
       bool found = false;
       
       for(auto & q : _queues) {
@@ -155,7 +167,9 @@ namespace Anki {
     
     void ActionList::Clear()
     {
+      _currentlyClearing = true;
       _queues.clear();
+      _currentlyClearing = false;
     }
     
     bool ActionList::IsEmpty() const

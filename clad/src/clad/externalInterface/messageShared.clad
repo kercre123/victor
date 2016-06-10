@@ -12,7 +12,7 @@ namespace ExternalInterface {
 
 message Ping {
     uint_32 counter,        // should count sequentially if no drops
-    float_64 timeSent,
+    float_64 timeSent_ms,
     bool isResponse
 }
 

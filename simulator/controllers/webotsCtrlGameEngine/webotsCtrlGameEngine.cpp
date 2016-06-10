@@ -204,10 +204,10 @@ int main(int argc, char **argv)
     double timeMS = stopWatch.Stop();
 
     if( timeMS >= BS_TIME_STEP ) {
-      PRINT_NAMED_WARNING("EngineHeardbeat.Overtime", "Update took %f ms (tick hearbeat is %dms)", timeMS, BS_TIME_STEP);
+      PRINT_NAMED_WARNING("EngineHeartbeat.Overtime", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
     }
     else if( timeMS >= 0.85*BS_TIME_STEP) {
-      PRINT_NAMED_INFO("EngineHeardbeat.SlowTick", "Update took %f ms (tick hearbeat is %dms)", timeMS, BS_TIME_STEP);
+      PRINT_NAMED_INFO("EngineHeartbeat.SlowTick", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
     }
     
 #ifdef NO_WEBOTS

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using DataPersistence;
 
@@ -20,6 +21,15 @@ public class ChestRewardManager {
   public ChestRequirementsUpdateHandler ChestRequirementsGained;
 
   public ChestGainedHandler ChestGained;
+
+  // Rewards that have been earned but haven't been shown to the player.
+  public Dictionary<string, int> PendingRewards = new Dictionary<string, int>();
+
+  public bool ChestPending {
+    get {
+      return PendingRewards.Count > 0;
+    }
+  }
 
   public ChestRewardManager() {
     // Listen for inventory values changing
@@ -69,10 +79,15 @@ public class ChestRewardManager {
       foreach (Ladder ladder in GetChestData().RewardLadders) {
         rewardAmount = GetCurrentLadderValue(ladder.LadderLevels);
         playerInventory.AddItemAmount(ladder.ItemId, rewardAmount);
+        if (PendingRewards.ContainsKey(ladder.ItemId)) {
+          PendingRewards[ladder.ItemId] += rewardAmount;
+        }
+        else {
+          PendingRewards.Add(ladder.ItemId, rewardAmount);
+        }
       }
 
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().ChestsGained++;
-
       if (ChestGained != null) {
         ChestGained();
       }

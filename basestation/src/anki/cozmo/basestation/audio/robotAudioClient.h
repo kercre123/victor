@@ -63,7 +63,7 @@ public:
   bool HasAnimation() const { return _currentAnimation != nullptr; }
 
   // Return true if there is no animation or animation is ready
-  bool UpdateAnimationIsReady();
+  bool UpdateAnimationIsReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
 
   // Check Animation States to see if it's completed
   bool AnimationIsComplete();

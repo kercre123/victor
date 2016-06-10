@@ -48,11 +48,14 @@ class UdpConnection(INetConnection):
             sys.stderr.write("[UdpConnection._TryToConnect] Unexpected state: " + str(self.connectionState) + os.linesep)
 
     def Disconnect(self):
+        "Disconnect from underlying network connection and reset any state"
         self._CloseSocket()
+        super().Disconnect()
 
-    # In this case, we do not need to completely close the socket and recreate a connection,
-    # we can just begin searching again for a connection on the existing socket
     def ResetConnection(self):
+        "Reset the connection and allow it to attempt to reconnect on future updates"
+        # In this case, we do not need to completely close the socket and recreate a connection,
+        # we can just begin searching again for a connection on the existing socket
         super().Disconnect()
 
     def _CloseSocket(self):
@@ -80,7 +83,7 @@ class UdpConnection(INetConnection):
         "returns 'messageData, sourceAddres' if there is a message to receive, 'None, None' otherwise"
         try:
             data, addr = self.socket.recvfrom(self.MTU)
-            return data, addr
+            return self._FilterReceivedMessage(data, addr)
         except:
             return None, None
 

@@ -59,20 +59,23 @@ protected:
   // Perform specific preparation to animation
   virtual void PrepareAnimation() override;
   
-  // All the animations events have been completed and Audio Buffer is empty
-  virtual bool IsAnimationDone() const override;
-  
   
 private:
   
-  // Use in Update method to perform actions for the BufferLoading state
-  void UpdateBufferLoading( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
-  
-  // Use in Update method to perform actions for the BufferReady state
-  void UpdateBufferReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
+  // Use in Update method to perform actions for the current state
+  void UpdateLoadingStream( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
+  void UpdateLoadingStreamFrames( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
+  void UpdateAudioFramesReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
   
   // Begin to load audio buffer with frames by scheduling all audio events to be posted in relevant time to each other
   void BeginBufferingAudioOnRobotMode();
+  
+  // Track the time the first stream was created and audio event to calculate the streams relevant animation time
+  double _firstStreamStartTime_ms = 0.0;
+  double _firstAudioEventTime_ms = 0.0;
+  
+  // Track if the first audio stream has
+  bool _didPlayFirstStream = false;
   
 };
 

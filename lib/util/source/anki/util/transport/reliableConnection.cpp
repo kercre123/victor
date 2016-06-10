@@ -67,6 +67,8 @@ ReliableConnection::ReliableConnection(const TransportAddress& inTransportAddres
   , _numPingsReceived(0)
   , _numPingsSentThatArrived(0)
   , _numPingsSentTowardsUs(0)
+  , _externalQueuedTimes_ms(ReliableConnection::sMaxAckRoundTripsToTrack) // Track same number as Ack as they're comparable stats
+  , _queuedTimes_ms(ReliableConnection::sMaxAckRoundTripsToTrack)         // Track same number as Ack as they're comparable stats
   , _pingRoundTripTimes(ReliableConnection::sMaxPingRoundTripsToTrack)
   , _ackRoundTripTimes(ReliableConnection::sMaxAckRoundTripsToTrack)
 #if ENABLE_RC_PACKET_TIME_DIAGNOSTICS
@@ -104,10 +106,11 @@ void ReliableConnection::DestroyPendingMessageList(PendingMessageList& messageLi
 }
 
 
-void ReliableConnection::AddMessage(const SrcBufferSet& srcBuffers, EReliableMessageType messageType, ReliableSequenceId seqId, bool flushPacket)
+void ReliableConnection::AddMessage(const SrcBufferSet& srcBuffers, EReliableMessageType messageType,
+                                    ReliableSequenceId seqId, bool flushPacket, NetTimeStamp queuedTime)
 {
   PendingMessage* newPendingMessage = new PendingMessage();
-  newPendingMessage->Set(srcBuffers, messageType, seqId, flushPacket);
+  newPendingMessage->Set(srcBuffers, messageType, seqId, flushPacket, queuedTime);
 
   #if ENABLE_RC_PACKET_TIME_DIAGNOSTICS
   {
@@ -274,7 +277,7 @@ void ReliableConnection::SendPing(ReliableTransport* reliableTransport, NetTimeS
 
   PingPayload pingPayload(pingTime, _numPingsSent, _numPingsReceived, isReply);
   const uint8_t* pingMessage = reinterpret_cast<const uint8_t*>(&pingPayload);
-  reliableTransport->SendMessage(false, _transportAddress, pingMessage, pingPayload.GetPayloadSize(), eRMT_Ping, true);
+  reliableTransport->SendMessage(false, _transportAddress, pingMessage, pingPayload.GetPayloadSize(), eRMT_Ping, true, GetCurrentNetTimeStamp());
 
   if (!isReply)
   {
@@ -576,6 +579,15 @@ size_t ReliableConnection::SendUnAckedMessages(ReliableTransport* reliableTransp
   {
     --i;
     PendingMessage* pendingMessage = _pendingMessageList[i];
+    
+    if (!pendingMessage->HasBeenSent())
+    {
+      const NetTimeStamp extTimeQueued_ms = pendingMessage->GetExternalQueuedDuration();
+      _externalQueuedTimes_ms.AddStat(extTimeQueued_ms);
+      const NetTimeStamp timeQueued_ms = currentNetTimeStamp - pendingMessage->GetQueuedTime();
+      _queuedTimes_ms.AddStat(timeQueued_ms);
+    }
+    
     if (pendingMessage->IsReliable())
     {
       pendingMessage->UpdateLatestSentTime(currentNetTimeStamp);
@@ -652,12 +664,21 @@ bool ReliableConnection::HasConnectionTimedOut() const
   
   if (hasTimedOut)
   {
-    const Stats::StatsAccumulator& ackRTT = _ackRoundTripTimes.GetPrimaryAccumulator();
-    const bool hasRTT = (ackRTT.GetNum() > 0);
-    PRINT_NAMED_WARNING("ReliableConnection.ConnectionTimedOut",
-                        "%p '%s' Timedout after %.2f ms (> %.2f), now = %.2f (latency %.1f ms (%.1f..%.1f))",
-                        this, _transportAddress.ToString().c_str(), currentTime - _latestRecvTime, sConnectionTimeoutInMS, currentTime,
-                        ackRTT.GetMean(), hasRTT ? ackRTT.GetMin() : 0.0, hasRTT ? ackRTT.GetMax() : 0.0 );
+    {
+      const Stats::StatsAccumulator& ackRTT = _ackRoundTripTimes.GetPrimaryAccumulator();
+      const bool hasRTT = (ackRTT.GetNum() > 0);
+      const Stats::StatsAccumulator& extQueuedTimes = _externalQueuedTimes_ms.GetPrimaryAccumulator();
+      const bool hasEQT = (extQueuedTimes.GetNum() > 0);
+      const Stats::StatsAccumulator& queuedTimes = _queuedTimes_ms.GetPrimaryAccumulator();
+      const bool hasQT = (queuedTimes.GetNum() > 0);
+      PRINT_NAMED_WARNING("ReliableConnection.ConnectionTimedOut",
+                          "%p '%s' Timedout after %.2f ms (> %.2f), now = %.2f (latency %.1f ms (%.1f..%.1f)) (extQueued %.1f ms (%.1f..%.1f)) (queued %.1f ms (%.1f..%.1f))",
+                          this, _transportAddress.ToString().c_str(), currentTime - _latestRecvTime, sConnectionTimeoutInMS, currentTime,
+                          ackRTT.GetMean(), hasRTT ? ackRTT.GetMin() : 0.0, hasRTT ? ackRTT.GetMax() : 0.0,
+                          extQueuedTimes.GetMean(), hasEQT ? extQueuedTimes.GetMin() : 0.0, hasEQT ? extQueuedTimes.GetMax() : 0.0,
+                          queuedTimes.GetMean(),    hasQT  ? queuedTimes.GetMin()    : 0.0, hasQT  ? queuedTimes.GetMax()    : 0.0 );
+    }
+    
     
     #if ENABLE_RC_PACKET_TIME_DIAGNOSTICS
     {

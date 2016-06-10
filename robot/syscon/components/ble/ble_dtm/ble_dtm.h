@@ -54,7 +54,7 @@ typedef uint32_t dtm_cmd_t;                                             /**< DTM
 #define DTM_PKT_PRBS9                   0x00                            /**< Bit pattern PRBS9. */
 #define DTM_PKT_0X0F                    0x01                            /**< Bit pattern 11110000 (LSB is the leftmost bit). */
 #define DTM_PKT_0X55                    0x02                            /**< Bit pattern 10101010 (LSB is the leftmost bit). */
-#define DTM_PKT_VENDORSPECIFIC          0xFFFFFFFF                      /**< Vendor specific. Nordic: Continuous carrier test, or configuration. */
+#define DTM_PKT_VENDORSPECIFIC          0x03                            /**< Vendor specific. Nordic: Continuous carrier test, or configuration. */
 
 /**@brief Return codes from dtm_cmd(). */
 #define DTM_SUCCESS                     0x00                            /**< Indicate that the DTM function completed with success. */

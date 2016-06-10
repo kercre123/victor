@@ -96,6 +96,10 @@ inline void transmit_mode(TRANSFER_MODE mode) {
   uart_mode = mode;
 }
 
+void Anki::Cozmo::HAL::UART::pause(void) {
+  UART0_C2 = 0;
+}
+
 void Anki::Cozmo::HAL::UART::WaitForSync() {
   while (!HeadDataReceived) {
     __asm { WFI }

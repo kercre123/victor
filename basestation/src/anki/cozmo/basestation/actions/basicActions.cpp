@@ -247,6 +247,7 @@ namespace Anki {
         _robot.GetAnimationStreamer().PopIdleAnimation();
         _shouldPopIdle = false;
       }
+      _compoundAction.PrepForCompletion();
     }
   
     void SearchSideToSideAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
@@ -781,6 +782,11 @@ namespace Anki {
 
     }
     
+    PanAndTiltAction::~PanAndTiltAction()
+    {
+      _compoundAction.PrepForCompletion();
+    }
+    
     void PanAndTiltAction::SetMaxPanSpeed(f32 maxSpeed_radPerSec)
     {
       if (maxSpeed_radPerSec == 0.f) {
@@ -1295,6 +1301,7 @@ namespace Anki {
         _waitForImagesAction->PrepForCompletion();
       }
       Util::SafeDelete(_waitForImagesAction);
+      _moveLiftToHeightAction.PrepForCompletion();
     }
     
     const std::string& VisuallyVerifyObjectAction::GetName() const
@@ -1661,7 +1668,7 @@ namespace Anki {
                                                                bool turnAfterAction,
                                                                Radians maxTurnAngle,
                                                                bool sayName)
-      : CompoundActionSequential(robot)
+    : CompoundActionSequential(robot)
     {
       if( turnBeforeAction ) {
         AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) );
@@ -1670,6 +1677,9 @@ namespace Anki {
       if( turnAfterAction ) {
         AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) ) ;
       }
+      
+      // Use the action we're wrapping for the completion info and type
+      SetProxyTag(action->GetTag());
     }  
     
 #pragma mark ---- WaitAction ----
@@ -1771,6 +1781,7 @@ namespace Anki {
     ReadToolCodeAction::~ReadToolCodeAction()
     {
       _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
+      _headAndLiftDownAction.PrepForCompletion();
     }
     
     ActionResult ReadToolCodeAction::CheckIfDone()

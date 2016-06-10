@@ -15,6 +15,8 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+//#define NATHAN_CUBE_JUNK
+
 extern void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
 
 extern GlobalDataToBody g_dataToBody;
@@ -33,7 +35,9 @@ static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 
 static void Process_setCubeLights(const CubeLights& msg)
 {
+  #ifndef NATHAN_CUBE_JUNK
   Radio::setPropLights(msg.objectID, msg.lights);
+  #endif
 }
 
 static void Process_setCubeGamma(const SetCubeGamma& msg)
@@ -43,7 +47,13 @@ static void Process_setCubeGamma(const SetCubeGamma& msg)
 
 static void Process_setPropSlot(const SetPropSlot& msg)
 {
+  #ifndef NATHAN_CUBE_JUNK
   Radio::assignProp(msg.slot, msg.factory_id);
+  #endif
+}
+
+static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
+  NVIC_SystemReset();
 }
 
 static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {

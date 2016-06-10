@@ -50,33 +50,6 @@ namespace Cozmo {
     
   private:
     
-    // Test constants
-    Pose3d _cliffDetectPose;
-    Pose3d _camCalibPose;
-    Pose3d _prePickupPose;
-    Pose3d _expectedLightCubePose;
-    Pose3d _actualLightCubePose;
-    Pose3d _expectedChargerPose;
-    std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
-    
-    static constexpr f32 _kCalibrationTimeout_sec = 8.f;
-    static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
-    static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
-    static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
-    static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
-    static constexpr u32 _kNumPickupRetries = 1;
-    static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
-    static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
-    static constexpr u32 _kMinNumberOfCalibrationImagesRequired = 5;
-    static constexpr FactoryID _kChargerFactoryID = 0x80000001;
-
-    // If no change in behavior state for this long then trigger failure
-    static constexpr f32 _kWatchdogTimeout = 20;    
-    
-    // Compute rotation ambiguities.
-    // As long as the cube is upright, it's fine.
-    static const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities;
-    
     virtual Result InitInternal(Robot& robot) override;
     virtual Status UpdateInternal(Robot& robot) override;
     void EndTest(Robot& robot, FactoryTestResultCode resCode);

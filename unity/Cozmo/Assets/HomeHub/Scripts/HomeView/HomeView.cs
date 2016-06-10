@@ -47,6 +47,14 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private Cozmo.UI.ProgressBar _RequirementPointsProgressBar;
+    [SerializeField]
+    private Image _EmotionChipTag;
+    [SerializeField]
+    private Sprite _EmotionChipSprite_Empty;
+    [SerializeField]
+    private Sprite _EmotionChipSprite_Mid;
+    [SerializeField]
+    private Sprite _EmotionChipSprite_Full;
 
     [SerializeField]
     private UnityEngine.UI.Text _CurrentRequirementPointsLabel;
@@ -60,6 +68,12 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private LootView _LootViewPrefab;
     private LootView _LootViewInstance = null;
+
+    [SerializeField]
+    private AnkiTextLabel _DailyGoalsCompletionText;
+
+    [SerializeField]
+    private AnkiTextLabel _DailyGaolsCompletionTextDown;
 
     private HomeHub _HomeHubInstance;
 
@@ -78,7 +92,6 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
-
       _HomeHubInstance = homeHubInstance;
 
       DASEventViewName = "home_view";
@@ -97,12 +110,20 @@ namespace Cozmo.HomeHub {
 
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
+      if (ChestRewardManager.Instance.ChestPending) {
+        HandleChestGained();
+      }
+      else {
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      }
+
+      GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
+      UpdatePlayTabText();
     }
 
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
-      OpenLootView();
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetCurrentRequirementPoints());
     }
 
     // Opens loot view and fires and relevant events
@@ -111,20 +132,46 @@ namespace Cozmo.HomeHub {
         // Avoid dupes
         return;
       }
+      if (_LootViewPrefab == null) {
+        DAS.Error("HomeView.OpenLootView", "LootViewPrefab is NULL");
+        return;
+      }
 
-      // Create alert view with Icon
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
+      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingRewards;
       _LootViewInstance = alertView;
+      _LootViewInstance.ViewCloseAnimationFinished += (() => (
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints())));
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
-      UpdateChestProgressBar(currentPoints, numPointsNeeded);
+      // Ignore updating if we are in the process of showing a new LootView
+      if (ChestRewardManager.Instance.ChestPending == false) {
+        UpdateChestProgressBar(currentPoints, numPointsNeeded);
+      }
     }
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded) {
-      _RequirementPointsProgressBar.SetProgress((float)currentPoints / (float)numPointsNeeded);
+      float progress = ((float)currentPoints / (float)numPointsNeeded);
+      _RequirementPointsProgressBar.SetProgress(progress);
       _CurrentRequirementPointsLabel.text = currentPoints.ToString();
       _RequirementPointsNeededLabel.text = numPointsNeeded.ToString();
+      if (progress <= 0.0f) {
+        _EmotionChipTag.overrideSprite = _EmotionChipSprite_Empty;
+      }
+      else if (progress >= 1.0f) {
+        _EmotionChipTag.overrideSprite = _EmotionChipSprite_Full;
+      }
+      else {
+        _EmotionChipTag.overrideSprite = _EmotionChipSprite_Mid;
+      }
+
+    }
+
+    private void HandleProgressUpdated() {
+      if (ChestRewardManager.Instance.ChestPending) {
+        OpenLootView();
+      }
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -195,18 +242,38 @@ namespace Cozmo.HomeHub {
     public void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnLockedChallengeClicked != null) {
         OnLockedChallengeClicked(challengeClicked, buttonTransform);
-      } 
+      }
     }
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnUnlockedChallengeClicked != null) {
         OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
-      } 
+      }
+    }
+
+    private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
+      if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
+        UpdatePlayTabText();
+      }
+    }
+
+    private void UpdatePlayTabText() {
+      int totalGoals = DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count;
+      int goalsCompleted = 0;
+      for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; ++i) {
+        if (DataPersistenceManager.Instance.CurrentSession.DailyGoals[i].GoalComplete) {
+          goalsCompleted++;
+        }
+      }
+      _DailyGoalsCompletionText.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
+      _DailyGaolsCompletionTextDown.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
     }
 
     protected override void CleanUp() {
       ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
+      _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
+      GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
     }
 
   }

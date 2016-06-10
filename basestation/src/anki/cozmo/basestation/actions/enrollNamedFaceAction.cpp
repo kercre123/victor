@@ -46,6 +46,8 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kENF_MaxSoundSpace_s,    "Actions.EnrollNamedFace", 0.75f);
   CONSOLE_VAR(bool, kENF_UseBackpackLights, "Actions.EnrollNamedFace", true);
   CONSOLE_VAR(TimeStamp_t, kENF_TimeoutForBackpackLights_ms, "Actions.EnrollNamedFace", 250);
+  CONSOLE_VAR(f32, kENF_UpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
+  CONSOLE_VAR(f32, kENF_UpdateFaceAngleThreshold_deg,        "Actions.EnrollNamedFace", 45.f);
   
   static void SetBackpackLightsHelper(Robot& robot, const ColorRGBA& color)
   {
@@ -66,8 +68,12 @@ namespace Cozmo {
   : IAction(robot)
   , _faceID(faceID)
   , _faceName(name)
-  { 
-
+  {
+    // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
+    PRINT_NAMED_INFO("EnrollNamedFaceAction.Constructor", "Original ID=%d", _faceID);
+    PRINT_NAMED_DEBUG("EnrollNamedFaceAction.Constructor_DEBUG", "Original ID=%d with name='%s'",
+                     _faceID, _faceName.c_str());
+    
     if(_robot.GetExternalInterface() == nullptr) {
       PRINT_NAMED_WARNING("EnrollNamedFaceAction.Constructor.NullExternalInterface",
                           "Will not handle FaceID changes");
@@ -88,11 +94,7 @@ namespace Cozmo {
   
   EnrollNamedFaceAction::~EnrollNamedFaceAction()
   {
-    if(_action != nullptr)
-    {
-      _action->PrepForCompletion();
-    }
-    Util::SafeDelete(_action);
+    SetAction( nullptr ) ;
     
     // Leave enrollment enabled
     _robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight);
@@ -137,6 +139,15 @@ namespace Cozmo {
     return action;
   }
   
+  void EnrollNamedFaceAction::SetAction(IActionRunner* action)
+  {
+    if(_action != nullptr) {
+      _action->PrepForCompletion();
+      Util::SafeDelete(_action);
+    }
+    _action = action;
+  }
+  
   Result EnrollNamedFaceAction::InitSequence()
   {
     switch(_whichSeq)
@@ -150,11 +161,11 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            _action = CreateTurnTowardsFaceAction(_robot, _faceID);
+            SetAction( CreateTurnTowardsFaceAction(_robot, _faceID) );
             return RESULT_OK;
           },
           .duringFcn = [this]() {
-            _action = CreateTrackAction(_robot, _faceID);
+            SetAction( CreateTrackAction(_robot, _faceID) );
             return RESULT_OK;
           },
           .stopFcn = [this]() {
@@ -182,7 +193,7 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepOneFunction", "Red");
             SetBackpackLightsHelper(_robot, NamedColors::RED);
-            _action = CreateTurnTowardsFaceAction(_robot, _faceID);
+            SetAction( CreateTurnTowardsFaceAction(_robot, _faceID) );
             return RESULT_OK;
           },
         });
@@ -202,11 +213,11 @@ namespace Cozmo {
               compoundAction->AddAction(new TurnTowardsPoseAction(_robot, face->GetHeadPose(), DEG_TO_RAD(45)));
             }
             
-            _action = compoundAction;
+            SetAction( compoundAction );
             return RESULT_OK;
           },
           .duringFcn = [this]() {
-            _action = CreateTrackAction(_robot, _faceID);
+            SetAction( CreateTrackAction(_robot, _faceID) );
             return RESULT_OK;
           },
         });
@@ -226,12 +237,12 @@ namespace Cozmo {
               compoundAction->AddAction(new TurnTowardsPoseAction(_robot, face->GetHeadPose(), DEG_TO_RAD(45)));
             }
             
-            _action = compoundAction;
+            SetAction( compoundAction );
             
             return RESULT_OK;
           },
           .duringFcn = [this]() {
-            _action = CreateTrackAction(_robot, _faceID);
+            SetAction( CreateTrackAction(_robot, _faceID) );
             return RESULT_OK;
           },
           .stopFcn = [this]() {
@@ -250,7 +261,7 @@ namespace Cozmo {
           .pose = Vision::FaceEnrollmentPose::LookingStraight,
           .numEnrollments = -1, // Don't count enrollments: use whatever we already have
           .startFcn = [this]() {
-            _action = CreateTurnTowardsFaceAction(_robot, _faceID);
+            SetAction( CreateTurnTowardsFaceAction(_robot, _faceID) );
             return RESULT_OK;
           },
           .duringFcn = {},
@@ -308,8 +319,15 @@ namespace Cozmo {
   
   ActionResult EnrollNamedFaceAction::Init()
   {
-    PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.Init", "");
-    
+    // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
+    PRINT_NAMED_INFO("EnrollNamedFaceAction.Init",
+                     "Initialize with ID=%d",
+                     _faceID);
+
+    PRINT_NAMED_DEBUG("EnrollNamedFaceAction.Init_DEBUG",
+                     "Initialize with ID=%d and name '%s'",
+                     _faceID, _faceName.c_str());
+
     if(_faceID <= 0) {
       PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.InvalidID",
                           "Can only enroll positive IDs, not unknown/tracker ID %d",
@@ -350,7 +368,7 @@ namespace Cozmo {
           ActionResult subResult = _action->Update();
           if(ActionResult::SUCCESS == subResult) {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.PreActionCompleted", "");
-            Util::SafeDelete(_action); // delete and set to null to signify we're done with this action
+            SetAction( nullptr );
           } else {
             return subResult; // NOTE: if action failed, it will still get deleted in destructor
           }
@@ -385,8 +403,8 @@ namespace Cozmo {
             if(ActionResult::SUCCESS != subResult) {
               PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.DuringActionFailed", "");
             }
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.PreActionCompleted", "");
-            Util::SafeDelete(_action); // delete and set to null to signify we're done with this action
+            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.DuringCompleted", "");
+            SetAction( nullptr );
           } else {
             //PRINT_NAMED_DEBUG("EnrollNamedFaceAction.CheckIfDone.DuringActionRunning", "");
           }
@@ -412,7 +430,7 @@ namespace Cozmo {
                              "Count=%d", _numEnrollmentsRequired);
           
           // Cancel any "during" action we were doing
-          Util::SafeDelete(_action);
+          SetAction( nullptr );
           
           if(nullptr != _seqIter->stopFcn)
           {
@@ -436,7 +454,7 @@ namespace Cozmo {
           ActionResult subResult = _action->Update();
           if(ActionResult::SUCCESS == subResult) {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.PostActionCompleted", "");
-            Util::SafeDelete(_action);
+            SetAction( nullptr );
           } else {
             return subResult;
           }
@@ -462,19 +480,19 @@ namespace Cozmo {
               // Play success animation which says player's name
               SayTextAction* sayTextAction = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
               sayTextAction->SetGameEvent(GameEvent::OnLearnedPlayerName);
-              _action = sayTextAction;
+              SetAction( sayTextAction );
             }
             
             //  // Test: trying saying name twice
             //  SayTextAction* sayTextAction2 = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
             //  sayTextAction2->SetGameEvent(GameEvent::OnLearnedPlayerName);
-            //  _action = new CompoundActionSequential(_robot, {sayTextAction, sayTextAction2});
+            //  SetAction( new CompoundActionSequential(_robot, {sayTextAction, sayTextAction2}) );
             
             //  // Test: Play happy animation after say text
-            //  _action = new CompoundActionSequential(_robot, {sayTextAction,
+            //  SetAction( new CompoundActionSequential(_robot, {sayTextAction,
             //    new PlayAnimationAction(_robot, "anim_reactToBlock_success_01_45"),
             //    new MoveHeadToAngleAction(_robot, DEG_TO_RAD(40))
-            //  });
+            //  }) );
             
             // Save the new album to the robot.
             if(_saveToRobot) {
@@ -523,6 +541,7 @@ namespace Cozmo {
     FaceEnrollmentCompleted info;
     info.faceID = _faceID;
     info.name   = _faceName;
+    info.saidName = _sayNameWhenDone; // Assumes name was said (invalid if action does not complete succesfully)
     completionUnion.Set_faceEnrollmentCompleted(std::move( info ));
   }
   
@@ -557,6 +576,25 @@ namespace Cozmo {
   template<>
   void EnrollNamedFaceAction::HandleMessage(const ExternalInterface::RobotObservedFace& msg)
   {
+    if(msg.faceID != _faceID)
+    {
+      auto myFace = _robot.GetFaceWorld().GetFace(_faceID);
+      auto newFace = _robot.GetFaceWorld().GetFace(msg.faceID);
+      
+      if(nullptr != myFace && nullptr != newFace &&
+         newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
+                                         kENF_UpdateFacePositionThreshold_mm,
+                                         DEG_TO_RAD_F32(kENF_UpdateFaceAngleThreshold_deg)))
+      {
+        PRINT_NAMED_INFO("EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceID",
+                         "Was enrolling ID=%d, changing to ID=%d based on pose",
+                         _faceID, msg.faceID);
+        
+        // NOTE: Making these equal triggers the next "if" on purpose
+        _faceID = msg.faceID;
+      }
+    }
+    
     if(msg.faceID == _faceID)
     {
       if(_lastFaceSeen_ms == 0) {
@@ -565,8 +603,8 @@ namespace Cozmo {
       
       _lastFaceSeen_ms = msg.timestamp;
     }
+    
   }
-  
   
 } // namespace Cozmo
 } // namespace Anki

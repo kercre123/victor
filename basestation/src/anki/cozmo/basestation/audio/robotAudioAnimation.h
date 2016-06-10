@@ -19,9 +19,9 @@
 #include "anki/cozmo/basestation/animations/track.h"
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
 #include "util/dispatchQueue/dispatchQueue.h"
-#include <vector>
+#include <string>
 #include <mutex>
-
+#include <vector>
 
 
 namespace Anki {
@@ -48,11 +48,13 @@ public:
   // Possible states of the animation
   enum class AnimationState : uint8_t {
     Preparing = 0,        // No Animation in progress
-    BufferLoading,        // Has Animation waiting for buffer frames
-    BufferReady,          // Has Animation buffer frames are ready
+    LoadingStream,        // Animation is waiting for audio stream
+    LoadingStreamFrames,  // Current Stream is waiting for audio frames
+    AudioFramesReady,     // Has Animation audio frames are ready
     AnimationAbort,       // In progress of aborting animation
     AnimationCompleted,   // Animation is completed
-    AnimationError        // Error creating animation
+    AnimationError,       // Error creating animation
+    AnimationStateCount   // Number of Animation States
   };
   
   // Use sub-class constructor, this class will return an invalid animation
@@ -65,6 +67,8 @@ public:
   
   // Current animation state
   AnimationState GetAnimationState() const { return _state; }
+  // Current animation state String
+  static const std::string& GetStringForAnimationState( AnimationState state );
   
   // Call at the beginning of the update loop to update the animation's state for the upcoming loop cycle
   virtual AnimationState Update( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms ) = 0;
@@ -74,8 +78,11 @@ public:
   // when to send a AudioSilence message.
   // Note: EngineToRobot pointer memory needs to be manage or it will leak memory.
   virtual void PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
-                            TimeStamp_t startTime_ms,
-                            TimeStamp_t streamingTime_ms ) = 0;
+                                     TimeStamp_t startTime_ms,
+                                     TimeStamp_t streamingTime_ms ) = 0;
+
+  static constexpr uint32_t kInvalidEventTime = UINT32_MAX;
+  uint32_t GetNextEventTime_ms();
 
   // FIXME: This is a temp fix, will remove once we have an Audio Mixer
   void SetRobotVolume( float volume ) { _robotVolume = volume; }
@@ -103,9 +110,9 @@ protected:
     AudioEvent( audioEvent ),
     TimeInMS( timeInMS ) {}
   };
-  
-  // Current state of the animation
-  AnimationState _state = AnimationState::Preparing;
+
+  // Set Animation State
+  void SetAnimationState( AnimationState state );
   
   // Pointer to parent audio client and it's audio buffer
   RobotAudioClient* _audioClient = nullptr;
@@ -122,6 +129,10 @@ protected:
   // Ordered list of animation audio event
   std::vector<AnimationEvent> _animationEvents;
   
+  // Get next Audio Event
+  // Return null if there are no more events
+  const AnimationEvent* GetNextEvent();
+  
   // Track the current Event in the _animationEvents vector
   int GetEventIndex() const { return _eventIndex; }
   void IncrementEventIndex() { ++_eventIndex; }
@@ -137,7 +148,7 @@ protected:
   bool HasCurrentBufferStream() const { return _currentBufferStream != nullptr; }
 
   // All the animations events have and completed
-  virtual bool IsAnimationDone() const = 0;
+  virtual bool IsAnimationDone() const;
   
   // Call this from constructor in sub-class to prepare for animation
   void InitAnimation( Animation* anAnimation, RobotAudioClient* audioClient );
@@ -151,8 +162,12 @@ protected:
   // FIXME: This is a temp fix, will remove once we have an Audio Mixer
   float _robotVolume = 1.0f;
 
+
 private:
 
+  // Current state of the animation
+  AnimationState _state = AnimationState::Preparing;
+  
   // Track current event
   int _eventIndex = 0;
   // Track number of events that have completed

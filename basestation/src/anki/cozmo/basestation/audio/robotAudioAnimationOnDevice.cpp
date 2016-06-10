@@ -40,15 +40,15 @@ RobotAudioAnimationOnDevice::RobotAudioAnimationOnDevice( Animation* anAnimation
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnDevice::AnimationState RobotAudioAnimationOnDevice::Update( TimeStamp_t startTime_ms,
-                                                                                TimeStamp_t streamingTime_ms )
+                                                                                 TimeStamp_t streamingTime_ms )
 {
-  switch ( _state ) {
+  switch ( GetAnimationState() ) {
       
-    case RobotAudioAnimation::AnimationState::BufferReady:
+    case RobotAudioAnimation::AnimationState::AudioFramesReady:
     {
       // Check if animations have all completed
       if ( IsAnimationDone() ) {
-        _state = AnimationState::AnimationCompleted;
+        SetAnimationState( AnimationState::AnimationCompleted );
       }
     }
       break;
@@ -57,9 +57,9 @@ RobotAudioAnimationOnDevice::AnimationState RobotAudioAnimationOnDevice::Update(
     {
       // If in animation mode wait for buffer to be ready before completing
       // If you hit this assert it is safe to comment out, please just let me know - Jordan R.
-      ASSERT_NAMED( _state != RobotAudioAnimation::AnimationState::AnimationAbort, "Don't expect to get update calls after abort has been called.");
-      
-      _state = AnimationState::AnimationCompleted;
+      ASSERT_NAMED( GetAnimationState() != RobotAudioAnimation::AnimationState::AnimationAbort,
+                    "Don't expect to get update calls after abort has been called" );
+      SetAnimationState( AnimationState::AnimationCompleted );
     }
       break;
       
@@ -68,10 +68,10 @@ RobotAudioAnimationOnDevice::AnimationState RobotAudioAnimationOnDevice::Update(
   }
 
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::Update", "EXIT State - %hhu", _state);
+    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::Update", "EXIT State - %hhu", GetAnimationState());
   }
 
-  return _state;
+  return GetAnimationState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,7 +80,13 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                                                         TimeStamp_t streamingTime_ms )
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::PopRobotAudioMessagePlayOnDeviceMode", "StartTime: %d - StreamingTime: %d - RelevantTime: %d - eventIdx: %d / %lu", startTime_ms, streamingTime_ms, (streamingTime_ms - startTime_ms), GetEventIndex(), (unsigned long)_animationEvents.size() );
+    PRINT_NAMED_INFO( "RobotAudioAnimationOnDevice::PopRobotAudioMessagePlayOnDeviceMode", "StartTime: %d - \
+                      StreamingTime: %d - RelevantTime: %d - eventIdx: %d / %lu",
+                      startTime_ms,
+                      streamingTime_ms,
+                      (streamingTime_ms - startTime_ms),
+                      GetEventIndex(),
+                      (unsigned long)_animationEvents.size() );
   }
   
   // When playing on device we always send Silence messages
@@ -137,22 +143,7 @@ void RobotAudioAnimationOnDevice::PrepareAnimation()
   }
   
   // Use audio controller to play sounds therefore we are ready to go
-  _state = AnimationState::BufferReady;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioAnimationOnDevice::IsAnimationDone() const
-{
-  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation::AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", (unsigned long)_animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
-  }
-  
-  // Compare completed event count with number of events
-  if ( GetCompletedEventCount() >= _animationEvents.size() ) {
-    return true;
-  }
-  
-  return false;
+  SetAnimationState( AnimationState::AudioFramesReady );
 }
 
 } // Audio

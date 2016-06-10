@@ -7,24 +7,14 @@
   </TextStylePolicy>
   <VersionControlPolicy inheritsSet="Mono" />
   <CSharpFormattingPolicy inheritsSet="Mono" inheritsScope="text/x-csharp" scope="text/x-csharp">
-    <NamespaceBraceStyle>EndOfLine</NamespaceBraceStyle>
-    <ClassBraceStyle>EndOfLine</ClassBraceStyle>
-    <InterfaceBraceStyle>EndOfLine</InterfaceBraceStyle>
-    <StructBraceStyle>EndOfLine</StructBraceStyle>
-    <EnumBraceStyle>EndOfLine</EnumBraceStyle>
-    <MethodBraceStyle>EndOfLine</MethodBraceStyle>
-    <ConstructorBraceStyle>EndOfLine</ConstructorBraceStyle>
-    <DestructorBraceStyle>EndOfLine</DestructorBraceStyle>
-    <ElseNewLinePlacement>NewLine</ElseNewLinePlacement>
-    <CatchNewLinePlacement>NewLine</CatchNewLinePlacement>
-    <FinallyNewLinePlacement>NewLine</FinallyNewLinePlacement>
-    <BeforeMethodDeclarationParentheses>False</BeforeMethodDeclarationParentheses>
-    <BeforeMethodCallParentheses>False</BeforeMethodCallParentheses>
-    <BeforeConstructorDeclarationParentheses>False</BeforeConstructorDeclarationParentheses>
-    <BeforeIndexerDeclarationBracket>False</BeforeIndexerDeclarationBracket>
-    <BeforeDelegateDeclarationParentheses>False</BeforeDelegateDeclarationParentheses>
-    <NewParentheses>False</NewParentheses>
-    <SpacesBeforeBrackets>False</SpacesBeforeBrackets>
+    <NewLinesForBracesInTypes>False</NewLinesForBracesInTypes>
+    <NewLinesForBracesInMethods>False</NewLinesForBracesInMethods>
+    <NewLineForElse>True</NewLineForElse>
+    <NewLineForCatch>True</NewLineForCatch>
+    <NewLineForFinally>True</NewLineForFinally>
+    <SpacingAfterMethodDeclarationName>False</SpacingAfterMethodDeclarationName>
+    <SpaceAfterMethodCallName>False</SpaceAfterMethodCallName>
+    <SpaceBeforeOpenSquareBracket>False</SpaceBeforeOpenSquareBracket>
   </CSharpFormattingPolicy>
   <NameConventionPolicy>
     <Rules>
@@ -206,5 +196,25 @@
     </Rules>
   </NameConventionPolicy>
   <ChangeLogPolicy inheritsSet="Mono" />
-  <TextStylePolicy inheritsSet="null" scope="text/x-csharp" />
+  <TextStylePolicy inheritsSet="VisualStudio" inheritsScope="text/plain" scope="text/x-csharp">
+    <FileWidth>120</FileWidth>
+    <TabWidth>2</TabWidth>
+    <IndentWidth>2</IndentWidth>
+  </TextStylePolicy>
+  <TextStylePolicy inheritsSet="VisualStudio" inheritsScope="text/plain" scope="text/x-fsharp">
+    <FileWidth>120</FileWidth>
+    <TabWidth>2</TabWidth>
+    <IndentWidth>2</IndentWidth>
+  </TextStylePolicy>
+  <FSharpFormattingPolicy scope="text/x-fsharp">
+    <DefaultFormat>
+      <IndentOnTryWith>False</IndentOnTryWith>
+      <ReorderOpenDeclaration>False</ReorderOpenDeclaration>
+      <SpaceAfterComma>True</SpaceAfterComma>
+      <SpaceAfterSemicolon>True</SpaceAfterSemicolon>
+      <SpaceAroundDelimiter>True</SpaceAroundDelimiter>
+      <SpaceBeforeArgument>True</SpaceBeforeArgument>
+      <SpaceBeforeColon>True</SpaceBeforeColon>
+    </DefaultFormat>
+  </FSharpFormattingPolicy>
 </PolicySet>

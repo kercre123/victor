@@ -151,6 +151,10 @@ namespace Anki {
       
     protected:
       std::map<SlotHandle, ActionQueue> _queues;
+    
+    private:
+      // Whether or not the queues are in the process of being cleared
+      bool _currentlyClearing = false;
       
     }; // class ActionList
     

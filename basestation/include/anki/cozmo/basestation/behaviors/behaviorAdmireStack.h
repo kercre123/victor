@@ -60,6 +60,7 @@ private:
     ReactingToTopple,
     SearchingForStack,
     KnockingOverStackFailed,
+    LookDownAndUp,
   };
 
   State _state = State::WatchingStack;
@@ -71,6 +72,7 @@ private:
   void TransitionToReactingToTopple(Robot& robot);
   void TransitionToSearchingForStack(Robot& robot);
   void TransitionToKnockingOverStackFailed(Robot& robot);
+  void TransitionToLookDownAndUp(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(Robot& robot);  

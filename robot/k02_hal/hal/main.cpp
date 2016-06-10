@@ -89,13 +89,12 @@ int main (void)
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
-  //update_bootloader();
+  update_bootloader();
   
   Power::enableEspressif();
 
   UART::DebugInit();
   #ifndef ENABLE_FCC_TEST
-  Watchdog::init();
   SPI::Init();
   #endif
   DAC::Init();
@@ -124,24 +123,21 @@ int main (void)
     // We can now safely start camera DMA, which shortly after starts HALExec
     // This function returns after the first call to HALExec is complete
     SPI::Init();
+    Watchdog::init();
     CameraStart();
 
     // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
   
-    #if defined(FACTORY_FIRMWARE)
-      // Run the main thread (lite)
-      for(;;) {
-        // Wait for head body sync to occur
-        UART::WaitForSync();
-        Spine::Manage();
-        WiFi::Update();
-      }
-   #else
-      // Run the main thread
-      do {
-        // Wait for head body sync to occur
-        UART::WaitForSync();
-      } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
-    #endif
+  // Run the main thread (lite)
+  for(;;)
+  {
+    // Wait for head body sync to occur
+    UART::WaitForSync();
+
+    if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
+    {
+      NVIC_SystemReset();
+    }
+  }
   #endif
 }

@@ -54,7 +54,7 @@ public class LatencyCalculator : MonoBehaviour {
       if (_LatencyDisplayInst) {
         _LatencyDisplayInst.HandleDebugLatencyMsg(msg);
       }
-      else if (msg.averageLatency > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
+      else if (msg.wifiLatency.avgTime_ms > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
         // Warning we are over the limit Warn people disconnects might happen.
         ShowLatencyDisplay();
       }
