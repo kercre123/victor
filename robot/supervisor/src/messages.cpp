@@ -70,7 +70,8 @@ namespace Anki {
         // Cache for power state information
         float vBat;
         float vExt;
-        u8 chargeStat;
+        bool onCharger;
+        bool isCharging;
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -748,7 +749,8 @@ namespace Anki {
       {
         vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
         vExt = static_cast<float>(msg.VExtFixed)/65536.0f;
-        chargeStat = msg.chargeStat;
+        onCharger  = msg.onCharger;
+        isCharging = msg.isCharging;
       }
       void Process_getPropState(const PropState& msg)
       {
@@ -912,7 +914,7 @@ namespace Anki {
           tsm.cliffLevel = g_dataToHead.cliffLevel,
           tsm.battVolt10x = static_cast<uint8_t>(vBat * 10.0f);
           tsm.extVolt10x  = static_cast<uint8_t>(vExt * 10.0f);
-          tsm.chargeStat  = chargeStat;
+          tsm.chargeStat  = (onCharger << 0) | (isCharging << 1);
           RobotInterface::SendMessage(tsm);
         }
 #endif
@@ -1064,12 +1066,12 @@ namespace Anki {
       }
       bool BatteryIsCharging()
       {
-        return false;
+        return Messages::isCharging;
       }
       bool BatteryIsOnCharger()
       {
-        return Messages::vExt > 4.0f;
-      }  
+        return Messages::onCharger;
+      }
 #else
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {

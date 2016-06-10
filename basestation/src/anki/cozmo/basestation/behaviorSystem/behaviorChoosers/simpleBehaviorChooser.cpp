@@ -270,7 +270,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
   }
 
   if( runningBehavior != nullptr && bestBehavior != runningBehavior ) {
-    PRINT_NAMED_DEBUG("BehaviorChooser.SwitchBehaviors",
+    PRINT_NAMED_INFO("BehaviorChooser.SwitchBehaviors",
                       "behavior '%s' has score of %f, so is interrupting running behavior '%s' which scored %f",
                       bestBehavior->GetName().c_str(),
                       bestScore,

@@ -12,7 +12,7 @@ namespace Cozmo.HubWorld {
     private Cozmo.UI.CozmoButton _ButtonScript;
 
     [SerializeField]
-    private Image _IconImage;
+    private Cozmo.UI.ChallengeIconProxy _IconProxy;
 
     [SerializeField]
     private Transform _IconContainer;
@@ -28,7 +28,8 @@ namespace Cozmo.HubWorld {
     public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, Sprite circuitSprite, bool isEnd = false) {
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
-        _IconImage.overrideSprite = challengeData.ChallengeIcon;
+        _IconProxy.SetIcon(challengeData.ChallengeIcon);
+        _IconProxy.SetChallengeIconAsGame(challengeData.IsMinigame);
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
 
@@ -66,7 +67,7 @@ namespace Cozmo.HubWorld {
     }
 
     private void RaiseButtonClicked(string challenge) {
-      if (OnButtonClicked != null) { 
+      if (OnButtonClicked != null) {
         OnButtonClicked(challenge, this.transform);
       }
     }

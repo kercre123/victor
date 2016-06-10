@@ -109,7 +109,7 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bo
   if(doLookAtFaceAfter)
   {
     // in any case, look back at the last face after this is done (to give them a chance to show another cube)
-    const bool sayName = true;
+    const bool sayName = false;
     action->AddAction(new TurnTowardsFaceWrapperAction(robot,
                                                        new PlayAnimationGroupAction(robot, kLookAtFaceAnimGroup),
                                                        true, false, PI_F, sayName));

@@ -2366,7 +2366,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   
     ObjectID BlockWorld::AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
     {
-      if (activeID >= 4 || activeID < 0) {
+      if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS || activeID < 0) {
         PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
         return ObjectID();
       }

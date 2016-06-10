@@ -21,7 +21,7 @@ public class ChallengeDetailsDialog : BaseView {
   private AnkiTextLabel _PlayersAndCubesLabel;
 
   [SerializeField]
-  private IconProxy _ChallengeIcon;
+  private ChallengeIconProxy _ChallengeIcon;
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _StartChallengeButton;
@@ -50,11 +50,12 @@ public class ChallengeDetailsDialog : BaseView {
     else if (players != 1 && cubes == 1) {
       locKey = LocalizationKeys.kChallengeDetailsLabelPlayersAndCubeNeeded;
     }
-      
+
     if (_PlayersAndCubesLabel != null) {
       _PlayersAndCubesLabel.text = Localization.GetWithArgs(locKey, players, cubes);
     }
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
+    _ChallengeIcon.SetChallengeIconAsGame(challengeData.IsMinigame);
     _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
     _ChallengeId = challengeData.ChallengeID;
   }

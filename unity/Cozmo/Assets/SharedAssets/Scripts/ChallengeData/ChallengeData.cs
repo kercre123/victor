@@ -53,11 +53,11 @@ public class ChallengeData : ScriptableObject {
   private Sprite _ChallengeIconPlainStyle;
 
   public Sprite ChallengeIconPlainStyle {
-    get { 
+    get {
       if (_ChallengeIconPlainStyle == null) {
         return ChallengeIcon;
       }
-      return _ChallengeIconPlainStyle; 
+      return _ChallengeIconPlainStyle;
     }
   }
 
@@ -78,6 +78,11 @@ public class ChallengeData : ScriptableObject {
   // string path to MinigameConfig
   public MinigameConfigBase MinigameConfig;
 
+
+  [SerializeField]
+  public bool IsMinigame;
+
+
   public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
 }
 
@@ -91,7 +96,7 @@ public struct MusicStateWrapper {
   [SerializeField]
   private int _Music;
 
-  public Anki.Cozmo.Audio.GameState.Music Music { 
+  public Anki.Cozmo.Audio.GameState.Music Music {
     get { return (Anki.Cozmo.Audio.GameState.Music)_Music; }
     set { _Music = (int)value; }
   }
@@ -103,4 +108,5 @@ public struct MusicStateWrapper {
   public static implicit operator MusicStateWrapper(Anki.Cozmo.Audio.GameState.Music other) {
     return new MusicStateWrapper(other);
   }
+
 }

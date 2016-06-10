@@ -1668,7 +1668,7 @@ namespace Anki {
                                                                bool turnAfterAction,
                                                                Radians maxTurnAngle,
                                                                bool sayName)
-      : CompoundActionSequential(robot)
+    : CompoundActionSequential(robot)
     {
       if( turnBeforeAction ) {
         AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) );
@@ -1677,6 +1677,9 @@ namespace Anki {
       if( turnAfterAction ) {
         AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle, sayName) ) ;
       }
+      
+      // Use the action we're wrapping for the completion info and type
+      SetProxyTag(action->GetTag());
     }  
     
 #pragma mark ---- WaitAction ----

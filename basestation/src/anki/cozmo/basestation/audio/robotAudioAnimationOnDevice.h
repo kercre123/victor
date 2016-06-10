@@ -56,9 +56,6 @@ protected:
   
   // Perform specific preparation to animation
   virtual void PrepareAnimation() override;
-  
-  // All the animations events have been completed and Audio Buffer is empty
-  virtual bool IsAnimationDone() const override;
 };
 
 } // Audio

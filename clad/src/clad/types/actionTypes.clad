@@ -126,7 +126,8 @@ structure ReadToolCodeCompleted {
 // Used by EnrollNamedFaceAction on success
 structure FaceEnrollmentCompleted {
   int_32 faceID,
-  string name
+  string name,
+  bool   saidName // Indicates whether the action played the say name animation at end (iff action completed successfully)
 }
 
 // Use tag to determine what struct to use

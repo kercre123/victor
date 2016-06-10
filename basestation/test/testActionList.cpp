@@ -195,6 +195,53 @@ ActionResult TestActionWithinAction::CheckIfDone()
   return (result ? ActionResult::SUCCESS : ActionResult::RUNNING);
 }
 
+// Simple action that can be set to complete
+class TestActionThatCancels : public IAction
+{
+public:
+  TestActionThatCancels(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
+  virtual ~TestActionThatCancels()
+  {
+    actionsDestroyed.push_back(_name);
+    for(auto tag : _tagsToCancelOnDestroy)
+    {
+      _robot.GetActionList().Cancel(tag);
+    }
+  }
+  virtual const std::string& GetName() const override { return _name; }
+  virtual RobotActionType GetType() const override { return _type; }
+  virtual u8 GetTracksToLock() const override { return _tracks; }
+  int _numRetries = 0;
+  bool _complete = false;
+  std::vector<u32> _tagsToCancelOnDestroy;
+protected:
+  virtual ActionResult Init() override;
+  virtual ActionResult CheckIfDone() override;
+  std::string _name = "Default";
+  RobotActionType _type;
+  u8 _tracks;
+};
+
+TestActionThatCancels::TestActionThatCancels(Robot& robot, std::string name, RobotActionType type, u8 tracks)
+: IAction(robot)
+{
+  _name = name;
+  _type = type;
+  _tracks = tracks;
+}
+
+ActionResult TestActionThatCancels::Init() { return ActionResult::SUCCESS; }
+
+ActionResult TestActionThatCancels::CheckIfDone()
+{
+  if(_numRetries > 0)
+  {
+    _numRetries--;
+    return ActionResult::FAILURE_RETRY;
+  }
+  return (_complete ? ActionResult::SUCCESS : ActionResult::RUNNING);
+}
+
 
 void CheckActionDestroyed(std::vector<std::string> actualNames)
 {
@@ -1065,6 +1112,25 @@ TEST(QueueAction, QueueDuplicate)
   EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
   EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
+}
+
+TEST(QueueAction, CancelFromDestructor)
+{
+  Robot r(0, cozmoContext);
+  
+  TestAction* action = new TestAction(r, "TestAction", RobotActionType::WAIT);
+  TestAction* action2 = new TestAction(r, "TestAction2", RobotActionType::WAIT);
+  TestActionThatCancels* actionThatCancels = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
+  actionThatCancels->_tagsToCancelOnDestroy.push_back(action->GetTag());
+  actionThatCancels->_tagsToCancelOnDestroy.push_back(action2->GetTag());
+  
+  r.GetActionList().QueueAction(QueueActionPosition::NEXT, action);
+  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, actionThatCancels);
+  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action2);
+  
+  r.GetActionList().Clear();
+  
+  EXPECT_TRUE(r.GetActionList().IsEmpty());
 }
 
 // Tests setting two unique tags
