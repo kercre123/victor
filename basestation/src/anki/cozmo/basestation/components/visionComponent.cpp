@@ -1803,6 +1803,24 @@ namespace Cozmo {
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
   
+  Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  {
+    Lock();
+    Result result = _visionSystem->RenameFace(faceID, oldName, newName);
+    Unlock();
+    
+    if(RESULT_OK == result)
+    {
+      SaveFaceAlbumToRobot();
+      ExternalInterface::RobotLoadedKnownFace msg;
+      msg.faceID = faceID;
+      msg.name   = newName;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    }
+    
+    return result;
+  }
+  
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const
   {
     // Notify about the newly-available names and IDs, and create wave files

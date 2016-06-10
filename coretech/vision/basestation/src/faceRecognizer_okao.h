@@ -54,6 +54,8 @@ namespace Vision {
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
     
+    Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
     // given facial part data. Returns true if the request is accepted (i.e.,
