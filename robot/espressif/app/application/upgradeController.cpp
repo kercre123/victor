@@ -693,36 +693,24 @@ namespace UpgradeController {
             break ;
           }
         case 10: // Stage 1
-          {
-            int ticks = system_get_time();
-            
+          {           
             i2spiSwitchMode(I2SPI_PAUSED);
             verify_stage1(*cert_state);
             i2spiSwitchMode(I2SPI_BOOTLOADER);
-
-            os_printf("DONE CERT 1 %d\n\r", system_get_time() - ticks);
             break ;
           }
         case 20: // Stage 2
           {
-            int ticks = system_get_time();
-            
             i2spiSwitchMode(I2SPI_PAUSED);
             verify_stage2(*cert_state);
             i2spiSwitchMode(I2SPI_BOOTLOADER);
-
-            os_printf("DONE CERT 2 %d\n\r", system_get_time() - ticks);
             break ;
           }
         case 30: // Stage 3
           {
-            int ticks = system_get_time();
-            
             i2spiSwitchMode(I2SPI_PAUSED);
             verify_stage3(*cert_state);
             i2spiSwitchMode(I2SPI_BOOTLOADER);
-
-            os_printf("DONE CERT 3 %d\n\r", system_get_time() - ticks);
             break ;
           }
         case 40: // Stage 4
