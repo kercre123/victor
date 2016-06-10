@@ -61,10 +61,12 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   
   _robotManager = robotMgr;
   _isInitialized = true;
-  
-  auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
-  using namespace ExternalInterface;
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReliableTransportRunMode>();
+
+  if (context->GetExternalInterface() != nullptr) {
+    auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ReliableTransportRunMode>();
+  }
 }
 
 void MessageHandler::ProcessMessages()
