@@ -81,7 +81,7 @@ def build(options):
 
 
 # runs webots test
-def runWebots(options, resultQueue, test):
+def runWebots(options, resultQueue, test, logFileName):
   # prepare run command
   runCommand = [
     '/Applications/Webots/webots', 
@@ -103,8 +103,6 @@ def runWebots(options, resultQueue, test):
 
   buildFolder = get_build_folder(options)
   mkdir_p(buildFolder)
-
-  logFileName = get_log_file_path(buildFolder, test, curTime)
 
   logFile = open(logFileName, 'w')
   startedTimeS = time.time()
@@ -263,66 +261,68 @@ def runAll(options):
   totalErrorCount = 0
   totalWarningCount = 0
 
-  for test in testNames:
-    if not config.has_option(test, 'world_file'):
-      UtilLog.error('ERROR: No world file specified for test ' + test + '.')
-      allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
-      continue
-    
-    world_files = json.JSONDecoder().decode(config.get(test, 'world_file'))
-    for world_file in world_files:
-      # world_file = config.get(test, 'world_file')
-      UtilLog.info('Running test: ' + test + ' in world ' + world_file)
-      
 
-      try:
-        source_file_path = os.path.join(WEBOTS_WORLD_SUBPATH, world_file)
-        generated_file_path = os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName)
-
-        generate_file_with_replace(generated_file_path, source_file_path,
-                                   worldFileTestNamePlaceHolder, test)
-
-      except TemplateStringNotFoundException:
-        UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
-        allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
-
-
-      # Run test in thread
-      testResultQueue = Queue.Queue(1)
-      runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test])
-      runWebotsThread.start()
-      runWebotsThread.join(120) # with timeout
-      
-      # Check if timeout exceeded
-      if runWebotsThread.isAlive():
-        UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
-        stopWebots(options)
-        allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
-        print 'allTestsPassed ' + str(allTestsPassed)
-        continue
-
-      # Check log for crashes, errors, and warnings
-      # TODO: Crashes affect test result, but errors and warnings do not. Should they?
-      buildFolder = get_build_folder(options)
-      logFileName = get_log_file_path(buildFolder, test, curTime)
-
-      (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
-      totalErrorCount += errorCount
-      totalWarningCount += warningCount
-
-      # Check for crashes
-      if crashCount > 0:
-        UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
-        allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
-        continue
-
-      # Get return code from test
-      if testResultQueue.empty():
-        UtilLog.error('ERROR: No result code received from ' + test)
-        allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
+  buildFolder = get_build_folder(options)
+  with tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz") as tar:
+    for test in testNames:
+      if not config.has_option(test, 'world_file'):
+        UtilLog.error('ERROR: No world file specified for test ' + test + '.')
+        allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
         continue
       
-      allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
+      world_files = json.JSONDecoder().decode(config.get(test, 'world_file'))
+      for world_file in world_files:
+        UtilLog.info('Running test: ' + test + ' in world ' + world_file)
+
+        try:
+          source_file_path = os.path.join(WEBOTS_WORLD_SUBPATH, world_file)
+          generated_file_path = os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName)
+
+          generate_file_with_replace(generated_file_path, source_file_path,
+                                     worldFileTestNamePlaceHolder, test)
+
+        except TemplateStringNotFoundException:
+          UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
+          allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
+
+        # TODO: Crashes affect test result, but errors and warnings do not. Should they?
+        logFileName = get_log_file_path(buildFolder, test, world_file, curTime)
+
+        # Run test in thread
+        testResultQueue = Queue.Queue(1)
+        runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test, logFileName])
+        runWebotsThread.start()
+        runWebotsThread.join(120) # with timeout
+        
+        # Check if timeout exceeded
+        if runWebotsThread.isAlive():
+          UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
+          stopWebots(options)
+          allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
+          print 'allTestsPassed ' + str(allTestsPassed)
+          continue
+
+        tar.add(logFileName, arcname=os.path.basename(logFileName))
+
+        # Check log for crashes, errors, and warnings
+
+        (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
+        totalErrorCount += errorCount
+        totalWarningCount += warningCount
+
+        # Check for crashes
+        if crashCount > 0:
+          UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
+          allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
+          continue
+
+        # Get return code from test
+        if testResultQueue.empty():
+          UtilLog.error('ERROR: No result code received from ' + test)
+          allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
+          continue
+        
+        allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
 
   return (allTestsPassed, testStatuses, totalErrorCount, totalWarningCount, len (testNames))
 
@@ -347,21 +347,6 @@ def parseOutput(options, logFile):
       warningCount = warningCount + 1
 
   return (crashCount, errorCount, warningCount)
-
-
-# tarball valgrind output files together
-def tarball(options):
-  buildFolder = get_build_folder(options)
-  tar = tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz")
-  
-  config = ConfigParser.ConfigParser()
-  config.read(options.cfg_path)
-  testNames = config.sections()
-  for test in testNames:
-    logFileName = get_log_file_path(buildFolder, test, curTime)
-    tar.add(logFileName, arcname=os.path.basename(logFileName))
-  
-  tar.close()
       
 def find_project_root():
   # go to the script dir, so that we can find the project dir
@@ -377,7 +362,7 @@ def get_build_folder(options):
   """Build the build folder path (where the logs are exported)"""
   return os.path.join(options.projectRoot, BUILD_SUBPATH, options.buildType)
 
-def get_log_file_path(log_folder, test_name, timestamp = ""):
+def get_log_file_path(log_folder, test_name, world_file_name, timestamp = ""):
   """Returns what the log file names should be.
 
   log_folder (string) --
@@ -386,15 +371,22 @@ def get_log_file_path(log_folder, test_name, timestamp = ""):
   test_name (string) --
     name of the controller class for the test that is outputting the logs
 
+  world_file_name (string) --
+    name of the webots world file the test is running in
+
   timestamp (string, optional)-- 
     timestamp of the test run; needs to be provided if runningMultipleTests is true
   """
-  if runningMultipleTests:
-    logFileName = os.path.join(log_folder, 'webots_out_' + test_name + '_' + timestamp + '.txt')
-  else:
-    logFileName = os.path.join(log_folder, 'webots_out_' + test_name + '.txt')
+  file_name = 'webots_out_' + test_name
 
-  return logFileName
+  if runningMultipleTests:
+    file_name += "_" + timestamp
+
+  file_name += "_" + world_file_name
+
+  log_file_path = os.path.join(log_folder, file_name + '.txt')
+
+  return log_file_path
 
 
 # executes main script logic
@@ -466,7 +458,6 @@ def main(scriptArgs):
     
     # run the tests
     (testsSucceeded, testResults, totalErrorCount, totalWarningCount, testCount) = runAll(options)
-    tarball(options)
 
     print 'Test results: '
     for key,val in testResults.items():

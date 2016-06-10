@@ -2,15 +2,8 @@
 
 import os
 import re
-# import logging
 import json
 import webotsTest
-
-# UtilLog = logging.getLogger('webots.test')
-# stdout_handler = logging.StreamHandler()
-# formatter = logging.Formatter('%(name)s - %(message)s')
-# stdout_handler.setFormatter(formatter)
-# UtilLog.addHandler(stdout_handler)
 
 def main():
   # build_type used to make sure to specify the webotsTest instead of relying on default; also used
@@ -26,7 +19,7 @@ def main():
 
   project_root = webotsTest.find_project_root()
   build_folder = os.path.join(project_root, webotsTest.BUILD_SUBPATH, build_type, '')
-  log_file_path = webotsTest.get_log_file_path(build_folder, test_controller_name)
+  log_file_path = webotsTest.get_log_file_path(build_folder, test_controller_name, wbt_file_name)
 
   available_animations = []
   with open(log_file_path, 'r') as log_file:
