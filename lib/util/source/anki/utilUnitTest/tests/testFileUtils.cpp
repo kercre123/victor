@@ -201,7 +201,7 @@ TEST_F(FileUtilsTest, FileExists)
 TEST_F(FileUtilsTest, RecurseGetFiles)
 {
   std::string fileName("testWriteFile.txt");
-  std::string path = "/tmp/testCreateDirectory/";
+  std::string path = "/tmp/testRecurseDirectory/";
   
   Anki::Util::FileUtils::CreateDirectory(path);
   DirectoryShouldExist(path);
