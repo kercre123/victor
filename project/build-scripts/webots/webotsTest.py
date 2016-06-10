@@ -270,6 +270,7 @@ def runAll(options):
         allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
         continue
       
+      # Loop through all the webots worlds this test controller should run in.
       world_files = json.JSONDecoder().decode(config.get(test, 'world_file'))
       for world_file in world_files:
         UtilLog.info('Running test: ' + test + ' in world ' + world_file)
