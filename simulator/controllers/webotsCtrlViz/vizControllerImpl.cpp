@@ -467,17 +467,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
-  /*
-  sprintf(txt, "Prox: (%2u, %2u, %2u) %d%d%d",
-    payload.state.proxLeft,
-    payload.state.proxForward,
-    payload.state.proxRight,
-    payload.state.status & IS_PROX_SIDE_BLOCKED,
-    payload.state.status & IS_PROX_FORWARD_BLOCKED,
-    payload.state.status & IS_PROX_SIDE_BLOCKED);
-  DrawText(VizTextLabelType::TEXT_LABEL_PROX_SENSORS, Anki::NamedColors::GREEN, txt);
-  */
-
   sprintf(txt, "Batt: %2.1f V  AnimTracksLocked: %c%c%c",
     (f32)payload.state.battVolt10x/10,
           !(payload.enabledAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
