@@ -262,6 +262,14 @@ def runAll(options):
 
 
   buildFolder = get_build_folder(options)
+
+
+  # tarfile.open will only create the file but not the path to the file if it doesn't exist; need to
+  # create the directory of the tar file first.
+  if not os.path.exists(buildFolder):
+    os.makedirs(buildFolder)
+
+
   with tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz") as tar:
     for test in testNames:
       if not config.has_option(test, 'world_file'):
