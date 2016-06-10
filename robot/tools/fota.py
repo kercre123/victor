@@ -4,18 +4,18 @@ Firmware over the air upgrade controller for loading new firmware images onto ro
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, time, hashlib, struct
+import sys, os, time, hashlib, struct, argparse
 
 DEFAULT_FIRMWARE_IMAGE = os.path.join("releases", "cozmo.safe")
 
-USAGE = """
-Upgrade firmware:
-    {exe} [<ALTERNATE IMAGE>]
-The default firmware image is "{default}"
-
-This tool must be run from the robot folder.
-
-""".format(exe=sys.argv[0], default=DEFAULT_FIRMWARE_IMAGE)
+parser = argparse.ArgumentParser(description="Upgrade firmware")
+parser.add_argument("-w", "--wait", help="increase delay between blocks",
+                    action="store_true")
+parser.add_argument("image", type=str,
+                    nargs='?',
+                    default=DEFAULT_FIRMWARE_IMAGE,
+                    help="image to load on robot")
+argv = parser.parse_args()
 
 sys.path.insert(0, os.path.join("tools"))
 import robotInterface
@@ -47,7 +47,7 @@ class OTAStreamer:
                 sys.stdout.write("Finished sending firmware image to robot")
                 sys.stdout.write(os.linesep)
                 break
-            if '-w' in sys.argv: time.sleep(2)
+            if argv.wait: time.sleep(2)
         self.writing = False
 
     def OnConnect(self, connectionInfo):
@@ -92,13 +92,13 @@ class OTAStreamer:
 # Script entry point
 if __name__ == '__main__':
     fwi = DEFAULT_FIRMWARE_IMAGE
-    if len(sys.argv) > 1:
-        if os.path.isfile(sys.argv[1]):
-            fwi = sys.argv[1]
-        elif sys.argv[1] == 'factory':
-            fwi = os.path.join("releases", "cozmo_factory_install.safe")
-        else:
-            sys.exit("No such file as {1}".format(*sys.argv))
+    
+    if os.path.isfile(argv.image):
+        fwi = argv.image
+    elif argv.image == 'factory':
+        fwi = os.path.join("releases", "cozmo_factory_install.safe")
+    else:
+        sys.exit("No such file as {1}".format(argv.image))
     
     robotInterface.Init(True)
     up = OTAStreamer(fwi)

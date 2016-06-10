@@ -700,46 +700,41 @@ namespace UpgradeController {
             //verify_stage1(*cert_state);
             //i2spiSwitchMode(I2SPI_BOOTLOADER);
 
-            os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
+            os_printf("DONE CERT 1 %d\n\r", system_get_time() - ticks);
             break ;
           }
         case 20000: // Stage 2
           {
             int ticks = system_get_time();
             
-            /*
             //i2spiSwitchMode(I2SPI_PAUSED);
             //verify_stage2(*cert_state);
             //i2spiSwitchMode(I2SPI_BOOTLOADER);
-            */
 
-            os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
+            os_printf("DONE CERT 2 %d\n\r", system_get_time() - ticks);
             break ;
           }
         case 30000: // Stage 3
           {
             int ticks = system_get_time();
             
-            /*
-            i2spiSwitchMode(I2SPI_PAUSED);
-            verify_stage3(*cert_state);
-            i2spiSwitchMode(I2SPI_BOOTLOADER);
-            */
+            //i2spiSwitchMode(I2SPI_PAUSED);
+            //verify_stage3(*cert_state);
+            //i2spiSwitchMode(I2SPI_BOOTLOADER);
 
-            os_printf("DONE CERT %d\n\r", system_get_time() - ticks);
+            os_printf("DONE CERT 3 %d\n\r", system_get_time() - ticks);
             break ;
           }
         case 40000: // Stage 4
           {
-            int ticks = system_get_time();
-            
-            /*
             i2spiSwitchMode(I2SPI_PAUSED);
+            /*
             if (!verify_stage4(*cert_state)) {
-              Reset();
+              haveValidCert = false;
+              //Reset();
             }
-            i2spiSwitchMode(I2SPI_BOOTLOADER);
             */
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
 
             os_printf("DONE CERT ALL %d\n\r", system_get_time() - start_tick);
 
