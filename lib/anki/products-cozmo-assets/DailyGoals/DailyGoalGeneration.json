@@ -4,7 +4,7 @@
       "TitleKey": "dailyGoal.title.WinSpeedTap",
       "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
-      "PointsRewarded": 5,
+      "PointsRewarded": 4,
       "Target": 1,
       "CladEvent": "OnSpeedtapGamePlayerWinAnyIntensity",
       "GenConditions": [],
@@ -14,9 +14,9 @@
       "TitleKey": "dailyGoal.title.PlaySpeedTap",
       "DescKey": "dailyGoal.description.PlaySpeedTap",
       "RewardType": "experience",
-      "PointsRewarded": 30,
-      "Target": 10,
-      "CladEvent": "OnSpeedtapStarted",
+      "PointsRewarded": 8,
+      "Target": 1,
+      "CladEvent": "OnUnlockableEarned",
       "GenConditions": [],
       "ProgressConditions": []
     }

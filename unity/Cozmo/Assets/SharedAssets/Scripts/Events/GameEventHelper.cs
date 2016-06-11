@@ -46,6 +46,17 @@ public class MinigameCompletedGameEvent : GameEventWrapper {
   }
 }
 
+public class UnlockableUnlockedGameEvent : GameEventWrapper {
+  public UnlockId unlock;
+
+  public override void Init(GameEvent Enum, params object[] args) {
+    base.Init(Enum);
+    if (args.Length > 0 && args[0].GetType() == typeof(UnlockId)) {
+      unlock = (UnlockId)args[0];
+    }
+  }
+
+}
 
 /// <summary>
 ///  Factory to create helper events so nothing has to think about them.
