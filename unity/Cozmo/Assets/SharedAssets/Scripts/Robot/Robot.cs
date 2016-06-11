@@ -158,15 +158,10 @@ public class Robot : IRobot {
 
   public Dictionary<int, LightCube> LightCubes { get; private set; }
 
+  private List<LightCube> _VisibleLightCubes = new List<LightCube>();
   public List<LightCube> VisibleLightCubes {
     get {
-      List<LightCube> visibleLightCubes = new List<LightCube>();
-      foreach (LightCube cube in LightCubes.Values) {
-        if (cube.IsInFieldOfView) {
-          visibleLightCubes.Add(cube);
-        }
-      }
-      return visibleLightCubes;
+      return _VisibleLightCubes;
     }
   }
 
@@ -331,12 +326,14 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
+    ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
     RobotEngineManager.Instance.OnSparkUnlockEnded -= SparkUnlockEnded;
+    ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
 
   public void CooldownTimers(float delta) {
@@ -624,7 +621,7 @@ public class Robot : IRobot {
       }
     }
     else {
-      DAS.Error("Robot.HandleSeeObservedObject", "Received old RobotObservedObject message but could not find ObservedObject with id " + message.objectID + "!");
+      DAS.Warn("Robot.HandleSeeObservedObject", "Received RobotObservedObject but could not find ObservedObject with id " + message.objectID + "!");
     }
   }
 
@@ -1530,5 +1527,16 @@ public class Robot : IRobot {
   public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
     RobotEngineManager.Instance.Message.LoadFaceAlbumFromFile = Singleton<LoadFaceAlbumFromFile>.Instance.Initialize(path, isPathRelative);
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  private void HandleInFieldOfViewStateChanged(ObservedObject objectChanged,
+                                               ObservedObject.InFieldOfViewState oldState,
+                                               ObservedObject.InFieldOfViewState newState) {
+    _VisibleLightCubes.Clear();
+    foreach (LightCube cube in LightCubes.Values) {
+      if (cube.IsInFieldOfView) {
+        _VisibleLightCubes.Add(cube);
+      }
+    }
   }
 }
