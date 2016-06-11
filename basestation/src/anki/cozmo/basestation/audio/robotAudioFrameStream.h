@@ -30,38 +30,38 @@ class RobotAudioFrameStream : Util::noncopyable  {
   
 public:
   
+  // Caller will define the stream Id and Created time when constructing
+  RobotAudioFrameStream( double CreatedTime_ms );
+  
   // Delete message left in queue
   ~RobotAudioFrameStream();
+  
+  // Get time this stream instance was created
+  double GetCreatedTime_ms() const { return _createdTime_ms; }
+  
+  // This is called by the RobotAudioBuffer after all the message for this stream have been pushed
+  void SetIsComplete() { _isComplete = true; }
+  
+  // Check if the stream has received all it's audio messages
+  bool IsComplete() const { return _isComplete; }
+
+  // Check if Robot Audio Message frames are available
+  bool HasAudioFrame() const { return !_audioFrameQueue.empty(); }
+  
+  // Get Robot Audio Frame count
+  size_t AudioFrameCount() const { return _audioFrameQueue.size(); }
   
   //  Push Robot Audio Message into buffer stream, this will take ownership of message's memory
   void PushRobotAudioFrame( AudioFrameData* audioFrame );
   
   //  Pop Robot Audio Message out of buffer stream, this will release relinquished of message's memory to caller.
   AudioFrameData* PopRobotAudioFrame();
-  
-  // Check if Robot Audio Message frames are available
-  bool HasAudioFrame() const { return !_audioFrameQueue.empty(); }
-  
-  // Get Robot Audio Frame count
-  size_t AudioFrameCount() const { return _audioFrameQueue.size(); }
-
-  // This is called by the RobotAudioBuffer after all the message for this stream have been pushed
-  void SetIsComplete() { _isComplete = true; }
-
-  // Check if the stream has received all it's audio messages
-  bool IsComplete() const { return _isComplete; }
-  
-  // Set created time when the stream begins to get audio frames
-  void SetCreatedTime_ms( double time_ms ) { _createdTime_ms = time_ms; }
-  
-  // Get created time
-  double GetCreatedTime_ms() const { return _createdTime_ms; }
 
 
 private:
 
-  bool _isComplete = false;
   double _createdTime_ms = 0.0;
+  bool _isComplete = false;
   using AudioFrameQueueType = std::queue< AudioFrameData* >;
   AudioFrameQueueType _audioFrameQueue;
   std::mutex _lock;

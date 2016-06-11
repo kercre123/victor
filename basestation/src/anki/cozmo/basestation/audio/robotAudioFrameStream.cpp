@@ -22,6 +22,12 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioFrameStream::RobotAudioFrameStream( double createdTime_ms )
+: _createdTime_ms( createdTime_ms )
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioFrameStream::~RobotAudioFrameStream()
 {
   // Delete all key frames

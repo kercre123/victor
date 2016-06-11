@@ -20,6 +20,7 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
+#define DEBUG_ROBOT_AUDIO_BUFFER_LOG  0
 
 namespace Anki {
 namespace Cozmo {
@@ -29,16 +30,25 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::PrepareAudioBuffer()
 {
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.PrepareAudioBuffer", "TimeStamp_s %f",
+                       Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
+  }
+  
   // Prep new Continuous Stream Buffer
-  _streamQueue.emplace();
-  _currentStream = &_streamQueue.back();
-  _currentStream->SetCreatedTime_ms( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() );
+  _streamQueue.emplace( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() );
   _isActive = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sampleCount )
 {
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.UpdateBuffer", "isWaitingForRest %s  TimeStamp_s %f",
+                       _isWaitingForReset ? "Y" : "N",
+                       Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
+  }
+  
   // Ignore updates if we are waiting for the plug-in to reset
   if ( _isWaitingForReset ) {
     if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
@@ -47,22 +57,31 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
     return;
   }
   
+  ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.UpdateBuffer._streamQueue.IsEmpty");
+  
   // Copy audio samples into frame & push it into the queue
   AudioFrameData *audioFrame = new AudioFrameData( sampleCount );
   audioFrame->CopySamples( samples, sampleCount );
-  _currentStream->PushRobotAudioFrame( audioFrame );
+  _streamQueue.back().PushRobotAudioFrame( audioFrame );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::CloseAudioBuffer()
 {
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.CloseAudioBuffer", "TimeStamp_s %f",
+                       Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
+  }
+
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
     PRINT_NAMED_WARNING("RobotAudioBuffer.ClearCache", "CLEAR!");
   }
   
   // No more samples to cache, create final Audio Message
-  _currentStream->SetIsComplete();
-  _currentStream = nullptr;
+  if ( !_isWaitingForReset ) {
+    ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.CloseAudioBuffer._streamQueue.IsEmpty");
+    _streamQueue.back().SetIsComplete();
+  }
   _isActive = false;
   _isWaitingForReset = false;
 }
@@ -74,10 +93,29 @@ RobotAudioFrameStream* RobotAudioBuffer::GetFrontAudioBufferStream()
   
   return &_streamQueue.front();
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioBuffer::PopAudioBufferStream()
+{
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.PopAudioBufferStream", "_StreamQueue Size: %lu  TimeStamp_s %f",
+                       (unsigned long)_streamQueue.size(),
+                       Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
+  }
   
+  ASSERT_NAMED(_streamQueue.front().IsComplete(), "RobotAudioBuffer.PopAudioBufferStream._streamQueue.front.IsNOTComplete");
+  _streamQueue.pop();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ClearBufferStreams()
 {
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.ClearBufferStreams", "_StreamQueue Size: %lu  TimeStamp_s %f",
+                       (unsigned long)_streamQueue.size(),
+                       Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
+  }
+  
   while ( !_streamQueue.empty() ) {
     _streamQueue.pop();
   }
@@ -86,7 +124,13 @@ void RobotAudioBuffer::ClearBufferStreams()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ResetAudioBuffer()
 {
-  if ( _currentStream != nullptr ) {
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.ResetAudioBuffer", "_isActive: %c  TimeStamp_s %f",
+                       _isActive ? 'Y' : 'N',
+                       Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
+  }
+  
+  if ( _isActive ) {
     _isWaitingForReset = true;
   }
 }

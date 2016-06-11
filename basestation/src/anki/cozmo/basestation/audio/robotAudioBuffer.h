@@ -66,7 +66,7 @@ public:
   RobotAudioFrameStream* GetFrontAudioBufferStream();
   
   // Pop the front / top Audio buffer stream in the queue
-  void PopAudioBufferStream() { _streamQueue.pop(); }
+  void PopAudioBufferStream();
   
   // Clear the Audio buffer stream queue
   void ClearBufferStreams();
@@ -84,9 +84,7 @@ private:
   // A queue of robot audio frames (continuous audio data)
   std::queue< RobotAudioFrameStream > _streamQueue;
   
-  // Track what stream is in uses
-  RobotAudioFrameStream* _currentStream = nullptr;
-  
+  // Track if the Audio Engine is providing data to stream
   bool _isActive = false;
   
   // Flag to identify we are waiting for current update buffer session to complete
