@@ -12,7 +12,7 @@
                     "animations",
                     "animationGroups"
                 ],
-                "version": "406"
+                "version": "426"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
