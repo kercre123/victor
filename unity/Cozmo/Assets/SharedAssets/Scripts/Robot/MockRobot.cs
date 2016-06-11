@@ -856,6 +856,10 @@ public class MockRobot : IRobot {
 
   }
 
+  public void EraseEnrolledFaceByID(int faceID) {
+
+  }
+
   public void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName) {
 
   }

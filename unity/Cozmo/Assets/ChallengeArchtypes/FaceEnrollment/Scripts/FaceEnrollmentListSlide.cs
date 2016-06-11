@@ -6,6 +6,7 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
 
   public System.Action OnEnrollNewFaceRequested;
   public System.Action<int, string> OnEditNameRequested;
+  public System.Action<int> OnDeleteEnrolledFace;
 
   [SerializeField]
   private FaceEnrollmentCell _FaceCellPrefab;
@@ -25,11 +26,28 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
       newFaceCell.transform.SetParent(_ContentContainer, false);
       newFaceCell.Initialize(kvp.Key, kvp.Value);
       newFaceCell.OnEditNameRequested += HandleEditNameRequested;
+      newFaceCell.OnDeleteNameRequested += HandleDeleteFace;
       _FaceCellList.Add(newFaceCell);
     }
     _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<Cozmo.UI.CozmoButton>();
     _EnrollNewFaceInstance.transform.SetParent(_ContentContainer, false);
     _EnrollNewFaceInstance.Initialize(HandleNewEnrollmentRequested, "enroll_new_face", "face_enrollment_list_slide");
+  }
+
+  public void ClearList() {
+    if (_EnrollNewFaceInstance != null) {
+      GameObject.Destroy(_EnrollNewFaceInstance.gameObject);
+    }
+
+    for (int i = 0; i < _FaceCellList.Count; ++i) {
+      GameObject.Destroy(_FaceCellList[i].gameObject);
+    }
+    _FaceCellList.Clear();
+  }
+
+  public void RefreshList(Dictionary<int, string> faceDatabase) {
+    ClearList();
+    Initialize(faceDatabase);
   }
 
   private void HandleEditNameRequested(int faceID, string faceName) {
@@ -41,6 +59,12 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
   private void HandleNewEnrollmentRequested() {
     if (OnEnrollNewFaceRequested != null) {
       OnEnrollNewFaceRequested();
+    }
+  }
+
+  private void HandleDeleteFace(int faceID) {
+    if (OnDeleteEnrolledFace != null) {
+      OnDeleteEnrolledFace(faceID);
     }
   }
 }

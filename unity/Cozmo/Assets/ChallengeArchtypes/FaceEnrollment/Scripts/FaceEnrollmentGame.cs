@@ -60,11 +60,13 @@ namespace FaceEnrollment {
       newView.ShowShelf();
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
+      _FaceListSlideInstance.OnDeleteEnrolledFace += HandleDeleteEnrolledFace;
     }
 
-    private void CleanupShowFaceListSlide() {
+    private void CleanupFaceListSlide() {
       _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested -= EditExisitingName;
+      _FaceListSlideInstance.OnDeleteEnrolledFace -= HandleDeleteEnrolledFace;
       SharedMinigameView.HideShelf();
     }
 
@@ -74,13 +76,13 @@ namespace FaceEnrollment {
       _FaceIDToEdit = faceID;
       _FaceOldNameEdit = exisitingName;
 
-      CleanupShowFaceListSlide();
+      CleanupFaceListSlide();
     }
 
     private void EnterNameForNewFace() {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
 
-      CleanupShowFaceListSlide();
+      CleanupFaceListSlide();
     }
 
     private void NewNameInputSlideInDone() {
@@ -152,6 +154,13 @@ namespace FaceEnrollment {
       }
       ShowFaceListSlide(SharedMinigameView);
       SharedMinigameView.HideSpinnerWidget();
+    }
+
+    private void HandleDeleteEnrolledFace(int faceID) {
+      RobotEngineManager.Instance.CurrentRobot.EraseEnrolledFaceByID(faceID);
+      // TODO: confirm deletion from engine
+      RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Remove(faceID);
+      _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
     }
 
     protected override void CleanUpOnDestroy() {

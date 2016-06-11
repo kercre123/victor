@@ -297,6 +297,8 @@ public interface IRobot : IDisposable {
 
   void EraseAllEnrolledFaces();
 
+  void EraseEnrolledFaceByID(int faceID);
+
   void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
 }

@@ -1538,6 +1538,10 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void EraseEnrolledFaceByID(int faceID) {
+    RobotEngineManager.Instance.Message.EraseEnrolledFaceByID = Singleton<EraseEnrolledFaceByID>.Instance.Initialize(faceID);
+  }
+
   public void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName) {
     RobotEngineManager.Instance.Message.UpdateEnrolledFaceByID = Singleton<UpdateEnrolledFaceByID>.Instance.Initialize(faceID, oldFaceName, newFaceName);
     RobotEngineManager.Instance.SendMessage();
