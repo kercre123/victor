@@ -78,6 +78,12 @@
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
   },
+  "simonGame.howToPlay": {
+    "translation": "Listen and watch the pattern for each round.  When it’s your turn, tap the Cubes in order to repeat the pattern.  One mistake, and it’s game over!"
+  },
+  "simonGame.difficulty.hardDescription.locked": {
+    "translation": "Unlock by winning Simon Hard."
+  },
   "simonGame.label.watchPattern": {
     "translation": "Watch the pattern."
   },

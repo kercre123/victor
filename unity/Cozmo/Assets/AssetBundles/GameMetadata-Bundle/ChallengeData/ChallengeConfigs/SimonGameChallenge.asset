@@ -19,9 +19,25 @@ MonoBehaviour:
   _ChallengeIconPlainStyle: {fileID: 0}
   _UnlockId:
     _EnumValueAsString: SimonGame
-    _EnumValue: 0
+    _EnumValue: 4
   _Music:
     _Music: -527946100
   MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}
   IsMinigame: 1
-  DifficultyOptions: []
+  DifficultyOptions:
+  - DifficultyId: 0
+    DifficultyName:
+      Key: minigame.difficulty.easy
+    DifficultyDescription:
+      Key: simonGame.howToPlay
+    AnimationPrefab: {fileID: 199182, guid: 60e3c8cb4013f4182b1369fe7b2d9408, type: 2}
+    LockedDifficultyDescription:
+      Key: 
+  - DifficultyId: 1
+    DifficultyName:
+      Key: minigame.difficulty.hard
+    DifficultyDescription:
+      Key: simonGame.howToPlay
+    AnimationPrefab: {fileID: 199182, guid: 60e3c8cb4013f4182b1369fe7b2d9408, type: 2}
+    LockedDifficultyDescription:
+      Key: simonGame.difficulty.hardDescription.locked

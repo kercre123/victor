@@ -57,7 +57,9 @@ namespace Simon {
     protected void InitializeMinigameObjects() {
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
 
-      State nextState = new CozmoMoveCloserToCubesState(new WaitForNextRoundSimonState(_FirstPlayer));
+      State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
+                                                  new WaitForNextRoundSimonState(_FirstPlayer)),
+                                                  DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
                                                                     _Config.CubeTooFarColor, _Config.CubeTooCloseColor);
       _StateMachine.SetNextState(initCubeState);
