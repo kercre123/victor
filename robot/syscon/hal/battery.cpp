@@ -136,7 +136,7 @@ void Battery::setHeadlight(bool status) {
 
 void Battery::powerOn()
 {
-  // Let power drain out - 10ms is plenty long enough
+  nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
@@ -144,6 +144,7 @@ void Battery::powerOff()
 {
   // Shutdown the extra things
   nrf_gpio_pin_clear(PIN_PWR_EN);
+  nrf_gpio_pin_set(PIN_VDDs_EN);
   MicroWait(10000);
 }
 
