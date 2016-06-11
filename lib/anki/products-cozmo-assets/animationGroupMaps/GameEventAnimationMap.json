@@ -134,7 +134,7 @@
     },
     {
       "CladEvent": "OnSimonPlayerHandComplete",
-      "AnimName": "ag_simon_failgame_player"
+      "AnimName": "ag_simon_successhand_player"
     },
     {
       "CladEvent": "OnSimonPointCube",
