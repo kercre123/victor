@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Simon {
@@ -10,6 +9,7 @@ namespace Simon {
     private int _CurrentSequenceIndex;
     private bool? _ShouldWinGame;
     private int _LastTargetID;
+    private bool _IsAnimating = false;
 
     public override void Enter() {
       base.Enter();
@@ -26,10 +26,24 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
     }
 
     public override void Update() {
       base.Update();
+      if (_IsAnimating) {
+        return;
+      }
       if (_ShouldWinGame.HasValue) {
         if (_ShouldWinGame.GetValueOrDefault()) {
           CozmoWinGame();
@@ -74,29 +88,20 @@ namespace Simon {
       return _CurrentRobot.LightCubes[_LastTargetID];
     }
 
-    public override void Exit() {
-      base.Exit();
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
-    }
-
     private void CozmoLoseGame() {
       _GameInstance.SetCubeLightsGuessWrong(_LastTargetID);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      _StateMachine.SetNextState(new AnimationGroupState(
-                                        AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnSimonPlayerWin),
-                                        HandleOnCozmoLoseAnimationDone));
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
+      _IsAnimating = true;
     }
 
     private void CozmoWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-
-      _StateMachine.SetNextState(new AnimationGroupState(
-                                  AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete),
-                                  HandleOnCozmoWinAnimationDone));
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
+      _IsAnimating = true;
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {

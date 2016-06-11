@@ -13,8 +13,6 @@ namespace Simon {
       base.Enter();
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      //_CurrentRobot.SendAnimation(AnimationName.kSimonBlinkStart, HandleStartAnimationComplete, Anki.Cozmo.QueueActionPosition.NOW_AND_RESUME);
-      //_CurrentRobot.SendAnimation(AnimationName.kSimonBlinkEnd, HandleEndAnimationComplete, Anki.Cozmo.QueueActionPosition.AT_END);
 
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPointCube, HandleEndAnimationComplete);
       // Animation needs to have a robot event

@@ -59,7 +59,7 @@ public class InitialCubesState : State {
     _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
   }
 
-  private void CheckForNewlySeenCubes() {
+  protected virtual void CheckForNewlySeenCubes() {
     bool numValidCubesChanged = false;
     LightCube cube = null;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
@@ -151,7 +151,7 @@ public class InitialCubesState : State {
     }
   }
 
-  private void HandleContinueButtonClicked() {
+  protected virtual void HandleContinueButtonClicked() {
     _StateMachine.SetNextState(_NextState);
   }
 }
