@@ -16,7 +16,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 public class RobotEngineManager : MonoBehaviour {
 
   public const string kRobotIP = "172.31.1.1";
-  
+
   public static RobotEngineManager Instance = null;
 
   public Dictionary<int, IRobot> Robots { get; private set; }
@@ -27,8 +27,8 @@ public class RobotEngineManager : MonoBehaviour {
 
   public int CurrentRobotID { get; private set; }
 
-  public IRobot CurrentRobot { 
-    get { 
+  public IRobot CurrentRobot {
+    get {
       if (_LastCurrentRobot != null && _LastCurrentRobotID == CurrentRobotID) {
         return _LastCurrentRobot;
       }
@@ -38,15 +38,15 @@ public class RobotEngineManager : MonoBehaviour {
         _LastCurrentRobotID = CurrentRobotID;
         return current;
       }
-      return null; 
-    } 
+      return null;
+    }
   }
 
   public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
   private List<string> _RobotAnimationNames = new List<string>();
 
-  [SerializeField] 
+  [SerializeField]
   private TextAsset _Configuration;
 
   [SerializeField]
@@ -57,12 +57,13 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
   public event Action<int> RobotConnected;
-  public event Action<uint, bool,RobotActionType> SuccessOrFailure;
-  public event Action<bool,string> RobotCompletedAnimation;
-  public event Action<bool,uint> RobotCompletedCompoundAction;
-  public event Action<bool,uint> RobotCompletedTaggedAction;
+  public event Action<uint, bool, RobotActionType> SuccessOrFailure;
+  public event Action<bool, string> RobotCompletedAnimation;
+  public event Action<bool, uint> RobotCompletedCompoundAction;
+  public event Action<bool, uint> RobotCompletedTaggedAction;
   public event Action<int, string, Vector3, Quaternion> RobotObservedFace;
   public event Action<int, Vector3, Quaternion> RobotObservedNewFace;
+  public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
@@ -77,9 +78,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
   public event Action<Anki.Cozmo.ExternalInterface.ObjectAvailable> OnObjectAvailableMsg;
   public event Action<Anki.Cozmo.ExternalInterface.ObjectUnavailable> OnObjectUnavailableMsg;
-  public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
-  public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
   public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
@@ -91,6 +90,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
   public event Action<int> OnDemoState;
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
+  public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
 
   #region Audio Callback events
 
@@ -168,7 +168,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void OnDisable() {
-    
+
     if (_Channel != null) {
       if (_Channel.IsActive) {
         Disconnect();
@@ -182,7 +182,7 @@ public class RobotEngineManager : MonoBehaviour {
       CozmoBinding.Shutdown();
     }
 
-// Destroy Singletons depending on RobotEvents
+    // Destroy Singletons depending on RobotEvents
     SkillSystem.Instance.DestroyInstance();
   }
 
@@ -190,8 +190,9 @@ public class RobotEngineManager : MonoBehaviour {
     if (_Channel != null) {
       _Channel.Update();
     }
-    if (CurrentRobot != null) {
-      CurrentRobot.ClearVisibleObjects();
+
+    if (CurrentRobot is MockRobot) {
+      (CurrentRobot as MockRobot).UpdateCallbackTicks();
     }
   }
 
@@ -215,7 +216,7 @@ public class RobotEngineManager : MonoBehaviour {
       _LastCurrentRobot = null;
       Robots.Remove(robotID);
     }
-    
+
     IRobot robot = new Robot(robotID);
     Robots.Add(robotID, robot);
     CurrentRobotID = robotID;
@@ -279,7 +280,6 @@ public class RobotEngineManager : MonoBehaviour {
     var message = messageIn.Message;
     switch (message.GetTag()) {
     case G2U.MessageEngineToGame.Tag.Ping:
-      ReceivedSpecificMessage(message.Ping);
       break;
     case G2U.MessageEngineToGame.Tag.UiDeviceAvailable:
       ReceivedSpecificMessage(message.UiDeviceAvailable);
@@ -296,15 +296,52 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.EngineRobotCLADVersionMismatch:
       ReceivedSpecificMessage(message.EngineRobotCLADVersionMismatch);
       break;
+
+    // Block pool and connection to objects
+    case G2U.MessageEngineToGame.Tag.ObjectAvailable:
+      ReceivedSpecificMessage(message.ObjectAvailable);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectUnavailable:
+      ReceivedSpecificMessage(message.ObjectUnavailable);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectConnectionState:
+      ReceivedSpecificMessage(message.ObjectConnectionState);
+      break;
+    // end Block pool and connection to objects
+
+    // Vision messages 
+    case G2U.MessageEngineToGame.Tag.RobotProcessedImage:
+      ReceiveSpecificMessage(message.RobotProcessedImage);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedObject:
       ReceivedSpecificMessage(message.RobotObservedObject);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
+      ReceivedSpecificMessage(message.RobotObservedPossibleObject);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotDeletedObject:
+      ReceivedSpecificMessage(message.RobotDeletedObject);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectMoved:
+      ReceivedSpecificMessage(message.ObjectMoved);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectStoppedMoving:
+      ReceivedSpecificMessage(message.ObjectStoppedMoving);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotMarkedObjectPoseUnknown:
+      ReceivedSpecificMessage(message.RobotMarkedObjectPoseUnknown);
       break;
     case G2U.MessageEngineToGame.Tag.RobotObservedFace:
       ReceivedSpecificMessage(message.RobotObservedFace);
       break;
-    case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
-      ReceivedSpecificMessage(message.RobotObservedNothing);
+    case G2U.MessageEngineToGame.Tag.RobotDeletedFace:
+      ReceivedSpecificMessage(message.RobotDeletedFace);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotObservedMotion:
+      ReceivedSpecificMessage(message.RobotObservedMotion);
+      break;
+    // End vision messages 
+
     case G2U.MessageEngineToGame.Tag.PlaySound:
       ReceivedSpecificMessage(message.PlaySound);
       break;
@@ -316,21 +353,6 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotCompletedAction:
       ReceivedSpecificMessage(message.RobotCompletedAction);
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotDeletedObject:
-      ReceivedSpecificMessage(message.RobotDeletedObject);
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotMarkedObjectPoseUnknown:
-      ReceivedSpecificMessage(message.RobotMarkedObjectPoseUnknown);
-      break;
-    case G2U.MessageEngineToGame.Tag.ObjectMoved:
-      ReceivedSpecificMessage(message.ObjectMoved);
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotDeletedFace:
-      ReceivedSpecificMessage(message.RobotDeletedFace);
-      break;
-    case G2U.MessageEngineToGame.Tag.ObjectStoppedMoving:
-      ReceivedSpecificMessage(message.ObjectStoppedMoving);
       break;
     case G2U.MessageEngineToGame.Tag.ObjectTapped:
       ReceivedSpecificMessage(message.ObjectTapped);
@@ -357,9 +379,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.VerifyDebugConsoleVarMessage:
       ReceivedSpecificMessage(message.VerifyDebugConsoleVarMessage);
       break;
-    case G2U.MessageEngineToGame.Tag.RobotObservedMotion:
-      ReceivedSpecificMessage(message.RobotObservedMotion);
-      break;
     case G2U.MessageEngineToGame.Tag.CliffEvent:
       ReceivedSpecificMessage(message.CliffEvent);
       break;
@@ -384,20 +403,8 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
       ReceivedSpecificMessage(message.InitBlockPoolMessage);
       break;
-    case G2U.MessageEngineToGame.Tag.ObjectAvailable:
-      ReceivedSpecificMessage(message.ObjectAvailable);
-      break;
-    case G2U.MessageEngineToGame.Tag.ObjectUnavailable:
-      ReceivedSpecificMessage(message.ObjectUnavailable);
-      break;
-    case G2U.MessageEngineToGame.Tag.ObjectConnectionState:
-      ReceivedSpecificMessage(message.ObjectConnectionState);
-      break;
     case G2U.MessageEngineToGame.Tag.ImageChunk:
       ReceivedSpecificMessage(message.ImageChunk);
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
-      ReceivedSpecificMessage(message.RobotObservedPossibleObject);
       break;
     case G2U.MessageEngineToGame.Tag.UnlockStatus:
       ReceivedSpecificMessage(message.UnlockStatus);
@@ -432,9 +439,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AnimationEvent:
       ReceiveSpecificMessage(message.AnimationEvent);
       break;
-    case G2U.MessageEngineToGame.Tag.RobotProcessedImage:
-      ReceiveSpecificMessage(message.RobotProcessedImage);
-      break;
     case G2U.MessageEngineToGame.Tag.RobotOnBack:
       ReceivedSpecificMessage(message.RobotOnBack);
       break;
@@ -444,20 +448,6 @@ public class RobotEngineManager : MonoBehaviour {
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
-    }
-  }
-
-  private void ReceiveSpecificMessage(G2U.RobotProcessedImage message) {
-    // TODO: implement this
-  }
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.Ping message) {
-    if (message.isResponse) {
-      DAS.Warn("Unity.ReceivedResponsePing", "Unity receiving response pings is unsupported");
-    }
-    else {
-      Message.Ping = Singleton<U2G.Ping>.Instance.Initialize(counter: message.counter, timeSent_ms: message.timeSent_ms, isResponse: true);
-      SendMessage();
     }
   }
 
@@ -474,7 +464,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceiveSpecificMessage(Anki.Cozmo.ExternalInterface.AnimationEvent message) {
-    if (OnRobotAnimationEvent != null) {  
+    if (OnRobotAnimationEvent != null) {
       OnRobotAnimationEvent(message);
     }
   }
@@ -533,18 +523,147 @@ public class RobotEngineManager : MonoBehaviour {
     Anki.Debug.DebugConsoleData.Instance.SetStatusText(message.statusMessage);
   }
 
+  private void ReceivedSpecificMessage(ObjectTapped message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      CurrentRobot.HandleObservedObjectTapped(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectConnectionState message) {
+    DAS.Debug("RobotEngineMananger.RecievedSpecificMessage", "ObjectConnectionState. " + (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factory ID " + message.factoryID.ToString("X"));
+
+    // TODO: Check if robot id matches current robot (message doesn't have id)
+    // Register new object with robot on connect
+    if (message.connected) {
+      // Get the ObjectType from ActiveObjectType
+      ObjectType objectType = ObjectType.Invalid;
+      switch (message.device_type) {
+      case ActiveObjectType.OBJECT_CUBE1:
+        objectType = ObjectType.Block_LIGHTCUBE1;
+        break;
+      case ActiveObjectType.OBJECT_CUBE2:
+        objectType = ObjectType.Block_LIGHTCUBE2;
+        break;
+      case ActiveObjectType.OBJECT_CUBE3:
+        objectType = ObjectType.Block_LIGHTCUBE3;
+        break;
+      case ActiveObjectType.OBJECT_CHARGER:
+        objectType = ObjectType.Charger_Basic;
+        break;
+      case ActiveObjectType.OBJECT_UNKNOWN:
+        objectType = ObjectType.Unknown;
+        break;
+      }
+
+      CurrentRobot.RegisterNewObservedObject((int)message.objectID, message.factoryID, objectType);
+    }
+    else {
+      CurrentRobot.DeleteObservedObject((int)message.objectID);
+    }
+
+    if (OnObjectConnectionState != null) {
+      OnObjectConnectionState(message);
+    }
+  }
+
+  /// <summary>
+  /// Message sent when an ObservedObject is deleted.
+  /// </summary>
+  private void ReceivedSpecificMessage(G2U.RobotDeletedObject message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      CurrentRobot.DeleteObservedObject((int)message.objectID);
+    }
+  }
+
+  /// <summary>
+  /// Message sent when vision system finishes processing a full frame. Other messages
+  /// may be called depending on what is found. This is sent _after_ those messages.
+  /// </summary>
+  private void ReceiveSpecificMessage(G2U.RobotProcessedImage message) {
+    // TODO: Check if robot id matches current robot (message doesn't have id)
+    if (CurrentRobot != null) {
+      CurrentRobot.FinishedProcessingImage(message.timestamp);
+    }
+  }
+
+  /// <summary>
+  /// Message sent for each ObservedObject identified in a vision frame.
+  /// </summary>
+  private void ReceivedSpecificMessage(G2U.RobotObservedObject message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      CurrentRobot.HandleSeeObservedObject(message);
+    }
+  }
+
+  /// <summary>
+  /// Message sent when a vision frame finds a marker that is too far away to 
+  /// be identified as a particular ObservedObject.
+  /// </summary>
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject message) {
+    if (OnObservedPossibleObject != null) {
+      OnObservedPossibleObject(message);
+    }
+  }
+
+  /// <summary>
+  /// Message sent when an ObservedObject is moved.
+  /// </summary>
   private void ReceivedSpecificMessage(ObjectMoved message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      CurrentRobot.HandleObservedObjectMoved(message);
+    }
+  }
+
+  /// <summary>
+  /// Message sent when an ObservedObject stops moving.
+  /// </summary>
+  private void ReceivedSpecificMessage(ObjectStoppedMoving message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      CurrentRobot.HandleObservedObjectStoppedMoving(message);
+    }
+  }
+
+  /// <summary>
+  /// Message sent when an ObservedObject's pose is unknown, which may happen when
+  /// the robot does not see a known/dirty ObservedObject in the place it expected it to be.
+  /// </summary>
+  private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      CurrentRobot.HandleObservedObjectPoseUnknown((int)message.objectID);
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
     if (CurrentRobot == null)
       return;
+    CurrentRobot.UpdateObservedFaceInfo(message);
 
-    int ID = (int)message.objectID;
+    if (message.faceID > 0 && message.name == "" && RobotObservedNewFace != null) {
+      RobotObservedNewFace(message.faceID,
+        new Vector3(message.world_x, message.world_y, message.world_z),
+        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
+    }
 
-    // We only care about light cubes moving. Chargers aren't supposed to detect that
-    if (CurrentRobot.LightCubes.ContainsKey(ID)) {
-      LightCube lightCube = CurrentRobot.LightCubes[ID];
+    if (RobotObservedFace != null) {
+      RobotObservedFace(message.faceID, message.name,
+        new Vector3(message.world_x, message.world_y, message.world_z),
+        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
+    }
+  }
 
-      lightCube.Moving(message);
-      CurrentRobot.UpdateDirtyList(lightCube);
+  private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
+    if (CurrentRobot != null && CurrentRobot.ID == message.robotID) {
+      int index = -1;
+      for (int i = 0; i < CurrentRobot.Faces.Count; i++) {
+        if (CurrentRobot.Faces[i].ID == message.faceID) {
+          index = i;
+          break;
+        }
+      }
+
+      if (index != -1) {
+        CurrentRobot.Faces.RemoveAt(index);
+      }
     }
   }
 
@@ -560,94 +679,10 @@ public class RobotEngineManager : MonoBehaviour {
 
   }
 
-  private void ReceivedSpecificMessage(ObjectStoppedMoving message) {
-    if (CurrentRobot == null)
-      return;
-
-    int ID = (int)message.objectID;
-    
-    // We only care about light cubes moving. Chargers aren't supposed to detect that
-    if (CurrentRobot.LightCubes.ContainsKey(ID)) {
-      LightCube lightCube = CurrentRobot.LightCubes[ID];
-      
-      lightCube.StoppedMoving(message);
-    }
-  }
-
-  private void ReceivedSpecificMessage(ObjectTapped message) {
-    if (CurrentRobot == null)
-      return;
-    
-    int ID = (int)message.objectID;
-    
-    if (CurrentRobot.LightCubes.ContainsKey(ID)) {
-      LightCube lightCube = CurrentRobot.LightCubes[ID];
-      
-      lightCube.Tapped(message);
-    }
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotObservedObject message) {
-    if (CurrentRobot == null)
-      return;
-    CurrentRobot.UpdateObservedObject(message);
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
-    if (CurrentRobot == null)
-      return;
-    CurrentRobot.UpdateObservedFaceInfo(message);
-
-    if (message.faceID > 0 && message.name == "" && RobotObservedNewFace != null) {
-      RobotObservedNewFace(message.faceID, 
-        new Vector3(message.world_x, message.world_y, message.world_z), 
-        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
-    }
-
-    if (RobotObservedFace != null) {
-      RobotObservedFace(message.faceID, message.name,
-        new Vector3(message.world_x, message.world_y, message.world_z), 
-        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
-    }
-
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
-    if (CurrentRobot == null)
-      return;
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotDeletedObject message) {
-    if (CurrentRobot == null)
-      return;
-
-    CurrentRobot.RobotDeletedObject(message);
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
-    if (CurrentRobot == null)
-      return;
-    
-    CurrentRobot.RobotMarkedObjectPoseUnknown(message);
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
-    if (CurrentRobot == null)
-      return;
-		
-    Face deleted = CurrentRobot.Faces.Find(x => x == message.faceID);
-
-    if (deleted != null) {
-      DAS.Debug("RobotEngineManager.DeletedFace", "Deleted ID " + message.faceID);
-      CurrentRobot.Faces.Remove(deleted);
-    }
-
-  }
-
   private void ReceivedSpecificMessage(G2U.RobotCompletedAction message) {
     if (CurrentRobot == null)
       return;
-    
+
     RobotActionType actionType = (RobotActionType)message.actionType;
     bool success = message.result == ActionResult.SUCCESS;
     CurrentRobot.TargetLockedObject = null;
@@ -659,11 +694,18 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (actionType == RobotActionType.PLAY_ANIMATION) {
-      // Reset cozmo's face
-      string animationCompleted = message.completionInfo.animationCompleted.animationName;
+      if (message.completionInfo.GetTag() == ActionCompletedUnion.Tag.animationCompleted) {
+        // Reset cozmo's face
+        string animationCompleted = message.completionInfo.animationCompleted.animationName;
 
-      if (RobotCompletedAnimation != null) {
-        RobotCompletedAnimation(success, animationCompleted);
+        if (RobotCompletedAnimation != null) {
+          RobotCompletedAnimation(success, animationCompleted);
+        }
+      }
+      else {
+        DAS.Warn("RobotEngineManager.ReceivedSpecificMessage(G2U.RobotCompletedAction message)",
+          string.Format("Message is of type RobotActionType.PLAY_ANIMATION but message.completionInfo has tag {0} instead of ActionCompletedUnion.Tag.animationCompleted! idTag={1} result={2}",
+            message.completionInfo.GetTag(), message.idTag, message.result));
       }
     }
 
@@ -699,7 +741,7 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.MoodState message) {
     if (CurrentRobot == null)
       return;
-    
+
     if (message.emotionValues.Length != (int)EmotionType.Count) {
       DAS.Error("MoodStateMessage.emotionValues.BadLength", "Expected " + EmotionType.Count + " entries but got " + message.emotionValues.Length);
     }
@@ -714,11 +756,11 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.PlaySound message) {
-    
+
   }
 
   private void ReceivedSpecificMessage(G2U.StopSound message) {
-    
+
   }
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
@@ -761,12 +803,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectConnectionState message) {
-    if (OnObjectConnectionState != null) {
-      OnObjectConnectionState(message);
-    }
-  }
-
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectAvailable message) {
     if (OnObjectAvailableMsg != null) {
       OnObjectAvailableMsg(message);
@@ -779,7 +815,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     if (OnRequestGameStart != null) {
       OnRequestGameStart(message);
@@ -789,12 +824,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     if (OnDenyGameStart != null) {
       OnDenyGameStart(message);
-    }
-  }
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject message) {
-    if (OnObservedPossibleObject != null) {
-      OnObservedPossibleObject(message);
     }
   }
 
@@ -924,7 +953,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (robotID < 0 || robotID > 255) {
       throw new ArgumentException("ID must be between 0 and 255.", "robotID");
     }
-    
+
     if (string.IsNullOrEmpty(robotIP)) {
       throw new ArgumentNullException("robotIP");
     }
@@ -934,7 +963,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
     int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ConnectToRobotMessage.ipAddress, 0);
     ConnectToRobotMessage.ipAddress[length] = 0;
-    
+
     ConnectToRobotMessage.robotID = (byte)robotID;
     ConnectToRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 

@@ -14,10 +14,8 @@ namespace TreasureHunt {
 
     public override void Update() {
       base.Update();
-      for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
-        if (_CurrentRobot.VisibleObjects[i] is LightCube) {
-          _StateMachine.SetNextState(new FollowGoldCubeState());
-        }
+      for (int i = 0; i < _CurrentRobot.VisibleLightCubes.Count; ++i) {
+        _StateMachine.SetNextState(new FollowGoldCubeState());
       }
     }
 

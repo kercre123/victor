@@ -18,12 +18,16 @@ namespace Simon {
     private const string _kLookInPlaceForCubesBehaviorName = "simon_lookInPlaceForCubes";
     private bool _SeenFirstCube;
 
+    private int _NumValidCubes;
+
     public ScanForInitialCubeState(State nextState, int cubesRequired, Color CubeTooFar, Color CubeTooClose) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
       _CubeTooFarColor = CubeTooFar;
       _CubeTooCloseColor = CubeTooClose;
       _SeenFirstCube = false;
+
+      _NumValidCubes = 0;
     }
 
     public override void Enter() {
@@ -31,10 +35,15 @@ namespace Simon {
 
     }
 
+    // ignore base class events
+    protected override void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
+                                                   ObservedObject.InFieldOfViewState newState) {
+    }
+
     public override void Update() {
       // Intentionally avoid base class since that will only check currently visible cubes
       if (!_SeenFirstCube) {
-        if (_CurrentRobot.VisibleObjects.Count > 0) {
+        if (_CurrentRobot.VisibleLightCubes.Count > 0) {
           _SeenFirstCube = true;
           // being in SetEnableFreeplayBehaviorChooser already forces us to be in the selection chooser.
           _CurrentRobot.ExecuteBehaviorByName(_kLookInPlaceForCubesBehaviorName);
@@ -42,10 +51,10 @@ namespace Simon {
       }
       else {
         UpdateScannedCubes();
-        if (_ValidCubeIds.Count != _NumValidCubes || _CubesStateUpdated) {
-          _NumValidCubes = _ValidCubeIds.Count;
+        if (_Game.CubeIdsForGame.Count != _NumValidCubes || _CubesStateUpdated) {
+          _NumValidCubes = _Game.CubeIdsForGame.Count;
           _CubesStateUpdated = false;
-          UpdateUI();
+          UpdateUI(_NumValidCubes);
         }
       }
     }
@@ -133,17 +142,19 @@ namespace Simon {
       List<LightCube> sortedCubes = new List<LightCube>();
       foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
         cube = lightCube.Value;
-        if (_ValidCubeIds.Contains(cube.ID)) {
-          sortedCubes.Add(cube);
-        }
+
         // TODO: if clear if was known but is no longer known and clear from _ValidCubeIDs list.
         if (cube.MarkersVisible) {
-          if (!_ValidCubeIds.Contains(cube.ID)) {
-            if (_ValidCubeIds.Count < _CubesRequired) {
-              _ValidCubeIds.Add(cube.ID);
+          if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
+            if (_Game.CubeIdsForGame.Count < _CubesRequired) {
+              _Game.CubeIdsForGame.Add(cube.ID);
               _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Seen);
             }
           }
+        }
+
+        if (_Game.CubeIdsForGame.Contains(cube.ID)) {
+          sortedCubes.Add(cube);
         }
       }
 
@@ -156,7 +167,7 @@ namespace Simon {
 
     }
 
-    protected override void UpdateUI() {
+    protected override void UpdateUI(int numValidCubes) {
       _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
       bool is_valid = false;

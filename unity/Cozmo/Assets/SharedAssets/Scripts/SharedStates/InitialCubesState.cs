@@ -9,13 +9,6 @@ public class InitialCubesState : State {
   protected ShowCozmoCubeSlide _ShowCozmoCubesSlide;
   protected GameBase _Game;
 
-  // TODO: Use RobotProcessedImage to count how many ticks / vision frames a cube
-  // is not visible instead of using a time-based timeout
-  private const float kCubeTimeoutSeconds = 0.4f;
-  protected List<int> _ValidCubeIds;
-  protected int _NumValidCubes;
-  private Dictionary <int, float> _CubeIdToTimeout;
-
   public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
@@ -29,7 +22,7 @@ public class InitialCubesState : State {
 
     _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
     _Game.SharedMinigameView.ShowContinueButtonOffset(HandleContinueButtonClicked,
-      Localization.Get(LocalizationKeys.kButtonContinue), 
+      Localization.Get(LocalizationKeys.kButtonContinue),
       GetWaitingForCubesText(_CubesRequired),
       Cozmo.UI.UIColorPalette.NeutralTextColor,
       "cubes_are_ready_continue_button");
@@ -38,12 +31,9 @@ public class InitialCubesState : State {
     _Game.SharedMinigameView.ShowMiddleBackground();
 
     _Game.CubeIdsForGame = new List<int>();
-    _CubeIdToTimeout = new Dictionary<int, float>();
-    _ValidCubeIds = new List<int>();
 
-    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
-    }
+    CheckForNewlySeenCubes();
+    ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
 
     string waitAnimGroup = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnWaitForCubesMinigameSetup);
     if (waitAnimGroup != null) {
@@ -51,16 +41,6 @@ public class InitialCubesState : State {
       pushIdleAnimMsg.animationName = waitAnimGroup;
       RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
       RobotEngineManager.Instance.SendMessage();
-    }
-  }
-
-  public override void Update() {
-    base.Update();
-    RemoveTimedOutCubes();
-    CheckForNewlySeenCubes();
-    if (_ValidCubeIds.Count != _NumValidCubes) {
-      _NumValidCubes = _ValidCubeIds.Count;
-      UpdateUI();
     }
   }
 
@@ -79,60 +59,58 @@ public class InitialCubesState : State {
     _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
   }
 
-  private void RemoveTimedOutCubes() {
-    List<int> keysToRemove = new List<int>();
-    foreach (var key in _ValidCubeIds) {
-      if (_CubeIdToTimeout.ContainsKey(key) && _CubeIdToTimeout[key] != -1) {
-        _CubeIdToTimeout[key] += Time.deltaTime;
-        if (_CubeIdToTimeout[key] >= kCubeTimeoutSeconds) {
-          keysToRemove.Add(key);
-          _CurrentRobot.LightCubes[key].SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
-          _CubeIdToTimeout[key] = -1;
-        }
-      }
-    }
-    foreach (var toRemove in keysToRemove) {
-      _ValidCubeIds.Remove(toRemove);
-    }
-  }
-
   private void CheckForNewlySeenCubes() {
+    bool numValidCubesChanged = false;
     LightCube cube = null;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       cube = lightCube.Value;
-      if (cube.MarkersVisible) {
-        if (!_ValidCubeIds.Contains(cube.ID)) {
-          if (_ValidCubeIds.Count < _CubesRequired) {
-            _ValidCubeIds.Add(cube.ID);
-            cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
-            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
-          }
-          else {
-            cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
-          }
-        }
-        else if (_CubeIdToTimeout.ContainsKey(cube.ID)) {
-          _CubeIdToTimeout[cube.ID] = -1;
-        }
+      numValidCubesChanged = numValidCubesChanged || TryUpdateCubeIdsForGame(cube);
+    }
+
+    if (numValidCubesChanged) {
+      UpdateUI(_Game.CubeIdsForGame.Count);
+    }
+  }
+
+  protected virtual void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
+                                               ObservedObject.InFieldOfViewState newState) {
+    if (changedObject is LightCube) {
+      if (TryUpdateCubeIdsForGame(changedObject as LightCube)) {
+        CheckForNewlySeenCubes();
+        UpdateUI(_Game.CubeIdsForGame.Count);
       }
-      else {
-        if (_ValidCubeIds.Contains(cube.ID)) {
-          if (!_CubeIdToTimeout.ContainsKey(cube.ID)) {
-            _CubeIdToTimeout.Add(cube.ID, 0f);
-          }
-          else if (_CubeIdToTimeout[cube.ID] == -1) {
-            _CubeIdToTimeout[cube.ID] = 0f;
-          }
+    }
+  }
+
+  private bool TryUpdateCubeIdsForGame(LightCube cube) {
+    bool numValidCubesChanged = false;
+    if (cube.IsInFieldOfView) {
+      if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
+        if (_Game.CubeIdsForGame.Count < _CubesRequired) {
+          _Game.CubeIdsForGame.Add(cube.ID);
+          numValidCubesChanged = true;
+          cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
+        }
+        else {
+          cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
         }
       }
     }
-
+    else {
+      cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
+      if (_Game.CubeIdsForGame.Contains(cube.ID)) {
+        _Game.CubeIdsForGame.Remove(cube.ID);
+        numValidCubesChanged = true;
+      }
+    }
+    return numValidCubesChanged;
   }
 
-  virtual protected void UpdateUI() {
-    _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
+  protected virtual void UpdateUI(int numValidCubes) {
+    _ShowCozmoCubesSlide.LightUpCubes(numValidCubes);
 
-    if (_NumValidCubes >= _CubesRequired) {
+    if (numValidCubes >= _CubesRequired) {
       _Game.SharedMinigameView.SetContinueButtonSupplementText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor);
 
       _Game.SharedMinigameView.EnableContinueButton(true);
@@ -141,15 +119,6 @@ public class InitialCubesState : State {
       _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
 
       _Game.SharedMinigameView.EnableContinueButton(false);
-    }
-
-    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      if (_ValidCubeIds.Contains(lightCube.Value.ID)) {
-        lightCube.Value.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
-      }
-      else {
-        lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
-      }
     }
   }
 
@@ -165,10 +134,7 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
-
-    foreach (int id in _ValidCubeIds) {
-      _Game.CubeIdsForGame.Add(id);
-    }
+    ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
 
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       if (!_Game.CubeIdsForGame.Contains(lightCube.Key)) {
@@ -183,11 +149,9 @@ public class InitialCubesState : State {
       RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
       RobotEngineManager.Instance.SendMessage();
     }
-
   }
 
   private void HandleContinueButtonClicked() {
-    // TODO: Check if the game has been run before; if so skip the HowToPlayState
     _StateMachine.SetNextState(_NextState);
   }
 }
