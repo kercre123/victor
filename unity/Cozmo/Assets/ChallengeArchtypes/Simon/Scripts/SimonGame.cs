@@ -102,6 +102,15 @@ namespace Simon {
     }
 
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
+
+      if (!CurrentRobot.LightCubes.ContainsKey(correctCubeID)) {
+        List<int> validIDs = CurrentRobot.LightCubes.Keys.ToList<int>();
+        string str = "";
+        for (int i = 0; i < validIDs.Count; ++i) {
+          str += validIDs[i] + ",";
+        }
+        DAS.Error("Simon.CubeDisconnect", "Cube Lost! " + correctCubeID + " valid are: " + str);
+      }
       foreach (int cubeId in CubeIdsForGame) {
         if (_sShowWrongCubeTap && cubeId == wrongTapCubeID) {
           CurrentRobot.LightCubes[wrongTapCubeID].SetFlashingLEDs(Color.magenta, 100, 100, 0);

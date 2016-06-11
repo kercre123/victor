@@ -94,6 +94,12 @@ namespace Simon {
         return;
       }
 
+      // Only ignore incorrect taps from punching table, give the benifit of the doubt
+      if (_CurrentSequenceIndex < _SequenceList.Count &&
+          _TargetCube == _SequenceList[_CurrentSequenceIndex]) {
+        DAS.Event("Simon.GotTapsMultipleFrames", "Ignoring second tap in same frame");
+        return;
+      }
       _LastTappedTime = Time.time;
       _StartLightBlinkTime = Time.time;
 
