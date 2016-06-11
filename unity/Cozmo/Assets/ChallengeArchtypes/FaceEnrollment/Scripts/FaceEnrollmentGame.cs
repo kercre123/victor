@@ -27,6 +27,8 @@ namespace FaceEnrollment {
     private int _FaceIDToEdit;
     private string _FaceOldNameEdit;
 
+    private int _FaceIDToEnroll;
+
     private int _FixedFaceID = -1;
 
     private bool _UseFixedFaceID = false;
@@ -49,18 +51,19 @@ namespace FaceEnrollment {
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.InitializeView(newView, data);
-      ShowFaceListSlide();
+      ShowFaceListSlide(newView);
     }
 
-    private void ShowFaceListSlide() {
-      _FaceListSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
+    private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
+      _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
     }
 
     private void EditExisitingName(int faceID, string exisitingName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
-      // TODO: pre fill text field with exisitng name
+      _EnterNameSlideInstance.SetNameInputField(exisitingName);
       _FaceIDToEdit = faceID;
       _FaceOldNameEdit = exisitingName;
     }
@@ -89,6 +92,10 @@ namespace FaceEnrollment {
     private void HandleUpdatedNameEntered(string newName) {
       HandleEnrolledFace(true);
       RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
+
+      // TODO: Check for confirmation by engine
+      CurrentRobot.EnrolledFaces[_FaceIDToEdit] = newName;
+
       // TODO: manually trigger say new name?
     }
 
@@ -109,6 +116,7 @@ namespace FaceEnrollment {
       }
 
       CurrentRobot.EnrollNamedFace(id, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
+      _FaceIDToEnroll = id;
       _AttemptedEnrollFace = true;
     }
 
@@ -119,9 +127,10 @@ namespace FaceEnrollment {
       }
       else {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+        CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
       }
 
-      ShowFaceListSlide();
+      ShowFaceListSlide(SharedMinigameView);
     }
 
     protected override void CleanUpOnDestroy() {

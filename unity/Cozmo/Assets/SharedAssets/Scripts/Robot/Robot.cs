@@ -166,6 +166,8 @@ public class Robot : IRobot {
 
   public List<Face> Faces { get; private set; }
 
+  public Dictionary<int, string> EnrolledFaces { get; set; }
+
   public int FriendshipPoints { get; private set; }
 
   public int FriendshipLevel { get; private set; }
@@ -307,6 +309,7 @@ public class Robot : IRobot {
     DirtyObjects = new List<ObservedObject>(initialSize);
     LightCubes = new Dictionary<int, LightCube>();
     Faces = new List<global::Face>();
+    EnrolledFaces = new Dictionary<int, string>();
 
     // Defaults in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -327,6 +330,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
     RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
+    RobotEngineManager.Instance.OnRobotLoadedKnownFace += HandleRobotLoadedKnownFace;
   }
 
   public void Dispose() {
@@ -373,6 +377,10 @@ public class Robot : IRobot {
 
   private void Reset(DisconnectionReason reason = DisconnectionReason.None) {
     ClearData();
+  }
+
+  private void HandleRobotLoadedKnownFace(int faceID, string name) {
+    EnrolledFaces.Add(faceID, name);
   }
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {

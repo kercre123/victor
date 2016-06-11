@@ -73,6 +73,8 @@ public interface IRobot : IDisposable {
 
   List<Face> Faces { get; }
 
+  Dictionary<int, string> EnrolledFaces { get; set; }
+
   float[] EmotionValues { get; }
 
   ILight[] BackpackLights { get; }

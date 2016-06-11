@@ -719,6 +719,17 @@ public class MockRobot : IRobot {
     }
   }
 
+  private Dictionary<int, string> _EnrolledFaces = new Dictionary<int, string>();
+
+  public Dictionary<int, string> EnrolledFaces {
+    get {
+      return _EnrolledFaces;
+    }
+    set {
+      _EnrolledFaces = value;
+    }
+  }
+
   public int FriendshipPoints {
     get;
     private set;
