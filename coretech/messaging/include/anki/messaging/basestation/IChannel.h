@@ -14,6 +14,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include "util/logging/logging.h"
+#include "util/transport/netTimeStamp.h"
 #include "util/transport/transportAddress.h"
 
 namespace Anki {
@@ -22,6 +23,13 @@ namespace Anki {
     // The max size in one BLE packet
     #define MAX_BLE_MSG_SIZE        20
     #define MIN_BLE_MSG_SIZE        2
+    
+    #define TRACK_INCOMING_PACKET_LATENCY 1
+    #if TRACK_INCOMING_PACKET_LATENCY
+      #define TRACK_INCOMING_PACKET_LATENCY_TIMESTAMP_MS() ::Anki::Util::GetCurrentNetTimeStamp()
+    #else
+      #define TRACK_INCOMING_PACKET_LATENCY_TIMESTAMP_MS() ::Anki::Util::kNetTimeStampZero
+    #endif
     
     typedef s32 ConnectionId;
     const ConnectionId DEFAULT_CONNECTION_ID = -1;
@@ -85,27 +93,37 @@ namespace Anki {
       IncomingPacket()
       {
       }
-      IncomingPacket(Tag tag, const TransportAddress& sourceAddress)
+      IncomingPacket(Tag tag, const TransportAddress& sourceAddress, Util::NetTimeStamp timeReceived_ms)
       : tag(tag)
       , sourceAddress(sourceAddress)
+      #if TRACK_INCOMING_PACKET_LATENCY
+      , _timeReceived_ms(timeReceived_ms)
+      #endif // TRACK_INCOMING_PACKET_LATENCY
       {
       }
-      IncomingPacket(Tag tag, const uint8_t *bufferData, unsigned int bufferDataSize, ConnectionId sourceId, const TransportAddress& sourceAddress)
+      IncomingPacket(Tag tag, const uint8_t *bufferData, unsigned int bufferDataSize, ConnectionId sourceId, const TransportAddress& sourceAddress, Util::NetTimeStamp timeReceived_ms)
       : PacketBase(bufferData, bufferDataSize)
       , tag(tag)
       , sourceId(sourceId)
       , sourceAddress(sourceAddress)
+      #if TRACK_INCOMING_PACKET_LATENCY
+      , _timeReceived_ms(timeReceived_ms)
+      #endif // TRACK_INCOMING_PACKET_LATENCY
       {
       }
       
       // The type of this packet. Only NormalMessage actually uses the buffer.
-      Tag tag;
+      Tag tag = Tag::NormalMessage;
       
       // The source connection ID.
       ConnectionId sourceId = DEFAULT_CONNECTION_ID;
       
       // The TransportAddress of the connection.
       TransportAddress sourceAddress;
+      
+      #if TRACK_INCOMING_PACKET_LATENCY
+      Util::NetTimeStamp _timeReceived_ms = Util::kNetTimeStampZero;
+      #endif // TRACK_INCOMING_PACKET_LATENCY
     };
     
     class IChannel {

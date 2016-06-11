@@ -154,7 +154,7 @@ public class Robot : IRobot {
 
   public GameStatusFlag GameStatus { get; private set; }
 
-  public float BatteryPercent { get; private set; }
+  public float BatteryVoltage { get; private set; }
 
   public Dictionary<int, LightCube> LightCubes { get; private set; }
 
@@ -410,11 +410,12 @@ public class Robot : IRobot {
         return;
       }
     }
-    SetHeadAngle(0.0f);
-    SetLiftHeight(0.0f);
-    if (onComplete != null) {
-      onComplete();
-    }
+
+    ResetLiftAndHead((s) => {
+      if (onComplete != null) {
+        onComplete();
+      }
+    });
   }
 
   public void ClearData(bool initializing = false) {
@@ -439,7 +440,7 @@ public class Robot : IRobot {
     LeftWheelSpeed = float.MaxValue;
     RightWheelSpeed = float.MaxValue;
     LiftHeight = float.MaxValue;
-    BatteryPercent = float.MaxValue;
+    BatteryVoltage = float.MaxValue;
     _LocalBusyTimer = 0f;
     _LastProcessedVisionFrameEngineTimestamp = 0;
 
@@ -458,7 +459,7 @@ public class Robot : IRobot {
     LiftHeight = message.liftHeight_mm;
     RobotStatus = (RobotStatusFlag)message.status;
     GameStatus = (GameStatusFlag)message.gameStatus;
-    BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
+    BatteryVoltage = message.batteryVoltage;
     CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
@@ -717,6 +718,13 @@ public class Robot : IRobot {
         DAS.Debug("Robot.RegisterNewObject", "Registered LightCube: id=" + id + " objectType=" + objectType);
         LightCube lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
         LightCubes.Add(id, lightCube);
+        if ((lightCube.FactoryID == 0) && (factoryId != 0)) {
+          // So far we received messages about the cube without a factory ID. This is because it was seen 
+          // before we connected to it. This message has the factory ID so we need to update its information
+          // so we can find it in the future
+          DAS.Debug(this, "Updating cube " + id + " factoryID to " + factoryId.ToString("X"));
+          lightCube.FactoryID = factoryId;
+        }
         createdObject = lightCube;
       }
     }
@@ -1193,6 +1201,27 @@ public class Robot : IRobot {
       ),
       callback,
       queueActionPosition);
+  }
+
+  public void ResetLiftAndHead(RobotCallback callback = null) {
+    bool headDone = false;
+    bool liftDone = false;
+
+    SetLiftHeight(0.0f, (s) => {
+      liftDone = true;
+      CheckLiftHeadCallback(headDone, liftDone, s, callback);
+    }, QueueActionPosition.IN_PARALLEL);
+
+    SetHeadAngle(0.0f, (s) => {
+      headDone = true;
+      CheckLiftHeadCallback(headDone, liftDone, s, callback);
+    }, QueueActionPosition.IN_PARALLEL);
+  }
+
+  private void CheckLiftHeadCallback(bool headDone, bool liftDone, bool success, RobotCallback callback) {
+    if (headDone && liftDone) {
+      callback(success);
+    }
   }
 
   // Height factor should be between 0.0f and 1.0f

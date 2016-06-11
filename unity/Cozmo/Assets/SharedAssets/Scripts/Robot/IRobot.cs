@@ -61,7 +61,7 @@ public interface IRobot : IDisposable {
 
   GameStatusFlag GameStatus { get; }
 
-  float BatteryPercent { get; }
+  float BatteryVoltage { get; }
 
   Dictionary<int, LightCube> LightCubes { get; }
 

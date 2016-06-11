@@ -40,6 +40,8 @@
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
+extern bool Anki::Cozmo::HAL::UnlockDevices;
+
 namespace Anki {
   namespace Cozmo {
 #ifndef TARGET_K02
@@ -211,8 +213,6 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
-        //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
-        //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
@@ -763,6 +763,13 @@ namespace Anki {
       void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
       {
         sendTestStateMessages = msg.enable;
+      }
+      
+      void Process_setHeadDeviceLock(const RobotInterface::SetHeadDeviceLock& msg) {
+#ifdef TARGET_K02
+        // Remapped for EP3
+        HAL::UnlockDevices = msg.enable;
+#endif
       }
       
       void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)

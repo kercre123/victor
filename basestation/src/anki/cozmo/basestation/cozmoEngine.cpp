@@ -39,6 +39,7 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
+#include "util/transport/connectionStats.h"
 #include <cstdlib>
 
 #if ANDROID
@@ -54,13 +55,6 @@
 #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
 #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
 
-#if REMOTE_CONSOLE_ENABLED
-namespace Anki { namespace Util {
-CONSOLE_VAR_EXTERN(float,  gNetStat2LatencyAvg);
-CONSOLE_VAR_EXTERN(float,  gNetStat4LatencyMin);
-CONSOLE_VAR_EXTERN(float,  gNetStat5LatencyMax);
-}}
-#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -286,11 +280,8 @@ Result CozmoEngine::Update(const float currTime_sec)
       
       _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
       
-#if REMOTE_CONSOLE_ENABLED
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugLatencyMessage>(Util::gNetStat2LatencyAvg,
-                                                                                                Util::gNetStat4LatencyMin,
-                                                                                                Util::gNetStat5LatencyMax);
-#endif
+      SendLatencyInfo();
+
       break;
     }
     case EngineState::UpdatingFirmware:
@@ -328,6 +319,37 @@ Result CozmoEngine::Update(const float currTime_sec)
   return RESULT_OK;
 }
   
+void CozmoEngine::SendLatencyInfo()
+{
+#if ENABLE_RELIABLE_CONNECTION_STATS
+  if (Util::kNetConnStatsUpdate)
+  {
+    ExternalInterface::TimingInfo wifiLatency(Util::gNetStat2LatencyAvg, Util::gNetStat4LatencyMin, Util::gNetStat5LatencyMax);
+    ExternalInterface::TimingInfo extSendQueueTime(Util::gNetStat7ExtQueuedAvg_ms, Util::gNetStat8ExtQueuedMin_ms, Util::gNetStat9ExtQueuedMax_ms);
+    ExternalInterface::TimingInfo sendQueueTime(Util::gNetStatAQueuedAvg_ms, Util::gNetStatBQueuedMin_ms, Util::gNetStatCQueuedMax_ms);
+    const Util::Stats::StatsAccumulator& queuedTimes_ms = _context->GetRobotManager()->GetMsgHandler()->GetQueuedTimes_ms();
+    ExternalInterface::TimingInfo recvQueueTime(queuedTimes_ms.GetMean(), queuedTimes_ms.GetMin(), queuedTimes_ms.GetMax());
+    
+    const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
+    const Util::Stats::StatsAccumulator& sdk1Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverUdp);
+    const Util::Stats::StatsAccumulator& sdk2Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverTcp);
+    const Util::Stats::StatsAccumulator& sdkLatency = (sdk1Latency.GetNumDbl() > sdk2Latency.GetNumDbl()) ? sdk1Latency : sdk2Latency;
+    ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
+    ExternalInterface::TimingInfo sdkEngineLatency(sdkLatency.GetMean(), sdkLatency.GetMin(), sdkLatency.GetMax());
+    
+    ExternalInterface::MessageEngineToGame debugLatencyMessage(ExternalInterface::DebugLatencyMessage(
+                                                                                     std::move(wifiLatency),
+                                                                                     std::move(extSendQueueTime),
+                                                                                     std::move(sendQueueTime),
+                                                                                     std::move(recvQueueTime),
+                                                                                     std::move(unityEngineLatency),
+                                                                                     std::move(sdkEngineLatency) ));
+    
+    _context->GetExternalInterface()->Broadcast( std::move(debugLatencyMessage) );
+  }
+#endif // ENABLE_RELIABLE_CONNECTION_STATS
+}
+
 void CozmoEngine::SetEngineState(EngineState newState)
 {
   EngineState oldState = _engineState;

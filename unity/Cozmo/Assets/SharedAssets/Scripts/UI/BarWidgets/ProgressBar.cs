@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Cozmo {
@@ -6,6 +7,8 @@ namespace Cozmo {
     public class ProgressBar : MonoBehaviour {
 
       private const float kTweenDuration = 0.5f;
+
+      public Action ProgressUpdateCompleted;
 
       [SerializeField]
       private Image _FilledForegroundImage;
@@ -33,6 +36,7 @@ namespace Cozmo {
       private float _StartProgress = 0f;
       private float _TargetProgress = 0f;
       private float _TimePassedSeconds = 0f;
+      private bool _ProgressUpdating = false;
 
       private void Start() {
         // Force filled type so that the progress bar works.
@@ -85,6 +89,12 @@ namespace Cozmo {
             _TimePassedSeconds = 0;
           }
         }
+        else if (_ProgressUpdating) {
+          _ProgressUpdating = false;
+          if (ProgressUpdateCompleted != null) {
+            ProgressUpdateCompleted.Invoke();
+          }
+        }
       }
 
       private float EaseOutQuad(float currentTimeSeconds, float startValue, float changeInValue, float duration) {
@@ -103,7 +113,7 @@ namespace Cozmo {
         if (progress < 0 || progress > 1) {
           DAS.Warn("ProgressBar.SetProgress.OutOfRange", "Tried to set progress to value=" + progress + " which is not in the range of 0 to 1! Clamping.");
         }
-
+        _ProgressUpdating = true;
         float newProgress = Mathf.Clamp(progress, 0f, 1f);
         if (newProgress != _TargetProgress) {
           _TargetProgress = newProgress;

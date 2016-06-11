@@ -16,6 +16,8 @@ extern "C" {
 #include "face.h"
 #include "rtip.h"
 #include "anki/cozmo/robot/esp.h"
+#include "nvStorage.h"
+#include "wifi_configuration.h"
 
 extern const unsigned int COZMO_VERSION_COMMIT;
 extern const char* DAS_USER;
@@ -37,6 +39,7 @@ namespace Factory {
 static RobotInterface::FactoryTestMode mode;
 static u32 lastExecTime;
 static u32 modeTimeout;
+static int modeParam;
 static s8  menuIndex;
 
 #define MENU_TIMEOUT 100000000
@@ -45,11 +48,13 @@ static const FTMenuItem rootMenuItems[] = {
   {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
-  {"Playpen test",    RobotInterface::FTM_PlayPenTest,   30000000 },
-  // #ifdef FACTORY_FIRMWARE
-  {"Cube test",       RobotInterface::FTM_cubeTest,      30000000 },
-  // #endif
+#if FACTORY_FIRMWARE
+  {"Playpen test",    RobotInterface::FTM_PlayPenTest,   0xFFFFffff },
+  {"Cube test",       RobotInterface::FTM_cubeTest,      0xFFFFffff },
+#if 0
   {"BLE",             RobotInterface::FTM_BLE_Menu,      15000000 },
+#endif
+#endif
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
 
@@ -104,12 +109,24 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   }
 }
 
+static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
+{
+  if (result == NVStorage::NV_NOT_FOUND && FACTORY_FIRMWARE)
+  {
+    SetMode(RobotInterface::FTM_FAC);
+  }
+  else
+  {
+    SetMode(RobotInterface::FTM_Sleepy);
+  }
+}
+
 void Update()
 {
-  if (mode != RobotInterface::FTM_None) 
+  if (mode != RobotInterface::FTM_None)
   {
     const u32 now = system_get_time();
-    if (now > modeTimeout) 
+    if (now > modeTimeout)
     {
       SetMode(RobotInterface::FTM_entry);
       modeTimeout = 0xFFFFffff;
@@ -119,6 +136,10 @@ void Update()
     {
       case RobotInterface::FTM_entry:
       {
+        if (NVStorage::Read(NVStorage::NVEntry_BirthCertificate, NVReadDoneCB) == NVStorage::NV_SCHEDULED)
+        {
+          SetMode(RobotInterface::FTM_WaitNV);
+        }
         break;
       }
       case RobotInterface::FTM_menus:
@@ -151,18 +172,6 @@ void Update()
         break;
       }
       case RobotInterface::FTM_PlayPenTest:
-      {
-        // Create config for test fixture open AP
-        struct softap_config ap_config;
-        wifi_softap_get_config(&ap_config);
-        os_sprintf((char*)ap_config.ssid, "Afix01");
-        ap_config.authmode = AUTH_OPEN;
-        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-        ap_config.beacon_interval = 100;
-        wifi_softap_set_config_current(&ap_config);
-        SetMode(RobotInterface::FTM_WiFiInfo);
-        break;
-      }
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
@@ -191,13 +200,13 @@ void Update()
         }
         break;
       }
-      // #ifdef FACTORY_FIRMWARE
+      #if FACTORY_FIRMWARE
       case RobotInterface::FTM_cubeTest:
       {
         Face::FacePrintf("Auto cube");
         break ;
       }
-      // #endif
+      #endif
       case RobotInterface::FTM_motorLifeTest:
       {
         if ((now - lastExecTime) > 1000000)
@@ -224,6 +233,57 @@ void Update()
         }
         break;
       }
+      case RobotInterface::FTM_Sleepy:
+      {
+        using namespace Anki::Cozmo::Face;
+        // Display WiFi password, alternate rows about every 2 minutes
+        const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
+        u64 frame[COLS];
+        Draw::Copy(frame, Face::SLEEPY_EYES);
+        Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
+        Draw::Mask(frame, columnMask);
+        Draw::Flip(frame);
+        if (now > 300000000 && FACTORY_FIRMWARE)
+        {
+          SetMode(RobotInterface::FTM_Off);
+        }
+        break;
+      }
+      case RobotInterface::FTM_FAC:
+      {
+        {
+          using namespace Anki::Cozmo::Face;
+          // Display DISPLAY FACTORY WARNING
+          const u64 columnMask = ((now/1000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
+          u64 frame[COLS];
+          Draw::Clear(frame);
+          Draw::Number(frame, 3, 0xFAC, 38, 8);
+          Draw::Invert(frame);
+          Draw::Mask(frame, columnMask);
+          Draw::Flip(frame);
+        }
+        if ((now - lastExecTime) > 2000000) {
+          RobotInterface::EngineToRobot msg;
+          os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+          msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
+          for (int i=Anki::Cozmo::LED_BACKPACK_FRONT; i<=Anki::Cozmo::LED_BACKPACK_BACK; i++)
+          {
+            msg.setBackpackLights.lights[i].onColor = Anki::Cozmo::LED_ENC_RED;
+            msg.setBackpackLights.lights[i].offColor = Anki::Cozmo::LED_ENC_OFF;
+            msg.setBackpackLights.lights[i].onFrames = 30;
+            msg.setBackpackLights.lights[i].offFrames = 30;
+            msg.setBackpackLights.lights[i].transitionOnFrames = 0;
+            msg.setBackpackLights.lights[i].transitionOffFrames = 15;
+          }
+          RTIP::SendMessage(msg);
+          lastExecTime = now;
+        }
+        if (now > 300000000 && FACTORY_FIRMWARE)
+        {
+          SetMode(RobotInterface::FTM_Off);
+        }
+        break;
+      }
       default:
       {
         break;
@@ -238,8 +298,12 @@ void Process_TestState(const RobotInterface::TestState& state)
   switch (mode)
   {
     case RobotInterface::FTM_entry:
+    case RobotInterface::FTM_WaitNV:
+    case RobotInterface::FTM_Sleepy:
+    case RobotInterface::FTM_FAC:
+    case RobotInterface::FTM_Off:
     {
-      if (((now - lastExecTime) > 2000000) && (ABS(state.speedsFixed[0]) > 1000))
+      if ((now > 2000000) && (ABS(state.speedsFixed[0]) > 1000))
       {
         lastExecTime = now;
         SetMode(RobotInterface::FTM_menus);
@@ -306,7 +370,7 @@ void Process_TestState(const RobotInterface::TestState& state)
   }
 }
 
-// #ifdef FACTORY_FIRMWARE
+#if FACTORY_FIRMWARE
 static void cubeMessageHook(const u8* buffer, int bufferSize) {
   using namespace Anki::Cozmo;
 
@@ -347,25 +411,25 @@ static void cubeMessageHook(const u8* buffer, int bufferSize) {
 
   if (++slot > 7) SetMode(RobotInterface::FTM_entry);
 }
-// #endif
+#endif
 
 RobotInterface::FactoryTestMode GetMode()
 {
   return mode;
 }
 
-void SetMode(const RobotInterface::FactoryTestMode newMode)
+int GetParam()
 {
-  // Some test modes can't touch the motors at all (maybe there's a better way to clean this up)
-  if (newMode == RobotInterface::FTM_PlayPenTest)
-  {
-    mode = newMode;
-    return;
-  }
-  
+  return modeParam;
+}
+
+void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
+{
   RobotInterface::EngineToRobot msg;
   Anki::Cozmo::Face::FaceUnPrintf();
   menuIndex = 0;
+  
+  os_printf("SM %d -> %d\r\n", mode, newMode);
   
   if (mode == RobotInterface::FTM_None && newMode != RobotInterface::FTM_None)
   {
@@ -394,7 +458,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
-    // #ifdef FACTORY_FIRMWARE
+    // #if FACTORY_FIRMWARE
     case RobotInterface::FTM_cubeTest:
     {
       RTIP::HookWifi(NULL);
@@ -441,23 +505,47 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
     case RobotInterface::FTM_BLE_Off:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_WIFI_OPERATING_MODE;
+      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
-    // #ifdef FACTORY_FIRMWARE
+    #if FACTORY_FIRMWARE
     case RobotInterface::FTM_cubeTest:
     {
       RTIP::HookWifi(cubeMessageHook);
       break;
     }
-    // #endif
+    case RobotInterface::FTM_PlayPenTest:
+    {
+      // Create config for test fixture open AP
+      struct softap_config ap_config;
+      wifi_softap_get_config(&ap_config);
+      os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
+      os_sprintf((char*)ap_config.ssid, "Afix%02d", param);
+      ap_config.authmode = AUTH_OPEN;
+      ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+      ap_config.beacon_interval = 100;
+      wifi_softap_set_config_current(&ap_config);
+    }
+    case RobotInterface::FTM_Off:
+    {
+      Face::Clear();
+      os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
+      RTIP::SendMessage(msg);
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
+      RTIP::SendMessage(msg);
+      WiFiConfiguration::Off(false);
+    }
+    #endif
     default:
     {
       // Nothing to do
     }
   }
   
+  modeParam = param;
   mode = newMode;
 }
 

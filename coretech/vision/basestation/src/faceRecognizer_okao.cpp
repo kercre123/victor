@@ -1394,6 +1394,40 @@ namespace Vision {
     }
   } // EraseAllFaces()
   
+  Result FaceRecognizer::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  {
+    auto enrollIter = _enrollmentData.find(faceID);
+    if(enrollIter != _enrollmentData.end())
+    {
+      if(enrollIter->second.name == oldName)
+      {
+        enrollIter->second.name = newName;
+        PRINT_NAMED_INFO("FaceRecognizer.RenameFace.Success", "Renamed ID=%d", faceID);
+        // Print additional info with the names in debug only, for privacy reasons
+        PRINT_NAMED_DEBUG("FaceRecognizer.RenameFace.Success_DEBUG", "Renamed ID=%d from '%s' to '%s'",
+                          faceID, oldName.c_str(), enrollIter->second.name.c_str());
+        return RESULT_OK;
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.RenameFace.OldNameMismatch",
+                            "Refusing to rename ID=%d because old name does not match stored name",
+                            faceID);
+        // Print additional info with the names in debug only, for privacy reasons
+        PRINT_NAMED_DEBUG("FaceRecognizer.RenameFace.OldNameMismatch_DEBUG",
+                          "OldName '%s' does not match stored name '%s' for ID=%d",
+                          oldName.c_str(), enrollIter->second.name.c_str(), faceID);
+        
+        return RESULT_FAIL;
+      }
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("FaceRecognizer.RenameFace.InvalidID",
+                          "No record for ID=%d", faceID);
+      return RESULT_FAIL;
+    }
+  }
   
   Result FaceRecognizer::GetSerializedData(std::vector<u8>& albumData,
                                            std::vector<u8>& enrollData)

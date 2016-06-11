@@ -26,6 +26,8 @@ void user_rf_pre_init(void)
   //system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
 }
 
+unsigned int wifiPin;
+
 /// Forward declarations
 typedef void (*NVInitDoneCB)(const int8_t);
 int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
@@ -111,10 +113,12 @@ void user_init(void)
     os_printf("Error getting wifi softap config\r\n");
   }
 
+  wifiPin = rand() % 100000000;
+
   os_sprintf((char*)ap_config.ssid, ssid);
-  os_sprintf((char*)ap_config.password, "%08d", rand() % 100000000);
+  os_sprintf((char*)ap_config.password, "%08d", wifiPin);
   ap_config.ssid_len = 0;
-  ap_config.channel = (macaddr[5]/24) + 1;
+  ap_config.channel = (system_get_time() % 11) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
   ap_config.max_connection = AP_MAX_CONNECTIONS;
   ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems

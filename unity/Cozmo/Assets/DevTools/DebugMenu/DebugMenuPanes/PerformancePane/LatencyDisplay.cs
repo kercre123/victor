@@ -32,7 +32,7 @@ public class LatencyDisplay : MonoBehaviour {
   }
 
   public void HandleDebugLatencyMsg(Anki.Cozmo.ExternalInterface.DebugLatencyMessage msg) {
-    UpdateUI(msg.averageLatency, msg.minLatency, msg.maxLatency);
+    UpdateUI(msg.wifiLatency.avgTime_ms, msg.wifiLatency.minTime_ms, msg.wifiLatency.maxTime_ms);
   }
 
   public void SaveEnabled(bool isEnabled) {

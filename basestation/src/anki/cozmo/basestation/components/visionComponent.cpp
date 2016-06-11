@@ -89,6 +89,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceEnrollmentPose>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
 
@@ -1803,6 +1804,24 @@ namespace Cozmo {
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
   
+  Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  {
+    Lock();
+    Result result = _visionSystem->RenameFace(faceID, oldName, newName);
+    Unlock();
+    
+    if(RESULT_OK == result)
+    {
+      SaveFaceAlbumToRobot();
+      ExternalInterface::RobotLoadedKnownFace msg;
+      msg.faceID = faceID;
+      msg.name   = newName;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    }
+    
+    return result;
+  }
+  
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const
   {
     // Notify about the newly-available names and IDs, and create wave files
@@ -1889,6 +1908,12 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::LoadFaceAlbumFromFile& msg)
   {
     LoadFaceAlbumFromFile(GetFullFaceAlbumPath(_context, msg.path, msg.isRelativePath));
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::UpdateEnrolledFaceByID& msg)
+  {
+    RenameFace(msg.faceID, msg.oldName, msg.newName);
   }
   
 } // namespace Cozmo

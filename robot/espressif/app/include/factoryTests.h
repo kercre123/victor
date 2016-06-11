@@ -18,7 +18,9 @@ namespace Anki {
       /// Get the current factory test mode
       RobotInterface::FactoryTestMode GetMode();
       
-      void SetMode(const RobotInterface::FactoryTestMode mode);
+      int GetParam();
+      
+      void SetMode(const RobotInterface::FactoryTestMode mode, const int param=0);
       
       /// Process test state update messages
       void Process_TestState(const RobotInterface::TestState& state);

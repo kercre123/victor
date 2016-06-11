@@ -10,7 +10,7 @@
 #define __CommsBase__
 
 #include "anki/messaging/basestation/IChannel.h"
-
+#include "util/stats/recentStatsAccumulator.h"
 #include "util/transport/iNetTransportDataReceiver.h"
 
 #include <deque>
@@ -54,7 +54,9 @@ namespace Anki {
       virtual bool GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const override;
       
       virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const override;
-
+      
+      const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
+      
     protected:
       void PushIncomingPacket(const IncomingPacket& packet);
 
@@ -80,6 +82,10 @@ namespace Anki {
       // Removes the connection, but doesn't mess with packets
       bool RemoveConnectionInternal(TransportAddress& address, ConnectionId connectionId);
 
+      #if TRACK_INCOMING_PACKET_LATENCY
+      Util::Stats::RecentStatsAccumulator _queuedTimes_ms; // how many ms between packet arriving and it being passed onto game
+      #endif // TRACK_INCOMING_PACKET_LATENCY
+      
       std::unordered_map<TransportAddress, ConnectionId> _addressLookup;
       std::unordered_map<ConnectionId, TransportAddress> _connectionIdLookup;
       std::deque<IncomingPacket> _incomingPacketQueue;

@@ -696,7 +696,7 @@ public class MockRobot : IRobot {
     private set;
   }
 
-  public float BatteryPercent {
+  public float BatteryVoltage {
     get { return 0.73f; }
   }
 

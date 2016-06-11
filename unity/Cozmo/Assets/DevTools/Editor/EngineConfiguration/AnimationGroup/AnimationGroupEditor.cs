@@ -22,9 +22,9 @@ public class AnimationGroupEditor : EditorWindow {
 
   private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
 
-  public static string sAnimationDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animations/"; } }
+  public static string sAnimationDirectory { get { return Application.dataPath + "/../../../EXTERNALS/cozmo-assets/animations/"; } }
 
-  public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/"; } }
+  public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../EXTERNALS/cozmo-assets/animationGroups/"; } }
 
   public static string[] AnimationNameOptions { get { return _AnimationNameOptions; } }
 

@@ -22,13 +22,18 @@ namespace RobotInterface {
     FTM_cubeTest,
     FTM_BLE_Menu,
     FTM_BLE_On,
-    FTM_BLE_Off
+    FTM_BLE_Off,
+    FTM_WaitNV,
+    FTM_Sleepy,
+    FTM_FAC,
+    FTM_Off,
   }
   
   /// The active test mode of the robot
   message EnterFactoryTestMode
   {
     FactoryTestMode mode,
+    int_32 param = 0,
   }
   
   /// Control whether the TestStateMessage will be sent or not
@@ -47,6 +52,11 @@ namespace RobotInterface {
     uint_8  battVolt10x,
     uint_8  extVolt10x,
     uint_8  chargeStat,
+  }
+  
+  message FactoryTestParameter
+  {
+    int_32 param
   }
 }
 }

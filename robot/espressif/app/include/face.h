@@ -22,18 +22,34 @@
 namespace Anki {
   namespace Cozmo {
     namespace Face {
+      static const int COLS = 128;
+      static const int ROWS = 64;
+      static const int PAGES = ROWS / 8;
       
+      extern u64 m_frame[COLS+12];
+
       // Sets up data structures, call before any other methods
       Result Init();
-      
-      // Decompresses a new image from the basestation into the image buffer
-      void Update(AnimKeyFrame::FaceImage img);
       
       /// Returns the number of rects remaining to be transmitted
       int GetRemainingRects();
       
+      /// Convert a regular number to 8 digits of BCD
+      u32 DecToBCD(const u32 val);
+            
       /// Clears all content from the face
       void Clear();
+
+      extern const u64 SLEEPY_EYES[];
+
+      namespace Draw {
+        void Clear(u64* frame);
+        void Copy(u64* frame, const u64* image);
+        void Mask(u64* frame, const u64 mask);
+        void Invert(u64* frame);
+        void Number(u64* frame, int digits, u32 value, int x, int y);
+        void Flip(u64* frame);
+      }
 
       extern "C"
       {
@@ -48,9 +64,6 @@ namespace Anki {
         
         // Display debug text on the screen, overriding regular printf
         void FaceDebugPrintf(const char *format, ...);
-
-        // Display a large font number on the screen
-        void FaceDisplayNumber(int digits, u32 value, int x, int y);
       }
     } // Face
   } // Cozmo

@@ -150,10 +150,6 @@ namespace Cozmo {
     // ID of face we are currently interested int
     FaceID_t _currentFace = Vision::UnknownFaceID;
     s32 _currentFaceNumTimesSeen = 0;
-    
-    // For the demo, we want to only enroll a face after we've "said the name" of a face we know, so track
-    // that here
-    bool _readyToEnrollFace = false;
 
     float _requestEnrollOnCooldownUntil_s = -1.0f;
 

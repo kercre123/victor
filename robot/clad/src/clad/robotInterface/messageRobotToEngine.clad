@@ -11,12 +11,12 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/types/powerMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/bleMessages.clad"
 #include "clad/types/animationEvents.clad"
+#include "clad/types/fwTestMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -122,7 +122,7 @@ union RobotToEngine {
   TimeProfileStat            timeProfStat           = 0xBE,
   IMUDataChunk               imuDataChunk           = 0xBF,
   CliffEvent                 cliffEvent             = 0xC0,
-  ChargerEvent               chargerEvent           = 0xC1,
+  //          FREE SLOT!!!                          = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
   ChargerMountComplete       chargerMountCompleted  = 0xC4,
@@ -142,6 +142,7 @@ union RobotToEngine {
   DockingStatus              dockingStatus          = 0xD3,
   RobotStopped               robotStopped           = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
+  FactoryTestParameter       factoryTestParam       = 0xD6,
   
   OTA::Ack                   otaAck                 = 0xEF,
   

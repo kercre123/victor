@@ -244,6 +244,7 @@ public static class LocalizationKeys {
   public const string kLootStart = "loot.Start";
   public const string kLootMid = "loot.Mid";
   public const string kLootAlmost = "loot.Almost";
+  public const string kLootAnnounce = "loot.Announce";
 
   #endregion
 

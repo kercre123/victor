@@ -280,6 +280,7 @@ public class RobotEngineManager : MonoBehaviour {
     var message = messageIn.Message;
     switch (message.GetTag()) {
     case G2U.MessageEngineToGame.Tag.Ping:
+      ReceivedSpecificMessage(message.Ping);
       break;
     case G2U.MessageEngineToGame.Tag.UiDeviceAvailable:
       ReceivedSpecificMessage(message.UiDeviceAvailable);
@@ -448,6 +449,16 @@ public class RobotEngineManager : MonoBehaviour {
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.Ping message) {
+    if (message.isResponse) {
+      DAS.Warn("Unity.ReceivedResponsePing", "Unity receiving response pings is unsupported");
+    }
+    else {
+      Message.Ping = Singleton<U2G.Ping>.Instance.Initialize(counter: message.counter, timeSent_ms: message.timeSent_ms, isResponse: true);
+      SendMessage();
     }
   }
 

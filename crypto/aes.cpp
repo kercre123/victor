@@ -4,6 +4,37 @@
 #include "aes.h"
 #include "random.h"
 
+#ifdef NRF51
+
+extern "C" {
+  #include "nrf.h" 
+  #include "nrf_sdm.h"
+  #include "nrf_soc.h"
+}
+
+void aes_ecb(ecb_data_t* ecb) {
+  uint8_t softdevice_is_enabled;
+  sd_softdevice_is_enabled(&softdevice_is_enabled);
+
+  if (softdevice_is_enabled) {
+    sd_ecb_block_encrypt((nrf_ecb_hal_data_t*)ecb);
+  } else {
+    NRF_ECB->POWER = 1;
+    NRF_ECB->ECBDATAPTR = (uint32_t)ecb;
+    NRF_ECB->EVENTS_ENDECB = 0;
+    NRF_ECB->TASKS_STARTECB = 1;
+    while (!NRF_ECB->EVENTS_ENDECB) ;
+  }
+}
+
+#else
+
+void aes_ecb(ecb_data_t* ecb) {
+  AES128_ECB_encrypt(ecb->cleartext, ecb->key, ecb->ciphertext);
+}
+
+#endif
+
 /*****************************************************************************/
 /* Defines:                                                                  */
 /*****************************************************************************/
@@ -26,9 +57,6 @@ static uint8_t RoundKey[176];
 
 // The Key input to the AES Program
 static const uint8_t* Key;
-
-// Initial Vector used only for CBC mode
-static uint8_t* Iv;
 
 // The lookup-tables are marked const so they can be placed in read-only storage instead of RAM
 // The numbers below can be computed dynamically trading ROM for RAM - 
@@ -94,86 +122,6 @@ static const uint8_t Rcon[255] = {
   0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 
   0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb
 };
-
-#ifdef NRF51
-
-extern "C" {
-  #include "nrf.h" 
-  #include "nrf_sdm.h"
-  #include "nrf_soc.h"
-}
-
-void aes_ecb(ecb_data_t* ecb) {
-  uint8_t softdevice_is_enabled;
-  sd_softdevice_is_enabled(&softdevice_is_enabled);
-
-  if (softdevice_is_enabled) {
-    sd_ecb_block_encrypt((nrf_ecb_hal_data_t*)ecb);
-  } else {
-    NRF_ECB->POWER = 1;
-    NRF_ECB->ECBDATAPTR = (uint32_t)ecb;
-    NRF_ECB->EVENTS_ENDECB = 0;
-    NRF_ECB->TASKS_STARTECB = 1;
-    while (!NRF_ECB->EVENTS_ENDECB) ;
-  }
-}
-#else
-
-void aes_ecb(ecb_data_t* ecb) {
-  AES128_ECB_encrypt(ecb->cleartext, ecb->key, ecb->ciphertext)
-}
-
-#endif
-
-int aes_encode(const void* key, uint8_t* data, int length) {
-  ecb_data_t ecb;
-
-  // This forces the block length to be a multiple of 16
-  // while also injecting random numbers into the buffer
-  // so we don't get cross talk
-  if (length % AES_KEY_LENGTH) {
-    int pad = AES_KEY_LENGTH - (length % AES_KEY_LENGTH);
-    gen_random(data + length, pad);
-    length += AES_KEY_LENGTH;
-  }
-
-  memcpy(ecb.key, key, AES_KEY_LENGTH);
-  
-  gen_random(ecb.cleartext, AES_KEY_LENGTH);
-
-  for (int i = 0; i < length; i += AES_KEY_LENGTH) {
-    aes_ecb(&ecb);
-    for (int k = 0; k < AES_KEY_LENGTH; k++) {
-      ecb.ciphertext[k] ^= data[k];
-    }
-    memcpy(data, ecb.cleartext, AES_KEY_LENGTH);
-    memcpy(ecb.cleartext, ecb.ciphertext, AES_KEY_LENGTH);
-    data += AES_KEY_LENGTH;
-  }
-
-  memcpy(data, ecb.cleartext, AES_KEY_LENGTH);
-
-  return length + AES_KEY_LENGTH;
-}
-
-int aes_decode(const void* key, uint8_t* data, int length) {
-  ecb_data_t ecb;
-  
-  memcpy(ecb.key, key, AES_KEY_LENGTH);
-  memcpy(ecb.cleartext, data, AES_KEY_LENGTH);
-
-  uint8_t *block = data + AES_KEY_LENGTH;
-  for(int i = AES_KEY_LENGTH; i < length; i += AES_KEY_LENGTH) {
-    aes_ecb(&ecb);
-    memcpy(ecb.cleartext, block, AES_KEY_LENGTH);
-
-    for (int bi = 0; bi < AES_KEY_LENGTH; bi++) {
-      *(data++) = *(block++) ^ ecb.ciphertext[bi];
-    }
-  }
-  
-  return length - AES_KEY_LENGTH;
-}
 
 static uint8_t getSBoxValue(uint8_t num)
 {
@@ -332,7 +280,7 @@ static void MixColumns(void)
 }
 
 // Multiply is used to multiply numbers in the field GF(2^8)
-#if MULTIPLY_AS_A_FUNCTION
+#ifdef MULTIPLY_AS_A_FUNCTION
 static uint8_t Multiply(uint8_t x, uint8_t y)
 {
   return (((y & 1) * x) ^
@@ -498,92 +446,63 @@ void AES128_ECB_decrypt(uint8_t* input, const uint8_t* key, uint8_t *output)
   InvCipher();
 }
 
-static void XorWithIv(uint8_t* buf)
-{
-  uint8_t i;
-  for(i = 0; i < AES_KEY_LENGTH; ++i)
-  {
-    buf[i] ^= Iv[i];
+void aes_fix_block(uint8_t* data, int& length) {
+  int overflow = length % AES_KEY_LENGTH;
+
+  if (overflow == 0) {
+    return ;
   }
+
+  int expand = AES_KEY_LENGTH - overflow;
+  gen_random(data + length, expand);
+  length += expand;
 }
 
-void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
-{
-  uintptr_t i;
-  uint8_t remainders = length % AES_KEY_LENGTH; /* Remaining bytes in the last non-full block */
+void aes_cfb_encode(const void* key, void* iv, const uint8_t* data, uint8_t* output, int length) {
+  ecb_data_t ecb;
 
-  BlockCopy(output, input);
-  state = (state_t*)output;
-
-  // Skip the key expansion if key is passed as 0
-  if(0 != key)
-  {
-    Key = key;
-    KeyExpansion();
-  }
-
-  if(iv != 0)
-  {
-    Iv = (uint8_t*)iv;
-  }
-
-  for(i = 0; i < length; i += AES_KEY_LENGTH)
-  {
-    XorWithIv(input);
-    BlockCopy(output, input);
-    state = (state_t*)output;
-    Cipher();
-    Iv = output;
-    input += AES_KEY_LENGTH;
-    output += AES_KEY_LENGTH;
-  }
-
-  if(remainders)
-  {
-    BlockCopy(output, input);
-    memset(output + remainders, 0, AES_KEY_LENGTH - remainders); /* add 0-padding */
-    state = (state_t*)output;
-    Cipher();
-  }
-}
-
-void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
-{
-  uintptr_t i;
-  uint8_t remainders = length % AES_KEY_LENGTH; /* Remaining bytes in the last non-full block */
+  void *target = iv;
   
-  BlockCopy(output, input);
-  state = (state_t*)output;
+  // Generate our IV
+  memcpy(ecb.key, key, AES_KEY_LENGTH);
+  gen_random(ecb.cleartext, AES_KEY_LENGTH); 
+  
+  while (length > 0) {
+    aes_ecb(&ecb);
 
-  // Skip the key expansion if key is passed as 0
-  if(0 != key)
-  {
-    Key = key;
-    KeyExpansion();
-  }
+    for (int i = 0; i < AES_KEY_LENGTH; i++) {
+      ecb.ciphertext[i] ^= *(data++);
+    }
 
-  // If iv is passed as 0, we continue to encrypt without re-setting the Iv
-  if(iv != 0)
-  {
-    Iv = (uint8_t*)iv;
-  }
-
-  for(i = 0; i < length; i += AES_KEY_LENGTH)
-  {
-    BlockCopy(output, input);
-    state = (state_t*)output;
-    InvCipher();
-    XorWithIv(output);
-    Iv = input;
-    input += AES_KEY_LENGTH;
+    memcpy(target, ecb.cleartext, AES_KEY_LENGTH);
+    memcpy(ecb.cleartext, ecb.ciphertext, AES_KEY_LENGTH);
+    target = output;
     output += AES_KEY_LENGTH;
+
+    length -= AES_KEY_LENGTH;
   }
 
-  if(remainders)
-  {
-    BlockCopy(output, input);
-    memset(output+remainders, 0, AES_KEY_LENGTH - remainders); /* add 0-padding */
-    state = (state_t*)output;
-    InvCipher();
+  memcpy(target, ecb.cleartext, AES_KEY_LENGTH);
+}
+
+void aes_cfb_decode(const void* key, const void* iv, const uint8_t* data, uint8_t* output, int length, void* aes_out) {
+  ecb_data_t ecb;
+
+  // Generate our IV
+  memcpy(ecb.key, key, AES_KEY_LENGTH);
+  memcpy(ecb.cleartext, iv, AES_KEY_LENGTH);
+  
+  while (length > 0) {
+    aes_ecb(&ecb);
+
+    for (int i = 0; i < AES_KEY_LENGTH; i++) {
+      *(output++) = (ecb.cleartext[i] = *(data++)) ^ ecb.ciphertext[i];
+    }
+
+    length -= AES_KEY_LENGTH;
+  }
+
+  if (aes_out) {
+    memcpy(aes_out, ecb.cleartext, AES_KEY_LENGTH);
   }
 }
