@@ -220,11 +220,9 @@ namespace UpgradeController {
         {
           #if DEBUG_OTA
           os_printf("\tStarting upgrade\r\n");
+          //Face::FacePrintf("Starting FOTA\nupgrade...");
           #endif
           bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
-          #if FACTORY_FIRMWARE == 0
-          Face::FacePrintf("Starting FOTA\nupgrade...");
-          #endif
           timer = system_get_time() + 20000; // 20 ms
           phase = OTAT_Enter_Recovery;
           RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_bodyRestart);
@@ -401,7 +399,7 @@ namespace UpgradeController {
               #if DEBUG_OTA
               os_printf("No valid certificate, resetting\r\n");
               #endif
-              AnkiError( 187, "UpgradeController.termination", 489, "No valid certificate!", 0);
+              AnkiError( 188, "UpgradeController.termination", 489, "No valid certificate!", 0);
               Reset();
             }
           }
@@ -528,7 +526,7 @@ namespace UpgradeController {
           }
           else
           {
-            AnkiWarn( 171, "UpgradeController", 488, "Unhandled special block 0x%x", 1, fwb->blockAddress);
+            AnkiWarn( 171, "UpgradeController", 491, "Unhandled special block 0x%x", 1, fwb->blockAddress);
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
             bytesProcessed += sizeof(FirmwareBlock);

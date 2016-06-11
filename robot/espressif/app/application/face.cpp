@@ -2,6 +2,7 @@
 #include "messages.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "anki/cozmo/robot/esp.h"
+#include "anki/cozmo/robot/logging.h"
 extern "C" {
 #include "anki/cozmo/robot/drop.h"
 }
@@ -11,9 +12,6 @@ namespace Anki {
 namespace Cozmo {
 namespace Face {
 
-  #define COLS 128
-  #define ROWS 64
-  #define PAGES (ROWS / 8)
   #define MAX_RECTS 4
   #define WORKING_RECTS (MAX_RECTS+1)
 
@@ -158,6 +156,137 @@ namespace Face {
       0x00018180, 0x00018180, 0x00018180, 0x00018180, 
       0x00018180, 0x00000000, 0x00000000, 0x00000000
     }
+  };
+
+  const u64 SLEEPY_EYES[] ICACHE_RODATA_ATTR STORE_ATTR = {
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x00F0000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
   };
 
   u64 m_frame[COLS + 12]; // OVERALLOCATE FOR OTA BECAUSE REASONS
@@ -397,34 +526,65 @@ namespace Face {
     Face::CreateRects((u64*) frame);
   }
 
-
-  void FaceDisplayNumber(int digits, u32 value, int x, int y)
+  u32 DecToBCD(const u32 val)
   {
-    const int number_width = digits * 16;
+    u32 ret = 0;
+    u32 num = val;
+    for (int i=0; i < 8; ++i)
+    {
+      ret |= (num % 10) << (4*i);
+      num /= 10;
+    }
+    return ret;
+  }
 
-    if (x + number_width > COLS) {
-      return ;
+  namespace Draw {
+    void Clear(u64* frame) {
+      os_memset(frame, 0, sizeof(u64) * COLS);
     }
 
-    u64 frame[COLS];
-    u64* pixels = &frame[x];
-    memset(frame, 0, sizeof(frame));
-
-
-    for (int c = 0; c < digits; c++) {
-      int ch = (value >> ((digits - 1 - c) * 4)) & 0xF;
-      for (int x = 0; x < 16; x++) {
-        u64 line = DIGITS[ch][x];
-        *(pixels++) = line << y;
+    void Mask(u64* frame, const u64 mask) {
+      for (int i = 0; i < COLS; i++) {
+        *(frame++) &= mask;
       }
     }
 
-    u8 top = y / 8;
-    u8 bottom = (y + 7) / 8 + 4;
+    void Invert(u64* frame)
+    {
+      for (int i = 0; i < COLS; i++) {
+        *frame = ~(*frame);
+        frame++;
+      } 
+    }
 
-    if (bottom > PAGES) { bottom = PAGES; }
+    void Copy(u64* frame, const u64* image) {
+      os_memcpy(frame, image, sizeof(u64) * COLS);
+    }
 
-    Face::CreateRects((u64*) frame, x, top, x + number_width, bottom);
+    void Number(u64* frame, int digits, u32 value, int x, int y)
+    {
+      const int number_width = digits * 16;
+
+      if (x + number_width > COLS) {
+        AnkiWarn( 187, "Face.DisplayNumber", 488, "Too wide", 0);
+        return;
+      }
+
+      u64* pixels = &frame[x];
+      memset(frame, 0, sizeof(frame));
+
+      for (int c = 0; c < digits; c++) {
+        int ch = (value >> ((digits - 1 - c) * 4)) & 0xF;
+        for (int x = 0; x < 16; x++) {
+          u64 line = DIGITS[ch][x];
+          *(pixels++) |= line << y;
+        }
+      }
+    }
+
+    void Flip(u64* frame) {
+      Face::CreateRects((u64*) frame);
+    }
   }
 
   void Clear()
@@ -481,11 +641,22 @@ namespace Face {
     return m_remainingRects;
   }
 
+  /*
+  void Draw(const u64* image, const u8 sx, const u8 sy, const u8 ex, const u8 ey, const u64 columnMask)
+  {
+    u64 frame[COLS];
+    for (int c=0; c<COLS; ++c) frame[c] = image[c] & columnMask;
+    CreateRects(frame, sx, sy, ex, ey);
+  }
+  */
+
 } // Face
 
 namespace HAL {
   void FaceAnimate(u8* image, const u16 length)
   {
+    using namespace Anki::Cozmo::Face;
+
     if (Face::_mode != Face::graphics || Face::m_remainingRects > 0) return; // Ignore when in text mode
 
     else if (length == MAX_FACE_FRAME_SIZE) // If it's this size, it's raw
