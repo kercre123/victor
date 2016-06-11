@@ -80,39 +80,6 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     PendSV_Handler
                 DCD     SysTick_Handler
 
-                ; External Interrupts
-                DCD     POWER_CLOCK_IRQHandler
-                DCD     RADIO_IRQHandler
-                DCD     UART0_IRQHandler
-                DCD     SPI0_TWI0_IRQHandler
-                DCD     SPI1_TWI1_IRQHandler
-                DCD     0                         ; Reserved
-                DCD     GPIOTE_IRQHandler
-                DCD     ADC_IRQHandler
-                DCD     TIMER0_IRQHandler
-                DCD     TIMER1_IRQHandler
-                DCD     TIMER2_IRQHandler
-                DCD     RTC0_IRQHandler
-                DCD     TEMP_IRQHandler
-                DCD     RNG_IRQHandler
-                DCD     ECB_IRQHandler
-                DCD     CCM_AAR_IRQHandler
-                DCD     WDT_IRQHandler
-                DCD     RTC1_IRQHandler
-                DCD     QDEC_IRQHandler
-                DCD     LPCOMP_IRQHandler
-                DCD     SWI0_IRQHandler
-                DCD     SWI1_IRQHandler
-                DCD     SWI2_IRQHandler
-                DCD     SWI3_IRQHandler
-                DCD     SWI4_IRQHandler
-                DCD     SWI5_IRQHandler
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
                 DCD     EnterRecovery
 
 __Vectors_End	

@@ -4,8 +4,11 @@
 #include "nrf_gpiote.h"
 #include "nrf_gpio.h"
 
+#include "timer.h"
 #include "lights.h"
 #include "hal/hardware.h"
+
+typedef uint32_t u32;
 
 struct LightChannel {
   uint8_t anode;
@@ -83,15 +86,22 @@ void Lights::stop(void) {
 }
 
 static int channel = 3;
-static int intensity = 0;
 
 void Lights::setChannel(int ch) {
   channel = ch;
-  intensity = 0;
 }
 
 void Lights::update() {
-  set(channel, channel ? 2 : 0x7, (++intensity & 0x40 ? intensity : ~intensity) & 0x3F);
+  static const int period = (int)(10 * COUNT_PER_MS);
+  static int next = GetCounter() + period;
+  int current = GetCounter();
+  
+  if (current < next) return ;
+  next = current + period;
+  
+  int intensity = GetCounter() >> 17;
+  
+  set(channel, channel ? 2 : 0x7, 0x18 + ((++intensity & 0x40 ? intensity : ~intensity) & 0x3F));
 }
 
 void Lights::set(int channel, int colors, uint8_t brightness) {
