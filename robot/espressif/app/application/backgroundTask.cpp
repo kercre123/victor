@@ -210,7 +210,7 @@ extern "C" int8_t backgroundTaskInit(void)
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   // Tell body / k02 to go into gameplay power mode
-  #ifndef FACTORY_FIRMWARE
+  #if !FACTORY_FIRMWARE
   {
     Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
     bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;

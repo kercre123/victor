@@ -6,6 +6,7 @@
 #include "hal/hardware.h"
 #include "battery.h"
 #include "timer.h"
+#include "lights.h"
 
 static inline void startADCsample(AnalogInput channel)
 {
@@ -41,14 +42,12 @@ void Battery::init()
 
   // Wait for cozmo to sit on a charger
   while (Battery::read() < VEXT_CONTACT_LEVEL) ;
-}
 
-void Battery::powerOn() {
   // Disable charger during boot
   nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
  
-  // Syscon power - this should always be on until battery fail
+  // Battery power: Disabled
   nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
 
@@ -74,6 +73,7 @@ int32_t Battery::read(void) {
 void Battery::manage(void) {
   static int ground_short = 0;
   
+  Lights::update();
   kickDog();
 
   int32_t value = read();
