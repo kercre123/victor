@@ -9,7 +9,8 @@
                     ".json"
                 ],
                 "subdirs": [
-                    "animations"
+                    "animations",
+                    "animationGroups"
                 ],
                 "version": "406"
             },

@@ -454,11 +454,50 @@
                   '-s',
                   '-f',
                   '-n',
-                  '<(cozmo_asset_path)',
+                  '<(externals_path)/cozmo-assets',
                   '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
                 ],
-              },
-              {
+            },
+            {
+                'action_name': 'create_symlink_resources_behaviors',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(cozmo_asset_path)/behaviors',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/behaviors',
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_daily_goals',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(cozmo_asset_path)/DailyGoals',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/DailyGoals',
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_anim_group_maps',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(cozmo_asset_path)/animationGroupMaps',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroupMaps',
+                ],
+            },
+            {
                 'action_name': 'create_symlink_resources_sound',
                 'inputs': [],
                 'outputs': [],
@@ -470,7 +509,7 @@
                   '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
                   '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound',
                 ],
-              },
+            },
             ]
           },
 

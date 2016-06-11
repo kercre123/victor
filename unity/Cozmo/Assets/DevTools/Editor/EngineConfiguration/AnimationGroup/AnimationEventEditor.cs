@@ -32,7 +32,7 @@ public class AnimationEventEditor : EditorWindow {
 
   private static Vector2 _scrollPos = new Vector2();
 
-  public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/"; } }
+  public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../EXTERNALS/cozmo-assets/animationGroups/"; } }
 
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
 
