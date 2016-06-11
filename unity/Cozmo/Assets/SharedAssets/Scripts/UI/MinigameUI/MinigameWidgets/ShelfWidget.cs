@@ -122,11 +122,11 @@ namespace Cozmo {
           _CaratTween.Kill();
         }
         if (isWorldPos) {
-          _CaratTween = _CaratContainer.transform.DOMoveX(targetPos, 
+          _CaratTween = _CaratContainer.transform.DOMoveX(targetPos,
             _CaratTweenDurationSeconds).SetEase(Ease.OutBack);
         }
         else {
-          _CaratTween = _CaratContainer.transform.DOLocalMoveX(targetPos, 
+          _CaratTween = _CaratContainer.transform.DOLocalMoveX(targetPos,
             _CaratTweenDurationSeconds).SetEase(Ease.OutBack);
         }
         _CaratTween.Play();

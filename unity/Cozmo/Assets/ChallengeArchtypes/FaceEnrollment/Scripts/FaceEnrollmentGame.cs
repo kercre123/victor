@@ -17,8 +17,8 @@ namespace FaceEnrollment {
     [SerializeField]
     private GameObject _FaceEnrollmentDiagramPrefab;
 
-    [SerializeField]
-    private Anki.UI.AnkiTextLabel _ShelfWidgetTextPrefab;
+    //[SerializeField]
+    //private Anki.UI.AnkiTextLabel _ShelfWidgetTextPrefab;
 
     private bool _AttemptedEnrollFace = false;
 
@@ -61,7 +61,7 @@ namespace FaceEnrollment {
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
       newView.ShowShelf();
-      newView.ShelfWidget.AddContent(_ShelfWidgetTextPrefab, HandleShelfContentTweenIn);
+      //newView.ShelfWidget.AddContent(_ShelfWidgetTextPrefab, HandleShelfContentTweenIn);
     }
 
     private void CleanupShowFaceListSlide() {

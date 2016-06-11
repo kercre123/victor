@@ -26,5 +26,8 @@
   },
   "faceEnrollment.enterName.placeholderText": {
     "translation": "Enter Name"
+  },
+  "faceEnrollment.faceEnrollmentList.description": {
+    "translation": "These are the faces that Cozmo recognizes."
   }
 }

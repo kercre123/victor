@@ -52,6 +52,8 @@ MonoBehaviour:
     type: 2}
   _FaceEnrollmentDiagramPrefab: {fileID: 124218, guid: 943f20b5dd5c447d5a65021eed590a4a,
     type: 2}
+  _ShelfWidgetTextPrefab: {fileID: 11420406, guid: 87e14c17169db4a1cb00df6eeaff9dc7,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -309,6 +311,11 @@ Prefab:
       propertyPath: _FaceListSlidePrefab
       value: 
       objectReference: {fileID: 11480272, guid: a3776657ddf994c64a023cff8cb078f7,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ShelfWidgetTextPrefab
+      value: 
+      objectReference: {fileID: 11420406, guid: 87e14c17169db4a1cb00df6eeaff9dc7,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
