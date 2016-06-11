@@ -70,13 +70,16 @@ void Exec(os_event_t *event)
   {
     case 0:
     {
-      static u32 lastAnimStateTime = 0;
-      const u32 now = system_get_time();
-      if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
+      if (clientConnected())
       {
-        if (AnimationController::SendAnimStateMessage() == RESULT_OK)
+        static u32 lastAnimStateTime = 0;
+        const u32 now = system_get_time();
+        if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
         {
-          lastAnimStateTime = now;
+          if (AnimationController::SendAnimStateMessage() == RESULT_OK)
+          {
+            lastAnimStateTime = now;
+          }
         }
       }
       break;
@@ -88,7 +91,10 @@ void Exec(os_event_t *event)
     }
     case 2:
     {
-      ActiveObjectManager::Update();
+      if (FACTORY_FIRMWARE == 0)
+      {
+        ActiveObjectManager::Update();
+      }
       break;
     }
     case 3:
@@ -209,6 +215,19 @@ extern "C" int8_t backgroundTaskInit(void)
 
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
+  // Tell body / k02 to go into gameplay power mode
+  #if !FACTORY_FIRMWARE
+  {
+    Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
+    bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+    Anki::Cozmo::RobotInterface::SendMessage(bMsg);
+
+    Anki::Cozmo::RobotInterface::SetHeadDeviceLock hMsg;
+    hMsg.enable = true;
+    Anki::Cozmo::RobotInterface::SendMessage(hMsg);
+  }
+  #endif
+
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   return false;
 }
@@ -224,8 +243,17 @@ extern "C" void backgroundTaskOnConnect(void)
 {
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
-  
-  Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_None);
+
+  if (FACTORY_FIRMWARE && (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_PlayPenTest))
+  {
+    Anki::Cozmo::RobotInterface::FactoryTestParameter ftp;
+    ftp.param = Anki::Cozmo::Factory::GetParam();
+    Anki::Cozmo::RobotInterface::SendMessage(ftp);
+  }
+  else
+  {
+    Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_None);
+  }
   
   sendWifiConnectionState(true);
   
@@ -256,6 +284,7 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
+  
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
@@ -263,7 +292,11 @@ extern "C" void backgroundTaskOnDisconnect(void)
   Anki::Cozmo::ActiveObjectManager::DisconnectAll();
   Anki::Cozmo::UpgradeController::OnDisconnect();
   sendWifiConnectionState(false);
-  if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
+  if (FACTORY_FIRMWARE && (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_PlayPenTest))
+  {
+    i2spiSwitchMode(I2SPI_SHUTDOWN);
+  }
+  else if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
   {
     Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
     Anki::Cozmo::Face::Clear();

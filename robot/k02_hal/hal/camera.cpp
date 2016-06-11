@@ -27,7 +27,6 @@ namespace Anki
   {
     namespace HAL
     {
-
       // Configuration for GC0329 camera chip
       const u8 I2C_ADDR = 0x31;
       const u8 CAM_SCRIPT[] =
@@ -383,8 +382,8 @@ void FTM2_IRQHandler(void)
   
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
-#if defined(ENABLE_JPEG) and !defined(FACTORY_FIRMWARE)
-  if (line < 498)   // XXX: This is apparently compensating for a JPEGCompress bug
+#if defined(ENABLE_JPEG)
+  if (line < 498 && UnlockDevices)   // XXX: This is apparently compensating for a JPEGCompress bug
     JPEGCompress(line, TOTAL_ROWS);
   else
     Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0, 0);

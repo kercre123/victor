@@ -37,7 +37,6 @@ int main (void) {
 
   // Power on the system
   Battery::init();
-  Battery::powerOn();
 
   // Do recovery until our signature is okay
   EnterRecovery();

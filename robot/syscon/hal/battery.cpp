@@ -136,7 +136,7 @@ void Battery::setHeadlight(bool status) {
 
 void Battery::powerOn()
 {
-  // Let power drain out - 10ms is plenty long enough
+  nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
@@ -144,8 +144,8 @@ void Battery::powerOff()
 {
   // Shutdown the extra things
   nrf_gpio_pin_clear(PIN_PWR_EN);
+  nrf_gpio_pin_set(PIN_VDDs_EN);
   MicroWait(10000);
-  NVIC_SystemReset();
 }
 
 static inline void sampleCliffSensor() {
@@ -187,6 +187,7 @@ void Battery::manage(void* userdata)
       if (vBat < VBAT_CHGD_LO_THRESHOLD) {
         if (++lowBatTimer >= LOW_BAT_TIME) {
           powerOff();
+          NVIC_SystemReset();
         }
       } else {
         lowBatTimer = 0;
@@ -201,7 +202,7 @@ void Battery::manage(void* userdata)
         if (NRF_ADC->RESULT < 0x30) {
           if (++ground_short > 30) {
             Battery::powerOff();
-            for (;;) ;
+            NVIC_SystemReset();
           }
         } else {
           ground_short = 0;

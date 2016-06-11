@@ -24,6 +24,13 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+#include "crc32.h"
+#include "sha512.h"
+#include "aes.h"
+#include "bignum.h"
+#include "rsa_pss.h"
+#include "publickeys.h"
+
 #define ESP_FW_MAX_SIZE  (0x07c000)
 #define ESP_FW_ADDR_MASK (0x07FFFF)
 
@@ -39,6 +46,11 @@ extern "C" {
 
 #define DEBUG_OTA 1
 
+void gen_random(void* ptr, int length)
+{
+  os_get_random((unsigned char *)ptr, length);
+}
+
 namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
@@ -53,10 +65,12 @@ namespace UpgradeController {
     OTAT_Delay,
     OTAT_Flash_Erase,
     OTAT_Sync_Recovery,
+    OTAT_Flash_Verify,
+    OTAT_Flash_Decrypt,
     OTAT_Flash_Write,
     OTAT_Wait,
     OTAT_Sig_Check,
-    OTAT_Reject,
+    OTAT_Abort,
     OTAT_Apply_WiFi,
     OTAT_Apply_RTIP,
     OTAT_Wait_For_RTIP_Ack,
@@ -78,12 +92,19 @@ namespace UpgradeController {
   int32_t  bufferSize; ///< Number of bytes of storage at buffer
   int32_t  bufferUsed; ///< Number of bytes of storage buffer currently filled
   int32_t  bytesProcessed; ///< The number of bytes of OTA data that have been processed from the buffer
-  uint32_t counter; ///< A in phase counter
+  int32_t  counter; ///< A in phase counter
+  uint32_t timer; ///< A timeout time
   int16_t  acceptedPacketNumber; ///< Highest packet number we have accepted
   int8_t   retries; ///< Flash operation retries
   OTATaskPhase phase; ///< Keeps track of our current task state
-  bool didEsp; ///< We have new firmware for the Espressif
+  bool didWiFi; ///< We have new firmware for the Espressif
+  bool didRTIP; ///< We have written new firmare for the RTIP
   bool haveTermination; ///< Have received termination
+  bool haveValidCert; ///< Have a valid certificate for the image
+
+  static sha512_state firmware_digest;
+  static uint8_t aes_iv[AES_KEY_LENGTH];
+  static bool aes_enabled;
 
   bool Init()
   {
@@ -91,11 +112,16 @@ namespace UpgradeController {
     bufferSize = 0;
     bufferUsed = 0;
     bytesProcessed = 0;
-    counter = system_get_time();
+    counter = 0;
+    timer = system_get_time();
     acceptedPacketNumber = -1;
     retries = MAX_RETRIES;
-    didEsp = false;
-    haveTermination = false;  
+    didWiFi = false;
+    didRTIP = false;
+    haveTermination = false;
+    haveValidCert = false;
+    sha512_init(firmware_digest);
+    aes_enabled = false;
     
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
@@ -141,29 +167,20 @@ namespace UpgradeController {
   
   LOCAL void Reset()
   {
+    os_printf("upgradeController Reset!!!\r\n");
     AnkiDebug( 170, "UpdateController", 466, "Reset()", 0);
     if (phase < OTAT_Enter_Recovery)
     {
       i2spiSwitchMode(I2SPI_REBOOT);
     }
-    else 
+    else if (didRTIP)
     {
-      phase = OTAT_Reject;
+      phase = OTATR_Set_Evil_A;
     }
-  }
-
-  LOCAL uint32_t calc_crc32(const uint8_t* data, int length)
-  {
-    uint32_t checksum = 0xFFFFFFFF;
-
-    while (length-- > 0) {
-      checksum ^= *(data++);
-      for (int b = 0; b < 8; b++) {
-        checksum = (checksum >> 1) ^ ((checksum & 1) ? CRC32_POLYNOMIAL : 0);
-      }
+    else
+    {
+      phase = OTAT_Abort;
     }
-
-    return ~checksum;
   }
 
   LOCAL bool VerifyFirmwareBlock(const FirmwareBlock* fwb)
@@ -203,9 +220,10 @@ namespace UpgradeController {
         {
           #if DEBUG_OTA
           os_printf("\tStarting upgrade\r\n");
+          //Face::FacePrintf("Starting FOTA\nupgrade...");
           #endif
           bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
-          Face::FacePrintf("Starting FOTA\nupgrade...");
+          timer = system_get_time() + 20000; // 20 ms
           phase = OTAT_Enter_Recovery;
           RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_bodyRestart);
           // Explicit fallthrough to next case
@@ -215,8 +233,11 @@ namespace UpgradeController {
       case OTAT_Delay:
       case OTAT_Flash_Erase:
       case OTAT_Sync_Recovery:
+      case OTAT_Flash_Verify:
+      case OTAT_Flash_Decrypt:
       case OTAT_Flash_Write:
       case OTAT_Wait:
+      case OTAT_Sig_Check:
       {
         if ((bufferSize - bufferUsed) < WRITE_DATA_SIZE)
         {
@@ -265,6 +286,7 @@ namespace UpgradeController {
     Ack ack;
     ack.bytesProcessed = bytesProcessed;
     ack.packetNumber   = acceptedPacketNumber;
+
     switch (phase)
     {
       case OTAT_Uninitalized:
@@ -274,12 +296,12 @@ namespace UpgradeController {
       }
       case OTAT_Enter_Recovery:
       {
-        if ((system_get_time() > counter) && (Face::GetRemainingRects() == 0))
+        if ((system_get_time() > timer) && (Face::GetRemainingRects() == 0))
         {
           const int8_t mode = OTA_Mode;
           if (RTIP::SendMessage((const uint8_t*)&mode, 1, RobotInterface::EngineToRobot::Tag_enterRecoveryMode))
           {
-            counter = system_get_time() + 30000;
+            timer = system_get_time() + 30000;
             phase = OTAT_Delay;
           }
         }
@@ -287,12 +309,13 @@ namespace UpgradeController {
       }
       case OTAT_Delay:
       {
-        if ((system_get_time() > counter) && i2spiMessageQueueIsEmpty())
+        if ((system_get_time() > timer) && i2spiMessageQueueIsEmpty())
         {
           i2spiSwitchMode(I2SPI_PAUSED);
           phase = OTAT_Flash_Erase;
           retries = MAX_RETRIES;
           counter = 0;
+          timer = 0;
           AnkiDebug( 172, "UpgradeController.state", 468, "flash erase", 0);
         }
         break;
@@ -326,7 +349,7 @@ namespace UpgradeController {
           AnkiDebug( 172, "UpgradeController.state", 469, "sync recovery", 0);
           i2spiSwitchMode(I2SPI_BOOTLOADER); // Start synchronizing with the bootloader
           phase = OTAT_Sync_Recovery;
-          counter = system_get_time() + 5000000; // 5 second timeout
+          timer = system_get_time() + 5000000; // 5 second timeout
           retries = MAX_RETRIES;
         }
         break;
@@ -336,13 +359,14 @@ namespace UpgradeController {
         if (i2spiGetRtipBootloaderState() == STATE_IDLE)
         {
           AnkiDebug( 172, "UpgradeController.state", 470, "flash write", 0);
-          phase = OTAT_Flash_Write;
+          phase = OTAT_Flash_Verify;
           counter = 0;
+          timer = 0;
           retries = MAX_RETRIES;
           ack.result = OKAY;
           RobotInterface::SendMessage(ack);
         }
-        else if (system_get_time() > counter)
+        else if (system_get_time() > timer)
         {
           #if DEBUG_OTA
           os_printf("Sync recovery timeout!\r\n");
@@ -353,21 +377,37 @@ namespace UpgradeController {
         }
         break;
       }
-      case OTAT_Flash_Write:
+      case OTAT_Flash_Verify:
       {
         if (bufferUsed < (int)sizeof(FirmwareBlock)) // We've reached the end of the buffer
         {
           if (haveTermination) // If there's no more, advance now
           {
-            AnkiDebug( 172, "UpgradeController.state", 457, "Sig check", 0);
-            counter = 0;
-            retries = MAX_RETRIES;
-            phase = OTAT_Sig_Check;
+            if (!aes_enabled || haveValidCert)
+            {
+              #if DEBUG_OTA
+              os_printf("Valid certificate, applying\r\n");
+              #endif
+              AnkiDebug( 172, "UpgradeController.state", 457, "Apply Wifi", 0);
+              counter = 0;
+              timer = 0;
+              retries = MAX_RETRIES;
+              phase = OTAT_Apply_WiFi;
+            }
+            else
+            {
+              #if DEBUG_OTA
+              os_printf("No valid certificate, resetting\r\n");
+              #endif
+              AnkiError( 188, "UpgradeController.termination", 489, "No valid certificate!", 0);
+              Reset();
+            }
           }
         }
         else
         {
           FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+
           if (VerifyFirmwareBlock(fwb) == false)
           {
             #if DEBUG_OTA
@@ -377,96 +417,191 @@ namespace UpgradeController {
             RobotInterface::SendMessage(ack);
             Reset();
           }
+          else if (fwb->blockAddress != CERTIFICATE_BLOCK)
+          {
+            static const int sha_per_tick = SHA512_BLOCK_SIZE;
+            haveValidCert = false;
+
+            const int remaining = sizeof(FirmwareBlock) - counter;
+
+            if (remaining > sha_per_tick)
+            {
+              sha512_process(firmware_digest, buffer + counter, sha_per_tick);
+              counter += sha_per_tick;
+            }
+            else
+            {
+              bool encrypted = aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK;
+              sha512_process(firmware_digest, buffer + counter, remaining);
+
+              retries = MAX_RETRIES;
+              counter = 0;
+              timer = 0;
+              phase = encrypted ? OTAT_Flash_Decrypt : OTAT_Flash_Write;
+            }
+          }
           else
           {
-            if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
+            AnkiDebug( 172, "UpgradeController.state", 490, "Sig Check", 0);
+            #if DEBUG_OTA
+            os_printf("OTA Sig header\r\n");
+            #endif
+
+            counter = 0;
+            timer = 0;
+            phase = OTAT_Sig_Check;
+          }
+        }
+        break;
+      }
+      case OTAT_Flash_Decrypt:
+      {
+        static const int AES_CHUNK_SIZE = AES_KEY_LENGTH * 16;
+        FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+
+        if ((unsigned)counter < TRANSMIT_BLOCK_SIZE)
+        {
+          uint8_t* address = counter + (uint8_t*)fwb->flashBlock;
+          aes_cfb_decode( AES_KEY, aes_iv, address, address, AES_CHUNK_SIZE, aes_iv);
+          
+          counter += AES_CHUNK_SIZE;
+        }
+        else
+        {
+          // Correct the checksum and send it down the wire
+          fwb->checkSum = calc_crc32(reinterpret_cast<const uint8*>(fwb->flashBlock), sizeof(fwb->flashBlock));
+
+          phase = OTAT_Flash_Write;
+          counter = 0;
+          timer = 0;
+        }
+
+        break ;
+      }
+      case OTAT_Flash_Write:
+      {
+        FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+
+        if ((fwb->blockAddress & SPECIAL_BLOCK) == SPECIAL_BLOCK)
+        {
+          if (fwb->blockAddress == COMMENT_BLOCK)
+          {
+            #if DEBUG_OTA
+            os_printf("OTA comment\r\n");
+            #endif
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+            
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
+          }
+          else if (fwb->blockAddress == HEADER_BLOCK)
+          {
+            FirmwareHeaderBlock* head = reinterpret_cast<FirmwareHeaderBlock*>(fwb->flashBlock);
+            
+            #if DEBUG_OTA
+            os_printf("OTA header block: %s\r\n", head->c_time);
+            #endif
+
+            memcpy(aes_iv, head->aes_iv, AES_KEY_LENGTH);
+            aes_enabled = true;
+
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
+          }
+          else
+          {
+            AnkiWarn( 171, "UpgradeController", 491, "Unhandled special block 0x%x", 1, fwb->blockAddress);
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
+          }
+        }
+        else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
+        {
+          const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
+          #if DEBUG_OTA
+          os_printf("WF 0x%x\r\n", destAddr);
+          #endif
+          const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+          if (rslt != SPI_FLASH_RESULT_OK)
+          {
+            if (retries-- <= 0)
             {
-              if (fwb->blockAddress == CERTIFICATE_BLOCK)
-              {
-                // TODO something with signature header
-                #if DEBUG_OTA
-                os_printf("OTA Sig header\r\n");
-                #endif
-                retries = MAX_RETRIES;
-                bufferUsed -= sizeof(FirmwareBlock);
-                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-                bytesProcessed += sizeof(FirmwareBlock);
-                ack.bytesProcessed = bytesProcessed;
-                ack.result = OKAY;
-                RobotInterface::SendMessage(ack);
-              }
-              else if (fwb->blockAddress == COMMENT_BLOCK)
-              {
-                #if DEBUG_OTA
-                os_printf("OTA comment\r\n");
-                #endif
-                retries = MAX_RETRIES;
-                bufferUsed -= sizeof(FirmwareBlock);
-                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-                bytesProcessed += sizeof(FirmwareBlock);
-                ack.bytesProcessed = bytesProcessed;
-                ack.result = OKAY;
-                RobotInterface::SendMessage(ack);
-              }
-            }
-            else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
-            {
-              const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
               #if DEBUG_OTA
-              os_printf("WF 0x%x\r\n", destAddr);
+              os_printf("\tRan out of retries writing to Espressif flash\r\n");
               #endif
-              const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
-              if (rslt != SPI_FLASH_RESULT_OK)
-              {
-                if (retries-- <= 0)
-                {
-                  ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
-                  RobotInterface::SendMessage(ack);
-                  Reset();
-                }
-              }
-              else
-              {
-                didEsp = true;
-                retries = MAX_RETRIES;
-                bufferUsed -= sizeof(FirmwareBlock);
-                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-                bytesProcessed += sizeof(FirmwareBlock);
-                ack.bytesProcessed = bytesProcessed;
-                ack.result = OKAY;
-                RobotInterface::SendMessage(ack);
-              }
+              ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+              RobotInterface::SendMessage(ack);
+              Reset();
             }
-            else // This is bound for the RTIP or body
+          }
+          else
+          {
+            didWiFi = true;
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
+          }
+        }
+        else // This is bound for the RTIP or body
+        {
+          switch (i2spiGetRtipBootloaderState())
+          {
+            case STATE_NACK:
+            case STATE_ACK:
+            case STATE_IDLE:
             {
-              switch (i2spiGetRtipBootloaderState())
+              if (i2spiBootloaderPushChunk(fwb))
               {
-                case STATE_NACK:
-                case STATE_ACK:
-                case STATE_IDLE:
-                {
-                  if (i2spiBootloaderPushChunk(fwb))
-                  {
-                    #if DEBUG_OTA
-                    os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
-                    #endif
-                    counter = system_get_time() + 20000; // 20ms
-                    phase = OTAT_Wait;
-                  }
-                  // Else try again next time
-                  break;
-                }
-                case STATE_BUSY:
-                case STATE_SYNC:
-                default:
-                {
-                  // Just wait for this to clear
-                  #if DEBUG_OTA > 2
-                  os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
-                  #endif
-                  break;
-                }
+                didRTIP = true;
+                #if DEBUG_OTA
+                os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
+                #endif
+                timer = system_get_time() + 20000; // 20ms
+                phase = OTAT_Wait;
               }
+              // Else try again next time
+              break;
+            }
+            case STATE_BUSY:
+            case STATE_SYNC:
+            default:
+            {
+              // Just wait for this to clear
+              #if DEBUG_OTA > 2
+              os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
+              #endif
+              break;
             }
           }
         }
@@ -499,14 +634,18 @@ namespace UpgradeController {
             ack.bytesProcessed = bytesProcessed;
             ack.result = OKAY;
             RobotInterface::SendMessage(ack);
-            phase = OTAT_Flash_Write; // Finished operation
+            phase = OTAT_Flash_Verify; // Finished operation
+            counter = 0;
+            timer = 0;
             break;
           }
           case STATE_IDLE:
           {
-            if (system_get_time() > counter)
+            if (system_get_time() > timer)
             {
-              os_printf("RTIP TO\r\n");
+              #if DEBUG_OTA
+              os_printf("Timeout\r\n");
+              #endif
               phase = OTAT_Flash_Write;
             }
             break;
@@ -524,13 +663,81 @@ namespace UpgradeController {
       }
       case OTAT_Sig_Check:
       {
-        AnkiWarn( 171, "UpgradeController", 458, "Signature check not implemented", 0);
-        AnkiDebug( 172, "UpgradeController.state", 459, "Apply WiFi", 0)
-        phase   = OTAT_Apply_WiFi;
-        retries = MAX_RETRIES;
-        break;
+        cert_state_t* cert_state = (cert_state_t*) Anki::Cozmo::Face::m_frame;
+        static uint32_t start_tick;
+
+        switch (counter++)
+        {
+        case 0: // Setup
+          {
+            os_printf("START CERT\n\r");
+            start_tick = system_get_time();
+
+            if (cert_state == NULL) {
+              Reset();
+              break ;
+            }
+
+            haveValidCert = true;
+
+            FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+            CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
+
+            uint8_t digest[SHA512_DIGEST_SIZE];
+            sha512_done(firmware_digest, digest);
+            sha512_init(firmware_digest);
+
+            verify_init(*cert_state, RSA_CERT_MONT, CERT_RSA, digest, cert->data, cert->length);
+            
+            break ;
+          }
+        case 10: // Stage 1
+          {           
+            i2spiSwitchMode(I2SPI_PAUSED);
+            verify_stage1(*cert_state);
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
+            break ;
+          }
+        case 20: // Stage 2
+          {
+            i2spiSwitchMode(I2SPI_PAUSED);
+            verify_stage2(*cert_state);
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
+            break ;
+          }
+        case 30: // Stage 3
+          {
+            i2spiSwitchMode(I2SPI_PAUSED);
+            verify_stage3(*cert_state);
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
+            break ;
+          }
+        case 40: // Stage 4
+          {
+            i2spiSwitchMode(I2SPI_PAUSED);
+            if (!verify_stage4(*cert_state)) {
+              os_printf("CERT FAILED\n\r");
+              //Reset();
+            }
+            i2spiSwitchMode(I2SPI_BOOTLOADER);
+
+            os_printf("DONE CERT ALL %d\n\r", system_get_time() - start_tick);
+
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+            counter = 0;
+            phase = OTAT_Flash_Verify;
+            break;
+          }
+        }
+        break ;
       }
-      case OTAT_Reject:
+      case OTAT_Abort:
       {
         i2spiBootloaderCommandDone();
         break;
@@ -538,7 +745,7 @@ namespace UpgradeController {
       case OTAT_Apply_WiFi:
       {
         SpiFlashOpResult rslt = SPI_FLASH_RESULT_OK;
-        if (didEsp)
+        if (didWiFi)
         {
           uint32_t headerUpdate[2];
           headerUpdate[0] = nextImageNumber; // Image number
@@ -559,7 +766,7 @@ namespace UpgradeController {
           AnkiDebug( 172, "UpgradeController.state", 461, "Reboot", 0);
           phase   = OTAT_Reboot;
           //phase   = OTAT_Apply_RTIP;
-          //counter = system_get_time() + 10000000; // 10 second timeout
+          //timer = system_get_time() + 10000000; // 10 second timeout
           retries = MAX_RETRIES;
         }
         break;
@@ -578,10 +785,10 @@ namespace UpgradeController {
           {
             AnkiDebug( 172, "UpgradeController.state", 462, "Wait for RTIP Ack", 0);
             phase = OTAT_Wait_For_RTIP_Ack;
-            counter = system_get_time() + 2000000; // 2 second timeout
+            timer = system_get_time() + 2000000; // 2 second timeout
           }
         }
-        else if (system_get_time() > counter)
+        else if (system_get_time() > timer)
         {
           #if DEBUG_OTA
           os_printf("Apply RTIP timeout, state %x\r\n", i2spiGetRtipBootloaderState());
@@ -599,7 +806,7 @@ namespace UpgradeController {
           case STATE_BUSY:
           {
             // Wait
-            if (system_get_time() > counter)
+            if (system_get_time() > timer)
             {
               ack.result = ERR_RTIP_TIMEOUT;
               RobotInterface::SendMessage(ack);
@@ -639,7 +846,14 @@ namespace UpgradeController {
       }
       case OTAT_Wait_For_Reboot:
       {
-        i2spiBootloaderCommandDone();
+        if (i2spiGetRtipBootloaderState() == STATE_NACK)
+        {
+          phase = OTATR_Set_Evil_A;
+        }
+        else
+        {
+          i2spiBootloaderCommandDone();
+        }
         break;
       }
       case OTATR_Set_Evil_A:
@@ -656,21 +870,21 @@ namespace UpgradeController {
         uint32_t invalidNumber = 0;
         if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
         {
-          counter = system_get_time() + 1000000; // 1s second delay
+          timer = system_get_time() + 1000000; // 1s second delay
           phase = OTATR_Delay;
         }
         break;
       }
       case OTATR_Delay:
       {
-        if (system_get_time() > counter) phase = OTATR_Get_Size;
+        if (system_get_time() > timer) phase = OTATR_Get_Size;
         break;
       }
       case OTATR_Get_Size:
       {
-        if (spi_flash_read(FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE, &counter, 4) == SPI_FLASH_RESULT_OK)
+        if (spi_flash_read(FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32_t*>(&counter), 4) == SPI_FLASH_RESULT_OK)
         {
-          if (counter == 0xFFFFffff || counter < sizeof(FirmwareBlock))
+          if (counter < (int)sizeof(FirmwareBlock))
           {
             os_printf("Invalid recovery firmware for RTIP and Body, size %x reported at %x\r\n", counter, FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE);
             phase = OTAT_Ready;
@@ -716,6 +930,7 @@ namespace UpgradeController {
               os_printf("Write RTIP 0x%08x\t", fwb->blockAddress);
               #endif
               phase = OTATR_Wait;
+              timer = system_get_time() + 200000; // 200ms
             }
             break;
           }
@@ -743,6 +958,21 @@ namespace UpgradeController {
             phase = OTATR_Write; // try again
             break;
           }
+          case STATE_IDLE:
+          {
+            if (system_get_time() > timer)
+            {
+              #if DEBUG_OTA
+              os_printf("Timeout\t");
+              #endif
+              phase = OTATR_Read;
+              // Fall through to ack case
+            }
+            else
+            {
+              break;
+            }
+          }
           case STATE_ACK:
           {
             #if DEBUG_OTA
@@ -762,7 +992,6 @@ namespace UpgradeController {
             break;
           }
           case STATE_BUSY:
-          case STATE_IDLE:
           {
             break;
           }

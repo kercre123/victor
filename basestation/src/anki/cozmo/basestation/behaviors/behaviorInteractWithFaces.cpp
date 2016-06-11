@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -29,8 +30,6 @@
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 #define DEBUG_BEHAVIOR_INTERACT_WITH_FACES 0
-
-#define SKIP_REQUIRE_KNOWN_FACE 1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
@@ -89,12 +88,6 @@ namespace Cozmo {
     SubscribeToTags({
       GameToEngineTag::DenyGameStart
     });
-
-    if( SKIP_REQUIRE_KNOWN_FACE ) {
-      PRINT_NAMED_WARNING("BehaviorInteractWithFaces.DEMO",
-                          "Disabling requirement to see a known face in order to enroll. This needs to be changed for the demo at some point");
-      _readyToEnrollFace = true;
-    }
     
     // - - - -
     // parse smart score
@@ -511,10 +504,6 @@ namespace Cozmo {
         compoundAction->AddAction( sayTextAction );
         //compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
-
-        if( _faceEnrollEnabled ) {
-          _readyToEnrollFace = true;
-        }
       }
 
       faceData->_playedNewFaceAnim = true;
@@ -533,10 +522,6 @@ namespace Cozmo {
         sayTextAction->SetGameEvent(GameEvent::OnSawOldNamedFace);
         compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
-        
-        if( _faceEnrollEnabled ) {
-          _readyToEnrollFace = true;
-        }
       }
     }
 
@@ -634,9 +619,15 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BehaviorInteractWithFaces::ShouldEnrollCurrentFace(const Robot& robot)
   {
-    if( !_readyToEnrollFace ) {
+    if( !_faceEnrollEnabled ) {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
-                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.NotReady", "");
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.NotEnabled", "");
+      return false;
+    }
+    
+    if ( !robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::FaceEnrollmentGame) ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
+                             "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.NotUnlocked", "");
       return false;
     }
 

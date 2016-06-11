@@ -13,7 +13,7 @@ import json
 import errno
 
 ASSET_REPO = 'cozmo-assets'
-ASSET_REPO_SUBDIRS = ['animations']
+ASSET_REPO_SUBDIRS = ['animations', 'animationGroups']
 ASSET_DIR = 'lib/anki/products-cozmo-assets'
 BACKUP_DIR = '/tmp/anim_assets_backup'
 
@@ -110,23 +110,19 @@ def _setupSymlinks(sourceDir, destDir, subdirs=ASSET_REPO_SUBDIRS):
   for subdir in subdirs:
     src = os.path.join(sourceDir, subdir)
     dst = os.path.join(destDir, subdir)
-
     if not os.path.exists(src):
       UtilLog.error("Cannot symlink %s -> %s because %s doesn't exist" % (dst, src, src))
       continue
-
     if os.path.exists(dst) or os.path.islink(dst):
       ret = _makeRoomForSymlink(dst, src)
       if ret is not None:
         continue
-
     # make parent directory(ies) for the symlink
     try:
       os.makedirs(destDir)
     except OSError, e:
       if e.errno != errno.EEXIST:
         raise
-
     print("Symlinking %s -> %s" % (dst, src))
     os.symlink(src, dst)
 
@@ -135,11 +131,6 @@ def checkCozmoAssetDir(options, assetRepo=ASSET_REPO, assetDir=ASSET_DIR):
     options.cozmoAssetPath = os.path.join(options.projectRoot, assetDir)
   if not os.path.exists(options.cozmoAssetPath):
     raise RuntimeError('Asset directory not found [%s]' % options.cozmoAssetPath)
-
-  symlinkSrc = os.path.join(options.externalsPath, assetRepo)
-  if os.path.exists(symlinkSrc):
-    _setupSymlinks(symlinkSrc, options.cozmoAssetPath)
-  _checkSubdirs(options.cozmoAssetPath)
 
 def main(scriptArgs):
   version = '1.0'
@@ -294,6 +285,7 @@ def main(scriptArgs):
         UtilLog.error('EXTERNALS directory not found [%s]' % (options.externalsPath) )
         return False
     externalsPath = options.externalsPath
+    _checkSubdirs(os.path.join(externalsPath, ASSET_REPO))
 
     gypPath = os.path.join(options.projectRoot, 'tools/gyp')
     if (options.gypPath is not None):
@@ -337,10 +329,8 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  # generator.processFolder(['game/src/anki/cozmo', 'game/include',
-  #   'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
-  #   'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
-  generator.processFolder([options.cozmoAssetPath], ['project/gyp/assets.lst'])
+  generator.processFolder([options.cozmoAssetPath, os.path.join(externalsPath, ASSET_REPO)],
+                          ['project/gyp/assets.lst'], exclude_patterns=["*.svn*"])
 
   if options.updateListsOnly:
     # TODO: remove dependency on abspath.
@@ -360,7 +350,6 @@ def main(scriptArgs):
      '--with-clad', options.cladPath]) != 0):
       UtilLog.error("error executing submodule configure")
       return False
-
 
   configurePath = os.path.join(projectRoot, 'project/gyp')
   cozmoEngineConfigurePath = os.path.join(options.cozmoEnginePath, 'project/gyp')

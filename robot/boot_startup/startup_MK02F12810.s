@@ -44,14 +44,8 @@
                 THUMB
 
 
-                IF :DEF: __STACK_SIZE
-Stack_Size      EQU     __STACK_SIZE
-                ELSE
-Stack_Size      EQU     2048
-                ENDIF
-
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
-Stack_Mem       SPACE   Stack_Size
+Stack_Mem       SPACE   0x1700
 __initial_sp
 
 ; Vector Table Mapped to Address 0 at Reset

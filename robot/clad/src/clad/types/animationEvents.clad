@@ -8,6 +8,7 @@ namespace Cozmo {
 
 enum uint_8 AnimEvent {
   TAPPED_BLOCK,
+  DEVICE_AUDIO_TRIGGER,
 
   Count
 }

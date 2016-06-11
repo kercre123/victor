@@ -7,6 +7,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "power.h"
+#include "sideload.h"
 
 #include "portable.h"
 #include "../../k02_hal/hal/hardware.h"
@@ -99,8 +100,8 @@ static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length
   return false;
 }
 
-static bool SetLight(uint8_t colors) {
-  return SendBodyCommand(COMMAND_SET_LED, &colors, sizeof(colors));
+static inline bool SetLight(uint8_t light) {
+  return SendBodyCommand(COMMAND_SET_LED, &light, sizeof(light));
 }
 
 static bool CheckBodySig(void) {
@@ -145,14 +146,6 @@ void ClearEvilWord(void) {
   SendCommand();
 }
 
-static inline void SetChannelBlink(int channel) {
-  // This is the color for the blink pattern
-  static int color = 0;
-  color = (color + 2) % 7;
-
-  SetLight((channel << 3) | color);
-}
-
 static inline bool FlashBlock() {
   static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
   
@@ -170,11 +163,11 @@ static inline bool FlashBlock() {
 
   // Upper 2gB is body space
   if (flash.packet.blockAddress >= 0x80000000) {
-    SetChannelBlink(2);
+    SetLight(2);
     flash.packet.blockAddress &= ~0x80000000;
     return SendBodyCommand(COMMAND_FLASH, &flash.packet, sizeof(flash.packet));
   } else {
-    SetChannelBlink(3);
+    SetLight(3);
   }
 
   // We will not override the boot loader
@@ -192,6 +185,33 @@ static inline bool FlashBlock() {
   }
 
   return true;
+}
+
+static inline bool LoadMemory() {
+  commandWord address = WaitForWord();
+  commandWord size = WaitForWord();
+
+  if (address + size * sizeof(commandWord) > SIDELOAD_SPACE_LENGTH) {
+    return false;
+  }
+  
+  uint16_t* target = (uint16_t*)(address + SIDELOAD_SPACE_START);
+
+  while (size-- > 0) {
+    *(target++) = WaitForWord();
+  }
+
+  return true;
+}
+
+static inline bool ExecuteSideLoad() {
+  commandWord call = WaitForWord();
+
+  if (call * sizeof(sideload_call) > SIDELOAD_SPACE_LENGTH) {
+    return false;
+  }
+  
+  return SIDELOAD_DATABASE[call]();
 }
 
 static void SyncToBody(void) {
@@ -288,13 +308,18 @@ void EnterRecovery(bool force) {
         SPI0_PUSHR_SLAVE = (CheckBootReady() && SendBodyCommand(COMMAND_BOOT_READY)) ? STATE_IDLE : STATE_NACK;
         break ;
         
-      case COMMAND_SET_LED:
-        SPI0_PUSHR_SLAVE = SetLight(WaitForWord()) ? STATE_IDLE : STATE_NACK;
-        break ;
-
       case COMMAND_FLASH:
         SPI0_PUSHR_SLAVE = FlashBlock() ? STATE_IDLE : STATE_NACK;
         break ;
+
+      case COMMAND_LOAD:
+        SPI0_PUSHR_SLAVE = LoadMemory() ? STATE_IDLE : STATE_NACK;
+        break ;
+      
+      case COMMAND_SIDE_EXEC:
+        SPI0_PUSHR_SLAVE = ExecuteSideLoad() ? STATE_IDLE : STATE_NACK;
+        break ;
+
     }
   }
 }

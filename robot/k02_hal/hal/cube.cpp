@@ -61,7 +61,6 @@ namespace Anki
           RobotInterface::SendMessage(m);
         }
 
-        
         // Compute upAxis
         // Send ObjectMoved message if upAxis changes
         static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};

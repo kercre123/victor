@@ -280,8 +280,15 @@ namespace Anki {
             }
             case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
             {
+              using namespace Anki::Cozmo::Face;
+
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              Face::FaceDisplayNumber(msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
+              
+              u64 frame[COLS];
+
+              Draw::Clear(frame);
+              Draw::Number(frame, msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
+              Draw::Flip(frame);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_testState:

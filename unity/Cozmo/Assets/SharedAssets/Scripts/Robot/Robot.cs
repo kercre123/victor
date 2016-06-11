@@ -154,7 +154,7 @@ public class Robot : IRobot {
 
   public GameStatusFlag GameStatus { get; private set; }
 
-  public float BatteryPercent { get; private set; }
+  public float BatteryVoltage { get; private set; }
 
   public List<ObservedObject> VisibleObjects { get; private set; }
 
@@ -410,11 +410,12 @@ public class Robot : IRobot {
         return;
       }
     }
-    SetHeadAngle(0.0f);
-    SetLiftHeight(0.0f);
-    if (onComplete != null) {
-      onComplete();
-    }
+
+    ResetLiftAndHead((s) => {
+      if (onComplete != null) {
+        onComplete();
+      }
+    });
   }
 
   public void ClearData(bool initializing = false) {
@@ -442,7 +443,7 @@ public class Robot : IRobot {
     LeftWheelSpeed = float.MaxValue;
     RightWheelSpeed = float.MaxValue;
     LiftHeight = float.MaxValue;
-    BatteryPercent = float.MaxValue;
+    BatteryVoltage = float.MaxValue;
     _LocalBusyTimer = 0f;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -468,7 +469,7 @@ public class Robot : IRobot {
     LiftHeight = message.liftHeight_mm;
     RobotStatus = (RobotStatusFlag)message.status;
     GameStatus = (GameStatusFlag)message.gameStatus;
-    BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
+    BatteryVoltage = message.batteryVoltage;
     CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
@@ -1177,6 +1178,27 @@ public class Robot : IRobot {
       ),
       callback,
       queueActionPosition);
+  }
+
+  public void ResetLiftAndHead(RobotCallback callback = null) {
+    bool headDone = false;
+    bool liftDone = false;
+
+    SetLiftHeight(0.0f, (s) => {
+      liftDone = true;
+      CheckLiftHeadCallback(headDone, liftDone, s, callback);
+    }, QueueActionPosition.IN_PARALLEL);
+
+    SetHeadAngle(0.0f, (s) => {
+      headDone = true;
+      CheckLiftHeadCallback(headDone, liftDone, s, callback);
+    }, QueueActionPosition.IN_PARALLEL);
+  }
+
+  private void CheckLiftHeadCallback(bool headDone, bool liftDone, bool success, RobotCallback callback) {
+    if (headDone && liftDone) {
+      callback(success);
+    }
   }
 
   // Height factor should be between 0.0f and 1.0f

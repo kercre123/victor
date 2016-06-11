@@ -414,10 +414,20 @@ message VerifyDebugConsoleVarMessage {
   bool success
 }
 
+structure TimingInfo
+{
+  float_32  avgTime_ms,
+  float_32  minTime_ms,
+  float_32  maxTime_ms
+}
+
 message DebugLatencyMessage {
-  float_32 averageLatency,
-  float_32 minLatency,
-  float_32 maxLatency
+  TimingInfo wifiLatency,
+  TimingInfo extSendQueueTime,
+  TimingInfo sendQueueTime,
+  TimingInfo recvQueueTime,
+  TimingInfo unityEngineLatency,
+  TimingInfo sdkEngineLatency
 }
 
 ///////////////////////////////////////////////////////////////////////////////

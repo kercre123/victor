@@ -24,10 +24,8 @@ enum TRANSMIT_MODE {
 static TRANSMIT_MODE uart_mode = TRANSMIT_NONE;
 static const int UART_TIMEOUT = 0x2000 << 8;
 
-void setLight(uint8_t clr) {
-  int channel = (clr >> 3) & 3;
-  Lights::set(channel, clr & 7, 0x80);
-}
+static int light_channel = 0;
+static int light_intensity = 0;
 
 void UARTInit(void) {
   // Power on the peripheral
@@ -118,9 +116,7 @@ static void readUart(void* p, int length, bool timeout = true) {
         if (timeout) {
           NVIC_SystemReset();
         } else {
-          static uint8_t color = 0x10;
-          color = ((color + 1) & 7) | 0x10;
-          setLight(color);
+          Lights::setChannel(0);
         }
         
         waitTime = GetCounter() + UART_TIMEOUT;
@@ -284,7 +280,7 @@ static inline bool FlashBlock() {
 }
 
 
-void EnterRecovery(void) {
+extern "C" void EnterRecovery(void) {
   UARTInit();
   
   // Disconnect input so we don't dump current into the charge pin
@@ -321,7 +317,7 @@ void EnterRecovery(void) {
         break ;
       
       case COMMAND_SET_LED:
-        setLight(readByte());
+        Lights::setChannel(readByte());
         state = STATE_ACK;
         break ;
       
@@ -331,8 +327,7 @@ void EnterRecovery(void) {
       
       case COMMAND_IDLE:
         // This is a no op and we don't want to send a reply (so it doesn't stall out the k02)
-        static int color = 0x0E;
-        setLight(color ^= 0x07);
+        Lights::setChannel(1);
         continue ;
               
       default:

@@ -88,7 +88,7 @@
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>1</SelectedForBatchBuild>
+          <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
         </TargetCommonOption>
         <CommonProperty>
@@ -298,7 +298,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x1fffe000</StartAddress>
-                <Size>0x3ff0</Size>
+                <Size>0x2000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -336,7 +336,7 @@
 --gnu</MiscControls>
               <Define>COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>k02_hal/lib;include;k02_hal;../crypto</IncludePath>
+              <IncludePath>k02_hal/lib;include;k02_hal;../crypto;./sideload</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -370,7 +370,7 @@
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc>--remove 
---predefine="-D__stack_size__=0x400" 
+--predefine="-D__stack_size__=0x1800" 
 --predefine="-D__heap_size__=0x400" 
 </Misc>
             <LinkerInputFile></LinkerInputFile>
