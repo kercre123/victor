@@ -311,6 +311,9 @@ public class RobotEngineManager : MonoBehaviour {
     // end Block pool and connection to objects
 
     // Vision messages 
+    case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
+      // TODO remove this message from engine
+      break;
     case G2U.MessageEngineToGame.Tag.RobotProcessedImage:
       ReceiveSpecificMessage(message.RobotProcessedImage);
       break;
