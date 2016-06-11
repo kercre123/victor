@@ -17,6 +17,9 @@ namespace FaceEnrollment {
     [SerializeField]
     private GameObject _FaceEnrollmentDiagramPrefab;
 
+    [SerializeField]
+    private Anki.UI.AnkiTextLabel _ShelfWidgetTextPrefab;
+
     private bool _AttemptedEnrollFace = false;
 
     // used by press demo to skip saving to actual robot.
@@ -56,9 +59,20 @@ namespace FaceEnrollment {
 
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
+      _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
+      newView.ShowShelf();
+      newView.ShelfWidget.AddContent(_ShelfWidgetTextPrefab, HandleShelfContentTweenIn);
+    }
+
+    private void CleanupShowFaceListSlide() {
+      _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
+      _FaceListSlideInstance.OnEditNameRequested -= EditExisitingName;
+      SharedMinigameView.HideShelf();
+    }
+
+    private void HandleShelfContentTweenIn() {
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
-      _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
     }
 
     private void EditExisitingName(int faceID, string exisitingName) {
@@ -66,10 +80,14 @@ namespace FaceEnrollment {
       _EnterNameSlideInstance.SetNameInputField(exisitingName);
       _FaceIDToEdit = faceID;
       _FaceOldNameEdit = exisitingName;
+
+      CleanupShowFaceListSlide();
     }
 
     private void EnterNameForNewFace() {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+
+      CleanupShowFaceListSlide();
     }
 
     private void NewNameInputSlideInDone() {

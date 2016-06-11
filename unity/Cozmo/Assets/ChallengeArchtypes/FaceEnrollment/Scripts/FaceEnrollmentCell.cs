@@ -9,9 +9,13 @@ public class FaceEnrollmentCell : MonoBehaviour {
   private string _FaceName;
   private int _FaceID;
 
+  [SerializeField]
+  Anki.UI.AnkiTextLabel _NameLabel;
+
   public void Initialize(int faceID, string faceName) {
     _FaceName = faceName;
     _FaceID = faceID;
+    _NameLabel.text = _FaceName;
   }
 
   private void HandleEditNameClicked() {
