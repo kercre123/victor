@@ -131,6 +131,7 @@ namespace FaceEnrollment {
       }
 
       ShowFaceListSlide(SharedMinigameView);
+      SharedMinigameView.HideSpinnerWidget();
     }
 
     protected override void CleanUpOnDestroy() {

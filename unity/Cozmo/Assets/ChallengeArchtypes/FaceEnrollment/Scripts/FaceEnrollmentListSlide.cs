@@ -26,7 +26,7 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
     }
     _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<Cozmo.UI.CozmoButton>();
     _EnrollNewFaceInstance.transform.SetParent(transform, false);
-    _EnrollNewFaceInstance.onClick.AddListener(HandleNewEnrollmentRequested);
+    _EnrollNewFaceInstance.Initialize(HandleNewEnrollmentRequested, "enroll_new_face", "face_enrollment_list_slide");
   }
 
   private void HandleEditNameRequested(int faceID, string faceName) {
