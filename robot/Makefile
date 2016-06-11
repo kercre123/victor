@@ -8,6 +8,7 @@ ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/ syscon/hal
 
+UV4=C:/Keil_v5/UV4/UV4.exe
 STAGING_DIR=staging
 BINARY_DIR=binaries
 RELEASE_DIR=releases
@@ -53,6 +54,10 @@ nrf: export_key $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
+keil:
+	$(UV4) -c ./cozmo.uvmpw
+	$(UV4) -b ./cozmo.uvmpw
+
 staging_dir:
 	mkdir -p ./staging
 
@@ -94,6 +99,7 @@ stage_factory_upgrade:
 	cp -v staging/factory.safe    binaries/factory.safe
 
 release: tests stage_binaries
+	if [ -a $(UV4) ]; then make keil; fi;
 	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
 	python3 ./tools/sign.py -c --sign $(AES_KEY) $(DEVELOPMENT_KEY) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 

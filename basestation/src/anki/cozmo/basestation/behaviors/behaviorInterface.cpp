@@ -207,6 +207,12 @@ void IBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 
 Result IBehavior::Init()
 {
+  if(_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) > 0) {
+    PRINT_NAMED_WARNING("IBehavior.Init.ActionsInQueue",
+                        "Initializing %s: %zu actions already in queue",
+                        GetName().c_str(), _robot.GetActionList().GetQueueLength(0));
+  }
+  
   _isRunning = true;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = InitInternal(_robot);

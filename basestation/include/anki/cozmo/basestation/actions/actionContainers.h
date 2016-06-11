@@ -122,9 +122,9 @@ namespace Anki {
       
       bool       IsEmpty() const;
       
-      size_t     GetQueueLength(SlotHandle atSlot);
+      size_t     GetQueueLength(SlotHandle atSlot) const;
       
-      size_t     GetNumQueues();
+      size_t     GetNumQueues() const;
 
       // Only cancels with the specified type. All slots are searched.
       // Returns true if any actions were cancelled.
@@ -159,12 +159,17 @@ namespace Anki {
     }; // class ActionList
     
     // The current running action should be considered part of the queue
-    inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
+    inline size_t ActionList::GetQueueLength(SlotHandle atSlot) const
     {
-      return _queues[atSlot].Length() + (nullptr == _queues[atSlot].GetCurrentRunningAction() ? 0 : 1);
+      size_t length = 0;
+      auto iter = _queues.find(atSlot);
+      if(iter != _queues.end()) {
+        length = iter->second.Length() + (nullptr == iter->second.GetCurrentRunningAction() ? 0 : 1);
+      }
+      return length;
     }
     
-    inline size_t ActionList::GetNumQueues()
+    inline size_t ActionList::GetNumQueues() const
     {
       return _queues.size();
     }
