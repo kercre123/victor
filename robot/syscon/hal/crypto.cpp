@@ -15,7 +15,7 @@ extern "C" {
 #include "crypto.h"
 #include "diffie.h"
 #include "random.h"
-//#include "storage.h"
+#include "storage.h"
 
 static volatile int fifoHead;
 static volatile int fifoTail;
@@ -34,20 +34,12 @@ void Crypto::init() {
   
   uint8_t key[AES_KEY_LENGTH];
   gen_random(key, AES_KEY_LENGTH);
-  //Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
+  Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
 }
 
 // Top 16 bytes of application space
 const void* Crypto::aes_key() {
-  static const uint8_t AES_KEY[] = {
-    0xFF, 0xFE, 0xFD, 0xFC,
-    0xFB, 0xFA, 0xF9, 0xF8,
-    0xF7, 0xF6, 0xF5, 0xF4,
-    0xF3, 0xF2, 0xF1, 0xF0
-  };
-  
-  return AES_KEY;
-  //return Storage::get_lazy(STORAGE_AES_KEY);
+  return Storage::get_lazy(STORAGE_AES_KEY);
 }
 
 void Crypto::execute(const CryptoTask* task) {
@@ -77,10 +69,21 @@ void Crypto::manage(void) {
       aes_ecb((ecb_data_t*) task->state);
       break ;
     case CRYPTO_AES_DECODE:
-      length = aes_decode(aes_key(), (uint8_t*) task->state, task->length);
-      break ;
+      {
+        uint8_t* data = (uint8_t*) task->state;
+
+        aes_cfb_decode(aes_key(), data, data + AES_KEY_LENGTH, data, task->length);
+        length = task->length - AES_KEY_LENGTH;
+        break ;
+      }
     case CRYPTO_AES_ENCODE:
-      length = aes_encode(aes_key(), (uint8_t*) task->state, task->length);
+      {
+        uint8_t* data = (uint8_t*) task->state;
+        
+        aes_fix_block(data, task->length);
+        aes_cfb_encode(aes_key(), data, data, data + AES_KEY_LENGTH, task->length);
+        length = task->length + AES_KEY_LENGTH;
+      }
       break ;
     case CRYPTO_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);

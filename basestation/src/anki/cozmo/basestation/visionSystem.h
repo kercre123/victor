@@ -289,6 +289,8 @@ namespace Cozmo {
     Result           EraseFace(Vision::FaceID_t faceID);
     void             EraseAllFaces();
     
+    Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,
                    const s32 integerCountsIncrement,

@@ -36,6 +36,18 @@ typedef struct {
 } FirmwareBlock;
 
 typedef struct {
+  uint32_t   magicValue;
+  uint32_t   fileVersion;
+  uint8_t    aes_iv[16];
+  uint32_t   timestamp;
+  uint8_t    c_time[32];
+  uint8_t    git_sha[20];
+
+  // HASH OID
+  // MODULUS FOR CERT
+} FirmwareHeaderBlock;
+
+typedef struct {
   uint32_t   length;
   uint8_t    data[2044];
 } CertificateData;
@@ -48,7 +60,9 @@ enum RECOVERY_COMMAND {
   COMMAND_BOOT_READY  = 0x04,
   COMMAND_PAUSE       = 0x05,
   COMMAND_RESUME      = 0x06,
-  COMMAND_IDLE        = 0x07
+  COMMAND_IDLE        = 0x07,
+  COMMAND_LOAD        = 0x08,
+  COMMAND_SIDE_EXEC   = 0x09
 };
 
 enum RECOVERY_STATE {

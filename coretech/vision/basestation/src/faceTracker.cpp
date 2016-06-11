@@ -91,6 +91,11 @@ namespace Vision {
     return _pImpl->EraseAllFaces();
   }
   
+  Result FaceTracker::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  {
+    return _pImpl->RenameFace(faceID, oldName, newName);
+  }
+  
   Result FaceTracker::SaveAlbum(const std::string& albumName)
   {
     return _pImpl->SaveAlbum(albumName);

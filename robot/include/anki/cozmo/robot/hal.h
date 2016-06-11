@@ -163,7 +163,8 @@ namespace Anki
       // Parameters / Constants
       //
       const f32 MOTOR_MAX_POWER = 1.0f;
-
+      extern bool UnlockDevices;
+      
       //
       // Simulator-only functions - not needed by real hardware
       // TBD:  If these aren't hardware features, can they go elsewhere?

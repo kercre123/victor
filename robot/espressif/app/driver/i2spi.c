@@ -433,6 +433,7 @@ void dmaisr(void* arg) {
         if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_BL_RX, eofDesAddr) == false)
         {
           os_put_char('!'); os_put_char('I'); os_put_char('F');
+          prepSdioQueue(asDesc(eofDesAddr), 0);
         }
         break;
       }
@@ -441,6 +442,7 @@ void dmaisr(void* arg) {
         if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, eofDesAddr) == false)
         {
           os_put_char('!'); os_put_char('I'); os_put_char('R');
+          prepSdioQueue(asDesc(eofDesAddr), 0);
         }
         break;
       }

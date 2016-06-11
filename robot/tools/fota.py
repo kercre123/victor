@@ -4,18 +4,19 @@ Firmware over the air upgrade controller for loading new firmware images onto ro
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, time, hashlib, struct
+import sys, os, time, hashlib, struct, argparse
 
 DEFAULT_FIRMWARE_IMAGE = os.path.join("releases", "cozmo.safe")
 
-USAGE = """
-Upgrade firmware:
-    {exe} [<ALTERNATE IMAGE>]
-The default firmware image is "{default}"
-
-This tool must be run from the robot folder.
-
-""".format(exe=sys.argv[0], default=DEFAULT_FIRMWARE_IMAGE)
+parser = argparse.ArgumentParser(description="Upgrade firmware")
+parser.add_argument("-w", "--wait", type=float,
+                    nargs='?', const="2.0",
+                    help="increase delay between blocks")
+parser.add_argument("image", type=str,
+                    nargs='?',
+                    default=DEFAULT_FIRMWARE_IMAGE,
+                    help="image to load on robot")
+argv = parser.parse_args()
 
 sys.path.insert(0, os.path.join("tools"))
 import robotInterface
@@ -30,6 +31,7 @@ class OTAStreamer:
     def Write(self):
         "Sends a write to the robot"
         while (self.bytesSent - self.bytesProcessed) < (self.ROBOT_BUFFER_SIZE - self.MESSAGE_PAYLOAD_SIZE):
+            robotInterface.Step()
             payload = self.fw.read(self.MESSAGE_PAYLOAD_SIZE)
             eof = len(payload) < self.MESSAGE_PAYLOAD_SIZE
             if eof:
@@ -47,6 +49,7 @@ class OTAStreamer:
                 sys.stdout.write("Finished sending firmware image to robot")
                 sys.stdout.write(os.linesep)
                 break
+            if argv.wait: time.sleep(argv.wait)
         self.writing = False
 
     def OnConnect(self, connectionInfo):
@@ -86,20 +89,20 @@ class OTAStreamer:
             if self.writing:
                 self.Write()
             else:
-                time.sleep(0.1)
+                robotInterface.Step()
 
 # Script entry point
 if __name__ == '__main__':
     fwi = DEFAULT_FIRMWARE_IMAGE
-    if len(sys.argv) > 1:
-        if os.path.isfile(sys.argv[1]):
-            fwi = sys.argv[1]
-        elif sys.argv[1] == 'factory':
-            fwi = os.path.join("releases", "cozmo_factory_install.safe")
-        else:
-            sys.exit("No such file as {1}".format(*sys.argv))
     
-    robotInterface.Init(True)
+    if os.path.isfile(argv.image):
+        fwi = argv.image
+    elif argv.image == 'factory':
+        fwi = os.path.join("releases", "cozmo_factory_install.safe")
+    else:
+        sys.exit("No such file as {0}".format(argv.image))
+    
+    robotInterface.Init(True, forkTransportThread = False)
     up = OTAStreamer(fwi)
     robotInterface.Connect(syncTime = None)
     up.main()

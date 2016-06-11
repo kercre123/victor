@@ -13,21 +13,23 @@ import subprocess
 
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_PSS
+from Crypto.Cipher import AES
 from Crypto import Random
 
 parser = ArgumentParser()
 parser.add_argument("output", type=str,
                     help="target location for file")
+
 parser.add_argument("-r", "--rtip", type=str,
                     help="K02 ELF Image")
 parser.add_argument("-b", "--body", type=str,
                     help="NRF ELF Image")
 parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
+
 parser.add_argument('--factory_restore', type=str,
                     help="Factory restore firmware for WiFi")
-parser.add_argument("-s", "--sign", type=str,
+parser.add_argument("-s", "--sign", nargs=2, type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", action="store_true",
                     help="Add version information comment block")
@@ -37,6 +39,7 @@ args = parser.parse_args()
 
 FILE_TYPE_VERSION   = 0x00000001
 
+AES_BLOCK_LENGTH    = 16
 BLOCK_LENGTH        = 0x800
 BODY_BLOCK          = 0x80000000
 WIFI_BLOCK          = 0x40000000
@@ -49,13 +52,28 @@ class DigestFile:
         self.digestType = digestType
         self.fo = open(fn, mode)
         self.hash = self.digestType.new()
+        self.iv = Random.get_random_bytes(AES_BLOCK_LENGTH)
 
-    def write(self, data, block):
+    def cfb(self, data, key):
+        cipher = AES.AESCipher(key, AES.MODE_ECB)
+        result = b''
+
+        for _, block in chunk(data, AES_BLOCK_LENGTH):
+            self.iv = bytes([block[i] ^ b for i, b in enumerate(cipher.encrypt(self.iv))])
+            result += self.iv
+
+        return result
+
+    def write(self, data, block, aes_key = None):
         assert len(data) <= BLOCK_LENGTH
 
         data = data + b"\xFF" * (BLOCK_LENGTH - len(data))
+
+        if aes_key:
+            data = self.cfb(data, aes_key)
+
         data += pack("<II", block, crc32(data))
-        
+
         self.hash.update(data)
         self.fo.write(data)
 
@@ -71,7 +89,6 @@ class DigestFile:
 
         # digest used for signing
         digest =  self.hash.digest()
-
         salt = Random.get_random_bytes(salt_length)
 
         # Generate our PSS hash
@@ -120,15 +137,7 @@ def MGF1(a, b, digestType = SHA512):
         counter += 1
 
 def chunk(i, size):
-    offsets = range(0, len(i), size)
-
-    # This shuffles the order of flash blocks to make it harder to do sha attacks on digests
-    if len(offsets) >= 3:
-        extra = list(offsets[1:-1])
-        random.shuffle(extra)
-        offsets = [offsets[-1], offsets[0]] + extra
-
-    for x in offsets:
+    for x in range(0, len(i), size):
         yield x, i[x:x+size]
 
 def get_image(fn):
@@ -148,13 +157,14 @@ def git_sha():
     out = execute('git', 'rev-parse', 'HEAD')
     return int(out, 16).to_bytes(20, byteorder='little')
 
-def make_header(key=None, digestType=None):
+def make_header(key=None, iv=None, digestType=None):
     timestamp = int(time.time())
     ctime = bytearray(time.ctime(), 'utf-8')
 
-    header = pack("<4sII32s20s",
+    header = pack("<4sI%isI32s20s" % AES_BLOCK_LENGTH,
         b'CZM0',
-        FILE_TYPE_VERSION, 
+        FILE_TYPE_VERSION,
+        iv if iv else (b"\x00" * 16),
         timestamp,
         ctime,
         git_sha())
@@ -204,24 +214,27 @@ def get_version_comment_block():
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    # Load our RSA key
-    if not args.sign == None:
-        with open (args.sign, "r") as fo:
-            key = RSA.importKey(fo.read())
-            print ("Signing data with a %i-bit certificate" % key.size())
-    else:
-        key = None
-
     # start building our firmware image
     fo = DigestFile(args.output, "wb", SHA512)
     
     if args.comment:
         fo.write(get_version_comment_block(), COMMENT_BLOCK)
 
-    if key:
+    # Load our RSA key
+    if not args.sign == None:
+        aes_key, cert_file = args.sign
+
+        with open (cert_file, "r") as cert_fo:
+            cert = RSA.importKey(cert_fo.read())
+            print ("Signing data with a %i-bit certificate" % cert.size())
+
+        aes_key = int(aes_key,16).to_bytes(AES_BLOCK_LENGTH, byteorder='little')
+    
         print ("Writting header information")
-        fo.write(make_header(key, SHA512), HEADER_INFORMATION)
-        fo.writeCert(key)
+        fo.write(make_header(cert, fo.iv, SHA512), HEADER_INFORMATION)
+        fo.writeCert(cert)
+    else:
+        cert, aes_key = None, None
 
     print ("Writting rom block")
     # this is our rom information
@@ -239,7 +252,7 @@ if __name__ == '__main__':
                 base_addr |= BODY_BLOCK
 
         for block, data in chunk(rom_data, BLOCK_LENGTH):
-            fo.write(data, block+base_addr)
+            fo.write(data, block+base_addr, aes_key)
     
     if args.factory_restore is not None:
         wifi,rtip = args.factory_restore.split(',')
@@ -250,8 +263,7 @@ if __name__ == '__main__':
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block + 0xFF400000 + 0x45000)
 
-    fo.writeCert(key)
-    
+    fo.writeCert(cert)    
     fo.close()
 
     if args.prepend_size_word:

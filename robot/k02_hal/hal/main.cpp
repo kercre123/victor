@@ -35,6 +35,8 @@ namespace Anki
   {
     namespace HAL
     {
+      bool UnlockDevices = false;
+
       // Import init functions from all HAL components
       void CameraInit(void);
       void CameraStart(void);

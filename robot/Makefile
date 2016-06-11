@@ -14,9 +14,12 @@ RELEASE_DIR=releases
 
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
-DEVELOPMENT_KEY=tools/development.pem
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app
+DIFFIE_KEY=certs/diffie.pem
+DEVELOPMENT_KEY=certs/development.pem
+AES_KEY=FA67CE138A376CD21A26118615326AA5
+
+.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app export_key tests
 
 all: k02 esp sim
 
@@ -44,7 +47,7 @@ app: $(ANKI_LOG_TABLE_JSON)
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
 
-nrf: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
+nrf: export_key $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
@@ -54,10 +57,21 @@ staging_dir:
 	mkdir -p ./staging
 
 export_key:
-	mkdir -p generated
-	python3 ./tools/export_public.py -k $(DEVELOPMENT_KEY) ./generated/publickey.h
-	g++ -o generated/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
-	./generated/calcMont >> ./generated/publickey.h
+	mkdir -p generated build
+	python3 ./tools/export_public.py -d $(DIFFIE_KEY) -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickeys.h
+	g++ -o build/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
+	build/calcMont >> ./generated/publickeys.h
+
+crypto_files = ../crypto/bignum.cpp
+sign_test_files = ./robot-test/signtest.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp 
+diffie_test_files = ./robot-test/diffietest.cpp ../crypto/sha1.cpp
+
+tests: export_key $(sign_test_files)
+	g++ -o ./build/diffietest $(diffie_test_files) $(crypto_files) -I ../crypto -I ./generated
+	build/diffietest
+
+	g++ -o ./build/signtest $(sign_test_files) $(crypto_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
+	build/signtest ./releases/cozmo.safe ./releases/cozmo.signed.safe
 
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
@@ -79,9 +93,9 @@ stage_factory_upgrade:
 	cp -v staging/esp.factory.bin binaries/esp.factory.bin
 	cp -v staging/factory.safe    binaries/factory.safe
 
-release: stage_binaries
+release: tests stage_binaries
 	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	#python3 ./tools/sign.py -c --sign ./tools/development.pem --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
+	python3 ./tools/sign.py -c --sign $(AES_KEY) $(DEVELOPMENT_KEY) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
@@ -109,6 +123,13 @@ esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
   
 onBuildServer: esp
+
+bryon_test: export_key tests esp release
+	./tools/connectToRobot.bash 0489
+	python3 ./tools/fota.py
+	sleep 3
+	./tools/connectToRobot.bash 0489
+	python3 ./tools/fota.py ./releases/cozmo.signed.safe -w 0.75
 
 clean:
 	make -C clad clean

@@ -1373,6 +1373,11 @@ namespace Cozmo {
     _faceTracker->EraseAllFaces();
   }
   
+  Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  {
+    return _faceTracker->RenameFace(faceID, oldName, newName);
+  }
+  
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {

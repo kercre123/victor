@@ -8,7 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
-//#include "storage.h"
+#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
@@ -18,6 +18,7 @@ extern "C" {
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
+#include "random.h"
 #include "crypto.h"
 #include "bluetooth.h"
 #include "dtm.h"
@@ -80,10 +81,10 @@ static void setupOperatingMode() {
   // Tear down existing mode
   switch (active_operating_mode) {
     case BODY_BLUETOOTH_OPERATING_MODE:      
-//      Bluetooth::shutdown();
+      Bluetooth::shutdown();
       break ;
     
-    case BODY_WIFI_OPERATING_MODE:
+    case BODY_ACCESSORY_OPERATING_MODE:
       Motors::stop();
       Radio::shutdown();
       break ;
@@ -100,18 +101,21 @@ static void setupOperatingMode() {
   // Setup new mode
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
+      Battery::powerOff();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       break ;
     
     case BODY_BLUETOOTH_OPERATING_MODE:
+      Battery::powerOn();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
 
-//      Bluetooth::advertise();
+      Bluetooth::advertise();
       break ;
     
-    case BODY_WIFI_OPERATING_MODE:
+    case BODY_ACCESSORY_OPERATING_MODE:
+      Battery::powerOn();
       Backpack::lightMode(TIMER_LEDS);
 
       Radio::advertise();
@@ -137,7 +141,7 @@ int main(void)
   using namespace Anki::Cozmo::RobotInterface;
 
   Bootloader::init();
-  //Storage::init();
+  Storage::init();
 
   // Initialize our scheduler
   RTOS::init();
@@ -164,7 +168,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(BODY_WIFI_OPERATING_MODE);
+  enterOperatingMode(BODY_IDLE_OPERATING_MODE);
   setupOperatingMode();
 
   Timer::start();
