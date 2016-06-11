@@ -410,11 +410,12 @@ public class Robot : IRobot {
         return;
       }
     }
-    SetHeadAngle(0.0f);
-    SetLiftHeight(0.0f);
-    if (onComplete != null) {
-      onComplete();
-    }
+
+    ResetLiftAndHead((s) => {
+      if (onComplete != null) {
+        onComplete();
+      }
+    });
   }
 
   public void ClearData(bool initializing = false) {
@@ -1172,6 +1173,27 @@ public class Robot : IRobot {
       ), 
       callback, 
       queueActionPosition);
+  }
+
+  public void ResetLiftAndHead(RobotCallback callback = null) {
+    bool headDone = false;
+    bool liftDone = false;
+
+    SetLiftHeight(0.0f, (s) => {
+      liftDone = true;
+      CheckLiftHeadCallback(headDone, liftDone, s, callback);
+    }, QueueActionPosition.IN_PARALLEL);
+
+    SetHeadAngle(0.0f, (s) => {
+      headDone = true;
+      CheckLiftHeadCallback(headDone, liftDone, s, callback);
+    }, QueueActionPosition.IN_PARALLEL);
+  }
+
+  private void CheckLiftHeadCallback(bool headDone, bool liftDone, bool success, RobotCallback callback) {
+    if (headDone && liftDone) {
+      callback(success);
+    }
   }
 
   // Height factor should be between 0.0f and 1.0f
