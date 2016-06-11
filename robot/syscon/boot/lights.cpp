@@ -85,7 +85,7 @@ void Lights::stop(void) {
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
 }
 
-static int channel = 3;
+static int channel = 5;
 
 void Lights::setChannel(int ch) {
   channel = ch;
