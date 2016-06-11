@@ -60,6 +60,7 @@ namespace Vision {
     FaceID_t EraseFace(const std::string& name);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
+    Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName);
     
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
