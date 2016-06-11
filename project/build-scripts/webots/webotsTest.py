@@ -506,6 +506,8 @@ def runAll(options):
         runWebotsThread.start()
         runWebotsThread.join(120) # with timeout
         
+        tar.add(logFileName, arcname=os.path.basename(logFileName))
+
         # Check if timeout exceeded
         if runWebotsThread.isAlive():
           UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
@@ -514,7 +516,6 @@ def runAll(options):
           print 'allTestsPassed ' + str(allTestsPassed)
           continue
 
-        tar.add(logFileName, arcname=os.path.basename(logFileName))
 
         # Check log for crashes, errors, and warnings
 
