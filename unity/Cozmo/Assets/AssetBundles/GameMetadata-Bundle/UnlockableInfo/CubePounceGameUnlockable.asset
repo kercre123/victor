@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: CubePounceGame
-    _EnumValue: 5
+    _EnumValue: 6
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -23,3 +23,5 @@ MonoBehaviour:
   TitleKey: unlockable.Default.Description
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
+  CoreUpgradeTintColorName: upgradePurple
+  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}

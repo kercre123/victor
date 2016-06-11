@@ -17,4 +17,4 @@ MonoBehaviour:
     _ItemIcon: {fileID: 21300000, guid: 953905e18ad644e89ac2a87904ff3809, type: 3}
   - _ItemId: treat
     _LocKey: item.treat
-    _ItemIcon: {fileID: 21300000, guid: 02aafc8bfaf39486f85f035e1fc329d5, type: 3}
+    _ItemIcon: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}

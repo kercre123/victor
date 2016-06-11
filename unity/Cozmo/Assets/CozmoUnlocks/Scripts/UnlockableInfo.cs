@@ -34,6 +34,11 @@ public class UnlockableInfo : ScriptableObject {
   public string RequestTrickCostItemId;
   public int RequestTrickCostAmountNeeded;
 
+  [Cozmo.UI.CoreUpgradeTintName]
+  public string CoreUpgradeTintColorName;
+
+  public Sprite CoreUpgradeIcon;
+
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {
 

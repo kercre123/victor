@@ -14,22 +14,22 @@ namespace Cozmo {
     [SerializeField]
     private string _ItemId;
 
-    public string ID { 
-      get { return _ItemId; } 
+    public string ID {
+      get { return _ItemId; }
     }
 
     [SerializeField]
     private string _LocKey;
 
-    public string LocKey { 
-      get { return _LocKey; } 
+    public string LocKey {
+      get { return _LocKey; }
     }
 
     [SerializeField]
     private Sprite _ItemIcon;
 
-    public Sprite Icon { 
-      get { return _ItemIcon; } 
+    public Sprite Icon {
+      get { return _ItemIcon; }
     }
 
     public string GetSingularName() {
@@ -55,8 +55,8 @@ namespace Cozmo {
     }
 
     public static ItemDataConfig Instance {
-      get { 
-        return _sInstance; 
+      get {
+        return _sInstance;
       }
     }
 
@@ -72,7 +72,7 @@ namespace Cozmo {
           _IdToData.Add(data.ID, data);
         }
         else {
-          DAS.Error("ItemDataMap.PopulateDictionary", "Trying to add item to dictionary, but the item already exists! item=" + data.ID);
+          DAS.Error("ItemDataConfig.PopulateDictionary", "Trying to add item to dictionary, but the item already exists! item=" + data.ID);
         }
       }
     }
@@ -80,7 +80,7 @@ namespace Cozmo {
     public static ItemData GetData(string itemId) {
       ItemData data = null;
       if (!_sInstance._IdToData.TryGetValue(itemId, out data)) {
-        DAS.Error("ItemDataMap.GetData", "Could not find item='" + itemId + "' in dictionary!");
+        DAS.Error("ItemDataConfig.GetData", "Could not find item='" + itemId + "' in dictionary!");
       }
       return data;
     }
@@ -96,7 +96,7 @@ namespace Cozmo {
       return _sInstance._IdToData.Keys;
     }
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     public IEnumerable<string> EditorGetItemIds() {
       List<string> itemIds = new List<string>();
       foreach (var data in _ItemMap) {
@@ -104,6 +104,6 @@ namespace Cozmo {
       }
       return itemIds;
     }
-    #endif
+#endif
   }
 }
