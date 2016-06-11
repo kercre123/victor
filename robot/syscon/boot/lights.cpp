@@ -82,6 +82,18 @@ void Lights::stop(void) {
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
 }
 
+static int channel = 3;
+static int intensity = 0;
+
+void Lights::setChannel(int ch) {
+  channel = ch;
+  intensity = 0;
+}
+
+void Lights::update() {
+  set(channel, channel ? 2 : 0x7, (++intensity & 0x40 ? intensity : ~intensity) & 0x3F);
+}
+
 void Lights::set(int channel, int colors, uint8_t brightness) {
   // Clear and stop the timer
   NRF_TIMER0->TASKS_STOP = 1;

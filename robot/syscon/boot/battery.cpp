@@ -6,6 +6,7 @@
 #include "hal/hardware.h"
 #include "battery.h"
 #include "timer.h"
+#include "lights.h"
 
 static inline void startADCsample(AnalogInput channel)
 {
@@ -74,6 +75,7 @@ int32_t Battery::read(void) {
 void Battery::manage(void) {
   static int ground_short = 0;
   
+  Lights::update();
   kickDog();
 
   int32_t value = read();
