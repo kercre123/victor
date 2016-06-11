@@ -36,7 +36,7 @@ public class PerformancePane : MonoBehaviour {
 
   [SerializeField]
   private Text _FpsLabel;
-  
+
   [SerializeField]
   private Text _AvgFPSLabel;
 
@@ -45,6 +45,9 @@ public class PerformancePane : MonoBehaviour {
 
   [SerializeField]
   private Button _ShowFPSCounterButton;
+
+  [SerializeField]
+  private Text _BatteryVoltage;
 
   private void Start() {
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
@@ -71,5 +74,9 @@ public class PerformancePane : MonoBehaviour {
 
   private void HandleShowCounterButtonClicked() {
     RaisePerformanceCounterButtonClicked();
+  }
+
+  private void Update() {
+    _BatteryVoltage.text = RobotEngineManager.Instance.CurrentRobot.BatteryVoltage.ToString();
   }
 }
