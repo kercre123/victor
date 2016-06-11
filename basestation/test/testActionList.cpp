@@ -978,7 +978,7 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
   
   testAction2->_complete = true;
   r.GetActionList().Update();
@@ -990,7 +990,7 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
   
   testAction3->_complete = true;
   r.GetActionList().Update();
@@ -1002,7 +1002,7 @@ TEST(QueueAction, QueueInParallel)
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
   EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
+  EXPECT_EQ(r.GetActionList().GetNumQueues(), 0);
   
   CheckActionDestroyed({"Test1", "Test2", "Test3"});
 }
