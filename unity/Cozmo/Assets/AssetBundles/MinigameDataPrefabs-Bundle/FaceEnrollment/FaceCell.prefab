@@ -27,6 +27,7 @@ GameObject:
   - 224: {fileID: 22405356}
   - 222: {fileID: 22200518}
   - 114: {fileID: 11465162}
+  - 114: {fileID: 11496180}
   m_Layer: 5
   m_Name: DeleteButton
   m_TagString: Untagged
@@ -44,6 +45,7 @@ GameObject:
   - 224: {fileID: 22444900}
   - 222: {fileID: 22297548}
   - 114: {fileID: 11475880}
+  - 114: {fileID: 11432210}
   m_Layer: 5
   m_Name: EditButton
   m_TagString: Untagged
@@ -120,6 +122,31 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11432210
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 128530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Interactable: 1
+  _TextLabel: {fileID: 0}
+  _TextLabelOffset: -5
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _AlphaController: {fileID: 0}
+  ButtonGraphics: []
+  _GlintAnimator: {fileID: 0}
+  _UISoundEvent:
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
+    _GameObjectType: 2
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11455076
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -302,6 +329,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _NameLabel: {fileID: 11489214}
+  _EditButton: {fileID: 11432210}
+  _DeleteButton: {fileID: 11496180}
 --- !u!114 &11491954
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -320,6 +349,31 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11496180
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 111942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Interactable: 1
+  _TextLabel: {fileID: 0}
+  _TextLabelOffset: -5
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _AlphaController: {fileID: 0}
+  ButtonGraphics: []
+  _GlintAnimator: {fileID: 0}
+  _UISoundEvent:
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
+    _GameObjectType: 2
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!222 &22200518
 CanvasRenderer:
   m_ObjectHideFlags: 1

@@ -17,9 +17,6 @@ namespace FaceEnrollment {
     [SerializeField]
     private GameObject _FaceEnrollmentDiagramPrefab;
 
-    //[SerializeField]
-    //private Anki.UI.AnkiTextLabel _ShelfWidgetTextPrefab;
-
     private bool _AttemptedEnrollFace = false;
 
     // used by press demo to skip saving to actual robot.
@@ -61,18 +58,14 @@ namespace FaceEnrollment {
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
       newView.ShowShelf();
-      //newView.ShelfWidget.AddContent(_ShelfWidgetTextPrefab, HandleShelfContentTweenIn);
+      _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
+      _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
     }
 
     private void CleanupShowFaceListSlide() {
       _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested -= EditExisitingName;
       SharedMinigameView.HideShelf();
-    }
-
-    private void HandleShelfContentTweenIn() {
-      _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
-      _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
     }
 
     private void EditExisitingName(int faceID, string exisitingName) {
@@ -108,13 +101,15 @@ namespace FaceEnrollment {
     }
 
     private void HandleUpdatedNameEntered(string newName) {
-      HandleEnrolledFace(true);
-      RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
 
       // TODO: Check for confirmation by engine
       CurrentRobot.EnrolledFaces[_FaceIDToEdit] = newName;
 
+      RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
+
       // TODO: manually trigger say new name?
+
+      EditOrEnrollFaceComplete(true);
     }
 
     private void HandleInstructionsSlideEntered() {
@@ -144,10 +139,17 @@ namespace FaceEnrollment {
         // TODO: Retry or notify failure or something?
       }
       else {
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+
         CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
       }
+      EditOrEnrollFaceComplete(success);
 
+    }
+
+    private void EditOrEnrollFaceComplete(bool success) {
+      if (success) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+      }
       ShowFaceListSlide(SharedMinigameView);
       SharedMinigameView.HideSpinnerWidget();
     }
