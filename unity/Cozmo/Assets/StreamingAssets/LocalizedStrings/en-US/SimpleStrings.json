@@ -114,33 +114,6 @@
   "requestSparkView.TreatCount": {
     "translation": "Total {0}: {1}"
   },
-  "dailyGoal.title.missing": {
-    "translation": "Missing Title"
-  },
-  "dailyGoal.description.missing": {
-    "translation": "This goal has no description set."
-  },
-  "dailyGoal.title.WinSpeedTap": {
-    "translation": "Win Speed Tap"
-  },
-  "dailyGoal.description.WinSpeedTap": {
-    "translation": "This goal has no description set."
-  },
-  "dailyGoal.title.PlaySpeedTap": {
-    "translation": "Play Speed Tap"
-  },
-  "dailyGoal.description.PlaySpeedTap": {
-    "translation": "This goal has no description set."
-  },
-  "dailyGoal.title.WinSpeedTapHands": {
-    "translation": "Win Speed Tap Hands"
-  },
-  "dailyGoal.description.WinSpeedTapHands": {
-    "translation": "This goal has no description set."
-  },
-  "dailyGoal.completedText": {
-    "translation": "{0}/{1} Complete"
-  },
   "loot.Start": {
     "translation": "Tap Repeatedly!"
   },

@@ -1,6 +1,16 @@
 {
   "GenList": [
     {
+      "TitleKey": "dailyGoal.title.MeetNewFace",
+      "DescKey": "dailyGoal.description.MeetNewFace",
+      "RewardType": "experience",
+      "PointsRewarded": 5,
+      "Target": 2,
+      "CladEvent": "OnLearnedPlayerName",
+      "GenConditions": [],
+      "ProgressConditions": []
+    },
+    {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
       "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
@@ -11,14 +21,24 @@
       "ProgressConditions": []
     },
     {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap",
-      "DescKey": "dailyGoal.description.PlaySpeedTap",
+      "TitleKey": "dailyGoal.title.UnlockMeetCozmo",
+      "DescKey": "dailyGoal.description.UnlockMeetCozmo",
       "RewardType": "experience",
       "PointsRewarded": 8,
       "Target": 1,
       "CladEvent": "OnUnlockableEarned",
       "GenConditions": [],
-      "ProgressConditions": []
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockCondition, Assembly-CSharp",
+          "Unlocked": "FaceEnrollmentGame",
+          "Label": {
+            "text": "Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ]
     }
   ]
 }

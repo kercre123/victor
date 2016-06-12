@@ -13,4 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DailyGoalFileName: DailyGoalGeneration.json
   MaxGoals: 3
-  MinGoals: 1
+  MinGoals: 3
