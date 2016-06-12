@@ -26,11 +26,15 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       List<LightCube> cubesForGame = new List<LightCube>();
-      GameBase game = _StateMachine.GetGame();
-      game.SharedMinigameView.HideMiddleBackground();
+      // Wait until we get to goal, shouldn't continue
+      _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance.InitColorsAndSounds();
+      _GameInstance.SharedMinigameView.HideShelf();
+      _GameInstance.SharedMinigameView.EnableContinueButton(false);
+      _GameInstance.SharedMinigameView.HideMiddleBackground();
 
-      IRobot robot = game.CurrentRobot;
-      foreach (int id in game.CubeIdsForGame) {
+      IRobot robot = _GameInstance.CurrentRobot;
+      foreach (int id in _GameInstance.CubeIdsForGame) {
         cubesForGame.Add(robot.LightCubes[id]);
       }
       LightCube cubeA, cubeB;
@@ -45,12 +49,6 @@ namespace Simon {
       _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
 
       MoveToTargetLocation(_TargetPosition, _TargetRotation);
-
-      // Wait until we get to goal, shouldn't continue
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.InitColorsAndSounds();
-      _GameInstance.SharedMinigameView.HideShelf();
-      _GameInstance.SharedMinigameView.EnableContinueButton(false);
 
       _CozmoInPosition = false;
       _FlashingIndex = 0;
