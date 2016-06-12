@@ -24,7 +24,7 @@ namespace Anki {
         bool isMet = false;
         if (cozEvent is UnlockableUnlockedGameEvent) {
           UnlockableUnlockedGameEvent unlockEvent = (UnlockableUnlockedGameEvent)cozEvent;
-          if (unlockEvent.Unlock <= Unlocked) {
+          if (unlockEvent.Unlock == Unlocked) {
             isMet = true;          
           }
         }
