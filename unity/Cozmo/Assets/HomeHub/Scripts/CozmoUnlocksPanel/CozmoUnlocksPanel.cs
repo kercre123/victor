@@ -5,15 +5,27 @@ using DataPersistence;
 
 public class CozmoUnlocksPanel : MonoBehaviour {
 
-  private List<UnlockableInfo> _Unlocked;
-  private List<UnlockableInfo> _Available;
-  private List<UnlockableInfo> _Unavailable;
+  public enum CozmoUnlockState {
+    Unlocked,
+    Unlockable,
+    Locked
+  }
+
+  public enum CozmoUnlockPosition {
+    Beginning,
+    Middle,
+    End
+  }
+
+  private List<CozmoUnlockableTile> _UnlockedTiles;
+  private List<CozmoUnlockableTile> _AvailableTiles;
+  private List<CozmoUnlockableTile> _UnavailableTiles;
 
   [SerializeField]
   private RectTransform _UnlocksContainer;
 
   [SerializeField]
-  private GameObject _UnlocksTilePrefab;
+  private CozmoUnlockableTile _UnlocksTilePrefab;
 
   [SerializeField]
   private Anki.UI.AnkiTextLabel _HexLabel;
@@ -22,7 +34,16 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private RequestTricksView _RequestTricksViewPrefab;
   private RequestTricksView _RequestTricksViewInstance;
 
-  void Start() { 
+  [SerializeField]
+  private Sprite[] _BeginningCircuitSprites;
+
+  [SerializeField]
+  private Sprite[] _EndCircuitSprites;
+
+  void Start() {
+    _UnlockedTiles = new List<CozmoUnlockableTile>();
+    _AvailableTiles = new List<CozmoUnlockableTile>();
+    _UnavailableTiles = new List<CozmoUnlockableTile>();
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
     UpdatePuzzlePieceCount();
@@ -42,48 +63,65 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     ClearTiles();
 
-    _Unlocked = UnlockablesManager.Instance.GetUnlocked(true);
-    _Available = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
-    _Unavailable = UnlockablesManager.Instance.GetUnavailableExplicit();
-
-    string tileName;
     string viewControllerName = "home_hub_cozmo_unlock_panel";
-    for (int i = 0; i < _Unlocked.Count; ++i) {
-      GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
-      tileInstance.transform.SetParent(_UnlocksContainer, false);
-      tileInstance.name = _Unlocked[i].Id.Value.ToString();
-      tileName = tileInstance.name + "\n(unlocked)";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
-      int unlockIndex = i;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(() => HandleTappedUnlocked(_Unlocked[unlockIndex]),
-        tileName, viewControllerName);
+    int numTilesMade = 0;
+    List<UnlockableInfo> unlockedUnlockData = UnlockablesManager.Instance.GetUnlocked(true);
+    List<UnlockableInfo> availableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
+    List<UnlockableInfo> unavailableUnlockData = UnlockablesManager.Instance.GetUnavailableExplicit();
+
+    int numRows = 2;
+    int numBeginningTiles = numRows;
+    int endTilesStartIndex = unlockedUnlockData.Count + availableUnlockData.Count + unavailableUnlockData.Count - numRows;
+    GameObject tileInstance;
+    CozmoUnlockableTile unlockableTile;
+    for (int i = 0; i < unlockedUnlockData.Count; ++i) {
+      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+      unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName,
+                                numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
+                                numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+      unlockableTile.OnTapped += HandleTappedUnlocked;
+      _UnlockedTiles.Add(unlockableTile);
+      numTilesMade++;
     }
 
-    for (int i = 0; i < _Available.Count; ++i) {
-      GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
-      tileInstance.transform.SetParent(_UnlocksContainer, false);
-      tileInstance.name = _Available[i].Id.Value.ToString();
-      tileName = tileInstance.name + "\n(available)";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
-      int unlockIndex = i;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(() => HandleTappedAvailable(_Available[unlockIndex]),
-        tileName, viewControllerName);
+    for (int i = 0; i < availableUnlockData.Count; ++i) {
+      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+      unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName,
+                                numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
+                                numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+      unlockableTile.OnTapped += HandleTappedAvailable;
+      _AvailableTiles.Add(unlockableTile);
+      numTilesMade++;
     }
 
-    for (int i = 0; i < _Unavailable.Count; ++i) {
-      GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
-      tileInstance.transform.SetParent(_UnlocksContainer, false);
-      tileInstance.name = _Unavailable[i].Id.Value.ToString();
-      tileName = tileInstance.name + "\n(locked)";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(null,
-        tileName, viewControllerName);
+    for (int i = 0; i < unavailableUnlockData.Count; ++i) {
+      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+      unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName,
+                                numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
+                                numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+      _UnavailableTiles.Add(unlockableTile);
+      numTilesMade++;
     }
   }
 
   private void ClearTiles() {
+    for (int i = 0; i < _UnlockedTiles.Count; ++i) {
+      _UnlockedTiles[i].OnTapped -= HandleTappedUnlocked;
+    }
+    _UnlockedTiles.Clear();
+
+    for (int i = 0; i < _AvailableTiles.Count; ++i) {
+      _AvailableTiles[i].OnTapped -= HandleTappedAvailable;
+    }
+    _AvailableTiles.Clear();
+
+    _UnavailableTiles.Clear();
+
     for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
-      GameObject.Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
+      Destroy(_UnlocksContainer.transform.GetChild(i).gameObject);
     }
   }
 

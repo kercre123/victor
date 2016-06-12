@@ -23,3 +23,5 @@ MonoBehaviour:
   TitleKey: unlockable.Default.Title
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
+  CoreUpgradeTintColorName: upgradePurple
+  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}

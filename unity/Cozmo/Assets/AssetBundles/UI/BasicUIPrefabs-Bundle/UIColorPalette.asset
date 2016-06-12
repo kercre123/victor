@@ -18,3 +18,12 @@ MonoBehaviour:
   _GameBackgroundColor: {r: 0.37254903, g: 0.77254903, b: 0.92941177, a: 1}
   _GameToggleColor: {r: 0.03137255, g: 0.27058825, b: 0.5372549, a: 1}
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}
+  _CoreUpgradeTints:
+  - _TintName: upgradeRed
+    _TintColor: {r: 1, g: 0.20392157, b: 0.3254902, a: 1}
+  - _TintName: upgradeYellow
+    _TintColor: {r: 1, g: 0.7058824, b: 0, a: 1}
+  - _TintName: upgradeGreen
+    _TintColor: {r: 0.42745098, g: 0.87058824, b: 0.06666667, a: 1}
+  - _TintName: upgradePurple
+    _TintColor: {r: 0.70980394, g: 0.19215687, b: 0.9490196, a: 1}
