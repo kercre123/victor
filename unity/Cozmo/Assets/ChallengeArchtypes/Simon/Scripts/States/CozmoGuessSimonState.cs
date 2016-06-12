@@ -14,10 +14,6 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoGuess);
-      _GameInstance.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelWatchCozmoGuess);
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = false;
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = true;
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;
@@ -29,6 +25,8 @@ namespace Simon {
 
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
+
+      _GameInstance.OnTurnStage(PlayerType.Cozmo, false);
     }
 
     public override void Exit() {
@@ -94,6 +92,8 @@ namespace Simon {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
       _IsAnimating = true;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
     }
 
     private void CozmoWinGame() {

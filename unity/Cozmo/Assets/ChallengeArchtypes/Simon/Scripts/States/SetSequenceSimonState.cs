@@ -25,12 +25,6 @@ namespace Simon {
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
-      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
-        0, _SequenceLength);
-
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = _NextPlayer == PlayerType.Human;
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = _NextPlayer != PlayerType.Human;
-
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -53,7 +47,7 @@ namespace Simon {
           _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         }
         else {
-          _StateMachine.SetNextState(new CozmoGuessSimonState());        
+          _StateMachine.SetNextState(new CozmoGuessSimonState());
         }
       }
       else {
@@ -65,8 +59,6 @@ namespace Simon {
 
     private void LightUpNextCube() {
       _CurrentSequenceIndex++;
-      _GameInstance.UpdateSequenceText(LocalizationKeys.kSimonGameLabelWatchPattern,
-        _CurrentSequenceIndex + 1, _SequenceLength);
       _LastSequenceTime = Time.time;
 
       int cubeId = GetCurrentTarget().ID;

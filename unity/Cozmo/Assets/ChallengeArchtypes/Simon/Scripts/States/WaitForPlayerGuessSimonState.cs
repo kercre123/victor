@@ -20,10 +20,6 @@ namespace Simon {
       base.Enter();
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderMakeYourGuess);
-      _GameInstance.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelMakeYourGuess);
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = true;
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
       // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
@@ -31,6 +27,8 @@ namespace Simon {
 
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnPlayerLoseAnimationDone);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
+
+      _GameInstance.OnTurnStage(PlayerType.Human, false);
     }
 
     public override void Exit() {
@@ -79,6 +77,8 @@ namespace Simon {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
       _IsAnimating = true;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
     }
 
     private void PlayerWinGame() {
@@ -89,6 +89,8 @@ namespace Simon {
       // AnimationManager will send callback to HandleOnPlayerWinAnimationDone
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete);
       _IsAnimating = true;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {

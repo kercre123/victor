@@ -36,6 +36,16 @@ namespace Simon {
 
     public MusicStateWrapper BetweenRoundsMusic;
 
+    [SerializeField]
+    private SimonTurnSlide _SimonTurnSlidePrefab;
+    private GameObject _SimonTurnSlide;
+    [SerializeField]
+    private float _BannerAnimationDurationSeconds = 1.5f;
+
+    public SimonTurnSlide SimonTurnSlidePrefab {
+      get { return _SimonTurnSlidePrefab; }
+    }
+
     private static bool _sShowWrongCubeTap = false;
     private void HandleDebugShowWrongTapColor(System.Object setvar) {
       _sShowWrongCubeTap = !_sShowWrongCubeTap;
@@ -69,6 +79,9 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+
+      SharedMinigameView.HideCozmoScoreboard();
+      SharedMinigameView.HidePlayerScoreboard();
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
@@ -193,13 +206,32 @@ namespace Simon {
       return audioEvent;
     }
 
-    public void UpdateSequenceText(string locKey, int currentIndex, int sequenceCount) {
-      string infoText = Localization.Get(locKey);
-      infoText += Localization.kNewLine;
-      infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
-      SharedMinigameView.InfoTitleText = infoText;
+    public void OnTurnStage(PlayerType player, bool isListening) {
+      if (_SimonTurnSlide == null) {
+        _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
+                                           _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
+      }
+      SimonTurnSlide simonTurnScript = _SimonTurnSlide.GetComponent<SimonTurnSlide>();
+      Sprite currentPortrait = null;
+      string statusLocKey = null;
+      if (player == PlayerType.Cozmo) {
+        currentPortrait = SharedMinigameView.CozmoPortrait;
+        statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelCozmoTurnListen : LocalizationKeys.kSimonGameLabelCozmoTurnRepeat;
+      }
+      else {
+        currentPortrait = SharedMinigameView.PlayerPortrait;
+        statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelYourTurnListen : LocalizationKeys.kSimonGameLabelYourTurnRepeat;
+      }
+      simonTurnScript.Initialize(currentPortrait, statusLocKey);
     }
-
+    public void ShowBanner(string bannerKey) {
+      // Play banner animation with score
+      string bannerText = Localization.Get(bannerKey);
+      SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
+        _BannerAnimationDurationSeconds);
+    }
+    private void HandleBannerAnimationDone() {
+    }
     protected override void RaiseMiniGameQuit() {
       base.RaiseMiniGameQuit();
       DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());

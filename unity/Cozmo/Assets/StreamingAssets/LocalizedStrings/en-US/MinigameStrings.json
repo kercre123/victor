@@ -82,37 +82,34 @@
     "translation": "Listen and watch the pattern for each round.  When it’s your turn, tap the Cubes in order to repeat the pattern.  One mistake, and it’s game over!"
   },
   "simonGame.difficulty.hardDescription.locked": {
-    "translation": "Unlock by winning Simon Hard."
+    "translation": "Unlock by winning Simon Easy."
   },
-  "simonGame.label.watchPattern": {
-    "translation": "Watch the pattern."
+  "simonGame.label.yourTurnListen": {
+    "translation": "Your turn to listen to the pattern..."
   },
-  "simonGame.label.watchCozmoGuess": {
-    "translation": "Watch Cozmo copy your pattern."
+  "simonGame.label.yourTurnRepeat": {
+    "translation": "Your turn to repeat to the pattern!"
   },
-  "simonGame.label.makeYourGuess": {
-    "translation": "Tap the cubes to copy the pattern."
+  "simonGame.label.correct": {
+    "translation": "You are CORRECT!"
   },
-  "simonGame.label.yourTurn": {
-    "translation": "Your Turn!"
+  "simonGame.label.youWin": {
+    "translation": "YOU WIN!"
   },
-  "simonGame.label.cozmoTurn": {
-    "translation": "Cozmo's Turn!"
+  "simonGame.label.cozmoWin": {
+    "translation": "COZMO WINS!"
   },
-  "simonGame.header.watchPattern": {
-    "translation": "Watch the Pattern"
+  "simonGame.label.cozmoTurnListen": {
+    "translation": "Cozmo's turn to listen to the pattern..."
   },
-  "simonGame.header.watchCozmoGuess": {
-    "translation": "Watch Cozmo Guess"
-  },
-  "simonGame.header.makeYourGuess": {
-    "translation": "Copy Cozmo's Pattern"
+  "simonGame.label.cozmoTurnRepeat": {
+    "translation": "Cozmo's turn to repeat to the pattern!"
   },
   "simonGame.label.stepsLeft": {
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "simonGame.text.patternLength": {
-    "translation": "Pattern Length: {0}"
+    "translation": "Round: {0}"
   },
   "simonGame.text.howToPlay": {
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
