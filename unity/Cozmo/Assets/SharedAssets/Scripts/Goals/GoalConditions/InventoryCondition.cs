@@ -11,7 +11,7 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specifies a day of the week that must be met.
+/// Inventory condition, specifies an item type and amount needed
 /// </summary>
 namespace Anki {
   namespace Cozmo {
@@ -21,6 +21,7 @@ namespace Anki {
       /// <summary>
       /// The Item type of the reward.
       /// </summary>
+      [ItemId]
       public string ItemType;
 
       public int ItemCount;
