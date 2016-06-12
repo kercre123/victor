@@ -11,7 +11,7 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specifies Difficulty beat
+/// Goal condition that specifies the UnlockID of the desired unlock.
 /// </summary>
 namespace Anki {
   namespace Cozmo {
@@ -23,8 +23,8 @@ namespace Anki {
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (cozEvent is UnlockableUnlockedGameEvent) {
-          UnlockableUnlockedGameEvent miniGameEvent = (UnlockableUnlockedGameEvent)cozEvent;
-          if (miniGameEvent.Unlock <= Unlocked) {
+          UnlockableUnlockedGameEvent unlockEvent = (UnlockableUnlockedGameEvent)cozEvent;
+          if (unlockEvent.Unlock <= Unlocked) {
             isMet = true;          
           }
         }
