@@ -82,6 +82,7 @@ public class GameEventWrapperFactory {
     // Specific wrappers, otherwise just use the base class.
     Register(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, typeof(MinigameCompletedGameEvent));
     Register(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, typeof(MinigameCompletedGameEvent));
+    Register(GameEvent.OnUnlockableEarned, typeof(UnlockableUnlockedGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {
