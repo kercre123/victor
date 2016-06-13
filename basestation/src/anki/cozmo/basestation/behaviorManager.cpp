@@ -114,6 +114,12 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                           [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                           {
                             _reactionsEnabled = event.GetData().Get_EnableReactionaryBehaviors().enabled;
+                            PRINT_NAMED_INFO("EnableReactionaryBehaviors", (_reactionsEnabled ? "Enabled" : "Disabled"));
+                            if(!_reactionsEnabled && _runningReactionaryBehavior)
+                            {
+                              PRINT_NAMED_INFO("EnableReactionaryBehaviors", "Disabling reactionary behaviors stopping currently running one");
+                              StopCurrentBehavior();
+                            }
                           }));
     _eventHandlers.push_back(externalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,

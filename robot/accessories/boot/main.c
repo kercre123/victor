@@ -41,12 +41,12 @@ void MainExecution()
   u8 i, dest;
   u8 idata *src;
   
-  PetWatchdog();      // XXX: Move UNDER handshake to prevent OTA reboot
   RadioHandshake();
+  PetWatchdog();
       
   // Set LED values
   if (R2A_BASIC_SETLEDS == _radioPayload[0])
-    LedSetValues();
+    LedSetValues(LED_START);
   
   // Receive an OTA message and copy the payload into PRAM
   if (R2A_OTA == (_radioPayload[0] & R2A_OTA))
@@ -76,14 +76,12 @@ void main()
   // Proceed to lower-power advertising mode - return with sync packet filled in
   Advertise();
   
-  // Enter high power consumption mode - watchdog is the best way to exit
-  // XXX: Let the patch call LedInit and manage _waitLSB/_waitMSB delay
-  // _wait delay is -3 ticks for LED init, -3 ticks for radio receive delay
-  LedInit();
-
   // If valid, start the requested OTA patch - see makesafe/cube.c for more details
   if (*(u8 code *)((u16)_patchStart<<8) == 0x75)
     ((void(code *)(void))((u16)_patchStart<<8))();
+
+  // Enter high power consumption mode - watchdog is the best way to exit
+  LedInit();
 
   // Now answer LED/OTA requests until connection stops
   while (1)

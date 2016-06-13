@@ -6,19 +6,22 @@
 
 // TX time is 130+128uS, RX time is 130+128uS, radio powerup time is ???
 // On the Signal Hound, robot typically ends 500-600uS from TX time
-#define AWAKE_TIME_US      1200     // Empirically need 1200uS for reliable OTA
+#define AWAKE_TIME_US      1100     // Empirically need 1100uS for reliable OTA
 #define BEACON_INTERVAL_US 1000000  // Send beacons about once a second
 
 // This is the advertising packet - it gets patched by the bootloader
-// XXX: Correctly set MSBs on to avoid packet errors - once you figure out WHICH IS THE MSB!
 code u8 ADVERTISEMENT[] = {
-  10,W_TX_PAYLOAD_NOACK,0x1e,0xab,0x11,0xca,    // Broadcast payload - private address REVERSE ORDER
+  10,W_TX_PAYLOAD_NOACK,0x1e,0xab,0x11,0xca,    // Broadcast payload - private address BROADCAST ORDER
   /* 0x3ff4 */          0xff,0xff,              // Little-endian model (0 = charger, 1 = cube 1, etc)
   /* 0x3ff6 */          0xff,0xff,              // Little-endian firmware patch bitmask (0=installed)
-                        0x04,                   // Hardware version - 3=EP2, 4=EP3
-                        0xff,                   // Reserved byte
+                        0x05,                   // Hardware version - 3=EP2, 4=EP3/EP3F :(, 5=Pilot
+                        0xff,                   // Reserved byte  
+  WREG | CONFIG,        PWR_UP | EN_CRC | CRCO, // Power up TX with 16-bit CRC
   0
 };
+
+extern code u8 SETUP_TX_BEACON[];
+void RadioSetup(u8 code *conf);
 
 // Go into power saving mode and advertise until we get a sync packet
 void Advertise()
@@ -35,6 +38,9 @@ void Advertise()
     P0CON = INPUT_OFF | i;
     P1CON = INPUT_OFF | i;
   }
+  
+  // Set up radio for advertise/receive
+  RadioSetup(SETUP_TX_BEACON);
 
   while (1)
   {

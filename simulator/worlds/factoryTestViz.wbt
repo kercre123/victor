@@ -52,6 +52,7 @@ DEF Cozmo_1 CozmoBot {
   vizMode TRUE
 }
 WebotsKeyboardController {
+  behaviorChooser "Selection"
   behaviorName "FactoryTest"
   forcedRobotIsSimulated FALSE
   forcedRobotIP "172.31.1.1"

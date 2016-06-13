@@ -541,7 +541,7 @@ message SetBackpackLEDs {
 message TransitionToNextDemoState {
 }
 
-message StartDemoWithEdge {
+message WakeUp {
   bool hasEdge = 1
 }
 

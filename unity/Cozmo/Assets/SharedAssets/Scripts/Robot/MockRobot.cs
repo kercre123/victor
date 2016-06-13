@@ -833,7 +833,7 @@ public class MockRobot : IRobot {
 
   }
 
-  public void StartDemoWithEdge(bool demoWithEdge) {
+  public void WakeUp(bool withEdge) {
 
   }
 

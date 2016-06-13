@@ -292,7 +292,7 @@ public interface IRobot : IDisposable {
 
   void TransitionToNextDemoState();
 
-  void StartDemoWithEdge(bool demoWithEdge);
+  void WakeUp(bool withEdge);
 
   #endregion
 

@@ -1,0 +1,60 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "dailyGoal.title.missing": {
+    "translation": "Missing Title"
+  },
+  "dailyGoal.description.missing": {
+    "translation": "This goal has no description set."
+  },
+  "dailyGoal.title.WinSpeedTap": {
+    "translation": "Win Speed Tap"
+  },
+  "dailyGoal.description.WinSpeedTap": {
+    "translation": "Beat Cozmo in a game of Speed Tap."
+  },
+  "dailyGoal.title.PlaySpeedTap": {
+    "translation": "Play Speed Tap"
+  },
+  "dailyGoal.description.PlaySpeedTap": {
+    "translation": "Play Speed Tap with Cozmo."
+  },
+  "dailyGoal.title.WinSpeedTapHands": {
+    "translation": "Score in Speed Tap"
+  },
+  "dailyGoal.description.WinSpeedTapHands": {
+    "translation": "Score points against Cozmo in Speed Tap."
+  },
+  "dailyGoal.completedText": {
+    "translation": "{0}/{1} Complete"
+  },
+  "dailyGoal.title.UnlockMeetCozmo": {
+    "translation": "Unlock Meet Cozmo"
+  },
+  "dailyGoal.description.UnlockMeetCozmo": {
+    "translation": "Unlock the Meet Cozmo activity."
+  },
+  "dailyGoal.title.MeetNewFace": {
+    "translation": "Introduce Cozmo"
+  },
+  "dailyGoal.description.MeetNewFace": {
+    "translation": "Introduce Cozmo to new people."
+  }
+}
