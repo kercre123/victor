@@ -61,6 +61,7 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace += HandleDeleteEnrolledFace;
+      newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
     }
 
     private void CleanupFaceListSlide() {
