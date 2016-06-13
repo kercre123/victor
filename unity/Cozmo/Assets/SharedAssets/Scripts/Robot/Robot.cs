@@ -326,6 +326,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
+    RobotEngineManager.Instance.OnObjectConnectionState += HandleObjectConnectionState;
+
     ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
   }
 
@@ -333,6 +335,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
     RobotEngineManager.Instance.OnSparkUnlockEnded -= SparkUnlockEnded;
+    RobotEngineManager.Instance.OnObjectConnectionState -= HandleObjectConnectionState;
     ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
 
@@ -557,11 +560,6 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void RegisterNewObservedObject(int id, uint factoryId, ObjectType objectType) {
-    DAS.Debug("Robot.RegisterNewObservedObject", "id=" + id + " factoryId=" + factoryId + " objectType=" + objectType);
-    AddObservedObject(id, factoryId, objectType);
-  }
-
   public void DeleteObservedObject(int id) {
     bool removedObject = false;
 
@@ -603,6 +601,37 @@ public class Robot : IRobot {
     }
   }
 
+  public void HandleObjectConnectionState(ObjectConnectionState message) {
+    DAS.Debug("Robot.HandleObjectConnectionState", (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factoryId " + message.factoryID.ToString("X"));
+
+    if (message.connected) {
+      // Get the ObjectType from ActiveObjectType
+      ObjectType objectType = ObjectType.Invalid;
+      switch (message.device_type) {
+      case ActiveObjectType.OBJECT_CUBE1:
+        objectType = ObjectType.Block_LIGHTCUBE1;
+        break;
+      case ActiveObjectType.OBJECT_CUBE2:
+        objectType = ObjectType.Block_LIGHTCUBE2;
+        break;
+      case ActiveObjectType.OBJECT_CUBE3:
+        objectType = ObjectType.Block_LIGHTCUBE3;
+        break;
+      case ActiveObjectType.OBJECT_CHARGER:
+        objectType = ObjectType.Charger_Basic;
+        break;
+      case ActiveObjectType.OBJECT_UNKNOWN:
+        objectType = ObjectType.Unknown;
+        break;
+      }
+
+      AddObservedObject((int)message.objectID, message.factoryID, objectType);
+    }
+    else {
+      DeleteObservedObject((int)message.objectID);
+    }
+  }
+
   public void HandleSeeObservedObject(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn("Robot.HandleSeeObservedObject", "HandleSeeObservedObject received RobotObservedObject message about the Mat!");
@@ -622,7 +651,8 @@ public class Robot : IRobot {
       }
     }
     else {
-      DAS.Warn("Robot.HandleSeeObservedObject", "Received RobotObservedObject but could not find ObservedObject with id " + message.objectID + "!");
+      // We didn't know about this object before. Store it with the information we know about it
+      AddObservedObject(message.objectID, 0, message.objectType);
     }
   }
 
@@ -681,10 +711,6 @@ public class Robot : IRobot {
       foundObject = foundCube;
     }
 
-    if (foundObject == null) {
-      DAS.Warn("Robot.GetObservedObjectById", "Could not find registered ObservedObject with id " + id + "!");
-    }
-
     return foundObject;
   }
 
@@ -701,10 +727,6 @@ public class Robot : IRobot {
       }
     }
 
-    if (foundObject == null) {
-      DAS.Warn("Robot.GetObservedObjectWithFactoryID", "Could not find registered ObservedObject with factoryId " + factoryId + "!");
-    }
-
     return foundObject;
   }
 
@@ -714,29 +736,32 @@ public class Robot : IRobot {
                   || (objectType == ObjectType.Block_LIGHTCUBE2)
                   || (objectType == ObjectType.Block_LIGHTCUBE3));
     if (isCube) {
-      if (!LightCubes.ContainsKey(id)) {
-        DAS.Debug("Robot.RegisterNewObject", "Registered LightCube: id=" + id + " objectType=" + objectType);
-        LightCube lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
+      LightCube lightCube = null;
+      if (!LightCubes.TryGetValue(id, out lightCube)) {
+        DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
+        lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
         LightCubes.Add(id, lightCube);
+      }
+      else {
         if ((lightCube.FactoryID == 0) && (factoryId != 0)) {
           // So far we received messages about the cube without a factory ID. This is because it was seen 
           // before we connected to it. This message has the factory ID so we need to update its information
           // so we can find it in the future
-          DAS.Debug(this, "Updating cube " + id + " factoryID to " + factoryId.ToString("X"));
+          DAS.Debug("Robot.AddObservedObject", "Updating cube " + id + " factoryID to " + factoryId.ToString("X"));
           lightCube.FactoryID = factoryId;
         }
-        createdObject = lightCube;
       }
+      createdObject = lightCube;
     }
     else if (objectType == ObjectType.Charger_Basic) {
       if (Charger == null) {
-        DAS.Debug("Robot.RegisterNewObject", "Registered Charger: id=" + id + " objectType=" + objectType);
+        DAS.Debug("Robot.AddObservedObject", "Registered Charger: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
         Charger = new ObservedObject(id, factoryId, ObjectFamily.Charger, objectType);
         createdObject = Charger;
       }
     }
     else {
-      DAS.Warn("Robot.TryAddObservedObject", "Tried to add an object with unsupported ObjectType! id=" + id + " objectType=" + objectType);
+      DAS.Warn("Robot.AddObservedObject", "Tried to add an object with unsupported ObjectType! id=" + id + " objectType=" + objectType);
       DeleteObservedObject(id);
     }
 

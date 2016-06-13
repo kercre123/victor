@@ -544,37 +544,6 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ObjectConnectionState message) {
-    DAS.Debug("RobotEngineMananger.RecievedSpecificMessage", "ObjectConnectionState. " + (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factory ID " + message.factoryID.ToString("X"));
-
-    // TODO: Check if robot id matches current robot (message doesn't have id)
-    // Register new object with robot on connect
-    if (message.connected) {
-      // Get the ObjectType from ActiveObjectType
-      ObjectType objectType = ObjectType.Invalid;
-      switch (message.device_type) {
-      case ActiveObjectType.OBJECT_CUBE1:
-        objectType = ObjectType.Block_LIGHTCUBE1;
-        break;
-      case ActiveObjectType.OBJECT_CUBE2:
-        objectType = ObjectType.Block_LIGHTCUBE2;
-        break;
-      case ActiveObjectType.OBJECT_CUBE3:
-        objectType = ObjectType.Block_LIGHTCUBE3;
-        break;
-      case ActiveObjectType.OBJECT_CHARGER:
-        objectType = ObjectType.Charger_Basic;
-        break;
-      case ActiveObjectType.OBJECT_UNKNOWN:
-        objectType = ObjectType.Unknown;
-        break;
-      }
-
-      CurrentRobot.RegisterNewObservedObject((int)message.objectID, message.factoryID, objectType);
-    }
-    else {
-      CurrentRobot.DeleteObservedObject((int)message.objectID);
-    }
-
     if (OnObjectConnectionState != null) {
       OnObjectConnectionState(message);
     }
