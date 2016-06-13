@@ -133,16 +133,16 @@ public class MockRobot : IRobot {
 
   }
 
-  public void RegisterNewObservedObject(int id, uint factoryId, ObjectType objectType) {
-    // Do nothing
-  }
-
   public void DeleteObservedObject(int id) {
     // Do nothing
   }
 
   public void FinishedProcessingImage(uint engineTimestamp) {
     // Do nothing
+  }
+
+  public void HandleObjectConnectionState(ObjectConnectionState message) {
+
   }
 
   public void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
@@ -526,10 +526,6 @@ public class MockRobot : IRobot {
   }
 
   public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
-    // Do nothing
-  }
-
-  public void ExecuteBehaviorByName(string behaviorName) {
     // Do nothing
   }
 

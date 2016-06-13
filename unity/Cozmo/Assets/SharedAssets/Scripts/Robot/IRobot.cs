@@ -118,11 +118,11 @@ public interface IRobot : IDisposable {
 
   #region Process ObservedObjects
 
-  void RegisterNewObservedObject(int id, uint factoryId, ObjectType objectType);
-
   void DeleteObservedObject(int id);
 
   void FinishedProcessingImage(uint engineTimestamp);
+
+  void HandleObjectConnectionState(ObjectConnectionState message);
 
   void HandleSeeObservedObject(G2U.RobotObservedObject message);
 
@@ -261,8 +261,6 @@ public interface IRobot : IDisposable {
   void SetEnableSOSLogging(bool enable);
 
   void ExecuteBehavior(BehaviorType type);
-
-  void ExecuteBehaviorByName(string behaviorName);
 
   void SetEnableFreeplayBehaviorChooser(bool enable);
 
