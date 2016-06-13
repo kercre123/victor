@@ -477,7 +477,7 @@ def runAll(options):
   with tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz") as tar:
     for test in testNames:
       if not config.has_option(test, 'world_file'):
-        UtilLog.error('ERROR: No world file specified for test ' + test + '.')
+        UtilLog.error('No world file specified for test ' + test + '.')
         allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
         continue
       
@@ -494,7 +494,7 @@ def runAll(options):
                                      worldFileTestNamePlaceHolder, test)
 
         except TemplateStringNotFoundException:
-          UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
+          UtilLog.error(worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
           allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
 
         # TODO: Crashes affect test result, but errors and warnings do not. Should they?
@@ -510,7 +510,7 @@ def runAll(options):
 
         # Check if timeout exceeded
         if runWebotsThread.isAlive():
-          UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
+          UtilLog.error(test + ' exceeded timeout.')
           stopWebots(options)
           allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
           print 'allTestsPassed ' + str(allTestsPassed)
@@ -525,13 +525,13 @@ def runAll(options):
 
         # Check for crashes
         if crashCount > 0:
-          UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
+          UtilLog.error(test + ' had a crashed controller.');
           allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
           continue
 
         # Get return code from test
         if testResultQueue.empty():
-          UtilLog.error('ERROR: No result code received from ' + test)
+          UtilLog.error('No result code received from ' + test)
           allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
           continue
         
@@ -692,7 +692,7 @@ def main(scriptArgs):
 
   # build the project first
   if not build(options):
-    UtilLog.error("ERROR build failed")
+    UtilLog.error("build failed")
     return 1
 
   # if we are running multiple tests set the flag

@@ -32,8 +32,6 @@ namespace Cozmo {
   class CST_Animations : public CozmoSimTestController {
     
   private:
-    // const u32 NUM_ANIMS_TO_PLAY = 1;
-    
     virtual s32 UpdateInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
@@ -53,8 +51,6 @@ namespace Cozmo {
   
   
   // =========== Test class implementation ===========
-  
-//  static const char* kTestAnimationName = "anim_speedTap_ask2play_01";
 
   s32 CST_Animations::UpdateInternal()
   {
@@ -94,7 +90,8 @@ namespace Cozmo {
       case TestState::ReadyForNextCommand:
       {
         PRINT_NAMED_INFO("CST_Animations.PlayingAnimation", "%s", _animationToPlay.c_str());
-        SendAnimation(_animationToPlay.c_str(), 1);
+        u32 numLoops = 1;
+        SendAnimation(_animationToPlay.c_str(), numLoops);
         _lastAnimPlayed = _animationToPlay;
         _lastAnimPlayedTime = GetSupervisor()->getTime();
         _testState = TestState::ExecutingTestAnimation;
@@ -103,15 +100,19 @@ namespace Cozmo {
       }
         
       case TestState::ExecutingTestAnimation:
+      {
+        double timeoutInSeconds = 99;
         // If no action complete message, this will timeout with assert.
-        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 99)) {
+        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, timeoutInSeconds)) {
           _testState = TestState::TestDone;
         }
         break;
+      }
 
       case TestState::WaitUntilEndOfMessage:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, 10){
+        double timeoutInSeconds = 10;
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, timeoutInSeconds){
           _testState = TestState::TestDone;
         }
       }
@@ -154,6 +155,10 @@ namespace Cozmo {
 
   void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
   {
+    // Returning a non-zero result signifies this test failed. 255 is an arbitary choice, though in
+    // other test controllers _result can be the result code parameters that exist in certain CLAD
+    // messages. These CLAD message result codes tend to be lower numbers so the arbitrary 255 is
+    // chosen, though it doens't really matter as long as it is non-zero.
     _result = 255;
     PRINT_NAMED_WARNING("CST_Animations.HandleAnimationAborted",
                       "'%s' was aborted.",
