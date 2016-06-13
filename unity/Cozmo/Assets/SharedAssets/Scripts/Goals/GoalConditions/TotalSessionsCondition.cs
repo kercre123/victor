@@ -11,7 +11,7 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specifies a day of the week that must be met.
+/// Condition that is met if the specified number of sessions have been played
 /// </summary>
 namespace Anki {
   namespace Cozmo {

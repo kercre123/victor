@@ -56,7 +56,7 @@ namespace WiFiConfiguration {
   {
     db_printf("WiFiConfiguration::Off(%d)\r\n", sleep);
     if (sleep) os_printf("WARN: WiFi sleep not yet implemented");
-    return wifi_set_opmode(NULL_MODE);
+    return wifi_set_opmode_current(NULL_MODE);
   }
   
   void SendRobotIpInfo(const u8 ifId)

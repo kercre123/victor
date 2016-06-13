@@ -74,6 +74,24 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region DailyGoalStrings
+
+  public const string kDailyGoalTitleMissing = "dailyGoal.title.missing";
+  public const string kDailyGoalDescriptionMissing = "dailyGoal.description.missing";
+  public const string kDailyGoalTitleWinSpeedTap = "dailyGoal.title.WinSpeedTap";
+  public const string kDailyGoalDescriptionWinSpeedTap = "dailyGoal.description.WinSpeedTap";
+  public const string kDailyGoalTitlePlaySpeedTap = "dailyGoal.title.PlaySpeedTap";
+  public const string kDailyGoalDescriptionPlaySpeedTap = "dailyGoal.description.PlaySpeedTap";
+  public const string kDailyGoalTitleWinSpeedTapHands = "dailyGoal.title.WinSpeedTapHands";
+  public const string kDailyGoalDescriptionWinSpeedTapHands = "dailyGoal.description.WinSpeedTapHands";
+  public const string kDailyGoalCompletedText = "dailyGoal.completedText";
+  public const string kDailyGoalTitleUnlockMeetCozmo = "dailyGoal.title.UnlockMeetCozmo";
+  public const string kDailyGoalDescriptionUnlockMeetCozmo = "dailyGoal.description.UnlockMeetCozmo";
+  public const string kDailyGoalTitleMeetNewFace = "dailyGoal.title.MeetNewFace";
+  public const string kDailyGoalDescriptionMeetNewFace = "dailyGoal.description.MeetNewFace";
+
+  #endregion
+
   #region FaceEnrollmentStrings
 
   public const string kFaceEnrollmentInstructions = "faceEnrollment.instructions";
@@ -237,15 +255,6 @@ public static class LocalizationKeys {
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";
   public const string kRequestSparkViewSparkunlockbutton = "requestSparkView.sparkunlockbutton";
   public const string kRequestSparkViewTreatCount = "requestSparkView.TreatCount";
-  public const string kDailyGoalTitleMissing = "dailyGoal.title.missing";
-  public const string kDailyGoalDescriptionMissing = "dailyGoal.description.missing";
-  public const string kDailyGoalTitleWinSpeedTap = "dailyGoal.title.WinSpeedTap";
-  public const string kDailyGoalDescriptionWinSpeedTap = "dailyGoal.description.WinSpeedTap";
-  public const string kDailyGoalTitlePlaySpeedTap = "dailyGoal.title.PlaySpeedTap";
-  public const string kDailyGoalDescriptionPlaySpeedTap = "dailyGoal.description.PlaySpeedTap";
-  public const string kDailyGoalTitleWinSpeedTapHands = "dailyGoal.title.WinSpeedTapHands";
-  public const string kDailyGoalDescriptionWinSpeedTapHands = "dailyGoal.description.WinSpeedTapHands";
-  public const string kDailyGoalCompletedText = "dailyGoal.completedText";
   public const string kLootStart = "loot.Start";
   public const string kLootMid = "loot.Mid";
   public const string kLootAlmost = "loot.Almost";

@@ -67,7 +67,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
     if (OnStartButton != null) {
       OnStartButton(true);
     }
-    RobotEngineManager.Instance.CurrentRobot.StartDemoWithEdge(true);
+    RobotEngineManager.Instance.CurrentRobot.WakeUp(true);
     HideStartButtons();
   }
 
@@ -75,7 +75,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
     if (OnStartButton != null) {
       OnStartButton(false);
     }
-    RobotEngineManager.Instance.CurrentRobot.StartDemoWithEdge(false);
+    RobotEngineManager.Instance.CurrentRobot.WakeUp(false);
     HideStartButtons();
   }
 

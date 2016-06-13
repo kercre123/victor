@@ -17,8 +17,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 23;
-const char* BUILD_INFO = "EP3F";
+u8 g_fixtureReleaseVersion = 25;
+const char* BUILD_INFO = "FOR TEST ONLY";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;
@@ -196,7 +196,7 @@ void WaitForDeviceOff(void)
   {
     while (g_isDevicePresent)
     {
-      // XXX: We used to send DMC_ACK commands continuously here to prevent auto-power-off
+      // Note: We used to send DMC_ACK commands continuously here to prevent auto-power-off
       ConsoleUpdate();
       DisplayUpdate();
     }
@@ -225,32 +225,6 @@ void WaitForDeviceOff(void)
   // When device is removed, restore fixture text
   SetFixtureText();
 }
-
-// Try to get a Device sitting on the charge contacts to enter debug mode
-// XXX: This code will need to be reworked for Cozmo
-#if 0
-void TryToEnterDiagnosticMode(void)
-{
-  u32 i;
-  int value;
-  u8* buffer = GetGlobalBuffer();
-
-  TestEnableTx();
-  TestPutChar(0xFF);
-  for (i = 0; i < 4; i++)
-    TestPutChar(DMC_ENTER);
-  
-  TestEnableRx();
-  value = TestGetCharWait(100);
-  if (value == DMC_ACK)
-  {
-    SlowPrintf("In diag mode..\r\n");
-    return;
-  }
-  
-  throw ERROR_ACK1;
-}
-#endif
 
 // Walk through tests one by one - logging to the PC and to the Device flash
 static void RunTests()
@@ -498,7 +472,6 @@ int main(void)
 
   SetFixtureText();
   
-  // XXX: Doesn't work on EP3 fixtures because CHGTX/CHGRX are wired backward
   SlowPutString("Initializing Test Port...\r\n");
   //InitTestPort(0);
 

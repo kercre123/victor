@@ -61,7 +61,7 @@ public interface IRobot : IDisposable {
 
   GameStatusFlag GameStatus { get; }
 
-  float BatteryPercent { get; }
+  float BatteryVoltage { get; }
 
   Dictionary<int, LightCube> LightCubes { get; }
 
@@ -294,7 +294,7 @@ public interface IRobot : IDisposable {
 
   void TransitionToNextDemoState();
 
-  void StartDemoWithEdge(bool demoWithEdge);
+  void WakeUp(bool withEdge);
 
   #endregion
 

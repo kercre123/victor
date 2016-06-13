@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Anki.Cozmo;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -142,6 +143,8 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void HandleOnUnlockRequestSuccess(Anki.Cozmo.UnlockId id, bool unlocked) {
+    GameEventManager.Instance.SendGameEventToEngine(
+      GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, id));
     _UnlockablesState[id] = unlocked;
   }
 

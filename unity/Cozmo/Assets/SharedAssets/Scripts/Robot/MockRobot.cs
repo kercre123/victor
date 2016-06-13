@@ -700,7 +700,7 @@ public class MockRobot : IRobot {
     private set;
   }
 
-  public float BatteryPercent {
+  public float BatteryVoltage {
     get { return 0.73f; }
   }
 
@@ -837,7 +837,7 @@ public class MockRobot : IRobot {
 
   }
 
-  public void StartDemoWithEdge(bool demoWithEdge) {
+  public void WakeUp(bool withEdge) {
 
   }
 

@@ -105,14 +105,12 @@ int main(int argc, char** argv) {
 	mont_from(RSA_DIFFIE_MONT, t2_b, t1);
 	print_hex(t2_b);
 
-	// Zero out unused space so we can do a memcmp
-	for (int i = t2_a.used; i < CELL_SIZE; i++) {
-		t2_a.digits[i] = 0;
-	}
-
-	for (int i = t2_b.used; i < CELL_SIZE; i++) {
-		t2_b.digits[i] = 0;
-	}
-
-	return memcmp(&t2_a, &t2_b, sizeof(big_num_t));
+  if (t2_a.used != t2_b.used) return 1;
+  if (t2_a.negative != t2_b.negative) return 2;
+	
+  for(int i = 0; i < t2_a.used; i++)
+  if (t2_a.digits[i] != t2_b.digits[i])
+  return 3;
+  
+  return 0;
 }

@@ -48,6 +48,14 @@ u8 code LED_PORT[] = {
 // Turn on a single LED (0-15)
 void LightOn(u8 i)
 {
+  // Init all LEDs to high-drive
+  P0CON = HIGH_DRIVE | 0;
+  P0CON = HIGH_DRIVE | 1;
+  P0CON = HIGH_DRIVE | 2;
+  P0CON = HIGH_DRIVE | 3;
+  P0CON = HIGH_DRIVE | 5;
+  P0CON = HIGH_DRIVE | 6;
+  
   if (IsCharger())      // Chargers are wired differently
     i += CHARGER_LED;
   LEDPORT = LED_PORT[i];
@@ -58,12 +66,12 @@ void LightOn(u8 i)
 typedef struct {
   u8 dir, port, value;
 } LedValue;
-static LedValue idata _leds[NUM_LEDS+1] _at_ 0x80;  // +1 for the terminator
+static LedValue idata _leds[NUM_LEDS+1] _at_ LED_START;  // +1 for the terminator
 
 // Set RGB LED values from _radioPayload[1..12]
-void LedSetValues()
+void LedSetValues(void idata *start)
 {
-  LedValue idata *led = _leds;
+  LedValue idata *led = start;
   u8 i, v, dir, left;
 
   i = 0;
@@ -140,7 +148,6 @@ TICK_ISR() using 1
   // Even if the LED was turned off this cycle, use the minimum RTC delay (2)
   if (lessthanpow2(howlong, 2))
   {
-    // XXX: Could support dimmer LEDs by scheduling T1/T0 ISR to turn it off
     LEDDIR = DEFDIR;        // Turn LED back off
     howlong = 2;
   }
@@ -171,16 +178,8 @@ TICK_ISR() using 1
 // Start LED driving and beat counting ISR - reset the chip to exit
 void LedInit(void)
 {
-  // Set all LEDs to high-drive
-  P0CON = HIGH_DRIVE | 0;
-  P0CON = HIGH_DRIVE | 1;
-  P0CON = HIGH_DRIVE | 2;
-  P0CON = HIGH_DRIVE | 3;
-  P0CON = HIGH_DRIVE | 5;
-  P0CON = HIGH_DRIVE | 6;
-  
   // Get ISR in sane state before starting it
-  LedSetValues();
+  LedSetValues(_leds);
 
   // Get LED IRQ up and running
   CLKCTRL = XOSC_ON;        // Leave XOSC on to to feed RC clk

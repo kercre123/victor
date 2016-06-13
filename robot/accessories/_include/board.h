@@ -2,9 +2,7 @@
 #ifndef BOARD_H__
 #define BOARD_H__
 
-// EP3 board pinout
-// Will change for FEP
-
+// Production pinout
 #define PWR_IDX 7
 #define PWR_BIT (1<<PWR_IDX)
 

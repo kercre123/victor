@@ -48,6 +48,7 @@ enum uint_8 GameEvent
   OnSimonCozmoWin,
   OnSimonPlayerWin,
   OnDailyGoalCompleted,
+  OnUnlockableEarned,
   Count, // Keep count at end.
 }
 

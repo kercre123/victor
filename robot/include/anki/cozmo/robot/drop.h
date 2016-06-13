@@ -51,7 +51,7 @@
 
 /// Maximum variable payload to RTIP
 // This is as much as we have time for without interfering with I2C timing on the RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (57)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (53)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,

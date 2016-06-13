@@ -159,6 +159,7 @@ static inline bool isBusy()
 
 static inline bool isReadBlocked()
 {
+  if (!clientConnected()) return false;
   return ((int)clientQueueAvailable() <= (int)sizeof(Anki::Cozmo::NVStorage::NVStorageBlob)) || (xPortGetFreeHeapSize() < 1680);
 }
 
