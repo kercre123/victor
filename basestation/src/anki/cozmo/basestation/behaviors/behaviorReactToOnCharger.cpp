@@ -38,7 +38,7 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   });
   
   SubscribeToTags({
-    GameToEngineTag::StartDemoWithEdge
+    GameToEngineTag::WakeUp
   });
   SubscribeToTags({
     EngineToGameTag::DemoState
@@ -48,7 +48,7 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
 // It's pretty easy for him to get nudged off and back on the charger, so make sure he has left the platform at least once
 bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.IsOnCharger() && _isReactionEnabled;
+  return _isOnCharger && _isReactionEnabled;
 }
 
 Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
@@ -61,7 +61,7 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 {
-  if( robot.IsOnCharger() && !_shouldStopBehavior )
+  if( _isOnCharger && !_shouldStopBehavior )
   {
     return Status::Running;
   }
@@ -73,7 +73,8 @@ bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::Messag
 {
   if(event.GetTag() == MessageEngineToGameTag::ChargerEvent)
   {
-    return event.Get_ChargerEvent().onCharger;
+    _isOnCharger = event.Get_ChargerEvent().onCharger;
+    return _isOnCharger;
   }
   
   return false;
@@ -81,7 +82,7 @@ bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::Messag
 
 void BehaviorReactToOnCharger::TransitionToSleepLoop(Robot& robot)
 {
-  if( robot.IsOnCharger() )
+  if( _isOnCharger )
   {
     StartActing(new PlayAnimationGroupAction(robot, kSleepLoopAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
   }
@@ -115,7 +116,7 @@ void BehaviorReactToOnCharger::AlwaysHandle(const GameToEngineEvent& event, cons
     // DEMO HACK ( obviously )
     // This is to make it more reliable in the demo that his wake up animation doesn't force him back
     // on the charger to go to sleep.
-    case GameToEngineTag::StartDemoWithEdge:
+    case GameToEngineTag::WakeUp:
     {
       _isReactionEnabled = false;
       break;
@@ -131,7 +132,7 @@ void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event
 {
   switch(event.GetData().GetTag())
   {
-    case GameToEngineTag::StartDemoWithEdge:
+    case GameToEngineTag::WakeUp:
     {
       _shouldStopBehavior = true;
       break;

@@ -39,6 +39,7 @@ namespace Anki {
     s32 CST_PlayPenFactoryTest::UpdateInternal()
     {
       if (!_testStarted) {
+        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("FactoryTest")));
         StartMovie("PlayPenFactoryTest");
