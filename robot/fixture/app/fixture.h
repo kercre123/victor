@@ -102,6 +102,6 @@ typedef enum
 #define ERROR_CUBE_NO_COMMUNICATION 701
 #define ERROR_CUBE_VERIFY_FAILED    702
 #define ERROR_CUBE_BLOCK_FAILED     703
-
+#define ERROR_CUBE_TYPE_CHANGE      704
 
 #endif

@@ -13,9 +13,8 @@
 #else
 #define PINC_CHGTX           11
 #define PINC_CHGRX           10
-#define PINB_SCL               9   // XXX: Pre-rev1 is backward for digital pot
-#define PINB_SDA               8
-#error This is no longer supported!
+#define PINB_SCL               8   // XXX: Reverse these for digital pot
+#define PINB_SDA               9
 #endif
 
 #define GPIOC_CHGTX          (1 << PINC_CHGTX)

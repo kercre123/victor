@@ -34,7 +34,8 @@ void AccelRead();
 bit AccelInit();
 
 // Set RGB LED values from _radioPayload[1..12]
-void LedSetValues();
+#define LED_START 0x80
+void LedSetValues(void idata *led);
 
 // Start LED ISR - this increases power consumption for connected mode
 void LedInit();
