@@ -100,7 +100,7 @@ def main(cli_args):
     "--configFile", generated_cfg_name,
     "--numRuns", str(options.numRuns),
     "--password", options.password
-    ]) == 0
+    ]) == 0 # assert webotsTest.main(...) == 0 failed
 
 
 if __name__ == '__main__':

@@ -744,6 +744,9 @@ def main(scriptArgs):
     num_of_total_tests = num_of_failed_tests + num_of_passed_tests
     UtilLog.info("Run #{0}".format(num_of_total_tests))
 
+    print "##teamcity[buildStatisticValue key='WebotsFailedTests' value='{0}']".format(num_of_failed_tests) # Number of tests that failed in one run
+    print "##teamcity[buildStatisticValue key='WebotsTotalTests' value='{0}']".format(num_of_failed_tests) # Number of tests in one run
+
   UtilLog.info(
     "{0}/{1} ({2:.1f}%) runs failed".format(num_of_failed_tests,
                                             num_of_total_tests,
