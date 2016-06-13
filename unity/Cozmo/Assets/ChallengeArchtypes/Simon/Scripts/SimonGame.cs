@@ -19,6 +19,7 @@ namespace Simon {
 
     private SimonGameConfig _Config;
 
+    public int MinSequenceLength { get { return _Config.MinSequenceLength; } }
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
 
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeats; } }

@@ -71,7 +71,6 @@ namespace Simon {
           else {
             SetScanPhase(ScanPhase.WaitForContinue);
           }
-          //SetScanPhase(ScanPhase.WaitForContinue);
         }
       }
       else if (_ScanPhase != ScanPhase.Error) {
@@ -191,11 +190,26 @@ namespace Simon {
 
     protected override void UpdateUI(int numValidCubes) {
       if (_ShowCozmoCubesSlide != null) {
-        _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
+
+        switch (numValidCubes) {
+        case 1:
+          // Start with lighting up the center specifically.
+          _ShowCozmoCubesSlide.LightUpCubes(new List<int> { 1 });
+          break;
+        case 2:
+          // Start with lighting up the center specifically.
+          _ShowCozmoCubesSlide.LightUpCubes(new List<int> { 1, 2 });
+          break;
+        default:
+          _ShowCozmoCubesSlide.LightUpCubes(numValidCubes);
+          break;
+        }
+
+        //_ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
         if (_ScanPhase != ScanPhase.Stopped) {
           _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
         }
-        // TODO: when done prototyping clean this up
+        // TODO: when done prototyping clean this up and move to setting phase.
         _Game.SharedMinigameView.EnableContinueButton(_ScanPhase == ScanPhase.WaitForContinue || _ScanPhase == ScanPhase.Stopped);
 
       }
@@ -216,8 +230,8 @@ namespace Simon {
         base.HandleContinueButtonClicked();
       }
     }
-    private void SetScanPhase(ScanPhase NextState) {
-      if (_ScanPhase != NextState) {
+    private void SetScanPhase(ScanPhase nextState) {
+      if (_ScanPhase != nextState) {
         // clean up previous
         if (_ScanPhase == ScanPhase.Error) {
           _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
@@ -231,28 +245,28 @@ namespace Simon {
         }
 
         // setup next state...
-        if (NextState == ScanPhase.WaitForContinue) {
+        if (nextState == ScanPhase.WaitForContinue) {
           _Game.SharedMinigameView.EnableContinueButton(true);
         }
-        else if (NextState == ScanPhase.NoCubesSeen) {
+        else if (nextState == ScanPhase.NoCubesSeen) {
           _Game.SharedMinigameView.EnableContinueButton(false);
         }
-        else if (NextState == ScanPhase.ScanLeft || NextState == ScanPhase.ScanCenter) {
+        else if (nextState == ScanPhase.ScanLeft || nextState == ScanPhase.ScanCenter) {
           _Game.SharedMinigameView.EnableContinueButton(false);
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * 45.0f, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
           _ShowCozmoCubesSlide.RotateCozmoImageTo(45.0f, 2.0f);
         }
-        else if (NextState == ScanPhase.ScanRight) {
+        else if (nextState == ScanPhase.ScanRight) {
           _Game.SharedMinigameView.EnableContinueButton(false);
           // Half speed since going further...
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * -90.0f, SimonGame.kTurnSpeed_rps / 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
           _ShowCozmoCubesSlide.RotateCozmoImageTo(-90.0f, 2.0f);
         }
-        else if (NextState == ScanPhase.Stopped) {
+        else if (nextState == ScanPhase.Stopped) {
           _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, 2.0f);
           _CurrentRobot.TurnTowardsObject(_SortedCubes[1], false);
         }
-        else if (NextState == ScanPhase.Error) {
+        else if (nextState == ScanPhase.Error) {
           _ShowCozmoCubesSlide = null;
           _Game.SharedMinigameView.EnableContinueButton(true);
           if (_SortedCubes.Count > 1) {
@@ -262,11 +276,10 @@ namespace Simon {
           _Game.SharedMinigameView.ShowWideGameStateSlide(
                                                      simonGame.SimonSetupErrorPrefab.gameObject, "simon_error_slide");
         }
-
-
-        _ScanPhase = NextState;
+        _ScanPhase = nextState;
       }
     }
+
     private void HandleTurnFinished(bool success) {
       // Stopped or Error could have taken over
       if (_ScanPhase == ScanPhase.ScanLeft) {
@@ -278,14 +291,15 @@ namespace Simon {
       else if (_ScanPhase == ScanPhase.ScanCenter) {
         SetScanPhase(ScanPhase.ScanLeft);
       }
-
     }
+
     protected override string GetWaitingForCubesText(int numCubes) {
       if (_ScanPhase == ScanPhase.NoCubesSeen || _ScanPhase == ScanPhase.WaitForContinue) {
         return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesPlaceCenter);
       }
       return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesScanning);
     }
+
     public override void Exit() {
       base.Exit();
     }

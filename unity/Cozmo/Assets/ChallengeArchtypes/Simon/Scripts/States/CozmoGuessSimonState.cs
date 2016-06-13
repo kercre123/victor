@@ -110,7 +110,7 @@ namespace Simon {
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
       _GameInstance.RaiseMiniGameWin(Localization.GetWithArgs(
-        LocalizationKeys.kSimonGameTextPatternLength, _CurrentSequence.Count));
+        LocalizationKeys.kSimonGameTextPatternLength, (_CurrentSequence.Count - _GameInstance.MinSequenceLength + 1)));
     }
   }
 }

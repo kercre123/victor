@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Anki.UI;
-using System.Collections;
+using System.Collections.Generic;
 using Cozmo;
 using Cozmo.UI;
 using DG.Tweening;
@@ -75,6 +75,20 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
       }
     }
     _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
+  }
+
+  public void LightUpCubes(List<int> cubeIndecies) {
+    for (int i = 0; i < _CubeImages.Length; i++) {
+      if (cubeIndecies.Contains(i)) {
+        _CubeImages[i].SetIcon(_InViewColor.uiSprite);
+        _CubeImages[i].SetAlpha(1f);
+      }
+      else {
+        _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
+        _CubeImages[i].SetAlpha(_OutOfViewAlpha);
+      }
+    }
+    _TransparentCubeContainer.gameObject.SetActive(cubeIndecies.Count == 0);
   }
 
   private void CreateCubes(int numCubesToShow, Sprite inViewSprite) {

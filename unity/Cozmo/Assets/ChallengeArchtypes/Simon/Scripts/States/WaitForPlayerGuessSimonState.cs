@@ -13,8 +13,18 @@ namespace Simon {
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
-    private const float _kTapBufferSeconds = 0f;
+    private const float _kTapBufferSeconds = 0.05f;
     private bool _IsAnimating = false;
+
+    List<CubeTapTime> _BadTapLists = new List<CubeTapTime>();
+    public class CubeTapTime {
+      public CubeTapTime(int setID, float setTimeStamp) {
+        id = setID;
+        timeStamp = setTimeStamp;
+      }
+      public float timeStamp;
+      public int id;
+    }
 
     public override void Enter() {
       base.Enter();
@@ -56,6 +66,13 @@ namespace Simon {
           }
           _TargetCube = -1;
         }
+        for (int i = 0; i < _BadTapLists.Count; ++i) {
+          if (_BadTapLists[i].timeStamp < Time.time) {
+            // This will clear the list and ready us for next time
+            DoBlockTap(_BadTapLists[i].id);
+            break;
+          }
+        }
       }
       else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
         _StartLightBlinkTime = -1;
@@ -68,7 +85,7 @@ namespace Simon {
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
       _GameInstance.RaiseMiniGameLose(Localization.GetWithArgs(
-        LocalizationKeys.kSimonGameTextPatternLength, _SequenceList.Count));
+        LocalizationKeys.kSimonGameTextPatternLength, (_SequenceList.Count - _GameInstance.MinSequenceLength + 1)));
     }
 
     private void PlayerLoseGame() {
@@ -94,20 +111,30 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
-      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime != -1) {
         return;
       }
+
+      // Just playing the ending animation
       if (_IsAnimating) {
         return;
       }
 
       // Only ignore incorrect taps from punching table, give the benifit of the doubt
-      if (_CurrentSequenceIndex < _SequenceList.Count &&
-          _TargetCube == _SequenceList[_CurrentSequenceIndex]) {
-        DAS.Event("Simon.GotTapsMultipleFrames", "Ignoring second tap in same frame");
-        return;
+      // correct ID, process immediately
+      if (id == _SequenceList[_CurrentSequenceIndex]) {
+        DoBlockTap(id);
       }
+      else {
+        // Add to a list and set some timers
+        _BadTapLists.Add(new CubeTapTime(id, Time.time + _kTapBufferSeconds));
+      }
+
+    }
+
+    private void DoBlockTap(int id) {
+      _BadTapLists.Clear();
+      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       _LastTappedTime = Time.time;
       _StartLightBlinkTime = Time.time;
 
