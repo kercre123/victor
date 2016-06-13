@@ -220,7 +220,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &11425640
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -555,6 +555,7 @@ MonoBehaviour:
   _UnlockedIconSprite: {fileID: 11468244}
   _BeginningCircuitySprite: {fileID: 11471226}
   _EndCircuitrySprite: {fileID: 11487054}
+  _ActionIndicator: {fileID: 11468690}
   _TileButton: {fileID: 11447044}
 --- !u!114 &11495658
 MonoBehaviour:
@@ -890,8 +891,8 @@ CanvasGroup:
   m_GameObject: {fileID: 110330}
   m_Enabled: 1
   m_Alpha: 1
-  m_Interactable: 0
-  m_BlocksRaycasts: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!1001 &100100000
 Prefab:

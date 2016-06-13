@@ -31,6 +31,10 @@ public class UnlockableInfo : ScriptableObject {
   public string TitleKey;
 
   [Cozmo.ItemId]
+  public string UpgradeCostItemId;
+  public int UpgradeCostAmountNeeded;
+
+  [Cozmo.ItemId]
   public string RequestTrickCostItemId;
   public int RequestTrickCostAmountNeeded;
 
@@ -38,6 +42,8 @@ public class UnlockableInfo : ScriptableObject {
   public string CoreUpgradeTintColorName;
 
   public Sprite CoreUpgradeIcon;
+
+  public int CubesRequired = 1;
 
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {

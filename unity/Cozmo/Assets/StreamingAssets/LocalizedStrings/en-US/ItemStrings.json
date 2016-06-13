@@ -29,5 +29,17 @@
   },
   "item.treat.plural": {
     "translation": "Sparks"
+  },
+  "item.genericHex.singular": {
+    "translation": "Code Fragment"
+  },
+  "item.genericHex.plural": {
+    "translation": "Code Fragments"
+  },
+  "item.cube.singular": {
+    "translation": "Cube"
+  },
+  "item.cube.plural": {
+    "translation": "Cubes"
   }
 }

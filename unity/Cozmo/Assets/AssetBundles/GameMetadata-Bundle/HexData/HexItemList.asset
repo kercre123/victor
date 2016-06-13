@@ -15,6 +15,3 @@ MonoBehaviour:
   - InventoryId: TestHexItem0
     HexSet: {fileID: 11400000, guid: eaad77c2f3e414104be77a3153e7d669, type: 2}
     TileColor: {r: 1, g: 0.76551723, b: 0, a: 1}
-  - InventoryId: TestHexItem1
-    HexSet: {fileID: 11400000, guid: eaad77c2f3e414104be77a3153e7d669, type: 2}
-    TileColor: {r: 0, g: 1, b: 0.95862055, a: 1}
