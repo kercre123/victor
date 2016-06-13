@@ -60,14 +60,14 @@ namespace FaceEnrollment {
       newView.ShowShelf();
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
-      _FaceListSlideInstance.OnDeleteEnrolledFace += HandleDeleteEnrolledFace;
+      _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
     }
 
     private void CleanupFaceListSlide() {
       _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested -= EditExisitingName;
-      _FaceListSlideInstance.OnDeleteEnrolledFace -= HandleDeleteEnrolledFace;
+      _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
       SharedMinigameView.HideShelf();
     }
 
@@ -155,6 +155,18 @@ namespace FaceEnrollment {
       }
       ShowFaceListSlide(SharedMinigameView);
       SharedMinigameView.HideSpinnerWidget();
+    }
+
+    // pop up a confirmation for deleting an enrolled face
+    private void RequestDeleteEnrolledFace(int faceID) {
+
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_NoText);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFace(faceID));
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+      alertView.TitleLocKey = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle, CurrentRobot.EnrolledFaces[faceID]);
+      // Listen for dialog close
     }
 
     private void HandleDeleteEnrolledFace(int faceID) {
