@@ -1789,6 +1789,7 @@ namespace Anki {
                 
                 // Get all Mfg test images and results
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
@@ -2459,6 +2460,26 @@ namespace Anki {
                        result.timestamps[12], result.timestamps[13], result.timestamps[14], result.timestamps[15] );
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults", "%s", buf);
+              
+              AppendToFile(_mfgDataSaveFile, buf);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_BirthCertificate:
+            {
+              BirthCertificate result;
+              if (recvdData->size() != MakeWordAligned(result.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+                break;
+              }
+              result.Unpack(recvdData->data(), result.Size());
+              
+              char buf[512];
+              snprintf(buf, sizeof(buf),
+                       "[BirthCertificate]\nYear: %u\nMonth: %u\nDay: %u\nHour: %d\nMin: %d\nSec: %d\n",
+                       result.year, result.month, result.day, result.hour, result.minute, result.second );
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.BirthCertificate", "%s", buf);
               
               AppendToFile(_mfgDataSaveFile, buf);
               break;
