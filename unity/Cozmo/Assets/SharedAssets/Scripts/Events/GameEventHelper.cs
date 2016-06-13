@@ -46,6 +46,17 @@ public class MinigameCompletedGameEvent : GameEventWrapper {
   }
 }
 
+public class UnlockableUnlockedGameEvent : GameEventWrapper {
+  public UnlockId Unlock;
+
+  public override void Init(GameEvent Enum, params object[] args) {
+    base.Init(Enum);
+    if (args.Length > 0 && args[0].GetType() == typeof(UnlockId)) {
+      Unlock = (UnlockId)args[0];
+    }
+  }
+
+}
 
 /// <summary>
 ///  Factory to create helper events so nothing has to think about them.
@@ -71,6 +82,7 @@ public class GameEventWrapperFactory {
     // Specific wrappers, otherwise just use the base class.
     Register(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, typeof(MinigameCompletedGameEvent));
     Register(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, typeof(MinigameCompletedGameEvent));
+    Register(GameEvent.OnUnlockableEarned, typeof(UnlockableUnlockedGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {

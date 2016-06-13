@@ -89,7 +89,6 @@ code u8 SETUP_OFF[] = {
 
 code u8 SETUP_TX_BEACON[] = {
   WREG | STATUS,        RX_DR | TX_DS | MAX_RT, // Clear IRQ status
-  WREG | CONFIG,        PWR_UP | EN_CRC | CRCO, // Power up TX with 16-bit CRC
   WREG | FLUSH_TX,      0,                      // Flush anything in the FIFO
   WREG | FLUSH_RX,      0,                      // Flush anything in the FIFO
   WREG | RF_SETUP,      RF_PWR1 | RF_PWR0,      // 1mbps, 0dB
@@ -99,8 +98,8 @@ code u8 SETUP_TX_BEACON[] = {
   WREG | SETUP_AW,      2,                      // Address width = 4
   WREG | RX_PW_P0,      10,                     // Expect a 10 byte reply
 
-  4, WREG|TX_ADDR,      0xca,0x5c,0xad,0xed,    // Broadcast TX address
-  4, WREG|RX_ADDR_P0,   0xca,0x11,0xab,0x1e,    // Private RX address
+  4, WREG|TX_ADDR,      0xca,0x5c,0xad,0xed,    // Broadcast TX address - last byte "ed" follows nRF rules
+  4, WREG|RX_ADDR_P0,   0xca,0x11,0xab,0x1e,    // Private RX address - last byte first on air
   0
 };
 code u8 SETUP_RX[] = {
@@ -113,17 +112,11 @@ bit RadioBeacon()
 {
   u8 gotPacket;
   
-  LightOn(1);   // XXX: For measuring standby timing
-  LightsOff();
-  
   // Start TX
-  // XXX-FEP:  Save some power by retaining the beacon
-  RadioSetup(SETUP_TX_BEACON);  
   RadioSetup(ADVERTISEMENT);
   
   // Wait for TX complete
   WUF = RFF = 0;
-
   RFCE = 1;
   PWRDWN = STANDBY;
   RFCE = 0;
@@ -133,7 +126,6 @@ bit RadioBeacon()
   
   // Listen for packet or timeout (either will wake us)
   RFF = 0;
-
   RFCE = 1;
   PWRDWN = STANDBY;
   RFCE = 0;
@@ -143,10 +135,8 @@ bit RadioBeacon()
   if (gotPacket)
     RadioRead((u8 idata *)SyncPkt, SyncLen);
   
-  // Power down radio again
-  LightOn(1);   // Just barely visible
+  // Power down radio again - this makes RFF 'forget'
   RadioSetup(SETUP_OFF);
-  LightsOff();
   RFCKEN = 0;
   
   return gotPacket;
@@ -162,7 +152,7 @@ code u8 SETUP_RX_HAND[] = {
 };
 code u8 SETUP_TX_HAND[] = {
   WREG | STATUS,        RX_DR | TX_DS | MAX_RT, // Clear IRQ status
-  4, WREG|TX_ADDR,      0xca,0x11,0xab,0x1e,    // Private TX address
+  4, WREG|TX_ADDR,      0xca,0x11,0xab,0x1e,    // Private TX address - last byte first on air
   WREG | CONFIG,        PWR_UP | EN_CRC | CRCO, // Power up TX with 16-bit CRC
   WREG | FLUSH_TX,      0,                      // Flush anything in the FIFO
   HAND_LEN,W_TX_PAYLOAD_NOACK,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -171,6 +161,7 @@ code u8 SETUP_TX_HAND[] = {
 
 extern u8 _hopBlackout;
 // Complete a handshake with the robot - hop, broadcast, listen, timeout
+// This function is only for OTA - hopping is not supported since we ran out of testing time
 bit RadioHandshake()
 {
   // Listen for packet or timeout
@@ -179,11 +170,10 @@ bit RadioHandshake()
   
   RFCE = 1;
   RFF = 0;
-  // XXX: EP3 version listens until watchdog expires
-  while (!RFF)
+  while (!RFF)    // Wait until contact, or watchdog kills us due to broken connection
     ;
   RFCE = 0;
-    
+  
   // Start TX, wait for TX complete
   RadioSetup(SETUP_TX_HAND);  
   RFCE = 1;

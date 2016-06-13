@@ -18,7 +18,7 @@ bool HeadDetect(void)
 {
   VBATMillivolts(3600);   // 3.6V is good for heads
   
-  // XXX: HORRIBLE EP1 HACK TIME - if we leave battery power enabled, the CPU will pull SWD high
+  // HORRIBLE PERMANENT HACK TIME - if we leave battery power enabled, the CPU will pull SWD high
   // Main problem is that power is always enabled, not exactly what we want
   EnableBAT();
   

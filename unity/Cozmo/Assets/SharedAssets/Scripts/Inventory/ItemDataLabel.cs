@@ -7,6 +7,9 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _CountLabel;
 
+      [SerializeField]
+      private UnityEngine.UI.Image _ItemIcon;
+
       [SerializeField, Cozmo.ItemId]
       private string _ItemId;
 
@@ -16,6 +19,16 @@ namespace Cozmo {
         playerInventory.ItemRemoved += HandleItemValueChanged;
         playerInventory.ItemCountSet += HandleItemValueChanged;
         _CountLabel.FormattingArgs = new object[] { GetItemNamePlural(), playerInventory.GetItemAmount(_ItemId) };
+
+        if (_ItemIcon != null) {
+          ItemData data = ItemDataConfig.GetData(_ItemId);
+          if (data != null) {
+            _ItemIcon.overrideSprite = data.Icon;
+          }
+          else {
+            _ItemIcon.enabled = false;
+          }
+        }
       }
 
       private void OnDestroy() {

@@ -87,10 +87,10 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
   { "FCC",  0x000000, g_EspUserEnd - g_EspUser, g_EspUser },
 #else
   { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
-  { "USER",  0x002000, g_EspUserEnd - g_EspUser, g_EspUser },
-  { "SAFE",  0x047000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
+  { "USER", 0x080000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "SAFE", 0x0c5000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
   { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
-  { "BLANK", 0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
+  { "BLANK",0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
 #endif
   { 0, 0, NULL }
 };
@@ -158,7 +158,7 @@ void DeinitEspressif(void)
   // Don't leave the Espressif powered, that's mean
   PIN_IN(GPIOA, PINA_TX);
   
-  // XXX: I'm at a loss who is driving PINA_BOOT high - but make sure it's not!
+  // Make sure PINA_BOOT is low (or not not driven), so power can fade
   PIN_RESET(GPIOA, PINA_BOOT);
 }
 

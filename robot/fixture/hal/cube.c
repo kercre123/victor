@@ -294,7 +294,7 @@ const u8 ESN_LOOKUP[150] = {
 
 
 // Get a radio-safe bit sequence
-// This assumes that MSB is the leading byte - reverse it if not true!
+// The MSB (last byte written) is the first byte out the wire
 static u32 GetRadioSequence()
 {
   // Make sure both the header and footer are in-range
@@ -311,7 +311,7 @@ static u32 GetRadioSequence()
     (ESN_LOOKUP[(bits>>0)  & 127] << 0) |
     (ESN_LOOKUP[(bits>>7)  & 127] << 8) |
     (ESN_LOOKUP[(bits>>14) & 127] << 16)|
-    (ESN_LOOKUP[(bits>>21) & 63]  << 24);
+    (ESN_LOOKUP[(bits>>21) & 63]  << 24);   // Last byte written has first 2 bits the same
   
   // For debug
   ConsolePrintf("cubeserial,%08x,%08x,\n", bits, bytes);
@@ -356,12 +356,11 @@ void ProgramCubeWithSerial()
     MicroWait(10000);
          
 #ifndef FCC
-    // XXX: Correctly set MSBs on to avoid packet errors - once you figure out WHICH IS THE MSB!
-    
     // Check serial number from (possibly) last time
     // We don't want to reserialize the same block
-    u32 serial;
-    CubeRead(0x3ff0, (u8*)&serial, 4);
+    u8 id[8];
+    CubeRead(0x3ff0, (u8*)&id, 8);    
+    u32 serial = *(u32*)id;
     serial = __REV(serial);   // Vandiver likes it stored in reverse
     SlowPrintf("Serial was: %08x\n", serial);
     if (serial != 0xffffffff)
@@ -372,11 +371,13 @@ void ProgramCubeWithSerial()
     
     // Patch accessory type/model: 0=charger, 1=cube1, etc
     int type = (g_fixtureType - FIXTURE_CHARGER_TEST);
+    if (type != (type & id[4]))
+      throw ERROR_CUBE_TYPE_CHANGE;
     cubeboot[0x3ff4] = type; 
     
     // Patch each copy of the serial number
-    Patch(cubeboot+0x3933, __REV(0xca11ab1e), serial);
-    Patch(cubeboot+0x394a, __REV(0xca11ab1e), serial);
+    Patch(cubeboot+0x3931, __REV(0xca11ab1e), serial);
+    Patch(cubeboot+0x3948, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x3ff0, 0xca11ab1e, __REV(serial));  // Reversed copy (thanks Vandiver)
 #endif
     
