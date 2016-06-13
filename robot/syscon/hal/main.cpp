@@ -168,7 +168,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(BODY_IDLE_OPERATING_MODE);
+  enterOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
   setupOperatingMode();
 
   Timer::start();
