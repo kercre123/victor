@@ -20,6 +20,5 @@ public class SimonGameConfig : MinigameConfigBase {
 
   public MusicStateWrapper BetweenRoundsMusic;
 
-  public Color CubeTooFarColor = new Color(1.0f, 1.0f, 0.0f);
   public Color CubeTooCloseColor = new Color(1.0f, 0.0f, 0.0f);
 }

@@ -7,38 +7,36 @@ namespace Simon {
     private enum ScannedSetupCubeState {
       Unknown,
       Seen,
-      TooFar,
       TooClose,
       Ready
     };
 
-    // TODO: move to real states if we're keeping this
-    // Right now it's one of 3 possible setups
-    private enum ScanState {
+    private enum ScanPhase {
       NoCubesSeen,
       WaitForContinue,
-      Scan,
+      ScanLeft,
+      ScanRight,
+      ScanCenter,
       Stopped,
+      Error,
     }
 
     private Dictionary<int, ScannedSetupCubeState> _SetupCubeState;
     private bool _CubesStateUpdated;
-    private Color _CubeTooFarColor;
     private Color _CubeTooCloseColor;
     private const string _kLookInPlaceForCubesBehaviorName = "simon_lookInPlaceForCubes";
 
-    private ScanState _ScanState;
+    private ScanPhase _ScanPhase;
 
     private int _NumValidCubes;
     // TODO: Keep GameIDs sorted instead
     List<LightCube> _SortedCubes = new List<LightCube>();
 
-    public ScanForInitialCubeState(State nextState, int cubesRequired, Color CubeTooFar, Color CubeTooClose) : base(nextState, cubesRequired) {
+    public ScanForInitialCubeState(State nextState, int cubesRequired, Color CubeTooClose) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
-      _CubeTooFarColor = CubeTooFar;
       _CubeTooCloseColor = CubeTooClose;
-      _ScanState = ScanState.NoCubesSeen;
+      _ScanPhase = ScanPhase.NoCubesSeen;
       _NumValidCubes = 0;
       _SortedCubes = new List<LightCube>();
     }
@@ -49,6 +47,8 @@ namespace Simon {
       foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
         lightCube.Value.SetLEDsOff();
       }
+
+      _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
     }
 
     // ignore base class events
@@ -60,38 +60,46 @@ namespace Simon {
 
     public override void Update() {
       // Intentionally avoid base class since that will only check currently visible cubes
-      if (_ScanState == ScanState.NoCubesSeen) {
-        if (_CurrentRobot.VisibleLightCubes.Count > 0) {
+      if (_ScanPhase == ScanPhase.NoCubesSeen) {
+        int visibleLightCount = _CurrentRobot.VisibleLightCubes.Count;
+        if (visibleLightCount > 0) {
           UpdateScannedCubes();
-          SetScanState(ScanState.WaitForContinue);
+          // If Cozmo can see all at once, we know it's an error, just tell them immediately.
+          if (visibleLightCount == _CubesRequired) {
+            SetScanPhase(ScanPhase.Error);
+          }
+          else {
+            SetScanPhase(ScanPhase.WaitForContinue);
+          }
+          //SetScanPhase(ScanPhase.WaitForContinue);
         }
       }
-      else {
+      else if (_ScanPhase != ScanPhase.Error) {
         UpdateScannedCubes();
         if (_Game.CubeIdsForGame.Count != _NumValidCubes || _CubesStateUpdated) {
           _NumValidCubes = _Game.CubeIdsForGame.Count;
           if (_NumValidCubes == _CubesRequired) {
-            SetScanState(ScanState.Stopped);
+            int readyCubes = 0;
+            int closeCubes = 0;
+            foreach (KeyValuePair<int, ScannedSetupCubeState> cubeState in _SetupCubeState) {
+              if (cubeState.Value == ScannedSetupCubeState.Ready) {
+                readyCubes++;
+              }
+              else if (cubeState.Value == ScannedSetupCubeState.TooClose) {
+                closeCubes++;
+              }
+            }
+            if (readyCubes == _CubesRequired) {
+              SetScanPhase(ScanPhase.Stopped);
+            }
+            else if (closeCubes != 0) {
+              SetScanPhase(ScanPhase.Error);
+            }
           }
           _CubesStateUpdated = false;
           UpdateUI(_NumValidCubes);
         }
       }
-    }
-
-    private LightCube GetClosestAvailableBlock(LightCube other) {
-      float minDist = float.MaxValue;
-      ObservedObject closest = null;
-      foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-        if (other != lightCube.Value) {
-          float d = Vector3.Distance(lightCube.Value.WorldPosition, other.WorldPosition);
-          if (d < minDist) {
-            minDist = d;
-            closest = lightCube.Value;
-          }
-        }
-      }
-      return closest as LightCube;
     }
 
     private void UpdateSetupLightState(int cubeID, ScannedSetupCubeState state) {
@@ -106,9 +114,6 @@ namespace Simon {
         else if (state == ScannedSetupCubeState.TooClose) {
           cube.SetLEDs(_CubeTooCloseColor);
         }
-        else if (state == ScannedSetupCubeState.TooFar) {
-          cube.SetLEDs(_CubeTooFarColor);
-        }
         else if (state == ScannedSetupCubeState.Ready) {
           cube.SetLEDs(Cozmo.CubePalette.ReadyColor.lightColor);
         }
@@ -117,13 +122,9 @@ namespace Simon {
 
     private ScannedSetupCubeState UpdateSetupCubeState(LightCube cubeA, LightCube cubeB) {
       float minDistMM = 60.0f;
-      float maxDistMM = 140.0f;
       float dist = Vector3.Distance(cubeA.WorldPosition, cubeB.WorldPosition);
       if (dist < minDistMM) {
         return ScannedSetupCubeState.TooClose;
-      }
-      else if (dist > maxDistMM) {
-        return ScannedSetupCubeState.TooFar;
       }
       return ScannedSetupCubeState.Ready;
     }
@@ -189,67 +190,104 @@ namespace Simon {
     }
 
     protected override void UpdateUI(int numValidCubes) {
-      _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
-
-      bool is_valid = false;
-      if (_NumValidCubes >= _CubesRequired) {
-        // Check the distance and number
-        _Game.SharedMinigameView.SetContinueButtonSupplementText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor);
-        int readyCubes = 0;
-        foreach (KeyValuePair<int, ScannedSetupCubeState> cubeState in _SetupCubeState) {
-          if (cubeState.Value == ScannedSetupCubeState.Ready) {
-            readyCubes++;
-          }
+      if (_ShowCozmoCubesSlide != null) {
+        _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
+        if (_ScanPhase != ScanPhase.Stopped) {
+          _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
         }
-        if (readyCubes >= _CubesRequired) {
-          is_valid = true;
-        }
+        // TODO: when done prototyping clean this up
+        _Game.SharedMinigameView.EnableContinueButton(_ScanPhase == ScanPhase.WaitForContinue || _ScanPhase == ScanPhase.Stopped);
 
-      }
-
-      if (!is_valid) {
-        _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
-      }
-      // TODO: when done prototyping clean this up
-      if (_ScanState == ScanState.WaitForContinue) {
-        _Game.SharedMinigameView.EnableContinueButton(true);
       }
       else {
-        _Game.SharedMinigameView.EnableContinueButton(is_valid);
+        _Game.SharedMinigameView.SetContinueButtonSupplementText("", Cozmo.UI.UIColorPalette.NeutralTextColor);
       }
 
     }
 
     protected override void HandleContinueButtonClicked() {
-      if (_ScanState == ScanState.WaitForContinue) {
-        SetScanState(ScanState.Scan);
+      if (_ScanPhase == ScanPhase.WaitForContinue) {
+        SetScanPhase(ScanPhase.ScanLeft);
+      }
+      else if (_ScanPhase == ScanPhase.Error) {
+        SetScanPhase(ScanPhase.NoCubesSeen);
       }
       else {
         base.HandleContinueButtonClicked();
       }
     }
+    private void SetScanPhase(ScanPhase NextState) {
+      if (_ScanPhase != NextState) {
+        // clean up previous
+        if (_ScanPhase == ScanPhase.Error) {
+          _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+          // Reset for another scan since hopefully they moved them
+          _Game.CubeIdsForGame.Clear();
+          _SetupCubeState.Clear();
+          // Reset to seen so we don't error out immediately again and scan for being too close...
+          foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+            lightCube.Value.SetLEDsOff();
+          }
+        }
 
-    // TODO: prototype only, once settled on setup method, move.
-    private void SetScanState(ScanState NextState) {
-      if (_ScanState != NextState) {
-        if (NextState == ScanState.WaitForContinue) {
+        // setup next state...
+        if (NextState == ScanPhase.WaitForContinue) {
           _Game.SharedMinigameView.EnableContinueButton(true);
         }
-        if (NextState == ScanState.Scan) {
-          // being in SetEnableFreeplayBehaviorChooser already forces us to be in the selection chooser.
-          _CurrentRobot.ExecuteBehaviorByName(_kLookInPlaceForCubesBehaviorName);
+        else if (NextState == ScanPhase.NoCubesSeen) {
           _Game.SharedMinigameView.EnableContinueButton(false);
         }
-        else if (NextState == ScanState.Stopped) {
-          _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        else if (NextState == ScanPhase.ScanLeft || NextState == ScanPhase.ScanCenter) {
+          _Game.SharedMinigameView.EnableContinueButton(false);
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * 45.0f, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(45.0f, 2.0f);
+        }
+        else if (NextState == ScanPhase.ScanRight) {
+          _Game.SharedMinigameView.EnableContinueButton(false);
+          // Half speed since going further...
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * -90.0f, SimonGame.kTurnSpeed_rps / 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(-90.0f, 2.0f);
+        }
+        else if (NextState == ScanPhase.Stopped) {
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, 2.0f);
           _CurrentRobot.TurnTowardsObject(_SortedCubes[1], false);
         }
-        _ScanState = NextState;
+        else if (NextState == ScanPhase.Error) {
+          _ShowCozmoCubesSlide = null;
+          _Game.SharedMinigameView.EnableContinueButton(true);
+          if (_SortedCubes.Count > 1) {
+            _CurrentRobot.TurnTowardsObject(_SortedCubes[1], false);
+          }
+          SimonGame simonGame = _Game as SimonGame;
+          _Game.SharedMinigameView.ShowWideGameStateSlide(
+                                                     simonGame.SimonSetupErrorPrefab.gameObject, "simon_error_slide");
+        }
+
+
+        _ScanPhase = NextState;
       }
+    }
+    private void HandleTurnFinished(bool success) {
+      // Stopped or Error could have taken over
+      if (_ScanPhase == ScanPhase.ScanLeft) {
+        SetScanPhase(ScanPhase.ScanRight);
+      }
+      else if (_ScanPhase == ScanPhase.ScanRight) {
+        SetScanPhase(ScanPhase.ScanCenter);
+      }
+      else if (_ScanPhase == ScanPhase.ScanCenter) {
+        SetScanPhase(ScanPhase.ScanLeft);
+      }
+
+    }
+    protected override string GetWaitingForCubesText(int numCubes) {
+      if (_ScanPhase == ScanPhase.NoCubesSeen || _ScanPhase == ScanPhase.WaitForContinue) {
+        return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesPlaceCenter);
+      }
+      return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesScanning);
     }
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     }
 
   }

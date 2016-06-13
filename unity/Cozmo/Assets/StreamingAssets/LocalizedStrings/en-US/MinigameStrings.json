@@ -114,6 +114,21 @@
   "simonGame.text.howToPlay": {
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
+
+
+  "simonGame.label.placeCenter": {
+    "translation": "Put 1 cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
+  },
+  "simonGame.label.waitingForCubes.placeCenter": {
+    "translation": "Waiting to see center cube..."
+  },
+  "simonGame.label.tooCloseError": {
+    "translation": "Move cubes further apart."
+  },
+  "simonGame.label.waitingForCubes.scanning": {
+    "translation": "Cozmo is checking the cubes..."
+  },
+
   "speedTap.roundsText": {
     "translation": "Round {0:N0}"
   },

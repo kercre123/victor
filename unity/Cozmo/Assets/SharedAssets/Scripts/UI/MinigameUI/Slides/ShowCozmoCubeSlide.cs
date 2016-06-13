@@ -4,6 +4,7 @@ using Anki.UI;
 using System.Collections;
 using Cozmo;
 using Cozmo.UI;
+using DG.Tweening;
 
 public class ShowCozmoCubeSlide : MonoBehaviour {
 
@@ -19,12 +20,17 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   [SerializeField]
   private RectTransform _TransparentCubeContainer;
 
+  [SerializeField]
+  private RectTransform _CozmoImageTransform;
+
   private IconProxy[] _CubeImages;
 
   private float _OutOfViewAlpha = 0.5f;
 
   private CubePalette.CubeColor _InViewColor;
   private CubePalette.CubeColor _OutViewColor;
+
+  private Tweener m_Tween;
 
   public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor) {
     _InViewColor = inViewColor;
@@ -33,9 +39,28 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     LightUpCubes(0);
     string locKeyToUse = (numCubesToShow > 1) ? LocalizationKeys.kMinigameLabelShowCubesPlural : LocalizationKeys.kMinigameLabelShowCubesSingular;
     _ShowCozmoCubesLabel.text = Localization.GetWithArgs(locKeyToUse,
-      numCubesToShow);
+          numCubesToShow);
 
     _TransparentCubeContainer.gameObject.SetActive(true);
+    m_Tween = null;
+  }
+
+  public void OnDestroy() {
+    if (m_Tween.IsActive()) {
+      m_Tween.Kill(false);
+      m_Tween = null;
+    }
+  }
+
+  public void RotateCozmoImageTo(float degrees, float duration) {
+    //Tweener move_tween = transform.DOLocalRotate(new Vector3(0, 0, final_angle), rotation_time, RotateMode.LocalAxisAdd);
+    //_CozmoImageTransform.DOLocalRotate(new Vector3(0, 0, degrees), 1.0f);
+    m_Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration, RotateMode.LocalAxisAdd);
+  }
+
+  //It's expected the called has already done a loc with args replacement
+  public void SetLabelText(string txt) {
+    _ShowCozmoCubesLabel.text = txt;
   }
 
   public void LightUpCubes(int numberCubes) {

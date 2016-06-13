@@ -122,12 +122,12 @@ public class InitialCubesState : State {
     }
   }
 
-  protected string GetCubesReadyText(int numCubes) {
+  protected virtual string GetCubesReadyText(int numCubes) {
     string cubesReadyKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelCubesReadyPlural : LocalizationKeys.kMinigameLabelCubesReadySingular;
     return Localization.GetWithArgs(cubesReadyKey, numCubes);
   }
 
-  protected string GetWaitingForCubesText(int numCubes) {
+  protected virtual string GetWaitingForCubesText(int numCubes) {
     string waitingForCubesKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelWaitingForCubesPlural : LocalizationKeys.kMinigameLabelWaitingForCubesSingular;
     return Localization.Get(waitingForCubesKey);
   }

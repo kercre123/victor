@@ -46,6 +46,12 @@ namespace Simon {
       get { return _SimonTurnSlidePrefab; }
     }
 
+    [SerializeField]
+    private Transform _SimonSetupErrorPrefab;
+    public Transform SimonSetupErrorPrefab {
+      get { return _SimonSetupErrorPrefab; }
+    }
+
     private static bool _sShowWrongCubeTap = false;
     private void HandleDebugShowWrongTapColor(System.Object setvar) {
       _sShowWrongCubeTap = !_sShowWrongCubeTap;
@@ -71,7 +77,7 @@ namespace Simon {
                                                   new WaitForNextRoundSimonState(_FirstPlayer)),
                                                   DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
-                                                                    _Config.CubeTooFarColor, _Config.CubeTooCloseColor);
+                                                                     _Config.CubeTooCloseColor);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);

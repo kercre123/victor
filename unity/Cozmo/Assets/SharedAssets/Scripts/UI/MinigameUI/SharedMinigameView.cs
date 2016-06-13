@@ -340,7 +340,7 @@ namespace Cozmo {
       }
 
       private string ComposeDasViewName(string slideName) {
-        return string.Format("{0}_{1}", DASEventViewName, 
+        return string.Format("{0}_{1}", DASEventViewName,
           string.IsNullOrEmpty(slideName) ? "no_slide" : slideName);
       }
 
@@ -443,7 +443,7 @@ namespace Cozmo {
         get {
           if (_CozmoScoreWidgetInstance == null) {
             _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
-              _CozmoPortraitSprite);            
+              _CozmoPortraitSprite);
           }
           return _CozmoScoreWidgetInstance;
         }
@@ -458,7 +458,7 @@ namespace Cozmo {
         get {
           if (_PlayerScoreWidgetInstance == null) {
             _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
-              _PlayerPortraitSprite);            
+              _PlayerPortraitSprite);
           }
           return _PlayerScoreWidgetInstance;
         }
@@ -657,15 +657,15 @@ namespace Cozmo {
 
       public string InfoTitleText {
         get { return _InfoTitleTextLabel.text; }
-        set { 
+        set {
           _InfoTitleLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
-          _InfoTitleTextLabel.text = value; 
+          _InfoTitleTextLabel.text = value;
         }
       }
 
       public void ShowNarrowInfoTextSlideWithKey(string localizationKey, TweenCallback endInTweenCallback = null) {
         _InfoTextSlideLayoutElement.gameObject.SetActive(true);
-        GameObject slide = ShowGameStateSlide("info_slide_" + localizationKey, _InfoTextSlidePrefab.gameObject, 
+        GameObject slide = ShowGameStateSlide("info_slide_" + localizationKey, _InfoTextSlidePrefab.gameObject,
                              _InfoTextGameSlideContainer, endInTweenCallback);
         Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
         textLabel.text = Localization.Get(localizationKey);

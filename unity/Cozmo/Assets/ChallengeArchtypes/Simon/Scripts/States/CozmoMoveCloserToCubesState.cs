@@ -29,7 +29,6 @@ namespace Simon {
       // Wait until we get to goal, shouldn't continue
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
-      _GameInstance.SharedMinigameView.HideShelf();
       _GameInstance.SharedMinigameView.EnableContinueButton(false);
       _GameInstance.SharedMinigameView.HideMiddleBackground();
 

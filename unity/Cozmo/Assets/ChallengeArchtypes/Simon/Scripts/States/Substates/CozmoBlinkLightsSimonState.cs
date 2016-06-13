@@ -37,13 +37,6 @@ namespace Simon {
       }
     }
 
-    /*private void HandleStartAnimationComplete(bool success) {
-      int cubeId = _TargetCube.ID;
-      SimonGame game = (SimonGame)_StateMachine.GetGame();
-      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(game.GetAudioForBlock(cubeId));
-      game.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(cubeId));
-    }*/
-
     private void HandleEndAnimationComplete(bool success) {
       _StateMachine.PopState();
     }

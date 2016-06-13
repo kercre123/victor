@@ -125,6 +125,10 @@ public static class LocalizationKeys {
   public const string kSimonGameLabelStepsLeft = "simonGame.label.stepsLeft";
   public const string kSimonGameTextPatternLength = "simonGame.text.patternLength";
   public const string kSimonGameTextHowToPlay = "simonGame.text.howToPlay";
+  public const string kSimonGameLabelPlaceCenter = "simonGame.label.placeCenter";
+  public const string kSimonGameLabelWaitingForCubesPlaceCenter = "simonGame.label.waitingForCubes.placeCenter";
+  public const string kSimonGameLabelTooCloseError = "simonGame.label.tooCloseError";
+  public const string kSimonGameLabelWaitingForCubesScanning = "simonGame.label.waitingForCubes.scanning";
   public const string kSpeedTapRoundsText = "speedTap.roundsText";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
