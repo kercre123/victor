@@ -55,6 +55,7 @@ namespace FaceEnrollment {
     }
 
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      newView.ShowQuitButton();
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
       newView.ShowShelf();
@@ -77,12 +78,18 @@ namespace FaceEnrollment {
       _FaceIDToEdit = faceID;
       _FaceOldNameEdit = exisitingName;
 
+      SharedMinigameView.ShowBackButton(() => ShowFaceListSlide(SharedMinigameView));
       CleanupFaceListSlide();
     }
 
-    private void EnterNameForNewFace() {
+    private void EnterNameForNewFace(string optionalExistingName = "") {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
 
+      if (string.IsNullOrEmpty(optionalExistingName) == false) {
+        _EnterNameSlideInstance.SetNameInputField(optionalExistingName);
+      }
+
+      SharedMinigameView.ShowBackButton(() => ShowFaceListSlide(SharedMinigameView));
       CleanupFaceListSlide();
     }
 
@@ -101,6 +108,11 @@ namespace FaceEnrollment {
       SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
       SharedMinigameView.ShowShelf();
       SharedMinigameView.ShowSpinnerWidget();
+
+      SharedMinigameView.ShowBackButton(() => {
+        EnterNameForNewFace(name);
+        SharedMinigameView.HideSpinnerWidget();
+      });
     }
 
     private void HandleUpdatedNameEntered(string newName) {

@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22480472}
   - 114: {fileID: 11411752}
   m_Layer: 5
-  m_Name: QuickQuitMiniGameButton
+  m_Name: BackButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -40,10 +40,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 167454}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 875022cbacd2a44ecb49f4e496a62c4e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1858b1344021b468a815175863f89c97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _QuickQuitButtonInstance: {fileID: 0}
+  _BackButtonInstance: {fileID: 0}
 --- !u!114 &11467228
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -59,7 +59,7 @@ MonoBehaviour:
   ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Cozmo.MinigameWidgets.QuickQuitMinigameButton:_QuickQuitButtonInstance
+    FieldName: Cozmo.MinigameWidgets.BackButton:_BackButtonInstance
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: ButtonIcon
