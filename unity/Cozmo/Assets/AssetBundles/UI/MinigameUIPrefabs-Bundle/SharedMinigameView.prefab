@@ -607,8 +607,7 @@ MonoBehaviour:
   _OverlayBackgroundImage: {fileID: 11419702}
   _QuitGameButtonPrefab: {fileID: 11462868, guid: 5cfc3c18e14be4897ab6b17b0035f685,
     type: 2}
-  _QuickQuitGameButtonPrefab: {fileID: 11411752, guid: 62b1176b20cd5466bb8ffd57337a9a8b,
-    type: 2}
+  _BackButtonPrefab: {fileID: 11411752, guid: 62b1176b20cd5466bb8ffd57337a9a8b, type: 2}
   _TitleWidgetPrefab: {fileID: 11452892, guid: 62681a27bea6f49c3b1874082b891f74, type: 2}
   _CozmoStatusPrefab: {fileID: 11442220, guid: cf9f13de2c8374a4789d98c4120fb2e9, type: 2}
   _ChallengeProgressWidgetPrefab: {fileID: 11418008, guid: 1f104ca012b8a4d35b83f167e041a8a4,

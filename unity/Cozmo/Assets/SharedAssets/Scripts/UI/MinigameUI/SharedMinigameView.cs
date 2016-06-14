@@ -64,9 +64,8 @@ namespace Cozmo {
       private QuitMinigameButton _QuitButtonInstance;
 
       [SerializeField]
-      private QuickQuitMinigameButton _QuickQuitGameButtonPrefab;
-
-      private QuickQuitMinigameButton _QuickQuitButtonInstance;
+      private BackButton _BackButtonPrefab;
+      private BackButton _BackButtonInstance;
 
       [SerializeField]
       private ChallengeTitleWidget _TitleWidgetPrefab;
@@ -326,8 +325,8 @@ namespace Cozmo {
           _QuitButtonInstance.DASEventViewController = currentViewName;
         }
 
-        if (_QuickQuitButtonInstance != null) {
-          _QuickQuitButtonInstance.DASEventViewController = currentViewName;
+        if (_BackButtonInstance != null) {
+          _BackButtonInstance.DASEventViewController = currentViewName;
         }
 
         if (_HowToPlayButtonInstance != null) {
@@ -340,7 +339,7 @@ namespace Cozmo {
       }
 
       private string ComposeDasViewName(string slideName) {
-        return string.Format("{0}_{1}", DASEventViewName, 
+        return string.Format("{0}_{1}", DASEventViewName,
           string.IsNullOrEmpty(slideName) ? "no_slide" : slideName);
       }
 
@@ -443,7 +442,7 @@ namespace Cozmo {
         get {
           if (_CozmoScoreWidgetInstance == null) {
             _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
-              _CozmoPortraitSprite);            
+              _CozmoPortraitSprite);
           }
           return _CozmoScoreWidgetInstance;
         }
@@ -458,7 +457,7 @@ namespace Cozmo {
         get {
           if (_PlayerScoreWidgetInstance == null) {
             _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
-              _PlayerPortraitSprite);            
+              _PlayerPortraitSprite);
           }
           return _PlayerScoreWidgetInstance;
         }
@@ -487,20 +486,27 @@ namespace Cozmo {
       #region Quit Button
 
       public void ShowQuitButton() {
+        HideBackButton();
         CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab, ContentLayer.Middle);
         _QuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
       }
 
-      public void ShowBackButton() {
-        CreateWidgetIfNull<QuickQuitMinigameButton>(ref _QuickQuitButtonInstance, _QuickQuitGameButtonPrefab, ContentLayer.Middle);
-        _QuickQuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
-        _QuickQuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
+      public void ShowBackButton(BackButton.BackButtonHandler backTapped) {
+        HideQuitButton();
+        CreateWidgetIfNull<BackButton>(ref _BackButtonInstance, _BackButtonPrefab, ContentLayer.Middle);
+        _BackButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
+        _BackButtonInstance.HandleBackTapped = new BackButton.BackButtonHandler(backTapped);
       }
 
       public void HideBackButton() {
-        HideWidget(_QuickQuitButtonInstance);
-        _QuickQuitButtonInstance = null;
+        HideWidget(_BackButtonInstance);
+        _BackButtonInstance = null;
+      }
+
+      public void HideQuitButton() {
+        HideWidget(_QuitButtonInstance);
+        _QuitButtonInstance = null;
       }
 
       private void HandleQuitConfirmed() {
@@ -657,15 +663,15 @@ namespace Cozmo {
 
       public string InfoTitleText {
         get { return _InfoTitleTextLabel.text; }
-        set { 
+        set {
           _InfoTitleLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
-          _InfoTitleTextLabel.text = value; 
+          _InfoTitleTextLabel.text = value;
         }
       }
 
       public void ShowNarrowInfoTextSlideWithKey(string localizationKey, TweenCallback endInTweenCallback = null) {
         _InfoTextSlideLayoutElement.gameObject.SetActive(true);
-        GameObject slide = ShowGameStateSlide("info_slide_" + localizationKey, _InfoTextSlidePrefab.gameObject, 
+        GameObject slide = ShowGameStateSlide("info_slide_" + localizationKey, _InfoTextSlidePrefab.gameObject,
                              _InfoTextGameSlideContainer, endInTweenCallback);
         Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
         textLabel.text = Localization.Get(localizationKey);

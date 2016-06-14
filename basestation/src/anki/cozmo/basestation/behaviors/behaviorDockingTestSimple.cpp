@@ -47,7 +47,8 @@ namespace Anki {
     CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest.MaxXAwayFromPreDock_mm",      30);
     CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest.MaxYAwayFromPreDock_mm",      50);
     CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest.MaxAngleAwayFromPreDock_deg", 10);
-    CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest.DriveToAndPickup",            false);
+    CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest.DriveToAndPickup",            true);
+    CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest.RollInsteadOfPickup",         false);
     
     static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
     static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
@@ -67,6 +68,7 @@ namespace Anki {
     BehaviorDockingTestSimple::BehaviorDockingTestSimple(Robot& robot, const Json::Value& config)
     : IBehavior(robot, config)
     , _initialVisionMarker(Vision::MARKER_UNKNOWN)
+    , _markerBeingSeen(Vision::MARKER_UNKNOWN)
     , _cubePlacementPose(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin())
     , _path("temp/dockingTestSimple.txt")
     {
@@ -222,8 +224,74 @@ namespace Anki {
           _numDockingRetries = 0;
           _failedCurrentAttempt = false;
           _attemptStartTime = robot.GetRobotState().lastImageTimeStamp;
-          SetCurrState(State::PickupLow);
+          
+          if(kRollInsteadOfPickup)
+          {
+            SetCurrState(State::Roll);
+          }
+          else
+          {
+            SetCurrState(State::PickupLow);
+          }
           _numSawObject = 0;
+          break;
+        }
+        case State::Roll:
+        {
+          if(_blockObjectIDPickup.IsSet())
+          {
+            _initialCubePose = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup)->GetPose();
+            _initialRobotPose = robot.GetPose();
+            
+            ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            Block* block = dynamic_cast<Block*>(object);
+            Pose3d junk;
+            _initialVisionMarker = const_cast<Vision::KnownMarker&>(block->GetTopMarker(junk));
+            
+           
+            DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::ROLLING);
+            driveAction->SetMotionProfile(_motionProfile);
+            StartActing(robot, driveAction,
+                        [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
+                          if(result == ActionResult::SUCCESS)
+                          {
+                            _initialRobotPose = robot.GetPose();
+                            
+                            RollObjectAction* action = new RollObjectAction(robot, _blockObjectIDPickup);
+                            action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+                            StartActing(robot, action,
+                                        [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
+                                          if (result != ActionResult::SUCCESS) {
+                                            if(_numSawObject < 5)
+                                            {
+                                              EndAttempt(robot, result, "RollNotSeeingObject", true);
+                                            }
+                                            else
+                                            {
+                                              EndAttempt(robot, result, "Roll", true);
+                                            }
+                                            return false;
+                                          }
+                                          SetCurrState(State::Reset);
+                                          return true;
+                                        });
+                            return true;
+                          }
+                          else
+                          {
+                            EndAttempt(robot, result, "DriveToObject", true);
+                            return false;
+                          }
+                          return false;
+                        });
+           
+          }
+          else
+          {
+            Write("\nPickupBlockID never set");
+            _yellForHelp = true;
+            SetCurrStateAndFlashLights(State::ManualReset, robot);
+          }
           break;
         }
         case State::PickupLow:
@@ -235,24 +303,39 @@ namespace Anki {
           
             if(kDriveToAndPickupBlock)
             {
-              DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectIDPickup);
-              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
-              action->SetMotionProfile(_motionProfile);
-              StartActing(robot, action,
-                          [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                            if (result != ActionResult::SUCCESS) {
-                              if(_numSawObject < 5)
+              DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::DOCKING);
+              driveAction->SetMotionProfile(_motionProfile);
+              StartActing(robot, driveAction,
+                          [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
+                              if(result == ActionResult::SUCCESS)
                               {
-                                EndAttempt(robot, result, "PickupNotSeeingObject", true);
+                                _initialRobotPose = robot.GetPose();
+                                PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
+                                action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+                                StartActing(robot, action,
+                                            [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
+                                              if (result != ActionResult::SUCCESS) {
+                                                if(_numSawObject < 5)
+                                                {
+                                                  EndAttempt(robot, result, "PickupNotSeeingObject", true);
+                                                }
+                                                else
+                                                {
+                                                  EndAttempt(robot, result, "Pickup", true);
+                                                }
+                                                return false;
+                                              }
+                                              SetCurrState(State::PlaceLow);
+                                              return true;
+                                            });
+                                return true;
                               }
                               else
                               {
-                                EndAttempt(robot, result, "Pickup", true);
+                                EndAttempt(robot, result, "DriveToObject", true);
+                                return false;
                               }
-                              return false;
-                            }
-                            SetCurrState(State::PlaceLow);
-                            return true;
+                            return false;
                           });
             }
             else
@@ -321,7 +404,7 @@ namespace Anki {
           std::vector<std::pair<Quad2f, ObjectID> > obstacles;
           robot.GetBlockWorld().GetObstacles(obstacles);
           aObject->GetCurrentPreActionPoses(preActionPoses,
-                                            {PreActionPose::DOCKING},
+                                            {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                             {_initialVisionMarker.GetCode()},
                                             obstacles,
                                             nullptr);
@@ -331,7 +414,29 @@ namespace Anki {
             PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "Found %i preActionPoses for marker %s",
                              (int)preActionPoses.size(),
                              _initialVisionMarker.GetCodeName());
-            return Status::Failure;
+            
+            // If we are rolling and we can't find any preAction poses it means the block was not rolled
+            // so get preActionPoses for the marker we are currently seeing
+            if(kRollInsteadOfPickup)
+            {
+              aObject->GetCurrentPreActionPoses(preActionPoses,
+                                                {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
+                                                {_markerBeingSeen.GetCode()},
+                                                obstacles,
+                                                nullptr);
+              
+              if(preActionPoses.size() != 1)
+              {
+                PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "Found %i preActionPoses for marker %s",
+                                 (int)preActionPoses.size(),
+                                 _markerBeingSeen.GetCodeName());
+                return Status::Failure;
+              }
+            }
+            else
+            {
+              return Status::Failure;
+            }
           }
           
           Pose3d preActionPose = preActionPoses.front().GetPose();
@@ -478,6 +583,8 @@ namespace Anki {
           return "Init";
         case State::Inactive:
           return "Inactive";
+        case State::Roll:
+          return "Roll";
         case State::PickupLow:
           return "PickupLow";
         case State::PlaceLow:
@@ -624,6 +731,19 @@ namespace Anki {
         if(_blockObjectIDPickup.IsSet() && _blockObjectIDPickup == objectID)
         {
           _numSawObject++;
+          
+          std::vector<const Vision::KnownMarker*> observedMarkers;
+          oObject->GetObservedMarkers(observedMarkers);
+          if(observedMarkers.size() == 1)
+          {
+            _markerBeingSeen = observedMarkers.front()->GetCode();
+          }
+          else
+          {
+            PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
+            _yellForHelp = true;
+            END_TEST_IN_HANDLER(ActionResult::FAILURE_ABORT, "SawMoreThanOneMarkerOnInit");
+          }
           return;
         }
         else if(!_blockObjectIDPickup.IsSet())
@@ -777,10 +897,10 @@ namespace Anki {
       
       std::stringstream ss;
       ss << "*****************\n";
-      ss << "Successful Runs: " << _numAttempts-_numFails << " (";
-      ss << ((_numAttempts-_numFails)/(1.0*_numAttempts))*100 << "%)\n";
-      ss << "Failed Runs: " << _numFails << " (" << (_numFails/(1.0*_numAttempts))*100 << "%)\n";
-      ss << "Total Runs: " << _numAttempts;
+      ss << "Successful Runs: " << _numAttempts-_numFails+_numExtraAttemptsDueToFailure << " (";
+      ss << ((_numAttempts-_numFails+_numExtraAttemptsDueToFailure)/(1.0*_numAttempts+_numExtraAttemptsDueToFailure))*100 << "%)\n";
+      ss << "Failed Runs: " << _numFails << " (" << (_numFails/(1.0*_numAttempts+_numExtraAttemptsDueToFailure))*100 << "%)\n";
+      ss << "Total Runs: " << _numAttempts+_numExtraAttemptsDueToFailure;
       Write(ss.str());
       Write("=====End DockingTestSimple=====");
     }

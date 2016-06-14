@@ -7,6 +7,10 @@ namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
     [SerializeField]
+    private FaceEnrollmentListSlide _FaceListSlidePrefab;
+    private FaceEnrollmentListSlide _FaceListSlideInstance;
+
+    [SerializeField]
     private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
@@ -20,25 +24,17 @@ namespace FaceEnrollment {
 
     private string _NameForFace;
 
+    private int _FaceIDToEdit;
+    private string _FaceOldNameEdit;
+
+    private int _FaceIDToEnroll;
+
     private int _FixedFaceID = -1;
 
     private bool _UseFixedFaceID = false;
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // make cozmo look up
-      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
-    }
-
-    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
-      base.InitializeView(newView, data);
-      _EnterNameSlideInstance = newView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide", NameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
-    }
-
-    public void NameInputSlideInDone() {
-      _EnterNameSlideInstance.RegisterInputFocus();
-      _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
-    }
-
+    // selects if we should save to the actual robot or only keep faces
+    // for this session. used by press demo to not save to the actual robot.
     public void SetSaveToRobot(bool saveToRobot) {
       _SaveToRobot = saveToRobot;
     }
@@ -48,11 +44,87 @@ namespace FaceEnrollment {
       _UseFixedFaceID = true;
     }
 
-    private void HandleNameEntered(string name) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
+      // make cozmo look up
+      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
+    }
+
+    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
+      base.InitializeView(newView, data);
+      ShowFaceListSlide(newView);
+    }
+
+    private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      newView.ShowQuitButton();
+      _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
+      _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
+      newView.ShowShelf();
+      _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
+      _FaceListSlideInstance.OnEditNameRequested += EditExistingName;
+      _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
+      newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
+    }
+
+    private void CleanupFaceListSlide() {
+      _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
+      _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
+      _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
+      SharedMinigameView.HideShelf();
+    }
+
+    private void EditExistingName(int faceID, string exisitingName) {
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+      _EnterNameSlideInstance.SetNameInputField(exisitingName);
+      _FaceIDToEdit = faceID;
+      _FaceOldNameEdit = exisitingName;
+
+      SharedMinigameView.ShowBackButton(() => ShowFaceListSlide(SharedMinigameView));
+      CleanupFaceListSlide();
+    }
+
+    private void EnterNameForNewFace(string optionalPrefilledName = "") {
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+
+      if (string.IsNullOrEmpty(optionalPrefilledName) == false) {
+        _EnterNameSlideInstance.SetNameInputField(optionalPrefilledName);
+      }
+
+      SharedMinigameView.ShowBackButton(() => ShowFaceListSlide(SharedMinigameView));
+      CleanupFaceListSlide();
+    }
+
+    private void NewNameInputSlideInDone() {
+      _EnterNameSlideInstance.RegisterInputFocus();
+      _EnterNameSlideInstance.OnNameEntered += HandleNewNameEntered;
+    }
+
+    private void EditNameInputSlideInDone() {
+      _EnterNameSlideInstance.RegisterInputFocus();
+      _EnterNameSlideInstance.OnNameEntered += HandleUpdatedNameEntered;
+    }
+
+    private void HandleNewNameEntered(string name) {
       _NameForFace = name;
       SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
       SharedMinigameView.ShowShelf();
       SharedMinigameView.ShowSpinnerWidget();
+
+      SharedMinigameView.ShowBackButton(() => {
+        EnterNameForNewFace(name);
+        SharedMinigameView.HideSpinnerWidget();
+      });
+    }
+
+    private void HandleUpdatedNameEntered(string newName) {
+
+      // TODO: Check for confirmation by engine
+      CurrentRobot.EnrolledFaces[_FaceIDToEdit] = newName;
+
+      RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
+
+      // TODO: manually trigger say new name?
+
+      EditOrEnrollFaceComplete(true);
     }
 
     private void HandleInstructionsSlideEntered() {
@@ -72,6 +144,7 @@ namespace FaceEnrollment {
       }
 
       CurrentRobot.EnrollNamedFace(id, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
+      _FaceIDToEnroll = id;
       _AttemptedEnrollFace = true;
     }
 
@@ -81,10 +154,38 @@ namespace FaceEnrollment {
         // TODO: Retry or notify failure or something?
       }
       else {
+
+        CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
+      }
+      EditOrEnrollFaceComplete(success);
+
+    }
+
+    private void EditOrEnrollFaceComplete(bool success) {
+      if (success) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
       }
+      ShowFaceListSlide(SharedMinigameView);
+      SharedMinigameView.HideSpinnerWidget();
+    }
 
-      base.RaiseMiniGameQuit();
+    // pop up a confirmation for deleting an enrolled face
+    private void RequestDeleteEnrolledFace(int faceID) {
+
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_NoText);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFace(faceID));
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+      alertView.TitleLocKey = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle, CurrentRobot.EnrolledFaces[faceID]);
+      // Listen for dialog close
+    }
+
+    private void HandleDeleteEnrolledFace(int faceID) {
+      RobotEngineManager.Instance.CurrentRobot.EraseEnrolledFaceByID(faceID);
+      // TODO: confirm deletion from engine
+      RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Remove(faceID);
+      _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
     }
 
     protected override void CleanUpOnDestroy() {

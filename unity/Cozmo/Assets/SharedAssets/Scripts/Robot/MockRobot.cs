@@ -25,6 +25,9 @@ public class MockRobot : IRobot {
       defaultValues.Add((Anki.Cozmo.UnlockId)i, true);
     }
     UnlockablesManager.Instance.OnConnectLoad(defaultValues);
+    _EnrolledFaces.Add(1, "Alice");
+    _EnrolledFaces.Add(2, "Bob");
+    _EnrolledFaces.Add(3, "Carol");
   }
 
   public void SetLocalBusyTimer(float localBusyTimer) {
@@ -142,7 +145,7 @@ public class MockRobot : IRobot {
   }
 
   public void HandleObjectConnectionState(ObjectConnectionState message) {
-    
+
   }
 
   public void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
@@ -261,7 +264,7 @@ public class MockRobot : IRobot {
   }
 
   public void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-
+    QueueCallback(0.5f, callback);
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -724,6 +727,17 @@ public class MockRobot : IRobot {
     }
   }
 
+  private Dictionary<int, string> _EnrolledFaces = new Dictionary<int, string>();
+
+  public Dictionary<int, string> EnrolledFaces {
+    get {
+      return _EnrolledFaces;
+    }
+    set {
+      _EnrolledFaces = value;
+    }
+  }
+
   public int FriendshipPoints {
     get;
     private set;
@@ -844,6 +858,14 @@ public class MockRobot : IRobot {
   }
 
   public void EraseAllEnrolledFaces() {
+
+  }
+
+  public void EraseEnrolledFaceByID(int faceID) {
+
+  }
+
+  public void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName) {
 
   }
 

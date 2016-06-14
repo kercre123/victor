@@ -193,7 +193,7 @@ namespace Anki {
         bool connectWithProfiler = false;
         int i = 0;
         
-		while (i < argv.Length) {
+		    while (i < argv.Length) {
           string arg = argv[i++];
           switch (arg) {
           case "--platform":
@@ -288,7 +288,7 @@ namespace Anki {
         return result;
       }
 
-      public static void BuildAssetBundlesInternal(BuildTarget buildTarget) {
+      public static string BuildAssetBundlesInternal(BuildTarget buildTarget) {
         // Rebuild sprite atlases
         UnityEditor.Sprites.Packer.RebuildAtlasCacheIfNeeded(buildTarget, true, UnityEditor.Sprites.Packer.Execution.ForceRegroup);
 
@@ -298,12 +298,17 @@ namespace Anki {
           Directory.CreateDirectory(outputPath);
         }
 
-        BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, buildTarget);
+        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, buildTarget);
+        if (manifest == null) {
+          return "Error building asset bundles. See the Unity log for more information";
+        }
 
         // Copy the asset bundles to the target folder
         if (CopyAssetBundlesTo(Path.Combine(Application.streamingAssetsPath, Assets.AssetBundleManager.kAssetBundlesFolder), buildTarget)) {
           AssetDatabase.Refresh();
         }
+
+        return null;
       }
 
       private static string BuildPlayerInternal(string outputFolder, BuildTarget buildTarget, BuildOptions buildOptions) {
@@ -314,8 +319,11 @@ namespace Anki {
           Directory.CreateDirectory(outputFolder);
         }
 
-        // Build and copy asset bundles
-        BuildAssetBundlesInternal(buildTarget);
+        // Build and copy asset bundles. If there is an error building bundles, then abort the build
+        string result = BuildAssetBundlesInternal(buildTarget);
+        if (!string.IsNullOrEmpty(result)) {
+          return result;
+        }
 
         // Copy engine assets
         CopyEngineAssetsToStreamingAssets();
@@ -329,7 +337,7 @@ namespace Anki {
         string[] scenes = GetScenesFromBuildSettings();
         string outputPath = outputFolder + "/" + GetOutputName(buildTarget);
 
-        string result = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, buildOptions);
+        result = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, buildOptions);
 
         return result;
       }

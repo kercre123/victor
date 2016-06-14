@@ -352,6 +352,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _FilledForegroundImage: {fileID: 1252896920}
+  _UseEndCap: 0
+  _EndCap: {fileID: 0}
   _NormalColor: {r: 0.027450982, g: 0.5568628, b: 0.8745099, a: 1}
   _DecreasingColor: {r: 1, g: 0, b: 0, a: 1}
   _IncreasingColor: {r: 0.027450982, g: 0.5568628, b: 0.8745099, a: 1}
