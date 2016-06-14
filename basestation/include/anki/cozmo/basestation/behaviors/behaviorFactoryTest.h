@@ -28,6 +28,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/pathMotionProfile.h"
 #include "clad/types/factoryTestTypes.h"
 
@@ -72,6 +74,10 @@ namespace Cozmo {
     Result HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     
+    // Handlers for signals coming from robot
+    void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    
+
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
     
@@ -87,11 +93,15 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
+    
+    std::vector<Signal::SmartHandle> _signalHandles;
+    
     FactoryTestState  _currentState;
     f32               _holdUntilTime = -1.0f;
     Radians           _startingRobotOrientation;
     Result            _lastHandlerResult;
     PathMotionProfile _motionProfile;
+    s32               _stationID;
  
     // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;
