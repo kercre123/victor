@@ -107,8 +107,11 @@ public class StartupManager : MonoBehaviour {
     // Load initial asset bundles
     yield return LoadAssetBundles(assetBundleManager);
 
-    // Instantiate startup assets
-    LoadAssets(assetBundleManager);
+    // Instantiate startup assets, skip if we're doing factory test.
+    string buildScene = BuildFlags.kDefaultBuildScene;
+    if (buildScene != "FactoryTest") {
+      LoadAssets(assetBundleManager);
+    }
 
     // Set up localization files and add managers
     if (Application.isPlaying) {
