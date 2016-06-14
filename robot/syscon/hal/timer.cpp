@@ -71,7 +71,7 @@ void Timer::lowPowerMode(bool lowPower) {
 
   if (lowPower) {
     irq_handler = LowPower_IRQHandler;
-    NRF_RTC1->PRESCALER = 9;
+    NRF_RTC1->PRESCALER = 0;
   } else {
     irq_handler = HighPower_IRQHandler;
     NRF_RTC1->PRESCALER = 0;

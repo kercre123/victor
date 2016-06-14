@@ -16,6 +16,7 @@
 
 #include "visionSystem.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -107,6 +108,8 @@ namespace Cozmo {
   CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f);
   
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceDetection", true);
+  
+  CONSOLE_VAR_RANGED(u8, kMarkerDetectionFrequency, "Vision.Performance", 1, 1, 10);
   
   using namespace Embedded;
   
@@ -333,7 +336,8 @@ namespace Cozmo {
         
         // TODO: Log or issue message?
         // NOTE: this disables any other modes so we are *only* tracking
-        _mode = static_cast<u32>(whichMode);
+        _mode.ClearFlags();
+        _mode.SetBitFlag(whichMode, true);
       } else {
         StopTracking();
       }
@@ -342,29 +346,35 @@ namespace Cozmo {
         // "Enabling" idle means to turn everything off
         PRINT_NAMED_INFO("VisionSystem.EnableMode.Idle",
                          "Disabling all vision modes");
-        _mode = static_cast<u32>(VisionMode::Idle);
+        _mode.ClearFlags();
+        _mode.SetBitFlag(whichMode, true);
       } else {
         PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
       }
     }else {
       if(enabled) {
-        const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
+        const bool modeAlreadyEnabled = _mode.IsBitFlagSet(whichMode);
         if(!modeAlreadyEnabled) {
           PRINT_NAMED_INFO("VisionSystem.EnablingMode",
                            "Adding mode %s to current mode %s.",
-                           VisionSystem::GetModeName(whichMode).c_str(),
-                           VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
+                           EnumToString(whichMode),
+                           VisionSystem::GetModeName(_mode).c_str());
           
-          _mode |= static_cast<u32>(whichMode);
+          _mode.SetBitFlag(VisionMode::Idle, false);
+          _mode.SetBitFlag(whichMode, true);
         }
       } else {
-        const bool modeAlreadyDisabled = !(_mode & static_cast<u32>(whichMode));
+        const bool modeAlreadyDisabled = !_mode.IsBitFlagSet(whichMode);
         if(!modeAlreadyDisabled) {
           PRINT_NAMED_INFO("VisionSystem.DisablingMode",
                            "Removing mode %s from current mode %s.",
-                           VisionSystem::GetModeName(whichMode).c_str(),
-                           VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
-          _mode &= ~static_cast<u32>(whichMode);
+                           EnumToString(whichMode),
+                           VisionSystem::GetModeName(_mode).c_str());
+          _mode.SetBitFlag(whichMode, false);
+          if (!_mode.AreAnyFlagsSet())
+          {
+            _mode.SetBitFlag(VisionMode::Idle, true);
+          }
         }
       }
     }
@@ -2171,65 +2181,29 @@ namespace Cozmo {
   }
   
   std::string VisionSystem::GetCurrentModeName() const {
-    return VisionSystem::GetModeName(static_cast<VisionMode>(_mode));
+    return VisionSystem::GetModeName(_mode);
   }
   
-  std::string VisionSystem::GetModeName(VisionMode mode) const
+  std::string VisionSystem::GetModeName(Util::BitFlags8<VisionMode> mode) const
   {
-    
-    static const std::map<VisionMode, std::string> LUT{
-      {VisionMode::Idle,                     "IDLE"}
-      ,{VisionMode::DetectingMarkers,        "MARKERS"}
-      ,{VisionMode::Tracking,                "TRACKING"}
-      ,{VisionMode::DetectingFaces,          "FACES"}
-      ,{VisionMode::DetectingMotion,         "MOTION"}
-      ,{VisionMode::ReadingToolCode,         "READTOOLCODE"}
-      ,{VisionMode::ComputingCalibration,    "CALIBRATION"}
-      ,{VisionMode::DetectingOverheadEdges,  "OVERHEADEDGES"}
-    };
-
     std::string retStr("");
-    
-    if(mode == VisionMode::Idle) {
-      return LUT.at(VisionMode::Idle);
-    } else {
-      for(const auto& possibleMode : LUT) {
-        if(possibleMode.first != VisionMode::Idle &&
-           static_cast<u32>(mode) & static_cast<u32>(possibleMode.first))
-        {
-          if(!retStr.empty()) {
-            retStr += "+";
-          }
-          retStr += possibleMode.second;
+    for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
+    {
+      if (mode.IsBitFlagSet(modeIter))
+      {
+        if(!retStr.empty()) {
+          retStr += "+";
         }
+        retStr += EnumToString(modeIter);
       }
-      return retStr;
     }
+    return retStr;
     
   } // GetModeName()
   
   VisionMode VisionSystem::GetModeFromString(const std::string& str) const
   {
-    // NOTE: Can't use StringToEnumMapper because VisionModes are bit flags, not simple enumeration
-    static const std::map<std::string, VisionMode> LUT{
-      {"Idle",                         VisionMode::Idle},
-      {"DetectingMarkers",             VisionMode::DetectingMarkers},
-      {"DetectingFaces",               VisionMode::DetectingFaces},
-      {"DetectingMotion",              VisionMode::DetectingMotion},
-      {"Tracking",                     VisionMode::Tracking},
-      {"ReadingToolCode",              VisionMode::ReadingToolCode},
-      {"DetectingOverheadEdges",       VisionMode::DetectingOverheadEdges},
-      {"ComputingCalibration",         VisionMode::ComputingCalibration},
-    };
-    
-    auto iter = LUT.find(str);
-    if(iter == LUT.end()) {
-      PRINT_NAMED_WARNING("VisionSystem.GetModeFromString.UnknownMode",
-                          "No string for mode '%s'. Returning Idle mode", str.c_str());
-      return VisionMode::Idle;
-    } else {
-      return iter->second;
-    }
+    return VisionModeFromString(str.c_str());
   }
   
   
@@ -2472,9 +2446,13 @@ namespace Cozmo {
     EndBenchmark("VisionSystem_CameraImagingPipeline");
     
     std::vector<Quad2f> markerQuads;
+    
+    auto& visionModesProcessed = _currentResult.modesProcessed;
+    visionModesProcessed.ClearFlags();
 
-    if(IsModeEnabled(VisionMode::DetectingMarkers)) {
+    if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
       if((lastResult = DetectMarkers(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
         return lastResult;
@@ -2482,7 +2460,8 @@ namespace Cozmo {
       Toc("TotalDetectingMarkers");
     }
     
-    if(IsModeEnabled(VisionMode::Tracking)) {
+    if(ShouldProcessVisionMode(VisionMode::Tracking)) {
+      visionModesProcessed.SetBitFlag(VisionMode::Tracking, true);
       // Update the tracker transformation using this image
       if((lastResult = TrackTemplate(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.TrackTemplateFailed", "");
@@ -2490,8 +2469,9 @@ namespace Cozmo {
       }
     }
     
-    if(IsModeEnabled(VisionMode::DetectingFaces)) {
+    if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
       Tic("TotalDetectingFaces");
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
       if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
@@ -2502,9 +2482,10 @@ namespace Cozmo {
     // DEBUG!!!!
     //EnableMode(VisionMode::DetectingMotion, true);
     
-    if(IsModeEnabled(VisionMode::DetectingMotion))
+    if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
     {
       Tic("TotalDetectingMotion");
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
@@ -2512,9 +2493,10 @@ namespace Cozmo {
       Toc("TotalDetectingMotion");
     }
     
-    if(IsModeEnabled(VisionMode::DetectingOverheadEdges))
+    if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
     {
       Tic("TotalDetectingOverheadEdges");
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
       if((lastResult = DetectOverheadEdges(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
@@ -2522,16 +2504,18 @@ namespace Cozmo {
       Toc("TotalDetectingOverheadEdges");
     }
     
-    if(IsModeEnabled(VisionMode::ReadingToolCode))
+    if(ShouldProcessVisionMode(VisionMode::ReadingToolCode))
     {
+      visionModesProcessed.SetBitFlag(VisionMode::ReadingToolCode, true);
       if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ReadToolCodeFailed", "");
         return lastResult;
       }
     }
     
-    if(IsModeEnabled(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
+    if(ShouldProcessVisionMode(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
     {
+      visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
       if((lastResult = ComputeCalibration()) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
@@ -2556,6 +2540,22 @@ namespace Cozmo {
     
     return lastResult;
   } // Update()
+  
+  bool VisionSystem::ShouldProcessVisionMode(VisionMode mode) const
+  {
+    if (!IsModeEnabled(mode))
+    {
+      return false;
+    }
+    
+    // Marker processing only gets to happen every nth frame
+    if (VisionMode::DetectingMarkers == mode && (_frameNumber % kMarkerDetectionFrequency) != 0)
+    {
+      return false;
+    }
+    
+    return true;
+  }
   
   
   void VisionSystem::SetParams(const bool autoExposureOn,

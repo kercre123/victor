@@ -9,6 +9,7 @@
 
   <project>
     <PathAndName>.\robot_sideload.uvprojx</PathAndName>
+    <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
   </project>
 
   <project>

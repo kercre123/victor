@@ -448,7 +448,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 {
   if( DO_FACE_VERIFICATION_STEP ) {
     _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    StartActing(new WaitForImagesAction(robot, kFaceVerificationNumImages),
+    StartActing(new WaitForImagesAction(robot, kFaceVerificationNumImages, VisionMode::DetectingFaces),
                 [this, &robot](ActionResult result) {
                   if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
                     TransitionToPlayingRequstAnim(robot);

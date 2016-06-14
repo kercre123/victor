@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -61,8 +62,9 @@ namespace Cozmo {
   // EP3 robots in the office however will not have this data so skip this check.
   CONSOLE_VAR(bool, kBFT_CheckPrevFixtureResults, "BehaviorFactoryTest",  false);
   
-  // Station ID
-  CONSOLE_VAR(u32,  kBFT_StationID,               "BehaviorFactoryTest",  0);
+  // Whether or not to wipe all nvStorage at start of test.
+  // Since this reboots the robot it will not actually run the test at all.
+  CONSOLE_VAR(bool,  kBFT_WipeAll,                "BehaviorFactoryTest",  false);
   
   
   ////////////////////////////
@@ -112,6 +114,7 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(FactoryTestState::InitRobot)
   , _lastHandlerResult(RESULT_OK)
+  , _stationID(-1)
   , _testResult(FactoryTestResultCode::UNKNOWN)
   {
     SetDefaultName("FactoryTest");
@@ -129,7 +132,7 @@ namespace Cozmo {
     _motionProfile.reverseSpeed_mmps = 80.0f;
     _motionProfile.isCustom = true;
     
-    
+    // Subscribe to EngineToGame messages
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -142,6 +145,24 @@ namespace Cozmo {
       EngineToGameTag::ObjectAvailable,
       EngineToGameTag::ObjectConnectionState
     }});
+
+    
+    // Setup robot message handlers
+    RobotInterface::MessageHandler *messageHandler = robot.GetContext()->GetRobotManager()->GetMsgHandler();
+    RobotID_t robotId = robot.GetID();
+    
+    
+    // Subscribe to RobotToEngine messages
+    using localHandlerType = void(BehaviorFactoryTest::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
+    // Create a helper lambda for subscribing to a tag with a local handler
+    auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+    {
+      _signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+    };
+    
+    
+    // bind to specific handlers in the robot class
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam,    &BehaviorFactoryTest::HandleFactoryTestParameter);
 
   }
   
@@ -253,18 +274,21 @@ namespace Cozmo {
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       _testResult = resCode;
       
+      // Get system time
+      time_t nowTime = time(0);
+      
       // Generate result struct
       ExternalInterface::FactoryTestResult testResMsg;
       FactoryTestResultEntry &testRes = testResMsg.resultEntry;
       testRes.result = resCode;
       testRes.engineSHA1 = 0;   // TODO
-      testRes.utcTime = time(0);
+      testRes.utcTime = nowTime;
+      testRes.stationID = _stationID;
       
       // Mark end time
       _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
-      
-      testRes.stationID = kBFT_StationID;
+
 
       
       if (kBFT_EnableNVStorageWrites) {
@@ -284,6 +308,32 @@ namespace Cozmo {
                                               testResMsg.resultEntry.result = _testResult;
                                               robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
                                             });
+        
+        // If test passed, write birth certificate
+        if (resCode == FactoryTestResultCode::SUCCESS) {
+          struct tm* tmStruct = gmtime(&nowTime);
+          
+          BirthCertificate bc;
+          bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
+          bc.month  = static_cast<u8>(tmStruct->tm_mon);
+          bc.day    = static_cast<u8>(tmStruct->tm_mday);
+          bc.hour   = static_cast<u8>(tmStruct->tm_hour);
+          bc.minute = static_cast<u8>(tmStruct->tm_min);
+          bc.second = static_cast<u8>(tmStruct->tm_sec);
+          
+          u8 bcBuf[bc.Size()];
+          size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
+          
+          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
+                                              [](NVStorage::NVResult res) {
+                                                if (res != NVStorage::NVResult::NV_OKAY) {
+                                                  PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
+                                                } else {
+                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
+                                                }
+                                              });
+        }
+        
       } else {
         PrintAndLightResult(robot,_testResult);
         robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
@@ -345,6 +395,26 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
         */
+        
+        if (kBFT_WipeAll) {
+          robot.GetNVStorageComponent().WipeAll(true);
+          END_TEST(FactoryTestResultCode::WIPED_ALL);
+        }
+        
+        // Check pre-playpen fixture test result
+        if (kBFT_CheckPrevFixtureResults) {
+          robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PrePlaypenResults,
+                                             [this,&robot](u8* data, size_t size, NVStorage::NVResult res){
+                                               if (res == NVStorage::NVResult::NV_OKAY) {
+                                                 if (data[0] != 0) {
+                                                   EndTest(robot, FactoryTestResultCode::ROBOT_FAILED_PREPLAYPEN_TESTS);
+                                                 }
+                                               } else {
+                                                 EndTest(robot, FactoryTestResultCode::ROBOT_NOT_TESTED);
+                                               }
+                                             });
+          
+        }
         
         if (TEST_CHARGER_CONNECT) {
           // Check if charger is discovered
@@ -1152,6 +1222,16 @@ namespace Cozmo {
     // ...
     
     return RESULT_OK;
+  }
+  
+  
+  void BehaviorFactoryTest::HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+  {
+    const RobotInterface::FactoryTestParameter& payload = message.GetData().Get_factoryTestParam();
+    
+    PRINT_NAMED_INFO("BehaviorFactoryTest.HandleFactoryTestParameter.Recvd", "StationID: %d", payload.param);
+    
+    _stationID = payload.param;
   }
   
   Result BehaviorFactoryTest::HandleCameraCalibration(Anki::Cozmo::Robot &robot, const Anki::Cozmo::CameraCalibration &msg)

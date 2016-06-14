@@ -323,7 +323,7 @@ void BehaviorReactToNewBlock::TransitionToLookingDown(Robot& robot)
   // Wait a few frames and then go back to asking. If the object is observed
   // during this, the HandleWhileRunning call will interrupt cause us to pick it up.
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
-    new WaitForImagesAction(robot, kBRTNB_numImagesToWaitWhileLookingDown),
+    new WaitForImagesAction(robot, kBRTNB_numImagesToWaitWhileLookingDown, VisionMode::DetectingMarkers),
     new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBRTNB_lookUpHeadAngle_deg)),
   });
   
@@ -384,7 +384,7 @@ IActionRunner* BehaviorReactToNewBlock::CreateAskForAction(Robot& robot)
     new PlayAnimationGroupAction(robot, _askForBlockAnimGroup),             // Play "ask for" animation
     //new PlayAnimationGroupAction(robot, _askingLoopGroup),                  // Play "asksing" loop (?)
     moveHeadAndLift,                                                        // Make sure head and lift are down
-    new WaitForImagesAction(robot, kBRTNB_numImagesToWaitWhileLookingDown), // Wait for a few images to see the object
+    new WaitForImagesAction(robot, kBRTNB_numImagesToWaitWhileLookingDown, VisionMode::DetectingMarkers), // Wait for a few images to see the object
   });
   
   return action;

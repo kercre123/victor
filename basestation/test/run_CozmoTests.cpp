@@ -122,7 +122,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-  lastResult = robot.Update();
+  lastResult = robot.Update(true);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // There should now be an object of the right type, with the right ID in BlockWorld
@@ -319,7 +319,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // Process all the markers we've queued
     //uint32_t numObjectsObserved = 0;
     //blockWorld.Update(numObjectsObserved);
-    robot.Update();
+    robot.Update(true);
     
     if(checkRobotPose) {
       // TODO: loop over all robots
