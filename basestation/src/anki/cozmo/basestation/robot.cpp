@@ -827,7 +827,7 @@ namespace Anki {
     
     
     
-    Result Robot::Update(void)
+    Result Robot::Update(bool ignoreVisionModes)
     {
 #if(0)
       ActiveBlockLightTest(1);
@@ -849,18 +849,21 @@ namespace Anki {
       
       if(_visionComponentPtr->GetCamera().IsCalibrated())
       {
-        Result visionResult = _visionComponentPtr->UpdateAllResults();
+        VisionProcessingResult procResult;
+        Result visionResult = _visionComponentPtr->UpdateAllResults(procResult);
         if(RESULT_OK != visionResult) {
           PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
           return visionResult;
         }
         
         // Update Block and Face Worlds
-        if(RESULT_OK != _blockWorld.Update()) {
+        if((ignoreVisionModes || procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers)) &&
+           RESULT_OK != _blockWorld.Update()) {
           PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
         }
         
-        if(RESULT_OK != _faceWorld.Update()) {
+        if((ignoreVisionModes || procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingFaces)) &&
+           RESULT_OK != _faceWorld.Update()) {
           PRINT_NAMED_WARNING("Robot.Update.FaceWorldUpdateFailed", "");
         }
         

@@ -144,7 +144,7 @@ public:
     Robot(const Robot&) = delete;
     Robot& operator=(const Robot&) = delete;
   
-    Result Update();
+    Result Update(bool ignoreVisionModes = false); // the parameter ignoreVisionModes is for unit testing
     
     Result UpdateFullRobotState(const RobotState& msg);
     

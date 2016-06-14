@@ -258,7 +258,7 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   
   // Wait for a few frames for block pose to settle down and try turning towards the object again incase
   // our first turn was slightly off
-  action->AddAction(new WaitForImagesAction(robot, numFramesToWaitForBeforeFlip));
+  action->AddAction(new WaitForImagesAction(robot, numFramesToWaitForBeforeFlip, VisionMode::DetectingMarkers));
   
   // Turn towards bottom block of stack
   action->AddAction(new TurnTowardsObjectAction(robot,

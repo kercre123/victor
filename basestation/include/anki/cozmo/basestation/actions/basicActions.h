@@ -23,7 +23,11 @@
 #include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/toolCodes.h"
+#include "clad/types/visionModes.h"
+#include "util/bitFlags/bitFlags.h"
 #include "util/helpers/templateHelpers.h"
+
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -407,7 +411,8 @@ namespace Cozmo {
     {
     public:
       
-      WaitForImagesAction(Robot& robot, u32 numFrames, TimeStamp_t afterTimeStamp = 0);
+      // VisionMode indicates the vision mode(s) that this action wants to wait for, for numFrames instances. VisionMode::Count means any
+      WaitForImagesAction(Robot& robot, u32 numFrames, VisionMode visionMode = VisionMode::Count, TimeStamp_t afterTimeStamp = 0);
       virtual ~WaitForImagesAction() { }
       
       virtual const std::string& GetName() const override { return _name; }
@@ -426,11 +431,12 @@ namespace Cozmo {
       std::string _name = "WaitForImages";
       
     private:
-      u32 _numFramesSeen;
       u32 _numFramesToWaitFor;
       TimeStamp_t _afterTimeStamp;
       
-      Signal::SmartHandle        _imageProcSignalHandle;
+      Signal::SmartHandle             _imageProcSignalHandle;
+      VisionMode                      _visionMode = VisionMode::Count;
+      u32                             _numModeFramesSeen = 0;
       
     }; // WaitForImagesAction()
   

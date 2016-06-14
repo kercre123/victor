@@ -103,7 +103,7 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bo
                                                                   {new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
                                                                    new DriveStraightAction(robot, kBPDB_verifyBackupDist_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps)});
     action->AddAction(parallel);
-    action->AddAction(new WaitForImagesAction(robot, kNumFrames));
+    action->AddAction(new WaitForImagesAction(robot, kNumFrames, VisionMode::DetectingMarkers));
   }
 
   if(doLookAtFaceAfter)

@@ -695,11 +695,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     }
       
     case RobotActionUnionTag::waitForImages:
-      return new WaitForImagesAction(robot, actionUnion.Get_waitForImages().numImages,
-                                     actionUnion.Get_waitForImages().afterTimeStamp);
-      
-      // TODO: Add cases for other actions
-      
+    {
+      const ExternalInterface::WaitForImages& waitMsg = actionUnion.Get_waitForImages();
+      return new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
+    }
     default:
       PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionTag",
                         "Failed to create an action for the given actionTag.");
@@ -897,9 +896,11 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       break;
       
     case ExternalInterface::MessageGameToEngineTag::WaitForImages:
-      newAction = new WaitForImagesAction(robot, event.GetData().Get_WaitForImages().numImages,
-                                          event.GetData().Get_WaitForImages().afterTimeStamp);
+    {
+      const ExternalInterface::WaitForImages& waitMsg = event.GetData().Get_WaitForImages();
+      newAction = new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
       break;
+    }
       
     default:
     {

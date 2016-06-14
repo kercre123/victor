@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/visionModesHelpers.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -327,25 +328,6 @@ namespace Cozmo {
       return _visionSystem->IsModeEnabled(mode);
     } else {
       return false;
-    }
-  }
-  
-  u32 VisionComponent::GetEnabledModes() const
-  {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->GetEnabledModes();
-    } else {
-      return 0;
-    }
-  }
-  
-  Result VisionComponent::SetModes(u32 modes)
-  {
-    if(nullptr != _visionSystem) {
-      _visionSystem->SetModes(modes);
-      return RESULT_OK;
-    } else {
-      return RESULT_FAIL;
     }
   }
   
@@ -781,7 +763,7 @@ namespace Cozmo {
     
   } // QueueObservedMarker()
   
-  Result VisionComponent::UpdateAllResults()
+  Result VisionComponent::UpdateAllResults(VisionProcessingResult& procResult_out)
   {
     bool anyFailures = false;
     
@@ -791,22 +773,45 @@ namespace Cozmo {
       
       while(true == _visionSystem->CheckMailbox(result))
       {
-        // Helper macro to print error message and set anyFailures=true if that result was not RESULT_OK.
-#       define TRY_AND_REPORT_FAILURE(__NAME__) \
-        do { if(RESULT_OK != this->__NAME__(result)) { \
-        PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults." QUOTE(__NAME__) "Failed", ""); \
-        anyFailures = true; } } while(0)
-
-        TRY_AND_REPORT_FAILURE(UpdateVisionMarkers);
-        TRY_AND_REPORT_FAILURE(UpdateFaces);
-        TRY_AND_REPORT_FAILURE(UpdateTrackingQuad);
-        TRY_AND_REPORT_FAILURE(UpdateDockingErrorSignal);
-        TRY_AND_REPORT_FAILURE(UpdateMotionCentroid);
-        TRY_AND_REPORT_FAILURE(UpdateOverheadEdges);
-        TRY_AND_REPORT_FAILURE(UpdateToolCode);
-        TRY_AND_REPORT_FAILURE(UpdateComputedCalibration);
-
-#       undef TRY_AND_REPORT_FAILURE
+        using localHandlerType = Result(VisionComponent::*)(const VisionProcessingResult& procResult);
+        auto tryAndReport = [this, &result, &anyFailures]( localHandlerType handler, VisionMode mode )
+        {
+          if (!result.modesProcessed.IsBitFlagSet(mode))
+          {
+            return;
+          }
+          
+          // Call the passed in member handler to look at the result
+          if (RESULT_OK != (this->*handler)(result))
+          {
+            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults", "%s Failed", EnumToString(mode));
+            anyFailures = true;
+          }
+        };
+        
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,       VisionMode::DetectingMarkers);
+        tryAndReport(&VisionComponent::UpdateFaces,               VisionMode::DetectingFaces);
+        
+        // Special handling for the two types of processing that are enabled by VisionMode::Tracking
+        if (result.modesProcessed.IsBitFlagSet(VisionMode::Tracking))
+        {
+          if (RESULT_OK != VisionComponent::UpdateTrackingQuad(result))
+          {
+            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults", "UpdateTrackingQuad Failed");
+            anyFailures = true;
+          }
+          
+          if (RESULT_OK != VisionComponent::UpdateDockingErrorSignal(result))
+          {
+            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults", "UpdateDockingErrorSignal Failed");
+            anyFailures = true;
+          }
+        }
+        
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
+        tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
+        tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         
         // Display any debug images left by the vision system
         for(auto & debugGray : result.debugImages) {
@@ -820,8 +825,19 @@ namespace Cozmo {
         _processingPeriod = result.timestamp - _lastProcessedImageTimeStamp;
         _lastProcessedImageTimeStamp = result.timestamp;
         
+        auto visionModesList = std::vector<VisionMode>();
+        for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode)
+        {
+          if (result.modesProcessed.IsBitFlagSet(mode))
+          {
+            visionModesList.push_back(mode);
+          }
+        }
+        
+        procResult_out = result;
+        
         // Send the processed image message last
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp)));
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp, std::move(visionModesList))));
       }
     }
     
