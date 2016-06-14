@@ -68,6 +68,9 @@ enum uint_8 FactoryTestResultCode {
   CUBE_POSE_WRITE_FAILED,
   LIFT_MOTOR_CALIB_UNEXPECTED,
   HEAD_MOTOR_CALIB_UNEXPECTED,
+  WIPED_ALL,
+  ROBOT_FAILED_PREPLAYPEN_TESTS,
+  ROBOT_NOT_TESTED,
 
 
   // ==== New result codes should be added at the end ========
@@ -78,8 +81,24 @@ structure FactoryTestResultEntry {
   uint_64 utcTime,
   uint_32 engineSHA1,
   uint_32 timestamps[16],
-  uint_32 stationID,
+  int_32 stationID,
   FactoryTestResultCode result,
+}
+
+// These are all hard-coded - in 2017 production, we may start using different values here
+structure BirthCertificate {
+  uint_8 atFactory = 0,
+  uint_8 whichFactory = 1,
+  uint_8 whichLine = 1,
+  uint_8 model = 1,
+
+  // Time taken from phone (ideally UTC, not China time zone, but it doesn't matter as long as you know which)
+  uint_8 year,
+  uint_8 month,
+  uint_8 day,
+  uint_8 hour,
+  uint_8 minute,
+  uint_8 second
 }
 
 
