@@ -203,13 +203,17 @@ public class DailyGoalManager : MonoBehaviour {
       goalList.Remove(toAdd);
       newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions));
     }
+    DAS.Info("DailyGoalManager.GenerateDailyGoals", newGoals.ToString());
+    DAS.Info("DailyGoalManager.GenerateDailyGoals.Count", newGoals.Count);
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
   }
 
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
+    DAS.Info("DailyGoalManager.SendDasEventsForGoalGeneration", "CallStack : " + System.Environment.StackTrace);
     if (goals.Count > 0) {
       for (int i = 0; i < goals.Count; i++) {
+        DAS.Info("DailyGoalManager.SendDasEventsForGoalGeneration", "i:" + i);
         DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
           new Dictionary<string, string> { {
               "$data",
