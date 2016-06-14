@@ -322,7 +322,7 @@ namespace Cozmo {
           bc.second = static_cast<u8>(tmStruct->tm_sec);
           
           u8 bcBuf[bc.Size()];
-          size_t bcNumBytes = bc.Pack(buf, sizeof(buf));
+          size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
           
           robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
                                               [](NVStorage::NVResult res) {
