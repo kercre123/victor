@@ -28,15 +28,13 @@ namespace Simon {
     private Color _CubeTooCloseColor;
     private ScanPhase _ScanPhase;
 
-    // TODO: Keep GameIDs sorted instead
-    List<LightCube> _SortedCubes = new List<LightCube>();
+    private BlockToCozmoPositionComparerByID _BlockPosComparer;
 
     public ScanForInitialCubeState(State nextState, int cubesRequired, Color CubeTooCloseColor) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
       _CubeTooCloseColor = CubeTooCloseColor;
-
-      _SortedCubes = new List<LightCube>();
+      _BlockPosComparer = new BlockToCozmoPositionComparerByID(_CurrentRobot);
     }
 
     public override void Enter() {
@@ -126,23 +124,29 @@ namespace Simon {
       return ScannedSetupCubeState.Ready;
     }
 
-    private void UpdateSetupCubeState(int checkIndex, List<LightCube> sortedCubes) {
-      LightCube currCube = sortedCubes[checkIndex];
-      if (sortedCubes.Count == 1) {
-        UpdateSetupLightState(currCube.ID, ScannedSetupCubeState.Seen);
+    private void UpdateSetupCubeState(int checkIndex) {
+      if (_Game.CubeIdsForGame.Count == 1) {
+        UpdateSetupLightState(_Game.CubeIdsForGame[checkIndex], ScannedSetupCubeState.Seen);
       }
       else if (checkIndex == 0) {
         // One to your right.
-        UpdateSetupLightState(currCube.ID, GetCubeDistance(currCube, sortedCubes[checkIndex + 1]));
+        LightCube currCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex]];
+        LightCube otherCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex + 1]];
+        UpdateSetupLightState(currCube, GetCubeDistance(currCube, otherCube));
       }
-      else if (checkIndex == sortedCubes.Count - 1) {
+      else if (checkIndex == _Game.CubeIdsForGame.Count - 1) {
         // One to your left
-        UpdateSetupLightState(currCube.ID, GetCubeDistance(currCube, sortedCubes[checkIndex - 1]));
+        LightCube currCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex]];
+        LightCube otherCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex - 1]];
+        UpdateSetupLightState(currCube.ID, GetCubeDistance(currCube, otherCube));
       }
       else {
         // Check both right and left for cubes in the middle.
-        ScannedSetupCubeState cubeLeftState = GetCubeDistance(currCube, sortedCubes[checkIndex - 1]);
-        ScannedSetupCubeState cubeRightState = GetCubeDistance(currCube, sortedCubes[checkIndex + 1]);
+        LightCube currCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex]];
+        LightCube leftCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex - 1]];
+        LightCube rightCube = _CurrentRobot.LightCubes[_Game.CubeIdsForGame[checkIndex + 1]];
+        ScannedSetupCubeState cubeLeftState = GetCubeDistance(currCube, leftCube);
+        ScannedSetupCubeState cubeRightState = GetCubeDistance(currCube, rightCube);
         if (cubeLeftState != ScannedSetupCubeState.Ready) {
           UpdateSetupLightState(currCube.ID, cubeLeftState);
         }
@@ -157,7 +161,6 @@ namespace Simon {
 
     protected void UpdateScannedCubes() {
       LightCube cube = null;
-      _SortedCubes.Clear();
       foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
         cube = lightCube.Value;
 
@@ -171,16 +174,14 @@ namespace Simon {
           }
         }
 
-        if (_Game.CubeIdsForGame.Contains(cube.ID)) {
-          _SortedCubes.Add(cube);
-        }
       }
 
       // Theres only 3 cubes, so shouldn't take that long.
-      _SortedCubes.Sort(new BlockToCozmoPositionComparer(_CurrentRobot));
+      // And they tend to shift slowly enough where they won't get real move messages.
+      _Game.CubeIdsForGame.Sort(_BlockPosComparer);
 
-      for (int i = 0; i < _SortedCubes.Count; ++i) {
-        UpdateSetupCubeState(i, _SortedCubes);
+      for (int i = 0; i < _Game.CubeIdsForGame.Count; ++i) {
+        UpdateSetupCubeState(i);
       }
 
     }
@@ -251,15 +252,16 @@ namespace Simon {
           _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _kRotateSec);
         }
         else if (nextState == ScanPhase.Stopped) {
+          // Rotate towards center
           _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _kRotateSec);
-          _CurrentRobot.TurnTowardsObject(_SortedCubes[1], false);
+          _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
           _Game.SharedMinigameView.EnableContinueButton(true);
         }
         else if (nextState == ScanPhase.Error) {
           _ShowCozmoCubesSlide = null;
           _Game.SharedMinigameView.EnableContinueButton(true);
-          if (_SortedCubes.Count > 1) {
-            _CurrentRobot.TurnTowardsObject(_SortedCubes[1], false);
+          if (_Game.CubeIdsForGame.Count > 1) {
+            _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
           }
           SimonGame simonGame = _Game as SimonGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
