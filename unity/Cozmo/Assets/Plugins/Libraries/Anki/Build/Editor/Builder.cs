@@ -265,7 +265,8 @@ namespace Anki {
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
-        BuildOptions buildOptions = GetBuildOptions(buildTarget, config == "debug", enableDebugging, connectWithProfiler);
+        bool isDebugBuild = config == "debug" || config == "Debug";
+        BuildOptions buildOptions = GetBuildOptions(buildTarget, isDebugBuild, enableDebugging, connectWithProfiler);
 
         ConfigurePlayerSettings(buildTarget, config);
 
@@ -361,12 +362,15 @@ namespace Anki {
 
         switch (config) {
         case "debug":
+        case "Debug":
           {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
           }
           break;
         case "profile":
+        case "Profile":
         case "release":
+        case "Release":
           {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception
