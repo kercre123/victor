@@ -25,6 +25,10 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
+      _CozmoInPosition = false;
+      _FlashingIndex = 0;
+      _EndFlashTime = 0;
+
       List<LightCube> cubesForGame = new List<LightCube>();
       // Wait until we get to goal, shouldn't continue
       _GameInstance = _StateMachine.GetGame() as SimonGame;
@@ -48,10 +52,6 @@ namespace Simon {
       _TargetRotation = Quaternion.Euler(0, 0, targetAngle);
 
       MoveToTargetLocation(_TargetPosition, _TargetRotation);
-
-      _CozmoInPosition = false;
-      _FlashingIndex = 0;
-      _EndFlashTime = 0;
     }
 
     public override void Exit() {
