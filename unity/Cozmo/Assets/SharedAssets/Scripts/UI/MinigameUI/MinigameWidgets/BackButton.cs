@@ -14,7 +14,7 @@ namespace Cozmo {
 
       public delegate void BackButtonHandler();
 
-      public event BackButtonHandler HandleBackTapped;
+      public BackButtonHandler HandleBackTapped;
 
       [SerializeField]
       private Cozmo.UI.CozmoButton _BackButtonInstance;

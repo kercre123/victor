@@ -496,7 +496,7 @@ namespace Cozmo {
         HideQuitButton();
         CreateWidgetIfNull<BackButton>(ref _BackButtonInstance, _BackButtonPrefab, ContentLayer.Middle);
         _BackButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
-        _BackButtonInstance.HandleBackTapped += backTapped;
+        _BackButtonInstance.HandleBackTapped = new BackButton.BackButtonHandler(backTapped);
       }
 
       public void HideBackButton() {
