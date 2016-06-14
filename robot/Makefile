@@ -16,6 +16,10 @@ RELEASE_DIR=releases
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 
+UNSIGNED_BINARY=$(RELEASE_DIR)/cozmo.unsafe
+SIGNED_BINARY=$(RELEASE_DIR)/cozmo.safe
+STAGING_BINARY=$(STAGING_DIR)/cozmo.safe
+
 DIFFIE_KEY=certs/diffie.pem
 DEVELOPMENT_KEY=certs/development.pem
 AES_KEY=FA67CE138A376CD21A26118615326AA5
@@ -76,11 +80,11 @@ tests: export_key $(sign_test_files)
 	build/diffietest
 
 	g++ -o ./build/signtest $(sign_test_files) $(crypto_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
-	build/signtest ./releases/cozmo.unsafe ./releases/cozmo.safe
+	build/signtest $(UNSIGNED_BINARY) $(SIGNED_BINARY)
 
 k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
-	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.unsafe
+	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
 
 k02_fcc_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/fcc/robot.axf
@@ -100,8 +104,8 @@ stage_factory_upgrade:
 
 release: stage_binaries
 	#if [ -a $(UV4) ]; then make keil; fi;
-	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	python3 ./tools/sign.py -c --sign $(AES_KEY) $(DEVELOPMENT_KEY) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.signed.safe
+	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(UNSIGNED_BINARY)
+	python3 ./tools/sign.py -c --sign $(AES_KEY) $(DEVELOPMENT_KEY) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(SIGNED_BINARY)
 	make tests
 
 vesp:
@@ -112,7 +116,7 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
 	make -C espressif lib/libmain_w.a
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld FACTORY_FIRMWARE=0
 	python3 ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
-	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
+	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
 
 esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	make -C espressif clean
@@ -124,7 +128,7 @@ esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	make -C espressif clean
 
 esp_factory_installer:
-	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --factory_restore binaries/esp.factory.bin,binaries/factory.safe ./staging/cozmo.safe
+	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --factory_restore binaries/esp.factory.bin,binaries/factory.safe $(STAGING_BINARY)
 
 esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
