@@ -47,17 +47,12 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Text _StatusText;
 
   [SerializeField]
-  private UnityEngine.UI.Text _StationNumberText;
-
-  [SerializeField]
   private Canvas _Canvas;
 
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
   private string _LogFilter = "";
-  private int _StationNumber = 0;
-  private int _TestNumber = 0;
   private bool _IsSim = false;
 
   private List<string> _LogList = new List<string>();
@@ -78,17 +73,6 @@ public class FactoryIntroManager : MonoBehaviour {
     _StartButton.onClick.AddListener(HandleStartButtonClick);
 
     _InProgressSpinner.gameObject.SetActive(false);
-  }
-
-  private void HandleStationNumberUpdate(int update) {
-    _StationNumber = update;
-    _StationNumberText.text = "Station Number: " + _StationNumber;
-    Debug.Log("TODO: Handle Station Number: " + _StationNumber);
-  }
-
-  private void HandleTestNumberUpdate(int update) {
-    _TestNumber = update;
-    Debug.Log("TODO: Test Start Number: " + _TestNumber);
   }
 
   private void HandleSetSimType(bool isSim) {
@@ -135,8 +119,6 @@ public class FactoryIntroManager : MonoBehaviour {
     }
     _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
-    _FactoryOptionsPanelInstance.OnSetStationNumber += HandleStationNumberUpdate;
-    _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
     _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
     _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
