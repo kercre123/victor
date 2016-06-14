@@ -7,7 +7,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
   public System.Action<int> OnSetStationNumber;
   public System.Action<bool> OnSetSim;
   public System.Action OnOTAButton;
-  public System.Action<string> OnConsoleLogFilter;
+
 
   [SerializeField]
   private UnityEngine.UI.Button _CloseButton;
@@ -18,28 +18,15 @@ public class FactoryOptionsPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Button _OTAButton;
 
-  [SerializeField]
-  public UnityEngine.UI.InputField _LogFilterInput;
-
-  public void Initialize(bool sim, string logFilter) {
+  public void Initialize(bool sim) {
     _SimToggle.isOn = sim;
-    _LogFilterInput.text = logFilter;
   }
 
   // Use this for initialization
   void Start() {
     _CloseButton.onClick.AddListener(() => GameObject.Destroy(gameObject));
     _SimToggle.onValueChanged.AddListener(HandleOnSetSimType);
-    _LogFilterInput.onValueChanged.AddListener(HandleLogInputChange);
     _OTAButton.onClick.AddListener(HandleOTAButton);
-  }
-
-  void HandleLogInputChange(string input) {
-    if (OnConsoleLogFilter != null) {
-      OnConsoleLogFilter(input);
-    }
-    PlayerPrefs.SetString("LogFilter", input);
-    PlayerPrefs.Save();
   }
 
   void HandleOTAButton() {

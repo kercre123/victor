@@ -29,10 +29,6 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Text _PingStatusText;
 
   [SerializeField]
-  private FactoryLogPanel _FactoryLogPanelPrefab;
-  private FactoryLogPanel _FactoryLogPanelInstance;
-
-  [SerializeField]
   private FactoryOptionsPanel _FactoryOptionsPanelPrefab;
   private FactoryOptionsPanel _FactoryOptionsPanelInstance;
 
@@ -49,15 +45,12 @@ public class FactoryIntroManager : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
-  private string _LogFilter = "";
   private bool _IsSim = false;
-
-  private List<string> _LogList = new List<string>();
 
   void Start() {
     _RestartOverlay.gameObject.SetActive(false);
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
-    _LogFilter = PlayerPrefs.GetString("LogFilter");
+
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
@@ -94,9 +87,6 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleOptionsButtonClick() {
-    if (_FactoryLogPanelInstance != null) {
-      GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
-    }
     if (_FactoryOptionsPanelInstance != null) {
       GameObject.Destroy(_FactoryOptionsPanelInstance);
     }
@@ -104,12 +94,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
     _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
-    _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
-    _FactoryOptionsPanelInstance.Initialize(_IsSim, _LogFilter);
-  }
-
-  private void HandleSetConsoleLogFilter(string input) {
-    _LogFilter = input;
+    _FactoryOptionsPanelInstance.Initialize(_IsSim);
   }
 
   private void HandleOTAButton() {
@@ -155,7 +140,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(false);
     _RestartOverlay.gameObject.SetActive(true);
     CozmoBinding.Shutdown();
-    UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
+    UnityEngine.SceneManagement.SceneManager.LoadScene("Bootstrap");
   }
 
   private void FactoryResult(FactoryTestResult result) {
