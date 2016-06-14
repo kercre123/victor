@@ -63,6 +63,8 @@ public class FactoryIntroManager : MonoBehaviour {
     _StartButton.onClick.AddListener(HandleStartButtonClick);
 
     _InProgressSpinner.gameObject.SetActive(false);
+
+    _OptionsButton.gameObject.SetActive(BuildFlags.kIsFactoryDevMode);
   }
 
   private void HandleSetSimType(bool isSim) {
