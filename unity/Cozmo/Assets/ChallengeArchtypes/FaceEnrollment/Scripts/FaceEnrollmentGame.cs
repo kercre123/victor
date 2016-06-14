@@ -60,19 +60,19 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
       newView.ShowShelf();
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
-      _FaceListSlideInstance.OnEditNameRequested += EditExisitingName;
+      _FaceListSlideInstance.OnEditNameRequested += EditExistingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
     }
 
     private void CleanupFaceListSlide() {
       _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
-      _FaceListSlideInstance.OnEditNameRequested -= EditExisitingName;
+      _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
       SharedMinigameView.HideShelf();
     }
 
-    private void EditExisitingName(int faceID, string exisitingName) {
+    private void EditExistingName(int faceID, string exisitingName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
       _EnterNameSlideInstance.SetNameInputField(exisitingName);
       _FaceIDToEdit = faceID;
@@ -82,11 +82,11 @@ namespace FaceEnrollment {
       CleanupFaceListSlide();
     }
 
-    private void EnterNameForNewFace(string optionalExistingName = "") {
+    private void EnterNameForNewFace(string optionalPrefilledName = "") {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
 
-      if (string.IsNullOrEmpty(optionalExistingName) == false) {
-        _EnterNameSlideInstance.SetNameInputField(optionalExistingName);
+      if (string.IsNullOrEmpty(optionalPrefilledName) == false) {
+        _EnterNameSlideInstance.SetNameInputField(optionalPrefilledName);
       }
 
       SharedMinigameView.ShowBackButton(() => ShowFaceListSlide(SharedMinigameView));

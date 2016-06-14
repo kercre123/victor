@@ -20,8 +20,8 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
     _SubmitName.Interactable = false;
   }
 
-  public void SetNameInputField(string exisitingName) {
-    _NameInputField.text = exisitingName;
+  public void SetNameInputField(string existing) {
+    _NameInputField.text = existing;
     _SubmitName.Interactable = true;
     _NameInputPlaceholder.enabled = false;
   }
