@@ -204,7 +204,7 @@ public class DailyGoalManager : MonoBehaviour {
       newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions));
     }
     DAS.Info("DailyGoalManager.GenerateDailyGoals", newGoals.ToString());
-    DAS.Info("DailyGoalManager.GenerateDailyGoals.Count", newGoals.Count);
+    DAS.Info("DailyGoalManager.GenerateDailyGoals.Count", newGoals.Count.ToString());
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
   }
