@@ -1,0 +1,9 @@
+{
+  "behaviorType": "DistractedByObject",
+  "name": "DistractedByObject",
+  "flatScore": 0.3,
+  "behaviorGroups": [
+  ],
+  "ReactionAnimGroup": "ag_reactToNewBlockOnGround",
+  "SamePoseDistThresh_mm": 80
+}
