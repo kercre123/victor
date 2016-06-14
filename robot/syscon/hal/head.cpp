@@ -211,11 +211,19 @@ void UART0_IRQHandler()
       
         if ((fixture_data & MASK) == PREFIX) {
           using namespace Anki::Cozmo;
-
-          RobotInterface::EnterFactoryTestMode msg;
-          msg.mode = fixture_data & ~MASK;
-          RobotInterface::SendMessage(msg);
+          uint8_t mode = fixture_data & ~MASK;
           
+          switch (mode) {
+          case 0x81:
+            Radio::sendTestPacket();
+            break ;
+          default:
+            RobotInterface::EnterFactoryTestMode msg;
+            msg.mode = mode;
+            RobotInterface::SendMessage(msg);
+            break;
+          }
+
           fixture_data = 0;
         }
 

@@ -403,11 +403,6 @@
               <FilePath>.\hal\rtos.cpp</FilePath>
             </File>
             <File>
-              <FileName>tests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\tests.cpp</FilePath>
-            </File>
-            <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\timer.cpp</FilePath>
@@ -421,6 +416,11 @@
               <FileName>backpack.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\backpack.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>tests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\tests.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>

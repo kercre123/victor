@@ -49,6 +49,14 @@ void Backpack::init()
 {
   currentChannel = &RGBLightPins[0];
   memset(drive_value, 0xFF, sizeof(drive_value));
+
+  static const LightState startUpLight = {
+    0x03E0,
+    0x0180,
+    0x14,0x06,0x14,0x06
+  };
+
+  Lights::update(lightController.backpack[2], &startUpLight);
 }
 
 static inline void lights_out(void) {

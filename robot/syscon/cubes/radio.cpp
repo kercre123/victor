@@ -206,6 +206,20 @@ static void OTARemoteDevice(uint32_t id) {
   ota_send_next_block();
 }
 
+void Radio::sendTestPacket(void) {
+  const AdvertisePacket test_packet = {
+    0x0D0B3D09,
+    0xFF03,
+    0xE3FF,
+    0x04,
+    0xFF
+  };
+
+  static const uesb_address_desc_t test_address = { 81, 0xE7E7E7E7 };
+
+  uesb_write_tx_payload(&test_address, &test_packet, sizeof(test_packet));
+}
+
 void uesb_event_handler(uint32_t flags)
 {
   // Only respond to receive interrupts

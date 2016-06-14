@@ -69,6 +69,7 @@ const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
 static RTOS_Task *task;
+static bool motorDisable = true;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 static const MotorConfig m_config[MOTOR_COUNT] = {
@@ -180,6 +181,10 @@ static void ConfigurePPI(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 p
   sd_ppi_channel_assign(ppiChannel + 1, &timer->EVENTS_COMPARE[2], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
   sd_ppi_channel_assign(ppiChannel + 2, &timer->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
   sd_ppi_channel_assign(ppiChannel + 3, &timer->EVENTS_COMPARE[3], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
+}
+
+void Motors::disable(bool disable) {
+  motorDisable = disable;
 }
 
 void Motors::teardown(void) {
@@ -415,12 +420,20 @@ Fixed Motors::getSpeed(u8 motorID)
 void Motors::manage(void* userdata)
 {
   // Verify the source
-  if (Head::spokenTo)
+  if (Head::spokenTo && !motorDisable)
   {
     // Copy (valid) data to update motors
     for (int i = 0; i < MOTOR_COUNT; i++)
     {
       Motors::setPower(i, g_dataToBody.motorPWM[i]);
+    }
+  }
+  else
+  {
+    // Copy (valid) data to update motors
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+      Motors::setPower(i, 0);
     }
   }
 
