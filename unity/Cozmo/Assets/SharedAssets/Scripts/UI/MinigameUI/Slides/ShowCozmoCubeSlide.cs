@@ -30,7 +30,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private CubePalette.CubeColor _InViewColor;
   private CubePalette.CubeColor _OutViewColor;
 
-  private Tweener m_Tween;
+  private Tweener _Tween;
 
   public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor) {
     _InViewColor = inViewColor;
@@ -42,25 +42,29 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
           numCubesToShow);
 
     _TransparentCubeContainer.gameObject.SetActive(true);
-    m_Tween = null;
+    _Tween = null;
   }
 
   public void OnDestroy() {
-    if (m_Tween.IsActive()) {
-      m_Tween.Kill(false);
-      m_Tween = null;
+    if (_Tween.IsActive()) {
+      _Tween.Kill(false);
+      _Tween = null;
     }
   }
 
   public void RotateCozmoImageTo(float degrees, float duration) {
-    //Tweener move_tween = transform.DOLocalRotate(new Vector3(0, 0, final_angle), rotation_time, RotateMode.LocalAxisAdd);
-    //_CozmoImageTransform.DOLocalRotate(new Vector3(0, 0, degrees), 1.0f);
-    m_Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration, RotateMode.LocalAxisAdd);
+    _Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration);
   }
 
   //It's expected the called has already done a loc with args replacement
   public void SetLabelText(string txt) {
     _ShowCozmoCubesLabel.text = txt;
+  }
+  public void SetCubeSpacing(float space) {
+    VerticalLayoutGroup group = _CubeContainer.GetComponent<VerticalLayoutGroup>();
+    if (group) {
+      group.spacing = space;
+    }
   }
 
   public void LightUpCubes(int numberCubes) {

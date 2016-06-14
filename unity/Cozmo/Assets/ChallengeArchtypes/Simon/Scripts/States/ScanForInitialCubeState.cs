@@ -5,6 +5,7 @@ namespace Simon {
   public class ScanForInitialCubeState : InitialCubesState {
 
     private const float _kMinDistMM = 60.0f;
+    private const float _kRotateSec = 2.0f;
     private enum ScannedSetupCubeState {
       Unknown,
       Seen,
@@ -47,6 +48,7 @@ namespace Simon {
 
       SetScanPhase(ScanPhase.NoCubesSeen);
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
+      _ShowCozmoCubesSlide.SetCubeSpacing(75);
     }
 
     // ignore base class events
@@ -228,25 +230,28 @@ namespace Simon {
         }
 
         // setup next state...
-        if (nextState == ScanPhase.WaitForContinue) {
-          _Game.SharedMinigameView.EnableContinueButton(true);
-        }
-        else if (nextState == ScanPhase.NoCubesSeen) {
+        if (nextState == ScanPhase.NoCubesSeen) {
           _Game.SharedMinigameView.EnableContinueButton(false);
+        }
+        else if (nextState == ScanPhase.WaitForContinue) {
+          _Game.SharedMinigameView.EnableContinueButton(true);
         }
         else if (nextState == ScanPhase.ScanLeft || nextState == ScanPhase.ScanCenter) {
           _Game.SharedMinigameView.EnableContinueButton(false);
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * 45.0f, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(45.0f, 2.0f);
+          const float kLeftScanDeg = 45.0f;
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanDeg, _kRotateSec);
         }
         else if (nextState == ScanPhase.ScanRight) {
           _Game.SharedMinigameView.EnableContinueButton(false);
-          // Half speed since going further...
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * -90.0f, SimonGame.kTurnSpeed_rps / 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(-90.0f, 2.0f);
+          // Half speed since going further
+          const float kRightScanDeg = -90.0f;
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, SimonGame.kTurnSpeed_rps / 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          // Half of the total Degrees cozmo rotates since these are absolute          
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _kRotateSec);
         }
         else if (nextState == ScanPhase.Stopped) {
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, 2.0f);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _kRotateSec);
           _CurrentRobot.TurnTowardsObject(_SortedCubes[1], false);
           _Game.SharedMinigameView.EnableContinueButton(true);
         }
