@@ -17,6 +17,7 @@
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/gameEvent.clad"
 #include "clad/types/uiConnectionTypes.clad"
+#include "clad/types/visionModes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/motorTypes.clad"
@@ -168,7 +169,8 @@ string    text
 //  or observations from the same image to indicate nothing else is coming from that
 //  image.
 message RobotProcessedImage {
-   uint_32 timestamp
+   uint_32 timestamp,
+   VisionMode visionModes[uint_8]
 }
 
 // RobotObservedObject for signaling that an object

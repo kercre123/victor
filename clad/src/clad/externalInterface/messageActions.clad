@@ -6,6 +6,7 @@
 #include "clad/types/actionTypes.clad"
 #include "clad/types/faceEnrollmentSequences.clad"
 #include "clad/types/gameEvent.clad"
+#include "clad/types/visionModes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/sayTextStyles.clad"
@@ -349,7 +350,8 @@ message Wait {
 // WaitForImages - wait for the specified number of images to be processed
 message WaitForImages {
   uint_32 numImages,
-  uint_32 afterTimeStamp = 0  // Only count images with timestamp > than this
+  uint_32 afterTimeStamp = 0,  // Only count images with timestamp > than this
+  VisionMode visionMode // Indicates the mode that is REQUIRED to occur numImages times (or Count for any mode)
 }
 
 // TODO: Why can't I use the auto-union feature? I have to manually add each message or else I get an infinite CLAD recursion?

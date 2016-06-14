@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/visionModesHelpers.h"
 
 namespace Anki {
   
@@ -1313,7 +1314,7 @@ namespace Anki {
     
     ActionResult VisuallyVerifyObjectAction::Init()
     {
-      _waitForImagesAction = new WaitForImagesAction(_robot, GetNumImagesToWaitFor());
+      _waitForImagesAction = new WaitForImagesAction(_robot, GetNumImagesToWaitFor(), VisionMode::DetectingMarkers);
       _waitForImagesAction->ShouldEmitCompletionSignal(false);
     
       using namespace ExternalInterface;
@@ -1587,7 +1588,7 @@ namespace Anki {
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
               ASSERT_NAMED(nullptr == _action, "TurnTowardsLastFacePoseAction.CheckIfDone.ActionPointerShouldStillBeNull");
-              SetAction(new WaitForImagesAction(_robot, _maxFramesToWait));
+              SetAction(new WaitForImagesAction(_robot, _maxFramesToWait, VisionMode::DetectingFaces));
               _state = State::WaitingForFace;
             } else {
               // ...if we've already seen a face, jump straight to turning
@@ -1713,24 +1714,45 @@ namespace Anki {
     
 #pragma mark ---- WaitForImagesAction ----
     
-    WaitForImagesAction::WaitForImagesAction(Robot& robot, u32 numFrames, TimeStamp_t afterTimeStamp)
+    WaitForImagesAction::WaitForImagesAction(Robot& robot, u32 numFrames, VisionMode visionMode, TimeStamp_t afterTimeStamp)
     : IAction(robot)
     , _numFramesToWaitFor(numFrames)
     , _afterTimeStamp(afterTimeStamp)
+    , _visionMode(visionMode)
     {
       _name = "WaitFor" + std::to_string(_numFramesToWaitFor) + "Images";
     }
     
     ActionResult WaitForImagesAction::Init()
     {
-      _numFramesSeen = 0;
+      _numModeFramesSeen = {};
       
       auto imageProcLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
       {
-        if(msg.GetData().Get_RobotProcessedImage().timestamp > _afterTimeStamp) {
-          ++_numFramesSeen;
-          PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d",
-                            _numFramesSeen, _numFramesToWaitFor);
+        ASSERT_NAMED(ExternalInterface::MessageEngineToGameTag::RobotProcessedImage == msg.GetData().GetTag(),
+                     "WaitForImagesAction.MessageTypeNotHandled");
+        const ExternalInterface::RobotProcessedImage& imageMsg = msg.GetData().Get_RobotProcessedImage();
+        if(imageMsg.timestamp > _afterTimeStamp)
+        {
+          if (VisionMode::Count == _visionMode)
+          {
+            ++_numModeFramesSeen;
+            PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d for any mode",
+                              _numModeFramesSeen, _numFramesToWaitFor);
+          }
+          else
+          {
+            for (const auto& mode : imageMsg.visionModes)
+            {
+              if (mode == _visionMode)
+              {
+                ++_numModeFramesSeen;
+                PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d for mode %s",
+                                  _numModeFramesSeen, _numFramesToWaitFor, EnumToString(mode));
+                break;
+              }
+            }
+          }
         }
       };
       
@@ -1741,12 +1763,12 @@ namespace Anki {
     
     ActionResult WaitForImagesAction::CheckIfDone()
     {
-      if(_numFramesSeen >= _numFramesToWaitFor) {
-        return ActionResult::SUCCESS;
-      }
-      else {
+      if (_numModeFramesSeen < _numFramesToWaitFor)
+      {
         return ActionResult::RUNNING;
       }
+      
+      return ActionResult::SUCCESS;
     }
     
 #pragma mark ---- ReadToolCodeAction ----

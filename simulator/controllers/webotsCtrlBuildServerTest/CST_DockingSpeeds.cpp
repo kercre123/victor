@@ -252,7 +252,7 @@ namespace Anki {
         case TestState::PlaceBlock:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == 0, 40)
+                                           GetCarryingObjectID() == 0, 55)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -276,7 +276,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            _placeActionCompleted &&
-                                           NEAR(pose0.GetTranslation().z(), 0.02, 0.01), 40)
+                                           NEAR(pose0.GetTranslation().z(), 0.02, 0.01), 55)
           {
             ResetTest();
             
@@ -285,7 +285,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
             m.idTag = 10;
-            m.action.Set_waitForImages(ExternalInterface::WaitForImages(10,0));
+            m.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,{VisionMode::DetectingMarkers}));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -304,7 +304,7 @@ namespace Anki {
             m2.robotID = 1;
             m2.position = QueueActionPosition::NEXT;
             m2.idTag = 30;
-            m2.action.Set_waitForImages(ExternalInterface::WaitForImages(10,0));
+            m2.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,{VisionMode::DetectingMarkers}));
             ExternalInterface::MessageGameToEngine message2;
             message2.Set_QueueSingleAction(m2);
             SendMessage(message2);
@@ -317,7 +317,7 @@ namespace Anki {
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, 40)
+                                           GetNumObjects() == 1, 55)
           {
             _testState = _nextState;
           }

@@ -147,7 +147,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       
       CompoundActionSequential* action = new CompoundActionSequential(robot, {
           new TurnTowardsPoseAction(robot, relPose, PI_F),
-          new WaitForImagesAction(robot, kNumImagesForVerification) });
+          new WaitForImagesAction(robot, kNumImagesForVerification, VisionMode::DetectingMarkers) });
 
       PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
                        "robot is already within range of the cube, check if we can see it");

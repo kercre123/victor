@@ -92,12 +92,6 @@ struct DockingErrorSignal;
     // Check whether a specific vision mode is enabled
     bool IsModeEnabled(VisionMode mode) const;
     
-    // Get a bit flag for all enabled vision modes
-    u32 GetEnabledModes() const;
-    
-    // Set modes from a bit mask
-    Result SetModes(u32 modes);
-    
     // Vision system will switch to tracking when this marker is seen
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
                           const Point2f&               markerSize_mm,
@@ -116,7 +110,7 @@ struct DockingErrorSignal;
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMovingFast(bool enable);
     
-    Result UpdateAllResults();
+    Result UpdateAllResults(VisionProcessingResult& procResult_out);
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionPoseData& poseData);
 

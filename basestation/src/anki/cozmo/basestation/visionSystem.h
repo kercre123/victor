@@ -58,6 +58,7 @@
 #include "clad/types/visionModes.h"
 #include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "util/bitFlags/bitFlags.h"
 
 #include <mutex>
 #include <queue>
@@ -122,6 +123,7 @@ namespace Cozmo {
   struct VisionProcessingResult
   {
     TimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
+    Util::BitFlags8<VisionMode> modesProcessed;
     
     std::list<VizInterface::TrackerQuad>               trackerQuads;
     std::list<ExternalInterface::RobotObservedMotion>  observedMotions;
@@ -156,9 +158,7 @@ namespace Cozmo {
     Result UpdateCameraCalibration(Vision::CameraCalibration& camCalib);
     
     Result EnableMode(VisionMode whichMode, bool enabled);
-    bool   IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
-    u32    GetEnabledModes() const { return _mode; }
-    void   SetModes(u32 modes) { _mode = modes; }
+    bool   IsModeEnabled(VisionMode whichMode) const { return _mode.IsBitFlagSet(whichMode); }
     
     Result EnableToolCodeCalibration(bool enable);
     
@@ -259,7 +259,7 @@ namespace Cozmo {
                                  Embedded::Point3<f32>&       translationWrtRobot);
     
     // VisionMode <-> String Lookups
-    std::string GetModeName(VisionMode mode) const;
+    std::string GetModeName(Util::BitFlags8<VisionMode> mode) const;
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
@@ -350,8 +350,8 @@ namespace Cozmo {
     // TODO: Move this to visionParameters
     const s32 MAX_TRACKING_FAILURES = 1;
     
-    u32 _mode = static_cast<u32>(VisionMode::Idle);
-    u32 _modeBeforeTracking = static_cast<u32>(VisionMode::Idle);
+    Util::BitFlags8<VisionMode> _mode;
+    Util::BitFlags8<VisionMode> _modeBeforeTracking;
     
     bool _calibrateFromToolCode = false;
     
@@ -527,6 +527,8 @@ namespace Cozmo {
                         Embedded::MemoryStack scratch);
     
     void RestoreNonTrackingMode();
+    
+    bool ShouldProcessVisionMode(VisionMode mode) const;
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
