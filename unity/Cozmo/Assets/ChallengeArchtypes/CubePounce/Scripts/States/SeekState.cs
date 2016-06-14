@@ -35,7 +35,7 @@ namespace CubePounce {
       LightCube target = _CubeSlapGame.GetCurrentTarget();
       if (target != null) {
         // If Cube is in the right position, enter game state.
-        if (target.MarkersVisible) {
+        if (target.IsInFieldOfView) {
           float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
           if (distance < CubePounceGame.kCubePlaceDist) {
             isBad = false;

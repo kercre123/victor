@@ -23,7 +23,7 @@ public static class MockLightCubeUtil {
       cube.Rotation.z,
       cube.TopFaceNorthAngle,
       (byte)(cube.MarkersVisible ? 1 : 0),
-      (byte)(cube.IsActive ? 1 : 0));
+      (byte)(cube.HasLights ? 1 : 0));
   }
 
   public static RobotObservedObject SetRotation(this RobotObservedObject obj, Quaternion rotation) {

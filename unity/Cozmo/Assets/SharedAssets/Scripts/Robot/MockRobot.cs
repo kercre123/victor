@@ -76,7 +76,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void ClearVisibleObjects() {
+  public void UpdateCallbackTicks() {
     // This is called every frame in the Update of RobotEngineManager, so its the perfect place to tick our callbacks
     var now = Time.time;
     for (int i = _Callbacks.Count - 1; i >= 0; i--) {
@@ -92,10 +92,6 @@ public class MockRobot : IRobot {
   }
 
   public void UpdateInfo(Anki.Cozmo.ExternalInterface.RobotState message) {
-    // won't get called
-  }
-
-  public void UpdateDirtyList(ObservedObject dirty) {
     // won't get called
   }
 
@@ -140,19 +136,40 @@ public class MockRobot : IRobot {
 
   }
 
-  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+  public void DeleteObservedObject(int id) {
+    // Do nothing
+  }
+
+  public void FinishedProcessingImage(uint engineTimestamp) {
+    // Do nothing
+  }
+
+  public void HandleObjectConnectionState(ObjectConnectionState message) {
 
   }
 
-  public void RobotDeletedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
-
-  }
-
-  public void UpdateObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
+  public void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
     // Won't be called
   }
 
-  public void RobotMarkedObjectPoseUnknown(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown message) {
+  public void HandleObservedObjectMoved(ObjectMoved message) {
+    // Do nothing
+  }
+
+  public void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message) {
+    // Do nothing
+  }
+
+  public void HandleObservedObjectPoseUnknown(int id) {
+    // Do nothing
+  }
+
+  public void HandleObservedObjectTapped(ObjectTapped message) {
+    // Do nothing
+  }
+
+  public ObservedObject GetObservedObjectById(int id) {
+    return null;
   }
 
   public void UpdateObservedFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
@@ -455,6 +472,10 @@ public class MockRobot : IRobot {
     QueueCallback(3f, callback);
   }
 
+  public LightCube GetClosestLightCube() {
+    return null;
+  }
+
   public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(3f, callback);
   }
@@ -682,35 +703,19 @@ public class MockRobot : IRobot {
     get { return 0.73f; }
   }
 
-  private readonly List<ObservedObject> _VisibleObjects = new List<ObservedObject>();
-
-  public List<ObservedObject> VisibleObjects {
-    get {
-      return _VisibleObjects;
-    }
-  }
-
-  private readonly List<ObservedObject> _SeenObjects = new List<ObservedObject>();
-
-  public List<ObservedObject> SeenObjects {
-    get {
-      return _SeenObjects;
-    }
-  }
-
-  private readonly List<ObservedObject> _DirtyObjects = new List<ObservedObject>();
-
-  public List<ObservedObject> DirtyObjects {
-    get {
-      return _DirtyObjects;
-    }
-  }
-
   private readonly Dictionary<int, LightCube> _LightCubes = new Dictionary<int, LightCube>();
 
   public Dictionary<int, LightCube> LightCubes {
     get {
       return _LightCubes;
+    }
+  }
+
+  public List<LightCube> VisibleLightCubes {
+    get {
+      List<LightCube> list = new List<LightCube>();
+      list.AddRange(LightCubes.Values);
+      return list;
     }
   }
 

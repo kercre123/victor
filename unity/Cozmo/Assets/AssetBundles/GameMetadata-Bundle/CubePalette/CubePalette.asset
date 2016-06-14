@@ -11,6 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e48d68ffa4704c94b45eda54e189e5f, type: 3}
   m_Name: CubePalette
   m_EditorClassIdentifier: 
+  _FindCubesTimeoutFrames: 1
   _OffColor:
     uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
     lightColor: {r: 0, g: 0, b: 0, a: 1}

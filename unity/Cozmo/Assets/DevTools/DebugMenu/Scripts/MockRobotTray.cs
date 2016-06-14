@@ -33,8 +33,6 @@ public class MockRobotTray : MonoBehaviour {
     };
 
     robot.LightCubes.Clear();
-    robot.SeenObjects.Clear();
-    robot.VisibleObjects.Clear();
 
     foreach (var cube in cubes) {
       var debugCube = UIManager.CreateUIElement(_DebugCubePrefab, _CubeTray).GetComponent<DebugCube>();
@@ -42,8 +40,6 @@ public class MockRobotTray : MonoBehaviour {
 
       _SpawnedCubes[cube.ID] = debugCube;
       robot.LightCubes[cube.ID] = cube;
-      robot.SeenObjects.Add(cube);
-      robot.VisibleObjects.Add(cube);
 
       cube.MakeActiveAndVisible(true, true);
     }

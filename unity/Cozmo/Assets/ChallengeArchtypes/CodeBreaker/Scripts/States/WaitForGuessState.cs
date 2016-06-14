@@ -158,7 +158,7 @@ namespace CodeBreaker {
       // Get the cubes
       List<LightCube> visibleCubes = new List<LightCube>();
       foreach (var obj in _TargetCubeStates) {
-        if (obj.cube.MarkersVisible) {
+        if (obj.cube.IsInFieldOfView) {
           visibleCubes.Add(obj.cube);
         }
       }
