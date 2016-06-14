@@ -97,7 +97,7 @@ namespace Simon {
     }
 
     public void InitColorsAndSounds() {
-      // Adds it so it's always R Y B based on Cozmo's left to right
+      // Adds it so it's always R Y B based on Cozmo's right to left
       if (_BlockIdToSound.Count() == 0) {
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonSetupComplete);
         List<LightCube> listCubes = new List<LightCube>();
@@ -124,15 +124,6 @@ namespace Simon {
     }
 
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
-
-      if (!CurrentRobot.LightCubes.ContainsKey(correctCubeID)) {
-        List<int> validIDs = CurrentRobot.LightCubes.Keys.ToList<int>();
-        string str = "";
-        for (int i = 0; i < validIDs.Count; ++i) {
-          str += validIDs[i] + ",";
-        }
-        DAS.Error("Simon.CubeDisconnect", "Cube Lost! " + correctCubeID + " valid are: " + str);
-      }
       foreach (int cubeId in CubeIdsForGame) {
         if (_sShowWrongCubeTap && cubeId == wrongTapCubeID) {
           CurrentRobot.LightCubes[wrongTapCubeID].SetFlashingLEDs(Color.magenta, 100, 100, 0);
@@ -151,20 +142,11 @@ namespace Simon {
         if (CurrentRobot.LightCubes.ContainsKey(cubeId)) {
           CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
         }
-        else {
-          List<int> validIDs = CurrentRobot.LightCubes.Keys.ToList<int>();
-          string str = "";
-          for (int i = 0; i < validIDs.Count; ++i) {
-            str += validIDs[i] + ",";
-          }
-
-          DAS.Error("Simon.CubeDisconnect", "Cube Lost! " + cubeId + " valid are: " + str);
-        }
       }
     }
 
     public void GenerateNewSequence(int sequenceLength) {
-      // First time is special
+      // First time is special per design, always shuffle different 3 to make the start more unique.
       if (sequenceLength <= _Config.MinSequenceLength) {
         List<int> shuffledAllIDs = new List<int>(CubeIdsForGame);
         sequenceLength = sequenceLength > CubeIdsForGame.Count ? CubeIdsForGame.Count : sequenceLength;
@@ -177,7 +159,7 @@ namespace Simon {
         int pickIndex = Random.Range(0, CubeIdsForGame.Count);
         int pickedID = CubeIdsForGame[pickIndex];
         // Attempt to decrease chance of 3 in a row
-        if (_CurrentIDSequence.Count > 2 && CubeIdsForGame.Count > 1) {
+        if (_CurrentIDSequence.Count > 2) {
           if (pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 2] &&
               pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
             List<int> validIDs = new List<int>(CubeIdsForGame);
@@ -208,7 +190,7 @@ namespace Simon {
         Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       SimonCube simonCube;
       if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
-        audioEvent = (Anki.Cozmo.Audio.AudioEventParameter)simonCube.soundName;
+        audioEvent = simonCube.soundName;
       }
       return audioEvent;
     }
@@ -231,14 +213,13 @@ namespace Simon {
       }
       simonTurnScript.Initialize(currentPortrait, statusLocKey);
     }
+
     public void ShowBanner(string bannerKey) {
-      // Play banner animation with score
       string bannerText = Localization.Get(bannerKey);
-      SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
+      SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, null,
         _BannerAnimationDurationSeconds);
     }
-    private void HandleBannerAnimationDone() {
-    }
+
     protected override void RaiseMiniGameQuit() {
       base.RaiseMiniGameQuit();
       DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
@@ -247,8 +228,6 @@ namespace Simon {
 
   [System.Serializable]
   public class SimonCube {
-    // TODO: Store Anki.Cozmo.Audio.GameEvent.SFX instead of uint; apparently Unity
-    // doesn't like that.
     public Anki.Cozmo.Audio.AudioEventParameter soundName;
     public Color cubeColor;
   }

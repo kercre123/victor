@@ -13,7 +13,7 @@ namespace Simon {
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
-    private const float _kTapBufferSeconds = 0.05f;
+    private const float _kTapBufferSeconds = 0.1f;
     private bool _IsAnimating = false;
 
     List<CubeTapTime> _BadTapLists = new List<CubeTapTime>();
