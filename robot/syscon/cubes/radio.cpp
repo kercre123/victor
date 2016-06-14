@@ -11,12 +11,10 @@
 #include "micro_esb.h"
   
 #include "protocol.h"
-#include "random.h"
 #include "hardware.h"
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
-#include "crypto.h"
 #include "lights.h"
 #include "messages.h"
 
@@ -81,6 +79,7 @@ static RadioState        radioState;
 
 void Radio::init() {
   ota_task = RTOS::create(ota_ack_timeout, false);
+  lightGamma = 0x100;
 }
 
 void Radio::advertise(void) {
@@ -95,7 +94,6 @@ void Radio::advertise(void) {
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
-  lightGamma = 0x100;
 
   uesb_init(&uesb_config);
   
