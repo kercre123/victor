@@ -79,6 +79,11 @@ public class FactoryIntroManager : MonoBehaviour {
     HideDevConnectDialog();
     SetStatusText("Factory App Connected To Robot");
 
+    HandleEnableNVStorageWrites(PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1);
+    HandleCheckPreviousResults(PlayerPrefs.GetInt("CheckPreviousResult", 1) == 1);
+    HandleWipeNVStorageAtStart(PlayerPrefs.GetInt("WipeNVStorageAtStart", 0) == 1);
+    HandleSkipBlockPickup(PlayerPrefs.GetInt("SkipBlockPickup", 0) == 1);
+
     // runs the factory test.
     RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -96,6 +101,12 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
     _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
     _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
+
+    _FactoryOptionsPanelInstance.OnEnableNVStorageWrites += HandleEnableNVStorageWrites;
+    _FactoryOptionsPanelInstance.OnCheckPreviousResults += HandleCheckPreviousResults;
+    _FactoryOptionsPanelInstance.OnWipeNVstorageAtStart += HandleWipeNVStorageAtStart;
+    _FactoryOptionsPanelInstance.OnSkipBlockPickup += HandleSkipBlockPickup;
+
     _FactoryOptionsPanelInstance.Initialize(_IsSim, ConsoleLogManager.Instance.LogFilter);
   }
 
@@ -169,6 +180,54 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HideDevConnectDialog() {
     if (_DevConnectDialogInstance != null) {
       Destroy(_DevConnectDialogInstance);
+    }
+  }
+
+  void HandleEnableNVStorageWrites(bool toggleValue) {
+    PlayerPrefs.SetInt("EnableNStorageWritesToggle", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", "0");
+    }
+  }
+
+  void HandleCheckPreviousResults(bool toggleValue) {
+    PlayerPrefs.SetInt("CheckPreviousResult", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", "0");
+    }
+  }
+
+  void HandleWipeNVStorageAtStart(bool toggleValue) {
+    PlayerPrefs.SetInt("WipeNVStorageAtStart", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", "0");
+    }
+  }
+
+  void HandleSkipBlockPickup(bool toggleValue) {
+    PlayerPrefs.SetInt("SkipBlockPickup", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", "0");
     }
   }
 
