@@ -277,5 +277,17 @@ TEST_F(FileUtilsTest, FullFilePath)
   
   result = Anki::Util::FileUtils::FullFilePath({FILESEP "path" FILESEP "to" FILESEP, FILESEP "given" FILESEP "file.jpg"});
   ASSERT_EQ(result, groundTruth1b);
+
+  //
+  // Empty string should not insert a FILESEP!
+  //
+  result = Anki::Util::FileUtils::FullFilePath({"", "file.jpg"});
+  ASSERT_EQ(result.front(), 'f');
+  
+  result = Anki::Util::FileUtils::FullFilePath({"", "", "", "file.jpg"});
+  ASSERT_EQ(result.front(), 'f');
+  
+  result = Anki::Util::FileUtils::FullFilePath({"", "path" FILESEP, "", "file.jpg"});
+  ASSERT_EQ(result, groundTruth2);
   
 }
