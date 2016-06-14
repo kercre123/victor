@@ -62,6 +62,9 @@ namespace Cozmo {
       private Banner _BannerWidgetPrefab;
       private Banner _BannerWidgetInstance;
 
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _ShelfText;
+
       private void Start() {
         transform.SetAsFirstSibling();
 
@@ -79,6 +82,10 @@ namespace Cozmo {
         if (_CaratTween != null) {
           _CaratTween.Kill();
         }
+      }
+
+      public void SetWidgetText(string widgetTextKey) {
+        _ShelfText.text = Localization.Get(widgetTextKey);
       }
 
       public void GrowShelfBackground() {
@@ -122,11 +129,11 @@ namespace Cozmo {
           _CaratTween.Kill();
         }
         if (isWorldPos) {
-          _CaratTween = _CaratContainer.transform.DOMoveX(targetPos, 
+          _CaratTween = _CaratContainer.transform.DOMoveX(targetPos,
             _CaratTweenDurationSeconds).SetEase(Ease.OutBack);
         }
         else {
-          _CaratTween = _CaratContainer.transform.DOLocalMoveX(targetPos, 
+          _CaratTween = _CaratContainer.transform.DOLocalMoveX(targetPos,
             _CaratTweenDurationSeconds).SetEase(Ease.OutBack);
         }
         _CaratTween.Play();

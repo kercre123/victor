@@ -97,6 +97,9 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentInstructions = "faceEnrollment.instructions";
   public const string kFaceEnrollmentEnterNameButtonText = "faceEnrollment.enterName.buttonText";
   public const string kFaceEnrollmentEnterNamePlaceholderText = "faceEnrollment.enterName.placeholderText";
+  public const string kFaceEnrollmentFaceEnrollmentListDescription = "faceEnrollment.faceEnrollmentList.description";
+  public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle = "faceEnrollment.faceEnrollmentList.deleteConfirmTitle";
+  public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton = "faceEnrollment.faceEnrollmentList.deleteConfirmButton";
 
   #endregion
 

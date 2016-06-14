@@ -73,6 +73,8 @@ public interface IRobot : IDisposable {
 
   List<Face> Faces { get; }
 
+  Dictionary<int, string> EnrolledFaces { get; set; }
+
   float[] EmotionValues { get; }
 
   ILight[] BackpackLights { get; }
@@ -291,7 +293,11 @@ public interface IRobot : IDisposable {
 
   void SendDemoResetState();
 
+  void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName);
+
   void EraseAllEnrolledFaces();
+
+  void EraseEnrolledFaceByID(int faceID);
 
   void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
