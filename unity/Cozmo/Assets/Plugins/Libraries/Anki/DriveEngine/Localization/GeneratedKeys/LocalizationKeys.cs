@@ -109,8 +109,8 @@ public static class LocalizationKeys {
   public const string kItemExperiencePlural = "item.experience.plural";
   public const string kItemTreatSingular = "item.treat.singular";
   public const string kItemTreatPlural = "item.treat.plural";
-  public const string kItemGenericFragmentSingular = "item.genericFragment.singular";
-  public const string kItemGenericFragmentPlural = "item.genericFragment.plural";
+  public const string kItemGenericHexSingular = "item.genericHex.singular";
+  public const string kItemGenericHexPlural = "item.genericHex.plural";
   public const string kItemCubeSingular = "item.cube.singular";
   public const string kItemCubePlural = "item.cube.plural";
 
@@ -181,6 +181,7 @@ public static class LocalizationKeys {
   public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
   public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
   public const string kMinigameTextHowToPlay = "minigame.text.howToPlay";
+  public const string kMinigameTextHowToPlayHeader = "minigame.text.howToPlayHeader";
   public const string kMinigameDifficultyEasy = "minigame.difficulty.easy";
   public const string kMinigameDifficultyMedium = "minigame.difficulty.medium";
   public const string kMinigameDifficultyHard = "minigame.difficulty.hard";

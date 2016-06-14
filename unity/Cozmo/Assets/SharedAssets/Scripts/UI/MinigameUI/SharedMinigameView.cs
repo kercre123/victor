@@ -629,10 +629,10 @@ namespace Cozmo {
         return cubeSlide;
       }
 
-      public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback) {
+      public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback, string headerLocKey = null) {
         GameObject slide = ShowWideGameStateSlide(_AnimationSlidePrefab.gameObject, slideDasName, endInTweenCallback);
         AnimationSlide animationSlide = slide.GetComponent<AnimationSlide>();
-        animationSlide.Initialize(animationPrefab, descLocKey);
+        animationSlide.Initialize(animationPrefab, descLocKey, headerLocKey);
       }
 
       public void ShowWideSlideWithText(string descLocKey, TweenCallback endInTweenCallback) {

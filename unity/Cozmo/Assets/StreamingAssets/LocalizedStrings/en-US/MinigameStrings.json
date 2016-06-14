@@ -207,6 +207,9 @@
   "minigame.text.howToPlay": {
     "translation": "How To Play"
   },
+  "minigame.text.howToPlayHeader": {
+    "translation": "How To Play:"
+  },
   "minigame.difficulty.easy": {
     "translation": "Easy"
   },
