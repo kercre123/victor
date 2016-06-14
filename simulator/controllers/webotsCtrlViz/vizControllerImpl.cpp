@@ -218,6 +218,17 @@ void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::
     payload.head_angle, payload.lift_angle);
 }
 
+static inline void SetColorHelper(webots::Display* disp, u32 ankiColor)
+{
+  disp->setColor(ankiColor >> 8);
+  
+  const uint8_t alpha = (uint8_t)(ankiColor & 0xff);
+  if(alpha < 0xff) {
+    static const float oneOver255 = 1.f / 255.f;
+    disp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+  }
+}
+  
 void VizControllerImpl::DrawText(VizTextLabelType labelID, u32 color, const char* text)
 {
   const int baseXOffset = 8;
@@ -225,12 +236,11 @@ void VizControllerImpl::DrawText(VizTextLabelType labelID, u32 color, const char
   const int yLabelStep = 10;  // Line spacing in pixels. Characters are 8x8 pixels in size.
 
   // Clear line specified by labelID
-  disp->setColor(0x0);
+  SetColorHelper(disp, NamedColors::BLACK);
   disp->fillRectangle(0, baseYOffset + yLabelStep * (uint32_t)labelID, disp->getWidth(), 8);
 
   // Draw text
-  disp->setColor(color >> 8);
-  disp->setAlpha(static_cast<double>(0xff & color)/255.);
+  SetColorHelper(disp, color);
 
   std::string str(text);
   if(str.empty()) {
@@ -324,24 +334,15 @@ void VizControllerImpl::ProcessVizVisionMarkerMessage(const AnkiEvent<VizInterfa
 void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraQuad();
-  const f32 oneOver255 = 1.f / 255.f;
 
-  camDisp->setColor(payload.color >> 8);
-  uint8_t alpha = (uint8_t)(payload.color & 0xff);
-  if(alpha < 0xff) {
-    camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-  }
+  SetColorHelper(camDisp, payload.color);
   camDisp->drawLine((int)payload.xUpperLeft, (int)payload.yUpperLeft, (int)payload.xLowerLeft, (int)payload.yLowerLeft);
   camDisp->drawLine((int)payload.xLowerLeft, (int)payload.yLowerLeft, (int)payload.xLowerRight, (int)payload.yLowerRight);
   camDisp->drawLine((int)payload.xLowerRight, (int)payload.yLowerRight, (int)payload.xUpperRight, (int)payload.yUpperRight);
   
   if(payload.topColor != payload.color)
   {
-    camDisp->setColor(payload.topColor >> 8);
-    uint8_t alpha = (uint8_t)(payload.topColor & 0xff);
-    if(alpha < 0xff) {
-      camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-    }
+    SetColorHelper(camDisp, payload.topColor);
   }
   camDisp->drawLine((int)payload.xUpperRight, (int)payload.yUpperRight, (int)payload.xUpperLeft, (int)payload.yUpperLeft);
 }
@@ -349,24 +350,14 @@ void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface
 void VizControllerImpl::ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraLine();
-  camDisp->setColor(payload.color >> 8);
-  uint8_t alpha = (uint8_t)(payload.color & 0xff);
-  if(alpha < 0xff) {
-    const f32 oneOver255 = 1.f / 255.f;
-    camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-  }
+  SetColorHelper(camDisp, payload.color);
   camDisp->drawLine((int)payload.xStart, (int)payload.yStart, (int)payload.xEnd, (int)payload.yEnd);
 }
 
 void VizControllerImpl::ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraOval();
-  camDisp->setColor(payload.color >> 8);
-  uint8_t alpha = (uint8_t)(payload.color & 0xff);
-  if(alpha < 0xff) {
-    const f32 oneOver255 = 1.f / 255.f;
-    camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-  }
+  SetColorHelper(camDisp, payload.color);
   camDisp->drawOval((int)std::round(payload.xCen), (int)std::round(payload.yCen),
     (int)std::round(payload.xRad), (int)std::round(payload.yRad));
 }
@@ -375,12 +366,7 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
 {
   const auto& payload = msg.GetData().Get_CameraText();
   if (payload.text.size() > 0){
-    camDisp->setColor(payload.color >> 8);
-    uint8_t alpha = (uint8_t)(payload.color & 0xff);
-    if(alpha < 0xff) {
-      const f32 oneOver255 = 1.f / 255.f;
-      camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-    }
+    SetColorHelper(camDisp, payload.color);
     camDisp->drawText(payload.text[0], (int)payload.x, (int)payload.y);
   }
 }
