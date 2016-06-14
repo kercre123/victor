@@ -19,8 +19,10 @@ MonoBehaviour:
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
-  DescriptionKey: Unlock Description
-  TitleKey: unlockable.Default.Description
+  DescriptionKey: unlockable.CubePounce.Description
+  TitleKey: unlockable.CubePounce.Title
+  UpgradeCostItemId: TestHexItem0
+  UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradePurple

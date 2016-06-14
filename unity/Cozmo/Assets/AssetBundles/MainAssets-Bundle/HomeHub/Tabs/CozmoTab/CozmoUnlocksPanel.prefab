@@ -253,7 +253,7 @@ MonoBehaviour:
     JsonValue: 5
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"Sparks: 20"'
+    JsonValue: '"#label.colonCount"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
@@ -327,7 +327,7 @@ MonoBehaviour:
     JsonValue: 5
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"Fragments: 200"'
+    JsonValue: '"#cozmoTab.hexCount"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: CozmoUnlocksPanel:_HexLabel
@@ -385,7 +385,7 @@ MonoBehaviour:
   _UnlocksContainer: {fileID: 22401556}
   _UnlocksTilePrefab: {fileID: 11487174, guid: 8ab911dc7ee844400aacb3da9b5028f6, type: 2}
   _HexLabel: {fileID: 0}
-  _RequestTricksViewPrefab: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
+  _CoreUpgradeDetailsViewPrefab: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
     type: 2}
   _BeginningCircuitSprites:
   - {fileID: 21300000, guid: 1bf4f9e4c97384c818ffda1923e92220, type: 3}
@@ -438,7 +438,7 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 2232, y: -18}
+  m_AnchoredPosition: {x: 2232, y: 8}
   m_SizeDelta: {x: 246, y: 212}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22424550
@@ -455,7 +455,7 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1735, y: -18}
+  m_AnchoredPosition: {x: 1735, y: 8}
   m_SizeDelta: {x: 110, y: 131}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22424992
@@ -494,7 +494,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 419, y: 74.99999}
+  m_AnchoredPosition: {x: 419, y: 98}
   m_SizeDelta: {x: 838, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22450082
@@ -511,7 +511,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1953, y: -18}
+  m_AnchoredPosition: {x: 1953, y: 8}
   m_SizeDelta: {x: 389, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22472966
@@ -528,7 +528,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1360, y: -18}
+  m_AnchoredPosition: {x: 1360, y: 8}
   m_SizeDelta: {x: 602, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22476092
@@ -633,6 +633,11 @@ Prefab:
       propertyPath: _UnlocksTilePrefab
       value: 
       objectReference: {fileID: 11487174, guid: 8ab911dc7ee844400aacb3da9b5028f6,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _CoreUpgradeDetailsViewPrefab
+      value: 
+      objectReference: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
