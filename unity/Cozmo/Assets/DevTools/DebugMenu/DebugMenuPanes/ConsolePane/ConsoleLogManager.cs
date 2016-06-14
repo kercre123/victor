@@ -7,8 +7,9 @@ using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
-
   private static ConsoleLogManager _Instance;
+
+  public string LogFilter = "";
 
   public static ConsoleLogManager Instance {
     get {
@@ -351,7 +352,7 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}"); 
+    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}");
     if (!string.IsNullOrEmpty(contextStr)) {
       formatStr.Append(" ({3})");
     }
@@ -392,7 +393,7 @@ public class LogPacket {
       colorStr = "00cc00";
       break;
     }
-    
+
     string contextStr = "";
     if (Context != null) {
       Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
@@ -409,7 +410,7 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}"); 
+    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}");
     if (!string.IsNullOrEmpty(contextStr)) {
       formatStr.Append(" ({4})");
     }
