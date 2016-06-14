@@ -22,6 +22,8 @@ namespace Simon {
       _GameInstance.OnTurnStage(_NextPlayer, true);
 
       _GameInstance.SetCubeLightsDefaultOn();
+
+      _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[1]], false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
 
     private void HandleContinuePressed() {

@@ -45,8 +45,7 @@ namespace Simon {
       }
 
       SetScanPhase(ScanPhase.NoCubesSeen);
-      _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
-      _ShowCozmoCubesSlide.SetCubeSpacing(75);
+      InitShowCubesSlide();
     }
 
     // ignore base class events
@@ -216,11 +215,19 @@ namespace Simon {
       }
     }
 
+    private void InitShowCubesSlide() {
+      if (_ShowCozmoCubesSlide == null) {
+        _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+      }
+      _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
+      _ShowCozmoCubesSlide.SetCubeSpacing(100);
+    }
+
     private void SetScanPhase(ScanPhase nextState) {
       if (_ScanPhase != nextState) {
         // clean up previous
         if (_ScanPhase == ScanPhase.Error) {
-          _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+          InitShowCubesSlide();
           // Reset for another scan since hopefully they moved them
           _Game.CubeIdsForGame.Clear();
           _SetupCubeState.Clear();

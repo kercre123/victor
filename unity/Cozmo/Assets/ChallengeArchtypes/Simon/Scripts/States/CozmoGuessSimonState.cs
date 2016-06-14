@@ -11,6 +11,14 @@ namespace Simon {
     private int _LastTargetID;
     private bool _IsAnimating = false;
 
+    // Still under review for what we want for audio.
+    // This is likely to be refactored into all different clips with unique sounds.
+    private const string _kPointDefault = "ag_simon_point_center";
+    private const string _kPointLeftSmall = "ag_simon_point_smallleft";
+    private const string _kPointRightSmall = "ag_simon_point_smallright";
+    private const string _kPointLeftBig = "ag_simon_point_bigleft";
+    private const string _kPointRightBig = "ag_simon_point_bigright";
+
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
@@ -78,7 +86,27 @@ namespace Simon {
 
     private void StartTurnToTarget(LightCube target) {
       _CurrentRobot.SetAllBackpackBarLED(_GameInstance.GetColorForBlock(target.ID));
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target));
+
+      int goingToIndex = _GameInstance.CubeIdsForGame.IndexOf(target.ID);
+      int fromIndex = 1;
+      if (_CurrentSequenceIndex > 0) {
+        fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_CurrentSequence[_CurrentSequenceIndex - 1]);
+      }
+      string animGroup = _kPointDefault;
+      if (goingToIndex - fromIndex == 1) {
+        animGroup = _kPointLeftSmall;
+      }
+      else if (goingToIndex - fromIndex == -1) {
+        animGroup = _kPointRightSmall;
+      }
+      if (goingToIndex - fromIndex >= 2) {
+        animGroup = _kPointLeftBig;
+      }
+      else if (goingToIndex - fromIndex <= -2) {
+        animGroup = _kPointRightBig;
+      }
+
+      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animGroup));
     }
 
     public LightCube GetCurrentTarget() {

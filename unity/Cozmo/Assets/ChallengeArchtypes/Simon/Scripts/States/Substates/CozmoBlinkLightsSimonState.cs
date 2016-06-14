@@ -4,26 +4,29 @@ using UnityEngine;
 namespace Simon {
   public class CozmoBlinkLightsSimonState : State {
     private LightCube _TargetCube;
+    private string _AnimGroupName;
 
-    public CozmoBlinkLightsSimonState(LightCube targetCube) {
+    public CozmoBlinkLightsSimonState(LightCube targetCube, string animGroupName = null) {
       _TargetCube = targetCube;
+      _AnimGroupName = animGroupName;
+      if (_AnimGroupName == null) {
+        _AnimGroupName = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnSimonPointCube);
+      }
     }
 
     public override void Enter() {
       base.Enter();
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPointCube, HandleEndAnimationComplete);
-      // Animation needs to have a robot event
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPointCube);
       RobotEngineManager.Instance.OnRobotAnimationEvent += OnRobotAnimationEvent;
+
+      // Animation needs to have a robot event
+      _CurrentRobot.SendAnimationGroup(_AnimGroupName, HandleEndAnimationComplete);
     }
 
     public override void Exit() {
       ResetLights();
 
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPointCube, HandleEndAnimationComplete);
       RobotEngineManager.Instance.OnRobotAnimationEvent -= OnRobotAnimationEvent;
     }
 
