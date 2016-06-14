@@ -186,6 +186,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   public List<DailyGoal> GenerateDailyGoals() {
     List<DailyGoal> newGoals = new List<DailyGoal>();
+    DAS.Info();
     int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals + 1));
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
     // Look at a list of exclusively goals that have their conditions met
@@ -210,17 +211,22 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
-    DAS.Info("DailyGoalManager.SendDasEventsForGoalGeneration", "CallStack : " + System.Environment.StackTrace);
-    if (goals.Count > 0) {
-      for (int i = 0; i < goals.Count; i++) {
-        DAS.Info("DailyGoalManager.SendDasEventsForGoalGeneration", "i:" + i);
-        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
-          new Dictionary<string, string> { {
-              "$data",
-              DASUtil.FormatGoal(goals[i])
-            }
-          });
+    try {
+      DAS.Info("DailyGoalManager.SendDasEventsForGoalGeneration", "CallStack : " + System.Environment.StackTrace);
+      if (goals.Count > 0) {
+        for (int i = 0; i < goals.Count; i++) {
+          DAS.Info("DailyGoalManager.SendDasEventsForGoalGeneration", "i:" + i);
+          DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
+            new Dictionary<string, string> { {
+                "$data",
+                DASUtil.FormatGoal(goals[i])
+              }
+            });
+        }
       }
+    }
+    catch {
+      DAS.Warn("DailyGoalManager.SendDasEventsForGoalGeneration", "DasEventsForGoalGenerationFailed");
     }
   }
 
