@@ -66,8 +66,8 @@ extern "C" void HardFault_Handler(void) {
 
 using namespace Anki::Cozmo::RobotInterface;
 
-static BodyRadioMode current_operating_mode = -1;
-static BodyRadioMode active_operating_mode = -1;
+static BodyRadioMode current_operating_mode = BODY_BLUETOOTH_OPERATING_MODE;
+static BodyRadioMode active_operating_mode = BODY_BLUETOOTH_OPERATING_MODE;
 
 void enterOperatingMode(BodyRadioMode mode) {
   current_operating_mode = mode;
@@ -80,17 +80,15 @@ static void setupOperatingMode() {
 
   // Tear down existing mode
   switch (active_operating_mode) {
-    case BODY_BLUETOOTH_OPERATING_MODE:      
+    case BODY_BLUETOOTH_OPERATING_MODE:
       Bluetooth::shutdown();
       break ;
     
     case BODY_ACCESSORY_OPERATING_MODE:
-      Motors::stop();
       Radio::shutdown();
       break ;
 
     case BODY_DTM_OPERATING_MODE:
-      Motors::stop();
       DTM::stop();
       break ;
 
@@ -101,12 +99,14 @@ static void setupOperatingMode() {
   // Setup new mode
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
+      Motors::disable(true);  
       Battery::powerOff();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       break ;
     
     case BODY_BLUETOOTH_OPERATING_MODE:
+      Motors::disable(true);
       Battery::powerOn();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
@@ -115,21 +115,21 @@ static void setupOperatingMode() {
       break ;
     
     case BODY_ACCESSORY_OPERATING_MODE:
+      Motors::disable(false);
       Battery::powerOn();
       Backpack::lightMode(TIMER_LEDS);
 
       Radio::advertise();
 
       Timer::lowPowerMode(false);
-      Motors::start();
       break ;
 
     case BODY_DTM_OPERATING_MODE:
+      Motors::disable(false);
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
 
       DTM::start();
-      Motors::start();
       break ;
   }
   
@@ -171,6 +171,7 @@ int main(void)
   enterOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
   setupOperatingMode();
 
+  Motors::start();
   Timer::start();
 
   // Run forever, because we are awesome.

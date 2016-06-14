@@ -93,7 +93,7 @@ void Battery::init()
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
   // Encoder and LED power
-  nrf_gpio_pin_set(PIN_VDDs_EN);
+  nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
   // turn off headlight
@@ -137,14 +137,12 @@ void Battery::setHeadlight(bool status) {
 void Battery::powerOn()
 {
   nrf_gpio_pin_set(PIN_PWR_EN);
-  nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
 void Battery::powerOff()
 {
   // Shutdown the extra things
   nrf_gpio_pin_clear(PIN_PWR_EN);
-  nrf_gpio_pin_set(PIN_VDDs_EN);
   MicroWait(10000);
 }
 
