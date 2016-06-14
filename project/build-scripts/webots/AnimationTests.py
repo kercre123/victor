@@ -62,7 +62,7 @@ def main(cli_args):
 
   available_animations = []
   with open(log_file_path, 'r') as log_file:
-    regex = r"(?<=HandleAnimationAvailable Animation available: )\w+"
+    regex = r"(?<=HandleAnimationAvailable Animation available: )(.*)(?=\n)"
     available_animations = re.findall(regex, log_file.read())
 
 
