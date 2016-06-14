@@ -146,6 +146,7 @@ public class DailyGoalManager : MonoBehaviour {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
+    _CurrentGenData = new DailyGoalGenerationData();
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
       string[] _DailyGoalFiles = Directory.GetFiles(sDailyGoalDirectory);
