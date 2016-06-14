@@ -116,6 +116,7 @@ namespace Anki {
 
         // Copy engine resources
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
+        FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources/assets/.svn");
 
         // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
         // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
