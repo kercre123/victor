@@ -45,13 +45,13 @@ public class FactoryIntroManager : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
-  private string _LogFilter = "";
   private bool _IsSim = false;
 
   void Start() {
     _RestartOverlay.gameObject.SetActive(false);
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
-    _LogFilter = PlayerPrefs.GetString("LogFilter");
+    ConsoleLogManager.Instance.LogFilter = PlayerPrefs.GetString("LogFilter");
+
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
@@ -96,11 +96,11 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
     _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
     _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
-    _FactoryOptionsPanelInstance.Initialize(_IsSim, _LogFilter);
+    _FactoryOptionsPanelInstance.Initialize(_IsSim, ConsoleLogManager.Instance.LogFilter);
   }
 
   private void HandleSetConsoleLogFilter(string input) {
-    _LogFilter = input;
+    ConsoleLogManager.Instance.LogFilter = input;
   }
 
   private void HandleOTAButton() {
