@@ -275,25 +275,39 @@ namespace Anki {
     
     void Robot::SetOnCharger(bool onCharger)
     {
+      Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
       if (onCharger && !_isOnCharger) {
+        
+        // If we don't actually have a charger, add an unconnected one now
+        if (nullptr == charger)
+        {
+          ObjectID newObj = AddUnconnectedCharger();
+          charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
+          ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
+        }
+        
         PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
-        
-        // Stop whatever we were doing
-        //GetActionList().Cancel();
-        
-        Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
-        if( charger )
-        {
-          charger->SetPoseToRobot(GetPose());
-        }
         
       } else if (!onCharger && _isOnCharger) {
         PRINT_NAMED_INFO("Robot.SetOnCharger.OffCharger", "");
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
       }
       
+      if( onCharger && nullptr != charger )
+      {
+        charger->SetPoseToRobot(GetPose());
+      }
+      
       _isOnCharger = onCharger;
+    }
+    
+    ObjectID Robot::AddUnconnectedCharger()
+    {
+      ASSERT_NAMED(_chargerID.IsUnknown(), "AddUnconnectedCharger.ChargerAlreadyExists");
+      ObjectID objID = GetBlockWorld().AddActiveObject(-1, 0, ActiveObjectType::OBJECT_CHARGER);
+      SetCharger(objID);
+      return _chargerID;
     }
 
     

@@ -336,6 +336,12 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
   ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
   ObjectID objID;
   
+  // Do checking here that the unsigned number we get as ActiveID (specified as payload.objectID) is actually less
+  // than the max slot we're supposed to have as ActiveID. Extra checking here is necessary since the number is unsigned
+  // and we do allow a negative ActiveID when calling AddActiveObject elsewhere, for adding the charger.
+  ASSERT_NAMED(payload.objectID < Util::numeric_cast<uint32_t>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS),
+               "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
+  
   if (payload.connected) {
     // Add active object to blockworld if not already there
     objID = GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID, payload.device_type);
