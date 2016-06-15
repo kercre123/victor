@@ -93,6 +93,7 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
+    void SendTestResultToGame(Robot& robot, FactoryTestResultCode resCode);
     
     std::vector<Signal::SmartHandle> _signalHandles;
     
@@ -117,12 +118,16 @@ namespace Cozmo {
     f32      _watchdogTriggerTime = -1.0;
     
     bool     _toolCodeImagesStored;
+
+    bool     _headCalibrated;
+    bool     _liftCalibrated;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
     bool _chargerAvailable = false;
     bool _chargerConnected = false;
     FactoryTestResultCode _testResult;
+    FactoryTestResultEntry _testResultEntry;
     std::vector<u32> _stateTransitionTimestamps;
     
   }; // class BehaviorFactoryTest

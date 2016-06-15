@@ -1052,6 +1052,12 @@ namespace Anki {
                     break;
                   }
                   
+                  // FactoryTest behavior has to start on a charger so we need to wake up the robot first
+                  if(behaviorName == "FactoryTest")
+                  {
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
+                  }
+                  
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
@@ -2066,7 +2072,7 @@ namespace Anki {
                   webots::Field* hasEdgeField = root_->getField("demoHasEdge");
                   if( hasEdgeField != nullptr ) {
                     bool hasEdge = hasEdgeField->getSFBool();
-                    SendMessage(MessageGameToEngine(StartDemoWithEdge(hasEdge)));
+                    SendMessage(MessageGameToEngine(WakeUp(hasEdge)));
                   }
                   else {
                     printf("ERROR: no field 'demoHasEdge', not sending edge message\n");

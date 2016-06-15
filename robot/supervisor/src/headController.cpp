@@ -119,6 +119,8 @@ namespace HeadController {
       // it's at the joint limit.  The arm flies off the robot!
       isCalibrated_ = true;
       SetDesiredAngle(MIN_HEAD_ANGLE);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
 #else
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;

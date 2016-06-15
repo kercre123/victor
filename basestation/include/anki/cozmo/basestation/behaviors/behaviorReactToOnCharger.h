@@ -46,6 +46,7 @@ private:
   
   bool _shouldStopBehavior = false;
   bool _isReactionEnabled = true;
+  bool _isOnCharger = false;
 }; // class BehaviorReactToOnCharger
   
 
