@@ -1138,6 +1138,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           ObservableObject* newObjectOnBottom = objSeen;
           ObservableObject* oldObjectOnBottom = matchingObject->CloneType();
           oldObjectOnBottom->SetPose(matchingObject->GetPose());
+          
           // If the object was already updated this timestamp then don't bother doing this.
           while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
 
@@ -1146,6 +1147,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
             Pose3d topPose = objectOnTop->GetPose();
             Pose3d bottomPose = oldObjectOnBottom->GetPose();
             Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
+            
+            Radians zDiff = topPose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis() - bottomPose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis();
+            topPose.SetRotation(Rotation3d(RotationVector3d(zDiff, Z_AXIS_3D())) * newObjectOnBottom->GetPose().GetRotation());
+            
             topPose.SetTranslation( newObjectOnBottom->GetPose().GetTranslation() + diff );
             Util::SafeDelete(oldObjectOnBottom);
             oldObjectOnBottom = objectOnTop->CloneType();
