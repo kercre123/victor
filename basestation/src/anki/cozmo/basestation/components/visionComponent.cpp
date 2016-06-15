@@ -46,6 +46,9 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
+// Whether or not to do rolling shutter correction
+#define ROLLING_SHUTTER_CORRECTION 1
+
 namespace Anki {
 namespace Cozmo {
 
@@ -54,9 +57,6 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasMovingTooFast.Face.Head_deg/s",    10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasMovingTooFast.Face.Body_deg/s",    30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasMovingTooFast.Face.NumToLookBack", 5);
-  
-  // Whether or not to do rolling shutter correction for physical robots
-  CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
   
   VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
   : _robot(robot)
@@ -157,7 +157,7 @@ namespace Cozmo {
       //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
     
-    if(kRollingShutterCorrectionEnabled)
+    if(ROLLING_SHUTTER_CORRECTION)
     {
       _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
     }
@@ -221,7 +221,8 @@ namespace Cozmo {
       _processingThread.join();
     }
     
-    _currentImg.Clear();
+    _currentImg = {};
+    _lastImg    = {};
   }
 
 
@@ -256,9 +257,49 @@ namespace Cozmo {
     }
   }
   
+  
+  bool VisionComponent::GetCurrentImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp)
+  {
+    bool retVal = false;
+    
+    Lock();
+    if(_running && !_currentImg.IsEmpty() && _currentImg.GetTimestamp() > newerThanTimestamp) {
+      _currentImg.CopyTo(img);
+      img.SetTimestamp(_currentImg.GetTimestamp());
+      retVal = true;
+    } else {
+      img = {};
+      retVal = false;
+    }
+    Unlock();
+    
+    return retVal;
+  }
+  
+  bool VisionComponent::GetLastProcessedImage(Vision::ImageRGB& img,
+                                              TimeStamp_t newerThanTimestamp)
+  {
+    bool retVal = false;
+    
+    Lock();
+    if(!_lastImg.IsEmpty() && _lastImg.GetTimestamp() > newerThanTimestamp) {
+      _lastImg.CopyTo(img);
+      img.SetTimestamp(_lastImg.GetTimestamp());
+      retVal = true;
+    }
+    Unlock();
+    
+    return retVal;
+  }
+
   TimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
   {
-    return _lastProcessedImageTimeStamp_ms;
+    return _lastProcessedImageTimeStamp;
+  }
+  
+  TimeStamp_t VisionComponent::GetProcessingPeriod()
+  {
+    return _processingPeriod;
   }
 
   void VisionComponent::Lock()
@@ -300,18 +341,8 @@ namespace Cozmo {
     }
   }
   
-  
-  Result VisionComponent::SetNextImage(EncodedImage& encodedImage)
+  Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
-    // Track how fast we are receiving frames
-    if(_lastReceivedImageTimeStamp_ms > 0) {
-      // Time should not move backwards!
-      ASSERT_NAMED(encodedImage.GetTimeStamp() >= _lastReceivedImageTimeStamp_ms,
-                   "VisionComponent.SetNextImage.UnexpectedTimeStamp");
-      _framePeriod_ms = encodedImage.GetTimeStamp() - _lastReceivedImageTimeStamp_ms;
-    }
-    _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
-    
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "");
       return RESULT_FAIL;
@@ -325,17 +356,11 @@ namespace Cozmo {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       ASSERT_NAMED(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
 
-      // Populate IMU data history for this image, for rolling shutter correction
-      GetImuDataHistory().CalculateTimestampForImageIMU(encodedImage.GetImageID(),
-                                                        encodedImage.GetTimeStamp(),
-                                                        RollingShutterCorrector::timeBetweenFrames_ms,
-                                                        encodedImage.GetHeight());
-    
       // Fill in the pose data for the given image, by querying robot history
       RobotPoseStamp imagePoseStamp;
       TimeStamp_t imagePoseStampTimeStamp;
       
-      Result lastResult = _robot.GetPoseHistory()->ComputePoseAt(encodedImage.GetTimeStamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
+      Result lastResult = _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
       
       // If we are unable to compute a pose at image timestamp because we haven't recieved any state updates
       // after that timestamp then use the latest pose
@@ -349,7 +374,7 @@ namespace Cozmo {
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
                           "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)\n",
-                          encodedImage.GetTimeStamp(),
+                          image.GetTimestamp(),
                           _robot.GetPoseHistory()->GetNumRawPoses(),
                           _robot.GetPoseHistory()->GetOldestTimeStamp(),
                           _robot.GetPoseHistory()->GetNewestTimeStamp(),
@@ -393,38 +418,13 @@ namespace Cozmo {
       // Experimental:
       //UpdateOverheadMap(image, _nextPoseData);
       
-      // Store image for calibration (*before* we swap encodedImage with _nextImg below!)
-      // NOTE: This means we do decoding on main thread, but this is just for the factory
-      //       test, so I'm not going to the trouble to store encoded images for calibration
-      if (_storeNextImageForCalibration) {
-        
-        if (IsModeEnabled(VisionMode::ComputingCalibration)) {
-          PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
-          _storeNextImageForCalibration = false;
-        } else {
-          
-          // If we were moving too fast at the timestamp the image was taken then don't save it for calibration purposes
-          if(!WasMovingTooFast(encodedImage.GetTimeStamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
-          {
-            _storeNextImageForCalibration = false;
-            // TODO: Get a grayscale image directly (we're currently decoding gray images, making them color and then making them gray again)
-            Vision::ImageRGB image = encodedImage.DecodeImageRGB();
-            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
-            if(RESULT_OK != addResult) {
-              PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
-            }
-          } else {
-            PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
-          }
-        }
-      }
-      
       switch(_runMode)
       {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            UpdateVisionSystem(_nextPoseData, encodedImage);
+            UpdateVisionSystem(_nextPoseData, image);
+            _lastImg = image;
           }
           break;
         }
@@ -436,13 +436,11 @@ namespace Cozmo {
             if(!_nextImg.IsEmpty()) {
               PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
                                "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
-                               encodedImage.GetTimeStamp(),
-                               _nextImg.GetTimeStamp(),
-                               _currentImg.GetTimeStamp());
+                               image.GetTimestamp(), _nextImg.GetTimestamp(), _currentImg.GetTimestamp());
             }
             
-            // Make encoded image the new "next" image
-            std::swap(_nextImg, encodedImage);
+            // TODO: Avoid the copying here (shared memory?)
+            image.CopyTo(_nextImg);
             
             Unlock();
           }
@@ -451,6 +449,29 @@ namespace Cozmo {
         default:
           PRINT_NAMED_ERROR("VisionComponent.SetNextImage.InvalidRunMode", "");
       } // switch(_runMode)
+
+
+      // Store image for calibration
+      if (_storeNextImageForCalibration) {
+
+        if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+          PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+          _storeNextImageForCalibration = false;
+        } else {
+          
+          // If we were moving too fast at the timestamp the image was taken then don't save it for calibration purposes
+          if(!WasMovingTooFast(image.GetTimestamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+          {
+            _storeNextImageForCalibration = false;
+            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
+            if(RESULT_OK != addResult) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+            }
+          } else {
+            PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+          }
+        }
+      }
       
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Update.NoCamCalib",
@@ -543,10 +564,9 @@ namespace Cozmo {
     
   } // LookupGroundPlaneHomography()
 
-  void VisionComponent::UpdateVisionSystem(const VisionPoseData&  poseData,
-                                           const EncodedImage&    encodedImg)
+  void VisionComponent::UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& img)
   {
-    Result result = _visionSystem->Update(poseData, encodedImg);
+    Result result = _visionSystem->Update(poseData, img);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
@@ -581,28 +601,28 @@ namespace Cozmo {
 
       if (!_currentImg.IsEmpty())
       {
-        // There is an image to be processed; do so now
+        // There is an image to be processed:
         UpdateVisionSystem(_currentPoseData, _currentImg);
+        
+        // Save the image we just processed
+        _lastImg = _currentImg;
+        ASSERT_NAMED(_lastImg.GetTimestamp() == _currentImg.GetTimestamp(),
+                     "VisionComponent.Processor.WrongImageTimestamp");
         
         Lock();
         // Clear it when done.
-        _currentImg.Clear();
-        _nextImg.Clear();
+        _currentImg = {};
+        _nextImg = {};
         Unlock();
         
         //std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
-      else if(!_nextImg.IsEmpty())
-      {
-        // We have an image waiting to be processed: swap it in (avoid copy)
+      } else if(!_nextImg.IsEmpty()) {
         Lock();
-        std::swap(_currentImg, _nextImg);
-        std::swap(_currentPoseData, _nextPoseData);
-        _nextImg.Clear();
+        _currentImg        = _nextImg;
+        _currentPoseData   = _nextPoseData;
+        _nextImg = {};
         Unlock();
-      }
-      else
-      {
+      } else {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
       }
       
@@ -802,10 +822,8 @@ namespace Cozmo {
         }
         
         // Store frame rate and last image processed time
-        ASSERT_NAMED(result.timestamp >= _lastProcessedImageTimeStamp_ms,
-                     "VisionComponent.UpdateAllResults.BadTimeStamp"); // Time should only move forward
-        _processingPeriod_ms = result.timestamp - _lastProcessedImageTimeStamp_ms;
-        _lastProcessedImageTimeStamp_ms = result.timestamp;
+        _processingPeriod = result.timestamp - _lastProcessedImageTimeStamp;
+        _lastProcessedImageTimeStamp = result.timestamp;
         
         auto visionModesList = std::vector<VisionMode>();
         for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode)
