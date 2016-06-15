@@ -21,8 +21,10 @@ namespace Cozmo {
   
   enum class TestState {
     InitCheck,
+    Setup,
     ReadyForNextCommand,
     ExecutingTestAnimation,
+    WaitUntilEndOfMessage,
     TestDone
   };
   
@@ -30,17 +32,18 @@ namespace Cozmo {
   class CST_Animations : public CozmoSimTestController {
     
   private:
-    const u32 NUM_ANIMS_TO_PLAY = 1;
-    
     virtual s32 UpdateInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
+    virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg) override;
+    virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg) override;
     
     TestState _testState = TestState::InitCheck;
 
     std::string _lastAnimPlayed = "";
     double _lastAnimPlayedTime = 0;
-    u32 _numAnimsPlayed = 0;
+    bool _receivedAllAnimations = false;
+    std::string _animationToPlay = "";
   };
   
   // Register class with factory
@@ -48,46 +51,71 @@ namespace Cozmo {
   
   
   // =========== Test class implementation ===========
-  
-  static const char* kTestAnimationName = "ANIMATION_TEST";
-  
+
   s32 CST_Animations::UpdateInternal()
   {
     switch (_testState) {
-
       case TestState::InitCheck:
-       
-        // TODO: This used to be where we asserted there were available animations to be played, but by moving our animation
-        // loading to be earlier we no longer get information on available animations. If we want that, or if there is some
-        // other initialization that needs to happen, it should go here.
-        
-        _testState = TestState::ReadyForNextCommand;
+      {
+        _animationToPlay = UiGameController::GetAnimationTestName();
+        PRINT_NAMED_DEBUG("CST_Animations.InitCheck",
+                          "Specified animation from .wbt world file: %s", _animationToPlay.c_str());
+
+        // If the sepcified animation is empty, wait until all the availalble animations have been
+        // broadcasted by the robot and exit. Useful to fetch and log available animations by
+        // running this test once without specifying animation to test.
+        if (_animationToPlay == "%ANIMATION_TEST_NAME%") {
+          _testState = TestState::WaitUntilEndOfMessage;
+        } else {
+          _testState = TestState::Setup;
+        }
+
         break;
+      }
+
+      case TestState::Setup:
+      {
+        // Sends a CLAD message to robot so that RobotAudioOutputSource is set to PlayOnRobot,
+        // otherwise a lot of the audio bugs will not occur. See robotAudioClient.h on the robot
+        // side for more information
+        ExternalInterface::SetRobotAudioOutputSource m;
+        m.source = ExternalInterface::RobotAudioOutputSourceCLAD::PlayOnRobot;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetRobotAudioOutputSource(m);
+        SendMessage(message);
+
+        _testState = TestState::ReadyForNextCommand;
+      }
 
       case TestState::ReadyForNextCommand:
       {
-        if (_numAnimsPlayed == NUM_ANIMS_TO_PLAY) {
-          _testState = TestState::TestDone;
-          PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
-          break;
-        }
-        auto animToPlay = kTestAnimationName;
-        PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, animToPlay);
-        SendAnimation(animToPlay, 1);
-        _lastAnimPlayed = animToPlay;
-        ++_numAnimsPlayed;
+        PRINT_NAMED_INFO("CST_Animations.PlayingAnimation", "%s", _animationToPlay.c_str());
+        u32 numLoops = 1;
+        SendAnimation(_animationToPlay.c_str(), numLoops);
+        _lastAnimPlayed = _animationToPlay;
         _lastAnimPlayedTime = GetSupervisor()->getTime();
         _testState = TestState::ExecutingTestAnimation;
-        
+
         break;
       }
         
       case TestState::ExecutingTestAnimation:
+      {
+        double timeoutInSeconds = 99;
         // If no action complete message, this will timeout with assert.
-        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 10)) {
-          _testState = TestState::ReadyForNextCommand;
+        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, timeoutInSeconds)) {
+          _testState = TestState::TestDone;
         }
         break;
+      }
+
+      case TestState::WaitUntilEndOfMessage:
+      {
+        double timeoutInSeconds = 10;
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_receivedAllAnimations, timeoutInSeconds){
+          _testState = TestState::TestDone;
+        }
+      }
 
       case TestState::TestDone:
         CST_EXIT();
@@ -124,7 +152,27 @@ namespace Cozmo {
     }
    
   }
-   
+
+  void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
+  {
+    // Returning a non-zero result signifies this test failed. 255 is an arbitary choice, though in
+    // other test controllers _result can be the result code parameters that exist in certain CLAD
+    // messages. These CLAD message result codes tend to be lower numbers so the arbitrary 255 is
+    // chosen, though it doens't really matter as long as it is non-zero.
+    _result = 255;
+    PRINT_NAMED_WARNING("CST_Animations.HandleAnimationAborted",
+                      "'%s' was aborted.",
+                      _animationToPlay.c_str());
+    _testState = TestState::TestDone;
+  }
+
+  void CST_Animations::HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg)
+  {
+    if (msg.messageType == ExternalInterface::MessageType::AnimationAvailable) {
+      PRINT_NAMED_INFO("CST_Animations.HandleEndOfMessage", "Received `EndOfMessage`; messageType: %s", ExternalInterface::MessageTypeToString(msg.messageType));
+      _receivedAllAnimations = true;
+    }
+  }
   // ============== End of message handlers =================
 
   

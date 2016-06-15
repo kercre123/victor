@@ -97,11 +97,13 @@ protected:
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
+  virtual void HandleAnimationAborted(ExternalInterface::AnimationAborted const& msg){};
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
   virtual void HandleNVStorageData(ExternalInterface::NVStorageData const& msg){};
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   virtual void HandleFactoryTestResult(ExternalInterface::FactoryTestResult const& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
+  virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -297,6 +299,7 @@ protected:
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   
   static size_t MakeWordAligned(size_t size);
+  const std::string GetAnimationTestName();
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
@@ -313,10 +316,12 @@ private:
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
+  void HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg);
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
   void HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg);
   void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   void HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg);
+  void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();

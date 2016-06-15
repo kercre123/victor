@@ -19,6 +19,8 @@ simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
+simulator/worlds/__GENERATED_FOR_*__.wbt
+project/build-scripts/webots/__GENERATED_ANIMATIONS_TEST__.cfg
 
 # Symlinks for face libraries:
 simulator/controllers/webotsCtrlGameEngine/lib 

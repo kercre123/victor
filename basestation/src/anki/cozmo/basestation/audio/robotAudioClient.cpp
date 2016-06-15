@@ -47,16 +47,60 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   // This only helps to determine if we should play sound on Webots or on the Robot
   auto robotSyncCallback = [this] ( const AnkiEvent<RobotInterface::RobotToEngine>& message ) {
     RobotAudioOutputSource outputSource = RobotAudioOutputSource::PlayOnDevice;
+
     if ( ! OVERRIDE_ON_DEVICE_OUTPUT_SOURCE ) {
       const RobotInterface::SyncTimeAck msg = message.GetData().Get_syncTimeAck();
       outputSource = msg.isPhysical ? RobotAudioOutputSource::PlayOnRobot : RobotAudioOutputSource::PlayOnDevice;
     }
+
+    // Rely on casting to convert between the RobotAudioClient enum and the CLAD generated enum for
+    // the easy ToString function
+
+    PRINT_NAMED_DEBUG(
+      "RobotAudioClient.RobotAudioClient.RobotSyncCallback",
+      "outputSource: %s",
+      ExternalInterface::RobotAudioOutputSourceCLADToString(
+        (ExternalInterface::RobotAudioOutputSourceCLAD)outputSource
+      )
+    );
+
     SetOutputSource( outputSource );
   };
   
   auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
     const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
     SetRobotVolume( msg.volume );
+  };
+
+  auto robotAudioOutputSourceCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ){
+    const ExternalInterface::SetRobotAudioOutputSource& msg = message.GetData().Get_SetRobotAudioOutputSource();
+
+    RobotAudioOutputSource outputSource;
+
+
+    // Switch case is needed to "cast" the CLAD generated RobotAudioOutputSource enum into
+    // RobotAudioClient::RobotAudioOutputSource. This allows RobotAudioOutputSource to stay in
+    // RobotAudioClient (instead of solely referencing the enum from the CLAD generated headers, in
+    // order to limit CLAD facing code in the rest of the audio codebase).
+
+    switch (msg.source)
+    {
+      case ExternalInterface::RobotAudioOutputSourceCLAD::NoDevice:
+        outputSource = RobotAudioOutputSource::None;
+        break;
+
+      case ExternalInterface::RobotAudioOutputSourceCLAD::PlayOnDevice:
+        outputSource = RobotAudioOutputSource::PlayOnDevice;
+        break;
+
+      case ExternalInterface::RobotAudioOutputSourceCLAD::PlayOnRobot:
+        outputSource = RobotAudioOutputSource::PlayOnRobot;
+        break;
+    }
+
+    SetOutputSource( outputSource );
+
+    PRINT_NAMED_DEBUG("RobotAudioClient.RobotAudioClient.RobotAudioOutputSourceCallback", "outputSource: %hhu", msg.source);
   };
   
   RobotInterface::MessageHandler* robotMsgHandler = context->GetRobotManager()->GetMsgHandler();
@@ -68,12 +112,21 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
 
   IExternalInterface* gameToEngineInterface = context->GetExternalInterface();
   if ( gameToEngineInterface ) {
-    _signalHandles.push_back(gameToEngineInterface->Subscribe( ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
-                                                               robotVolumeCallback) );
+    PRINT_NAMED_DEBUG("RobotAudioClient.RobotAudioClient", "gameToEngineInterface exists");
+
+    _signalHandles.push_back(
+      gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
+                                       robotVolumeCallback)
+    );
+
+    _signalHandles.push_back(
+      gameToEngineInterface->Subscribe(
+        ExternalInterface::MessageGameToEngineTag::SetRobotAudioOutputSource,
+        robotAudioOutputSourceCallback
+      )
+    );
   }
-  
-  
-  
+
   // Configure Robot Audio buffers with Wwise buses. PlugIn Ids are set in Wwise project
   // Setup Robot Buffers
   // Note: This is only configured to work with a single robot

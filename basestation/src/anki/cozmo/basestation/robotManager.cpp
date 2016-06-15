@@ -320,6 +320,10 @@ namespace Anki {
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
           _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
         }
+
+        _context->GetExternalInterface()->
+          BroadcastToGame<ExternalInterface::EndOfMessage>(ExternalInterface::MessageType::AnimationAvailable);
+        PRINT_NAMED_DEBUG("RobotManager.BroadcastAvailableAnimations", "Supposedly sent EndOfMessage");
       }
     }
     

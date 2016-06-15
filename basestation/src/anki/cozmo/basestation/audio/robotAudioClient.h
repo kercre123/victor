@@ -34,6 +34,7 @@ class RobotAudioClient : public AudioEngineClient
 {
 public:
 
+  // !!! Be sure to update RobotAudioOutputSourceCLAD in messageGameToEngine.clad if this is changed !!!
   // Animation audio modes
   enum class RobotAudioOutputSource : uint8_t {
     None,           // No audio

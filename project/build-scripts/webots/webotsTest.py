@@ -18,6 +18,8 @@ import logging
 import ConfigParser
 import Queue
 from datetime import datetime
+import collections
+import json
 
 this_file_path = os.path.abspath(os.path.dirname(__file__))
 
@@ -43,14 +45,19 @@ curTime = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 worldFileTestNamePlaceHolder = '%COZMO_SIM_TEST%'
 generatedWorldFileName = '__generated__.wbt'
 
+# The path after project root where the webots world files are located.
+WEBOTS_WORLD_SUBPATH = os.path.join('simulator', 'worlds')
+BUILD_SUBPATH = os.path.join('build', 'mac')
 
 # Name of user created certificate for signing webots executables to be 
 # excepted by the firewall
 CERTIFICATE_NAME = "WebotsFirewall"
 
-
 class WorkContext(object): pass
-
+class TemplateStringNotFoundException(Exception): 
+  def __init__(self, template_string, source_data):
+    print("Template string was not found in source data!")
+    print("Template String: {0}\nSource Data: {1}".format(template_string, source_data))
 
 def mkdir_p(path):
   try:
@@ -278,7 +285,7 @@ def build(options):
   return returned_0
 
 # runs webots test
-def runWebots(options, resultQueue, test):
+def runWebots(options, resultQueue, test, logFileName):
   # prepare run command
   runCommand = [
     '/Applications/Webots/webots', 
@@ -287,7 +294,7 @@ def runWebots(options, resultQueue, test):
     '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
-    os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
+    os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName),
     ]
 
   if options.showGraphics:
@@ -298,13 +305,8 @@ def runWebots(options, resultQueue, test):
 
   UtilLog.debug('run command ' + ' '.join(runCommand))
 
-  buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
+  buildFolder = get_build_folder(options)
   mkdir_p(buildFolder)
-
-  if runningMultipleTests:
-    logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
-  else:
-    logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
 
   logFile = open(logFileName, 'w')
   startedTimeS = time.time()
@@ -338,7 +340,7 @@ def stopWebots(options):
   # kill all webots processes
   ps   = subprocess.Popen(('ps', 'Aux'), stdout=subprocess.PIPE)
   grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
-  grepMinusThisProcess = subprocess.Popen(('grep', '-v', 'webotsTest.py'), stdin=grep.stdout, stdout=subprocess.PIPE)
+  grepMinusThisProcess = subprocess.Popen(('grep', '-v', os.path.dirname(options.cfg_path)), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grepMinusThisProcess.stdout, stdout=subprocess.PIPE)
   kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out,err = kill.communicate()
@@ -382,83 +384,158 @@ def SetTestStatus(testName, status, totalResultFlag, testStatuses):
   return True
 
 
+def generate_file_with_replace(generated_file_path, source_file_path, 
+                               template_string, replacement_string):
+  """Generates a new file by copying a existing file and replacing a string inside.
+
+  Args:
+    generated_file_path (string) --
+      Path of the file to be generated
+
+    source_file_path (string) --
+      Path of the existing file to be copied with a portion replaced
+
+    template_string (string) --
+      The string to look for inside source_file_path to be replaced. TemplateStringNotFoundException
+      will be raised if the string cannot be found.
+
+    replacement_string (string) --
+      The string to replace template_string with.
+
+  Raises:
+    TemplateStringNotFoundException -- 
+      if `template_string` does not exist inside `source_file_path`, see 
+      generate_file_with_replace_pass_data()
+  """
+
+  with open(source_file_path, 'r') as source_file:
+    source_data = source_file.read()
+
+  generate_file_with_replace_pass_data(generated_file_path, source_data, 
+                                       template_string, replacement_string)
+
+def generate_file_with_replace_pass_data(generated_file_path, source_data, 
+                                         template_string, replacement_string):
+  """Generates a new file by replacing a string inside given data.
+
+  See generate_file_with_replace(). This function is useful if there are many files to be generated
+  from the same source file, albeit with different replacement_string(s). This function allows
+  source_data to be passed in directly instead of passing a file path so that the IO operation to
+  open the source file only needs to happen once, preceding the call of this funciton. 
+
+  Args:
+    generated_file_path (string) --
+      Path of the file to be generated
+
+    source_data (string) --
+      Data of the source file.
+
+    template_string (string) --
+      The string to look for inside source_file_path to be replaced. TemplateStringNotFoundException
+      will be raised if the string cannot be found.
+
+    replacement_string (string) --
+      The string to replace template_string with.
+
+  Raises:
+    TemplateStringNotFoundException -- 
+      if `template_string` does not exist inside `source_data`
+  """
+
+  if template_string not in source_data:
+    raise TemplateStringNotFoundException(template_string, source_data)
+
+  # Generate world file with appropriate args passed into test controller
+  generated_data = source_data.replace(template_string, replacement_string)
+
+  with open(generated_file_path, 'w+') as generated_file:
+    generated_file.write(generated_data)
+
+
 # runs all threads groups
 # returns true if all tests suceeded correctly
 def runAll(options):
   # Get list of tests and world files from config
   config = ConfigParser.ConfigParser()
-  webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
-  config.read(webotsTestCfgPath)
+  config.read(options.cfg_path)
   testNames = config.sections()
   testStatuses = {}
   allTestsPassed = True
   totalErrorCount = 0
   totalWarningCount = 0
 
-  for test in testNames:
-    if not config.has_option(test, 'world_file'):
-      UtilLog.error('ERROR: No world file specified for test ' + test + '.')
-      allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
-      continue
-    
-    baseWorldFile = config.get(test, 'world_file')
-    UtilLog.info('Running test: ' + test + ' in world ' + baseWorldFile)
-    
-    # Check if world file contains valid test name place holder
-    baseWorldFile = open('simulator/worlds/' + baseWorldFile, 'r')
-    baseWorldData = baseWorldFile.read()
-    baseWorldFile.close()
-    if worldFileTestNamePlaceHolder not in baseWorldData:
-      UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
-      allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
-      continue
 
-    # Generate world file with appropriate args passed into test controller
-    generatedWorldData = baseWorldData.replace(worldFileTestNamePlaceHolder, test)
-    generatedWorldFile = open(os.path.join(options.projectRoot, 'simulator/worlds/' + generatedWorldFileName), 'w+')
-    generatedWorldFile.write(generatedWorldData)
-    generatedWorldFile.close()
+  buildFolder = get_build_folder(options)
 
-    # Run test in thread
-    testResultQueue = Queue.Queue(1)
-    runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test])
-    runWebotsThread.start()
-    runWebotsThread.join(120) # with timeout
-    
-    # Check if timeout exceeded
-    if runWebotsThread.isAlive():
-      UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
-      stopWebots(options)
-      allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
-      print 'allTestsPassed ' + str(allTestsPassed)
-      continue
 
-    # Check log for crashes, errors, and warnings
-    # TODO: Crashes affect test result, but errors and warnings do not. Should they?
-    buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
-    
-    if runningMultipleTests:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
-    else:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+  # tarfile.open will only create the file but not the path to the file if it doesn't exist; need to
+  # create the directory of the tar file first.
+  if not os.path.exists(buildFolder):
+    os.makedirs(buildFolder)
 
-    (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
-    totalErrorCount += errorCount
-    totalWarningCount += warningCount
 
-    # Check for crashes
-    if crashCount > 0:
-      UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
-      allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
-      continue
+  with tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz") as tar:
+    for test in testNames:
+      if not config.has_option(test, 'world_file'):
+        UtilLog.error('No world file specified for test ' + test + '.')
+        allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
+        continue
+      
+      # Loop through all the webots worlds this test controller should run in.
+      world_files = json.JSONDecoder().decode(config.get(test, 'world_file'))
+      for world_file in world_files:
+        UtilLog.info('Running test: ' + test + ' in world ' + world_file)
 
-    # Get return code from test
-    if testResultQueue.empty():
-      UtilLog.error('ERROR: No result code received from ' + test)
-      allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
-      continue
-    
-    allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
+        try:
+          source_file_path = os.path.join(WEBOTS_WORLD_SUBPATH, world_file)
+          generated_file_path = os.path.join(options.projectRoot, WEBOTS_WORLD_SUBPATH, generatedWorldFileName)
+
+          generate_file_with_replace(generated_file_path, source_file_path,
+                                     worldFileTestNamePlaceHolder, test)
+
+        except TemplateStringNotFoundException:
+          UtilLog.error(worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
+          allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
+
+        # TODO: Crashes affect test result, but errors and warnings do not. Should they?
+        logFileName = get_log_file_path(buildFolder, test, world_file, curTime)
+
+        # Run test in thread
+        testResultQueue = Queue.Queue(1)
+        runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test, logFileName])
+        runWebotsThread.start()
+        runWebotsThread.join(120) # with timeout
+        
+        tar.add(logFileName, arcname=os.path.basename(logFileName))
+
+        # Check if timeout exceeded
+        if runWebotsThread.isAlive():
+          UtilLog.error(test + ' exceeded timeout.')
+          stopWebots(options)
+          allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
+          print 'allTestsPassed ' + str(allTestsPassed)
+          continue
+
+
+        # Check log for crashes, errors, and warnings
+
+        (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
+        totalErrorCount += errorCount
+        totalWarningCount += warningCount
+
+        # Check for crashes
+        if crashCount > 0:
+          UtilLog.error(test + ' had a crashed controller.');
+          allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
+          continue
+
+        # Get return code from test
+        if testResultQueue.empty():
+          UtilLog.error('No result code received from ' + test)
+          allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
+          continue
+        
+        allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
 
   return (allTestsPassed, testStatuses, totalErrorCount, totalWarningCount, len (testNames))
 
@@ -483,26 +560,47 @@ def parseOutput(options, logFile):
       warningCount = warningCount + 1
 
   return (crashCount, errorCount, warningCount)
-
-
-# tarball valgrind output files together
-def tarball(options):
-  buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
-  tar = tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz")
-  
-  config = ConfigParser.ConfigParser()
-  webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
-  config.read(webotsTestCfgPath)
-  testNames = config.sections()
-  for test in testNames:
-    if runningMultipleTests:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
-    else:
-      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
-    tar.add(logFileName, arcname=os.path.basename(logFileName))
-  
-  tar.close()
       
+def find_project_root():
+  # go to the script dir, so that we can find the project dir
+  # in the future replace this with command line param
+  selfPath = os.path.dirname(os.path.realpath(__file__))
+  os.chdir(selfPath)
+
+  # find project root path
+  projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+  return projectRoot
+
+def get_build_folder(options):
+  """Build the build folder path (where the logs are exported)"""
+  return os.path.join(options.projectRoot, BUILD_SUBPATH, options.buildType)
+
+def get_log_file_path(log_folder, test_name, world_file_name, timestamp = ""):
+  """Returns what the log file names should be.
+
+  log_folder (string) --
+    the path where the log files should live
+
+  test_name (string) --
+    name of the controller class for the test that is outputting the logs
+
+  world_file_name (string) --
+    name of the webots world file the test is running in
+
+  timestamp (string, optional)-- 
+    timestamp of the test run; needs to be provided if runningMultipleTests is true
+  """
+  file_name = 'webots_out_' + test_name
+
+  if runningMultipleTests:
+    file_name += "_" + timestamp
+
+  file_name += "_" + world_file_name
+
+  log_file_path = os.path.join(log_folder, file_name + '.txt')
+
+  return log_file_path
+
 
 # executes main script logic
 def main(scriptArgs):
@@ -540,6 +638,12 @@ def main(scriptArgs):
                       action='store_true',
                       help='display Webots window')
 
+  parser.add_argument('--configFile',
+                      dest='configFile',
+                      action='store',
+                      default='webotsTests.cfg',
+                      help='Name of .cfg file to use, should be located in the same directory as this file.')
+
   parser.add_argument('--numRuns', 
                       dest='numRuns', 
                       action='store', 
@@ -571,38 +675,34 @@ def main(scriptArgs):
   else:
     UtilLog.setLevel(logging.INFO)
 
-  # if no project root fund - make one up
-  if not options.projectRoot:
-    # go to the script dir, so that we can find the project dir
-  	# in the future replace this with command line param
-  	selfPath = os.path.dirname(os.path.realpath(__file__))
-  	os.chdir(selfPath)
 
-  	# find project root path
-  	projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
-  	options.projectRoot = projectRoot
-  else:
+
+  if options.projectRoot:
     options.projectRoot = os.path.normpath(os.path.join(os.getcwd(), options.projectRoot))
-
-  generated_dir = os.path.join(options.projectRoot, "generated/mac")
-  if not (os.path.isdir(generated_dir) and os.path.exists(generated_dir)):
-    UtilLog.error("Couldn't find mac platform build. Did you build for the mac platform in cozmo engine?")
-    return 1
+  else:
+    options.projectRoot = find_project_root()
 
 
   os.chdir(options.projectRoot)
+
+  options.cfg_path = os.path.join('project', 'build-scripts', 'webots', options.configFile)
+  assert(os.path.isfile(os.path.join(options.projectRoot, options.cfg_path)))
 
   UtilLog.debug(options)
 
   # build the project first
   if not build(options):
-    UtilLog.error("ERROR build failed")
+    UtilLog.error("build failed")
     return 1
 
   # if we are running multiple tests set the flag
   if(int(options.numRuns) > 1):
     global runningMultipleTests
     runningMultipleTests= True
+
+  num_of_failed_tests = 0
+  num_of_passed_tests = 0
+  num_of_total_tests = 0
 
   for _ in range(0, int(options.numRuns)):
     # save current time for logs
@@ -614,7 +714,6 @@ def main(scriptArgs):
     
     # run the tests
     (testsSucceeded, testResults, totalErrorCount, totalWarningCount, testCount) = runAll(options)
-    tarball(options)
 
     print 'Test results: '
     for key,val in testResults.items():
@@ -635,10 +734,24 @@ def main(scriptArgs):
       UtilLog.error("SOME TESTS FAILED")
       UtilLog.error("*************************")
       returnValue = returnValue + 1
+      num_of_failed_tests += 1
     else:
       UtilLog.info("*************************")
       UtilLog.info("ALL " + str(len(testResults)) + " TESTS PASSED")
       UtilLog.info("*************************")
+      num_of_passed_tests += 1
+
+    num_of_total_tests = num_of_failed_tests + num_of_passed_tests
+    UtilLog.info("Run #{0}".format(num_of_total_tests))
+
+    print "##teamcity[buildStatisticValue key='WebotsFailedTests' value='{0}']".format(num_of_failed_tests) # Number of tests that failed in one run
+    print "##teamcity[buildStatisticValue key='WebotsTotalTests' value='{0}']".format(num_of_failed_tests) # Number of tests in one run
+
+  UtilLog.info(
+    "{0}/{1} ({2:.1f}%) runs failed".format(num_of_failed_tests,
+                                            num_of_total_tests,
+                                            float(num_of_failed_tests)/num_of_total_tests*100)
+  )
 
   return returnValue
 

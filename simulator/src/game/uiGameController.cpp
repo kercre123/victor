@@ -231,8 +231,15 @@ namespace Anki {
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
       PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
-      
+
       HandleAnimationAvailable(msg);
+    }
+
+    void UiGameController::HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg)
+    {
+      PRINT_NAMED_INFO("HandleAnimationAborted", "Tag: %u", msg.tag);
+
+      HandleAnimationAborted(msg);
     }
     
     void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
@@ -273,8 +280,16 @@ namespace Anki {
     {
       PRINT_NAMED_INFO("HandleFactoryTestResult",
                        "Test result: %s", EnumToString(msg.resultEntry.result));
-      
+
       HandleFactoryTestResult(msg);
+    }
+
+    void UiGameController::HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg)
+    {
+      PRINT_NAMED_INFO("HandleEndOfMessage",
+                       "messageType: %s", EnumToString(msg.messageType));
+
+      HandleEndOfMessage(msg);
     }
     
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
@@ -410,6 +425,13 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
             HandleFactoryTestResultBase(message.Get_FactoryTestResult());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAborted:
+            HandleAnimationAborted(message.Get_AnimationAborted());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::EndOfMessage:
+            HandleEndOfMessage(message.Get_EndOfMessage());
+            break;
+
           default:
             // ignore
             break;
@@ -1737,6 +1759,11 @@ namespace Anki {
         return size + numBytesToMakeAligned;
       }
       return size;
+    }
+
+    const std::string UiGameController::GetAnimationTestName()
+    {
+      return _robotNode->getField("animationTestName")->getSFString();
     }
     
   } // namespace Cozmo
