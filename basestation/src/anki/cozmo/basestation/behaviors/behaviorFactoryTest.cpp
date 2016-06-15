@@ -64,7 +64,8 @@ namespace Cozmo {
   
   // Whether or not to wipe all nvStorage at start of test.
   // Since this reboots the robot it will not actually run the test at all.
-  CONSOLE_VAR(bool,  kBFT_WipeAll,                "BehaviorFactoryTest",  false);
+  CONSOLE_VAR(bool,  kBFT_WipeNVStorage,          "BehaviorFactoryTest",  false);
+  
   
   
   ////////////////////////////
@@ -398,15 +399,8 @@ namespace Cozmo {
     }
     
     // Check for pickup
-    if (_headCalibrated && robot.IsPickedUp()) {
-      if(_holdUntilTime < currentTime_sec)
-      {
-        END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
-      }
-      else
-      {
-        return Status::Running;
-      }
+    if (robot.IsPickedUp() && _currentState > FactoryTestState::ChargerAndIMUCheck) {
+      END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
     }
     
     if (IsActing()) {
@@ -428,7 +422,7 @@ namespace Cozmo {
         }
         */
         
-        if (kBFT_WipeAll) {
+        if (kBFT_WipeNVStorage) {
           robot.GetNVStorageComponent().WipeAll(true);
           END_TEST(FactoryTestResultCode::WIPED_ALL);
         }
