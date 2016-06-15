@@ -1,7 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <linker>
-<assembly fullname="UnityEngine">
-<type fullname="UnityEngine.ParticleSystemRenderer" preserve="all"/>
-<type fullname="UnityEngine.ParticleSystem" preserve="all"/>
-<type fullname="UnityEngine.ParticleRenderer" preserve="all"/>
-</assembly>
+	<assembly fullname="UnityEngine">
+		<type fullname="UnityEngine.ParticleSystemRenderer" preserve="all" />
+		<type fullname="UnityEngine.ParticleSystem" preserve="all" />
+		<type fullname="UnityEngine.ParticleRenderer" preserve="all" />
+		<type fullname="UnityEditor.Animations.AnimatorController" preserve="all" />
+	</assembly>
 </linker>
