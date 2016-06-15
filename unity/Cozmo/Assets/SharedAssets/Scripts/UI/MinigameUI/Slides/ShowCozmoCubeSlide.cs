@@ -46,7 +46,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   }
 
   public void OnDestroy() {
-    if (_Tween.IsActive()) {
+    if (_Tween != null && _Tween.IsActive()) {
       _Tween.Kill(false);
       _Tween = null;
     }
