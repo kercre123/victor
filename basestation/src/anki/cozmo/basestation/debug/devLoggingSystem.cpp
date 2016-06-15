@@ -45,13 +45,14 @@ void DevLoggingSystem::DestroyInstance()
 
 DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
 {
-  DeleteFiles(baseDirectory, kArchiveExtensionString);
   std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
-  ArchiveDirectories(baseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
-  
   _allLogsBaseDirectory = baseDirectory;
-  _devLoggingBaseDirectory = GetPathString(baseDirectory, appRunTimeString);
   
+  // TODO:(lc) For the playtest we don't want to delete any log files, since they could be very valuable
+  //DeleteFiles(_allLogsBaseDirectory, kArchiveExtensionString);
+  ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
+  
+  _devLoggingBaseDirectory = GetPathString(_allLogsBaseDirectory, appRunTimeString);
   _gameToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "gameToEngine")));
   _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToGame")));
   _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "robotToEngine")));
