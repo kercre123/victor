@@ -306,8 +306,10 @@ namespace Cozmo {
     // Track how fast we are receiving frames
     if(_lastReceivedImageTimeStamp_ms > 0) {
       // Time should not move backwards!
-      ASSERT_NAMED(encodedImage.GetTimeStamp() >= _lastReceivedImageTimeStamp_ms,
-                   "VisionComponent.SetNextImage.UnexpectedTimeStamp");
+      ASSERT_NAMED_EVENT(encodedImage.GetTimeStamp() >= _lastReceivedImageTimeStamp_ms,
+                         "VisionComponent.SetNextImage.UnexpectedTimeStamp",
+                         "Current:%d Last:%d",
+                         encodedImage.GetTimeStamp(), _lastReceivedImageTimeStamp_ms);
       _framePeriod_ms = encodedImage.GetTimeStamp() - _lastReceivedImageTimeStamp_ms;
     }
     _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
@@ -408,9 +410,12 @@ namespace Cozmo {
           {
             _storeNextImageForCalibration = false;
             // TODO: Get a grayscale image directly (we're currently decoding gray images, making them color and then making them gray again)
-            Vision::ImageRGB image = encodedImage.DecodeImageRGB();
-            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
-            if(RESULT_OK != addResult) {
+            Vision::ImageRGB image;
+            Result result = encodedImage.DecodeImageRGB(image);
+            if(RESULT_OK == result) {
+              result = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
+            }
+            if(RESULT_OK != result) {
               PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
             }
           } else {

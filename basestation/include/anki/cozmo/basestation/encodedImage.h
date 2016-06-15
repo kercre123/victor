@@ -45,7 +45,7 @@ namespace Cozmo {
     
     TimeStamp_t GetTimeStamp() const { return _timestamp; }
     
-    Vision::ImageRGB DecodeImageRGB() const;
+    Result DecodeImageRGB(Vision::ImageRGB& decodedImg) const;
     
     Result Save(const std::string& filename) const;
     

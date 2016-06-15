@@ -438,7 +438,12 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
     // This apparently has to happen _after_ we do the camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
     // (Otherwise, the channels seem to cycle and we get rainbow effects in Webots while saving is on, even though
     // the saved images are fine.)
-    Vision::ImageRGB img = _encodedImage.DecodeImageRGB();
+    Vision::ImageRGB img;
+    Result result = _encodedImage.DecodeImageRGB(img);
+    if(RESULT_OK != result) {
+      PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizImageChunkMessage.DecodeFailed", "t=%d", payload.frameTimeStamp);
+      return;
+    }
     
     if(img.IsEmpty()) {
       PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizImageChunkMessage.EmptyImageDecoded", "t=%d", payload.frameTimeStamp);

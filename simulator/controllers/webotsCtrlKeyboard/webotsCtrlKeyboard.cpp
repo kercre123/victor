@@ -98,7 +98,13 @@ namespace Anki {
       
       if(isImageReady)
       {
-        Vision::ImageRGB img = _encodedImage.DecodeImageRGB();
+        Vision::ImageRGB img;
+        Result result = _encodedImage.DecodeImageRGB(img);
+        if(RESULT_OK != result) {
+          printf("WARNING: image decode failed");
+          return;
+        }
+        
         cv::Mat cvImg = img.get_CvMat_();
         
         const s32 outputColor = 1; // 1 for Green, 2 for Blue

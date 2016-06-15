@@ -323,6 +323,8 @@ namespace Cozmo {
     Matlab _matlab;
 #   endif
     
+    Vision::ImageRGB _image;
+    
     // Previous image for doing background subtraction, e.g. for saliency
     // NOTE: previous images stored at resolution of motion detection processing.
     Vision::ImageRGB _prevImage;

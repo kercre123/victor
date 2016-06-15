@@ -2382,9 +2382,15 @@ namespace Cozmo {
                               const EncodedImage&        encodedImg)
   {
     Tic("DecodeJPEG");
-    Vision::ImageRGB image = encodedImg.DecodeImageRGB();
+    // Should only get allocated the first time, but should re-use _image's memory
+    // from then on, so long as the decoded image is the same size.
+    Result decodeResult = encodedImg.DecodeImageRGB(_image);
     Toc("DecodeJPEG");
-    return Update(poseData, image);
+    
+    if(RESULT_OK != decodeResult) {
+      return decodeResult;
+    }
+    return Update(poseData, _image);
   }
   
   // This is the regular Update() call

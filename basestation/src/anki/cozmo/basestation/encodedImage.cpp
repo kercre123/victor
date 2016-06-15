@@ -58,7 +58,6 @@ namespace Cozmo {
       
       _buffer.clear();
       _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
-
     }
     
     // Check if a chunk was received out of order
@@ -73,6 +72,7 @@ namespace Cozmo {
     // We've received all data when the msg chunkSize is less than the max
     const bool isLastChunk =  chunk.chunkId == chunk.imageChunkCount-1;
     if(isLastChunk) {
+      // Set timestamp using last chunk
       _timestamp = chunk.frameTimeStamp;
     }
     
@@ -91,52 +91,60 @@ namespace Cozmo {
     return isLastChunk;
   }
   
-  Vision::ImageRGB EncodedImage::DecodeImageRGB() const
+  static inline void DecodeHelper(const std::vector<u8>& buffer, Vision::ImageRGB& decodedImg)
   {
-    cv::Mat cvImg;
-    
+    cv::imdecode(buffer, cv::IMREAD_COLOR, &decodedImg.get_CvMat_());
+    cvtColor(decodedImg.get_CvMat_(), decodedImg.get_CvMat_(), CV_BGR2RGB); // opencv will decode as BGR
+  }
+  
+  Result EncodedImage::DecodeImageRGB(Vision::ImageRGB& decodedImg) const
+  {
     switch(_encoding)
     {
       case ImageEncoding::JPEGColor:
+      case ImageEncoding::JPEGGray:
       {
-        cvImg = cv::imdecode(_buffer, cv::IMREAD_COLOR);
-        cvtColor(cvImg, cvImg, CV_BGR2RGB);
+        // Simple case: just decode directly into the passed-in image's buffer.
+        // Note that this will take a buffer with grayscale data in it and
+        // turn it into RGB for us.
+        DecodeHelper(_buffer, decodedImg);
         break;
       }
         
       case ImageEncoding::JPEGMinimizedGray:
       {
+        // Convert our special minimized JPEG format to regular JPEG buffer and
+        // decode that
         std::vector<u8> tempBuffer;
         MiniGrayToJpeg(_buffer, _imgHeight, _imgWidth, tempBuffer);
-        cvImg = cv::imdecode(tempBuffer, cv::IMREAD_GRAYSCALE);
+        DecodeHelper(tempBuffer, decodedImg);
         break;
       }
-        
-      case ImageEncoding::JPEGGray:
-      {
-        cvImg = cv::imdecode(_buffer, cv::IMREAD_GRAYSCALE);
-        break;
-      }
-        
+      
       case ImageEncoding::RawGray:
       {
         // Already decompressed.
-        // Raw image bytes is the same as total received bytes.
-        cvImg = cv::Mat_<u8>(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
+        Vision::Image grayImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
+        decodedImg = Vision::ImageRGB(grayImg);
         break;
       }
         
       case ImageEncoding::RawRGB:
+      {
         // Already decompressed.
-        // Raw image bytes is the same as total received bytes.
-        cvImg = cv::Mat(_imgHeight, _imgWidth, CV_8UC3, const_cast<u8*>(&(_buffer[0])));
+        // TODO: Avoid copying the data
+        //   (for now, it's necessary because we can't guarantee _buffer will be
+        //    valid, yet the returned decodedImg will refer to it)
+        Vision::ImageRGB tempImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
+        tempImg.CopyTo(decodedImg);
         break;
+      }
         
       case ImageEncoding::JPEGColorHalfWidth:
       {
-        cvImg = cv::imdecode(_buffer, cv::IMREAD_COLOR);
-        cvtColor(cvImg, cvImg, CV_BGR2RGB);
-        cv::copyMakeBorder(cvImg, cvImg, 0, 0, 160, 160, cv::BORDER_CONSTANT, 0);
+        DecodeHelper(_buffer, decodedImg);
+        cv::copyMakeBorder(decodedImg.get_CvMat_(), decodedImg.get_CvMat_(),
+                           0, 0, 160, 160, cv::BORDER_CONSTANT, 0);
         break;
       }
         
@@ -145,30 +153,24 @@ namespace Cozmo {
                           "Encoding %s not yet supported for decoding image chunks",
                           EnumToString(_encoding));
         
-        // Return empty image
-        return Vision::ImageRGB();
+        return RESULT_FAIL;
         
     } // switch(encoding)
     
-    
-    if(cvImg.rows != _imgHeight || cvImg.cols != _imgWidth)
+    if(decodedImg.GetNumRows() != _imgHeight || decodedImg.GetNumCols() != _imgWidth)
     {
       PRINT_NAMED_WARNING("EncodedImage.DecodeImageRGB.BadDecode",
                           "Failed to decode %dx%d image from buffer. Got %dx%d",
-                          _imgWidth, _imgHeight, cvImg.cols, cvImg.rows);
+                          _imgWidth, _imgHeight, decodedImg.GetNumCols(), decodedImg.GetNumRows());
       
-      return Vision::ImageRGB();
+      return RESULT_FAIL;
     }
     
-    if(cvImg.channels() == 1) {
-      cv::cvtColor(cvImg, cvImg, CV_GRAY2RGB);
-    }
+    decodedImg.SetTimestamp(_timestamp);
     
-    Vision::ImageRGB image(_imgHeight, _imgWidth, cvImg.data);
-    image.SetTimestamp(_timestamp);
-    
-    return image;
+    return RESULT_OK;
   }
+  
   
   Result EncodedImage::Save(const std::string& filename) const
   {
@@ -282,10 +284,12 @@ namespace Cozmo {
     
     // Allocate enough space for worst case expansion
     size_t bufferLength = bufferIn.size();
-    bufferOut.resize(bufferLength*2 + headerLength);
+    bufferOut.reserve(bufferLength*2 + headerLength);
     
-    std::copy(header, header+headerLength, bufferOut.begin());
+    bufferOut.insert(bufferOut.begin(), header, header+headerLength);
+    
     // Adjust header size information
+    assert(bufferOut.size() > 0x61);
     bufferOut[0x5e] = height >> 8;
     bufferOut[0x5f] = height & 0xff;
     bufferOut[0x60] = width  >> 8;
@@ -296,19 +300,16 @@ namespace Cozmo {
     }
     
     // Add byte stuffing - one 0 after each 0xff
-    int off = headerLength;
     for (int i = 1; i < bufferLength; i++)
     {
-      bufferOut[off++] = bufferIn[i];
+      bufferOut.push_back(bufferIn[i]);
       if (bufferIn[i] == 0xff) {
-        bufferOut[off++] = 0;
+        bufferOut.push_back(0);
       }
     }
     
-    bufferOut[off++] = 0xFF;
-    bufferOut[off++] = 0xD9;
-    
-    bufferOut.resize(off);
+    bufferOut.push_back(0xFF);
+    bufferOut.push_back(0xD9);
     
   } // MiniGrayToJpeg()
   
