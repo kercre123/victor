@@ -7,8 +7,9 @@ using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
-
   private static ConsoleLogManager _Instance;
+
+  public string LogFilter = "";
 
   public static ConsoleLogManager Instance {
     get {
@@ -73,6 +74,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void Update() {
+
+    string[] filters = LogFilter.Split(',');
+
     lock (_ReceivedPackets) {
       while (_ReceivedPackets.Count > 0) {
         LogPacket newPacket;
@@ -80,7 +84,10 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
         // Packets could be trying to be saved from another thread while we are processing them here so we have to lock
         newPacket = _ReceivedPackets.Dequeue();
 
-        _MostRecentLogs.Enqueue(newPacket);
+        if (Contains(newPacket.ToString(), filters)) {
+          _MostRecentLogs.Enqueue(newPacket);
+        }
+
         while (_MostRecentLogs.Count > numberCachedLogMaximum) {
           _MostRecentLogs.Dequeue();
         }
@@ -113,6 +120,16 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
       SOSLogManager.Instance.CleanUp();
     }
   }
+
+  private bool Contains(string original, string[] filters) {
+    for (int i = 0; i < filters.Length; ++i) {
+      if (original.Contains(filters[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   private void HandleNewSOSLog(string log) {
     if (log.Contains("[Warn]")) {
@@ -351,7 +368,7 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}"); 
+    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}");
     if (!string.IsNullOrEmpty(contextStr)) {
       formatStr.Append(" ({3})");
     }
@@ -392,7 +409,7 @@ public class LogPacket {
       colorStr = "00cc00";
       break;
     }
-    
+
     string contextStr = "";
     if (Context != null) {
       Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
@@ -409,7 +426,7 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}"); 
+    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}");
     if (!string.IsNullOrEmpty(contextStr)) {
       formatStr.Append(" ({4})");
     }

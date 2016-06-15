@@ -183,7 +183,7 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                      choices=['pressDemo', 'factoryTest'], nargs='+',
+                      choices=['pressDemo', 'factoryTest', 'factoryTestDev'], nargs='+',
                       help="Generates feature flags for project")
 
     parser.add_argument(
@@ -363,13 +363,24 @@ class GamePlatformConfiguration(object):
 
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
             file.write(class_code + git_variable +
-                       '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+'}')
+                       '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+
+                       '  public const bool kIsFactoryDevMode = false;'+'\n'+
+                       '}')
         elif self.options.features != None and 'factoryTest' in self.options.features[0]:
             file.write(class_code + git_variable +
-                       '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+'}')
+                       '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+
+                       '  public const bool kIsFactoryDevMode = false;'+'\n'+
+                       '}')
+        elif self.options.features != None and 'factoryTestDev' in self.options.features[0]:
+            file.write(class_code + git_variable +
+                       '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+
+                       '  public const bool kIsFactoryDevMode = true;'+'\n'+
+                       '}') 
         else:
             file.write(class_code + git_variable +
-                       '  public const string kDefaultBuildScene = \"\";'+'\n'+'}')
+                       '  public const string kDefaultBuildScene = \"\";'+'\n'+
+                       '  public const bool kIsFactoryDevMode = false;'+'\n'+
+                       '}')
 
         file.close()
         #NEED OF DEMO BUILD
