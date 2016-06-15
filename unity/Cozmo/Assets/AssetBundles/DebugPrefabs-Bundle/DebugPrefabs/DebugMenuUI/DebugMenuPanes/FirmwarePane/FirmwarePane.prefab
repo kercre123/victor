@@ -213,6 +213,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _OutputText: {fileID: 11403976}
   _UpgradeButton: {fileID: 11489772}
+  _ResetButton: {fileID: 11448632}
 --- !u!114 &11440410
 MonoBehaviour:
   m_ObjectHideFlags: 1
