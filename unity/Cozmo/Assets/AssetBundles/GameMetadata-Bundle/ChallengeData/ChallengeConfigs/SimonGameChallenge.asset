@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 128684, guid: ec2190d2b19be4e24b4d0be8775b6a34, type: 2}
   _ChallengeID: SimonGame
-  _ChallengeTitleLocKey: simonGame01.title
-  _ChallengeDescriptionLocKey: simonGame01.description
+  _ChallengeTitleLocKey: simonGame.title
+  _ChallengeDescriptionLocKey: simonGame.description
   _ChallengeIcon: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf, type: 3}
   _ChallengeIconPlainStyle: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf,
     type: 3}

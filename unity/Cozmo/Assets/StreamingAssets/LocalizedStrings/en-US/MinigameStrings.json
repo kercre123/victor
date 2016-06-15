@@ -240,17 +240,17 @@
   "minigame.difficulty.expert": {
     "translation": "Expert"
   },
-  "speedTap.difficulty.easyDescription": {
-    "translation": "Be the first to slap your cube when the colors match - but never slap on red!"
+ "speedTap.difficulty.easyDescription": {
+   "translation": "Be the first to slap your cube when the colors match\n- but never slap on red!"
   },
   "speedTap.difficulty.mediumDescription": {
-    "translation": "Same rules as Easy mode, but with light patterns! Cubes may have up to 2 colors."
+   "translation": "Same rules as Easy mode, but now with light patterns! Cubes may have up to 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
-    "translation": "More complexity! Cubes may have 1-3 colors."
+   "translation": "More complexity!\nCubes may have 1-3 colors."
   },
   "speedTap.difficulty.expertDescription": {
-    "translation": "Experts only: Cubes may have 1-4 colors."
+   "translation": "Experts only:\nCubes may have 1-4 colors."
   },
   "button.retry": {
     "translation": "Try Again"

@@ -19,34 +19,40 @@
     ]
   },
   "unlockable.CubePounce.Title": {
-    "translation": "Takeaway"
+    "translation": "Cube Pounce Game"
   },
   "unlockable.CubePounce.Description": {
-    "translation": "Takeaway description here."
+    "translation": "With this upgrade, Cozmo learns how to play Cube Pounce."
   },
   "unlockable.FaceEnrollment.Title": {
     "translation": "Meet Cozmo"
   },
   "unlockable.FaceEnrollment.Description": {
-    "translation": "Meet Cozmo description here."
+    "translation": "With this upgrade, Cozmo learns to remember faces and speak names."
   },
   "unlockable.Simon.Title": {
-    "translation": "Simon"
+    "translation": "Simon Game"
   },
   "unlockable.Simon.Description": {
-    "translation": "Simon description here."
+    "translation": "With this upgrade, Cozmo learns how to play Simon."
   },
   "unlockable.SpeedTap.Title": {
-    "translation": "Speed Tap"
+    "translation": "Speed Tap Game"
   },
   "unlockable.SpeedTap.Description": {
-    "translation": "Speed Tap description here."
+    "translation": "With this upgrade, Cozmo learns how to play Speed Tap."
   },
   "unlockable.CubeRollAction.Title": {
     "translation": "Cube Roll"
   },
   "unlockable.CubeRollAction.Description": {
-    "translation": "Get Cozmo to Roll a Cube"
+    "translation": "With this upgrade, Cozmo gains the ability to roll Cubes."
+  },
+  "unlockable.DroneMode.Title": {
+    "translation": "Drone Mode Activity"
+  },
+  "unlockable.DroneMode.Description": {
+    "translation": "With this upgrade, Cozmo will allow you to pilot him in Drone Mode."
   },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon"
