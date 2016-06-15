@@ -9,7 +9,7 @@ public class InitialCubesState : State {
   protected ShowCozmoCubeSlide _ShowCozmoCubesSlide;
   protected GameBase _Game;
 
-  private const float _kCubeDistanceWithoutInLift_mm = 60.0f;
+  private const float _kCubeSqrDistanceWithoutInLift_mm = 360.0f;
 
   public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
@@ -65,37 +65,37 @@ public class InitialCubesState : State {
   }
 
   protected virtual void CheckForNewlySeenCubes() {
-    bool numValidCubesChanged = false;
+    bool validCubesChanged = false;
     LightCube cube = null;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       cube = lightCube.Value;
-      numValidCubesChanged |= TryUpdateCubeIdsForGame(cube);
+      validCubesChanged |= TryUpdateCubeIdForGame(cube);
     }
 
-    if (numValidCubesChanged) {
+    if (validCubesChanged) {
       UpdateUI(_Game.CubeIdsForGame.Count);
     }
   }
 
-  private bool TryUpdateCubeIdsForGame(LightCube cube) {
-    bool numValidCubesChanged = false;
+  private bool TryUpdateCubeIdForGame(LightCube cube) {
+    bool validCubesChanged = false;
     if (cube.IsInFieldOfView) {
       if (IsReallyCloseToCube(cube)) {
-        numValidCubesChanged |= RemoveFromValidCubes(cube);
+        validCubesChanged |= RemoveFromValidCubes(cube);
       }
       else {
-        numValidCubesChanged |= AddToValidCubes(cube);
+        validCubesChanged |= AddToValidCubes(cube);
       }
     }
     else {
-      numValidCubesChanged |= RemoveFromValidCubes(cube);
+      validCubesChanged |= RemoveFromValidCubes(cube);
     }
-    return numValidCubesChanged;
+    return validCubesChanged;
   }
 
   private bool IsReallyCloseToCube(LightCube cube) {
     return (_CurrentRobot.WorldPosition.xy() - cube.WorldPosition.xy()).sqrMagnitude
-    <= (_kCubeDistanceWithoutInLift_mm * _kCubeDistanceWithoutInLift_mm);
+    <= (_kCubeSqrDistanceWithoutInLift_mm);
   }
 
   private bool AddToValidCubes(LightCube cube) {
