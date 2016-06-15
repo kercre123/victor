@@ -11,7 +11,7 @@
 #include "rtos.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
-static const int MinContactTime = 100;   //
+static const int MinContactTime = 20;    // .10s
 
 // Updated to 3.0
 static const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
@@ -134,7 +134,7 @@ void Battery::init()
   NVIC_SetPriority(ADC_IRQn, 3);
   */
 
-  RTOS::schedule(manage_adc, CYCLES_MS(10.0f));
+  RTOS::schedule(manage_adc);
   RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
 
