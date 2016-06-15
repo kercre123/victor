@@ -57,7 +57,7 @@ namespace Anki.Debug {
     }
 
     private bool _NeedsUIUpdate;
-    private Dictionary<string, List<DebugConsoleVarData> > _DataByCategory;
+    private Dictionary<string, List<DebugConsoleVarData>> _DataByCategory;
 
     private DebugConsolePane _ConsolePane;
 
@@ -70,13 +70,24 @@ namespace Anki.Debug {
       consoleVar.varValue.varFunction = varName;
       AddConsoleVar(consoleVar, callback);
     }
+    public void RemoveConsoleFunctionUnity(string varName, string categoryName) {
+      List<DebugConsoleVarData> lines;
+      if (_DataByCategory.TryGetValue(categoryName, out lines)) {
+        for (int i = 0; i < lines.Count; ++i) {
+          if (lines[i].VarName == varName) {
+            lines.RemoveAt(i);
+            break;
+          }
+        }
+      }
+    }
 
     private DebugConsoleVarData GetExistingLineUI(string categoryName, string varName) {
       List<DebugConsoleVarData> lines;
       if (_DataByCategory.TryGetValue(categoryName, out lines)) {
         for (int i = 0; i < lines.Count; ++i) {
           if (lines[i].VarName == varName) {
-            return lines[i];          
+            return lines[i];
           }
         }
       }
@@ -128,9 +139,9 @@ namespace Anki.Debug {
       else if (data.TagType == ConsoleVarUnion.Tag.varFunction) {
         return _ConsolePane.PrefabVarUIButton;
       }
-    // mins and maxes are just numeric limits... so just stubbing this in
-    else if ((data.MaxValue < 10000 && data.MinValue > -10000) &&
-             (data.MaxValue != data.MinValue)) {
+      // mins and maxes are just numeric limits... so just stubbing this in
+      else if ((data.MaxValue < 10000 && data.MinValue > -10000) &&
+               (data.MaxValue != data.MinValue)) {
         return _ConsolePane.PrefabVarUISlider;
       }
       return _ConsolePane.PrefabVarUIText;
@@ -164,11 +175,11 @@ namespace Anki.Debug {
       categories.Sort();
       return categories;
     }
-    
+
     // Get with the singleton pattern, no creating ones outside instance
-    private DebugConsoleData() { 
+    private DebugConsoleData() {
       _NeedsUIUpdate = false;
-      _DataByCategory = new Dictionary<string, List<DebugConsoleVarData> >();
+      _DataByCategory = new Dictionary<string, List<DebugConsoleVarData>>();
     }
 
     public bool NeedsUIUpdate() {

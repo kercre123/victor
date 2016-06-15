@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Anki.UI;
-using System.Collections;
+using System.Collections.Generic;
 using Cozmo;
 using Cozmo.UI;
+using DG.Tweening;
 
 public class ShowCozmoCubeSlide : MonoBehaviour {
 
@@ -19,12 +20,17 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   [SerializeField]
   private RectTransform _TransparentCubeContainer;
 
+  [SerializeField]
+  private RectTransform _CozmoImageTransform;
+
   private IconProxy[] _CubeImages;
 
   private float _OutOfViewAlpha = 0.5f;
 
   private CubePalette.CubeColor _InViewColor;
   private CubePalette.CubeColor _OutViewColor;
+
+  private Tweener _Tween;
 
   public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor) {
     _InViewColor = inViewColor;
@@ -33,9 +39,32 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     LightUpCubes(0);
     string locKeyToUse = (numCubesToShow > 1) ? LocalizationKeys.kMinigameLabelShowCubesPlural : LocalizationKeys.kMinigameLabelShowCubesSingular;
     _ShowCozmoCubesLabel.text = Localization.GetWithArgs(locKeyToUse,
-      numCubesToShow);
+          numCubesToShow);
 
     _TransparentCubeContainer.gameObject.SetActive(true);
+    _Tween = null;
+  }
+
+  public void OnDestroy() {
+    if (_Tween.IsActive()) {
+      _Tween.Kill(false);
+      _Tween = null;
+    }
+  }
+
+  public void RotateCozmoImageTo(float degrees, float duration) {
+    _Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration);
+  }
+
+  //It's expected the called has already done a loc with args replacement
+  public void SetLabelText(string txt) {
+    _ShowCozmoCubesLabel.text = txt;
+  }
+  public void SetCubeSpacing(float space) {
+    VerticalLayoutGroup group = _CubeContainer.GetComponent<VerticalLayoutGroup>();
+    if (group) {
+      group.spacing = space;
+    }
   }
 
   public void LightUpCubes(int numberCubes) {
@@ -50,6 +79,20 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
       }
     }
     _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
+  }
+
+  public void LightUpCubes(List<int> cubeIndecies) {
+    for (int i = 0; i < _CubeImages.Length; i++) {
+      if (cubeIndecies.Contains(i)) {
+        _CubeImages[i].SetIcon(_InViewColor.uiSprite);
+        _CubeImages[i].SetAlpha(1f);
+      }
+      else {
+        _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
+        _CubeImages[i].SetAlpha(_OutOfViewAlpha);
+      }
+    }
+    _TransparentCubeContainer.gameObject.SetActive(cubeIndecies.Count == 0);
   }
 
   private void CreateCubes(int numCubesToShow, Sprite inViewSprite) {

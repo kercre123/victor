@@ -7,12 +7,17 @@ namespace Simon {
     public const float kTargetDistance = 125f;
     public const float kDistanceThreshold = 20f;
     float kAngleTolerance = 2.5f;
+    private const float _kCubeIntroBlinkTimes = 0.5f;
 
     private State _NextState;
-
+    private SimonGame _GameInstance;
     private Vector2 _TargetPosition;
     private Quaternion _TargetRotation;
     private Vector2 _CubeMidpoint;
+
+    private bool _CozmoInPosition;
+    private int _FlashingIndex;
+    private float _EndFlashTime;
 
     public CozmoMoveCloserToCubesState(State nextState) {
       _NextState = nextState;
@@ -20,12 +25,19 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-      List<LightCube> cubesForGame = new List<LightCube>();
-      GameBase game = _StateMachine.GetGame();
-      game.SharedMinigameView.HideMiddleBackground();
+      _CozmoInPosition = false;
+      _FlashingIndex = 0;
+      _EndFlashTime = 0;
 
-      IRobot robot = game.CurrentRobot;
-      foreach (int id in game.CubeIdsForGame) {
+      List<LightCube> cubesForGame = new List<LightCube>();
+      // Wait until we get to goal, shouldn't continue
+      _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance.InitColorsAndSounds();
+      _GameInstance.SharedMinigameView.EnableContinueButton(false);
+      _GameInstance.SharedMinigameView.HideMiddleBackground();
+
+      IRobot robot = _GameInstance.CurrentRobot;
+      foreach (int id in _GameInstance.CubeIdsForGame) {
         cubesForGame.Add(robot.LightCubes[id]);
       }
       LightCube cubeA, cubeB;
@@ -45,6 +57,21 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
+    }
+
+    public override void Update() {
+      base.Update();
+
+      if (_EndFlashTime < Time.time && _FlashingIndex < _GameInstance.CubeIdsForGame.Count) {
+        _EndFlashTime = Time.time + _kCubeIntroBlinkTimes;
+        int id = _GameInstance.CubeIdsForGame[_FlashingIndex];
+        _GameInstance.BlinkLight(id, _kCubeIntroBlinkTimes, Color.black, _GameInstance.GetColorForBlock(id));
+        ++_FlashingIndex;
+        if (_FlashingIndex >= _GameInstance.CubeIdsForGame.Count) {
+          GoToNextState();
+        }
+      }
+
     }
 
     private void MoveToTargetLocation(Vector2 targetPosition, Quaternion targetRotation) {
@@ -76,7 +103,13 @@ namespace Simon {
     }
 
     private void HandleGotoRotationComplete(bool success) {
-      _StateMachine.SetNextState(_NextState);
+      _CozmoInPosition = true;
+      GoToNextState();
+    }
+    private void GoToNextState() {
+      if (_CozmoInPosition && _FlashingIndex >= _GameInstance.CubeIdsForGame.Count) {
+        _StateMachine.SetNextState(_NextState);
+      }
     }
 
     #region Target Position calculations

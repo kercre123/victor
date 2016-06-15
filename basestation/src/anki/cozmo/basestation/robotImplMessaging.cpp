@@ -571,6 +571,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = object->GetID();
+    payload.robotID = GetID();
     Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
   }
 }

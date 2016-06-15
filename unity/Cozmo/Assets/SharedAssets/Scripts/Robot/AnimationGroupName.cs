@@ -2,7 +2,6 @@
 using System.Collections;
 
 public static class AnimationGroupName {
-  public const string kWin = "Win";
 
   #region Request Game
 
@@ -29,6 +28,12 @@ public static class AnimationGroupName {
   public const string kCubePounce_LoseHand = "cubePounce_LoseHand";
   public const string kCubePounce_LoseRound = "cubePounce_LoseRound";
   public const string kCubePounce_LoseSession = "cubePounce_LoseSession";
+
+  #endregion
+
+  #region Simon
+
+  public const string kSimonStartTurn = "ag_simon_cozmo_end_listen";
 
   #endregion
 }

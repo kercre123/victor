@@ -119,6 +119,38 @@
     {
       "CladEvent": "OnWaitForCubesMinigameSetup",
       "AnimName": "ag_speedTap_wait"
+    },
+    {
+      "CladEvent": "OnSimonSetupComplete",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnSimonExampleStarted",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnSimonCozmoHandComplete",
+      "AnimName": "ag_simon_successhand_cozmo"
+    },
+    {
+      "CladEvent": "OnSimonPlayerHandComplete",
+      "AnimName": "ag_simon_successhand_player"
+    },
+    {
+      "CladEvent": "OnSimonPointCube",
+      "AnimName": "ag_simon_point"
+    },
+    {
+      "CladEvent": "OnSimonCozmoWin",
+      "AnimName": "ag_simon_failgame_player"
+    },
+    {
+      "CladEvent": "OnSimonPlayerWin",
+      "AnimName": "ag_simon_failgame_cozmo"
+    },
+    {
+      "CladEvent": "OnDailyGoalCompleted",
+      "AnimName": ""
     }
   ]
 }

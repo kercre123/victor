@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Simon {
@@ -9,26 +8,48 @@ namespace Simon {
     private IList<int> _CurrentSequence;
     private int _CurrentSequenceIndex;
     private bool? _ShouldWinGame;
+    private int _LastTargetID;
+    private bool _IsAnimating = false;
+
+    // Still under review for what we want for audio.
+    // This is likely to be refactored into all different clips with unique sounds.
+    private const string _kPointDefault = "ag_simon_point_center";
+    private const string _kPointLeftSmall = "ag_simon_point_smallleft";
+    private const string _kPointRightSmall = "ag_simon_point_smallright";
+    private const string _kPointLeftBig = "ag_simon_point_bigleft";
+    private const string _kPointRightBig = "ag_simon_point_bigright";
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderWatchCozmoGuess);
-      _GameInstance.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelWatchCozmoGuess);
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = false;
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = true;
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;
+      _LastTargetID = -1;
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoTurnStarted);
+
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
+
+      _GameInstance.OnTurnStage(PlayerType.Cozmo, false);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
     }
 
     public override void Update() {
       base.Update();
+      if (_IsAnimating) {
+        return;
+      }
       if (_ShouldWinGame.HasValue) {
         if (_ShouldWinGame.GetValueOrDefault()) {
           CozmoWinGame();
@@ -43,8 +64,8 @@ namespace Simon {
           _ShouldWinGame = true;
         }
         else {
-          float coinFlip = Random.Range(0f, 1f);
-          if (coinFlip > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
+          float rand = Random.Range(0f, 1f);
+          if (rand > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
             _ShouldWinGame = false;
             int correctId = _CurrentSequence[_CurrentSequenceIndex];
             List<int> blockIds = new List<int>();
@@ -53,8 +74,8 @@ namespace Simon {
                 blockIds.Add(cubeId);
               }
             }
-            int targetId = blockIds[Random.Range(0, blockIds.Count)];
-            StartTurnToTarget(_CurrentRobot.LightCubes[targetId]);
+            _LastTargetID = blockIds[Random.Range(0, blockIds.Count)];
+            StartTurnToTarget(_CurrentRobot.LightCubes[_LastTargetID]);
           }
           else {
             StartTurnToTarget(GetCurrentTarget());
@@ -65,35 +86,50 @@ namespace Simon {
 
     private void StartTurnToTarget(LightCube target) {
       _CurrentRobot.SetAllBackpackBarLED(_GameInstance.GetColorForBlock(target.ID));
-      _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target));
+
+      int goingToIndex = _GameInstance.CubeIdsForGame.IndexOf(target.ID);
+      int fromIndex = 1;
+      if (_CurrentSequenceIndex > 0) {
+        fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_CurrentSequence[_CurrentSequenceIndex - 1]);
+      }
+      string animGroup = _kPointDefault;
+      if (goingToIndex - fromIndex == 1) {
+        animGroup = _kPointLeftSmall;
+      }
+      else if (goingToIndex - fromIndex == -1) {
+        animGroup = _kPointRightSmall;
+      }
+      if (goingToIndex - fromIndex >= 2) {
+        animGroup = _kPointLeftBig;
+      }
+      else if (goingToIndex - fromIndex <= -2) {
+        animGroup = _kPointRightBig;
+      }
+
+      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animGroup));
     }
 
     public LightCube GetCurrentTarget() {
-      return _CurrentRobot.LightCubes[_CurrentSequence[_CurrentSequenceIndex]];
-    }
-
-    public override void Exit() {
-      base.Exit();
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _LastTargetID = _CurrentSequence[_CurrentSequenceIndex];
+      return _CurrentRobot.LightCubes[_LastTargetID];
     }
 
     private void CozmoLoseGame() {
-      _GameInstance.SetCubeLightsGuessWrong();
+      _GameInstance.SetCubeLightsGuessWrong(_LastTargetID);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleOnCozmoLoseAnimationDone));
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
+      _IsAnimating = true;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
     }
 
     private void CozmoWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-
-      // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
-      // and feel a bit thwarted 
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnCozmoWinAnimationDone));
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
+      _IsAnimating = true;
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
@@ -102,7 +138,7 @@ namespace Simon {
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
       _GameInstance.RaiseMiniGameWin(Localization.GetWithArgs(
-        LocalizationKeys.kSimonGameTextPatternLength, _CurrentSequence.Count));
+        LocalizationKeys.kSimonGameTextPatternLength, (_CurrentSequence.Count - _GameInstance.MinSequenceLength + 1)));
     }
   }
 }

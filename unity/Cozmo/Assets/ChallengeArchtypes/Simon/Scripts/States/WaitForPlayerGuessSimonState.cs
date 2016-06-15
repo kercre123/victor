@@ -13,26 +13,46 @@ namespace Simon {
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
-    private const float _kTapBufferSeconds = 0f;
+    private const float _kTapBufferSeconds = 0.1f;
+    private bool _IsAnimating = false;
+
+    List<CubeTapTime> _BadTapLists = new List<CubeTapTime>();
+    public class CubeTapTime {
+      public CubeTapTime(int setID, float setTimeStamp) {
+        id = setID;
+        timeStamp = setTimeStamp;
+      }
+      public float timeStamp;
+      public int id;
+    }
 
     public override void Enter() {
       base.Enter();
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameHeaderMakeYourGuess);
-      _GameInstance.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kSimonGameLabelMakeYourGuess);
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = true;
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
       // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
       _LastTappedTime = Time.time;
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerTurnStarted);
+
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnPlayerLoseAnimationDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
+
+      _GameInstance.OnTurnStage(PlayerType.Human, false);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      LightCube.TappedAction -= OnBlockTapped;
+      _CurrentRobot.DriveWheels(0f, 0f);
+
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnPlayerLoseAnimationDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
     }
 
     public override void Update() {
       base.Update();
-      if (_StartLightBlinkTime == -1) {
+      if (_StartLightBlinkTime == -1 && !_IsAnimating) {
         if (_CurrentSequenceIndex == _SequenceList.Count) {
           PlayerWinGame();
         }
@@ -46,16 +66,17 @@ namespace Simon {
           }
           _TargetCube = -1;
         }
+        for (int i = 0; i < _BadTapLists.Count; ++i) {
+          if (_BadTapLists[i].timeStamp < Time.time) {
+            // This will clear the list and ready us for next time
+            DoBlockTap(_BadTapLists[i].id);
+            break;
+          }
+        }
       }
       else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
         _StartLightBlinkTime = -1;
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
-      LightCube.TappedAction -= OnBlockTapped;
-      _CurrentRobot.DriveWheels(0f, 0f);
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
@@ -64,34 +85,56 @@ namespace Simon {
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
       _GameInstance.RaiseMiniGameLose(Localization.GetWithArgs(
-        LocalizationKeys.kSimonGameTextPatternLength, _SequenceList.Count));
+        LocalizationKeys.kSimonGameTextPatternLength, (_SequenceList.Count - _GameInstance.MinSequenceLength + 1)));
     }
 
     private void PlayerLoseGame() {
-      _GameInstance.SetCubeLightsGuessWrong();
+      _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleOnPlayerLoseAnimationDone));
+      _IsAnimating = true;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
     }
 
     private void PlayerWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
 
-      // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
-      // and feel a bit thwarted 
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnPlayerWinAnimationDone));
+      // AnimationManager will send callback to HandleOnPlayerWinAnimationDone
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete);
+      _IsAnimating = true;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
-      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime != -1) {
         return;
       }
 
+      // Just playing the ending animation
+      if (_IsAnimating) {
+        return;
+      }
+
+      // Only ignore incorrect taps from punching table, give the benifit of the doubt
+      // correct ID, process immediately
+      if (id == _SequenceList[_CurrentSequenceIndex]) {
+        DoBlockTap(id);
+      }
+      else {
+        // Add to a list and set some timers
+        _BadTapLists.Add(new CubeTapTime(id, Time.time + _kTapBufferSeconds));
+      }
+
+    }
+
+    private void DoBlockTap(int id) {
+      _BadTapLists.Clear();
+      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       _LastTappedTime = Time.time;
       _StartLightBlinkTime = Time.time;
 

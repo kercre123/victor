@@ -14,21 +14,16 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.InitColorsAndSounds();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.BetweenRoundsMusic);
 
       _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
         Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
 
-      string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
-        LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;
-      _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(headerTextKey);
-      _GameInstance.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(headerTextKey);
-
-      _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = (_NextPlayer != PlayerType.Cozmo);
-      _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = (_NextPlayer != PlayerType.Human);
+      _GameInstance.OnTurnStage(_NextPlayer, true);
 
       _GameInstance.SetCubeLightsDefaultOn();
+
+      _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[1]], false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
 
     private void HandleContinuePressed() {

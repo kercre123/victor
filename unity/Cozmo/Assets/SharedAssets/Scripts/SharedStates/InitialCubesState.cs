@@ -5,9 +5,9 @@ using System.Collections.Generic;
 public class InitialCubesState : State {
 
   private State _NextState;
-  private int _CubesRequired;
-  private ShowCozmoCubeSlide _ShowCozmoCubesSlide;
-  private GameBase _Game;
+  protected int _CubesRequired;
+  protected ShowCozmoCubeSlide _ShowCozmoCubesSlide;
+  protected GameBase _Game;
 
   public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
@@ -59,7 +59,7 @@ public class InitialCubesState : State {
     _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
   }
 
-  private void CheckForNewlySeenCubes() {
+  protected virtual void CheckForNewlySeenCubes() {
     bool numValidCubesChanged = false;
     LightCube cube = null;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
@@ -72,7 +72,7 @@ public class InitialCubesState : State {
     }
   }
 
-  private void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
+  protected virtual void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
                                                ObservedObject.InFieldOfViewState newState) {
     if (changedObject is LightCube) {
       if (TryUpdateCubeIdsForGame(changedObject as LightCube)) {
@@ -107,7 +107,7 @@ public class InitialCubesState : State {
     return numValidCubesChanged;
   }
 
-  private void UpdateUI(int numValidCubes) {
+  protected virtual void UpdateUI(int numValidCubes) {
     _ShowCozmoCubesSlide.LightUpCubes(numValidCubes);
 
     if (numValidCubes >= _CubesRequired) {
@@ -122,12 +122,12 @@ public class InitialCubesState : State {
     }
   }
 
-  private string GetCubesReadyText(int numCubes) {
+  protected virtual string GetCubesReadyText(int numCubes) {
     string cubesReadyKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelCubesReadyPlural : LocalizationKeys.kMinigameLabelCubesReadySingular;
     return Localization.GetWithArgs(cubesReadyKey, numCubes);
   }
 
-  private string GetWaitingForCubesText(int numCubes) {
+  protected virtual string GetWaitingForCubesText(int numCubes) {
     string waitingForCubesKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelWaitingForCubesPlural : LocalizationKeys.kMinigameLabelWaitingForCubesSingular;
     return Localization.Get(waitingForCubesKey);
   }
@@ -151,7 +151,7 @@ public class InitialCubesState : State {
     }
   }
 
-  private void HandleContinueButtonClicked() {
+  protected virtual void HandleContinueButtonClicked() {
     _StateMachine.SetNextState(_NextState);
   }
 }
