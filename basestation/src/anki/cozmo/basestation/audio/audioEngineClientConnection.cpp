@@ -28,16 +28,18 @@ AudioEngineClientConnection::AudioEngineClientConnection( AudioEngineMessageHand
   
   // Subscribe to Connection Side Messages
   auto callback = std::bind(&AudioEngineClientConnection::HandleEvents, this, std::placeholders::_1);
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioEvent, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::StopAllAudioEvents, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioGameState, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioSwitchState, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioParameter, callback ) );
+  AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioEvent, callback ) );
+  AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::StopAllAudioEvents, callback ) );
+  AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioGameState, callback ) );
+  AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioSwitchState, callback ) );
+  AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioParameter, callback ) );
+  AddSignalHandle( _messageHandler->Subscribe( MessageAudioClientTag::PostAudioMusicState, callback ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClientConnection::~AudioEngineClientConnection()
 {
+  ClearSignalHandles();
   Util::SafeDelete( _messageHandler );
 }
 
@@ -77,6 +79,10 @@ void AudioEngineClientConnection::HandleEvents(const AnkiEvent<MessageAudioClien
       
     case MessageAudioClientTag::PostAudioParameter:
       HandleMessage( event.GetData().Get_PostAudioParameter() );
+      break;
+      
+    case MessageAudioClientTag::PostAudioMusicState:
+      HandleMessage( event.GetData().Get_PostAudioMusicState() );
       break;
       
     default:

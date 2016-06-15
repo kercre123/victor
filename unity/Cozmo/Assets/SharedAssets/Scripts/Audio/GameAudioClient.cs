@@ -233,16 +233,11 @@ namespace Anki {
         }
 
         // Set Music States
-        // We can move this, I just need a place to keep static state to start the music
-        private static bool _didPlayMusic = false;
-
-        static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state) {
+        static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state, 
+                                         bool interrupt = false,
+                                         uint minDurationInMilliSeconds = 0) {
           AudioClient client = AudioClient.Instance;
-          if (!_didPlayMusic) {
-            client.PostEvent((GameEvent.GenericEvent)GameEvent.Music.Play, GameObjectType.Default);
-            _didPlayMusic = true;
-          }
-          client.PostGameState(GameState.StateGroupType.Music, (GameState.GenericState)state);
+          client.PostMusicState((GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }
       }
     }

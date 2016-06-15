@@ -113,6 +113,17 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
+        public void PostMusicState(GameState.GenericState musicState,
+                                   bool interrupt = false,
+                                   uint minDurationInMilliSeconds = 0) {
+          DAS.Debug("AudioController.PostMusicState",
+                    "Music State: " + musicState + " Interrupt: " + interrupt + " MinDurationInMilliSeconds: " + minDurationInMilliSeconds);
+          PostAudioMusicState msg = new PostAudioMusicState(musicState, interrupt, minDurationInMilliSeconds);
+          _RobotEngineManager.Message.PostAudioMusicState = msg;
+          _RobotEngineManager.SendMessage();
+        }
+        
+
         // Callback functionality
         private const ushort kInvalidPlayId = 0;
         private ushort _previousPlayId = kInvalidPlayId;

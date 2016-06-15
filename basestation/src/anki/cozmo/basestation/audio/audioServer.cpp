@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
+#include "anki/cozmo/basestation/audio/musicConductor.h"
 #include "clad/audio/audioMessage.h"
 #include "clad/audio/audioCallbackMessage.h"
 #include "util/helpers/templateHelpers.h"
@@ -106,7 +107,7 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
   }
   
   if ( playingId == kInvalidAudioPlayingId ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Play Event %s on GameObject %d",
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable to Play Event %s on GameObject %d",
                        EnumToString( message.audioEvent ), message.gameObject );
   }
 }
@@ -127,7 +128,7 @@ void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionI
   // Perform Game State
   const bool success = _audioController->SetState( groupId, stateId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set State %s : %s",
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable to Set State %s : %s",
                        EnumToString( message.stateGroup ), EnumToString( message.stateValue ) );
   }
 }
@@ -142,7 +143,7 @@ void AudioServer::ProcessMessage( const PostAudioSwitchState& message, Connectio
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %s",
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable to Set Switch State %s : %s on GameObject %s",
                        EnumToString( message.switchStateGroup ), EnumToString( message.switchStateValue ),
                        EnumToString( message.gameObject ) );
   }
@@ -189,14 +190,23 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   const bool success = _audioController->SetParameter( parameterId, value, objectId, duration, curve );
   if ( !success ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage",
-                       "Unable To Set Parameter %s to Value %f on GameObject %s with duration %d milliSeconds with \
+                       "Unable to Set Parameter %s to Value %f on GameObject %s with duration %d milliSeconds with \
                        curve type %s",
                        EnumToString( message.parameter ), message.parameterValue, EnumToString( message.gameObject ),
                        message.timeInMilliSeconds, EnumToString( message.curve ) );
   }
 }
-  
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioServer::ProcessMessage( const PostAudioMusicState& message, ConnectionIdType connectionId )
+{
+  //Decode Music Message
+  const AudioStateId stateId = Util::numeric_cast<AudioStateId>( message.stateValue );
+  const bool interrupt = message.interrupt;
+  const uint32_t minDuration_ms = Util::numeric_cast<uint32_t>( message.minDurationInMilliSeconds );
+  _audioController->GetMusicConductor()->SetMusicState( stateId, interrupt, minDuration_ms );
+}
+
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioServer::ConnectionIdType AudioServer::GetNewClientConnectionId()
@@ -270,7 +280,7 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
         break;
     }
     
-    if (AudioCallbackInfo::Tag::INVALID != callbackMsg.callbackInfo.GetTag()) {
+    if ( AudioCallbackInfo::Tag::INVALID != callbackMsg.callbackInfo.GetTag() ) {
       connection->PostCallback( std::move( callbackMsg ) );
     }
   }
@@ -284,8 +294,8 @@ void AudioServer::RegisterCladGameObjectsWithAudioController()
         aGameObj < static_cast<uint32_t>(GameObjectType::End);
         ++aGameObj) {
     // Register GameObjectType
-    bool success = _audioController->RegisterGameObject( static_cast<AudioGameObject>(aGameObj),
-                                                         std::string(EnumToString(static_cast<GameObjectType>(aGameObj)) ));
+    bool success = _audioController->RegisterGameObject( static_cast<AudioGameObject>( aGameObj ),
+                                                         std::string(EnumToString(static_cast<GameObjectType>( aGameObj ))) );
     if (!success) {
       PRINT_NAMED_ERROR( "AudioServer.RegisterCladGameObjectsWithAudioController",
                          "Registering GameObjectId: %ul - %s was unsuccessful",

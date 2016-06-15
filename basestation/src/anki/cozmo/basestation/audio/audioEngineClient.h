@@ -69,6 +69,10 @@ public:
                       int32_t timeInMilliSeconds = 0,
                       CurveType curve = CurveType::Linear ) const;
   
+  void PostMusicState( GameState::GenericState musicState,
+                       bool interrupt,
+                       uint32_t minDuration_ms );
+
 protected:
   
   AudioEngineMessageHandler* _messageHandler = nullptr;

@@ -88,6 +88,17 @@ void AudioClientConnection::HandleMessage( const PostAudioParameter& parameterMe
     PRINT_NAMED_ERROR( "AudioClientConnection.HandleMessage" , "Server is NULL" );
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioClientConnection::HandleMessage( const PostAudioMusicState& musicStateMessage )
+{
+  if ( nullptr != _server ) {
+    _server->ProcessMessage( musicStateMessage, GetConnectionId() );
+  }
+  else {
+    PRINT_NAMED_ERROR( "AudioClientConnection.HandleMessage" , "Server is NULL" );
+  }
+}
   
   
 } // Audio

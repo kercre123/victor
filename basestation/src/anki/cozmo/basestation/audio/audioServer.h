@@ -33,6 +33,7 @@ struct StopAllAudioEvents;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
+struct PostAudioMusicState;
 struct AudioCallbackDuration;
 struct AudioCallbackMarker;
 struct AudioCallbackMarkerComplete;
@@ -54,11 +55,14 @@ public:
   const AudioClientConnection* GetConnection( ConnectionIdType connectionId ) const;
   
   // Client Connection Deletgate Methods
+  // Events
   void ProcessMessage( const PostAudioEvent& message, ConnectionIdType connectionId );
   void ProcessMessage( const StopAllAudioEvents& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioSwitchState& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioParameter& message, ConnectionIdType connectionId );
+  // Music
+  void ProcessMessage( const PostAudioMusicState& message, ConnectionIdType connectionId );
   
   AudioController* GetAudioController() { return _audioController; }
   
