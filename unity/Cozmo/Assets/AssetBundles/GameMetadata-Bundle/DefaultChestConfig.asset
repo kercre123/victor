@@ -17,7 +17,7 @@ MonoBehaviour:
     - Level: 0
       Value: 30
   RewardLadders:
-  - ItemId: treat
+  - ItemId: TestHexItem0
     LadderLevels:
     - Level: 0
       Value: 1
