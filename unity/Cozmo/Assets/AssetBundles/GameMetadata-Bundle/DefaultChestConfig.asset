@@ -15,7 +15,7 @@ MonoBehaviour:
     ItemId: experience
     LadderLevels:
     - Level: 0
-      Value: 100
+      Value: 30
   RewardLadders:
   - ItemId: treat
     LadderLevels:
