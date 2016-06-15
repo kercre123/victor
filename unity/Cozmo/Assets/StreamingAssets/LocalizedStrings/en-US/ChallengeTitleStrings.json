@@ -51,11 +51,11 @@
   "investorDemo.investorDemoScene4": {
     "translation": "Investor Scene 4"
   },
-  "simonGame01.title": {
+  "simonGame.title": {
     "translation": "Simon"
   },
-  "simonGame01.description": {
-    "translation": "Can you repeat cozmo's pattern? Tap the cubes in the order cozmo points at them."
+  "simonGame.description": {
+    "translation": "Simon is a game of sound and memory. Listen carefully and remember each note!"
   },
   "treasureHuntGame01.title": {
     "translation": "Treasure Hunt Challenge"
@@ -97,7 +97,7 @@
     "translation": "Cube Pounce"
   },
   "cubeSlap.description": {
-    "translation": "Cube Pounce Description"
+    "translation": "Think you're faster than Cozmo? Put your reaction time to the test!"
   },
   "playhouseGame01.title": {
     "translation": "Playhouse"
@@ -154,6 +154,6 @@
     "translation": "Meet Cozmo"
   },
   "faceEnrollment.description": {
-    "translation": "Cozmo can recognize you, and save your name in his memory banks."
+    "translation": "Face Enrollment Description"
   }
 }
