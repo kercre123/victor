@@ -10,8 +10,8 @@
  **/
 
 #include "anki/cozmo/basestation/encodedImage.h"
-
 #include "anki/vision/basestation/image.h"
+#include "anki/common/basestation/array2d_impl.h"
 
 #include "util/fileUtils/fileUtils.h"
 
