@@ -11,7 +11,7 @@
 #include "rtos.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
-static const int MinContactTime = 100;   //
+static const int MinContactTime = 20;    // .10s
 
 // Updated to 3.0
 static const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
@@ -25,6 +25,7 @@ static const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
 static const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
 
 static const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
+static const Fixed VEXT_CHARGE_THRESHOLD  = TO_FIXED(4.00); // V
 
 static const u32 CLIFF_SENSOR_BLEED = 200;
 
@@ -133,7 +134,7 @@ void Battery::init()
   NVIC_SetPriority(ADC_IRQn, 3);
   */
 
-  RTOS::schedule(manage_adc, CYCLES_MS(10.0f));
+  RTOS::schedule(manage_adc);
   RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
 
@@ -208,7 +209,7 @@ void manage_adc(void*)
         }
 
         vExt = calcResult(VEXT_SCALE);
-        onContacts = vExt > VEXT_DETECT_THRESHOLD;
+        onContacts = vExt > VEXT_DETECT_THRESHOLD || (isCharging && vExt > VEXT_CHARGE_THRESHOLD);
         
         if (!onContacts) {
           ContactTime = 0;

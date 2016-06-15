@@ -115,16 +115,16 @@ namespace Anki {
         Directory.CreateDirectory("Assets/StreamingAssets/cozmo_resources");
 
         // Copy engine resources
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
-
         // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
         // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
-        // Immediately after copying over '../../EXTERNALS/cozmo-assets' to 'Assets/StreamingAssets/cozmo_resources/assets' above,
-        // we could potentially need to copy over those three Git directories into 'Assets/StreamingAssets/cozmo_resources/assets/',
-        // but we avoid that because of a series of symlinks created by 'project/gyp/cozmoGame.gyp' for Webots. Specifically, we end
-        // up with 'simulator/controllers/webotsCtrlGameEngine/resources/assets' -> 'EXTERNALS/cozmo-assets' and then a symlink for
-        // each of those three Git directories. The end result is that we have a symlink for each of those three Git directories in
-        // 'EXTERNALS/cozmo-assets/' pointing at the corresponding directory in 'lib/anki/products-cozmo-assets/'.
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
+        FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources/assets/.svn");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
+                                                   "Assets/StreamingAssets/cozmo_resources/assets/animationGroupMaps");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/behaviors",
+                                                   "Assets/StreamingAssets/cozmo_resources/assets/behaviors");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
+                                                   "Assets/StreamingAssets/cozmo_resources/assets/DailyGoals");
 
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", "Assets/StreamingAssets/cozmo_resources/config");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", "Assets/StreamingAssets/cozmo_resources/pocketsphinx");
@@ -265,7 +265,8 @@ namespace Anki {
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
-        BuildOptions buildOptions = GetBuildOptions(buildTarget, config == "debug", enableDebugging, connectWithProfiler);
+        bool isDebugBuild = config == "debug" || config == "Debug";
+        BuildOptions buildOptions = GetBuildOptions(buildTarget, isDebugBuild, enableDebugging, connectWithProfiler);
 
         ConfigurePlayerSettings(buildTarget, config);
 
@@ -361,12 +362,15 @@ namespace Anki {
 
         switch (config) {
         case "debug":
+        case "Debug":
           {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
           }
           break;
         case "profile":
+        case "Profile":
         case "release":
+        case "Release":
           {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception

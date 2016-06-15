@@ -442,11 +442,11 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'mkdir', '-p','<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources',
+                  'mkdir', '-p','<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
                 ],
             },
             {
-                'action_name': 'create_symlink_resources_assets',
+                'action_name': 'create_symlink_resources_animations',
                 'inputs': [],
                 'outputs': [],
                 'action': [
@@ -454,8 +454,21 @@
                   '-s',
                   '-f',
                   '-n',
-                  '<(externals_path)/cozmo-assets',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
+                  '<(externals_path)/cozmo-assets/animations',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animations',
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_animationGroups',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(externals_path)/cozmo-assets/animationGroups',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroups',
                 ],
             },
             {
