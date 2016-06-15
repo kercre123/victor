@@ -47,7 +47,7 @@ namespace Simon {
           _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         }
         else {
-          _StateMachine.SetNextState(new CozmoGuessSimonState());
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSimonStartTurn, HandEndAnimationDone));
         }
       }
       else {
@@ -55,6 +55,10 @@ namespace Simon {
           LightUpNextCube();
         }
       }
+    }
+
+    public void HandEndAnimationDone(bool success) {
+      _StateMachine.SetNextState(new CozmoGuessSimonState());
     }
 
     private void LightUpNextCube() {
