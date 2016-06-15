@@ -28,7 +28,6 @@ namespace Anki {
     
     DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
                                                      const ObjectID objectID,
-                                                     const bool shouldDriveToClosestPreActionPose,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
                                                      const bool useManualSpeed,
@@ -44,25 +43,44 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     , _flipBlockAction(new FlipBlockAction(robot, objectID))
-    , _shouldDriveToClosestPreActionPose(shouldDriveToClosestPreActionPose)
     {
-      GetDriveToObjectAction()->SetGetPossiblePosesFunc(&DriveAndFlipBlockAction::GetPossiblePoses);
+      GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+      {
+        return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
+      });
 
       AddAction(_flipBlockAction);
       SetProxyTag(_flipBlockAction->GetTag()); // Use flip action's completion info
     }
     
-    ActionResult DriveAndFlipBlockAction::GetPossiblePoses(ActionableObject* object,
-                                                           std::vector<Pose3d>& possiblePoses,
-                                                           bool& alreadyInPosition)
+    void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
     {
+      GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, tf](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+      {
+        return GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
+      });
+    }
+    
+    const std::string& DriveAndFlipBlockAction::GetName() const
+    {
+      static const std::string name("DriveAndFlipBlockAction");
+      return name;
+    }
+    
+    ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
+                                                           ActionableObject* object,
+                                                           std::vector<Pose3d>& possiblePoses,
+                                                           bool& alreadyInPosition,
+                                                           const bool shouldDriveToClosestPose)
+    {
+      PRINT_NAMED_INFO("DriveAndFlipBlockAction.GetPossiblePoses", "Getting possible preActionPoses");
       IDockAction::PreActionPoseInfo preActionPoseInfo(object->GetID(),
                                                        PreActionPose::FLIPPING,
                                                        false,
                                                        0,
                                                        kPreDockPoseAngleTolerance);
       
-      IDockAction::IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
+      IDockAction::IsCloseEnoughToPreActionPose(robot, preActionPoseInfo);
       
       if(preActionPoseInfo.actionResult == ActionResult::FAILURE_ABORT)
       {
@@ -71,7 +89,7 @@ namespace Anki {
       }
       
       Pose3d facePose;
-      TimeStamp_t faceTime = _robot.GetFaceWorld().GetLastObservedFace(facePose);
+      TimeStamp_t faceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
       
       if(preActionPoseInfo.preActionPoses.size() == 0)
       {
@@ -79,8 +97,9 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
-      if(_shouldDriveToClosestPreActionPose)
+      if(shouldDriveToClosestPose)
       {
+        PRINT_NAMED_INFO("DriveAndFlipBlockAction.GetPossiblePoses", "Selecting closest preAction pose");
         possiblePoses.push_back(preActionPoseInfo.preActionPoses[preActionPoseInfo.closestIndex].GetPose());
         return ActionResult::SUCCESS;
       }
@@ -93,7 +112,7 @@ namespace Anki {
       for(auto iter = preActionPoseInfo.preActionPoses.begin(); iter != preActionPoseInfo.preActionPoses.end(); ++iter)
       {
         Pose3d poseWrtRobot;
-        if(!iter->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot))
+        if(!iter->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot))
         {
           continue;
         }
@@ -151,11 +170,11 @@ namespace Anki {
         
         if(firstClosestPose.GetTranslation().Length() > secondClosestPose.GetTranslation().Length())
         {
-          firstClosestPose.GetWithRespectTo(_robot.GetPose(), poseToDriveTo);
+          firstClosestPose.GetWithRespectTo(robot.GetPose(), poseToDriveTo);
         }
         else
         {
-          secondClosestPose.GetWithRespectTo(_robot.GetPose(), poseToDriveTo);
+          secondClosestPose.GetWithRespectTo(robot.GetPose(), poseToDriveTo);
         }
       }
       
@@ -167,13 +186,24 @@ namespace Anki {
     DriveToFlipBlockPoseAction::DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID)
     : DriveToObjectAction(robot, objectID, PreActionPose::FLIPPING)
     {
-      SetGetPossiblePosesFunc(&DriveAndFlipBlockAction::GetPossiblePoses);
+      SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+      {
+        return DriveAndFlipBlockAction::GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
+      });
     }
     
     const std::string& DriveToFlipBlockPoseAction::GetName() const
     {
       static const std::string name("DriveToFlipBlockPoseAction");
       return name;
+    }
+    
+    void DriveToFlipBlockPoseAction::ShouldDriveToClosestPreActionPose(bool tf)
+    {
+      SetGetPossiblePosesFunc([this, tf](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+      {
+        return DriveAndFlipBlockAction::GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
+      });
     }
     
     

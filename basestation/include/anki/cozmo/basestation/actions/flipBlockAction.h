@@ -28,7 +28,6 @@ namespace Anki {
     public:
       DriveAndFlipBlockAction(Robot& robot,
                               const ObjectID objectID,
-                              const bool shouldDriveToClosestPreActionPose = false,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false,
@@ -36,18 +35,20 @@ namespace Anki {
                               const bool sayName = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
+      virtual const std::string& GetName() const override;
+      void ShouldDriveToClosestPreActionPose(bool tf);
       
-      ActionResult GetPossiblePoses(ActionableObject* object,
-                                    std::vector<Pose3d>& possiblePoses,
-                                    bool& alreadyInPosition);
+      static ActionResult GetPossiblePoses(Robot& robot,
+                                           ActionableObject* object,
+                                           std::vector<Pose3d>& possiblePoses,
+                                           bool& alreadyInPosition,
+                                           const bool shouldDriveToClosestPose);
       
     private:
       IAction* _flipBlockAction = nullptr;
-      bool _shouldDriveToClosestPreActionPose = false;
-      
     };
     
-    
+
     class DriveToFlipBlockPoseAction : public DriveToObjectAction
     {
     public:
@@ -55,7 +56,9 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
+      void ShouldDriveToClosestPreActionPose(bool tf);
     };
+    
     
     // Drives straight and move lift to flip block
     class FlipBlockAction : public IAction

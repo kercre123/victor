@@ -919,16 +919,19 @@ namespace Anki {
     {
       return _compoundAction.Update();
     }
-    
-#pragma mark ---- TurnTowardsObjectAction ----
+    #pragma mark ---- TurnTowardsObjectAction ----
     
     TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
                                        ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : TurnTowardsObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
-                       maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
+    : TurnTowardsObjectAction(robot,
+                              objectID,
+                              Vision::Marker::ANY_CODE,
+                              maxTurnAngle,
+                              visuallyVerifyWhenDone,
+                              headTrackWhenDone)
     {
       
     }
@@ -1049,11 +1052,30 @@ namespace Anki {
         } else {
           _facePoseCompoundActionDone = true;
           
-          // Go ahead and do a first tick of visual verification's Update, to
-          // get it initialized
-          ActionResult verificationResult = _visuallyVerifyAction.Update();
-          if(ActionResult::SUCCESS != verificationResult) {
-            return verificationResult;
+          if(_doRefinedTurn)
+          {
+            // If we need to refine the turn just reset this action, set appropriate variables, and re-init
+            Reset(false);
+            ShouldDoRefinedTurn(false);
+            SetMaxPanSpeed(kRefinedTurnAccel_radPerSec2);
+            SetPanTolerance(_refinedTurnAngleTol_rad);
+            
+            ActionResult res = Init();
+            if(res != ActionResult::SUCCESS)
+            {
+              return res;
+            }
+            
+            return ActionResult::RUNNING;
+          }
+          else if(_visuallyVerifyWhenDone)
+          {
+            // Go ahead and do a first tick of visual verification's Update, to
+            // get it initialized
+            ActionResult verificationResult = _visuallyVerifyAction.Update();
+            if(ActionResult::SUCCESS != verificationResult) {
+              return verificationResult;
+            }
           }
         }
       }
@@ -1302,6 +1324,7 @@ namespace Anki {
         _waitForImagesAction->PrepForCompletion();
       }
       Util::SafeDelete(_waitForImagesAction);
+
       _moveLiftToHeightAction.PrepForCompletion();
     }
     

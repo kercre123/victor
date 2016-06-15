@@ -85,6 +85,7 @@ private:
   bool _didKnockOverStack = false;
   
   const int numFramesToWaitForBeforeFlip = 5;
+  const f32 kTurnTowardsObjectAngleTol_rad = DEG_TO_RAD_F32(2.5f);
   
   ObjectID _thirdBlockID;
   

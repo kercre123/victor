@@ -247,25 +247,13 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
                                                      new PlayAnimationAction(robot, kFocusEyesForKnockOverAnim)));
   
   // Turn towards bottom block of stack
-  action->AddAction(new TurnTowardsObjectAction(robot,
-                                                bottomBlockID,
-                                                Radians(PI_F),
-                                                false, // verify when done?
-                                                false));
-  
-  // Move head for knock over
-  action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
-  
-  // Wait for a few frames for block pose to settle down and try turning towards the object again incase
-  // our first turn was slightly off
-  action->AddAction(new WaitForImagesAction(robot, numFramesToWaitForBeforeFlip, VisionMode::DetectingMarkers));
-  
-  // Turn towards bottom block of stack
-  action->AddAction(new TurnTowardsObjectAction(robot,
-                                                bottomBlockID,
-                                                Radians(PI_F),
-                                                false, // verify when done?
-                                                false));
+  TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(robot,
+                                                                                 bottomBlockID,
+                                                                                 Radians(PI_F),
+                                                                                 false, // verify when done?
+                                                                                 false);
+  turnTowardsObjectAction->SetRefinedTurnAngleTol(kTurnTowardsObjectAngleTol_rad);
+  action->AddAction(turnTowardsObjectAction);
   
   // Knock over
   FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
@@ -336,7 +324,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStackFailed(Robot& robot)
   
   ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
   // When retrying the FlipBlockAction we want to use the closest preAction pose and not drive anywhere
-  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, bottomBlockID, true);
+  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, bottomBlockID);
+  action->ShouldDriveToClosestPreActionPose(true);
   StartActing(action, [this, &robot](ActionResult res) {
     if(res == ActionResult::SUCCESS)
     {

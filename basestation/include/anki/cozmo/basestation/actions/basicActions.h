@@ -169,7 +169,6 @@ namespace Cozmo {
       // eyes will dart to look at the angle.
       PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                        bool isPanAbsolute, bool isTiltAbsolute);
-      
       virtual ~PanAndTiltAction();
       
       virtual const std::string& GetName() const override { return _name; }
@@ -491,17 +490,17 @@ namespace Cozmo {
       // set maxTurnAngle to zero.
       
       TurnTowardsObjectAction(Robot& robot,
-                       ObjectID objectID,
-                       Radians maxTurnAngle,
-                       bool visuallyVerifyWhenDone = false,
-                       bool headTrackWhenDone = false);
+                              ObjectID objectID,
+                              Radians maxTurnAngle,
+                              bool visuallyVerifyWhenDone = false,
+                              bool headTrackWhenDone = false);
       
       TurnTowardsObjectAction(Robot& robot,
-                       ObjectID objectID,
-                       Vision::Marker::Code whichCode,
-                       Radians maxTurnAngle,
-                       bool visuallyVerifyWhenDone = false,
-                       bool headTrackWhenDone = false);
+                              ObjectID objectID,
+                              Vision::Marker::Code whichCode,
+                              Radians maxTurnAngle,
+                              bool visuallyVerifyWhenDone = false,
+                              bool headTrackWhenDone = false);
       
       virtual ~TurnTowardsObjectAction();
       
@@ -510,19 +509,26 @@ namespace Cozmo {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
+      void ShouldDoRefinedTurn(const bool tf) { _doRefinedTurn = tf; }
+      void SetRefinedTurnAngleTol(const f32 tol) { _refinedTurnAngleTol_rad = tol; }
+      
     protected:
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
-      bool                       _facePoseCompoundActionDone;
+      bool                       _facePoseCompoundActionDone = false;
       
       VisuallyVerifyObjectAction _visuallyVerifyAction;
+      bool                       _refinedTurnTowardsDone = false;
       
       ObjectID                   _objectID;
       Vision::Marker::Code       _whichCode;
       bool                       _visuallyVerifyWhenDone;
       bool                       _headTrackWhenDone;
+      bool                       _doRefinedTurn = true;
+      f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD_F32(5);
+      const f32                  kRefinedTurnAccel_radPerSec2 = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
       
     }; // TurnTowardsObjectAction
     

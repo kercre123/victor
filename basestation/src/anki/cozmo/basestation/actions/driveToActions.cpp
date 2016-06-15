@@ -88,7 +88,12 @@ namespace Anki {
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
     {
-
+      SetGetPossiblePosesFunc([this](ActionableObject* object,
+                                     std::vector<Pose3d>& possiblePoses,
+                                     bool& alreadyInPosition)
+                              {
+                                return GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+                              });
     }
     
     DriveToObjectAction::DriveToObjectAction(Robot& robot,
@@ -105,7 +110,12 @@ namespace Anki {
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
     {
-
+      SetGetPossiblePosesFunc([this](ActionableObject* object,
+                                     std::vector<Pose3d>& possiblePoses,
+                                     bool& alreadyInPosition)
+                                     {
+                                       return GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+                                     });
     }
     
     DriveToObjectAction::~DriveToObjectAction()
