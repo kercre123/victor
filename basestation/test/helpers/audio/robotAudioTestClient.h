@@ -13,6 +13,7 @@
 #define __Test_Helpers_Audio_RobotAudioTestClient_H__
 
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "helpers/audio/robotAudioTestBuffer.h"
 
 
 namespace Anki {
@@ -25,10 +26,13 @@ class RobotAudioTestClient : public RobotAudioClient
 public:
 
   // Default Constructor
-  RobotAudioTestClient( Robot* robot );
+  RobotAudioTestClient( );
+
+  // The the audio buffer for the corresponding Game Object
+  RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject ) override;
 
 private:
-
+  RobotAudioTestBuffer _robotAudioTestBuffer;
 };
 
 } // Audio

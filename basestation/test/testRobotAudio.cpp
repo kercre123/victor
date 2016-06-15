@@ -69,11 +69,11 @@ TEST(RobotAudio, CreateRobotAudio)
     PRINT_NAMED_INFO("RobotAudio.CreateRobotAudio", "%s", name.c_str());
   }
   ASSERT_GE(names.size(), 1);
-  Robot robot(1, cozmoContext);
+  //Robot robot(1, cozmoContext);
   PRINT_NAMED_INFO("RobotAudio.CreateRobotAudio", "robot created");
   Animation* animation = container.GetAnimation("ANIMATION_TEST");
   animation->AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play,100));
-  RobotAudioTestClient audioClient(&robot);
+  RobotAudioTestClient audioClient;
   RobotAudioAnimationOnRobot raaor(animation, &audioClient);
   raaor.Update(0,33);
 }

@@ -17,11 +17,14 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
-RobotAudioTestClient::RobotAudioTestClient( Robot* robot )
-  : RobotAudioClient( robot )
+RobotAudioTestClient::RobotAudioTestClient()
+  : RobotAudioClient(nullptr)
 {
 }
 
+RobotAudioBuffer* RobotAudioTestClient::GetRobotAudiobuffer( GameObjectType gameObject ) {
+  return &_robotAudioTestBuffer;
+}
 
 } // Audio
 } // Cozmo
