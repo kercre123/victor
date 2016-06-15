@@ -148,6 +148,7 @@ int main(void)
   // Initialize the SoftDevice handler module.
   Bluetooth::init();
   Crypto::init();
+  Lights::init();
 
   // Setup all tasks
   Motors::init();
@@ -156,7 +157,6 @@ int main(void)
   Battery::init();
   Timer::init();
   Backpack::init();
-  Lights::init();
 
   // Startup the system
   Battery::powerOn();
