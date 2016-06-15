@@ -147,18 +147,26 @@ public class FactoryIntroManager : MonoBehaviour {
     _Background.color = Color.red;
     _InProgressSpinner.gameObject.SetActive(false);
     _RestartButton.gameObject.SetActive(true);
+    TearDownEngine();
   }
 
   private void TestPassed() {
     _Background.color = Color.green;
     _InProgressSpinner.gameObject.SetActive(false);
     _RestartButton.gameObject.SetActive(true);
+    TearDownEngine();
+  }
+
+  private void TearDownEngine() {
+    CozmoBinding.Shutdown();
+    RobotEngineManager.Instance.RobotConnected -= HandleConnected;
+    RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.OnFactoryResult -= FactoryResult;
   }
 
   private void RestartTestApp() {
     _RestartButton.gameObject.SetActive(false);
     _RestartOverlay.gameObject.SetActive(true);
-    CozmoBinding.Shutdown();
     UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
   }
 
