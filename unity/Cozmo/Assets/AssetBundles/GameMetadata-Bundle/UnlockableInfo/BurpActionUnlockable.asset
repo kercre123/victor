@@ -20,11 +20,15 @@ MonoBehaviour:
     _EnumValue: 5
   - _EnumValueAsString: SimonGame
     _EnumValue: 4
+  - _EnumValueAsString: FaceEnrollmentGame
+    _EnumValue: 7
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
-  DescriptionKey: Unlock Description
-  TitleKey: unlockable.Default.Description
+  DescriptionKey: unlockable.ComingSoon.Description
+  TitleKey: unlockable.ComingSoon.Title
+  UpgradeCostItemId: TestHexItem0
+  UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradeGreen

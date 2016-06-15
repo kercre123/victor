@@ -30,7 +30,26 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 
 @end
 
+bool unityLogHandler(LogType logType, const char* log, va_list list)
+{
+    // Will log to stderr including system.log as a warning
+    NSLogv([NSString stringWithUTF8String:log], list);
+    return true;
+}
+
 @implementation CozmoAppController
+
+- (id)init
+{
+  self = [super init];
+  if (nil != self) {
+    // [COZMO-2152] Always use NSLog for logging so everything in unity gets written to system.log
+    // as a warning
+    UnitySetLogEntryHandler(unityLogHandler);
+  }
+  return self;
+}
+
 
 // This adds the launch option to say we want the BackgroundFetch to actually happen sometimes (whenever the OS decrees)
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions

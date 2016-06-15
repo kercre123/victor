@@ -6,30 +6,30 @@ using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class QuickQuitMinigameButton : MinigameWidget {
+    public class BackButton : MinigameWidget {
 
       private const float kAnimXOffset = 0f;
       private const float kAnimYOffset = 200.0f;
       private const float kAnimDur = 0.25f;
 
-      public delegate void QuickQuitButtonHandler();
+      public delegate void BackButtonHandler();
 
-      public event QuickQuitButtonHandler QuitGameConfirmed;
+      public BackButtonHandler HandleBackTapped;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _QuickQuitButtonInstance;
+      private Cozmo.UI.CozmoButton _BackButtonInstance;
 
       public string DASEventViewController {
-        get { return _QuickQuitButtonInstance.DASEventViewController; } 
-        set { _QuickQuitButtonInstance.DASEventViewController = value; }
+        get { return _BackButtonInstance.DASEventViewController; }
+        set { _BackButtonInstance.DASEventViewController = value; }
       }
 
       private void Awake() {
-        _QuickQuitButtonInstance.Initialize(HandleQuitButtonTap, "quit_game_during_setup_button", "TBD");
+        _BackButtonInstance.Initialize(HandleBackTap, "back_button", _BackButtonInstance.DASEventViewController);
       }
 
       public override void DestroyWidgetImmediately() {
-        _QuickQuitButtonInstance.onClick.RemoveAllListeners();
+        _BackButtonInstance.onClick.RemoveAllListeners();
         Destroy(gameObject);
       }
 
@@ -41,9 +41,9 @@ namespace Cozmo {
         return CreateCloseAnimSequence(kAnimXOffset, kAnimYOffset, kAnimDur);
       }
 
-      private void HandleQuitButtonTap() {
-        if (QuitGameConfirmed != null) {
-          QuitGameConfirmed();
+      private void HandleBackTap() {
+        if (HandleBackTapped != null) {
+          HandleBackTapped();
         }
       }
     }

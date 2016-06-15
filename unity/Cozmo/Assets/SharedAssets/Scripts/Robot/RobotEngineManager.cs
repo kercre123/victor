@@ -91,6 +91,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<int> OnDemoState;
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
+  public event Action<int, string> OnRobotLoadedKnownFace;
 
   #region Audio Callback events
 
@@ -448,6 +449,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotOnBackFinished:
       ReceivedSpecificMessage(message.RobotOnBackFinished);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotLoadedKnownFace:
+      ReceiveSpecificMessage(message.RobotLoadedKnownFace);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
@@ -893,6 +897,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.NVStorageOpResult message) {
     if (OnGotNVStorageOpResult != null) {
       OnGotNVStorageOpResult(message);
+    }
+  }
+
+  private void ReceiveSpecificMessage(Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace message) {
+    if (OnRobotLoadedKnownFace != null) {
+      OnRobotLoadedKnownFace(message.faceID, message.name);
     }
   }
 

@@ -64,9 +64,8 @@ namespace Cozmo {
       private QuitMinigameButton _QuitButtonInstance;
 
       [SerializeField]
-      private QuickQuitMinigameButton _QuickQuitGameButtonPrefab;
-
-      private QuickQuitMinigameButton _QuickQuitButtonInstance;
+      private BackButton _BackButtonPrefab;
+      private BackButton _BackButtonInstance;
 
       [SerializeField]
       private ChallengeTitleWidget _TitleWidgetPrefab;
@@ -326,8 +325,8 @@ namespace Cozmo {
           _QuitButtonInstance.DASEventViewController = currentViewName;
         }
 
-        if (_QuickQuitButtonInstance != null) {
-          _QuickQuitButtonInstance.DASEventViewController = currentViewName;
+        if (_BackButtonInstance != null) {
+          _BackButtonInstance.DASEventViewController = currentViewName;
         }
 
         if (_HowToPlayButtonInstance != null) {
@@ -487,20 +486,27 @@ namespace Cozmo {
       #region Quit Button
 
       public void ShowQuitButton() {
+        HideBackButton();
         CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab, ContentLayer.Middle);
         _QuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
       }
 
-      public void ShowBackButton() {
-        CreateWidgetIfNull<QuickQuitMinigameButton>(ref _QuickQuitButtonInstance, _QuickQuitGameButtonPrefab, ContentLayer.Middle);
-        _QuickQuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
-        _QuickQuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
+      public void ShowBackButton(BackButton.BackButtonHandler backTapped) {
+        HideQuitButton();
+        CreateWidgetIfNull<BackButton>(ref _BackButtonInstance, _BackButtonPrefab, ContentLayer.Middle);
+        _BackButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
+        _BackButtonInstance.HandleBackTapped = new BackButton.BackButtonHandler(backTapped);
       }
 
       public void HideBackButton() {
-        HideWidget(_QuickQuitButtonInstance);
-        _QuickQuitButtonInstance = null;
+        HideWidget(_BackButtonInstance);
+        _BackButtonInstance = null;
+      }
+
+      public void HideQuitButton() {
+        HideWidget(_QuitButtonInstance);
+        _QuitButtonInstance = null;
       }
 
       private void HandleQuitConfirmed() {
@@ -623,10 +629,10 @@ namespace Cozmo {
         return cubeSlide;
       }
 
-      public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback) {
+      public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback, string headerLocKey = null) {
         GameObject slide = ShowWideGameStateSlide(_AnimationSlidePrefab.gameObject, slideDasName, endInTweenCallback);
         AnimationSlide animationSlide = slide.GetComponent<AnimationSlide>();
-        animationSlide.Initialize(animationPrefab, descLocKey);
+        animationSlide.Initialize(animationPrefab, descLocKey, headerLocKey);
       }
 
       public void ShowWideSlideWithText(string descLocKey, TweenCallback endInTweenCallback) {

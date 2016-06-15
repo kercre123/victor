@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22416398}
   - 114: {fileID: 11415844}
   m_Layer: 5
-  m_Name: BackButton
+  m_Name: CloseButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -49,10 +49,7 @@ MonoBehaviour:
   - ObjectPath: ../
     FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance
     ReferencePath: 
-  ModifiedGlobalReferences:
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Sprite
-    Reference: {fileID: 21300000, guid: 0be4cbea6ee7946a4a7f42eff5bcab10, type: 3}
+  ModifiedGlobalReferences: []
 --- !u!114 &11462868
 MonoBehaviour:
   m_ObjectHideFlags: 1

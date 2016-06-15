@@ -32,6 +32,10 @@ namespace Cozmo {
       get { return _ItemIcon; }
     }
 
+    public string GetAmountName(int amount) {
+      return (amount == 1) ? GetSingularName() : GetPluralName();
+    }
+
     public string GetSingularName() {
       return Localization.Get(LocKey + ".singular");
     }
@@ -63,6 +67,12 @@ namespace Cozmo {
     [SerializeField]
     private ItemData[] _ItemMap;
 
+    [SerializeField]
+    private ItemData _GenericHexItemData;
+
+    [SerializeField]
+    private ItemData _GenericCubeItemData;
+
     private Dictionary<string, ItemData> _IdToData;
 
     private void PopulateDictionary() {
@@ -79,10 +89,21 @@ namespace Cozmo {
 
     public static ItemData GetData(string itemId) {
       ItemData data = null;
-      if (!_sInstance._IdToData.TryGetValue(itemId, out data)) {
+      if (HexItemList.IsPuzzlePiece(itemId)) {
+        data = GetHexData();
+      }
+      else if (!_sInstance._IdToData.TryGetValue(itemId, out data)) {
         DAS.Error("ItemDataConfig.GetData", "Could not find item='" + itemId + "' in dictionary!");
       }
       return data;
+    }
+
+    public static ItemData GetHexData() {
+      return _sInstance._GenericHexItemData;
+    }
+
+    public static ItemData GetCubeData() {
+      return _sInstance._GenericCubeItemData;
     }
 
     public static List<string> GetAllItemIds() {

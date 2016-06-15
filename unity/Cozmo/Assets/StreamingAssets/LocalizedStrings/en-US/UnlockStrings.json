@@ -18,11 +18,41 @@
       "/{*}"
     ]
   },
+  "unlockable.CubePounce.Title": {
+    "translation": "Takeaway"
+  },
+  "unlockable.CubePounce.Description": {
+    "translation": "Takeaway description here."
+  },
+  "unlockable.FaceEnrollment.Title": {
+    "translation": "Meet Cozmo"
+  },
+  "unlockable.FaceEnrollment.Description": {
+    "translation": "Meet Cozmo description here."
+  },
+  "unlockable.Simon.Title": {
+    "translation": "Simon"
+  },
+  "unlockable.Simon.Description": {
+    "translation": "Simon description here."
+  },
+  "unlockable.SpeedTap.Title": {
+    "translation": "Speed Tap"
+  },
+  "unlockable.SpeedTap.Description": {
+    "translation": "Speed Tap description here."
+  },
   "unlockable.CubeRollAction.Title": {
     "translation": "Cube Roll"
   },
   "unlockable.CubeRollAction.Description": {
     "translation": "Get Cozmo to Roll a Cube"
+  },
+  "unlockable.ComingSoon.Title": {
+    "translation": "Coming Soon"
+  },
+  "unlockable.ComingSoon.Description": {
+    "translation": "More Content Coming Soon"
   },
   "unlockable.Default.Title": {
     "translation": "Unlockable Default Title"

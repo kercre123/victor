@@ -97,6 +97,9 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentInstructions = "faceEnrollment.instructions";
   public const string kFaceEnrollmentEnterNameButtonText = "faceEnrollment.enterName.buttonText";
   public const string kFaceEnrollmentEnterNamePlaceholderText = "faceEnrollment.enterName.placeholderText";
+  public const string kFaceEnrollmentFaceEnrollmentListDescription = "faceEnrollment.faceEnrollmentList.description";
+  public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle = "faceEnrollment.faceEnrollmentList.deleteConfirmTitle";
+  public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton = "faceEnrollment.faceEnrollmentList.deleteConfirmButton";
 
   #endregion
 
@@ -106,6 +109,10 @@ public static class LocalizationKeys {
   public const string kItemExperiencePlural = "item.experience.plural";
   public const string kItemTreatSingular = "item.treat.singular";
   public const string kItemTreatPlural = "item.treat.plural";
+  public const string kItemGenericHexSingular = "item.genericHex.singular";
+  public const string kItemGenericHexPlural = "item.genericHex.plural";
+  public const string kItemCubeSingular = "item.cube.singular";
+  public const string kItemCubePlural = "item.cube.plural";
 
   #endregion
 
@@ -179,6 +186,7 @@ public static class LocalizationKeys {
   public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
   public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
   public const string kMinigameTextHowToPlay = "minigame.text.howToPlay";
+  public const string kMinigameTextHowToPlayHeader = "minigame.text.howToPlayHeader";
   public const string kMinigameDifficultyEasy = "minigame.difficulty.easy";
   public const string kMinigameDifficultyMedium = "minigame.difficulty.medium";
   public const string kMinigameDifficultyHard = "minigame.difficulty.hard";
@@ -238,6 +246,7 @@ public static class LocalizationKeys {
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kLabelXCount = "label.xCount";
+  public const string kLabelSimpleCount = "label.simpleCount";
   public const string kLabelColonCount = "label.colonCount";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kEndSessionTitle = "endSession.title";
@@ -253,8 +262,10 @@ public static class LocalizationKeys {
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";
-  public const string kRequestSparkViewSparkunlockbutton = "requestSparkView.sparkunlockbutton";
-  public const string kRequestSparkViewTreatCount = "requestSparkView.TreatCount";
+  public const string kCoreUpgradeDetailsDialogTitleLabel = "coreUpgradeDetailsDialog.titleLabel";
+  public const string kCoreUpgradeDetailsDialogCubesNeeded = "coreUpgradeDetailsDialog.cubesNeeded";
+  public const string kCoreUpgradeDetailsDialogPrompt = "coreUpgradeDetailsDialog.prompt";
+  public const string kCoreUpgradeDetailsDialogTotalInventory = "coreUpgradeDetailsDialog.totalInventory";
   public const string kLootStart = "loot.Start";
   public const string kLootMid = "loot.Mid";
   public const string kLootAlmost = "loot.Almost";
@@ -273,8 +284,18 @@ public static class LocalizationKeys {
 
   #region UnlockStrings
 
+  public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
+  public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";
+  public const string kUnlockableFaceEnrollmentTitle = "unlockable.FaceEnrollment.Title";
+  public const string kUnlockableFaceEnrollmentDescription = "unlockable.FaceEnrollment.Description";
+  public const string kUnlockableSimonTitle = "unlockable.Simon.Title";
+  public const string kUnlockableSimonDescription = "unlockable.Simon.Description";
+  public const string kUnlockableSpeedTapTitle = "unlockable.SpeedTap.Title";
+  public const string kUnlockableSpeedTapDescription = "unlockable.SpeedTap.Description";
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
+  public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
+  public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";
   public const string kUnlockableDefaultDescription = "unlockable.Default.Description";
   public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";

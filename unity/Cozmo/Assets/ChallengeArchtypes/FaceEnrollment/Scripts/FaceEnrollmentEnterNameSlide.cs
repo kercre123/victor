@@ -20,6 +20,12 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
     _SubmitName.Interactable = false;
   }
 
+  public void SetNameInputField(string existing) {
+    _NameInputField.text = existing;
+    _SubmitName.Interactable = true;
+    _NameInputPlaceholder.enabled = false;
+  }
+
   public void RegisterInputFocus() {
     _NameInputField.ActivateInputField();
     _NameInputField.onValueChanged.AddListener(HandleInputFieldChange);
@@ -31,8 +37,8 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
       _NameInputPlaceholder.enabled = true;
     }
     else {
-      _NameInputPlaceholder.enabled = false;
       _SubmitName.Interactable = true;
+      _NameInputPlaceholder.enabled = false;
     }
   }
 

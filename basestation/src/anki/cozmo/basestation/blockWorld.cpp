@@ -1379,10 +1379,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
             // - with unknown pose state
             // - that are currently being carried
             // - whose pose origin does not match the robot's
+            // - who are a charger (since those stay around)
             if(object->GetPoseState() != ObservableObject::PoseState::Unknown &&
                object->GetLastObservedTime() < atTimestamp &&
                _robot->GetCarryingObject() != object->GetID() &&
-               &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
+               &object->GetPose().FindOrigin() == _robot->GetWorldOrigin() &&
+               object->GetFamily() != ObjectFamily::Charger)
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
                 // If this object has only been seen once and that was too long ago,
@@ -2366,9 +2368,14 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   
     ObjectID BlockWorld::AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
     {
-      if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS || activeID < 0) {
+      if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
         PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
         return ObjectID();
+      }
+      
+      if (activeID < 0)
+      {
+        PRINT_NAMED_INFO("BlockWorld.AddActiveObject","Adding object with negative ActiveID %d FactoryID %d", activeID, factoryID);
       }
       
       // Is there an active object with the same activeID that already exists?
@@ -2382,6 +2389,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           ObservableObject* sameTypeObject = objIt.second;
           if (sameTypeObject->GetActiveID() < 0) {
             sameTypeObject->SetActiveID(activeID);
+            sameTypeObject->SetFactoryID(factoryID);
             PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingObjectWithNoActiveID",
                              "objectID %d, activeID %d, type %s",
                              sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
@@ -2413,7 +2421,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           return matchingObject->GetID();
         } else if (matchingObject->GetFactoryID() == 0) {
           // Existing object was only previously observed, never connected, so its factoryID is 0
-          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
+          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
                            "objectID %d, activeID %d, type %s, factoryID 0x%x",
                            matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
           return matchingObject->GetID();

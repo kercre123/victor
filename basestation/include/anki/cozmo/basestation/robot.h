@@ -1074,6 +1074,9 @@ public:
     // =========  Active Object messages  ============
     Result SendFlashObjectIDs();
     void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
+  
+    // Adds an unconnected charger object
+    ObjectID AddUnconnectedCharger();
     
     
 }; // class Robot

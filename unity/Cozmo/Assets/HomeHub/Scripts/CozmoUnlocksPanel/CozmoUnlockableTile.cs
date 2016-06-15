@@ -30,6 +30,9 @@ public class CozmoUnlockableTile : MonoBehaviour {
   public Image _EndCircuitrySprite;
 
   [SerializeField]
+  public Image _ActionIndicator;
+
+  [SerializeField]
   public CozmoButton _TileButton;
 
   private UnlockableInfo _UnlockData;
@@ -47,7 +50,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
       _TileButton.Text = Localization.Get(unlockableData.TitleKey);
     }
     else {
-      _TileButton.Text = null;
+      _TileButton.Text = "";
     }
 
     _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked);
@@ -59,9 +62,10 @@ public class CozmoUnlockableTile : MonoBehaviour {
     _EndCircuitrySprite.gameObject.SetActive(!isEndTile);
     _EndCircuitrySprite.overrideSprite = endSprite;
 
-    // TODO set tint of the icon
     _UnlockedIconSprite.sprite = unlockableData.CoreUpgradeIcon;
     _UnlockedTintBackground.color = UIColorPalette.GetUpgradeTintData(unlockableData.CoreUpgradeTintColorName).TintColor;
+
+    _ActionIndicator.gameObject.SetActive(unlockableData.UnlockableType == UnlockableType.Action);
   }
 
   private void HandleButtonTapped() {

@@ -84,6 +84,7 @@ namespace Anki {
         enum class State {
           Init,
           Inactive,
+          Roll,
           PickupLow,
           PlaceLow,
           Reset,
@@ -106,6 +107,7 @@ namespace Anki {
         ObjectID _blockObjectIDPickup;
       
         Vision::Marker _initialVisionMarker;
+        Vision::Marker _markerBeingSeen;
       
         // Where the cube should be put down
         Pose3d _cubePlacementPose;

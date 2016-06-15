@@ -812,12 +812,12 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   public static IPAddress GetLocalIPv4() {
     #if UNITY_EDITOR || !UNITY_ANDROID
     NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
-    Array.Sort(interfaces, CompareInterfaces);
-
     foreach (NetworkInterface item in interfaces) {
-      foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses) {
-        if (ip.Address.AddressFamily == AddressFamily.InterNetwork) {
-          return (IPAddress)ip.Address;
+      if (item.Name == "en0") {
+        foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses) {
+          if (ip.Address.AddressFamily == AddressFamily.InterNetwork) {
+            return (IPAddress)ip.Address;
+          }
         }
       }
     }

@@ -19,9 +19,12 @@ MonoBehaviour:
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 1
-  DescriptionKey: unlockable.Default.Title
-  TitleKey: unlockable.Default.Title
+  DescriptionKey: unlockable.SpeedTap.Description
+  TitleKey: unlockable.SpeedTap.Title
+  UpgradeCostItemId: TestHexItem0
+  UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49, type: 3}
+  CubesRequired: 2

@@ -25,7 +25,7 @@ public class SelectDifficultyState : State {
       "selected_difficulty_continue_button");
     _Game.SharedMinigameView.ShelfWidget.GrowShelfBackground();
 
-    _DifficultySelectButtonPanel = _Game.SharedMinigameView.ShowDifficultySelectButtons(_DifficultyOptions, 
+    _DifficultySelectButtonPanel = _Game.SharedMinigameView.ShowDifficultySelectButtons(_DifficultyOptions,
       _HighestLevelCompleted, HandleInitialDifficultySelected);
   }
 
@@ -43,7 +43,7 @@ public class SelectDifficultyState : State {
 
   private void HandleInitialDifficultySelected() {
     _DifficultySelectButtonPanel.OnDifficultySelected += HandleDifficultySelected;
-    HandleDifficultySelected(_DifficultySelectButtonPanel.GetCurrentlySelectedXWorldPosition(), true, 
+    HandleDifficultySelected(_DifficultySelectButtonPanel.GetCurrentlySelectedXWorldPosition(), true,
       _DifficultySelectButtonPanel.SelectedDifficulty);
   }
 
@@ -53,7 +53,7 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.EnableContinueButton(isUnlocked);
     if (isUnlocked) {
       _Game.SharedMinigameView.ShowWideAnimationSlide(data.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
-        data.AnimationPrefab, null);
+                                                      data.AnimationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
       _Game.SharedMinigameView.HideLockedBackground();
     }
     else {

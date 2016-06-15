@@ -169,6 +169,8 @@ public class Robot : IRobot {
 
   public List<Face> Faces { get; private set; }
 
+  public Dictionary<int, string> EnrolledFaces { get; set; }
+
   public int FriendshipPoints { get; private set; }
 
   public int FriendshipLevel { get; private set; }
@@ -307,6 +309,7 @@ public class Robot : IRobot {
     ID = robotID;
     LightCubes = new Dictionary<int, LightCube>();
     Faces = new List<global::Face>();
+    EnrolledFaces = new Dictionary<int, string>();
 
     // Defaults in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -329,6 +332,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.OnObjectConnectionState += HandleObjectConnectionState;
 
     ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
+    RobotEngineManager.Instance.OnRobotLoadedKnownFace += HandleRobotLoadedKnownFace;
   }
 
   public void Dispose() {
@@ -376,6 +380,10 @@ public class Robot : IRobot {
 
   private void Reset(DisconnectionReason reason = DisconnectionReason.None) {
     ClearData();
+  }
+
+  private void HandleRobotLoadedKnownFace(int faceID, string name) {
+    EnrolledFaces.Add(faceID, name);
   }
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
@@ -1575,6 +1583,15 @@ public class Robot : IRobot {
 
   public void EraseAllEnrolledFaces() {
     RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EraseEnrolledFaceByID(int faceID) {
+    RobotEngineManager.Instance.Message.EraseEnrolledFaceByID = Singleton<EraseEnrolledFaceByID>.Instance.Initialize(faceID);
+  }
+
+  public void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName) {
+    RobotEngineManager.Instance.Message.UpdateEnrolledFaceByID = Singleton<UpdateEnrolledFaceByID>.Instance.Initialize(faceID, oldFaceName, newFaceName);
     RobotEngineManager.Instance.SendMessage();
   }
 

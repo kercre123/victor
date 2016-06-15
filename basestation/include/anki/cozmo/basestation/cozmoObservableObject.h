@@ -74,6 +74,7 @@ namespace Cozmo {
     void         SetActiveID(ActiveID activeID)         { assert(IsActive()); _activeID = activeID; }
     ActiveID     GetActiveID()                  const   { return _activeID; }
     virtual bool IsActive()                     const   { return false; }
+    void         SetFactoryID(FactoryID factoryID)      { assert(IsActive()); _factoryID = factoryID; }
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
 
     
