@@ -96,7 +96,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
-  
 
 CozmoEngine::~CozmoEngine()
 {
@@ -203,8 +202,7 @@ void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::Messag
     SetEngineState(EngineState::UpdatingFirmware);
   }
 }
-    
-    
+
 bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
 {
   if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
@@ -219,7 +217,7 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
   return RESULT_OK;
 }
-    
+
 void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
     
@@ -230,7 +228,7 @@ void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::Message
     }
     
 }
-    
+
 Result CozmoEngine::Update(const float currTime_sec)
 {
   if(!_isInitialized) {
