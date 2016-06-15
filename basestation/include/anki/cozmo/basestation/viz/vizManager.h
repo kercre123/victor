@@ -396,9 +396,8 @@ namespace Anki {
       void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
       void SendStartRobotUpdate();
       void SendEndRobotUpdate();
-      void SendSaveImages(ImageSendMode mode, std::string path = "");
-      void SendSaveState(bool enabled, std::string path = "");
-      
+      void SendSaveImages(bool saveImages, std::string path = "");
+
     protected:
       
       void SendMessage(const VizInterface::MessageViz& message);

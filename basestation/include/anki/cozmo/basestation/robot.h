@@ -38,13 +38,13 @@
 #include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
@@ -101,7 +101,7 @@ class MoodManager;
 class PathDolerOuter;
 class ProgressionUnlockComponent;
 class VisionComponent;
-class BlockFilter;
+class   BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -114,6 +114,12 @@ class LightsComponent;
 namespace Audio {
   class RobotAudioClient;
 }
+
+typedef enum {
+  SAVE_OFF = 0,
+  SAVE_ONE_SHOT,
+  SAVE_CONTINUOUS
+} SaveMode_t;
     
 namespace RobotInterface {
   class MessageHandler;
@@ -220,6 +226,18 @@ public:
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
+    Result ProcessImage(const Vision::ImageRGB& image);
+    
+    // Get a *copy* of the current image on this robot's vision processing thread
+    // TODO: Remove this method? I don't think anyone is using it...
+    bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
+    
+    // Returns the average period of incoming robot images
+    u32 GetAverageImagePeriodMS() const;
+  
+    // Returns the average period of image processing
+    u32 GetAverageImageProcPeriodMS() const;
+
     // Set the calibrated rotation of the camera
     void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
   
@@ -450,6 +468,13 @@ public:
     void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
     u16 GetForwardSensorValue() const { return _forwardSensorValue_mm; }
 
+  
+    // Set how to save incoming robot state messages
+    void SetSaveStateMode(const SaveMode_t mode);
+    
+    // Set how to save incoming robot images to file
+    void SetSaveImageMode(const SaveMode_t mode);
+    
     // Return the timestamp of the last _processed_ image
     TimeStamp_t GetLastImageTimeStamp() const;
   
@@ -659,6 +684,8 @@ public:
     RobotInterface::MessageHandler* GetRobotMessageHandler();
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+  
+    void SetImageSaveMode(SaveMode_t m) { _imageSaveMode = m;}
   
     void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
     const u32 GetLastSentImageID() const { return _lastSentImageID; }
@@ -882,9 +909,16 @@ public:
     // vision marker that triggers them
     std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
     
-    EncodedImage _encodedImage;
-    u32          _repeatedImageCount = 0;
-    double       _lastImageRecvTime  = -1.0;
+    // Save mode for robot state
+    SaveMode_t _stateSaveMode = SAVE_OFF;
+    
+    // Save mode for robot images
+    SaveMode_t _imageSaveMode = SAVE_OFF;
+    
+    // Maintains an average period of incoming robot images and processing speed
+    u32         _imgFramePeriod        = 0;
+    u32         _imgProcPeriod         = 0;
+    TimeStamp_t _lastImgTimeStamp      = 0;
   
     ///////// Modifiers ////////
   
@@ -956,6 +990,7 @@ public:
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
     std::vector<Signal::SmartHandle> _signalHandles;
+    ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
     std::ofstream _imuLogFileStream;
     TracePrinter _traceHandler;

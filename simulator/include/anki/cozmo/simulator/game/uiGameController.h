@@ -118,8 +118,7 @@ protected:
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode, u8 robotID);
   void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
-  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "");
-  void SendSaveState(bool enabled, const std::string& path = "");
+  void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,
                              PathMotionProfile motionProf,
