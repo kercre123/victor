@@ -279,27 +279,33 @@ namespace Cozmo {
     
   };
   
+  
+  void BehaviorFactoryTest::SendTestResultToGame(Robot& robot, FactoryTestResultCode resCode)
+  {
+    // Generate result struct
+    ExternalInterface::FactoryTestResult testResMsg;
+    FactoryTestResultEntry &testRes = testResMsg.resultEntry;
+    testRes.result = resCode;
+    testRes.engineSHA1 = 0;   // TODO
+    testRes.utcTime = time(0);
+    testRes.stationID = _stationID;
+    std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
+
+    PrintAndLightResult(robot,resCode);
+    robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
+
+  }
+  
+  
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       _testResult = resCode;
       
-      // Get system time
-      time_t nowTime = time(0);
-      
-      // Generate result struct
-      ExternalInterface::FactoryTestResult testResMsg;
-      FactoryTestResultEntry &testRes = testResMsg.resultEntry;
-      testRes.result = resCode;
-      testRes.engineSHA1 = 0;   // TODO
-      testRes.utcTime = nowTime;
-      testRes.stationID = _stationID;
-      
       // Mark end time
+      FactoryTestResultEntry testRes;
       _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
-
 
       
       if (kBFT_EnableNVStorageWrites) {
@@ -308,46 +314,51 @@ namespace Cozmo {
         
         // Store test result to robot flash
         robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
-                                            [this,&robot,&testResMsg](NVStorage::NVResult res){
+                                            [this,&robot](NVStorage::NVResult res){
                                               if (res != NVStorage::NVResult::NV_OKAY) {
                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
                                                                     "WriteResult: %s (Original test result: %s)",
-                                                                    EnumToString(res), EnumToString(testResMsg.resultEntry.result));
+                                                                    EnumToString(res), EnumToString(_testResult));
                                                 _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
                                               }
-                                              PrintAndLightResult(robot,_testResult);
-                                              testResMsg.resultEntry.result = _testResult;
-                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
+                                              
+                                              
+                                              
+                                              // If test passed, write birth certificate
+                                              if (_testResult == FactoryTestResultCode::SUCCESS) {
+                                                time_t nowTime = time(0);
+                                                struct tm* tmStruct = gmtime(&nowTime);
+                                                
+                                                BirthCertificate bc;
+                                                bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
+                                                bc.month  = static_cast<u8>(tmStruct->tm_mon);
+                                                bc.day    = static_cast<u8>(tmStruct->tm_mday);
+                                                bc.hour   = static_cast<u8>(tmStruct->tm_hour);
+                                                bc.minute = static_cast<u8>(tmStruct->tm_min);
+                                                bc.second = static_cast<u8>(tmStruct->tm_sec);
+                                                
+                                                u8 bcBuf[bc.Size()];
+                                                size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
+                                                
+                                                robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
+                                                                                    [this,&robot](NVStorage::NVResult res) {
+                                                                                      if (res != NVStorage::NVResult::NV_OKAY) {
+                                                                                        PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
+                                                                                        _testResult = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
+                                                                                      } else {
+                                                                                        PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
+                                                                                      }
+                                                                                      SendTestResultToGame(robot, _testResult);
+                                                                                    });
+                                              } else {
+                                                SendTestResultToGame(robot, _testResult);
+                                              }
+                                              
                                             });
-        
-        // If test passed, write birth certificate
-        if (resCode == FactoryTestResultCode::SUCCESS) {
-          struct tm* tmStruct = gmtime(&nowTime);
-          
-          BirthCertificate bc;
-          bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
-          bc.month  = static_cast<u8>(tmStruct->tm_mon);
-          bc.day    = static_cast<u8>(tmStruct->tm_mday);
-          bc.hour   = static_cast<u8>(tmStruct->tm_hour);
-          bc.minute = static_cast<u8>(tmStruct->tm_min);
-          bc.second = static_cast<u8>(tmStruct->tm_sec);
-          
-          u8 bcBuf[bc.Size()];
-          size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
-          
-          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
-                                              [](NVStorage::NVResult res) {
-                                                if (res != NVStorage::NVResult::NV_OKAY) {
-                                                  PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
-                                                } else {
-                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
-                                                }
-                                              });
-        }
+
         
       } else {
-        PrintAndLightResult(robot,_testResult);
-        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
+        SendTestResultToGame(robot, _testResult);
       }
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",

@@ -73,6 +73,7 @@ enum uint_8 FactoryTestResultCode {
   ROBOT_FAILED_PREPLAYPEN_TESTS,
   ROBOT_NOT_TESTED,
   MOTORS_UNCALIBRATED,
+  BIRTH_CERTIFICATE_WRITE_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===

@@ -93,6 +93,7 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
+    void SendTestResultToGame(Robot& robot, FactoryTestResultCode resCode);
     
     std::vector<Signal::SmartHandle> _signalHandles;
     
