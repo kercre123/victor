@@ -89,6 +89,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalDescriptionUnlockMeetCozmo = "dailyGoal.description.UnlockMeetCozmo";
   public const string kDailyGoalTitleMeetNewFace = "dailyGoal.title.MeetNewFace";
   public const string kDailyGoalDescriptionMeetNewFace = "dailyGoal.description.MeetNewFace";
+  public const string kDailyGoalDescriptionMeetTwoNewFaces = "dailyGoal.description.MeetTwoNewFaces";
 
   #endregion
 
@@ -294,6 +295,8 @@ public static class LocalizationKeys {
   public const string kUnlockableSpeedTapDescription = "unlockable.SpeedTap.Description";
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
+  public const string kUnlockableDroneModeTitle = "unlockable.DroneMode.Title";
+  public const string kUnlockableDroneModeDescription = "unlockable.DroneMode.Description";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";

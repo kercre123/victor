@@ -78,39 +78,57 @@
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
   },
-  "simonGame.label.watchPattern": {
-    "translation": "Watch the pattern."
+  "simonGame.howToPlay": {
+    "translation": "Listen and watch the pattern for each round.  When it’s your turn, tap the Cubes in order to repeat the pattern.  One mistake, and it’s game over!"
   },
-  "simonGame.label.watchCozmoGuess": {
-    "translation": "Watch Cozmo copy your pattern."
+  "simonGame.difficulty.hardDescription.locked": {
+    "translation": "Unlock by winning Simon Easy."
   },
-  "simonGame.label.makeYourGuess": {
-    "translation": "Tap the cubes to copy the pattern."
+  "simonGame.label.yourTurnListen": {
+    "translation": "Your turn to listen to the pattern..."
   },
-  "simonGame.label.yourTurn": {
-    "translation": "Your Turn!"
+  "simonGame.label.yourTurnRepeat": {
+    "translation": "Your turn to repeat to the pattern!"
   },
-  "simonGame.label.cozmoTurn": {
-    "translation": "Cozmo's Turn!"
+  "simonGame.label.correct": {
+    "translation": "You are CORRECT!"
   },
-  "simonGame.header.watchPattern": {
-    "translation": "Watch the Pattern"
+  "simonGame.label.youWin": {
+    "translation": "YOU WIN!"
   },
-  "simonGame.header.watchCozmoGuess": {
-    "translation": "Watch Cozmo Guess"
+  "simonGame.label.cozmoWin": {
+    "translation": "COZMO WINS!"
   },
-  "simonGame.header.makeYourGuess": {
-    "translation": "Copy Cozmo's Pattern"
+  "simonGame.label.cozmoTurnListen": {
+    "translation": "Cozmo's turn to listen to the pattern..."
+  },
+  "simonGame.label.cozmoTurnRepeat": {
+    "translation": "Cozmo's turn to repeat to the pattern!"
   },
   "simonGame.label.stepsLeft": {
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "simonGame.text.patternLength": {
-    "translation": "Pattern Length: {0}"
+    "translation": "Round: {0}"
   },
   "simonGame.text.howToPlay": {
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
+
+
+  "simonGame.label.placeCenter": {
+    "translation": "Put 1 cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
+  },
+  "simonGame.label.waitingForCubes.placeCenter": {
+    "translation": "Waiting to see center cube..."
+  },
+  "simonGame.label.tooCloseError": {
+    "translation": "Move cubes further apart."
+  },
+  "simonGame.label.waitingForCubes.scanning": {
+    "translation": "Cozmo is checking the cubes..."
+  },
+
   "speedTap.roundsText": {
     "translation": "Round {0:N0}"
   },
@@ -207,6 +225,9 @@
   "minigame.text.howToPlay": {
     "translation": "How To Play"
   },
+  "minigame.text.howToPlayHeader": {
+    "translation": "How To Play:"
+  },
   "minigame.difficulty.easy": {
     "translation": "Easy"
   },
@@ -219,17 +240,17 @@
   "minigame.difficulty.expert": {
     "translation": "Expert"
   },
-  "speedTap.difficulty.easyDescription": {
-    "translation": "Be the first to slap your cube when the colors match\n- but never slap on red!"
+ "speedTap.difficulty.easyDescription": {
+   "translation": "Be the first to slap your cube when the colors match\n- but never slap on red!"
   },
   "speedTap.difficulty.mediumDescription": {
-    "translation": "Same rules as Easy mode, but now with light patterns! Cubes may have up to 2 colors."
+   "translation": "Same rules as Easy mode, but now with light patterns! Cubes may have up to 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
-    "translation": "More complexity!\nCubes may have 1-3 colors."
+   "translation": "More complexity!\nCubes may have 1-3 colors."
   },
   "speedTap.difficulty.expertDescription": {
-    "translation": "Experts only:\nCubes may have 1-4 colors."
+   "translation": "Experts only:\nCubes may have 1-4 colors."
   },
   "button.retry": {
     "translation": "Try Again"
