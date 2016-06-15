@@ -17,9 +17,6 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Image _RestartOverlay;
 
   [SerializeField]
-  private UnityEngine.UI.Button _LogsButton;
-
-  [SerializeField]
   private UnityEngine.UI.Button _OptionsButton;
 
   [SerializeField]
@@ -30,10 +27,6 @@ public class FactoryIntroManager : MonoBehaviour {
 
   [SerializeField]
   private UnityEngine.UI.Text _PingStatusText;
-
-  [SerializeField]
-  private FactoryLogPanel _FactoryLogPanelPrefab;
-  private FactoryLogPanel _FactoryLogPanelInstance;
 
   [SerializeField]
   private FactoryOptionsPanel _FactoryOptionsPanelPrefab;
@@ -47,25 +40,18 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Text _StatusText;
 
   [SerializeField]
-  private UnityEngine.UI.Text _StationNumberText;
-
-  [SerializeField]
   private Canvas _Canvas;
 
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
-  private string _LogFilter = "";
-  private int _StationNumber = 0;
-  private int _TestNumber = 0;
   private bool _IsSim = false;
-
-  private List<string> _LogList = new List<string>();
 
   void Start() {
     _RestartOverlay.gameObject.SetActive(false);
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
-    _LogFilter = PlayerPrefs.GetString("LogFilter");
+    ConsoleLogManager.Instance.LogFilter = PlayerPrefs.GetString("LogFilter");
+
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
@@ -73,22 +59,12 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(false);
 
     _RestartButton.onClick.AddListener(() => RestartTestApp());
-    _LogsButton.onClick.AddListener(HandleLogButtonClick);
     _OptionsButton.onClick.AddListener(HandleOptionsButtonClick);
     _StartButton.onClick.AddListener(HandleStartButtonClick);
 
     _InProgressSpinner.gameObject.SetActive(false);
-  }
 
-  private void HandleStationNumberUpdate(int update) {
-    _StationNumber = update;
-    _StationNumberText.text = "Station Number: " + _StationNumber;
-    Debug.Log("TODO: Handle Station Number: " + _StationNumber);
-  }
-
-  private void HandleTestNumberUpdate(int update) {
-    _TestNumber = update;
-    Debug.Log("TODO: Test Start Number: " + _TestNumber);
+    _OptionsButton.gameObject.SetActive(BuildFlags.kIsFactoryDevMode);
   }
 
   private void HandleSetSimType(bool isSim) {
@@ -105,6 +81,11 @@ public class FactoryIntroManager : MonoBehaviour {
     HideDevConnectDialog();
     SetStatusText("Factory App Connected To Robot");
 
+    HandleEnableNVStorageWrites(PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1);
+    HandleCheckPreviousResults(PlayerPrefs.GetInt("CheckPreviousResult", 1) == 1);
+    HandleWipeNVStorageAtStart(PlayerPrefs.GetInt("WipeNVStorageAtStart", 0) == 1);
+    HandleSkipBlockPickup(PlayerPrefs.GetInt("SkipBlockPickup", 0) == 1);
+
     // runs the factory test.
     RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -113,38 +94,26 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(true);
   }
 
-  private void HandleLogButtonClick() {
-    if (_FactoryLogPanelInstance != null) {
-      GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
-    }
-    if (_FactoryOptionsPanelInstance != null) {
-      GameObject.Destroy(_FactoryOptionsPanelInstance.gameObject);
-    }
-    _FactoryLogPanelInstance = GameObject.Instantiate(_FactoryLogPanelPrefab).GetComponent<FactoryLogPanel>();
-    _FactoryLogPanelInstance.transform.SetParent(_Canvas.transform, false);
-    _FactoryLogPanelInstance.LogFilter = _LogFilter;
-    _FactoryLogPanelInstance.UpdateLogText(_LogList);
-  }
-
   private void HandleOptionsButtonClick() {
-    if (_FactoryLogPanelInstance != null) {
-      GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
-    }
     if (_FactoryOptionsPanelInstance != null) {
       GameObject.Destroy(_FactoryOptionsPanelInstance);
     }
     _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
-    _FactoryOptionsPanelInstance.OnSetStationNumber += HandleStationNumberUpdate;
-    _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
     _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
     _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
-    _FactoryOptionsPanelInstance.Initialize(_IsSim, _LogFilter);
+
+    _FactoryOptionsPanelInstance.OnEnableNVStorageWrites += HandleEnableNVStorageWrites;
+    _FactoryOptionsPanelInstance.OnCheckPreviousResults += HandleCheckPreviousResults;
+    _FactoryOptionsPanelInstance.OnWipeNVstorageAtStart += HandleWipeNVStorageAtStart;
+    _FactoryOptionsPanelInstance.OnSkipBlockPickup += HandleSkipBlockPickup;
+
+    _FactoryOptionsPanelInstance.Initialize(_IsSim, ConsoleLogManager.Instance.LogFilter);
   }
 
   private void HandleSetConsoleLogFilter(string input) {
-    _LogFilter = input;
+    ConsoleLogManager.Instance.LogFilter = input;
   }
 
   private void HandleOTAButton() {
@@ -166,16 +135,6 @@ public class FactoryIntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleNewSOSLog(string log_entry) {
-    while (_LogList.Count > 9000) {
-      _LogList.RemoveAt(0);
-    }
-    _LogList.Add(log_entry);
-    if (_FactoryLogPanelInstance != null) {
-      _FactoryLogPanelInstance.UpdateLogText(_LogList);
-    }
-  }
-
   private void HandleDisconnectedFromClient(DisconnectionReason obj) {
     SetStatusText("Disconnected: " + obj.ToString());
     TestFailed();
@@ -188,19 +147,26 @@ public class FactoryIntroManager : MonoBehaviour {
     _Background.color = Color.red;
     _InProgressSpinner.gameObject.SetActive(false);
     _RestartButton.gameObject.SetActive(true);
+    TearDownEngine();
   }
 
   private void TestPassed() {
     _Background.color = Color.green;
     _InProgressSpinner.gameObject.SetActive(false);
     _RestartButton.gameObject.SetActive(true);
+    TearDownEngine();
+  }
+
+  private void TearDownEngine() {
+    CozmoBinding.Shutdown();
+    RobotEngineManager.Instance.RobotConnected -= HandleConnected;
+    RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.OnFactoryResult -= FactoryResult;
   }
 
   private void RestartTestApp() {
     _RestartButton.gameObject.SetActive(false);
     _RestartOverlay.gameObject.SetActive(true);
-    SOSLogManager.Instance.CleanUp();
-    CozmoBinding.Shutdown();
     UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
   }
 
@@ -224,6 +190,54 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HideDevConnectDialog() {
     if (_DevConnectDialogInstance != null) {
       Destroy(_DevConnectDialogInstance);
+    }
+  }
+
+  void HandleEnableNVStorageWrites(bool toggleValue) {
+    PlayerPrefs.SetInt("EnableNStorageWritesToggle", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", "0");
+    }
+  }
+
+  void HandleCheckPreviousResults(bool toggleValue) {
+    PlayerPrefs.SetInt("CheckPreviousResult", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", "0");
+    }
+  }
+
+  void HandleWipeNVStorageAtStart(bool toggleValue) {
+    PlayerPrefs.SetInt("WipeNVStorageAtStart", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", "0");
+    }
+  }
+
+  void HandleSkipBlockPickup(bool toggleValue) {
+    PlayerPrefs.SetInt("SkipBlockPickup", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", "0");
     }
   }
 
