@@ -15,6 +15,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
@@ -57,6 +58,7 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
   _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToGame")));
   _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "robotToEngine")));
   _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToRobot")));
+  _engineToVizLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToViz")));
 }
   
 void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension) const
@@ -204,6 +206,18 @@ void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
   }
   
   _robotToEngineLog->Write(PrepareMessage(message));
+}
+    
+template<>
+void DevLoggingSystem::LogMessage(const VizInterface::MessageViz& message)
+{
+  // Ignore image chunks for now since they are too large in size.
+  if (VizInterface::MessageVizTag::ImageChunk == message.GetTag())
+  {
+    return;
+  }
+    
+  _engineToVizLog->Write(PrepareMessage(message));
 }
   
 #if REMOTE_CONSOLE_ENABLED

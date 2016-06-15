@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
@@ -102,6 +103,14 @@ namespace Anki {
           PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
         }
       }
+        
+      // Log viz messages from here.
+      #if ANKI_DEV_CHEATS
+      if(nullptr != DevLoggingSystem::GetInstance())
+      {
+        DevLoggingSystem::GetInstance()->LogMessage(message);
+      }
+      #endif
     }
 
     
