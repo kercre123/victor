@@ -159,7 +159,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(false);
     _RestartOverlay.gameObject.SetActive(true);
     CozmoBinding.Shutdown();
-    UnityEngine.SceneManagement.SceneManager.LoadScene("Bootstrap");
+    UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
   }
 
   private void FactoryResult(FactoryTestResult result) {
