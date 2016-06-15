@@ -397,6 +397,17 @@ namespace Anki {
                                               msg.useManualSpeed);
       }
 
+      void Process_startMotorCalibration(const RobotInterface::StartMotorCalibration& msg) {
+        if (msg.calibrateHead) {
+          HeadController::StartCalibrationRoutine();
+        }
+        
+        if (msg.calibrateLift) {
+          LiftController::StartCalibrationRoutine();
+        }
+      }
+      
+      
       void Process_drive(const RobotInterface::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {

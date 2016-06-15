@@ -117,6 +117,9 @@ namespace Cozmo {
     f32      _watchdogTriggerTime = -1.0;
     
     bool     _toolCodeImagesStored;
+
+    bool     _headCalibrated;
+    bool     _liftCalibrated;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;

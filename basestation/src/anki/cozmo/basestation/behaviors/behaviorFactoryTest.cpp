@@ -87,6 +87,7 @@ namespace Cozmo {
     {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
   };
 
+  static constexpr f32 _kMotorCalibrationTimeout_sec = 4.f;
   static constexpr f32 _kCalibrationTimeout_sec = 8.f;
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
@@ -188,6 +189,10 @@ namespace Cozmo {
     
     robot.GetActionList().Cancel();
  
+    // Clear motor calibration flags
+    _headCalibrated = false;
+    _liftCalibrated = false;
+    
     // Set known poses
     _cliffDetectPose = Pose3d(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin());
     _camCalibPose = Pose3d(0, Z_AXIS_3D(), {0, 0, 0}, &robot.GetPose().FindOrigin());
@@ -224,7 +229,13 @@ namespace Cozmo {
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
     
-
+    
+    // Set robot body to accessory mode
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBodyRadioMode(RobotInterface::BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
+    
+    // Set head device lock so that video will stream down
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadDeviceLock(true)));
+    
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
 
@@ -373,7 +384,7 @@ namespace Cozmo {
     }
     
     // Check for pickup
-    if (robot.IsPickedUp()) {
+    if (_headCalibrated && robot.IsPickedUp()) {
       END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
     }
     
@@ -421,6 +432,25 @@ namespace Cozmo {
           robot.BroadcastAvailableObjects(true);
         }
         
+        
+        // Start motor calibration
+        robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
+        _holdUntilTime = currentTime_sec + _kMotorCalibrationTimeout_sec;
+        
+        SetCurrState(FactoryTestState::WaitingForMotorCalibration);
+      }
+        
+      // - - - - - - - - - - - - - - WAITING FOR MOTOR CALIBRATION - - - - - - - - - - - - - - -
+      case FactoryTestState::WaitingForMotorCalibration:
+      {
+        // Check that head and lift are calibrated
+        if (!_headCalibrated || !_liftCalibrated) {
+          if (_holdUntilTime < currentTime_sec) {
+            END_TEST(FactoryTestResultCode::MOTORS_UNCALIBRATED);
+          }
+          break;
+        }
+        
         // Set fake calibration if not already set so that we can actually run
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
@@ -439,14 +469,22 @@ namespace Cozmo {
           new MoveHeadToAngleAction(robot, 0),
         });
         StartActing(robot, headAndLiftAction,
-            [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-              if (result != ActionResult::SUCCESS) {
-                EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
-                return false;
-              }
-              SetCurrState(FactoryTestState::ChargerAndIMUCheck);
-              return true;
-            });
+                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                      if (result != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
+                        return false;
+                      }
+                      
+                      // Capture initial robot orientation and check if it changes over some period of time
+                      _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+                      _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _kIMUDriftDetectPeriod_sec;
+                      
+                      // Take photo for checking starting pose
+                      robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
+                      
+                      SetCurrState(FactoryTestState::ChargerAndIMUCheck);
+                      return true;
+                    });
         
         break;
       }
@@ -461,22 +499,12 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
         }
         
-        // Check for IMU drift
-        if (_holdUntilTime < 0) {
-          // Capture initial robot orientation and check if it changes over some period of time
-          _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
-          _holdUntilTime = currentTime_sec + _kIMUDriftDetectPeriod_sec;
-          
-          // Take photo for checking starting pose
-          robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
-          
-        }
         // When drift detection period has expired, and NVStorage has no pending requests in case we're
         // in the middle of pulling down lots of data (like face data) that could slow down other unreliable image data
         // from coming through, proceed to checking the drift amount and whether or not an image was stored
         // for camera calibration. For factory robots, the NVStorage pulldown shouldn't affect this since
         // there's no face data to pull.
-        else if (currentTime_sec > _holdUntilTime && !robot.GetNVStorageComponent().HasPendingRequests()) {
+        if (currentTime_sec > _holdUntilTime && !robot.GetNVStorageComponent().HasPendingRequests()) {
           f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
           if(angleChange > _kIMUDriftAngleThreshDeg) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
@@ -1363,17 +1391,32 @@ namespace Cozmo {
   
   Result BehaviorFactoryTest::HandleMotorCalibration(Robot& robot, const MotorCalibration &msg)
   {
-    // This should never happen during the test!
-    switch(msg.motorID) {
-      case MotorID::MOTOR_HEAD:
-        EndTest(robot, FactoryTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
-        break;
-      case MotorID::MOTOR_LIFT:
-        EndTest(robot, FactoryTestResultCode::LIFT_MOTOR_CALIB_UNEXPECTED);
-        break;
-      default:
-        EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
-        break;
+    // This should never happen during the test, except at the beginning
+    if (_currentState == FactoryTestState::WaitingForMotorCalibration) {
+      
+      // If a motor has finished calibrating, mark it as calibrated
+      if (!msg.calibStarted){
+        if (msg.motorID == MotorID::MOTOR_HEAD) {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.HandleMotorCalibration.HeadCalibrated", "");
+          _headCalibrated = true;
+        } else if (msg.motorID == MotorID::MOTOR_LIFT) {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.HandleMotorCalibration.LiftCalibrated", "");
+          _liftCalibrated = true;
+        }
+      }
+      
+    } else {
+      switch(msg.motorID) {
+        case MotorID::MOTOR_HEAD:
+          EndTest(robot, FactoryTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
+          break;
+        case MotorID::MOTOR_LIFT:
+          EndTest(robot, FactoryTestResultCode::LIFT_MOTOR_CALIB_UNEXPECTED);
+          break;
+        default:
+          EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+          break;
+      }
     }
 
     return RESULT_OK;
