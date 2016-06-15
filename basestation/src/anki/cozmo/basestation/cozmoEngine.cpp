@@ -220,13 +220,11 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
 
 void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
-    
-    for (RobotID_t robotId : GetRobotIDList())
-    {
-        PRINT_NAMED_INFO("CozmoEngine.HandleResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
-        _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
-    }
-    
+  for (RobotID_t robotId : GetRobotIDList())
+  {
+    PRINT_NAMED_INFO("CozmoEngine.HandleResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
+    _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
+  }
 }
 
 Result CozmoEngine::Update(const float currTime_sec)
