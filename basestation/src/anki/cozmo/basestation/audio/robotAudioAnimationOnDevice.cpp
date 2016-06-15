@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnDevice.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
-#include "anki/cozmo/basestation/audio/robotAudioMessageStream.h"
+#include "anki/cozmo/basestation/audio/robotAudioFrameStream.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "clad/audio/messageAudioClient.h"
 #include <util/helpers/templateHelpers.h>

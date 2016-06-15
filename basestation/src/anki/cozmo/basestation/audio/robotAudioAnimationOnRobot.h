@@ -31,7 +31,7 @@ namespace Audio {
 
 class RobotAudioClient;
 class RobotAudioBuffer;
-class RobotAudioMessageStream;
+class RobotAudioFrameStream;
 
 
 
@@ -71,8 +71,7 @@ private:
   void BeginBufferingAudioOnRobotMode();
   
   // Track the time the first stream was created and audio event to calculate the streams relevant animation time
-  double _firstStreamStartTime_ms = 0.0;
-  double _firstAudioEventTime_ms = 0.0;
+  double _streamAnimationOffsetTime_ms = 0.0;
   
   // Track if the first audio stream has
   bool _didPlayFirstStream = false;

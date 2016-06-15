@@ -64,9 +64,7 @@ void RobotAudioAnimation::AbortAnimation()
   
   // Stop all events play
   _audioClient->StopAllEvents( GameObjectType::CozmoAnimation );
-  
-  _audioBuffer->ClearBufferStreams();
-  
+    
   SetAnimationState( AnimationState::AnimationAbort );
 }
 

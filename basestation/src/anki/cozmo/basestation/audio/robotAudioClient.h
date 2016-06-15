@@ -75,6 +75,7 @@ public:
   void SetOutputSource( RobotAudioOutputSource outputSource );
   RobotAudioOutputSource GetOutputSource() const { return _outputSource; }
 
+
 private:
   
   using PluginId_t = uint32_t;

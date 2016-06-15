@@ -392,14 +392,14 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   
   _hijackAudioPlugIn->SetDestroyPluginCallback( [this] ( const uint32_t plugInId )
   {
-    PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback! PluginId: %d", plugInId );
+    PRINT_NAMED_INFO( "AudioController.Initialize", "Destroy PlugIn Callback! PluginId: %d", plugInId );
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
     // Catch mistakes with wwise project
     ASSERT_NAMED( buffer != nullptr,
                   "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetDestroyPluginCallback.RobotAudioBufferNull");
     // Done with voice clear audio buffer
     if ( buffer != nullptr ) {
-      buffer->ClearCache();
+      buffer->CloseAudioBuffer();
     }
     
     

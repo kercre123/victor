@@ -233,14 +233,14 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
     
     // Prepare next audio stream
     const bool isAudioStreamReady = _audioBuffer->HasAudioBufferStream() && _audioBuffer->GetFrontAudioBufferStream()->HasAudioFrame();
-    RobotAudioMessageStream* nextStream = nullptr;
+    RobotAudioFrameStream* nextStream = nullptr;
     if ( isAudioStreamReady ) {
       nextStream = _audioBuffer->GetFrontAudioBufferStream();
     }
     
     // First check if there is a stream that is overdue to play
     if ( _didPlayFirstStream && isAudioStreamReady ) {
-      const uint32_t streamRelevantTime_ms = floor( nextStream->GetCreatedTime_ms() - _firstStreamStartTime_ms + _firstAudioEventTime_ms );
+      const uint32_t streamRelevantTime_ms = floor( nextStream->GetCreatedTime_ms() - _streamAnimationOffsetTime_ms );
       if ( streamRelevantTime_ms <= relevantTime_ms ) {
         // Start playing this stream
         _currentBufferStream = nextStream;
@@ -271,8 +271,7 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
           if ( !_didPlayFirstStream ) {
             // Setup inital contition for the fist event
             _didPlayFirstStream = true;
-            _firstStreamStartTime_ms = nextStream->GetCreatedTime_ms();
-            _firstAudioEventTime_ms = nextEvent->TimeInMS;
+            _streamAnimationOffsetTime_ms = nextStream->GetCreatedTime_ms() - nextEvent->TimeInMS;
           }
           // Setup stream
           _currentBufferStream = nextStream;

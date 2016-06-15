@@ -37,7 +37,7 @@ namespace Audio {
 
 class RobotAudioClient;
 class RobotAudioBuffer;
-class RobotAudioMessageStream;
+class RobotAudioFrameStream;
 
 
 
@@ -144,7 +144,7 @@ protected:
   void IncrementCompletedEventCount() { std::lock_guard<std::mutex> lock(_completedEventLock);  ++_completedEventCount; }
   
   // Hold on to the current stream frames are being pulled from
-  RobotAudioMessageStream* _currentBufferStream = nullptr;
+  RobotAudioFrameStream* _currentBufferStream = nullptr;
   bool HasCurrentBufferStream() const { return _currentBufferStream != nullptr; }
 
   // All the animations events have and completed
