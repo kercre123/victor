@@ -7,9 +7,12 @@ public class FirmwarePane : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _OutputText;
   [SerializeField]
   private Anki.UI.AnkiButton _UpgradeButton;
+  [SerializeField]
+  private Anki.UI.AnkiButton _ResetButton;
 
   void Start() {
-    _UpgradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(0), "debug_upgrade_firmware_button", "debug_upgrade_firmware_view");
+    _UpgradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(0), "debug_upgrade_firmware_button", "debug_firmware_view");
+    _ResetButton.Initialize(() => RobotEngineManager.Instance.ResetFirmware(), "debug_reset_firmware_button", "debug_firmware_view");
 
     RobotEngineManager.Instance.OnFirmwareUpdateProgress += OnFirmwareUpdateProgress;
     RobotEngineManager.Instance.OnFirmwareUpdateComplete += OnFirmwareUpdateComplete;

@@ -78,6 +78,11 @@ message UpdateFirmware {
   int_32 version
 }
 
+// ResetFirmware
+// Tell the engine to kill robot body code and reset to factory defaults
+message ResetFirmware {
+}
+
 // DriveWheels
 message DriveWheels {
     float_32 lwheel_speed_mmps,
