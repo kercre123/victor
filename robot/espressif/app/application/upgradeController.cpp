@@ -104,7 +104,6 @@ namespace UpgradeController {
 
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
-  static bool aes_enabled;
 
   bool Init()
   {
@@ -121,7 +120,6 @@ namespace UpgradeController {
     haveTermination = false;
     haveValidCert = false;
     sha512_init(firmware_digest);
-    aes_enabled = false;
     
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
@@ -383,7 +381,7 @@ namespace UpgradeController {
         {
           if (haveTermination) // If there's no more, advance now
           {
-            if (!aes_enabled || haveValidCert)
+            if (haveValidCert)
             {
               #if DEBUG_OTA
               os_printf("Valid certificate, applying\r\n");
@@ -431,7 +429,7 @@ namespace UpgradeController {
             }
             else
             {
-              bool encrypted = aes_enabled && (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK;
+              bool encrypted = (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK;
               sha512_process(firmware_digest, buffer + counter, remaining);
 
               retries = MAX_RETRIES;
@@ -456,7 +454,7 @@ namespace UpgradeController {
       }
       case OTAT_Flash_Decrypt:
       {
-        static const int AES_CHUNK_SIZE = AES_KEY_LENGTH * 16;
+        static const int AES_CHUNK_SIZE = TRANSMIT_BLOCK_SIZE / 8;
         FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
 
         if ((unsigned)counter < TRANSMIT_BLOCK_SIZE)
@@ -510,7 +508,6 @@ namespace UpgradeController {
             #endif
 
             memcpy(aes_iv, head->aes_iv, AES_KEY_LENGTH);
-            aes_enabled = true;
 
             retries = MAX_RETRIES;
             bufferUsed -= sizeof(FirmwareBlock);
@@ -664,21 +661,15 @@ namespace UpgradeController {
       case OTAT_Sig_Check:
       {
         cert_state_t* cert_state = (cert_state_t*) Anki::Cozmo::Face::m_frame;
-        static uint32_t start_tick;
 
         switch (counter++)
         {
         case 0: // Setup
           {
-            os_printf("START CERT\n\r");
-            start_tick = system_get_time();
-
             if (cert_state == NULL) {
               Reset();
               break ;
             }
-
-            haveValidCert = true;
 
             FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
             CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
@@ -716,12 +707,12 @@ namespace UpgradeController {
           {
             i2spiSwitchMode(I2SPI_PAUSED);
             if (!verify_stage4(*cert_state)) {
-              os_printf("CERT FAILED\n\r");
-              //Reset();
+              Reset();
+              break ;
+            } else {
+              haveValidCert = true;
             }
             i2spiSwitchMode(I2SPI_BOOTLOADER);
-
-            os_printf("DONE CERT ALL %d\n\r", system_get_time() - start_tick);
 
             retries = MAX_RETRIES;
             bufferUsed -= sizeof(FirmwareBlock);

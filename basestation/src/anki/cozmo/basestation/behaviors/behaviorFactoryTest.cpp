@@ -510,6 +510,7 @@ namespace Cozmo {
           auto headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
           headAction->SetMaxSpeed(DEG_TO_RAD_F32(20));
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction});
+          compoundAction->ShouldEmitCompletionSignal(true);
           
           StartActing(robot, compoundAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -1345,10 +1346,8 @@ namespace Cozmo {
   
   Result BehaviorFactoryTest::HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg)
   {
-    // This is expected when driving to slot
-    if (_currentState == FactoryTestState::DriveToSlot) {
-      _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06f;
-    } else {
+    // This is expected when driving to slot but not anytime else
+    if (_currentState != FactoryTestState::DriveToSlot) {
       EndTest(robot, FactoryTestResultCode::CLIFF_UNEXPECTED);
     }
     

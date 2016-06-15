@@ -51,7 +51,7 @@ struct GlobalDataToHead
   uint32_t source;
   Fixed speeds[4];
   Fixed positions[4];
-  uint32_t cliffLevel;
+  int32_t cliffLevel;
   CladBufferUp cladBuffer;
 };
 

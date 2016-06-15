@@ -11,28 +11,34 @@
 #include "rtos.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
-static const int MinContactTime = 100;   //
+static const int MinContactTime = 20;    // .10s
 
 // Updated to 3.0
-const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
-const u32 V_PRESCALE    = 3;
-const u32 V_SCALE       = 0x3ff; // 10 bit ADC
+static const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
+static const u32 V_PRESCALE    = 3;
+static const u32 V_SCALE       = 0x3ff; // 10 bit ADC
 
-const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
-const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
+static const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
+static const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
-const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
-const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
+static const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
+static const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
 
-const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
+static const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
+static const Fixed VEXT_CHARGE_THRESHOLD  = TO_FIXED(4.00); // V
+
+static const u32 CLIFF_SENSOR_BLEED = 200;
 
 static int ContactTime = 0;
 
+void manage_adc(void*);
+  
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
 static Fixed vBat, vExt;
-static bool isCharging;
+static bool isCharging = false;
+static bool disableCharge = true;
 
 // Which pin is currently being used in the ADC mux
 AnalogInput m_pinIndex;
@@ -92,8 +98,8 @@ void Battery::init()
   nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
-  // Encoder and LED power
-  nrf_gpio_pin_set(PIN_VDDs_EN);
+  // Encoder and LED power (enabled)
+  nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
   // turn off headlight
@@ -122,7 +128,13 @@ void Battery::init()
 
   startADCsample(ANALOG_CLIFF_SENSE);
 
-  RTOS::schedule(Battery::manage);
+  /*
+  NRF_ADC->INTENSET = ADC_INTENSET_END_Msk;  
+  NVIC_EnableIRQ(ADC_IRQn);
+  NVIC_SetPriority(ADC_IRQn, 3);
+  */
+
+  RTOS::schedule(manage_adc);
   RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
 
@@ -136,41 +148,26 @@ void Battery::setHeadlight(bool status) {
 
 void Battery::powerOn()
 {
+  disableCharge = false;
   nrf_gpio_pin_set(PIN_PWR_EN);
-  nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
 void Battery::powerOff()
 {
+  disableCharge = true;
   // Shutdown the extra things
   nrf_gpio_pin_clear(PIN_PWR_EN);
-  nrf_gpio_pin_set(PIN_VDDs_EN);
   MicroWait(10000);
 }
 
-static inline void sampleCliffSensor() {
-  static bool ledOn = false;
+void manage_adc(void*)
+{
+  using namespace Battery;
+  static const int LOW_BAT_TIME = CYCLES_MS(60*1000); // 1 minute
+
   static int resultLedOn;
   static int resultLedOff;
-  
-  if (ledOn) {
-    resultLedOn = NRF_ADC->RESULT;
-    nrf_gpio_pin_clear(PIN_IR_DROP);
 
-    g_dataToHead.cliffLevel = resultLedOn - resultLedOff;
-    
-    startADCsample(ANALOG_V_BAT_SENSE);
-  } else {
-    resultLedOff = NRF_ADC->RESULT;
-    nrf_gpio_pin_set(PIN_IR_DROP);
-    startADCsample(ANALOG_CLIFF_SENSE);
-  }
-  
-  ledOn = !ledOn;
-}
-
-void Battery::manage(void* userdata)
-{
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
@@ -178,27 +175,30 @@ void Battery::manage(void* userdata)
   switch (m_pinIndex)
   {
     case ANALOG_V_BAT_SENSE:
-      vBat = calcResult(VBAT_SCALE);
-      startADCsample(ANALOG_V_EXT_SENSE);
+      {
+        vBat = calcResult(VBAT_SCALE);
 
-      // after 1 minute of low battery, turn off
-      static const int LOW_BAT_TIME = 1000 / 20; // 1 minute
-      static int lowBatTimer = 0;
-      if (vBat < VBAT_CHGD_LO_THRESHOLD) {
-        if (++lowBatTimer >= LOW_BAT_TIME) {
-          powerOff();
-          NVIC_SystemReset();
+        // after 1 minute of low battery, turn off
+        static int lowBatTimer = GetCounter() + LOW_BAT_TIME;
+
+        if (vBat < VBAT_CHGD_LO_THRESHOLD) {
+          if (lowBatTimer - GetCounter() < 0) {
+            powerOff();
+            NVIC_SystemReset();
+          }
+        } else {
+          lowBatTimer = GetCounter() + LOW_BAT_TIME;
         }
-      } else {
-        lowBatTimer = 0;
-      }
-    
-      break ;
+      
+        startADCsample(ANALOG_CLIFF_SENSE);
 
+        break ;
+      }
     case ANALOG_V_EXT_SENSE:
       {
         // Are our power pins shorted?
         static int ground_short = 0;
+        
         if (NRF_ADC->RESULT < 0x30) {
           if (++ground_short > 30) {
             Battery::powerOff();
@@ -209,8 +209,7 @@ void Battery::manage(void* userdata)
         }
 
         vExt = calcResult(VEXT_SCALE);
-        onContacts = vExt > VEXT_DETECT_THRESHOLD;
-        startADCsample(ANALOG_CLIFF_SENSE);
+        onContacts = vExt > VEXT_DETECT_THRESHOLD || (isCharging && vExt > VEXT_CHARGE_THRESHOLD);
         
         if (!onContacts) {
           ContactTime = 0;
@@ -218,17 +217,36 @@ void Battery::manage(void* userdata)
           ContactTime++;
         }
 
-        if (ContactTime < MaxContactTime && ContactTime > MinContactTime) {
+        if (!disableCharge && ContactTime < MaxContactTime && ContactTime > MinContactTime) {
           nrf_gpio_pin_set(PIN_CHARGE_EN);
           isCharging = true;
         } else {
           nrf_gpio_pin_clear(PIN_CHARGE_EN);
           isCharging = false;
         }
-      }
-      break ;
+        
+        startADCsample(ANALOG_CLIFF_SENSE);
+        break ;
+      }      
     case ANALOG_CLIFF_SENSE:
-      sampleCliffSensor();
-      break ;
+      {
+        static const uint32_t PIN_IR_DROP_MASK = 1 << PIN_IR_DROP;
+        
+        if (NRF_GPIO->OUT & PIN_IR_DROP_MASK) {
+          resultLedOn = NRF_ADC->RESULT;
+          startADCsample(ANALOG_V_BAT_SENSE);
+        } else {
+          resultLedOff = NRF_ADC->RESULT;
+          startADCsample(ANALOG_V_EXT_SENSE);
+
+        }
+        
+        int result = resultLedOn - resultLedOff - CLIFF_SENSOR_BLEED;
+        g_dataToHead.cliffLevel = (result < 0) ? 0 : result;
+        
+        nrf_gpio_pin_toggle(PIN_IR_DROP);
+        
+        break ;
+      }
   }
 }
