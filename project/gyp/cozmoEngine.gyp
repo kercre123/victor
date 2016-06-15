@@ -538,6 +538,12 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',      # Why is this needed for Viz?
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for Viz?
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',  # Why is this needed for Viz?
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',     # Why is this needed for Viz?
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',     # Why is this needed for Viz?
+              '<@(routing_http_server_libs)',                                 # Why is this needed for Viz?
             ],
             'conditions': [
               # For some reason, need to link directly against FacioMetric libs
@@ -717,6 +723,7 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for Keyboard controller?
             ],
             'conditions': [
               # For some reason, need to link directly against FacioMetric libs

@@ -1,0 +1,73 @@
+/**
+ * File: encodedImage.h
+ *
+ * Author: Andrew Stein
+ * Date:   6/9/2016
+ *
+ * Description: Defines a container for encoded images on the basestation.
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
+
+#ifndef __Anki_Vision_Basestation_EncodedImage_H__
+#define __Anki_Vision_Basestation_EncodedImage_H__
+
+#include "anki/common/types.h"
+#include "clad/types/imageTypes.h"
+
+#include <vector>
+
+
+namespace Anki {
+  
+  // Forward declaration
+  namespace Vision {
+    class ImageRGB;
+  }
+  
+namespace Cozmo {
+  
+  class EncodedImage
+  {
+  public:
+    
+    EncodedImage();
+    
+    // Returns true if the image is ready after adding this chunk
+    bool AddChunk(const ImageChunk& chunk);
+    
+    void Clear() { _buffer.clear(); }
+    bool IsEmpty() const { return _buffer.empty(); }
+    
+    u32 GetImageID() const { return _imgID; }
+    s32 GetWidth()   const { return _imgWidth; }
+    s32 GetHeight()  const { return _imgHeight; }
+    
+    TimeStamp_t GetTimeStamp() const { return _timestamp; }
+    
+    Vision::ImageRGB DecodeImageRGB() const;
+    
+    Result Save(const std::string& filename) const;
+    
+  private:
+
+    std::vector<u8>        _buffer;
+    
+    TimeStamp_t            _timestamp;
+    s32                    _imgWidth;
+    s32                    _imgHeight;
+    u32                    _imgID;
+    
+    ImageEncoding          _encoding;
+    u8                     _expectedChunkId;
+    bool                   _isImgValid;
+
+    static void MiniGrayToJpeg(const std::vector<u8>& bufferIn, const u16 height, const u16 width,
+                               std::vector<u8>& bufferOut);
+    
+  }; // class EncodedImage
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Anki_Vision_Basestation_EncodedImage_H__

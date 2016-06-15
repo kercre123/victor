@@ -89,7 +89,7 @@ namespace Anki
     s32 GetNumCols() const;
     s32 GetNumElements() const;
 
-    inline bool IsEmpty() const;
+    bool IsEmpty() const;
 
     // Don't let the public mess with my data, but they can see it:
     const T* GetDataPointer() const;

@@ -240,7 +240,7 @@ namespace Anki
   }
 
   template<typename T>
-  bool Array2d<T>::IsEmpty() const
+  inline bool Array2d<T>::IsEmpty() const
   {
 #if ANKICORETECH_USE_OPENCV
     // Thin wrapper to OpenCV's empty() check:

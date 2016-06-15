@@ -291,10 +291,15 @@ std::string FileUtils::FullFilePath(std::vector<std::string>&& names)
     ++nameIter;
     while(nameIter != names.end())
     {
-      RemoveFileSeparators(*nameIter);
-      
-      fullpath += kFileSeparator;
-      fullpath += *nameIter;
+      if(!nameIter->empty())
+      {
+        RemoveFileSeparators(*nameIter);
+        
+        if(!fullpath.empty()) {
+          fullpath += kFileSeparator;
+        }
+        fullpath += *nameIter;
+      }
       ++nameIter;
     }
   }

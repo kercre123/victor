@@ -154,13 +154,33 @@ void VizControllerImpl::ProcessMessage(VizInterface::MessageViz&& message)
   _eventMgr.Broadcast(AnkiEvent<VizInterface::MessageViz>(
     type, std::move(message)));
 }
+  
 void VizControllerImpl::ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_SaveImages();
-  _saveImages = payload.saveImages;
-  if(_saveImages)
+  _saveImageMode = payload.mode;
+  if(_saveImageMode != ImageSendMode::Off)
   {
-    _savedImagesFolder = payload.path;
+    if(payload.path.empty()) {
+      _savedImagesFolder = "saved_images";
+    } else {
+      _savedImagesFolder = payload.path;
+    }
+  }
+}
+  
+  
+void VizControllerImpl::ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SaveState();
+  _saveState = payload.enabled;
+  if(_saveState)
+  {
+    if(_savedStateFolder.empty()) {
+      _savedStateFolder = "saved_state";
+    } else {
+      _savedStateFolder = payload.path;
+    }
   }
 }
 
@@ -218,6 +238,17 @@ void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::
     payload.head_angle, payload.lift_angle);
 }
 
+static inline void SetColorHelper(webots::Display* disp, u32 ankiColor)
+{
+  disp->setColor(ankiColor >> 8);
+  
+  const uint8_t alpha = (uint8_t)(ankiColor & 0xff);
+  if(alpha < 0xff) {
+    static const float oneOver255 = 1.f / 255.f;
+    disp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+  }
+}
+  
 void VizControllerImpl::DrawText(VizTextLabelType labelID, u32 color, const char* text)
 {
   const int baseXOffset = 8;
@@ -225,12 +256,11 @@ void VizControllerImpl::DrawText(VizTextLabelType labelID, u32 color, const char
   const int yLabelStep = 10;  // Line spacing in pixels. Characters are 8x8 pixels in size.
 
   // Clear line specified by labelID
-  disp->setColor(0x0);
+  SetColorHelper(disp, NamedColors::BLACK);
   disp->fillRectangle(0, baseYOffset + yLabelStep * (uint32_t)labelID, disp->getWidth(), 8);
 
   // Draw text
-  disp->setColor(color >> 8);
-  disp->setAlpha(static_cast<double>(0xff & color)/255.);
+  SetColorHelper(disp, color);
 
   std::string str(text);
   if(str.empty()) {
@@ -324,24 +354,15 @@ void VizControllerImpl::ProcessVizVisionMarkerMessage(const AnkiEvent<VizInterfa
 void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraQuad();
-  const f32 oneOver255 = 1.f / 255.f;
 
-  camDisp->setColor(payload.color >> 8);
-  uint8_t alpha = (uint8_t)(payload.color & 0xff);
-  if(alpha < 0xff) {
-    camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-  }
+  SetColorHelper(camDisp, payload.color);
   camDisp->drawLine((int)payload.xUpperLeft, (int)payload.yUpperLeft, (int)payload.xLowerLeft, (int)payload.yLowerLeft);
   camDisp->drawLine((int)payload.xLowerLeft, (int)payload.yLowerLeft, (int)payload.xLowerRight, (int)payload.yLowerRight);
   camDisp->drawLine((int)payload.xLowerRight, (int)payload.yLowerRight, (int)payload.xUpperRight, (int)payload.yUpperRight);
   
   if(payload.topColor != payload.color)
   {
-    camDisp->setColor(payload.topColor >> 8);
-    uint8_t alpha = (uint8_t)(payload.topColor & 0xff);
-    if(alpha < 0xff) {
-      camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-    }
+    SetColorHelper(camDisp, payload.topColor);
   }
   camDisp->drawLine((int)payload.xUpperRight, (int)payload.yUpperRight, (int)payload.xUpperLeft, (int)payload.yUpperLeft);
 }
@@ -349,24 +370,14 @@ void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface
 void VizControllerImpl::ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraLine();
-  camDisp->setColor(payload.color >> 8);
-  uint8_t alpha = (uint8_t)(payload.color & 0xff);
-  if(alpha < 0xff) {
-    const f32 oneOver255 = 1.f / 255.f;
-    camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-  }
+  SetColorHelper(camDisp, payload.color);
   camDisp->drawLine((int)payload.xStart, (int)payload.yStart, (int)payload.xEnd, (int)payload.yEnd);
 }
 
 void VizControllerImpl::ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_CameraOval();
-  camDisp->setColor(payload.color >> 8);
-  uint8_t alpha = (uint8_t)(payload.color & 0xff);
-  if(alpha < 0xff) {
-    const f32 oneOver255 = 1.f / 255.f;
-    camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-  }
+  SetColorHelper(camDisp, payload.color);
   camDisp->drawOval((int)std::round(payload.xCen), (int)std::round(payload.yCen),
     (int)std::round(payload.xRad), (int)std::round(payload.yRad));
 }
@@ -375,56 +386,71 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
 {
   const auto& payload = msg.GetData().Get_CameraText();
   if (payload.text.size() > 0){
-    camDisp->setColor(payload.color >> 8);
-    uint8_t alpha = (uint8_t)(payload.color & 0xff);
-    if(alpha < 0xff) {
-      const f32 oneOver255 = 1.f / 255.f;
-      camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
-    }
+    SetColorHelper(camDisp, payload.color);
     camDisp->drawText(payload.text[0], (int)payload.x, (int)payload.y);
   }
 }
 
 void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  // TODO: Support timestamps
   const auto& payload = msg.GetData().Get_ImageChunk();
-  const u16 width = Vision::CameraResInfo[(int)payload.resolution].width;
-  const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
-  const bool isImageReady = _imageDeChunker.AppendChunk(payload.imageId, 0, height, width,
-    payload.imageEncoding,
-    payload.imageChunkCount, payload.chunkId, payload.data.data(), (uint32_t)payload.data.size());
+  const bool isImageReady = _encodedImage.AddChunk(payload);
 
   if(isImageReady)
   {
-    cv::Mat cvImg = _imageDeChunker.GetImage();
+    if(_saveImageMode != ImageSendMode::Off || _saveVizImage)
+    {
+      if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
+        PRINT_NAMED_WARNING("VizControllerImpl.CreateDirectory", "Could not create images directory");
+      }
 
-    if(cvImg.channels() == 1) {
-      cvtColor(cvImg, cvImg, CV_GRAY2RGB);
-    }
-    // Delete existing image if there is one.
-    if (camImg != nullptr) {
-      if(_saveImages)
+      if(_saveVizImage)
       {
-        if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
-          PRINT_NAMED_WARNING("VizControllerImpl.CreateDirectory", "Could not create images directory");
-        }
-        else
-        {
-          webots::ImageRef* img = camDisp->imageCopy(0, 0, camDisp->getWidth(), camDisp->getHeight());
-          std::stringstream ss;
-          ss << "images_" << _curImageTimestamp << ".jpg";
-          camDisp->imageSave(img, Util::FileUtils::FullFilePath({_savedImagesFolder,ss.str()}));
-        }
+        // Save previous image with any viz overlaid before we delete it
+        webots::ImageRef* copyImg = camDisp->imageCopy(0, 0, camDisp->getWidth(), camDisp->getHeight());
+        std::stringstream vizFilename;
+        vizFilename << "viz_images_" << _curImageTimestamp << "_" << (_saveCtr-1) << ".jpg";
+        camDisp->imageSave(copyImg, Util::FileUtils::FullFilePath({_savedImagesFolder, vizFilename.str()}));
+        camDisp->imageDelete(copyImg);
+        _saveVizImage = false;
       }
       
+      if(_saveImageMode != ImageSendMode::Off)
+      {
+        // Save original image
+        std::stringstream origFilename;
+        origFilename << "images_" << _encodedImage.GetTimeStamp() << "_" << _saveCtr << ".jpg";
+        _encodedImage.Save(Util::FileUtils::FullFilePath({_savedImagesFolder, origFilename.str()}));
+        _saveVizImage = true;
+        ++_saveCtr;
+      }
+      
+      if(_saveImageMode == ImageSendMode::SingleShot) {
+        _saveImageMode = ImageSendMode::Off;
+      }
+    }
+    
+    // Delete existing image if there is one
+    if (camImg != nullptr) {
       camDisp->imageDelete(camImg);
     }
-
+    
+    // This apparently has to happen _after_ we do the camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
+    // (Otherwise, the channels seem to cycle and we get rainbow effects in Webots while saving is on, even though
+    // the saved images are fine.)
+    Vision::ImageRGB img = _encodedImage.DecodeImageRGB();
+    
+    if(img.IsEmpty()) {
+      PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizImageChunkMessage.EmptyImageDecoded", "t=%d", payload.frameTimeStamp);
+      return;
+    }
+    
     //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
 
-    camImg = camDisp->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
+    camImg = camDisp->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
     camDisp->imagePaste(camImg, 0, 0);
+    SetColorHelper(camDisp, NamedColors::RED);
+    camDisp->drawText(std::to_string(payload.frameTimeStamp), 1, camDisp->getHeight()-9); // display timestamp at lower left
     _curImageTimestamp = payload.frameTimeStamp;
   }
 }
@@ -507,6 +533,31 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
+  
+  // Save state to file
+  if(_saveState)
+  {
+    const size_t kMaxPayloadSize = 256;
+    if(payload.Size() > kMaxPayloadSize) {
+      PRINT_NAMED_WARNING("VizController.ProcessVizRobotStateMessage.PayloadSizeTooLarge",
+                          "%zu > %zu", payload.Size(), kMaxPayloadSize);
+    } else {
+      // Compose line for entire state msg in hex
+      char stateMsgLine[2*kMaxPayloadSize + 1];
+      memset(stateMsgLine,0,kMaxPayloadSize);
+      u8 msgBytes[kMaxPayloadSize];
+      payload.Pack(msgBytes, kMaxPayloadSize);
+      for (int i=0; i < payload.Size(); i++){
+        sprintf(&stateMsgLine[2*i], "%02x", (unsigned char)msgBytes[i]);
+      }
+      sprintf(&stateMsgLine[payload.Size() * 2],"\n");
+      
+      FILE *stateFile;
+      stateFile = fopen("RobotState.txt", "at");
+      fputs(stateMsgLine, stateFile);
+      fclose(stateFile);
+    }
+  } // if(_saveState)
 }
 
   

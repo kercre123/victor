@@ -1207,6 +1207,5 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
   }
 }
 
-  
 } // namespace Cozmo
 } // namespace Anki

@@ -1,36 +1,205 @@
 /**
- * File: imageDeChunker.cpp
+ * File: encodedImage.cpp
  *
  * Author: Andrew Stein
- * Date:   11/20/2014
+ * Date:   6/9/2016
  *
- * Description: Implements an image data dechunker for Cozmo image data
+ * Description: Implements a container for encoded images on the basestation.
  *
- * Copyright: Anki, Inc. 2015
+ * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/cozmo/basestation/imageDeChunker.h"
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+#include "anki/cozmo/basestation/encodedImage.h"
 
+#include "anki/vision/basestation/image.h"
+
+#include "util/fileUtils/fileUtils.h"
+
+#if ANKICORETECH_USE_OPENCV
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#endif
 
 namespace Anki {
 namespace Cozmo {
-
-  ImageDeChunker::ImageDeChunker()
-  : _imgID(0)
-  , _imgBytes(0)
+  
+  EncodedImage::EncodedImage()
+  : _timestamp(0)
   , _imgWidth(0)
   , _imgHeight(0)
+  , _imgID(std::numeric_limits<u32>::max())
+  , _encoding(ImageEncoding::NoneImageEncoding)
   , _expectedChunkId(0)
   , _isImgValid(false)
   {
     
   }
+
+  bool EncodedImage::AddChunk(const ImageChunk &chunk)
+  {
+    if(chunk.data.size() > static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE)) {
+      PRINT_NAMED_WARNING("ImageDeChunker.AppendChunk",
+                          "Expecting chunks of size no more than %d, got %zu.",
+                          ImageConstants::IMAGE_CHUNK_SIZE, chunk.data.size());
+      return false;
+    }
+    
+    // If image ID has changed, then start over.
+    if (chunk.imageId != _imgID)
+    {
+      _imgID           = chunk.imageId;
+      const Vision::ImageDims& imageDims = Vision::CameraResInfo[(int)chunk.resolution];
+      _imgWidth        = imageDims.width;;
+      _imgHeight       = imageDims.height;
+      _isImgValid      = (chunk.chunkId == 0);
+      _expectedChunkId = 0;
+      _encoding        = chunk.imageEncoding;
+      
+      _buffer.clear();
+      _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
+
+    }
+    
+    // Check if a chunk was received out of order
+    if (chunk.chunkId != _expectedChunkId) {
+      PRINT_NAMED_INFO("EncodedImage.AddChunk.ChunkDropped",
+                       "Expected chunk %d, got %d", _expectedChunkId, chunk.chunkId);
+      _isImgValid = false;
+    }
+    
+    _expectedChunkId = chunk.chunkId + 1;
+    
+    // We've received all data when the msg chunkSize is less than the max
+    const bool isLastChunk =  chunk.chunkId == chunk.imageChunkCount-1;
+    if(isLastChunk) {
+      _timestamp = chunk.frameTimeStamp;
+    }
+    
+    if (!_isImgValid) {
+      if (isLastChunk) {
+        PRINT_NAMED_INFO("EncodedImage.AddChunk.IncompleteImage",
+                         "Received last chunk of invalidated image");
+      }
+      return false;
+    }
+    
+    // Image chunks are assumed/guaranteed to be received in order so  we just
+    // blindly append data to array
+    _buffer.insert(_buffer.end(), chunk.data.begin(), chunk.data.end());
+    
+    return isLastChunk;
+  }
+  
+  Vision::ImageRGB EncodedImage::DecodeImageRGB() const
+  {
+    cv::Mat cvImg;
+    
+    switch(_encoding)
+    {
+      case ImageEncoding::JPEGColor:
+      {
+        cvImg = cv::imdecode(_buffer, cv::IMREAD_COLOR);
+        cvtColor(cvImg, cvImg, CV_BGR2RGB);
+        break;
+      }
+        
+      case ImageEncoding::JPEGMinimizedGray:
+      {
+        std::vector<u8> tempBuffer;
+        MiniGrayToJpeg(_buffer, _imgHeight, _imgWidth, tempBuffer);
+        cvImg = cv::imdecode(tempBuffer, cv::IMREAD_GRAYSCALE);
+        break;
+      }
+        
+      case ImageEncoding::JPEGGray:
+      {
+        cvImg = cv::imdecode(_buffer, cv::IMREAD_GRAYSCALE);
+        break;
+      }
+        
+      case ImageEncoding::RawGray:
+      {
+        // Already decompressed.
+        // Raw image bytes is the same as total received bytes.
+        cvImg = cv::Mat_<u8>(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
+        break;
+      }
+        
+      case ImageEncoding::RawRGB:
+        // Already decompressed.
+        // Raw image bytes is the same as total received bytes.
+        cvImg = cv::Mat(_imgHeight, _imgWidth, CV_8UC3, const_cast<u8*>(&(_buffer[0])));
+        break;
+        
+      case ImageEncoding::JPEGColorHalfWidth:
+      {
+        cvImg = cv::imdecode(_buffer, cv::IMREAD_COLOR);
+        cvtColor(cvImg, cvImg, CV_BGR2RGB);
+        cv::copyMakeBorder(cvImg, cvImg, 0, 0, 160, 160, cv::BORDER_CONSTANT, 0);
+        break;
+      }
+        
+      default:
+        PRINT_NAMED_ERROR("EncodedImage.DecodeImageRGB.UnsupportedEncoding",
+                          "Encoding %s not yet supported for decoding image chunks",
+                          EnumToString(_encoding));
+        
+        // Return empty image
+        return Vision::ImageRGB();
+        
+    } // switch(encoding)
+    
+    
+    if(cvImg.rows != _imgHeight || cvImg.cols != _imgWidth)
+    {
+      PRINT_NAMED_WARNING("EncodedImage.DecodeImageRGB.BadDecode",
+                          "Failed to decode %dx%d image from buffer. Got %dx%d",
+                          _imgWidth, _imgHeight, cvImg.cols, cvImg.rows);
+      
+      return Vision::ImageRGB();
+    }
+    
+    if(cvImg.channels() == 1) {
+      cv::cvtColor(cvImg, cvImg, CV_GRAY2RGB);
+    }
+    
+    Vision::ImageRGB image(_imgHeight, _imgWidth, cvImg.data);
+    image.SetTimestamp(_timestamp);
+    
+    return image;
+  }
+  
+  Result EncodedImage::Save(const std::string& filename) const
+  {
+    const std::vector<u8>* bufferPtr = &_buffer;
+    std::vector<u8> tempBuffer;
+    
+    if(_encoding == ImageEncoding::JPEGMinimizedGray)
+    {
+      // If this buffer is encoded as our homebrew "MinimzedGray" JPEG,
+      // we need to convert it for storage so it can be read by normal
+      // JPEG decoders
+      MiniGrayToJpeg(_buffer, _imgHeight, _imgWidth, tempBuffer);
+      bufferPtr = &tempBuffer;
+    }
+    
+    const bool success = Util::FileUtils::WriteFile(filename, *bufferPtr);
+    
+    if(success) {
+      return RESULT_OK;
+    } else {
+      PRINT_NAMED_WARNING("EncodedImage.Save.WriteFail", "Filename: %s",
+                          filename.c_str());
+      return RESULT_FAIL;
+    }
+  }
+  
   
   // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
   // This is a port of C# code from Nathan.
-  static void miniGrayToJpeg(const std::vector<u8>& bufferIn, s32 bufferLength, std::vector<u8>& bufferOut, const u16 height, const u16 width)
+  void EncodedImage::MiniGrayToJpeg(const std::vector<u8>& bufferIn, const u16 height, const u16 width,
+                                    std::vector<u8>& bufferOut)
   {
     // Fetch quality to decide which header to use
     //const int quality = bufferIn[0];
@@ -65,7 +234,7 @@ namespace Cozmo {
       0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01,
       0x00, 0x00, 0x3F, 0x00
     };
-
+    
     // Pre-baked JPEG header for grayscale, Q80
     static const u8 header80[] = {
       0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
@@ -112,7 +281,8 @@ namespace Cozmo {
     assert(headerLength > 0);
     
     // Allocate enough space for worst case expansion
-    bufferOut.resize(bufferLength*2 + headerLength); 
+    size_t bufferLength = bufferIn.size();
+    bufferOut.resize(bufferLength*2 + headerLength);
     
     std::copy(header, header+headerLength, bufferOut.begin());
     // Adjust header size information
@@ -139,142 +309,8 @@ namespace Cozmo {
     bufferOut[off++] = 0xD9;
     
     bufferOut.resize(off);
+    
+  } // MiniGrayToJpeg()
   
-  } // miniGrayToJpeg()
-  
-  bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                                   Cozmo::ImageEncoding encoding, u8 totalChunkCount,
-                                   u8 chunkId, const u8* data, u32 chunkSize)
-  {
-    if(chunkSize > static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE)) {
-      PRINT_NAMED_ERROR("ImageDeChunker.AppendChunk", "Expecting chunks of size no more than %d, got %d.",
-                        ImageConstants::IMAGE_CHUNK_SIZE, chunkSize);
-      return false;
-    }
-    
-    // If msgID has changed, then start over.
-    if (newImageId != _imgID) {
-      _imgID = newImageId;
-      _imgBytes = 0;
-      _imgWidth  = ncols;
-      _imgHeight = nrows;
-      _imgData.resize(_imgWidth*_imgHeight*3);
-      _isImgValid = chunkId == 0;
-      _expectedChunkId = 0;
-    }
-    
-    // Check if a chunk was received out of order
-    if (chunkId != _expectedChunkId) {
-      PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
-                       "Expected chunk %d, got %d", _expectedChunkId, chunkId);
-      _isImgValid = false;
-    }
-    
-    _expectedChunkId = chunkId + 1;
-    
-    // We've received all data when the msg chunkSize is less than the max
-    const bool isLastChunk =  chunkId == totalChunkCount-1;
-    
-    if (!_isImgValid) {
-      if (isLastChunk) {
-        PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
-                         "Received last chunk of invalidated image");
-      }
-      return false;
-    }
-    
-    // Msgs are guaranteed to be received in order (with TCP) so just append data to array
-    std::copy(data, data + chunkSize, _imgData.begin() + _imgBytes);
-    _imgBytes += chunkSize;
-    
-    if (isLastChunk) {
-      
-      switch(encoding)
-      {
-        case ImageEncoding::JPEGColor:
-        {
-          _img = cv::imdecode(_imgData, CV_LOAD_IMAGE_COLOR);
-          cvtColor(_img, _img, CV_BGR2RGB);
-          break;
-        }
-          
-        case ImageEncoding::JPEGMinimizedGray:
-        {
-          std::vector<u8> buffer;
-          miniGrayToJpeg(_imgData, _imgBytes, buffer, _imgHeight, _imgWidth);
-          _img = cv::imdecode(buffer, CV_LOAD_IMAGE_GRAYSCALE);
-          break;
-        }
-
-        case ImageEncoding::JPEGGray:
-        {
-          _img = cv::imdecode(_imgData, CV_LOAD_IMAGE_GRAYSCALE);
-          break;
-        }
-        case ImageEncoding::RawGray:
-        {
-          // Already decompressed.
-          // Raw image bytes is the same as total received bytes.
-          _img = cv::Mat_<u8>(_imgHeight, _imgWidth, &(_imgData[0]));
-          break;
-        }
-        case ImageEncoding::RawRGB:
-          // Already decompressed.
-          // Raw image bytes is the same as total received bytes.
-          _img = cv::Mat(_imgHeight, _imgWidth, CV_8UC3, &(_imgData[0]));
-          break;
-        case ImageEncoding::JPEGColorHalfWidth:
-        {
-          _img = cv::imdecode(_imgData, CV_LOAD_IMAGE_COLOR);
-          cvtColor(_img, _img, CV_BGR2RGB);
-          cv::copyMakeBorder(_img, _img, 0, 0, 160, 160, cv::BORDER_CONSTANT, 0);          
-          break;
-        }
-        default:
-          printf("***ERRROR - ProcessVizImageChunkMessage: Encoding %d not yet supported for decoding image chunks.\n", static_cast<int>(encoding));
-          return false;
-      } // switch(encoding)
-      
-      if(_img.rows != _imgHeight || _img.cols != _imgWidth) {
-        printf("***ERROR - ImageDeChunker.AppendChunk: expected %dx%d image after decoding, got %dx%d.\n", _imgWidth, _imgHeight, _img.cols, _img.rows);
-      }
-      
-#     ifdef TEST_16_9_ASPECT_RATIO
-      // TEST 16:9 format by blacking out 25% of the rows (12.5% at top and bottom)
-      _img(cv::Range(0,_img.rows*.125),cv::Range::all()).setTo(0);
-      _img(cv::Range(0.875*_img.rows,_img.rows),cv::Range::all()).setTo(0);
-#     endif
-      
-    } // if(isLastChunk)
-    
-    return isLastChunk;
-    
-  }
-  
-  bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                                   Cozmo::ImageEncoding encoding, u8 totalChunkCount,
-                                   u8 chunkId, const std::array<u8, static_cast<size_t>(ImageConstants::IMAGE_CHUNK_SIZE)>& data, u32 chunkSize)
-  {
-    return AppendChunk(newImageId, frameTimeStamp, nrows, ncols, encoding, totalChunkCount,
-                       chunkId, &(data[0]), chunkSize);
-  } // AppendChunk()
-  
-  /*
-  Image ImageDeChunker::GetImage() const
-  {
-    if(_img.channels() == 3) {
-      Image grayImage(_img.rows, _img.cols);
-      cvtColor(_img, grayImage.get_CvMat_(), CV_RGB2GRAY);
-    } else {
-      return Vision::Image(_img.rows, _img.cols, _img.data);
-    }
-  }
-  
-  ImageRGBA ImageDeChunker::GetImageRGBA() const
-  {
-    // TODO Fill this in!
-  }
-  */
-
 } // namespace Cozmo
 } // namespace Anki
