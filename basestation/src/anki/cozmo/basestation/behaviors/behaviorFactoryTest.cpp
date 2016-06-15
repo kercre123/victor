@@ -399,7 +399,14 @@ namespace Cozmo {
     
     // Check for pickup
     if (_headCalibrated && robot.IsPickedUp()) {
-      END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
+      if(_holdUntilTime < currentTime_sec)
+      {
+        END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
+      }
+      else
+      {
+        return Status::Running;
+      }
     }
     
     if (IsActing()) {
@@ -506,7 +513,6 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - CHARGER AND IMU CHECK - - - - - - - - - - - - - - -
       case FactoryTestState::ChargerAndIMUCheck:
       {
-        
         // Check that robot is on charger
         if (!robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
@@ -1413,6 +1419,7 @@ namespace Cozmo {
         if (msg.motorID == MotorID::MOTOR_HEAD) {
           PRINT_NAMED_INFO("BehaviorFactoryTest.HandleMotorCalibration.HeadCalibrated", "");
           _headCalibrated = true;
+          _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _kMotorCalibrationTimeout_sec;
         } else if (msg.motorID == MotorID::MOTOR_LIFT) {
           PRINT_NAMED_INFO("BehaviorFactoryTest.HandleMotorCalibration.LiftCalibrated", "");
           _liftCalibrated = true;
