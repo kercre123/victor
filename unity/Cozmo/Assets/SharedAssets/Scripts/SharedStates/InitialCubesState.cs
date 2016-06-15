@@ -9,6 +9,8 @@ public class InitialCubesState : State {
   protected ShowCozmoCubeSlide _ShowCozmoCubesSlide;
   protected GameBase _Game;
 
+  private const float _kCubeSqrDistanceWithoutInLift_mm = 360.0f;
+
   public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
@@ -33,7 +35,6 @@ public class InitialCubesState : State {
     _Game.CubeIdsForGame = new List<int>();
 
     CheckForNewlySeenCubes();
-    ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
 
     string waitAnimGroup = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnWaitForCubesMinigameSetup);
     if (waitAnimGroup != null) {
@@ -42,6 +43,10 @@ public class InitialCubesState : State {
       RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
       RobotEngineManager.Instance.SendMessage();
     }
+  }
+
+  public override void Update() {
+    CheckForNewlySeenCubes();
   }
 
   public override void Pause() {
@@ -60,51 +65,63 @@ public class InitialCubesState : State {
   }
 
   protected virtual void CheckForNewlySeenCubes() {
-    bool numValidCubesChanged = false;
+    bool validCubesChanged = false;
     LightCube cube = null;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       cube = lightCube.Value;
-      numValidCubesChanged = numValidCubesChanged || TryUpdateCubeIdsForGame(cube);
+      validCubesChanged |= TryUpdateCubeIdForGame(cube);
     }
 
-    if (numValidCubesChanged) {
+    if (validCubesChanged) {
       UpdateUI(_Game.CubeIdsForGame.Count);
     }
   }
 
-  protected virtual void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
-                                               ObservedObject.InFieldOfViewState newState) {
-    if (changedObject is LightCube) {
-      if (TryUpdateCubeIdsForGame(changedObject as LightCube)) {
-        CheckForNewlySeenCubes();
-        UpdateUI(_Game.CubeIdsForGame.Count);
-      }
-    }
-  }
-
-  private bool TryUpdateCubeIdsForGame(LightCube cube) {
-    bool numValidCubesChanged = false;
+  private bool TryUpdateCubeIdForGame(LightCube cube) {
+    bool validCubesChanged = false;
     if (cube.IsInFieldOfView) {
-      if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
-        if (_Game.CubeIdsForGame.Count < _CubesRequired) {
-          _Game.CubeIdsForGame.Add(cube.ID);
-          numValidCubesChanged = true;
-          cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
-        }
-        else {
-          cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
-        }
+      if (IsReallyCloseToCube(cube)) {
+        validCubesChanged |= RemoveFromValidCubes(cube);
+      }
+      else {
+        validCubesChanged |= AddToValidCubes(cube);
       }
     }
     else {
-      cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
-      if (_Game.CubeIdsForGame.Contains(cube.ID)) {
-        _Game.CubeIdsForGame.Remove(cube.ID);
-        numValidCubesChanged = true;
+      validCubesChanged |= RemoveFromValidCubes(cube);
+    }
+    return validCubesChanged;
+  }
+
+  private bool IsReallyCloseToCube(LightCube cube) {
+    return (_CurrentRobot.WorldPosition.xy() - cube.WorldPosition.xy()).sqrMagnitude
+    <= (_kCubeSqrDistanceWithoutInLift_mm);
+  }
+
+  private bool AddToValidCubes(LightCube cube) {
+    bool addCube = false;
+    if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
+      if (_Game.CubeIdsForGame.Count < _CubesRequired) {
+        _Game.CubeIdsForGame.Add(cube.ID);
+        addCube = true;
+        cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
+      }
+      else {
+        cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
       }
     }
-    return numValidCubesChanged;
+    return addCube;
+  }
+
+  private bool RemoveFromValidCubes(LightCube cube) {
+    bool removedCube = false;
+    cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
+    if (_Game.CubeIdsForGame.Contains(cube.ID)) {
+      _Game.CubeIdsForGame.Remove(cube.ID);
+      removedCube = true;
+    }
+    return removedCube;
   }
 
   protected virtual void UpdateUI(int numValidCubes) {
@@ -134,7 +151,6 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
-    ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
 
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       if (!_Game.CubeIdsForGame.Contains(lightCube.Key)) {

@@ -49,9 +49,6 @@ namespace Simon {
     }
 
     // ignore base class events
-    protected override void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
-                                                   ObservedObject.InFieldOfViewState newState) {
-    }
     protected override void CheckForNewlySeenCubes() {
     }
 
