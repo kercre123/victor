@@ -519,7 +519,7 @@ public class RobotEngineManager : MonoBehaviour {
       DAS.Error("clad_version_mismatch_robot_to_engine", str);
     }
 
-    DebugMenuManager.Instance.OnDebugMenuButtonTap();
+    //DebugMenuManager.Instance.OnDebugMenuButtonTap();
   }
 
   private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
