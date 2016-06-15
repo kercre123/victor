@@ -78,6 +78,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   auto callback = std::bind(&CozmoEngine::HandleGameEvents, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ResetFirmware, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
@@ -219,8 +220,10 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
     
 void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
+    
     for (RobotID_t robotId : GetRobotIDList())
     {
+        PRINT_NAMED_INFO("CozmoEngine.HandleResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
         _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
     }
     
