@@ -181,7 +181,7 @@ void manage_adc(void*)
         static int lowBatTimer = GetCounter() + LOW_BAT_TIME;
 
         if (vBat < VBAT_CHGD_LO_THRESHOLD) {
-          if (LOW_BAT_TIME - GetCounter() < 0) {
+          if (lowBatTimer - GetCounter() < 0) {
             powerOff();
             NVIC_SystemReset();
           }
