@@ -15,6 +15,8 @@
  **/
 
 #include "visionSystem.h"
+
+#include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/vision/basestation/image_impl.h"
@@ -2376,6 +2378,14 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
+  Result VisionSystem::Update(const VisionPoseData&      poseData,
+                              const EncodedImage&        encodedImg)
+  {
+    Tic("DecodeJPEG");
+    Vision::ImageRGB image = encodedImg.DecodeImageRGB();
+    Toc("DecodeJPEG");
+    return Update(poseData, image);
+  }
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,

@@ -16,7 +16,7 @@
 #include "clad/types/emotionTypes.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/cozmo/basestation/imageDeChunker.h"
+#include "anki/cozmo/basestation/encodedImage.h"
 #include "util/container/circularBuffer.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
@@ -95,6 +95,7 @@ private:
   void ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
@@ -145,11 +146,17 @@ private:
   std::map<uint8_t, uint8_t> robotIDToVizBotIdxMap_;
 
   // Image message processing
-  ImageDeChunker _imageDeChunker;
-  TimeStamp_t _curImageTimestamp;
-  bool _saveImages = false;
-  std::string _savedImagesFolder = "";
-
+  EncodedImage  _encodedImage;
+  TimeStamp_t   _curImageTimestamp;
+  ImageSendMode _saveImageMode = ImageSendMode::Off;
+  std::string   _savedImagesFolder = "";
+  u32           _saveCtr = 0;
+  bool          _saveVizImage = false;
+  
+  // For saving state
+  bool          _saveState = false;
+  std::string   _savedStateFolder = "";
+  
   AnkiEventMgr<VizInterface::MessageViz> _eventMgr;
   
   // Circular buffers of data to show last N ticks of a value

@@ -673,22 +673,17 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
 void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   // Ignore images if robot has not yet acknowledged time sync
-  if (!_timeSynced)
+  if (!_timeSynced) {
     return;
+  }
   
   const ImageChunk& payload = message.GetData().Get_image();
-  const u16 width  = Vision::CameraResInfo[(int)payload.resolution].width;
-  const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
+  
+  const bool isImageReady = _encodedImage.AddChunk(payload);
 
-  const bool isImageReady = _imageDeChunker->
-  AppendChunk(payload.imageId, payload.frameTimeStamp,
-    height, width,
-    payload.imageEncoding,
-    payload.imageChunkCount,
-    payload.chunkId, payload.data.data(), (uint32_t)payload.data.size() );
-
-  if (_context->GetExternalInterface() != nullptr && GetImageSendMode() != ImageSendMode::Off) {
-    
+  // Forward the image chunks over external interface if image send mode is not OFF
+  if (GetContext()->GetExternalInterface() != nullptr && GetImageSendMode() != ImageSendMode::Off)
+  {
     // we don't want to start sending right in the middle of an image, wait until we hit payload 0
     // before starting to send.
     if(payload.chunkId == 0 || GetLastSentImageID() == payload.imageId) {
@@ -707,80 +702,48 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
       }
     }
   }
+  
+  // Forward the image chunks to Viz as well (Note that this does nothing if
+  // sending images is disabled in VizManager)
   GetContext()->GetVizManager()->SendImageChunk(GetID(), payload);
 
   if(isImageReady)
   {
-    cv::Mat cvImg = _imageDeChunker->GetImage();
-    if(cvImg.channels() == 1) {
-      cv::cvtColor(cvImg, cvImg, CV_GRAY2RGB);
-    }
-
-    Vision::ImageRGB image(height,width,cvImg.data);
-    image.SetTimestamp(payload.frameTimeStamp);
-    
-    _visionComponentPtr->GetImuDataHistory().CalculateTimestampForImageIMU(payload.imageId, payload.frameTimeStamp, RollingShutterCorrector::timeBetweenFrames_ms, height);
-    
     /* For help debugging COZMO-694:
-    PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
-                     "About to process image: robot timestamp %d, message time %f, basestation timestamp %d",
-                     image.GetTimestamp(), message.GetCurrentTime(),
-                     BaseStationTimer::getInstance()->GetCurrentTimeStamp());
+     PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
+     "About to process image: robot timestamp %d, message time %f, basestation timestamp %d",
+     image.GetTimestamp(), message.GetCurrentTime(),
+     BaseStationTimer::getInstance()->GetCurrentTimeStamp());
      */
     
-#   if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
-    // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
-    static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
-    static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
-    static s32 g_queueImages_queueIndex = 0;
-    
-    char filename[256];
-    snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
-    
-    cv::imwrite(filename, image.get_CvMat_());
-    
-    g_queueImages_queueIndex++;
-    
-    if(g_queueImages_queueIndex >= g_queueImages_queueLength)
-      g_queueImages_queueIndex = 0;
-#   endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
-
-    #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
-    #define TRACK_MULTIPLE_IMAGES_PER_TICK 1
-    #else
-    #define TRACK_MULTIPLE_IMAGES_PER_TICK 0
-    #endif
-    if (TRACK_MULTIPLE_IMAGES_PER_TICK)
+    const double currentMessageTime = message.GetCurrentTime();
+    if (currentMessageTime != _lastImageRecvTime)
     {
-      static uint32_t repeatTimeCount = 0;
-      static double lastImageTime = -1.0;
-      
-      double currentMessageTime = SEC_TO_MILIS(message.GetCurrentTime());
-      if (currentMessageTime != lastImageTime)
+      _lastImageRecvTime = currentMessageTime;
+      _repeatedImageCount = 0;
+    }
+    else
+    {
+      ++_repeatedImageCount;
+      if (_repeatedImageCount >= 3)
       {
-        lastImageTime = currentMessageTime;
-        repeatTimeCount = 0;
-      }
-      else
-      {
-        ++repeatTimeCount;
-        if (repeatTimeCount >= 3)
-        {
-          PRINT_NAMED_WARNING("Robot.HandleImageChunk",
-                              "%d robot images (latest=%dms) received in basestation tick at %fms.",
-                              repeatTimeCount,
-                              payload.frameTimeStamp,
-                              currentMessageTime);
-          
-          // Drop the rest of the images on the floor
-          return;
-          
-        }
+        PRINT_NAMED_WARNING("Robot.HandleImageChunk",
+                            "Ignoring %dth image (with t=%u) received during basestation tick at %fsec",
+                            _repeatedImageCount,
+                            payload.frameTimeStamp,
+                            currentMessageTime);
+        
+        // Drop the rest of the images on the floor
+        return;
       }
     }
     
-    ProcessImage(image);
-
+    //PRINT_NAMED_DEBUG("Robot.HandleImageChunk", "Image at t=%d is ready", _encodedImage.GetTimeStamp());
+    
+    // NOTE: _encodedImage will be invalidated by this call (SetNextImage does a swap internally).
+    //       So don't try to use it for anything else after this!
+    _visionComponentPtr->SetNextImage(_encodedImage);
+    
   } // if(isImageReady)
 
 }
@@ -909,8 +872,6 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveRobotState>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
@@ -963,18 +924,6 @@ void Robot::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 
   _longPathPlanner->GetTestPath(GetPose(), p, &motionProfile);
   ExecutePath(p);
-}
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::SaveImages& msg)
-{
-  _imageSaveMode = (SaveMode_t)msg.mode;
-}
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::SaveRobotState& msg)
-{
-  _stateSaveMode = (SaveMode_t)msg.mode;
 }
   
 template<>
