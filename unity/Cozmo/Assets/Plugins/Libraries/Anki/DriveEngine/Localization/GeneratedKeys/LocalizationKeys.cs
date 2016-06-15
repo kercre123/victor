@@ -13,8 +13,8 @@ public static class LocalizationKeys {
   public const string kInvestorDemoInvestorDemoScene2 = "investorDemo.investorDemoScene2";
   public const string kInvestorDemoInvestorDemoScene3 = "investorDemo.investorDemoScene3";
   public const string kInvestorDemoInvestorDemoScene4 = "investorDemo.investorDemoScene4";
-  public const string kSimonGame01Title = "simonGame01.title";
-  public const string kSimonGame01Description = "simonGame01.description";
+  public const string kSimonGameTitle = "simonGame.title";
+  public const string kSimonGameDescription = "simonGame.description";
   public const string kTreasureHuntGame01Title = "treasureHuntGame01.title";
   public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
   public const string kSelfieGame01Title = "selfieGame01.title";
