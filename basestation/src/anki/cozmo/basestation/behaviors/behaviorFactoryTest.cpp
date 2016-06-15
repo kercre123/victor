@@ -282,14 +282,11 @@ namespace Cozmo {
   
   void BehaviorFactoryTest::SendTestResultToGame(Robot& robot, FactoryTestResultCode resCode)
   {
+    _testResultEntry.result = resCode;
+    
     // Generate result struct
     ExternalInterface::FactoryTestResult testResMsg;
-    FactoryTestResultEntry &testRes = testResMsg.resultEntry;
-    testRes.result = resCode;
-    testRes.engineSHA1 = 0;   // TODO
-    testRes.utcTime = time(0);
-    testRes.stationID = _stationID;
-    std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
+    testResMsg.resultEntry = _testResultEntry;
 
     PrintAndLightResult(robot,resCode);
     robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
@@ -303,14 +300,20 @@ namespace Cozmo {
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       _testResult = resCode;
       
+      // Fill out result
+      _testResultEntry.result = resCode;
+      _testResultEntry.engineSHA1 = 0;   // TODO
+      _testResultEntry.utcTime = time(0);
+      _testResultEntry.stationID = _stationID;
+
       // Mark end time
-      FactoryTestResultEntry testRes;
-      _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _stateTransitionTimestamps[_testResultEntry.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + _testResultEntry.timestamps.size(), _testResultEntry.timestamps.begin());
 
       
       if (kBFT_EnableNVStorageWrites) {
-        u8 buf[testRes.Size()];
-        size_t numBytes = testRes.Pack(buf, sizeof(buf));
+        u8 buf[_testResultEntry.Size()];
+        size_t numBytes = _testResultEntry.Pack(buf, sizeof(buf));
         
         // Store test result to robot flash
         robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
