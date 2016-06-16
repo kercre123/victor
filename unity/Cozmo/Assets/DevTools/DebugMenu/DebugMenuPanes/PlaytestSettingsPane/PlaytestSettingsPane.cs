@@ -16,7 +16,6 @@ public class PlaytestSettingsPane : MonoBehaviour {
     // use reflection to change readonly field
     typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
     DataPersistenceManager.Instance.Save();
-    Application.Quit();
   }
 
 }
