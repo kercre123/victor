@@ -15,6 +15,7 @@
 #define PINC_CHGRX           10
 #define PINB_SCL               8   // XXX: Reverse these for digital pot
 #define PINB_SDA               9
+#error Building in EP3 mode - obsolete!
 #endif
 
 #define GPIOC_CHGTX          (1 << PINC_CHGTX)

@@ -239,7 +239,7 @@ void Update()
         // Display WiFi password, alternate rows about every 2 minutes
         const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
         u64 frame[COLS];
-        Draw::Copy(frame, Face::SLEEPY_EYES);
+        // Draw::Copy(frame, Face::SLEEPY_EYES); // XXX: Artwork was not popular with design
         Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
         Draw::Mask(frame, columnMask);
         Draw::Flip(frame);

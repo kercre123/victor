@@ -17,7 +17,9 @@ copy ..\..\staging\esp.factory.bin .
 copy ..\..\espressif_bootloader\firmware\cboot.bin esp.boot.bin
 @echo.
 @echo ===========================================
-@echo Note:  Remember to make esp_factory_safe ^&^&
+@echo Note:  Remember to:
+@echo make release
+@echo make esp_factory_safe
 @echo make -C espressif clean ^&^& make esp_factory
 @echo ===========================================
 @echo.
