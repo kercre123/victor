@@ -80,7 +80,7 @@ public class InitialCubesState : State {
   private bool TryUpdateCubeIdForGame(LightCube cube) {
     bool validCubesChanged = false;
     if (cube.IsInFieldOfView) {
-      if (IsReallyCloseToCube(cube)) {
+      if (IsReallyCloseToCube(cube) && MockRobotTray.Instance == null) {
         validCubesChanged |= RemoveFromValidCubes(cube);
       }
       else {
