@@ -39,7 +39,7 @@ MonoBehaviour:
       Key: minigame.difficulty.medium
     DifficultyDescription:
       Key: speedTap.difficulty.mediumDescription
-    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
+    AnimationPrefab: {fileID: 199182, guid: 6c04f5e3ff0324a61b3b4cd32188a86c, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.mediumDescription.locked
   - DifficultyId: 2
@@ -47,7 +47,7 @@ MonoBehaviour:
       Key: minigame.difficulty.hard
     DifficultyDescription:
       Key: speedTap.difficulty.hardDescription
-    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
+    AnimationPrefab: {fileID: 199182, guid: 6c8fdc1350b2e47de8c9d62774db759e, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.hardDescription.locked
   - DifficultyId: 3
@@ -55,6 +55,6 @@ MonoBehaviour:
       Key: minigame.difficulty.expert
     DifficultyDescription:
       Key: speedTap.difficulty.expertDescription
-    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
+    AnimationPrefab: {fileID: 199182, guid: 9cab816ee792b414e8c638ea89837813, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.expertDescription.locked
