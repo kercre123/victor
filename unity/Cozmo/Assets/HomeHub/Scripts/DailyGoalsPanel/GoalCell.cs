@@ -73,7 +73,7 @@ namespace Cozmo {
         }
         UpdateProgressionUI();
         SetProgress((float)goal.Progress / (float)goal.Target);
-        _RewardTextLabel.text = "+" + goal.PointsRewarded;
+        _RewardTextLabel.text = goal.PointsRewarded.ToString();
       }
 
       public bool GoalComplete() {
