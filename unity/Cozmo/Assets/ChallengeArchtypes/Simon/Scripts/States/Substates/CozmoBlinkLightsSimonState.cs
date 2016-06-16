@@ -18,7 +18,7 @@ namespace Simon {
       base.Enter();
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      RobotEngineManager.Instance.OnRobotAnimationEvent += OnRobotAnimationEvent;
+      RobotEngineManager.Instance.OnRobotAnimationEvent += HandleRobotAnimationEvent;
 
       // Animation needs to have a robot event
       _CurrentRobot.SendAnimationGroup(_AnimGroupName, HandleEndAnimationComplete);
@@ -27,10 +27,10 @@ namespace Simon {
     public override void Exit() {
       ResetLights();
 
-      RobotEngineManager.Instance.OnRobotAnimationEvent -= OnRobotAnimationEvent;
+      RobotEngineManager.Instance.OnRobotAnimationEvent -= HandleRobotAnimationEvent;
     }
 
-    private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
+    private void HandleRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
       if (animEvent.event_id == Anki.Cozmo.AnimEvent.DEVICE_AUDIO_TRIGGER ||
           animEvent.event_id == Anki.Cozmo.AnimEvent.TAPPED_BLOCK) {
         int cubeId = _TargetCube.ID;

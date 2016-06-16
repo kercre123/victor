@@ -49,6 +49,7 @@ enum uint_8 GameEvent
   OnSimonPlayerWin,
   OnDailyGoalCompleted,
   OnUnlockableEarned,
+  OnGameComplete,
   Count, // Keep count at end.
 }
 

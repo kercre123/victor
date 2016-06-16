@@ -4,6 +4,8 @@
 		<type fullname="UnityEngine.ParticleSystemRenderer" preserve="all" />
 		<type fullname="UnityEngine.ParticleSystem" preserve="all" />
 		<type fullname="UnityEngine.ParticleRenderer" preserve="all" />
-		<type fullname="UnityEditor.Animations.AnimatorController" preserve="all" />
+		<type fullname="UnityEngine.RuntimeAnimatorController" preserve="all" />
+		<type fullname="UnityEngine.AnimationClip" preserve="all" />
+		<type fullname="UnityEngine.Animator" preserve="all" />
 	</assembly>
 </linker>

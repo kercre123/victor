@@ -57,6 +57,7 @@ private:
   std::unique_ptr<Util::RollingFileLogger>    _engineToGameLog;
   std::unique_ptr<Util::RollingFileLogger>    _robotToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToRobotLog;
+  std::unique_ptr<Util::RollingFileLogger>    _engineToVizLog;
   
   std::string _allLogsBaseDirectory;
   std::string _devLoggingBaseDirectory;

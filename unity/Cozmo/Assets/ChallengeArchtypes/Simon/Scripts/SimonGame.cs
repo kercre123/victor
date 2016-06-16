@@ -78,7 +78,7 @@ namespace Simon {
                                                   new WaitForNextRoundSimonState(_FirstPlayer)),
                                                   DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
-                                                                     _Config.CubeTooCloseColor);
+                                                                    _Config.MinDistBetweenCubesMM, _Config.RotateSecScan);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -86,9 +86,6 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
-
-      SharedMinigameView.HideCozmoScoreboard();
-      SharedMinigameView.HidePlayerScoreboard();
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
@@ -195,7 +192,7 @@ namespace Simon {
       return audioEvent;
     }
 
-    public void OnTurnStage(PlayerType player, bool isListening) {
+    public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
       if (_SimonTurnSlide == null) {
         _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
                                            _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");

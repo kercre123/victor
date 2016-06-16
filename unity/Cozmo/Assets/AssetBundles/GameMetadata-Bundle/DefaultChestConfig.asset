@@ -15,17 +15,9 @@ MonoBehaviour:
     ItemId: experience
     LadderLevels:
     - Level: 0
-      Value: 10
-    - Level: 4
-      Value: 20
-    - Level: 8
       Value: 30
-    - Level: 12
-      Value: 40
-    - Level: 15
-      Value: 50
   RewardLadders:
-  - ItemId: treat
+  - ItemId: TestHexItem0
     LadderLevels:
     - Level: 0
       Value: 1

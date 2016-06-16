@@ -226,7 +226,8 @@ public class DailyGoalEditor : EditorWindow {
     string eventName = genData.CladEvent.ToString();
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
       EditorGUILayout.BeginVertical();
-      EditorGUILayout.LabelField(string.Format(">{0}", Localization.Get(genData.TitleKey).ToUpper()));
+      string titleLocfile = "";
+      EditorGUILayout.LabelField(string.Format(">{0}", LocalizationEditorUtility.GetTranslation(genData.TitleKey, out titleLocfile).ToUpper()));
       EditorGUI.indentLevel++;
       EditorGUILayout.LabelField(">>GOAL");
       EditorGUI.indentLevel++;
@@ -260,8 +261,8 @@ public class DailyGoalEditor : EditorWindow {
       EditorGUILayout.LabelField(">>LOC KEYS");
       EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();
-      genData.TitleKey = EditorGUILayout.TextField("TitleLocKey", genData.TitleKey ?? string.Empty);
-      genData.DescKey = EditorGUILayout.TextField("DescLocKey", genData.DescKey ?? string.Empty);
+      EditorDrawingUtility.DrawLocalizationString(ref genData.TitleKey, ref titleLocfile);
+      EditorDrawingUtility.DrawLocalizationString(ref genData.DescKey);
       EditorGUILayout.EndHorizontal();
       EditorGUI.indentLevel--;
       EditorGUI.indentLevel--;
@@ -302,13 +303,21 @@ public class DailyGoalEditor : EditorWindow {
         i--;
         continue;
       }
-      (cond as T).OnGUI();
+
+      EditorGUILayout.BeginHorizontal();
+
+      (cond as T).OnGUI_DrawUniqueControls();
+      if (GUI.Button(EditorGUILayout.GetControlRect(), "C--")) {
+        conditions.RemoveAt(i);
+      }
+
+      EditorGUILayout.EndHorizontal();
     }
 
     var nextRect = EditorGUILayout.GetControlRect();
 
     // show the add condition/action box at the bottom of the list
-    var newObject = ShowAddPopup<T>(nextRect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
+    var newObject = DrawAddConditionPopup<T>(nextRect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
 
     if (!EqualityComparer<T>.Default.Equals(newObject, default(T))) {
       conditions.Add(newObject);
@@ -317,17 +326,18 @@ public class DailyGoalEditor : EditorWindow {
   }
 
   // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
-  private T ShowAddPopup<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : GoalCondition {
+  private T DrawAddConditionPopup<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : GoalCondition {
     var popupRect = new Rect(rect.x, rect.y, rect.width - 50, rect.height);
     var plusRect = new Rect(rect.x + rect.width - 50, rect.y, 50, rect.height);
     index = EditorGUI.IntPopup(popupRect, index, names, indices);
 
-    if (GUI.Button(plusRect, "+")) {
+    if (GUI.Button(plusRect, "C++")) {
       var result = (T)(Activator.CreateInstance(types[index]));
       return result;
     }
     return default(T);
   }
+
 
   #endregion
 

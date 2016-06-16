@@ -82,13 +82,8 @@ namespace FaceEnrollment {
       CleanupFaceListSlide();
     }
 
-    private void EnterNameForNewFace(string optionalPrefilledName = "") {
+    private void EnterNameForNewFace() {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
-
-      if (string.IsNullOrEmpty(optionalPrefilledName) == false) {
-        _EnterNameSlideInstance.SetNameInputField(optionalPrefilledName);
-      }
-
       SharedMinigameView.ShowBackButton(() => ShowFaceListSlide(SharedMinigameView));
       CleanupFaceListSlide();
     }
@@ -110,7 +105,7 @@ namespace FaceEnrollment {
       SharedMinigameView.ShowSpinnerWidget();
 
       SharedMinigameView.ShowBackButton(() => {
-        EnterNameForNewFace(name);
+        EnterNameForNewFace();
         SharedMinigameView.HideSpinnerWidget();
       });
     }

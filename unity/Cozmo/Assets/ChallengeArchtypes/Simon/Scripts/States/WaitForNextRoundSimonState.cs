@@ -19,7 +19,7 @@ namespace Simon {
       _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
         Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
 
-      _GameInstance.OnTurnStage(_NextPlayer, true);
+      _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
 
       _GameInstance.SetCubeLightsDefaultOn();
 

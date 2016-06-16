@@ -33,7 +33,7 @@ namespace Cozmo {
       }
 
       private DailyGoal _Goal;
-     
+
       private float _GoalProg;
 
       public float Progress {
@@ -73,7 +73,7 @@ namespace Cozmo {
         }
         UpdateProgressionUI();
         SetProgress((float)goal.Progress / (float)goal.Target);
-        _RewardTextLabel.text = "+" + goal.PointsRewarded;
+        _RewardTextLabel.text = goal.PointsRewarded.ToString();
       }
 
       public bool GoalComplete() {
@@ -85,7 +85,7 @@ namespace Cozmo {
       }
 
       private void UpdateProgressionUI() {
-        _GoalLabel.text = _Goal.Title + " (" + _Goal.Progress + "/" + _Goal.Target + ")";
+        _GoalLabel.text = _Goal.Title;
 
         if (GoalComplete()) {
           _GoalLabel.color = UIColorPalette.CompleteTextColor;

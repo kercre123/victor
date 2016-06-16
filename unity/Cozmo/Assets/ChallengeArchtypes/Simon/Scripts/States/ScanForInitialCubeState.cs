@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace Simon {
   public class ScanForInitialCubeState : InitialCubesState {
-
-    private const float _kMinDistMM = 60.0f;
-    private const float _kRotateSec = 2.0f;
     private enum ScannedSetupCubeState {
       Unknown,
       Seen,
@@ -25,16 +22,18 @@ namespace Simon {
 
     private Dictionary<int, ScannedSetupCubeState> _SetupCubeState;
     private bool _CubesStateUpdated;
-    private Color _CubeTooCloseColor;
     private ScanPhase _ScanPhase;
-
     private BlockToCozmoPositionComparerByID _BlockPosComparer;
 
-    public ScanForInitialCubeState(State nextState, int cubesRequired, Color CubeTooCloseColor) : base(nextState, cubesRequired) {
+    private float _MinDistBetweenCubesMM = 60.0f;
+    private float _RotateSecScan = 2.0f;
+
+    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
-      _CubeTooCloseColor = CubeTooCloseColor;
       _BlockPosComparer = new BlockToCozmoPositionComparerByID(_CurrentRobot);
+      _MinDistBetweenCubesMM = MinDistBetweenCubesMM;
+      _RotateSecScan = RotateSecScan;
     }
 
     public override void Enter() {
@@ -49,9 +48,6 @@ namespace Simon {
     }
 
     // ignore base class events
-    protected override void HandleInFieldOfViewStateChanged(ObservedObject changedObject, ObservedObject.InFieldOfViewState oldState,
-                                                   ObservedObject.InFieldOfViewState newState) {
-    }
     protected override void CheckForNewlySeenCubes() {
     }
 
@@ -107,7 +103,7 @@ namespace Simon {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
         }
         else if (state == ScannedSetupCubeState.TooClose) {
-          cube.SetLEDs(_CubeTooCloseColor);
+          cube.SetLEDs(Cozmo.CubePalette.ErrorColor.lightColor);
         }
         else if (state == ScannedSetupCubeState.Ready) {
           cube.SetLEDs(Cozmo.CubePalette.ReadyColor.lightColor);
@@ -117,7 +113,7 @@ namespace Simon {
 
     private ScannedSetupCubeState GetCubeDistance(LightCube cubeA, LightCube cubeB) {
       float dist = Vector3.Distance(cubeA.WorldPosition, cubeB.WorldPosition);
-      if (dist < _kMinDistMM) {
+      if (dist < _MinDistBetweenCubesMM) {
         return ScannedSetupCubeState.TooClose;
       }
       return ScannedSetupCubeState.Ready;
@@ -231,7 +227,6 @@ namespace Simon {
           // Reset for another scan since hopefully they moved them
           _Game.CubeIdsForGame.Clear();
           _SetupCubeState.Clear();
-          // Reset to seen so we don't error out immediately again and scan for being too close...
           foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
             lightCube.Value.SetLEDsOff();
           }
@@ -248,19 +243,19 @@ namespace Simon {
           _Game.SharedMinigameView.EnableContinueButton(false);
           const float kLeftScanDeg = 45.0f;
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanDeg, _kRotateSec);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanDeg, _RotateSecScan);
         }
         else if (nextState == ScanPhase.ScanRight) {
           _Game.SharedMinigameView.EnableContinueButton(false);
           // Half speed since going further
           const float kRightScanDeg = -90.0f;
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, SimonGame.kTurnSpeed_rps / 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, SimonGame.kTurnSpeed_rps * 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
           // Half of the total Degrees cozmo rotates since these are absolute          
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _kRotateSec);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _RotateSecScan);
         }
         else if (nextState == ScanPhase.Stopped) {
           // Rotate towards center
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _kRotateSec);
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
           _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
           _Game.SharedMinigameView.EnableContinueButton(true);
         }
