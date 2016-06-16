@@ -181,10 +181,10 @@ static inline bool FlashBlock() {
   }
 
   // Verify that our header is valid
-  if (flash.packet.blockAddress == BOOT_LOADER_LENGTH) {
+  if (flash.packet.blockAddress == BOOT_HEADER_ADDRESS) {
     BootLoaderSignature* header = (BootLoaderSignature*) flash.packet.blockAddress;
 
-    if (!header->sig != HEADER_SIGNATURE || !header->evil_word) {
+    if (header->sig != HEADER_SIGNATURE || !header->evil_word) {
       return false;
     }
   }

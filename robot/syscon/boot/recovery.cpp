@@ -263,18 +263,19 @@ static inline bool FlashBlock() {
   }
  
   // Unaligned block
-  if (flash.packet.blockAddress % TRANSMIT_BLOCK_SIZE) {
+  if (packet.blockAddress % TRANSMIT_BLOCK_SIZE) {
     return false;
   }
 
   // Verify that our header is valid
-  if (flash.packet.blockAddress == BOOT_HEADER_LOCATION) {
-    BootLoaderSignature* header = (BootLoaderSignature*) flash.packet.blockAddress;
+  if (packet.blockAddress == BOOT_HEADER_LOCATION) {
+    BootLoaderSignature* header = (BootLoaderSignature*) packet.blockAddress;
 
-    if (!header->sig != HEADER_SIGNATURE || !header->evil_word) {
+    if (header->sig != HEADER_SIGNATURE || !header->evil_word) {
       return false;
     }
   }
+
   // Check the SHA-1 of the packet to verify that transmission actually worked
   uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
 
