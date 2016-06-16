@@ -39,9 +39,10 @@ namespace Comms {
 namespace Anki {
 namespace Cozmo {
   
-class IExternalInterface;
-class RobotManager;
 class CozmoEngine;
+class IExternalInterface;
+class RobotDataLoader;
+class RobotManager;
 class VizManager;
   
 namespace RobotInterface {
@@ -74,6 +75,7 @@ public:
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
   
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
+  RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
@@ -88,6 +90,7 @@ private:
   // Context holds onto these things for everybody:
   std::unique_ptr<Audio::AudioServer>             _audioServer;
   std::unique_ptr<Util::RandomGenerator>          _random;
+  std::unique_ptr<RobotDataLoader>                _dataLoader;
   std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<VizManager>                     _vizManager;
   std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;

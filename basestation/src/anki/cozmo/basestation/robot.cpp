@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -162,26 +163,10 @@ namespace Anki {
       
       _lastDebugStringHash = 0;
       
-      if (_context->GetDataPlatform() != nullptr)
-      {
-        FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
-      }
-
       // Read in Mood Manager Json
       if (nullptr != _context->GetDataPlatform())
       {
-        Json::Value moodConfig;
-        std::string jsonFilename = "config/basestation/config/mood_config.json";
-        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, moodConfig);
-        if (!success)
-        {
-          PRINT_NAMED_ERROR("Robot.MoodConfigJsonNotFound",
-                            "Mood Json config file %s not found.",
-                            jsonFilename.c_str());
-        }
-        
-        _moodManager->Init(moodConfig);
-        
+        _moodManager->Init(_context->GetDataLoader()->GetRobotMoodConfig());
         LoadEmotionEvents();
       }
 
@@ -190,26 +175,8 @@ namespace Anki {
       _progressionUnlockComponent->SendUnlockStatus();
       
       // load available behaviors into the behavior factory
-      // rsam: 05/02/16 we are moving behaviors to basestation, but at the moment we support both paths for legacy
-      // reasons. Eventually I will move them to BS
-      LoadBehaviors("assets/behaviors/");
-      LoadBehaviors("config/basestation/config/behaviors/");
-      
-      // Read in behavior manager Json
-      Json::Value behaviorConfig;
-      if (nullptr != _context->GetDataPlatform())
-      {
-        std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
-        if (!success)
-        {
-          PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonFailed",
-                            "Behavior Json config file %s failed to parse.",
-                            jsonFilename.c_str());
-          behaviorConfig.clear();
-        }
-      }
-      _behaviorMgr.InitConfiguration(behaviorConfig);
+      LoadBehaviors();
+      _behaviorMgr.InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
 
       
       SetHeadAngle(_currentHeadAngle);
@@ -231,20 +198,7 @@ namespace Anki {
       
       if (nullptr != _context->GetDataPlatform())
       {
-        // Read in parameters from the Json config file:
-        Json::Value visionConfig;
-        std::string jsonFilename = "config/basestation/config/vision_config.json";
-        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
-                                                               jsonFilename,
-                                                               visionConfig);
-        if (!success)
-        {
-          PRINT_NAMED_ERROR("Robot.VisionConfigJsonNotFound",
-                            "Vision Json config file %s not found.",
-                            jsonFilename.c_str());
-        }
-
-        _visionComponentPtr->Init(visionConfig);
+        _visionComponentPtr->Init(_context->GetDataLoader()->GetRobotVisionConfig());
       }
       
     } // Constructor: Robot
@@ -1521,69 +1475,44 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-   
-    
+
+
     void Robot::LoadEmotionEvents()
     {
-      if (_context->GetDataPlatform() == nullptr)
+      const auto& emotionEventData = _context->GetDataLoader()->GetEmotionEventJsons();
+      for (const auto& fileJsonPair : emotionEventData)
       {
-        return;
-      }
-      
-      // For now we'll keep this in the engine, rather than in e.g. "assets/emotionevents/" as they're more
-      // heavily coupled with the code than with assets
-      
-      const std::string eventFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/emotionevents/");
-      
-      DIR* dir = opendir(eventFolder.c_str());
-      if ( dir != nullptr)
-      {
-        dirent* ent = nullptr;
-        while ( (ent = readdir(dir)) != nullptr)
+        const auto& filename = fileJsonPair.first;
+        const auto& eventJson = fileJsonPair.second;
+        if (!eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
         {
-          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
-          {
-            std::string fullFileName = eventFolder + ent->d_name;
-            
-            Json::Value eventJson;
-            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, eventJson);
-            if (success && !eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
-            {
-              PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", fullFileName.c_str());
-            }
-            else
-            {
-              PRINT_NAMED_WARNING("Robot.LoadEmotionEvents", "Failed to read '%s'", fullFileName.c_str());
-            }
-          }
+          PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("Robot.LoadEmotionEvents", "Failed to read '%s'", filename.c_str());
         }
       }
     }
-    
-    void Robot::LoadBehaviors(const std::string& path)
+
+    void Robot::LoadBehaviors()
     {
-      if (_context->GetDataPlatform() == nullptr)
+      const auto& behaviorData = _context->GetDataLoader()->GetBehaviorJsons();
+      for( const auto& fileJsonPair : behaviorData )
       {
-        return;
-      }
-      
-      const std::string behaviorFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, path);
-      std::vector<std::string> behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
-      for( const auto& fullFileName : behaviorJsonFiles )
-      {
-        Json::Value behaviorJson;
-        const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
-        if (success && !behaviorJson.empty())
+        const auto& filename = fileJsonPair.first;
+        const auto& behaviorJson = fileJsonPair.second;
+        if (!behaviorJson.empty())
         {
           // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
           const Result ret = _behaviorMgr.CreateBehaviorFromConfiguration(behaviorJson);
           if ( ret != RESULT_OK ) {
-            PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create behavior from '%s'", fullFileName.c_str());
+            PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create behavior from '%s'", filename.c_str());
           }
         }
-        else if( ! success )
+        else
         {
-          PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
+          PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", filename.c_str());
         }
         // don't print anything if we read an empty json
       }

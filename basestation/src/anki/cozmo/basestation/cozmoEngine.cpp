@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/multiClientChannel.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
@@ -171,7 +172,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   }
   
   _isInitialized = true;
-  
+
+  _context->GetDataLoader()->LoadData();
   _context->GetRobotManager()->Init(_config);
   
   return RESULT_OK;

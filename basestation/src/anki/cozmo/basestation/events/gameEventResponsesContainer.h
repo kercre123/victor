@@ -31,7 +31,7 @@ namespace Cozmo {
   class GameEventResponsesContainer
   {
   public:
-    bool        Load(Anki::Util::Data::DataPlatform* data, std::string path);
+    bool        Load(const Anki::Util::Data::DataPlatform* data, std::string path);
     
     std::string GetResponse(Anki::Cozmo::GameEvent ev);
     bool        HasResponse(Anki::Cozmo::GameEvent ev);

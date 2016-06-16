@@ -122,21 +122,13 @@ protected:
   std::vector<RobotID_t>     _IDs;
   const CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
-  std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
-  std::unique_ptr<AnimationGroupContainer>    _animationGroups;
-  std::unique_ptr<FirmwareUpdater>            _firmwareUpdater;
-  std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-  std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
-  std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
+  CannedAnimationContainer* const _cannedAnimations;
+  AnimationGroupContainer* const _animationGroups;
+  GameEventResponsesContainer* const _gameEventResponses;
+  std::unique_ptr<FirmwareUpdater> _firmwareUpdater;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
-  void ReadAnimationDirImpl(const std::string& animationDir);
-  void ReadAnimationFile(const char* filename);
 
-  void ReadAnimationGroupDir();
-  void ReadAnimationGroupFile(const char* filename);
-  
 }; // class RobotManager
   
 } // namespace Cozmo

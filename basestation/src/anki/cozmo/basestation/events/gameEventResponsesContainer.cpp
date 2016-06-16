@@ -21,7 +21,7 @@ namespace Anki
 namespace Cozmo
 {
   
-  bool GameEventResponsesContainer::Load(Anki::Util::Data::DataPlatform* data, std::string path)
+  bool GameEventResponsesContainer::Load(const Anki::Util::Data::DataPlatform* data, std::string path)
   {
     if (nullptr == data )
     {

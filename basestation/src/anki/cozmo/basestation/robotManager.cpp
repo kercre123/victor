@@ -7,6 +7,7 @@
 //
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
@@ -37,10 +38,10 @@ namespace Anki {
     RobotManager::RobotManager(const CozmoContext* context)
     : _context(context)
     , _robotEventHandler(context)
-    , _cannedAnimations(new CannedAnimationContainer())
-    , _animationGroups(new AnimationGroupContainer())
+    , _cannedAnimations(context->GetDataLoader()->GetCannedAnimations())
+    , _animationGroups(context->GetDataLoader()->GetAnimationGroups())
+    , _gameEventResponses(context->GetDataLoader()->GetGameEventResponses())
     , _firmwareUpdater(new FirmwareUpdater(context))
-    , _gameEventResponses(new GameEventResponsesContainer())
     , _robotMessageHandler(new RobotInterface::MessageHandler())
     {
       using namespace ExternalInterface;
@@ -75,23 +76,12 @@ namespace Anki {
     
       Anki::Util::Time::PushTimedStep("RobotManager::Init");
       _robotMessageHandler->Init(config, this, _context);
-      
-      Anki::Util::Time::PushTimedStep("ReadAnimationDir");
-      ReadAnimationDir();
-      Anki::Util::Time::PopTimedStep();
-      
-      Anki::Util::Time::PushTimedStep("ReadAnimationGroupDir");
-      ReadAnimationGroupDir();
-      Anki::Util::Time::PopTimedStep();
-      
-      Anki::Util::Time::PushTimedStep("ReadAnimationGroupMapsDir");
-      _gameEventResponses->Load(_context->GetDataPlatform(),"assets/animationGroupMaps");
-      Anki::Util::Time::PopTimedStep();
-      
       Anki::Util::Time::PopTimedStep(); // RobotManager::Init
       
       Anki::Util::Time::PrintTimedSteps();
       Anki::Util::Time::ClearSteps();
+
+      BroadcastAvailableAnimations();
       
       auto endTime = std::chrono::system_clock::now();
       auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
@@ -245,70 +235,8 @@ namespace Anki {
     
     void RobotManager::ReadAnimationDir()
     {
-      if (nullptr == _context || nullptr ==_context->GetDataPlatform())
-      {
-        ASSERT_NAMED("RobotManager.ReadAnimations","No context or data platform for reading animations!");
-      }
-      
-      // Disable super-verbose warnings about clipping face parameters in json files
-      // To help find bad/deprecated animations, try removing this.
-      ProceduralFace::EnableClippingWarning(false);
-      
-      ReadAnimationDirImpl("assets/animations/");
-      ReadAnimationDirImpl("config/basestation/animations/");
-      
-      ProceduralFace::EnableClippingWarning(true);
-      
+      _context->GetDataLoader()->LoadAnimations();
       BroadcastAvailableAnimations();
-    }
-    
-    void RobotManager::ReadAnimationDirImpl(const std::string& animationDir)
-    {
-      Anki::Util::Time::ScopedStep scopeTimer(animationDir.c_str());
-      
-      const std::string animationFolder =
-      _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
-      
-      auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, "json", true);
-      
-      for (const auto& path : filePaths)
-      {
-        struct stat attrib{0};
-        int result = stat(path.c_str(), &attrib);
-        if (result == -1) {
-          PRINT_NAMED_WARNING("RobotManager.ReadAnimationFile", "could not get mtime for %s", path.c_str());
-          continue;
-        }
-        bool loadFile = false;
-        auto mapIt = _loadedAnimationFiles.find(path);
-#ifdef __APPLE__  // TODO: COZMO-1057
-        time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
-#else
-        time_t tmpSeconds = attrib.st_mtime;
-#endif
-        if (mapIt == _loadedAnimationFiles.end()) {
-          _loadedAnimationFiles.insert({path, tmpSeconds});
-          loadFile = true;
-        } else {
-          if (mapIt->second < tmpSeconds) {
-            mapIt->second = tmpSeconds;
-            loadFile = true;
-          } else {
-            //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
-          }
-        }
-        if (loadFile) {
-          ReadAnimationFile(path.c_str());
-        }
-      }
-#if ANKI_DEV_CHEATS && !ANDROID
-      // Only when not shipping use our temp dir
-      std::string test_anim = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, USBTunnelServer::TempAnimFileName);
-      if( Util::FileUtils::FileExists(test_anim) )
-      {
-        ReadAnimationFile(test_anim.c_str());
-      }
-#endif
     }
     
     void RobotManager::BroadcastAvailableAnimations()
@@ -324,92 +252,6 @@ namespace Anki {
         _context->GetExternalInterface()->
           BroadcastToGame<ExternalInterface::EndOfMessage>(ExternalInterface::MessageType::AnimationAvailable);
         PRINT_NAMED_DEBUG("RobotManager.BroadcastAvailableAnimations", "Supposedly sent EndOfMessage");
-      }
-    }
-    
-    // Read the animation data from a file
-    void RobotManager::ReadAnimationFile(const char* filename)
-    {
-      Json::Value animDefs;
-      const bool success = _context->GetDataPlatform()->readAsJson(filename, animDefs);
-      std::string animationId;
-      if (success && !animDefs.empty()) {
-        //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
-        _cannedAnimations->DefineFromJson(animDefs, animationId);
-        
-        if(std::string(filename).find(animationId) == std::string::npos) {
-          PRINT_NAMED_WARNING("RobotManager.ReadAnimationFile.AnimationNameMismatch",
-                              "Animation name '%s' does not match seem to match "
-                              "filename '%s'", animationId.c_str(), filename);
-        }
-      }
-    }
-    
-    // Read the animationGroups in a dir
-    void RobotManager::ReadAnimationGroupDir()
-    {
-      if (nullptr == _context || nullptr ==_context->GetDataPlatform())
-      {
-        ASSERT_NAMED("RobotManager.ReadAnimationGroupDir","No context or data platform for reading animation groups!");
-      }
-      
-      const std::string animationGroupFolder =
-      _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
-      
-      auto filePaths = Util::FileUtils::FilesInDirectory(animationGroupFolder, true, "json",true);
-      for (const auto& path : filePaths)
-      {
-        struct stat attrib{0};
-        int result = stat(path.c_str(), &attrib);
-        if (result == -1) {
-          PRINT_NAMED_WARNING("RobotManager.ReadAnimationGroupFile", "could not get mtime for %s", path.c_str());
-          continue;
-        }
-        bool loadFile = false;
-        auto mapIt = _loadedAnimationGroupFiles.find(path);
-#ifdef __APPLE__  // TODO: COZMO-1057
-        time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
-#else
-        time_t tmpSeconds = attrib.st_mtime;
-#endif
-        if (mapIt == _loadedAnimationGroupFiles.end()) {
-          _loadedAnimationGroupFiles.insert({path, tmpSeconds});
-          loadFile = true;
-        } else {
-          if (mapIt->second < tmpSeconds) {
-            mapIt->second = tmpSeconds;
-            loadFile = true;
-          } else {
-            //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
-          }
-        }
-        if (loadFile) {
-          ReadAnimationGroupFile(path.c_str());
-        }
-      }
-      
-    }
-    
-    // Read the animation groups in a dir
-    void RobotManager::ReadAnimationGroupFile(const char* filename)
-    {
-      Json::Value animGroupDef;
-      const bool success = _context->GetDataPlatform()->readAsJson(filename, animGroupDef);
-      if (success && !animGroupDef.empty()) {
-        
-        std::string fullName(filename);
-        
-        // remove path
-        auto slashIndex = fullName.find_last_of("/");
-        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
-        // remove extension
-        auto dotIndex = jsonName.find_last_of(".");
-        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
-        
-        PRINT_NAMED_INFO("RobotManager.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
-        
-        ASSERT_NAMED(nullptr != _cannedAnimations, "RobotManager.ReadAnimationGroupFile.NullCannedAnimations");
-        _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
       }
     }
     

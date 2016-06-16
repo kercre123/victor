@@ -51,7 +51,7 @@ namespace Cozmo {
   
   
   // Read the animations in a dir
-  void FaceAnimationManager::ReadFaceAnimationDir(Util::Data::DataPlatform* dataPlatform)
+  void FaceAnimationManager::ReadFaceAnimationDir(const Util::Data::DataPlatform* dataPlatform)
   {
     if (dataPlatform == nullptr) { return; }
     const std::string animationFolder = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/faceAnimations/");

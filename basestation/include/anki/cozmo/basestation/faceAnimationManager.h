@@ -45,7 +45,7 @@ namespace Cozmo {
     inline static FaceAnimationManager* getInstance();
     static void removeInstance();
     
-    void ReadFaceAnimationDir(Util::Data::DataPlatform* dataPlatform);
+    void ReadFaceAnimationDir(const Util::Data::DataPlatform* dataPlatform);
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.

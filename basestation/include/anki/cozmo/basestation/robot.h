@@ -525,8 +525,8 @@ public:
     void   StopSound();
   
     // Load in all data-driven behaviors
-    void LoadBehaviors(const std::string& path);
-  
+    void LoadBehaviors();
+
     // Load in all data-driven emotion events
     void LoadEmotionEvents();
 

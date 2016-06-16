@@ -1,4 +1,5 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
@@ -16,6 +17,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   : _externalInterface(externalInterface)
   , _dataPlatform(dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
+  , _dataLoader(new RobotDataLoader(dataPlatform))
   , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())
   , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
@@ -26,10 +28,11 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
     _audioServer.reset(new Audio::AudioServer(new Audio::AudioController(dataPlatform)));
   }
 }
-  
+
+
 CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 {
-  
+
 }
 
 CozmoContext::~CozmoContext()
