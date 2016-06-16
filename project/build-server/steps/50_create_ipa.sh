@@ -37,6 +37,8 @@ IPA_FILE="${ANKI_BUILD_BUNDLE_NAME}-${ANKI_BUILD_CONFIGURATION}-${ANKI_BUILD_PRO
 rm -f "${BUILT_PRODUCTS_PATH}/${ANKI_BUILD_BUNDLE_NAME}.ipa"
 rm -f "${ARTIFACT_ROOT}/${IPA_FILE}"
 
+/usr/bin/codesign --verify -vvvv ${APP_BUNDLE}
+
 xcrun \
     -sdk ${SDK_PLATFORM} \
     PackageApplication \
