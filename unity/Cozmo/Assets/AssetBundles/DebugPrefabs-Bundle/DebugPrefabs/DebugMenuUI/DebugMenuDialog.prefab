@@ -412,6 +412,8 @@ MonoBehaviour:
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
   - name: FaceEnrollment
     panePrefab: {fileID: 184652, guid: 0df6b876209ca40c5b32f20b561782da, type: 2}
+  - name: Playtest
+    panePrefab: {fileID: 119064, guid: 9450d0bb23c9a405dadefc00ad27edd0, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
@@ -596,7 +598,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 18
+      value: 19
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -736,6 +738,14 @@ Prefab:
       propertyPath: _DebugContentPaneData.Array.data[17].panePrefab
       value: 
       objectReference: {fileID: 184652, guid: 0df6b876209ca40c5b32f20b561782da, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[18].name
+      value: Playtest
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[18].panePrefab
+      value: 
+      objectReference: {fileID: 119064, guid: 9450d0bb23c9a405dadefc00ad27edd0, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 159258}
