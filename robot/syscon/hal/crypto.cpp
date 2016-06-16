@@ -68,6 +68,7 @@ void Crypto::manage(void) {
     case CRYPTO_ECB:
       aes_ecb((ecb_data_t*) task->state);
       break ;
+    /*
     case CRYPTO_AES_DECODE:
       {
         uint8_t* data = (uint8_t*) task->state;
@@ -91,6 +92,7 @@ void Crypto::manage(void) {
     case CRYPTO_FINISH_DIFFIE_HELLMAN:
       dh_finish(aes_key(), (DiffieHellman*) task->state);
       break ;
+    */
   }
 
   if (task->callback) {
