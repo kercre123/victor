@@ -40,6 +40,5 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   BetweenRoundsMusic:
-    _Music: -527946100
-  CubeTooFarColor: {r: 1, g: 1, b: 0, a: 1}
+    _Music: 1963393666
   CubeTooCloseColor: {r: 1, g: 0, b: 0, a: 1}
