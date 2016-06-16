@@ -53,6 +53,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   }
 
   void OnDestroy() {
+    if (_CoreUpgradeDetailsViewInstance != null) {
+      _CoreUpgradeDetailsViewInstance.CloseView();
+    }
+
     RobotEngineManager.Instance.OnRequestSetUnlockResult -= HandleRequestSetUnlockResult;
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded -= HandleItemValueChanged;
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved -= HandleItemValueChanged;
