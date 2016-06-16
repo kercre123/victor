@@ -156,6 +156,7 @@ public:
   
     // Accessors
     const RobotID_t        GetID()         const;
+    u32                    GetSerialNumber() const {return _serialNumber;}
     BlockWorld&            GetBlockWorld()       {return _blockWorld;}
     const BlockWorld&      GetBlockWorld() const {return _blockWorld;}
     
@@ -743,6 +744,7 @@ public:
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
     // The robot's identifier
     RobotID_t         _ID;
+    u32               _serialNumber;
     bool              _isPhysical = false;
   
     // Whether or not sync time was acknowledged by physical robot
