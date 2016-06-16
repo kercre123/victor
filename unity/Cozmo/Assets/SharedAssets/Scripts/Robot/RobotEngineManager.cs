@@ -123,6 +123,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
+  private U2G.ResetFirmware _ResetFirmwareMessage = new U2G.ResetFirmware();
 
   public bool InitSkillSystem;
 
@@ -908,6 +909,11 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void UpdateFirmware(int firmwareVersion) {
     Message.UpdateFirmware = Singleton<U2G.UpdateFirmware>.Instance.Initialize(firmwareVersion);
+    SendMessage();
+  }
+
+  public void ResetFirmware() {
+    Message.ResetFirmware = _ResetFirmwareMessage;
     SendMessage();
   }
 

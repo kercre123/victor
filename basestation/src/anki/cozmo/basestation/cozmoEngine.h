@@ -131,6 +131,7 @@ protected:
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleUpdateFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void SetEngineState(EngineState newState);
   
   Result AddRobot(RobotID_t robotID);

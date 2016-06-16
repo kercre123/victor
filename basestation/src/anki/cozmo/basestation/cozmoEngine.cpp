@@ -90,10 +90,12 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   
   auto updateFirmwareCallback = std::bind(&CozmoEngine::HandleUpdateFirmware, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UpdateFirmware, updateFirmwareCallback));
+
+  auto resetFirmwareCallback = std::bind(&CozmoEngine::HandleResetFirmware, this, std::placeholders::_1);
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ResetFirmware, resetFirmwareCallback));
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
-  
 
 CozmoEngine::~CozmoEngine()
 {
@@ -200,7 +202,7 @@ void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::Messag
     SetEngineState(EngineState::UpdatingFirmware);
   }
 }
-  
+
 bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
 {
   if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
@@ -215,7 +217,16 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
   return RESULT_OK;
 }
-  
+
+void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  for (RobotID_t robotId : GetRobotIDList())
+  {
+    PRINT_NAMED_INFO("CozmoEngine.HandleResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
+    _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
+  }
+}
+
 Result CozmoEngine::Update(const float currTime_sec)
 {
   if(!_isInitialized) {
