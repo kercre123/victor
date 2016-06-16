@@ -117,7 +117,7 @@ void BehaviorDistractedByObject::HandleObjectObserved(const Robot& robot, const 
     return;
   }
   
-  // Don't ever get distracted by an object being carried or docked with
+  // Never get distracted by an object being carried or docked with
   if(msg.objectID == robot.GetCarryingObject() ||
      msg.objectID == robot.GetDockObject())
   {
