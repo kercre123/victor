@@ -26,7 +26,6 @@ namespace Cozmo {
   FactoryTestLogger::FactoryTestLogger()
   : _logDir("")
   , _logFileName("")
-  , _dataPlatform(nullptr)
   {
     
   }
@@ -36,18 +35,13 @@ namespace Cozmo {
     CloseLog();
   }
   
-  void FactoryTestLogger::SetDataPlatform(Util::Data::DataPlatform* dataPlatform)
-  {
-    _dataPlatform = dataPlatform;
-  }
-  
 
-  bool FactoryTestLogger::StartLog(const std::string& logName, bool appendDateTime)
+  bool FactoryTestLogger::StartLog(const std::string& logName, bool appendDateTime, Util::Data::DataPlatform* dataPlatform)
   {
     // Generate new log dir name
     std::string newLogDir = "";
-    if (_dataPlatform) {
-      newLogDir = Util::FileUtils::FullFilePath({_dataPlatform->pathToResource(Util::Data::Scope::Cache, _kLogRootDirName), logName});
+    if (dataPlatform) {
+      newLogDir = Util::FileUtils::FullFilePath({dataPlatform->pathToResource(Util::Data::Scope::Cache, _kLogRootDirName), logName});
     } else {
       newLogDir = Util::FileUtils::FullFilePath({_kLogRootDirName, logName});
     }
@@ -201,6 +195,11 @@ namespace Cozmo {
   {
     if (_logDir.empty()) {
       PRINT_NAMED_INFO("FactoryTestLogger.AddFile.LogNotStarted", "Ignoring because log not started");
+      return false;
+    }
+    
+    if (filename.empty()) {
+      PRINT_NAMED_WARNING("FactoryTestLogger.AddFile.EmptyFilename", "");
       return false;
     }
     

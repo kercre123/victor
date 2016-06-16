@@ -156,7 +156,7 @@ public:
   
     // Accessors
     const RobotID_t        GetID()         const;
-    u32                    GetSerialNumber() const {return _serialNumber;}
+    const u32              GetSerialNumber() const {return _serialNumber;}
     BlockWorld&            GetBlockWorld()       {return _blockWorld;}
     const BlockWorld&      GetBlockWorld() const {return _blockWorld;}
     

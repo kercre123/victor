@@ -83,10 +83,8 @@ namespace Anki {
         std::string _drivingLoopAnim = "";
         std::string _drivingEndAnim = "";
 
-        // Manufacturing data save folder name
-        std::string _mfgDataSaveFolder = "";
+        // For exporting formatted log of mfg test data from robot
         FactoryTestLogger _factoryTestLogger;
-        
         
       } // private namespace
     
@@ -1809,15 +1807,8 @@ namespace Anki {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight);
                 }
                 
-                // Set mfg save folder and file
-                auto time_point = std::chrono::system_clock::now();
-                time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
-                auto nowLocalTime = localtime(&nowTime);
-                char buf[80];
-                strftime(buf, sizeof(buf), "%F_%H-%M-%S/", nowLocalTime);
-                
-                _mfgDataSaveFolder = buf;
-                _factoryTestLogger.StartLog(_mfgDataSaveFolder);
+                // Start log
+                _factoryTestLogger.StartLog("", true);
                 break;
               }
               case (s32)'*':

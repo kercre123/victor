@@ -37,11 +37,9 @@ public:
   FactoryTestLogger();
   ~FactoryTestLogger();
   
-  void SetDataPlatform(Util::Data::DataPlatform* dataPlatform);
-  
   // Specify the name of the log (i.e. log folder)
-  // Optionally, determine whether
-  bool StartLog(const std::string& logName, bool appendDateTime = false);
+  // Optionally, specify if you want to append the current date and time to the log name
+  bool StartLog(const std::string& logName, bool appendDateTime = false, Util::Data::DataPlatform* dataPlatform = nullptr);
   void CloseLog();
   
   std::string GetLogName() { return _logDir; }
@@ -66,8 +64,6 @@ private:
   std::string _logFileName;
 
   std::ofstream _logFileHandle;
-  
-  Util::Data::DataPlatform* _dataPlatform;
 };
 
 } // end namespace Cozmo
