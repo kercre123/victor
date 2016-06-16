@@ -377,7 +377,7 @@ void ProgramCubeWithSerial()
     
     // Patch each copy of the serial number
     Patch(cubeboot+0x3931, __REV(0xca11ab1e), serial);
-    Patch(cubeboot+0x3948, __REV(0xca11ab1e), serial);
+    Patch(cubeboot+0x395f, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x3ff0, 0xca11ab1e, __REV(serial));  // Reversed copy (thanks Vandiver)
 #endif
     

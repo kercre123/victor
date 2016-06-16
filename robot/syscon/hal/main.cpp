@@ -140,7 +140,6 @@ int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
-  Bootloader::init();
   Storage::init();
 
   // Initialize our scheduler
@@ -149,6 +148,7 @@ int main(void)
   // Initialize the SoftDevice handler module.
   Bluetooth::init();
   Crypto::init();
+  Lights::init();
 
   // Setup all tasks
   Motors::init();
@@ -157,7 +157,6 @@ int main(void)
   Battery::init();
   Timer::init();
   Backpack::init();
-  Lights::init();
 
   // Startup the system
   Battery::powerOn();
@@ -168,7 +167,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
+  enterOperatingMode(BODY_IDLE_OPERATING_MODE);
   setupOperatingMode();
 
   Motors::start();

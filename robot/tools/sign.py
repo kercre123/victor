@@ -184,10 +184,10 @@ def get_version_comment_block():
     dirt = execute('git', 'status')
 
     comment = {
+        #'dirt': dirt[:1000],
         'version': version.strip(),
         'date': time.ctime(),
         'time': time.time(),
-        'dirt': dirt[:1000]
     }
 
     encodded = json.dumps(comment).encode("UTF-8")
@@ -203,7 +203,8 @@ def get_version_comment_block():
     comment['time'] = time.time()
     p = subprocess.Popen(['git', 'status'], stdout=subprocess.PIPE)
     assert p.wait() == 0
-    comment['dirt'] = p.communicate()[0].decode()[:1000]
+    #NOTE: Commenting this out, as it is probably not best for the wild
+    #comment['dirt'] = p.communicate()[0].decode()[:1000]
     encodded = json.dumps(comment).encode("UTF-8")
     paddingLength = BLOCK_LENGTH - len(encodded)
     assert paddingLength > 0, "Must have null termination"

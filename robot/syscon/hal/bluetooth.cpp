@@ -15,8 +15,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-#define DISABLE_CRYPTO_CHECK
-#define DISABLE_AUTHENTIFICATION
+//#define DISABLE_CRYPTO_CHECK
+//#define DISABLE_AUTHENTIFICATION
 
 #define member_size(type, member) sizeof(((type *)0)->member)
   

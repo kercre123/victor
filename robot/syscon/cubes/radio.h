@@ -52,6 +52,7 @@ namespace Radio {
   void advertise();
   void shutdown();
 
+  void sendTestPacket(void) ;
   void discover();
   void setPropLights(unsigned int slot, const Anki::Cozmo::LightState *state);
   void assignProp(unsigned int slot, uint32_t accessory);

@@ -206,11 +206,15 @@ void safeWrite(char* filename, int options)
 // Write a cube image
 void cubeWrite(char* filename, int options)
 {
-  // Check patch for valid start location
+  // Check patch for valid start location, get hardware version from last byte of filename
   int start = (m_stageImage[1] << 8) | (u8)m_stageImage[2];
-  printf("Start address 0x%04x\n", start);
+  int hwVer = filename[strlen(filename)-1] - '0';
+  printf("Start address 0x%04x, hardware version %x\n", start, hwVer);
   if (m_stageImage[0] != 0x2 || (start & 0xff))
     bye("FAIL:  Cube patch must be linked to start on a 256 byte boundary");
+  if (hwVer < 4 || hwVer > 9)
+    bye("Accessory filename must end in a valid hardware version\n");
+
   // Patch must start with mov sp, ... instruction - denoting proper startup.a51 file
   // Also, you can't just hack this here - the bootloader is looking for this combination
   if (m_stageImage[start] != 0x75)
@@ -248,7 +252,7 @@ void cubeWrite(char* filename, int options)
   m_safeImage[4] = (len-16);  m_safeImage[5] = (len-16)>>8;
   m_safeImage[6] = version;   m_safeImage[7] = version>>8;
   m_safeImage[8] = start>>8;
-  m_safeImage[9] = 4;         // HW version 3=EP2, 4=EP3
+  m_safeImage[9] = hwVer;         // HW version 3=EP2, 4=EP3, 6=Pilot
 
   FILE *fp = fopen(filename, "wb");
   printf("Writing %s...", filename);

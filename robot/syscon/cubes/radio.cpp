@@ -11,12 +11,10 @@
 #include "micro_esb.h"
   
 #include "protocol.h"
-#include "random.h"
 #include "hardware.h"
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
-#include "crypto.h"
 #include "lights.h"
 #include "messages.h"
 
@@ -81,6 +79,7 @@ static RadioState        radioState;
 
 void Radio::init() {
   ota_task = RTOS::create(ota_ack_timeout, false);
+  lightGamma = 0x100;
 }
 
 void Radio::advertise(void) {
@@ -95,7 +94,6 @@ void Radio::advertise(void) {
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
-  lightGamma = 0x100;
 
   uesb_init(&uesb_config);
   
@@ -204,6 +202,20 @@ static void OTARemoteDevice(uint32_t id) {
   uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
 
   ota_send_next_block();
+}
+
+void Radio::sendTestPacket(void) {
+  const AdvertisePacket test_packet = {
+    0x0D0B3D09,
+    0xFF03,
+    0xE3FF,
+    0x04,
+    0xFF
+  };
+
+  static const uesb_address_desc_t test_address = { 81, 0xE7E7E7E7 };
+
+  uesb_write_tx_payload(&test_address, &test_packet, sizeof(test_packet));
 }
 
 void uesb_event_handler(uint32_t flags)
