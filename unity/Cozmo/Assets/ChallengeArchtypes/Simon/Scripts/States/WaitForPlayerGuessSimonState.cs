@@ -38,7 +38,7 @@ namespace Simon {
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnPlayerLoseAnimationDone);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
 
-      _GameInstance.OnTurnStage(PlayerType.Human, false);
+      _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Human, false);
     }
 
     public override void Exit() {

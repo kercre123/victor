@@ -60,6 +60,15 @@ namespace Cozmo {
     }
 
     [SerializeField]
+    private CubeColor _ErrorColor;
+
+    public static CubeColor ErrorColor {
+      get {
+        return Instance._ErrorColor;
+      }
+    }
+
+    [SerializeField]
     private CubeCycleColors _TapMeColor;
 
     public static CubeCycleColors TapMeColor {

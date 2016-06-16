@@ -81,9 +81,9 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
   }
 
-  public void LightUpCubes(List<int> cubeIndecies) {
+  public void LightUpCubes(List<int> cubeIndices) {
     for (int i = 0; i < _CubeImages.Length; i++) {
-      if (cubeIndecies.Contains(i)) {
+      if (cubeIndices.Contains(i)) {
         _CubeImages[i].SetIcon(_InViewColor.uiSprite);
         _CubeImages[i].SetAlpha(1f);
       }
@@ -92,7 +92,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
         _CubeImages[i].SetAlpha(_OutOfViewAlpha);
       }
     }
-    _TransparentCubeContainer.gameObject.SetActive(cubeIndecies.Count == 0);
+    _TransparentCubeContainer.gameObject.SetActive(cubeIndices.Count == 0);
   }
 
   private void CreateCubes(int numCubesToShow, Sprite inViewSprite) {

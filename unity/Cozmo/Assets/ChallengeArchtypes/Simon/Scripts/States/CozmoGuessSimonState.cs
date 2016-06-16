@@ -32,9 +32,9 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
 
-      _GameInstance.OnTurnStage(PlayerType.Cozmo, false);
+      _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Cozmo, false);
     }
 
     public override void Exit() {
@@ -42,7 +42,7 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
 
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoWin, HandleOnCozmoWinAnimationDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
     }
 
     public override void Update() {
@@ -78,6 +78,7 @@ namespace Simon {
             StartTurnToTarget(_CurrentRobot.LightCubes[_LastTargetID]);
           }
           else {
+            _LastTargetID = _CurrentSequence[_CurrentSequenceIndex];
             StartTurnToTarget(GetCurrentTarget());
           }
         }
@@ -110,7 +111,6 @@ namespace Simon {
     }
 
     public LightCube GetCurrentTarget() {
-      _LastTargetID = _CurrentSequence[_CurrentSequenceIndex];
       return _CurrentRobot.LightCubes[_LastTargetID];
     }
 
@@ -128,7 +128,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessRight();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete);
       _IsAnimating = true;
     }
 

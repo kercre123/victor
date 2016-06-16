@@ -24,6 +24,9 @@ MonoBehaviour:
   _ReadyColor:
     uiSprite: {fileID: 21300000, guid: 6e830b09012e240b7bef77cb34e75a70, type: 3}
     lightColor: {r: 0, g: 1, b: 0, a: 1}
+  _ErrorColor:
+    uiSprite: {fileID: 0}
+    lightColor: {r: 1, g: 0, b: 0, a: 1}
   _TapMeColor:
     lightColors:
     - {r: 1, g: 0, b: 0, a: 1}
