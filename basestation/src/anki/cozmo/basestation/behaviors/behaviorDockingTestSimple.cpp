@@ -41,14 +41,14 @@
 namespace Anki {
   namespace Cozmo {
   
-    CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest.MaxNumAttempts",              30);
-    CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest.MaxConsecFails",              3);
-    CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest.DockingMethod",               (u8)DockingMethod::HYBRID_DOCKING);
-    CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest.MaxXAwayFromPreDock_mm",      30);
-    CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest.MaxYAwayFromPreDock_mm",      50);
-    CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest.MaxAngleAwayFromPreDock_deg", 10);
-    CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest.DriveToAndPickup",            true);
-    CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest.RollInsteadOfPickup",         false);
+    CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest", 30);
+    CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest", 3);
+    CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest", (u8)DockingMethod::HYBRID_DOCKING);
+    CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest", 30);
+    CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest", 50);
+    CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest", 10);
+    CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest", true);
+    CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
     
     static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
     static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
@@ -70,7 +70,7 @@ namespace Anki {
     , _initialVisionMarker(Vision::MARKER_UNKNOWN)
     , _markerBeingSeen(Vision::MARKER_UNKNOWN)
     , _cubePlacementPose(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin())
-    , _path("temp/dockingTestSimple.txt")
+    , _logger(robot.GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
     {
       SetDefaultName("DockingTestSimple");
       
@@ -117,10 +117,6 @@ namespace Anki {
       
       time_t t = time(0);
       struct tm* now = localtime(&t);
-      std::stringstream logName;
-      logName << "temp/dockingTest_" << now->tm_mon+1 << "-" << now->tm_mday << "-" << now->tm_hour << "." << now->tm_min;
-      logName << ".txt";
-      _path = logName.str();
       
       Write("=====Start DockingTestSimple=====");
       const RobotInterface::FWVersionInfo& fw = robot.GetFWVersionInfo();
@@ -878,10 +874,7 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::Write(const std::string& s)
     {
-      std::ofstream file;
-      file.open(_path, std::ios_base::app);
-      file << s << "\n";
-      file.close();
+      _logger.Write(s + "\n");
     }
     
     void BehaviorDockingTestSimple::PrintStats()
