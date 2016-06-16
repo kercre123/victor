@@ -158,12 +158,16 @@ namespace Cozmo {
   {
     std::stringstream ss;
     ss << "\n[BirthCertificate]"
-       << "\nYear: "   << static_cast<int>(data.year)
-       << "\nMonth: "  << static_cast<int>(data.month)
-       << "\nDay: "    << static_cast<int>(data.day)
-       << "\nHour: "   << static_cast<int>(data.hour)
-       << "\nMinute: " << static_cast<int>(data.minute)
-       << "\nSecond: " << static_cast<int>(data.second) << std::endl;
+       << "\nAtFactory: " << static_cast<int>(data.atFactory)
+       << "\nFactory: "   << static_cast<int>(data.whichFactory)
+       << "\nLine: "      << static_cast<int>(data.whichLine)
+       << "\nModel: "     << static_cast<int>(data.model)
+       << "\nYear: "      << static_cast<int>(data.year)
+       << "\nMonth: "     << static_cast<int>(data.month)
+       << "\nDay: "       << static_cast<int>(data.day)
+       << "\nHour: "      << static_cast<int>(data.hour)
+       << "\nMinute: "    << static_cast<int>(data.minute)
+       << "\nSecond: "    << static_cast<int>(data.second) << std::endl;
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.BirthCertificate", "%s", ss.str().c_str());
     return AppendToFile(ss.str());

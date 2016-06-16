@@ -347,7 +347,7 @@ namespace Cozmo {
                                                 
                                                 BirthCertificate bc;
                                                 bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
-                                                bc.month  = static_cast<u8>(tmStruct->tm_mon);
+                                                bc.month  = static_cast<u8>(tmStruct->tm_mon + 1); // Months start at zero
                                                 bc.day    = static_cast<u8>(tmStruct->tm_mday);
                                                 bc.hour   = static_cast<u8>(tmStruct->tm_hour);
                                                 bc.minute = static_cast<u8>(tmStruct->tm_min);
@@ -358,7 +358,6 @@ namespace Cozmo {
                                                 
                                                 // Write birth certificate to log on device
                                                 _factoryTestLogger.Append(bc);
-                                                _factoryTestLogger.CloseLog();
                                                 
                                                 robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
                                                                                     [this,&robot](NVStorage::NVResult res) {
@@ -373,7 +372,7 @@ namespace Cozmo {
                                               } else {
                                                 SendTestResultToGame(robot, _testResult);
                                               }
-                                              
+                                              _factoryTestLogger.CloseLog();
                                             });
 
         
@@ -1072,6 +1071,13 @@ namespace Cozmo {
   
   void BehaviorFactoryTest::StopInternal(Robot& robot)
   {
+    // If EnableNVStorageWrites is true then the log will be closed in the nvStorage write in EndTest
+    // Otherwise we need to close it here
+    if(!kBFT_EnableNVStorageWrites)
+    {
+      _factoryTestLogger.CloseLog();
+    }
+    
     // Cancel all actions
     for (const auto& tag : _actionCallbackMap) {
       robot.GetActionList().Cancel(tag.first);
