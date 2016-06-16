@@ -91,6 +91,7 @@ int main (void)
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
+  update_bootloader();
   Power::enableEspressif();
 
   UART::DebugInit();
