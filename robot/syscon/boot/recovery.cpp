@@ -269,7 +269,7 @@ static inline bool FlashBlock() {
 
   // Verify that our header is valid
   if (packet.blockAddress == BOOT_HEADER_LOCATION) {
-    BootLoaderSignature* header = (BootLoaderSignature*) packet.blockAddress;
+    BootLoaderSignature* header = (BootLoaderSignature*) packet.flashBlock;
 
     if (header->sig != HEADER_SIGNATURE || !header->evil_word) {
       return false;
