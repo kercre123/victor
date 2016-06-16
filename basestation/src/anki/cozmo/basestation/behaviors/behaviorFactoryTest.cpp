@@ -66,6 +66,9 @@ namespace Cozmo {
   // Since this reboots the robot it will not actually run the test at all.
   CONSOLE_VAR(bool,  kBFT_WipeNVStorage,          "BehaviorFactoryTest",  false);
   
+  // Save logs on device
+  CONSOLE_VAR(bool,  kBFT_SaveLogsOnDevice,       "BehaviorFactoryTest",  true);
+  
   
   
   ////////////////////////////
@@ -76,7 +79,6 @@ namespace Cozmo {
   static Pose3d _camCalibPose;
   static Pose3d _prePickupPose;
   static Pose3d _expectedLightCubePose;
-  static Pose3d _actualLightCubePose;
   static Pose3d _expectedChargerPose;
   
   // Pan and tilt angles to command robot to look at calibration targets
@@ -207,6 +209,14 @@ namespace Cozmo {
       audioClient->SetRobotVolume(0);
     }
     
+    // Setup logging to device
+    if (kBFT_SaveLogsOnDevice) {
+      _factoryTestLogger.StartLog( std::to_string(robot.GetSerialNumber()), true, robot.GetDataPlatform());
+      PRINT_NAMED_INFO("BehaviorFactoryTest.WillLogToDevice",
+                       "Log name: %s",
+                       _factoryTestLogger.GetLogName().c_str());
+    }
+    
     // Set blind docking mode
     ExternalInterface::SetDebugConsoleVarMessage dockMethodMsg;
     dockMethodMsg.varName = "PickupDockingMethod";
@@ -311,6 +321,8 @@ namespace Cozmo {
       _stateTransitionTimestamps[_testResultEntry.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + _testResultEntry.timestamps.size(), _testResultEntry.timestamps.begin());
 
+      // Write result to device
+      _factoryTestLogger.Append(_testResultEntry);
       
       if (kBFT_EnableNVStorageWrites) {
         u8 buf[_testResultEntry.Size()];
@@ -343,6 +355,10 @@ namespace Cozmo {
                                                 
                                                 u8 bcBuf[bc.Size()];
                                                 size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
+                                                
+                                                // Write birth certificate to log on device
+                                                _factoryTestLogger.Append(bc);
+                                                _factoryTestLogger.CloseLog();
                                                 
                                                 robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
                                                                                     [this,&robot](NVStorage::NVResult res) {
@@ -435,6 +451,11 @@ namespace Cozmo {
                                                  if (data[0] != 0) {
                                                    EndTest(robot, FactoryTestResultCode::ROBOT_FAILED_PREPLAYPEN_TESTS);
                                                  }
+                                                 
+                                                 // Write data to log on device
+                                                 std::vector<u8> dataVec(data, data+size);
+                                                 _factoryTestLogger.AddFile("PrePlaypenResult.bin", dataVec);
+                                                 
                                                } else {
                                                  EndTest(robot, FactoryTestResultCode::ROBOT_NOT_TESTED);
                                                }
@@ -701,6 +722,7 @@ namespace Cozmo {
                         if (kBFT_EnableNVStorageWrites) {
                           // Save tool code images to robot (whether it succeeded to read code or not)
                           _toolCodeImagesStored = false;
+                          std::vector<std::vector<u8> > rawJpegData;
                           if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
                                                                                       // Clear tool code images from VisionSystem
                                                                                       robot.GetVisionComponent().ClearToolCodeImages();
@@ -719,11 +741,17 @@ namespace Cozmo {
                                                                                         PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
                                                                                         _toolCodeImagesStored = true;
                                                                                       }
-                                                                                    }) != RESULT_OK)
+                                                                                    }, &rawJpegData) != RESULT_OK)
                           {
                             EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
                             return false;
                           }
+                          
+                          // Save tool code images to log on device
+                          for (u32 i=0; i<rawJpegData.size(); ++i) {
+                            _factoryTestLogger.AddFile("toolCodeImage_" + std::to_string(i) + ".jpg", rawJpegData[i]);
+                          }
+                          
                         }
                         
                         // Check result of tool code read
@@ -740,6 +768,9 @@ namespace Cozmo {
                                          info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
                                          info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
                                          info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+                        
+                        // Write tool code to log on device
+                        _factoryTestLogger.Append(info);
                         
                         // Store results to nvStorage
                         if (kBFT_EnableNVStorageWrites) {
@@ -851,26 +882,30 @@ namespace Cozmo {
         // Write cube's pose to nv storage
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
         
+        // Serialize the cube's pose
+        const Pose3d& cubePose = oObject->GetPose();
+        Radians angleX, angleY, angleZ;
+        cubePose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+        
+        std::array<f32,6> poseData;
+        poseData[0] = angleX.ToFloat();
+        poseData[1] = angleY.ToFloat();
+        poseData[2] = angleZ.ToFloat();
+        poseData[3] = cubePose.GetTranslation().x();
+        poseData[4] = cubePose.GetTranslation().y();
+        poseData[5] = cubePose.GetTranslation().z();
+        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.WritingCubePose",
+                         "rot: %f %f %f, trans: %f %f %f",
+                         poseData[0], poseData[1], poseData[2],
+                         poseData[3], poseData[4], poseData[5]);
+        
+        // Write pose data to log on device
+        _factoryTestLogger.AppendPoseData("ObservedCubePose", poseData);
+        
         if (kBFT_EnableNVStorageWrites) {
-          f32 poseData[6] = {0,0,0,0,0,0};
-          
-          // Serialize the cube's pose
-          const Pose3d& cubePose = oObject->GetPose();
-          Radians angleX, angleY, angleZ;
-          cubePose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
-          poseData[0] = angleX.ToFloat();
-          poseData[1] = angleY.ToFloat();
-          poseData[2] = angleZ.ToFloat();
-          poseData[3] = cubePose.GetTranslation().x();
-          poseData[4] = cubePose.GetTranslation().y();
-          poseData[5] = cubePose.GetTranslation().z();
-          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.WritingCubePose",
-                           "rot: %f %f %f, trans: %f %f %f",
-                           poseData[0], poseData[1], poseData[2],
-                           poseData[3], poseData[4], poseData[5]);
           
           if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ObservedCubePose,
-                                                                   (u8*)poseData, sizeof(poseData),
+                                                                   (u8*)poseData.data(), sizeof(poseData),
                                                                    [this,&robot](NVStorage::NVResult res) {
                                                                      if (res != NVStorage::NVResult::NV_OKAY) {
                                                                        EndTest(robot, FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
@@ -905,7 +940,6 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
-        _actualLightCubePose = oObject->GetPose();
         _attemptCounter = 0;
         SetCurrState(FactoryTestState::StartPickup);
         break;
@@ -980,25 +1014,6 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - PLACING BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PlacingBlock:
       {
-        // Verify that block is where expected
-        ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
-        Vec3f Tdiff;
-        Radians angleDiff;
-        if (!oObject->GetPose().IsSameAs_WithAmbiguity(_actualLightCubePose,
-                                                       _kBlockRotationAmbiguities,
-                                                       oObject->GetSameDistanceTolerance(),
-                                                       oObject->GetSameAngleTolerance()*0.5f, true,
-                                                       Tdiff, angleDiff)) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpectedAfterPlacement",
-                              "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
-                              oObject->GetPose().GetTranslation().x(),
-                              oObject->GetPose().GetTranslation().y(),
-                              oObject->GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
-                              _actualLightCubePose.GetTranslation().x(),
-                              _actualLightCubePose.GetTranslation().y(),
-                              _actualLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-          END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
-        }
 
         // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
         EndTest(robot, FactoryTestResultCode::SUCCESS);
@@ -1303,26 +1318,29 @@ namespace Cozmo {
     // Set camera calibration
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
+
+    
+    CameraCalibration calibMsg;
+    calibMsg.focalLength_x = camCalib.GetFocalLength_x();
+    calibMsg.focalLength_y = camCalib.GetFocalLength_y();
+    calibMsg.center_x = camCalib.GetCenter_x();
+    calibMsg.center_y = camCalib.GetCenter_y();
+    calibMsg.skew = camCalib.GetSkew();
+    calibMsg.nrows = camCalib.GetNrows();
+    calibMsg.ncols = camCalib.GetNcols();
+    
+    ASSERT_NAMED_EVENT(camCalib.GetDisortionCoeffs().size() <= calibMsg.distCoeffs.size(),
+                       "BehaviorFactoryTest.HandleCameraCalibration.TooManyDistCoeffs",
+                       "%zu > %zu", camCalib.GetDisortionCoeffs().size(),
+                       calibMsg.distCoeffs.size());
+    std::copy(camCalib.GetDisortionCoeffs().begin(), camCalib.GetDisortionCoeffs().end(),
+              calibMsg.distCoeffs.begin());
+    
+    // Write camera calibration to log on device
+    _factoryTestLogger.Append(calibMsg);
+    
     
     if (kBFT_EnableNVStorageWrites) {
-      
-      // Save calibration to robot
-      CameraCalibration calibMsg;
-      calibMsg.focalLength_x = camCalib.GetFocalLength_x();
-      calibMsg.focalLength_y = camCalib.GetFocalLength_y();
-      calibMsg.center_x = camCalib.GetCenter_x();
-      calibMsg.center_y = camCalib.GetCenter_y();
-      calibMsg.skew = camCalib.GetSkew();
-      calibMsg.nrows = camCalib.GetNrows();
-      calibMsg.ncols = camCalib.GetNcols();
-      
-      ASSERT_NAMED_EVENT(camCalib.GetDisortionCoeffs().size() <= calibMsg.distCoeffs.size(),
-                         "BehaviorFactoryTest.HandleCameraCalibration.TooManyDistCoeffs",
-                         "%zu > %zu", camCalib.GetDisortionCoeffs().size(),
-                         calibMsg.distCoeffs.size());
-      std::copy(camCalib.GetDisortionCoeffs().begin(), camCalib.GetDisortionCoeffs().end(),
-                calibMsg.distCoeffs.begin());
-
       u8 buf[calibMsg.Size()];
       size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
       
@@ -1336,6 +1354,7 @@ namespace Cozmo {
                                           });
       
       // Save calibration images to robot
+      std::vector<std::vector<u8> > rawJpegData;
       Result writeImagesResult = robot.GetVisionComponent().WriteCalibrationImagesToRobot(
                                                                                           
         [this,&robot](std::vector<NVStorage::NVResult>& results){
@@ -1356,7 +1375,8 @@ namespace Cozmo {
           } else {
             PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCalibImages.SUCCESS", "");
           }
-        }
+        },
+        &rawJpegData
       );
       
       if (writeImagesResult != RESULT_OK) {
@@ -1364,7 +1384,14 @@ namespace Cozmo {
         EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_SEND_FAILED);
       }
       
+      // Save calibration images to log on device
+      for (u32 i=0; i<rawJpegData.size(); ++i) {
+        _factoryTestLogger.AddFile("calibImage_" + std::to_string(i+1) + ".jpg", rawJpegData[i]);
+      }
+
+      
       // Save computed camera pose when robot was on charger
+      Pose3d calibPose;
       Result writePoseResult = robot.GetVisionComponent().WriteCalibrationPoseToRobot(0,
         [this,&robot](NVStorage::NVResult res)
         {
@@ -1373,12 +1400,26 @@ namespace Cozmo {
           } else {
             EndTest(robot, FactoryTestResultCode::CALIB_POSE_WRITE_FAILED);
           }
-        }
+        },
+        &calibPose
       );
       if (writePoseResult != RESULT_OK) {
         PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibPose.SendFAILED", "");
         EndTest(robot, FactoryTestResultCode::CALIB_POSE_SEND_FAILED);
       }
+      
+      
+      // Write calib pose to log on device
+      std::array<f32,6> poseData;
+      Radians angleX, angleY, angleZ;
+      calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+      poseData[0] = angleX.ToFloat();
+      poseData[1] = angleY.ToFloat();
+      poseData[2] = angleZ.ToFloat();
+      poseData[3] = calibPose.GetTranslation().x();
+      poseData[4] = calibPose.GetTranslation().y();
+      poseData[5] = calibPose.GetTranslation().z();
+      _factoryTestLogger.AppendPoseData("CalibPose", poseData);
       
     }
 

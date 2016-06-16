@@ -27,6 +27,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
+#include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
@@ -129,6 +130,8 @@ namespace Cozmo {
     FactoryTestResultCode _testResult;
     FactoryTestResultEntry _testResultEntry;
     std::vector<u32> _stateTransitionTimestamps;
+    
+    FactoryTestLogger _factoryTestLogger;
     
   }; // class BehaviorFactoryTest
 
