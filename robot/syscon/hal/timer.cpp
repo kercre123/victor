@@ -28,7 +28,7 @@ void Timer::init()
   NRF_RTC1->TASKS_CLEAR = 1;
   
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
-  // resolution. This should still provide enough for this chip/board.  
+  // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
   
   // Configure the interrupts

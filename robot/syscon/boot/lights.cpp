@@ -21,15 +21,17 @@ static const LightChannel led_channel[] = {
   // Turn signals
   { PIN_LED1, { PIN_LED2, PIN_LED4, PIN_LED4 } },
 
-  // Front
-  { PIN_LED3, { PIN_LED1, PIN_LED2, PIN_LED4 } },
-  
   // Mid
   { PIN_LED2, { PIN_LED1, PIN_LED3, PIN_LED4 } },
 
+  // Front
+  { PIN_LED3, { PIN_LED1, PIN_LED2, PIN_LED4 } },
+  
   // Back
   { PIN_LED4, { PIN_LED1, PIN_LED3, PIN_LED2 } },
 };
+
+static int channel = 5; // Don't light immediately, because sync causes gross flicker
 
 static const int MAX_CHANNEL = sizeof(led_channel) / sizeof(LightChannel);
 
@@ -84,8 +86,6 @@ void Lights::stop(void) {
   nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
 }
-
-static int channel = 5;
 
 void Lights::setChannel(int ch) {
   channel = ch;

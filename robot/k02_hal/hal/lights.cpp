@@ -11,8 +11,15 @@ namespace Anki
   {
     namespace HAL
     {
-      static const uint32_t DROP_LEVEL = 20;
-      static const uint32_t UNDROP_LEVEL = 120;  // hysteresis
+      // Thresholds for factory FW
+      // NOTE: Need more testing to figure out what these should be
+      static const uint32_t DROP_LEVEL = 400;
+      static const uint32_t UNDROP_LEVEL = 600;  // hysteresis
+      
+      // Previous thresholds
+      //static const uint32_t DROP_LEVEL = 20;
+      //static const uint32_t UNDROP_LEVEL = 120;  // hysteresis
+      
       static bool cliffDetected = false;
       static uint16_t colorState[4];
 

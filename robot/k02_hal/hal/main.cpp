@@ -92,7 +92,6 @@ int main (void)
   RCM_RPFW = 16;
 
   update_bootloader();
-  
   Power::enableEspressif();
 
   UART::DebugInit();

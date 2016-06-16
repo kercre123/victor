@@ -53,6 +53,12 @@ message SetHeadlight
   bool enable
 }
 
+message StartMotorCalibration
+{
+  bool calibrateHead,
+  bool calibrateLift
+}
+
 message DriveWheels
 {
   float_32 lwheel_speed_mmps,
@@ -398,6 +404,7 @@ union EngineToRobot
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
+  StartMotorCalibration         startMotorCalibration       = 0x58,
   
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,  

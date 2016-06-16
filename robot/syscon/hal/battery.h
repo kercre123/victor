@@ -9,7 +9,6 @@ namespace Battery {
   void init();
 
   // Update the state of the battery
-  void manage(void* userdata = NULL);
   void setHeadlight(bool status);
   uint8_t getLevel(void);
   
