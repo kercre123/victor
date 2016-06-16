@@ -93,7 +93,7 @@ namespace Vision {
     _eventName += name;
   }
   
-  void Profiler::PrintAverageTiming() const
+  void Profiler::PrintAverageTiming()
   {
     for(auto & timerPair : _timers)
     {
@@ -101,12 +101,23 @@ namespace Vision {
     }
   }
   
-  void Profiler::PrintTimerData(const char* name, const Timer& timer) const
+  void Profiler::PrintTimerData(const char* name, Timer& timer)
   {
-    PRINT_NAMED_INFO(_eventName.c_str(), "%s averaged %.2fms over %d calls",
+    const auto timeSinceLastPrint = timer.totalTime.count() - timer.totalTimeAtLastPrint.count();
+    const auto countSinceLastPrint = timer.count - timer.countAtLastPrint;
+    
+    const double avgOverAllTime = (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0);
+    const double avgSinceLastPrint = (countSinceLastPrint > 0 ? (double)timeSinceLastPrint / (double)countSinceLastPrint : 0);
+    
+    PRINT_NAMED_INFO(_eventName.c_str(), "%s averaged %.2fms over %d calls (%.2fms over %d calls since last print)",
                      name,
-                     (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0),
-                     timer.count);
+                     avgOverAllTime,
+                     timer.count,
+                     avgSinceLastPrint,
+                     countSinceLastPrint);
+    
+    timer.totalTimeAtLastPrint = timer.totalTime;
+    timer.countAtLastPrint = timer.count;
   }
   
 # endif // SHOW_TIMING

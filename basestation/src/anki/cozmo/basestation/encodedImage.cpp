@@ -39,7 +39,7 @@ namespace Cozmo {
   bool EncodedImage::AddChunk(const ImageChunk &chunk)
   {
     if(chunk.data.size() > static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE)) {
-      PRINT_NAMED_WARNING("ImageDeChunker.AppendChunk",
+      PRINT_NAMED_WARNING("EncodedImage.AddChunk",
                           "Expecting chunks of size no more than %d, got %zu.",
                           ImageConstants::IMAGE_CHUNK_SIZE, chunk.data.size());
       return false;
