@@ -13,14 +13,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RewardedActions:
   - GameEvent:
-      _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
-      _EnumValue: 9
+      _EnumValueAsString: OnSpeedtapHandPlayerWin
+      _EnumValue: 5
+    Amount: 2
+  - GameEvent:
+      _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
+      _EnumValue: 15
+    Amount: 30
+  - GameEvent:
+      _EnumValueAsString: OnGameComplete
+      _EnumValue: 39
     Amount: 15
   - GameEvent:
-      _EnumValueAsString: OnSpeedtapStarted
-      _EnumValue: 3
+      _EnumValueAsString: OnSimonPlayerHandComplete
+      _EnumValue: 33
     Amount: 3
-  - GameEvent:
-      _EnumValueAsString: OnSpeedtapRoundCozmoWinAnyIntensity
-      _EnumValue: 6
-    Amount: 5

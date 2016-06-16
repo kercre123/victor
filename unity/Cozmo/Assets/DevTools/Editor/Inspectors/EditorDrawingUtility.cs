@@ -34,20 +34,22 @@ public static class EditorDrawingUtility {
     if (GUILayout.Button("+", GUILayout.Width(30))) {
       list.Insert(0, createFunc(0));
     }
+    if (GUILayout.Button("-", GUILayout.Width(30))) {
+      list.RemoveAt(0);
+    }
     EditorGUILayout.EndHorizontal();
 
     for (int i = 0; i < list.Count; i++) {
       EditorGUILayout.BeginHorizontal();
       list[i] = drawControls(list[i], i);
 
-
+      if (GUILayout.Button("+", GUILayout.Width(30))) {        
+        list.Insert(i + 1, createFunc(i + 1));
+      }
+        
       if (GUILayout.Button("-", GUILayout.Width(30))) {
         list.RemoveAt(i);
         i--;
-      }
-
-      if (GUILayout.Button("+", GUILayout.Width(30))) {        
-        list.Insert(i + 1, createFunc(i + 1));
       }
 
       EditorGUILayout.EndHorizontal();
@@ -119,6 +121,20 @@ public static class EditorDrawingUtility {
 
   public static void InitializeLocalizationString(string localizationKey, out string localizedStringFile, out string localizedString) {
     localizedString = LocalizationEditorUtility.GetTranslation(localizationKey, out localizedStringFile);
+  }
+
+  public static void DrawLocalizationString(ref string localizationKey) {
+    string fileName = "";
+    string localizedString = "";
+
+    localizedString = LocalizationEditorUtility.GetTranslation(localizationKey, out fileName);
+
+    DrawLocalizationString(ref localizationKey, ref fileName, ref localizedString);
+  }
+
+  public static void DrawLocalizationString(ref string localizationKey, ref string localizedStringFile) {
+    string localizedString = LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey);
+    DrawLocalizationString(ref localizationKey, ref localizedStringFile, ref localizedString);
   }
 
   public static void DrawLocalizationString(ref string localizationKey, ref string localizedStringFile, ref string localizedString) {

@@ -13,8 +13,6 @@ using UnityEditor;
 
 /// <summary>
 /// Goal condition, checked during generation to determine whether or not we can select a daily goal from the pool.
-/// TODO: Write generic JSON converter for Goal Conditions. Currently we cannot properly serialize information about
-/// classes that inherit from this.
 /// </summary>
 namespace Anki {
   namespace Cozmo {
@@ -44,17 +42,11 @@ namespace Anki {
       #endif
 
       #if UNITY_EDITOR
-      // Function to draw the controls for this Condition/Action
-      public virtual void OnGUI() {
-        var rect = EditorGUILayout.GetControlRect();
+      // Function to draw the controls for this Condition
+      public virtual void OnGUI_DrawUniqueControls() {
         EditorGUILayout.BeginVertical();
-
-        GUI.Label(rect, Label);
-
-        EditorGUI.indentLevel++;
+        GUI.Label(EditorGUILayout.GetControlRect(), Label);
         DrawControls();
-        EditorGUI.indentLevel--;
-
         EditorGUILayout.EndVertical();
       }
 
