@@ -270,6 +270,7 @@ public abstract class GameBase : MonoBehaviour {
 
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
   public virtual void HandleGameEnd() {
+    GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnGameComplete);
     if (PlayerRoundsWon > CozmoRoundsWon) {
       PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
       int currentDifficultyUnlocked = 0;
