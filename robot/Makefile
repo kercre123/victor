@@ -97,7 +97,7 @@ nrf_fix:
 stage_binaries:
 	@if test ./build/app/robot.axf -nt ./binaries/robot.axf; then cp -v ./build/app/robot.axf ./binaries/robot.axf; fi
 	@if test ./syscon/build/app/syscon.axf -nt ./binaries/syscon.axf; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf; fi
-	@if test ./espressif/bin/upgrade/user1.2048.new.3.bin  -nt ./binaries/esp.user.bin; then cp -v ./espressif/bin/upgrade/user1.2048.new.3.bin ./binaries/esp.user.bin; fi
+	@if test ./staging/esp.user.bin  -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin  ./binaries/esp.user.bin; fi
 
 stage_factory_upgrade:
 	cp -v staging/esp.factory.bin binaries/esp.factory.bin
