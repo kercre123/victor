@@ -27,7 +27,7 @@ parser.add_argument("-b", "--body", type=str,
 parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
 
-parser.add_argument('--factory_restore', type=str,
+parser.add_argument('--factory_restore', type=str, nargs=2,
                     help="Factory restore firmware for WiFi")
 parser.add_argument("-s", "--sign", nargs=2, type=str,
                     help="Create signature block")
@@ -256,7 +256,7 @@ if __name__ == '__main__':
             fo.write(data, block+base_addr, aes_key)
     
     if args.factory_restore is not None:
-        wifi,rtip = args.factory_restore.split(',')
+        wifi,rtip = args.factory_restore
         rom_data = open(wifi, 'rb').read()
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block + 0xFF400000)
