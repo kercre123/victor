@@ -130,7 +130,6 @@ namespace Anki {
     , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
     , _speedChooser(new SpeedChooser(*this))
     , _blockFilter(new BlockFilter(this))
-    , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
     , _hasMismatchedEngineToRobotCLAD(false)
     , _hasMismatchedRobotToEngineCLAD(false)
@@ -211,7 +210,6 @@ namespace Anki {
       // caused by the vision thread using _poseHistory when it was destroyed here
       Util::SafeDelete(_visionComponentPtr);
       
-      Util::SafeDelete(_imageDeChunker);
       Util::SafeDelete(_poseHistory);
       Util::SafeDelete(_pdo);
       Util::SafeDelete(_longPathPlanner);
@@ -417,62 +415,7 @@ namespace Anki {
       if (!_timeSynced) {
         return lastResult;
       }
-      
-      // Save state to file
-      if(_stateSaveMode != SAVE_OFF)
-      {
-        // Make sure image capture folder exists
-        std::string robotStateCaptureDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
-        if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
-          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
-        }
-        
-#if(0)
-        // Compose line for entire state msg in hex
-        char stateMsgLine[256];
-        memset(stateMsgLine,0,256);
-        
-        u8 msgBytes[256];
-        msg.GetBytes(msgBytes);
-        for (int i=0; i< msg.GetSize(); i++){
-          sprintf(&stateMsgLine[2*i], "%02x", (unsigned char)msgBytes[i]);
-        }
-        sprintf(&stateMsgLine[msg.GetSize() *2],"\n");
-        FILE *stateFile;
-        stateFile = fopen("RobotState.txt", "a");
-        fputs(stateMsgLine, stateFile);
-        fclose(stateFile);
-#endif
-        /*
-        // clad functionality missing: ToJson()
-        // Write state message to JSON file
-        // TODO: (ds/as) use current game log folder instead?
-        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
-        
-        Json::Value json = msg.CreateJson();
-        PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
-        _context->GetDataPlatform()->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
-        */
-#if(0)
-        // Compose line for IMU output file.
-        // Used for determining delay constant in image timestamp.
-        char stateMsgLine[512];
-        memset(stateMsgLine,0,512);
-        sprintf(stateMsgLine, "%d, %f, %f\n", msg.timestamp, msg.rawGyroZ, msg.rawAccelY);
-        
-        FILE *stateFile;
-        stateFile = fopen("cozmoIMUState.csv", "a");
-        fputs(stateMsgLine, stateFile);
-        fclose(stateFile);
-#endif
-        
-        
-        // Turn off save mode if we were in one-shot mode
-        if (_stateSaveMode == SAVE_ONE_SHOT) {
-          _stateSaveMode = SAVE_OFF;
-        }
-      }
-
+    
       // Set flag indicating that robot state messages have been received
       _newStateMsgAvailable = true;
       
@@ -661,8 +604,8 @@ namespace Anki {
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
       RobotState stateMsg(msg);
 
-      const float imageFrameRate = 1000.0f / GetAverageImagePeriodMS();
-      const float imageProcRate = 1000.0f / GetAverageImageProcPeriodMS();
+      const float imageFrameRate = 1000.0f / _visionComponentPtr->GetFramePeriod_ms();
+      const float imageProcRate = 1000.0f / _visionComponentPtr->GetProcessingPeriod_ms();
             
       // Send state to visualizer for displaying
       GetContext()->GetVizManager()->SendRobotState(stateMsg,
@@ -1078,8 +1021,8 @@ namespace Anki {
       // Sending debug string to game and viz
       char buffer [128];
 
-      const float imageProcRate = 1000.0f / GetAverageImageProcPeriodMS();
-
+      const float imageProcRate = 1000.0f / _visionComponentPtr->GetProcessingPeriod_ms();
+      
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
@@ -1163,22 +1106,6 @@ namespace Anki {
       return RESULT_OK;
       
     } // Update()
-    
-    bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
-    {
-      PRINT_NAMED_ERROR("Robot.GetCurrentImage.Deprecated", "");
-      return false;
-    }
-    
-    u32 Robot::GetAverageImagePeriodMS() const
-    {
-      return _imgFramePeriod;
-    }
-    
-    u32 Robot::GetAverageImageProcPeriodMS() const
-    {
-      return _imgProcPeriod;
-    }
       
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
     {
@@ -2684,61 +2611,8 @@ namespace Anki {
       return SendRobotMessage<RobotInterface::EnablePickupParalysis>(enable);
     }
     
-    void Robot::SetSaveStateMode(const SaveMode_t mode)
-    {
-      _stateSaveMode = mode;
-    }
-
-      
-    void Robot::SetSaveImageMode(const SaveMode_t mode)
-    {
-      _imageSaveMode = mode;
-    }
-    
     TimeStamp_t Robot::GetLastImageTimeStamp() const {
       return GetVisionComponent().GetLastProcessedImageTimeStamp();
-    }
-    
-    Result Robot::ProcessImage(const Vision::ImageRGB& image)
-    {
-      Result lastResult = RESULT_OK;
-      
-      if (_imageSaveMode != SAVE_OFF) {
-        
-        // Make sure image capture folder exists
-        std::string imageCaptureDir = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
-        if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
-          PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
-        }
-        
-        // Write image to file (recompressing as jpeg again!)
-        static u32 imgCounter = 0;
-        char imgFilename[256];
-        std::vector<int> compression_params;
-        compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-        compression_params.push_back(90);
-        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", imageCaptureDir.c_str(), GetID(), image.GetTimestamp(), imgCounter++);
-        cv::imwrite(imgFilename, image.get_CvMat_(), compression_params);
-        
-        if (_imageSaveMode == SAVE_ONE_SHOT) {
-          _imageSaveMode = SAVE_OFF;
-        }
-      }
-      
-      // Compute framerate
-      if (_lastImgTimeStamp > 0) {
-        const f32 imgFramerateAvgCoeff = 0.25f;
-        _imgFramePeriod = _imgFramePeriod * (1.f-imgFramerateAvgCoeff) + (image.GetTimestamp() - _lastImgTimeStamp) * imgFramerateAvgCoeff;
-      }
-      _lastImgTimeStamp = image.GetTimestamp();
-      
-      const f32 imgProcrateAvgCoeff = 0.9f;
-      _imgProcPeriod = (_imgProcPeriod * (1.f-imgProcrateAvgCoeff) +
-                        _visionComponentPtr->GetProcessingPeriod() * imgProcrateAvgCoeff);
-      
-      _visionComponentPtr->SetNextImage(image);
-      
-      return lastResult;
     }
     
     /*

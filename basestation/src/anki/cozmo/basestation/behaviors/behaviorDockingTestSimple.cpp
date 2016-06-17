@@ -148,7 +148,7 @@ namespace Anki {
         std::stringstream ss;
         ss << "images_" << now->tm_mon+1 << "-" << now->tm_mday << "-" << now->tm_hour << "." << now->tm_min;
         _imageFolder = ss.str();
-        robot.GetContext()->GetVizManager()->SendSaveImages(true, ss.str());
+        robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, ss.str());
       }
       
       return RESULT_OK;
@@ -164,7 +164,7 @@ namespace Anki {
         
         if(robot.GetContext()->GetVizManager() != nullptr)
         {
-          robot.GetContext()->GetVizManager()->SendSaveImages(false);
+          robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream);
         }
         
         _yellForCompletion = true;
@@ -188,7 +188,7 @@ namespace Anki {
           
           if(robot.GetContext()->GetVizManager() != nullptr)
           {
-            robot.GetContext()->GetVizManager()->SendSaveImages(true, _imageFolder);
+            robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, _imageFolder);
           }
         
           // Turn off backpack lights in case we needed to be manually reset
@@ -483,7 +483,7 @@ namespace Anki {
             
             if(robot.GetContext()->GetVizManager() != nullptr)
             {
-              robot.GetContext()->GetVizManager()->SendSaveImages(false);
+              robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
             }
             
             IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Test Complete", SayTextStyle::Normal, true), new WaitAction(robot, 3)});
@@ -502,7 +502,7 @@ namespace Anki {
             
             if(robot.GetContext()->GetVizManager() != nullptr)
             {
-              robot.GetContext()->GetVizManager()->SendSaveImages(false);
+              robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
             }
             
             IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextStyle::Normal, true), new WaitAction(robot, 3)});
@@ -541,7 +541,7 @@ namespace Anki {
       
       if(robot.GetContext()->GetVizManager() != nullptr)
       {
-        robot.GetContext()->GetVizManager()->SendSaveImages(false);
+        robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
       }
     }
     

@@ -19,6 +19,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
+#include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -81,7 +82,9 @@ struct DockingErrorSignal;
     // mode, it will be processed as soon as the current image is completed.
     // Also, any debug images left by vision processing for display will be
     // displayed.
-    Result SetNextImage(const Vision::ImageRGB& image);
+    // NOTE: The given encodedImage is swapped into place, so it will no longer
+    //       be valid in the caller after using this method.
+    Result SetNextImage(EncodedImage& encodedImage);
 
     void Pause(); // toggle paused state
     void Pause(bool isPaused); // set pause state
@@ -126,15 +129,10 @@ struct DockingErrorSignal;
     // Fails if vision system is already in the middle of reading tool code.
     Result EnableToolCodeCalibration(bool enable);
       
-    // If the current image is newer than the specified timestamp, copy it into
-    // the given img and return true.
-    bool GetCurrentImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
-    
-    bool GetLastProcessedImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
-    
     TimeStamp_t GetLastProcessedImageTimeStamp() const;
     
-    TimeStamp_t GetProcessingPeriod();
+    TimeStamp_t GetProcessingPeriod_ms() const;
+    TimeStamp_t GetFramePeriod_ms() const;
     
     template<class PixelType>
     Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality);
@@ -235,7 +233,7 @@ struct DockingErrorSignal;
     
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
-    
+  
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
@@ -250,9 +248,8 @@ struct DockingErrorSignal;
     bool   _paused  = false;
     std::mutex _lock;
     
-    Vision::ImageRGB _currentImg;
-    Vision::ImageRGB _nextImg;
-    Vision::ImageRGB _lastImg; // the last image we processed
+    EncodedImage _currentImg;
+    EncodedImage _nextImg;
     
     ImuDataHistory _imuHistory;
 
@@ -267,9 +264,11 @@ struct DockingErrorSignal;
     f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
     f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
     
-    TimeStamp_t _lastProcessedImageTimeStamp = 0;
-    TimeStamp_t _processingPeriod = 0;
-
+    TimeStamp_t _lastReceivedImageTimeStamp_ms = 0;
+    TimeStamp_t _lastProcessedImageTimeStamp_ms = 0;
+    TimeStamp_t _processingPeriod_ms = 0;  // How fast we are processing frames
+    TimeStamp_t _framePeriod_ms = 0;       // How fast we are receiving frames
+    
     VisionPoseData   _currentPoseData;
     VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
@@ -285,7 +284,7 @@ struct DockingErrorSignal;
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();
-    void UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& img);
+    void UpdateVisionSystem(const VisionPoseData& poseData, const EncodedImage& encodedImgs);
     
     void Lock();
     void Unlock();
@@ -366,6 +365,16 @@ struct DockingErrorSignal;
   inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {
     _storeNextImageForCalibration = true;
     _calibTargetROI = targetROI;
+  }
+  
+  inline TimeStamp_t VisionComponent::GetFramePeriod_ms() const
+  {
+    return _framePeriod_ms;
+  }
+  
+  inline TimeStamp_t VisionComponent::GetProcessingPeriod_ms() const
+  {
+    return _processingPeriod_ms;
   }
 
 } // namespace Cozmo

@@ -44,7 +44,7 @@ namespace Vision {
     double AverageToc(const char* timerName);
     
     // Print average time per tic/toc pair for each registered timer
-    void PrintAverageTiming() const;
+    void PrintAverageTiming();
     
     // Set the minimum time between automatic average timing prints in milliseconds
     void SetPrintFrequency(int64_t printFrequency_ms) { _timeBetweenPrints_ms = printFrequency_ms; }
@@ -56,7 +56,9 @@ namespace Vision {
       std::chrono::time_point<std::chrono::system_clock> lastPrintTime = std::chrono::system_clock::now();
       std::chrono::milliseconds currentTime;
       std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
+      std::chrono::milliseconds totalTimeAtLastPrint = std::chrono::milliseconds(0);
       int count = 0;
+      int countAtLastPrint = 0;
       
       void Update();
     };
@@ -69,7 +71,7 @@ namespace Vision {
     
     int64_t _timeBetweenPrints_ms = -1;
     
-    void PrintTimerData(const char* name, const Timer& timer) const;
+    void PrintTimerData(const char* name, Timer& timer);
     
   }; // class Profiler
   

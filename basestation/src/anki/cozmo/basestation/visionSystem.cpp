@@ -15,6 +15,8 @@
  **/
 
 #include "visionSystem.h"
+
+#include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/vision/basestation/image_impl.h"
@@ -2376,6 +2378,20 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
+  Result VisionSystem::Update(const VisionPoseData&      poseData,
+                              const EncodedImage&        encodedImg)
+  {
+    Tic("DecodeJPEG");
+    // Should only get allocated the first time, but should re-use _image's memory
+    // from then on, so long as the decoded image is the same size.
+    Result decodeResult = encodedImg.DecodeImageRGB(_image);
+    Toc("DecodeJPEG");
+    
+    if(RESULT_OK != decodeResult) {
+      return decodeResult;
+    }
+    return Update(poseData, _image);
+  }
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,

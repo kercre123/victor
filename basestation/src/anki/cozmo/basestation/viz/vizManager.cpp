@@ -690,11 +690,17 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
     }
     
-    void VizManager::SendSaveImages(bool saveImages, std::string path)
+    void VizManager::SendSaveImages(ImageSendMode mode, std::string path)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::SaveImages(saveImages, path)));
+      SendMessage(VizInterface::MessageViz(VizInterface::SaveImages(mode, path)));
     }
 
+    void VizManager::SendSaveState(bool enabled, std::string path)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SaveState(enabled, path)));
+    }
+    
+  
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,
                                    const u8* data,
@@ -862,9 +868,12 @@ namespace Anki {
       using namespace ExternalInterface;
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDisplay>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::ErasePoseMarker>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::VisualizeQuad>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetVizOrigin>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseQuad>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetVizOrigin>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveRobotState>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::VisualizeQuad>();
+
     }
     
     template<>
@@ -900,6 +909,18 @@ namespace Anki {
     void VizManager::HandleMessage(const ExternalInterface::EraseQuad& msg)
     {
       EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::SaveImages& msg)
+    {
+      SendSaveImages(msg.mode, msg.path);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::SaveRobotState& msg)
+    {
+      SendSaveState(msg.enabled, msg.path);
     }
     
     

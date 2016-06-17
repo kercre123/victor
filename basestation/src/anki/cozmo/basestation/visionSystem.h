@@ -72,6 +72,7 @@ namespace Cozmo {
   // Forward declaration:
   class Robot;
   class VizManager;
+  class EncodedImage;
   
   struct VisionPoseData {
     TimeStamp_t           timeStamp;
@@ -167,8 +168,12 @@ namespace Cozmo {
     
     // This is main Update() call to be called in a loop from above.
 
-    Result Update(const VisionPoseData&            robotState,
+    Result Update(const VisionPoseData&      robotState,
                   const Vision::ImageRGB&    inputImg);
+    
+    // First decodes the image then calls Update() above
+    Result Update(const VisionPoseData&      robotState,
+                  const EncodedImage&        encodedImg);
     
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
     Result ClearCalibrationImages();
@@ -317,6 +322,8 @@ namespace Cozmo {
     // For prototyping with Matlab
     Matlab _matlab;
 #   endif
+    
+    Vision::ImageRGB _image;
     
     // Previous image for doing background subtraction, e.g. for saliency
     // NOTE: previous images stored at resolution of motion detection processing.

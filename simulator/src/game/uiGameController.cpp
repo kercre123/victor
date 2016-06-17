@@ -842,21 +842,16 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSaveImages(SaveMode_t mode, bool alsoSaveState)
+    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path)
     {
-      ExternalInterface::SaveImages m;
-      m.mode = mode;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SaveImages(m);
-      SendMessage(message);
-      
-      if(alsoSaveState) {
-        ExternalInterface::SaveRobotState msgSaveState;
-        msgSaveState.mode = mode;
-        ExternalInterface::MessageGameToEngine messageWrapper;
-        messageWrapper.Set_SaveRobotState(msgSaveState);
-        SendMessage(messageWrapper);
-      }
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(SaveImages(imageMode, path)));
+    }
+    
+    void UiGameController::SendSaveState(bool enabled, const std::string& path)
+    {
+      using namespace ExternalInterface;
+      SendMessage(MessageGameToEngine(SaveRobotState(enabled, path)));
     }
     
     void UiGameController::SendEnableDisplay(bool on)

@@ -492,19 +492,6 @@ bool  CozmoEngine::HasRobotWithID(const RobotID_t robotID) const
   return _context->GetRobotManager()->DoesRobotExist(robotID);
 }
 
-bool CozmoEngine::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
-{
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  if(robot != nullptr) {
-    return robot->GetCurrentImage(img, newerThanTime);
-  } else {
-    PRINT_NAMED_ERROR("CozmoEngine.GetCurrentRobotImage.InvalidRobotID",
-                      "Image requested for invalid robot ID = %d.", robotID);
-    return false;
-  }
-}
-
 std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
   return _context->GetRobotManager()->GetRobotIDList();
 }

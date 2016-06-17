@@ -323,7 +323,13 @@ message EndRobotUpdate
 
 message SaveImages
 {
-  bool saveImages,
+  ImageSendMode mode,
+  string path
+}
+
+message SaveState
+{
+  bool   enabled,
   string path
 }
 
