@@ -108,7 +108,7 @@ public abstract class GameBase : MonoBehaviour {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
-    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI);
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: FinishTurnToFace);
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
@@ -117,7 +117,9 @@ public abstract class GameBase : MonoBehaviour {
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     RegisterInterruptionStartedEvents();
+  }
 
+  private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
