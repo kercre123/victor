@@ -111,8 +111,6 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
-      // TODO: Replaced with RewardedActionManager's RewardPending, serve up energy through that,
-      // then handle chest pending at the end of that interaction.
       if (ChestRewardManager.Instance.ChestPending) {
         HandleChestGained();
       }
@@ -125,7 +123,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetCurrentRequirementPoints());
     }
 
     // Opens loot view and fires and relevant events
@@ -140,7 +138,7 @@ namespace Cozmo.HomeHub {
       }
 
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
-      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingRewards;
       _LootViewInstance = alertView;
       _LootViewInstance.ViewCloseAnimationFinished += (() => (
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints())));
@@ -171,7 +169,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleProgressUpdated() {
-      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null) {
+      if (ChestRewardManager.Instance.ChestPending) {
         OpenLootView();
       }
     }

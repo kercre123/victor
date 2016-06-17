@@ -77,10 +77,6 @@ namespace DataPersistence {
         // create a new session
         TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
         newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-        // Sort by priority, placing higher priority at the front of the list
-        newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
-          return y.Priority.CompareTo(x.Priority);
-        });
         DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
         DataPersistenceManager.Instance.Save();
 

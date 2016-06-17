@@ -19,7 +19,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private readonly List<GameObject> _EmptyGoalCells = new List<GameObject>();
   private const float _kFadeTweenDuration = 0.25f;
 
-  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
+  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
   // Prefab for GoalCells
   [SerializeField]
@@ -46,7 +46,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _CompletedText;
 
   void Start() {
-    UpdateDailySession();
+    UpdateDailySession(GetComponent<Cozmo.HomeHub.TabPanel>().GetHomeViewInstance().HomeHubInstance.RewardIcons);
   }
 
   private void OnDestroy() {
@@ -66,7 +66,7 @@ public class DailyGoalPanel : MonoBehaviour {
     _EmptyGoalCells.Clear();
   }
 
-  public void UpdateDailySession() {
+  public void UpdateDailySession(Transform[] rewardIcons = null) {
     var currentSession = DataPersistenceManager.Instance.CurrentSession;
 
     SetDailyGoals(currentSession.DailyGoals);
@@ -76,8 +76,8 @@ public class DailyGoalPanel : MonoBehaviour {
       currentSession.GoalsFinished = true;
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
     }
-    // TODO: UpdateDailySession should reflect rewards earned during that session rather than passing the rewardIcons through a spaghetti chain
-    // RewardedAction and UnlockManagers should save that data to the session.
+
+    rewardIcons = null;
   }
 
   private void OnGoalCellProgression(GoalCell goalCell) {

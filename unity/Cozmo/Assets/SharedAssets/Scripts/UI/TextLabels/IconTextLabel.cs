@@ -13,9 +13,6 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _TextLabel;
 
-      [SerializeField]
-      private AnkiTextLabel _DescLabel;
-
       public void SetIcon(Sprite sprite) {
         if (_Icon != null) {
           _Icon.sprite = sprite;
@@ -25,12 +22,6 @@ namespace Cozmo {
       public void SetText(string text) {
         if (_TextLabel != null) {
           _TextLabel.text = text;
-        }
-      }
-
-      public void SetDesc(string text) {
-        if (_DescLabel != null) {
-          _DescLabel.text = text;
         }
       }
     }

@@ -18,7 +18,6 @@ using System.Reflection;
 /// </summary>
 public class DailyGoalEditor : EditorWindow {
 
-  private static bool _IsOpen = false;
 
   private static string[] _GoalGenNameOptions;
   private static string[] _FilteredCladNameOptions;
@@ -239,8 +238,7 @@ public class DailyGoalEditor : EditorWindow {
       else {
         genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, eventName)), _FilteredCladNameOptions, GUILayout.Width(250))];
       }
-      genData.Target = EditorGUILayout.IntField(new GUIContent("Target", "Amount of times the goal event needs to fire with all conditions met to complete goal"), genData.Target);
-      genData.Priority = EditorGUILayout.IntField(new GUIContent("Priority", "Higher priority goals will appear higher in the Daily Goal panel"), genData.Priority);
+      genData.Target = EditorGUILayout.IntField("Target", genData.Target);
       EditorGUILayout.EndHorizontal();
       EditorGUI.indentLevel--;
 
@@ -276,18 +274,11 @@ public class DailyGoalEditor : EditorWindow {
   [MenuItem("Cozmo/Progression/Daily Goal Editor #%d")]
   public static void OpenDailyGoalEditor() {
     DailyGoalEditor window = (DailyGoalEditor)EditorWindow.GetWindow(typeof(DailyGoalEditor));
-    if (DailyGoalEditor._IsOpen) {
-      window.Close();
-      DailyGoalEditor._IsOpen = false;
-    }
-    else {
-      DailyGoalEditor.LoadData();
-      window.titleContent = new GUIContent("DailyGoal Editor");
-      window.Show();
-      window.Focus();
-      window.position = new Rect(0, 0, 800, 600);
-      DailyGoalEditor._IsOpen = true;
-    }
+    DailyGoalEditor.LoadData();
+    window.titleContent = new GUIContent("DailyGoal Editor");
+    window.Show();
+    window.Focus();
+    window.position = new Rect(0, 0, 800, 600);
   }
 
   #region GoalConditions and Helpers

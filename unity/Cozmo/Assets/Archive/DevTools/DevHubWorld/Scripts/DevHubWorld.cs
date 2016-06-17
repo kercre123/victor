@@ -51,7 +51,7 @@ public class DevHubWorld : HubWorldBase {
     _MiniGameInstance.OnMiniGameWin += HandleMiniGameEnd;
   }
 
-  private void HandleMiniGameEnd() {
+  private void HandleMiniGameEnd(Transform[] rewardIcons) {
     ShowHubWorldDialog();
   }
 
