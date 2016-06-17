@@ -52,9 +52,14 @@ public class CoreUpgradeDetailsDialog : BaseView {
   [SerializeField]
   private AnkiTextLabel _SparksInventoryLabel;
 
+  [SerializeField]
+  private float _UpgradeTween_sec = 0.6f;
+
   private UnlockableInfo _UnlockInfo;
 
   private CoreUpgradeRequestedHandler _ButtonCostPaidSuccessCallback;
+
+  private Sequence _UpgradeTween;
 
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
@@ -134,8 +139,18 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _ButtonCostPaidSuccessCallback(_UnlockInfo);
       }
 
-      CloseView();
+      _UnlockUpgradeButton.Interactable = false;
+      PlayUpgradeAnimation();
     }
+  }
+
+  private void PlayUpgradeAnimation() {
+    _UpgradeTween = DOTween.Sequence();
+    _UpgradeTween.Append(
+      _UnlockableTintBackground.DOColor(UIColorPalette.GetUpgradeTintData(_UnlockInfo.CoreUpgradeTintColorName).TintColor, _UpgradeTween_sec));
+    _UpgradeTween.Join(_UnlockableIcon.DOColor(Color.white, _UpgradeTween_sec));
+    _UpgradeTween.AppendCallback(CloseView);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
   }
 
   private void OnSparkClicked() {
@@ -161,6 +176,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
   protected override void CleanUp() {
     RobotEngineManager.Instance.OnSparkUnlockEnded -= HandleSparkUnlockEnded;
     RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
+    if (_UpgradeTween != null) {
+      _UpgradeTween.Kill();
+    }
   }
 
   protected override void ConstructOpenAnimation(Sequence openAnimation) {
