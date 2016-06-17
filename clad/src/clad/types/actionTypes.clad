@@ -41,6 +41,7 @@ enum int_32 RobotActionType {
     TURN_TOWARDS_OBJECT,
     TURN_TOWARDS_POSE,
     VISUALLY_VERIFY_OBJECT,
+    VISUALLY_VERIFY_FACE,
     PLAY_ANIMATION,
     DEVICE_AUDIO,              // This calls audio from WWise
     WAIT,

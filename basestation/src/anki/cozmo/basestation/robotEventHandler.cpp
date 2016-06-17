@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/searchForObjectAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -84,6 +85,8 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::TurnTowardsLastFacePose,
       MessageGameToEngineTag::TurnTowardsObject,
       MessageGameToEngineTag::TurnTowardsPose,
+      MessageGameToEngineTag::VisuallyVerifyFace,
+      MessageGameToEngineTag::VisuallyVerifyObject,
       MessageGameToEngineTag::Wait,
       MessageGameToEngineTag::WaitForImages,
     };
@@ -580,6 +583,20 @@ IActionRunner* CreateSearchForObjectAction(Robot& robot, const ExternalInterface
   return newAction;
 }
   
+IActionRunner* CreateVisuallyVerifyFaceAction(Robot& robot, const ExternalInterface::VisuallyVerifyFace& msg)
+{
+  VisuallyVerifyFaceAction* action = new VisuallyVerifyFaceAction(robot, msg.faceID);
+  action->SetNumImagesToWaitFor(msg.numImagesToWait);
+  return action;
+}
+  
+IActionRunner* CreateVisuallyVerifyObjectAction(Robot& robot, const ExternalInterface::VisuallyVerifyObject& msg)
+{
+  VisuallyVerifyObjectAction* action = new VisuallyVerifyObjectAction(robot, msg.objectID);
+  action->SetNumImagesToWaitFor(msg.numImagesToWait);
+  return action;
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -717,6 +734,13 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       const ExternalInterface::WaitForImages& waitMsg = actionUnion.Get_waitForImages();
       return new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
     }
+      
+    case RobotActionUnionTag::visuallyVerifyFace:
+      return CreateVisuallyVerifyFaceAction(robot, actionUnion.Get_visuallyVerifyFace());
+     
+    case RobotActionUnionTag::visuallyVerifyObject:
+      return CreateVisuallyVerifyObjectAction(robot, actionUnion.Get_visuallyVerifyObject());
+      
     default:
       PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionTag",
                         "Failed to create an action for the given actionTag.");
@@ -922,6 +946,18 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     {
       const ExternalInterface::WaitForImages& waitMsg = event.GetData().Get_WaitForImages();
       newAction = new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
+      break;
+    }
+      
+    case ExternalInterface::MessageGameToEngineTag::VisuallyVerifyFace:
+    {
+      newAction = CreateVisuallyVerifyFaceAction(robot, event.GetData().Get_VisuallyVerifyFace());
+      break;
+    }
+      
+    case ExternalInterface::MessageGameToEngineTag::VisuallyVerifyObject:
+    {
+      newAction = CreateVisuallyVerifyObjectAction(robot, event.GetData().Get_VisuallyVerifyObject());
       break;
     }
       

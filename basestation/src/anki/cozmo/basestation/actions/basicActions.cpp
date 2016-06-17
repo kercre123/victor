@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -945,18 +946,25 @@ namespace Anki {
                                        bool headTrackWhenDone)
     : TurnTowardsPoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
-    , _visuallyVerifyAction(robot, objectID, whichCode)
     , _objectID(objectID)
     , _whichCode(whichCode)
-    , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
     , _headTrackWhenDone(headTrackWhenDone)
     {
-      
+      if(visuallyVerifyWhenDone) {
+        _visuallyVerifyAction = new VisuallyVerifyObjectAction(robot, objectID, whichCode);
+        
+        // Disable completion signals since this is inside another action
+        _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
+        _visuallyVerifyAction->ShouldSuppressTrackLocking(true);
+      }
     }
     
     TurnTowardsObjectAction::~TurnTowardsObjectAction()
     {
-      _visuallyVerifyAction.PrepForCompletion();
+      if(nullptr != _visuallyVerifyAction) {
+        _visuallyVerifyAction->PrepForCompletion();
+        Util::SafeDelete(_visuallyVerifyAction);
+      }
     }
     
     ActionResult TurnTowardsObjectAction::Init()
@@ -1034,10 +1042,6 @@ namespace Anki {
       
       _facePoseCompoundActionDone = false;
       
-      // Disable completion signals since this is inside another action
-      _visuallyVerifyAction.ShouldEmitCompletionSignal(false);
-      _visuallyVerifyAction.ShouldSuppressTrackLocking(true);
-      
       return ActionResult::SUCCESS;
     } // TurnTowardsObjectAction::Init()
     
@@ -1069,11 +1073,11 @@ namespace Anki {
             
             return ActionResult::RUNNING;
           }
-          else if(_visuallyVerifyWhenDone)
+          else if(nullptr != _visuallyVerifyAction)
           {
             // Go ahead and do a first tick of visual verification's Update, to
             // get it initialized
-            ActionResult verificationResult = _visuallyVerifyAction.Update();
+            ActionResult verificationResult = _visuallyVerifyAction->Update();
             if(ActionResult::SUCCESS != verificationResult) {
               return verificationResult;
             }
@@ -1083,12 +1087,10 @@ namespace Anki {
 
       // If we get here, _compoundAction completed returned SUCCESS. So we can
       // can continue with our additional checks:
-      if (_visuallyVerifyWhenDone) {
-        ActionResult verificationResult = _visuallyVerifyAction.Update();
+      if (nullptr != _visuallyVerifyAction) {
+        ActionResult verificationResult = _visuallyVerifyAction->Update();
         if (verificationResult != ActionResult::SUCCESS) {
           return verificationResult;
-        } else {
-          _visuallyVerifyWhenDone = false;
         }
       }
       
@@ -1302,164 +1304,7 @@ namespace Anki {
       static const std::string name("TurnTowardsPoseAction");
       return name;
     }
-    
-#pragma mark ---- VisuallyVerifyObjectAction ----
-    
-    VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(Robot& robot,
-                                                           ObjectID objectID,
-                                                           Vision::Marker::Code whichCode)
-    : IAction(robot)
-    , _objectID(objectID)
-    , _whichCode(whichCode)
-    , _waitToVerifyTime(-1)
-    , _moveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)
-    , _moveLiftToHeightActionDone(false)
-    {
-      
-    }
-    
-    VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
-    {
-      if(_waitForImagesAction != nullptr)
-      {
-        _waitForImagesAction->PrepForCompletion();
-      }
-      Util::SafeDelete(_waitForImagesAction);
 
-      _moveLiftToHeightAction.PrepForCompletion();
-    }
-    
-    const std::string& VisuallyVerifyObjectAction::GetName() const
-    {
-      static const std::string name("VisuallyVerifyObject" + std::to_string(_objectID.GetValue())
-                                    + "Action");
-      return name;
-    }
-    
-    ActionResult VisuallyVerifyObjectAction::Init()
-    {
-      _waitForImagesAction = new WaitForImagesAction(_robot, GetNumImagesToWaitFor(), VisionMode::DetectingMarkers);
-      _waitForImagesAction->ShouldEmitCompletionSignal(false);
-    
-      using namespace ExternalInterface;
-      
-      _objectSeen = false;
-      
-      auto obsObjLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
-      {
-        const auto& objectObservation = event.GetData().Get_RobotObservedObject();
-        // ID has to match and we have to actually have seen a marker (not just
-        // saying part of the object is in FOV due to assumed projection)
-        if(!_objectSeen && objectObservation.objectID == _objectID && objectObservation.markersVisible)
-        {
-          _objectSeen = true;
-        }
-      };
-      
-      _observedObjectHandle = _robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::RobotObservedObject, obsObjLambda);
-      
-      if(_whichCode == Vision::Marker::ANY_CODE) {
-        _markerSeen = true;
-      } else {
-        _markerSeen = false;
-      }
-      
-      // Get lift out of the way
-
-      _moveLiftToHeightAction.ShouldEmitCompletionSignal(false);
-      _moveLiftToHeightAction.ShouldSuppressTrackLocking(true);
-      _moveLiftToHeightActionDone = false;
-      _waitToVerifyTime = -1.f;
-      
-      // Go ahead and do the first update on moving the lift, so we don't "waste"
-      // the first tick of CheckIfDone initializing the sub-action.
-      ActionResult moveLiftInitResult = _moveLiftToHeightAction.Update();
-      if(ActionResult::SUCCESS == moveLiftInitResult ||
-         ActionResult::RUNNING == moveLiftInitResult)
-      {
-        // Continue to CheckIfDone as long as the first Update didn't _fail_
-        return ActionResult::SUCCESS;
-      } else {
-        return moveLiftInitResult;
-      }
-    }
-    
-    ActionResult VisuallyVerifyObjectAction::CheckIfDone()
-    {
-      ActionResult actionRes = ActionResult::RUNNING;
-      
-      if(_objectSeen)
-      {
-        if(!_markerSeen)
-        {
-          // We've seen the object, check if we've seen the correct marker if one was
-          // specified and we haven't seen it yet
-          ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
-          if(object == nullptr) {
-            PRINT_NAMED_ERROR("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                              "[%d] Object with ID=%d no longer exists in the world.",
-                              GetTag(),
-                              _objectID.GetValue());
-            return ActionResult::FAILURE_ABORT;
-          }
-          
-          // Look for which markers were seen since (and including) last observation time
-          std::vector<const Vision::KnownMarker*> observedMarkers;
-          object->GetObservedMarkers(observedMarkers, object->GetLastObservedTime());
-          
-          for(auto marker : observedMarkers) {
-            if(marker->GetCode() == _whichCode) {
-              _markerSeen = true;
-              break;
-            }
-          }
-          
-          if(!_markerSeen) {
-            // Seeing wrong marker(s). Log this for help in debugging
-            std::string observedMarkerNames;
-            for(auto marker : observedMarkers) {
-              observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
-              observedMarkerNames += " ";
-            }
-            
-            PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.WrongMarker",
-                             "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
-                             GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
-          }
-        } // if(!_markerSeen)
-        
-        if(_markerSeen) {
-          // We've seen the object and the correct marker: we're good to go!
-          return ActionResult::SUCCESS;
-        }
-        
-      } else {
-        // Still waiting to see the object: keep moving head/lift
-        if (!_moveLiftToHeightActionDone) {
-          ActionResult liftActionRes = _moveLiftToHeightAction.Update();
-          if (liftActionRes != ActionResult::SUCCESS) {
-            if (liftActionRes != ActionResult::RUNNING) {
-              PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
-                                  "Failed to move lift out of FOV. Action result = %s\n",
-                                  EnumToString(actionRes));
-            }
-            return liftActionRes;
-          }
-          _moveLiftToHeightActionDone = true;
-        }
-      } // if/else(objectSeen)
-      
-      if(!_robot.GetMoveComponent().IsMoving() && _waitForImagesAction->Update() != ActionResult::RUNNING)
-      {
-        PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.TimedOut",
-                            "Did not see object %d before processing %d images",
-                            _objectID.GetValue(), GetNumImagesToWaitFor());
-        return ActionResult::FAILURE_ABORT;
-      }
-      
-      return actionRes;
-      
-    } // VisuallyVerifyObjectAction::CheckIfDone()
     
 #pragma mark ---- TurnTowardsLastFacePoseAction ----
 

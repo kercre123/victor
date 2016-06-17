@@ -359,6 +359,20 @@ message TurnTowardsPose {
     uint_8   robotID
 }
 
+// VisuallyVerifyFace
+//   Succeeds if given face is visible from the robot's current pose
+message VisuallyVerifyFace {
+    int_32 faceID,
+    int_32 numImagesToWait
+}
+
+// VisuallyVerifyObject
+//   Succeeds if given object is visible from the robot's current pose
+message VisuallyVerifyObject {
+    uint_32 objectID,
+    int_32 numImagesToWait
+}
+
 // Wait
 message Wait {
   float_32 time_s
@@ -407,6 +421,8 @@ union RobotActionUnion {
   TurnTowardsLastFacePose   turnTowardsLastFacePose,
   TurnTowardsObject         turnTowardsObject,
   TurnTowardsPose           turnTowardsPose,
+  VisuallyVerifyFace        visuallyVerifyFace,
+  VisuallyVerifyObject      visuallyVerifyObject,
   Wait                      wait,
   WaitForImages             waitForImages
 }

@@ -31,6 +31,9 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  // Forward declaration
+  class VisuallyVerifyObjectAction;
 
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
@@ -440,44 +443,6 @@ namespace Cozmo {
     }; // WaitForImagesAction()
   
   
-    // Verify that an object exists by facing tilting the head to face its
-    // last-known pose and verify that we can still see it. Optionally, you can
-    // also require that a specific marker be seen as well.
-    class VisuallyVerifyObjectAction : public IAction
-    {
-    public:
-      VisuallyVerifyObjectAction(Robot& robot,
-                                 ObjectID objectID,
-                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
-      
-      virtual ~VisuallyVerifyObjectAction();
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
-      
-      virtual int GetNumImagesToWaitFor() const { return _numImagesToWaitFor; }
-      void SetNumImagesToWaitFor(int numImages) { _numImagesToWaitFor = numImages; }
-      
-    protected:
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-      ObjectID                _objectID;
-      Vision::Marker::Code    _whichCode;
-      f32                     _waitToVerifyTime;
-      bool                    _objectSeen;
-      bool                    _markerSeen;
-      MoveLiftToHeightAction  _moveLiftToHeightAction;
-      bool                    _moveLiftToHeightActionDone;
-      Signal::SmartHandle     _observedObjectHandle;
-      WaitForImagesAction*    _waitForImagesAction = nullptr;
-      int                     _numImagesToWaitFor = 10;
-      
-    }; // class VisuallyVerifyObjectAction
-    
-    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class TurnTowardsObjectAction : public TurnTowardsPoseAction
@@ -519,12 +484,11 @@ namespace Cozmo {
       
       bool                       _facePoseCompoundActionDone = false;
       
-      VisuallyVerifyObjectAction _visuallyVerifyAction;
+      VisuallyVerifyObjectAction*_visuallyVerifyAction = nullptr;
       bool                       _refinedTurnTowardsDone = false;
       
       ObjectID                   _objectID;
       Vision::Marker::Code       _whichCode;
-      bool                       _visuallyVerifyWhenDone;
       bool                       _headTrackWhenDone;
       bool                       _doRefinedTurn = true;
       f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD_F32(5);
