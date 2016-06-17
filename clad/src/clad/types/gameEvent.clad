@@ -50,6 +50,7 @@ enum uint_8 GameEvent
   OnDailyGoalCompleted,
   OnUnlockableEarned,
   OnGameComplete,
+  OnMeetNewPerson,
   Count, // Keep count at end.
 }
 

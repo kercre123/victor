@@ -6,7 +6,7 @@
       "RewardType": "experience",
       "PointsRewarded": 20,
       "Target": 2,
-      "CladEvent": "OnLearnedPlayerName",
+      "CladEvent": "OnMeetNewPerson",
       "GenConditions": [],
       "ProgressConditions": []
     },

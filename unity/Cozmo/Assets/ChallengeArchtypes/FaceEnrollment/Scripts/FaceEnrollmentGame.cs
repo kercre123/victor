@@ -150,6 +150,7 @@ namespace FaceEnrollment {
       }
       else {
 
+        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnMeetNewPerson);
         CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
       }
       EditOrEnrollFaceComplete(success);
