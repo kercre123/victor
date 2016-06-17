@@ -22,31 +22,31 @@
     "translation": "Cube Pounce Game"
   },
   "unlockable.CubePounce.Description": {
-    "translation": "With this upgrade, Cozmo learns how to play Cube Pounce."
+    "translation": "With this upgrade, Cozmo learns how to play Cube Pounce, a game of reflexes and reaction time."
   },
   "unlockable.FaceEnrollment.Title": {
     "translation": "Meet Cozmo"
   },
   "unlockable.FaceEnrollment.Description": {
-    "translation": "With this upgrade, Cozmo learns to remember faces and speak names."
+    "translation": "With this upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
   },
   "unlockable.Simon.Title": {
     "translation": "Simon Game"
   },
   "unlockable.Simon.Description": {
-    "translation": "With this upgrade, Cozmo learns how to play Simon."
+    "translation": "With this upgrade, Cozmo learns how to play the Simon music game."
   },
   "unlockable.SpeedTap.Title": {
     "translation": "Speed Tap Game"
   },
   "unlockable.SpeedTap.Description": {
-    "translation": "With this upgrade, Cozmo learns how to play Speed Tap."
+    "translation": "With this upgrade, Cozmo learns how to play the game Speed Tap. Over time, his skills will improve!"
   },
   "unlockable.CubeRollAction.Title": {
     "translation": "Cube Roll"
   },
   "unlockable.CubeRollAction.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to roll Cubes."
+    "translation": "With this upgrade, Cozmo gains the ability to roll Cubes if he sees one on its side."
   },
   "unlockable.DroneMode.Title": {
     "translation": "Drone Mode Activity"
