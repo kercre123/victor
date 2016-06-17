@@ -135,8 +135,11 @@ namespace FaceEnrollment {
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
 
       if (_AttemptedEnrollFace) {
+        DAS.Debug("FaceEnrollmentGame.HandleObservedNewFace", "saw new face but attempt flag is true");
         return;
       }
+
+      DAS.Debug("FaceEnrollmentGame.HandleObservedNewFace", "Attempting to enroll new face: " + id);
 
       CurrentRobot.EnrollNamedFace(id, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
       _FaceIDToEnroll = id;
@@ -153,7 +156,8 @@ namespace FaceEnrollment {
         CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
       }
       EditOrEnrollFaceComplete(success);
-
+      _AttemptedEnrollFace = false;
+      RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
 
     private void EditOrEnrollFaceComplete(bool success) {
