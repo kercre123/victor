@@ -1,0 +1,48 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "reward.description.Missing": {
+    "translation": "Missing description"
+  },
+  "reward.description.SpeedTapWinGame": {
+    "translation": "Win Speed Tap"
+  },
+  "reward.description.SpeedTapWinHand": {
+    "translation": "Score Points in Speed Tap"
+  },
+  "reward.description.PlayGame": {
+    "translation": "Play a game with Cozmo"
+  },
+  "reward.description.SimonMatch": {
+    "translation": "Score Points in Simon"
+  },
+  "reward.description.SimonOnPlayerWin": {
+    "translation": "Outlast Cozmo in Simon"
+  },
+  "reward.collect.CollectEnergy": {
+    "translation": "+{0} Energy!"
+  },
+  "reward.collect.Instruction": {
+    "translation": "Tap to Collect"
+  },
+  "reward.description.NewDifficulty": {
+    "translation": "{0} Unlocked!"
+  }
+}

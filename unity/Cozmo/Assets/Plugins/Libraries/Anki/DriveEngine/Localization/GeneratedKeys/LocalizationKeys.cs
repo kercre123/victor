@@ -230,6 +230,20 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region RewardedActionStrings
+
+  public const string kRewardDescriptionMissing = "reward.description.Missing";
+  public const string kRewardDescriptionSpeedTapWinGame = "reward.description.SpeedTapWinGame";
+  public const string kRewardDescriptionSpeedTapWinHand = "reward.description.SpeedTapWinHand";
+  public const string kRewardDescriptionPlayGame = "reward.description.PlayGame";
+  public const string kRewardDescriptionSimonMatch = "reward.description.SimonMatch";
+  public const string kRewardDescriptionSimonOnPlayerWin = "reward.description.SimonOnPlayerWin";
+  public const string kRewardCollectCollectEnergy = "reward.collect.CollectEnergy";
+  public const string kRewardCollectInstruction = "reward.collect.Instruction";
+  public const string kRewardDescriptionNewDifficulty = "reward.description.NewDifficulty";
+
+  #endregion
+
   #region SimpleStrings
 
   public const string kNameCozmo = "name.cozmo";
