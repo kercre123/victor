@@ -14,9 +14,11 @@
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/gameEventResponsesContainer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -39,8 +41,9 @@
 namespace Anki {
 namespace Cozmo {
 
-RobotDataLoader::RobotDataLoader(const Util::Data::DataPlatform* platform)
-: _platform(platform)
+RobotDataLoader::RobotDataLoader(const CozmoContext* context)
+: _context(context)
+, _platform(nullptr)
 , _cannedAnimations(new CannedAnimationContainer())
 , _animationGroups(new AnimationGroupContainer())
 , _gameEventResponses(new GameEventResponsesContainer())
@@ -51,6 +54,7 @@ RobotDataLoader::~RobotDataLoader() = default;
 
 void RobotDataLoader::LoadData()
 {
+  _platform = _context->GetDataPlatform();
   if (_platform == nullptr) {
     return;
   }
@@ -328,6 +332,13 @@ void RobotDataLoader::LoadRobotConfigs()
                         "Vision Json config file %s not found.",
                         jsonFilename.c_str());
     }
+  }
+
+  // feature gate
+  {
+    const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};
+    const std::string fileContents{Util::FileUtils::ReadFile(filename)};
+    _context->GetFeatureGate()->Init(fileContents);
   }
 }
 

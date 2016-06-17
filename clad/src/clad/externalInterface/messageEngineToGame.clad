@@ -22,6 +22,7 @@
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/motorTypes.clad"
+#include "clad/types/featureGateTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -79,6 +80,11 @@ message ObjectAvailable
 message ObjectUnavailable
 {
   uint_32      factory_id,
+}
+
+// Responds to Unity request for feature toggles
+message FeatureToggles {
+  FeatureToggle features[uint_16]
 }
 
 

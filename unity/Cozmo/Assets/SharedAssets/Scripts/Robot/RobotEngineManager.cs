@@ -168,6 +168,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (InitSkillSystem) {
       SkillSystem.Instance.InitInstance();
     }
+    FeatureGate.Instance.Initialize();
 
   }
 
@@ -452,6 +453,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotLoadedKnownFace:
       ReceiveSpecificMessage(message.RobotLoadedKnownFace);
+      break;
+    case G2U.MessageEngineToGame.Tag.FeatureToggles:
+      ReceivedSpecificMessage(message.FeatureToggles);
       break;
     case G2U.MessageEngineToGame.Tag.DeviceDataMessage:
       ReceivedSpecificMessage(message.DeviceDataMessage);
@@ -907,6 +911,10 @@ public class RobotEngineManager : MonoBehaviour {
     if (OnRobotLoadedKnownFace != null) {
       OnRobotLoadedKnownFace(message.faceID, message.name);
     }
+  }
+
+  private void ReceivedSpecificMessage(G2U.FeatureToggles message) {
+    FeatureGate.Instance.HandleFeatureToggles(message);
   }
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {

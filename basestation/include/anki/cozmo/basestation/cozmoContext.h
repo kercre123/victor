@@ -40,6 +40,7 @@ namespace Anki {
 namespace Cozmo {
   
 class CozmoEngine;
+class CozmoFeatureGate;
 class IExternalInterface;
 class RobotDataLoader;
 class RobotManager;
@@ -73,7 +74,8 @@ public:
   
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
-  
+
+  CozmoFeatureGate*                     GetFeatureGate() const { return _featureGate.get(); }
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
@@ -89,6 +91,7 @@ private:
   
   // Context holds onto these things for everybody:
   std::unique_ptr<Audio::AudioServer>             _audioServer;
+  std::unique_ptr<CozmoFeatureGate>               _featureGate;
   std::unique_ptr<Util::RandomGenerator>          _random;
   std::unique_ptr<RobotDataLoader>                _dataLoader;
   std::unique_ptr<RobotManager>                   _robotMgr;

@@ -1,0 +1,14 @@
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 FeatureType {
+  Dummy
+}
+
+structure FeatureToggle {
+  string name,
+  bool enabled
+}
+
+}
+}

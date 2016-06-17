@@ -19,6 +19,7 @@
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/emotionTypes.clad"
 #include "clad/types/faceEnrollmentPoses.clad"
+#include "clad/types/featureGateTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
@@ -67,6 +68,15 @@ message ReliableTransportRunMode {
   bool isSync
 }
 
+// Request feature toggles from engine
+message RequestFeatureToggles {
+}
+
+// Set feature toggle changed in UI
+message SetFeatureToggle {
+  FeatureType feature,
+  bool value
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Low-level Robot Controls

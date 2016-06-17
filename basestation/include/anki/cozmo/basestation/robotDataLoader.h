@@ -33,12 +33,13 @@ namespace Cozmo {
 
 class AnimationGroupContainer;
 class CannedAnimationContainer;
+class CozmoContext;
 class GameEventResponsesContainer;
 
 class RobotDataLoader : private Util::noncopyable
 {
 public:
-  RobotDataLoader(const Util::Data::DataPlatform* platform);
+  RobotDataLoader(const CozmoContext* context);
   ~RobotDataLoader();
 
   // loads all data
@@ -77,7 +78,8 @@ private:
   void LoadEmotionEvents();
   void LoadBehaviors();
 
-  const Util::Data::DataPlatform* const _platform;
+  const CozmoContext* const _context;
+  const Util::Data::DataPlatform* _platform;
 
   FileJsonMap _emotionEvents;
   FileJsonMap _behaviors;

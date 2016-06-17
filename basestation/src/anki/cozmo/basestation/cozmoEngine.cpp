@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/multiClientChannel.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/console/consoleInterface.h"
 #include "util/global/globalDefinitions.h"
@@ -96,7 +97,11 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
 
   auto resetFirmwareCallback = std::bind(&CozmoEngine::HandleResetFirmware, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ResetFirmware, resetFirmwareCallback));
-  
+
+  auto featureRequestsCallback = std::bind(&CozmoEngine::HandleFeatureRequests, this, std::placeholders::_1);
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::RequestFeatureToggles, featureRequestsCallback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetFeatureToggle, featureRequestsCallback));
+
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
 
@@ -207,6 +212,33 @@ void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::Messag
   }
 }
 
+void CozmoEngine::HandleFeatureRequests(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  switch (event.GetData().GetTag()) {
+    case ExternalInterface::MessageGameToEngine::Tag::RequestFeatureToggles:
+    {
+      // collect feature list and send to UI
+      ExternalInterface::FeatureToggles toggles;
+      auto featureList = _context->GetFeatureGate()->GetFeatures();
+      for (const auto& featurePair : featureList) {
+        toggles.features.emplace_back(featurePair.first, featurePair.second);
+      }
+
+      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::FeatureToggles>(std::move(toggles));
+      break;
+    }
+    case ExternalInterface::MessageGameToEngine::Tag::SetFeatureToggle:
+    {
+      const auto& message = event.GetData().Get_SetFeatureToggle();
+      _context->GetFeatureGate()->SetFeatureEnabled(message.feature, message.value);
+      break;
+    }
+    default:
+      PRINT_NAMED_ERROR("CozmoEngine.HandleFeatureRequests", "got here with bad message type");
+      break;
+  }
+}
+  
 bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
 {
   if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {

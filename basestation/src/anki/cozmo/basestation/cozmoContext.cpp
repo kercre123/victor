@@ -5,6 +5,7 @@
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/shared/cozmoConfig_common.h"
 //#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -16,8 +17,9 @@ namespace Cozmo {
 CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface)
   : _externalInterface(externalInterface)
   , _dataPlatform(dataPlatform)
+  , _featureGate(new CozmoFeatureGate())
   , _random(new Anki::Util::RandomGenerator())
-  , _dataLoader(new RobotDataLoader(dataPlatform))
+  , _dataLoader(new RobotDataLoader(this))
   , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())
   , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
