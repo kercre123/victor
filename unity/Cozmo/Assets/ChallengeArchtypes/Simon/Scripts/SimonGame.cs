@@ -21,6 +21,7 @@ namespace Simon {
 
     public int MinSequenceLength { get { return _Config.MinSequenceLength; } }
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
+    public int GetCurrentTurnNumber { get { return _CurrentSequenceLength - MinSequenceLength; } }
 
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeats; } }
 
@@ -28,7 +29,7 @@ namespace Simon {
 
     private int _CurrentSequenceLength;
 
-    private PlayerType _FirstPlayer = PlayerType.Human;
+    private PlayerType _FirstPlayer = PlayerType.Cozmo;
 
     public AnimationCurve CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
 

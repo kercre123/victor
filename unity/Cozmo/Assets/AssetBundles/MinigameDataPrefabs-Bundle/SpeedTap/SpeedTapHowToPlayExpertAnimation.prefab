@@ -382,7 +382,7 @@ GameObject:
   - 224: {fileID: 22439308}
   - 95: {fileID: 9587436}
   m_Layer: 5
-  m_Name: SpeedTapHowToPlayAnimation
+  m_Name: SpeedTapHowToPlayExpertAnimation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -397,7 +397,7 @@ Animator:
   m_GameObject: {fileID: 199182}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 729b79f43220448f39c153e558e59773, type: 2}
+  m_Controller: {fileID: 9100000, guid: d30ed2d4dadf64ea7ba2233c594dd0d0, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1545,7 +1545,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d30ed2d4dadf64ea7ba2233c594dd0d0, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 199182}

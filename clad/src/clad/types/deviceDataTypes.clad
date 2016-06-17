@@ -1,0 +1,27 @@
+/** Clad message definitions for types of device data.
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+  enum uint_8 DeviceDataType
+  {
+    DeviceID        = 0x00,
+    DeviceModel,
+    AppRunID,
+    LastAppRunID,
+    GameID,
+    UserID,
+
+    Count
+  }
+
+  structure DeviceDataPair
+  {
+    DeviceDataType dataType,
+    string dataValue
+  }
+      
+} // namespace Cozmo
+} // namespace Anki

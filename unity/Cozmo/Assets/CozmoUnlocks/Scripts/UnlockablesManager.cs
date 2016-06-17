@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class UnlockablesManager : MonoBehaviour {
-  
+
   public static UnlockablesManager Instance { get; private set; }
 
   private void OnEnable() {
@@ -84,7 +84,8 @@ public class UnlockablesManager : MonoBehaviour {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
-      bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
+      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
+      bool isAvailable = !neverAvailable && IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
       if (locked && isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
         available.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
@@ -96,9 +97,11 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnavailableExplicit() {
     List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
+      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
       bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
-      if (locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
+      if (neverAvailable
+          || (locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock)) {
         unavailable.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }

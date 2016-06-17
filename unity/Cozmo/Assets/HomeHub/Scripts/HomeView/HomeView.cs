@@ -11,6 +11,12 @@ using System;
 namespace Cozmo.HomeHub {
   public class HomeView : BaseView {
 
+    public enum HomeTab {
+      Cozmo,
+      Play,
+      Profile
+    }
+
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
     [SerializeField]
@@ -29,6 +35,9 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private CozmoButton _CozmoTabDownButton;
+
+    [SerializeField]
+    private GameObject _AnyUpgradeAffordableIndicator;
 
     [SerializeField]
     private CozmoButton _PlayTabButton;
@@ -82,7 +91,7 @@ namespace Cozmo.HomeHub {
       private set { _HomeHubInstance = value; }
     }
 
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -120,6 +129,10 @@ namespace Cozmo.HomeHub {
 
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       UpdatePlayTabText();
+
+      Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded += HandleItemValueChanged;
+      CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 
     private void HandleChestGained() {
@@ -140,8 +153,8 @@ namespace Cozmo.HomeHub {
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
       alertView.LootBoxRewards = ChestRewardManager.Instance.PendingRewards;
       _LootViewInstance = alertView;
-      _LootViewInstance.ViewCloseAnimationFinished += (() => (
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints())));
+      _LootViewInstance.ViewCloseAnimationFinished += (() =>
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints()));
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
@@ -179,60 +192,45 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
-      if (_CurrentTab != null) {
-        GameObject.Destroy(_CurrentTab.gameObject);
-      }
-      _ScrollRect.horizontalNormalizedPosition = 0.0f;
-      _CurrentTab = GameObject.Instantiate(_CozmoTabPrefab.gameObject).GetComponent<HomeViewTab>();
-      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
-      _CurrentTab.Initialize(this);
-
-      _CozmoTabButton.gameObject.SetActive(false);
-      _CozmoTabDownButton.gameObject.SetActive(true);
-
-      _PlayTabButton.gameObject.SetActive(true);
-      _PlayTabDownButton.gameObject.SetActive(false);
-
-      _ProfileTabButton.gameObject.SetActive(true);
-      _ProfileTabDownButton.gameObject.SetActive(false);
+      ClearCurrentTab();
+      ShowNewCurrentTab(_CozmoTabPrefab);
+      UpdateTabGraphics(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
-      if (_CurrentTab != null) {
-        GameObject.Destroy(_CurrentTab.gameObject);
-      }
-      _ScrollRect.horizontalNormalizedPosition = 0.0f;
-      _CurrentTab = GameObject.Instantiate(_PlayTabPrefab.gameObject).GetComponent<HomeViewTab>();
-      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
-      _CurrentTab.Initialize(this);
-
-      _CozmoTabButton.gameObject.SetActive(true);
-      _CozmoTabDownButton.gameObject.SetActive(false);
-
-      _PlayTabButton.gameObject.SetActive(false);
-      _PlayTabDownButton.gameObject.SetActive(true);
-
-      _ProfileTabButton.gameObject.SetActive(true);
-      _ProfileTabDownButton.gameObject.SetActive(false);
+      ClearCurrentTab();
+      ShowNewCurrentTab(_PlayTabPrefab);
+      UpdateTabGraphics(HomeTab.Play);
     }
 
     private void HandleProfileTabButton() {
+      ClearCurrentTab();
+      ShowNewCurrentTab(_ProfileTabPrefab);
+      UpdateTabGraphics(HomeTab.Profile);
+    }
+
+    private void ClearCurrentTab() {
       if (_CurrentTab != null) {
-        GameObject.Destroy(_CurrentTab.gameObject);
+        Destroy(_CurrentTab.gameObject);
       }
+    }
+
+    private void ShowNewCurrentTab(HomeViewTab homeViewTabPrefab) {
       _ScrollRect.horizontalNormalizedPosition = 0.0f;
-      _CurrentTab = GameObject.Instantiate(_ProfileTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTab = Instantiate(homeViewTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
+    }
 
-      _CozmoTabButton.gameObject.SetActive(true);
-      _CozmoTabDownButton.gameObject.SetActive(false);
+    private void UpdateTabGraphics(HomeTab currentTab) {
+      _CozmoTabButton.gameObject.SetActive(currentTab != HomeTab.Cozmo);
+      _CozmoTabDownButton.gameObject.SetActive(currentTab == HomeTab.Cozmo);
 
-      _PlayTabButton.gameObject.SetActive(true);
-      _PlayTabDownButton.gameObject.SetActive(false);
+      _PlayTabButton.gameObject.SetActive(currentTab != HomeTab.Play);
+      _PlayTabDownButton.gameObject.SetActive(currentTab == HomeTab.Play);
 
-      _ProfileTabButton.gameObject.SetActive(false);
-      _ProfileTabDownButton.gameObject.SetActive(true);
+      _ProfileTabButton.gameObject.SetActive(currentTab != HomeTab.Profile);
+      _ProfileTabDownButton.gameObject.SetActive(currentTab == HomeTab.Profile);
     }
 
     public Dictionary<string, ChallengeStatePacket> GetChallengeStates() {
@@ -269,12 +267,33 @@ namespace Cozmo.HomeHub {
       _DailyGaolsCompletionTextDown.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
     }
 
+    private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+      CheckIfUnlockablesAffordableAndUpdateBadge();
+    }
+
+    private void CheckIfUnlockablesAffordableAndUpdateBadge() {
+      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
+
+      bool canAfford = false;
+      for (int i = 0; i < unlockableUnlockData.Count; ++i) {
+        if (playerInventory.CanRemoveItemAmount(unlockableUnlockData[i].UpgradeCostItemId,
+                                                unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
+          canAfford = true;
+          break;
+        }
+      }
+      _AnyUpgradeAffordableIndicator.SetActive(canAfford);
+    }
+
     protected override void CleanUp() {
       ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
-    }
 
+      Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded -= HandleItemValueChanged;
+    }
   }
 }

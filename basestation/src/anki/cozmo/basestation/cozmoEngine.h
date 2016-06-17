@@ -59,6 +59,7 @@ class MultiClientChannel;
 class UiMessageHandler;
 class USBTunnelServer;
 class BLESystem;
+class DeviceDataManager;
   
 template <typename Type>
 class AnkiEvent;
@@ -125,6 +126,7 @@ protected:
   std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
   std::unique_ptr<CozmoContext>                             _context;
   std::unique_ptr<BLESystem>                                _bleSystem;
+  std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
 
   virtual Result InitInternal();

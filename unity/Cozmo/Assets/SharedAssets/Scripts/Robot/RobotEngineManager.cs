@@ -92,6 +92,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<int, string> OnRobotLoadedKnownFace;
+  public event Action<Anki.Cozmo.ExternalInterface.DeviceDataMessage> OnDeviceDataMessage;
 
   #region Audio Callback events
 
@@ -124,6 +125,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
   private U2G.ResetFirmware _ResetFirmwareMessage = new U2G.ResetFirmware();
+  private U2G.RequestDeviceData _RequestDeviceDataMessage = new U2G.RequestDeviceData();
 
   public bool InitSkillSystem;
 
@@ -453,6 +455,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotLoadedKnownFace:
       ReceiveSpecificMessage(message.RobotLoadedKnownFace);
+      break;
+    case G2U.MessageEngineToGame.Tag.DeviceDataMessage:
+      ReceivedSpecificMessage(message.DeviceDataMessage);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
@@ -907,6 +912,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {
+    if (OnDeviceDataMessage != null) {
+      OnDeviceDataMessage(message);
+    }
+  }
+
   public void UpdateFirmware(int firmwareVersion) {
     Message.UpdateFirmware = Singleton<U2G.UpdateFirmware>.Instance.Initialize(firmwareVersion);
     SendMessage();
@@ -939,6 +950,11 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendDenyGameStart() {
     Message.DenyGameStart = _DenyGameStartMessage;
+    SendMessage();
+  }
+
+  public void SendRequestDeviceData() {
+    Message.RequestDeviceData = _RequestDeviceDataMessage;
     SendMessage();
   }
 

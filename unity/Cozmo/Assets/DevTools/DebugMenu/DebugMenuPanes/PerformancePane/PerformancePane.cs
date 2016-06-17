@@ -49,14 +49,26 @@ public class PerformancePane : MonoBehaviour {
   [SerializeField]
   private Text _BatteryVoltage;
 
+  [SerializeField]
+  private Text _DeviceID;
+
+  [SerializeField]
+  private Text _AppRunID;
+
+  [SerializeField]
+  private Text _LastAppRunID;
+
   private void Start() {
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneOpened(this);
+    RobotEngineManager.Instance.OnDeviceDataMessage += HandleDeviceDataMessage;
+    RobotEngineManager.Instance.SendRequestDeviceData();
   }
 
   private void OnDestroy() {
     _ShowFPSCounterButton.onClick.RemoveListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneClosed();
+    RobotEngineManager.Instance.OnDeviceDataMessage -= HandleDeviceDataMessage;
   }
 
   public void SetFPS(float newFPS) {
@@ -74,6 +86,35 @@ public class PerformancePane : MonoBehaviour {
 
   private void HandleShowCounterButtonClicked() {
     RaisePerformanceCounterButtonClicked();
+  }
+
+  private void HandleDeviceDataMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {
+    for (int i = 0; i < message.dataList.Length; ++i) {
+      Anki.Cozmo.DeviceDataPair currentPair = message.dataList[i];
+      switch (currentPair.dataType)
+      {
+        case Anki.Cozmo.DeviceDataType.DeviceID:
+        {
+          _DeviceID.text = currentPair.dataValue;
+          break;
+        }
+        case Anki.Cozmo.DeviceDataType.AppRunID:
+        {
+          _AppRunID.text = currentPair.dataValue;
+          break;
+        }
+        case Anki.Cozmo.DeviceDataType.LastAppRunID:
+        {
+          _LastAppRunID.text = currentPair.dataValue;
+          break;
+        }
+        default:
+        {
+          DAS.Debug("PerformancePane.HandleDeviceDataMessage.UnhandledDataType", currentPair.dataType.ToString());
+          break;
+        }
+      }
+    }
   }
 
   private void Update() {

@@ -65,7 +65,8 @@ namespace Simon {
         }
         else {
           float rand = Random.Range(0f, 1f);
-          if (rand > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
+          // Cozmo always right first time
+          if (_GameInstance.GetCurrentTurnNumber > 1 && rand > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
             _ShouldWinGame = false;
             int correctId = _CurrentSequence[_CurrentSequenceIndex];
             List<int> blockIds = new List<int>();

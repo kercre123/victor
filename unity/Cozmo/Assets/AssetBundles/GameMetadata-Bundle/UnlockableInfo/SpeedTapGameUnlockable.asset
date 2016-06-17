@@ -13,12 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SpeedTapGame
-    _EnumValue: 5
+    _EnumValue: 3
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 1
+  NeverAvailable: 0
   DescriptionKey: unlockable.SpeedTap.Description
   TitleKey: unlockable.SpeedTap.Title
   UpgradeCostItemId: TestHexItem0

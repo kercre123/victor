@@ -33,6 +33,9 @@ public class CozmoUnlockableTile : MonoBehaviour {
   public Image _ActionIndicator;
 
   [SerializeField]
+  public GameObject _AffordableIndicator;
+
+  [SerializeField]
   public CozmoButton _TileButton;
 
   private UnlockableInfo _UnlockData;
@@ -46,12 +49,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
 
     _TileButton.Initialize(HandleButtonTapped, dasButtonName, dasViewController);
 
-    if (unlockState != CozmoUnlocksPanel.CozmoUnlockState.Locked) {
-      _TileButton.Text = Localization.Get(unlockableData.TitleKey);
-    }
-    else {
-      _TileButton.Text = "";
-    }
+    _TileButton.Text = Localization.Get(unlockableData.TitleKey);
 
     _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked);
     _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);
@@ -66,6 +64,15 @@ public class CozmoUnlockableTile : MonoBehaviour {
     _UnlockedTintBackground.color = UIColorPalette.GetUpgradeTintData(unlockableData.CoreUpgradeTintColorName).TintColor;
 
     _ActionIndicator.gameObject.SetActive(unlockableData.UnlockableType == UnlockableType.Action);
+
+    if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
+      Cozmo.Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      _AffordableIndicator.gameObject.SetActive(
+        playerInventory.CanRemoveItemAmount(unlockableData.UpgradeCostItemId, unlockableData.UpgradeCostAmountNeeded));
+    }
+    else {
+      _AffordableIndicator.gameObject.SetActive(false);
+    }
   }
 
   private void HandleButtonTapped() {

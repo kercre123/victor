@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/deviceData/deviceDataManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -64,6 +65,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   : _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+  , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
   //, _bleSystem(new BLESystem())
 #if ANKI_DEV_CHEATS && !ANDROID

@@ -75,7 +75,6 @@ namespace Cozmo {
   static Pose3d _camCalibPose;
   static Pose3d _prePickupPose;
   static Pose3d _expectedLightCubePose;
-  static Pose3d _actualLightCubePose;
   static Pose3d _expectedChargerPose;
   
   // Pan and tilt angles to command robot to look at calibration targets
@@ -863,7 +862,6 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
-        _actualLightCubePose = oObject->GetPose();
         _attemptCounter = 0;
         SetCurrState(FactoryTestState::StartPickup);
         break;
@@ -938,25 +936,6 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - PLACING BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PlacingBlock:
       {
-        // Verify that block is where expected
-        ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
-        Vec3f Tdiff;
-        Radians angleDiff;
-        if (!oObject->GetPose().IsSameAs_WithAmbiguity(_actualLightCubePose,
-                                                       _kBlockRotationAmbiguities,
-                                                       oObject->GetSameDistanceTolerance(),
-                                                       oObject->GetSameAngleTolerance()*0.5f, true,
-                                                       Tdiff, angleDiff)) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpectedAfterPlacement",
-                              "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
-                              oObject->GetPose().GetTranslation().x(),
-                              oObject->GetPose().GetTranslation().y(),
-                              oObject->GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
-                              _actualLightCubePose.GetTranslation().x(),
-                              _actualLightCubePose.GetTranslation().y(),
-                              _actualLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-          END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
-        }
 
         // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
         EndTest(robot, FactoryTestResultCode::SUCCESS);
