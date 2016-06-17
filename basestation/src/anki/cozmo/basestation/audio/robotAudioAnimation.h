@@ -84,6 +84,8 @@ public:
   static constexpr uint32_t kInvalidEventTime = UINT32_MAX;
   uint32_t GetNextEventTime_ms();
 
+  const std::string& GetName() const {return _animationName; };
+  
   // FIXME: This is a temp fix, will remove once we have an Audio Mixer
   void SetRobotVolume( float volume ) { _robotVolume = volume; }
 
