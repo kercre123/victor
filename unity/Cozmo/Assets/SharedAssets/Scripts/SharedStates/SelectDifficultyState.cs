@@ -72,6 +72,7 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.ShelfWidget.ShrinkShelfBackground();
     _Game.SharedMinigameView.HideDifficultySelectButtonPanel();
     _Game.SharedMinigameView.HideContinueButton();
+    _Game.SharedMinigameView.HideGameStateSlide();
 
     _StateMachine.SetNextState(_NextState);
   }
