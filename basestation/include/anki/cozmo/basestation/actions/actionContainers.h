@@ -143,8 +143,9 @@ namespace Anki {
       // Returns true if the passed in action tag matches the action currently playing in the given slot
       bool       IsCurrAction(u32 idTag, SlotHandle fromSlot = 0) const;
       
-      // Returns true if this is a duplicate action
-      bool       IsDuplicate(IActionRunner* action);
+      // If we are currently clearing the action will be destroyed and will return true
+      // Otherwise will return if the action is a duplicate
+      bool       IsDuplicateOrCurrentlyClearing(IActionRunner* action);
       
       // Blindly clears out the contents of the action list
       void       Clear();
