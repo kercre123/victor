@@ -45,6 +45,7 @@ namespace Simon {
 
       SetScanPhase(ScanPhase.NoCubesSeen);
       InitShowCubesSlide();
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
     }
 
     // ignore base class events
@@ -106,7 +107,7 @@ namespace Simon {
           cube.SetLEDs(Cozmo.CubePalette.ErrorColor.lightColor);
         }
         else if (state == ScannedSetupCubeState.Ready) {
-          cube.SetLEDs(Cozmo.CubePalette.ReadyColor.lightColor);
+          cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
         }
       }
     }
@@ -213,6 +214,7 @@ namespace Simon {
 
     private void InitShowCubesSlide() {
       if (_ShowCozmoCubesSlide == null) {
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
         _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
       }
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
@@ -265,6 +267,8 @@ namespace Simon {
           if (_Game.CubeIdsForGame.Count > 1) {
             _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
           }
+          // Error sound
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
           SimonGame simonGame = _Game as SimonGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
                                                      simonGame.SimonSetupErrorPrefab.gameObject, "simon_error_slide");

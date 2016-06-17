@@ -208,6 +208,7 @@ namespace Simon {
       else {
         currentPortrait = SharedMinigameView.PlayerPortrait;
         statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelYourTurnListen : LocalizationKeys.kSimonGameLabelYourTurnRepeat;
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
       }
       simonTurnScript.Initialize(currentPortrait, statusLocKey);
     }

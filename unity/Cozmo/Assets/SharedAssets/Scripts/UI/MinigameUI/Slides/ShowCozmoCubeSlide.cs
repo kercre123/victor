@@ -46,14 +46,20 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   }
 
   public void OnDestroy() {
+    DestroyTween();
+
+  }
+
+  public void RotateCozmoImageTo(float degrees, float duration) {
+    DestroyTween();
+    _Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration);
+  }
+
+  private void DestroyTween() {
     if (_Tween != null && _Tween.IsActive()) {
       _Tween.Kill(false);
       _Tween = null;
     }
-  }
-
-  public void RotateCozmoImageTo(float degrees, float duration) {
-    _Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration);
   }
 
   //It's expected the called has already done a loc with args replacement

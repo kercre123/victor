@@ -108,6 +108,7 @@ namespace Simon {
       _IsAnimating = true;
 
       _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
