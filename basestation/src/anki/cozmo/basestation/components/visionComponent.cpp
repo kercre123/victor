@@ -1327,7 +1327,8 @@ namespace Cozmo {
   }
   
   Result VisionComponent::WriteCalibrationPoseToRobot(size_t whichPose,
-                                                      NVStorageComponent::NVStorageWriteEraseCallback callback)
+                                                      NVStorageComponent::NVStorageWriteEraseCallback callback,
+                                                      Pose3d* p)
   {
     Result lastResult = RESULT_OK;
     
@@ -1360,6 +1361,10 @@ namespace Cozmo {
         poseData[3] = calibPose.GetTranslation().x();
         poseData[4] = calibPose.GetTranslation().y();
         poseData[5] = calibPose.GetTranslation().z();
+        
+        if (nullptr != p) {
+          *p = calibPose;
+        }
       }
       
       // Write to robot
@@ -1373,7 +1378,8 @@ namespace Cozmo {
     return lastResult;
   }
   
-  Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback)
+  Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback,
+                                                        std::vector<std::vector<u8> >* rawJpegData)
   {
     const auto& calibImages = _visionSystem->GetCalibrationImages();
     
@@ -1395,6 +1401,10 @@ namespace Cozmo {
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage5,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage6};
     
+    if (nullptr != rawJpegData) {
+      rawJpegData->clear();
+    }
+    
     // Write images to robot
     u32 imgIdx = 0;
     u8 usedMask = 0;
@@ -1410,6 +1420,11 @@ namespace Cozmo {
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
       
+      if (nullptr != rawJpegData) {
+        rawJpegData->emplace_back(imgVec);
+      }
+      
+      
       /*
       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
       FILE* fp = fopen(imgFilename.c_str(), "w");
@@ -1420,16 +1435,12 @@ namespace Cozmo {
       // Write images to robot
       PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
       bool res = true;
-      if (imgIdx < calibImages.size() - 1) {
-        res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
-                                                   [this](NVStorage::NVResult res) {
-                                                    _writeCalibImagesToRobotResults.push_back(res);
-                                                  });
-      } else {
-        res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
-                                                   [this, callback](NVStorage::NVResult res) {
-                                                     _writeCalibImagesToRobotResults.push_back(res);
+      bool isLastImage = (imgIdx < calibImages.size() - 1);
+      res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
+                                                 [this, callback, isLastImage](NVStorage::NVResult res) {
+                                                   _writeCalibImagesToRobotResults.push_back(res);
                                                
+                                                   if (isLastImage) {
                                                      std::string resStr = "";
                                                      for(auto r : _writeCalibImagesToRobotResults) {
                                                        resStr += EnumToString(r) + std::string(", ");
@@ -1439,8 +1450,8 @@ namespace Cozmo {
                                                      if (callback) {
                                                        callback(_writeCalibImagesToRobotResults);
                                                      }
-                                                   });
-      }
+                                                   }
+                                                 });
       
       if (!res) {
         return RESULT_FAIL;
@@ -1483,7 +1494,8 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredToolCodeImages();
   }
   
-  Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback)
+  Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback,
+                                                     std::vector<std::vector<u8> >* rawJpegData)
   {
     const auto& images = _visionSystem->GetToolCodeImages();
     
@@ -1498,6 +1510,9 @@ namespace Cozmo {
                      "%zu images", _visionSystem->GetNumStoredToolCodeImages());
     _writeToolCodeImagesToRobotResults.clear();
     
+    if (nullptr != rawJpegData) {
+      rawJpegData->clear();
+    }
     
     static const NVStorage::NVEntryTag toolCodeImageTags[2] = {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
     
@@ -1509,6 +1524,10 @@ namespace Cozmo {
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 75}));
       
+      if (nullptr != rawJpegData) {
+        rawJpegData->emplace_back(imgVec);
+      }
+
       /*
        std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
        FILE* fp = fopen(imgFilename.c_str(), "w");
@@ -1520,16 +1539,12 @@ namespace Cozmo {
       // Write images to robot
       PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.RequestingWrite", "Image %d", imgIdx);
       bool res = true;
-      if (imgIdx < images.size() - 1) {
-        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
-                                                   [this](NVStorage::NVResult res) {
-                                                     _writeToolCodeImagesToRobotResults.push_back(res);
-                                                   });
-      } else {
-        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
-                                                   [this, callback](NVStorage::NVResult res) {
-                                                     _writeToolCodeImagesToRobotResults.push_back(res);
+      bool isLastImage = (imgIdx < images.size() - 1);
+      res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
+                                                 [this, callback, isLastImage](NVStorage::NVResult res) {
+                                                   _writeToolCodeImagesToRobotResults.push_back(res);
                                                      
+                                                   if (isLastImage) {
                                                      std::string resStr = "";
                                                      for(auto r : _writeToolCodeImagesToRobotResults) {
                                                        resStr += EnumToString(r) + std::string(", ");
@@ -1539,8 +1554,8 @@ namespace Cozmo {
                                                      if (callback) {
                                                        callback(_writeToolCodeImagesToRobotResults);
                                                      }
-                                                   });
-      }
+                                                   }
+                                                 });
       
       if (!res) {
         return RESULT_FAIL;

@@ -6,7 +6,7 @@
 
 // TX time is 130+128uS, RX time is 130+128uS, radio powerup time is ???
 // On the Signal Hound, robot typically ends 500-600uS from TX time
-#define AWAKE_TIME_US      1100     // Empirically need 1100uS for reliable OTA
+#define AWAKE_TIME_US      1150     // Empirically need 1150uS for reliable OTA
 #define BEACON_INTERVAL_US 1000000  // Send beacons about once a second
 
 // This is the advertising packet - it gets patched by the bootloader
@@ -14,7 +14,7 @@ code u8 ADVERTISEMENT[] = {
   10,W_TX_PAYLOAD_NOACK,0x1e,0xab,0x11,0xca,    // Broadcast payload - private address BROADCAST ORDER
   /* 0x3ff4 */          0xff,0xff,              // Little-endian model (0 = charger, 1 = cube 1, etc)
   /* 0x3ff6 */          0xff,0xff,              // Little-endian firmware patch bitmask (0=installed)
-                        0x05,                   // Hardware version - 3=EP2, 4=EP3/EP3F :(, 5=Pilot
+                        0x06,                   // Hardware version - 3=EP2, 4=EP3/EP3F :(, 5=Test, 6=Pilot
                         0xff,                   // Reserved byte  
   WREG | CONFIG,        PWR_UP | EN_CRC | CRCO, // Power up TX with 16-bit CRC
   0

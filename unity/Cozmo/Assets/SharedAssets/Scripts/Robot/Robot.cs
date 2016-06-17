@@ -1508,8 +1508,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void StartDemoWithEdge(bool demoWithEdge) {
-    RobotEngineManager.Instance.Message.StartDemoWithEdge = Singleton<StartDemoWithEdge>.Instance.Initialize(demoWithEdge);
+  public void WakeUp(bool withEdge) {
+    RobotEngineManager.Instance.Message.WakeUp = Singleton<WakeUp>.Instance.Initialize(withEdge);
     RobotEngineManager.Instance.SendMessage();
   }
 

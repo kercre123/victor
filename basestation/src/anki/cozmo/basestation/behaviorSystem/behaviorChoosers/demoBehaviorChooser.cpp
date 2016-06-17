@@ -68,7 +68,7 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::TransitionToNextDemoState>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::StartDemoWithEdge>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::WakeUp>();
   }
 
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
@@ -455,7 +455,7 @@ void DemoBehaviorChooser::HandleMessage(const ExternalInterface::TransitionToNex
 }
 
 template<>
-void DemoBehaviorChooser::HandleMessage(const ExternalInterface::StartDemoWithEdge& msg)
+void DemoBehaviorChooser::HandleMessage(const ExternalInterface::WakeUp& msg)
 {
   _hasEdge = msg.hasEdge;
   

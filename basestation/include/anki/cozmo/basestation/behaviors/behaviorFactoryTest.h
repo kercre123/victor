@@ -27,6 +27,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
+#include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
@@ -93,6 +94,7 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
+    void SendTestResultToGame(Robot& robot, FactoryTestResultCode resCode);
     
     std::vector<Signal::SmartHandle> _signalHandles;
     
@@ -117,13 +119,23 @@ namespace Cozmo {
     f32      _watchdogTriggerTime = -1.0;
     
     bool     _toolCodeImagesStored;
+
+    // Multiple calibrations are done to prevent odd lift calibration behavior
+    // After one calibration lift can rarely get stuck in the up position so a second calibration
+    // will fix it
+    const u8 _maxNumCalib = 2;
+    u8     _headCalibrated = 0;
+    u8     _liftCalibrated = 0;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
     bool _chargerAvailable = false;
     bool _chargerConnected = false;
     FactoryTestResultCode _testResult;
+    FactoryTestResultEntry _testResultEntry;
     std::vector<u32> _stateTransitionTimestamps;
+    
+    FactoryTestLogger _factoryTestLogger;
     
   }; // class BehaviorFactoryTest
 

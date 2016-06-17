@@ -101,6 +101,7 @@ namespace UpgradeController {
   bool didRTIP; ///< We have written new firmare for the RTIP
   bool haveTermination; ///< Have received termination
   bool haveValidCert; ///< Have a valid certificate for the image
+  bool receivedIV;
 
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
@@ -119,6 +120,7 @@ namespace UpgradeController {
     didRTIP = false;
     haveTermination = false;
     haveValidCert = false;
+    receivedIV = false;
     sha512_init(firmware_digest);
     
     // No matter which of the three images we're loading, we can get a header here
@@ -432,10 +434,15 @@ namespace UpgradeController {
               bool encrypted = (fwb->blockAddress & SPECIAL_BLOCK) != SPECIAL_BLOCK;
               sha512_process(firmware_digest, buffer + counter, remaining);
 
-              retries = MAX_RETRIES;
-              counter = 0;
-              timer = 0;
-              phase = encrypted ? OTAT_Flash_Decrypt : OTAT_Flash_Write;
+              if (encrypted && !receivedIV) {
+                // We did not receive out IV, so this image is invalid
+                Reset();
+              } else {
+                retries = MAX_RETRIES;
+                counter = 0;
+                timer = 0;
+                phase = encrypted ? OTAT_Flash_Decrypt : OTAT_Flash_Write;
+              }
             }
           }
           else
@@ -507,6 +514,7 @@ namespace UpgradeController {
             os_printf("OTA header block: %s\r\n", head->c_time);
             #endif
 
+            receivedIV = true;
             memcpy(aes_iv, head->aes_iv, AES_KEY_LENGTH);
 
             retries = MAX_RETRIES;

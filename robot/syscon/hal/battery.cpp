@@ -27,7 +27,7 @@ static const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
 static const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 static const Fixed VEXT_CHARGE_THRESHOLD  = TO_FIXED(4.00); // V
 
-static const u32 CLIFF_SENSOR_BLEED = 200;
+static const u32 CLIFF_SENSOR_BLEED = 0;
 
 static int ContactTime = 0;
 

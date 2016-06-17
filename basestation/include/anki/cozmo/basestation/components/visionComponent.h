@@ -184,15 +184,19 @@ struct DockingErrorSignal;
     // Also erases remaining calibration image slots on robot.
     // We don't want to have a mix of images from different calibration runs.
     using WriteImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
-    Result WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback = {});
+    Result WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback = {},
+                                         std::vector<std::vector<u8> >* rawJpegData = nullptr);
     
     // Write the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
-    Result WriteCalibrationPoseToRobot(size_t whichPose, NVStorageComponent::NVStorageWriteEraseCallback callback = {});
+    Result WriteCalibrationPoseToRobot(size_t whichPose,
+                                       NVStorageComponent::NVStorageWriteEraseCallback callback = {},
+                                       Pose3d* p = nullptr);
     
     // Tool code images
     Result ClearToolCodeImages();    
     size_t  GetNumStoredToolCodeImages() const;
-    Result WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback = {});
+    Result WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback = {},
+                                      std::vector<std::vector<u8> >* rawJpegData = nullptr);
     
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }

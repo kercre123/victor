@@ -17,8 +17,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 25;
-const char* BUILD_INFO = "FOR TEST ONLY";
+u8 g_fixtureReleaseVersion = 26;
+const char* BUILD_INFO = "SMT/PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;

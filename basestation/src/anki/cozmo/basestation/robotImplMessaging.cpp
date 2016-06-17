@@ -170,6 +170,9 @@ void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
+  
+  _serialNumber = payload.robotID;
+  
   // Set DAS Global on all messages
   char string_id[32] = {0};
   snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", payload.modelID,payload.robotID);
