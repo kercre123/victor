@@ -39,8 +39,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 356f72b8dda834c49bc0a6027dafc8e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RewardsEnabled: 1
+  ActionRewardID: experience
   _RewardConfig: {fileID: 11400000, guid: 691488c0cef66496fadbd30e8205c096, type: 2}
+  NewDifficultyUnlock: -1
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -53,6 +54,14 @@ Prefab:
       value: 
       objectReference: {fileID: 11400000, guid: 691488c0cef66496fadbd30e8205c096,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: ExperienceID
+      value: experience
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ActionRewardID
+      value: experience
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187916}

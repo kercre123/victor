@@ -69,9 +69,6 @@ namespace Cozmo.HomeHub {
     private UnityEngine.UI.Text _CurrentRequirementPointsLabel;
 
     [SerializeField]
-    private UnityEngine.UI.Text _RequirementPointsNeededLabel;
-
-    [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
 
     [SerializeField]
@@ -91,7 +88,7 @@ namespace Cozmo.HomeHub {
       private set { _HomeHubInstance = value; }
     }
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -120,6 +117,8 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
+      // TODO: Replaced with RewardedActionManager's RewardPending, serve up energy through that,
+      // then handle chest pending at the end of that interaction.
       if (ChestRewardManager.Instance.ChestPending) {
         HandleChestGained();
       }
@@ -136,7 +135,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetCurrentRequirementPoints());
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
     }
 
     // Opens loot view and fires and relevant events
@@ -149,12 +148,14 @@ namespace Cozmo.HomeHub {
         DAS.Error("HomeView.OpenLootView", "LootViewPrefab is NULL");
         return;
       }
-
+      _EmotionChipTag.gameObject.SetActive(false);
       LootView alertView = UIManager.OpenView(_LootViewPrefab);
-      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingRewards;
+      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
       _LootViewInstance = alertView;
-      _LootViewInstance.ViewCloseAnimationFinished += (() =>
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints()));
+      _LootViewInstance.ViewCloseAnimationFinished += (() => {
+        _EmotionChipTag.gameObject.SetActive(true);
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      });
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
@@ -168,7 +169,6 @@ namespace Cozmo.HomeHub {
       float progress = ((float)currentPoints / (float)numPointsNeeded);
       _RequirementPointsProgressBar.SetProgress(progress);
       _CurrentRequirementPointsLabel.text = currentPoints.ToString();
-      _RequirementPointsNeededLabel.text = numPointsNeeded.ToString();
       if (progress <= 0.0f) {
         _EmotionChipTag.overrideSprite = _EmotionChipSprite_Empty;
       }
@@ -182,7 +182,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleProgressUpdated() {
-      if (ChestRewardManager.Instance.ChestPending) {
+      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null) {
         OpenLootView();
       }
     }
@@ -278,7 +278,7 @@ namespace Cozmo.HomeHub {
       bool canAfford = false;
       for (int i = 0; i < unlockableUnlockData.Count; ++i) {
         if (playerInventory.CanRemoveItemAmount(unlockableUnlockData[i].UpgradeCostItemId,
-                                                unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
+              unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
           canAfford = true;
           break;
         }

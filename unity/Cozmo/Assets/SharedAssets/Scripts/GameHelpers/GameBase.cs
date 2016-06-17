@@ -13,17 +13,19 @@ using Cozmo.Util;
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
 
+  private const float kChallengeCompleteScoreboardDelay = 5f;
+
   private System.Guid? _GameUUID;
 
   public delegate void MiniGameQuitHandler();
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler();
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler();
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -54,6 +56,12 @@ public abstract class GameBase : MonoBehaviour {
   public List<DifficultySelectOptionData> DifficultyOptions {
     get {
       return _DifficultyOptions;
+    }
+  }
+
+  public string ChallengeID {
+    get {
+      return _ChallengeData.ChallengeID;
     }
   }
 
@@ -114,6 +122,9 @@ public abstract class GameBase : MonoBehaviour {
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
 
     SkillSystem.Instance.StartGame(_ChallengeData);
+    // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
+    RewardedActionManager.Instance.PendingActionRewards.Clear();
+    RewardedActionManager.Instance.NewDifficultyUnlock = -1;
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     RegisterInterruptionStartedEvents();
@@ -272,17 +283,25 @@ public abstract class GameBase : MonoBehaviour {
 
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
   public virtual void HandleGameEnd() {
-    GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnGameComplete);
-    if (PlayerRoundsWon > CozmoRoundsWon) {
+    // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
+    bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
+    GameEventManager.Instance.SendGameEventToEngine(
+      GameEventWrapperFactory.Create(GameEvent.OnGameComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, IsHighIntensityGame()));
+    if (playerWon) {
       PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
       int currentDifficultyUnlocked = 0;
       if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
         currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
       }
+      // Set NewDifficultyUnlock to -1 so it will be ignored by ChallengeEndedDialog
+      RewardedActionManager.Instance.NewDifficultyUnlock = -1;
       int newDifficultyUnlocked = CurrentDifficulty + 1;
       if (currentDifficultyUnlocked < newDifficultyUnlocked) {
         playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
         DataPersistence.DataPersistenceManager.Instance.Save();
+        // If a new Difficulty was unlocked, set that in the UnlockablesManager so it will show
+        // in ChallengeEndedDialog
+        RewardedActionManager.Instance.NewDifficultyUnlock = newDifficultyUnlocked;
       }
       RaiseMiniGameWin();
     }
@@ -422,14 +441,38 @@ public abstract class GameBase : MonoBehaviour {
                                      MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
                                      "challenge_end_slide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
-    _ChallengeEndViewInstance.SetupDialog(subtitleText);
+    _ChallengeEndViewInstance.SetupDialog(subtitleText, _ChallengeData);
 
     SoftEndGameRobotReset();
-
-    // Listen for dialog close
-    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
+    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance, 
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     SharedMinigameView.HideHowToPlayButton();
+    StartCoroutine(AutoAdvance(kChallengeCompleteScoreboardDelay));
+  }
+
+  private IEnumerator AutoAdvance(float waitTime) {
+    yield return new WaitForSeconds(waitTime);
+    HandleChallengeResultAdvance();
+  }
+
+  // Update the Challenge Ended Dialog to show all pending rewards and unlocks,
+  // if there are none, close the view.
+  private void HandleChallengeResultAdvance() {
+    StopCoroutine("AutoAdvance");
+    if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
+      SharedMinigameView.HidePlayerScoreboard();
+      SharedMinigameView.HideCozmoScoreboard();
+      SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
+        Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
+        Localization.Get(LocalizationKeys.kRewardCollectInstruction),
+        Color.gray,
+        "game_results_continue_button");
+
+      _ChallengeEndViewInstance.DisplayRewards();
+    }
+    else {
+      HandleChallengeResultViewClosed();
+    }
   }
 
   private void HandleChallengeResultViewClosed() {
@@ -438,20 +481,20 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.TurnOffAllLights();
     }
 
-    // Get unparented reward icons
-    Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIconsByStat();
+    // Get unparented reward icons TODO : Probably put this somewhere else
+    //Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIcons();
 
     // Pass icons and xp to HomeHub
     if (_WonChallenge) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
-        OnMiniGameWin(rewardIconObjects);
+        OnMiniGameWin();
       } 
     }
     else {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerLose);
       if (OnMiniGameLose != null) {
-        OnMiniGameLose(rewardIconObjects);
+        OnMiniGameLose();
       }
     }
 

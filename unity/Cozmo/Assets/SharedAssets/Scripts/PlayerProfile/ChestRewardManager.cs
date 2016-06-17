@@ -23,11 +23,11 @@ public class ChestRewardManager {
   public ChestGainedHandler ChestGained;
 
   // Rewards that have been earned but haven't been shown to the player.
-  public Dictionary<string, int> PendingRewards = new Dictionary<string, int>();
+  public Dictionary<string, int> PendingChestRewards = new Dictionary<string, int>();
 
   public bool ChestPending {
     get {
-      return PendingRewards.Count > 0;
+      return PendingChestRewards.Count > 0;
     }
   }
 
@@ -45,10 +45,19 @@ public class ChestRewardManager {
     return GetCurrentLadderValue(GetChestData().RequirementLadder.LadderLevels);
   }
 
+  public int GetPreviousRequirementPoints() {
+    return GetPreviousLadderValue(GetChestData().RequirementLadder.LadderLevels);
+  }
+
   private ChestData GetChestData() {
     return ChestData.Instance;
   }
 
+  /// <summary>
+  /// Gets the points needed to earn the current chest.
+  /// </summary>
+  /// <returns>The current ladder value.</returns>
+  /// <param name="ladderLevels">Ladder levels.</param>
   private int GetCurrentLadderValue(LadderLevel[] ladderLevels) {
     int ladderLevel = 0;
     if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
@@ -61,6 +70,34 @@ public class ChestRewardManager {
         break;
       }
     }
+    if (value == 0) {
+      DAS.Error("ChestRewardManager.GetCurrentLadderValue", "LadderValue should never be 0");
+      value = 1;
+    }
+    return value;
+  }
+
+  /// <summary>
+  /// Gets the points needed to earn the previous chest.
+  /// </summary>
+  /// <returns>The current ladder value.</returns>
+  /// <param name="ladderLevels">Ladder levels.</param>
+  private int GetPreviousLadderValue(LadderLevel[] ladderLevels) {
+    int ladderLevel = 0;
+    if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
+      ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().ChestsGained;
+    }
+    int value = ladderLevels.First().Value; // default to first value
+    for (int i = 0; i < ladderLevels.Length; ++i) {
+      if ((ladderLevel - 1) == ladderLevels[i].Level) {
+        value = ladderLevels[i].Value;
+        break;
+      }
+    }
+    if (value == 0) {
+      DAS.Error("ChestRewardManager.GetPreviousLadderValue", "LadderValue should never be 0");
+      value = 1;
+    }
     return value;
   }
 
@@ -69,6 +106,7 @@ public class ChestRewardManager {
       return;
     }
 
+    // Deregister Events so this won't trigger itself with Items granted
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     DeregisterEvents(playerInventory);
 
@@ -79,11 +117,11 @@ public class ChestRewardManager {
       foreach (Ladder ladder in GetChestData().RewardLadders) {
         rewardAmount = GetCurrentLadderValue(ladder.LadderLevels);
         playerInventory.AddItemAmount(ladder.ItemId, rewardAmount);
-        if (PendingRewards.ContainsKey(ladder.ItemId)) {
-          PendingRewards[ladder.ItemId] += rewardAmount;
+        if (PendingChestRewards.ContainsKey(ladder.ItemId)) {
+          PendingChestRewards[ladder.ItemId] += rewardAmount;
         }
         else {
-          PendingRewards.Add(ladder.ItemId, rewardAmount);
+          PendingChestRewards.Add(ladder.ItemId, rewardAmount);
         }
       }
 

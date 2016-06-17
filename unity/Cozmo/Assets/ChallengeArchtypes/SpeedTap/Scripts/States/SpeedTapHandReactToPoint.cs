@@ -179,13 +179,13 @@ namespace SpeedTap {
       bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
       if (_CurrentWinner == PointWinner.Player) {
         GameEventManager.Instance.SendGameEventToEngine(
-          GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, _SpeedTapGame.CurrentDifficulty));
+          GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, _SpeedTapGame.ChallengeID, _SpeedTapGame.CurrentDifficulty, true, highIntensity));
         animationEventToSend = (highIntensity) ? 
           GameEvent.OnSpeedtapGamePlayerWinHighIntensity : GameEvent.OnSpeedtapGamePlayerWinLowIntensity;
       }
       else {
         GameEventManager.Instance.SendGameEventToEngine(
-          GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, _SpeedTapGame.CurrentDifficulty));
+          GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, _SpeedTapGame.ChallengeID, _SpeedTapGame.CurrentDifficulty, false, highIntensity));
         animationEventToSend = (highIntensity) ? 
           GameEvent.OnSpeedtapGameCozmoWinHighIntensity : GameEvent.OnSpeedtapGameCozmoWinLowIntensity;
       }

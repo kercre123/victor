@@ -187,7 +187,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
   }
 
-  private void HandleMinigameOver(Transform[] rewards) {
+  private void HandleMinigameOver() {
     HandleMiniGameQuit();
   }
 
