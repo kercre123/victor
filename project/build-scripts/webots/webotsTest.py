@@ -474,7 +474,7 @@ def runAll(options):
     os.makedirs(buildFolder)
 
 
-  with tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz") as tar:
+  with tarfile.open(os.path.join(buildFolder, "webots_out_{0}.tar.gz".format(curTime)), "w:gz") as tar:
     for test in testNames:
       if not config.has_option(test, 'world_file'):
         UtilLog.error('No world file specified for test ' + test + '.')
@@ -662,8 +662,7 @@ def main(scriptArgs):
                       help="""Your password is needed to add the webots executables to the firewall exception list. Can
                       be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
                       easily and also for build server/steps reasons.""")
-
-
+  
   (options, args) = parser.parse_known_args(scriptArgs)
 
   if options.platform != "mac":
@@ -675,13 +674,10 @@ def main(scriptArgs):
   else:
     UtilLog.setLevel(logging.INFO)
 
-
-
   if options.projectRoot:
     options.projectRoot = os.path.normpath(os.path.join(os.getcwd(), options.projectRoot))
   else:
     options.projectRoot = find_project_root()
-
 
   os.chdir(options.projectRoot)
 
