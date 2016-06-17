@@ -16,15 +16,17 @@ public class UnlockableInfo : ScriptableObject {
   // used for serializing enums as strings instead of integers.
   public SerializableUnlockIds[] Prerequisites;
 
-  // true = any prereq filled will make this unlock available
-  // false = all prereqs must be filled to make this unlock available.
+  [Tooltip("If true, any prereq filled will make this unlock available. If false, all prereqs must be filled to make this unlock available.")]
   public bool AnyPrereqUnlock;
 
-  // explicitly viewable and unlockable from the unlocks menu in Cozmo Tab.
+  [Tooltip("Explicitly viewable and unlockable from the unlocks menu in Cozmo Tab.")]
   public bool ExplicitUnlock;
 
-  // unlocked by default if the robot profile is new.
+  [Tooltip("Unlocked by default if the robot profile is new.")]
   public bool DefaultUnlock;
+
+  [Tooltip("Will never leave the 'locked' state")]
+  public bool NeverAvailable;
 
   public string DescriptionKey;
 

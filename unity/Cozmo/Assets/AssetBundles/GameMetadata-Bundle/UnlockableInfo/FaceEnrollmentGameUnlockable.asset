@@ -13,12 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: FaceEnrollmentGame
-    _EnumValue: 7
+    _EnumValue: 5
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
+  NeverAvailable: 0
   DescriptionKey: unlockable.FaceEnrollment.Description
   TitleKey: unlockable.FaceEnrollment.Title
   UpgradeCostItemId: TestHexItem0
