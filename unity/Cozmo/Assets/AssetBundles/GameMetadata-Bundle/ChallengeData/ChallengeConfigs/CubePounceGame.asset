@@ -15,11 +15,12 @@ MonoBehaviour:
   _ChallengeID: CubePounceGame
   _ChallengeTitleLocKey: cubeSlap.title
   _ChallengeDescriptionLocKey: cubeSlap.description
-  _ChallengeIcon: {fileID: 21300000, guid: 39aa659c69e4346a5bfc69abd7722455, type: 3}
-  _ChallengeIconPlainStyle: {fileID: 0}
+  _ChallengeIcon: {fileID: 21300000, guid: 5a17a17c602924356a56e3152bae81a7, type: 3}
+  _ChallengeIconPlainStyle: {fileID: 21300000, guid: 00916176a1ff0452ab93c94889523eee,
+    type: 3}
   _UnlockId:
     _EnumValueAsString: CubePounceGame
-    _EnumValue: 6
+    _EnumValue: 4
   _Music:
     _Music: -527946100
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}
