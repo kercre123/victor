@@ -46,12 +46,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
 
     _TileButton.Initialize(HandleButtonTapped, dasButtonName, dasViewController);
 
-    if (unlockState != CozmoUnlocksPanel.CozmoUnlockState.Locked) {
-      _TileButton.Text = Localization.Get(unlockableData.TitleKey);
-    }
-    else {
-      _TileButton.Text = "";
-    }
+    _TileButton.Text = Localization.Get(unlockableData.TitleKey);
 
     _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked);
     _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);

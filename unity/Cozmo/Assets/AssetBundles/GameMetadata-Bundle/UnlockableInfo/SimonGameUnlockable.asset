@@ -13,12 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SimonGame
-    _EnumValue: 4
+    _EnumValue: 2
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 1
+  NeverAvailable: 0
   DescriptionKey: unlockable.Simon.Description
   TitleKey: unlockable.Simon.Title
   UpgradeCostItemId: TestHexItem0

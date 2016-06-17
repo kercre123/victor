@@ -7,8 +7,6 @@ namespace Cozmo {
 
 enum uint_8 UnlockId
 {
-  BurpAction = 0,
-  DriveInCircleAction,
   CubeRollAction,
   CubeStackAction,
   SimonGame,
