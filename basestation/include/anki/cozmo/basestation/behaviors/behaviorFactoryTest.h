@@ -120,8 +120,12 @@ namespace Cozmo {
     
     bool     _toolCodeImagesStored;
 
-    bool     _headCalibrated;
-    bool     _liftCalibrated;
+    // Multiple calibrations are done to prevent odd lift calibration behavior
+    // After one calibration lift can rarely get stuck in the up position so a second calibration
+    // will fix it
+    const u8 _maxNumCalib = 2;
+    u8     _headCalibrated = 0;
+    u8     _liftCalibrated = 0;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;

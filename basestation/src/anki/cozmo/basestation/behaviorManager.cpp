@@ -118,7 +118,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                             if(!_reactionsEnabled && _runningReactionaryBehavior)
                             {
                               PRINT_NAMED_INFO("EnableReactionaryBehaviors", "Disabling reactionary behaviors stopping currently running one");
-                              StopCurrentBehavior();
+                              SwitchToBehavior(nullptr);
                             }
                           }));
     _eventHandlers.push_back(externalInterface->Subscribe(
