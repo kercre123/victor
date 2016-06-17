@@ -406,14 +406,14 @@ namespace Cozmo {
     }
     
     // Always turn to look at the face before any reaction
-    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot,
-                                                                             face->GetHeadPose(),
+    TurnTowardsFaceAction* turnTowardsFaceAction = new TurnTowardsFaceAction(robot,
+                                                                             face->GetID(),
                                                                              DEG_TO_RAD(179));
-    turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(2.0) );
+    turnTowardsFaceAction->SetPanTolerance( DEG_TO_RAD(2.0) );
 
     if(face->GetName().empty()) {
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-      compoundAction->AddAction(turnTowardsPoseAction);
+      compoundAction->AddAction(turnTowardsFaceAction);
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _initialTakeAnimGroup) );
       StartActing(compoundAction,
                   std::bind(&BehaviorInteractWithFaces::TransitionToWaitingForRecognition,
@@ -424,7 +424,7 @@ namespace Cozmo {
     } else {
       // Face already has a name, skip past all the waiting for recognition stuff and
       // go straight to reacting (after turning towards the face first)
-      StartActing(turnTowardsPoseAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
+      StartActing(turnTowardsFaceAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
     }
 
 
@@ -461,12 +461,12 @@ namespace Cozmo {
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
         
       // Always turn to look at the face before any reaction
-      TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot,
-                                                                               face->GetHeadPose(),
+      TurnTowardsFaceAction* turnTowardsFaceAction = new TurnTowardsFaceAction(robot,
+                                                                               face->GetID(),
                                                                                DEG_TO_RAD(179));
-      turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(2.0) );
+      turnTowardsFaceAction->SetPanTolerance( DEG_TO_RAD(2.0) );
 
-      compoundAction->AddAction(turnTowardsPoseAction);
+      compoundAction->AddAction(turnTowardsFaceAction);
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _waitAnimGroup) );
 
       StartActing(compoundAction,
@@ -504,7 +504,7 @@ namespace Cozmo {
         
     // Always turn to look at the face before any reaction. Even if we were already looking at it, this will
     // serve to adjust the position
-    compoundAction->AddAction(new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179)));
+    compoundAction->AddAction(new TurnTowardsFaceAction(robot, face->GetID(), DEG_TO_RAD(179)));
 
     if( !faceData->_playedNewFaceAnim ) {
       if( face->GetName().empty() ) {

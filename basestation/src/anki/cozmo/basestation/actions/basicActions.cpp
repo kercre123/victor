@@ -1463,14 +1463,15 @@ namespace Anki {
     
 #pragma mark ---- TurnTowardsLastFacePoseAction ----
 
-    TurnTowardsLastFacePoseAction::TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle, bool sayName)
+    TurnTowardsFaceAction::TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle, bool sayName)
     : TurnTowardsPoseAction(robot, maxTurnAngle)
+    , _faceID(faceID)
     , _sayName(sayName)
     {
      
     }
 
-    void TurnTowardsLastFacePoseAction::SetAction(IActionRunner *action)
+    void TurnTowardsFaceAction::SetAction(IActionRunner *action)
     {
       if(nullptr != _action) {
         _action->PrepForCompletion();
@@ -1483,7 +1484,7 @@ namespace Anki {
       }
     }
     
-    TurnTowardsLastFacePoseAction::~TurnTowardsLastFacePoseAction()
+    TurnTowardsFaceAction::~TurnTowardsFaceAction()
     {
       SetAction(nullptr);
       
@@ -1494,12 +1495,27 @@ namespace Anki {
       }
     }
     
-    ActionResult TurnTowardsLastFacePoseAction::Init()
+    ActionResult TurnTowardsFaceAction::Init()
     {
       // If we have a last observed face set, use its pose. Otherwise pose wil not be set
       // and TurnTowardsPoseAction will return failure.
       Pose3d pose;
-      if(_robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
+      bool gotPose = false;
+
+      
+      if(_faceID != Vision::UnknownFaceID)
+      {
+        auto face = _robot.GetFaceWorld().GetFace(_faceID);
+        if(nullptr != face && face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
+          gotPose = true;
+        }
+      }
+      else if(_robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
+      {
+        gotPose = true;
+      }
+      
+      if(gotPose)
       {
         TurnTowardsPoseAction::SetPose(pose);
         
@@ -1521,32 +1537,44 @@ namespace Anki {
         _tracksLocked = true;
         
         return TurnTowardsPoseAction::Init();
-        
-      } else {
+      }
+      else
+      {
         _state = State::SayingName; // jump to end
         return ActionResult::SUCCESS;
       }
-      
+        
     } // Init()
 
     template<>
-    void TurnTowardsLastFacePoseAction::HandleMessage(const ExternalInterface::RobotObservedFace& msg)
+    void TurnTowardsFaceAction::HandleMessage(const ExternalInterface::RobotObservedFace& msg)
     {
-      Vision::FaceID_t faceID = msg.faceID;
       if(_state == State::Turning || _state == State::WaitingForFace)
       {
-        // Record this face if it is closer than any we've seen so far
-        const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(faceID);
-        if(nullptr != face) {
-          Pose3d faceWrtRobot;
-          if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), faceWrtRobot)) {
-            const f32 distSq = faceWrtRobot.GetTranslation().LengthSq();
-            if(distSq < _closestDistSq) {
-              _obsFaceID = faceID;
-              _closestDistSq = distSq;
-              PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.ObservedFaceCallback",
-                                "Observed ID=%d at distSq=%.1f",
-                                _obsFaceID, _closestDistSq);
+        Vision::FaceID_t faceID = msg.faceID;
+        if(_faceID != Vision::UnknownFaceID)
+        {
+          // We know what face we're looking for. If this is it, set the observed face ID to it.
+          if(faceID == _faceID) {
+            _obsFaceID = faceID;
+          }
+        }
+        else
+        {
+          // We are looking for any face.
+          // Record this face if it is closer than any we've seen so far
+          const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(faceID);
+          if(nullptr != face) {
+            Pose3d faceWrtRobot;
+            if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), faceWrtRobot)) {
+              const f32 distSq = faceWrtRobot.GetTranslation().LengthSq();
+              if(distSq < _closestDistSq) {
+                _obsFaceID = faceID;
+                _closestDistSq = distSq;
+                PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.ObservedFaceCallback",
+                                  "Observed ID=%d at distSq=%.1f",
+                                  _obsFaceID, _closestDistSq);
+              }
             }
           }
         }
@@ -1555,18 +1583,25 @@ namespace Anki {
     
     
     template<>
-    void TurnTowardsLastFacePoseAction::HandleMessage(const ExternalInterface::RobotChangedObservedFaceID& msg)
+    void TurnTowardsFaceAction::HandleMessage(const ExternalInterface::RobotChangedObservedFaceID& msg)
     {
       if(_obsFaceID == msg.oldID) {
         PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.HandleChangedFaceIDMessage",
-                          "Updating fine-tune ID from %d to %d",
+                          "Updating fine-tune observed ID from %d to %d",
                           _obsFaceID, msg.newID);
         _obsFaceID = msg.newID;
+      }
+      
+      if(_faceID == msg.oldID) {
+        PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.HandleChangedFaceIDMessage",
+                          "Updating face ID from %d to %d",
+                          _faceID, msg.newID);
+        _faceID = msg.newID;
       }
     } // HandleMessage(RobotChangedObservedFaceID)
     
     
-    void TurnTowardsLastFacePoseAction::CreateFineTuneAction()
+    void TurnTowardsFaceAction::CreateFineTuneAction()
     {
       PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.CreateFinalAction.SawFace",
                         "Observed ID=%d. Will fine tune.", _obsFaceID);
@@ -1590,7 +1625,7 @@ namespace Anki {
     } // CreateFineTuneAction()
     
     
-    ActionResult TurnTowardsLastFacePoseAction::CheckIfDone()
+    ActionResult TurnTowardsFaceAction::CheckIfDone()
     {
       ActionResult result = ActionResult::RUNNING;
       
@@ -1631,7 +1666,7 @@ namespace Anki {
         {
           result = _action->Update();
           if(_obsFaceID != Vision::UnknownFaceID) {
-            // We saw a face. Turn towards it and (optionally) say name.
+            // We saw a/the face. Turn towards it and (optionally) say name.
             CreateFineTuneAction(); // Moves to State:FineTuning
             result = ActionResult::RUNNING;
           }
@@ -1678,12 +1713,12 @@ namespace Anki {
       
       return result;
       
-    } // TurnTowardsLastFacePose::CheckIfDone()
+    } // TurnTowardsFaceAction::CheckIfDone()
 
   
-    const std::string& TurnTowardsLastFacePoseAction::GetName() const
+    const std::string& TurnTowardsFaceAction::GetName() const
     {
-      static const std::string name("TurnTowardsLastFacePoseAction");
+      static const std::string name("TurnTowardsFaceAction");
       return name;
     }
 

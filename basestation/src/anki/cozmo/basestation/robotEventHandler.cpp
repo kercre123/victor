@@ -80,6 +80,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::TrackToObject,
       MessageGameToEngineTag::TraverseObject,
       MessageGameToEngineTag::TurnInPlace,
+      MessageGameToEngineTag::TurnTowardsFace,
       MessageGameToEngineTag::TurnTowardsLastFacePose,
       MessageGameToEngineTag::TurnTowardsObject,
       MessageGameToEngineTag::TurnTowardsPose,
@@ -441,7 +442,7 @@ IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInte
 
   TurnTowardsObjectAction* action = new TurnTowardsObjectAction(robot,
                                                   objectID,
-                                                  Radians(msg.maxTurnAngle),
+                                                  Radians(msg.maxTurnAngle_rad),
                                                   msg.visuallyVerifyWhenDone,
                                                   msg.headTrackWhenDone);
   
@@ -460,7 +461,7 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   
-  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(robot, pose, Radians(msg.maxTurnAngle));
+  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(robot, pose, Radians(msg.maxTurnAngle_rad));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -472,9 +473,23 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
   return action;
 }
 
+IActionRunner* GetTurnTowardsFaceActionHelper(Robot& robot, const ExternalInterface::TurnTowardsFace& msg)
+{
+  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, msg.faceID, Radians(msg.maxTurnAngle_rad), msg.sayName);
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
+}
+  
 IActionRunner* GetTurnTowardsLastFacePoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
-  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle), msg.sayName);
+  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -649,6 +664,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
 
     case RobotActionUnionTag::mountCharger:
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
+      
+    case RobotActionUnionTag::turnTowardsFace:
+      return GetTurnTowardsFaceActionHelper(robot, actionUnion.Get_turnTowardsFace());
       
     case RobotActionUnionTag::turnTowardsLastFacePose:
       return GetTurnTowardsLastFacePoseActionHelper(robot, actionUnion.Get_turnTowardsLastFacePose());
@@ -847,6 +865,11 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       // Special case: doesn't use queuing below
       HandleMessage(event.GetData().Get_SetLiftHeight());
       return;
+    }
+    case ExternalInterface::MessageGameToEngineTag::TurnTowardsFace:
+    {
+      newAction = GetTurnTowardsFaceActionHelper(robot, event.GetData().Get_TurnTowardsFace());
+      break;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
     {
