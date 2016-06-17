@@ -170,8 +170,27 @@ namespace Anki {
       }
 
       // Initialize progression
-      _progressionUnlockComponent->Init();
-      _progressionUnlockComponent->SendUnlockStatus();
+      if (nullptr != _context->GetDataPlatform())
+      {
+        Json::Value progressionUnlockConfig;
+        std::string jsonFilename = "config/basestation/config/unlock_config.json";
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                               jsonFilename,
+                                                               progressionUnlockConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.UnlockConfigJsonNotFound",
+                            "Unlock Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+        
+        _progressionUnlockComponent->Init(progressionUnlockConfig);
+        _progressionUnlockComponent->SendUnlockStatus();
+      }
+      else {
+        Json::Value empty;
+        _progressionUnlockComponent->Init(empty);
+      }
       
       // load available behaviors into the behavior factory
       LoadBehaviors();

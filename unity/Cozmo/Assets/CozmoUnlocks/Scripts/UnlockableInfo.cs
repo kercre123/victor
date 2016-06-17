@@ -22,9 +22,6 @@ public class UnlockableInfo : ScriptableObject {
   [Tooltip("Explicitly viewable and unlockable from the unlocks menu in Cozmo Tab.")]
   public bool ExplicitUnlock;
 
-  [Tooltip("Unlocked by default if the robot profile is new.")]
-  public bool DefaultUnlock;
-
   [Tooltip("Will never leave the 'locked' state")]
   public bool NeverAvailable;
 

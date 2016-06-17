@@ -1,2 +1,8 @@
 {
+  "defaultUnlocks": [
+    "CubeRollAction",
+    "CubeStackAction",
+    "SimonGame",
+    "SpeedTapGame"
+  ]
 }

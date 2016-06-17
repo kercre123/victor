@@ -312,6 +312,8 @@ public static class LocalizationKeys {
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
   public const string kUnlockableDroneModeTitle = "unlockable.DroneMode.Title";
   public const string kUnlockableDroneModeDescription = "unlockable.DroneMode.Description";
+  public const string kUnlockableCubeStackActionTitle = "unlockable.CubeStackAction.Title";
+  public const string kUnlockableCubeStackActionDescription = "unlockable.CubeStackAction.Description";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";

@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "util/helpers/templateHelpers.h"
 #include "json/json.h"
+#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 
 // for now, fake that it takes this long to "write and confirm" the data to the robot
 
@@ -26,16 +27,37 @@
 namespace Anki {
 namespace Cozmo {
 
+static const char* kDefaultUnlockIdsConfigKey = "defaultUnlocks";
+
 ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
   : _robot(robot)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProgressionUnlockComponent::Init()
+void ProgressionUnlockComponent::Init(const Json::Value &config)
 {
-  // todo rsam remove Json if we don't need it
 
+  // load default unlocks from json
+  if( !config.isNull() && config[kDefaultUnlockIdsConfigKey].isArray() ) {
+    for( const auto& unlockIdJson : config[kDefaultUnlockIdsConfigKey] ) {
+      if( ! unlockIdJson.isString() ) {
+        PRINT_NAMED_ERROR("ProgressionUnlockComponent.InvalidData",
+                          "invalid element in unlock id's list (not a string)");
+        continue;
+      }
+
+      UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
+      _currentUnlocks.insert(uid);
+    }
+  }
+  else {
+    PRINT_NAMED_WARNING("ProgressionUnlockComponent.MissingDefaults",
+                        "missing key '%s'",
+                        kDefaultUnlockIdsConfigKey);
+  }
+  
+  
   // register to get unlock requests
   if( _robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
@@ -125,6 +147,9 @@ void ProgressionUnlockComponent::SendUnlockStatus() const
     allUnlocks[ Util::EnumToUnderlying( unlockIt ) ].unlocked = true;
   }
 
+  PRINT_NAMED_INFO("ProgressionUnlockComponent.SendUnlockStatus", "sending current unlock status (%zu unlocked)",
+                   _currentUnlocks.size());
+  
   // now send
   _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
                                               ExternalInterface::UnlockStatus(
@@ -138,6 +163,10 @@ void ProgressionUnlockComponent::Update()
   BOUNDED_WHILE( 100, ! _confirmationsToSend.empty() ) {
     auto top = _confirmationsToSend.begin();
     if( currTime > top->first ) {
+      PRINT_NAMED_DEBUG("ProgressionUnlockComponent.SendUnlockConfirm",
+                        "sending unlock confirm '%s'",
+                        UnlockIdToString(top->second));
+      
       _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
                                                   ExternalInterface::RequestSetUnlockResult(
                                                     top->second, IsUnlocked(top->second))));

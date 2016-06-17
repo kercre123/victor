@@ -54,6 +54,12 @@
   "unlockable.DroneMode.Description": {
     "translation": "With this upgrade, Cozmo will allow you to pilot him in Drone Mode."
   },
+  "unlockable.CubeStackAction.Title": {
+    "translation": "Cube Stack"
+  },
+  "unlockable.CubeStackAction.Description": {
+    "translation": "Get Cozmo to Stack two Cubes"
+  },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon"
   },

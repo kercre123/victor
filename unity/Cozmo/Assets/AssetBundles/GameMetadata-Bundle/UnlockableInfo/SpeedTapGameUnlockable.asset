@@ -18,7 +18,6 @@ MonoBehaviour:
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
-  DefaultUnlock: 1
   NeverAvailable: 0
   DescriptionKey: unlockable.SpeedTap.Description
   TitleKey: unlockable.SpeedTap.Title

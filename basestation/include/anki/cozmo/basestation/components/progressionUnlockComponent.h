@@ -32,7 +32,7 @@ public:
 
   explicit ProgressionUnlockComponent(Robot& robot);
 
-  void Init();
+  void Init(const Json::Value &config);
 
   bool IsUnlocked(UnlockId unlock) const;
 
