@@ -88,8 +88,8 @@ private:
   // Context holds onto these things for everybody:
   std::unique_ptr<Audio::AudioServer>             _audioServer;
   std::unique_ptr<Util::RandomGenerator>          _random;
-  std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<VizManager>                     _vizManager;
+  std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
 };
   

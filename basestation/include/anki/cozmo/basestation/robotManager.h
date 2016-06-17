@@ -73,6 +73,7 @@ public:
   // Add / remove robots
   void AddRobot(const RobotID_t withID);
   void RemoveRobot(const RobotID_t withID);
+  void RemoveRobots();
   
   // Call each Robot's Update() function
   void UpdateAllRobots();
@@ -130,6 +131,8 @@ protected:
   std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
+  
+  void DeleteRobot(Robot* robot) const;
   
   void ReadAnimationDirImpl(const std::string& animationDir);
   void ReadAnimationFile(const char* filename);

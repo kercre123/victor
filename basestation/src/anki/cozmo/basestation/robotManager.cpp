@@ -67,7 +67,10 @@ namespace Anki {
 
     }
     
-    RobotManager::~RobotManager() = default;
+    RobotManager::~RobotManager()
+    {
+      ASSERT_NAMED_EVENT(_robots.empty(), "robotmanager_robot_leak", "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
+    }
     
     void RobotManager::Init(const Json::Value& config)
     {
@@ -131,9 +134,8 @@ namespace Anki {
         
         _robotDisconnectedSignal.emit(withID);
         _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
-        
-        
-        delete(iter->second);
+
+        DeleteRobot(iter->second);
         iter = _robots.erase(iter);
         
         // Find the ID. This is inefficient, but this isn't a long list
@@ -146,6 +148,14 @@ namespace Anki {
       } else {
         PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.\n", withID);
       }
+    }
+    
+    void RobotManager::RemoveRobots()
+    {
+      for (auto &kvp : _robots) {
+        DeleteRobot(kvp.second);
+      }
+      _robots.clear();
     }
     
     std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
@@ -241,6 +251,15 @@ namespace Anki {
     void RobotManager::UpdateRobotConnection()
     {
       _robotMessageHandler->ProcessMessages();
+    }
+    
+    void RobotManager::DeleteRobot(Robot *robot) const
+    {
+      // AbortAll is called in Robot::~Robot which destroys current goals, actions, etc. Some of them eventually use the robot instance
+      // themselves which is being destroyed. We really shouldn't be having that much logic on the destructors but, for now, aborting
+      // before destruction is the best option
+      robot->AbortAll();
+      delete(robot);
     }
     
     void RobotManager::ReadAnimationDir()

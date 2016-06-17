@@ -16,8 +16,8 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   : _externalInterface(externalInterface)
   , _dataPlatform(dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
-  , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())
+  , _robotMgr(new RobotManager(this))
   , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
 {
   // Only set up the audio server if we have a real dataPlatform
@@ -34,7 +34,7 @@ CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 
 CozmoContext::~CozmoContext()
 {
-
+  _robotMgr->RemoveRobots();
 }
   
 } // namespace Cozmo
