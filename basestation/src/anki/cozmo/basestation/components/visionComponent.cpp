@@ -58,6 +58,10 @@ namespace Cozmo {
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
   
+  // Amount of time we sleep when paused, waiting for next image, and after processing each image
+  // (in order to provide a little breathing room for main thread)
+  CONSOLE_VAR_RANGED(u8, kVision_MinSleepTime_ms, "Vision.General", 2, 1, 10);
+  
   VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
   : _robot(robot)
   , _context(context)
@@ -580,7 +584,7 @@ namespace Cozmo {
     while (_running) {
       
       if(_paused) {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
         continue;
       }
 
@@ -595,7 +599,8 @@ namespace Cozmo {
         _nextImg.Clear();
         Unlock();
         
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // Sleep to alleviate pressure on main thread
+        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
       else if(!_nextImg.IsEmpty())
       {
@@ -608,7 +613,8 @@ namespace Cozmo {
       }
       else
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        // Waiting on next image
+        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
       
     } // while(_running)

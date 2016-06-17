@@ -59,6 +59,8 @@ namespace Vision {
   // CONSOLE_VAR(BOOL, kAllowNonTrackingMerging,  "Vision.Recognition", false); // TODO: (AS) Put back?
   CONSOLE_VAR_RANGED(s32, kFaceMergeThreshold, "Vision.FaceRecognition", 900, 0, 1000);
   
+  CONSOLE_VAR_RANGED(u8, kFaceRec_MinSleepTime_ms, "Vision.FaceRecognition", 5, 1, 10);
+  
   static std::string GetTimeString(EnrolledFaceEntry::Time time)
   {
     std::string str;
@@ -502,7 +504,7 @@ namespace Vision {
         ExtractFeatures();
       }
       // Sleep for a bit
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      std::this_thread::sleep_for(std::chrono::milliseconds(kFaceRec_MinSleepTime_ms));
     }
   } // Run()
   
