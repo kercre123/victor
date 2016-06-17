@@ -40,6 +40,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RewardsEnabled: 1
+  ExperienceID: experience
   _RewardConfig: {fileID: 11400000, guid: 691488c0cef66496fadbd30e8205c096, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -53,6 +54,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11400000, guid: 691488c0cef66496fadbd30e8205c096,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: ExperienceID
+      value: experience
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187916}

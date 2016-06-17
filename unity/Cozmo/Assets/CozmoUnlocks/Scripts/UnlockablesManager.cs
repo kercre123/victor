@@ -23,6 +23,17 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
+  // Set to -1 if no new difficulty was unlocked, otherwise is set to the new difficulty and included along
+  // with Pending Unlockables as the next difficulty unlocked.
+  public int NewDifficultyUnlock = -1;
+  public List<Anki.Cozmo.UnlockId> PendingUnlockables = new List<Anki.Cozmo.UnlockId>();
+
+  public bool UnlockPending {
+    get {
+      return ((PendingUnlockables.Count > 0) || (NewDifficultyUnlock != -1));
+    }
+  }
+
   private void Start() {
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleOnUnlockRequestSuccess;
   }
@@ -105,6 +116,15 @@ public class UnlockablesManager : MonoBehaviour {
     return unavailable;
   }
 
+  public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id) {
+    UnlockableInfo info = Array.Find(_UnlockableInfoList.UnlockableInfoData, x => x.Id.Value == id);
+    if (info == null) {
+      DAS.Error(this, "Invalid unlockable id " + id);
+      return null;
+    }
+    return info;
+  }
+
   public void TrySetUnlocked(Anki.Cozmo.UnlockId id, bool unlocked) {
     RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(id, unlocked);
   }
@@ -146,6 +166,7 @@ public class UnlockablesManager : MonoBehaviour {
     GameEventManager.Instance.SendGameEventToEngine(
       GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, id));
     _UnlockablesState[id] = unlocked;
+    PendingUnlockables.Add(id);
   }
 
 }

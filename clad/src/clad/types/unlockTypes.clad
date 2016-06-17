@@ -15,6 +15,7 @@ enum uint_8 UnlockId
   SpeedTapGame,
   CubePounceGame,
   FaceEnrollmentGame,
+  DifficultyUnlock,
   Count
 }
 

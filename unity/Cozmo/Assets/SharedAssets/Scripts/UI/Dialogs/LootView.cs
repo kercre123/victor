@@ -62,9 +62,9 @@ namespace Cozmo {
       // Total Charge per Tap and rate at which Charge decays
       // Charge opens the box at 1.0f and also controls TronBurst and Particle emission rates
       [SerializeField]
-      private float _ChargePerTap = 0.15f;
+      private float _ChargePerTap = 0.2f;
       [SerializeField]
-      private float _ChargeDecayRate = 0.0045f;
+      private float _ChargeDecayRate = 0.003f;
 
       // How long the Reward animation takes to tween the reward doobers to their initial positions
       [SerializeField]
@@ -279,8 +279,8 @@ namespace Cozmo {
             _LootBox.localScale = new Vector3(newScale, newScale, 1.0f);
             _BoxGlow.color = _LootGlow.color;
           }
-          UpdateLootText();
         }
+        UpdateLootText();
       }
 
       /// <summary>
@@ -312,12 +312,22 @@ namespace Cozmo {
 
       private Transform SpawnDoober(string rewardID) {
         Transform newDoob = UIManager.CreateUIElement(_RewardDooberPrefab.gameObject, _DooberStart).transform;
+        Sprite rewardIcon = null;
         // TODO: Initialize Doober with appropriate values
-        if (ItemDataConfig.GetData(rewardID) != null) {
-          Sprite rewardIcon = ItemDataConfig.GetData(rewardID).Icon;
-          if (rewardIcon != null) {
-            newDoob.GetComponent<Image>().overrideSprite = rewardIcon;
+        if (HexItemList.IsPuzzlePiece(rewardID)) {
+          PuzzlePieceData pData = HexItemList.PuzzlePiece(rewardID);
+          if (pData != null) {
+            rewardIcon = HexItemList.Instance.HexSprite;
           }
+        }
+        else {
+          ItemData iData = ItemDataConfig.GetData(rewardID);
+          if (iData != null) {
+            rewardIcon = iData.Icon;
+          }
+        }
+        if (rewardIcon != null) {
+          newDoob.GetComponent<Image>().overrideSprite = rewardIcon;
         }
         _ActiveDooberTransforms.Add(newDoob);
         return newDoob;
@@ -356,7 +366,7 @@ namespace Cozmo {
         dooberSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, CloseView);
         dooberSequence.Play();
 
-        ChestRewardManager.Instance.PendingRewards.Clear();
+        ChestRewardManager.Instance.PendingChestRewards.Clear();
       }
 
       private void TronLineBurst(int count) {

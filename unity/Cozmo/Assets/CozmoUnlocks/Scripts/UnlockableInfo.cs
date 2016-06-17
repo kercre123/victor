@@ -4,7 +4,8 @@ using System;
 
 public enum UnlockableType {
   Game,
-  Action
+  Action,
+  Difficulty
 }
 
 [Serializable]

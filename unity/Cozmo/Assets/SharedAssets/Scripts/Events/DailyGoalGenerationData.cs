@@ -51,6 +51,7 @@ namespace Anki.Cozmo {
         CladEvent = GameEvent.Count;
         GenConditions = new List<GoalCondition>();
         ProgressConditions = new List<GoalCondition>();
+        Priority = 0;
       }
 
       /// <summary>
@@ -74,6 +75,10 @@ namespace Anki.Cozmo {
       /// The Target amount of times the CladEvent must be fired to complete this goal.
       /// </summary>
       public int Target;
+      /// <summary>
+      /// Higher priority goals will sort to the top of the daily goal list.
+      /// </summary>
+      public int Priority;
       /// <summary>
       /// The Game Event that this Daily Goal is progressed by.
       /// </summary>

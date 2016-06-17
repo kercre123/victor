@@ -41,6 +41,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22413246}
+  - 222: {fileID: 22239474}
   m_Layer: 5
   m_Name: MultRewardC
   m_TagString: Untagged
@@ -89,6 +90,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22405386}
+  - 222: {fileID: 22231936}
   m_Layer: 5
   m_Name: MultRewardA
   m_TagString: Untagged
@@ -104,6 +106,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22445366}
+  - 222: {fileID: 22256750}
   m_Layer: 5
   m_Name: MultRewardE
   m_TagString: Untagged
@@ -136,6 +139,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22489430}
+  - 222: {fileID: 22260402}
   m_Layer: 5
   m_Name: MultRewardD
   m_TagString: Untagged
@@ -151,6 +155,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22473282}
+  - 222: {fileID: 22238076}
   m_Layer: 5
   m_Name: MultRewardF
   m_TagString: Untagged
@@ -213,6 +218,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22467404}
+  - 222: {fileID: 22243890}
   m_Layer: 5
   m_Name: MultRewardB
   m_TagString: Untagged
@@ -460,8 +466,8 @@ MonoBehaviour:
   _MinBoxScale: 0.75
   _MaxBoxScale: 1
   _ChargeVFXUpdateInterval: 0.25
-  _ChargePerTap: 0.15
-  _ChargeDecayRate: 0.0045
+  _ChargePerTap: 0.2
+  _ChargeDecayRate: 0.003
   _RewardExplosionDuration: 0.5
   _RewardExplosionStayDuration: 1.5
   _RewardExplosionFinalDuration: 0.75
@@ -3669,18 +3675,54 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 185298}
+--- !u!222 &22231936
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 135492}
 --- !u!222 &22233914
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 103592}
+--- !u!222 &22238076
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 141514}
+--- !u!222 &22239474
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 117114}
+--- !u!222 &22243890
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 166874}
 --- !u!222 &22252344
 CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 199250}
+--- !u!222 &22256750
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 139564}
+--- !u!222 &22260402
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 141270}
 --- !u!222 &22273566
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -3754,8 +3796,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 356, y: 222}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 374, y: 282}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22405922
 RectTransform:
@@ -3805,8 +3847,8 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 410, y: 624}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 517, y: 671}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22413246
 RectTransform:
@@ -3822,8 +3864,8 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 260, y: -232}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 400, y: -127}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22417584
 RectTransform:
@@ -3907,8 +3949,8 @@ RectTransform:
   m_RootOrder: 5
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 89, y: 52}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 62, y: 36}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22446516
 RectTransform:
@@ -3965,8 +4007,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -455, y: -74}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -361, y: -7}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22468726
 RectTransform:
@@ -4009,8 +4051,8 @@ RectTransform:
   m_RootOrder: 6
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -354, y: -330}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 24, y: -311}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22476342
 RectTransform:
@@ -4097,8 +4139,8 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -148, y: 271}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -242, y: 298}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22524592
 CanvasGroup:
@@ -4193,24 +4235,12 @@ Prefab:
       value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _TapSoundEvent._EventType
-      value: UI
+      propertyPath: _ChargePerTap
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: _EmotionChipWindowOpenSoundEvent._Event
-      value: Sfx_Ui_Emotion_Chip_Charged_Start_Play
-      objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _TapSoundEvent._Event
-      value: Sfx_Ui_Emotion_Chip_Charged_Tap_Play
-      objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _LootReleasedSoundEvent._Event
-      value: Sfx_Ui_Code_Fragment_Released_Play
-      objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _EmotionChipWindowOpenSoundEvent._EventType
-      value: UI
+      propertyPath: _ChargeDecayRate
+      value: 0.003
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using Anki.Cozmo;
+using Cozmo;
 using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,26 +14,10 @@ using DataPersistence;
 /// </summary>
 public class RewardedActionManager : MonoBehaviour {
 
-  // Disable if we don't want to reward points, for instance, if we want minigames to ignore these
-  // Just make sure you reenable before resolving anything that would trigger end of game events
-  // (for the sake of win speed tap esque goals.
-  public bool RewardsEnabled = true;
+  [ItemId]
+  public string ExperienceID;
 
-  private static RewardedActionManager _Instance = null;
-
-  public static RewardedActionManager Instance { 
-    get { 
-      if (_Instance == null) { 
-        _Instance = new RewardedActionManager();
-      }
-      return _Instance; 
-    }
-    set {
-      if (_Instance != null) {
-        _Instance = value;
-      }
-    }
-  }
+  public static RewardedActionManager Instance { get; private set; }
 
   private IRobot _CurrRobot = null;
 
@@ -45,24 +30,55 @@ public class RewardedActionManager : MonoBehaviour {
     }
   }
 
+  private void OnEnable() {
+    if (Instance != null && Instance != this) {
+      Destroy(gameObject);
+      return;
+    }
+    else {
+      Instance = this;
+    }
+  }
+
   // TODO: Replace config with json
   [SerializeField]
   private GenericRewardsConfig _RewardConfig;
 
   // Map Animation Group Names to Event Enums using the tool
-  public Dictionary<GameEvent, int> RewardEventMap = new Dictionary<GameEvent, int>();
+  public Dictionary<GameEvent, RewardData> RewardEventMap = new Dictionary<GameEvent, RewardData>();
+
+  // Rewards that have been earned but haven't been shown to the player.
+  public Dictionary<GameEvent, int> PendingEnergyRewards = new Dictionary<GameEvent, int>();
+
+  public bool RewardPending {
+    get {
+      return PendingEnergyRewards.Count > 0;
+    }
+  }
+
+  public int TotalPendingEnergy {
+    get {
+      int total = 0;
+      foreach (GameEvent eventID in RewardedActionManager.Instance.PendingEnergyRewards.Keys) {
+        int count = 0;
+        if (RewardedActionManager.Instance.PendingEnergyRewards.TryGetValue(eventID, out count)) {
+          total += count;
+        }
+      }
+      return total;
+    }
+  }
 
 
   void Start() {
-    GameEventManager.Instance.OnGameEvent += GameEventReceived;
-    // TODO: Load in config file used for handling this
+    RegisterEvents();
     GameEvent gEvent;
-    int amount;
+    RewardData reward;
     for (int i = 0; i < _RewardConfig.RewardedActions.Count; i++) {
       gEvent = _RewardConfig.RewardedActions[i].GameEvent.Value;
-      amount = _RewardConfig.RewardedActions[i].Amount;
+      reward = _RewardConfig.RewardedActions[i].Reward;
       if (!RewardEventMap.ContainsKey(gEvent)) {
-        RewardEventMap.Add(gEvent, amount);
+        RewardEventMap.Add(gEvent, reward);
       }
       else {
         DAS.Error(this, string.Format("{0} is a redundant event. Already have a reward for this.", gEvent));
@@ -71,17 +87,32 @@ public class RewardedActionManager : MonoBehaviour {
   }
 
   void OnDestroy() {
-    GameEventManager.Instance.OnGameEvent -= GameEventReceived;
+    DeregisterEvents();
   }
 
   public void GameEventReceived(GameEventWrapper cozEvent) {
-    int reward = 0;
-    if (enabled) {
-      if (RewardEventMap.TryGetValue(cozEvent.GameEventEnum, out reward)) {
-        DAS.Info(this, string.Format("{0} rewarded {1} points", cozEvent.GameEventEnum, reward));
-        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", reward);
+    RewardData reward = null;
+    if (RewardEventMap.TryGetValue(cozEvent.GameEventEnum, out reward)) {
+      DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Amount, reward.ItemID));
+      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.ItemID, reward.Amount);
+      if (reward.ItemID == ExperienceID) {
+        if (!PendingEnergyRewards.ContainsKey(cozEvent.GameEventEnum)) {
+          PendingEnergyRewards.Add(cozEvent.GameEventEnum, reward.Amount);
+        }
+        else {
+          PendingEnergyRewards[cozEvent.GameEventEnum] += reward.Amount;
+        }
       }
     }
+  }
+
+
+  private void RegisterEvents() {
+    GameEventManager.Instance.OnGameEvent += GameEventReceived;
+  }
+
+  private void DeregisterEvents() {
+    GameEventManager.Instance.OnGameEvent -= GameEventReceived;
   }
 
 
