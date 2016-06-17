@@ -9,13 +9,13 @@ namespace Cozmo.HomeHub {
 
     private static HomeHub _Instance = null;
 
-    public static HomeHub Instance { 
+    public static HomeHub Instance {
       get {
         if (_Instance == null) {
           DAS.Error("HomeHub.Instance", "NULL HomeHub Instance");
         }
-        return _Instance; 
-      } 
+        return _Instance;
+      }
     }
 
     public Transform[] RewardIcons = null;
@@ -39,7 +39,7 @@ namespace Cozmo.HomeHub {
 
     private GameBase _MiniGameInstance;
 
-    public GameBase MiniGameInstance { 
+    public GameBase MiniGameInstance {
       get {
         return _MiniGameInstance;
       }
@@ -142,9 +142,6 @@ namespace Cozmo.HomeHub {
         StartTime = System.DateTime.UtcNow,
       };
 
-      // Close dialog
-      CloseTimelineDialog();
-
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].Data);
     }
@@ -157,9 +154,6 @@ namespace Cozmo.HomeHub {
         StartTime = System.DateTime.UtcNow,
       };
 
-      // Close dialog
-      CloseTimelineDialog();
-
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeRequested].Data);
     }
@@ -170,7 +164,7 @@ namespace Cozmo.HomeHub {
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       // We need to initialize the dialog first before opening the view, so don't animate right away
-      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, 
+      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab,
         newView => {
           newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
         });
@@ -208,7 +202,10 @@ namespace Cozmo.HomeHub {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       }
 
-      GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
+      // Close dialog
+      CloseTimelineDialog();
+
+      GameObject newMiniGameObject = Instantiate(challengeData.MinigamePrefab);
       _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
       _MiniGameInstance.InitializeMinigame(challengeData);
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
@@ -264,7 +261,7 @@ namespace Cozmo.HomeHub {
       DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
     }
 
-    private void LoadChallengeData(ChallengeDataList sourceChallenges, 
+    private void LoadChallengeData(ChallengeDataList sourceChallenges,
                                    out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
       // Initial load of what's unlocked and completed from data
       challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
@@ -283,7 +280,7 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won) { 
+    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won) {
       // the last session is not necessarily valid as the 'CurrentSession', as its possible
       // the day rolled over while we were playing the challenge.
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
@@ -305,7 +302,7 @@ namespace Cozmo.HomeHub {
       if (_HomeViewInstance != null) {
 
         CompleteChallenge(new CompletedChallengeData() {
-          ChallengeId = completedChallengeId 
+          ChallengeId = completedChallengeId
         }, true);
 
         // Force refresh of the dialog

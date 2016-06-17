@@ -136,6 +136,7 @@ public static class LocalizationKeys {
   public const string kMinigamesLabelGamesAndActivities = "minigames.label.gamesAndActivities";
   public const string kMinigamesLabelCozmoUnlocksPanel = "minigames.label.cozmoUnlocksPanel";
   public const string kMinigameLabelDifficultySelect = "minigame.label.difficultySelect";
+  public const string kMinigameLabelCozmoPrep = "minigame.label.cozmoPrep";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";

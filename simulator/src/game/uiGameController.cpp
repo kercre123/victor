@@ -92,13 +92,6 @@ namespace Anki {
       HandleRobotObservedFace(msg);
     }
     
-    void UiGameController::HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg)
-    {
-      _lastObservedObject.Reset();
-      
-      HandleRobotObservedNothing(msg);
-    }
-    
     void UiGameController::HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg)
     {
       PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot %d reported deleting object %d", msg.robotID, msg.objectID);

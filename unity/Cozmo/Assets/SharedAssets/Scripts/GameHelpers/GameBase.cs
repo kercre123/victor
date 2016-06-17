@@ -13,6 +13,7 @@ using Cozmo.Util;
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
 
+  private const float kWaitForPickupOrPlaceTimeout_sec = 30f;
   private const float kChallengeCompleteScoreboardDelay = 5f;
 
   private System.Guid? _GameUUID;
@@ -116,8 +117,6 @@ public abstract class GameBase : MonoBehaviour {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
-    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: FinishTurnToFace);
-
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
 
@@ -128,18 +127,59 @@ public abstract class GameBase : MonoBehaviour {
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     RegisterInterruptionStartedEvents();
-  }
 
-  private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
-      MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab,
       newView => {
         newView.Initialize();
         InitializeView(newView, _ChallengeData);
+        newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
+        newView.ShowShelf();
+        newView.ShowSpinnerWidget();
+        newView.HideMiddleBackground();
       });
 
-    Initialize(_ChallengeData.MinigameConfig);
+    PrepRobotForGame();
+  }
+
+  private void PrepRobotForGame() {
+    IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (currentRobot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING) {
+      StartCoroutine(WaitForPickingUpOrPlacingFinish(currentRobot, Time.time));
+    }
+    else {
+      CheckForCarryingBlock(currentRobot);
+    }
+  }
+
+  private IEnumerator WaitForPickingUpOrPlacingFinish(IRobot robot, float startTimestamp) {
+    while (robot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING
+      && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
+      yield return new WaitForEndOfFrame();
+    }
+
+    CheckForCarryingBlock(robot);
+  }
+
+  private void CheckForCarryingBlock(IRobot robot) {
+    if (robot.RobotStatus == RobotStatusFlag.IS_CARRYING_BLOCK) {
+      robot.PlaceObjectOnGroundHere(FinishPlaceObjectOnGround);
+    }
+    else {
+      robot.TurnTowardsLastFacePose(Mathf.PI, callback: FinishTurnToFace);
+    }
+  }
+
+  private void FinishPlaceObjectOnGround(bool success) {
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: FinishTurnToFace);
+  }
+
+  private void FinishTurnToFace(bool success) {
+    _SharedMinigameViewInstance.ShowMiddleBackground();
+    _SharedMinigameViewInstance.HideSpinnerWidget();
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
+
+    Initialize(_ChallengeData.MinigameConfig);
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
@@ -438,13 +478,13 @@ public abstract class GameBase : MonoBehaviour {
 
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                     MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                     MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject,
                                      "challenge_end_slide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText, _ChallengeData);
 
     SoftEndGameRobotReset();
-    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance, 
+    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     SharedMinigameView.HideHowToPlayButton();
     StartCoroutine(AutoAdvance(kChallengeCompleteScoreboardDelay));
@@ -489,7 +529,7 @@ public abstract class GameBase : MonoBehaviour {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
         OnMiniGameWin();
-      } 
+      }
     }
     else {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerLose);
@@ -519,7 +559,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public int CurrentDifficulty {
     get { return _CurrentDifficulty; }
-    set { 
+    set {
       _CurrentDifficulty = value;
       OnDifficultySet(value);
     }
@@ -594,7 +634,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void UpdateCubeCycleLights() {
-    foreach (KeyValuePair<int,CycleData> kvp in _CubeCycleTimers) {
+    foreach (KeyValuePair<int, CycleData> kvp in _CubeCycleTimers) {
       kvp.Value.timeElaspedSeconds += Time.deltaTime;
 
       if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
@@ -635,7 +675,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void BlinkLight(int cubeId, float duration, Color blinkColor, Color originalColor) {
-    BlinkLight(cubeId, duration, new Color[]{ blinkColor }, new Color[]{ originalColor });
+    BlinkLight(cubeId, duration, new Color[] { blinkColor }, new Color[] { originalColor });
   }
 
   public void BlinkLight(int cubeId, float duration, Color[] blinkColorsCounterclockwise, Color[] originalColors) {
@@ -672,7 +712,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void UpdateBlinkLights() {
     List<int> cubesToStopBlinking = new List<int>();
-    foreach (KeyValuePair<int,BlinkData> cubeIdToTimer in _BlinkCubeTimers) {
+    foreach (KeyValuePair<int, BlinkData> cubeIdToTimer in _BlinkCubeTimers) {
       cubeIdToTimer.Value.timeElaspedSeconds += Time.deltaTime;
       if (cubeIdToTimer.Value.timeElaspedSeconds > cubeIdToTimer.Value.blinkDuration) {
         cubesToStopBlinking.Add(cubeIdToTimer.Key);

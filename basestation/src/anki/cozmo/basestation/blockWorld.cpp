@@ -2885,11 +2885,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
       }
       
-      if(_currentObservedObjects.empty()) {
-        // If we didn't see/update anything, send a signal saying so
-        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
-      } 
-      
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
       
       // Don't worry about collision with the robot while picking or placing since we

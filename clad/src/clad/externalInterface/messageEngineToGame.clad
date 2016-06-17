@@ -247,11 +247,6 @@ message RobotDeletedFace {
     uint_32 robotID
 }
 
-// RobotObservedNothing
-message RobotObservedNothing {
-    uint_32 robotID
-}
-
 // RobotDeletedObject
 message RobotDeletedObject {
     uint_32 robotID,
