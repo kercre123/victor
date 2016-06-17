@@ -16,11 +16,11 @@ MonoBehaviour:
   _ChallengeTitleLocKey: simonGame.title
   _ChallengeDescriptionLocKey: simonGame.description
   _ChallengeIcon: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf, type: 3}
-  _ChallengeIconPlainStyle: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf,
+  _ChallengeIconPlainStyle: {fileID: 21300000, guid: e599f55eac7d54b38a60c412eef68915,
     type: 3}
   _UnlockId:
     _EnumValueAsString: SimonGame
-    _EnumValue: 4
+    _EnumValue: 2
   _Music:
     _Music: 1963393666
   MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}
