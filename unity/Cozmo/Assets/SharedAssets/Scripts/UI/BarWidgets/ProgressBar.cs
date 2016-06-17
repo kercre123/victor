@@ -48,8 +48,7 @@ namespace Cozmo {
           DAS.Warn("ProgressBar.Start", "UseEndCap enabled but EndCap is NULL");
           _UseEndCap = false;
         }
-        if (_EndCap != null && ((!_UseEndCap) ||
-            ((_FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width) < _EndCap.sprite.rect.width))) {
+        if (!_UseEndCap && _EndCap != null) {
           _EndCap.gameObject.SetActive(false);
         }
       }
@@ -69,7 +68,7 @@ namespace Cozmo {
             float capPos = 0.0f;
             capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width;
 
-            if (capPos < _EndCap.sprite.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
+            if (capPos < _EndCap.sprite.rect.width) {
               _EndCap.gameObject.SetActive(false);
             }
             else {

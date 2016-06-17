@@ -82,6 +82,7 @@ public class ChallengeData : ScriptableObject {
   [SerializeField]
   public bool IsMinigame;
 
+
   public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
 }
 

@@ -23,7 +23,6 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
-
   private void Start() {
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleOnUnlockRequestSuccess;
   }
@@ -107,15 +106,6 @@ public class UnlockablesManager : MonoBehaviour {
       }
     }
     return unavailable;
-  }
-
-  public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id) {
-    UnlockableInfo info = Array.Find(_UnlockableInfoList.UnlockableInfoData, x => x.Id.Value == id);
-    if (info == null) {
-      DAS.Error(this, "Invalid unlockable id " + id);
-      return null;
-    }
-    return info;
   }
 
   public void TrySetUnlocked(Anki.Cozmo.UnlockId id, bool unlocked) {

@@ -14,7 +14,7 @@ MonoBehaviour:
   _ItemMap:
   - _ItemId: experience
     _LocKey: item.experience
-    _ItemIcon: {fileID: 21300000, guid: 57bffd227680c43f28139b25c62b84d3, type: 3}
+    _ItemIcon: {fileID: 21300000, guid: 953905e18ad644e89ac2a87904ff3809, type: 3}
   - _ItemId: treat
     _LocKey: item.treat
     _ItemIcon: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}

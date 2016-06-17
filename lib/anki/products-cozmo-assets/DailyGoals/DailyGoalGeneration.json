@@ -6,31 +6,19 @@
       "RewardType": "experience",
       "PointsRewarded": 20,
       "Target": 2,
-      "Priority": 0,
       "CladEvent": "OnMeetNewPerson",
       "GenConditions": [],
       "ProgressConditions": []
     },
     {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap",
-      "DescKey": "dailyGoal.description.PlaySpeedTap",
+      "TitleKey": "dailyGoal.title.WinSpeedTap",
+      "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
       "PointsRewarded": 60,
-      "Target": 2,
-      "Priority": 0,
-      "CladEvent": "OnGameComplete",
+      "Target": 1,
+      "CladEvent": "OnSpeedtapGamePlayerWinAnyIntensity",
       "GenConditions": [],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.GameEndChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Game End Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ]
+      "ProgressConditions": []
     },
     {
       "TitleKey": "dailyGoal.title.UnlockMeetCozmo",
@@ -38,7 +26,6 @@
       "RewardType": "experience",
       "PointsRewarded": 10,
       "Target": 1,
-      "Priority": 0,
       "CladEvent": "OnUnlockableEarned",
       "GenConditions": [],
       "ProgressConditions": [

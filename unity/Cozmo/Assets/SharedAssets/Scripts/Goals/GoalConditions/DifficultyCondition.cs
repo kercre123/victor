@@ -11,21 +11,21 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specifies the Current Game completed
+/// Goal condition that specifies Difficulty beat
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndChallengeIDCondition : GoalCondition {
+    public class DifficultyCondition : GoalCondition {
      
-      public string ChallengeID;
+      public int Difficulty;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (cozEvent is MinigameCompletedGameEvent) {
           MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
-          if (miniGameEvent.GameID == ChallengeID) {
-            isMet = true;
+          if (miniGameEvent.Difficulty <= Difficulty) {
+            isMet = true;          
           }
         }
         return isMet;
@@ -34,7 +34,7 @@ namespace Anki {
       #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge desired"), ChallengeID);
+        Difficulty = EditorGUILayout.IntField("Difficulty", Difficulty);
         EditorGUILayout.EndHorizontal();
       }
       #endif

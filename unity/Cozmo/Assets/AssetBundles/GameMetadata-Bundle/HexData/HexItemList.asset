@@ -11,7 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf9437af8635f469ea85f9b90b7bf769, type: 3}
   m_Name: HexItemList
   m_EditorClassIdentifier: 
-  HexSprite: {fileID: 21300000, guid: 88082d5aacbbe4455885d2c3a1750000, type: 3}
   HexItems:
   - InventoryId: TestHexItem0
     HexSet: {fileID: 11400000, guid: eaad77c2f3e414104be77a3153e7d669, type: 2}

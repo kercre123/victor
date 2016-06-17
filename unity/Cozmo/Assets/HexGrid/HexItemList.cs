@@ -15,8 +15,6 @@ namespace Cozmo {
       get { return _sInstance; }
     }
 
-    public Sprite HexSprite;
-
     public PuzzlePieceData[] HexItems;
 
     private Dictionary<string, PuzzlePieceData> _IdToData;

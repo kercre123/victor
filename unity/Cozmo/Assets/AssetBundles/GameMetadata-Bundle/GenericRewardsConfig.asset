@@ -15,40 +15,16 @@ MonoBehaviour:
   - GameEvent:
       _EnumValueAsString: OnSpeedtapHandPlayerWin
       _EnumValue: 5
-    Reward:
-      ItemID: experience
-      Amount: 2
-      Description:
-        Key: reward.description.SimonMatch
+    Amount: 2
   - GameEvent:
       _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
       _EnumValue: 15
-    Reward:
-      ItemID: experience
-      Amount: 30
-      Description:
-        Key: reward.description.SpeedTapWinGame
+    Amount: 30
   - GameEvent:
       _EnumValueAsString: OnGameComplete
       _EnumValue: 39
-    Reward:
-      ItemID: experience
-      Amount: 15
-      Description:
-        Key: reward.description.PlayGame
+    Amount: 15
   - GameEvent:
       _EnumValueAsString: OnSimonPlayerHandComplete
       _EnumValue: 33
-    Reward:
-      ItemID: experience
-      Amount: 3
-      Description:
-        Key: reward.description.SimonMatch
-  - GameEvent:
-      _EnumValueAsString: OnSimonPlayerWin
-      _EnumValue: 36
-    Reward:
-      ItemID: experience
-      Amount: 30
-      Description:
-        Key: reward.description.SimonOnPlayerWin
+    Amount: 3

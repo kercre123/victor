@@ -29,30 +29,19 @@ public class GameEventWrapper {
 }
 
 public class MinigameCompletedGameEvent : GameEventWrapper {
-  public string GameID;
   public int Difficulty;
-  public bool PlayerWon;
-  public bool HighIntensity;
+  public string GameID;
 
   public override void Init(GameEvent Enum, params object[] args) {
     base.Init(Enum);
+    if (args.Length > 0 && args[0].GetType() == typeof(Int32)) {
+      Difficulty = (int)args[0];
+    }
     // Potentially this could also attempt to guess the ID by the enum type.
     // Just depends on what the event is.
     // Not needed if the event name includes the game type.
-    if (args.Length > 0 && args[0].GetType() == typeof(String)) {
-      GameID = (string)args[0];
-    }
-
-    if (args.Length > 1 && args[1].GetType() == typeof(Int32)) {
-      Difficulty = (int)args[1];
-    }
-
-    if (args.Length > 2 && args[2].GetType() == typeof(bool)) {
-      PlayerWon = (bool)args[2];
-    }
-
-    if (args.Length > 3 && args[3].GetType() == typeof(bool)) {
-      HighIntensity = (bool)args[3];
+    if (args.Length > 1 && args[1].GetType() == typeof(String)) {
+      GameID = (string)args[1];
     }
   }
 }
@@ -93,9 +82,6 @@ public class GameEventWrapperFactory {
     // Specific wrappers, otherwise just use the base class.
     Register(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, typeof(MinigameCompletedGameEvent));
     Register(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, typeof(MinigameCompletedGameEvent));
-    Register(GameEvent.OnSimonPlayerWin, typeof(MinigameCompletedGameEvent));
-    Register(GameEvent.OnSimonCozmoWin, typeof(MinigameCompletedGameEvent));
-    Register(GameEvent.OnGameComplete, typeof(MinigameCompletedGameEvent));
     Register(GameEvent.OnUnlockableEarned, typeof(UnlockableUnlockedGameEvent));
   }
 
