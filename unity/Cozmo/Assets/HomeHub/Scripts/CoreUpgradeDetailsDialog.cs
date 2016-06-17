@@ -99,7 +99,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
                            string dasButtonName, string costItemId, int costAmount, AnkiTextLabel inventoryLabel) {
     button.Initialize(buttonCallback, dasButtonName, this.DASEventViewName);
 
-    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     button.Interactable = playerInventory.CanRemoveItemAmount(costItemId, costAmount);
 
     ItemData itemData = ItemDataConfig.GetData(costItemId);
