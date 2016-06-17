@@ -1,6 +1,6 @@
 {
   "behaviorType": "PutDownBlock",
-  "name": "PutDownBlock",
+  "name": "demo_PutDownBlock",
   "flatScore": 0.75,
   "repetitionPenalty": {
     "nodes": [

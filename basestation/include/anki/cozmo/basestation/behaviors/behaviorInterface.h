@@ -132,7 +132,10 @@ public:
   
   float EvaluateRepetitionPenalty() const;
   const Util::GraphEvaluator2d& GetRepetionalPenalty() const { return _repetitionPenalty; }
-    
+
+  float EvaluateRunningPenalty() const;
+  const Util::GraphEvaluator2d& GetRunningPenalty() const { return _runningPenalty; }
+
   bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
@@ -300,6 +303,7 @@ private:
   
   MoodScorer              _moodScorer;
   Util::GraphEvaluator2d  _repetitionPenalty;
+  Util::GraphEvaluator2d  _runningPenalty;
   float                   _flatScore;
   
   Robot& _robot;
@@ -321,6 +325,7 @@ private:
   bool _isOwnedByFactory;
     
   bool _enableRepetitionPenalty;
+  bool _enableRunningPenalty;
     
 }; // class IBehavior
   

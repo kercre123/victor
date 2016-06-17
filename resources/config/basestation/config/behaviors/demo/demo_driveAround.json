@@ -1,6 +1,6 @@
 {
   "behaviorType": "LookAround",
-  "name": "DriveAround",
+  "name": "demo_DriveAround",
   "flatScore": 0.3,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,

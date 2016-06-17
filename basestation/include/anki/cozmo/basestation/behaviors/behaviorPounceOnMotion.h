@@ -52,7 +52,9 @@ protected:
   float _lastPoseDist = 0.0f;
   
   // Overwritten by config.
-  float _maxTimeSinceNoMotion_sec = 30.0;
+  float _maxTimeSinceNoMotion_running_sec = 30.0;
+  float _maxTimeSinceNoMotion_notRunning_sec = 30.0;
+  float _boredomMultiplier = 0.8f;
   float _maxTimeBeforeRotate = 5.f;
   
   

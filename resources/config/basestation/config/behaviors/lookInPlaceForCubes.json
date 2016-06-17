@@ -1,38 +1,9 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
-  "name": "demo_lookInPlaceForCubes",
-
-  // should run we have faces (so that find faces will be prefered)
-  "emotionScorers": [
-    {
-      "emotionType": "Social",
-      "scoreGraph": {
-        "nodes": [
-          {
-            "x": -1.0,
-            "y": 0.0
-          },
-          {
-            "x": 0.0,
-            "y": 0.0
-          },
-          {
-            "x": 0.1,
-            "y": 0.3
-          },
-          {
-            "x": 0.5,
-            "y": 0.4
-          }
-        ]
-      },
-      "trackDelta": false
-    }
-  ],
-  
+  "name": "LookInPlaceForCubes",
+  "flatScore": 0.4,
   "behaviorGroups": [
-    "Demo",
-    "DemoCubes"
+    "FreeplayOne"
   ],
 
   // -- configuration parameters for ExploreLookAroundInPlace
@@ -40,7 +11,7 @@
   {
     "behavior_ShouldResetTurnDirection": false,
     "behavior_ShouldLowerLift": true,
-    "behavior_DistanceFromRecentLocationMin_mm": 200.0,
+    "behavior_DistanceFromRecentLocationMin_mm": 100.0,
     "behavior_RecentLocationsMax": 1,
     "behavior_AngleOfFocus_deg": 0.0,
     

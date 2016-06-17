@@ -2,12 +2,12 @@
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestSpeedTap",
   "requiredGameFlags" : "SpeedTap",
-
+  
   "zero_block_config": {
     "request_animName" : "requestGame_speedTap_request",
     "deny_animName" : "requestGame_speedTap_deny",
     "minRequestDelay_s" : 20.0,
-    "score_factor": 0.2
+    "score_factor": 0.5
   },
 
   "one_block_config": {

@@ -1,0 +1,8 @@
+{
+  "behaviorType": "PutDownBlock",
+  "name": "PutDownBlock",
+  "flatScore": 0.2,
+  "behaviorGroups": [
+    "FreeplayOne"
+  ]
+}

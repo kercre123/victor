@@ -1,0 +1,9 @@
+{
+  "behaviorType": "ExploreVisitPossibleMarker",
+  "name": "visitPossibleMarker",
+  "flatScore": 0.6,
+  "behaviorGroups": [
+    "Demo",
+    "FreeplayOne"
+  ]  
+}

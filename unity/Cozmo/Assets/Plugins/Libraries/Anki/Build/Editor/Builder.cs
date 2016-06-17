@@ -121,8 +121,6 @@ namespace Anki {
         FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources/assets/.svn");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
                                                    "Assets/StreamingAssets/cozmo_resources/assets/animationGroupMaps");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/behaviors",
-                                                   "Assets/StreamingAssets/cozmo_resources/assets/behaviors");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
                                                    "Assets/StreamingAssets/cozmo_resources/assets/DailyGoals");
 

@@ -26,7 +26,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFlipDownFromWheelie.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
@@ -170,11 +169,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DemoFearEdge:
     {
       newBehavior = new BehaviorDemoFearEdge(robot, config);
-      break;
-    }
-    case BehaviorType::FlipDownFromWheelie:
-    {
-      newBehavior = new BehaviorFlipDownFromWheelie(robot, config);
       break;
     }
     case BehaviorType::ReactToRobotOnBack:

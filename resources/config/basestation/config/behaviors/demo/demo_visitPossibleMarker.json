@@ -1,8 +1,0 @@
-{
-  "behaviorType": "ExploreVisitPossibleMarker",
-  "name": "demo_visitPossibleMarker",
-  "flatScore": 0.5,
-  "behaviorGroups": [
-    "FreePlay"
-  ]  
-}

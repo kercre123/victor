@@ -49,7 +49,7 @@
       "emotionAffectors" : [
         {
           "emotionType" : "Social",
-          "value" : 0.05
+          "value" : 0.15
         }
       ]
     },
@@ -58,7 +58,7 @@
       "emotionAffectors" : [
         {
           "emotionType" : "Social",
-          "value" : 0.1
+          "value" : 0.2
         }
       ]
     },
@@ -74,6 +74,15 @@
           "value" : -0.06
         }
       ]
-    }
+    },
+    {
+      "name": "LookAtFaceVerified",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.08
+        }
+      ]
+    }   
   ]
 }

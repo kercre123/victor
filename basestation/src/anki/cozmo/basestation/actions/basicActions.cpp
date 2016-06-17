@@ -17,10 +17,11 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 
@@ -1572,9 +1573,11 @@ namespace Anki {
                         
       const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
       if(nullptr != face) {
-        // Valid face...
+        // Valid face...        
         Pose3d pose;
         if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
+          _robot.GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
+          
           // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
           // require too large of an adjustment.
           SetAction(new TurnTowardsPoseAction(_robot, pose, DEG_TO_RAD(45)));

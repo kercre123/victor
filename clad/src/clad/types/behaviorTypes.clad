@@ -43,7 +43,6 @@ enum uint_8 BehaviorType {
   PutDownBlock,
   FactoryTest,
   DemoFearEdge,
-  FlipDownFromWheelie,
   DockingTestSimple,
   DriveOffCharger,
 

@@ -38,6 +38,7 @@ static const char* kNameKey              = "name";
 static const char* kEmotionScorersKey    = "emotionScorers";
 static const char* kFlatScoreKey         = "flatScore";
 static const char* kRepetitionPenaltyKey = "repetitionPenalty";
+static const char* kRunningPenaltyKey    = "runningPenalty";
 static const char* kBehaviorGroupsKey    = "behaviorGroups";
 static const char* kRequiredUnlockKey    = "requiredUnlockId";
   
@@ -52,6 +53,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   , _isRunning(false)
   , _isOwnedByFactory(false)  
   , _enableRepetitionPenalty(true)
+  , _enableRunningPenalty(true)
 {
   ReadFromJson(config);
 
@@ -139,7 +141,31 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   {
     _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
+
+  // - - - - - - - - - -
+  // Running penalty
+  // - - - - - - - - - -
+  
+  _runningPenalty.Clear();
     
+  const Json::Value& runningPenaltyJson = config[kRunningPenaltyKey];
+  if (!runningPenaltyJson.isNull())
+  {
+    if (!_runningPenalty.ReadFromJson(runningPenaltyJson))
+    {
+      PRINT_NAMED_WARNING("IBehavior.BadRunningPenalty",
+                          "Behavior '%s': %s failed to read",
+                          _name.c_str(),
+                          kRunningPenaltyKey);
+    }
+  }
+    
+  // Ensure there is a valid graph
+  if (_runningPenalty.GetNumNodes() == 0)
+  {
+    _runningPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
+  }
+
   // - - - - - - - - - -
   // Behavior Groups
   // - - - - - - - - - -
@@ -333,6 +359,19 @@ float IBehavior::EvaluateRepetitionPenalty() const
     
   return 1.0f;
 }
+
+float IBehavior::EvaluateRunningPenalty() const
+{  
+  if (_startedRunningTime_s > 0.0)
+  {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceStarted = Util::numeric_cast<float>(currentTime_sec - _startedRunningTime_s);
+    const float runningPenalty = _runningPenalty.EvaluateY(timeSinceStarted);
+    return runningPenalty;
+  }
+  
+  return 1.0f;
+}
   
 float IBehavior::EvaluateScore(const Robot& robot) const
 {
@@ -351,7 +390,13 @@ float IBehavior::EvaluateScore(const Robot& robot) const
       score = EvaluateScoreInternal(robot);
     }
       
-    // no repetition penalty when running
+    // use running penalty while running, repetition penalty otherwise
+    if (_enableRunningPenalty && isRunning)
+    {
+      const float runningPenalty = EvaluateRunningPenalty();
+      score *= runningPenalty;
+    }
+
     if (_enableRepetitionPenalty && !isRunning)
     {
       const float repetitionPenalty = EvaluateRepetitionPenalty();

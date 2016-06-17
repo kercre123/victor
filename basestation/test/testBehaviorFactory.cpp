@@ -77,6 +77,22 @@ static const char* kTestBehaviorJson =
 "         }"
 "      ]"
 "   },"
+"    \"runningPenalty\": {"
+"    \"nodes\": ["
+"      {"
+"        \"x\": 0.0,"
+"        \"y\": 1.0"
+"      },"
+"      {"
+"        \"x\": 10.0,"
+"        \"y\": 1.0"
+"      },"
+"      {"
+"        \"x\": 60.0,"
+"        \"y\": 0.5"
+"      }"
+"    ]"
+"  },"
 "   \"behaviorGroups\" : ["
 "      \"AffectsBlocks\","
 "      \"RequestSpeedTap\""
@@ -139,6 +155,12 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
   EXPECT_EQ(inBehavior->GetRepetionalPenalty().GetNumNodes(), 2);
   EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(0.0f), 0.0f);
   EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(4.5f), 0.5f);
+
+  EXPECT_EQ(inBehavior->GetRunningPenalty().GetNumNodes(), 3);
+  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(0.0f), 1.0f);
+  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(5.0f), 1.0f);
+  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(35.0f), 0.75f);
+  EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(200.0f), 0.5f);
   
   EXPECT_EQ(behaviorFactory.FindBehaviorByName(kTestBehaviorName), inBehavior);
   EXPECT_EQ(behaviorFactory.GetBehaviorMap().size(), expectedBehaviorCount);

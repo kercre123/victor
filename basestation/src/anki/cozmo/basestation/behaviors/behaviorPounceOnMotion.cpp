@@ -33,18 +33,23 @@ namespace Cozmo {
 
 using namespace ExternalInterface;
   
-static const std::string s_PounceAnimGroup        = "ag_pounceOnMotionPounce";
-static const std::string s_PounceSuccessAnimGroup = "ag_pounceOnMotionSuccess";
-static const std::string s_PounceFailAnimGroup    = "ag_pounceOnMotionFail";
-static const std::string s_pounceDriveFaceAnimGroup = "ag_pounceDriveFace";
-static const std::string s_PounceGetOutAnimGroup  = "ag_pounceDriveFace_getOut";
-static const std::string s_PounceInitalWarningAnimGroup = "ag_pounceWarningInitial";
-static const std::string s_PounceReactToMotionAnimGroup = "ag_pounceReactToMotion";
+static const std::string s_PounceAnimGroup                = "ag_pounceOnMotionPounce";
+static const std::string s_PounceSuccessAnimGroup         = "ag_pounceOnMotionSuccess";
+static const std::string s_PounceFailAnimGroup            = "ag_pounceOnMotionFail";
+static const std::string s_pounceDriveFaceAnimGroup       = "ag_pounceDriveFace";
+static const std::string s_PounceGetOutAnimGroup          = "ag_pounceDriveFace_getOut";
+static const std::string s_PounceInitalWarningAnimGroup   = "ag_pounceWarningInitial";
+static const std::string s_PounceReactToMotionAnimGroup   = "ag_pounceReactToMotion";
 static const std::string s_PounceSneakDriveStartAnimGroup = "ag_pounceDriveStart";
-static const std::string s_PounceSneakDriveLoopAnimGroup = "ag_pounceDriveLoop";
-static const std::string s_PounceSneakDriveEndAnimGroup = "ag_pounceDriveEnd";
-static const char* kMaxNoMotionBeforeBored_Sec    = "maxNoGroundMotionBeforeBored_Sec";
-static const char* kTimeBeforeRotate_Sec          = "TimeBeforeRotate_Sec";
+static const std::string s_PounceSneakDriveLoopAnimGroup  = "ag_pounceDriveLoop";
+static const std::string s_PounceSneakDriveEndAnimGroup   = "ag_pounceDriveEnd";
+static const char* kMaxNoMotionBeforeBored_running_Sec    = "maxNoGroundMotionBeforeBored_running_Sec";
+static const char* kMaxNoMotionBeforeBored_notRunning_Sec = "maxNoGroundMotionBeforeBored_notRunning_Sec";
+static const char* kTimeBeforeRotate_Sec                  = "TimeBeforeRotate_Sec";
+static const char* kBoredomMultiplier                     = "boredomMultiplier";
+
+static float kBoredomMultiplierDefault = 0.8f;
+
 // combination of offset between lift and robot orign and motion built into animation
 static constexpr float kDriveForwardUntilDist = 50.f;
 // Anything below this basically all looks the same, so just play the animation and possibly miss
@@ -61,7 +66,11 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
     EngineToGameTag::RobotCompletedAction
   }});
 
-  _maxTimeSinceNoMotion_sec = config.get(kMaxNoMotionBeforeBored_Sec, _maxTimeSinceNoMotion_sec).asFloat();
+  _maxTimeSinceNoMotion_running_sec = config.get(kMaxNoMotionBeforeBored_running_Sec,
+                                                 _maxTimeSinceNoMotion_running_sec).asFloat();
+  _maxTimeSinceNoMotion_notRunning_sec = config.get(kMaxNoMotionBeforeBored_notRunning_Sec,
+                                                    _maxTimeSinceNoMotion_notRunning_sec).asFloat();
+  _boredomMultiplier = config.get(kBoredomMultiplier, kBoredomMultiplierDefault).asFloat();
   _maxTimeBeforeRotate = config.get(kTimeBeforeRotate_Sec, _maxTimeBeforeRotate).asFloat();
   
   SET_STATE(Inactive);
@@ -70,8 +79,8 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 
 bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
 {
-  // Can always run now. Used to be more motion based.
-  return true;
+  // Can always run if we aren't holding something. Used to be more motion based.
+  return !robot.IsCarryingObject();
 }
 
 float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
@@ -82,9 +91,9 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
   if( !IsRunning() )
   {
     double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( _lastMotionTime + _maxTimeSinceNoMotion_sec > currentTime_sec )
+    if ( _lastMotionTime + _maxTimeSinceNoMotion_notRunning_sec < currentTime_sec )
     {
-      multiplier = 1.2f;
+      multiplier = _boredomMultiplier;
     }
   }
   return IBehavior::EvaluateScoreInternal(robot) * multiplier;
@@ -434,7 +443,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
     case State::WaitingForMotion:
     {
       // We're done if we haven't seen motion in a long while or since start.
-      if ( _lastMotionTime + _maxTimeSinceNoMotion_sec < currentTime_sec )
+      if ( _lastMotionTime + _maxTimeSinceNoMotion_running_sec < currentTime_sec )
       {
         PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
         TransitionToGetOutBored(robot);
