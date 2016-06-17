@@ -109,6 +109,15 @@ namespace Cozmo {
 
       #endregion
 
+      #region Audio
+      [SerializeField]
+      private Anki.Cozmo.Audio.AudioEventParameter _TapSoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+      [SerializeField]
+      private Anki.Cozmo.Audio.AudioEventParameter _EmotionChipWindowOpenSoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+      [SerializeField]
+      private Anki.Cozmo.Audio.AudioEventParameter _LootReleasedSoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+      #endregion
+
       private float _currentCharge = 0.0f;
       private float _recentTapCharge = 0.0f;
       private int _tronBurst = 1;
@@ -180,7 +189,7 @@ namespace Cozmo {
       private bool _BoxOpened;
 
       private void Awake() {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
         _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
         _ActiveDooberTransforms = new List<Transform>();
         _LootGlow.DOFade(0.0f, 0.0f);
@@ -240,6 +249,7 @@ namespace Cozmo {
             _ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, currShake), _ShakeRotationVibrato, _ShakeRotationRandomness);
             currShake = Mathf.Lerp(_ShakePositionMin, _ShakePositionMax, _currentCharge);
             _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, currShake, _ShakePositionVibrato, _ShakePositionRandomness);
+            Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_TapSoundEvent);
           }
         }
       }
@@ -296,6 +306,7 @@ namespace Cozmo {
 
       private void RewardLoot() {
         _BurstParticles.Emit(_OpenChestBurst);
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_LootReleasedSoundEvent);
         UnleashTheDoobers();
       }
 

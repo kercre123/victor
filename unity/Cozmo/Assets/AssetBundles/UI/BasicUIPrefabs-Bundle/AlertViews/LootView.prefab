@@ -457,8 +457,8 @@ MonoBehaviour:
   _ShakePositionVibrato: 45
   _ShakePositionRandomness: 30
   _TapDecayRate: 0.02
-  _MinScale: 0.75
-  _MaxScale: 1
+  _MinBoxScale: 0.75
+  _MaxBoxScale: 1
   _ChargeVFXUpdateInterval: 0.25
   _ChargePerTap: 0.15
   _ChargeDecayRate: 0.0045
@@ -474,6 +474,18 @@ MonoBehaviour:
   _OpenChestBurst: 15
   _LootMidThreshold: 0.25
   _LootAlmostThreshold: 0.5
+  _TapSoundEvent:
+    _Event: Sfx_Ui_Emotion_Chip_Charged_Tap_Play
+    _EventType: UI
+    _GameObjectType: 2
+  _EmotionChipWindowOpenSoundEvent:
+    _Event: Sfx_Ui_Emotion_Chip_Charged_Start_Play
+    _EventType: UI
+    _GameObjectType: 2
+  _LootReleasedSoundEvent:
+    _Event: Sfx_Ui_Code_Fragment_Released_Play
+    _EventType: UI
+    _GameObjectType: 2
   _LootStartKey: loot.Start
   _LootMidKey: loot.Mid
   _LootAlmostKey: loot.Almost
@@ -4179,6 +4191,26 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _LootAlmostThreshold
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TapSoundEvent._EventType
+      value: UI
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _EmotionChipWindowOpenSoundEvent._Event
+      value: Sfx_Ui_Emotion_Chip_Charged_Start_Play
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TapSoundEvent._Event
+      value: Sfx_Ui_Emotion_Chip_Charged_Tap_Play
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _LootReleasedSoundEvent._Event
+      value: Sfx_Ui_Code_Fragment_Released_Play
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _EmotionChipWindowOpenSoundEvent._EventType
+      value: UI
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
