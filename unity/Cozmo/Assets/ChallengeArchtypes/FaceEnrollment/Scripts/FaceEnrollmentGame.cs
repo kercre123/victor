@@ -154,7 +154,8 @@ namespace FaceEnrollment {
         CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
       }
       EditOrEnrollFaceComplete(success);
-
+      _AttemptedEnrollFace = false;
+      RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
 
     private void EditOrEnrollFaceComplete(bool success) {
