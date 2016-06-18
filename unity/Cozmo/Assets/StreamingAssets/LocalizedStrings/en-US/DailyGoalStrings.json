@@ -25,10 +25,10 @@
     "translation": "This goal has no description set."
   },
   "dailyGoal.title.WinSpeedTap": {
-    "translation": "Win a game of Speed Tap"
+    "translation": "Win a game of\n<color='#4499FF'>Speed Tap</color>"
   },
   "dailyGoal.description.WinSpeedTap": {
-    "translation": "Beat Cozmo in a game of Speed Tap."
+    "translation": "Beat Cozmo in a game of <color='#1133FF'>Speed Tap</color>."
   },
   "dailyGoal.title.PlaySpeedTap": {
     "translation": "Play Speed Tap"
@@ -46,18 +46,15 @@
     "translation": "{0}/{1} Complete"
   },
   "dailyGoal.title.UnlockMeetCozmo": {
-    "translation": "Unlock Meet Cozmo"
+    "translation": "Unlock the <color='#1100FF'>Meet Cozmo</color> Upgrade"
   },
   "dailyGoal.description.UnlockMeetCozmo": {
     "translation": "Unlock the Meet Cozmo Activity."
   },
   "dailyGoal.title.MeetNewFace": {
-    "translation": "Introduce Cozmo"
+    "translation": "Teach Cozmo two names with <color='#1100FF'>Meet Cozmo</color>"
   },
   "dailyGoal.description.MeetNewFace": {
-    "translation": "Introduce Cozmo to new people."
-  },
-  "dailyGoal.description.MeetTwoNewFaces": {
-    "translation": "Introduce Cozmo to two people with Meet Cozmo."
+    "translation": "Using the Meet Cozmo Activity, teach Cozmo the names of two new people."
   }
 }
