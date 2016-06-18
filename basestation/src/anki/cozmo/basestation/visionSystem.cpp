@@ -2929,10 +2929,11 @@ namespace Cozmo {
       } // if(DRAW_TOOL_CODE_DEBUG)
       
       if(dotLabel == -1) {
-        // TODO: Return failure instead?
         PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.DotsNotFound",
                             "Failed to find valid dot");
-        return RESULT_OK;
+        
+        // Continuing to the next dot so that we atleast have images
+        continue;
       }
       
       ASSERT_NAMED(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
@@ -2947,8 +2948,13 @@ namespace Cozmo {
 #     endif
     } // for each tool code dot iDot
     
-    ASSERT_NAMED(observedPoints.size() == 2,
-                 "VisionSystem.ReadToolCode.WrongNumDotsObserved");
+    if (observedPoints.size() < 2) {
+      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.WrongNumDotsObserved",
+                          "Dots found in %zu images", observedPoints.size());
+      
+      // TODO: Return failure instead?
+      return RESULT_OK;
+    }
     
     readToolCodeMessage.observedCalibDotLeft_x  = observedPoints[LEFT_DOT].x();
     readToolCodeMessage.observedCalibDotLeft_y  = observedPoints[LEFT_DOT].y();
