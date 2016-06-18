@@ -216,6 +216,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                   case ActionResult::SUCCESS:
                     if( !_successAnimGroup.empty() ) {
                       StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
+                      IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
                     }
                     break;
                   
