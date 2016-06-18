@@ -1,7 +1,8 @@
 {
   "behaviorType": "DriveOffCharger",
   "name": "DriveOffCharger",
-  "flatScore" : 3.0,
+  "flatScore" : 3.0,  
+  "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [
     "Demo",
     "FreeplayOne"

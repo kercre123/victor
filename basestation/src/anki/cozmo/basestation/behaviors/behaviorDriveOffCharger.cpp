@@ -25,12 +25,24 @@ namespace Cozmo {
 static const float kInitialDriveSpeed = 100.0f;
 static const float kInitialDriveAccel = 40.0f;
 
+static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
+
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
   SetDefaultName("DriveOffCharger");
+
+  float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
+  
+  _distToDrive_mm = Charger::GetLength() + extraDist_mm;
+
+  PRINT_NAMED_DEBUG("BehaviorDriveOffCharger.DriveDist",
+                    "Driving %fmm off the charger (%f length + %f extra)",
+                    _distToDrive_mm,
+                    Charger::GetLength(),
+                    extraDist_mm);
 }
   
 bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
@@ -78,9 +90,21 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
   // HACK: figure out why IsOnChargerPlatform might be incorrect.
   if( robot.IsOnChargerPlatform() && _timesResumed <= 2)
   {
+    if( ! IsActing() ) {
+      // if we finished the last action, but are still on the charger, queue another one
+      TransitionToDrivingForward(robot);
+    }
+    
     return Status::Running;
   }
-  return Status::Complete;
+
+  if( IsActing() ) {
+    // let the action finish
+    return Status::Running;
+  }
+  else {
+    return Status::Complete;
+  }
 }
 
 
@@ -95,9 +119,10 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
                                                               _drivingLoopAnimGroup,
                                                               _stopDrivingAnimGroup});
     // probably interrupted by getting off the charger platform
-    DriveStraightAction* action = new DriveStraightAction(robot, Charger::GetLength(), kInitialDriveSpeed);
+    DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm, kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);
-    StartActing(action, &BehaviorDriveOffCharger::TransitionToDrivingForward);
+    StartActing(action);
+    // the Update function will transition back to this state (or out of the behavior) as appropriate
   }
 }
 
