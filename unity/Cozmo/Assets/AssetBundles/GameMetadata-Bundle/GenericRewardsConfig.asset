@@ -25,7 +25,7 @@ MonoBehaviour:
       _EnumValue: 36
     Reward:
       ItemID: experience
-      Amount: 30
+      Amount: 80
       Description:
         Key: reward.description.SimonOnPlayerWin
   - GameEvent:
@@ -39,6 +39,14 @@ MonoBehaviour:
   - GameEvent:
       _EnumValueAsString: OnGameComplete
       _EnumValue: 39
+    Reward:
+      ItemID: experience
+      Amount: 50
+      Description:
+        Key: reward.description.PlayGame
+  - GameEvent:
+      _EnumValueAsString: OnSimonCozmoWin
+      _EnumValue: 35
     Reward:
       ItemID: experience
       Amount: 50
