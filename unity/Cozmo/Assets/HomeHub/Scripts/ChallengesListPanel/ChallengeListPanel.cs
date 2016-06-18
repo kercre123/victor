@@ -31,6 +31,7 @@ namespace Cozmo.HomeHub {
               HandleUnlockedChallengeClicked, "home_hub_challenge_list_panel"));
         }
       }
+      UnlockablesManager.Instance.ResolveNewUnlocks();
     }
 
     private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab, 
@@ -51,7 +52,8 @@ namespace Cozmo.HomeHub {
         buttons[i].SetIsEnd(false);
       }
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData, dasParentViewName, _CircuitSprites[(circuitOffset + buttons.Length) % _CircuitSprites.Length], true);
+      bool isNew = UnlockablesManager.Instance.IsNewUnlock(challengeData.UnlockId.Value);
+      buttonScript.Initialize(challengeData, dasParentViewName, _CircuitSprites[(circuitOffset + buttons.Length) % _CircuitSprites.Length], true, isNew);
       buttonScript.OnButtonClicked += handler;
       return newButton;
     }

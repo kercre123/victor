@@ -61,6 +61,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private Sequence _UpgradeTween;
 
+  private bool _NewUnlock = false;
+
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
     _ButtonCostPaidSuccessCallback = buttonCostPaidCallback;
@@ -75,14 +77,14 @@ public class CoreUpgradeDetailsDialog : BaseView {
         // TODO: Once request tricks is working show the buttons
         // _RequestTrickButtonContainer.gameObject.SetActive(true);
         SetupButton(_RequestTrickButton, OnSparkClicked, "request_trick_button",
-                    unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel);
+          unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel);
         RobotEngineManager.Instance.OnSparkUnlockEnded += HandleSparkUnlockEnded;
       }
     }
     else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
       _UnlockUpgradeButtonContainer.gameObject.SetActive(true);
       SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
-                  unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel);
+        unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel);
       _UnlockableIcon.color = Color.gray;
       _UnlockableTintBackground.color = Color.gray;
     }
@@ -92,8 +94,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     _UnlockableIcon.sprite = unlockInfo.CoreUpgradeIcon;
     _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
-                                                        unlockInfo.CubesRequired,
-                                                        ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
+      unlockInfo.CubesRequired,
+      ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
 
     _UnlockableActionIndicator.gameObject.SetActive(unlockInfo.UnlockableType == UnlockableType.Action);
 
@@ -109,11 +111,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     ItemData itemData = ItemDataConfig.GetData(costItemId);
     button.Text = Localization.GetWithArgs(LocalizationKeys.kLabelSimpleCount,
-                                           costAmount,
-                                           itemData.GetAmountName(costAmount));
+      costAmount,
+      itemData.GetAmountName(costAmount));
     inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelColonCount,
-                                                   itemData.GetPluralName(),
-                                                   playerInventory.GetItemAmount(costItemId));
+      itemData.GetPluralName(),
+      playerInventory.GetItemAmount(costItemId));
   }
 
   private void UpdateState() {
@@ -149,8 +151,13 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _UpgradeTween.Append(
       _UnlockableTintBackground.DOColor(UIColorPalette.GetUpgradeTintData(_UnlockInfo.CoreUpgradeTintColorName).TintColor, _UpgradeTween_sec));
     _UpgradeTween.Join(_UnlockableIcon.DOColor(Color.white, _UpgradeTween_sec));
-    _UpgradeTween.AppendCallback(CloseView);
+    _UpgradeTween.AppendCallback(ResolveOnNewUnlock);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+  }
+
+  private void ResolveOnNewUnlock() {
+    UpdateState();
+    _NewUnlock = true;
   }
 
   private void OnSparkClicked() {
@@ -196,5 +203,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (_AlphaController != null) {
       closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
     }
+    closeAnimation.AppendCallback(() => {
+      if (UnlockablesManager.Instance.OnNewUnlock != null && _NewUnlock) {
+        UnlockablesManager.Instance.OnNewUnlock.Invoke();
+      }
+    });
   }
 }

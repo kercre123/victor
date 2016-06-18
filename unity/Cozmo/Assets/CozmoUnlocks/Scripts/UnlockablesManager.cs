@@ -18,11 +18,27 @@ public class UnlockablesManager : MonoBehaviour {
     }
   }
 
+  public Action OnNewUnlock;
+
   private Dictionary<Anki.Cozmo.UnlockId, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockId, bool>();
 
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
+  [SerializeField]
+  private List<Anki.Cozmo.UnlockId> _NewUnlocks = new List<UnlockId>();
+
+  public bool IsNewUnlock(Anki.Cozmo.UnlockId uID) {
+    return _NewUnlocks.Contains(uID);
+  }
+
+  /// <summary>
+  /// Resolves the new unlocks. Currently just clears the list, but in the future will also save relevant
+  /// information regarding actually seeing an unlock or not.
+  /// </summary>
+  public void ResolveNewUnlocks() {
+    _NewUnlocks.Clear();
+  }
 
   private void Start() {
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleOnUnlockRequestSuccess;
@@ -148,6 +164,9 @@ public class UnlockablesManager : MonoBehaviour {
     GameEventManager.Instance.SendGameEventToEngine(
       GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, id));
     _UnlockablesState[id] = unlocked;
+    if (unlocked) {
+      _NewUnlocks.Add(id);
+    }
   }
 
 }

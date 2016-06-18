@@ -471,7 +471,7 @@ MonoBehaviour:
   _RewardExplosionDuration: 0.5
   _RewardExplosionStayDuration: 1.5
   _RewardExplosionFinalDuration: 0.75
-  _RewardExplosionFinalVariance: 0.5
+  _RewardExplosionFinalVariance: 1
   _TronBurstLow: 1
   _TronBurstMid: 3
   _TronBurstAlmost: 9
@@ -4253,6 +4253,14 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _EmotionChipWindowOpenSoundEvent._EventType
       value: UI
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _RewardExplosionFinalDuration
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _RewardExplosionFinalVariance
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

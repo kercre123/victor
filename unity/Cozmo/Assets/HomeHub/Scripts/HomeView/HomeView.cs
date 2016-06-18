@@ -117,6 +117,8 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
+      UnlockablesManager.Instance.OnNewUnlock += HandlePlayTabButton;
+      UnlockablesManager.Instance.OnNewUnlock += CheckIfUnlockablesAffordableAndUpdateBadge;
       // TODO: Replaced with RewardedActionManager's RewardPending, serve up energy through that,
       // then handle chest pending at the end of that interaction.
       if (ChestRewardManager.Instance.ChestPending) {
@@ -291,6 +293,8 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
+      UnlockablesManager.Instance.OnNewUnlock -= HandlePlayTabButton;
+      UnlockablesManager.Instance.OnNewUnlock -= CheckIfUnlockablesAffordableAndUpdateBadge;
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;

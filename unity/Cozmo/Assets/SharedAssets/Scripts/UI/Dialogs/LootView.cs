@@ -74,11 +74,11 @@ namespace Cozmo {
       private float _RewardExplosionStayDuration = 1.5f;
       // How long the Reward animation takes to tween the reward doobers to their final positions
       [SerializeField]
-      private float _RewardExplosionFinalDuration = 0.75f;
+      private float _RewardExplosionFinalDuration = 1.25f;
       // The maximum amount of variance in seconds that Doobers are randomly staggered by to create
       // less uniform movements
       [SerializeField]
-      private float _RewardExplosionFinalVariance = 0.5f;
+      private float _RewardExplosionFinalVariance = 1.0f;
 
       #region Particle Update Settings
 

@@ -82,8 +82,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
       unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
       unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName,
-                                numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
-                                numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+        numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
+        numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
       unlockableTile.OnTapped += HandleTappedUnlocked;
       _UnlockedTiles.Add(unlockableTile);
       numTilesMade++;
@@ -93,8 +93,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
       unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
       unlockableTile.Initialize(unlockableUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName,
-                                numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
-                                numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+        numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
+        numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
       unlockableTile.OnTapped += HandleTappedUnlockable;
       _UnlockableTiles.Add(unlockableTile);
       numTilesMade++;
@@ -104,8 +104,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
       unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
       unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName,
-                                numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
-                                numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+        numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
+        numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
       _LockedTiles.Add(unlockableTile);
       numTilesMade++;
     }
