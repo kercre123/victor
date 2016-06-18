@@ -56,8 +56,14 @@ public:
 
 protected:
   
+  // For Test
+  RobotAudioAnimationOnRobot();
+  
   // Perform specific preparation to animation
   virtual void PrepareAnimation() override;
+  
+  // Begin to load audio buffer with frames by scheduling all audio events to be posted in relevant time to each other
+  virtual void BeginBufferingAudioOnRobotMode();
   
   
 private:
@@ -66,9 +72,6 @@ private:
   void UpdateLoadingStream( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
   void UpdateLoadingStreamFrames( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
   void UpdateAudioFramesReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
-  
-  // Begin to load audio buffer with frames by scheduling all audio events to be posted in relevant time to each other
-  void BeginBufferingAudioOnRobotMode();
   
   // Track the time the first stream was created and audio event to calculate the streams relevant animation time
   double _streamAnimationOffsetTime_ms = 0.0;

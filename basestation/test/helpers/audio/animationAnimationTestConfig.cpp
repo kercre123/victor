@@ -1,4 +1,4 @@
-/**
+/*
  * File: animationAnimationTestConfig.h
  *
  * Author: Jordan Rivas
@@ -9,7 +9,7 @@
  *
  * Copyright: Anki, Inc. 2016
  *
- **/
+ */
 
 
 #include "anki/cozmo/basestation/animation/animation.h"
@@ -19,6 +19,7 @@
 #include "helpers/audio/robotAudioTestClient.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "util/time/universalTime.h"
 
 
 using namespace Anki;
@@ -67,6 +68,28 @@ std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTest
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::GetCurrentPlayingEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms )
+{
+  std::vector<TestAudioEvent> frameEvents;
+  
+  for ( auto& anEvent : _events ) {
+    // Check if it started in frame
+    if ( anEvent.startTime_ms >= frameStartTime_ms && anEvent.startTime_ms <= frameEndTime_ms ) {
+      frameEvents.emplace_back( anEvent );
+      continue;
+    }
+    
+    // Check if event is playing in frame
+    const uint32_t eventEndTime = anEvent.startTime_ms + anEvent.duration_ms;
+    if ( anEvent.startTime_ms < frameStartTime_ms && eventEndTime > frameStartTime_ms ) {
+      frameEvents.emplace_back( anEvent );
+      continue;
+    }
+  }
+  return frameEvents;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAnimationTestConfig::LoadAudioKeyFrames( Anki::Cozmo::Animation& outAnimation )
 {
   ASSERT_NAMED(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
@@ -86,16 +109,15 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
   
   std::vector<uint32_t> _eventRemainingDurations;
   bool audioComplete = false;
-  size_t eventIdx = 0;
-  // skip foward to first event
-  uint32_t animationTime_ms = 0;
-  
   bool activeFrame = false;
   bool activeStream = false;
-  
+  size_t eventIdx = 0;
+  uint32_t animationTime_ms = 0;
   uint32_t streamTime_ms = 0;
-  
   uint32_t frameTime_ms = 0;
+  
+  uint32_t firstEventOffset = _events.front().startTime_ms;
+  
   
   while ( !audioComplete ) {
     
@@ -104,7 +126,8 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
       
       if ( eventIdx < _events.size() ) {
         // Create new stream
-        outBuffer.PrepareAudioBuffer();
+        // This is a test method, normally creation time is set when wwise creates the stream
+        outBuffer.PrepareAudioBuffer( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() + ( _events[eventIdx].startTime_ms - firstEventOffset ) );
         // Skip foward to next event
         animationTime_ms = _events[eventIdx].startTime_ms;
         

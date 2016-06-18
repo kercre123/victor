@@ -20,7 +20,12 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
-
+void RobotAudioTestBuffer::PrepareAudioBuffer( double creationTime_ms )
+{
+  // Prep new Continuous Stream Buffer
+  _streamQueue.emplace( creationTime_ms );
+  _isActive = true;
+}
 
 } // Audio
 } // Cozmo

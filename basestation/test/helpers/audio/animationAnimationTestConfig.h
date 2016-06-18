@@ -45,10 +45,13 @@ public:
     , startTime_ms( startTime_ms )
     , duration_ms( duration_ms )
     {}
+    
     bool InAnimationTimeRange( uint32_t animationTime_ms )
     {
-      return ( animationTime_ms >= startTime_ms ) && ( animationTime_ms < startTime_ms + duration_ms );
+      return ( animationTime_ms >= startTime_ms ) && ( animationTime_ms < GetCompletionTime_ms() );
     }
+    
+    uint32_t GetCompletionTime_ms() const { return startTime_ms + duration_ms; }
     
     // TODO: Add methods to offset actual buffer createion to simulate the buffer not perfectly lining up with desired
     //       situation.
@@ -61,8 +64,10 @@ public:
   // Call to lock insert and setup meta data
   void InsertComplete();
   
-  // Get list of sorted events within frame time
+  // Get list of sorted events that start within frame time
   std::vector<TestAudioEvent> FrameAudioEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms );
+  
+  std::vector<TestAudioEvent> GetCurrentPlayingEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms );
   
   // Write audio into Test Robot Buffer
   const std::vector<TestAudioEvent>& GetAudioEvents() const { return _events; }

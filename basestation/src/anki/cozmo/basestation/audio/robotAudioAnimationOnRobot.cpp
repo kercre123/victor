@@ -352,6 +352,10 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot()
+{ }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioAnimationOnRobot::PrepareAnimation()
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {

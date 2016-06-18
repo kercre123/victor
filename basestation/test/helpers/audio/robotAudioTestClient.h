@@ -18,7 +18,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
 namespace Audio {
 
 class RobotAudioTestClient : public RobotAudioClient
