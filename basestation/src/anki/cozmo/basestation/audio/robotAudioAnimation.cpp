@@ -23,6 +23,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
+#define DEBUG_ROBOT_AUDIO_ANIMATION_OVERRIDE 1
+
 
 namespace Anki {
 namespace Cozmo {
@@ -50,7 +52,7 @@ RobotAudioAnimation::~RobotAudioAnimation()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioAnimation::AbortAnimation()
 {  
-  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO || DEBUG_ROBOT_AUDIO_ANIMATION_OVERRIDE ) {
     PRINT_NAMED_INFO("RobotAudioAnimation.AbortAnimation", "Animation: %s", _animationName.c_str());
   }
   
