@@ -110,14 +110,35 @@ namespace Cozmo {
         _FilledForegroundImage.fillAmount = 0;
       }
 
-      public void SetProgress(float progress) {
+      /// <summary>
+      /// Sets the progress of the bar.
+      /// </summary>
+      /// <param name="progress">Progress.</param>
+      /// <param name="instant">If set to <c>true</c> cut to progress instantly without firing events.</param>
+      public void SetProgress(float progress, bool instant = false) {
         if (progress < 0 || progress > 1) {
           DAS.Warn("ProgressBar.SetProgress.OutOfRange", "Tried to set progress to value=" + progress + " which is not in the range of 0 to 1! Clamping.");
         }
-        _ProgressUpdating = true;
+        _ProgressUpdating = !instant;
         float newProgress = Mathf.Clamp(progress, 0f, 1f);
         if (newProgress != _TargetProgress) {
           _TargetProgress = newProgress;
+        }
+        // If set to instant, immediately set progress bar to new value, don't fire events.
+        if (instant) {
+          _FilledForegroundImage.fillAmount = _TargetProgress;
+          if (_UseEndCap) {
+            float capPos = 0.0f;
+            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width;
+
+            if (capPos < _EndCap.sprite.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
+              _EndCap.gameObject.SetActive(false);
+            }
+            else {
+              _EndCap.gameObject.SetActive(true);
+              _EndCap.rectTransform.localPosition = new Vector3(capPos, _EndCap.rectTransform.localPosition.y);
+            }
+          }
         }
       }
     }

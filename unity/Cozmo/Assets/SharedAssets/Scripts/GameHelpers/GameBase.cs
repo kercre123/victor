@@ -15,6 +15,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private const float kWaitForPickupOrPlaceTimeout_sec = 30f;
   private const float kChallengeCompleteScoreboardDelay = 5f;
+  private float _AutoAdvanceTimestamp = -1f;
 
   private System.Guid? _GameUUID;
 
@@ -214,6 +215,7 @@ public abstract class GameBase : MonoBehaviour {
     UpdateCubeCycleLights();
     UpdateBlinkLights();
     UpdateStateMachine();
+    AutoAdvanceCheck();
   }
 
   private void UpdateStateMachine() {
@@ -497,18 +499,19 @@ public abstract class GameBase : MonoBehaviour {
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     SharedMinigameView.HideHowToPlayButton();
-    StartCoroutine(AutoAdvance(kChallengeCompleteScoreboardDelay));
+    _AutoAdvanceTimestamp = Time.time;
   }
 
-  private IEnumerator AutoAdvance(float waitTime) {
-    yield return new WaitForSeconds(waitTime);
-    HandleChallengeResultAdvance();
+  public void AutoAdvanceCheck() {
+    if (_AutoAdvanceTimestamp != -1 && (Time.time - _AutoAdvanceTimestamp > kChallengeCompleteScoreboardDelay)) {
+      HandleChallengeResultAdvance();
+    }
   }
 
   // Update the Challenge Ended Dialog to show all pending rewards and unlocks,
   // if there are none, close the view.
   private void HandleChallengeResultAdvance() {
-    StopCoroutine("AutoAdvance");
+    _AutoAdvanceTimestamp = -1;
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();

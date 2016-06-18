@@ -11,39 +11,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ce0dc538f0af4766a7ae65641170163, type: 3}
   m_Name: GenericRewardsConfig
   m_EditorClassIdentifier: 
+  ExpPerParticleEffect: 10
+  BurstPerParticleHit: 10
+  ExpParticleMinSpread: 50
+  ExpParticleMaxSpread: 400
+  ExpParticleBurst: 1
+  ExpParticleHold: 1.25
+  ExpParticleLeave: 1
+  ExpParticleStagger: 0.5
   RewardedActions:
-  - GameEvent:
-      _EnumValueAsString: OnSpeedtapHandPlayerWin
-      _EnumValue: 5
-    Reward:
-      ItemID: experience
-      Amount: 2
-      Description:
-        Key: reward.description.SimonMatch
-  - GameEvent:
-      _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
-      _EnumValue: 15
-    Reward:
-      ItemID: experience
-      Amount: 30
-      Description:
-        Key: reward.description.SpeedTapWinGame
-  - GameEvent:
-      _EnumValueAsString: OnGameComplete
-      _EnumValue: 39
-    Reward:
-      ItemID: experience
-      Amount: 15
-      Description:
-        Key: reward.description.PlayGame
-  - GameEvent:
-      _EnumValueAsString: OnSimonPlayerHandComplete
-      _EnumValue: 33
-    Reward:
-      ItemID: experience
-      Amount: 3
-      Description:
-        Key: reward.description.SimonMatch
   - GameEvent:
       _EnumValueAsString: OnSimonPlayerWin
       _EnumValue: 36
@@ -52,3 +28,19 @@ MonoBehaviour:
       Amount: 30
       Description:
         Key: reward.description.SimonOnPlayerWin
+  - GameEvent:
+      _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
+      _EnumValue: 15
+    Reward:
+      ItemID: experience
+      Amount: 10
+      Description:
+        Key: reward.description.SpeedTapWinGame
+  - GameEvent:
+      _EnumValueAsString: OnGameComplete
+      _EnumValue: 39
+    Reward:
+      ItemID: experience
+      Amount: 50
+      Description:
+        Key: reward.description.PlayGame

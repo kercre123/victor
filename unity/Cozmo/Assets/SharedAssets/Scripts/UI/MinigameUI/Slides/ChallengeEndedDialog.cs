@@ -99,7 +99,6 @@ public class ChallengeEndedDialog : MonoBehaviour {
         AddEnergyReward(eventID, count);
       }
     }
-    RewardedActionManager.Instance.PendingActionRewards.Clear();
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;
     
   }

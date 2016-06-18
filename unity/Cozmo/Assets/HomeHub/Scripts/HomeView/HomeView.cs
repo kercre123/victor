@@ -7,6 +7,7 @@ using Cozmo.UI;
 using DataPersistence;
 using System.Linq;
 using System;
+using DG.Tweening;
 
 namespace Cozmo.HomeHub {
   public class HomeView : BaseView {
@@ -76,10 +77,20 @@ namespace Cozmo.HomeHub {
     private LootView _LootViewInstance = null;
 
     [SerializeField]
+    private GameObject _EnergyDooberPrefab;
+    [SerializeField]
+    private Transform _EnergyDooberStart;
+    [SerializeField]
+    private Transform _EnergyDooberEnd;
+
+    [SerializeField]
     private AnkiTextLabel _DailyGoalsCompletionText;
 
     [SerializeField]
     private AnkiTextLabel _DailyGaolsCompletionTextDown;
+
+    [SerializeField]
+    private ParticleSystem _EnergyBarEmitter;
 
     private HomeHub _HomeHubInstance;
 
@@ -124,8 +135,19 @@ namespace Cozmo.HomeHub {
       if (ChestRewardManager.Instance.ChestPending) {
         HandleChestGained();
       }
+      // If we have energy earned, create the energy doobers and clear pending action rewards
+      if (RewardedActionManager.Instance.RewardPending) {
+        int endPoints = ChestRewardManager.Instance.GetCurrentRequirementPoints();
+        if (ChestRewardManager.Instance.ChestPending) {
+          endPoints = ChestRewardManager.Instance.GetPreviousRequirementPoints();
+        }
+        endPoints -= Mathf.Min(endPoints, (RewardedActionManager.Instance.TotalPendingEnergy));
+        UpdateChestProgressBar(endPoints, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+        EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy);
+        
+      }
       else {
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
 
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
@@ -160,6 +182,39 @@ namespace Cozmo.HomeHub {
       });
     }
 
+    // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started
+    private void EnergyDooberBurst(int pointsEarned) {
+      GenericRewardsConfig rc = GenericRewardsConfig.Instance;
+      int doobCount = Mathf.CeilToInt((float)pointsEarned / 5.0f);
+      Sequence dooberSequence = DOTween.Sequence();
+      for (int i = 0; i < doobCount; i++) {
+        Transform freshDoobz = UIManager.CreateUIElement(_EnergyDooberPrefab, _EnergyDooberStart).transform;
+        float xOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
+        float yOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
+        float exitTime = UnityEngine.Random.Range(0.0f, rc.ExpParticleStagger) + rc.ExpParticleBurst + rc.ExpParticleHold;
+        Vector3 doobTarget = new Vector3(freshDoobz.position.x - xOffset, freshDoobz.position.y + yOffset, freshDoobz.position.z);
+        dooberSequence.Insert(0.0f, freshDoobz.DOLocalMove(doobTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
+        dooberSequence.Insert(exitTime, freshDoobz.DOLocalMove(_EnergyDooberEnd.localPosition, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => (CleanUpDoober(freshDoobz))));
+      }
+      dooberSequence.AppendCallback(ResolveDooberBurst);
+      dooberSequence.Play();
+    }
+
+    private void CleanUpDoober(Transform toClean) {
+      _EnergyBarEmitter.Emit(GenericRewardsConfig.Instance.BurstPerParticleHit);
+      Destroy(toClean.gameObject);
+    }
+
+    private void ResolveDooberBurst() {
+      RewardedActionManager.Instance.PendingActionRewards.Clear();
+      if (ChestRewardManager.Instance.ChestPending == false) {
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      }
+      else {
+        HandleChestGained();
+      }
+    }
+
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
       // Ignore updating if we are in the process of showing a new LootView
       if (ChestRewardManager.Instance.ChestPending == false) {
@@ -167,9 +222,9 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded) {
+    private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded, bool instant = false) {
       float progress = ((float)currentPoints / (float)numPointsNeeded);
-      _RequirementPointsProgressBar.SetProgress(progress);
+      _RequirementPointsProgressBar.SetProgress(progress, instant);
       _CurrentRequirementPointsLabel.text = currentPoints.ToString();
       if (progress <= 0.0f) {
         _EmotionChipTag.overrideSprite = _EmotionChipSprite_Empty;
@@ -183,8 +238,11 @@ namespace Cozmo.HomeHub {
 
     }
 
+    // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
+    // If there are Rewards Pending, do this when the Energy Sequence ends.
     private void HandleProgressUpdated() {
-      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null) {
+      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
+          && RewardedActionManager.Instance.RewardPending == false) {
         OpenLootView();
       }
     }

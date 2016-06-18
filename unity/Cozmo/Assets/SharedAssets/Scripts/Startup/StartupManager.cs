@@ -261,13 +261,15 @@ public class StartupManager : MonoBehaviour {
       ChallengeDataList.SetInstance(cd);
     });
 
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName, 
+      "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig grc) => {
+      Cozmo.UI.GenericRewardsConfig.SetInstance(grc);
+    });
+
     assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName, 
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
       Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
     });
-
-
-
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
