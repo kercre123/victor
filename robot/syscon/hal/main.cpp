@@ -66,17 +66,28 @@ extern "C" void HardFault_Handler(void) {
 
 using namespace Anki::Cozmo::RobotInterface;
 
-static BodyRadioMode current_operating_mode = BODY_BLUETOOTH_OPERATING_MODE;
-static BodyRadioMode active_operating_mode = BODY_BLUETOOTH_OPERATING_MODE;
+// Not in a known operating mode until later in main()
+static BodyRadioMode current_operating_mode = -1;
+static BodyRadioMode active_operating_mode = -1;
 
 void enterOperatingMode(BodyRadioMode mode) {
   current_operating_mode = mode;
 }
 
-static void setupOperatingMode() { 
+static void setupOperatingMode() {
+  // XXX: Factory only - to support test modes:  Dirty hack to run battery for 4 seconds after power-up regardless of mode
+  static bool turnPowerOff = false;
+  if (turnPowerOff && GetCounter() > (4<<23))
+  {
+    Battery::powerOff();
+    turnPowerOff = false;
+  }
+  
   if (active_operating_mode == current_operating_mode) {
     return ;
   }
+
+  turnPowerOff = false;
 
   // Tear down existing mode
   switch (active_operating_mode) {
@@ -100,7 +111,7 @@ static void setupOperatingMode() {
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
       Motors::disable(true);  
-      Battery::powerOff();
+      turnPowerOff = true;
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       break ;

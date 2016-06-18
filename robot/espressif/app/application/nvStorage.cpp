@@ -1110,6 +1110,15 @@ bool WipeAllTask(uint32_t param)
   }
 }
 
+bool IsFactoryStorageEmpty()
+{
+  NVEntryHeader header;
+  SpiFlashOpResult r = spi_flash_read(FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32_t*>(&header), sizeof(NVEntryHeader));
+  if (r != SPI_FLASH_RESULT_OK || header.tag != NVEntry_Invalid)
+    return false;
+  return true;
+}
+
 NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)
 {
   if (isBusy()) return NV_BUSY;

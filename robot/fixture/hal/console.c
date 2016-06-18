@@ -308,16 +308,6 @@ static void GetSerial(void)
     g_fixtureType & FIXTURE_DEBUG ? "DEBUG" : FIXTYPES[g_fixtureType],
     g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
 }
-
-static void SetVBAT(void)
-{
-  int mv;
-  char* arg = GetArgument(1);  
-  sscanf(arg, "%i", &mv);
-  VBATMillivolts(mv);
-  EnableBAT();
-}
-
 static void SetLotCode(void)
 {
   char* arg = GetArgument(1);
@@ -426,7 +416,6 @@ static CommandFunction m_functions[] =
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
   {"Burn", CubeBurn, FALSE},
-  {"SetVBAT", SetVBAT, FALSE},
   {"Send", SendTestMessage, FALSE},
   {"HeadESP", HeadESP, FALSE},
   {"SetMotor", SetMotor, FALSE},

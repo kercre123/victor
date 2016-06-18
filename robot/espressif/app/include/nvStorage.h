@@ -115,7 +115,11 @@ namespace Anki {
        * @return either scheduled or busy
        */
       NVResult WipeAll(const bool includeFactory, EraseDoneCB callback=0, const bool fork=true, const bool reboot=false);
-       
+
+      /** Return true if factory storage is empty - in other words, this robot has not visited the Playpen or has been WipeAlled
+       */
+      bool IsFactoryStorageEmpty();
+      
        extern "C" {
          /** Run garbage collection
           * @warning This method must only be called when it is safe to do flash erase operations.

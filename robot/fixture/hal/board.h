@@ -4,19 +4,10 @@
 
 #include "stm32f2xx.h"
 
-// Charge pins moved in rev 1
-#ifdef REV1
 #define PINC_CHGTX           6
 #define PINC_CHGRX           7
 #define PINB_SCL               8
 #define PINB_SDA               9
-#else
-#define PINC_CHGTX           11
-#define PINC_CHGRX           10
-#define PINB_SCL               8   // XXX: Reverse these for digital pot
-#define PINB_SDA               9
-#error Building in EP3 mode - obsolete!
-#endif
 
 #define GPIOC_CHGTX          (1 << PINC_CHGTX)
 #define GPIOC_CHGRX          (1 << PINC_CHGRX)

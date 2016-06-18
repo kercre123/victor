@@ -14,42 +14,12 @@
 // Return true if device is detected on contacts
 bool RobotDetect(void)
 {
-  static int heardPing = 0;
-
-  u32 start = getMicroCounter();
-    
-  if (heardPing > 0)
-    heardPing--;
-
-  // Drive power on if we haven't heard a ping lately
-  if (!heardPing)
-  {
-    PIN_SET(GPIOC, PINC_CHGTX);
-    PIN_OUT(GPIOC, PINC_CHGTX);
-    MicroWait(500);
-  }
-  
-  // Receive mode - TX low is floating
-  PIN_RESET(GPIOC, PINC_CHGTX);
+  // Turn power on and check for current draw
+  PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
-  PIN_PULL_UP(GPIOC, PINC_CHGRX);
   PIN_IN(GPIOC, PINC_CHGRX);
-  MicroWait(10);
-  
-  // Wait for RX to go low/be low
-  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
-    if (getMicroCounter()-start > 1000)
-      return !!heardPing;
-  MicroWait(10);
-  
-  // Now wait for it to go high again
-  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
-    if (getMicroCounter()-start > 1000)
-      return !!heardPing;
-
-  // One ping every 30ms is enough to keep us listening
-  heardPing = 30;
-  return true;
+  MicroWait(1000);
+  return MonitorGetCurrent() > 20000;
 }
 
 void SendTestChar(int c)
@@ -65,11 +35,11 @@ void SendTestChar(int c)
   // Wait for RX to go low/be low
   while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
     if (getMicroCounter()-start > 1000000)
-      throw 2;
+      throw ERROR_NO_PULSE;
   // Now wait for it to go high
   while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
     if (getMicroCounter()-start > 1000000)
-      throw 2;
+      throw ERROR_NO_PULSE;
     
   // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
   PIN_SET(GPIOC, PINC_CHGTX);
@@ -114,6 +84,7 @@ void PlaypenTest(void)
   SendTestMode(7);    // Lucky 7 is Playpen fixture mode
 }
 
+extern int g_stepNumber;
 void ChargerTest(void)
 {
   int offContact = 0;
@@ -127,10 +98,19 @@ void ChargerTest(void)
     MicroWait(50000);
     int current = MonitorGetCurrent();
     ConsolePrintf("%d..", current);
-    if (current < 20000)
+    if (current < 10000)
       offContact++;
-    else
+    else if (current > 100000)    // Robot is up and running
       offContact = 0;
+    else {
+    /* This approach to detecting a rebooting robot doesn't work because the current draw is ALL over
+      // Robot is rebooting
+      while (current < 100000)
+        current = MonitorGetCurrent();
+      g_stepNumber = -1;   // Post-reboot, restart to first step
+      return;
+    */
+    }
     if (offContact > 10)
       return;
   }

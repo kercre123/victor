@@ -76,6 +76,9 @@ typedef enum
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
+// Testport errors
+#define ERROR_NO_PULSE              400   // Robot is not in debug/test mode
+
 // SWD errors
 #define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
 #define ERROR_SWD_READ_FAULT        451   // SWD read failed

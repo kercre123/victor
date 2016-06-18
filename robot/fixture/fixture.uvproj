@@ -355,7 +355,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
-              <Define>REV1,USE_STDPERIPH_DRIVER,FIXTURE</Define>
+              <Define>USE_STDPERIPH_DRIVER,FIXTURE</Define>
               <Undefine></Undefine>
               <IncludePath>lib;hal;usb;.</IncludePath>
             </VariousControls>
