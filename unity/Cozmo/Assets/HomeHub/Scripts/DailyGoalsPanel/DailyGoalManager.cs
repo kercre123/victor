@@ -262,7 +262,7 @@ public class DailyGoalManager : MonoBehaviour {
       _RequestDialog.DisableAllButtons();
       _RequestDialog.ViewClosed -= HandleRequestDialogClose;
     }
-    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleMiniGameYesAnimEnd);
+    HandleMiniGameYesAnimEnd(true);
   }
 
   private void HandleMiniGameYesAnimEnd(bool success) {
