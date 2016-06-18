@@ -21,9 +21,6 @@ namespace DataPersistence {
     private Text _SessionDays;
 
     [SerializeField]
-    private ChallengeDataList _ChallengeDataList;
-
-    [SerializeField]
     private InputField _NotificationTextInput;
 
     [SerializeField]
