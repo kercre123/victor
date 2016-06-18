@@ -108,7 +108,7 @@ namespace Cozmo {
     void TransitionToDispatch(Robot& robot);
     void TransitionToGlancingDown(Robot& robot);
     void TransitionToRecognizingFace(Robot& robot);
-    void TransitionToWaitingForRecognition(Robot& robot);
+    void TransitionToWaitingForRecognition(Robot& robot, bool hasWaited);
     void TransitionToReactingToFace(Robot& robot);
     void TransitionToRequestingFaceEnrollment(Robot& robot);
 

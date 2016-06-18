@@ -124,6 +124,10 @@ namespace Cozmo {
   bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
   {
     // runnable if there are any faces that we might want to interact with
+
+    if( robot.IsCarryingObject() ) {
+      return false;
+    }
     
     bool isRunnable = false;
     for(auto & faceData : _interestingFacesData) {
@@ -411,7 +415,12 @@ namespace Cozmo {
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
       compoundAction->AddAction(turnTowardsPoseAction);
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _initialTakeAnimGroup) );
-      StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToWaitingForRecognition);
+      StartActing(compoundAction,
+                  std::bind(&BehaviorInteractWithFaces::TransitionToWaitingForRecognition,
+                            this,
+                            std::placeholders::_1,
+                            false // hasn't waited yet
+                           ));
     } else {
       // Face already has a name, skip past all the waiting for recognition stuff and
       // go straight to reacting (after turning towards the face first)
@@ -421,7 +430,7 @@ namespace Cozmo {
 
   }
 
-  void BehaviorInteractWithFaces::TransitionToWaitingForRecognition(Robot& robot)
+  void BehaviorInteractWithFaces::TransitionToWaitingForRecognition(Robot& robot, bool hasWaited)
   {
     SET_STATE(WaitingForRecognition);
 
@@ -438,7 +447,7 @@ namespace Cozmo {
       return;
     }
     
-    if( _currentFace < 0 || faceData->_numTimesSeenFrontal < kMinTimesSeenFrontalBeforeEnroll)
+    if( _currentFace < 0 || faceData->_numTimesSeenFrontal < kMinTimesSeenFrontalBeforeEnroll )
     {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
                              "BehaviorInteractWithFaces.TransitionToWaitingForRecognition.Waiting",
@@ -460,7 +469,13 @@ namespace Cozmo {
       compoundAction->AddAction(turnTowardsPoseAction);
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _waitAnimGroup) );
 
-      StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToWaitingForRecognition);
+      StartActing(compoundAction,
+                  // go back to this state again in case we now have the face
+                  std::bind(&BehaviorInteractWithFaces::TransitionToWaitingForRecognition,
+                            this,
+                            std::placeholders::_1,
+                            true
+                           ));
     }
     else {
       // This is a "session-only" face with positive ID that we've seen enough times
@@ -474,7 +489,6 @@ namespace Cozmo {
       }
     }
   }
-
 
   void BehaviorInteractWithFaces::TransitionToReactingToFace(Robot& robot)
   {
