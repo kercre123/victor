@@ -340,7 +340,9 @@ public abstract class GameBase : MonoBehaviour {
       // Set NewDifficultyUnlock to -1 so it will be ignored by ChallengeEndedDialog
       RewardedActionManager.Instance.NewDifficultyUnlock = -1;
       int newDifficultyUnlocked = CurrentDifficulty + 1;
-      if (currentDifficultyUnlocked < newDifficultyUnlocked) {
+      if (currentDifficultyUnlocked < newDifficultyUnlocked &&
+          _ChallengeData.DifficultyOptions != null &&
+          newDifficultyUnlocked < _ChallengeData.DifficultyOptions.Count) {
         playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
         DataPersistence.DataPersistenceManager.Instance.Save();
         // If a new Difficulty was unlocked, set that in the UnlockablesManager so it will show
@@ -361,6 +363,10 @@ public abstract class GameBase : MonoBehaviour {
   public int HighestLevelCompleted() {
     int difficulty = 0;
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(_ChallengeData.ChallengeID, out difficulty)) {
+      // someone has reduced the number of difficulties saved, should only happen in development
+      if (difficulty >= _ChallengeData.DifficultyOptions.Count) {
+        return _ChallengeData.DifficultyOptions.Count - 1;
+      }
       return difficulty;
     }
     return 0;
