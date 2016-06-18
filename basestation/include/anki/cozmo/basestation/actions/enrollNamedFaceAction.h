@@ -62,6 +62,7 @@ namespace Cozmo {
   private:
     
     enum class State : u8 {
+      LookForFace,
       PreActing,
       Enrolling,
       PostActing,
@@ -75,11 +76,17 @@ namespace Cozmo {
     std::string               _actionName = "EnrollNamedFace";
     Vision::FaceID_t          _faceID = Vision::UnknownFaceID;
     std::string               _faceName;
+    Radians                   _lastRelBodyAngle = 0.f;
     IActionRunner*            _action = nullptr;
     TimeStamp_t               _lastModeChangeTime_ms;
     TimeStamp_t               _minTimePerEnrollStep_ms = 1000;
     TimeStamp_t               _lastFaceSeen_ms = 0;
     s32                       _numEnrollmentsRequired = 0;
+    const s32                 _kNumImagesToWait = 3;
+    f32                       _totalBackup_mm = 0.f;
+    const f32                 _kMinBackup_mm = 5.f;  // In a single try
+    const f32                 _kMaxBackup_mm = 15.f; //     "
+    const f32                 _kMaxTotalBackup_mm = 50.f;
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
     bool                      _idlePushed = false;

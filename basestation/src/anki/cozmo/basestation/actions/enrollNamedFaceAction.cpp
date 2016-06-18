@@ -24,6 +24,8 @@
 #include "anki/vision/basestation/trackedFace.h"
 #include "util/console/consoleInterface.h"
 
+#include <cmath>
+
 #define DEBUG_ENROLL_NAMED_FACE_ACTION 0
 
 #if DEBUG_ENROLL_NAMED_FACE_ACTION
@@ -161,7 +163,7 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            SetAction( CreateTurnTowardsFaceAction(_robot, _faceID) );
+            //SetAction( CreateTurnTowardsFaceAction(_robot, _faceID) );
             return RESULT_OK;
           },
           .duringFcn = [this]() {
@@ -344,14 +346,12 @@ namespace Cozmo {
     
     ASSERT_NAMED(!_enrollSequence.empty(), "EnrollNamedFaceAction.Init.EmptyEnrollSequence");
     
-    _seqIter = _enrollSequence.begin();
-    _lastModeChangeTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    
-    Result stepInitResult = InitCurrentStep();
-    if(RESULT_OK != stepInitResult) {
-      PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.StepInitFailed", "");
-      return ActionResult::FAILURE_ABORT;
-    }
+    // First thing we want to do is turn towards the face and make sure we see it
+    _state = State::LookForFace;
+    _action = new CompoundActionSequential(_robot, {
+      CreateTurnTowardsFaceAction(_robot, _faceID),
+      new WaitForImagesAction(_robot, _kNumImagesToWait, VisionMode::DetectingFaces),
+    });
     
     return ActionResult::SUCCESS;
   } // Init()
@@ -361,6 +361,72 @@ namespace Cozmo {
   {
     switch(_state)
     {
+      case State::LookForFace:
+      {
+        if(_action != nullptr)
+        {
+          ActionResult subResult = _action->Update();
+          if(ActionResult::RUNNING != subResult)
+          {
+            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TurnTowardsFaceCompleted", "");
+            
+            if(_lastFaceSeen_ms == 0) {
+              // If we haven't seen the face since this behavior was created,
+              // try looking up further: it's more likely a face is further up and
+              // we're looking too low. Add a little movement so he doesn't look dead.
+              // NOTE: we will just keep doing this until timeout if we never see the face!
+              const Radians absHeadAngle = GetRNG().RandDblInRange(MAX_HEAD_ANGLE - DEG_TO_RAD(10), MAX_HEAD_ANGLE);
+              
+              // Rotate in the opposite direction enough to undo the last rotation plus a little more
+              const double newAngle = std::copysign(GetRNG().RandDblInRange(0, DEG_TO_RAD(10)),
+                                                    -_lastRelBodyAngle.ToDouble());
+              const Radians relBodyAngle = newAngle -_lastRelBodyAngle;
+              _lastRelBodyAngle = newAngle;
+
+              CompoundActionSequential* lookAroundAction = new CompoundActionSequential(_robot, {
+                new PanAndTiltAction(_robot, relBodyAngle, absHeadAngle, false, true),
+              });
+              
+              // Also back up a little if we haven't gone too far back already
+              if(_totalBackup_mm <= _kMaxTotalBackup_mm) {
+                const f32 backupSpeed_mmps = 100.f;
+                const f32 backupDist_mm = GetRNG().RandDblInRange(_kMinBackup_mm, _kMaxBackup_mm);
+                _totalBackup_mm += backupDist_mm;
+                DriveStraightAction* backUpAction = new DriveStraightAction(_robot, -backupDist_mm, backupSpeed_mmps);
+                backUpAction->SetShouldPlayDrivingAnimation(false); // don't want head to move down!
+                lookAroundAction->AddAction(backUpAction);
+              }
+              
+              lookAroundAction->AddAction(new WaitForImagesAction(_robot, _kNumImagesToWait, VisionMode::DetectingFaces));
+              
+              SetAction(lookAroundAction);
+              return ActionResult::RUNNING;
+            }
+            
+            // Otherwise, we've seen the face so continue with starting enrollment sequence
+            SetAction(nullptr);
+            _seqIter = _enrollSequence.begin();
+            _lastModeChangeTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+            
+            Result stepInitResult = InitCurrentStep(); // Transitions us to PreActing
+            if(RESULT_OK != stepInitResult) {
+              PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.StepInitFailed", "");
+              return ActionResult::FAILURE_ABORT;
+            }
+            
+          }
+          else if(ActionResult::RUNNING != subResult)
+          {
+            PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.LookAtFaceStateFailure", "");
+            return subResult;
+          }
+          break;
+        }
+        
+        // There's no action for some reason, just switch states and fall through immediately
+        _state = State::PreActing;
+      }
+        
       case State::PreActing:
       {
         if(_action != nullptr)
