@@ -132,14 +132,26 @@ public abstract class GameBase : MonoBehaviour {
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab,
       newView => {
         newView.Initialize();
-        InitializeView(newView, _ChallengeData);
-        newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
-        newView.ShowShelf();
-        newView.ShowSpinnerWidget();
-        newView.HideMiddleBackground();
+        SetupView(newView, _ChallengeData);
       });
 
     PrepRobotForGame();
+  }
+
+  private void SetupView(SharedMinigameView newView, ChallengeData data) {
+    // For all challenges, set the title text and add a quit button by default
+    ChallengeTitleWidget titleWidget = newView.TitleWidget;
+    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
+    titleWidget.Icon = data.ChallengeIconPlainStyle;
+    newView.ShowQuitButton();
+
+    // TODO use different color for activities vs games
+    newView.InitializeColor(UIColorPalette.GameBackgroundColor);
+
+    newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
+    newView.ShowShelf();
+    newView.ShowSpinnerWidget();
+    newView.HideMiddleBackground();
   }
 
   private void PrepRobotForGame() {
@@ -179,25 +191,17 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.HideSpinnerWidget();
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
-    Initialize(_ChallengeData.MinigameConfig);
-
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
-
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
+
+    Initialize(_ChallengeData.MinigameConfig);
+    InitializeView(_SharedMinigameViewInstance, _ChallengeData);
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
   protected virtual void InitializeView(SharedMinigameView newView, ChallengeData data) {
-    // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = newView.TitleWidget;
-    titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.Icon = data.ChallengeIconPlainStyle;
-    newView.ShowQuitButton();
-
-    // TODO use different color for activities vs games
-    newView.InitializeColor(UIColorPalette.GameBackgroundColor);
   }
 
   #endregion
