@@ -312,6 +312,7 @@ void Motors::start()
   NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
   
   // Configure each motor pin as an output
+  __disable_irq();
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
     // Configure the pins for the motor bridge to be outputs and default low (stopped)
@@ -329,6 +330,7 @@ void Motors::start()
     const u32 mask = 1 << pin;
       
     // Configure initial pin sensing (used for inversion with whack-a-mole)
+    nrf_gpio_cfg_input(motorConfig->encoderPins[0], NRF_GPIO_PIN_NOPULL);
     if (state & mask)
     {
       nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
@@ -342,10 +344,11 @@ void Motors::start()
       nrf_gpio_cfg_input(motorConfig->encoderPins[1], NRF_GPIO_PIN_NOPULL);
     }
   }
+  __enable_irq();
 
   RTOS::start(task);
 }
-
+/* NDM: Doesn't look like this would work, but at least it's not called...
 void Motors::stop()
 {
   for (int i = 0; i < MOTOR_COUNT; i++) {
@@ -359,7 +362,7 @@ void Motors::stop()
 
   NVIC_DisableIRQ(GPIOTE_IRQn);
 }
-
+*/
 void Motors::init()
 {
   ConfigurePPI(NRF_TIMER1, 0, 0);

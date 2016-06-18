@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 26;
+u8 g_fixtureReleaseVersion = 27;
 const char* BUILD_INFO = "SMT/PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;
@@ -227,10 +227,9 @@ void WaitForDeviceOff(void)
 }
 
 // Walk through tests one by one - logging to the PC and to the Device flash
+int g_stepNumber;
 static void RunTests()
 {
-  int i;
-  
   ConsoleWrite("[TEST:START]\r\n");
   
   ConsolePrintf("fixtureSerial,%i\r\n", FIXTURE_SERIAL);
@@ -242,10 +241,10 @@ static void RunTests()
     // Write pre-test data to flash and update factory block
     WritePreTestData();
     
-    for (i = 0; i < m_functionCount; i++)
+    for (g_stepNumber = 0; g_stepNumber < m_functionCount; g_stepNumber++)
     {      
-      SetTestCounterText(i + 1, m_functionCount);
-      m_functions[i]();
+      SetTestCounterText(g_stepNumber + 1, m_functionCount);
+      m_functions[g_stepNumber]();
     }
     
     WriteFactoryBlockErrorCode(ERROR_OK);

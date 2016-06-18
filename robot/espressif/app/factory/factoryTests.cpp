@@ -517,15 +517,21 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     }
     case RobotInterface::FTM_PlayPenTest:
     {
+      // If we need to wipe up the factory info (on a second run), do that now
+      if (!NVStorage::IsFactoryStorageEmpty()) {
+        os_printf("Playpen test is wiping all\n");
+        NVStorage::WipeAll(true, 0, true, true);
+      }
       // Create config for test fixture open AP
       struct softap_config ap_config;
       wifi_softap_get_config(&ap_config);
       os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-      os_sprintf((char*)ap_config.ssid, "Afix%02d", param);
+      os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
       ap_config.authmode = AUTH_OPEN;
       ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
       ap_config.beacon_interval = 100;
       wifi_softap_set_config_current(&ap_config);
+      break;
     }
     case RobotInterface::FTM_Off:
     {
@@ -537,6 +543,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
       RTIP::SendMessage(msg);
       WiFiConfiguration::Off(false);
+      break;
     }
     #endif
     default:
