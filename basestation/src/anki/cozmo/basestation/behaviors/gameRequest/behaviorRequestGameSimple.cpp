@@ -242,7 +242,7 @@ float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot
   // if we have requested, and are past the timeout, then we don't want to keep running
   if( IsActing() ) {
     // while we are doing things, we really don't want to be interrupted
-    return 1.0f;
+    return 1.5f;
   }
 
   // otherwise, fall back to running score
