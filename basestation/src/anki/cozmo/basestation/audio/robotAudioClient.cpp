@@ -156,6 +156,16 @@ AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::G
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
 {
+  // Check if there is a current animation, if so abort that animation and clean up correctly
+  if ( _currentAnimation != nullptr ) {
+    PRINT_NAMED_ERROR("RobotAudioClient.CreateAudioAnimation",
+                      "CurrentAnimation '%s' state: %s is NOT Null when creating a new animation",
+                      _currentAnimation->GetName().c_str(),
+                      RobotAudioAnimation::GetStringForAnimationState(_currentAnimation->GetAnimationState()).c_str() );
+    _currentAnimation->AbortAnimation();
+    ClearCurrentAnimation();
+  }
+
   // Create appropriate animation type for mode
   RobotAudioAnimation* audioAnimation = nullptr;
   switch ( _outputSource ) {
@@ -185,14 +195,6 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
   const RobotAudioAnimation::AnimationState animationState = audioAnimation->GetAnimationState();
   if ( animationState != RobotAudioAnimation::AnimationState::AnimationCompleted &&
        animationState != RobotAudioAnimation::AnimationState::AnimationError ) {
-    
-    if ( _currentAnimation != nullptr ) {
-      PRINT_NAMED_ERROR("RobotAudioClient.CreateAudioAnimation",
-                        "CurrentAnimation state: %hhu is NOT Null when creating a new animation",
-                        _currentAnimation->GetAnimationState() );
-      ClearCurrentAnimation();
-    }
-    
     _currentAnimation = audioAnimation;
   }
   else {
