@@ -7,10 +7,6 @@ using Anki.Cozmo.ExternalInterface;
 public class FactoryIntroManager : MonoBehaviour {
 
   [SerializeField]
-  private ConnectDialog _DevConnectDialog;
-  private GameObject _DevConnectDialogInstance;
-
-  [SerializeField]
   private UnityEngine.UI.Image _Background;
 
   [SerializeField]
@@ -47,18 +43,23 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private bool _IsSim = false;
 
+  private const int kRobotID = 1;
+
   void Start() {
     _RestartOverlay.gameObject.SetActive(false);
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
     ConsoleLogManager.Instance.LogFilter = PlayerPrefs.GetString("LogFilter");
 
     SetStatusText("Not Connected");
-    RobotEngineManager.Instance.RobotConnected += HandleConnected;
+
+    RobotEngineManager.Instance.Disconnect();
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.OnFactoryResult += FactoryResult;
     _RestartButton.gameObject.SetActive(false);
 
-    _RestartButton.onClick.AddListener(() => RestartTestApp());
+    _RestartButton.onClick.AddListener(RestartTestApp);
     _OptionsButton.onClick.AddListener(HandleOptionsButtonClick);
     _StartButton.onClick.AddListener(HandleStartButtonClick);
 
@@ -72,13 +73,21 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleStartButtonClick() {
-    ShowDevConnectDialog();
+    RobotEngineManager.Instance.Disconnect();
+    RobotEngineManager.Instance.Connect("127.0.0.1");
+
     _StartButton.gameObject.SetActive(false);
     _InProgressSpinner.gameObject.SetActive(true);
   }
 
+  private void HandleConnectedToClient(string connectionIdentifier) {
+    RobotEngineManager.Instance.StartEngine();
+    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _IsSim ? "127.0.0.1" : "172.31.1.1", _IsSim);
+
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
+  }
+
   private void HandleConnected(int robotID) {
-    HideDevConnectDialog();
     SetStatusText("Factory App Connected To Robot");
 
     HandleEnableNVStorageWrites(PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1);
@@ -118,7 +127,9 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleOTAButton() {
-    ShowDevConnectDialog();
+    RobotEngineManager.Instance.Disconnect();
+    RobotEngineManager.Instance.Connect("127.0.0.1");
+
     RobotEngineManager.Instance.RobotConnected -= HandleConnected;
     RobotEngineManager.Instance.RobotConnected += HandleOTAConnected;
     _FactoryOTAPanelInstance = GameObject.Instantiate(_FactoryOTAPanelPrefab).GetComponent<FactoryOTAPanel>();
@@ -160,8 +171,9 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private void TearDownEngine() {
     CozmoBinding.Shutdown();
-    RobotEngineManager.Instance.RobotConnected -= HandleConnected;
+    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToClient;
     RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected -= HandleConnected;
     RobotEngineManager.Instance.OnFactoryResult -= FactoryResult;
   }
 
@@ -180,20 +192,7 @@ public class FactoryIntroManager : MonoBehaviour {
       TestFailed();
     }
   }
-
-  public void ShowDevConnectDialog() {
-    if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
-      _DevConnectDialogInstance = GameObject.Instantiate(_DevConnectDialog.gameObject);
-    }
-    _DevConnectDialogInstance.GetComponent<ConnectDialog>().Play(_IsSim);
-  }
-
-  private void HideDevConnectDialog() {
-    if (_DevConnectDialogInstance != null) {
-      Destroy(_DevConnectDialogInstance);
-    }
-  }
-
+    
   void HandleEnableNVStorageWrites(bool toggleValue) {
     PlayerPrefs.SetInt("EnableNStorageWritesToggle", toggleValue ? 1 : 0);
     PlayerPrefs.Save();

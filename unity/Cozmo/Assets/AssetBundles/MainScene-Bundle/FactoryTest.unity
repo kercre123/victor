@@ -491,7 +491,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65dc7be214371450897ab2ba1522fd59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DevConnectDialog: {fileID: 11419672, guid: d73c982d72b7d4050937088024507432, type: 2}
   _Background: {fileID: 420244544}
   _RestartOverlay: {fileID: 2098555734}
   _OptionsButton: {fileID: 680834003}
