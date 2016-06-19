@@ -193,8 +193,8 @@ namespace Cozmo {
     robot.GetActionList().Cancel();
  
     // Clear motor calibration flags
-    _headCalibrated = 0;
-    _liftCalibrated = 0;
+    _headCalibrated = false;
+    _liftCalibrated = false;
     
     // Set known poses
     _cliffDetectPose = Pose3d(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin());
@@ -470,7 +470,7 @@ namespace Cozmo {
         
         // Start motor calibration
         robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
-        _holdUntilTime = currentTime_sec + _kMotorCalibrationTimeout_sec*_maxNumCalib;
+        _holdUntilTime = currentTime_sec + _kMotorCalibrationTimeout_sec;
         
         SetCurrState(FactoryTestState::WaitingForMotorCalibration);
       }
@@ -479,7 +479,7 @@ namespace Cozmo {
       case FactoryTestState::WaitingForMotorCalibration:
       {
         // Check that head and lift are calibrated
-        if (_headCalibrated < _maxNumCalib || _liftCalibrated < _maxNumCalib) {
+        if (!_headCalibrated || !_liftCalibrated) {
           if (_holdUntilTime < currentTime_sec) {
             END_TEST(FactoryTestResultCode::MOTORS_UNCALIBRATED);
           }
@@ -1459,18 +1459,10 @@ namespace Cozmo {
       if (!msg.calibStarted){
         if (msg.motorID == MotorID::MOTOR_HEAD) {
           PRINT_NAMED_INFO("BehaviorFactoryTest.HandleMotorCalibration.HeadCalibrated", "");
-          _headCalibrated++;
-          if(_headCalibrated < _maxNumCalib)
-          {
-            robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, false)));
-          }
+          _headCalibrated = true;
         } else if (msg.motorID == MotorID::MOTOR_LIFT) {
           PRINT_NAMED_INFO("BehaviorFactoryTest.HandleMotorCalibration.LiftCalibrated", "");
-          _liftCalibrated++;
-          if(_liftCalibrated < _maxNumCalib)
-          {
-            robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(false, true)));
-          }
+          _liftCalibrated = true;
         }
       }
       
