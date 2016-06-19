@@ -69,6 +69,9 @@ namespace Cozmo {
   // Save logs on device
   CONSOLE_VAR(bool,  kBFT_SaveLogsOnDevice,       "BehaviorFactoryTest",  true);
   
+  // Disconnect at end of test
+  CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  true);
+  
   
   
   ////////////////////////////
@@ -302,6 +305,10 @@ namespace Cozmo {
     PrintAndLightResult(robot,resCode);
     robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
 
+    // Disconnect from robot
+    if (kBFT_DisconnectAtEnd) {
+      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::DisconnectFromRobot>(robot.GetID());
+    }
   }
   
   

@@ -46,6 +46,10 @@ message ConnectToRobot {
     uint_8 isSimulated
 }
 
+message DisconnectFromRobot {
+    uint_8 robotID,
+}
+
 // ConnectToUiDevice
 message ConnectToUiDevice {
     UiConnectionType  connectionType,
