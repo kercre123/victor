@@ -28,8 +28,8 @@ enum e_nrf_gpio {
   PIN_ENCODER_RIGHT   = 4,  // ENC2
   PIN_ENCODER_HEADA   = 14, // ENC3 - wire harness reversed since EP3
   PIN_ENCODER_HEADB   = 17,
-  PIN_ENCODER_LIFTA   = 0,  // ENC4 - wire harness reversed since EP3
-  PIN_ENCODER_LIFTB   = 1,      
+  PIN_ENCODER_LIFTA   = 1,  // ENC4 - wire harness reversed since EP3
+  PIN_ENCODER_LIFTB   = 0,      
 
   // Motors + charge OK signal
   PIN_LEFT_P          = 19,

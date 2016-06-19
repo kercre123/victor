@@ -599,15 +599,15 @@ void GPIOTE_IRQHandler()
       {
         fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_HIGH);      
         if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
-          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
+          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;
         else
-          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;      
+          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;      
       } else {
         fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_LOW);
         if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
-          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;
+          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
         else
-          m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;  
+          m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;  
       }    
     }       
     // Left wheel

@@ -19,6 +19,11 @@ extern "C" {
 #include "nvStorage.h"
 #include "wifi_configuration.h"
 
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_hash.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
+
 extern const unsigned int COZMO_VERSION_COMMIT;
 extern const char* DAS_USER;
 extern const char* BUILD_DATE;
@@ -239,6 +244,7 @@ void Update()
         // Display WiFi password, alternate rows about every 2 minutes
         const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
         u64 frame[COLS];
+        Draw::Clear(frame);
         // Draw::Copy(frame, Face::SLEEPY_EYES); // XXX: Artwork was not popular with design
         Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
         Draw::Mask(frame, columnMask);
@@ -517,20 +523,29 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     }
     case RobotInterface::FTM_PlayPenTest:
     {
+      static bool afixMode = false;
       // If we need to wipe up the factory info (on a second run), do that now
       if (!NVStorage::IsFactoryStorageEmpty()) {
+        // Really need wipeall to have battery power to prevent interruption - hopefully rare
+        Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
+        bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+        Anki::Cozmo::RobotInterface::SendMessage(bMsg);
+        
         os_printf("Playpen test is wiping all\n");
         NVStorage::WipeAll(true, 0, true, true);
+
+      // If we haven't already, create config for test fixture open AP
+      } else if (!afixMode) {
+        struct softap_config ap_config;
+        wifi_softap_get_config(&ap_config);
+        os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
+        os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
+        ap_config.authmode = AUTH_OPEN;
+        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+        ap_config.beacon_interval = 100;
+        wifi_softap_set_config_current(&ap_config);
+        afixMode = true;
       }
-      // Create config for test fixture open AP
-      struct softap_config ap_config;
-      wifi_softap_get_config(&ap_config);
-      os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-      os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
-      ap_config.authmode = AUTH_OPEN;
-      ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-      ap_config.beacon_interval = 100;
-      wifi_softap_set_config_current(&ap_config);
       break;
     }
     case RobotInterface::FTM_Off:
