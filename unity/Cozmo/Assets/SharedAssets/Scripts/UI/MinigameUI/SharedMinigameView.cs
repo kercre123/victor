@@ -505,8 +505,14 @@ namespace Cozmo {
       }
 
       public void HideQuitButton() {
-        HideWidget(_QuitButtonInstance);
-        _QuitButtonInstance = null;
+        if (_QuitButtonInstance != null) {
+          _QuitButtonInstance.QuitGameConfirmed -= HandleQuitConfirmed;
+          HideWidget(_QuitButtonInstance);
+          _QuitButtonInstance = null;
+        }
+        else {
+          DAS.Warn(this, "HideQuitButton - _QuitButtonInstance is NULL");
+        }
       }
 
       private void HandleQuitConfirmed() {
