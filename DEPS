@@ -24,11 +24,11 @@
     "teamcity": {
         "builds": {
             "coretech_external": {
-                "build_id": "87386",
+                "build_id": "96110",
                 "build_type_id": "Cozmo_CoretechExternal_Build",
                 "extension": "tar.gz",
                 "package_name": "Cozmo_CoretechExternal",
-                "version": "124"
+                "version": "132"
             }
         },
         "default_usr": "puller_cozmo",
