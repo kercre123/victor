@@ -72,6 +72,7 @@ public:
   void HandleMessage(const T& msg);
   
   Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
+  Result RemoveRobotConnection(const uint32_t robotId);
   
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 

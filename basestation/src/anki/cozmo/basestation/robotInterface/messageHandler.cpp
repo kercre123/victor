@@ -237,6 +237,14 @@ Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobo
   
   return RESULT_OK;
 }
+
+Result MessageHandler::RemoveRobotConnection(const uint32_t robotId)
+{
+  Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(robotId);
+  _channel->RemoveConnection(id);
+  
+  return RESULT_OK;
+}
  
 const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
 {

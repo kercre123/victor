@@ -79,6 +79,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromRobot, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
@@ -211,10 +212,26 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
   _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(connectMsg);
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
-  AddRobot(connectMsg.robotID);
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
-  return RESULT_OK;
+  return (AddRobot(connectMsg.robotID) == RESULT_OK);
 }
+
+bool CozmoEngine::DisconnectFromRobot(const ExternalInterface::DisconnectFromRobot& disconnectMsg)
+{
+  if( !CozmoEngine::HasRobotWithID(disconnectMsg.robotID)) {
+    PRINT_NAMED_INFO("CozmoEngine.DisconnectFromRobot.AlreadyDisconnected", "Robot %d already disconnected", disconnectMsg.robotID);
+    return true;
+  }
+  
+  _context->GetRobotManager()->GetMsgHandler()->RemoveRobotConnection(disconnectMsg.robotID);
+  
+  // TODO: Need to call RemoveRobot(), but there's probably other things that need to get done in there
+  // or elsewhere for this to work properly. For now, not calling it to avoid an assert.
+  // Currently, this function is only called from BehaviorFactoryTest as part of the factory test app.
+  PRINT_NAMED_WARNING("CozmoEngine.DisconnectFromRobot.TODO", "DISCONNECT NOT YET FULLY FUNCTIONAL");
+  // return (RemoveRobot(disconnectMsg.robotID) == RESULT_OK);
+  return true;
+}
+
   
 Result CozmoEngine::Update(const float currTime_sec)
 {
@@ -453,7 +470,21 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     
     // Set Robot Audio Client Message Handler to link to Connection and Robot Audio Buffer ( Audio played on Robot )
     robot->GetRobotAudioClient()->SetMessageHandler( engineConnection->GetMessageHandler() );
+
+    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(robot->GetID(), RESULT_OK);
   }
+  
+  return lastResult;
+}
+  
+Result CozmoEngine::RemoveRobot(RobotID_t robotID)
+{
+  Result lastResult = RESULT_OK;
+  
+  _context->GetRobotManager()->RemoveRobot(robotID);
+
+  // TODO: ANY OTHER CLEANUP TO DO HERE???
+  // ...
   
   return lastResult;
 }
@@ -531,6 +562,17 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
         PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
       } else {
         PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);
+      }
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::DisconnectFromRobot:
+    {
+      const ExternalInterface::DisconnectFromRobot& msg = event.GetData().Get_DisconnectFromRobot();
+      const bool success = DisconnectFromRobot(msg);
+      if(success) {
+        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Disconnecting from robot %d!", msg.robotID);
+      } else {
+        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to disconnect from robot %d!", msg.robotID);
       }
       break;
     }
