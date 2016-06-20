@@ -15,6 +15,7 @@
 
 #include "clad/types/actionTypes.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
@@ -246,6 +247,8 @@ namespace Anki {
                          ObjectID objectID,
                          const bool useManualSpeed = false);
       
+      virtual ~PickupObjectAction();
+      
       virtual const std::string& GetName() const override;
       
       // Override to determine type (pick/place, low/high) dynamically depending
@@ -264,6 +267,11 @@ namespace Anki {
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
+      
+    private:
+    
+      TurnTowardsPoseAction* _verifyAction = nullptr;
+      bool                   _verifyActionDone = false;
       
     }; // class PickupObjectAction
     

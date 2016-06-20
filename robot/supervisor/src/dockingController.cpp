@@ -37,7 +37,7 @@
 #define IGNORE_FAST_ROTATING_ERRSIG 0
 
 // Whether or not to adjust the head angle to try to look towards the block based on our error signal
-#define TRACK_BLOCK 0
+#define TRACK_BLOCK 1
 
 
 namespace Anki {
@@ -221,7 +221,7 @@ namespace Anki {
         const u8 DOCKDECEL_ON_FAILURE_MMPS2 = 40;
 
         // Constants for the Hanns maneuver (HM)
-        const u8 HM_DIST_MM = 40;
+        const u8 HM_DIST_MM = 50;
         const f32 HM_SPEED_MMPS = 300;
         const u16 HM_ACCEL_MMPS2 = 500;
         const f32 HM_TURN_ANGLE_RAD = DEG_TO_RAD_F32(22);
@@ -618,8 +618,16 @@ namespace Anki {
             SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
 
 #if(TRACK_BLOCK)
+            static const f32 MIN_HEAD_TRACKING_ANGLE = DEG_TO_RAD_F32(-20);
+
             f32 desiredHeadAngle = atan_fast( (dockingErrSignalMsg_.z_height - NECK_JOINT_POSITION[2])/dockingErrSignalMsg_.x_distErr) + DEG_TO_RAD_F32(4);
-            HeadController::SetDesiredAngle(desiredHeadAngle);
+
+            // When repeatedly commanding a low head angle head calibration likes to kick in so this
+            // is to prevent that from happening
+            if(desiredHeadAngle > MIN_HEAD_TRACKING_ANGLE)
+            {
+              HeadController::SetDesiredAngle(desiredHeadAngle);
+            }
 #endif
 
             continue;
@@ -969,6 +977,13 @@ namespace Anki {
             return;
           }
         }
+        
+        // Ignore error signals while doing the Hanns Manuever so that we don't try to acquire a new
+        // error signal because the block is moving
+        if(failureMode_ == HANNS_MANEUVER)
+        {
+          return;
+        }
 
 
 #if(RESET_LOC_ON_BLOCK_UPDATE)
@@ -1211,12 +1226,29 @@ namespace Anki {
           {
             // Compute new starting point for path
             // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
-            f32 x_start_mm = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.GetAngle().ToFloat());
-            f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.GetAngle().ToFloat());
+            const f32 dockPoseCos = cosf(dockPose_.GetAngle().ToFloat());
+            const f32 dockPoseSin = sinf(dockPose_.GetAngle().ToFloat());
+            
+            f32 x_start_mm = dockPose_.x() - 3 * distToBlock * dockPoseCos;
+            f32 y_start_mm = dockPose_.y() - 3 * distToBlock * dockPoseSin;
+            
+            f32 distIntoBlock_mm = 0;
+            
+            // If we are rolling push the block a little by planning a path into it
+            if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
+            {
+              distIntoBlock_mm = PATH_END_DIST_INTO_BLOCK_MM;
+            }
             
             PathFollower::ClearPath();
-            PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
-                                                 dockSpeed_mmps_, dockAccel_mmps2_, dockAccel_mmps2_);
+            PathFollower::AppendPathSegment_Line(0,
+                                                 x_start_mm,
+                                                 y_start_mm,
+                                                 dockPose_.x() + distIntoBlock_mm*dockPoseCos,
+                                                 dockPose_.y() + distIntoBlock_mm*dockPoseSin,
+                                                 dockSpeed_mmps_,
+                                                 dockAccel_mmps2_,
+                                                 dockAccel_mmps2_);
             
             //AnkiDebug( 5, "DockingController", 472, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
           }

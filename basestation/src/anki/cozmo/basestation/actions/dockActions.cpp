@@ -706,6 +706,15 @@ namespace Anki {
       SetPostDockLiftMovingAnimation("LiftEffortPickup");
     }
     
+    PickupObjectAction::~PickupObjectAction()
+    {
+      if(_verifyAction != nullptr)
+      {
+        _verifyAction->PrepForCompletion();
+        Util::SafeDelete(_verifyAction);
+      }
+    }
+    
     const std::string& PickupObjectAction::GetName() const
     {
       static const std::string name("PickupObjectAction");
@@ -794,6 +803,27 @@ namespace Anki {
     ActionResult PickupObjectAction::Verify()
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
+      
+      if(_verifyAction == nullptr)
+      {
+        _verifyAction = new TurnTowardsPoseAction(_robot, _dockObjectOrigPose, 0);
+        _verifyAction->ShouldEmitCompletionSignal(false);
+        _verifyAction->ShouldSuppressTrackLocking(true);
+        _verifyActionDone = false;
+      }
+      
+      if(!_verifyActionDone)
+      {
+        ActionResult res = _verifyAction->Update();
+        if(res != ActionResult::RUNNING)
+        {
+          _verifyActionDone = true;
+        }
+        else
+        {
+          return ActionResult::RUNNING;
+        }
+      }
       
       switch(_dockAction)
       {

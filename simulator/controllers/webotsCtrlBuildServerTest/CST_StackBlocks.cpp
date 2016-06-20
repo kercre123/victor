@@ -109,7 +109,7 @@ namespace Anki {
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 60, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 36, ROBOT_POSITION_TOL_MM) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM) &&
                                            GetCarryingObjectID() == 0, 20)
           {
@@ -150,7 +150,7 @@ namespace Anki {
                                            GetCarryingObjectID() == -1 &&
                                            NEAR(pose0.GetTranslation().z(), 65, BLOCK_HEIGHT_TOL_MM) &&
                                            NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 130, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 113, ROBOT_POSITION_TOL_MM) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM), 20)
           {
             StopMovie();
