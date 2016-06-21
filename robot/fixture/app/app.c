@@ -461,8 +461,10 @@ int main(void)
   
   SlowPutString("STARTUP!\r\n");
 
+  // Figure out which fixture type we are
   g_fixtureType = (FixtureType)InitBoard();
-  SlowPrintf("Fixture: %i\r\n", g_fixtureType);
+  if (g_fixtureType == FIXTURE_NONE && g_flashParams.fixtureTypeOverride > 1 && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
+    g_fixtureType = g_flashParams.fixtureTypeOverride;
   
   SlowPutString("Initializing Display...\r\n");
   

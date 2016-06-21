@@ -6,9 +6,11 @@
 
 #define FIXTURE_BODY1_TEST    1     // ID 1
 #define FIXTURE_BODY2_TEST    9     // ID 4 + 1
+#define FIXTURE_BODY3_TEST    12    // ID 4 + 3
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
 #define FIXTURE_HEAD2_TEST    10    // ID 4 + 2  
+#define FIXTURE_HEAD3_TEST    13    // ID 4 + 3 + 1 
 
 #define FIXTURE_EXTRAS_TEST   3     // ID 2 + 1
 #define FIXTURE_MOTOR_TEST    11    // ID 4 + 2 + 1
@@ -24,11 +26,12 @@
 
 #define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
-#define FIXTURE_DEBUG         16
+#define FIXTURE_DEBUG         16    // Should be last ID
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1", "EXTRAS", "CHARGER", "CUBE1", "CUBE2", "CUBE3", \
-                        "ROBOT", "BODY2", "HEAD2", "MOTOR",  "FINAL",  "?", "?", "PLAYPEN", "DEBUG" }
+                        "ROBOT", "BODY2", "HEAD2", "MOTOR",  "BODY3",   "HEAD3", "N/A",   "PLAYPEN", \
+                        "DEBUG" }
 
 extern FixtureType g_fixtureType;
 

@@ -249,6 +249,11 @@ void LoadRom(const uint8_t *rom, int length) {
     
     for (int i = 0; i < send; i++) {
       if (verify[i] != mem[i]) {
+        // Print the whole mismatched block
+        ConsolePrintf("\r\nFirst mismatch @ %04x\r\nExpected:\r\n", addr+i);
+        ConsoleWriteHex(mem, CUBE_PAGE_SIZE, addr);
+        ConsolePrintf("Found:\r\n");
+        ConsoleWriteHex(verify, CUBE_PAGE_SIZE, addr);
         throw ERROR_CUBE_VERIFY_FAILED;
       }
     }

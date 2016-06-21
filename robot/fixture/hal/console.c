@@ -143,14 +143,14 @@ char ConsoleGetChar()
   return value;
 }
 
-void ConsoleWriteHex(u8* buffer, u32 numberOfBytes)
+void ConsoleWriteHex(const u8* buffer, u32 numberOfBytes, u32 offset)
 {
   u32 i, j;
   u32 numberOfRows = (numberOfBytes + 15) >> 4;
   for (i = 0; i < numberOfRows; i++)
   {
     u32 index = i << 4;
-    ConsolePrintf("%04x: ", i << 4);
+    ConsolePrintf("%04x: ", (i << 4) + offset);
     for (j = 0; j < 16; j++)
     {
       ConsolePrintf("%02x ", buffer[index + j]);
@@ -253,7 +253,6 @@ static char* GetArgument(u32 index)
   return buffer;
 }
 
-
 static void SetMode(void)
 {
   char* arg = GetArgument(1);
@@ -261,6 +260,8 @@ static void SetMode(void)
   for (int i = 0; i <= FIXTURE_DEBUG; i++)
     if (!strcasecmp(arg, FIXTYPES[i]))
     {
+      g_flashParams.fixtureTypeOverride = i;
+      StoreParams();
       g_fixtureType = i;
       SetFixtureText();
       return;
