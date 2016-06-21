@@ -22,6 +22,9 @@ public:
   // Default Constructor
   RobotAudioAnimationOnRobotTest( Animation* anAnimation, RobotAudioClient* audioClient );
   
+  // Test helper
+  size_t GetCurrentStreamFrameCount();
+  
 protected:
   
   // Begin to load audio buffer with frames by scheduling all audio events to be posted in relevant time to each other

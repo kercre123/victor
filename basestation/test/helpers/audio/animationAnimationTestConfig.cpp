@@ -127,7 +127,9 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
       if ( eventIdx < _events.size() ) {
         // Create new stream
         // This is a test method, normally creation time is set when wwise creates the stream
-        outBuffer.PrepareAudioBuffer( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() + ( _events[eventIdx].startTime_ms - firstEventOffset ) );
+        // + 10 ms to represent delay in WWise
+        double eventDelay = ( _events[eventIdx].startTime_ms - firstEventOffset ) + 10;
+        outBuffer.PrepareAudioBuffer( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() + eventDelay );
         // Skip foward to next event
         animationTime_ms = _events[eventIdx].startTime_ms;
         

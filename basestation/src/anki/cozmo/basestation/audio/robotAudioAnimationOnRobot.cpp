@@ -243,6 +243,12 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
       const uint32_t streamRelevantTime_ms = floor( nextStream->GetCreatedTime_ms() - _streamAnimationOffsetTime_ms );
       if ( streamRelevantTime_ms <= relevantTime_ms ) {
         // Start playing this stream
+        if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+          PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
+                            "Set Next Stream | SteamTime - StartTime_ms %d | AnimTime_ms %d",
+                            streamRelevantTime_ms, relevantTime_ms );
+        }
+        
         _currentBufferStream = nextStream;
         return;
       }
@@ -275,6 +281,12 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
           }
           // Setup stream
           _currentBufferStream = nextStream;
+          
+          if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+            PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
+                              "Set Next Stream | EventTime - StartTime_ms %d | AnimTime_ms %d",
+                              nextEvent->TimeInMS, relevantTime_ms );
+          }
         }
         else {
           // Wait for next buffer stream

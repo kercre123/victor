@@ -32,7 +32,7 @@
 #include <functional>
 #include <vector>
 
-#define TEST_ROBOT_AUDIO_DEV_LOG 1
+#define TEST_ROBOT_AUDIO_DEV_LOG 0
 
 
 using namespace Anki;
@@ -113,31 +113,54 @@ public:
   
 };
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Animation Loop methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// No audio events in animation
+const RobotAudioTest::AnimationRunLoopFunc noAudioEventLoopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms )
+{
+  EXPECT_TRUE( config.GetAudioEvents().empty() );
+  EXPECT_EQ( RobotAudioAnimation::AnimationState::AnimationCompleted, audioAnimation.GetAnimationState() );
+  
+  return true;
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Exercise animation is able to get bufferes when expected under perfect condition
-const RobotAudioTest::AnimationRunLoopFunc loopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms )
+const RobotAudioTest::AnimationRunLoopFunc generalUsesLoopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms )
 {
   // Perform Unit Test on Animation HERE!
-  
   // Get Expected events
   const uint32_t frameStartTime_ms = animationTime_ms - Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS + 1;
   std::vector<AnimationAnimationTestConfig::TestAudioEvent> frameEvents = config.GetCurrentPlayingEvents( frameStartTime_ms, animationTime_ms );
+  if ( TEST_ROBOT_AUDIO_DEV_LOG ) {
+    printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n" );
+    std::string testStr;
+    for ( auto& anEvent : frameEvents ) {
+      testStr += ( "\n" + std::string( EnumToString( anEvent.event ) ) + " @ " + std::to_string(anEvent.startTime_ms) );
+    }
+    PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
+                      "animTimeRange_ms: %d - %d | %s",
+                      animationTime_ms - ( Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS - 1 ), animationTime_ms, testStr.c_str() );
+  }
   
   // Always call update
   RobotAudioAnimation::AnimationState state = audioAnimation.Update( 0 , animationTime_ms );
   
+  // We are pre-populating audio data for test, not getting data in realtime form Wwise
   EXPECT_EQ( RobotAudioAnimation::AnimationState::AudioFramesReady, state);
   
   // Pop frame
   RobotInterface::EngineToRobot* audioFrame = nullptr;
   audioAnimation.PopRobotAudioMessage( audioFrame, 0, animationTime_ms );
-  
-  if ( TEST_ROBOT_AUDIO_DEV_LOG && false ) {
-    std::string testStr;
-    for ( auto& anEvent : frameEvents ) {
-      testStr += ( "\n" + std::string( EnumToString( anEvent.event ) ) + " @ " + std::to_string(anEvent.startTime_ms) );
-    }
-    PRINT_NAMED_INFO("RobotAudioTest.TestAnimaiion01", "animTime: %d - %s", animationTime_ms, testStr.c_str() );
-    PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc", "Popped Audio Frame: %c", audioFrame != nullptr ? 'Y' : 'N'  );
+  if ( TEST_ROBOT_AUDIO_DEV_LOG ) {
+    RobotAudioAnimationOnRobotTest &audioAnimationTestRef = static_cast<RobotAudioAnimationOnRobotTest&>(audioAnimation);
+    size_t remainingFrames = audioAnimationTestRef.GetCurrentStreamFrameCount();
+    PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
+                      "FrameEventCount: %zu | Popped Audio Frame: %c | Remaining frames %zu",
+                      frameEvents.size(),
+                      audioFrame != nullptr ? 'Y' : 'N',
+                      remainingFrames );
   }
   
   
@@ -157,14 +180,136 @@ const RobotAudioTest::AnimationRunLoopFunc loopFunc = []( RobotAudioAnimationOnR
 };
 
 
-// TODO: REMOVE THIS IS TEMP
-TEST_F(RobotAudioTest, TestAnimation01)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// TESTS
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test No Events
+TEST_F(RobotAudioTest, TestNoEvents)
 {
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.InsertComplete();
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, noAudioEventLoopFunc );
+}
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Single Streams
+TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  // Currently, RobotAudioTest doesn't let me test an event starting @ 0 ms, ironic.
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
+  config.InsertComplete();
+  EXPECT_EQ( 1, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Single Streams that is not at in the first frame
+TEST_F(RobotAudioTest, TestSingleEventAnimation )
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 200, 100) );
+  config.InsertComplete();
+  EXPECT_EQ( 1, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+// Test single stream multiple events
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Events end in order they were trigured
+TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInOrder)
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 20) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 10, 40) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 30, 100) );
+  config.InsertComplete();
+  EXPECT_EQ( 3, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Events that end out of order of when they were triggered
+TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInReverseOrder)
+{
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
   config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 3, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 10, 10) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 10, 80) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 30, 40) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 40, 10) );
+  config.InsertComplete();
+  EXPECT_EQ( 4, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+// Test Multiple Streams
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Multiple Streams with a Single Event
+TEST_F(RobotAudioTest, TestMultipleStreams_SingleEvent)
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 400, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 580, 12) );
+  config.InsertComplete();
+  EXPECT_EQ( 4, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Multiple Streams with multiple Events
+TEST_F(RobotAudioTest, TestMultipleStreams_MultipleEvents)
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 4, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 20, 100) );
   config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 200, 100) );
   config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 400, 100) );
   config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 580, 12) );
@@ -177,6 +322,68 @@ TEST_F(RobotAudioTest, TestAnimation01)
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
-  RunAnimation( audioAnimation, config, loopFunc );
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
 }
 
+// Test Back to Back Streams
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Back to Back Streams in same frame
+TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_SameFrame)
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 102, 100) );
+  config.InsertComplete();
+  EXPECT_EQ( 2, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Back to Back Streams Frame Boarder
+TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_NextFrame)
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 66) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 67, 100) );
+  config.InsertComplete();
+  EXPECT_EQ( 2, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+ 
+// Test Events on frame edges
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test Events on frame edges
+// FIXME: There is a bug with the with how audio test data is created & Popped in Test
+TEST_F(RobotAudioTest, DISABLED_TestFrameEdgeCase_StartsOnEdge)
+{
+  EXPECT_EQ( 0, config.GetAudioEvents().size() );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 33, 10) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 133, 100) );
+  config.InsertComplete();
+  EXPECT_EQ( 2, config.GetAudioEvents().size() );
+  
+  config.LoadAudioKeyFrames( *animation );
+  
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  
+  RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
+  
+  RunAnimation( audioAnimation, config, generalUsesLoopFunc );
+}
+
+// TODO: Add test for more edge cases!!
