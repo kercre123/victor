@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+#if FACTORY_TEST
+
 public class SpinIcon : MonoBehaviour {
 
   // Use this for initialization
@@ -13,3 +15,5 @@ public class SpinIcon : MonoBehaviour {
     transform.RotateAround(transform.position, Vector3.forward, -250.0f * Time.deltaTime);
   }
 }
+
+#endif

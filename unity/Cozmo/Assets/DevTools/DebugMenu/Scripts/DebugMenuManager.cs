@@ -27,7 +27,7 @@ public class DebugMenuManager : MonoBehaviour {
     private set {
       if (_Instance == null) {
         _Instance = value;
-      }    
+      }
     }
   }
 
@@ -41,10 +41,12 @@ public class DebugMenuManager : MonoBehaviour {
     // TODO: Destroy self if not production
     _Instance = this;
   }
-  
+
   // TODO: Pragma out this code for production
   public void OnDebugMenuButtonTap() {
+#if ENABLE_DEBUG_PANEL
     CreateDebugDialog();
+#endif
   }
 
   public GameBase GetCurrMinigame() {

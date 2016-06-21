@@ -60,19 +60,14 @@ public class StartupManager : MonoBehaviour {
   // Use this for initialization
   private IEnumerator Start() {
 
-    string buildScene = BuildFlags.kDefaultBuildScene;
-    if (buildScene == "FactoryTest") {
-      UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
-    }
-
     // Initialize DAS first so we can have error messages during intialization
-    #if ANIMATION_TOOL
+#if ANIMATION_TOOL
     DAS.AddTarget(new ConsoleDasTarget());
-    #elif (UNITY_IPHONE || UNITY_ANDROID) && !UNITY_EDITOR
+#elif (UNITY_IPHONE || UNITY_ANDROID) && !UNITY_EDITOR
     DAS.AddTarget(new EngineDasTarget());
-    #else
+#else
     DAS.AddTarget(new UnityDasTarget());
-    #endif
+#endif
 
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
@@ -93,7 +88,7 @@ public class StartupManager : MonoBehaviour {
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
-      
+
     AssetBundleManager assetBundleManager = gameObject.AddComponent<AssetBundleManager>();
     yield return InitializeAssetBundleManager(assetBundleManager);
 
@@ -112,8 +107,10 @@ public class StartupManager : MonoBehaviour {
     // Load initial asset bundles
     yield return LoadAssetBundles(assetBundleManager);
 
-    // Instantiate startup assets
+    // Instantiate startup assets, skip if we're doing factory test.
+#if !FACTORY_TEST
     LoadAssets(assetBundleManager);
+#endif
 
     // Set up localization files and add managers
     if (Application.isPlaying) {
@@ -143,10 +140,10 @@ public class StartupManager : MonoBehaviour {
     // Load debug asset bundle if in debug build
     if (_IsDebugBuild) {
       bool loadedDebugAssetBundle = false;
-      assetBundleManager.LoadAssetBundleAsync(_DebugAssetBundleName, 
+      assetBundleManager.LoadAssetBundleAsync(_DebugAssetBundleName,
         (success) => {
           if (!success) {
-            DAS.Error("StartupManager.Awake.AssetBundleLoading", 
+            DAS.Error("StartupManager.Awake.AssetBundleLoading",
               string.Format("Failed to load Asset Bundle with name={0}", _DebugAssetBundleName));
           }
           loadedDebugAssetBundle = true;
@@ -157,14 +154,14 @@ public class StartupManager : MonoBehaviour {
 
       int loadedDebugAssets = 0;
       foreach (string prefabName in _StartupDebugPrefabNames) {
-        AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName, 
+        AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName,
           prefabName, (GameObject prefab) => {
-          if (prefab != null) {
-            GameObject go = GameObject.Instantiate(prefab);
-            go.transform.SetParent(transform);
-          }
-          loadedDebugAssets++;
-        });
+            if (prefab != null) {
+              GameObject go = GameObject.Instantiate(prefab);
+              go.transform.SetParent(transform);
+            }
+            loadedDebugAssets++;
+          });
       }
       while (loadedDebugAssets < _StartupDebugPrefabNames.Length) {
         yield return 0;
@@ -181,10 +178,10 @@ public class StartupManager : MonoBehaviour {
     // Load initial asset bundles
     int loadedAssetBundles = 0;
     foreach (string assetBundleName in _AssetBundlesToLoad) {
-      assetBundleManager.LoadAssetBundleAsync(assetBundleName, 
+      assetBundleManager.LoadAssetBundleAsync(assetBundleName,
         (success) => {
           if (!success) {
-            DAS.Error("StartupManager.Awake.AssetBundleLoading", 
+            DAS.Error("StartupManager.Awake.AssetBundleLoading",
               string.Format("Failed to load Asset Bundle with name={0}", assetBundleName));
           }
           loadedAssetBundles++;
@@ -206,7 +203,7 @@ public class StartupManager : MonoBehaviour {
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
-    
+
 
     if (_IsDebugBuild) {
       gameObject.AddComponent<SOSLogManager>();
@@ -215,70 +212,69 @@ public class StartupManager : MonoBehaviour {
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
     // TODO: Don't hardcode this?
-    assetBundleManager.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName,
       "ShaderHolder", (Cozmo.ShaderHolder sh) => {
-      Cozmo.ShaderHolder.SetInstance(sh);
-    });
+        Cozmo.ShaderHolder.SetInstance(sh);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(_BasicUIPrefabAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(_BasicUIPrefabAssetBundleName,
       "AlertViewLoader", (Cozmo.UI.AlertViewLoader avl) => {
-      Cozmo.UI.AlertViewLoader.SetInstance(avl);
-    });
+        Cozmo.UI.AlertViewLoader.SetInstance(avl);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName,
       "UIColorPalette", (Cozmo.UI.UIColorPalette colorP) => {
-      Cozmo.UI.UIColorPalette.SetInstance(colorP);
-    });
+        Cozmo.UI.UIColorPalette.SetInstance(colorP);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName,
       "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
-      psc.Initialize();
-      Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
-    });
+        psc.Initialize();
+        Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName,
       "CubePalette", (Cozmo.CubePalette cp) => {
-      Cozmo.CubePalette.SetInstance(cp);
-    });
+        Cozmo.CubePalette.SetInstance(cp);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
       "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
-      Cozmo.ItemDataConfig.SetInstance(idc);
-    });
-        
-    assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName, 
+        Cozmo.ItemDataConfig.SetInstance(idc);
+      });
+
+    assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName,
       "DefaultChestConfig", (ChestData cd) => {
-      ChestData.SetInstance(cd);
-    });
+        ChestData.SetInstance(cd);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName,
       "HexItemList", (Cozmo.HexItemList cd) => {
-      Cozmo.HexItemList.SetInstance(cd);
-    });
+        Cozmo.HexItemList.SetInstance(cd);
+      });
 
-    assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
       "ChallengeList", (ChallengeDataList cd) => {
-      ChallengeDataList.SetInstance(cd);
-    });
+        ChallengeDataList.SetInstance(cd);
+      });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName, 
-      "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig grc) => {
-      Cozmo.UI.GenericRewardsConfig.SetInstance(grc);
-    });
-
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName, 
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName,
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
-      Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
-    });
+        Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
+      });
+
+
+
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
-    if (string.IsNullOrEmpty(BuildFlags.kDefaultBuildScene)) {
-      assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
-    }
-    else {
-      assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, BuildFlags.kDefaultBuildScene, loadAdditively: false, callback: null);
-    }
+#if FACTORY_TEST
+    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, "FactoryTest", loadAdditively: false, callback: null);
+#elif PRESS_DEMO
+    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, "PressDemo", loadAdditively: false, callback: null);
+#else
+    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
+#endif
   }
 
   private IEnumerator UpdateLoadingDots() {
@@ -304,7 +300,7 @@ public class StartupManager : MonoBehaviour {
   }
 
   private IEnumerator ExtractResourceFiles() {
-    #if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID
     // In Android the files in streamingAssetsPath are in the jar file which means our native code can't access them. Here
     // we extract them from the jar file into persistentDataPath using the resources manifest.
     string fromPath = Application.streamingAssetsPath + "/";
@@ -374,7 +370,7 @@ public class StartupManager : MonoBehaviour {
     }
 
     resourcesWWW.Dispose();
-    #endif
+#endif
 
     _ExtractionErrorMessage = null;
     yield return null;

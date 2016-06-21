@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+#if FACTORY_TEST
+
 public class FactoryOptionsPanel : MonoBehaviour {
 
   public System.Action<int> OnSetTestNumber;
@@ -74,3 +76,5 @@ public class FactoryOptionsPanel : MonoBehaviour {
     }
   }
 }
+
+#endif

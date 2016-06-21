@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
+#if FACTORY_TEST
+
 public class FactoryLogPanel : MonoBehaviour {
   [SerializeField]
   RectTransform _LogTextList;
@@ -75,3 +77,5 @@ public class FactoryLogPanel : MonoBehaviour {
     GameObject.Destroy(gameObject);
   }
 }
+
+#endif

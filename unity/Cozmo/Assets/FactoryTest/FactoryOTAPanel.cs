@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+#if FACTORY_TEST
+
 public class FactoryOTAPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Text _OTAStatus;
@@ -42,3 +44,5 @@ public class FactoryOTAPanel : MonoBehaviour {
 
 
 }
+
+#endif

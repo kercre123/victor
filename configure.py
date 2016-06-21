@@ -9,6 +9,7 @@ import platform
 import sys
 import subprocess
 import shutil
+import hashlib
 
 GAME_ROOT = os.path.normpath(
         os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
@@ -354,22 +355,31 @@ class GamePlatformConfiguration(object):
             self.call_engine('generate')
         # END ENGINE GENERATE
 
-        #START OF DEMO BUILD
+        #FEATURES BUILD FLAGS
+
+        #writes to smcs file based on feature flags
+        unityAssetsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets');
+        smcsFile = open(os.path.join(unityAssetsPath, 'smcs.rsp'), 'w')
+        smcsSettings = "-warnaserror+\n" + "-define:ENABLE_DEBUG_PANEL\n";
+
+        if self.options.features != None and 'factoryTest' in self.options.features[0]:
+            smcsSettings = smcsSettings + "-define:FACTORY_TEST"
+        elif self.options.features != None and 'pressDemo' in self.options.features[0]:
+            smcsSettings = smcsSettings + "-define:PRESS_DEMO"
+
+        smcsFile.write(smcsSettings + '\n');
+
+        smcsFile.close()
+
         class_code = 'public class BuildFlags { \n'
         git_variable = '  public const string kGitHash = \"' + subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
         buildFlagsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
         ankibuild.util.File.mkdir_p(buildFlagsPath)
+
         file = open(os.path.join(buildFlagsPath, 'BuildFlags.cs'), 'w')
 
-        if self.options.features != None and 'pressDemo' in self.options.features[0]:
-            file.write(class_code + git_variable +
-                       '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+'}')
-        elif self.options.features != None and 'factoryTest' in self.options.features[0]:
-            file.write(class_code + git_variable +
-                       '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+'}')
-        else:
-            file.write(class_code + git_variable +
-                       '  public const string kDefaultBuildScene = \"\";'+'\n'+'}')
+        # writes a hash for the contents of the smcs file to force unity editor to recompile if the editor is already open.
+        file.write(class_code + git_variable + '  public const string kSmcsFileHash = \"' + hashlib.sha256(smcsSettings).hexdigest() + '\";'+'\n'+'}')
 
         file.close()
         #NEED OF DEMO BUILD

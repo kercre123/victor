@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 using Anki.Cozmo.ExternalInterface;
 
+#if FACTORY_TEST
+
 public class FactoryIntroManager : MonoBehaviour {
 
   [SerializeField]
@@ -245,3 +247,5 @@ public class FactoryIntroManager : MonoBehaviour {
 
   }
 }
+
+#endif
