@@ -147,7 +147,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     if (deviceID < 0 || deviceID > byte.MaxValue) {
       throw new ArgumentException("Device id must be 0 to 255.", "deviceID");
     }
-    
+
     if (IsActive) {
       throw new InvalidOperationException("UdpChannel is already active. Disconnect first.");
     }
@@ -310,9 +310,9 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       catch (Exception e) {
         Debug.LogException(e);
       }
-      
+
     }
-    
+
     ProcessMessages();
 
     bool wasActive = IsActive;
@@ -320,7 +320,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     IsActive = (connectionState != ConnectionState.Disconnected);
 
     if (wasActive && !IsActive) {
-      DAS.Warn(this, "UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + "."); 
+      DAS.Warn(this, "UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + ".");
 
       try {
         RaiseDisconnectedFromClient(currentDisconnectionReason);
@@ -330,7 +330,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
     }
   }
-  
+
   // synchronous
   private void ProcessMessages() {
     while (receivedMessages.Count > 0) {
@@ -352,10 +352,10 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
     connectionState = ConnectionState.Disconnected;
     currentDisconnectionReason = reason;
-    
+
     sentBuffers.Clear();
     receivedMessages.Clear();
-    
+
     if (!needsDisconnect || !SendDisconnect()) {
       if (mainServer != null) {
         mainServer.Close();
@@ -389,7 +389,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     Destroy(reason);
     InternalUpdate();
   }
-  
+
   // either
   protected void SimpleSend(SocketBufferState chainedState) {
     BeginSend(chainedState, callback_SimpleSend_Complete);
@@ -414,6 +414,10 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   // either
   protected virtual bool SendDisconnect() {
     return false;
+  }
+
+  public void DumpReceiveBuffer() {
+    receivedMessages.Clear();
   }
 
   // synchronous
@@ -466,7 +470,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     if (connectionState != ConnectionState.Connected) {
       throw new InvalidOperationException("Error attempting to send on UdpConnection with state " + connectionState.ToString() + ".");
     }
-    
+
     if (mainSend != null) {
       throw new InvalidOperationException("Error attempting to send on UdpConnection when already sending.");
     }
@@ -612,11 +616,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
               Destroy(DisconnectionReason.ConnectionThrottled);
               return;
             }
-            
+
             receivedMessages.Enqueue(message);
           }
         }
-        
+
         ServerReceive();
       }
       catch (Exception e) {
@@ -764,7 +768,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
       else if (state.needsCloseWhenDone) {
         state.socket.Close();
-        
+
         state.isSocketActive = false;
         state.needsCloseWhenDone = false;
       }
@@ -801,7 +805,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
       if (state.needsCloseWhenDone) {
         state.socket.Close();
-        
+
         state.isSocketActive = false;
         state.needsCloseWhenDone = false;
       }
@@ -810,7 +814,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
   // adapted from http://stackoverflow.com/a/24814027
   public static IPAddress GetLocalIPv4() {
-    #if UNITY_EDITOR || !UNITY_ANDROID
+#if UNITY_EDITOR || !UNITY_ANDROID
     NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
     foreach (NetworkInterface item in interfaces) {
       if (item.Name == "en0") {
@@ -822,7 +826,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
     }
     return null;
-    #else
+#else
     int intIPAddress = 0;
     using(var activityClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
     using(var contextClass = new AndroidJavaClass("android.content.Context")) 
@@ -841,7 +845,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     Debug.Log("WiFi IP address: " + ipAddress.ToString());
  
     return ipAddress;
-    #endif
+#endif
   }
 
   private static int CompareInterfaces(NetworkInterface a, NetworkInterface b) {
