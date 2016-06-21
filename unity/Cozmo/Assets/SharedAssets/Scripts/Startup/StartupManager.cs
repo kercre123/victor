@@ -68,8 +68,8 @@ public class StartupManager : MonoBehaviour {
     // Initialize DAS first so we can have error messages during intialization
     #if ANIMATION_TOOL
     DAS.AddTarget(new ConsoleDasTarget());
-    #elif UNITY_IPHONE && !UNITY_EDITOR
-    DAS.AddTarget(new IphoneDasTarget());
+    #elif (UNITY_IPHONE || UNITY_ANDROID) && !UNITY_EDITOR
+    DAS.AddTarget(new EngineDasTarget());
     #else
     DAS.AddTarget(new UnityDasTarget());
     #endif
