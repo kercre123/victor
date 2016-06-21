@@ -190,6 +190,7 @@ namespace Anki {
       void StartCalibrationRoutine()
       {
         AnkiEvent( 16, "LiftController", 144, "Starting calibration", 0);
+        Enable();
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true);
@@ -469,12 +470,12 @@ namespace Anki {
           if (IsInPosition()) {
             AnkiWarn( 16, "LiftController", 149, "burnout protection triggered. Stop messing with the lift! Going limp until you do!", 0);
             Disable(true);
-            return true;
           } else {
             AnkiWarn( 16, "LiftController", 150, "burnout protection triggered. Recalibrating.", 0);
             StartCalibrationRoutine();
-            return true;
+            potentialBurnoutStartTime_ms = 0;
           }
+          return true;
         }
         
         return false;

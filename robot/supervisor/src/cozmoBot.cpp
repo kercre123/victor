@@ -289,12 +289,14 @@ namespace Anki {
           AnkiEvent( 40, "Radio", 447, "Robot radio is connected.", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
+          LiftController::Enable();
+          HeadController::Enable();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           AnkiEvent( 40, "Radio", 251, "Radio disconnected", 0);
           Messages::ResetInit();
           SteeringController::ExecuteDirectDrive(0,0);
-          LiftController::SetAngularVelocity(0);
-          HeadController::SetAngularVelocity(0);
+          LiftController::Disable();
+          HeadController::Disable();
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::Init();
@@ -386,6 +388,14 @@ namespace Anki {
                 }
               }
 #endif
+              
+              // Keep lift and head limp by default if not already connected
+              // which at this point it usually shouldn't be
+              if (!HAL::RadioIsConnected()) {
+                LiftController::Disable();
+                HeadController::Disable();
+              }
+              
               mode_ = WAITING;
             }
 
