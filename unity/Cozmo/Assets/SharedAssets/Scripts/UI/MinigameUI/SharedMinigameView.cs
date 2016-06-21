@@ -530,6 +530,7 @@ namespace Cozmo {
         CreateWidgetIfNull<HowToPlayButton>(ref _HowToPlayButtonInstance, _HowToPlayButtonPrefab);
         _HowToPlayButtonInstance.Initialize(howToPlayDescKey, howToPlayAnimationPrefab, ComposeDasViewName(_CurrentSlideName), UIColorPalette.GameToggleColor);
         _HowToPlayButtonInstance.OnHowToPlayButtonClicked += HandleHowToPlayButtonClicked;
+        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
       }
 
       public void HideHowToPlayButton() {
@@ -537,6 +538,7 @@ namespace Cozmo {
           HideWidget(_HowToPlayButtonInstance);
           _HowToPlayButtonInstance = null;
         }
+        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
       }
 
       public void OpenHowToPlayView() {
@@ -578,6 +580,7 @@ namespace Cozmo {
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
+        SetCircuitryBasedOnText(shelfText);
       }
 
       public void ShowContinueButtonCentered(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
@@ -592,11 +595,13 @@ namespace Cozmo {
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
+        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.CenterAligned);
       }
 
       public void HideContinueButton() {
         HideWidget(_ContinueButtonInstance);
         _ContinueButtonInstance = null;
+        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
       }
 
       public void EnableContinueButton(bool enable) {
@@ -608,6 +613,16 @@ namespace Cozmo {
       public void SetContinueButtonSupplementText(string text, Color color) {
         if (_ContinueButtonInstance != null) {
           _ContinueButtonInstance.SetShelfText(text, color);
+          SetCircuitryBasedOnText(text);
+        }
+      }
+
+      private void SetCircuitryBasedOnText(string text) {
+        if (string.IsNullOrEmpty(text)) {
+          ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedNoText);
+        }
+        else {
+          ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
         }
       }
 

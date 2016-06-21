@@ -6,7 +6,7 @@ using Anki.UI;
 namespace Cozmo {
   namespace MinigameWidgets {
     public class ContinueGameButtonWidget : MinigameWidget {
-      
+
       private const float kAnimXOffset = 0.0f;
       private const float kAnimYOffset = -300.0f;
       private const float kAnimDur = 0.25f;
@@ -19,16 +19,10 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;
 
-      [SerializeField]
-      private Image _CircuitryWithText;
-
-      [SerializeField]
-      private Image _CircuitryWithoutText;
-
       private ContinueButtonClickHandler _OnClickCallback;
 
       public string DASEventViewController {
-        get { return _ContinueButton.DASEventViewController; } 
+        get { return _ContinueButton.DASEventViewController; }
         set { _ContinueButton.DASEventViewController = value; }
       }
 
@@ -48,13 +42,6 @@ namespace Cozmo {
         if (_ShelfTextLabel != null) {
           _ShelfTextLabel.text = text;
           _ShelfTextLabel.color = textColor;
-        }
-        bool textIsEmpty = string.IsNullOrEmpty(text);
-        if (_CircuitryWithText != null) {
-          _CircuitryWithText.gameObject.SetActive(!textIsEmpty);
-        }
-        if (_CircuitryWithoutText != null) {
-          _CircuitryWithoutText.gameObject.SetActive(textIsEmpty);
         }
       }
 
