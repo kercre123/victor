@@ -81,6 +81,9 @@ namespace Anki
     // floats and the color will be white.
     bool GetColorOptional(const Json::Value& node, const std::string& key, Anki::ColorRGBA& color);
     
+    // Get an angle back in Radians, possibly stored in degrees in the Json
+    bool GetAngleOptional(const Json::Value& jsonRoot, const std::string& key, Radians& angle, bool storedInDegrees);
+    
     // Dump the json to the selected output (pretty-printed). The depth argument limits
     // the depth of the tree that is printed. It is 0 by default, which
     // means to print the whole tree

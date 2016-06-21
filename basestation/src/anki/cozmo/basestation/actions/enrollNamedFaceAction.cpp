@@ -128,7 +128,7 @@ namespace Cozmo {
     
     const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
     if(nullptr != face) {
-      action = new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD_F32(45.f));
+      action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
     }
     else {
       // Couldn't find face in face world, try turning towards last face pose
@@ -207,13 +207,9 @@ namespace Cozmo {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepThreeStart", "Blue");
             SetBackpackLightsHelper(_robot, NamedColors::BLUE);
             CompoundActionSequential* compoundAction = new CompoundActionSequential(_robot, {
-              new DriveStraightAction(_robot, kFwdDist_mm, kSpeed_mmps)
+              new DriveStraightAction(_robot, kFwdDist_mm, kSpeed_mmps),
+              new TurnTowardsFaceAction(_robot, _faceID, DEG_TO_RAD(45)),
             });
-            
-            const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
-            if(nullptr != face) {
-              compoundAction->AddAction(new TurnTowardsPoseAction(_robot, face->GetHeadPose(), DEG_TO_RAD(45)));
-            }
             
             SetAction( compoundAction );
             return RESULT_OK;
@@ -231,13 +227,9 @@ namespace Cozmo {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepTwoFunction", "Green");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
             CompoundActionSequential* compoundAction = new CompoundActionSequential(_robot, {
-              new DriveStraightAction(_robot, kBwdDist_mm, kSpeed_mmps)
+              new DriveStraightAction(_robot, kBwdDist_mm, kSpeed_mmps),
+              new TurnTowardsFaceAction(_robot, _faceID, DEG_TO_RAD(45)),
             });
-            
-            const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
-            if(nullptr != face) {
-              compoundAction->AddAction(new TurnTowardsPoseAction(_robot, face->GetHeadPose(), DEG_TO_RAD(45)));
-            }
             
             SetAction( compoundAction );
             

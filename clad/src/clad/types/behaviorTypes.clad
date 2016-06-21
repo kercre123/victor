@@ -45,6 +45,8 @@ enum uint_8 BehaviorType {
   DemoFearEdge,
   DockingTestSimple,
   DriveOffCharger,
+  DistractedByObject,
+  DistractedByFace,
 
   Count
 }

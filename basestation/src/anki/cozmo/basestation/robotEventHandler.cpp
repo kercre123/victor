@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/searchForObjectAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -80,9 +81,12 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::TrackToObject,
       MessageGameToEngineTag::TraverseObject,
       MessageGameToEngineTag::TurnInPlace,
+      MessageGameToEngineTag::TurnTowardsFace,
       MessageGameToEngineTag::TurnTowardsLastFacePose,
       MessageGameToEngineTag::TurnTowardsObject,
       MessageGameToEngineTag::TurnTowardsPose,
+      MessageGameToEngineTag::VisuallyVerifyFace,
+      MessageGameToEngineTag::VisuallyVerifyObject,
       MessageGameToEngineTag::Wait,
       MessageGameToEngineTag::WaitForImages,
     };
@@ -441,7 +445,7 @@ IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInte
 
   TurnTowardsObjectAction* action = new TurnTowardsObjectAction(robot,
                                                   objectID,
-                                                  Radians(msg.maxTurnAngle),
+                                                  Radians(msg.maxTurnAngle_rad),
                                                   msg.visuallyVerifyWhenDone,
                                                   msg.headTrackWhenDone);
   
@@ -460,7 +464,7 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
   
-  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(robot, pose, Radians(msg.maxTurnAngle));
+  TurnTowardsPoseAction* action = new TurnTowardsPoseAction(robot, pose, Radians(msg.maxTurnAngle_rad));
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -472,9 +476,23 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
   return action;
 }
 
+IActionRunner* GetTurnTowardsFaceActionHelper(Robot& robot, const ExternalInterface::TurnTowardsFace& msg)
+{
+  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, msg.faceID, Radians(msg.maxTurnAngle_rad), msg.sayName);
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
+}
+  
 IActionRunner* GetTurnTowardsLastFacePoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
-  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle), msg.sayName);
+  TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -565,6 +583,20 @@ IActionRunner* CreateSearchForObjectAction(Robot& robot, const ExternalInterface
   return newAction;
 }
   
+IActionRunner* CreateVisuallyVerifyFaceAction(Robot& robot, const ExternalInterface::VisuallyVerifyFace& msg)
+{
+  VisuallyVerifyFaceAction* action = new VisuallyVerifyFaceAction(robot, msg.faceID);
+  action->SetNumImagesToWaitFor(msg.numImagesToWait);
+  return action;
+}
+  
+IActionRunner* CreateVisuallyVerifyObjectAction(Robot& robot, const ExternalInterface::VisuallyVerifyObject& msg)
+{
+  VisuallyVerifyObjectAction* action = new VisuallyVerifyObjectAction(robot, msg.objectID);
+  action->SetNumImagesToWaitFor(msg.numImagesToWait);
+  return action;
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -650,6 +682,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::mountCharger:
       return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
       
+    case RobotActionUnionTag::turnTowardsFace:
+      return GetTurnTowardsFaceActionHelper(robot, actionUnion.Get_turnTowardsFace());
+      
     case RobotActionUnionTag::turnTowardsLastFacePose:
       return GetTurnTowardsLastFacePoseActionHelper(robot, actionUnion.Get_turnTowardsLastFacePose());
 
@@ -699,6 +734,13 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       const ExternalInterface::WaitForImages& waitMsg = actionUnion.Get_waitForImages();
       return new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
     }
+      
+    case RobotActionUnionTag::visuallyVerifyFace:
+      return CreateVisuallyVerifyFaceAction(robot, actionUnion.Get_visuallyVerifyFace());
+     
+    case RobotActionUnionTag::visuallyVerifyObject:
+      return CreateVisuallyVerifyObjectAction(robot, actionUnion.Get_visuallyVerifyObject());
+      
     default:
       PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionTag",
                         "Failed to create an action for the given actionTag.");
@@ -848,6 +890,11 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       HandleMessage(event.GetData().Get_SetLiftHeight());
       return;
     }
+    case ExternalInterface::MessageGameToEngineTag::TurnTowardsFace:
+    {
+      newAction = GetTurnTowardsFaceActionHelper(robot, event.GetData().Get_TurnTowardsFace());
+      break;
+    }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
     {
       newAction = GetTurnTowardsLastFacePoseActionHelper(robot, event.GetData().Get_TurnTowardsLastFacePose());
@@ -899,6 +946,18 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     {
       const ExternalInterface::WaitForImages& waitMsg = event.GetData().Get_WaitForImages();
       newAction = new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
+      break;
+    }
+      
+    case ExternalInterface::MessageGameToEngineTag::VisuallyVerifyFace:
+    {
+      newAction = CreateVisuallyVerifyFaceAction(robot, event.GetData().Get_VisuallyVerifyFace());
+      break;
+    }
+      
+    case ExternalInterface::MessageGameToEngineTag::VisuallyVerifyObject:
+    {
+      newAction = CreateVisuallyVerifyObjectAction(robot, event.GetData().Get_VisuallyVerifyObject());
       break;
     }
       

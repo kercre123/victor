@@ -1034,7 +1034,7 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
       objectID: observedObject,
       robotID: ID,
-      maxTurnAngle: float.MaxValue,
+      maxTurnAngle_rad: float.MaxValue,
       panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
       headTrackWhenDone: headTrackWhenDone,
       maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
@@ -1058,7 +1058,7 @@ public class Robot : IRobot {
         world_x: face.WorldPosition.x,
         world_y: face.WorldPosition.y,
         world_z: face.WorldPosition.z,
-        maxTurnAngle: float.MaxValue,
+        maxTurnAngle_rad: float.MaxValue,
         maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
         panAccel_radPerSec2: panAccel_radPerSec2,
         panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
@@ -1078,7 +1078,7 @@ public class Robot : IRobot {
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
 
     SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
-      maxTurnAngle: maxTurnAngle,
+      maxTurnAngle_rad: maxTurnAngle,
       maxPanSpeed_radPerSec: kDefaultRadPerSec,
       panAccel_radPerSec2: kPanAccel_radPerSec2,
       panTolerance_rad: kPanTolerance_rad,

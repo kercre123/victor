@@ -280,10 +280,27 @@ message TurnInPlaceAtSpeed {
     uint_8 robotID
 }
 
+// TurnTowardsFace
+message TurnTowardsFace {
+    int_32   faceID,
+    float_32 maxTurnAngle_rad,
+
+    // A value of 0 means 'Don't care' (i.e. use engine's default value)
+    float_32 maxPanSpeed_radPerSec = 0.0,
+    float_32 panAccel_radPerSec2 = 0.0,
+    float_32 panTolerance_rad = 0.0,
+    float_32 maxTiltSpeed_radPerSec = 0.0,
+    float_32 tiltAccel_radPerSec2 = 0.0,
+    float_32 tiltTolerance_rad = 0.0,
+
+    bool     sayName = 0, // If we see the given face ID at end, and it is named, say that name
+    uint_8   robotID
+}
+
 // TurnTowardsLastFacePose
 //  Tell the robot to turn and tilt his head to face the pose of the last known face
 message TurnTowardsLastFacePose {
-    float_32 maxTurnAngle,
+    float_32 maxTurnAngle_rad,
 
     // A value of 0 means 'Don't care' (i.e. use engine's default value)
     float_32 maxPanSpeed_radPerSec = 0.0,
@@ -307,7 +324,7 @@ message TurnTowardsLastFacePose {
 //   object once the robot has successfully faced it.
 message TurnTowardsObject {
     uint_32  objectID,
-    float_32 maxTurnAngle,
+    float_32 maxTurnAngle_rad,
 
     // A value of 0 means 'Don't care' (i.e. use engine's default value)
     float_32 maxPanSpeed_radPerSec = 0.0,
@@ -329,7 +346,7 @@ message TurnTowardsPose {
     float_32 world_x,
     float_32 world_y,
     float_32 world_z,
-    float_32 maxTurnAngle,
+    float_32 maxTurnAngle_rad,
 
     // A value of 0 means 'Don't care' (i.e. use engine's default value)
     float_32 maxPanSpeed_radPerSec = 0.0,
@@ -340,6 +357,20 @@ message TurnTowardsPose {
     float_32 tiltTolerance_rad = 0.0,
 
     uint_8   robotID
+}
+
+// VisuallyVerifyFace
+//   Succeeds if given face is visible from the robot's current pose
+message VisuallyVerifyFace {
+    int_32 faceID,
+    int_32 numImagesToWait
+}
+
+// VisuallyVerifyObject
+//   Succeeds if given object is visible from the robot's current pose
+message VisuallyVerifyObject {
+    uint_32 objectID,
+    int_32 numImagesToWait
 }
 
 // Wait
@@ -386,9 +417,12 @@ union RobotActionUnion {
   TrackToFace               trackFace,
   TrackToObject             trackObject,
   TurnInPlace               turnInPlace,
+  TurnTowardsFace           turnTowardsFace,
   TurnTowardsLastFacePose   turnTowardsLastFacePose,
   TurnTowardsObject         turnTowardsObject,
   TurnTowardsPose           turnTowardsPose,
+  VisuallyVerifyFace        visuallyVerifyFace,
+  VisuallyVerifyObject      visuallyVerifyObject,
   Wait                      wait,
   WaitForImages             waitForImages
 }

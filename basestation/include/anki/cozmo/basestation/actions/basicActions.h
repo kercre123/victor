@@ -31,6 +31,9 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  // Forward declaration
+  class VisuallyVerifyObjectAction;
 
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
@@ -440,44 +443,6 @@ namespace Cozmo {
     }; // WaitForImagesAction()
   
   
-    // Verify that an object exists by facing tilting the head to face its
-    // last-known pose and verify that we can still see it. Optionally, you can
-    // also require that a specific marker be seen as well.
-    class VisuallyVerifyObjectAction : public IAction
-    {
-    public:
-      VisuallyVerifyObjectAction(Robot& robot,
-                                 ObjectID objectID,
-                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
-      
-      virtual ~VisuallyVerifyObjectAction();
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
-      
-      virtual int GetNumImagesToWaitFor() const { return _numImagesToWaitFor; }
-      void SetNumImagesToWaitFor(int numImages) { _numImagesToWaitFor = numImages; }
-      
-    protected:
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-      ObjectID                _objectID;
-      Vision::Marker::Code    _whichCode;
-      f32                     _waitToVerifyTime;
-      bool                    _objectSeen;
-      bool                    _markerSeen;
-      MoveLiftToHeightAction  _moveLiftToHeightAction;
-      bool                    _moveLiftToHeightActionDone;
-      Signal::SmartHandle     _observedObjectHandle;
-      WaitForImagesAction*    _waitForImagesAction = nullptr;
-      int                     _numImagesToWaitFor = 10;
-      
-    }; // class VisuallyVerifyObjectAction
-    
-    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class TurnTowardsObjectAction : public TurnTowardsPoseAction
@@ -519,12 +484,11 @@ namespace Cozmo {
       
       bool                       _facePoseCompoundActionDone = false;
       
-      VisuallyVerifyObjectAction _visuallyVerifyAction;
+      VisuallyVerifyObjectAction*_visuallyVerifyAction = nullptr;
       bool                       _refinedTurnTowardsDone = false;
       
       ObjectID                   _objectID;
       Vision::Marker::Code       _whichCode;
-      bool                       _visuallyVerifyWhenDone;
       bool                       _headTrackWhenDone;
       bool                       _doRefinedTurn = true;
       f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD_F32(5);
@@ -537,14 +501,14 @@ namespace Cozmo {
     // anything if there is no face.
     // If a face is seen after we stop turning, "fine tune" the turn a bit and
     // say the face's name if we recognize it (and sayName=true).
-    class TurnTowardsLastFacePoseAction : public TurnTowardsPoseAction
+    class TurnTowardsFaceAction : public TurnTowardsPoseAction
     {
     public:
-      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = PI_F, bool sayName = false);
-      virtual ~TurnTowardsLastFacePoseAction();
+      TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle = PI_F, bool sayName = false);
+      virtual ~TurnTowardsFaceAction();
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_FACE; }
 
       // Will manually manage locking head and body internally
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
@@ -570,6 +534,7 @@ namespace Cozmo {
         SayingName,
       };
       
+      Vision::FaceID_t        _faceID            = Vision::UnknownFaceID;
       IActionRunner*          _action            = nullptr;
       f32                     _closestDistSq     = std::numeric_limits<f32>::max();
       u32                     _maxFramesToWait   = 10;
@@ -585,7 +550,26 @@ namespace Cozmo {
       
     }; // TurnTowardsLastFacePoseAction
 
-    
+  
+    class TurnTowardsLastFacePoseAction : public TurnTowardsFaceAction
+    {
+    public:
+      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = PI_F, bool sayName = false)
+      : TurnTowardsFaceAction(robot, Vision::UnknownFaceID, maxTurnAngle, sayName)
+      {
+        
+      }
+      
+      virtual const std::string& GetName() const override {
+        static const std::string name("TurnTowardsLastFacePoseAction");
+        return name;
+      }
+      
+      virtual RobotActionType GetType() const override {
+        return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE;
+      }
+    };
+  
     // Turn towards the last face before or after another action
     class TurnTowardsFaceWrapperAction : public CompoundActionSequential
     {

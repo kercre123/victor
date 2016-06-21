@@ -196,6 +196,20 @@ std::string ParseString(const Json::Value& config, const char* key, const std::s
     return retVal;
   }
 
+  bool GetAngleOptional(const Json::Value& jsonRoot, const std::string& key, Radians& angle, bool storedInDegrees)
+  {
+    float storedVal;
+    const bool found = GetValueOptional(jsonRoot, key, storedVal);
+    if(found) {
+      if(storedInDegrees) {
+        angle = DEG_TO_RAD_F32(storedVal);
+      } else {
+        angle = storedVal;
+      }
+    }
+    return found;
+  }
+  
 namespace {
   
 __attribute__((used)) void PrintJsonInternal(const Json::Value& config, int maxDepth, const std::function<void(std::string)>& outputFunction)
