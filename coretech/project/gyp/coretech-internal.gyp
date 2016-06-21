@@ -28,6 +28,7 @@
     'planning_test_source': 'planning-test.lst',
     'planning_robot_source': 'planning-robot.lst',
     'messaging_source': 'messaging.lst',
+    'vision_generated_source': '../../generated/clad/vision/vision.lst',
     'messaging_robot_source': 'messaging-robot.lst',
 
     # TODO: should this be passed in, or shared?
@@ -707,7 +708,10 @@
 
     {
       'target_name': 'ctiMessaging',
-      'sources': [ '<!@(cat <(messaging_source))' ],
+      'sources': [ 
+        '<!@(cat <(messaging_source))',
+        '<!@(cat <(vision_generated_source))'  
+      ],
       'conditions': [
         ['OS=="android"',{
           'sources/': [

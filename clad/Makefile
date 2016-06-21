@@ -25,6 +25,7 @@ OUTPUT_ENGINE_H=$(patsubst %.clad, %.h, $(INPUT_ENGINE_FILES))
 OUTPUT_ENGINE_H_AND_CPP=$(OUTPUT_ENGINE_H) $(OUTPUT_ENGINE_CPP)
 OUTPUT_ENGINE_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_ENGINE_FILES))
 OUTPUT_ENGINE_PYTHON=$(patsubst %.clad, %.py, $(INPUT_ENGINE_FILES))
+OUTPUT_ENGINE_LST=$(OUTPUT_DIR)engine.lst
 
 INPUT_VIZ_DIR=./vizSrc/
 INPUT_VIZ_FILES=$(shell cd $(INPUT_VIZ_DIR); find . -type f -iname '*.clad')
@@ -33,7 +34,7 @@ OUTPUT_VIZ_H=$(patsubst %.clad, %.h, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_H_AND_CPP=$(OUTPUT_VIZ_H) $(OUTPUT_VIZ_CPP)
 OUTPUT_VIZ_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_PYTHON=$(patsubst %.clad, %.py, $(INPUT_VIZ_FILES))
-OUTPUT_VIZ_LST=../generated/clad/viz.lst
+OUTPUT_VIZ_LST=$(OUTPUT_DIR)viz.lst
 
 INPUT_ROBOT_DIR=../robot/clad/src/
 INPUT_ROBOT_NOT_SHARED_FILES=$(shell cd $(INPUT_ROBOT_DIR); grep -irL ROBOT_CLAD_SHARED *)
@@ -46,6 +47,7 @@ OUTPUT_ROBOT_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_ROBOT_SHARED_FILES))
 OUTPUT_ROBOT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_ROBOT_SHARED_FILES))
 ROBOT_ENGINE_TO_ROBOT_UNION=clad/robotInterface/messageEngineToRobot
 ROBOT_ROBOT_TO_ENGINE_UNION=clad/robotInterface/messageRobotToEngine
+OUTPUT_ROBOT_LST=$(OUTPUT_DIR)robot.lst
 
 # TODO: Move this to its own Makefile/build inside coretech-internal
 INPUT_CTI_VISION_DIR=../coretech/vision/clad/src/
@@ -55,6 +57,8 @@ OUTPUT_CTI_VISION_H=$(patsubst %.clad, %.h, $(INPUT_CTI_VISION_FILES))
 OUTPUT_CTI_VISION_H_AND_CPP=$(OUTPUT_CTI_VISION_H) $(OUTPUT_CTI_VISION_CPP)
 OUTPUT_CTI_VISION_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_CTI_VISION_FILES))
 OUTPUT_CTI_VISION_PYTHON=$(patsubst %.clad, %.py, $(INPUT_CTI_VISION_FILES))
+OUTPUT_CTI_VISION_LST=$(OUTPUT_DIR_CTI_VISION)vision.lst
+OUTPUT_CTI_VISION_ENGINE_LST=$(OUTPUT_DIR)vision.lst
 
 vpath %.clad $(INPUT_ENGINE_DIR):$(INPUT_VIZ_DIR):$(INPUT_ROBOT_DIR):$(INPUT_CTI_VISION_DIR)
 vpath %.h $(OUTPUT_DIR_ENGINE)/
@@ -66,11 +70,12 @@ vpath %.cpp $(OUTPUT_DIR_CTI_VISION)/
 vpath %.cs $(OUTPUT_DIR_CTI_VISION)/
 vpath %.h $(OUTPUT_DIR_CTI_VISION)/
 
-.PHONY: show clean $(OUTPUT_VIZ_LST)
+.PHONY: show clean
 
-all: cpp python $(OUTPUT_VIZ_LST)
+all: cpp python 
 
-cpp: engineCpp robotCpp vizCpp ctiVisionCpp
+cpp: engineCpp robotCpp vizCpp ctiVisionCpp cppListFiles
+cppListFiles: $(OUTPUT_VIZ_LST) $(OUTPUT_ENGINE_LST) $(OUTPUT_ROBOT_LST) $(OUTPUT_CTI_VISION_LST) $(OUTPUT_CTI_VISION_ENGINE_LST)
 robotCpp: $(OUTPUT_ROBOT_CPP)
 engineCpp: $(OUTPUT_ENGINE_H_AND_CPP)
 vizCpp: $(OUTPUT_VIZ_H_AND_CPP)
@@ -191,7 +196,22 @@ $(OUTPUT_VIZ_LST):
 	#$(INPUT_VIZ_FILES)
 	cat /dev/null > $(OUTPUT_VIZ_LST)
 	for f in $(OUTPUT_VIZ_H_AND_CPP); do echo ../$(OUTPUT_DIR_ENGINE)/$$f >> $(OUTPUT_VIZ_LST); done
-	
+
+$(OUTPUT_ENGINE_LST):
+	cat /dev/null > $(OUTPUT_ENGINE_LST)
+	for f in $(OUTPUT_ENGINE_H_AND_CPP); do echo ../$(OUTPUT_DIR_ENGINE)/$$f >> $(OUTPUT_ENGINE_LST); done
+
+$(OUTPUT_ROBOT_LST):
+	cat /dev/null > $(OUTPUT_ROBOT_LST)
+	for f in $(OUTPUT_ROBOT_H_AND_CPP); do echo ../$(OUTPUT_DIR_ENGINE)/$$f >> $(OUTPUT_ROBOT_LST); done
+
+$(OUTPUT_CTI_VISION_LST):
+	cat /dev/null > $(OUTPUT_CTI_VISION_LST)
+	for f in $(OUTPUT_CTI_VISION_H_AND_CPP); do echo ../../generated/clad/vision/$$f >> $(OUTPUT_CTI_VISION_LST); done
+
+$(OUTPUT_CTI_VISION_ENGINE_LST):
+	cat /dev/null > $(OUTPUT_CTI_VISION_ENGINE_LST)
+	for f in $(OUTPUT_CTI_VISION_H_AND_CPP); do echo ../../coretech/generated/clad/vision/$$f >> $(OUTPUT_CTI_VISION_ENGINE_LST); done
 
 show:
 	echo "*** input files ***"
@@ -221,9 +241,14 @@ show:
 	echo "*** output ctiVision python ***"
 	echo $(OUTPUT_CTI_VISION_PYTHON)
 
-clean:
+clean: cleanOutputDirs cleanCppListFiles
+
+cleanCppListFiles:
+	rm -rf $(OUTPUT_VIZ_LST) $(OUTPUT_ENGINE_LST) $(OUTPUT_ROBOT_LST) $(OUTPUT_CTI_VISION_LST) $(OUTPUT_CTI_VISION_ENGINE_LST)
+
+cleanOutputDirs:
 	if test -d $(OUTPUT_DIR_ENGINE); then chmod -Rf 777 $(OUTPUT_DIR_ENGINE); fi
 	if test -d $(OUTPUT_DIR_CSHARP); then chmod -Rf 777 $(OUTPUT_DIR_CSHARP); fi
 	if test -d $(OUTPUT_DIR_PYTHON); then chmod -Rf 777 $(OUTPUT_DIR_PYTHON); fi
 	if test -d $(OUTPUT_DIR_CTI_VISION); then chmod -Rf 777 $(OUTPUT_DIR_CTI_VISION); fi
-	rm -rf $(OUTPUT_DIR_ENGINE) $(OUTPUT_DIR_CSHARP) $(OUTPUT_DIR_PYTHON) $(OUTPUT_VIZ_LST)
+	rm -rf $(OUTPUT_DIR_ENGINE) $(OUTPUT_DIR_CSHARP) $(OUTPUT_DIR_PYTHON)
