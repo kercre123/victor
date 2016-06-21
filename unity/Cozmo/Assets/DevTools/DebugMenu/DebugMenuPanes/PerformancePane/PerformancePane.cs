@@ -77,6 +77,7 @@ public class PerformancePane : MonoBehaviour {
   }
 
   private void Update() {
-    _BatteryVoltage.text = RobotEngineManager.Instance.CurrentRobot.BatteryVoltage.ToString();
+    IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+    _BatteryVoltage.text = (currentRobot != null) ? currentRobot.BatteryVoltage.ToString() : "0";
   }
 }

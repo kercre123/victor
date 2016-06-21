@@ -12,8 +12,9 @@
 
 
 UdpClient::UdpClient()
+: host_info_list(nullptr)
+, socketfd(-1)
 {
-  socketfd = -1;
 }
 
 UdpClient::~UdpClient()
@@ -100,6 +101,7 @@ bool UdpClient::Disconnect()
 {
   if (socketfd > -1) {
     freeaddrinfo(host_info_list);
+    host_info_list = nullptr;
     close(socketfd);
     socketfd = -1;
   }

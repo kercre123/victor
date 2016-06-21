@@ -1043,7 +1043,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1
+  m_Text: 
 --- !u!114 &11408806
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1585,7 +1585,6 @@ MonoBehaviour:
   _ResetRobotDataButton: {fileID: 11441868}
   _StartNewSessionButton: {fileID: 11435180}
   _SessionDays: {fileID: 11408764}
-  _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
   _NotificationTextInput: {fileID: 11459334}
   _SubmitNotificationButton: {fileID: 11428928}
   _NotificationDay: {fileID: 11499800}
