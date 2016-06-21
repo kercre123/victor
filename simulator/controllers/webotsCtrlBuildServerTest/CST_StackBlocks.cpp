@@ -150,7 +150,7 @@ namespace Anki {
                                            GetCarryingObjectID() == -1 &&
                                            NEAR(pose0.GetTranslation().z(), 65, BLOCK_HEIGHT_TOL_MM) &&
                                            NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 113, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 120, ROBOT_POSITION_TOL_MM) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM), 20)
           {
             StopMovie();
