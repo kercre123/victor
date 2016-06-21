@@ -20,6 +20,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <list>
 
 // Forward declaration
 namespace Json {
@@ -48,6 +49,8 @@ struct EnrolledFaceEntry
   
   s32                       score            = 1000;  // [0,1000]
   u8                        nextDataToUpdate = 0;     // index of next data to update
+  
+  std::list<FaceRecognitionMatch> debugMatchingInfo;
   
   EnrolledFaceEntry(FaceID_t withID = UnknownFaceID);
   

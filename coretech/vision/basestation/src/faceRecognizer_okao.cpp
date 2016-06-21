@@ -61,6 +61,8 @@ namespace Vision {
   
   CONSOLE_VAR_RANGED(u8, kFaceRec_MinSleepTime_ms, "Vision.FaceRecognition", 5, 1, 10);
   
+  CONSOLE_VAR_RANGED(u8, kFaceRecMaxResults, "Vision.FaceRecognition", 2, 2, 10);
+  
   static std::string GetTimeString(EnrolledFaceEntry::Time time)
   {
     std::string str;
@@ -912,6 +914,10 @@ namespace Vision {
 
   Result FaceRecognizer::RecognizeFace(FaceID_t& faceID, INT32& recognitionScore)
   {
+    // In case something goes wrong, make sure return values are sane
+    faceID = UnknownFaceID;
+    recognitionScore = 0;
+    
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
                  "FaceRecognizer.RecognizerFace.FeaturesShouldBeReady");
     
@@ -936,10 +942,10 @@ namespace Vision {
       recognitionScore = MaxScore;
     } else {
       INT32 resultNum = 0;
-      const s32 MaxResults = 2; // TODO: Increase this to allow merging or more than two results below?
-      INT32 userIDs[MaxResults], scores[MaxResults];
+      std::vector<INT32> userIDs(kFaceRecMaxResults), scores(kFaceRecMaxResults);
       Tic("OkaoIdentify");
-      okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, MaxResults, userIDs, scores, &resultNum);
+      okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, kFaceRecMaxResults,
+                                    userIDs.data(), scores.data(), &resultNum);
       Toc("OkaoIdentify");
       
       if(OKAO_NORMAL != okaoResult) {
@@ -955,10 +961,45 @@ namespace Vision {
             userIDs[iResult] += 1;
           }
           
-          INT32 oldestID = userIDs[0];
-          auto oldestEnrollIter = _enrollmentData.find(oldestID);
-          ASSERT_NAMED(oldestEnrollIter != _enrollmentData.end(),
-                       "FaceRecognizer.RecognizeFace.MissingEnrollmentDataForOldestID");
+          INT32 matchingID = userIDs[0];
+          auto matchIter = _enrollmentData.find(matchingID);
+          
+          if(matchIter == _enrollmentData.end()) {
+            PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.MissingTopMatchEnrollmentData", "ID:%d", matchingID);
+            return RESULT_FAIL;
+          }
+          
+          if(resultNum >= 2)
+          {
+            auto nextMatchIter = _enrollmentData.find(userIDs[1]);
+            
+            if(nextMatchIter == _enrollmentData.end())
+            {
+              PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.Missing2ndMatchEnrollmentData", "ID:%d", userIDs[1]);
+            }
+            else if(matchIter->second.IsForThisSessionOnly() &&
+                    !nextMatchIter->second.IsForThisSessionOnly() &&
+                    scores[1] > kFaceRecognitionThreshold)
+            {
+              // We just relized a session-only face is someone we know with a high enough (2nd-highest) score.
+              // Use that ID and remove the session-only enrollment data.
+              // TODO: Consider merging this data instead?
+              PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.Using2ndBestMatch",
+                               "Top match (ID:%d Score:%d) is session-only. Second match (ID:%d Score:%d) is named",
+                               userIDs[0], scores[0], userIDs[1], scores[1]);
+              Result removeResult = RemoveUser(userIDs[0]);
+              if(RESULT_OK != removeResult) {
+                PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.RemoveUserFailed", "ID:%d", userIDs[0]);
+              }
+              matchingID = userIDs[1];
+              matchIter = nextMatchIter;
+            }
+          }
+          
+          // INT32 oldestID = userIDs[0];
+          // auto oldestEnrollIter = _enrollmentData.find(oldestID);
+          // ASSERT_NAMED(oldestEnrollIter != _enrollmentData.end(),
+          //              "FaceRecognizer.RecognizeFace.MissingEnrollmentDataForOldestID");
           
           // Do we ever really want to do this? I'm disabling for now since it's been off by
           // default thanks to the console var. If re-enabled, we'll need to add
@@ -1010,12 +1051,12 @@ namespace Vision {
           //            }
           //          } // if(kAllowNonTrackingMerging)
           
-          Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle);
+          Result result = UpdateExistingUser(matchingID, _okaoRecognitionFeatureHandle);
           if(RESULT_OK != result) {
             return result;
           }
           
-          faceID = oldestID;
+          faceID = matchingID;
           recognitionScore = scores[0];
           
           if(_enrollmentID == faceID && _enrollmentTrackID != _detectionInfo.nID)
@@ -1027,6 +1068,20 @@ namespace Vision {
                              _enrollmentID, -_detectionInfo.nID, -_enrollmentTrackID);
             _enrollmentTrackID = _detectionInfo.nID;
           }
+          
+          // Populate the debug info for the recognized face
+          std::list<FaceRecognitionMatch> newDebugInfo;
+          for(s32 iResult=0; iResult < resultNum; ++iResult) {
+            auto const matchedID = userIDs[iResult]; // NOTE: +1 has already been done at this point
+            auto iter = _enrollmentData.find(matchedID);
+            newDebugInfo.emplace_back(FaceRecognitionMatch{
+              .name = (iter == _enrollmentData.end() ? "" : iter->second.name),
+              .matchedID = matchedID,
+              .score  = scores[iResult],
+            });
+          }
+          std::swap(newDebugInfo, matchIter->second.debugMatchingInfo);
+
         }
         else if(_enrollmentID != UnknownFaceID &&
                 _detectionInfo.nID == _enrollmentTrackID &&

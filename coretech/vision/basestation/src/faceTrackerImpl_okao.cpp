@@ -599,6 +599,8 @@ namespace Vision {
         face.SetID(recognitionData.faceID);
         face.SetName(recognitionData.name); // Could be empty!
         face.SetNumEnrollments(enrollmentCompleted);
+        
+        face.SetRecognitionDebugInfo(recognitionData.debugMatchingInfo);
       }
       
     } // FOR each face

@@ -35,6 +35,13 @@ namespace Vision {
     FaceID_t     faceID;
   };
   
+  struct FaceRecognitionMatch
+  {
+    std::string  name;
+    FaceID_t     matchedID;
+    s32          score;
+  };
+  
 } // namespace Vision
 } // namespace Anki
 

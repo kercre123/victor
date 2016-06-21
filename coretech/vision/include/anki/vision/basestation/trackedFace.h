@@ -133,6 +133,9 @@ namespace Vision {
     
     static const char* GetExpressionName(Expression whichExpression);
     
+    void SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info);
+    const std::list<FaceRecognitionMatch>& GetRecognitionDebugInfo() const;
+    
   private:
     
     FaceID_t       _id             = UnknownFaceID;
@@ -155,6 +158,8 @@ namespace Vision {
     Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
+    
+    std::list<FaceRecognitionMatch> _debugRecognitionInfo;
     
   }; // class TrackedFace
   
@@ -287,6 +292,14 @@ namespace Vision {
   
   inline void TrackedFace::SetName(const std::string& newName) {
     _name = newName;
+  }
+  
+  inline void TrackedFace::SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info) {
+    _debugRecognitionInfo = info;
+  }
+  
+  inline const std::list<FaceRecognitionMatch>& TrackedFace::GetRecognitionDebugInfo() const {
+    return _debugRecognitionInfo;
   }
   
 } // namespace Vision

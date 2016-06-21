@@ -296,6 +296,19 @@ namespace Anki {
         name = face.GetName() + "-";
       }
       name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
+      
+      // Add score debugging info:
+      auto debugScoreInfo = face.GetRecognitionDebugInfo();
+      for(auto & info : debugScoreInfo) {
+        name += "\n*";
+        if(info.name.empty()) {
+          name += "KnownFace";
+        } else {
+          name += info.name;
+        }
+        name += "[" + std::to_string(info.matchedID) + "]=" + std::to_string(info.score);
+      }
+      
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
       // Draw bounding rectangle (?)

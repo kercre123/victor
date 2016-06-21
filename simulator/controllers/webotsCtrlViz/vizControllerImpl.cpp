@@ -386,6 +386,11 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
 {
   const auto& payload = msg.GetData().Get_CameraText();
   if (payload.text.size() > 0){
+    // Drop shadow
+    SetColorHelper(camDisp, NamedColors::BLACK);
+    camDisp->drawText(payload.text[0], (int)payload.x+1, (int)payload.y+1);
+    
+    // Actual text
     SetColorHelper(camDisp, payload.color);
     camDisp->drawText(payload.text[0], (int)payload.x, (int)payload.y);
   }
@@ -409,7 +414,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
         // Save previous image with any viz overlaid before we delete it
         webots::ImageRef* copyImg = camDisp->imageCopy(0, 0, camDisp->getWidth(), camDisp->getHeight());
         std::stringstream vizFilename;
-        vizFilename << "viz_images_" << _curImageTimestamp << "_" << (_saveCtr-1) << ".jpg";
+        vizFilename << "viz_images_" << _curImageTimestamp << "_" << (_saveCtr-1) << ".png";
         camDisp->imageSave(copyImg, Util::FileUtils::FullFilePath({_savedImagesFolder, vizFilename.str()}));
         camDisp->imageDelete(copyImg);
         _saveVizImage = false;
