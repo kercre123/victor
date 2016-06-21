@@ -340,7 +340,7 @@ def stopWebots(options):
   # kill all webots processes
   ps   = subprocess.Popen(('ps', 'Aux'), stdout=subprocess.PIPE)
   grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
-  grepMinusThisProcess = subprocess.Popen(('grep', '-v', os.path.dirname(options.cfg_path)), stdin=grep.stdout, stdout=subprocess.PIPE)
+  grepMinusThisProcess = subprocess.Popen(('grep', '-v', '.py'), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grepMinusThisProcess.stdout, stdout=subprocess.PIPE)
   kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out,err = kill.communicate()
