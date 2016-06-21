@@ -50,6 +50,9 @@ public:
   bool Append(const ToolCodeInfo& data);
   bool Append(const BirthCertificate& data);
   
+  // Prints byte as a bit string
+  bool AppendCalibMetaInfo(uint8_t dotsFoundMask);
+  
   // Expects poseData[0-2] to represent rotation about x,y,z
   // and poseData[3-5] to represent translation in x,y,z
   bool AppendPoseData(const std::string& poseName, const std::array<float,6>& poseData);

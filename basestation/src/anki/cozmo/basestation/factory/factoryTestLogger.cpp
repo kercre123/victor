@@ -45,6 +45,17 @@ namespace Cozmo {
     } else {
       newLogDir = Util::FileUtils::FullFilePath({_kLogRootDirName, logName});
     }
+
+    // Append date time to log name
+    if (appendDateTime) {
+      auto time_point = std::chrono::system_clock::now();
+      time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
+      auto nowLocalTime = localtime(&nowTime);
+      char buf[newLogDir.length() + 50];
+      strftime(buf, sizeof(buf), "_-_%F_%H-%M-%S/", nowLocalTime);
+      newLogDir += buf;
+    }
+
     
     // Check if it already exists
     if (Util::FileUtils::DirectoryExists(newLogDir)) {
@@ -63,16 +74,6 @@ namespace Cozmo {
 
     _logDir = newLogDir;
     PRINT_NAMED_INFO("FactoryTestLogger.StartLog.CreatingLogDir", "%s", _logDir.c_str());
-    
-    if (appendDateTime) {
-      auto time_point = std::chrono::system_clock::now();
-      time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
-      auto nowLocalTime = localtime(&nowTime);
-      char buf[80];
-      strftime(buf, sizeof(buf), "_-_%F_%H-%M-%S/", nowLocalTime);
-      _logDir += buf;
-    }
-    
     Util::FileUtils::CreateDirectory(_logDir);
     _logFileName = Util::FileUtils::FullFilePath({_logDir, _kLogTextFileName});
     
@@ -111,7 +112,6 @@ namespace Cozmo {
     for(auto timestamp : data.timestamps) {
       ss << timestamp << " ";
     }
-    ss << std::endl;
 
     PRINT_NAMED_INFO("FactoryTestLogger.Append.FactoryTestResultEntry", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
@@ -134,7 +134,6 @@ namespace Cozmo {
     for(auto coeff : data.distCoeffs) {
       ss << coeff << " ";
     }
-    ss << std::endl;
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CameraCalibration", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
@@ -148,7 +147,7 @@ namespace Cozmo {
        << "\nExpected_L: " << data.expectedCalibDotLeft_x  << ", " << data.expectedCalibDotLeft_y
        << "\nExpected_R: " << data.expectedCalibDotRight_x << ", " << data.expectedCalibDotRight_y
        << "\nObserved_L: " << data.observedCalibDotLeft_x  << ", " << data.observedCalibDotLeft_y
-       << "\nObserved_R: " << data.observedCalibDotRight_x << ", " << data.observedCalibDotRight_y << std::endl;
+       << "\nObserved_R: " << data.observedCalibDotRight_x << ", " << data.observedCalibDotRight_y;
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.ToolCodeInfo", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
@@ -167,18 +166,30 @@ namespace Cozmo {
        << "\nDay: "       << static_cast<int>(data.day)
        << "\nHour: "      << static_cast<int>(data.hour)
        << "\nMinute: "    << static_cast<int>(data.minute)
-       << "\nSecond: "    << static_cast<int>(data.second) << std::endl;
+       << "\nSecond: "    << static_cast<int>(data.second);
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.BirthCertificate", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
 
+  bool FactoryTestLogger::AppendCalibMetaInfo(uint8_t dotsFoundMask)
+  {
+    std::bitset<8> b(dotsFoundMask);
+    
+    std::stringstream ss;
+    ss << "\n[CalibMetaInfo]"
+    << "\nImagesUsed: " << b.to_string();
+    
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.CalibMetaInfo", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
   bool FactoryTestLogger::AppendPoseData(const std::string& poseName, const std::array<float,6>& poseData)
   {
     std::stringstream ss;
     ss << "\n[" << poseName << "]"
        << "\nRot: "   << poseData[0] << " " << poseData[1] << " " << poseData[2]
-       << "\nTrans: " << poseData[3] << " " << poseData[4] << " " << poseData[5] << std::endl;
+       << "\nTrans: " << poseData[3] << " " << poseData[4] << " " << poseData[5];
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.PoseData", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
@@ -191,7 +202,7 @@ namespace Cozmo {
       PRINT_NAMED_INFO("FactoryTestLogger.Append.LogNotStarted", "Ignoring because log not started");
       return false;
     }
-    _logFileHandle << data;
+    _logFileHandle << data << std::endl;
     return true;
   }
 

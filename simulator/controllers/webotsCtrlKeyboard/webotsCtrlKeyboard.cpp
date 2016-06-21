@@ -1791,6 +1791,7 @@ namespace Anki {
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
@@ -2331,6 +2332,11 @@ namespace Anki {
               
               break;
             }
+            case NVStorage::NVEntryTag::NVEntry_CalibImagesUsed:
+            {
+              _factoryTestLogger.AppendCalibMetaInfo(recvdData->at(0));
+              break;
+            }
             case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
             {
               ToolCodeInfo info;
@@ -2364,7 +2370,7 @@ namespace Anki {
               }
 
               std::array<f32,6> poseData;
-              std::copy_n(recvdData->begin(), sizeOfPoseData, poseData.begin());
+              memcpy(poseData.data(), recvdData->data(), sizeOfPoseData);
 
               _factoryTestLogger.AppendPoseData("CalibPose", poseData);
               
@@ -2389,7 +2395,7 @@ namespace Anki {
               }
               
               std::array<f32,6> poseData;
-              std::copy_n(recvdData->begin(), sizeOfPoseData, poseData.begin());
+              memcpy(poseData.data(), recvdData->data(), sizeOfPoseData);
                           
               _factoryTestLogger.AppendPoseData("ObservedCubePose", poseData);
               

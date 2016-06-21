@@ -80,7 +80,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
-  public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
+  public event Action<Anki.Cozmo.FactoryTestResultEntry> OnFactoryResult;
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
@@ -405,8 +405,8 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RequestSetUnlockResult:
       ReceivedSpecificMessage(message.RequestSetUnlockResult);
       break;
-    case G2U.MessageEngineToGame.Tag.FactoryTestResult:
-      ReceivedSpecificMessage(message.FactoryTestResult);
+    case G2U.MessageEngineToGame.Tag.FactoryTestResultEntry:
+      ReceivedSpecificMessage(message.FactoryTestResultEntry);
       break;
     case G2U.MessageEngineToGame.Tag.FirmwareUpdateProgress:
       ReceivedSpecificMessage(message.FirmwareUpdateProgress);
@@ -798,7 +798,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FactoryTestResult message) {
+  private void ReceivedSpecificMessage(Anki.Cozmo.FactoryTestResultEntry message) {
     if (OnFactoryResult != null) {
       OnFactoryResult(message);
     }

@@ -22,6 +22,7 @@ enum uint_8 FactoryTestState {
   PlacingBlock,
   DockToCharger,
   BLE_TestControl,
+  WaitingForWritesToRobot,
 }
 
 enum uint_8 FactoryTestResultCode {
@@ -43,7 +44,7 @@ enum uint_8 FactoryTestResultCode {
   CAMERA_CALIB_WRITE_FAILED,
   CALIB_IMAGES_WRITE_FAILED,
   CALIB_POSE_WRITE_FAILED,
-  CALIB_IMAGES_SEND_FAILED,
+  TOO_MANY_CALIB_IMAGES,
   CALIB_POSE_SEND_FAILED, 
   READ_TOOL_CODE_FAILED,
   TOOL_CODE_POSITIONS_OOR,
@@ -74,12 +75,16 @@ enum uint_8 FactoryTestResultCode {
   ROBOT_NOT_TESTED,
   MOTORS_UNCALIBRATED,
   BIRTH_CERTIFICATE_WRITE_FAILED,
+  NVSTORAGE_WRITE_FAILED,
+  NVSTORAGE_SEND_FAILED,
+  TOO_MANY_TOOL_CODE_IMAGES,
+  CALIB_IMAGE_USED_WRITE_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
 }
 
-structure FactoryTestResultEntry {
+message FactoryTestResultEntry {
   uint_64 utcTime,
   uint_32 engineSHA1,
   uint_32 timestamps[16],

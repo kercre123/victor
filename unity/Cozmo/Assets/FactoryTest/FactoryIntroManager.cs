@@ -183,9 +183,9 @@ public class FactoryIntroManager : MonoBehaviour {
     UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
   }
 
-  private void FactoryResult(FactoryTestResult result) {
-    SetStatusText("Result Code: " + (int)result.resultEntry.result + " (" + result.resultEntry.result + ")");
-    if (result.resultEntry.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
+  private void FactoryResult(Anki.Cozmo.FactoryTestResultEntry result) {
+    SetStatusText("Result Code: " + (int)result.result + " (" + result.result + ")");
+    if (result.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
       TestPassed();
     }
     else {

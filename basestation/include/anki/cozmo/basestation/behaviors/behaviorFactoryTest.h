@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
@@ -55,14 +56,16 @@ namespace Cozmo {
     
     virtual Result InitInternal(Robot& robot) override;
     virtual Status UpdateInternal(Robot& robot) override;
+    virtual void   StopInternal(Robot& robot) override;
+    virtual void   HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+    
     void EndTest(Robot& robot, FactoryTestResultCode resCode);
     void PrintAndLightResult(Robot& robot, FactoryTestResultCode res);
-   
-    virtual void   StopInternal(Robot& robot) override;
-    
-    virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
+    void QueueWriteToRobot(NVStorage::NVEntryTag tag, const u8* data, size_t size);
+    bool SendQueuedWrites(Robot& robot);
     
+
     // Handlers for signals coming from the engine
     Result HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
@@ -132,6 +135,22 @@ namespace Cozmo {
     std::vector<u32> _stateTransitionTimestamps;
     
     FactoryTestLogger _factoryTestLogger;
+    
+    struct WriteEntry {
+      WriteEntry(NVStorage::NVEntryTag tag,
+                 const u8* data, size_t size,
+                 NVStorageComponent::NVStorageWriteEraseCallback callback)
+      : _tag(tag)
+      , _callback(callback) {
+        _data.assign(data, data+size);
+      }
+      
+      NVStorage::NVEntryTag _tag;
+      std::vector<u8> _data;
+      NVStorageComponent::NVStorageWriteEraseCallback _callback;
+    };
+    std::list<WriteEntry> _queuedWrites;
+    FactoryTestResultCode _writeFailureCode;
     
   }; // class BehaviorFactoryTest
 

@@ -68,6 +68,9 @@ namespace Cozmo {
   
   // Save logs on device
   CONSOLE_VAR(bool,  kBFT_SaveLogsOnDevice,       "BehaviorFactoryTest",  true);
+
+  // Do NVStorage writes at end of test only if it passes
+  CONSOLE_VAR(bool,  kBFT_WriteToNVStorageOnPassOnly, "BehaviorFactoryTest",  true);
   
   // Disconnect at end of test
   CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  true);
@@ -191,7 +194,7 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
-    _toolCodeImagesStored = false;
+    _queuedWrites.clear();
     
     robot.GetActionList().Cancel();
  
@@ -298,12 +301,8 @@ namespace Cozmo {
   {
     _testResultEntry.result = resCode;
     
-    // Generate result struct
-    ExternalInterface::FactoryTestResult testResMsg;
-    testResMsg.resultEntry = _testResultEntry;
-
     PrintAndLightResult(robot,resCode);
-    robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
+    robot.Broadcast( ExternalInterface::MessageEngineToGame( FactoryTestResultEntry(_testResultEntry)));
 
     // Disconnect from robot
     if (kBFT_DisconnectAtEnd) {
@@ -312,80 +311,85 @@ namespace Cozmo {
   }
   
   
+  
+  void BehaviorFactoryTest::QueueWriteToRobot(NVStorage::NVEntryTag tag, const u8* data, size_t size)
+  {
+    if (kBFT_EnableNVStorageWrites) {
+      
+      static const std::map<NVStorage::NVEntryTag, FactoryTestResultCode> _tagToCode = {
+        {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft,  FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_ToolCodeInfo,       FactoryTestResultCode::TOOL_CODE_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImage1,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImage2,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImage3,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImage4,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImage5,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImage6,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibImagesUsed,    FactoryTestResultCode::CALIB_IMAGE_USED_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CameraCalib,        FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibPose,          FactoryTestResultCode::CALIB_POSE_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_ObservedCubePose,   FactoryTestResultCode::CUBE_POSE_WRITE_FAILED}
+      };
+      
+      FactoryTestResultCode resCode = FactoryTestResultCode::NVSTORAGE_WRITE_FAILED;
+      if (_tagToCode.count(tag) > 0) {
+        resCode = _tagToCode.at(tag);
+      }
+      
+      // Create callback for the nvStorage write
+      auto callback = [this,tag,resCode](NVStorage::NVResult res) {
+        if (res != NVStorage::NVResult::NV_OKAY) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToRobot.Failed", "Tag: %s", EnumToString(tag));
+          _writeFailureCode = resCode;
+        } else {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToRobot.Success", "Tag: %s", EnumToString(tag));
+        }
+      };
+
+      _queuedWrites.emplace_back(tag, data, size, callback);
+
+    }
+  }
+  
+  bool BehaviorFactoryTest::SendQueuedWrites(Robot& robot) {
+    
+    // Send queued writes to robot
+    for (auto const& entry : _queuedWrites) {
+      if (!robot.GetNVStorageComponent().Write(entry._tag, &(entry._data), entry._callback)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       _testResult = resCode;
+      PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.PreWriteResult", "%s", EnumToString(_testResult));
+      
+      // Mark end time
+      _stateTransitionTimestamps[_testResultEntry.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      
+      // Sending all queued writes to robot
+      bool sendWrites = !kBFT_WriteToNVStorageOnPassOnly || (_testResult == FactoryTestResultCode::SUCCESS);
+      _writeFailureCode = FactoryTestResultCode::UNKNOWN;
+      if (sendWrites && !SendQueuedWrites(robot)) {
+        _testResult = FactoryTestResultCode::NVSTORAGE_SEND_FAILED;
+      }
       
       // Fill out result
-      _testResultEntry.result = resCode;
+      _testResultEntry.result = _testResult;
       _testResultEntry.engineSHA1 = 0;   // TODO
       _testResultEntry.utcTime = time(0);
       _testResultEntry.stationID = _stationID;
-
-      // Mark end time
-      _stateTransitionTimestamps[_testResultEntry.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + _testResultEntry.timestamps.size(), _testResultEntry.timestamps.begin());
-
-      // Write result to device
-      _factoryTestLogger.Append(_testResultEntry);
       
-      if (kBFT_EnableNVStorageWrites) {
-        u8 buf[_testResultEntry.Size()];
-        size_t numBytes = _testResultEntry.Pack(buf, sizeof(buf));
-        
-        // Store test result to robot flash
-        robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
-                                            [this,&robot](NVStorage::NVResult res){
-                                              if (res != NVStorage::NVResult::NV_OKAY) {
-                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
-                                                                    "WriteResult: %s (Original test result: %s)",
-                                                                    EnumToString(res), EnumToString(_testResult));
-                                                _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
-                                              }
-                                              
-                                              
-                                              
-                                              // If test passed, write birth certificate
-                                              if (_testResult == FactoryTestResultCode::SUCCESS) {
-                                                time_t nowTime = time(0);
-                                                struct tm* tmStruct = gmtime(&nowTime);
-                                                
-                                                BirthCertificate bc;
-                                                bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
-                                                bc.month  = static_cast<u8>(tmStruct->tm_mon + 1); // Months start at zero
-                                                bc.day    = static_cast<u8>(tmStruct->tm_mday);
-                                                bc.hour   = static_cast<u8>(tmStruct->tm_hour);
-                                                bc.minute = static_cast<u8>(tmStruct->tm_min);
-                                                bc.second = static_cast<u8>(tmStruct->tm_sec);
-                                                
-                                                u8 bcBuf[bc.Size()];
-                                                size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
-                                                
-                                                // Write birth certificate to log on device
-                                                _factoryTestLogger.Append(bc);
-                                                
-                                                robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
-                                                                                    [this,&robot](NVStorage::NVResult res) {
-                                                                                      if (res != NVStorage::NVResult::NV_OKAY) {
-                                                                                        PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
-                                                                                        _testResult = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
-                                                                                      } else {
-                                                                                        PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
-                                                                                      }
-                                                                                      SendTestResultToGame(robot, _testResult);
-                                                                                    });
-                                              } else {
-                                                SendTestResultToGame(robot, _testResult);
-                                              }
-                                              _factoryTestLogger.CloseLog();
-                                            });
-
-        
-      } else {
-        SendTestResultToGame(robot, _testResult);
-      }
+      SetCurrState(FactoryTestState::WaitingForWritesToRobot);
+      
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",
                           "Existing result %s (new result %s)",
@@ -399,12 +403,6 @@ namespace Cozmo {
     #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Failure;
 
     const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
-    // If test is complete
-    if (_testResult != FactoryTestResultCode::UNKNOWN) {
-      PRINT_NAMED_WARNING("BehaviorFactory.Update.TestAlreadyComplete", "Result %s (code %d)", EnumToString(_testResult), (int)_testResult);
-      return Status::Complete;
-    }
     
     // Check to see if we had any problems with any handlers
     if(_lastHandlerResult != RESULT_OK) {
@@ -725,40 +723,36 @@ namespace Cozmo {
           StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         
-                        if (kBFT_EnableNVStorageWrites) {
-                          // Save tool code images to robot (whether it succeeded to read code or not)
-                          _toolCodeImagesStored = false;
-                          std::vector<std::vector<u8> > rawJpegData;
-                          if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
-                                                                                      // Clear tool code images from VisionSystem
-                                                                                      robot.GetVisionComponent().ClearToolCodeImages();
-                                                                                      
-                                                                                      u32 numFailures = 0;
-                                                                                      for (auto r : results) {
-                                                                                        if (r != NVStorage::NVResult::NV_OKAY) {
-                                                                                          ++numFailures;
-                                                                                        }
-                                                                                      }
-                                                                                      
-                                                                                      if (numFailures > 0) {
-                                                                                        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToolCodeImages.FAILED", "%d failures", numFailures);
-                                                                                        EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
-                                                                                      } else {
-                                                                                        PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
-                                                                                        _toolCodeImagesStored = true;
-                                                                                      }
-                                                                                    }, &rawJpegData) != RESULT_OK)
-                          {
-                            EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
-                            return false;
-                          }
-                          
-                          // Save tool code images to log on device
-                          for (u32 i=0; i<rawJpegData.size(); ++i) {
-                            _factoryTestLogger.AddFile("toolCodeImage_" + std::to_string(i) + ".jpg", rawJpegData[i]);
-                          }
-                          
+                        // Save tool code images to robot (whether it succeeded to read code or not)
+                        std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetToolCodeImageJpegData();
+
+                        const u32 NUM_TOOL_CODE_IMAGES = 2;
+                        static const NVStorage::NVEntryTag toolCodeImageTags[NUM_TOOL_CODE_IMAGES] = {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
+                        
+
+                        // Verify number of images
+                        bool tooManyToolCodeImages = rawJpegData.size() > NUM_TOOL_CODE_IMAGES;
+                        if (tooManyToolCodeImages) {
+                          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.TooManyToolCodeImagesFound",
+                                              "%zu images found. Why?", rawJpegData.size());
+                          rawJpegData.resize(NUM_TOOL_CODE_IMAGES);
                         }
+                        
+                        // Write images to robot
+                        u32 imgIdx = 0;
+                        for (auto const& img : rawJpegData) {
+                          QueueWriteToRobot(toolCodeImageTags[imgIdx], img.data(), img.size());
+                          ++imgIdx;
+                          
+                          // Save calibration images to log on device
+                          _factoryTestLogger.AddFile("toolCodeImage_" + std::to_string(imgIdx) + ".jpg", img);
+                        }
+                        
+                        if (tooManyToolCodeImages) {
+                          EndTest(robot, FactoryTestResultCode::TOO_MANY_TOOL_CODE_IMAGES);
+                          return false;
+                        }
+                        
                         
                         // Check result of tool code read
                         if (result != ActionResult::SUCCESS) {
@@ -779,22 +773,9 @@ namespace Cozmo {
                         _factoryTestLogger.Append(info);
                         
                         // Store results to nvStorage
-                        if (kBFT_EnableNVStorageWrites) {
-                          u8 buf[info.Size()];
-                          size_t numBytes = info.Pack(buf, sizeof(buf));
-                          if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
-                                                              [this,&robot](NVStorage::NVResult res) {
-                                                                if (res != NVStorage::NVResult::NV_OKAY) {
-                                                                  EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
-                                                                } else {
-                                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCode.Success", "");
-                                                                }
-                                                              }))
-                          {
-                            EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
-                            return false;
-                          }
-                        }
+                        u8 buf[info.Size()];
+                        size_t numBytes = info.Pack(buf, sizeof(buf));
+                        QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes);
                         
                         
                         // Verify tool code data is in range
@@ -905,24 +886,13 @@ namespace Cozmo {
                          poseData[0], poseData[1], poseData[2],
                          poseData[3], poseData[4], poseData[5]);
         
+        // Store to robot
+        QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_ObservedCubePose, (u8*)poseData.data(), sizeof(poseData));
+        
         // Write pose data to log on device
         _factoryTestLogger.AppendPoseData("ObservedCubePose", poseData);
         
-        if (kBFT_EnableNVStorageWrites) {
-          
-          if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ObservedCubePose,
-                                                                   (u8*)poseData.data(), sizeof(poseData),
-                                                                   [this,&robot](NVStorage::NVResult res) {
-                                                                     if (res != NVStorage::NVResult::NV_OKAY) {
-                                                                       EndTest(robot, FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
-                                                                     } else {
-                                                                       PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCubePose.Success", "");
-                                                                     }
-                                                                   })) {
-                                                                     END_TEST(FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
-                                                                   }
-          
-        }
+        
         
         // Verify that block is approximately where expected
         Vec3f Tdiff;
@@ -955,15 +925,10 @@ namespace Cozmo {
       case FactoryTestState::StartPickup:
       {
         if (kBFT_SkipBlockPickup) {
-          if (kBFT_EnableNVStorageWrites) {
-            if (!_toolCodeImagesStored) {
-              break;
-            }
-          }
           
           // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
           EndTest(robot, FactoryTestResultCode::SUCCESS);
-          return Status::Complete;
+          break;
           // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         }
         
@@ -1023,7 +988,7 @@ namespace Cozmo {
 
         // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
         EndTest(robot, FactoryTestResultCode::SUCCESS);
-        return Status::Complete;
+        break;
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         // Look at charger
@@ -1067,6 +1032,87 @@ namespace Cozmo {
                     chargerCallback);
         break;
       }
+        
+      // - - - - - - - - - - - - - - WAITING FOR WRITES TO ROBOT - - - - - - - - - - - - - - -
+      case FactoryTestState::WaitingForWritesToRobot:
+      {
+        if (robot.GetNVStorageComponent().HasPendingRequests()) {
+          break;
+        }
+       
+        // Check if there were write failures
+        if (_writeFailureCode != FactoryTestResultCode::UNKNOWN) {
+          _testResult = _writeFailureCode;
+          _testResultEntry.result = _testResult;
+        }
+        
+        
+        // Write result to device
+        _factoryTestLogger.Append(_testResultEntry);
+        
+        
+        bool sendWrites = !kBFT_WriteToNVStorageOnPassOnly || (_testResult == FactoryTestResultCode::SUCCESS);
+        if (sendWrites && kBFT_EnableNVStorageWrites) {
+          u8 buf[_testResultEntry.Size()];
+          size_t numBytes = _testResultEntry.Pack(buf, sizeof(buf));
+          
+          // Store test result to robot flash
+          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
+                                              [this,&robot](NVStorage::NVResult res){
+                                                if (res != NVStorage::NVResult::NV_OKAY) {
+                                                  PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
+                                                                      "WriteResult: %s (Original test result: %s)",
+                                                                      EnumToString(res), EnumToString(_testResult));
+                                                  _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
+                                                }
+                                                
+                                                
+                                                
+                                                // If test passed, write birth certificate
+                                                if (_testResult == FactoryTestResultCode::SUCCESS) {
+                                                  time_t nowTime = time(0);
+                                                  struct tm* tmStruct = gmtime(&nowTime);
+                                                  
+                                                  BirthCertificate bc;
+                                                  bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
+                                                  bc.month  = static_cast<u8>(tmStruct->tm_mon + 1); // Months start at zero
+                                                  bc.day    = static_cast<u8>(tmStruct->tm_mday);
+                                                  bc.hour   = static_cast<u8>(tmStruct->tm_hour);
+                                                  bc.minute = static_cast<u8>(tmStruct->tm_min);
+                                                  bc.second = static_cast<u8>(tmStruct->tm_sec);
+                                                  
+                                                  u8 bcBuf[bc.Size()];
+                                                  size_t bcNumBytes = bc.Pack(bcBuf, sizeof(bcBuf));
+                                                  
+                                                  // Write birth certificate to log on device
+                                                  _factoryTestLogger.Append(bc);
+                                                  
+                                                  robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate, bcBuf, bcNumBytes,
+                                                                                      [this,&robot](NVStorage::NVResult res) {
+                                                                                        if (res != NVStorage::NVResult::NV_OKAY) {
+                                                                                          PRINT_NAMED_WARNING("BehaviorFactoryTest.BCWriteFail","");
+                                                                                          _testResult = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
+                                                                                        } else {
+                                                                                          PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
+                                                                                        }
+                                                                                        SendTestResultToGame(robot, _testResult);
+                                                                                      });
+                                                } else {
+                                                  SendTestResultToGame(robot, _testResult);
+                                                }
+                                                _factoryTestLogger.CloseLog();
+                                              });
+          
+          
+        } else {
+          SendTestResultToGame(robot, _testResult);
+        }
+        
+        return Status::Complete;
+        
+        break;
+      }
+        
       default:
         PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.UnknownState",
                           "Reached unknown state %d.", (u32)_currentState);
@@ -1307,22 +1353,7 @@ namespace Cozmo {
   
   Result BehaviorFactoryTest::HandleCameraCalibration(Anki::Cozmo::Robot &robot, const Anki::Cozmo::CameraCalibration &msg)
   {
-    #define CHECK_OOR(value, min, max) (value < min || value > max)
-
-    // Check if calibration values are sane
-    if (CHECK_OOR(msg.focalLength_x, 250, 310) ||
-        CHECK_OOR(msg.focalLength_y, 250, 310) ||
-        CHECK_OOR(msg.center_x, 130, 190) ||
-        CHECK_OOR(msg.center_y, 90, 150) ||
-        msg.nrows != 240 ||
-        msg.ncols != 320)
-    {
-      PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
-                          "focalLength (%f, %f), center (%f, %f)",
-                          msg.focalLength_x, msg.focalLength_y, msg.center_x, msg.center_y);
-      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
-    }
-
+ 
     Vision::CameraCalibration camCalib(msg.nrows, msg.ncols,
                                        msg.focalLength_x, msg.focalLength_y,
                                        msg.center_x, msg.center_y,
@@ -1353,89 +1384,93 @@ namespace Cozmo {
     _factoryTestLogger.Append(calibMsg);
     
     
-    if (kBFT_EnableNVStorageWrites) {
-      u8 buf[calibMsg.Size()];
-      size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
-      
-      robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,
-                                          [this,&robot](NVStorage::NVResult res) {
-                                            if (res == NVStorage::NVResult::NV_OKAY) {
-                                              PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCameraCalib.SUCCESS", "");
-                                            } else {
-                                              EndTest(robot, FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED);
-                                            }
-                                          });
-      
-      // Save calibration images to robot
-      std::vector<std::vector<u8> > rawJpegData;
-      Result writeImagesResult = robot.GetVisionComponent().WriteCalibrationImagesToRobot(
-                                                                                          
-        [this,&robot](std::vector<NVStorage::NVResult>& results){
-          
-          // Clear calibration images from VisionSystem
-          robot.GetVisionComponent().ClearCalibrationImages();
-          
-          u32 numFailures = 0;
-          for (auto r : results) {
-            if (r != NVStorage::NVResult::NV_OKAY) {
-              ++numFailures;
-            }
-          }
-          
-          if (numFailures > 0) {
-            PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.FAILED", "%d failures", numFailures);
-            EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED);
-          } else {
-            PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCalibImages.SUCCESS", "");
-          }
-        },
-        &rawJpegData
-      );
-      
-      if (writeImagesResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.SendFAILED", "");
-        EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_SEND_FAILED);
-      }
-      
-      // Save calibration images to log on device
-      for (u32 i=0; i<rawJpegData.size(); ++i) {
-        _factoryTestLogger.AddFile("calibImage_" + std::to_string(i+1) + ".jpg", rawJpegData[i]);
-      }
+    // Write calibration to robot
+    u8 buf[calibMsg.Size()];
+    size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
+    QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes);
 
-      
-      // Save computed camera pose when robot was on charger
-      Pose3d calibPose;
-      Result writePoseResult = robot.GetVisionComponent().WriteCalibrationPoseToRobot(0,
-        [this,&robot](NVStorage::NVResult res)
-        {
-          if (res == NVStorage::NVResult::NV_OKAY) {
-            PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCalibPose.SUCCESS", "");
-          } else {
-            EndTest(robot, FactoryTestResultCode::CALIB_POSE_WRITE_FAILED);
-          }
-        },
-        &calibPose
-      );
-      if (writePoseResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibPose.SendFAILED", "");
-        EndTest(robot, FactoryTestResultCode::CALIB_POSE_SEND_FAILED);
-      }
-      
-      
-      // Write calib pose to log on device
-      std::array<f32,6> poseData;
-      Radians angleX, angleY, angleZ;
-      calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
-      poseData[0] = angleX.ToFloat();
-      poseData[1] = angleY.ToFloat();
-      poseData[2] = angleZ.ToFloat();
-      poseData[3] = calibPose.GetTranslation().x();
-      poseData[4] = calibPose.GetTranslation().y();
-      poseData[5] = calibPose.GetTranslation().z();
-      _factoryTestLogger.AppendPoseData("CalibPose", poseData);
-      
+    
+    // Get calibration image data
+    u8 dotsFoundMask;
+    std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetCalibrationImageJpegData(&dotsFoundMask);
+    
+    const u32 NUM_CAMERA_CALIB_IMAGES = 6;
+    static const NVStorage::NVEntryTag calibImageTags[NUM_CAMERA_CALIB_IMAGES] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
+      NVStorage::NVEntryTag::NVEntry_CalibImage2,
+      NVStorage::NVEntryTag::NVEntry_CalibImage3,
+      NVStorage::NVEntryTag::NVEntry_CalibImage4,
+      NVStorage::NVEntryTag::NVEntry_CalibImage5,
+      NVStorage::NVEntryTag::NVEntry_CalibImage6};
+
+    // Verify number of images
+    bool tooManyCalibImages = rawJpegData.size() > NUM_CAMERA_CALIB_IMAGES;
+    if (tooManyCalibImages) {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.TooManyCalibImagesFound",
+                          "%zu images found. Why?", rawJpegData.size());
+      rawJpegData.resize(NUM_CAMERA_CALIB_IMAGES);
     }
 
+    // Write calibration images to robot
+    u32 imgIdx = 0;
+    for (auto const& img : rawJpegData) {
+      QueueWriteToRobot(calibImageTags[imgIdx], img.data(), img.size());
+      ++imgIdx;
+      
+      // Save calibration images to log on device
+      _factoryTestLogger.AddFile("calibImage_" + std::to_string(imgIdx) + ".jpg", img);
+    }
+    
+    // Write bit flag indicating in which images dots were found
+    QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed, &dotsFoundMask, 1);
+    _factoryTestLogger.AppendCalibMetaInfo(dotsFoundMask);
+    
+    // Error if too many images found for some reason
+    if (tooManyCalibImages) {
+      END_TEST_IN_HANDLER(FactoryTestResultCode::TOO_MANY_CALIB_IMAGES);
+    }
+    
+    // Save computed camera pose when robot was on charger
+    Pose3d calibPose;
+    Result writePoseResult = robot.GetVisionComponent().GetCalibrationPoseToRobot(0, calibPose);
+    if (writePoseResult != RESULT_OK) {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibPose.SendFAILED", "");   // TODO: FAiled to get calib pose
+      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIB_POSE_SEND_FAILED);
+    }
+    
+    
+    // Write calib pose to log on device
+    std::array<f32,6> poseData;
+    Radians angleX, angleY, angleZ;
+    calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+    poseData[0] = angleX.ToFloat();
+    poseData[1] = angleY.ToFloat();
+    poseData[2] = angleZ.ToFloat();
+    poseData[3] = calibPose.GetTranslation().x();
+    poseData[4] = calibPose.GetTranslation().y();
+    poseData[5] = calibPose.GetTranslation().z();
+    _factoryTestLogger.AppendPoseData("CalibPose", poseData);
+  
+
+    // Write calib pose to robot
+    QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_CalibPose, (u8*)(poseData.data()), sizeof(poseData));
+    
+    
+    
+    // Check if calibration values are sane
+    #define CHECK_OOR(value, min, max) (value < min || value > max)
+    if (CHECK_OOR(msg.focalLength_x, 250, 310) ||
+        CHECK_OOR(msg.focalLength_y, 250, 310) ||
+        CHECK_OOR(msg.center_x, 130, 190) ||
+        CHECK_OOR(msg.center_y, 90, 150) ||
+        msg.nrows != 240 ||
+        msg.ncols != 320)
+    {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
+                          "focalLength (%f, %f), center (%f, %f)",
+                          msg.focalLength_x, msg.focalLength_y, msg.center_x, msg.center_y);
+      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
+    }
+    
     _calibrationReceived = true;
     return RESULT_OK;
   }
