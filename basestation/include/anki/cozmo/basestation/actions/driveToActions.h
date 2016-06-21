@@ -157,15 +157,19 @@ namespace Anki {
         _getPossiblePosesFunc = func;
       }
       
+      // Default GetPossiblePoses function is public in case others want to just
+      // use it as the baseline and modify it's results slightly
+      ActionResult GetPossiblePoses(ActionableObject* object,
+                                    std::vector<Pose3d>& possiblePoses,
+                                    bool& alreadyInPosition);
+      
     protected:
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
       ActionResult InitHelper(ActionableObject* object);
-      ActionResult GetPossiblePoses(ActionableObject* object,
-                                    std::vector<Pose3d>& possiblePoses,
-                                    bool& alreadyInPosition);
+      
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
@@ -243,6 +247,10 @@ namespace Anki {
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
+      DriveToObjectAction* GetDriveToObjectAction() {
+        return _driveToObjectAction;
+      }
+      
     protected:
 
       virtual Result UpdateDerived() override;
@@ -250,10 +258,6 @@ namespace Anki {
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
-      
-      DriveToObjectAction* GetDriveToObjectAction() {
-        return _driveToObjectAction;
-      }
       
     private:
       DriveToObjectAction* _driveToObjectAction = nullptr;

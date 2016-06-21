@@ -103,6 +103,7 @@ namespace Anki {
       };
       
       // Delete completed action
+      (*currentAction)->PrepForCompletion(); // Possible overkill
       Util::SafeDelete(*currentAction);
       currentAction = _actions.erase(currentAction);
     }
@@ -272,6 +273,11 @@ namespace Anki {
           
           switch(subResult)
           {
+            case ActionResult::RUNNING:
+            {
+              return ActionResult::RUNNING;
+            }
+              
             case ActionResult::SUCCESS:
             {
               return MoveToNextAction(currentTime);
@@ -287,8 +293,7 @@ namespace Anki {
                 return ActionResult::RUNNING;
               }
               // No retries remaining. Fall through:
-              
-            case ActionResult::RUNNING:
+
             case ActionResult::FAILURE_ABORT:
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_PROCEED:

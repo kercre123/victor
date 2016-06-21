@@ -949,12 +949,12 @@ namespace Anki {
                                                      approachAngle_rad,
                                                      useManualSpeed);
 
-      AddAction(_driveToObjectAction);
+      AddAction(_driveToObjectAction, true);
       
       if(maxTurnTowardsFaceAngle_rad > 0.f)
       {
-        AddAction(new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName));
-        AddAction(new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad));
+        AddAction(new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName), true);
+        AddAction(new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad), true);
       }
     }
 
