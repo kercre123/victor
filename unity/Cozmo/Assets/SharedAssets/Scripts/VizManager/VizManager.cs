@@ -39,7 +39,7 @@ namespace Anki.Cozmo.Viz {
         }
       }
 
-      public bool IsValid { 
+      public bool IsValid {
         get {
           return Message.GetTag() != MessageViz.Tag.INVALID;
         }
@@ -143,7 +143,7 @@ namespace Anki.Cozmo.Viz {
     public static bool EnableTexture = false;
 
     private void OnEnable() {
-      
+
       DAS.Info("VizManager.OnEnable", string.Empty);
       if (Instance != null && Instance != this) {
         Destroy(gameObject);
@@ -152,7 +152,7 @@ namespace Anki.Cozmo.Viz {
       else {
         Instance = this;
       }
-        
+
       _Channel = new VizUdpChannel();
       _Channel.ConnectedToClient += Connected;
       _Channel.DisconnectedFromClient += Disconnected;
@@ -168,6 +168,9 @@ namespace Anki.Cozmo.Viz {
 
     private void Update() {
       if (EnableTexture == false) {
+        // since we the texture isn't enabled lets
+        // dump all of our messages we're getting.
+        _Channel.DumpReceiveBuffer();
         return;
       }
 
@@ -187,7 +190,7 @@ namespace Anki.Cozmo.Viz {
         _Channel.Disconnect();
 
         // only really needed in editor in case unhitting play
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         float limit = Time.realtimeSinceStartup + 2.0f;
         while (_Channel.HasPendingOperations) {
           if (limit < Time.realtimeSinceStartup) {
@@ -196,7 +199,7 @@ namespace Anki.Cozmo.Viz {
           }
           System.Threading.Thread.Sleep(500);
         }
-        #endif
+#endif
       }
     }
 
@@ -575,7 +578,7 @@ namespace Anki.Cozmo.Viz {
         Vector3.right * 0.02f + heightOffset,
         Vector3.right * 0.02f + heightOffset,
         new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset,
-        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset, 
+        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset,
         innerColor,
         outerColor);
 
@@ -584,7 +587,7 @@ namespace Anki.Cozmo.Viz {
         Vector3.right * 0.02f + heightOffset,
         Vector3.right * 0.02f + heightOffset,
         new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset,
-        new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset, 
+        new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset,
         innerColor,
         outerColor);
 
@@ -593,7 +596,7 @@ namespace Anki.Cozmo.Viz {
         Vector3.right * 0.02f + heightOffset,
         Vector3.right * 0.02f + heightOffset,
         new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset,
-        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset, 
+        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset,
         innerColor,
         outerColor);
 
@@ -602,16 +605,16 @@ namespace Anki.Cozmo.Viz {
         Vector3.right * 0.02f + heightOffset,
         Vector3.right * 0.02f + heightOffset,
         new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset,
-        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset, 
+        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset,
         innerColor,
         outerColor);
 
       // back
       vizQuad.AddToQuadList(
-        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset, 
-        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset, 
+        new Vector3(-0.01f, -0.01f, 0.01f) + heightOffset,
+        new Vector3(-0.01f, 0.01f, 0.01f) + heightOffset,
         new Vector3(-0.01f, 0.01f, -0.01f) + heightOffset,
-        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset, 
+        new Vector3(-0.01f, -0.01f, -0.01f) + heightOffset,
         innerColor,
         outerColor);
 
@@ -654,7 +657,7 @@ namespace Anki.Cozmo.Viz {
     }
 
     public void ShowObjects(ShowObjects showObjects) {
-      
+
       _ShowingObjects = (showObjects.show == 0 ? false : true);
       foreach (var obj in _Objects.Values) {
         obj.gameObject.SetActive(_ShowingObjects);
@@ -720,7 +723,7 @@ namespace Anki.Cozmo.Viz {
         vizPath.BeginPath();
       }
       vizPath.AppendLine(
-        new Vector3(line.x_start_m, line.y_start_m, line.z_start_m), 
+        new Vector3(line.x_start_m, line.y_start_m, line.z_start_m),
         new Vector3(line.x_end_m, line.y_end_m, line.z_end_m));
     }
 
@@ -733,9 +736,9 @@ namespace Anki.Cozmo.Viz {
         vizPath.BeginPath();
       }
       vizPath.AppendArc(
-        new Vector2(arc.x_center_m, arc.y_center_m), 
-        arc.radius_m, 
-        arc.start_rad, 
+        new Vector2(arc.x_center_m, arc.y_center_m),
+        arc.radius_m,
+        arc.start_rad,
         arc.sweep_rad);
     }
 
@@ -816,7 +819,7 @@ namespace Anki.Cozmo.Viz {
       DrawOverlayLine(visionMarker.topRight_x, visionMarker.topRight_y, visionMarker.topLeft_x, visionMarker.topLeft_y, Color.red);
     }
 
-    private void DrawFaceDetection(FaceDetection faceDetection) {      
+    private void DrawFaceDetection(FaceDetection faceDetection) {
       DrawOverlayOval((faceDetection.x_upperLeft + 0.5f * faceDetection.width), (faceDetection.y_upperLeft + 0.5f * faceDetection.height), (0.5f * faceDetection.width), (0.5f * faceDetection.height), Color.blue);
     }
 
@@ -846,11 +849,11 @@ namespace Anki.Cozmo.Viz {
       var stepx = 1;
 
       if (dy < 0) {
-        dy = -dy; 
+        dy = -dy;
         stepy = -1;
       }
       if (dx < 0) {
-        dx = -dx; 
+        dx = -dx;
         stepx = -1;
       }
       dy <<= 1;
@@ -935,7 +938,7 @@ namespace Anki.Cozmo.Viz {
 
     // Actually set 4 pixels
     private void SetOverlayPixel(int x, int y, Color c) {
-      
+
       _OverlayImage.SetPixel(x, y, c);
       _OverlayImage.SetPixel(x + 1, y, c);
       _OverlayImage.SetPixel(x, y + 1, c);
