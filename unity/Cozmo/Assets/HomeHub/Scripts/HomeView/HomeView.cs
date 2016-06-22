@@ -81,7 +81,7 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _EnergyDooberStart;
     [SerializeField]
-    private RectTransform _EnergyDooberEnd;
+    private Transform _EnergyDooberEnd;
 
     [SerializeField]
     private AnkiTextLabel _DailyGoalsCompletionText;
@@ -180,12 +180,14 @@ namespace Cozmo.HomeHub {
       _LootViewInstance = alertView;
       _LootViewInstance.ViewCloseAnimationFinished += (() => {
         _EmotionChipTag.gameObject.SetActive(true);
+        CheckIfUnlockablesAffordableAndUpdateBadge();
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       });
     }
 
     // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started
     private void EnergyDooberBurst(int pointsEarned) {
+      UIManager.DisableTouchEvents();
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
       int doobCount = Mathf.CeilToInt((float)pointsEarned / 5.0f);
       Sequence dooberSequence = DOTween.Sequence();
@@ -209,6 +211,7 @@ namespace Cozmo.HomeHub {
 
     private void ResolveDooberBurst() {
       RewardedActionManager.Instance.PendingActionRewards.Clear();
+      UIManager.EnableTouchEvents();
       if (ChestRewardManager.Instance.ChestPending == false) {
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       }
@@ -334,6 +337,9 @@ namespace Cozmo.HomeHub {
     }
 
     private void CheckIfUnlockablesAffordableAndUpdateBadge() {
+      if (ChestRewardManager.Instance.ChestPending) {
+        return;
+      }
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
 

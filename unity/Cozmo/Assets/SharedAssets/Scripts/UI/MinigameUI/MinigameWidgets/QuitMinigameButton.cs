@@ -11,6 +11,8 @@ namespace Cozmo {
       private const float kAnimXOffset = 0f;
       private const float kAnimYOffset = 200.0f;
       private const float kAnimDur = 0.25f;
+      // If this is from a minigame or activity, defaults to true
+      private bool _IsMinigame = true;
 
       public delegate void QuitButtonHandler();
 
@@ -28,6 +30,10 @@ namespace Cozmo {
 
       private void Awake() {
         _QuitButtonInstance.Initialize(HandleQuitButtonTap, "open_quit_game_confirm_view_button", "shared_minigame_view");
+      }
+
+      public void Initialize(bool isMinigame) {
+        _IsMinigame = isMinigame;
       }
 
       public override void DestroyWidgetImmediately() {
@@ -50,7 +56,12 @@ namespace Cozmo {
         alertView.SetCloseButtonEnabled(false);
         alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed);
         alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
-        alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
+        if (_IsMinigame) {
+          alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
+        }
+        else {
+          alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitleActivity;
+        }
         // Listen for dialog close
         alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
         _ConfimedQuit = false;

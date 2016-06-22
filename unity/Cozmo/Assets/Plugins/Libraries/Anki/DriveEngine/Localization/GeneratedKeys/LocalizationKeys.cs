@@ -89,7 +89,6 @@ public static class LocalizationKeys {
   public const string kDailyGoalDescriptionUnlockMeetCozmo = "dailyGoal.description.UnlockMeetCozmo";
   public const string kDailyGoalTitleMeetNewFace = "dailyGoal.title.MeetNewFace";
   public const string kDailyGoalDescriptionMeetNewFace = "dailyGoal.description.MeetNewFace";
-  public const string kDailyGoalDescriptionMeetTwoNewFaces = "dailyGoal.description.MeetTwoNewFaces";
 
   #endregion
 
@@ -123,6 +122,7 @@ public static class LocalizationKeys {
   public const string kMinigameTextPlayerWins = "minigame.text.playerWins";
   public const string kMinigameTextCozmoWins = "minigame.text.cozmoWins";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
+  public const string kMinigameQuitViewTitleActivity = "minigame.quitView.title.activity";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameTextWinner = "minigame.text.winner";
   public const string kMinigameTextScore = "minigame.text.score";

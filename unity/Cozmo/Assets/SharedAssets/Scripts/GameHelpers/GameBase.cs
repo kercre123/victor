@@ -132,10 +132,10 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance = UIManager.OpenView(
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab,
       newView => {
-        newView.Initialize();
+        newView.Initialize(_ChallengeData);
         SetupView(newView, _ChallengeData);
       });
-
+    
     PrepRobotForGame();
   }
 
@@ -167,7 +167,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private IEnumerator WaitForPickingUpOrPlacingFinish(IRobot robot, float startTimestamp) {
     while (robot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING
-      && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
+           && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
       yield return new WaitForEndOfFrame();
     }
 
