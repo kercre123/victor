@@ -37,7 +37,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
     _ForceProgressSecretButton.onClick.AddListener(HandleForceProgressPressed);
     _StartButton.onClick.AddListener(HandleStartButton);
     _StartNoEdgeSecretButton.onClick.AddListener(HandleStartNoEdgeButton);
-    RobotEngineManager.Instance.DisconnectedFromClient += OnClientDisconnect;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), OnClientDisconnect);
     _ResetButton.onClick.AddListener(HandleResetButton);
   }
 
@@ -49,8 +49,8 @@ public class PressDemoView : Cozmo.UI.BaseView {
     }
   }
 
-  private void OnClientDisconnect(DisconnectionReason reason) {
-    _FatalErrorText.text = "Disconnected from Cozmo: " + reason.ToString();
+  private void OnClientDisconnect(object message) {
+    _FatalErrorText.text = "Disconnected from Cozmo: Robot disconnected";
   }
 
   public void SetPressDemoDebugState(int index) {
@@ -86,6 +86,6 @@ public class PressDemoView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-    RobotEngineManager.Instance.DisconnectedFromClient -= OnClientDisconnect;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), OnClientDisconnect);
   }
 }

@@ -10,11 +10,18 @@ using System.Collections.Generic;
 using Anki.Cozmo.ExternalInterface;
 
 namespace Anki.Debug {
-  public class DebugConsoleData {
+  public class DebugConsoleData : IDisposable {
 
-    private static DebugConsoleData _Instance = new DebugConsoleData();
+    private static DebugConsoleData _Instance;
 
-    public static DebugConsoleData Instance { get { return _Instance; } }
+    public static DebugConsoleData Instance {
+      get {
+        if (_Instance == null) {
+          _Instance = new DebugConsoleData();
+        }
+        return _Instance;
+      }
+    }
 
     public delegate void DebugConsoleVarEventHandler(System.Object setvar);
 
@@ -56,12 +63,25 @@ namespace Anki.Debug {
       }
     }
 
+    private bool _EngineCallbacksRegistered = false;
     private bool _NeedsUIUpdate;
     private Dictionary<string, List<DebugConsoleVarData>> _DataByCategory;
 
     private DebugConsolePane _ConsolePane;
 
     public DebugConsolePane ConsolePane { set { _ConsolePane = value; } }
+
+    private void HandleInitDebugConsoleVar(object messageObject) {
+      Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage message = (Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage)messageObject;
+      DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", " Recieved Debug Console Init");
+      for (int i = 0; i < message.varData.Length; ++i) {
+        Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
+      }
+    }
+
+    private void HandleVerifyDebugConsoleVar(object message) {
+      Anki.Debug.DebugConsoleData.Instance.SetStatusText(((Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage)message).statusMessage);
+    }
 
     public void AddConsoleFunctionUnity(string varName, string categoryName, DebugConsoleVarEventHandler callback = null) {
       Anki.Cozmo.ExternalInterface.DebugConsoleVar consoleVar = new Anki.Cozmo.ExternalInterface.DebugConsoleVar();
@@ -180,6 +200,19 @@ namespace Anki.Debug {
     private DebugConsoleData() {
       _NeedsUIUpdate = false;
       _DataByCategory = new Dictionary<string, List<DebugConsoleVarData>>();
+    }
+
+    public void RegisterEngineCallbacks() {
+      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage), HandleInitDebugConsoleVar);
+      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage), HandleVerifyDebugConsoleVar);
+      _EngineCallbacksRegistered = true;
+    }
+
+    public void Dispose() {
+      if (_EngineCallbacksRegistered) {
+        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage), HandleInitDebugConsoleVar);
+        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage), HandleVerifyDebugConsoleVar);
+      }
     }
 
     public bool NeedsUIUpdate() {

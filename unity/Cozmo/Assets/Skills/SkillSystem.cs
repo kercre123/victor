@@ -27,15 +27,15 @@ public class SkillSystem {
   #region GameAPI
 
   public static SkillSystem Instance {
-    get { 
+    get {
       if (_sInstance == null) {
         _sInstance = new SkillSystem();
       }
-      return _sInstance; 
+      return _sInstance;
     }
   }
 
-  public void InitInstance() {
+  public void Initialize() {
     SkillSystem.Instance.Init();
   }
 
@@ -46,7 +46,7 @@ public class SkillSystem {
 
 
 
-  public void StartGame(ChallengeData data) { 
+  public void StartGame(ChallengeData data) {
     _CurrChallengeData = data;
 
     ChallengeData[] challengeList = ChallengeDataList.Instance.ChallengeData;
@@ -58,7 +58,7 @@ public class SkillSystem {
     }
   }
 
-  public void EndGame() { 
+  public void EndGame() {
     _CurrChallengeData = null;
     _ChallengeIndex = -1;
   }
@@ -136,7 +136,7 @@ public class SkillSystem {
   #endregion
 
   private GameSkillData GetSkillDataForGame() {
-// In the event we've never played this game before and they have old save data.
+    // In the event we've never played this game before and they have old save data.
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CozmoSkillLevels == null) {
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CozmoSkillLevels = new Dictionary<string, GameSkillData>();
     }
@@ -193,8 +193,8 @@ public class SkillSystem {
                   _CozmoHighestLevels[_ChallengeIndex]++;
                 }
                 UpdateHighestSkillsOnRobot();
-              
-                DAS.Event("game.cozmoskill.levelup", _CurrChallengeData.ChallengeID, null, 
+
+                DAS.Event("game.cozmoskill.levelup", _CurrChallengeData.ChallengeID, null,
                   DASUtil.FormatExtraData(cozmoSkillLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
 
                 if (OnLevelUp != null && newHighestLevel) {
@@ -207,7 +207,7 @@ public class SkillSystem {
             else if (winPercent > skillLevelConfig.UpperBoundThreshold) {
               currSkillData.ChangeLevel(currSkillData.LastLevel - 1);
               // cozmosHighestRobotLevel never levels down
-              DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null, 
+              DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null,
                 DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
             }
             else {
@@ -222,30 +222,31 @@ public class SkillSystem {
   private void Destroy() {
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
 
-    RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
-    RobotEngineManager.Instance.OnGotNVStorageData -= HandleNVStorageRead;
-    RobotEngineManager.Instance.OnGotNVStorageOpResult -= HandleNVStorageOpResult;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleRobotConnected);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageData), HandleNVStorageRead);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageOpResult), HandleNVStorageOpResult);
   }
 
   private void Init() {
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
-    
-    RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
-    RobotEngineManager.Instance.OnGotNVStorageData += HandleNVStorageRead;
-    RobotEngineManager.Instance.OnGotNVStorageOpResult += HandleNVStorageOpResult;
+
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleRobotConnected);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageData), HandleNVStorageRead);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageOpResult), HandleNVStorageOpResult);
 
     _ChallengeIndex = -1;
     _CurrChallengeData = null;
     SetCozmoHighestLevelsReached(null, 0);
   }
 
-  private void HandleRobotConnected(int rbt_id) {
+  private void HandleRobotConnected(object message) {
     RobotEngineManager.Instance.Message.NVStorageReadEntry = new G2U.NVStorageReadEntry();
     RobotEngineManager.Instance.Message.NVStorageReadEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
     RobotEngineManager.Instance.SendMessage();
   }
   // if this was an failure we're never going to get the result we
-  private void HandleNVStorageOpResult(G2U.NVStorageOpResult opResult) {
+  private void HandleNVStorageOpResult(object message) {
+    G2U.NVStorageOpResult opResult = (G2U.NVStorageOpResult)message;
     if (opResult.op == NVOperation.NVOP_READ &&
         opResult.tag == NVEntryTag.NVEntry_GameSkillLevels) {
       if (opResult.result != NVResult.NV_OKAY &&
@@ -257,7 +258,8 @@ public class SkillSystem {
     }
   }
 
-  private void HandleNVStorageRead(G2U.NVStorageData robotData) {
+  private void HandleNVStorageRead(object message) {
+    G2U.NVStorageData robotData = (G2U.NVStorageData)message;
     if (robotData.tag == NVEntryTag.NVEntry_GameSkillLevels) {
       SetCozmoHighestLevelsReached(robotData.data, robotData.data_length);
     }

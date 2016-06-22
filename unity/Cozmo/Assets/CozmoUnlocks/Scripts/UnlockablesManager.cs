@@ -41,11 +41,13 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void Start() {
-    RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleOnUnlockRequestSuccess;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), HandleOnUnlockRequestSuccess);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.UnlockStatus), HandleUnlockStatus);
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.OnRequestSetUnlockResult -= HandleOnUnlockRequestSuccess;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), HandleOnUnlockRequestSuccess);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.UnlockStatus), HandleUnlockStatus);
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
@@ -160,12 +162,21 @@ public class UnlockablesManager : MonoBehaviour {
 
   }
 
-  private void HandleOnUnlockRequestSuccess(Anki.Cozmo.UnlockId id, bool unlocked) {
-    GameEventManager.Instance.SendGameEventToEngine(
-      GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, id));
-    _UnlockablesState[id] = unlocked;
-    if (unlocked) {
-      _NewUnlocks.Add(id);
+  private void HandleUnlockStatus(object messageObject) {
+    Anki.Cozmo.ExternalInterface.UnlockStatus message = (Anki.Cozmo.ExternalInterface.UnlockStatus)messageObject;
+    Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
+    for (int i = 0; i < message.unlocks.Length; ++i) {
+      loadedUnlockables.Add(message.unlocks[i].unlockID, message.unlocks[i].unlocked);
+    }
+    OnConnectLoad(loadedUnlockables);
+  }
+
+  private void HandleOnUnlockRequestSuccess(object message) {
+    Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMessage = (Anki.Cozmo.ExternalInterface.RequestSetUnlockResult)message;
+    GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
+    _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
+    if (resultMessage.unlocked) {
+      _NewUnlocks.Add(resultMessage.unlockID);
     }
   }
 

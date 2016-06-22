@@ -30,10 +30,6 @@ public class MockRobot : IRobot {
     _EnrolledFaces.Add(3, "Carol");
   }
 
-  public void SetLocalBusyTimer(float localBusyTimer) {
-    // Do nothing
-  }
-
   public bool Status(Anki.Cozmo.RobotStatusFlag s) {
     return (RobotStatus & s) == s;
   }
@@ -41,11 +37,6 @@ public class MockRobot : IRobot {
   public bool IsLocalized() {
     return true;
   }
-
-  public void CooldownTimers(float delta) {
-    // Do nothing
-  }
-
   public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
     Vector3 offset = worldSpacePosition - this.WorldPosition;
     offset = Quaternion.Inverse(this.Rotation) * offset;
@@ -91,10 +82,6 @@ public class MockRobot : IRobot {
     }
   }
 
-  public void UpdateInfo(Anki.Cozmo.ExternalInterface.RobotState message) {
-    // won't get called
-  }
-
   public LightCube GetLightCubeWithFactoryID(uint factoryID) {
     return null;
   }
@@ -136,44 +123,8 @@ public class MockRobot : IRobot {
 
   }
 
-  public void DeleteObservedObject(int id) {
-    // Do nothing
-  }
-
-  public void FinishedProcessingImage(uint engineTimestamp) {
-    // Do nothing
-  }
-
-  public void HandleObjectConnectionState(ObjectConnectionState message) {
-
-  }
-
-  public void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
-    // Won't be called
-  }
-
-  public void HandleObservedObjectMoved(ObjectMoved message) {
-    // Do nothing
-  }
-
-  public void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message) {
-    // Do nothing
-  }
-
-  public void HandleObservedObjectPoseUnknown(int id) {
-    // Do nothing
-  }
-
-  public void HandleObservedObjectTapped(ObjectTapped message) {
-    // Do nothing
-  }
-
   public ObservedObject GetObservedObjectById(int id) {
     return null;
-  }
-
-  public void UpdateObservedFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
-    // Won't be called
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
@@ -823,12 +774,6 @@ public class MockRobot : IRobot {
       if (OnHeadTrackingObjectSet != null) {
         OnHeadTrackingObjectSet(_HeadTrackingObject);
       }
-    }
-  }
-
-  public bool IsBusy {
-    get {
-      return _Callbacks.Count > 0;
     }
   }
 

@@ -79,8 +79,6 @@ public interface IRobot : IDisposable {
 
   Anki.Cozmo.UnlockId SparkUnlockId { get; }
 
-  ObservedObject TargetLockedObject { get; set; }
-
   int CarryingObjectID { get; }
 
   int HeadTrackingObjectID { get; }
@@ -97,15 +95,9 @@ public interface IRobot : IDisposable {
 
   event Action<ObservedObject> OnHeadTrackingObjectSet;
 
-  void SetLocalBusyTimer(float localBusyTimer);
-
-  bool IsBusy { get; }
-
   bool Status(RobotStatusFlag s);
 
   bool IsLocalized();
-
-  void CooldownTimers(float delta);
 
   Vector3 WorldToCozmo(Vector3 worldSpacePosition);
 
@@ -117,34 +109,11 @@ public interface IRobot : IDisposable {
 
   void ClearData(bool initializing = false);
 
-
-  #region Process ObservedObjects
-
-  void DeleteObservedObject(int id);
-
-  void FinishedProcessingImage(uint engineTimestamp);
-
-  void HandleObjectConnectionState(ObjectConnectionState message);
-
-  void HandleSeeObservedObject(G2U.RobotObservedObject message);
-
-  void HandleObservedObjectMoved(ObjectMoved message);
-
-  void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message);
-
-  void HandleObservedObjectPoseUnknown(int id);
-
-  void HandleObservedObjectTapped(ObjectTapped message);
-
   ObservedObject GetObservedObjectById(int id);
-
-  #endregion
 
   LightCube GetLightCubeWithFactoryID(uint factoryID);
 
   ObservedObject GetObservedObjectWithFactoryID(uint factoryID);
-
-  void UpdateInfo(G2U.RobotState message);
 
   void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight);
 
@@ -162,8 +131,6 @@ public interface IRobot : IDisposable {
 
   // enable/disable games available for Cozmo to request
   void SetAvailableGames(BehaviorGameFlag games);
-
-  void UpdateObservedFaceInfo(G2U.RobotObservedFace message);
 
   void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams);
 

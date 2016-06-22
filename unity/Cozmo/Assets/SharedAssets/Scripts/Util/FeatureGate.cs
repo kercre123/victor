@@ -12,6 +12,7 @@ public class FeatureGate {
     // message engine and ask for our data
     RequestData();
     RobotEngineManager.Instance.ConnectedToClient += (s) => RequestData();
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FeatureToggles), HandleFeatureToggles);
   }
 
   private void RequestData() {
@@ -46,7 +47,9 @@ public class FeatureGate {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void HandleFeatureToggles(FeatureToggles featureToggles) {
+  private void HandleFeatureToggles(object message) {
+    FeatureToggles featureToggles = (FeatureToggles)message;
+
     string[] enumNames = System.Enum.GetNames(typeof(FeatureType));
     for (int i = 0; i < enumNames.Length; i++) {
       enumNames[i] = enumNames[i].ToLower();
@@ -86,11 +89,11 @@ public class FeatureGate {
   }
 
   public static FeatureGate Instance {
-    get { 
+    get {
       if (_sInstance == null) {
         _sInstance = new FeatureGate();
       }
-      return _sInstance; 
+      return _sInstance;
     }
   }
 

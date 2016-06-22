@@ -19,11 +19,16 @@ public class IntroManager : MonoBehaviour {
   void Start() {
     ShowDevConnectDialog();
 
-    RobotEngineManager.Instance.RobotConnected += HandleConnected;
-    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleConnected);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), HandleDisconnectedFromClient);
   }
 
-  private void HandleConnected(int robotID) {
+  void OnDestroy() {
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleConnected);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), HandleDisconnectedFromClient);
+  }
+
+  private void HandleConnected(object message) {
 
     HideDevConnectDialog();
 
@@ -36,10 +41,10 @@ public class IntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleDisconnectedFromClient(DisconnectionReason obj) {
+  private void HandleDisconnectedFromClient(object message) {
     // Force quit hub world and show connect dialog again
     if (_HubWorldInstance != null) {
-      _HubWorldInstance.DestroyHubWorld(); 
+      _HubWorldInstance.DestroyHubWorld();
       Destroy(_HubWorldInstance);
     }
 

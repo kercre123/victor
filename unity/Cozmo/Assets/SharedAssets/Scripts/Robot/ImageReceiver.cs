@@ -34,14 +34,14 @@ public class ImageReceiver : IDisposable {
 
   private void Initialize(ImageSendMode sendMode) {
     if (_SendMode == ImageSendMode.Off) {
-      RobotEngineManager.Instance.OnImageChunkReceived += ProcessImageChunk;
+      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ImageChunk), ProcessImageChunk);
     }
     _SendMode = sendMode;
     RequestImage(_SendMode);
   }
 
   private void RequestImage(ImageSendMode sendMode) {
-    RobotEngineManager.Instance.Message.ImageRequest = 
+    RobotEngineManager.Instance.Message.ImageRequest =
       Singleton<ImageRequest>.Instance.Initialize((byte)RobotEngineManager.Instance.CurrentRobotID, sendMode);
     RobotEngineManager.Instance.SendMessage();
   }
@@ -54,7 +54,7 @@ public class ImageReceiver : IDisposable {
   }
 
   public void StopCapture() {
-    RobotEngineManager.Instance.OnImageChunkReceived -= ProcessImageChunk;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ImageChunk), ProcessImageChunk);
     if (_SendMode != ImageSendMode.Off) {
       RequestImage(ImageSendMode.Off);
       _SendMode = ImageSendMode.Off;
@@ -73,9 +73,10 @@ public class ImageReceiver : IDisposable {
     _MemStream.Dispose();
     _MemStream2.Dispose();
   }
-    
+
   //allow manual processing
-  public void ProcessImageChunk(ImageChunk imageChunk) {
+  public void ProcessImageChunk(object message) {
+    ImageChunk imageChunk = (ImageChunk)message;
 
     if (imageChunk.chunkId == 0) {
       _MemStream.Seek(0, SeekOrigin.Begin);
@@ -108,7 +109,7 @@ public class ImageReceiver : IDisposable {
           _MemStream.Seek(0, SeekOrigin.Begin);
           _MemStream.Read(ImageUtil.OneByteBuffer, 0, 1);
           float c = ImageUtil.OneByteBuffer[0] / 255f;
-          _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(c, c, c, 1f));            
+          _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(c, c, c, 1f));
         }
         _ReceivedImage.Apply();
         break;
@@ -119,7 +120,7 @@ public class ImageReceiver : IDisposable {
           float r = ImageUtil.ThreeByteBuffer[0] / 255f;
           float g = ImageUtil.ThreeByteBuffer[0] / 255f;
           float b = ImageUtil.ThreeByteBuffer[0] / 255f;
-          _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(r, g, b, 1f));            
+          _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(r, g, b, 1f));
         }
         _ReceivedImage.Apply();
         break;

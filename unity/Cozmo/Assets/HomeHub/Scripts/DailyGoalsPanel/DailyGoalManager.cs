@@ -144,8 +144,8 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void Start() {
     Instance = this;
-    RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
-    RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RequestGameStart), HandleAskForMinigame);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DenyGameStart), HandleExternalRejection);
     _CurrentGenData = new DailyGoalGenerationData();
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
@@ -175,8 +175,8 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.OnRequestGameStart -= HandleAskForMinigame;
-    RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestGameStart), HandleAskForMinigame);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DenyGameStart), HandleExternalRejection);
   }
 
   private void LoadDailyGoalData(string path) {
@@ -221,7 +221,7 @@ public class DailyGoalManager : MonoBehaviour {
     }
   }
 
-  private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+  private void HandleAskForMinigame(object messageObject) {
     if (_RequestDialog != null) {
       // Avoid dupes
       return;
@@ -270,7 +270,7 @@ public class DailyGoalManager : MonoBehaviour {
     MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
   }
 
-  private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+  private void HandleExternalRejection(object messageObject) {
     DAS.Info(this, "HandleExternalRejection");
     if (_RequestDialog != null && _RequestPending == false) {
       _RequestDialog.CloseView();
