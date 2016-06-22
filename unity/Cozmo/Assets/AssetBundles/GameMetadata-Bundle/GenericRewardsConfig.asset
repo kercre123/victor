@@ -13,10 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ExpPerParticleEffect: 10
   BurstPerParticleHit: 10
-  ExpParticleMinSpread: 50
-  ExpParticleMaxSpread: 400
-  ExpParticleBurst: 1
-  ExpParticleHold: 1.25
+  ExpParticleMinSpread: 0.25
+  ExpParticleMaxSpread: 4
+  ExpParticleBurst: 0.75
+  ExpParticleHold: 1
   ExpParticleLeave: 1
   ExpParticleStagger: 0.5
   RewardedActions:

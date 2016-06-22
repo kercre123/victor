@@ -79,9 +79,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private GameObject _EnergyDooberPrefab;
     [SerializeField]
-    private Transform _EnergyDooberStart;
+    private RectTransform _EnergyDooberStart;
     [SerializeField]
-    private Transform _EnergyDooberEnd;
+    private RectTransform _EnergyDooberEnd;
 
     [SerializeField]
     private AnkiTextLabel _DailyGoalsCompletionText;
@@ -130,11 +130,6 @@ namespace Cozmo.HomeHub {
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
       UnlockablesManager.Instance.OnNewUnlock += HandlePlayTabButton;
       UnlockablesManager.Instance.OnNewUnlock += CheckIfUnlockablesAffordableAndUpdateBadge;
-      // TODO: Replaced with RewardedActionManager's RewardPending, serve up energy through that,
-      // then handle chest pending at the end of that interaction.
-      if (ChestRewardManager.Instance.ChestPending) {
-        HandleChestGained();
-      }
       // If we have energy earned, create the energy doobers and clear pending action rewards
       if (RewardedActionManager.Instance.RewardPending) {
         int endPoints = ChestRewardManager.Instance.GetCurrentRequirementPoints();
@@ -142,9 +137,11 @@ namespace Cozmo.HomeHub {
           endPoints = ChestRewardManager.Instance.GetPreviousRequirementPoints();
         }
         endPoints -= Mathf.Min(endPoints, (RewardedActionManager.Instance.TotalPendingEnergy));
+        if (endPoints < 0) {
+          endPoints = 0;
+        }
         UpdateChestProgressBar(endPoints, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
-        EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy);
-        
+        StartCoroutine(BurstAfterInit());
       }
       else {
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
@@ -156,6 +153,11 @@ namespace Cozmo.HomeHub {
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
+    }
+
+    private IEnumerator BurstAfterInit() {
+      yield return new WaitForFixedUpdate();
+      EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy);
     }
 
     private void HandleChestGained() {
@@ -178,7 +180,7 @@ namespace Cozmo.HomeHub {
       _LootViewInstance = alertView;
       _LootViewInstance.ViewCloseAnimationFinished += (() => {
         _EmotionChipTag.gameObject.SetActive(true);
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       });
     }
 
@@ -193,8 +195,8 @@ namespace Cozmo.HomeHub {
         float yOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
         float exitTime = UnityEngine.Random.Range(0.0f, rc.ExpParticleStagger) + rc.ExpParticleBurst + rc.ExpParticleHold;
         Vector3 doobTarget = new Vector3(freshDoobz.position.x - xOffset, freshDoobz.position.y + yOffset, freshDoobz.position.z);
-        dooberSequence.Insert(0.0f, freshDoobz.DOLocalMove(doobTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
-        dooberSequence.Insert(exitTime, freshDoobz.DOLocalMove(_EnergyDooberEnd.localPosition, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => (CleanUpDoober(freshDoobz))));
+        dooberSequence.Insert(0.0f, freshDoobz.DOMove(doobTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
+        dooberSequence.Insert(exitTime, freshDoobz.DOMove(_EnergyDooberEnd.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => (CleanUpDoober(freshDoobz))));
       }
       dooberSequence.AppendCallback(ResolveDooberBurst);
       dooberSequence.Play();
@@ -356,6 +358,7 @@ namespace Cozmo.HomeHub {
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;
+      StopCoroutine(BurstAfterInit());
     }
   }
 }

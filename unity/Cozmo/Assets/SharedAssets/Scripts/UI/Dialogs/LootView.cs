@@ -195,7 +195,7 @@ namespace Cozmo {
         _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
         _ActiveDooberTransforms = new List<Transform>();
         _LootGlow.DOFade(0.0f, 0.0f);
-        CreateBoxAnimation();
+        StartCoroutine(InitializeBox());
         _BoxOpened = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
@@ -204,6 +204,11 @@ namespace Cozmo {
 
         GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
         _BannerInstance = banner.GetComponent<Banner>();
+      }
+
+      private IEnumerator InitializeBox() {
+        yield return new WaitForFixedUpdate();
+        CreateBoxAnimation();
       }
 
       #region tronlight pool logic
@@ -389,6 +394,7 @@ namespace Cozmo {
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
         }
+        StopCoroutine(InitializeBox());
         StopTweens();
       }
 
@@ -419,7 +425,7 @@ namespace Cozmo {
       public void CreateBoxAnimation() {
         Sequence boxSequence = DOTween.Sequence();
         boxSequence.Append(_LootBox.DOScale(_BoxIntroStartScale, _BoxIntroTweenDuration).From().SetEase(Ease.InExpo));
-        boxSequence.Join(_LootBox.DOLocalMove(_BoxSource.localPosition, _BoxIntroTweenDuration).From());
+        boxSequence.Join(_LootBox.DOMove(_BoxSource.position, _BoxIntroTweenDuration).From());
         boxSequence.Append(_LootBox.DOScale(_MinBoxScale, _BoxIntroSettleDuration).SetEase(Ease.InExpo));
         boxSequence.OnComplete(HandleBoxFinished);
         boxSequence.Play();

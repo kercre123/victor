@@ -27,7 +27,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
   [SerializeField]
   private Transform _RightContainer;
 
-  private Transform _UnlockablesContainer;
+  private Transform _DifficultyUnlockContainer;
   private Transform _EnergyEarnedContainer;
 
   [SerializeField]
@@ -36,15 +36,12 @@ public class ChallengeEndedDialog : MonoBehaviour {
   [SerializeField]
   private IconTextLabel _RewardIconPrefab;
 
-  private List<Transform> _RewardIcons;
-
   private bool _DualLists = false;
 
   private ChallengeData _ChallengeConfig;
 
   public void SetupDialog(string subtitleText, ChallengeData config) {
     _ChallengeConfig = config;
-    _RewardIcons = new List<Transform>();
     if (_DualContainer != null) {
       _DualContainer.gameObject.SetActive(false);
     }
@@ -79,12 +76,12 @@ public class ChallengeEndedDialog : MonoBehaviour {
     _DualLists = (RewardedActionManager.Instance.RewardPending && RewardedActionManager.Instance.NewDifficultyPending);
     if (_DualLists) {
       _DualContainer.gameObject.SetActive(true);
-      _UnlockablesContainer = _LeftContainer;
+      _DifficultyUnlockContainer = _LeftContainer;
       _EnergyEarnedContainer = _RightContainer;
     }
     else {
       _CenterContainer.gameObject.SetActive(true);
-      _UnlockablesContainer = _CenterContainer;
+      _DifficultyUnlockContainer = _CenterContainer;
       _EnergyEarnedContainer = _CenterContainer;
     }
 
@@ -116,24 +113,20 @@ public class ChallengeEndedDialog : MonoBehaviour {
     iconTextLabel.SetIcon(data.Icon);
 
     iconTextLabel.SetDesc(Localization.Get(RewardedActionManager.Instance.RewardEventMap[gEvent].Description));
-
-    _RewardIcons.Add(iconTextLabel.transform);
   }
 
   public void AddDifficultyUnlock(int newLevel) {
-    if (_UnlockablesContainer != null) {
-      _UnlockablesContainer.gameObject.SetActive(true);
+    if (_DifficultyUnlockContainer != null) {
+      _DifficultyUnlockContainer.gameObject.SetActive(true);
     }
 
     IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
-                                    _UnlockablesContainer).GetComponent<IconTextLabel>();
+                                    _DifficultyUnlockContainer).GetComponent<IconTextLabel>();
     
     iconTextLabel.SetText("");
     iconTextLabel.SetDesc(Localization.GetWithArgs(LocalizationKeys.kRewardDescriptionNewDifficulty, _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName));
 
     iconTextLabel.SetIcon(_ChallengeConfig.ChallengeIcon);
-
-    _RewardIcons.Add(iconTextLabel.transform);
     
   }
 }

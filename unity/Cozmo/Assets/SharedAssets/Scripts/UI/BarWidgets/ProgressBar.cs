@@ -107,7 +107,7 @@ namespace Cozmo {
         _TimePassedSeconds = 0;
         _StartProgress = 0;
         _TargetProgress = 0;
-        _FilledForegroundImage.fillAmount = 0;
+        SetProgress(0.0f, true);
       }
 
       /// <summary>
