@@ -7,6 +7,10 @@
   'variables': {
 
     'engine_source': 'cozmoEngine.lst',
+    'clad_vision_source': '../../generated/clad/vision.lst',
+    'clad_engine_source': '../../generated/clad/engine.lst',
+    'clad_robot_source': '../../generated/clad/robot.lst',
+    'clad_viz_source': '../../generated/clad/viz.lst',
     'api_source': 'cozmoAPI.lst',
     'api_library_type': 'static_library',
     'engine_test_source': 'cozmoEngine-test.lst',
@@ -1424,6 +1428,10 @@
       'target_name': 'cozmoEngine',
       'sources': [ 
         '<!@(cat <(engine_source))',
+        '<!@(cat <(clad_engine_source))',
+        '<!@(cat <(clad_vision_source))',
+        '<!@(cat <(clad_robot_source))',
+        '<!@(cat <(clad_viz_source))',
         '<!@(cat <(clad_source))',
         '<!@(cat <(api_source))',
       ],
