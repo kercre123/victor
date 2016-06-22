@@ -30,7 +30,7 @@ namespace Anki {
         return true;
       }
       #endif
-        
+
       [MenuItem(Build.Builder._kProjectName + "/Build/Find Duplicate Assets in Bundles")]
       public static void FindDuplicateAssetsInBundles() {
         BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
@@ -179,7 +179,7 @@ namespace Anki {
         }
         Debug.Log(result);
       }
-	  
+
       // Build the project from a set of arguments. This method is used for automated builds
       public static string BuildWithArgs(string[] argv) {
 
@@ -187,11 +187,13 @@ namespace Anki {
         string platform = null;
         string config = null;
         string sdk = null;
+        int buildNumber = 1;
         bool enableDebugging = false;
         bool connectWithProfiler = false;
+
         int i = 0;
-        
-		    while (i < argv.Length) {
+
+        while (i < argv.Length) {
           string arg = argv[i++];
           switch (arg) {
           case "--platform":
@@ -202,6 +204,14 @@ namespace Anki {
           case "--config":
             {
               config = argv[i++];
+              break;
+            }
+          case "--build-number":
+            {
+              if (!Int32.TryParse (argv [i++], out buildNumber)){
+                buildNumber = 1;
+              }
+              PlayerSettings.Android.bundleVersionCode = buildNumber;
               break;
             }
           case "--build-path":

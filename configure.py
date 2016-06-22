@@ -195,6 +195,13 @@ def parse_game_arguments():
             help='Provide the mobile provisioning profile name for signing')
 
     parser.add_argument(
+            '--set-build-number',
+            metavar='string',
+            default='1',
+            required=False,
+            help='Set the Android build number')
+
+    parser.add_argument(
             '--use-keychain',
             metavar='string',
             default=None,
@@ -525,6 +532,7 @@ class GamePlatformConfiguration(object):
         args += ['-executeMethod', 'CommandLineBuild.Build']
         args += ['--platform', self.platform]
         args += ['--config', self.options.configuration]
+        args += ['--build-number', self.options.set_build_number]
         args += ['--build-path', os.path.join(self.options.build_dir, self.platform)]
         print args
         ankibuild.util.File.execute(args)
