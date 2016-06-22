@@ -374,6 +374,9 @@ namespace Cozmo {
       // Mark end time
       _stateTransitionTimestamps[_testResultEntry.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
+      // Stop robot actions
+      robot.GetActionList().Cancel();
+      
       // Sending all queued writes to robot
       bool sendWrites = !kBFT_WriteToNVStorageOnPassOnly || (_testResult == FactoryTestResultCode::SUCCESS);
       _writeFailureCode = FactoryTestResultCode::UNKNOWN;
@@ -400,7 +403,7 @@ namespace Cozmo {
   
   IBehavior::Status BehaviorFactoryTest::UpdateInternal(Robot& robot)
   {
-    #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Failure;
+    #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Running;
 
     const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
@@ -412,15 +415,20 @@ namespace Cozmo {
     }
     
     UpdateStateName();
-   
-    // Check watchdog timer
-    if (currentTime_sec > _watchdogTriggerTime) {
-      END_TEST(FactoryTestResultCode::TEST_TIMED_OUT);
-    }
-    
-    // Check for pickup
-    if (robot.IsPickedUp() && _currentState > FactoryTestState::ChargerAndIMUCheck) {
-      END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
+
+    // Possible failure conditions at any point during the test
+    if (_testResult == FactoryTestResultCode::UNKNOWN) {
+      
+      // Check watchdog timer
+      if (currentTime_sec > _watchdogTriggerTime) {
+        END_TEST(FactoryTestResultCode::TEST_TIMED_OUT);
+      }
+      
+      // Check for pickup
+      if (robot.IsPickedUp() && _currentState > FactoryTestState::ChargerAndIMUCheck) {
+        END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
+      }
+      
     }
     
     if (IsActing()) {
@@ -569,6 +577,9 @@ namespace Cozmo {
             connectToIDs[0] = _kChargerFactoryID;
             robot.ConnectToObjects(connectToIDs);
           }
+          
+          // Make sure cliff (and pickup) detection is enabled
+          robot.SetEnableCliffSensor(true);
         
           // 1) Drive off charger towards slot.
           // 2) Move head down slowly. If head is stiff, hopefully this will catch it
@@ -1036,7 +1047,7 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - WAITING FOR WRITES TO ROBOT - - - - - - - - - - - - - - -
       case FactoryTestState::WaitingForWritesToRobot:
       {
-        if (robot.GetNVStorageComponent().HasPendingRequests()) {
+        if (robot.GetNVStorageComponent().HasPendingRequests() || robot.GetMoveComponent().IsMoving()) {
           break;
         }
        
@@ -1430,11 +1441,13 @@ namespace Cozmo {
     }
     
     // Save computed camera pose when robot was on charger
+    // NOTE: If this fails a lot on the line, demote this to a non-error.
+    //       It's not as accurate as what we'll get from the Robot Test Fixture (pre-playpen) anyway.
     Pose3d calibPose;
     Result writePoseResult = robot.GetVisionComponent().GetCalibrationPoseToRobot(0, calibPose);
     if (writePoseResult != RESULT_OK) {
-      PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibPose.SendFAILED", "");   // TODO: FAiled to get calib pose
-      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIB_POSE_SEND_FAILED);
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.GetCalibPose.Failed", "");
+      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIB_POSE_GET_FAILED);
     }
     
     
