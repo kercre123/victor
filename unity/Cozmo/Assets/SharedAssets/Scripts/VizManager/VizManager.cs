@@ -957,53 +957,60 @@ namespace Anki.Cozmo.Viz {
       int x = camText.x, y = _OverlayImage.height - 1 - camText.y - _CameraFont.lineHeight;
 
       var color = camText.color.ToColor();
+      string[] textLines = text.Split(new char[] { '\n' }, 10);
 
-      for (int i = 0; i < text.Length; i++) {
-        CharacterInfo charInfo;
-        // our font is ASCII, so if we can't draw a character just draw a ?
-        if (!_CameraFont.GetCharacterInfo(text[i], out charInfo)) {
-          _CameraFont.GetCharacterInfo('?', out charInfo);
-        }
+      for (int iLine = 0; iLine < textLines.Length; iLine++) {
 
-        var uvBottomRight = charInfo.uvBottomRight;
-        var uvBottomLeft = charInfo.uvBottomLeft;
-        var uvTopLeft = charInfo.uvTopLeft;
-
-
-        int minX = Mathf.RoundToInt(uvBottomRight.x * fontTexture.width);
-        int maxX = Mathf.RoundToInt(uvTopLeft.x * fontTexture.width);
-        int minY = Mathf.RoundToInt(uvBottomRight.y * fontTexture.height);
-        int maxY = Mathf.RoundToInt(uvTopLeft.y * fontTexture.height);
-
-        int stepX = minX < maxX ? 1 : -1;
-        int stepY = minY < maxY ? 1 : -1;
-
-        // if the bottom y changes, it means we need to swap x/y when writing to our texture
-        bool swapXY = !Mathf.Approximately(uvBottomRight.y, uvBottomLeft.y);
-
-        int xRange = Mathf.Abs(minX - maxX);
-        int yRange = Mathf.Abs(minY - maxY);
-
-        for (int j = 0; j < xRange; j++) {
-          for (int k = 0; k < yRange; k++) {
-
-            int jf = minX + stepX * j;
-            int kf = minY + stepY * k;
-
-            int jo = x + charInfo.bearing + charInfo.glyphWidth - (swapXY ? 1 + k : j) - charInfo.minX;
-            int ko = y + (swapXY ? 1 + j : k) + charInfo.minY;
-
-            Color oldColor = _OverlayImage.GetPixel(jo, ko);
-
-            Color fontColor = fontTexture.GetPixel(jf, kf);
-
-            var newColor = oldColor * (1 - fontColor.a) + color * fontColor.a;
-
-            _OverlayImage.SetPixel(jo, ko, newColor);
+        for (int i = 0; i < textLines[iLine].Length; i++) {
+          CharacterInfo charInfo;
+          // our font is ASCII, so if we can't draw a character just draw a ?
+          if (!_CameraFont.GetCharacterInfo(textLines[iLine][i], out charInfo)) {
+            _CameraFont.GetCharacterInfo('?', out charInfo);
           }
-        }
 
-        x += charInfo.advance;
+          var uvBottomRight = charInfo.uvBottomRight;
+          var uvBottomLeft = charInfo.uvBottomLeft;
+          var uvTopLeft = charInfo.uvTopLeft;
+
+
+          int minX = Mathf.RoundToInt(uvBottomRight.x * fontTexture.width);
+          int maxX = Mathf.RoundToInt(uvTopLeft.x * fontTexture.width);
+          int minY = Mathf.RoundToInt(uvBottomRight.y * fontTexture.height);
+          int maxY = Mathf.RoundToInt(uvTopLeft.y * fontTexture.height);
+
+          int stepX = minX < maxX ? 1 : -1;
+          int stepY = minY < maxY ? 1 : -1;
+
+          // if the bottom y changes, it means we need to swap x/y when writing to our texture
+          bool swapXY = !Mathf.Approximately(uvBottomRight.y, uvBottomLeft.y);
+
+          int xRange = Mathf.Abs(minX - maxX);
+          int yRange = Mathf.Abs(minY - maxY);
+
+          for (int j = 0; j < xRange; j++) {
+            for (int k = 0; k < yRange; k++) {
+
+              int jf = minX + stepX * j;
+              int kf = minY + stepY * k;
+
+              int jo = x + charInfo.bearing + charInfo.glyphWidth - (swapXY ? 1 + k : j) - charInfo.minX;
+              int ko = y + (swapXY ? 1 + j : k) + charInfo.minY;
+
+              Color oldColor = _OverlayImage.GetPixel(jo, ko);
+
+              Color fontColor = fontTexture.GetPixel(jf, kf);
+
+              var newColor = oldColor * (1 - fontColor.a) + color * fontColor.a;
+
+              _OverlayImage.SetPixel(jo, ko, newColor);
+            }
+          }
+
+          x += charInfo.advance;
+        }
+        // Reset to new line
+        x = camText.x;
+        y -= _CameraFont.lineHeight;
       }
     }
 
