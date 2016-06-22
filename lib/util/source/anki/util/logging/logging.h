@@ -22,6 +22,7 @@
 #define __Util_Logging_Logging_H_
 
 #include "util/logging/eventKeys.h"
+#include "util/logging/callstack.h"
 #include <string>
 #include <vector>
 
@@ -145,8 +146,21 @@ void sSetGlobal(const char* key, const char* value);
 #define DEBUG_ABORT ((void)0)
 #endif
 
-#define ASSERT_NAMED(exp, name) do{if(!(exp)){ PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #exp); DEBUG_ABORT;} }while(0)
-#define ASSERT_NAMED_EVENT(exp, name, format, ...) do{if(!(exp)){ PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #exp, ##__VA_ARGS__); DEBUG_ABORT;} }while(0)
+#define ASSERT_NAMED(exp, name) do{                                 \
+          if(!(exp)) {                                              \
+            PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #exp);  \
+            Anki::Util::sDumpCallstack("AssertCallstack");          \
+            DEBUG_ABORT;                                            \
+          }                                                         \
+        }while(0)
+
+#define ASSERT_NAMED_EVENT(exp, name, format, ...) do{                                \
+          if(!(exp)) {                                                                \
+            PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #exp, ##__VA_ARGS__);   \
+            Anki::Util::sDumpCallstack("AssertCallstack");                            \
+            DEBUG_ABORT;                                                              \
+          }                                                                           \
+        }while(0)
 
 #endif // __Util_Logging_Logging_H_
 
