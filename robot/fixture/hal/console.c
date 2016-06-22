@@ -398,8 +398,7 @@ void SetMotor(void)
   int test = 0;
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &test);
-  MotorPWM(test);
-  ConsolePrintf(":: %d ::\n", LEDTest(test));
+  MotorMV(test);
 }  
 
 void HeadESP();

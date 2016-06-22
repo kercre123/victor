@@ -6,14 +6,15 @@
 
 #define FIXTURE_BODY1_TEST    1     // ID 1
 #define FIXTURE_BODY2_TEST    9     // ID 4 + 1
-#define FIXTURE_BODY3_TEST    12    // ID 4 + 3
+#define FIXTURE_BODY3_TEST    13    // ID 4 + 3 + 1
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
-#define FIXTURE_HEAD2_TEST    10    // ID 4 + 2  
-#define FIXTURE_HEAD3_TEST    13    // ID 4 + 3 + 1 
 
 #define FIXTURE_EXTRAS_TEST   3     // ID 2 + 1
-#define FIXTURE_MOTOR_TEST    11    // ID 4 + 2 + 1
+
+#define FIXTURE_MOTOR1_TEST   10    // ID 4 + 2  
+#define FIXTURE_MOTOR2A_TEST  11    // ID 4 + 2 + 1
+#define FIXTURE_MOTOR2B_TEST  12    // ID 4 + 3
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
 #define FIXTURE_CHARGER_TEST  4     // ID 3
@@ -22,15 +23,14 @@
 #define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
 
 #define FIXTURE_ROBOT_TEST    8     // ID 4
-#define FIXTURE_FINAL_TEST    12    // ID 4 + 3
-
+#define FIXTURE_INFO_TEST     14    // ID 4 + 3 + 2
 #define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
 #define FIXTURE_DEBUG         16    // Should be last ID
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1", "EXTRAS", "CHARGER", "CUBE1", "CUBE2", "CUBE3", \
-                        "ROBOT", "BODY2", "HEAD2", "MOTOR",  "BODY3",   "HEAD3", "N/A",   "PLAYPEN", \
+#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1", "EXTRAS", "CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
+                        "ROBOT", "BODY2", "MOTOR1","MOTOR2A","MOTOR2B", "BODY3",  "INFO",  "PLAYPEN", \
                         "DEBUG" }
 
 extern FixtureType g_fixtureType;
@@ -102,6 +102,13 @@ typedef enum
 
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
+
+// Motor harness errors
+#define ERROR_BACKPACK_LED          650   // Backpack LED miswired
+#define ERROR_ENCODER_FAULT         651   // Encoder broken
+#define ERROR_MOTOR_BACKWARD        652   // Motor harness or encoder is miswired
+#define ERROR_MOTOR_SLOW            653   // Motor (or encoder) problems at low speed
+#define ERROR_MOTOR_FAST            654   // Encoder problem at high speed
 
 // Cube/charger errors
 #define ERROR_CUBE_CANNOT_WRITE     700

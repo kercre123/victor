@@ -42,6 +42,13 @@
 #define PINA_BPLED2 6
 #define PINA_BPLED3 7
 
+// Quadrature encoder IOs/ADC channels
+#define PINA_ENCLED 4
+#define PINC_ENCA   3
+#define ADC_ENCA    13
+#define PINC_ENCB   4
+#define ADC_ENCB    14
+
 typedef enum 
 {
   LEDRED = 0,

@@ -13,10 +13,14 @@ bool HeadDetect(void);
 TestFunction* GetHeadTestFunctions(void);
 
 bool RobotDetect(void);
+TestFunction* GetInfoTestFunctions(void);
 TestFunction* GetRobotTestFunctions(void);
+TestFunction* GetPlaypenTestFunctions(void);
 
 bool MotorDetect(void);
-TestFunction* GetMotorTestFunctions(void);
+TestFunction* GetMotor1TestFunctions(void);
+TestFunction* GetMotor2ATestFunctions(void);
+TestFunction* GetMotor2BTestFunctions(void);
 
 bool ExtrasDetect(void);
 TestFunction* GetExtrasTestFunctions(void);

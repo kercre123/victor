@@ -17,8 +17,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 27;
-const char* BUILD_INFO = "SMT/PILOT ONLY";
+u8 g_fixtureReleaseVersion = 29;
+const char* BUILD_INFO = "PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;
@@ -133,7 +133,7 @@ void SetTestCounterText(u32 current, u32 count)
   DisplayBigCenteredText("%02d/%02d", current, count);
   DisplayFlip();
   
-  SlowPrintf("Test %i/%i\r\n", current, count);
+//  SlowPrintf("Test %i/%i\r\n", current, count);
 }
 
 void SetErrorText(u16 error)
@@ -169,16 +169,18 @@ bool DetectDevice(void)
     case FIXTURE_CUBE3_TEST:
       return CubeDetect();
     case FIXTURE_HEAD1_TEST:
-    case FIXTURE_HEAD2_TEST:
       return HeadDetect();
     case FIXTURE_BODY1_TEST:
     case FIXTURE_BODY2_TEST:
+    case FIXTURE_BODY3_TEST:
       return BodyDetect();
+    case FIXTURE_INFO_TEST:
     case FIXTURE_ROBOT_TEST:
-    case FIXTURE_FINAL_TEST:
     case FIXTURE_PLAYPEN_TEST:
       return RobotDetect();
-    case FIXTURE_MOTOR_TEST:
+    case FIXTURE_MOTOR1_TEST:
+    case FIXTURE_MOTOR2A_TEST:      
+    case FIXTURE_MOTOR2B_TEST:      
       return MotorDetect();
     case FIXTURE_EXTRAS_TEST:
       return ExtrasDetect();
@@ -266,7 +268,7 @@ static void RunTests()
   }
 
   ConsolePrintf("[RESULT:%03i]\r\n[TEST:END]\r\n", error);
-  SlowPrintf("Test finished with error %03d\n", error);
+//  SlowPrintf("Test finished with error %03d\n", error);
   
   if (error != ERROR_OK)
   {
@@ -373,20 +375,30 @@ static void MainExecution()
       m_functions = GetCubeTestFunctions();
       break;
     case FIXTURE_HEAD1_TEST:
-    case FIXTURE_HEAD2_TEST:
       m_functions = GetHeadTestFunctions();
       break;    
     case FIXTURE_BODY1_TEST:
     case FIXTURE_BODY2_TEST:
+    case FIXTURE_BODY3_TEST:
       m_functions = GetBodyTestFunctions();
       break;
+    case FIXTURE_INFO_TEST:
+      m_functions = GetInfoTestFunctions();
+      break;
     case FIXTURE_ROBOT_TEST:
-    case FIXTURE_FINAL_TEST:
-    case FIXTURE_PLAYPEN_TEST:
       m_functions = GetRobotTestFunctions();
       break;
-    case FIXTURE_MOTOR_TEST:
-      m_functions = GetMotorTestFunctions();
+    case FIXTURE_PLAYPEN_TEST:
+      m_functions = GetPlaypenTestFunctions();
+      break;
+    case FIXTURE_MOTOR1_TEST:
+      m_functions = GetMotor1TestFunctions();
+      break;
+    case FIXTURE_MOTOR2A_TEST:      
+      m_functions = GetMotor2ATestFunctions();
+      break;
+    case FIXTURE_MOTOR2B_TEST:      
+      m_functions = GetMotor2BTestFunctions();
       break;
     case FIXTURE_EXTRAS_TEST:
       m_functions = GetExtrasTestFunctions();

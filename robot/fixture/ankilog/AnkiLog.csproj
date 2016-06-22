@@ -8,8 +8,8 @@
     <ProjectGuid>{56F33936-9C06-4001-B3DE-D8D2DD196C9D}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AnkiLog</RootNamespace>
-    <AssemblyName>AnkiLog</AssemblyName>
+    <RootNamespace>CozmoLog</RootNamespace>
+    <AssemblyName>CozmoLog</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>

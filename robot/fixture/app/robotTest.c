@@ -92,13 +92,19 @@ void SendTestMode(int test)
   SendTestChar(test);
 }
 
+void InfoTest(void)
+{
+  // XXX: Sample data so Smerp can start development of their info fixture reader
+  ConsolePrintf("version,00000026,00000006,00C0009A,00000001\r\n");
+}
+
 void PlaypenTest(void)
 {
   SendTestMode(7);    // Lucky 7 is Playpen fixture mode
 }
 
 extern int g_stepNumber;
-void ChargerTest(void)
+void PlaypenWaitTest(void)
 {
   int offContact = 0;
   int restart = 0;
@@ -136,12 +142,36 @@ void ChargerTest(void)
 }
 
 // List of all functions invoked by the test, in order
-TestFunction* GetRobotTestFunctions(void)
+TestFunction* GetInfoTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    NULL
+  };
+
+  return functions;
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetPlaypenTestFunctions(void)
 {
   static TestFunction functions[] =
   {
     PlaypenTest,
-    ChargerTest,
+    PlaypenWaitTest,
+    NULL
+  };
+
+  return functions;
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetRobotTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
     NULL
   };
 
