@@ -186,7 +186,7 @@ static void frame_data_received(const void*, int length) {
   if (rx_buffer.msgID >= 0x30) {
     Anki::Cozmo::HAL::RadioSendMessage(rx_buffer.data, rx_buffer.length, rx_buffer.msgID);
   } else {
-    Spine::ProcessMessage(&rx_buffer);
+    Spine::processMessage(&rx_buffer);
   }
 }
 

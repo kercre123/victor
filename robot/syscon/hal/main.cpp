@@ -23,6 +23,7 @@ extern "C" {
 #include "bluetooth.h"
 #include "dtm.h"
 #include "bootloader.h"
+#include "messages.h"
 
 #include "sha1.h"
 
@@ -143,6 +144,7 @@ int main(void)
   Storage::init();
 
   // Initialize our scheduler
+  Spine::init();
   RTOS::init();
   Bootloader::init();
 

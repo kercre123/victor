@@ -5,6 +5,10 @@
 
 static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
 
+// This is our virtual IRQ for elevating messages
+#define QUEUE_IRQn        SPI1_TWI1_IRQn
+#define QUEUE_IRQHandler  SPI1_TWI1_IRQHandler
+
 enum watchdog_channels {
   WDOG_RTOS,
   WDOG_UART,
@@ -13,7 +17,8 @@ enum watchdog_channels {
 
 enum IRQ_Priority {
   ENCODER_PRIORITY = 0,
-  TIMER_PRIORITY = 1,
+  QUEUE_PRIORITY = 1,
+  TIMER_PRIORITY = 1,  
   LED_PRIORITY = 1,
   UART_PRIORITY = 1,
   RADIO_PRIORITY = 2,

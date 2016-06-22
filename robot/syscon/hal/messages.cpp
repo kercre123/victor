@@ -25,8 +25,8 @@ using namespace Anki::Cozmo;
 
 static const int QUEUE_DEPTH = 4;
 static CladBufferUp spinebuffer[QUEUE_DEPTH];
-static volatile int spine_enter = 0;
-static volatile int spine_exit  = 0;
+static volatile int spine_enter;
+static volatile int spine_exit;
 
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
@@ -99,33 +99,39 @@ static void Process_killBodyCode(const KillBodyCode& msg)
   NVIC_SystemReset();
 }
 
-void Spine::ProcessHeadData()
-{
-  using namespace Anki::Cozmo;
-  
-  const u8 tag = g_dataToBody.cladBuffer.data[0];
-  if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
+void Spine::init(void) {
+  spine_enter = 0;
+  spine_exit = 0;
+}
+
+void Spine::dequeue(CladBufferUp* dest) {
+  if (spine_enter == spine_exit)
   {
-    // pass
-  }
-  else if (tag > RobotInterface::TO_BODY_END)
-  {
-    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
+    dest->length = 0;
   }
   else
   {
-    ProcessMessage(&g_dataToBody.cladBuffer);
+    memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBufferUp));
+    spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
   }
 }
 
-void Spine::ProcessMessage(void* buf) {
+void Spine::processMessage(void* buf) {
+  using namespace Anki::Cozmo;
   RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(buf);
   
-  switch(msg.tag)
-  {
-    #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
-    default:
-      AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, msg.tag);
+  if (msg.tag < RobotInterface::TO_BODY_END) {
+    switch(msg.tag)
+    {
+      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
+      case RobotInterface::GLOBAL_INVALID_TAG:
+        // pass
+        break ;
+      default:
+        AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, msg.tag);
+    }
+  } else {
+    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, msg.tag);
   }
 }
 
@@ -136,7 +142,7 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
   {
     return Bluetooth::transmit((const uint8_t*)buffer, size, msgID);
   }
-    
+
   const int exit = (spine_exit+1) % QUEUE_DEPTH;
   if (spine_enter == exit) {
     return false;
@@ -164,14 +170,4 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
   }
 }
 
-void Spine::Dequeue(CladBufferUp* dest) {
-  if (spine_enter == spine_exit)
-  {
-    dest->length = 0;
-  }
-  else
-  {
-    memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBufferUp));
-    spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
-  }
-}
+
