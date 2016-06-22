@@ -65,8 +65,6 @@ static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
 static int ota_block_index;
 static RTOS_Task *ota_task;
 static void ota_ack_timeout(void* userdata);
-static const int OTA_ACK_TIMEOUT = CYCLES_MS(2);
-static const int MAX_ACK_TIMEOUTS = CYCLES_MS(500) / OTA_ACK_TIMEOUT;
 static int ack_timeouts;
 static int lightGamma;
 
@@ -160,7 +158,21 @@ static void ota_send_next_block() {
 
 static void ota_ack_timeout(void* userdata) {
   // Give up, we didn't receive any acks soon enough
-  if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {
+  if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {    
+    // Disconnect cube if it has failed to connect
+    int slot = LocateAccessory(OTAAddress.address);
+    
+    if (slot >= 0) {
+      AccessorySlot* acc = &accessories[slot];
+      
+      if (acc->failure_count++ > MAX_OTA_FAILURES) {
+        acc->allocated = false;
+        acc->active = false;
+        
+        SendObjectConnectionState(slot, OBJECT_OTA_FAIL);
+      }
+    }
+
     EnterState(RADIO_PAIRING);
     uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
     return ;
@@ -399,9 +411,10 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
       }
       SendObjectConnectionState(slot);
     }
-    
+
     acc->allocated = true;
     acc->id = accessory;
+    acc->failure_count = 0;
   }
   else
   {
