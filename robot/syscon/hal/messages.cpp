@@ -23,10 +23,18 @@ extern GlobalDataToBody g_dataToBody;
 
 using namespace Anki::Cozmo;
 
+enum QueueSlotState {
+  QUEUE_INACTIVE,
+  QUEUE_READY
+};
+
+struct QueueSlot{
+  CladBufferUp buffer;
+  volatile QueueSlotState state;
+};
+
 static const int QUEUE_DEPTH = 4;
-static CladBufferUp spinebuffer[QUEUE_DEPTH];
-static volatile int spine_enter;
-static volatile int spine_exit;
+static QueueSlot queue[QUEUE_DEPTH];
 
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
@@ -100,27 +108,31 @@ static void Process_killBodyCode(const KillBodyCode& msg)
 }
 
 void Spine::init(void) {
-  spine_enter = 0;
-  spine_exit = 0;
+  for (int i = 0; i < QUEUE_DEPTH; i++) {
+    queue[i].state = QUEUE_INACTIVE;
+  }
 }
 
 void Spine::dequeue(CladBufferUp* dest) {
-  if (spine_enter == spine_exit)
-  {
-    dest->length = 0;
+  static int queue_exit = 0;
+
+  dest->length = 0;
+
+  if (queue[queue_exit].state != QUEUE_READY) {
+    return ;
   }
-  else
-  {
-    memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBufferUp));
-    spine_enter = (spine_enter + 1) % QUEUE_DEPTH;
-  }
+
+  // Dequeue and deallocate slot
+  memcpy(dest, &queue[queue_exit].buffer, sizeof(CladBufferUp));
+  queue[queue_exit].state = QUEUE_INACTIVE;
+  queue_exit = (queue_exit + 1) % QUEUE_DEPTH;
 }
 
 void Spine::processMessage(void* buf) {
   using namespace Anki::Cozmo;
   RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(buf);
   
-  if (msg.tag < RobotInterface::TO_BODY_END) {
+  if (msg.tag <= RobotInterface::TO_BODY_END) {
     switch(msg.tag)
     {
       #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
@@ -129,6 +141,7 @@ void Spine::processMessage(void* buf) {
         break ;
       default:
         AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, msg.tag);
+        break ;
     }
   } else {
     AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, msg.tag);
@@ -142,32 +155,36 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
   {
     return Bluetooth::transmit((const uint8_t*)buffer, size, msgID);
   }
-
-  const int exit = (spine_exit+1) % QUEUE_DEPTH;
-  if (spine_enter == exit) {
-    return false;
-  }
   else if ((size + 1) > SPINE_MAX_CLAD_MSG_SIZE_UP)
   {
     AnkiError( 128, "Spine.Enqueue.MessageTooLong", 386, "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", 3, msgID, size, SPINE_MAX_CLAD_MSG_SIZE_UP);
     return false;
   }
-  else
+  else if (msgID == 0)
   {
-    u8* dest = spinebuffer[spine_exit].data;
-    if (msgID != 0) {
-      *dest = msgID;
-      ++dest;
-      spinebuffer[spine_exit].length = size + 1;
-    }
-    else
-    {
-      spinebuffer[spine_exit].length = size;
-    }
-    memcpy(dest, buffer, size);
-    spine_exit = exit;
-    return true;
+    return false;
   }
+  
+
+  static int queue_enter = 0;
+
+  // Slot is not available for dequeueing
+  if (queue[queue_enter].state != QUEUE_INACTIVE) {
+    return false;
+  }
+
+  // Critical section for dequeueing message
+  __disable_irq();
+  int index = queue_enter;
+  queue_enter = (queue_enter + 1) % QUEUE_DEPTH;
+  __enable_irq();
+
+
+  queue[index].buffer.length = size + 1;
+  queue[index].buffer.data[0] = msgID;
+  memcpy(&queue[index].buffer.data[1], buffer, size);
+
+  // Message is stage and ready for transmission
+  queue[index].state = QUEUE_READY;
+  return true;
 }
-
-
