@@ -62,8 +62,7 @@ public:
   
   virtual ~RobotAudioAnimation();
   
-  // Cancel all events and clear buffer
-  void AbortAnimation();
+  const std::string& GetAnimationName() const {return _animationName; };
   
   // Current animation state
   AnimationState GetAnimationState() const { return _state; }
@@ -81,10 +80,12 @@ public:
                                      TimeStamp_t startTime_ms,
                                      TimeStamp_t streamingTime_ms ) = 0;
 
+  // Cancel all events and clear buffer
+  void AbortAnimation();
+
+  // Find out the next audio event's play time
   static constexpr uint32_t kInvalidEventTime = UINT32_MAX;
   uint32_t GetNextEventTime_ms();
-
-  const std::string& GetName() const {return _animationName; };
   
   // FIXME: This is a temp fix, will remove once we have an Audio Mixer
   void SetRobotVolume( float volume ) { _robotVolume = volume; }

@@ -161,10 +161,10 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
 {
   // Check if there is a current animation, if so abort that animation and clean up correctly
   if ( _currentAnimation != nullptr ) {
-    PRINT_NAMED_ERROR("RobotAudioClient.CreateAudioAnimation",
-                      "CurrentAnimation '%s' state: %s is NOT Null when creating a new animation",
-                      _currentAnimation->GetName().c_str(),
-                      RobotAudioAnimation::GetStringForAnimationState(_currentAnimation->GetAnimationState()).c_str() );
+    PRINT_NAMED_ERROR( "RobotAudioClient.CreateAudioAnimation",
+                       "CurrentAnimation '%s' state: %s is NOT Null when creating a new animation",
+                       _currentAnimation->GetAnimationName().c_str(),
+                       RobotAudioAnimation::GetStringForAnimationState(_currentAnimation->GetAnimationState()).c_str() );
     _currentAnimation->AbortAnimation();
     ClearCurrentAnimation();
   }
@@ -210,6 +210,12 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioClient::ClearCurrentAnimation()
 {
+  std::string animationState = "No Current Audio Animation";
+  if ( _currentAnimation != nullptr ) {
+    animationState = "Current Audio Animation '" + _currentAnimation->GetAnimationName() + "' State: " +
+    _currentAnimation->GetStringForAnimationState( _currentAnimation->GetAnimationState() );
+  }
+  PRINT_NAMED_INFO( "RobotAudioClient.ClearCurrentAnimation", "%s", animationState.c_str() );
   Util::SafeDelete(_currentAnimation);
 }
 
@@ -226,9 +232,12 @@ bool RobotAudioClient::UpdateAnimationIsReady( TimeStamp_t startTime_ms, TimeSta
     return true;
   }
   
+  // Buffer is loading, however it's not yet time to play the next audio event
   if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::LoadingStream ) {
     const TimeStamp_t relavantTime_ms = streamingTime_ms - startTime_ms;
     const TimeStamp_t nextEventTime_ms = _currentAnimation->GetNextEventTime_ms();
+    // Check if the next event is in the future
+    // This is also true when the result is kInvalidEventTime
     if ( relavantTime_ms < nextEventTime_ms ) {
       return true;
     }
