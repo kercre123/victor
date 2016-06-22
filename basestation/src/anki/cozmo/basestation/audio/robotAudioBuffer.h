@@ -79,7 +79,7 @@ public:
   bool IsWaitingForReset() const { return _isWaitingForReset; }
 
 
-private:
+protected:
   
   // A queue of robot audio frames (continuous audio data)
   std::queue< RobotAudioFrameStream > _streamQueue;

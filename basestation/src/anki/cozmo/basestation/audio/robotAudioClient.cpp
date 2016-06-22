@@ -35,6 +35,9 @@ namespace Audio {
 RobotAudioClient::RobotAudioClient( Robot* robot )
 : _robot( robot )
 {
+  if (_robot == nullptr) {
+    return;
+  }
   const CozmoContext* context = _robot->GetContext();
   // For Unit Test bale out if there is no Audio Server
   if ( context->GetAudioServer() == nullptr ) {

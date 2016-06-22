@@ -195,7 +195,7 @@ namespace Cozmo {
     
     struct AudioRef {
       Audio::GameEvent::GenericEvent audioEvent;
-      // TODO: We can add other audio controlls to animation data - JMR
+      // TODO: We can add other audio controls to animation data - JMR
     };
     
     const AudioRef& GetAudioRef() const;

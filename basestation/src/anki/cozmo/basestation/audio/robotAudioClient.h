@@ -46,7 +46,7 @@ public:
   RobotAudioClient( Robot* robot );
   
   // The the audio buffer for the corresponding Game Object
-  RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
+  virtual RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
 
   // Post Cozmo specific Audio events
   CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );
