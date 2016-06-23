@@ -62,8 +62,6 @@ public:
 
   // TODO:(bn) define equality operators?
 
-  // TODO:(bn) define math operations here, like quad? What does adding two polygons mean?
-
   // Get min/max coordinates (e.g. for bounding box)
   T GetMinX(void) const;
   T GetMinY(void) const;
