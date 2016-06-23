@@ -58,7 +58,11 @@ public class PerformancePane : MonoBehaviour {
   [SerializeField]
   private Text _LastAppRunID;
 
+  [SerializeField]
+  private Text _ActiveVariantText;
+
   private void Start() {
+    _ActiveVariantText.text = Screen.currentResolution + "\n" + Anki.Assets.AssetBundleManager.Instance.ActiveVariantsToString();
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneOpened(this);
     RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DeviceDataMessage), HandleDeviceDataMessage);

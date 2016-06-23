@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 namespace Anki {
   namespace Assets {
-    
+
     public class AssetBundleManager : MonoBehaviour {
 
       public const string kAssetBundlesFolder = "AssetBundles";
@@ -29,7 +29,7 @@ namespace Anki {
 
       private string _AssetBundleFolder;
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       static int m_SimulateAssetBundleInEditor = -1;
       const string kSimulateAssetBundles = "SimulateAssetBundles";
 
@@ -48,7 +48,7 @@ namespace Anki {
           }
         }
       }
-      #endif
+#endif
 
       public static AssetBundleManager Instance {
         get {
@@ -83,26 +83,26 @@ namespace Anki {
         Log(LogType.Log, "Initializing Asset Manager");
         _sInstance = this;
 
-        #if UNITY_EDITOR  
+#if UNITY_EDITOR
         // In simulator mode we don't load any bundles
         Log(LogType.Log, "Simulation Mode: " + (SimulateAssetBundleInEditor ? "Enabled" : "Disabled"));
         if (SimulateAssetBundleInEditor) {
           CallCallback(callback, true);
           return;
         }
-        #endif
+#endif
 
         // Determine where the assets are located
         string manifestAssetBundleName = "";
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         string platformName = GetPlatformName(EditorUserBuildSettings.activeBuildTarget);
         manifestAssetBundleName = platformName;
         _AssetBundleFolder = kAssetBundlesFolder + "/" + platformName + "/";
-        #else
+#else
         manifestAssetBundleName = GetRuntimePlatformName();
         _AssetBundleFolder = System.IO.Path.Combine(Application.streamingAssetsPath, kAssetBundlesFolder) + "/";
-        #endif
+#endif
         Log(LogType.Log, "Asset bundle folder is " + _AssetBundleFolder);
 
         // Load the asset bundle manifest from the main bundle which is called like the platform
@@ -131,7 +131,7 @@ namespace Anki {
                 else {
                   _Variants.Add(split[0], new List<string> { split[1] });
                 }
-              }  
+              }
             }
             else {
               Log(LogType.Error, "Error initializing the asset system. Couln't load the asset bundle manifest.");
@@ -149,12 +149,12 @@ namespace Anki {
       public void LoadAssetBundleAsync(string assetBundleName, Action<bool> callback) {
         Log(LogType.Log, "Loading asset bundle " + assetBundleName);
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
           CallCallback(callback, true);
           return;
         }
-        #endif
+#endif
 
         string variantAssetBundleName = RemapVariantName(assetBundleName);
 
@@ -170,10 +170,10 @@ namespace Anki {
       public void UnloadAssetBundle(string assetBundleName, bool destroyObjectsCreatedFromBundle = true) {
         Log(LogType.Log, "Unloading asset bundle " + assetBundleName);
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         if (SimulateAssetBundleInEditor)
           return;
-        #endif
+#endif
 
         string variantAssetBundleName = RemapVariantName(assetBundleName);
 
@@ -185,7 +185,7 @@ namespace Anki {
       public void LoadAssetAsync<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {
         Log(LogType.Log, "Loading asset " + assetName + " from asset bundle " + assetBundleName);
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
           string[] assetPaths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, assetName);
           if (assetPaths.Length == 0) {
@@ -204,7 +204,7 @@ namespace Anki {
           CallCallback(callback, obj as AssetType);
         }
         else
-        #endif
+#endif
         {
           StartCoroutine(LoadAssetAsyncInternal<AssetType>(assetBundleName, assetName, callback));
         }
@@ -217,12 +217,12 @@ namespace Anki {
       public void LoadSceneAsync(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
         Log(LogType.Log, "Loading scene " + sceneName + " from asset bundle " + assetBundleName + ((loadAdditively) ? " additively" : " non additively"));
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
           StartCoroutine(LoadSceneAsyncInternalInEditor(assetBundleName, sceneName, loadAdditively, callback));
         }
-        else 
-        #endif
+        else
+#endif
         {
           StartCoroutine(LoadSceneAsyncInternal(assetBundleName, sceneName, loadAdditively, callback));
         }
@@ -246,7 +246,7 @@ namespace Anki {
         }
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public static string GetPlatformName(BuildTarget buildTarget) {
 
         switch (buildTarget) {
@@ -263,7 +263,7 @@ namespace Anki {
           return null;
         }
       }
-      #else
+#else
       
       public static string GetRuntimePlatformName() {
         switch (Application.platform) {
@@ -278,7 +278,7 @@ namespace Anki {
           return null;
         }
       }
-      #endif
+#endif
 
       #region Private Methods
 
@@ -361,7 +361,7 @@ namespace Anki {
         // The bundle hasn't been loaded yet so load it from disk
         string assetBundlePath = _AssetBundleFolder + assetBundleName;
         AssetBundle assetBundle;
-  
+
         if (!assetBundlePath.StartsWith("jar:")) {
           AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(assetBundlePath);
           yield return request;
@@ -423,7 +423,7 @@ namespace Anki {
         }
 
         // Wait until allt the loading coroutines have finished
-        yield return new WaitWhile(() => { 
+        yield return new WaitWhile(() => {
           return loadedDependencies < loadedAssetBundle.Dependencies.Length;
         });
       }
@@ -473,7 +473,7 @@ namespace Anki {
         CallCallback(callback, request.asset as AssetType);
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       private IEnumerator LoadSceneAsyncInternalInEditor(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
         string[] scenePaths = UnityEditor.AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, sceneName);
         if (scenePaths.Length == 0) {
@@ -492,7 +492,7 @@ namespace Anki {
 
         CallCallback(callback, true);
       }
-      #endif
+#endif
 
       private IEnumerator LoadSceneAsyncInternal(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
         LoadedAssetBundle loadedAssetBundle = null;
@@ -545,11 +545,15 @@ namespace Anki {
       }
 
       private void PrintActiveVariants() {
+        Log(LogType.Log, ActiveVariantsToString());
+      }
+
+      public string ActiveVariantsToString() {
         System.Text.StringBuilder sb = new System.Text.StringBuilder("Active variants: ");
         foreach (var variant in _ActiveVariants) {
           sb.Append(variant + ", ");
         }
-        Log(LogType.Log, sb.ToString());
+        return sb.ToString();
       }
 
       private void CallCallback<ParameterType>(Action<ParameterType> callback, ParameterType value) {

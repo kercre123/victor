@@ -1,9 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using AskCozmo;
-using System;
-using Anki.Cozmo;
 
 public class ChallengeData : ScriptableObject {
   // the mini game prefab to load for this challenge
