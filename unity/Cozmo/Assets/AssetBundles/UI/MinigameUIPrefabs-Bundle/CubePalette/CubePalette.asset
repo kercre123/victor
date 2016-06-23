@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e48d68ffa4704c94b45eda54e189e5f, type: 3}
+  m_Name: CubePalette
+  m_EditorClassIdentifier: 
+  _OffColor:
+    uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
+    lightColor: {r: 0, g: 0, b: 0, a: 1}
+  _InViewColor:
+    uiSprite: {fileID: 21300000, guid: d12b27138f0d34b9ab4b69782c7c6c6a, type: 3}
+    lightColor: {r: 1, g: 1, b: 1, a: 1}
+  _OutOfViewColor:
+    uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
+    lightColor: {r: 0, g: 0, b: 0, a: 1}
+  _ReadyColor:
+    uiSprite: {fileID: 0}
+    lightColor: {r: 0, g: 1, b: 0, a: 1}
+  _ErrorColor:
+    uiSprite: {fileID: 0}
+    lightColor: {r: 1, g: 0, b: 0, a: 1}
+  _TapMeColor:
+    lightColors:
+    - {r: 1, g: 0, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 1, b: 0, a: 1}
+    cycleIntervalSeconds: 0.25

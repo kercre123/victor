@@ -44,6 +44,15 @@ MonoBehaviour:
   _ChallengeDetailsPrefab: {fileID: 11471404, guid: dd6c56330042c4b55904fa785cddaedc,
     type: 2}
   _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
+  _MinigameDataPrefabAssetBundleName:
+    _EnumValueAsString: minigame_data_prefabs
+    _EnumValue: 1
+  _MinigameUIPrefabAssetBundleName:
+    _EnumValueAsString: minigame_ui_prefabs
+    _EnumValue: 2
+  _MinigameUISpriteAssetBundleName:
+    _EnumValueAsString: minigame_ui_sprites
+    _EnumValue: 4
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -61,6 +70,30 @@ Prefab:
       value: 
       objectReference: {fileID: 11473448, guid: aa1c93b68e19246e29f87de1a90da9d1,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _MinigameDataPrefabAssetBundleName._EnumValueAsString
+      value: minigame_data_prefabs
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MinigameUIPrefabAssetBundleName._EnumValueAsString
+      value: minigame_ui_prefabs
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MinigameUISpriteAssetBundleName._EnumValueAsString
+      value: minigame_ui_sprites
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MinigameUIPrefabAssetBundleName._EnumValue
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MinigameUISpriteAssetBundleName._EnumValue
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MinigameDataPrefabAssetBundleName._EnumValue
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 128306}

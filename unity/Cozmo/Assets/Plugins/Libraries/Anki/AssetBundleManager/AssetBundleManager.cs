@@ -564,5 +564,45 @@ namespace Anki {
 
       #endregion
     }
+
+    /// <summary>
+    /// Unity expects asset bundle names to be all_lowercase so we are keeping that 
+    /// expectation here.
+    /// </summary>
+    public enum AssetBundleNames {
+      minigame_metadata,
+      minigame_data_prefabs,
+      minigame_ui_prefabs,
+      basic_ui_prefabs,
+      minigame_ui_sprites,
+      basic_ui_sprites,
+      debug_prefabs,
+      debug_assets
+    }
+
+    [Serializable]
+    public class SerializableAssetBundleNames : SerializableEnum<AssetBundleNames> {
+
+    }
+
+    [Serializable]
+    public class AssetBundleAssetLink<T> where T : UnityEngine.Object {
+      [SerializeField]
+      private SerializableAssetBundleNames _AssetBundle;
+
+      [SerializeField]
+      private string _AssetDataName;
+
+      public void LoadAssetData(Action<T> dataLoadedCallback) {
+        AssetBundleManager.Instance.LoadAssetAsync<T>(
+          _AssetBundle.Value.ToString(), _AssetDataName,
+          (T dataInstance) => {
+            dataLoadedCallback(dataInstance);
+          });
+      }
+    }
+
+    [Serializable]
+    public class GameObjectDataLink : AssetBundleAssetLink<GameObject> { }
   }
 }

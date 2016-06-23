@@ -1,14 +1,11 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
-using DG.Tweening;
 using Anki.Cozmo;
-using System.Linq;
-using Cozmo.Util;
 using Anki.Cozmo.ExternalInterface;
+using Anki.Assets;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -130,21 +127,35 @@ public abstract class GameBase : MonoBehaviour {
 
     RegisterInterruptionStartedEvents();
 
-    _SharedMinigameViewInstance = UIManager.OpenView(
-      MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab,
-      newView => {
+    LoadMinigameUIAssetBundle();
+  }
+
+  private void LoadMinigameUIAssetBundle() {
+    string minigameAssetBundleName = AssetBundleNames.minigame_ui_prefabs.ToString();
+    AssetBundleManager.Instance.LoadAssetBundleAsync(
+      minigameAssetBundleName, (bool success) => {
+        LoadSharedMinigameView(minigameAssetBundleName);
+        CubePalette.LoadCubePalette(minigameAssetBundleName);
+      });
+  }
+
+  private void LoadSharedMinigameView(string minigameAssetBundleName) {
+    MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab(minigameAssetBundleName, (GameObject viewPrefab) => {
+      SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
+      _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
         newView.Initialize(_ChallengeData);
         SetupView(newView, _ChallengeData);
       });
 
-    PrepRobotForGame();
+      PrepRobotForGame();
+    });
   }
 
   private void SetupView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.Icon = data.ChallengeIconPlainStyle;
+    data.LoadPrefabData((ChallengePrefabData prefabData) => titleWidget.Icon = prefabData.ChallengeIconPlainStyle);
     newView.ShowQuitButton();
 
     // TODO use different color for activities vs games
@@ -411,6 +422,8 @@ public abstract class GameBase : MonoBehaviour {
 
     DeregisterInterruptionStartedEvents();
     DeregisterInterruptionEndedEvents();
+
+    AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 
   public void CloseMinigameImmediately() {
@@ -501,11 +514,7 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.CloseHowToPlayView();
 
     // Open confirmation dialog instead
-    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                     MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject,
-                                     "challenge_end_slide");
-    _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
-    _ChallengeEndViewInstance.SetupDialog(subtitleText, _ChallengeData);
+    _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
 
     SoftEndGameRobotReset();
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,

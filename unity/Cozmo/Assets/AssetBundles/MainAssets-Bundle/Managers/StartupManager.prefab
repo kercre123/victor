@@ -43,13 +43,13 @@ MonoBehaviour:
   _LoadingBarLabel: {fileID: 0}
   _AddDotSeconds: 0.25
   _AssetBundlesToLoad:
-  - main-scene
-  _MainSceneAssetBundleName: main-scene
+  - main_scene
+  _MainSceneAssetBundleName: main_scene
   _MainSceneName: HomeHub
-  _MinigameUIPrefabAssetBundleName: minigame-ui-prefabs
-  _BasicUIPrefabAssetBundleName: basic-ui-prefabs
-  _GameMetadataAssetBundleName: game-metadata
-  _DebugAssetBundleName: debug-prefabs
+  _MinigameUIPrefabAssetBundleName: minigame_ui_prefabs
+  _BasicUIPrefabAssetBundleName: basic_ui_prefabs
+  _GameMetadataAssetBundleName: minigame_metadata
+  _DebugAssetBundleName: debug_prefabs
   _StartupDebugPrefabNames:
   - DebugMenuManager
   - VizManager
@@ -59,7 +59,31 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _MinigameUIPrefabAssetBundleName
+      value: minigame_ui_prefabs
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _BasicUIPrefabAssetBundleName
+      value: basic_ui_prefabs
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameMetadataAssetBundleName
+      value: minigame_metadata
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DebugAssetBundleName
+      value: debug_prefabs
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _MainSceneAssetBundleName
+      value: main_scene
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _AssetBundlesToLoad.Array.data[0]
+      value: main_scene
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 117198}

@@ -1,7 +1,6 @@
 ﻿// from http://www.scottwebsterportfolio.com/blog/2015/3/29/enum-serialization-in-unity
 
 using UnityEngine;
-using System.Collections;
 using System;
 
 [Serializable]

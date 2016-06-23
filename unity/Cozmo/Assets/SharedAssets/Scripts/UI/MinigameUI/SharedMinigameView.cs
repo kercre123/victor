@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using Cozmo.UI;
 using DG.Tweening;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Cozmo {
@@ -153,6 +152,12 @@ namespace Cozmo {
 
       [SerializeField]
       private AnimationSlide _AnimationSlidePrefab;
+
+      [SerializeField]
+      private GameObject _ShowCozmoCubesSlidePrefab;
+
+      [SerializeField]
+      private ChallengeEndedDialog _ChallengeEndViewPrefab;
 
       #endregion
 
@@ -648,10 +653,18 @@ namespace Cozmo {
       #region Game State Slides
 
       public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, TweenCallback endInTweenCallback = null) {
-        GameObject slideObject = ShowWideGameStateSlide(MinigameUIPrefabHolder.Instance.InitialCubesSlide, "setup_cubes_slide", endInTweenCallback);
+        GameObject slideObject = ShowWideGameStateSlide(_ShowCozmoCubesSlidePrefab, "setup_cubes_slide", endInTweenCallback);
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.InViewColor, Cozmo.CubePalette.OutOfViewColor);
+        cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor);
         return cubeSlide;
+      }
+
+      public ChallengeEndedDialog ShowChallengeEndedSlide(string subtitleText, ChallengeData data) {
+        GameObject challengeEndSlide = ShowNarrowGameStateSlide(
+          _ChallengeEndViewPrefab.gameObject, "challenge_end_slide");
+        ChallengeEndedDialog challengeEndSlideScript = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
+        challengeEndSlideScript.SetupDialog(subtitleText, data);
+        return challengeEndSlideScript;
       }
 
       public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback, string headerLocKey = null) {

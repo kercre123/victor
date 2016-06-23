@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 using Cozmo.Util;
+using Anki.Assets;
 
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
@@ -17,8 +17,6 @@ namespace Cozmo.HomeHub {
         return _Instance;
       }
     }
-
-    public Transform[] RewardIcons = null;
 
     [SerializeField]
     private StartView _StartViewPrefab;
@@ -189,13 +187,19 @@ namespace Cozmo.HomeHub {
         CompleteChallenge(_CurrentChallengePlaying, didWin);
         _CurrentChallengePlaying = null;
       }
+      UnloadMinigameAssets();
       ShowTimelineDialog();
     }
 
     private void HandleMiniGameQuit() {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
+      UnloadMinigameAssets();
       ShowTimelineDialog();
+    }
+
+    private void UnloadMinigameAssets() {
+      AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_data_prefabs.ToString());
     }
 
     private void PlayMinigame(ChallengeData challengeData) {
@@ -207,14 +211,29 @@ namespace Cozmo.HomeHub {
       // Close dialog
       CloseTimelineDialog();
 
-      GameObject newMiniGameObject = Instantiate(challengeData.MinigamePrefab);
-      _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-      _MiniGameInstance.InitializeMinigame(challengeData);
-      _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-      _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
-      _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
-      _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
-      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
+      AssetBundleManager.Instance.LoadAssetBundleAsync(
+        AssetBundleNames.minigame_data_prefabs.ToString(),
+        (bool prefabsSuccess) => {
+          if (prefabsSuccess) {
+            LoadMinigame(challengeData);
+          }
+          else {
+            // TODO show error dialog and boot to home
+          }
+        });
+    }
+
+    private void LoadMinigame(ChallengeData challengeData) {
+      challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
+        GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
+        _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+        _MiniGameInstance.InitializeMinigame(challengeData);
+        _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+        _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
+        _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
+        _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
+      });
     }
 
     private void HandleEndGameDialog() {

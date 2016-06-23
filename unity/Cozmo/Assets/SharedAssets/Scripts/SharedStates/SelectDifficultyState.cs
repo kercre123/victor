@@ -52,9 +52,11 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.ShelfWidget.MoveCarat(buttonXWorldPosition);
     _Game.SharedMinigameView.EnableContinueButton(isUnlocked);
     if (isUnlocked) {
-      _Game.SharedMinigameView.ShowWideAnimationSlide(data.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
-                                                      data.AnimationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
       _Game.SharedMinigameView.HideLockedBackground();
+      _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
+        _Game.SharedMinigameView.ShowWideAnimationSlide(_SelectedDifficultyData.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
+                                                        animationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
+      });
     }
     else {
       _Game.SharedMinigameView.ShowWideSlideWithText(data.LockedDifficultyDescription.Key, null);
@@ -67,12 +69,15 @@ public class SelectDifficultyState : State {
 
     // Don't tween transitions in Exit because that will cause errors in DoTween if exiting 
     // the state machine is through the quit button
-    _Game.SharedMinigameView.ShowHowToPlayButton(_SelectedDifficultyData.DifficultyDescription.Key, _SelectedDifficultyData.AnimationPrefab);
     _Game.SharedMinigameView.ShelfWidget.HideCaratOffscreenLeft();
     _Game.SharedMinigameView.ShelfWidget.ShrinkShelfBackground();
     _Game.SharedMinigameView.HideDifficultySelectButtonPanel();
     _Game.SharedMinigameView.HideContinueButton();
     _Game.SharedMinigameView.HideGameStateSlide();
+
+    _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
+      _Game.SharedMinigameView.ShowHowToPlayButton(_SelectedDifficultyData.DifficultyDescription.Key, animationPrefab);
+    });
 
     _StateMachine.SetNextState(_NextState);
   }

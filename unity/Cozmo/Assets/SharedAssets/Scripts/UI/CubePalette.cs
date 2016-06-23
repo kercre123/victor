@@ -1,94 +1,99 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Anki.Assets;
 
 namespace Cozmo {
-  public class CubePalette : ScriptableObject {
+  namespace UI {
+    public class CubePalette : ScriptableObject {
+      private static CubePalette _sInstance;
 
-    private static CubePalette _sInstance;
-
-    public static void SetInstance(CubePalette instance) {
-      _sInstance = instance;
-    }
-
-    public static CubePalette Instance {
-      get { return _sInstance; }
-    }
-
-    [SerializeField]
-    private uint _FindCubesTimeoutFrames = 2;
-
-    public static uint FindCubesTimeoutFrames {
-      get {
-        return Instance._FindCubesTimeoutFrames;
+      public static CubePalette Instance {
+        get {
+          return _sInstance;
+        }
+        private set {
+          if (_sInstance == null) {
+            _sInstance = value;
+          }
+          else {
+            Destroy(value);
+          }
+        }
       }
-    }
 
-    [SerializeField]
-    private CubeColor _OffColor;
-
-    public static CubeColor OffColor {
-      get {
-        return Instance._OffColor;
+      public static void LoadCubePalette(string assetBundleName) {
+        AssetBundleManager.Instance.LoadAssetAsync(
+          assetBundleName, "CubePalette", (CubePalette colorHolder) => {
+            Instance = colorHolder;
+          });
       }
-    }
 
-    [SerializeField]
-    private CubeColor _InViewColor;
+      [SerializeField]
+      private CubeColor _OffColor;
 
-    public static CubeColor InViewColor {
-      get {
-        return Instance._InViewColor;
+      public CubeColor OffColor {
+        get {
+          return _OffColor;
+        }
       }
-    }
 
-    [SerializeField]
-    private CubeColor _OutOfViewColor;
+      [SerializeField]
+      private CubeColor _InViewColor;
 
-    public static CubeColor OutOfViewColor {
-      get {
-        return Instance._OutOfViewColor;
+      public CubeColor InViewColor {
+        get {
+          return _InViewColor;
+        }
       }
-    }
 
-    [SerializeField]
-    private CubeColor _ReadyColor;
+      [SerializeField]
+      private CubeColor _OutOfViewColor;
 
-    public static CubeColor ReadyColor {
-      get {
-        return Instance._ReadyColor;
+      public CubeColor OutOfViewColor {
+        get {
+          return _OutOfViewColor;
+        }
       }
-    }
 
-    [SerializeField]
-    private CubeColor _ErrorColor;
+      [SerializeField]
+      private CubeColor _ReadyColor;
 
-    public static CubeColor ErrorColor {
-      get {
-        return Instance._ErrorColor;
+      public CubeColor ReadyColor {
+        get {
+          return _ReadyColor;
+        }
       }
-    }
 
-    [SerializeField]
-    private CubeCycleColors _TapMeColor;
+      [SerializeField]
+      private CubeColor _ErrorColor;
 
-    public static CubeCycleColors TapMeColor {
-      get {
-        return Instance._TapMeColor;
+      public CubeColor ErrorColor {
+        get {
+          return _ErrorColor;
+        }
       }
-    }
 
-    [System.Serializable]
-    public class CubeColor {
-      // TODO: Use generic sprites from mock tray or write a shader instead of
-      // having a sprite for every color in existence
-      public Sprite uiSprite;
-      public Color lightColor;
-    }
+      [SerializeField]
+      private CubeCycleColors _TapMeColor;
 
-    [System.Serializable]
-    public class CubeCycleColors {
-      public Color[] lightColors;
-      public float cycleIntervalSeconds;
+      public CubeCycleColors TapMeColor {
+        get {
+          return _TapMeColor;
+        }
+      }
+
+      [System.Serializable]
+      public class CubeColor {
+        // TODO: Use generic sprites from mock tray or write a shader instead of
+        // having a sprite for every color in existence
+        public Sprite uiSprite;
+        public Color lightColor;
+      }
+
+      [System.Serializable]
+      public class CubeCycleColors {
+        public Color[] lightColors;
+        public float cycleIntervalSeconds;
+      }
     }
   }
 }

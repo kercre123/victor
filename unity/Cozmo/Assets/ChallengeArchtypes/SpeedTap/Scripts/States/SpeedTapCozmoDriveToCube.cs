@@ -1,6 +1,4 @@
-﻿using System;
-using UnityEngine;
-using Anki.Cozmo.Audio;
+﻿using Cozmo.UI;
 
 namespace SpeedTap {
 
@@ -27,8 +25,8 @@ namespace SpeedTap {
       }
 
       _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock,
-        Cozmo.CubePalette.TapMeColor.lightColors,
-        Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+                                   CubePalette.Instance.TapMeColor.lightColors,
+                                   CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();

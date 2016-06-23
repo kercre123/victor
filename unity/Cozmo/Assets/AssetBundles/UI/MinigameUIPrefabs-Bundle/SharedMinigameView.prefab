@@ -633,6 +633,8 @@ MonoBehaviour:
     type: 2}
   _AnimationSlidePrefab: {fileID: 11467862, guid: aec3efa072da94a5e830c7beeb4d7417,
     type: 2}
+  _ShowCozmoCubesSlidePrefab: {fileID: 146872, guid: 95d62b6d570b642638e6e63c769a1b62,
+    type: 2}
   _ScoreWidgetPrefab: {fileID: 11470090, guid: b9e65c08e72f64c788a56c09874e1484, type: 2}
   _ScoreEnterAnimationXOffset: 600
   _CozmoScoreContainer: {fileID: 22442982}

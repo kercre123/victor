@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Cozmo.UI;
 using UnityEngine;
-using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
@@ -15,17 +14,17 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerBlock == null) {
         foreach (var kvp in _CurrentRobot.LightCubes) {
           if (kvp.Value.ID != _SpeedTapGame.CozmoBlock.ID) {
-            _SpeedTapGame.StartCycleCube(kvp.Value.ID, 
-              Cozmo.CubePalette.TapMeColor.lightColors, 
-              Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+            _SpeedTapGame.StartCycleCube(kvp.Value.ID,
+              CubePalette.Instance.TapMeColor.lightColors,
+              CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
           }
         }
         _SpeedTapGame.ShowPlayerTapConfirmSlide();
       }
       else {
-        _SpeedTapGame.StartCycleCube(_SpeedTapGame.PlayerBlock.ID, 
-          Cozmo.CubePalette.TapMeColor.lightColors, 
-          Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+        _SpeedTapGame.StartCycleCube(_SpeedTapGame.PlayerBlock.ID,
+          CubePalette.Instance.TapMeColor.lightColors,
+          CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
         _SpeedTapGame.ShowPlayerTapNewRoundSlide();
       }
 

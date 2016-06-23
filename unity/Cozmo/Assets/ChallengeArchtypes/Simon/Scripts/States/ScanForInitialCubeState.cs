@@ -100,14 +100,14 @@ namespace Simon {
         _CubesStateUpdated = true;
         LightCube cube = _CurrentRobot.LightCubes[cubeID];
         if (state == ScannedSetupCubeState.Seen) {
-          cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+          cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
         }
         else if (state == ScannedSetupCubeState.TooClose) {
-          cube.SetLEDs(Cozmo.CubePalette.ErrorColor.lightColor);
+          cube.SetLEDs(Cozmo.UI.CubePalette.Instance.ErrorColor.lightColor);
         }
         else if (state == ScannedSetupCubeState.Ready) {
-          cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+          cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
         }
       }
     }
@@ -165,7 +165,7 @@ namespace Simon {
             if (_Game.CubeIdsForGame.Count < _CubesRequired) {
               _Game.CubeIdsForGame.Add(cube.ID);
               _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Unknown);
-              cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+              cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
             }
           }
         }

@@ -1,15 +1,21 @@
 ﻿using UnityEngine;
-using System.Collections;
 using Anki.UI;
 using System;
+using Anki.Assets;
 
-[System.Serializable]
+[Serializable]
 public class DifficultySelectOptionData {
   public int DifficultyId;
   public LocalizedString DifficultyName;
   public LocalizedString DifficultyDescription;
-  public GameObject AnimationPrefab;
   public LocalizedString LockedDifficultyDescription;
+
+  [SerializeField]
+  private GameObjectDataLink _AnimationPrefabData;
+
+  public void LoadAnimationPrefabData(Action<GameObject> dataLoadedCallback) {
+    _AnimationPrefabData.LoadAssetData(dataLoadedCallback);
+  }
 }
 
 public class DifficultySelectOption : MonoBehaviour {

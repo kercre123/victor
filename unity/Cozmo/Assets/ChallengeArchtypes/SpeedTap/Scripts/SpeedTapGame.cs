@@ -144,8 +144,8 @@ namespace SpeedTap {
       get { return _SpeedTapRoundEndSlidePrefab; }
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
-      SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
+    protected override void Initialize(MinigameConfigBase minigameConfigData) {
+      SpeedTapGameConfig speedTapConfig = minigameConfigData as SpeedTapGameConfig;
       // Set all Config based values
       TotalRounds = speedTapConfig.Rounds;
       MaxScorePerRound = speedTapConfig.MaxScorePerRound;
@@ -170,7 +170,6 @@ namespace SpeedTap {
 
     // Use this for initialization
     protected void InitializeMinigameObjects(int cubesRequired) {
-
       InitialCubesState initCubeState = new InitialCubesState(
                                           new SelectDifficultyState(
                                             new SpeedTapCozmoDriveToCube(true),

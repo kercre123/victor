@@ -46,9 +46,6 @@ public class StartupManager : MonoBehaviour {
   private string _MainSceneName;
 
   [SerializeField]
-  private string _MinigameUIPrefabAssetBundleName;
-
-  [SerializeField]
   private string _BasicUIPrefabAssetBundleName;
 
   [SerializeField]
@@ -170,7 +167,7 @@ public class StartupManager : MonoBehaviour {
         AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName,
           prefabName, (GameObject prefab) => {
             if (prefab != null) {
-              GameObject go = GameObject.Instantiate(prefab);
+              GameObject go = Instantiate(prefab);
               go.transform.SetParent(transform);
             }
             loadedDebugAssets++;
@@ -262,11 +259,6 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
       });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName,
-      "CubePalette", (Cozmo.CubePalette cp) => {
-        Cozmo.CubePalette.SetInstance(cp);
-      });
-
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
       "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
         Cozmo.ItemDataConfig.SetInstance(idc);
@@ -299,14 +291,6 @@ public class StartupManager : MonoBehaviour {
       "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
         Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
       });
-
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName,
-      "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
-        Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
-      });
-
-
-
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
