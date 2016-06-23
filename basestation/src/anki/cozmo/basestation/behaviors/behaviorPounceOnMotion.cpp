@@ -348,7 +348,7 @@ void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
   
 void BehaviorPounceOnMotion::TransitionToRelaxLift(Robot& robot)
 {
-  robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
+  robot.GetMoveComponent().EnableLiftPower(false);
   SET_STATE(RelaxingLift);
   // We don't get an accurate pitch evaulation if the head is moving during an animation
   // so hold this for a bit longer

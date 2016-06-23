@@ -206,8 +206,6 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
     const AnimationGroupEntry* bestEntry = nullptr;
     float minCooldown = std::numeric_limits<float>::max();
 
-    // TODO:(bn) this should be a warning, but we are doing this all over the place in the vertical slice, so
-    // keeping info for now
     PRINT_NAMED_INFO("AnimationGroup.GetAnimation.AllOnCooldown",
                      "All animations are on cooldown. Selecting the one closest to being finished");
 

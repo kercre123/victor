@@ -250,7 +250,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
       Pose3d newTargetPose(RotationVector3d{},
                            newTranslation * (oldLength - kPossibleObjectViewingDist_mm),
                            &robot.GetPose());
-      // TODO:(bn) motion profile here?
+
       action->AddAction(new DriveToPoseAction(robot, newTargetPose, false));
     }
   }

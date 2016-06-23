@@ -6,7 +6,6 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-// TODO:(bn) should these be a full path?
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
