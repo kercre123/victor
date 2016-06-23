@@ -46,7 +46,7 @@ namespace Anki {
         case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
         {
           // Check before cancelling everything
-          if(IsDuplicate(action))
+          if(IsDuplicateOrCurrentlyClearing(action))
           {
             return RESULT_FAIL;
           }
@@ -92,7 +92,7 @@ namespace Anki {
     
     Result ActionList::QueueActionNext(IActionRunner* action, u8 numRetries)
     {
-      if(IsDuplicate(action))
+      if(IsDuplicateOrCurrentlyClearing(action))
       {
         return RESULT_FAIL;
       }
@@ -101,7 +101,7 @@ namespace Anki {
     
     Result ActionList::QueueActionAtEnd(IActionRunner* action, u8 numRetries)
     {
-      if(IsDuplicate(action))
+      if(IsDuplicateOrCurrentlyClearing(action))
       {
         return RESULT_FAIL;
       }
@@ -110,7 +110,7 @@ namespace Anki {
     
     Result ActionList::QueueActionNow(IActionRunner* action, u8 numRetries)
     {
-      if(IsDuplicate(action))
+      if(IsDuplicateOrCurrentlyClearing(action))
       {
         return RESULT_FAIL;
       }
@@ -119,7 +119,7 @@ namespace Anki {
     
     Result ActionList::QueueActionAtFront(IActionRunner* action, u8 numRetries)
     {
-      if(IsDuplicate(action))
+      if(IsDuplicateOrCurrentlyClearing(action))
       {
         return RESULT_FAIL;
       }
@@ -221,7 +221,7 @@ namespace Anki {
         return -1;
       }
       
-      if(IsDuplicate(action))
+      if(IsDuplicateOrCurrentlyClearing(action))
       {
         return -1;
       }
@@ -269,20 +269,34 @@ namespace Anki {
       return qIter->second.GetCurrentAction()->GetTag() == idTag;
     }
     
-    bool ActionList::IsDuplicate(IActionRunner* action)
+    bool ActionList::IsDuplicateOrCurrentlyClearing(IActionRunner* action)
     {
-      for(auto &queue : _queues)
+      // If we are currently clearing just destroy the action
+      if(_currentlyClearing)
       {
-        if(queue.second.IsDuplicate(action))
+        if(action != nullptr)
         {
-          PRINT_NAMED_WARNING("ActionList.QueueAction.IsDuplicate",
-                              "Attempting to queue duplicate action %s [%d]",
-                              action->GetName().c_str(), action->GetTag());
-          return true;
+          action->PrepForCompletion();
         }
+        Util::SafeDelete(action);
+        return true;
       }
-      return false;
+      else
+      {
+        for(auto &queue : _queues)
+        {
+          if(queue.second.IsDuplicate(action))
+          {
+            PRINT_NAMED_WARNING("ActionList.QueueAction.IsDuplicate",
+                                "Attempting to queue duplicate action %s [%d]",
+                                action->GetName().c_str(), action->GetTag());
+            return true;
+          }
+        }
+        return false;
+      }
     }
+    
 
 #pragma mark ---- ActionQueue ----
     
