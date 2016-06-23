@@ -113,21 +113,6 @@ void Spine::init(void) {
   }
 }
 
-void Spine::dequeue(CladBufferUp* dest) {
-  static int queue_exit = 0;
-
-  dest->length = 0;
-
-  if (queue[queue_exit].state != QUEUE_READY) {
-    return ;
-  }
-
-  // Dequeue and deallocate slot
-  memcpy(dest, &queue[queue_exit].buffer, sizeof(CladBufferUp));
-  queue[queue_exit].state = QUEUE_INACTIVE;
-  queue_exit = (queue_exit + 1) % QUEUE_DEPTH;
-}
-
 void Spine::processMessage(void* buf) {
   using namespace Anki::Cozmo;
   RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(buf);
@@ -148,41 +133,57 @@ void Spine::processMessage(void* buf) {
   }
 }
 
+void Spine::dequeue(CladBufferUp* dest) {
+  static int queue_exit = 0;
+
+  dest->length = 0;
+
+  if (queue[queue_exit].state != QUEUE_READY) {
+    return ;
+  }
+
+  // Dequeue and deallocate slot
+  memcpy(dest, &queue[queue_exit].buffer, sizeof(CladBufferUp));
+  queue[queue_exit].state = QUEUE_INACTIVE;
+  queue_exit = (queue_exit + 1) % QUEUE_DEPTH;
+}
+
 bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
 {
-  // Forward further down the pip
+  // Forward further down the pipe
   if (msgID >= 0x28 && msgID <= 0x2F)
   {
     return Bluetooth::transmit((const uint8_t*)buffer, size, msgID);
   }
-  else if ((size + 1) > SPINE_MAX_CLAD_MSG_SIZE_UP)
+  
+  // Error cases for spine communication
+  if (size > SPINE_MAX_CLAD_MSG_SIZE_UP)
   {
     AnkiError( 128, "Spine.Enqueue.MessageTooLong", 386, "Message %x[%d] too long to enqueue to head. MAX_SIZE = %d", 3, msgID, size, SPINE_MAX_CLAD_MSG_SIZE_UP);
     return false;
   }
   else if (msgID == 0)
   {
-    return false;
+    return true;
   }
-  
 
   static int queue_enter = 0;
 
   // Slot is not available for dequeueing
+  __disable_irq();
   if (queue[queue_enter].state != QUEUE_INACTIVE) {
+    __enable_irq();
     return false;
   }
 
   // Critical section for dequeueing message
-  __disable_irq();
   int index = queue_enter;
   queue_enter = (queue_enter + 1) % QUEUE_DEPTH;
   __enable_irq();
 
-
-  queue[index].buffer.length = size + 1;
-  queue[index].buffer.data[0] = msgID;
-  memcpy(&queue[index].buffer.data[1], buffer, size);
+  queue[index].buffer.length = size;
+  queue[index].buffer.msgID = msgID;
+  memcpy(&queue[index].buffer.data, buffer, size);
 
   // Message is stage and ready for transmission
   queue[index].state = QUEUE_READY;

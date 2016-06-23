@@ -14,7 +14,7 @@ namespace Anki {
         void Dequeue(CladBufferDown* dest);
         /// Enqueue CLAD data to send to body.
         // @warning Only call from main executation thread
-        bool Enqueue(const u8* data, const u8 length, const u8 tag=RobotInterface::GLOBAL_INVALID_TAG);
+        bool Enqueue(const u8* data, const u8 length, const u8 tag);
       }
     }
   }

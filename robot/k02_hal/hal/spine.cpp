@@ -27,39 +27,26 @@ namespace HAL {
       spine_enter = (spine_enter+1) % QUEUE_DEPTH;
     }
   }
-  
-  bool Spine::Enqueue(const u8* data, const u8 length, const u8 tag) {
+
+  bool Spine::Enqueue(const u8* data, const u8 length, u8 tag) {
     const int exit = (spine_exit+1) % QUEUE_DEPTH;
-    u8 realTag;
-    u8 realLength;
-    if (tag == RobotInterface::GLOBAL_INVALID_TAG)
-    {
-      realTag = data[0];
-      realLength = length;
-    }
-    else
-    {
-      realTag = tag;
-      realLength = length + 1;
-    }
 
     if (spine_enter == exit) {
       return false;
     }
-    else if (realLength > SPINE_MAX_CLAD_MSG_SIZE_DOWN)
+    else if (tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
-      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, realTag, realLength, SPINE_MAX_CLAD_MSG_SIZE_DOWN);
+      return true;
+    }
+    else if (length > SPINE_MAX_CLAD_MSG_SIZE_DOWN)
+    {
+      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, tag, length, SPINE_MAX_CLAD_MSG_SIZE_DOWN);
       return false;
     }
     else
     {
-      u8* dest = spinebuffer[spine_exit].data;
-      if (tag != RobotInterface::GLOBAL_INVALID_TAG)
-      {
-        *dest = tag;
-        dest++;
-      }
-      memcpy(dest, data, length);
+      spinebuffer[spine_exit].msgID = tag;
+      memcpy(spinebuffer[spine_exit].data, data, length);
       spinebuffer[spine_exit].length = length;
       spine_exit = exit;
       return true;
@@ -69,6 +56,7 @@ namespace HAL {
   void Spine::Manage() {
     RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
     const u8 tag = msg->tag;
+
     if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
       // pass
@@ -79,7 +67,7 @@ namespace HAL {
     }
     else if (tag > RobotInterface::TO_RTIP_END)
     {
-      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length-1, g_dataToHead.cladBuffer.data[0]);
+      RadioSendMessage(g_dataToHead.cladBuffer.data, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer.msgID);
     }
     else if (msg->Size() != g_dataToHead.cladBuffer.length)
     {

@@ -41,6 +41,7 @@ namespace HAL {
     const uint16_t sizeWHeader = size+1;
     const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
     const u8 tag = ((msgID == RobotInterface::GLOBAL_INVALID_TAG) ? *reinterpret_cast<const u8*>(buffer) : msgID);
+
     if (tag < RobotInterface::TO_RTIP_START)
     {
       return Spine::Enqueue(reinterpret_cast<const u8*>(buffer), size, msgID);
@@ -57,7 +58,7 @@ namespace HAL {
       int available = TX_BUF_SIZE - ((wind - txRind) & TX_BUF_SIZE_MASK);
       while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
       {
-      	if (!reliable) return false;
+        if (!reliable) return false;
         else available = TX_BUF_SIZE - ((wind - txRind) & TX_BUF_SIZE_MASK);
       }
       const u8* msgPtr = (u8*)buffer;
@@ -99,6 +100,7 @@ namespace HAL {
       const uint8_t rind = rxRind;
       uint8_t wind = rxWind;
       const int available = RX_BUF_SIZE - ((wind - rind) & RX_BUF_SIZE_MASK);
+      
       if ((length+1) < available)
       {
         int i;
@@ -124,29 +126,31 @@ namespace HAL {
         uint8_t available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
         while ((available) && (available > rxBuf[rind]))
         {
-          uint32_t cladBuffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/4)+1]; // Allocate as u32 to guarantee aligntment
-          RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
-          uint8_t* msgBuffer = msg->GetBuffer();
+          uint32_t cladBuffer[DROP_TO_RTIP_MAX_VAR_PAYLOAD]  __attribute__ ((aligned (4)));
+
+          RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(cladBuffer);
+          uint8_t* msgBuffer = msg.GetBuffer();
+          
           const uint8_t msgLen = rxBuf[rind++];
-          const uint8_t msgTag = rxBuf[rind];
           for (uint8_t i=0; i<msgLen; i++) msgBuffer[i] = rxBuf[rind++];
           rxRind = rind;
           available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-          if ((msgTag > RobotInterface::TO_RTIP_END) && ((msgTag < RobotInterface::ANIM_RT_START) || (msgTag > RobotInterface::ANIM_RT_END)))
+          
+          if ((msg.tag > RobotInterface::TO_RTIP_END) && ((msg.tag < RobotInterface::ANIM_RT_START) || (msg.tag > RobotInterface::ANIM_RT_END)))
           {
-            AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg->tag);
+            AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg.tag);
           }
-          else if (msgTag < RobotInterface::TO_RTIP_START)
+          else if (msg.tag < RobotInterface::TO_RTIP_START)
           {
-            while (Spine::Enqueue(msgBuffer, msgLen) == false) ; // Spin until success
+            while (Spine::Enqueue(msg.GetBuffer() + 1, msg.Size() - 1, msg.tag) == false) ; // Spin until success
           }
-          else if (msg->Size() != msgLen)
+          else if (msg.Size() != msgLen)
           {
-            AnkiError( 141, "WiFi.Update", 381, "CLAD message 0x%x size %d doesn't match size in buffer %d", 3, msg->tag, msg->Size(), msgLen);
+            AnkiError( 141, "WiFi.Update", 381, "CLAD message 0x%x size %d doesn't match size in buffer %d", 3, msg.tag, msg.Size(), msgLen);
           }
           else
           {
-            Messages::ProcessMessage(*msg);
+            Messages::ProcessMessage(msg);
           }
         }
         return RESULT_OK;
