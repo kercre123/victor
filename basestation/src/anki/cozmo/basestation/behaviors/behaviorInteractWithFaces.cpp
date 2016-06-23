@@ -260,8 +260,8 @@ namespace Cozmo {
       // add some randomness to break ties
       float score = GetRNG().RandDbl();
 
-      // TEMP:  // TODO:(bn) better function for this?
-      if( faceID > 0 ) {
+      const bool enrolledFace = faceID > 0;
+      if( enrolledFace ) {
         // we prefer faces we know, since they are more stable
         score += kKnownFaceScore;
        }
