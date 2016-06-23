@@ -657,11 +657,6 @@ xythetaEnvironment::xythetaEnvironment()
   oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
 }
 
-xythetaEnvironment::xythetaEnvironment(const char* mprimFilename)
-{
-  Init(mprimFilename);
-}
-
 bool xythetaEnvironment::Init(const Json::Value& mprimJson)
 {
   ClearObstacles();
@@ -994,7 +989,7 @@ void xythetaEnvironment::DumpObstacles(Util::JsonWriter& writer) const
   writer.EndList();
 }
 
-void xythetaEnvironment::AddObstacle(const Quad2f& quad, Cost cost)
+void xythetaEnvironment::AddObstacleAllThetas(const Quad2f& quad, Cost cost)
 {
   // for legacy purposes, add this to every single angle!
   Poly2f poly;
@@ -1006,7 +1001,7 @@ void xythetaEnvironment::AddObstacle(const Quad2f& quad, Cost cost)
   }
 }
   
-void xythetaEnvironment::AddObstacle(const RotatedRectangle& rect, Cost cost)
+void xythetaEnvironment::AddObstacleAllThetas(const RotatedRectangle& rect, Cost cost)
 {
   Poly2f poly(rect);
   FastPolygon fastPoly(poly);

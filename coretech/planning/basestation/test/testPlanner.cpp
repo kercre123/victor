@@ -207,7 +207,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   // know not to change or remove it
   EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
 
   xythetaPlanner planner(context);
 
@@ -236,7 +236,7 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
   EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
 
-  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
 
   xythetaPlanner planner(context);
 
@@ -307,7 +307,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
 
   // first add it with a fatal cost (the default)
-  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
 
   xythetaPlanner planner(context);
 
@@ -338,7 +338,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
   context.env.ClearObstacles();
   // now add it with a high cost
-  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 50.0);
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 50.0);
 
   context.env.PrepareForPlanning();
 
@@ -361,7 +361,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
   context.env.ClearObstacles();
   // now add it with a very low cost
-  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 1e-4);
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 1e-4);
 
   context.env.PrepareForPlanning();
 
@@ -424,7 +424,7 @@ GTEST_TEST(TestPlanner, ReplanEasy)
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 
-  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
 
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should not interfere with plan";
 
@@ -463,7 +463,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   context.env.PrintPlan(planner.GetPlan());
 
-  context.env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
   EXPECT_FALSE(context.env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should block plan!";
 
@@ -786,7 +786,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_initial)
         s.y_mm += dy;
         if( context.env.State_c2State(s) == start ) {
           ASSERT_EQ(0, context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), s, distFromPlan))
-            << "didn't get correct position for offset ("<<dx<<','<<dy<<") s="<<s<<" dist="<<distFromPlan
+            << "didn't get correct position for offset ("<<dx<<','<<dy<<") s="<<s<<" dist="<<distFromPlan 
             << " (" << numTested << " already passed)";
           numTested++;
         }
@@ -812,7 +812,7 @@ GTEST_TEST(TestPlanner, CorrectlyRoundStateNearBox)
 
   xythetaPlanner planner(context);
 
-  context.env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
+  context.env.AddObstacleAllThetas(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
   context.start = State_c(0, 0, 0.0);
   EXPECT_TRUE(planner.StartIsValid()) << "set start at origin should pass";
