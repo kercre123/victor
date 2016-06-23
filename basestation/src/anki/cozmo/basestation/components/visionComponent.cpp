@@ -399,35 +399,59 @@ namespace Cozmo {
       // Experimental:
       //UpdateOverheadMap(image, _nextPoseData);
       
-      // Store image for calibration (*before* we swap encodedImage with _nextImg below!)
+      // Store image for calibration or factory test (*before* we swap encodedImage with _nextImg below!)
       // NOTE: This means we do decoding on main thread, but this is just for the factory
       //       test, so I'm not going to the trouble to store encoded images for calibration
-      if (_storeNextImageForCalibration) {
-        
-        if (IsModeEnabled(VisionMode::ComputingCalibration)) {
-          PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
-          _storeNextImageForCalibration = false;
-        } else {
-          
-          // If we were moving too fast at the timestamp the image was taken then don't save it for calibration purposes
-          if(!WasMovingTooFast(encodedImage.GetTimeStamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+      if (_storeNextImageForCalibration || _doFactoryDotTest)
+      {
+        // If we were moving too fast at the timestamp the image was taken then don't use it for
+        // calibration or dot test purposes
+        if(!WasMovingTooFast(encodedImage.GetTimeStamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+        {
+          Vision::Image imageGray;
+          Result result = encodedImage.DecodeImageGray(imageGray);
+          if(RESULT_OK != result)
           {
-            _storeNextImageForCalibration = false;
-            // TODO: Get a grayscale image directly (we're currently decoding gray images, making them color and then making them gray again)
-            Vision::ImageRGB image;
-            Result result = encodedImage.DecodeImageRGB(image);
-            if(RESULT_OK == result) {
-              result = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
-            }
-            if(RESULT_OK != result) {
-              PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
-            }
-          } else {
-            PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+            PRINT_NAMED_WARNING("VisionComponent.SetNextImage.DecodeFailed",
+                                "Cannot use next image for calibration(%d) or dot test(%d)",
+                                _storeNextImageForCalibration, _doFactoryDotTest);
           }
+          else
+          {
+            if(_storeNextImageForCalibration)
+            {
+              _storeNextImageForCalibration = false;
+              if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+                PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+              } else {
+                result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
+                if(RESULT_OK != result) {
+                  PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+                }
+              }
+            } // if(_storeNextImageForCalibration)
+            
+            if(_doFactoryDotTest)
+            {
+              _doFactoryDotTest = false;
+              
+              ExternalInterface::RobotCompletedFactoryDotTest msg;
+              Result dotResult = FindFactoryTestDotCentroids(imageGray, msg);
+              if(RESULT_OK != dotResult) {
+                PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
+              }
+              _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+              
+            } // if(_doFactoryDotTest)
+            
+          } // if(decode failed)
         }
-      }
+        else {
+          PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+        }
+      } // if (_storeNextImageForCalibration || _doFactoryDotTest)
       
+
       switch(_runMode)
       {
         case RunMode::Synchronous:
@@ -1473,6 +1497,162 @@ namespace Cozmo {
     
     
   }
+  
+  Result VisionComponent::ComputeCameraPoseVsIdeal(const Quad2f& obsQuad, Pose3d& pose) const
+  {
+    // Define real size of target, w.r.t. its center as origin
+    static const f32 kDotSpacingX_mm = 40.f;
+    static const f32 kDotSpacingY_mm = 20.5f;
+    static const Quad3f targetQuad(Point3f(-0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0.f),
+                                   Point3f(-0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0.f),
+                                   Point3f( 0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0.f),
+                                   Point3f( 0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0.f));
+    
+    // Distance between target center and intersection of camera's optical axis with the
+    // target, due to 4-degree look-down.
+    static const f32 kTargetCenterVertDist_mm = 4.2f;
+    
+    // Compute pose of target's center w.r.t. the camera
+    Pose3d targetWrtCamera;
+    Result result = _camera.ComputeObjectPose(obsQuad, targetQuad, targetWrtCamera);
+    if(RESULT_OK != result) {
+      PRINT_NAMED_WARNING("VisionComponent.FindFactorTestDotCentroids.ComputePoseFailed", "");
+      return result;
+    }
+    
+    // Define the pose of the target (center) w.r.t. the ideal camera.
+    // NOTE: 4.2mm is
+    //       The center of the target lies along the ideal (unrotated) camera's optical axis
+    //       and the target dots are defined in that coordinate frame (x,y) at upper left.
+    const f32 kTargetDist_mm = kTargetCenterVertDist_mm / std::tan(DEG_TO_RAD(4));
+    const Pose3d targetWrtIdealCamera(0, Z_AXIS_3D(), {0.f, 0.f, kTargetDist_mm});
+    
+    // Compute the pose of the camera w.r.t. the ideal camera
+    pose = targetWrtCamera.GetInverse() * targetWrtIdealCamera;
+
+    return RESULT_OK;
+  }
+  
+  Result VisionComponent::FindFactoryTestDotCentroids(const Vision::Image& image,
+                                                      ExternalInterface::RobotCompletedFactoryDotTest& msg)
+  {
+    // Expected locations for each dot with a generous search area around each
+    static const s32 kSearchSize_pix = 80;
+    static const std::array<Point2i,4> kExpectedDotCenters_pix{{
+      /* Upper Left  */ Point2i(40,   40),
+      /* Lower Left  */ Point2i(40,  200),
+      /* Upper Right */ Point2i(280,  40),
+      /* Lower Right */ Point2i(280, 204)
+    }};
+    
+    static const s32 kDotDiameter_pix = 25;
+    static const f32 kDotArea_pix = (f32)(kDotDiameter_pix*kDotDiameter_pix) * 0.25f * PI_F;
+    static const f32 kMinAreaFrac = 0.75f; // relative to circular dot area
+    static const f32 kMaxAreaFrac = 1.25f; // relative to dot bounding box
+    
+    // Enable drawing the image with detected centroids and search areas
+    // NOTE: Don't check this in set to true!
+    const bool kDrawDebugDisplay = false;
+    
+    // Binarize and compute centroid for the ROI around each expected dot location
+    for(s32 iDot=0; iDot < 4; ++iDot)
+    {
+      auto & expectedCenter = kExpectedDotCenters_pix[iDot];
+      
+      Rectangle<s32> roiRect(expectedCenter.x()-kSearchSize_pix/2, expectedCenter.y()-kSearchSize_pix/2,
+                             kSearchSize_pix, kSearchSize_pix);
+
+      // Use Otsu inverted thresholding to get the dark stuff as "on" with an automatically-computed threshold
+      Vision::Image roi;
+      image.GetROI(roiRect).CopyTo(roi);
+      cv::threshold(roi.get_CvMat_(), roi.get_CvMat_(), 128, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
+      
+      // Find the connected component closest to center (that is of reasonable area)
+      // NOTE: The squares of the checkerboard pattern will hopefully be too small
+      //       if they come out as individual components and too large if they
+      //       get connected together due to blurring / compression.
+      Array2d<s32> labels;
+      std::vector<Vision::Image::ConnectedComponentStats> stats;
+      const s32 N = roi.GetConnectedComponents(labels, stats);
+      const Point2f center(0.5f*(f32)roiRect.GetWidth(), 0.5f*(f32)roiRect.GetHeight());
+      f32 bestDistFromCenter = std::numeric_limits<f32>::max();
+      size_t largestArea = 0;
+      s32 bestComp = 0;
+      for(s32 iComp=1; iComp<N; ++iComp) // Note: skipping "background" component 0
+      {
+        // Use the bounding box for the max area check so that checkboard squares
+        // that get linked together look even bigger (and therefore too large)
+        const Rectangle<s32>& bbox = stats[iComp].boundingBox;
+        if(bbox.Area() < kMaxAreaFrac * kDotDiameter_pix * kDotDiameter_pix)
+        {
+          const size_t currentArea = stats[iComp].area;
+          if(currentArea > kDotArea_pix*kMinAreaFrac && currentArea > largestArea)
+          {
+            const f32 d = ComputeDistanceBetween(stats[iComp].centroid, center);
+            if(d < bestDistFromCenter) {
+              bestDistFromCenter = d;
+              bestComp = iComp;
+              largestArea = currentArea;
+            }
+          }
+        }
+      }
+      
+      if(bestComp == 0) {
+        PRINT_NAMED_WARNING("VisionComponent.FindFactoryTestDotCentroids.NotComponentLargeEnough",
+                            "DotArea=%.1f, MinFrac=%.2f", kDotArea_pix, kMinAreaFrac);
+        return RESULT_FAIL;
+      }
+      
+      // Put centroid in original image coordinates (not ROI coordinates)
+      msg.dotCenX_pix[iDot] = stats[bestComp].centroid.x() + roiRect.GetX();
+      msg.dotCenY_pix[iDot] = stats[bestComp].centroid.y() + roiRect.GetY();
+    }
+
+    if(_camera.IsCalibrated())
+    {
+      // Go ahead and compute the camera pose using the dots if the camera is already calibrated
+      
+      const Quad2f obsQuad(Point2f(msg.dotCenX_pix[0], msg.dotCenY_pix[0]),
+                           Point2f(msg.dotCenX_pix[1], msg.dotCenY_pix[1]),
+                           Point2f(msg.dotCenX_pix[2], msg.dotCenY_pix[2]),
+                           Point2f(msg.dotCenX_pix[3], msg.dotCenY_pix[3]));
+      
+      Pose3d pose;
+      Result poseResult = ComputeCameraPoseVsIdeal(obsQuad, pose);
+      if(RESULT_OK != poseResult) {
+        PRINT_NAMED_WARNING("VisionComponent.FindFactoryTestDotCentroids.ComputePoseFailed", "");
+      } else {
+        msg.camPoseX_mm = pose.GetTranslation().x();
+        msg.camPoseY_mm = pose.GetTranslation().y();
+        msg.camPoseZ_mm = pose.GetTranslation().z();
+        
+        msg.camPoseRoll_rad  = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
+        msg.camPosePitch_rad = pose.GetRotation().GetAngleAroundXaxis().ToFloat();
+        msg.camPoseYaw_rad   = pose.GetRotation().GetAngleAroundYaxis().ToFloat();
+        
+        msg.didComputePose = true;
+      }
+    }
+    
+    msg.success = true;
+    
+    if(kDrawDebugDisplay)
+    {
+      Vision::ImageRGB debugDisp(image);
+      for(s32 iDot=0; iDot<4; ++iDot) {
+        debugDisp.DrawPoint(Point2f(msg.dotCenX_pix[iDot], msg.dotCenY_pix[iDot]), NamedColors::RED, 3);
+        
+        Rectangle<f32> roiRect(kExpectedDotCenters_pix[iDot].x()-kSearchSize_pix/2,
+                               kExpectedDotCenters_pix[iDot].y()-kSearchSize_pix/2,
+                               kSearchSize_pix, kSearchSize_pix);
+        debugDisp.DrawRect(roiRect, NamedColors::GREEN, 2);
+      }
+      debugDisp.Display("FactoryTestFindDots", 0);
+    }
+    
+    return RESULT_OK;
+  } // FindFactoryTestDotCentroids()
   
   Result VisionComponent::ClearToolCodeImages()
   {

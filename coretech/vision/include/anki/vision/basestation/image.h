@@ -135,8 +135,15 @@ namespace Vision {
     Image& Threshold(u8 value);
     Image  Threshold(u8 value) const;
     
-    s32 GetConnectedComponents(Array2d<s32>& labelImage,
-                               std::vector<std::vector< Point2<s32> > >& regionPoints) const;
+    s32 GetConnectedComponents(Array2d<s32>& labelImage) const;
+    
+    struct ConnectedComponentStats
+    {
+      size_t          area;
+      Point2f         centroid;
+      Rectangle<s32>  boundingBox;
+    };
+    s32 GetConnectedComponents(Array2d<s32>& labelImage, std::vector<ConnectedComponentStats>& stats) const;
     
     // Get image negatives (i.e. invert black-on-white to white-on-black)
     Image& Negate();

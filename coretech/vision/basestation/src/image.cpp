@@ -253,72 +253,35 @@ namespace Vision {
   }
 
   
-  s32 Image::GetConnectedComponents(Array2d<s32>& labelImage,
-                                    std::vector<std::vector< Point2<s32> > >& regionPoints) const
+  s32 Image::GetConnectedComponents(Array2d<s32>& labelImage) const
   {
-    // Until we start using OpenCV 3, which has an actual connected components implementation,
-    // this is adapted from here:
-    //    http://nghiaho.com/uploads/code/opencv_connected_component/blob.cpp
-    //
     
-    if(labelImage.GetNumRows() != GetNumRows() || labelImage.GetNumCols() != GetNumCols()) {
-      PRINT_NAMED_ERROR("Image.GetConnectedComponents.SizeMismatch",
-                        "Label image should be %dx%d, not %dx%d",
-                        GetNumCols(), GetNumRows(), labelImage.GetNumCols(), labelImage.GetNumRows());
-      return -1;
-    }
+    const s32 count = cv::connectedComponents(this->get_CvMat_(), labelImage.get_CvMat_());
     
-    // Put a 1 in labelImage everywhere this image is > 0, and 0 otherwise
-    // NOTE: can't use use cv::Mat's > 0 operation, b/c that yields 0 and 255.
-    // TODO: is "(this->get_CvMat()_ > 0)/255" actually faster?
-    std::function<s32(const u8&)> lambda = [](u8 p) {
-      return s32(p > 0 ? 1 : 0);
-    };
-    ApplyScalarFunction(lambda, labelImage);
-
-    regionPoints.clear();
-    
-    // Fill the label_image with the blobs
-    // 0  - background
-    // 1  - unlabelled foreground
-    // 2+ - labelled foreground
-    
-    int labelCount = 2; // starts at 2 because 0,1 are used already
-    
-    for(int y=0; y < labelImage.GetNumRows(); y++) {
-      s32 *row = labelImage.GetRow(y); // (s32*)labelImage.ptr(y);
-      for(int x=0; x < labelImage.GetNumCols(); x++) {
-        if(row[x] != 1) {
-          continue;
-        }
-        
-        cv::Rect rect;
-        cv::floodFill(labelImage.get_CvMat_(), cv::Point(x,y), labelCount, &rect, 0, 0, 4);
-        
-        std::vector<Point2<s32> > blob;
-        
-        for(int i=rect.y; i < (rect.y+rect.height); i++) {
-          int *row2 = (int*)labelImage.GetRow(i);
-          for(int j=rect.x; j < (rect.x+rect.width); j++) {
-            if(row2[j] != labelCount) {
-              continue;
-            }
-            
-            blob.emplace_back(j,i);
-          }
-        }
-        
-        regionPoints.emplace_back(blob);
-        
-        ++labelCount;
-      }
-    }
-    
-    return labelCount-2;
-    
+    return count;
   } // GetConnectedComponents()
   
-  
+  s32 Image::GetConnectedComponents(Array2d<s32>& labelImage, std::vector<ConnectedComponentStats>& stats) const
+  {
+    cv::Mat cvStats, cvCentroids;
+    const s32 count = cv::connectedComponentsWithStats(this->get_CvMat_(), labelImage.get_CvMat_(), cvStats, cvCentroids);
+    for(s32 iComp=0; iComp < count; ++iComp)
+    {
+      const s32* compStats = cvStats.ptr<s32>(iComp);
+      const f64* compCentroid = cvCentroids.ptr<f64>(iComp);
+
+      ConnectedComponentStats stat{
+        .area        = (size_t)compStats[cv::CC_STAT_AREA],
+        .centroid    = Point2f(compCentroid[0], compCentroid[1]),
+        .boundingBox = Rectangle<s32>(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
+                                      compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]),
+      };
+      
+      stats.push_back(std::move(stat));
+    }
+    
+    return count;
+  }
   
 #if 0
 #pragma mark --- ImageRGBA ---
