@@ -69,7 +69,13 @@ namespace Cozmo {
   // Save logs on device
   CONSOLE_VAR(bool,  kBFT_SaveLogsOnDevice,       "BehaviorFactoryTest",  true);
 
-  // Do NVStorage writes at end of test only if it passes
+  // Write to NVStorage when test complete (versus throughout the test)
+  // This is only honored if kBFT_WriteToNVStorageOnPassOnly is false.
+  // If kBFT_WriteToNVStorageOnPassOnly == true, this var is effectively true as well.
+  CONSOLE_VAR(bool,  kBFT_WriteToNVStorageAtEnd, "BehaviorFactoryTest",  true);
+  
+  // Do NVStorage writes at end of test only if it passes.
+  // Overrides kBFT_WriteToNVStorageAtEnd (i.e. treats it as if it were true).
   CONSOLE_VAR(bool,  kBFT_WriteToNVStorageOnPassOnly, "BehaviorFactoryTest",  true);
   
   // Disconnect at end of test
@@ -312,7 +318,7 @@ namespace Cozmo {
   
   
   
-  void BehaviorFactoryTest::QueueWriteToRobot(NVStorage::NVEntryTag tag, const u8* data, size_t size)
+  void BehaviorFactoryTest::QueueWriteToRobot(Robot& robot, NVStorage::NVEntryTag tag, const u8* data, size_t size)
   {
     if (kBFT_EnableNVStorageWrites) {
       
@@ -320,13 +326,14 @@ namespace Cozmo {
         {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft,  FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_ToolCodeInfo,       FactoryTestResultCode::TOOL_CODE_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_IMUInfo,            FactoryTestResultCode::IMU_INFO_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibImage1,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibImage2,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibImage3,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibImage4,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibImage5,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibImage6,        FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED},
-        {NVStorage::NVEntryTag::NVEntry_CalibImagesUsed,    FactoryTestResultCode::CALIB_IMAGE_USED_WRITE_FAILED},
+        {NVStorage::NVEntryTag::NVEntry_CalibMetaInfo,      FactoryTestResultCode::CALIB_META_INFO_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CameraCalib,        FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_CalibPose,          FactoryTestResultCode::CALIB_POSE_WRITE_FAILED},
         {NVStorage::NVEntryTag::NVEntry_ObservedCubePose,   FactoryTestResultCode::CUBE_POSE_WRITE_FAILED}
@@ -338,16 +345,26 @@ namespace Cozmo {
       }
       
       // Create callback for the nvStorage write
-      auto callback = [this,tag,resCode](NVStorage::NVResult res) {
+      auto callback = [this,&robot,tag,resCode](NVStorage::NVResult res) {
         if (res != NVStorage::NVResult::NV_OKAY) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToRobot.Failed", "Tag: %s", EnumToString(tag));
-          _writeFailureCode = resCode;
+          
+          if (kBFT_WriteToNVStorageAtEnd || kBFT_WriteToNVStorageOnPassOnly) {
+            _writeFailureCode = resCode;
+          } else {
+            EndTest(robot, resCode);
+          }
+          
         } else {
           PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToRobot.Success", "Tag: %s", EnumToString(tag));
         }
       };
 
-      _queuedWrites.emplace_back(tag, data, size, callback);
+      if (kBFT_WriteToNVStorageAtEnd || kBFT_WriteToNVStorageOnPassOnly) {
+        _queuedWrites.emplace_back(tag, data, size, callback);
+      } else {
+        robot.GetNVStorageComponent().Write(tag, data, size, callback);
+      }
 
     }
   }
@@ -553,6 +570,15 @@ namespace Cozmo {
         // there's no face data to pull.
         if (currentTime_sec > _holdUntilTime && !robot.GetNVStorageComponent().HasPendingRequests()) {
           f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
+          
+          // Write drift rate to robot
+          IMUInfo imuInfo;
+          imuInfo.driftRate_degPerSec = angleChange / _kIMUDriftDetectPeriod_sec;
+          QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_IMUInfo, (u8*)&imuInfo, sizeof(imuInfo));
+          
+          // Write drift rate to log
+          _factoryTestLogger.Append(imuInfo);
+          
           if(angleChange > _kIMUDriftAngleThreshDeg) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
                                 "Angle change of %f deg detected in %f seconds",
@@ -752,7 +778,7 @@ namespace Cozmo {
                         // Write images to robot
                         u32 imgIdx = 0;
                         for (auto const& img : rawJpegData) {
-                          QueueWriteToRobot(toolCodeImageTags[imgIdx], img.data(), img.size());
+                          QueueWriteToRobot(robot, toolCodeImageTags[imgIdx], img.data(), img.size());
                           ++imgIdx;
                           
                           // Save calibration images to log on device
@@ -786,7 +812,7 @@ namespace Cozmo {
                         // Store results to nvStorage
                         u8 buf[info.Size()];
                         size_t numBytes = info.Pack(buf, sizeof(buf));
-                        QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes);
+                        QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes);
                         
                         
                         // Verify tool code data is in range
@@ -879,29 +905,14 @@ namespace Cozmo {
 
         // Write cube's pose to nv storage
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
-        
-        // Serialize the cube's pose
         const Pose3d& cubePose = oObject->GetPose();
-        Radians angleX, angleY, angleZ;
-        cubePose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
-        
-        std::array<f32,6> poseData;
-        poseData[0] = angleX.ToFloat();
-        poseData[1] = angleY.ToFloat();
-        poseData[2] = angleZ.ToFloat();
-        poseData[3] = cubePose.GetTranslation().x();
-        poseData[4] = cubePose.GetTranslation().y();
-        poseData[5] = cubePose.GetTranslation().z();
-        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.WritingCubePose",
-                         "rot: %f %f %f, trans: %f %f %f",
-                         poseData[0], poseData[1], poseData[2],
-                         poseData[3], poseData[4], poseData[5]);
+        PoseData poseData = ConvertToPoseData(cubePose);
         
         // Store to robot
-        QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_ObservedCubePose, (u8*)poseData.data(), sizeof(poseData));
+        QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_ObservedCubePose, (u8*)&poseData, sizeof(poseData));
         
         // Write pose data to log on device
-        _factoryTestLogger.AppendPoseData("ObservedCubePose", poseData);
+        _factoryTestLogger.AppendObservedCubePose(poseData);
         
         
         
@@ -1398,12 +1409,12 @@ namespace Cozmo {
     // Write calibration to robot
     u8 buf[calibMsg.Size()];
     size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
-    QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes);
+    QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes);
 
     
     // Get calibration image data
-    u8 dotsFoundMask;
-    std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetCalibrationImageJpegData(&dotsFoundMask);
+    CalibMetaInfo calibMetaInfo;
+    std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetCalibrationImageJpegData(&calibMetaInfo.dotsFoundMask);
     
     const u32 NUM_CAMERA_CALIB_IMAGES = 6;
     static const NVStorage::NVEntryTag calibImageTags[NUM_CAMERA_CALIB_IMAGES] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
@@ -1424,7 +1435,7 @@ namespace Cozmo {
     // Write calibration images to robot
     u32 imgIdx = 0;
     for (auto const& img : rawJpegData) {
-      QueueWriteToRobot(calibImageTags[imgIdx], img.data(), img.size());
+      QueueWriteToRobot(robot, calibImageTags[imgIdx], img.data(), img.size());
       ++imgIdx;
       
       // Save calibration images to log on device
@@ -1432,8 +1443,8 @@ namespace Cozmo {
     }
     
     // Write bit flag indicating in which images dots were found
-    QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed, &dotsFoundMask, 1);
-    _factoryTestLogger.AppendCalibMetaInfo(dotsFoundMask);
+    QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CalibMetaInfo, (u8*)&calibMetaInfo, sizeof(calibMetaInfo));
+    _factoryTestLogger.Append(calibMetaInfo);
     
     // Error if too many images found for some reason
     if (tooManyCalibImages) {
@@ -1452,20 +1463,11 @@ namespace Cozmo {
     
     
     // Write calib pose to log on device
-    std::array<f32,6> poseData;
-    Radians angleX, angleY, angleZ;
-    calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
-    poseData[0] = angleX.ToFloat();
-    poseData[1] = angleY.ToFloat();
-    poseData[2] = angleZ.ToFloat();
-    poseData[3] = calibPose.GetTranslation().x();
-    poseData[4] = calibPose.GetTranslation().y();
-    poseData[5] = calibPose.GetTranslation().z();
-    _factoryTestLogger.AppendPoseData("CalibPose", poseData);
-  
+    PoseData poseData = ConvertToPoseData(calibPose);
+    _factoryTestLogger.AppendCalibPose(poseData);
 
     // Write calib pose to robot
-    QueueWriteToRobot(NVStorage::NVEntryTag::NVEntry_CalibPose, (u8*)(poseData.data()), sizeof(poseData));
+    QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CalibPose, (u8*)&poseData, sizeof(poseData));
     
     
     
@@ -1570,7 +1572,20 @@ namespace Cozmo {
     }
   }
 
-
+  
+  PoseData BehaviorFactoryTest::ConvertToPoseData(const Pose3d& p)
+  {
+    PoseData poseData;
+    Radians angleX, angleY, angleZ;
+    p.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+    poseData.angleX_rad = angleX.ToFloat();
+    poseData.angleY_rad = angleY.ToFloat();
+    poseData.angleZ_rad = angleZ.ToFloat();
+    poseData.transX_mm = p.GetTranslation().x();
+    poseData.transY_mm = p.GetTranslation().y();
+    poseData.transZ_mm = p.GetTranslation().z();
+    return poseData;
+  }
   
 } // namespace Cozmo
 } // namespace Anki

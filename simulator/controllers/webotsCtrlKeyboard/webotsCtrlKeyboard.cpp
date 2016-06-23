@@ -1790,8 +1790,9 @@ namespace Anki {
                 // Get all Mfg test images and results
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_IMUInfo);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibMetaInfo);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
@@ -2318,6 +2319,20 @@ namespace Anki {
           }
           
           switch(msg.tag) {
+            case NVStorage::NVEntryTag::NVEntry_IMUInfo:
+            {
+              IMUInfo info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+                break;
+              }
+              info.Unpack(recvdData->data(), info.Size());
+              
+              _factoryTestLogger.Append(info);
+              
+              break;
+            }
             case NVStorage::NVEntryTag::NVEntry_CameraCalib:
             {
               CameraCalibration calib;
@@ -2332,9 +2347,18 @@ namespace Anki {
               
               break;
             }
-            case NVStorage::NVEntryTag::NVEntry_CalibImagesUsed:
+            case NVStorage::NVEntryTag::NVEntry_CalibMetaInfo:
             {
-              _factoryTestLogger.AppendCalibMetaInfo(recvdData->at(0));
+              CalibMetaInfo info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+                break;
+              }
+              info.Unpack(recvdData->data(), info.Size());
+              
+              _factoryTestLogger.Append(info);
+              
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
@@ -2353,51 +2377,30 @@ namespace Anki {
             }
             case NVStorage::NVEntryTag::NVEntry_CalibPose:
             {
-              
-              // Pose data is stored like this. (See VisionSystem.cpp)
-              //const f32 poseData[6] = {
-              //  angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
-              //  calibPose.GetTranslation().x(),
-              //  calibPose.GetTranslation().y(),
-              //  calibPose.GetTranslation().z(),
-              //};
-              
-              const u32 sizeOfPoseData = 6 * sizeof(f32);
-              if (recvdData->size() != MakeWordAligned(sizeOfPoseData)) {
+              PoseData info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
                 PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose.UnexpectedSize",
-                                 "Expected %zu, got %zu", MakeWordAligned(sizeOfPoseData), recvdData->size());
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
                 break;
               }
+              info.Unpack(recvdData->data(), info.Size());
 
-              std::array<f32,6> poseData;
-              memcpy(poseData.data(), recvdData->data(), sizeOfPoseData);
-
-              _factoryTestLogger.AppendPoseData("CalibPose", poseData);
+              _factoryTestLogger.AppendCalibPose(info);
               
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_ObservedCubePose:
             {
-              
-              // Pose data is stored like this. (See BehaviorFactoryTest.cpp)
-              //const f32 poseData[6] = {
-              //  angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
-              //  calibPose.GetTranslation().x(),
-              //  calibPose.GetTranslation().y(),
-              //  calibPose.GetTranslation().z(),
-              //};
-              
-              const u32 sizeOfPoseData = 6 * sizeof(f32);
-              if (recvdData->size() != MakeWordAligned(sizeOfPoseData)) {
+              PoseData info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
                 PRINT_NAMED_INFO("HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
-                                 "Expected %zu, got %zu", MakeWordAligned(sizeOfPoseData), recvdData->size());
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
                 break;
               }
+              info.Unpack(recvdData->data(), info.Size());
               
-              std::array<f32,6> poseData;
-              memcpy(poseData.data(), recvdData->data(), sizeOfPoseData);
-                          
-              _factoryTestLogger.AppendPoseData("ObservedCubePose", poseData);
+              _factoryTestLogger.AppendObservedCubePose(info);
+              
               
               break;
             }

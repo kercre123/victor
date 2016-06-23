@@ -49,18 +49,18 @@ public:
   bool Append(const CameraCalibration& data);
   bool Append(const ToolCodeInfo& data);
   bool Append(const BirthCertificate& data);
-  
-  // Prints byte as a bit string
-  bool AppendCalibMetaInfo(uint8_t dotsFoundMask);
-  
-  // Expects poseData[0-2] to represent rotation about x,y,z
-  // and poseData[3-5] to represent translation in x,y,z
-  bool AppendPoseData(const std::string& poseName, const std::array<float,6>& poseData);
+  bool Append(const IMUInfo& data);
+  bool Append(const CalibMetaInfo& data);
+  bool AppendCalibPose(const PoseData& data);
+  bool AppendObservedCubePose(const PoseData& data);
   
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);
+
   
 private:
+  
+  bool AppendPoseData(const std::string& poseName, const PoseData& data);
   bool AppendToFile(const std::string& data);
   
   std::string _logDir;

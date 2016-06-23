@@ -62,7 +62,7 @@ namespace Cozmo {
     void EndTest(Robot& robot, FactoryTestResultCode resCode);
     void PrintAndLightResult(Robot& robot, FactoryTestResultCode res);
 
-    void QueueWriteToRobot(NVStorage::NVEntryTag tag, const u8* data, size_t size);
+    void QueueWriteToRobot(Robot& robot, NVStorage::NVEntryTag tag, const u8* data, size_t size);
     bool SendQueuedWrites(Robot& robot);
     
 
@@ -151,6 +151,8 @@ namespace Cozmo {
     };
     std::list<WriteEntry> _queuedWrites;
     FactoryTestResultCode _writeFailureCode;
+
+    static PoseData ConvertToPoseData(const Pose3d& p);
     
   }; // class BehaviorFactoryTest
 

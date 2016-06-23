@@ -172,9 +172,9 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
 
-  bool FactoryTestLogger::AppendCalibMetaInfo(uint8_t dotsFoundMask)
+  bool FactoryTestLogger::Append(const CalibMetaInfo& data)
   {
-    std::bitset<8> b(dotsFoundMask);
+    std::bitset<8> b(data.dotsFoundMask);
     
     std::stringstream ss;
     ss << "\n[CalibMetaInfo]"
@@ -184,12 +184,30 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
-  bool FactoryTestLogger::AppendPoseData(const std::string& poseName, const std::array<float,6>& poseData)
+  bool FactoryTestLogger::Append(const IMUInfo& data)
+  {
+    std::stringstream ss;
+    ss << "\n[IMUInfo]"
+    << "\nDriftRate_degPerSec: " << data.driftRate_degPerSec;
+    
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.IMUInfo", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
+  bool FactoryTestLogger::AppendCalibPose(const PoseData& data) {
+    return AppendPoseData("CalibPose", data);
+  }
+
+  bool FactoryTestLogger::AppendObservedCubePose(const PoseData& data) {
+    return AppendPoseData("ObservedCubePose", data);
+  }
+    
+  bool FactoryTestLogger::AppendPoseData(const std::string& poseName, const PoseData& data)
   {
     std::stringstream ss;
     ss << "\n[" << poseName << "]"
-       << "\nRot: "   << poseData[0] << " " << poseData[1] << " " << poseData[2]
-       << "\nTrans: " << poseData[3] << " " << poseData[4] << " " << poseData[5];
+       << "\nRot: "   << data.angleX_rad << " " << data.angleY_rad << " " << data.angleZ_rad
+       << "\nTrans: " << data.transX_mm << " " << data.transY_mm << " " << data.transZ_mm;
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.PoseData", "%s", ss.str().c_str());
     return AppendToFile(ss.str());

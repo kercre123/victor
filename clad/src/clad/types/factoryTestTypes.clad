@@ -78,7 +78,8 @@ enum uint_8 FactoryTestResultCode {
   NVSTORAGE_WRITE_FAILED,
   NVSTORAGE_SEND_FAILED,
   TOO_MANY_TOOL_CODE_IMAGES,
-  CALIB_IMAGE_USED_WRITE_FAILED,
+  CALIB_META_INFO_WRITE_FAILED,
+  IMU_INFO_WRITE_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
@@ -106,6 +107,23 @@ structure BirthCertificate {
   uint_8 hour,
   uint_8 minute,
   uint_8 second
+}
+
+structure CalibMetaInfo {
+  uint_8 dotsFoundMask    // bit mask for which calibration images had dots found
+}
+
+structure IMUInfo {
+  float_32 driftRate_degPerSec
+}
+
+structure PoseData {
+  float_32 angleX_rad,
+  float_32 angleY_rad,
+  float_32 angleZ_rad,
+  float_32 transX_mm,
+  float_32 transY_mm,
+  float_32 transZ_mm,
 }
 
 
