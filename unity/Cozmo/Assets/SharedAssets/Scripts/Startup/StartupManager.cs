@@ -156,12 +156,12 @@ public class StartupManager : MonoBehaviour {
       foreach (string prefabName in _StartupDebugPrefabNames) {
         AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName,
           prefabName, (GameObject prefab) => {
-            if (prefab != null) {
-              GameObject go = GameObject.Instantiate(prefab);
-              go.transform.SetParent(transform);
-            }
-            loadedDebugAssets++;
-          });
+          if (prefab != null) {
+            GameObject go = GameObject.Instantiate(prefab);
+            go.transform.SetParent(transform);
+          }
+          loadedDebugAssets++;
+        });
       }
       while (loadedDebugAssets < _StartupDebugPrefabNames.Length) {
         yield return 0;
@@ -214,54 +214,59 @@ public class StartupManager : MonoBehaviour {
     // TODO: Don't hardcode this?
     assetBundleManager.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName,
       "ShaderHolder", (Cozmo.ShaderHolder sh) => {
-        Cozmo.ShaderHolder.SetInstance(sh);
-      });
+      Cozmo.ShaderHolder.SetInstance(sh);
+    });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(_BasicUIPrefabAssetBundleName,
       "AlertViewLoader", (Cozmo.UI.AlertViewLoader avl) => {
-        Cozmo.UI.AlertViewLoader.SetInstance(avl);
-      });
+      Cozmo.UI.AlertViewLoader.SetInstance(avl);
+    });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName,
       "UIColorPalette", (Cozmo.UI.UIColorPalette colorP) => {
-        Cozmo.UI.UIColorPalette.SetInstance(colorP);
-      });
+      Cozmo.UI.UIColorPalette.SetInstance(colorP);
+    });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName,
       "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
-        psc.Initialize();
-        Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
-      });
+      psc.Initialize();
+      Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
+    });
 
     assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName,
       "CubePalette", (Cozmo.CubePalette cp) => {
-        Cozmo.CubePalette.SetInstance(cp);
-      });
+      Cozmo.CubePalette.SetInstance(cp);
+    });
 
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
       "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
-        Cozmo.ItemDataConfig.SetInstance(idc);
-      });
+      Cozmo.ItemDataConfig.SetInstance(idc);
+    });
 
     assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName,
       "DefaultChestConfig", (ChestData cd) => {
-        ChestData.SetInstance(cd);
-      });
+      ChestData.SetInstance(cd);
+    });
 
     assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName,
       "HexItemList", (Cozmo.HexItemList cd) => {
-        Cozmo.HexItemList.SetInstance(cd);
-      });
+      Cozmo.HexItemList.SetInstance(cd);
+    });
 
     assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
       "ChallengeList", (ChallengeDataList cd) => {
-        ChallengeDataList.SetInstance(cd);
-      });
+      ChallengeDataList.SetInstance(cd);
+    });
 
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName,
+      "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
+      Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
+    });
+    
     assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName,
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
-        Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
-      });
+      Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
+    });
 
 
 

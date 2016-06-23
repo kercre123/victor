@@ -57,16 +57,16 @@ namespace Cozmo {
       }
       
       
-      Result GameMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
+      Result GameMessageHandler::ProcessPacket(const std::vector<uint8_t>& buffer)
       {
         Result retVal = RESULT_FAIL;
 
         ExternalInterface::MessageEngineToGame message;
-        if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
+        if (message.Unpack(buffer.data(), buffer.size()) != buffer.size()) {
           PRINT_STREAM_ERROR("GameMessageHandler.MessageBufferWrongSize",
             "Buffer's size does not match expected size for this message ID. (Msg " <<
             ExternalInterface::MessageEngineToGameTagToString(message.GetTag()) << ", expected " << message.Size() <<
-            ", recvd " << packet.dataLen << ")");
+            ", recvd " << buffer.size() << ")");
         }
 
         if (messageCallback != nullptr) {
@@ -85,10 +85,10 @@ namespace Cozmo {
           
           while(comms_->GetNumPendingMsgPackets() > 0)
           {
-            Comms::MsgPacket packet;
-            comms_->GetNextMsgPacket(packet);
+            std::vector<uint8_t> buffer;
+            comms_->GetNextMsgPacket(buffer);
             
-            if(ProcessPacket(packet) != RESULT_OK) {
+            if(ProcessPacket(buffer) != RESULT_OK) {
               retVal = RESULT_FAIL;
             }
           } // while messages are still available from comms

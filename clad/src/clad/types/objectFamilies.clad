@@ -15,7 +15,8 @@ namespace Cozmo {
     Ramp,
     Charger,
     Mat,
-    MarkerlessObject
+    MarkerlessObject,
+    CustomObject
   } // enum class ObjectFamily
   
 } // namespace Cozmo

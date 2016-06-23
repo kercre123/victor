@@ -183,7 +183,7 @@ def main(scriptArgs):
     return True
 
   #run engine clad's make
-  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
+  if (subprocess.call(['make', '--silent', 'cleanCppListFiles', 'all'], cwd=os.path.join(projectRoot, 'clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
 
@@ -199,7 +199,7 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine', 'resources'],
+  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'resources'],
    ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['cozmoAPI/src/anki/cozmo', 'cozmoAPI/include' ], ['project/gyp/cozmoAPI.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])

@@ -39,7 +39,7 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json:
 
 bool BehaviorReactToRobotOnBack::IsRunnableInternal(const Robot& robot) const
 {
-  return true;
+  return _disableIDs.size() == 0;
 }
 
 Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)

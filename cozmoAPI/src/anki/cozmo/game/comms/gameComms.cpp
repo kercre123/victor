@@ -192,10 +192,11 @@ namespace Cozmo {
   
   
   // Returns true if a MsgPacket was successfully gotten
-  bool GameComms::GetNextMsgPacket(Comms::MsgPacket& p)
+  bool GameComms::GetNextMsgPacket(std::vector<uint8_t>& buf)
   {
     if (!recvdMsgPackets_.empty()) {
-      p = recvdMsgPackets_.front();
+      const auto& packet = recvdMsgPackets_.front();
+      buf = {packet.data, packet.data+packet.dataLen};
       recvdMsgPackets_.pop_front();
       return true;
     }

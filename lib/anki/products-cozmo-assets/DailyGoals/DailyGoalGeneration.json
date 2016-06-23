@@ -9,7 +9,8 @@
       "Priority": 0,
       "CladEvent": "OnMeetNewPerson",
       "GenConditions": [],
-      "ProgressConditions": []
+      "ProgressConditions": [],
+      "Id": 18
     },
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
@@ -20,7 +21,8 @@
       "Priority": 3,
       "CladEvent": "OnSpeedtapGamePlayerWinAnyIntensity",
       "GenConditions": [],
-      "ProgressConditions": []
+      "ProgressConditions": [],
+      "Id": 19
     },
     {
       "TitleKey": "dailyGoal.title.UnlockMeetCozmo",
@@ -41,7 +43,8 @@
             "tooltip": ""
           }
         }
-      ]
+      ],
+      "Id": 20
     }
   ]
 }

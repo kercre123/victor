@@ -37,7 +37,13 @@ IPA_FILE="${ANKI_BUILD_BUNDLE_NAME}-${ANKI_BUILD_CONFIGURATION}-${ANKI_BUILD_PRO
 rm -f "${BUILT_PRODUCTS_PATH}/${ANKI_BUILD_BUNDLE_NAME}.ipa"
 rm -f "${ARTIFACT_ROOT}/${IPA_FILE}"
 
-/usr/bin/codesign --verify -vvvv ${APP_BUNDLE}
+EXIT_CODE=`/usr/bin/codesign --verify -vvvv ${APP_BUNDLE}`
+
+if [ ${EXIT_CODE} != 0 ]; then
+    echo "\nError: Codesigning Verification Failed. Try rebuilding.\n"
+    /usr/bin/codesign --display --verbose=4 -r- ${APP_BUNDLE}
+    exit ${EXIT_CODE}
+fi
 
 xcrun \
     -sdk ${SDK_PLATFORM} \

@@ -26,6 +26,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22497190}
+  - 222: {fileID: 22245648}
   m_Layer: 5
   m_Name: EnergyEarnedContainer
   m_TagString: Untagged
@@ -3394,6 +3395,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 124638}
+--- !u!222 &22245648
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 110880}
 --- !u!222 &22246112
 CanvasRenderer:
   m_ObjectHideFlags: 1

@@ -15,14 +15,14 @@ namespace ScriptedSequences.Conditions {
           EnableChangedAndRobotConnected(true);
         }
         else {
-          RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
-          RobotEngineManager.Instance.DisconnectedFromClient += HandleRobotDisconnected;
+          RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleRobotConnected);
+          RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), HandleRobotDisconnected);
         }
       }
       else {
         EnableChangedAndRobotConnected(false);
-        RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
-        RobotEngineManager.Instance.DisconnectedFromClient -= HandleRobotDisconnected;
+        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleRobotConnected);
+        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), HandleRobotDisconnected);
       }
     }
 
@@ -30,11 +30,11 @@ namespace ScriptedSequences.Conditions {
 
     protected abstract void EnableChangedAndRobotConnected(bool enabled);
 
-    private void HandleRobotConnected(int id) {
+    private void HandleRobotConnected(object message) {
       EnableChangedAndRobotConnected(IsEnabled);
     }
 
-    private void HandleRobotDisconnected(DisconnectionReason reason) {
+    private void HandleRobotDisconnected(object message) {
       IsMet = false;
     }
 

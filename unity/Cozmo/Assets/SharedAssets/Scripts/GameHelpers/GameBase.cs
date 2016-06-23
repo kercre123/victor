@@ -8,6 +8,7 @@ using DG.Tweening;
 using Anki.Cozmo;
 using System.Linq;
 using Cozmo.Util;
+using Anki.Cozmo.ExternalInterface;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -132,10 +133,10 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance = UIManager.OpenView(
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab,
       newView => {
-        newView.Initialize();
+        newView.Initialize(_ChallengeData);
         SetupView(newView, _ChallengeData);
       });
-
+    
     PrepRobotForGame();
   }
 
@@ -167,7 +168,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private IEnumerator WaitForPickingUpOrPlacingFinish(IRobot robot, float startTimestamp) {
     while (robot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING
-      && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
+           && (Time.time - startTimestamp) < kWaitForPickupOrPlaceTimeout_sec) {
       yield return new WaitForEndOfFrame();
     }
 
@@ -767,39 +768,39 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void RegisterInterruptionStartedEvents() {
     DeregisterInterruptionStartedEvents();
-    RobotEngineManager.Instance.OnCliffEvent += HandleRobotCliffEventStarted;
-    RobotEngineManager.Instance.OnRobotPickedUp += HandleRobotPickedUpStarted;
-    RobotEngineManager.Instance.OnRobotOnBack += HandleRobotOnBackEventStarted;
+    RobotEngineManager.Instance.AddCallback(typeof(CliffEvent), HandleRobotCliffEventStarted);
+    RobotEngineManager.Instance.AddCallback(typeof(RobotPickedUp), HandleRobotPickedUpStarted);
+    RobotEngineManager.Instance.AddCallback(typeof(RobotOnBack), HandleRobotOnBackEventStarted);
   }
 
   protected void DeregisterInterruptionStartedEvents() {
-    RobotEngineManager.Instance.OnCliffEvent -= HandleRobotCliffEventStarted;
-    RobotEngineManager.Instance.OnRobotPickedUp -= HandleRobotPickedUpStarted;
-    RobotEngineManager.Instance.OnRobotOnBack -= HandleRobotOnBackEventStarted;
+    RobotEngineManager.Instance.RemoveCallback(typeof(CliffEvent), HandleRobotCliffEventStarted);
+    RobotEngineManager.Instance.RemoveCallback(typeof(RobotPickedUp), HandleRobotPickedUpStarted);
+    RobotEngineManager.Instance.RemoveCallback(typeof(RobotOnBack), HandleRobotOnBackEventStarted);
   }
 
   protected void RegisterInterruptionEndedEvents() {
     DeregisterInterruptionEndedEvents();
-    RobotEngineManager.Instance.OnCliffEventFinished += HandleRobotInterruptionEventEnded;
-    RobotEngineManager.Instance.OnRobotPutDown += HandleRobotInterruptionEventEnded;
-    RobotEngineManager.Instance.OnRobotOnBackFinished += HandleRobotInterruptionEventEnded;
+    RobotEngineManager.Instance.AddCallback(typeof(RobotCliffEventFinished), HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.AddCallback(typeof(RobotPutDown), HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.AddCallback(typeof(RobotOnBackFinished), HandleRobotInterruptionEventEnded);
   }
 
   protected void DeregisterInterruptionEndedEvents() {
-    RobotEngineManager.Instance.OnCliffEventFinished -= HandleRobotInterruptionEventEnded;
-    RobotEngineManager.Instance.OnRobotPutDown -= HandleRobotInterruptionEventEnded;
-    RobotEngineManager.Instance.OnRobotOnBackFinished -= HandleRobotInterruptionEventEnded;
+    RobotEngineManager.Instance.RemoveCallback(typeof(RobotCliffEventFinished), HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.RemoveCallback(typeof(RobotPutDown), HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.RemoveCallback(typeof(RobotOnBackFinished), HandleRobotInterruptionEventEnded);
   }
 
-  private void HandleRobotPickedUpStarted() {
+  private void HandleRobotPickedUpStarted(object messageObject) {
     HandleRobotInterruptionEventStarted();
   }
 
-  private void HandleRobotCliffEventStarted(Anki.Cozmo.CliffEvent cliffEvent) {
+  private void HandleRobotCliffEventStarted(object messageObject) {
     HandleRobotInterruptionEventStarted();
   }
 
-  private void HandleRobotOnBackEventStarted(Anki.Cozmo.ExternalInterface.RobotOnBack robotOnBackMessage) {
+  private void HandleRobotOnBackEventStarted(object messageObject) {
     HandleRobotInterruptionEventStarted();
   }
 
@@ -810,7 +811,7 @@ public abstract class GameBase : MonoBehaviour {
     PauseStateMachine();
   }
 
-  protected virtual void HandleRobotInterruptionEventEnded() {
+  protected virtual void HandleRobotInterruptionEventEnded(object messageObject) {
     DeregisterInterruptionEndedEvents();
     RegisterInterruptionStartedEvents();
 

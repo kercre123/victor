@@ -541,6 +541,67 @@ const char *visionTestJsonFiles[] = {
   "visionTest_OffTheMat.json"
 };
 
+
+TEST(FactoryTest, FindDots)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+
+  struct TestData
+  {
+    std::string filename;
+    Vision::CameraCalibration calib;
+  };
+  
+  // TODO: Fill in actual calibration data for each test image
+  std::vector<TestData> tests = {
+    {
+      .filename = "test/factoryTests/factoryDotTarget.png",
+      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 165.f, 120.f),
+    },
+    {
+      .filename = "test/factoryTests/factoryDotTarget_trulycam2.png",
+      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 165.f, 120.f),
+    },
+  };
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  Vision::Image image;
+  ExternalInterface::RobotCompletedFactoryDotTest msg;
+  
+  for(auto & test : tests)
+  {
+    const std::string testFilename = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                     test.filename);
+    
+    robot.GetVisionComponent().SetCameraCalibration(test.calib);
+    
+    lastResult = image.Load(testFilename);
+    ASSERT_EQ(lastResult, RESULT_OK);
+    ASSERT_EQ(image.GetNumRows(), test.calib.GetNrows());
+    ASSERT_EQ(image.GetNumCols(), test.calib.GetNcols());
+    
+    lastResult = robot.GetVisionComponent().FindFactoryTestDotCentroids(image, msg);
+    ASSERT_EQ(lastResult, RESULT_OK);
+    
+    ASSERT_TRUE(msg.success);
+    
+    PRINT_NAMED_INFO("FactoryTest.FindDots.Result",
+                     "HeadPose for '%s'[%s]: position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg Pitch=%.1fdeg, Yaw=%.1fdeg",
+                     test.filename.c_str(), msg.success ? "SUCCESS" : "FAIL",
+                     msg.camPoseX_mm, msg.camPoseY_mm, msg.camPoseZ_mm,
+                     RAD_TO_DEG(msg.camPoseRoll_rad),
+                     RAD_TO_DEG(msg.camPosePitch_rad),
+                     RAD_TO_DEG(msg.camPoseYaw_rad));
+    
+    // TODO: Check the rest of the message contents for sane values
+  }
+}
+
 /*
 // This actually creates the set of tests, one for each filename above.
 INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,

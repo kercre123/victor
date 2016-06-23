@@ -16,8 +16,10 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+
 #include "anki/cozmo/basestation/charger.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -33,9 +35,7 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value
   : IBehavior(robot, config)
 {
   SetDefaultName("DriveOffCharger");
-
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
-  
   _distToDrive_mm = Charger::GetLength() + extraDist_mm;
 
   PRINT_NAMED_DEBUG("BehaviorDriveOffCharger.DriveDist",
@@ -64,14 +64,19 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   TransitionToDrivingForward(robot);
   _timesResumed = 0;
-  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+  
+  //Disable Cliff Reaction
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
+  
   return Result::RESULT_OK;
 }
   
 void BehaviorDriveOffCharger::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
+  //Enable Cliff Reaction
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
+
 }
 
 

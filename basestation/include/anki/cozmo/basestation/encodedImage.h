@@ -22,6 +22,7 @@ namespace Anki {
   
   // Forward declaration
   namespace Vision {
+    class Image;
     class ImageRGB;
   }
   
@@ -45,7 +46,9 @@ namespace Cozmo {
     
     TimeStamp_t GetTimeStamp() const { return _timestamp; }
     
+    // Decode internal buffer into a given gray or RGB image
     Result DecodeImageRGB(Vision::ImageRGB& decodedImg) const;
+    Result DecodeImageGray(Vision::Image& decodedImg) const;
     
     Result Save(const std::string& filename) const;
     
@@ -64,6 +67,9 @@ namespace Cozmo {
 
     static void MiniGrayToJpeg(const std::vector<u8>& bufferIn, const u16 height, const u16 width,
                                std::vector<u8>& bufferOut);
+    
+    template<class ImageType>
+    Result DecodeImageHelper(ImageType& decodedImg) const;
     
   }; // class EncodedImage
 

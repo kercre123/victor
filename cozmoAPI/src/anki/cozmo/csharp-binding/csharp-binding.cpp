@@ -233,3 +233,19 @@ void cozmo_send_to_clipboard(const char* log) {
   Anki::Cozmo::iOSBinding::cozmo_engine_send_to_clipboard(log);
 #endif
 }
+
+size_t cozmo_transmit_engine_to_game(uint8_t* buffer, const size_t size)
+{
+  if (engineAPI == nullptr) {
+    return 0;
+  }
+  return engineAPI->SendMessages(buffer, size);
+}
+
+void cozmo_transmit_game_to_engine(const uint8_t* buffer, const size_t size)
+{
+  if (engineAPI == nullptr) {
+    return;
+  }
+  engineAPI->ReceiveMessages(buffer, size);
+}

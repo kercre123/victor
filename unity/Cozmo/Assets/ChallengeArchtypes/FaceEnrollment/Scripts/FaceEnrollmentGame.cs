@@ -134,18 +134,21 @@ namespace FaceEnrollment {
         _AttemptedEnrollFace = true;
       }
       else {
-        RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+        RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), HandleObservedFace);
       }
     }
 
-    private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
+    private void HandleObservedFace(object messageObject) {
+      Anki.Cozmo.ExternalInterface.RobotObservedFace message = (Anki.Cozmo.ExternalInterface.RobotObservedFace)messageObject;
 
-      if (_AttemptedEnrollFace) {
+      bool newFace = message.faceID > 0 && message.name == "";
+
+      if (_AttemptedEnrollFace || !newFace) {
         return;
       }
 
-      CurrentRobot.EnrollNamedFace(id, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
-      _FaceIDToEnroll = id;
+      CurrentRobot.EnrollNamedFace(message.faceID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
+      _FaceIDToEnroll = message.faceID;
       _AttemptedEnrollFace = true;
     }
 
@@ -161,7 +164,7 @@ namespace FaceEnrollment {
       }
       EditOrEnrollFaceComplete(success);
       _AttemptedEnrollFace = false;
-      RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
+      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), HandleObservedFace);
     }
 
     private void EditOrEnrollFaceComplete(bool success) {
@@ -193,7 +196,7 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
-      RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
+      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), HandleObservedFace);
     }
 
   }

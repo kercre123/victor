@@ -15,13 +15,24 @@ namespace ScriptedSequences.Actions {
       }
       else {
         RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-        RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
+        RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedMotion), HandleObservedMotion);
       }
 
       return token;
     }
 
-    private void HandleObservedMotion(Vector2 pos) {
+    private void HandleObservedMotion(object messageObject) {
+
+      /*
+       *  here's how to compute to normalized screen space.
+       * 
+       * if (OnObservedMotion != null) {
+            var resolution = ImageResolutionTable.GetDimensions(ImageResolution.CVGA);
+            // Normalize our position to [-1,1], [-1,1]
+            OnObservedMotion(new Vector2(message.img_x * 2.0f / (float)resolution.Width, message.img_y * 2.0f / (float)resolution.Height));
+         }
+       * */
+
       if (_WaveTimeAccumulator > 0.5f) {
         _Token.Succeed();
       }

@@ -12,7 +12,7 @@ namespace Anki {
       public delegate void CallbackHandler(CallbackInfo callbackInfo);
 
       public class AudioClient {
-        
+
         public event CallbackHandler OnAudioCallback;
 
         private static AudioClient _AudioClient = null;
@@ -37,7 +37,7 @@ namespace Anki {
           _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
           if (null != _RobotEngineManager) {
-            _RobotEngineManager.ReceivedAudioCallback += HandleCallback;
+            _RobotEngineManager.AddCallback(typeof(Anki.Cozmo.Audio.AudioCallback), HandleCallback);
             _IsInitialized = true;
           }
           else {
@@ -46,7 +46,7 @@ namespace Anki {
         }
 
         ~AudioClient() {
-          _RobotEngineManager.ReceivedAudioCallback -= HandleCallback;
+          _RobotEngineManager.RemoveCallback(typeof(Anki.Cozmo.Audio.AudioCallback), HandleCallback);
           _RobotEngineManager = null;
           _IsInitialized = false;
         }
@@ -69,7 +69,7 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
 
           // Assert if a callback handle is passed in and callback flag is set to EventNone
-          sysDebug.Assert( !(AudioCallbackFlag.EventNone == callbackFlag && null != handler) );
+          sysDebug.Assert(!(AudioCallbackFlag.EventNone == callbackFlag && null != handler));
           if (null != handler) {
             AddCallbackHandler(playId, callbackFlag, handler);
           }
@@ -171,14 +171,15 @@ namespace Anki {
                 UnregisterCallbackHandler(playId);
               }
             }
-            else if ( unregisterHandle.Value ) {
+            else if (unregisterHandle.Value) {
               UnregisterCallbackHandler(playId);
             }
           }
         }
-      
+
         // Handle message types
-        private void HandleCallback(AudioCallback message) {
+        private void HandleCallback(object messageObject) {
+          AudioCallback message = (AudioCallback)messageObject;
           DAS.Debug("AudioController.HandleCallback", "Received Audio Callback " + message.ToString());
           CallbackInfo info = new CallbackInfo(message);
           if (null != OnAudioCallback) {
@@ -243,7 +244,7 @@ namespace Anki {
           if (_GameStateTypes.TryGetValue(stateGroup, out groupStates)) {
             return groupStates;
           }
-            
+
           return null;
         }
 

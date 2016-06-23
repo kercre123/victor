@@ -61,14 +61,14 @@ public class PerformancePane : MonoBehaviour {
   private void Start() {
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneOpened(this);
-    RobotEngineManager.Instance.OnDeviceDataMessage += HandleDeviceDataMessage;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DeviceDataMessage), HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
   }
 
   private void OnDestroy() {
     _ShowFPSCounterButton.onClick.RemoveListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneClosed();
-    RobotEngineManager.Instance.OnDeviceDataMessage -= HandleDeviceDataMessage;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DeviceDataMessage), HandleDeviceDataMessage);
   }
 
   public void SetFPS(float newFPS) {
@@ -88,28 +88,24 @@ public class PerformancePane : MonoBehaviour {
     RaisePerformanceCounterButtonClicked();
   }
 
-  private void HandleDeviceDataMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {
+  private void HandleDeviceDataMessage(object messageObject) {
+    Anki.Cozmo.ExternalInterface.DeviceDataMessage message = (Anki.Cozmo.ExternalInterface.DeviceDataMessage)messageObject;
     for (int i = 0; i < message.dataList.Length; ++i) {
       Anki.Cozmo.DeviceDataPair currentPair = message.dataList[i];
-      switch (currentPair.dataType)
-      {
-        case Anki.Cozmo.DeviceDataType.DeviceID:
-        {
+      switch (currentPair.dataType) {
+      case Anki.Cozmo.DeviceDataType.DeviceID: {
           _DeviceID.text = currentPair.dataValue;
           break;
         }
-        case Anki.Cozmo.DeviceDataType.AppRunID:
-        {
+      case Anki.Cozmo.DeviceDataType.AppRunID: {
           _AppRunID.text = currentPair.dataValue;
           break;
         }
-        case Anki.Cozmo.DeviceDataType.LastAppRunID:
-        {
+      case Anki.Cozmo.DeviceDataType.LastAppRunID: {
           _LastAppRunID.text = currentPair.dataValue;
           break;
         }
-        default:
-        {
+      default: {
           DAS.Debug("PerformancePane.HandleDeviceDataMessage.UnhandledDataType", currentPair.dataType.ToString());
           break;
         }

@@ -43,6 +43,12 @@ public static class CozmoBinding {
   [DllImport("__Internal")]
   private static extern void cozmo_send_to_clipboard(string logData);
 
+  [DllImport("__Internal")]
+  public static extern uint cozmo_transmit_engine_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
+
+  [DllImport("__Internal")]
+  public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
+
   #elif UNITY_ANDROID
 
   [DllImport("cozmoEngine")]
@@ -56,6 +62,12 @@ public static class CozmoBinding {
 
   [DllImport("cozmoEngine")]
   private static extern void cozmo_send_to_clipboard(string logData);
+
+  [DllImport("cozmoEngine")]
+  public static extern uint cozmo_transmit_engine_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
+
+  [DllImport("cozmoEngine")]
+  public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
 
   #endif
 

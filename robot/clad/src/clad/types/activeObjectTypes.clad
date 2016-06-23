@@ -9,11 +9,13 @@ namespace Cozmo {
 
 enum uint_16 ActiveObjectType
 {
-  OBJECT_CHARGER = 0xff00,
-  OBJECT_CUBE1   = 0xff01,
-  OBJECT_CUBE2   = 0xff02,
-  OBJECT_CUBE3   = 0xff03,
-  OBJECT_UNKNOWN = 0xffff
+  OBJECT_OTA_FAIL 	= 0xEE00,
+
+  OBJECT_CHARGER 	= 0xff00,
+  OBJECT_CUBE1   	= 0xff01,
+  OBJECT_CUBE2   	= 0xff02,
+  OBJECT_CUBE3   	= 0xff03,
+  OBJECT_UNKNOWN 	= 0xffff
 }
 
 

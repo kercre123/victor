@@ -54,7 +54,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
 
 bool BehaviorReactToPickup::IsRunnableInternal(const Robot& robot) const
 {
-  return true;
+  return _disableIDs.size() == 0;
 }
 
 Result BehaviorReactToPickup::InitInternal(Robot& robot)
@@ -99,7 +99,7 @@ void BehaviorReactToPickup::StopInternal(Robot& robot)
 {
 }
 
-void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
+void BehaviorReactToPickup::AlwaysHandleInternal(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
   // We want to get these messages, even when not running

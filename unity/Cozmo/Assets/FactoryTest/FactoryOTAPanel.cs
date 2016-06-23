@@ -14,18 +14,25 @@ public class FactoryOTAPanel : MonoBehaviour {
   public System.Action OnRestartButton;
 
   void Start() {
-    RobotEngineManager.Instance.OnFirmwareUpdateProgress += OnFirmwareUpdateProgress;
-    RobotEngineManager.Instance.OnFirmwareUpdateComplete += OnFirmwareUpdateComplete;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress), OnFirmwareUpdateProgress);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete), OnFirmwareUpdateComplete);
     _RestartButton.gameObject.SetActive(false);
     _RestartButton.onClick.AddListener(HandleRestartButton);
   }
 
-  private void OnFirmwareUpdateProgress(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
+  private void OnFirmwareUpdateProgress(object messageObject) {
+    Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message = (Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress)messageObject;
     _OTAStatus.text = "InProgress: Robot " + message.robotID + " Stage: " + message.stage + ":" + message.subStage + " " + message.percentComplete + "%"
     + "\nFwSig = " + message.fwSig;
   }
 
-  private void OnFirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
+  private void OnDestroy() {
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress), OnFirmwareUpdateProgress);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete), OnFirmwareUpdateComplete);
+  }
+
+  private void OnFirmwareUpdateComplete(object messageObject) {
+    Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message = (Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete)messageObject;
     _OTAStatus.text = "Complete: Robot " + message.robotID + " Result: " + message.result
     + "\nFwSig = " + message.fwSig;
 

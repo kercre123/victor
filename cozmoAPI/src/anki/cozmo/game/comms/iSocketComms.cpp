@@ -25,7 +25,7 @@ CONSOLE_VAR(bool, kPrintUiMessageLatency, "GameToEngineConnection", false);
 const uint32_t kMaxLatencySamples = 250;
 const uint32_t kReportFrequency = 125;
 
-ISocketComms::ISocketComms(UiConnectionType connectionType)
+ISocketComms::ISocketComms()
   : _latencyStats(kMaxLatencySamples)
   , _pingCounter(0)
 {

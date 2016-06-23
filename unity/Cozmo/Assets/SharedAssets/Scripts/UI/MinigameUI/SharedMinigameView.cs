@@ -199,10 +199,13 @@ namespace Cozmo {
 
       public CanvasGroup CurrentSlide { get { return _CurrentSlide; } }
 
-      public bool _OpenAnimationStarted = false;
+      private bool _OpenAnimationStarted = false;
 
-      public void Initialize() {
+      private bool _IsMinigame = true;
+
+      public void Initialize(ChallengeData data) {
         HideNarrowInfoTextSlide();
+        _IsMinigame = data.IsMinigame;
       }
 
       #region Base View
@@ -488,6 +491,7 @@ namespace Cozmo {
       public void ShowQuitButton() {
         HideBackButton();
         CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab, ContentLayer.Middle);
+        _QuitButtonInstance.Initialize(_IsMinigame);
         _QuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
       }

@@ -45,7 +45,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     _UnlockableTiles = new List<CozmoUnlockableTile>();
     _LockedTiles = new List<CozmoUnlockableTile>();
     LoadTiles();
-    RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), HandleRequestSetUnlockResult);
     UpdatePuzzlePieceCount();
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded += HandleItemValueChanged;
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved += HandleItemValueChanged;
@@ -57,7 +57,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       _CoreUpgradeDetailsViewInstance.CloseView();
     }
 
-    RobotEngineManager.Instance.OnRequestSetUnlockResult -= HandleRequestSetUnlockResult;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), HandleRequestSetUnlockResult);
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded -= HandleItemValueChanged;
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved -= HandleItemValueChanged;
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemCountSet -= HandleItemValueChanged;
@@ -149,7 +149,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 
-  private void HandleRequestSetUnlockResult(Anki.Cozmo.UnlockId unlockId, bool unlocked) {
+  private void HandleRequestSetUnlockResult(object message) {
     LoadTiles();
   }
 

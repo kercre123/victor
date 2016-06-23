@@ -42,6 +42,9 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+
+  
 private:
   
   // Cap on how long ago we had to have observed a face in order to turn towards it
@@ -59,7 +62,6 @@ private:
   u32 _lastActionTag = 0;
   bool _isActing = false;
   
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   void StartActing(Robot& robot, IActionRunner* action);
 }; // class BehaviorReactToPoke

@@ -70,8 +70,8 @@ public class FactoryIntroManager : MonoBehaviour {
     _LogFilter = PlayerPrefs.GetString("LogFilter");
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
-    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
-    RobotEngineManager.Instance.OnFactoryResult += FactoryResult;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), HandleDisconnectedFromClient);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FactoryTestResult), FactoryResult);
     _RestartButton.gameObject.SetActive(false);
 
     _RestartButton.onClick.AddListener(() => RestartTestApp());
@@ -179,8 +179,8 @@ public class FactoryIntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleDisconnectedFromClient(DisconnectionReason obj) {
-    SetStatusText("Disconnected: " + obj.ToString());
+  private void HandleDisconnectedFromClient(object message) {
+    SetStatusText("Disconnected");
     TestFailed();
   }
 
@@ -207,7 +207,8 @@ public class FactoryIntroManager : MonoBehaviour {
     UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
   }
 
-  private void FactoryResult(FactoryTestResult result) {
+  private void FactoryResult(object message) {
+    Anki.Cozmo.ExternalInterface.FactoryTestResult result = (Anki.Cozmo.ExternalInterface.FactoryTestResult)message;
     SetStatusText("Result Code: " + (int)result.resultEntry.result + " (" + result.resultEntry.result + ")");
     if (result.resultEntry.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
       TestPassed();

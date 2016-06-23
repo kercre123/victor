@@ -64,8 +64,8 @@ public class ConnectDialog : MonoBehaviour {
 
     if (RobotEngineManager.Instance != null) {
       RobotEngineManager.Instance.ConnectedToClient += Connected;
-      RobotEngineManager.Instance.DisconnectedFromClient += Disconnected;
-      RobotEngineManager.Instance.RobotConnected += RobotConnected;
+      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), Disconnected);
+      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), RobotConnected);
     }
 
     Application.targetFrameRate = 30;
@@ -79,10 +79,10 @@ public class ConnectDialog : MonoBehaviour {
     _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
     _MockButton.Initialize(HandleMockButton, "mock_button", "connect_dialog");
 
-    #if !UNITY_EDITOR
+#if !UNITY_EDITOR
     _SimButton.gameObject.SetActive(false);
     _MockButton.gameObject.SetActive(false);
-    #endif
+#endif
 
     _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
   }
@@ -102,8 +102,8 @@ public class ConnectDialog : MonoBehaviour {
   private void OnDestroy() {
     if (RobotEngineManager.Instance != null) {
       RobotEngineManager.Instance.ConnectedToClient -= Connected;
-      RobotEngineManager.Instance.DisconnectedFromClient -= Disconnected;
-      RobotEngineManager.Instance.RobotConnected -= RobotConnected;
+      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), Disconnected);
+      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), RobotConnected);
     }
   }
 
@@ -166,11 +166,13 @@ public class ConnectDialog : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
   }
 
-  private void Disconnected(DisconnectionReason reason) {
-    _ConnectionStatus.text = "Disconnected: " + reason.ToString();
+  private void Disconnected(object message) {
+    _ConnectionStatus.text = "Disconnected";
   }
 
-  private void RobotConnected(int robotID) {
+  private void RobotConnected(object messageObject) {
+    Anki.Cozmo.ExternalInterface.RobotConnected message = (Anki.Cozmo.ExternalInterface.RobotConnected)messageObject;
+    int robotID = (int)message.robotID;
     if (!RobotEngineManager.Instance.Robots.ContainsKey(robotID)) {
       DAS.Error(this, "Unknown robot connected: " + robotID.ToString());
       return;
@@ -183,7 +185,7 @@ public class ConnectDialog : MonoBehaviour {
     }
 
     // Set initial Robot Volume when connecting
-    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[]{ Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
 
     _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");

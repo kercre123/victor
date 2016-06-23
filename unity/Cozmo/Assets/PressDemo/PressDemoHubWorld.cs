@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Anki.Cozmo.ExternalInterface;
 
 /// <summary>
 ///  handles scene transitions on the unity side for the press demo
@@ -39,10 +40,12 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
-    RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
-    RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
-    RobotEngineManager.Instance.OnDemoState += HandleDemoState;
-    RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
+    RobotEngineManager.Instance.AddCallback(typeof(RequestGameStart), HandleRequestSpeedTap);
+    RobotEngineManager.Instance.AddCallback(typeof(RequestEnrollFace), HandleRequestEnrollFace);
+    RobotEngineManager.Instance.AddCallback(typeof(DemoState), HandleDemoState);
+
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DenyGameStart), HandleExternalRejection);
+
     RobotEngineManager.Instance.CurrentRobot.SendAnimation(AnimationName.kStartSleeping, HandleSleepAnimationComplete);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
     return true;
@@ -50,10 +53,10 @@ public class PressDemoHubWorld : HubWorldBase {
 
   public override bool DestroyHubWorld() {
     GameObject.Destroy(_PressDemoViewInstance.gameObject);
-    RobotEngineManager.Instance.OnRequestGameStart -= HandleRequestSpeedTap;
-    RobotEngineManager.Instance.OnRequestEnrollFace -= HandleRequestEnrollFace;
-    RobotEngineManager.Instance.OnDemoState -= HandleDemoState;
-    RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestGameStart), HandleRequestSpeedTap);
+    RobotEngineManager.Instance.RemoveCallback(typeof(RequestEnrollFace), HandleRequestEnrollFace);
+    RobotEngineManager.Instance.RemoveCallback(typeof(DemoState), HandleDemoState);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DenyGameStart), HandleExternalRejection);
     return true;
   }
 
@@ -65,7 +68,9 @@ public class PressDemoHubWorld : HubWorldBase {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
   }
 
-  private void HandleDemoState(int demoNum) {
+  private void HandleDemoState(object message) {
+    DemoState demoStateMessage = (DemoState)message;
+    int demoNum = demoStateMessage.stateNum;
     _PressDemoDebugSceneIndex = demoNum;
     DAS.Debug("PressDemo", "Demo State #: " + demoNum);
     if (_PressDemoViewInstance != null) {
@@ -77,7 +82,8 @@ public class PressDemoHubWorld : HubWorldBase {
     }
   }
 
-  private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
+  private void HandleRequestEnrollFace(object messageObject) {
+    Anki.Cozmo.ExternalInterface.RequestEnrollFace message = (Anki.Cozmo.ExternalInterface.RequestEnrollFace)messageObject;
     DAS.Info("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Face Enroll");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
@@ -90,7 +96,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _ExplicitFaceID = message.face_id;
   }
 
-  private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+  private void HandleExternalRejection(object message) {
     DAS.Info(this, "PressDemoHubWorld.HandleExternalRejection");
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
@@ -98,7 +104,8 @@ public class PressDemoHubWorld : HubWorldBase {
     }
   }
 
-  private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+  private void HandleRequestSpeedTap(object messageObject) {
+    RequestGameStart message = (RequestGameStart)messageObject;
     DAS.Info("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);

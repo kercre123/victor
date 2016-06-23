@@ -133,31 +133,6 @@ const AIBeacon* AIWhiteboard::GetActiveBeacon() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::DisableCliffReaction(void* id)
-{
-  _disableCliffIds.insert(id);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::RequestEnableCliffReaction(void* id)
-{
-  size_t numErased = _disableCliffIds.erase(id);
-
-  if( numErased == 0 ){
-    PRINT_NAMED_WARNING("AIWhiteboard.RequestEnableCliffReaction.InvalidId",
-                        "tried to request enabling cliff reaction with id %p, but no id found. %zu in set",
-                        id,
-                        _disableCliffIds.size());
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::IsCliffReactionEnabled() const
-{
-  return _disableCliffIds.empty();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose)
 {        
   // iterate all current possible markers

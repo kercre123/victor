@@ -152,7 +152,7 @@ TEST(BehaviorInterface, Init)
 
 TEST(BehaviorInterface, InitWithInterface)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -213,7 +213,7 @@ void TickAndCheckScore( Robot& robot, IBehavior& behavior, int num, float expect
 
 TEST(BehaviorInterface, ScoreWhileRunning)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -282,7 +282,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
 TEST(BehaviorInterface, HandleMessages)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -324,7 +324,7 @@ void DoTicks(Robot& robot, IBehavior& behavior, int num=1)
 
 TEST(BehaviorInterface, OutsideAction)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -409,7 +409,7 @@ bool TestBehavior::CallStartActingInternalCallbackRobot(Robot& robot,
 
 TEST(BehaviorInterface, StartActingSimple)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -444,7 +444,7 @@ TEST(BehaviorInterface, StartActingSimple)
 
 TEST(BehaviorInterface, StartActingFailures)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -508,7 +508,7 @@ TEST(BehaviorInterface, StartActingFailures)
 
 TEST(BehaviorInterface, StartActingCallbacks)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -574,7 +574,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
 
 TEST(BehaviorInterface, StartActingWhenNotRunning)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -638,7 +638,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
 TEST(BehaviorInterface, StopActingWithoutCallback)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;
@@ -733,7 +733,7 @@ public:
 
 TEST(BehaviorInterface, StartActingInsideInit)
 {
-  UiMessageHandler handler(0);
+  UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty;

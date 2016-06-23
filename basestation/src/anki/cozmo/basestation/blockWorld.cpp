@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/customObject.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -226,6 +227,18 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         [this] (const EventType& event)
         {
           CycleSelectedObject();
+        }));
+      
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::CreateObjectAtPose,
+        [this] (const EventType& event)
+        {
+
+          const ExternalInterface::CreateObjectAtPose& msg = event.GetData().Get_CreateObjectAtPose();
+          
+          Pose3d newObjectPose(msg.angle_rad, Z_AXIS_3D(), {msg.x_mm, msg.y_mm, 0.0f},
+                               _robot->GetWorldOrigin());
+          
+          BlockWorld::AddCustomObject(newObjectPose, msg.depth_mm, msg.width_mm, msg.height_mm);
         }));
     }
     
@@ -1686,6 +1699,63 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       return RESULT_OK;
     }
   
+    Result BlockWorld::AddCustomObject(const Pose3d& p, const f32 depth_mm, const f32 width_mm, const f32 height_mm)
+    {
+      //TODO share common code with AddMarkerlessObject
+      TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+      
+      // Create an instance of the detected object
+      CustomObject *m = new CustomObject(ObjectType::CustomObstacle, depth_mm, width_mm, height_mm);
+      
+      
+      // Raise origin of object above ground.
+      // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
+      Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
+      Pose3d obsPose = p * raiseObject;
+      m->SetPose(obsPose);
+      m->SetPoseParent(_robot->GetPose().GetParent());
+      
+      // Check if this prox obstacle already exists
+      std::vector<ObservableObject*> existingObjects;
+      FindOverlappingObjects(m, _existingObjects[ObjectFamily::CustomObject], existingObjects);
+      
+      // Update the last observed time of existing overlapping obstacles
+      for(auto obj : existingObjects) {
+        obj->SetLastObservedTime(lastTimestamp);
+      }
+      
+      // No need to add the obstacle again if it already exists
+      if (!existingObjects.empty()) {
+        delete m;
+        return RESULT_OK;
+      }
+      
+      
+      // Check if the obstacle intersects with any other existing objects in the scene.
+      BlockWorldFilter filter;
+      if(_robot->GetLocalizedTo().IsSet()) {
+        // Ignore the mat object that the robot is localized to (?)
+        filter.AddIgnoreID(_robot->GetLocalizedTo());
+      }
+      FindIntersectingObjects(m, existingObjects, 0, filter);
+      if (!existingObjects.empty()) {
+        delete m;
+        return RESULT_OK;
+      }
+      
+      // HACK: to make it think it was observed enough times so as not to get immediately deleted.
+      //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
+      for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
+        m->SetLastObservedTime(lastTimestamp);
+      }
+      
+      AddNewObject(m);
+      _didObjectsChange = true;
+      _currentObservedObjects.push_back(m);
+      
+      return RESULT_OK;
+    }
+  
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
       BlockWorldFilter filter;
@@ -2904,7 +2974,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
           // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
           if(objectsByFamily.first != ObjectFamily::Mat &&
-             objectsByFamily.first != ObjectFamily::MarkerlessObject)
+             objectsByFamily.first != ObjectFamily::MarkerlessObject &&
+             objectsByFamily.first != ObjectFamily::CustomObject)
           {
             for(auto & objectsByType : objectsByFamily.second)
             {

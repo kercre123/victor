@@ -42,9 +42,10 @@ public:
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) override;
   
   virtual void Update() override;
-  
+
+  virtual bool AreMessagesGrouped() const override { return false; }
   virtual bool SendMessage(const Comms::MsgPacket& msgPacket) override;
-  virtual bool RecvMessage(Comms::MsgPacket& outMsgPacket) override;
+  virtual bool RecvMessage(std::vector<uint8_t>& outBuffer) override;
 
   virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) override;

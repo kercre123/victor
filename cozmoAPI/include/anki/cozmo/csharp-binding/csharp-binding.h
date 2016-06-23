@@ -21,6 +21,12 @@ extern "C" {
   // Hook for deinitialization. Should be fine to call startup after this call, even on failure.
   // Return value is just for informational purposes. Should never fail, even if not initialized.
   int cozmo_shutdown();
+
+  // Called from C# to get messages from the engine
+  size_t cozmo_transmit_engine_to_game(uint8_t* buffer, size_t size);
+
+  // Called from C# to push messages to the engine
+  void cozmo_transmit_game_to_engine(const uint8_t* buffer, size_t size);
   
   // Hook for triggering setup of the desired wifi details
   int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey);

@@ -78,7 +78,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         // _RequestTrickButtonContainer.gameObject.SetActive(true);
         SetupButton(_RequestTrickButton, OnSparkClicked, "request_trick_button",
           unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel);
-        RobotEngineManager.Instance.OnSparkUnlockEnded += HandleSparkUnlockEnded;
+        RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.SparkUnlockEnded), HandleSparkUnlockEnded);
       }
     }
     else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
@@ -176,12 +176,12 @@ public class CoreUpgradeDetailsDialog : BaseView {
     label.text = Localization.GetWithArgs(LocalizationKeys.kLabelColonCount, itemData.GetPluralName(), itemId);
   }
 
-  private void HandleSparkUnlockEnded() {
+  private void HandleSparkUnlockEnded(object message) {
     UpdateState();
   }
 
   protected override void CleanUp() {
-    RobotEngineManager.Instance.OnSparkUnlockEnded -= HandleSparkUnlockEnded;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.SparkUnlockEnded), HandleSparkUnlockEnded);
     RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     if (_UpgradeTween != null) {
       _UpgradeTween.Kill();

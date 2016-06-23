@@ -6,15 +6,22 @@ using System.Linq;
 
 public static class EditorDrawingUtility {
 
-  public static void DrawList<T>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc) {
+  public static void DrawList<T>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, bool includeCreateFunc = true, GUIStyle titleStyle = null) {
 
     EditorGUILayout.BeginHorizontal();
-    GUILayout.Label(label);
-    if (GUILayout.Button("+", GUILayout.Width(30))) {
-      list.Add(createFunc());
+    if (titleStyle != null) {
+      GUILayout.Label(label, titleStyle);
     }
-    if (GUILayout.Button("-", GUILayout.Width(30))) {
-      list.RemoveAt(0);
+    else {
+      GUILayout.Label(label);
+    }
+    if (includeCreateFunc) {
+      if (GUILayout.Button("+", GUILayout.Width(30))) {
+        list.Add(createFunc());
+      }
+      if (GUILayout.Button("-", GUILayout.Width(30))) {
+        list.RemoveAt(0);
+      }
     }
     EditorGUILayout.EndHorizontal();
 
@@ -56,11 +63,16 @@ public static class EditorDrawingUtility {
     }
   }
 
-  public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel)
+  public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel, GUIStyle titleStyle = null, GUIStyle subtitleStyle = null)
     where U : IComparable {
     EditorGUILayout.BeginVertical();
     EditorGUILayout.BeginHorizontal();
-    GUILayout.Label(label);
+    if (titleStyle != null) {
+      GUILayout.Label(label, titleStyle);
+    }
+    else {
+      GUILayout.Label(label);
+    }
     if (GUILayout.Button("+", GUILayout.Width(30))) {
       list.Insert(0, createFunc());
     }
@@ -72,7 +84,7 @@ public static class EditorDrawingUtility {
     var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
 
     foreach (var entry in splitList) {
-      DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc);
+      DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc, false, subtitleStyle);
     }
 
     var tmp = splitList.SelectMany(kvp => kvp.Value).ToArray();

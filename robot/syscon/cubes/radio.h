@@ -22,6 +22,10 @@ static const int MAX_ACCESSORIES = TICK_LOOP;
 
 static const int ADV_CHANNEL = 81;
 
+static const int OTA_ACK_TIMEOUT = CYCLES_MS(2);
+static const int MAX_ACK_TIMEOUTS = CYCLES_MS(500) / OTA_ACK_TIMEOUT;
+static const int MAX_OTA_FAILURES = 5;
+
 // Advertising settings
 static const uint32_t ADVERTISE_ADDRESS = 0xCA5CADED;
 
@@ -35,6 +39,7 @@ struct AccessorySlot {
   bool                  active;
   bool                  allocated;
   int                   last_received;
+  int                   failure_count;
 
   bool                  hopSkip;
   uint8_t               hopIndex;

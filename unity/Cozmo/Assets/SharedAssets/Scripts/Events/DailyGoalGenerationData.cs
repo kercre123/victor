@@ -52,6 +52,7 @@ namespace Anki.Cozmo {
         GenConditions = new List<GoalCondition>();
         ProgressConditions = new List<GoalCondition>();
         Priority = 0;
+        Id = 0;
       }
 
       /// <summary>
@@ -91,6 +92,10 @@ namespace Anki.Cozmo {
       /// The Conditions for if this goal will progress when its event is fired.
       /// </summary>
       public List<GoalCondition> ProgressConditions = new List<GoalCondition>();
+      /// <summary>
+      /// Uint ID of the Goal, purely used in editor.
+      /// </summary>
+      public uint Id;
 
       public bool CanGen() {
         for (int i = 0; i < GenConditions.Count; i++) {

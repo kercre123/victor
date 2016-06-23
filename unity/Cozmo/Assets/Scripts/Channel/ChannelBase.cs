@@ -7,14 +7,6 @@ using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
 /// <summary>
-/// The type of protocol to communicate over.
-/// </summary>
-public enum ChannelProtocol {
-  Tcp = 0,
-  Udp,
-}
-
-/// <summary>
 /// The reason a connection has failed.
 /// </summary>
 public enum DisconnectionReason {

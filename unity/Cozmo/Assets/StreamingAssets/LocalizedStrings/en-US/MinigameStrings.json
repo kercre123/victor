@@ -30,6 +30,9 @@
   "minigame.quitView.title": {
     "translation": "Quit Game?"
   },
+  "minigame.quitView.title.activity": {
+    "translation": "Quit Activity?"
+  },
   "minigame.quitView.description": {
     "translation": "Any progress in this game will be lost. Are you sure?"
   },

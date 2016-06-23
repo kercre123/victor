@@ -26,7 +26,7 @@ public class BlockPoolPane : MonoBehaviour {
   [SerializeField]
   private InputField _FilterInput;
   private int _FilterRSSI = _DefaultRSSIFilter;
-  
+
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
@@ -66,17 +66,18 @@ public class BlockPoolPane : MonoBehaviour {
     _BlockStatesById = new Dictionary<uint, BlockData>();
     _BlockStates = new List<BlockData>();
 
-    RobotEngineManager.Instance.OnInitBlockPoolMsg += HandleInitBlockPool;
-    
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.InitBlockPoolMessage), HandleInitBlockPool);
+
     // Gets back the InitBlockPool message to fill.
     RobotEngineManager.Instance.Message.GetBlockPoolMessage = new G2U.GetBlockPoolMessage();
     RobotEngineManager.Instance.SendMessage();
   }
 
   private void HandleFilterUpdate(string filter) {
-    try  {
+    try {
       _FilterRSSI = int.Parse(filter);
-    } catch (System.Exception) {
+    }
+    catch (System.Exception) {
       // If the value is not a number, don't update the objects
       return;
     }
@@ -88,7 +89,9 @@ public class BlockPoolPane : MonoBehaviour {
     }
   }
 
-  private void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
+  private void HandleInitBlockPool(object message) {
+
+    Anki.Cozmo.ExternalInterface.InitBlockPoolMessage initMsg = (Anki.Cozmo.ExternalInterface.InitBlockPoolMessage)message;
 
     // Might stomp game setup but hopefully people are using this debug menu before playing.
     foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
@@ -102,7 +105,7 @@ public class BlockPoolPane : MonoBehaviour {
     foreach (Transform child in _AvailableScrollView) {
       Destroy(child);
     }
- 
+
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
       // See if we already know about the object. This happens when the blockpool pane is opened after the robot
       // has already connected to some objects.
@@ -112,12 +115,14 @@ public class BlockPoolPane : MonoBehaviour {
 
         // Show all our enabled lights to blue so we can see what is currently connected
         lc.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
-      } else {
+      }
+      else {
         ObservedObject oo = RobotEngineManager.Instance.CurrentRobot.GetObservedObjectWithFactoryID(initMsg.blockData[i].factory_id);
         if (oo != null) {
           // Create the button with the information that we know
           AddButton(initMsg.blockData[i].factory_id, oo.ObjectType, initMsg.blockData[i].enabled, 0);
-        } else {
+        }
+        else {
           // Create the button with the information that we know
           AddButton(initMsg.blockData[i].factory_id, ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
         }
@@ -125,17 +130,17 @@ public class BlockPoolPane : MonoBehaviour {
     }
 
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
-    RobotEngineManager.Instance.OnObjectConnectionState += HandleObjectConnectionState;
-    RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
-    RobotEngineManager.Instance.OnObjectUnavailableMsg += HandleObjectUnavailableMsg;
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ObjectConnectionState), HandleObjectConnectionState);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.ObjectAvailable), HandleObjectAvailableMsg);
+    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.ObjectUnavailable), HandleObjectUnavailableMsg);
     SendAvailableObjects(true);
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
-    RobotEngineManager.Instance.OnObjectConnectionState -= HandleObjectConnectionState;
-    RobotEngineManager.Instance.OnObjectAvailableMsg -= HandleObjectAvailableMsg;
-    RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.InitBlockPoolMessage), HandleInitBlockPool);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ObjectConnectionState), HandleObjectConnectionState);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.ObjectAvailable), HandleObjectAvailableMsg);
+    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.ObjectUnavailable), HandleObjectUnavailableMsg);
     SendAvailableObjects(false);
 
     // clear the lights we've turned blue to show connections. Force the values right away since we are
@@ -148,7 +153,8 @@ public class BlockPoolPane : MonoBehaviour {
     }
   }
 
-  private void HandleObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+  private void HandleObjectConnectionState(object messageObject) {
+    Anki.Cozmo.ObjectConnectionState message = (Anki.Cozmo.ObjectConnectionState)messageObject;
     // Turn on or off the lights depending on whether we are connecting or disconnecting
     LightCube lc = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(message.factoryID);
     if (lc != null) {
@@ -159,7 +165,8 @@ public class BlockPoolPane : MonoBehaviour {
     }
   }
 
-  private void HandleObjectAvailableMsg(Anki.Cozmo.ExternalInterface.ObjectAvailable objAvailableMsg) {
+  private void HandleObjectAvailableMsg(object message) {
+    Anki.Cozmo.ExternalInterface.ObjectAvailable objAvailableMsg = (Anki.Cozmo.ExternalInterface.ObjectAvailable)message;
     switch (objAvailableMsg.objectType) {
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE1:
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE2:
@@ -173,7 +180,8 @@ public class BlockPoolPane : MonoBehaviour {
   }
 
   // haven't heard from this block in 10 seconds, remove it.
-  private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
+  private void HandleObjectUnavailableMsg(object message) {
+    Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg = (Anki.Cozmo.ExternalInterface.ObjectUnavailable)message;
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
       Destroy(data.BlockButton.gameObject);
@@ -256,7 +264,8 @@ public class BlockPoolPane : MonoBehaviour {
     // Move the button to the correct list depending on whether it is enabled or not
     if (data.IsEnabled && (data.BlockButton.transform.parent != _EnabledScrollView)) {
       data.BlockButton.transform.SetParent(_EnabledScrollView);
-    } else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
+    }
+    else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
       data.BlockButton.transform.SetParent(_AvailableScrollView);
     }
 

@@ -298,6 +298,21 @@ message RobotErasedAllEnrolledFaces {
 
 }
 
+// RobotCompletedFactoryDotTest
+//  Only sent during factory tests
+message RobotCompletedFactoryDotTest {
+    float_32 camPoseX_mm,
+    float_32 camPoseY_mm,
+    float_32 camPoseZ_mm,
+    float_32 camPoseRoll_rad,
+    float_32 camPosePitch_rad,
+    float_32 camPoseYaw_rad,
+    float_32 dotCenX_pix[4],  // Centroids in "standard" order: upper left, lower left, upper right, lower right
+    float_32 dotCenY_pix[4],  //    " 
+    bool     success = 0,
+    bool     didComputePose = 0, // If false, camPose members will all be invalid
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  ACTIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

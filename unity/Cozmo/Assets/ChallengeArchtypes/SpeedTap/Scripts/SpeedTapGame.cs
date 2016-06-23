@@ -87,19 +87,19 @@ namespace SpeedTap {
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
 
-    public Color PlayerWinColor { 
-      get { 
-        return PlayerWinColors[0]; 
-      } 
+    public Color PlayerWinColor {
+      get {
+        return PlayerWinColors[0];
+      }
       set {
         PlayerWinColors.Fill(value);
       }
     }
 
-    public Color CozmoWinColor { 
-      get { 
-        return CozmoWinColors[0]; 
-      } 
+    public Color CozmoWinColor {
+      get {
+        return CozmoWinColors[0];
+      }
       set {
         CozmoWinColors.Fill(value);
       }
@@ -169,20 +169,20 @@ namespace SpeedTap {
     }
 
     // Use this for initialization
-    protected void InitializeMinigameObjects(int cubesRequired) { 
+    protected void InitializeMinigameObjects(int cubesRequired) {
 
       InitialCubesState initCubeState = new InitialCubesState(
                                           new SelectDifficultyState(
                                             new SpeedTapCozmoDriveToCube(true),
                                             DifficultyOptions,
                                             HighestLevelCompleted()
-                                          ), 
+                                          ),
                                           cubesRequired);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
-      RobotEngineManager.Instance.OnRobotAnimationEvent += OnRobotAnimationEvent;
+      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.AnimationEvent), OnRobotAnimationEvent);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
@@ -211,7 +211,7 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
-      RobotEngineManager.Instance.OnRobotAnimationEvent -= OnRobotAnimationEvent;
+      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.AnimationEvent), OnRobotAnimationEvent);
 
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
     }
@@ -267,7 +267,8 @@ namespace SpeedTap {
     /// Sets cozmo's last tapped timestamp based on animation event message
     /// </summary>
     /// <param name="animEvent">Animation event.</param>
-    private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
+    private void OnRobotAnimationEvent(object message) {
+      Anki.Cozmo.ExternalInterface.AnimationEvent animEvent = (Anki.Cozmo.ExternalInterface.AnimationEvent)message;
       if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
         _LastCozmoTimeStamp = animEvent.timestamp;

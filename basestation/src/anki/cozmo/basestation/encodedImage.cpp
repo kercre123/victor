@@ -97,7 +97,39 @@ namespace Cozmo {
     cvtColor(decodedImg.get_CvMat_(), decodedImg.get_CvMat_(), CV_BGR2RGB); // opencv will decode as BGR
   }
   
-  Result EncodedImage::DecodeImageRGB(Vision::ImageRGB& decodedImg) const
+  static inline void DecodeHelper(const std::vector<u8>& buffer, Vision::Image decodedImg)
+  {
+    cv::imdecode(buffer, cv::IMREAD_GRAYSCALE, &decodedImg.get_CvMat_());
+  }
+
+
+  // General template for when Gray or RGB data is both passed in and also requested out.
+  template<class ImgTypeIn, class ImgTypeOut>
+  static inline void RawHelper(const ImgTypeIn& imgIn, ImgTypeOut& imgOut)
+  {
+    // TODO: Avoid copying the data
+    //   (for now, it's necessary because we can't guarantee _buffer will be
+    //    valid, yet imgIn is just a header around its data
+    imgIn.CopyTo(imgOut);
+  }
+  
+  // Specialization for converting gray data to rgb data
+  template<>
+  inline void RawHelper(const Vision::Image& grayImgIn, Vision::ImageRGB& rgbImgOut)
+  {
+    rgbImgOut = Vision::ImageRGB(grayImgIn);
+  }
+  
+  // Specialization for converting rgb data to gray data
+  template<>
+  inline void RawHelper(const Vision::ImageRGB& rgbImageIn, Vision::Image& grayImgOut)
+  {
+    grayImgOut = rgbImageIn.ToGray();
+  }
+  
+  
+  template<class ImageType>
+  Result EncodedImage::DecodeImageHelper(ImageType& decodedImg) const
   {
     switch(_encoding)
     {
@@ -125,18 +157,15 @@ namespace Cozmo {
       {
         // Already decompressed.
         Vision::Image grayImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
-        decodedImg = Vision::ImageRGB(grayImg);
+        RawHelper(grayImg, decodedImg);
         break;
       }
         
       case ImageEncoding::RawRGB:
       {
         // Already decompressed.
-        // TODO: Avoid copying the data
-        //   (for now, it's necessary because we can't guarantee _buffer will be
-        //    valid, yet the returned decodedImg will refer to it)
-        Vision::ImageRGB tempImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
-        tempImg.CopyTo(decodedImg);
+        Vision::ImageRGB rgbImg(_imgHeight, _imgWidth, const_cast<u8*>(&(_buffer[0])));
+        RawHelper(rgbImg, decodedImg);
         break;
       }
         
@@ -170,7 +199,17 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
+
   
+  Result EncodedImage::DecodeImageRGB(Vision::ImageRGB& decodedImg) const
+  {
+    return DecodeImageHelper(decodedImg);
+  }
+
+  Result EncodedImage::DecodeImageGray(Vision::Image& decodedImg) const
+  {
+    return DecodeImageHelper(decodedImg);
+  }
   
   Result EncodedImage::Save(const std::string& filename) const
   {

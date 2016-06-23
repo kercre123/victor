@@ -82,7 +82,7 @@ namespace Cozmo {
     // Process a raw byte buffer as a message and send it to the specified
     // robot.
     // Returns RESULT_FAIL if no handler callback was registered for this message.
-    Result ProcessPacket(const Comms::MsgPacket& packet);
+    Result ProcessPacket(const std::vector<uint8_t>& buffer);
     
   }; // class GameMessageHandler
   

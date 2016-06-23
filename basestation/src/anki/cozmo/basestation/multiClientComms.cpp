@@ -517,7 +517,7 @@ namespace Cozmo {
   
   
   // Returns true if a MsgPacket was successfully gotten
-  bool MultiClientComms::GetNextMsgPacket(Comms::MsgPacket& p)
+  bool MultiClientComms::GetNextMsgPacket(std::vector<uint8_t>& buf)
   {
     #if(DO_SIM_COMMS_LATENCY)
     if (numRecvRdyMsgs_ > 0) {
@@ -525,7 +525,8 @@ namespace Cozmo {
     #else
     if (!recvdMsgPackets_.empty()) {
     #endif
-      p = recvdMsgPackets_.begin()->second;
+      const auto& packet = recvdMsgPackets_.begin()->second;
+      buf = {packet.data, packet.data+packet.dataLen};
       recvdMsgPackets_.pop_front();
       return true;
     }

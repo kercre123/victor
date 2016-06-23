@@ -27,9 +27,8 @@ namespace Cozmo {
 using MessageSizeType = uint16_t; // Must match on Engine and Python SDK side
 
 
-TcpSocketComms::TcpSocketComms(UiConnectionType connectionType)
-  : ISocketComms(connectionType)
-  , _tcpServer( new TcpServer() )
+TcpSocketComms::TcpSocketComms()
+  : _tcpServer( new TcpServer() )
   , _connectedId( kDeviceIdInvalid )
   , _hasClient(false)
 {
@@ -149,7 +148,7 @@ bool TcpSocketComms::ReadFromSocket()
 }
 
   
-bool TcpSocketComms::ExtractNextMessage(Comms::MsgPacket& outMsgPacket)
+bool TcpSocketComms::ExtractNextMessage(std::vector<uint8_t>& outBuffer)
 {
   if (_receivedBuffer.size() >= sizeof(MessageSizeType))
   {
@@ -159,7 +158,8 @@ bool TcpSocketComms::ExtractNextMessage(Comms::MsgPacket& outMsgPacket)
     
     if (sizeofMessageAndHeader <= _receivedBuffer.size())
     {
-      outMsgPacket.CopyFrom( sizeofMessage, &_receivedBuffer[sizeof(MessageSizeType)] );
+      const uint8_t* sourceBuffer = &_receivedBuffer[sizeof(MessageSizeType)];
+      outBuffer = {sourceBuffer, sourceBuffer+sizeofMessage};
       _receivedBuffer.erase(_receivedBuffer.begin(), _receivedBuffer.begin() + sizeofMessageAndHeader);
       return true;
     }
@@ -169,12 +169,12 @@ bool TcpSocketComms::ExtractNextMessage(Comms::MsgPacket& outMsgPacket)
 }
   
   
-bool TcpSocketComms::RecvMessage(Comms::MsgPacket& outMsgPacket)
+bool TcpSocketComms::RecvMessage(std::vector<uint8_t>& outBuffer)
 {
   if (IsConnected())
   {
     // Try to extract a message from already received bytes first (to avoid overfilling the recv buffer)
-    if (ExtractNextMessage(outMsgPacket))
+    if (ExtractNextMessage(outBuffer))
     {
       return true;
     }
@@ -183,7 +183,7 @@ bool TcpSocketComms::RecvMessage(Comms::MsgPacket& outMsgPacket)
     
     if (ReadFromSocket())
     {
-      return ExtractNextMessage(outMsgPacket);
+      return ExtractNextMessage(outBuffer);
     }
   }
   

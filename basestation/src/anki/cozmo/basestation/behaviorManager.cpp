@@ -29,6 +29,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+
 #define DEBUG_BEHAVIOR_MGR 0
 
 namespace Anki {
@@ -322,6 +324,11 @@ void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
   if( SwitchToBehavior(nextBehavior) ) {
     _runningReactionaryBehavior = true;
   }
+}
+  
+void BehaviorManager::RequestEnableReactionaryBehavior(std::string requesterID, BehaviorType behavior, bool enable)
+{
+  _robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::RequestEnableReactionaryBehavior>(requesterID, behavior, enable);
 }
   
 Result BehaviorManager::Update()
