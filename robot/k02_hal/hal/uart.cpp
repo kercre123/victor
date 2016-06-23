@@ -100,6 +100,10 @@ void Anki::Cozmo::HAL::UART::pause(void) {
   UART0_C2 = 0;
 }
 
+bool Anki::Cozmo::HAL::UART::FoundSync() {
+  return HeadDataReceived;
+}
+
 void Anki::Cozmo::HAL::UART::WaitForSync() {
   while (!HeadDataReceived) {
     __asm { WFI }

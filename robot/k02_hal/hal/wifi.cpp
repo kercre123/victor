@@ -153,6 +153,7 @@ namespace HAL {
             Messages::ProcessMessage(msg);
           }
         }
+
         return RESULT_OK;
       }
     }

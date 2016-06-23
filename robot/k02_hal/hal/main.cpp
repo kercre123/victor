@@ -128,16 +128,22 @@ int main (void)
 
     // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
   
-  // Run the main thread (lite)
-  for(;;)
-  {
-    // Wait for head body sync to occur
-    UART::WaitForSync();
-
-    if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
+    // Run the main thread (lite)
+    for(;;)
     {
-      NVIC_SystemReset();
+      // Pump Wifi clad as quickly as possible
+      while (!UART::FoundSync()) {
+        WiFi::Update();
+      }
+
+      // Wait for head body sync to occur
+      UART::WaitForSync();
+      Spine::Manage();
+
+      if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
+      {
+        NVIC_SystemReset();
+      }
     }
-  }
   #endif
 }
