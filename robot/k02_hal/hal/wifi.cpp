@@ -44,7 +44,7 @@ namespace HAL {
 
     if (tag < RobotInterface::TO_RTIP_START)
     {
-      return Spine::Enqueue(reinterpret_cast<const u8*>(buffer), size, msgID);
+      return Spine::Enqueue(buffer, size, msgID);
     }
     else if (tag <= RobotInterface::TO_RTIP_END)
     {
@@ -135,7 +135,7 @@ namespace HAL {
           for (uint8_t i=0; i<msgLen; i++) msgBuffer[i] = rxBuf[rind++];
           rxRind = rind;
           available = RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK);
-          
+
           if ((msg.tag > RobotInterface::TO_RTIP_END) && ((msg.tag < RobotInterface::ANIM_RT_START) || (msg.tag > RobotInterface::ANIM_RT_END)))
           {
             AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg.tag);
@@ -157,7 +157,7 @@ namespace HAL {
       }
     }
 
-	} // namespace WiFi
+  } // namespace WiFi
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

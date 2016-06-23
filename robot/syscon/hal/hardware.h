@@ -13,7 +13,7 @@ enum watchdog_channels {
 
 enum IRQ_Priority {
   ENCODER_PRIORITY = 0,
-  TIMER_PRIORITY = 1,  
+  TIMER_PRIORITY = 1,
   LED_PRIORITY = 1,
   UART_PRIORITY = 1,
   RADIO_PRIORITY = 2,

@@ -13,25 +13,25 @@ namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
   static CladBufferDown spinebuffer[QUEUE_DEPTH];
-  static volatile int spine_enter = 0;
-  static volatile int spine_exit = 0;
+  static bool active[QUEUE_DEPTH];
+  static volatile int spine_read = 0;
+  static volatile int spine_write = 0;
 
   void Spine::Dequeue(CladBufferDown* dest) {
-    if (spine_enter == spine_exit) {
-      dest->length = 0;
+    if (active[spine_read]) {
+      // Skip flags field
+      memcpy(dest, &(spinebuffer[spine_read]), sizeof(CladBufferDown));
+      active[spine_read] = false;
+      spine_read = (spine_read+1) % QUEUE_DEPTH;
     }
     else
     {
-      // Skip flags field
-      memcpy(dest, &(spinebuffer[spine_enter]), sizeof(CladBufferDown));
-      spine_enter = (spine_enter+1) % QUEUE_DEPTH;
+      dest->length = 0;
     }
   }
 
-  bool Spine::Enqueue(const u8* data, const u8 length, u8 tag) {
-    const int exit = (spine_exit+1) % QUEUE_DEPTH;
-
-    if (spine_enter == exit) {
+  bool Spine::Enqueue(const void* data, const u8 length, u8 tag) {
+    if (active[spine_write]) {
       return false;
     }
     else if (tag == RobotInterface::GLOBAL_INVALID_TAG)
@@ -45,38 +45,39 @@ namespace HAL {
     }
     else
     {
-      spinebuffer[spine_exit].msgID = tag;
-      memcpy(spinebuffer[spine_exit].data, data, length);
-      spinebuffer[spine_exit].length = length;
-      spine_exit = exit;
+      spinebuffer[spine_write].msgID = tag;
+      memcpy(spinebuffer[spine_write].data, data, length);      
+      spinebuffer[spine_write].length = length + 1;
+      active[spine_write] = true;
+      spine_write = (spine_write+1) % QUEUE_DEPTH;
       return true;
     }
   }
 
   void Spine::Manage() {
-    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
-    const u8 tag = msg->tag;
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
 
-    if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
+    if (g_dataToHead.cladBuffer.length == 0)
     {
       // pass
     }
-    else if (tag < RobotInterface::TO_RTIP_START)
+    else if (msg.tag < RobotInterface::TO_RTIP_START)
     {
-      AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, tag, g_dataToHead.cladBuffer.length);
+      AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, msg.tag, g_dataToHead.cladBuffer.length);
     }
-    else if (tag > RobotInterface::TO_RTIP_END)
+    else if (msg.tag > RobotInterface::TO_RTIP_END)
     {
       RadioSendMessage(g_dataToHead.cladBuffer.data, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer.msgID);
     }
-    else if (msg->Size() != g_dataToHead.cladBuffer.length)
+    else if (msg.Size() != g_dataToHead.cladBuffer.length)
     {
-      AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
+      AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, msg.tag, g_dataToHead.cladBuffer.length, msg.Size());
     }
     else
     {
-      Messages::ProcessMessage(*msg);
+      Messages::ProcessMessage(msg);
     }
+
     // Prevent same message from getting processed twice (if the spine desyncs)
     g_dataToHead.cladBuffer.length = 0;
   }

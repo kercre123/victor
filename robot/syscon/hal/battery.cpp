@@ -128,12 +128,6 @@ void Battery::init()
 
   startADCsample(ANALOG_CLIFF_SENSE);
 
-  /*
-  NRF_ADC->INTENSET = ADC_INTENSET_END_Msk;  
-  NVIC_EnableIRQ(ADC_IRQn);
-  NVIC_SetPriority(ADC_IRQn, 3);
-  */
-
   RTOS::schedule(manage_adc);
   RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
@@ -183,7 +177,7 @@ void manage_adc(void*)
 
         if (vBat < VBAT_CHGD_LO_THRESHOLD) {
           int ticks_left = lowBatTimer - GetCounter();
-          
+
           if (ticks_left < 0) {
             powerOff();
             NVIC_SystemReset();
@@ -212,7 +206,7 @@ void manage_adc(void*)
 
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD || (isCharging && vExt > VEXT_CHARGE_THRESHOLD);
-        
+
         if (!onContacts) {
           ContactTime = 0;
         } else {

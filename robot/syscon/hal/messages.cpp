@@ -116,7 +116,7 @@ void Spine::init(void) {
 void Spine::processMessage(void* buf) {
   using namespace Anki::Cozmo;
   RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(buf);
-  
+
   if (msg.tag <= RobotInterface::TO_BODY_END) {
     switch(msg.tag)
     {
@@ -181,7 +181,7 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
   queue_enter = (queue_enter + 1) % QUEUE_DEPTH;
   __enable_irq();
 
-  queue[index].buffer.length = size;
+  queue[index].buffer.length = size + 1;
   queue[index].buffer.msgID = msgID;
   memcpy(&queue[index].buffer.data, buffer, size);
 
