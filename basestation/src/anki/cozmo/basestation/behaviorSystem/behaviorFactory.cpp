@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
 
@@ -213,6 +214,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorReactToNewBlock(robot, config);
       break;
     }
+    case BehaviorType::PopAWheelie:
+    {
+      newBehavior = new BehaviorPopAWheelie(robot, config);
+      break;
+    }
     case BehaviorType::DistractedByObject:
     {
       newBehavior = new BehaviorDistractedByObject(robot, config);
@@ -223,7 +229,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorDistractedByFace(robot, config);
       break;
     }
-  
     case BehaviorType::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));

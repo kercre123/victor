@@ -1,0 +1,218 @@
+/**
+ * File: behaviorPopAWheelie.cpp
+ *
+ * Author: Kevin M. Karol
+ * Created: 2016-06-15
+ *
+ * Description: Behavior that allows cozmo to use a block to throw himself on his back
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#include "anki/cozmo/basestation/behaviors/BehaviorPopAWheelie.h"
+
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/vision/basestation/observableObject.h"
+#include "util/console/consoleInterface.h"
+
+
+#define SET_STATE(s) SetState_internal(State::s, #s)
+
+namespace Anki {
+namespace Cozmo {
+
+CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
+CONSOLE_VAR(f32, kBPW_MaxTowardFaceAngle_deg, "Behavior.PopAWheelie", 90.f);
+CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
+
+BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config)
+: IBehavior(robot, config)
+, _blockworldFilter( new BlockWorldFilter )
+, _robot(robot)
+{
+  SetDefaultName("PopAWheelie");
+    
+  // set up the filter we will use for finding blocks we care about
+  _blockworldFilter->OnlyConsiderLatestUpdate(false);
+  _blockworldFilter->SetFilterFcn( std::bind( &BehaviorPopAWheelie::FilterBlocks, this, std::placeholders::_1) );
+}
+
+bool BehaviorPopAWheelie::IsRunnableInternal(const Robot& robot) const
+{
+  UpdateTargetBlock(robot);
+  
+  return _targetBlock.IsSet() && ! robot.IsCarryingObject();
+}
+
+Result BehaviorPopAWheelie::InitInternal(Robot& robot)
+{
+  
+  TransitionToReactingToBlock(robot);
+  
+  return Result::RESULT_OK;
+}
+
+void BehaviorPopAWheelie::StopInternal(Robot& robot)
+{
+  ResetBehavior(robot);
+}
+
+void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
+{
+  ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
+  if( nullptr != closestObj ) {
+    _targetBlock = closestObj->GetID();
+  }
+  else {
+    _targetBlock.UnSet();
+  }
+}
+
+bool BehaviorPopAWheelie::FilterBlocks(ObservableObject* obj) const
+{
+  return (!obj->IsPoseStateUnknown() &&
+          _robot.CanPickUpObjectFromGround(*obj));
+}
+
+
+void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
+{
+  SET_STATE(ReactingToBlock);
+  
+  if( !_initialAnimGroup.empty() ) {
+    // Turn towards the object and then react to it before performing the pop a wheelie action
+    StartActing(new CompoundActionSequential(robot, {
+      new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
+      new PlayAnimationGroupAction(robot, _initialAnimGroup),
+    }),
+                [this,&robot]{ this->TransitionToPerformingAction(robot); });
+  }
+  else {
+    TransitionToPerformingAction(robot);
+  }
+}
+
+void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetry)
+{
+  SET_STATE(PerformingAction);
+  if( ! _targetBlock.IsSet() ) {
+    PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
+                        "%s: Transitioning to action state, but we don't have a valid block ID",
+                        GetName().c_str());
+    return;
+  }
+  
+  if(isRetry) {
+    ++_numPopAWheelieActionRetries;
+    PRINT_NAMED_INFO("BehaviorPopAWheelie.TransitionToPerformingAction.Retrying",
+                     "Retry %d of %d", _numPopAWheelieActionRetries, kBPW_MaxRetries);
+  } else {
+    _numPopAWheelieActionRetries = 0;
+  }
+  
+  // Only turn towards face if this is _not_ a retry
+  const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
+  
+  IActionRunner* goPopAWheelie = new DriveToPopAWheelieAction(robot, _targetBlock);
+  
+  StartActing(goPopAWheelie,
+              [&,this](const ExternalInterface::RobotCompletedAction& msg) {
+                switch(msg.result)
+                {
+                  case ActionResult::SUCCESS:
+                    /**if( !_successAnimGroup.empty() ) {
+                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
+                    }**/
+                    break;
+                    
+                  case ActionResult::FAILURE_RETRY:
+                    if(_numPopAWheelieActionRetries < kBPW_MaxRetries)
+                    {
+                      SetupRetryAction(robot, msg);
+                      break;
+                    }
+                    
+                    // else: too many retries, fall through to failure abort
+                    
+                  case ActionResult::FAILURE_ABORT:
+                    // assume that failure is because we didn't visually verify (although it could be due to an
+                    // error)
+                    PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedAbort",
+                                     "Failed to verify pop, searching for block");
+                    break;
+                    
+                  default:
+                    // other failure, just end
+                    PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedPopAction",
+                                     "action failed with %s, behavior ending",
+                                     EnumToString(msg.result));
+                } // switch(msg.result)
+                
+              });
+  
+  IncreaseScoreWhileActing( kBPW_ScoreIncreaseForAction );
+}
+
+
+void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg)
+{
+  //Ensure that the closest block is selected
+  UpdateTargetBlock(robot);
+  
+  // Pick which retry animation, if any, to play. Then try performing the action again,
+  // with "isRetry" set to true.
+  
+  IActionRunner* animAction = nullptr;
+  switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+  {
+    case ObjectInteractionResult::INCOMPLETE:
+    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+    {
+      if( ! _realignAnimGroup.empty() ) {
+        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
+      }
+      break;
+    }
+      
+    default: {
+      if( ! _retryActionAnimGroup.empty() ) {
+        animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
+      }
+      break;
+    }
+  }
+  
+  if( nullptr != animAction ) {
+    StartActing(animAction, [this,&robot]() {
+      this->TransitionToPerformingAction(robot, true);
+    });
+  }
+  else {
+    TransitionToPerformingAction(robot, true);
+  }
+  
+}
+
+
+void BehaviorPopAWheelie::SetState_internal(State state, const std::string& stateName)
+{
+  _state = state;
+  PRINT_NAMED_DEBUG("BehaviorPopAWheelie.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
+}
+
+void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
+{
+  _state = State::ReactingToBlock;
+  _targetBlock.UnSet();
+}
+
+}
+}
