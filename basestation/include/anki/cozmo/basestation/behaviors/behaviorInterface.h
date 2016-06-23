@@ -387,6 +387,12 @@ public:
   // Subscribe to tags that should immediately trigger this behavior
   void SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTriggerTags(std::set<GameToEngineTag>&& tags);
+  
+  //Handle enabling/disabling of reactionary behaviors
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
+  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) final override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot){};
+  virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot){};
 
   // if a trigger tag is received, this function will be called. If it returns true, this behavior will run
   // immediately
@@ -400,6 +406,9 @@ public:
   virtual bool ShouldResumeLastBehavior() const override = 0;
     
 protected:
+  //Handle tracking enable/disable requests
+  virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
+  std::multiset<std::string> _disableIDs;
   
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;

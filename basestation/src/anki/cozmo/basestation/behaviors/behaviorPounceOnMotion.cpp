@@ -485,11 +485,14 @@ void  BehaviorPounceOnMotion::EnableCliffReacts(bool enable,Robot& robot)
 {
   if( _cliffReactEnabled && !enable )
   {
-    robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+    //Disable Cliff Reaction
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
   }
   else if( !_cliffReactEnabled && enable )
   {
-    robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
+    //Enable Cliff Reaction
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
+
   }
   
   _cliffReactEnabled = enable;

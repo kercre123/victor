@@ -104,7 +104,10 @@ public:
     
   const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
-
+  
+  // Enable and disable reactionary behaviors
+  void RequestEnableReactionaryBehavior(std::string requesterID, BehaviorType behavior, bool enable);
+  
   // accessors: whiteboard
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
@@ -126,7 +129,9 @@ private:
 
   // same as SwitchToBehavior but also handles special reactionary logic
   void SwitchToReactionaryBehavior(IBehavior* nextBehavior);
+  
 
+  
   // checks the chooser and switches to a new behavior if neccesary
   void SwitchToNextBehavior();
 

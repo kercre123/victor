@@ -48,7 +48,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
 
 bool BehaviorReactToCliff::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled();
+  return _disableIDs.size() == 0;
 }
 
 Result BehaviorReactToCliff::InitInternal(Robot& robot)

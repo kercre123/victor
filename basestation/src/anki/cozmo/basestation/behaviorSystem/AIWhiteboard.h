@@ -96,18 +96,6 @@ public:
 
   // return current active beacon if any, or nullptr if none are active
   const AIBeacon* GetActiveBeacon() const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Tracked values
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // enable or disable the request. The id can be anything, but is intended to be used as `this` from an
-  // object which is calling this function. The reaction will be disabled immediately when disable is called,
-  // and will only be re-enabled when the corresponding number of called to RequestEnableCliffReaction are
-  // made with the correct ids
-  void DisableCliffReaction(void* id);
-  void RequestEnableCliffReaction(void* id);
-  bool IsCliffReactionEnabled() const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
@@ -144,7 +132,6 @@ private:
   // signal handles for events we register to. These are currently unsubscribed when destroyed
   std::vector<Signal::SmartHandle> _signalHandles;
   
-  std::multiset<void*> _disableCliffIds;  
  
   // list of markers we have not checked out yet. Using list because we make assume possible markers of same type
   // can be found at different locations

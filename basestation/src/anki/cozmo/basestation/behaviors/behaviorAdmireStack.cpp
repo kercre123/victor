@@ -101,7 +101,8 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
 void BehaviorAdmireStack::StopInternal(Robot& robot)
 {
   if( _state == State::TryingToGrabThirdBlock ) {
-    robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
+    //Enable Cliff Reaction
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
   }
   
   // If we are being stopped while in the ReactingToTopple state we want to make sure to set _didKnockOverStack to true
@@ -191,8 +192,9 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
 {
   SET_STATE(TryingToGrabThirdBlock);
 
-  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
-    
+  //Disable Cliff Reaction
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
+  
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   ObjectID topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
@@ -223,8 +225,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
 {
   SET_STATE(KnockingOverStack);
 
-  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
-
+  //Enable Cliff Reaction
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();

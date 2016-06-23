@@ -47,7 +47,7 @@ private:
   double _nextRepeatAnimationTime = 0;
   double _repeatAnimatingMultiplier = 1;
 
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
 }; // class BehaviorReactToPickup
   

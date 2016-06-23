@@ -24,6 +24,7 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/behaviorTypes.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/math/numericCast.h"
@@ -500,6 +501,11 @@ IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& conf
   : IBehavior(robot, config)
 {
   SetBehaviorGroup(BehaviorGroup::Reactionary, true);
+  
+  // These are the tags that should trigger this behavior to be switched to immediately
+  SubscribeToTags({
+    GameToEngineTag::RequestEnableReactionaryBehavior
+  });
 }
   
 void IReactionaryBehavior::SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags)
@@ -513,7 +519,64 @@ void IReactionaryBehavior::SubscribeToTriggerTags(std::set<GameToEngineTag>&& ta
   _gameToEngineTags.insert(tags.begin(), tags.end());
   SubscribeToTags(std::move(tags));
 }
+
+void IReactionaryBehavior::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  //Currently no default behavior, using Always Handle Internal for consistency
+  AlwaysHandleInternal(event, robot);
   
+}
+  
+void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
+{
+  //Turn off reactionary behaviors based on name
+  GameToEngineTag tag = event.GetData().GetTag();
+  
+  if (tag == GameToEngineTag::RequestEnableReactionaryBehavior){
+    std::string requesterID = event.GetData().Get_RequestEnableReactionaryBehavior().requesterID;
+    BehaviorType behavior = event.GetData().Get_RequestEnableReactionaryBehavior().behavior;
+    bool enable = event.GetData().Get_RequestEnableReactionaryBehavior().enable;
+    
+    std::string behaviorName = GetName();
+
+    if(behavior == BehaviorType::ReactToCliff
+       && behaviorName ==  BehaviorTypeToString(BehaviorType::ReactToCliff)){
+      UpdateDisableIDs(requesterID, enable);
+    }else if(behavior == BehaviorType::ReactToRobotOnBack
+             && behaviorName == BehaviorTypeToString(BehaviorType::ReactToRobotOnBack)){
+      UpdateDisableIDs(requesterID, enable);
+    }else if(behavior == BehaviorType::ReactToPickup
+             && behaviorName == BehaviorTypeToString(BehaviorType::ReactToPickup)){
+      UpdateDisableIDs(requesterID, enable);
+    }
+    
+  }else{
+    AlwaysHandleInternal(event, robot);
+  }
+}
+  
+void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enable)
+{
+  if(enable){
+    int countRemoved = (int)_disableIDs.erase(requesterID);
+    if(!countRemoved){
+      PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
+                          "Attempted to enable reactionary behavior with invalid ID");
+    }
+    
+  }else{
+    int countInList = (int)_disableIDs.count(requesterID);
+    if(countInList){
+      PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
+                          "Attempted to disable reactionary behavior with ID previously registered");
+    }else{
+      _disableIDs.insert(requesterID);
+    }
+
+  }
+  
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

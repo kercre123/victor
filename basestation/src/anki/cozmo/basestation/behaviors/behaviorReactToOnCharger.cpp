@@ -109,7 +109,7 @@ void BehaviorReactToOnCharger::HandleWhileNotRunning(const EngineToGameEvent& ev
   }
 }
   
-void BehaviorReactToOnCharger::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
+void BehaviorReactToOnCharger::AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {

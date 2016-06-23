@@ -131,7 +131,7 @@ void BehaviorReactToPoke::StopInternal(Robot& robot)
 {
 }
 
-void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
+void BehaviorReactToPoke::AlwaysHandleInternal(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
 

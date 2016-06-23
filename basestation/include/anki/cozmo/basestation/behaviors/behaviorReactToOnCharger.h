@@ -32,7 +32,7 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) override;
   
-  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot) override;
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
   
 protected:
