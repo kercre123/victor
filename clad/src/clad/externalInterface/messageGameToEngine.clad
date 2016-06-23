@@ -263,6 +263,18 @@ message SetRobotCarryingObject {
     uint_8 robotID
 }
 
+// CreateObjectAtPose
+// Creates a CustomObject at the specific pose
+message CreateObjectAtPose {
+  float_32 x_mm,
+  float_32 y_mm,
+  float_32 z_mm,
+  float_32 angle_rad,
+  float_32 depth_mm,
+  float_32 width_mm,
+  float_32 height_mm
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Vision Settings and Commands
 ///////////////////////////////////////////////////////////////////////////////

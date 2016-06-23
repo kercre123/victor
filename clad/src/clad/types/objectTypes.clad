@@ -75,6 +75,7 @@ namespace Cozmo {
     // Markerless Objects (e.g. obstacles)
     //
     ProxObstacle,
+    CustomObstacle,
     
   } // enum class ObjectType
   

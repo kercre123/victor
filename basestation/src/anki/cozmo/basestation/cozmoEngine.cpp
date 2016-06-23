@@ -547,7 +547,7 @@ void CozmoEngine::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode
     } else if (newMode == ImageSendMode::Stream) {
       robot->GetBlockWorld().EnableDraw(true);
     }
-    
+    robot->SetImageSendMode(newMode);
     robot->SendRobotMessage<RobotInterface::ImageRequest>(newMode, resolution);
   }
   

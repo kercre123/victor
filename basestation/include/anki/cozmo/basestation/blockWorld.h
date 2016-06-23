@@ -335,6 +335,8 @@ namespace Anki
       // adds a markerless object at the given pose
       Result AddMarkerlessObject(const Pose3d& pose);
       
+      Result AddCustomObject(const Pose3d& pose, const f32 x_mm, const f32 y_mm, const f32 z_mm);
+      
       // Generates a list of ObservedMarker pointers that reference the actual ObservedMarkers
       // stored in poseKeyObsMarkerMap
       void GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
