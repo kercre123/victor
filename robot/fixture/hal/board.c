@@ -78,7 +78,7 @@ int InitBoard(void)
   STM_EVAL_LEDOff(LEDRED);
   STM_EVAL_LEDOff(LEDGREEN);
   
-  // Always enable charger/ENCHG - I don't know why this signal exists
+  // Always enable charger/ENCHG - this is the only way to turn off cube power
   GPIO_SetBits(GPIOA, GPIOA_ENCHG);
   GPIO_InitStructure.GPIO_Pin = GPIOA_ENCHG;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -135,6 +135,7 @@ void EnableBAT(void)
 {  
   GPIO_SetBits(GPIOD, GPIO_Pin_2);    // Disable sink (to prevent blowing up the fixture)
   GPIO_ResetBits(GPIOC, GPIO_Pin_2);
+  GPIO_SetBits(GPIOA, GPIOA_ENCHG);
   isEnabled = 1;
 }
 
@@ -143,6 +144,8 @@ void DisableBAT(void)
   if (isEnabled)
   {
     GPIO_SetBits(GPIOC, GPIO_Pin_2);
+    GPIO_SetBits(GPIOA, GPIO_Pin_15);
+    GPIO_ResetBits(GPIOA, GPIOA_ENCHG);
     MicroWait(1);
     GPIO_ResetBits(GPIOD, GPIO_Pin_2);  // Enable sink to quickly discharge any remaining power
     GPIO_ResetBits(GPIOC, GPIO_Pin_1);  // Sink even more current (down to 0.3V at least)

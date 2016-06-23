@@ -123,7 +123,7 @@ int GrabADC(int channel)
 }
 
 // Grab quadrature encoder data
-void ReadEncoder(bool light, int usDelay, int& a, int& b)
+void ReadEncoder(bool light, int usDelay, int& a, int& b, bool skipa)
 {
   // Turn on encoder LED and read both channels
   PIN_PULL_NONE(GPIOA, PINA_ENCLED);
@@ -133,12 +133,14 @@ void ReadEncoder(bool light, int usDelay, int& a, int& b)
   else
     PIN_IN(GPIOA, PINA_ENCLED);    
   
-  if (usDelay)
-    MicroWait(usDelay);  // Let LED turn on or off
-
   PIN_ANA(GPIOC, PINC_ENCA);
-  a = QuickADC(ADC_ENCA);
   PIN_ANA(GPIOC, PINC_ENCB);
+
+  if (usDelay)
+    MicroWait(usDelay);  // Let LED turn on or off and ADC charge up
+
+  if (!skipa)
+    a = QuickADC(ADC_ENCA);
   b = QuickADC(ADC_ENCB);
 }
 

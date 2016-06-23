@@ -109,12 +109,19 @@ typedef enum
 #define ERROR_MOTOR_BACKWARD        652   // Motor harness or encoder is miswired
 #define ERROR_MOTOR_SLOW            653   // Motor (or encoder) problems at low speed
 #define ERROR_MOTOR_FAST            654   // Encoder problem at high speed
+#define ERROR_ENCODER_UNDERVOLT     655   // Encoder can't meet minimum voltage
 
 // Cube/charger errors
-#define ERROR_CUBE_CANNOT_WRITE     700
-#define ERROR_CUBE_NO_COMMUNICATION 701
-#define ERROR_CUBE_VERIFY_FAILED    702
-#define ERROR_CUBE_BLOCK_FAILED     703
-#define ERROR_CUBE_TYPE_CHANGE      704
+#define ERROR_CUBE_CANNOT_WRITE     700   // MCU is locked
+#define ERROR_CUBE_NO_COMMUNICATION 701   // MCU is not working (bad crystal?)
+#define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
+#define ERROR_CUBE_TYPE_CHANGE      704   // Cube type (1,2,3) does not match fixture type (1,2,3)
+
+#define ERROR_CUBE_MISSING_LED      750   // Bad LED
+#define ERROR_CUBE_NO_BOOT          751   // Bad accelometer, MCU, or crystal
+#define ERROR_CUBE_UNDERPOWER       752   // Bad power regulator
+#define ERROR_CUBE_OVERPOWER        753   // Too much power in active mode
+#define ERROR_CUBE_STANDBY          754   // Too much power in standby mode
+#define ERROR_CUBE_RADIO            755   // Bad radio/antenna
 
 #endif

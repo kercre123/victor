@@ -402,7 +402,7 @@ void SetMotor(void)
 }  
 
 void HeadESP();
-
+void CubePOST(void);
 static CommandFunction m_functions[] =
 {
   {"GetSerial", GetSerial, FALSE},
@@ -415,7 +415,7 @@ static CommandFunction m_functions[] =
   {"Current", TestCurrent, FALSE},
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
-  {"Burn", CubeBurn, FALSE},
+  {"CubePOST", CubePOST, FALSE},
   {"Send", SendTestMessage, FALSE},
   {"HeadESP", HeadESP, FALSE},
   {"SetMotor", SetMotor, FALSE},

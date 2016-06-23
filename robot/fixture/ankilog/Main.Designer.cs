@@ -83,7 +83,7 @@
             this.list.GridLines = true;
             this.list.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.list.HideSelection = false;
-            this.list.Location = new System.Drawing.Point(22, 44);
+            this.list.Location = new System.Drawing.Point(9, 44);
             this.list.MultiSelect = false;
             this.list.Name = "list";
             this.list.Size = new System.Drawing.Size(600, 308);
@@ -227,10 +227,10 @@
             this.tabs.Controls.Add(this.tabPage2);
             this.tabs.Controls.Add(this.tabPage3);
             this.tabs.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabs.Location = new System.Drawing.Point(5, 6);
+            this.tabs.Location = new System.Drawing.Point(5, 1);
             this.tabs.Name = "tabs";
             this.tabs.SelectedIndex = 0;
-            this.tabs.Size = new System.Drawing.Size(617, 389);
+            this.tabs.Size = new System.Drawing.Size(617, 394);
             this.tabs.TabIndex = 9;
             this.tabs.Visible = false;
             this.tabs.SelectedIndexChanged += new System.EventHandler(this.tabs_SelectedIndexChanged);
@@ -244,7 +244,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 27);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(609, 358);
+            this.tabPage1.Size = new System.Drawing.Size(609, 363);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Car Info";
             this.tabPage1.UseVisualStyleBackColor = true;

@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 29;
+u8 g_fixtureReleaseVersion = 30;
 const char* BUILD_INFO = "PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;

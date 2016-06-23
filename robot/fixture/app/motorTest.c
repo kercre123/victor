@@ -81,20 +81,36 @@ void TestLEDs(void)
 }
 
 // Test encoder (not motor)
-const int MIN_ENC_ON = 2300, MAX_ENC_OFF = 500;   // In millivolts (with padding)
-const int ENC_US = 120;   // Rise/fall time should be 120uS per Bryan
+const int MIN_ENC_ON = 2310, MAX_ENC_OFF = 800;   // In millivolts (with padding) - must be 0.3x to 0.7x VDD
+const int ENC_SLOW_US = 1000, ENC_US = 227;       // Rise/fall time should be 112uS per Bryan
 void TestEncoders(void)
 {
   // Read encoder when turned on and off
-  int ona, onb, offa, offb;
-  ReadEncoder(true, ENC_US, ona, onb);
-  ReadEncoder(false, ENC_US, offa, offb);
-  ConsolePrintf("encoders,%d,%d,%d,%d\r\n", ona, onb, offa, offb);
+  int ona, onb, offa, offb, skip;
+
+  // For slow reading, don't really care about timing, or if it was on or off
+  ReadEncoder(true, ENC_SLOW_US, ona, onb);
+  ReadEncoder(false, ENC_SLOW_US, offa, offb);
+  ConsolePrintf("slow-encoders,%d,%d,%d,%d\r\n", ona, onb, offa, offb);
   
-  if (ona < MIN_ENC_ON || onb < MIN_ENC_ON)
-    throw ERROR_ENCODER_FAULT;
   if (offa > MAX_ENC_OFF || offb > MAX_ENC_OFF)
     throw ERROR_ENCODER_FAULT;  
+  if (ona < MIN_ENC_ON || onb < MIN_ENC_ON)
+    if (ona > MAX_ENC_OFF && onb > MAX_ENC_OFF)
+      throw ERROR_ENCODER_UNDERVOLT;
+    else
+      throw ERROR_ENCODER_FAULT;
+  
+  ReadEncoder(true, ENC_US, ona, onb);
+  ReadEncoder(false, ENC_US, offa, offb);
+  ReadEncoder(true, ENC_US, skip, onb, true);
+  ReadEncoder(false, ENC_US, skip, offb, true);
+  ConsolePrintf("fast-encoders,%d,%d,%d,%d\r\n", ona, onb, offa, offb);
+
+  if (ona < MIN_ENC_ON || onb < MIN_ENC_ON)
+    throw ERROR_MOTOR_FAST;
+  if (offa > MAX_ENC_OFF || offb > MAX_ENC_OFF)
+    throw ERROR_MOTOR_FAST;
 }
 
 // Count encoder ticks, check direction, and collect min/max a/b values

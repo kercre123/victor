@@ -13,5 +13,7 @@ s32 MonitorGetCurrent(void);
 
 // Get the voltage in mV
 s32 MonitorGetVoltage(void);
-  
+s32 BatGetCurrent(void);
+s32 ChargerGetCurrent(void);
+
 #endif

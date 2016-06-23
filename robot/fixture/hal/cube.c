@@ -221,28 +221,12 @@ int IsPageBlank(const uint8_t *rom)
   return 1;
 }
 
-void LoadRom(const uint8_t *rom, int length) {
-  SlowPrintf("Programming Cube");
-  
+bool VerifyRom(const uint8_t *rom, int length)
+{
   const uint8_t *mem = rom;
   for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
     int left =  length - addr;
-    if (IsPageBlank(rom + addr))
-      continue;
-    
-    SlowPrintf("\nWriting %i", addr / CUBE_PAGE_SIZE);
-    
-    CubeWriteEn();
-    if (~CubeReadFSR() & CUBE_FSR_WEN) { throw ERROR_CUBE_CANNOT_WRITE; }
-    CubeProgram(addr, mem, (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left);
-  }
-
-  mem = rom;
-  for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
-    int left =  length - addr;
     int send = (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left;
-      
-    SlowPrintf("\nVerifying %i", addr / CUBE_PAGE_SIZE);
 
     uint8_t verify[CUBE_PAGE_SIZE];
     CubeRead(addr, verify, send);
@@ -254,12 +238,29 @@ void LoadRom(const uint8_t *rom, int length) {
         ConsoleWriteHex(mem, CUBE_PAGE_SIZE, addr);
         ConsolePrintf("Found:\r\n");
         ConsoleWriteHex(verify, CUBE_PAGE_SIZE, addr);
-        throw ERROR_CUBE_VERIFY_FAILED;
+        return false;
       }
     }
   }
-  
-  SlowPrintf("\nDone         ");
+  return true;
+}
+
+void LoadRom(const uint8_t *rom, int length) {
+  const uint8_t *mem = rom;
+  for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
+    int left =  length - addr;
+    if (IsPageBlank(rom + addr))
+      continue;
+    
+    ConsolePrintf("flash,%i\r\n", addr / CUBE_PAGE_SIZE);
+    
+    CubeWriteEn();
+    if (~CubeReadFSR() & CUBE_FSR_WEN) { throw ERROR_CUBE_CANNOT_WRITE; }
+    CubeProgram(addr, mem, (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left);
+  }
+
+  if (!VerifyRom(rom, length))
+    throw ERROR_CUBE_VERIFY_FAILED;
 }
 
 // Simple program routine - no brains, no serialization - for test only
@@ -344,6 +345,14 @@ static void Patch(u8* where, u32 before, u32 after)
 // Handle all the boot loader serial patching stuff
 void ProgramCubeWithSerial()
 {
+  // Drive every output into the cube
+  PIN_OUT(GPIOA, PINA_DUTCS);
+  PIN_AF(GPIOA, PINA_SCK);
+  PIN_AF(GPIOA, PINA_MISO);
+  PIN_AF(GPIOA, PINA_MOSI);
+  PIN_OUT(GPIOA, PINA_PROGHV);
+  PIN_OUT(GPIOC, PINC_RESET);
+  
   try {  
     // Make a copy of the cube bootloader for patching
     u8* cubeboot = GetGlobalBuffer();
@@ -360,19 +369,21 @@ void ProgramCubeWithSerial()
     GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
     MicroWait(10000);
          
-#ifndef FCC
+#ifdef FCC
+    LoadRom(cubeboot, length);
+#else
     // Check serial number from (possibly) last time
     // We don't want to reserialize the same block
     u8 id[8];
     CubeRead(0x3ff0, (u8*)&id, 8);    
     u32 serial = *(u32*)id;
     serial = __REV(serial);   // Vandiver likes it stored in reverse
-    SlowPrintf("Serial was: %08x\n", serial);
-    if (serial != 0xffffffff)
-      SlowPrintf("Serial already set, won't set again\n");
-    else
-      // Generate a radio-safe serial number
+    // Generate a radio-safe serial number
+    bool hadSerial = (serial != 0xffffffff); 
+    if (!hadSerial)
       serial = GetRadioSequence();
+    else
+      ConsolePrintf("old-serial,%08x\r\n", serial);
     
     // Patch accessory type/model: 0=charger, 1=cube1, etc
     int type = (g_fixtureType - FIXTURE_CHARGER_TEST);
@@ -384,10 +395,12 @@ void ProgramCubeWithSerial()
     Patch(cubeboot+0x3931, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x395f, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x3ff0, 0xca11ab1e, __REV(serial));  // Reversed copy (thanks Vandiver)
-#endif
-    
     //ConsoleWriteHex(cubeboot, 16384); 
-    LoadRom(cubeboot, length);
+    
+    // If we had a serial, skip programming if already programmed
+    if (!hadSerial || !VerifyRom(cubeboot, length))
+      LoadRom(cubeboot, length);
+#endif
     
     GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
     GPIO_SetBits(GPIOA, GPIO_Pin_9);    // Turn off high-voltage PROG

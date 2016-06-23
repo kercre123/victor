@@ -36,6 +36,13 @@
 #define PINB_DEBUGTX 6
 #define GPIOB_DEBUGTX (1 << PINB_DEBUGTX)
 
+#define PINA_DUTCS 4
+#define PINA_SCK 5
+#define PINA_MISO 6
+#define PINA_MOSI 7
+#define PINA_PROGHV 9
+#define PINC_RESET 5
+
 // Backpack LEDs/ADC channels
 #define PINA_BPLED0 2
 #define PINA_BPLED1 3
