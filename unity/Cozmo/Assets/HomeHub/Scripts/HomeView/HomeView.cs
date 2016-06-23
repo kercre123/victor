@@ -345,6 +345,7 @@ namespace Cozmo.HomeHub {
 
     private void CheckIfUnlockablesAffordableAndUpdateBadge() {
       if (ChestRewardManager.Instance.ChestPending) {
+        _AnyUpgradeAffordableIndicator.SetActive(false);
         return;
       }
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
