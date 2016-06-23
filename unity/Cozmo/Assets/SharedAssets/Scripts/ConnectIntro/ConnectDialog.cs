@@ -92,6 +92,7 @@ public class ConnectDialog : MonoBehaviour {
   }
 
   private void HandleConnectButton() {
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
     this.Play(false);
   }
 
@@ -162,7 +163,6 @@ public class ConnectDialog : MonoBehaviour {
     // Set initial volumes
     // TODO: We need to connect to the engine as soon as the app launches so we can begin playing audio.
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
-
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
   }
 
