@@ -18,6 +18,114 @@ using System.Reflection;
 /// </summary>
 public class DailyGoalEditor : EditorWindow {
 
+  #region GUIStyle
+
+  // Unity Style for the Main DAILY GOALS title at the top
+  private static GUIStyle _MainTitleStyle;
+
+  public static GUIStyle MainTitleStyle {
+    get {
+      if (_MainTitleStyle == null) {
+        _MainTitleStyle = new GUIStyle();
+        _MainTitleStyle.fontStyle = FontStyle.Bold;
+        _MainTitleStyle.normal.textColor = Color.white;
+        _MainTitleStyle.active.textColor = Color.white;
+        _MainTitleStyle.fontSize = 28;
+      }
+      return _MainTitleStyle;
+    }
+  }
+
+  // Unity Style for event labels that separate each group of daily goals
+  private static GUIStyle _TitleStyle;
+
+  public static GUIStyle TitleStyle {
+    get {
+      if (_TitleStyle == null) {
+        _TitleStyle = new GUIStyle();
+        _TitleStyle.fontStyle = FontStyle.Bold;
+        _TitleStyle.normal.textColor = Color.white;
+        _TitleStyle.active.textColor = Color.white;
+        _TitleStyle.fontSize = 20;
+      }
+      return _TitleStyle;
+    }
+  }
+
+  // Unity style for labels within each individual daily goal
+  private static GUIStyle _SubtitleStyle;
+
+  public static GUIStyle SubtitleStyle {
+    get {
+      if (_SubtitleStyle == null) {
+        _SubtitleStyle = new GUIStyle();
+        _SubtitleStyle.fontStyle = FontStyle.Bold;
+        _SubtitleStyle.normal.textColor = Color.white;
+        _SubtitleStyle.active.textColor = Color.white;
+        _SubtitleStyle.fontSize = 16;
+      }
+      return _SubtitleStyle;
+    }
+  }
+
+  // custom Unity Style for a button
+  private static GUIStyle _AddButtonStyle;
+
+  public static GUIStyle AddButtonStyle {
+    get {
+      if (_AddButtonStyle == null) {
+        _AddButtonStyle = new GUIStyle(EditorStyles.miniButton);
+        _AddButtonStyle.fontStyle = FontStyle.Bold;
+        _AddButtonStyle.normal.textColor = Color.green;
+        _AddButtonStyle.active.textColor = Color.white;
+        _AddButtonStyle.fontSize = 14;
+        _AddButtonStyle.stretchWidth = true;
+      }
+      return _AddButtonStyle;
+    }
+  }
+
+  // custom Unity Style for a button
+  private static GUIStyle _RemoveButtonStyle;
+
+  public static GUIStyle RemoveButtonStyle {
+    get {
+      if (_RemoveButtonStyle == null) {
+        _RemoveButtonStyle = new GUIStyle(EditorStyles.miniButton);
+        _RemoveButtonStyle.fontStyle = FontStyle.Bold;
+        _RemoveButtonStyle.normal.textColor = Color.red;
+        _RemoveButtonStyle.active.textColor = Color.white;
+        _RemoveButtonStyle.fontSize = 14;
+        _RemoveButtonStyle.stretchWidth = true;
+      }
+      return _RemoveButtonStyle;
+    }
+  }
+
+  // TODO: Add in a proper highlight background for when Foldouts are opened, Box Texture2D with some color
+  private static GUIStyle _FoldoutStyle;
+
+  public static GUIStyle FoldoutStyle {
+    get {
+      if (_FoldoutStyle == null) {
+        _FoldoutStyle = new GUIStyle(EditorStyles.foldout);
+        Color white = Color.white;
+        _FoldoutStyle.fontStyle = FontStyle.Bold;
+        _FoldoutStyle.normal.textColor = white;
+        _FoldoutStyle.onNormal.textColor = white;
+        _FoldoutStyle.hover.textColor = white;
+        _FoldoutStyle.onHover.textColor = white;
+        _FoldoutStyle.focused.textColor = white;
+        _FoldoutStyle.onFocused.textColor = white;
+        _FoldoutStyle.active.textColor = white;
+        _FoldoutStyle.onActive.textColor = white;
+      }
+      return _FoldoutStyle;
+    }
+  }
+
+  #endregion
+
   private static bool _IsOpen = false;
 
   private static string[] _GoalGenNameOptions;
@@ -39,6 +147,44 @@ public class DailyGoalEditor : EditorWindow {
   private static string _EventSearchField = "";
   private static Vector2 _scrollPos = new Vector2();
 
+  // toggle state for foldouts of individual goals
+  // uint corresponds to a unique ID
+  // bool corresponds to whether or not the foldout is expanded
+  private Dictionary<uint, bool> _DailyGoalFoldouts = new Dictionary<uint, bool>();
+  // uint refers to the ID of the Daily Goal (that ID must be set to true in DailyGoalFoldouts to reveal conditions)
+  // If true in DailyGoalFoldouts, then refer to the CondFoldouts to determine which Condition list
+  private Dictionary<uint, CondFoldouts> _ConditionFoldouts = new Dictionary<uint, CondFoldouts>();
+
+  private static bool _IdMapComplete = false;
+
+  public class CondFoldouts {
+    // If the Gen Condition list is folded out
+    public bool FoldoutGenConditions;
+    // If the Prog Condition list is folded out
+    public bool FoldoutProgConditions;
+
+    public CondFoldouts(bool isGenCon, bool isProCon) {
+      FoldoutGenConditions = isGenCon;
+      FoldoutProgConditions = isProCon;
+    }
+  }
+
+  // get a uint 1 higher than the highest node's Id
+  private uint GetNextGoalId() {
+    var data = _CurrentGenData;
+
+    if (data == null) {
+      return 0;
+    }
+
+    uint maxId = 0;
+    for (int i = 0; i < data.GenList.Count; i++) {
+      var goal = data.GenList[i];
+
+      maxId = goal.Id > maxId ? goal.Id : maxId;
+    }
+    return maxId + 1;
+  }
 
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
 
@@ -46,7 +192,6 @@ public class DailyGoalEditor : EditorWindow {
 
   static DailyGoalEditor() {
     LoadData();
-
     // get all conditions
     var ctypes = Assembly.GetAssembly(typeof(GoalCondition))
       .GetTypes()
@@ -96,6 +241,7 @@ public class DailyGoalEditor : EditorWindow {
         _CurrentGenData = JsonConvert.DeserializeObject<DailyGoalGenerationData>(json, GlobalSerializerSettings.JsonSettings);
         _CurrentGoalGenName = Path.GetFileNameWithoutExtension(path);
         _CurrentGoalGenFile = path;
+        RemapEditorIDs();
       }
       catch (Exception ex) {
         Debug.LogError(ex.Message);
@@ -103,11 +249,30 @@ public class DailyGoalEditor : EditorWindow {
     }
   }
 
+  public void RemapEditorIDs() {
+    DailyGoalGenerationData.GoalEntry existingEntry;
+    _ConditionFoldouts.Clear();
+    _DailyGoalFoldouts.Clear();
+    for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
+      existingEntry = _CurrentGenData.GenList[i];
+      // Only grab a new id if we have intersections or
+      // there is no ID established
+      if (existingEntry.Id == 0) {
+        existingEntry.Id = GetNextGoalId();
+      }
+      _DailyGoalFoldouts.Add(existingEntry.Id, false);
+      _ConditionFoldouts.Add(existingEntry.Id, new CondFoldouts(false, false));
+    }
+    DailyGoalEditor._IdMapComplete = true;
+  }
+
   public void OnGUI() {
-    
     DrawToolbar();
 
     if (_CurrentGenData != null) {
+      if (DailyGoalEditor._IdMapComplete == false) {
+        RemapEditorIDs();
+      }
       _CurrentGoalGenName = EditorGUILayout.TextField("File Name", _CurrentGoalGenName ?? string.Empty);
       string eventFilter = EditorGUILayout.TextField("Filter CLAD Events", _EventSearchField ?? string.Empty);
       // Only filter if the event filter has been changed
@@ -200,6 +365,7 @@ public class DailyGoalEditor : EditorWindow {
               // Reload groups
               LoadData();
               EditorUtility.DisplayDialog("Save Successful!", "EventMap '" + _CurrentGoalGenName + "' has been saved to " + _CurrentGoalGenFile, "OK");
+              _IdMapComplete = false;
             }
           }
         }
@@ -217,58 +383,115 @@ public class DailyGoalEditor : EditorWindow {
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
     EditorGUIUtility.labelWidth = 100;
-    EditorDrawingUtility.DrawGroupedList("DailyGoals", genData.GenList, DrawGoalDataEntry, () => new DailyGoalGenerationData.GoalEntry(), x => x.CladEvent, e => e.ToString());
+    EditorDrawingUtility.DrawGroupedList("DailyGoals", genData.GenList, DrawGoalDataEntry, AddDailyGoalEntry, x => x.CladEvent, e => e.ToString(), DailyGoalEditor.MainTitleStyle, DailyGoalEditor.TitleStyle);
     EditorGUILayout.EndScrollView();
     EditorGUILayout.EndVertical();
 
   }
 
+  private DailyGoalGenerationData.GoalEntry AddDailyGoalEntry() {
+    DailyGoalGenerationData.GoalEntry newGoal = new DailyGoalGenerationData.GoalEntry();
+    newGoal.Id = GetNextGoalId();
+    // If the GetNextGoalId returns a key that's still in the Dictionaries, it is because
+    // we have removed the genData but not cleansed the Dictionary of that ID, free up
+    // the ID.
+    if (_DailyGoalFoldouts.ContainsKey(newGoal.Id)) {
+      _DailyGoalFoldouts.Remove(newGoal.Id);
+      _ConditionFoldouts.Remove(newGoal.Id);
+    }
+    _DailyGoalFoldouts.Add(newGoal.Id, false);
+    _ConditionFoldouts.Add(newGoal.Id, new CondFoldouts(false, false));
+    return newGoal;
+  }
+
   public DailyGoalGenerationData.GoalEntry DrawGoalDataEntry(DailyGoalGenerationData.GoalEntry genData) {
     string eventName = genData.CladEvent.ToString();
+    bool isExpanded = false;
+    CondFoldouts condExpanded = new CondFoldouts(false, false);
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
       EditorGUILayout.BeginVertical();
-      string titleLocfile = "";
-      EditorGUILayout.LabelField(string.Format(">{0}", LocalizationEditorUtility.GetTranslation(genData.TitleKey, out titleLocfile).ToUpper()));
-      EditorGUI.indentLevel++;
-      EditorGUILayout.LabelField(">>GOAL");
-      EditorGUI.indentLevel++;
-      EditorGUILayout.BeginHorizontal();
-      if (string.IsNullOrEmpty(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
-        genData.CladEvent = (GameEvent)EditorGUILayout.EnumPopup("GameEvent", genData.CladEvent, GUILayout.Width(250));
+      if (_DailyGoalFoldouts.TryGetValue(genData.Id, out isExpanded)) {
+        if (!_ConditionFoldouts.TryGetValue(genData.Id, out condExpanded)) {
+          _ConditionFoldouts.Add(genData.Id, new CondFoldouts(false, false));
+        }
       }
       else {
-        genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, eventName)), _FilteredCladNameOptions, GUILayout.Width(250))];
+        return genData;
+      }
+      EditorGUILayout.BeginHorizontal();
+      if (isExpanded) {
+        GUI.contentColor = Color.green;
+      }
+      bool goalOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), isExpanded, string.Format("{0}", genData.TitleKey), DailyGoalEditor.FoldoutStyle);
+      _DailyGoalFoldouts[genData.Id] = goalOpen;
+      GUI.contentColor = Color.white;
+      // If the Goal is not expanded, Only show the title
+      if (!goalOpen) {
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
+        return genData;
+      }
+      else {
+        GUI.backgroundColor = new Color(0.75f, 0.75f, 1.0f);
+      }
+
+      if (GUILayout.Button(string.Format("Delete {0}", genData.TitleKey), DailyGoalEditor.RemoveButtonStyle)) {
+        _CurrentGenData.GenList.Remove(genData);
+      }
+      EditorGUILayout.EndHorizontal();
+      EditorGUILayout.LabelField("Goal", DailyGoalEditor.SubtitleStyle);
+      EditorGUILayout.BeginHorizontal();
+      if (string.IsNullOrEmpty(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
+        genData.CladEvent = (GameEvent)EditorGUILayout.EnumPopup("GameEvent", genData.CladEvent);
+      }
+      else {
+        genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, eventName)), _FilteredCladNameOptions)];
       }
       genData.Target = EditorGUILayout.IntField(new GUIContent("Target", "Amount of times the goal event needs to fire with all conditions met to complete goal"), genData.Target);
       genData.Priority = EditorGUILayout.IntField(new GUIContent("Priority", "Higher priority goals will appear higher in the Daily Goal panel"), genData.Priority);
       EditorGUILayout.EndHorizontal();
-      EditorGUI.indentLevel--;
 
-      //Draw list of conditions here
-      DrawConditionList(new GUIContent(">> GENERATION CONDITIONS", 
-        "Conditions that must be met for the Goal to be selected for Generation"), genData.GenConditions);
+      //Draw lists of conditions here
+      bool genCondOpen = condExpanded.FoldoutGenConditions;
+      bool proCondOpen = condExpanded.FoldoutProgConditions;
+
+      if (genCondOpen) {
+        GUI.contentColor = Color.green;
+      }
+      genCondOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), genCondOpen,
+        new GUIContent(string.Format("Generation Conditions{0}", (genData.GenConditions.Count > 0 ? string.Format(" - ({0})", genData.GenConditions.Count) : "")), 
+          "Conditions that must be met for the Goal to be selected for Generation"), DailyGoalEditor.FoldoutStyle);
+      GUI.contentColor = Color.white;
+      if (genCondOpen) {
+        DrawConditionList(genData.GenConditions);
+      }
+
+      if (proCondOpen) {
+        GUI.contentColor = Color.green;
+      }
+      proCondOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), proCondOpen,
+        new GUIContent(string.Format("Progress Conditions{0}", (genData.ProgressConditions.Count > 0 ? string.Format(" - ({0})", genData.ProgressConditions.Count) : "")), 
+          "Conditions that must be met for the Goal to be progressed when its GameEvent fires"), DailyGoalEditor.FoldoutStyle);
+      GUI.contentColor = Color.white;
+      if (proCondOpen) {
+        DrawConditionList(genData.ProgressConditions);
+      }
+
+      _ConditionFoldouts[genData.Id] = new CondFoldouts(genCondOpen, proCondOpen);
       
-      //Draw list of conditions here
-      DrawConditionList(new GUIContent(">> PROGRESS CONDITIONS", 
-        "Conditions that must be met for the Goal to be progressed MidGame"), genData.ProgressConditions);
-      
-      EditorGUILayout.LabelField(">>REWARD");
-      EditorGUI.indentLevel++;
+      EditorGUILayout.LabelField("Reward", DailyGoalEditor.SubtitleStyle);
       EditorGUILayout.BeginHorizontal();
-      genData.RewardType = EditorGUILayout.TextField("Type", genData.RewardType ?? string.Empty);
+      genData.RewardType = EditorGUILayout.TextField("Reward", genData.RewardType);
       genData.PointsRewarded = EditorGUILayout.IntField("Count", genData.PointsRewarded);
       EditorGUILayout.EndHorizontal();
-      EditorGUI.indentLevel--;
 
-      EditorGUILayout.LabelField(">>LOC KEYS");
-      EditorGUI.indentLevel++;
+      EditorGUILayout.LabelField("Localization", DailyGoalEditor.SubtitleStyle);
       EditorGUILayout.BeginHorizontal();
-      EditorDrawingUtility.DrawLocalizationString(ref genData.TitleKey, ref titleLocfile);
+      EditorDrawingUtility.DrawLocalizationString(ref genData.TitleKey);
       EditorDrawingUtility.DrawLocalizationString(ref genData.DescKey);
       EditorGUILayout.EndHorizontal();
-      EditorGUI.indentLevel--;
-      EditorGUI.indentLevel--;
       EditorGUILayout.EndVertical();
+      GUI.backgroundColor = Color.white;
     }
     return genData;
   }
@@ -285,8 +508,9 @@ public class DailyGoalEditor : EditorWindow {
       window.titleContent = new GUIContent("DailyGoal Editor");
       window.Show();
       window.Focus();
-      window.position = new Rect(0, 0, 800, 600);
+      window.position = new Rect(0, 0, 600, 600);
       DailyGoalEditor._IsOpen = true;
+      DailyGoalEditor._IdMapComplete = false;
     }
   }
 
@@ -302,8 +526,7 @@ public class DailyGoalEditor : EditorWindow {
 
 
   // Draws a list of Conditions
-  public void DrawConditionList<T>(GUIContent label, List<T> conditions) where T : GoalCondition {    
-    GUI.Label(GetIndentedLabelRect(), label);
+  public void DrawConditionList<T>(List<T> conditions) where T : GoalCondition {    
     for (int i = 0; i < conditions.Count; i++) {
       var cond = conditions[i];
       // clear out any null conditions
@@ -315,8 +538,9 @@ public class DailyGoalEditor : EditorWindow {
 
       EditorGUILayout.BeginHorizontal();
 
+      var name = (cond as T).GetType().Name.ToHumanFriendly();
       (cond as T).OnGUI_DrawUniqueControls();
-      if (GUI.Button(EditorGUILayout.GetControlRect(), "C--")) {
+      if (GUI.Button(EditorGUILayout.GetControlRect(), String.Format("Delete {0}", name), DailyGoalEditor.RemoveButtonStyle)) {
         conditions.RemoveAt(i);
       }
 
@@ -336,17 +560,16 @@ public class DailyGoalEditor : EditorWindow {
 
   // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
   private T DrawAddConditionPopup<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : GoalCondition {
-    var popupRect = new Rect(rect.x, rect.y, rect.width - 50, rect.height);
-    var plusRect = new Rect(rect.x + rect.width - 50, rect.y, 50, rect.height);
+    var popupRect = new Rect(rect.x, rect.y, rect.width - 150, rect.height);
+    var plusRect = new Rect(rect.x + rect.width - 150, rect.y, 150, rect.height);
     index = EditorGUI.IntPopup(popupRect, index, names, indices);
 
-    if (GUI.Button(plusRect, "C++")) {
+    if (GUI.Button(plusRect, "New Condition", DailyGoalEditor.AddButtonStyle)) {
       var result = (T)(Activator.CreateInstance(types[index]));
       return result;
     }
     return default(T);
   }
-
 
   #endregion
 
