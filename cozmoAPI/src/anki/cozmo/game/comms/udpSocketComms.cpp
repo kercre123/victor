@@ -25,8 +25,7 @@ namespace Cozmo {
     
   
 UdpSocketComms::UdpSocketComms(UiConnectionType connectionType)
-  : ISocketComms(connectionType)
-  , _comms(new MultiClientComms())
+  : _comms(new MultiClientComms())
   , _advertisementService(nullptr)
 {
   std::string serviceName = std::string(EnumToString(connectionType)) + "AdvertisementService";
@@ -133,9 +132,9 @@ bool UdpSocketComms::SendMessage(const Comms::MsgPacket& msgPacket)
 }
   
 
-bool UdpSocketComms::RecvMessage(Comms::MsgPacket& outMsgPacket)
+bool UdpSocketComms::RecvMessage(std::vector<uint8_t>& outBuffer)
 {
-  return _comms->GetNextMsgPacket(outMsgPacket);
+  return _comms->GetNextMsgPacket(outBuffer);
 }
 
 

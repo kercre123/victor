@@ -32,6 +32,7 @@ namespace Data {
 namespace Cozmo {
 
 class CozmoEngine;
+class GameMessagePort;
 
 class CozmoAPI : private Util::noncopyable
 {
@@ -42,6 +43,10 @@ public:
   // When manual control over updating the engine is desired:
   bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   bool Update(const double currentTime_sec);
+
+  // Send messages to game, receive messages from game
+  size_t SendMessages(uint8_t* buffer, size_t bufferSize);
+  void ReceiveMessages(const uint8_t* buffer, size_t size);
   
   // Destroys any running thread and game instance
   void Clear();
@@ -61,11 +66,13 @@ private:
     
     // For manually ticking the game
     bool Update(const double currentTime_sec);
+    GameMessagePort* GetGameMessagePort() const { return _gameMessagePort.get(); }
     
   private:
+    std::unique_ptr<GameMessagePort> _gameMessagePort;
     std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
-    
+
   }; // class CozmoInstanceRunner
   
   // Our running instance, if we have one

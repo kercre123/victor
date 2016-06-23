@@ -96,7 +96,7 @@ namespace Cozmo {
   
     virtual size_t Send(const Comms::MsgPacket &p);
 
-    virtual bool GetNextMsgPacket(Comms::MsgPacket &p);
+    virtual bool GetNextMsgPacket(std::vector<uint8_t> &p);
     
     
     // when game is unpaused we need to dump old messages

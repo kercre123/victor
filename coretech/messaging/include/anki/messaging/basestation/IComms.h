@@ -12,6 +12,7 @@
 #include <string.h>
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
+#include <vector>
 
 namespace Anki {
   namespace Comms {
@@ -66,7 +67,7 @@ namespace Anki {
       
       virtual size_t Send(const MsgPacket &p) = 0;
       
-      virtual bool GetNextMsgPacket(MsgPacket &p) = 0;
+      virtual bool GetNextMsgPacket(std::vector<uint8_t> &p) = 0;
       
       // virtual void SetCurrentTimestamp(BaseStationTime_t timestamp) = 0;
 

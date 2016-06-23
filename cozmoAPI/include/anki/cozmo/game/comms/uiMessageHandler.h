@@ -43,13 +43,14 @@ namespace Anki {
 
     class Robot;
     class RobotManager;
+    class GameMessagePort;
     
     
     class UiMessageHandler : public IExternalInterface
     {
     public:
       
-      UiMessageHandler(u32 hostUiDeviceID); // Force construction with stuff in Init()?
+      UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* messagePipe); // Force construction with stuff in Init()?
       virtual ~UiMessageHandler();
       
       Result Init(const Json::Value& config);
@@ -108,8 +109,9 @@ namespace Anki {
       Result ProcessMessages();
       
       // Process a raw byte buffer as a GameToEngine CLAD message and broadcast it
-      Result ProcessMessageBytes(const uint8_t* packetBytes, uint16_t packetSize, UiConnectionType connectionType);
-      Result ProcessMessageBytes(const Comms::MsgPacket& packet, UiConnectionType connectionType);
+      Result ProcessMessageBytes(const uint8_t* packetBytes, size_t packetSize,
+                                 UiConnectionType connectionType, bool isSingleMessage);
+      void HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType);
       
       // Send a message to a specified ID
       virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId = kDestinationIdEveryone) override;

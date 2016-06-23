@@ -57,6 +57,7 @@ class IExternalInterface;
 class CozmoContext;
 class MultiClientChannel;
 class UiMessageHandler;
+class GameMessagePort;
 class USBTunnelServer;
 class BLESystem;
 class DeviceDataManager;
@@ -77,7 +78,7 @@ class CozmoEngine
 {
 public:
 
-  CozmoEngine(Util::Data::DataPlatform* dataPlatform);
+  CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* gameMessagePort);
   virtual ~CozmoEngine();
 
 

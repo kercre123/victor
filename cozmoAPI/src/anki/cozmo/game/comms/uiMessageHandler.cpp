@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/game/comms/directGameComms.h"
 #include "anki/cozmo/game/comms/tcpSocketComms.h"
 #include "anki/cozmo/game/comms/udpSocketComms.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
@@ -37,6 +38,11 @@
 #include "util/enums/enumOperators.h"
 #include "util/time/universalTime.h"
 
+#if ANDROID || ANKI_IOS_BUILD
+#define USE_DIRECT_COMMS 1
+#else
+#define USE_DIRECT_COMMS 0
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -55,7 +61,7 @@ namespace Anki {
     
     
     
-    ISocketComms* CreateSocketComms(UiConnectionType type)
+    ISocketComms* CreateSocketComms(UiConnectionType type, GameMessagePort* gameMessagePort, ISocketComms::DeviceId hostDeviceId)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
 
@@ -63,7 +69,11 @@ namespace Anki {
       {
         case UiConnectionType::UI:
         {
+          #if USE_DIRECT_COMMS
+          return new DirectGameComms(gameMessagePort, hostDeviceId);
+          #else
           return new UdpSocketComms(type);
+          #endif
         }
         case UiConnectionType::SdkOverUdp:
         {
@@ -76,7 +86,7 @@ namespace Anki {
         case UiConnectionType::SdkOverTcp:
         {
         #if ANKI_ENABLE_SDK_OVER_TCP
-          return new TcpSocketComms(type);
+          return new TcpSocketComms();
         #else
           return nullptr;
         #endif
@@ -90,13 +100,13 @@ namespace Anki {
     }
     
 
-    UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
+    UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
       : _isInitialized(false)
       , _hostUiDeviceID(hostUiDeviceID)
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        _socketComms[(uint32_t)i] = CreateSocketComms(i);
+        _socketComms[(uint32_t)i] = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID());
       }
     }
     
@@ -198,20 +208,43 @@ namespace Anki {
     }
  
     
-    Result UiMessageHandler::ProcessMessageBytes(const uint8_t* packetBytes, uint16_t packetSize, UiConnectionType connectionType)
+    Result UiMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes, const size_t packetSize,
+                                                 UiConnectionType connectionType, const bool isSingleMessage)
     {
       ExternalInterface::MessageGameToEngine message;
-      size_t bytesUnpacked = message.Unpack(packetBytes, packetSize);
-      if (bytesUnpacked != packetSize)
+      uint16_t bytesRemaining = packetSize;
+      const uint8_t* messagePtr = packetBytes;
+
+      while (bytesRemaining > 0)
       {
-        PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg "
-                           << ExternalInterface::MessageGameToEngineTagToString(message.GetTag())
-                           << ", expected " << message.Size() << ", recvd " << packetSize << ")" );
-        
-        return RESULT_FAIL;
+        size_t bytesUnpacked = message.Unpack(messagePtr, bytesRemaining);
+        if (isSingleMessage && bytesUnpacked != packetSize)
+        {
+          PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
+                             "Buffer's size does not match expected size for this message ID. (Msg "
+                              << ExternalInterface::MessageGameToEngineTagToString(message.GetTag())
+                              << ", expected " << message.Size() << ", recvd " << packetSize << ")" );
+          return RESULT_FAIL;
+        }
+        else if (!isSingleMessage && (bytesUnpacked > bytesRemaining || bytesUnpacked == 0))
+        {
+          PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
+                            "Buffer overrun reading messages, last message: "
+                             << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()));
+
+          return RESULT_FAIL;
+        }
+        bytesRemaining -= bytesUnpacked;
+        messagePtr += bytesUnpacked;
+
+        HandleProcessedMessage(message, connectionType);
       }
-      
+
+      return RESULT_OK;
+    }
+
+    void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType)
+    {
       #if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
@@ -220,7 +253,7 @@ namespace Anki {
       #endif
       // We must handle pings at this level because they are a connection type specific message
       // and must be dealt with at the transport level rather than at the app level
-      if ( message.GetTag() == ExternalInterface::MessageGameToEngineTag::Ping )
+      if (message.GetTag() == ExternalInterface::MessageGameToEngineTag::Ping)
       {
         ISocketComms* socketComms = GetSocketComms(connectionType);
         if (socketComms)
@@ -232,30 +265,20 @@ namespace Anki {
           }
           else
           {
-            ExternalInterface::Ping outPing( pingMsg.counter, pingMsg.timeSent_ms, true );
+            ExternalInterface::Ping outPing(pingMsg.counter, pingMsg.timeSent_ms, true);
             ExternalInterface::MessageEngineToGame toSend;
             toSend.Set_Ping(outPing);
             DeliverToGame(std::move(toSend), (DestinationId)connectionType);
           }
         }
       }
-      else{
+      else
+      {
         // Send out this message to anyone that's subscribed
-        Broadcast(std::move(message));
+        Broadcast(message);
       }
-      
-      return RESULT_OK;
     }
-    
-    
-    
-    
-    Result UiMessageHandler::ProcessMessageBytes(const Comms::MsgPacket& packet, UiConnectionType connectionType)
-    {
-      return ProcessMessageBytes(packet.data, packet.dataLen, connectionType);
-    }
-    
-    
+
     // Broadcasting MessageGameToEngine messages are only internal
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
     {
@@ -334,14 +357,15 @@ namespace Anki {
           if (socketComms)
           {
             bool keepReadingMessages = true;
+            const bool isSingleMessage = !socketComms->AreMessagesGrouped();
             while(keepReadingMessages)
             {
-              Comms::MsgPacket packet;
-              keepReadingMessages = socketComms->RecvMessage(packet);
-              
+              std::vector<uint8_t> buffer;
+              keepReadingMessages = socketComms->RecvMessage(buffer);
+
               if (keepReadingMessages)
               {
-                Result res = ProcessMessageBytes(packet, i);
+                Result res = ProcessMessageBytes(buffer.data(), buffer.size(), i, isSingleMessage);
                 if (res != RESULT_OK)
                 {
                   retVal = RESULT_FAIL;

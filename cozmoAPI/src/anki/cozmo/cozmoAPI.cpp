@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/cozmoAPI.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/game/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "util/logging/logging.h"
 #include <chrono>
@@ -34,7 +35,7 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
     PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Non-threaded Cozmo already created!");
     return Result::RESULT_FAIL;
   }
-  
+
   // Init the InstanceRunner
   bool gameInitResult = false;
   _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
@@ -44,7 +45,7 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
     PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Error initializing new api instance!");
     return Result::RESULT_FAIL;
   }
-  
+
   // Start the thread
   _cozmoRunnerThread = std::thread(&CozmoInstanceRunner::Run, _cozmoRunner.get());
   
@@ -86,6 +87,26 @@ bool CozmoAPI::Update(const double currentTime_sec)
   
   return _cozmoRunner->Update(currentTime_sec);
 }
+
+size_t CozmoAPI::SendMessages(uint8_t* buffer, size_t bufferSize)
+{
+  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetGameMessagePort() : nullptr;
+  if (messagePipe == nullptr) {
+    return 0;
+  }
+
+  return messagePipe->PullToGameMessages(buffer, bufferSize);
+}
+
+void CozmoAPI::ReceiveMessages(const uint8_t* buffer, size_t size)
+{
+  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetGameMessagePort() : nullptr;
+  if (messagePipe == nullptr) {
+    return;
+  }
+
+  messagePipe->PushFromGameMessages(buffer, size);
+}
   
 CozmoAPI::~CozmoAPI()
 {
@@ -116,7 +137,8 @@ void CozmoAPI::Clear()
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _cozmoInstance(new CozmoEngine(dataPlatform))
+: _gameMessagePort(new GameMessagePort())
+, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get()))
 , _isRunning(true)
 {
   Result initResultReturn = _cozmoInstance->Init(config);
@@ -135,7 +157,7 @@ CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
   auto runStart = std::chrono::system_clock::now();
-  
+
   while(_isRunning)
   {
     auto tickStart = std::chrono::system_clock::now();
@@ -179,6 +201,6 @@ bool CozmoAPI::CozmoInstanceRunner::Update(const double currentTime_sec)
   }
   return updateResult == RESULT_OK;
 }
-  
+
 } // namespace Cozmo
 } // namespace Anki

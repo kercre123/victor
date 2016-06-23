@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using Anki.Cozmo;
 using Anki.Cozmo.Audio;
+using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
@@ -75,7 +76,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<string> ConnectedToClient;
 
   private bool _CozmoBindingStarted = false;
-  private RobotUdpChannel _Channel = null;
+  private RobotChannel _Channel = null;
   private bool _IsRobotConnected = false;
 
   private const int _UIDeviceID = 1;
@@ -123,7 +124,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     Application.runInBackground = true;
 
+    #if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
+    _Channel = new RobotDirectChannel();
+    #else
     _Channel = new RobotUdpChannel();
+    #endif
     _Channel.ConnectedToClient += Connected;
     _Channel.DisconnectedFromClient += Disconnected;
     _Channel.MessageReceived += ReceivedMessage;

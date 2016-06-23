@@ -46,16 +46,25 @@ public:
   using DeviceId = int;
   static constexpr DeviceId kDeviceIdInvalid = -1;
   
-  ISocketComms(UiConnectionType connectionType);
+  ISocketComms();
   virtual ~ISocketComms();
   
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) = 0;
   
   virtual void Update() = 0;
-  
+
+  // Describes whether an ISocketComms returns messages via a packet or a buffer
+  enum class MessageType {
+    Packet,
+    Buffer
+  };
+  // describes whether this comms groups messages together in buffers
+  // (returning false = every buffer contains exactly one message)
+  virtual bool AreMessagesGrouped() const = 0;
+
   virtual bool SendMessage(const Comms::MsgPacket& msgPacket) = 0;
-  virtual bool RecvMessage(Comms::MsgPacket& outMsgPacket) = 0;
-  
+  virtual bool RecvMessage(std::vector<uint8_t>& outBuffer) = 0;
+
   virtual bool ConnectToDeviceByID(DeviceId deviceId) = 0;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) = 0;
   

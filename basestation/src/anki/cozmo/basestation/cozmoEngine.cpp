@@ -62,8 +62,8 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
-  : _uiMsgHandler(new UiMessageHandler(1))
+CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
+  : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
