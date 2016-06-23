@@ -132,6 +132,10 @@ namespace Cozmo.HomeHub {
       UnlockablesManager.Instance.OnNewUnlock += CheckIfUnlockablesAffordableAndUpdateBadge;
       // If we have energy earned, create the energy doobers and clear pending action rewards
       if (RewardedActionManager.Instance.RewardPending) {
+
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
+        }
         int endPoints = ChestRewardManager.Instance.GetCurrentRequirementPoints();
         if (ChestRewardManager.Instance.ChestPending) {
           endPoints = ChestRewardManager.Instance.GetPreviousRequirementPoints();
@@ -213,6 +217,9 @@ namespace Cozmo.HomeHub {
       RewardedActionManager.Instance.PendingActionRewards.Clear();
       UIManager.EnableTouchEvents();
       if (ChestRewardManager.Instance.ChestPending == false) {
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
+        }
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       }
       else {
