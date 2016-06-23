@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 extern "C" {
   #include "nrf.h"
@@ -19,16 +21,34 @@ namespace Backpack {
   void update() {}
 }
 
-static const int MAX_PROPS = 7
-  ;
-static unsigned int rssi[MAX_PROPS];
+enum FilterTypes {
+  FILTER_DISABLED,
+  FILTER_ADVERTISE,
+  FILTER_ALL,
+  FILTER_CUBE1 = OBJECT_CUBE1,
+  FILTER_CUBE2 = OBJECT_CUBE2,
+  FILTER_CUBE3 = OBJECT_CUBE3,
+  FILTER_CHARGER = OBJECT_CHARGER,
+};
+
+static FilterTypes filter_type = FILTER_DISABLED;
+
+static const int PIN_TX = PIN_TX_VEXT;
+static const int PIN_RX = PIN_TX_HEAD;
+static const int MAX_RSSI = 50;
+static unsigned int rssi[MAX_ACCESSORIES];
+
+static uint8_t print_read_index = 0;
+static uint8_t print_write_index = 0;
+static uint8_t print_count = 0;
+static uint8_t print_queue[0x100];
 
 static inline unsigned int abs(int x) { return x < 0 ? -x : x; }
 
 static bool minRSSI(unsigned int measured, int& slot) {
   int maximum = 0;
   
-  for (int i = 0; i < MAX_PROPS; i++) {
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
     if (rssi[i] >= maximum) {
       slot = i;
       maximum = rssi[i];
@@ -43,30 +63,31 @@ static bool minRSSI(unsigned int measured, int& slot) {
   return false;
 }
 
-uint32_t isqrt(uint32_t a_nInput)
-{
-  uint32_t op  = a_nInput;
-  uint32_t res = 0;
-  uint32_t one = 1uL << 30; // The second-to-top bit is set: use 1u << 14 for uint16_t type; use 1uL<<30 for uint32_t type
+void set_test_mode(FilterTypes type) {
+  LightState colors[4];
+  memset(&colors, 0, sizeof(colors));
 
-
-  // "one" starts at the highest power of four <= than the argument.
-  while (one > op)
-  {
-      one >>= 2;
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    Radio::assignProp(i, 0);
+    Radio::setPropLights(i, colors);
   }
 
-  while (one != 0)
-  {
-    if (op >= res + one)
-    {
-      op = op - (res + one);
-      res = res +  2 * one;
-    }
-    res >>= 1;
-    one >>= 2;
+  filter_type = type;
+}
+
+void uart_printf(const char* format, ...) {
+  char buffer[256];
+  uint8_t bytes;
+  va_list args;
+  va_start (args, format);
+  bytes = vsprintf (buffer, format, args);
+  va_end (args);
+
+  for (int i = 0; i < bytes; i++) {
+    print_queue[print_write_index++] = buffer[i];
   }
-  return res;
+
+  print_count += bytes;
 }
 
 bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID) {
@@ -78,9 +99,28 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       const ObjectDiscovered* discovered = (ObjectDiscovered*) buffer;
       int slot;
 
-      if (abs(discovered->rssi) > 50) break ;
-
+      switch (filter_type) {
+        case FILTER_ALL:
+          break ;
+        case FILTER_CUBE1:
+        case FILTER_CUBE2:
+        case FILTER_CUBE3:
+        case FILTER_CHARGER:
+          if (filter_type != (FilterTypes) discovered->device_type) {
+            return true;
+          }
+          break ;
+        case FILTER_DISABLED:
+        case FILTER_ADVERTISE:
+          return true;
+      }
+      
+      if (abs(discovered->rssi) > MAX_RSSI) {
+        break ;
+      }
+      
       if (minRSSI(abs(discovered->rssi), slot)) {
+        uart_printf("C%c%c%c%c", discovered->factory_id, discovered->factory_id >> 8, discovered->factory_id >> 16, discovered->factory_id >> 24);
         Radio::assignProp(slot, discovered->factory_id);
       }
 
@@ -92,31 +132,20 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       LightState colors[4];
       LightState allState;
 
-      #ifdef PRETTY_SHADES
-      int r = state->x, g = state->y, b = state->z;
-      int len = isqrt(r*r+g*g+b*b);
-
-      r = r * 0x70 / len + 0x80;
-      g = g * 0x70 / len + 0x80;
-      b = b * 0x70 / len + 0x80;
-      
-      #else
       int r = state->x, g = state->y, b = state->z;
       r = abs(r); g = abs(g); b = abs(b); 
+      uint16_t color;
 
       if (!r && !g && !b) {
-        r = 0xFF; g = 0xFF; b = 0xFF;
+        color = PACK_COLORS(0, 0xFF, 0xFF, 0xFF);
       }
       else if (abs(state->x) < 6 && abs(state->z) < 6 && state->y > 58) {
-        r = 0; g = 0xFF; b = 0;
+        color = PACK_COLORS(0, 0x00, 0xFF, 0x00);
       }
       else {
-        r = 0xFF; g = 0; b = 0;
+        color = PACK_COLORS(0, 0xFF, 0x00, 0x00);
       }
 
-      #endif
-
-      uint16_t color = PACK_COLORS(0, r, g, b);
       allState.onColor = color;
       allState.offColor = color;
       
@@ -128,7 +157,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       break ;
     }
   }
-  
+
   return true;
 }
 
@@ -149,6 +178,19 @@ int main(void)
   NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRCCOPY_SRC_Synth;
   NRF_CLOCK->TASKS_LFCLKSTART = 1;
 
+  // Setup UART
+  NRF_UART0->POWER = 1;
+  NRF_UART0->CONFIG = 0;
+  NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
+  nrf_gpio_pin_set(PIN_TX);
+
+  NRF_UART0->BAUDRATE = NRF_BAUD(1000000);
+  NRF_UART0->PSELRXD = PIN_RX;
+  NRF_UART0->PSELTXD = PIN_RX;
+  NRF_UART0->TASKS_STARTRX = 1;
+  NRF_UART0->TASKS_STARTTX = 1;
+  NRF_UART0->EVENTS_TXDRDY = 1;
+
   // Initialize our scheduler
   RTOS::init();
   Timer::init();
@@ -163,18 +205,77 @@ int main(void)
   __enable_irq();
 
   // Run forever, because we are awesome.
-  for (;;) {
-    static uint8_t last = 0;
-    uint8_t cur = NRF_RTC1->COUNTER;
-    
-    if (cur == last) continue ;
-    last = cur;
+  static const int32_t periods[] = { 256, 256, 32768 };
+  static const int total_periods = sizeof(periods) / sizeof(int32_t);
+  static int32_t target[total_periods];
+  static bool write_ready = true;
+  
+  memset(&target, 0, sizeof(target));
 
-    for (int i = 0; i < WDOG_TOTAL_CHANNELS; i++) {
-      RTOS::kick((watchdog_channels)i);
+  for (;;) {
+    int32_t cur = NRF_RTC1->COUNTER;
+
+    if (NRF_UART0->EVENTS_RXDRDY) {
+      NRF_UART0->EVENTS_RXDRDY = 0;
+
+      switch (NRF_UART0->RXD) {
+        case 'A':
+          set_test_mode(FILTER_ADVERTISE);
+          break ;
+        case 'C':
+          set_test_mode(FILTER_ALL);
+          break ;
+        case '1':
+          set_test_mode(FILTER_CHARGER);
+          break ;
+        case '2':
+          set_test_mode(FILTER_CUBE1);
+          break ;
+        case '3':
+          set_test_mode(FILTER_CUBE2);
+          break ;
+        case '4':
+          set_test_mode(FILTER_CUBE3);
+          break ;
+        case 'X':
+          set_test_mode(FILTER_DISABLED);
+          break ;
+      }
     }
-    
-    // This means that if the crypto engine is running, the lights will stop pulsing. 
-    Lights::manage();
+
+    if (NRF_UART0->EVENTS_TXDRDY) {
+      NRF_UART0->EVENTS_TXDRDY = 0;
+      
+      write_ready = true;
+    }
+
+    if (write_ready && print_count > 0) {
+      NRF_UART0->TXD = print_queue[print_read_index++];
+      print_count --;
+
+      write_ready = false;
+    }
+
+    // Main loop for calculating counters
+    for (int i = 0; i < total_periods; i++) {
+      if (target[i] - cur > 0) continue ;
+      target[i] += periods[i];
+
+      switch (i) {
+        case 0:
+          Lights::manage();
+          break ;
+        case 1:
+          for (int i = 0; i < WDOG_TOTAL_CHANNELS; i++) {
+            RTOS::kick((watchdog_channels) i);
+          }
+          break ;
+        case 2:
+          if (filter_type == FILTER_ADVERTISE) {
+            Radio::sendTestPacket();
+          }
+          break ;
+      }
+    }
   }
 }

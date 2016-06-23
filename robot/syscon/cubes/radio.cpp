@@ -213,9 +213,7 @@ void Radio::sendTestPacket(void) {
     0xFF
   };
 
-  static const uesb_address_desc_t test_address = { 81, 0xE7E7E7E7 };
-
-  uesb_write_tx_payload(&test_address, &test_packet, sizeof(test_packet));
+  uesb_write_tx_payload(&PairingAddress, &test_packet, sizeof(test_packet));
 }
 
 void uesb_event_handler(uint32_t flags)
