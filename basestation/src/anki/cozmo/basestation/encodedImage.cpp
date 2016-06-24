@@ -97,7 +97,7 @@ namespace Cozmo {
     cvtColor(decodedImg.get_CvMat_(), decodedImg.get_CvMat_(), CV_BGR2RGB); // opencv will decode as BGR
   }
   
-  static inline void DecodeHelper(const std::vector<u8>& buffer, Vision::Image decodedImg)
+  static inline void DecodeHelper(const std::vector<u8>& buffer, Vision::Image& decodedImg)
   {
     cv::imdecode(buffer, cv::IMREAD_GRAYSCALE, &decodedImg.get_CvMat_());
   }
