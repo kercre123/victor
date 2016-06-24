@@ -42,6 +42,7 @@ enum uint_8 BehaviorType {
   AdmireStack,
   PutDownBlock,
   FactoryTest,
+  FactoryCentroidExtractor,
   DemoFearEdge,
   FlipDownFromWheelie,
   DockingTestSimple,

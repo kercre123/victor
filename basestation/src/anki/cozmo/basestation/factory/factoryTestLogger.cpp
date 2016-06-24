@@ -213,6 +213,31 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
+  bool FactoryTestLogger::Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg)
+  {
+    std::stringstream ss;
+    
+    if(msg.success)
+    {
+      ss << "\n[CentroidInfo]" << std::fixed
+      << "\nHeadAngle_deg: " << RAD_TO_DEG(msg.headAngle)
+      << "\nUpperLeft: "  << msg.dotCenX_pix[0] << " " << msg.dotCenY_pix[0]
+      << "\nLowerLeft: "  << msg.dotCenX_pix[1] << " " << msg.dotCenY_pix[1]
+      << "\nUpperRight: " << msg.dotCenX_pix[2] << " " << msg.dotCenY_pix[2]
+      << "\nLowerRight: " << msg.dotCenX_pix[3] << " " << msg.dotCenY_pix[3];
+      
+      if(msg.didComputePose)
+      {
+        ss << "\n\n[CamPose]"
+        << "\nRot_deg: "   << RAD_TO_DEG(msg.camPoseRoll_rad) << " " << RAD_TO_DEG(msg.camPosePitch_rad) << " " << RAD_TO_DEG(msg.camPoseYaw_rad)
+        << "\nTrans_mm: " << msg.camPoseX_mm << " " << msg.camPoseY_mm << " " << msg.camPoseZ_mm;
+      }
+    }
+    
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.CentroidInfo", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
   bool FactoryTestLogger::AppendToFile(const std::string& data) {
     
     // If log name was not actually defined yet, do nothing.

@@ -73,7 +73,8 @@ namespace NVStorage {
     NVEntry_ToolCodeImageRight = 0x80110000,
 
     // ==== Pre-playpen tags =====
-    NVEntry_PrePlaypenResults  = 0xC0000000
+    NVEntry_PrePlaypenResults   = 0xC0000000,
+    NVEntry_PrePlaypenCentroids = 0xC0000001
   }
 
   // Nominally 0 is success > 0 is conditional success and < 0 is error

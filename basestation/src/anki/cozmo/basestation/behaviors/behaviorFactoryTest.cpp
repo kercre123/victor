@@ -80,6 +80,9 @@ namespace Cozmo {
   
   // Disconnect at end of test
   CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  true);
+
+  // Read the centroid locations stored on the robot from the prePlaypen test and calculate camera pose
+  CONSOLE_VAR(bool,  kBFT_ReadCentroidsFromRobot, "BehaviorFactoryTest",  false);
   
   
   
@@ -755,6 +758,97 @@ namespace Cozmo {
       case FactoryTestState::WaitForCameraCalibration:
       {
         if (_calibrationReceived) {
+        
+        
+          if(kBFT_ReadCentroidsFromRobot)
+          {
+            robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PrePlaypenCentroids,
+                                               [this,&robot](u8* data, size_t size, NVStorage::NVResult res){
+                                                 if (res == NVStorage::NVResult::NV_OKAY) {
+                                                   
+                                                   ExternalInterface::RobotCompletedFactoryDotTest msg;
+                                                   msg.success = true;
+                                                   
+                                                   // TODO:
+                                                   // Populate msg.dotCenX/Y_pix and headAngle from data (need to get format of data from nathan)
+                                                   
+                                                   const Quad2f obsQuad(Point2f(msg.dotCenX_pix[0], msg.dotCenY_pix[0]),
+                                                                        Point2f(msg.dotCenX_pix[1], msg.dotCenY_pix[1]),
+                                                                        Point2f(msg.dotCenX_pix[2], msg.dotCenY_pix[2]),
+                                                                        Point2f(msg.dotCenX_pix[3], msg.dotCenY_pix[3]));
+                                                   
+                                                   Pose3d pose;
+                                                   if(robot.GetVisionComponent().ComputeCameraPoseVsIdeal(obsQuad, pose) != RESULT_OK)
+                                                   {
+                                                     msg.didComputePose = false;
+                                                     _factoryTestLogger.Append(msg);
+                                                     EndTest(robot, FactoryTestResultCode::COMPUTE_CAM_POSE_FAILED);
+                                                   }
+                                                   else
+                                                   {
+                                                     msg.didComputePose = true;
+                                                     msg.camPoseX_mm = pose.GetTranslation().x();
+                                                     msg.camPoseY_mm = pose.GetTranslation().y();
+                                                     msg.camPoseZ_mm = pose.GetTranslation().z();
+                                                     
+                                                     msg.camPoseRoll_rad  = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
+                                                     msg.camPosePitch_rad = pose.GetRotation().GetAngleAroundXaxis().ToFloat();
+                                                     msg.camPoseYaw_rad   = pose.GetRotation().GetAngleAroundYaxis().ToFloat();
+                                                     
+                                                     _factoryTestLogger.Append(msg);
+                                                     
+                                                     static const f32 rollThresh_rad = DEG_TO_RAD_F32(5);
+                                                     static const f32 pitchThresh_rad = DEG_TO_RAD_F32(5);
+                                                     static const f32 yawThresh_rad = DEG_TO_RAD_F32(5);
+                                                     static const f32 xThresh_mm = 5;
+                                                     static const f32 yThresh_mm = 5;
+                                                     static const f32 zThresh_mm = 5;
+                                                     
+                                                     bool exceedsThresh = false;
+                                                     if(!NEAR(msg.camPoseRoll_rad, 0, rollThresh_rad))
+                                                     {
+                                                       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Roll exceeds threshold");
+                                                       exceedsThresh = true;
+                                                     }
+                                                     if(!NEAR(msg.camPosePitch_rad - msg.headAngle, DEG_TO_RAD_F32(-4), pitchThresh_rad))
+                                                     {
+                                                       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Pitch exceeds threshold");
+                                                       exceedsThresh = true;
+                                                     }
+                                                     if(!NEAR(msg.camPoseYaw_rad, 0, yawThresh_rad))
+                                                     {
+                                                       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "Yaw exceeds threshold");
+                                                       exceedsThresh = true;
+                                                     }
+                                                     if(!NEAR(msg.camPoseX_mm, 0, xThresh_mm))
+                                                     {
+                                                       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "xTrans exceeds threshold");
+                                                       exceedsThresh = true;
+                                                     }
+                                                     if(!NEAR(msg.camPoseY_mm, 0, yThresh_mm))
+                                                     {
+                                                       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "yTrans exceeds threshold");
+                                                       exceedsThresh = true;
+                                                     }
+                                                     if(!NEAR(msg.camPoseZ_mm, 0, zThresh_mm))
+                                                     {
+                                                       PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.CamPose", "zTrans exceeds threshold");
+                                                       exceedsThresh = true;
+                                                     }
+                                                     
+                                                     if(exceedsThresh)
+                                                     {
+                                                       EndTest(robot, FactoryTestResultCode::CAM_POSE_OOR);
+                                                     }
+                                                     
+                                                   }
+                                                   
+                                                 } else {
+                                                   EndTest(robot, FactoryTestResultCode::NO_PREPLAYPEN_CENTROIDS);
+                                                 }
+                                               });
+          }
+        
           
           ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
           

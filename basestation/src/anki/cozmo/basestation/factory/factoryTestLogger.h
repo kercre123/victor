@@ -12,6 +12,8 @@
 #ifndef __Basestation_Factory_FactoryTestLogger_H_
 #define __Basestation_Factory_FactoryTestLogger_H_
 
+#include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/pose.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -53,6 +55,7 @@ public:
   bool Append(const CalibMetaInfo& data);
   bool AppendCalibPose(const PoseData& data);
   bool AppendObservedCubePose(const PoseData& data);
+  bool Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg);
   
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);

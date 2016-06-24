@@ -1538,8 +1538,9 @@ namespace Cozmo {
       }
       
       if(bestComp == 0) {
-        PRINT_NAMED_WARNING("VisionComponent.FindFactoryTestDotCentroids.NotComponentLargeEnough",
+        PRINT_NAMED_WARNING("VisionComponent.FindFactoryTestDotCentroids.NoComponentLargeEnough",
                             "DotArea=%.1f, MinFrac=%.2f", kDotArea_pix, kMinAreaFrac);
+        
         return RESULT_FAIL;
       }
       
@@ -1574,6 +1575,7 @@ namespace Cozmo {
       }
     }
     
+    msg.headAngle = _robot.GetHeadAngle();
     msg.success = true;
     
     if(kDrawDebugDisplay)

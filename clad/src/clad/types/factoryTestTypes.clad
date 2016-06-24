@@ -80,6 +80,9 @@ enum uint_8 FactoryTestResultCode {
   TOO_MANY_TOOL_CODE_IMAGES,
   CALIB_META_INFO_WRITE_FAILED,
   IMU_INFO_WRITE_FAILED,
+  NO_PREPLAYPEN_CENTROIDS,
+  COMPUTE_CAM_POSE_FAILED,
+  CAM_POSE_OOR,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
