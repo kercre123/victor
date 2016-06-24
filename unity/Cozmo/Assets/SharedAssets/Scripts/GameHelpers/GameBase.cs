@@ -768,28 +768,28 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void RegisterInterruptionStartedEvents() {
     DeregisterInterruptionStartedEvents();
-    RobotEngineManager.Instance.AddCallback(typeof(CliffEvent), HandleRobotCliffEventStarted);
-    RobotEngineManager.Instance.AddCallback(typeof(RobotPickedUp), HandleRobotPickedUpStarted);
-    RobotEngineManager.Instance.AddCallback(typeof(RobotOnBack), HandleRobotOnBackEventStarted);
+    RobotEngineManager.Instance.AddCallback<CliffEvent>(HandleRobotCliffEventStarted);
+    RobotEngineManager.Instance.AddCallback<RobotPickedUp>(HandleRobotPickedUpStarted);
+    RobotEngineManager.Instance.AddCallback<RobotOnBack>(HandleRobotOnBackEventStarted);
   }
 
   protected void DeregisterInterruptionStartedEvents() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(CliffEvent), HandleRobotCliffEventStarted);
-    RobotEngineManager.Instance.RemoveCallback(typeof(RobotPickedUp), HandleRobotPickedUpStarted);
-    RobotEngineManager.Instance.RemoveCallback(typeof(RobotOnBack), HandleRobotOnBackEventStarted);
+    RobotEngineManager.Instance.RemoveCallback<CliffEvent>(HandleRobotCliffEventStarted);
+    RobotEngineManager.Instance.RemoveCallback<RobotPickedUp>(HandleRobotPickedUpStarted);
+    RobotEngineManager.Instance.RemoveCallback<RobotOnBack>(HandleRobotOnBackEventStarted);
   }
 
   protected void RegisterInterruptionEndedEvents() {
     DeregisterInterruptionEndedEvents();
-    RobotEngineManager.Instance.AddCallback(typeof(RobotCliffEventFinished), HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.AddCallback(typeof(RobotPutDown), HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.AddCallback(typeof(RobotOnBackFinished), HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.AddCallback<RobotCliffEventFinished>(HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.AddCallback<RobotPutDown>(HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.AddCallback<RobotOnBackFinished>(HandleRobotInterruptionEventEnded);
   }
 
   protected void DeregisterInterruptionEndedEvents() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(RobotCliffEventFinished), HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.RemoveCallback(typeof(RobotPutDown), HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.RemoveCallback(typeof(RobotOnBackFinished), HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.RemoveCallback<RobotCliffEventFinished>(HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.RemoveCallback<RobotPutDown>(HandleRobotInterruptionEventEnded);
+    RobotEngineManager.Instance.RemoveCallback<RobotOnBackFinished>(HandleRobotInterruptionEventEnded);
   }
 
   private void HandleRobotPickedUpStarted(object messageObject) {

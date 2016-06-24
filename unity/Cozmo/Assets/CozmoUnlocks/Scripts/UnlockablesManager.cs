@@ -41,13 +41,13 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void Start() {
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), HandleOnUnlockRequestSuccess);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.UnlockStatus), HandleUnlockStatus);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), HandleOnUnlockRequestSuccess);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.UnlockStatus), HandleUnlockStatus);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
@@ -162,8 +162,7 @@ public class UnlockablesManager : MonoBehaviour {
 
   }
 
-  private void HandleUnlockStatus(object messageObject) {
-    Anki.Cozmo.ExternalInterface.UnlockStatus message = (Anki.Cozmo.ExternalInterface.UnlockStatus)messageObject;
+  private void HandleUnlockStatus(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
     Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
     for (int i = 0; i < message.unlocks.Length; ++i) {
       loadedUnlockables.Add(message.unlocks[i].unlockID, message.unlocks[i].unlocked);
@@ -171,8 +170,7 @@ public class UnlockablesManager : MonoBehaviour {
     OnConnectLoad(loadedUnlockables);
   }
 
-  private void HandleOnUnlockRequestSuccess(object message) {
-    Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMessage = (Anki.Cozmo.ExternalInterface.RequestSetUnlockResult)message;
+  private void HandleOnUnlockRequestSuccess(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMessage) {
     GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {

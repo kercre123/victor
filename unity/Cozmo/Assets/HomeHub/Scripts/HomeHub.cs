@@ -55,7 +55,7 @@ namespace Cozmo.HomeHub {
     }
 
     public override bool LoadHubWorld() {
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), RefreshChallengeUnlockInfo);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       ShowStartView();
@@ -63,7 +63,7 @@ namespace Cozmo.HomeHub {
     }
 
     public override bool DestroyHubWorld() {
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult), RefreshChallengeUnlockInfo);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       CloseMiniGameImmediately();
 
       // Deregister events

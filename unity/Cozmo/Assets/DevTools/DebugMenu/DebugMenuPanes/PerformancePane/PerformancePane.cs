@@ -65,14 +65,14 @@ public class PerformancePane : MonoBehaviour {
     _ActiveVariantText.text = Screen.currentResolution + "\n" + Anki.Assets.AssetBundleManager.Instance.ActiveVariantsToString();
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneOpened(this);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DeviceDataMessage), HandleDeviceDataMessage);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
     RobotEngineManager.Instance.SendRequestDeviceData();
   }
 
   private void OnDestroy() {
     _ShowFPSCounterButton.onClick.RemoveListener(HandleShowCounterButtonClicked);
     RaisePerformancePaneClosed();
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DeviceDataMessage), HandleDeviceDataMessage);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
   }
 
   public void SetFPS(float newFPS) {
@@ -92,8 +92,7 @@ public class PerformancePane : MonoBehaviour {
     RaisePerformanceCounterButtonClicked();
   }
 
-  private void HandleDeviceDataMessage(object messageObject) {
-    Anki.Cozmo.ExternalInterface.DeviceDataMessage message = (Anki.Cozmo.ExternalInterface.DeviceDataMessage)messageObject;
+  private void HandleDeviceDataMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {
     for (int i = 0; i < message.dataList.Length; ++i) {
       Anki.Cozmo.DeviceDataPair currentPair = message.dataList[i];
       switch (currentPair.dataType) {

@@ -14,8 +14,8 @@ public class FactoryOTAPanel : MonoBehaviour {
   public System.Action OnRestartButton;
 
   void Start() {
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress), OnFirmwareUpdateProgress);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete), OnFirmwareUpdateComplete);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(OnFirmwareUpdateProgress);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(OnFirmwareUpdateComplete);
     _RestartButton.gameObject.SetActive(false);
     _RestartButton.onClick.AddListener(HandleRestartButton);
   }
@@ -27,8 +27,8 @@ public class FactoryOTAPanel : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress), OnFirmwareUpdateProgress);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete), OnFirmwareUpdateComplete);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(OnFirmwareUpdateProgress);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(OnFirmwareUpdateComplete);
   }
 
   private void OnFirmwareUpdateComplete(object messageObject) {

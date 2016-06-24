@@ -37,7 +37,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
     _ForceProgressSecretButton.onClick.AddListener(HandleForceProgressPressed);
     _StartButton.onClick.AddListener(HandleStartButton);
     _StartNoEdgeSecretButton.onClick.AddListener(HandleStartNoEdgeButton);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), OnClientDisconnect);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnClientDisconnect);
     _ResetButton.onClick.AddListener(HandleResetButton);
   }
 
@@ -86,6 +86,6 @@ public class PressDemoView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), OnClientDisconnect);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnClientDisconnect);
   }
 }

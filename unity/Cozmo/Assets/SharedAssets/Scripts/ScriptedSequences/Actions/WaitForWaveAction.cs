@@ -15,7 +15,7 @@ namespace ScriptedSequences.Actions {
       }
       else {
         RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-        RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedMotion), HandleObservedMotion);
+        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedMotion>(HandleObservedMotion);
       }
 
       return token;

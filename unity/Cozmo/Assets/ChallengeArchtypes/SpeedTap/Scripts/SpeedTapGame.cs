@@ -182,7 +182,7 @@ namespace SpeedTap {
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.AnimationEvent), OnRobotAnimationEvent);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
@@ -211,7 +211,7 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.AnimationEvent), OnRobotAnimationEvent);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
 
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
     }
@@ -267,8 +267,7 @@ namespace SpeedTap {
     /// Sets cozmo's last tapped timestamp based on animation event message
     /// </summary>
     /// <param name="animEvent">Animation event.</param>
-    private void OnRobotAnimationEvent(object message) {
-      Anki.Cozmo.ExternalInterface.AnimationEvent animEvent = (Anki.Cozmo.ExternalInterface.AnimationEvent)message;
+    private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
       if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
         _LastCozmoTimeStamp = animEvent.timestamp;

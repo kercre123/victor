@@ -34,7 +34,7 @@ public class ImageReceiver : IDisposable {
 
   private void Initialize(ImageSendMode sendMode) {
     if (_SendMode == ImageSendMode.Off) {
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ImageChunk), ProcessImageChunk);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ImageChunk>(ProcessImageChunk);
     }
     _SendMode = sendMode;
     RequestImage(_SendMode);
@@ -54,7 +54,7 @@ public class ImageReceiver : IDisposable {
   }
 
   public void StopCapture() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ImageChunk), ProcessImageChunk);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ImageChunk>(ProcessImageChunk);
     if (_SendMode != ImageSendMode.Off) {
       RequestImage(ImageSendMode.Off);
       _SendMode = ImageSendMode.Off;
@@ -75,9 +75,7 @@ public class ImageReceiver : IDisposable {
   }
 
   //allow manual processing
-  public void ProcessImageChunk(object message) {
-    ImageChunk imageChunk = (ImageChunk)message;
-
+  public void ProcessImageChunk(ImageChunk imageChunk) {
     if (imageChunk.chunkId == 0) {
       _MemStream.Seek(0, SeekOrigin.Begin);
       _MemStream.SetLength(0);

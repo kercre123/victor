@@ -71,16 +71,15 @@ namespace Anki.Debug {
 
     public DebugConsolePane ConsolePane { set { _ConsolePane = value; } }
 
-    private void HandleInitDebugConsoleVar(object messageObject) {
-      Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage message = (Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage)messageObject;
+    private void HandleInitDebugConsoleVar(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage message) {
       DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", " Recieved Debug Console Init");
       for (int i = 0; i < message.varData.Length; ++i) {
         Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
       }
     }
 
-    private void HandleVerifyDebugConsoleVar(object message) {
-      Anki.Debug.DebugConsoleData.Instance.SetStatusText(((Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage)message).statusMessage);
+    private void HandleVerifyDebugConsoleVar(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage message) {
+      Anki.Debug.DebugConsoleData.Instance.SetStatusText(message.statusMessage);
     }
 
     public void AddConsoleFunctionUnity(string varName, string categoryName, DebugConsoleVarEventHandler callback = null) {
@@ -203,15 +202,15 @@ namespace Anki.Debug {
     }
 
     public void RegisterEngineCallbacks() {
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage), HandleInitDebugConsoleVar);
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage), HandleVerifyDebugConsoleVar);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage>(HandleInitDebugConsoleVar);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleVerifyDebugConsoleVar);
       _EngineCallbacksRegistered = true;
     }
 
     public void Dispose() {
       if (_EngineCallbacksRegistered) {
-        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage), HandleInitDebugConsoleVar);
-        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage), HandleVerifyDebugConsoleVar);
+        RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage>(HandleInitDebugConsoleVar);
+        RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleVerifyDebugConsoleVar);
       }
     }
 

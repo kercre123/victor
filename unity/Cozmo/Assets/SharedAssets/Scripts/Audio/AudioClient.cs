@@ -37,7 +37,7 @@ namespace Anki {
           _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
           if (null != _RobotEngineManager) {
-            _RobotEngineManager.AddCallback(typeof(Anki.Cozmo.Audio.AudioCallback), HandleCallback);
+            _RobotEngineManager.AddCallback<Anki.Cozmo.Audio.AudioCallback>(HandleCallback);
             _IsInitialized = true;
           }
           else {
@@ -46,7 +46,7 @@ namespace Anki {
         }
 
         ~AudioClient() {
-          _RobotEngineManager.RemoveCallback(typeof(Anki.Cozmo.Audio.AudioCallback), HandleCallback);
+          _RobotEngineManager.RemoveCallback<Anki.Cozmo.Audio.AudioCallback>(HandleCallback);
           _RobotEngineManager = null;
           _IsInitialized = false;
         }
@@ -178,8 +178,7 @@ namespace Anki {
         }
 
         // Handle message types
-        private void HandleCallback(object messageObject) {
-          AudioCallback message = (AudioCallback)messageObject;
+        private void HandleCallback(AudioCallback message) {
           DAS.Debug("AudioController.HandleCallback", "Received Audio Callback " + message.ToString());
           CallbackInfo info = new CallbackInfo(message);
           if (null != OnAudioCallback) {

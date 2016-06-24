@@ -14,24 +14,22 @@ public class FirmwarePane : MonoBehaviour {
     _UpgradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(0), "debug_upgrade_firmware_button", "debug_firmware_view");
     _ResetButton.Initialize(() => RobotEngineManager.Instance.ResetFirmware(), "debug_reset_firmware_button", "debug_firmware_view");
 
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress), OnFirmwareUpdateProgress);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete), OnFirmwareUpdateComplete);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(OnFirmwareUpdateProgress);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(OnFirmwareUpdateComplete);
   }
 
   public void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress), OnFirmwareUpdateProgress);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete), OnFirmwareUpdateComplete);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(OnFirmwareUpdateProgress);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(OnFirmwareUpdateComplete);
   }
 
 
-  private void OnFirmwareUpdateProgress(object messageObject) {
-    Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message = (Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress)messageObject;
+  private void OnFirmwareUpdateProgress(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
     _OutputText.text = "InProgress: Robot " + message.robotID + " Stage: " + message.stage + ":" + message.subStage + " " + message.percentComplete + "%"
     + "\nFwSig = " + message.fwSig;
   }
 
-  private void OnFirmwareUpdateComplete(object messageObject) {
-    Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message = (Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete)messageObject;
+  private void OnFirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
     _OutputText.text = "Complete: Robot " + message.robotID + " Result: " + message.result
     + "\nFwSig = " + message.fwSig;
   }

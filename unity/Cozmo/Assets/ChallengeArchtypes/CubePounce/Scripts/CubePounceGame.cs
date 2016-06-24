@@ -60,14 +60,14 @@ namespace CubePounce {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.CliffEvent), HandleCliffEvent);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.CliffEvent>(HandleCliffEvent);
 
       InitialCubesState initCubeState = new InitialCubesState(new SeekState(), numCubes);
       _StateMachine.SetNextState(initCubeState);
     }
 
     protected override void CleanUpOnDestroy() {
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.CliffEvent), HandleCliffEvent);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.CliffEvent>(HandleCliffEvent);
     }
 
     public LightCube GetCurrentTarget() {
@@ -130,7 +130,7 @@ namespace CubePounce {
     // Currently, Cozmo will trigger the end of their pounce animation before the cliff event is registered, possibly
     // can have a quick fix here by adding more to the end of the pounce animation, although much more likely we will
     // have to replace this entirely.
-    private void HandleCliffEvent(object messageObject) {
+    private void HandleCliffEvent(Anki.Cozmo.CliffEvent messageObject) {
       _CliffFlagTrown = true;
     }
 

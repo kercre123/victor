@@ -299,48 +299,48 @@ public class Robot : IRobot {
 
     ClearData(true);
 
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), Reset);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
 
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotCompletedAction), ProcessRobotCompletedAction);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.MoodState), UpdateEmotionFromEngineRobotManager);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.SparkUnlockEnded), SparkUnlockEnded);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ObjectConnectionState), HandleObjectConnectionState);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.MoodState>(UpdateEmotionFromEngineRobotManager);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(SparkUnlockEnded);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ObjectTapped), HandleObservedObjectTapped);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotProcessedImage), FinishedProcessingImage);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDeletedObject), DeleteObservedObject);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedObject), HandleSeeObservedObject);
-    RobotEngineManager.Instance.AddCallback(typeof(ObjectMoved), HandleObservedObjectMoved);
-    RobotEngineManager.Instance.AddCallback(typeof(ObjectStoppedMoving), HandleObservedObjectStoppedMoving);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown), HandleObservedObjectPoseUnknown);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDeletedFace), HandleDeletedFace);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DebugAnimationString), HandleDebugAnimationString);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotState), UpdateInfo);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DebugString), HandleDebugString);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), UpdateObservedFaceInfo);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
+    RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleObservedObjectMoved);
+    RobotEngineManager.Instance.AddCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedFace>(HandleDeletedFace);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugAnimationString>(HandleDebugAnimationString);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotState>(UpdateInfo);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
 
     ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace), HandleRobotLoadedKnownFace);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace>(HandleRobotLoadedKnownFace);
   }
 
   public void Dispose() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), Reset);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotCompletedAction), ProcessRobotCompletedAction);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.SparkUnlockEnded), SparkUnlockEnded);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ObjectConnectionState), HandleObjectConnectionState);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(SparkUnlockEnded);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ObjectTapped), HandleObservedObjectTapped);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotProcessedImage), FinishedProcessingImage);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDeletedObject), DeleteObservedObject);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedObject), HandleSeeObservedObject);
-    RobotEngineManager.Instance.RemoveCallback(typeof(ObjectMoved), HandleObservedObjectMoved);
-    RobotEngineManager.Instance.RemoveCallback(typeof(ObjectStoppedMoving), HandleObservedObjectStoppedMoving);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown), HandleObservedObjectPoseUnknown);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDeletedFace), HandleDeletedFace);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DebugAnimationString), HandleDebugAnimationString);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotState), UpdateInfo);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DebugString), HandleDebugString);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), UpdateObservedFaceInfo);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedObject>(HandleDeleteObservedObject);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
+    RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleObservedObjectMoved);
+    RobotEngineManager.Instance.RemoveCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedFace>(HandleDeletedFace);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DebugAnimationString>(HandleDebugAnimationString);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotState>(UpdateInfo);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
 
     ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
@@ -351,19 +351,15 @@ public class Robot : IRobot {
     return offset;
   }
 
-  private void HandleDebugString(object messageObject) {
-    Anki.Cozmo.ExternalInterface.DebugString message = (Anki.Cozmo.ExternalInterface.DebugString)messageObject;
+  private void HandleDebugString(Anki.Cozmo.ExternalInterface.DebugString message) {
     CurrentBehaviorString = message.text;
   }
 
-  private void HandleDebugAnimationString(object messageObject) {
-    Anki.Cozmo.ExternalInterface.DebugAnimationString message = (Anki.Cozmo.ExternalInterface.DebugAnimationString)messageObject;
+  private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
     CurrentDebugAnimationString = message.text;
   }
 
-  private void ProcessRobotCompletedAction(object messageObject) {
-
-    Anki.Cozmo.ExternalInterface.RobotCompletedAction message = (Anki.Cozmo.ExternalInterface.RobotCompletedAction)messageObject;
+  private void ProcessRobotCompletedAction(Anki.Cozmo.ExternalInterface.RobotCompletedAction message) {
 
     uint idTag = message.idTag;
     RobotActionType actionType = (RobotActionType)message.actionType;
@@ -395,8 +391,7 @@ public class Robot : IRobot {
     ClearData();
   }
 
-  private void HandleRobotLoadedKnownFace(object message) {
-    Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace knownFaceMessage = (Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace)message;
+  private void HandleRobotLoadedKnownFace(Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace knownFaceMessage) {
     EnrolledFaces.Add(knownFaceMessage.faceID, knownFaceMessage.name);
   }
 
@@ -473,8 +468,7 @@ public class Robot : IRobot {
 
   }
 
-  private void UpdateInfo(object messageObject) {
-    G2U.RobotState message = (G2U.RobotState)messageObject;
+  private void UpdateInfo(G2U.RobotState message) {
     if (message.robotID == ID) {
       HeadAngle = message.headAngle_rad;
       PoseAngle = message.poseAngle_rad;
@@ -571,8 +565,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void UpdateEmotionFromEngineRobotManager(object message) {
-    Anki.Cozmo.ExternalInterface.MoodState moodStateMessage = (Anki.Cozmo.ExternalInterface.MoodState)message;
+  private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.ExternalInterface.MoodState moodStateMessage) {
     for (EmotionType i = 0; i < EmotionType.Count; ++i) {
       EmotionValues[(int)i] = moodStateMessage.emotionValues[(int)i];
     }
@@ -581,34 +574,34 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void DeleteObservedObject(object messageObject) {
-    Anki.Cozmo.ExternalInterface.RobotDeletedObject message = (Anki.Cozmo.ExternalInterface.RobotDeletedObject)messageObject;
+  public void DeleteObservedObject(int id) {
+    bool removedObject = false;
 
-    if (ID == message.robotID) {
-      int objectID = (int)message.objectID;
-      bool removedObject = false;
-
-      if (Charger != null && Charger.ID == objectID) {
-        removedObject = true;
-        Charger = null;
-      }
-      else {
-        removedObject = LightCubes.Remove(objectID);
-      }
-
-      if (removedObject) {
-        DAS.Debug("Robot.DeleteObservedObject", "Deleted ID " + objectID);
-      }
-      else {
-        DAS.Debug("Robot.DeleteObservedObject", "Tried to delete object with ID " + objectID + " but failed.");
-      }
+    if (Charger != null && Charger.ID == id) {
+      removedObject = true;
+      Charger = null;
+    }
+    else {
+      removedObject = LightCubes.Remove(id);
     }
 
+    if (removedObject) {
+      DAS.Debug("Robot.DeleteObservedObject", "Deleted ID " + id);
+    }
+    else {
+      DAS.Debug("Robot.DeleteObservedObject", "Tried to delete object with ID " + id + " but failed.");
+    }
   }
 
-  public void FinishedProcessingImage(object message) {
+  public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedObject message) {
+    if (ID == message.robotID) {
+      DeleteObservedObject((int)message.objectID);
+    }
+  }
 
-    uint engineTimestamp = ((Anki.Cozmo.ExternalInterface.RobotProcessedImage)message).timestamp;
+  public void FinishedProcessingImage(Anki.Cozmo.ExternalInterface.RobotProcessedImage message) {
+
+    uint engineTimestamp = message.timestamp;
     // Update the robot's current timestamp if the new one is newer
     if (engineTimestamp >= _LastProcessedVisionFrameEngineTimestamp) {
       _LastProcessedVisionFrameEngineTimestamp = engineTimestamp;
@@ -630,8 +623,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObjectConnectionState(object messageObject) {
-    ObjectConnectionState message = (ObjectConnectionState)messageObject;
+  private void HandleObjectConnectionState(ObjectConnectionState message) {
     DAS.Debug("Robot.HandleObjectConnectionState", (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factoryId " + message.factoryID.ToString("X"));
 
     if (message.connected) {
@@ -662,8 +654,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleDeletedFace(object messageObject) {
-    Anki.Cozmo.ExternalInterface.RobotDeletedFace message = (Anki.Cozmo.ExternalInterface.RobotDeletedFace)messageObject;
+  private void HandleDeletedFace(Anki.Cozmo.ExternalInterface.RobotDeletedFace message) {
     if (ID == message.robotID) {
       int index = -1;
       for (int i = 0; i < Faces.Count; i++) {
@@ -679,8 +670,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleSeeObservedObject(object messageObject) {
-    Anki.Cozmo.ExternalInterface.RobotObservedObject message = (Anki.Cozmo.ExternalInterface.RobotObservedObject)messageObject;
+  private void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn("Robot.HandleSeeObservedObject", "HandleSeeObservedObject received RobotObservedObject message about the Mat!");
       return;
@@ -704,8 +694,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObservedObjectMoved(object messageObject) {
-    ObjectMoved message = (ObjectMoved)messageObject;
+  private void HandleObservedObjectMoved(ObjectMoved message) {
     if (ID == message.robotID) {
       ObservedObject objectStartedMoving = GetObservedObjectById((int)message.objectID);
       if (objectStartedMoving != null) {
@@ -721,8 +710,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObservedObjectStoppedMoving(object messageObject) {
-    ObjectStoppedMoving message = (ObjectStoppedMoving)messageObject;
+  private void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message) {
     if (ID == message.robotID) {
       ObservedObject objectStoppedMoving = GetObservedObjectById((int)message.objectID);
       if (objectStoppedMoving != null) {
@@ -739,8 +727,7 @@ public class Robot : IRobot {
 
   }
 
-  private void HandleObservedObjectPoseUnknown(object messageObject) {
-    Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown message = (Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown)messageObject;
+  private void HandleObservedObjectPoseUnknown(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown message) {
     int objectID = (int)message.objectID;
     if (ID == message.robotID) {
       // TODO Do we need a timestamp here? (message doesn't have it)
@@ -752,8 +739,7 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObservedObjectTapped(object messageObject) {
-    ObjectTapped message = (ObjectTapped)messageObject;
+  private void HandleObservedObjectTapped(ObjectTapped message) {
     if (ID == message.robotID) {
       ObservedObject objectPoseUnknown = GetObservedObjectById((int)message.objectID);
       if (objectPoseUnknown != null) {
@@ -830,8 +816,7 @@ public class Robot : IRobot {
     return createdObject;
   }
 
-  private void UpdateObservedFaceInfo(object messageObject) {
-    Anki.Cozmo.ExternalInterface.RobotObservedFace message = (Anki.Cozmo.ExternalInterface.RobotObservedFace)messageObject;
+  private void UpdateObservedFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
     Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
   }

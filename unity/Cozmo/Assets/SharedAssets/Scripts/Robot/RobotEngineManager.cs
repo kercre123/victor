@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo.Audio;
 using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
 
@@ -18,27 +19,14 @@ public class RobotEngineManager : MonoBehaviour {
 
   public static RobotEngineManager Instance = null;
 
-  private Dictionary<Type, Action<object>> _CallbackActionMap = new Dictionary<Type, Action<object>>();
+  private CallbackManager _CallbackManager = new CallbackManager();
 
-  public void AddCallback(Type messageType, Action<object> callback) {
-    Action<object> action;
-    if (_CallbackActionMap.TryGetValue(messageType, out action)) {
-      action += callback;
-      _CallbackActionMap[messageType] = action;
-    }
-    else {
-      _CallbackActionMap.Add(messageType, callback);
-    }
+  public void AddCallback<T>(Action<T> callback) {
+    _CallbackManager.AddCallback(callback);
   }
 
-  public void RemoveCallback(Type messageType, Action<object> callback) {
-    Action<object> action;
-    if (_CallbackActionMap.TryGetValue(messageType, out action)) {
-      action -= callback;
-    }
-    else {
-      DAS.Warn("RobotEngineManager.RemoveCallback", "Error removing callback." + System.Environment.StackTrace);
-    }
+  public void RemoveCallback<T>(Action<T> callback) {
+    _CallbackManager.RemoveCallback(callback);
   }
 
   public Dictionary<int, IRobot> Robots { get; private set; }
@@ -271,12 +259,13 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     }
 
-    // try to find any registered callbacks with a matching message type tag
-    // and call them if we do have registered callbacks.
-    Action<object> action;
-    if (_CallbackActionMap.TryGetValue(message.GetMessageType(), out action)) {
-      action(typeof(Anki.Cozmo.ExternalInterface.MessageEngineToGame).GetProperty(message.GetTag().ToString()).GetValue(message, null));
-    }
+    // since the property to access individual message data in a CLAD message shares its name
+    // with the message's tag, we can use that name to get the property that retrieves message
+    // data for this type, and execute it on this message
+    object messageData = typeof(Anki.Cozmo.ExternalInterface.MessageEngineToGame).GetProperty(message.GetTag().ToString()).GetValue(message, null);
+    // callback manager will use the runtime type of messageData to notify subscribers of the
+    // incoming message
+    _CallbackManager.MessageReceived(messageData);
   }
 
   private void ProcessPingResponse(Anki.Cozmo.ExternalInterface.Ping message) {
@@ -429,12 +418,9 @@ public class RobotEngineManager : MonoBehaviour {
     CurrentRobotID = robotID;
 
     // mock connect message fire.
-    Action<object> actionCallback;
-    if (_CallbackActionMap.TryGetValue(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), out actionCallback)) {
-      Anki.Cozmo.ExternalInterface.RobotConnected connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnected();
-      connectedMessage.robotID = 1;
-      actionCallback((object)connectedMessage);
-    }
+    Anki.Cozmo.ExternalInterface.RobotConnected connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnected();
+    connectedMessage.robotID = 1;
+    _CallbackManager.MessageReceived(connectedMessage);
   }
 
   #endregion //Mocks

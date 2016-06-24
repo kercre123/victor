@@ -9,15 +9,14 @@ namespace ScriptedSequences.Conditions {
 
     protected override void EnableChangedAndRobotConnected(bool enabled) {
       if (enabled) {
-        RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotCompletedAction), HandleActionComplete);
+        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleActionComplete);
       }
       else {
-        RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotCompletedAction), HandleActionComplete);
+        RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleActionComplete);
       }
     }
 
-    private void HandleActionComplete(object messageObject) {
-      Anki.Cozmo.ExternalInterface.RobotCompletedAction message = (Anki.Cozmo.ExternalInterface.RobotCompletedAction)messageObject;
+    private void HandleActionComplete(Anki.Cozmo.ExternalInterface.RobotCompletedAction message) {
       RobotActionType actionType = message.actionType;
       bool success = message.result == ActionResult.SUCCESS;
 

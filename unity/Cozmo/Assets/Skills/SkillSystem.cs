@@ -222,17 +222,17 @@ public class SkillSystem {
   private void Destroy() {
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
 
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleRobotConnected);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageData), HandleNVStorageRead);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageOpResult), HandleNVStorageOpResult);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NVStorageData>(HandleNVStorageRead);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NVStorageOpResult>(HandleNVStorageOpResult);
   }
 
   private void Init() {
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
 
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), HandleRobotConnected);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageData), HandleNVStorageRead);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.NVStorageOpResult), HandleNVStorageOpResult);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NVStorageData>(HandleNVStorageRead);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NVStorageOpResult>(HandleNVStorageOpResult);
 
     _ChallengeIndex = -1;
     _CurrChallengeData = null;
@@ -245,8 +245,7 @@ public class SkillSystem {
     RobotEngineManager.Instance.SendMessage();
   }
   // if this was an failure we're never going to get the result we
-  private void HandleNVStorageOpResult(object message) {
-    G2U.NVStorageOpResult opResult = (G2U.NVStorageOpResult)message;
+  private void HandleNVStorageOpResult(G2U.NVStorageOpResult opResult) {
     if (opResult.op == NVOperation.NVOP_READ &&
         opResult.tag == NVEntryTag.NVEntry_GameSkillLevels) {
       if (opResult.result != NVResult.NV_OKAY &&
@@ -258,8 +257,7 @@ public class SkillSystem {
     }
   }
 
-  private void HandleNVStorageRead(object message) {
-    G2U.NVStorageData robotData = (G2U.NVStorageData)message;
+  private void HandleNVStorageRead(G2U.NVStorageData robotData) {
     if (robotData.tag == NVEntryTag.NVEntry_GameSkillLevels) {
       SetCozmoHighestLevelsReached(robotData.data, robotData.data_length);
     }

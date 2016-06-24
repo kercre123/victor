@@ -134,13 +134,11 @@ namespace FaceEnrollment {
         _AttemptedEnrollFace = true;
       }
       else {
-        RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), HandleObservedFace);
+        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
       }
     }
 
-    private void HandleObservedFace(object messageObject) {
-      Anki.Cozmo.ExternalInterface.RobotObservedFace message = (Anki.Cozmo.ExternalInterface.RobotObservedFace)messageObject;
-
+    private void HandleObservedFace(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
       bool newFace = message.faceID > 0 && message.name == "";
 
       if (_AttemptedEnrollFace || !newFace) {
@@ -164,7 +162,7 @@ namespace FaceEnrollment {
       }
       EditOrEnrollFaceComplete(success);
       _AttemptedEnrollFace = false;
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), HandleObservedFace);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
     }
 
     private void EditOrEnrollFaceComplete(bool success) {
@@ -196,7 +194,7 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotObservedFace), HandleObservedFace);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
     }
 
   }

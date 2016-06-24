@@ -144,8 +144,8 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void Start() {
     Instance = this;
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RequestGameStart), HandleAskForMinigame);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.DenyGameStart), HandleExternalRejection);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
     _CurrentGenData = new DailyGoalGenerationData();
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
@@ -175,8 +175,8 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RequestGameStart), HandleAskForMinigame);
-    RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.DenyGameStart), HandleExternalRejection);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
   }
 
   private void LoadDailyGoalData(string path) {

@@ -849,9 +849,7 @@ class UnionEmitter(ast.NodeVisitor):
         with self.output.indent(1):
             self.emitTags(node, globals)
         self.emitTagMember(node, globals)
-        self.emitTypeMember(node, globals)
         self.emitGetTag(node, globals)
-        self.emitGetType(node, globals)
         self.emitUnion(node, globals)
         self.emitAccessors(node, globals)
         self.emitInitializer(node, globals)
@@ -889,16 +887,11 @@ class UnionEmitter(ast.NodeVisitor):
         
     def emitTagMember(self, node, globals):
         self.output.write('\tprivate Tag _tag = Tag.INVALID;\n\n')
-
-    def emitTypeMember(self, node, globals):
-        self.output.write('\tprivate System.Type _messageType;\n\n')
         
     def emitUnion(self, node, globals):
         self.output.write('\tprivate object _state = null;\n\n')
     def emitGetTag(self, node, globals):
         self.output.write('\tpublic Tag GetTag() { return _tag; }\n\n')
-    def emitGetType(self, node, globals):
-        self.output.write('\tpublic System.Type GetMessageType() { return _messageType; }\n\n')
         
     def emitAccessors(self, node, globals):
         for member in node.members():
@@ -919,10 +912,7 @@ class UnionEmitter(ast.NodeVisitor):
             self.output.write('if(typeof(T) == typeof(')
             visitor.visit(member.type)
             self.output.write('))\n\t\t{\n');
-            self.output.write('\t\t\t_tag = Tag.{tag};\n'.format(tag=member.name))
-            self.output.write('\t\t\t_messageType = typeof(')
-            visitor.visit(member.type)
-            self.output.write(');\n')
+            self.output.write('\t\t\t_tag = Tag.{tag};\n'.format(tag=member.name));
             self.output.write('\t\t}\n')
         self.output.write('\t\telse\n\t\t{\n')
         self.output.write('\t\t\t_state = null;\n')
@@ -1143,9 +1133,6 @@ class Union_AccessorEmitter(ast.NodeVisitor):
           self.output.write('\t\t\t_tag = Tag.%s;\n'% node.name)
         else:
           self.output.write('\t\t\t_tag = (value != null) ? Tag.%s : Tag.INVALID;\n' % node.name)
-          self.output.write('\t\t\t_messageType = typeof(')
-          self.visit(node.type)
-          self.output.write(');\n')
         self.output.write('\t\t\t_state = value;\n')
         self.output.write('\t\t}\n')
         self.output.write('\t}\n')

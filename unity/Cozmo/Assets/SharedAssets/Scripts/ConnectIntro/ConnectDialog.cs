@@ -64,8 +64,8 @@ public class ConnectDialog : MonoBehaviour {
 
     if (RobotEngineManager.Instance != null) {
       RobotEngineManager.Instance.ConnectedToClient += Connected;
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), Disconnected);
-      RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), RobotConnected);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
     }
 
     Application.targetFrameRate = 30;
@@ -103,8 +103,8 @@ public class ConnectDialog : MonoBehaviour {
   private void OnDestroy() {
     if (RobotEngineManager.Instance != null) {
       RobotEngineManager.Instance.ConnectedToClient -= Connected;
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), Disconnected);
-      RobotEngineManager.Instance.RemoveCallback(typeof(Anki.Cozmo.ExternalInterface.RobotConnected), RobotConnected);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
     }
   }
 
@@ -170,8 +170,7 @@ public class ConnectDialog : MonoBehaviour {
     _ConnectionStatus.text = "Disconnected";
   }
 
-  private void RobotConnected(object messageObject) {
-    Anki.Cozmo.ExternalInterface.RobotConnected message = (Anki.Cozmo.ExternalInterface.RobotConnected)messageObject;
+  private void RobotConnected(Anki.Cozmo.ExternalInterface.RobotConnected message) {
     int robotID = (int)message.robotID;
     if (!RobotEngineManager.Instance.Robots.ContainsKey(robotID)) {
       DAS.Error(this, "Unknown robot connected: " + robotID.ToString());

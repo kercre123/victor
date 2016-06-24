@@ -70,8 +70,8 @@ public class FactoryIntroManager : MonoBehaviour {
     _LogFilter = PlayerPrefs.GetString("LogFilter");
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.RobotDisconnected), HandleDisconnectedFromClient);
-    RobotEngineManager.Instance.AddCallback(typeof(Anki.Cozmo.ExternalInterface.FactoryTestResult), FactoryResult);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectedFromClient);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FactoryTestResult>(FactoryResult);
     _RestartButton.gameObject.SetActive(false);
 
     _RestartButton.onClick.AddListener(() => RestartTestApp());
