@@ -67,7 +67,7 @@ namespace HAL {
     }
     else if (msg.tag > RobotInterface::TO_RTIP_END)
     {
-      RadioSendMessage(g_dataToHead.cladBuffer.data, g_dataToHead.cladBuffer.length, g_dataToHead.cladBuffer.msgID);
+      RadioSendMessage(g_dataToHead.cladBuffer.data, g_dataToHead.cladBuffer.length - 1, g_dataToHead.cladBuffer.msgID);
     }
     else if (msg.Size() != g_dataToHead.cladBuffer.length)
     {
