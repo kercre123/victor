@@ -62,7 +62,6 @@ void BehaviorDemoFearEdge::TransitionToDrivingForward(Robot& robot)
   // drive pretty far (hopefully hitting the cliff), and just repeat if we don't hit it. We expect to be
   // interrupted by the cliff behavior
 
-  // TODO:(bn) a better path here
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({_startDrivingAnimGroup,
                                                             _drivingLoopAnimGroup,
                                                             _stopDrivingAnimGroup});

@@ -62,6 +62,9 @@ public class ConsoleLogPane : MonoBehaviour {
   private UnityEngine.UI.Toggle _PauseToggle;
 
   [SerializeField]
+  private UnityEngine.UI.Toggle _LatencyToggle;
+
+  [SerializeField]
   private Button _CopyLogButton;
 
   private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
@@ -79,6 +82,9 @@ public class ConsoleLogPane : MonoBehaviour {
 
     _PauseToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled;
     _PauseToggle.onValueChanged.AddListener(HandleTogglePause);
+
+    _LatencyToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled;
+    _LatencyToggle.onValueChanged.AddListener(HandleToggleLatency);
 
     _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
   }
@@ -115,6 +121,11 @@ public class ConsoleLogPane : MonoBehaviour {
       }
     }
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled = enable;
+    DataPersistence.DataPersistenceManager.Instance.Save();
+  }
+
+  public void HandleToggleLatency(bool enable) {
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled = enable;
     DataPersistence.DataPersistenceManager.Instance.Save();
   }
 

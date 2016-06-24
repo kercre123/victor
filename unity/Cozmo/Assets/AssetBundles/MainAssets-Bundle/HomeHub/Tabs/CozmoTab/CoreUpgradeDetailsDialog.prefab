@@ -889,7 +889,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -1074,6 +1074,7 @@ MonoBehaviour:
   _RequestTrickButtonContainer: {fileID: 183812}
   _RequestTrickButton: {fileID: 0}
   _SparksInventoryLabel: {fileID: 11470876}
+  _UpgradeTween_sec: 0.6
 --- !u!114 &11455274
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1093,9 +1094,9 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 88082d5aacbbe4455885d2c3a1750000, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1

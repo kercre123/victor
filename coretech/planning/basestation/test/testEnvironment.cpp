@@ -102,8 +102,8 @@ GTEST_TEST(TestEnvironment, DumpAndInit)
     EXPECT_FALSE(env.allMotionPrimitives_[i].empty());
   }
 
-  env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
-  env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
+  env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+  env.AddObstacleAllThetas(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
   ASSERT_EQ(env.GetNumObstacles(), 2);
 
@@ -315,7 +315,7 @@ GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch_WithObstacle)
 
   EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-  env.AddObstacle(Anki::RotatedRectangle(-20.0, 100.0, 20.0, 100.0, 20.0), 1.0f);
+  env.AddObstacleAllThetas(Anki::RotatedRectangle(-20.0, 100.0, 20.0, 100.0, 20.0), 1.0f);
 
   env.PrepareForPlanning();
 

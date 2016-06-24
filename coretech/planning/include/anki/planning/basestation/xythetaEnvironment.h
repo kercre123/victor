@@ -309,10 +309,6 @@ public:
   // for testing, has no prims or map!
   xythetaEnvironment();
 
-  // just for now, eventually we won't use filenames like this, obviously......
-  // TEMP: remove this and only use Init instead
-  xythetaEnvironment(const char* mprimFilename);
-
   ~xythetaEnvironment();
 
   // returns true if everything worked
@@ -332,10 +328,11 @@ public:
   // work
   bool Import(const Json::Value& config);
 
-  // defaults to a fatal obstacle  // TEMP: will be removed
-  void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
-  void AddObstacle(const Quad2f& quad, Cost cost = FATAL_OBSTACLE_COST);
-
+  // Adds the same obstacle to all thetas (doesn't really make any physical sense, basically assumes a point
+  // robot. useful for unit tests) defaults to a fatal obstacle
+  void AddObstacleAllThetas(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
+  void AddObstacleAllThetas(const Quad2f& quad, Cost cost = FATAL_OBSTACLE_COST);
+ 
   // returns a polygon which represents the obstacle expanded to the
   // c-space of robot, where the origin of tobot is (0,0)
   static FastPolygon ExpandCSpace(const Poly2f& obstacle,

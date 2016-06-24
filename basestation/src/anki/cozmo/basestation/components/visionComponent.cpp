@@ -1502,7 +1502,7 @@ namespace Cozmo {
   {
     // Define real size of target, w.r.t. its center as origin
     static const f32 kDotSpacingX_mm = 40.f;
-    static const f32 kDotSpacingY_mm = 20.5f;
+    static const f32 kDotSpacingY_mm = 27.f;
     static const Quad3f targetQuad(Point3f(-0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0.f),
                                    Point3f(-0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0.f),
                                    Point3f( 0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0.f),
@@ -1542,7 +1542,7 @@ namespace Cozmo {
       /* Upper Left  */ Point2i(40,   40),
       /* Lower Left  */ Point2i(40,  200),
       /* Upper Right */ Point2i(280,  40),
-      /* Lower Right */ Point2i(280, 204)
+      /* Lower Right */ Point2i(280, 200)
     }};
     
     static const s32 kDotDiameter_pix = 25;

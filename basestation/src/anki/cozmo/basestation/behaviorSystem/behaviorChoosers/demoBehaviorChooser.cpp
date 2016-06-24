@@ -306,8 +306,6 @@ void DemoBehaviorChooser::TransitionToFaces()
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoFaces);
 
-  // TODO:(bn) figure out how enrollment will work
-  
   _checkTransition = [this]() { return _hasSeenBlock; };
 }
 

@@ -15,6 +15,15 @@ using System;
 /// </summary>
 public class StartupManager : MonoBehaviour {
 
+  private const string _kUHDVariant = "uhd";
+  private const string _kHDVariant = "hd";
+  private const string _kSDVariant = "sd";
+
+  private const int _kMaxHDWidth = 1920;
+  private const int _kMaxHDHeight = 1080;
+  private const int _kMaxSDWidth = 1136;
+  private const int _kMaxSDHeight = 640;
+
   [SerializeField]
   private Cozmo.UI.ProgressBar _LoadingBar;
 
@@ -98,7 +107,7 @@ public class StartupManager : MonoBehaviour {
     // _IsDebugBuild = Debug.isDebugBuild;
     _IsDebugBuild = true;
 
-    assetBundleManager.AddActiveVariant(GetActiveVariant());
+    assetBundleManager.AddActiveVariant(GetVariantBasedOnScreenResolution());
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
@@ -156,12 +165,12 @@ public class StartupManager : MonoBehaviour {
       foreach (string prefabName in _StartupDebugPrefabNames) {
         AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName,
           prefabName, (GameObject prefab) => {
-          if (prefab != null) {
-            GameObject go = GameObject.Instantiate(prefab);
-            go.transform.SetParent(transform);
-          }
-          loadedDebugAssets++;
-        });
+            if (prefab != null) {
+              GameObject go = GameObject.Instantiate(prefab);
+              go.transform.SetParent(transform);
+            }
+            loadedDebugAssets++;
+          });
       }
       while (loadedDebugAssets < _StartupDebugPrefabNames.Length) {
         yield return 0;
@@ -169,9 +178,26 @@ public class StartupManager : MonoBehaviour {
     }
   }
 
-  private string GetActiveVariant() {
-    // TODO: Pick sd or hd or uhd based on device
-    return "hd";
+  private string GetVariantBasedOnScreenResolution() {
+    // Our checks assume landscape, so "width" is the longer side of the device
+    Resolution screenResolution = Screen.currentResolution;
+    int screenResolutionWidth = Mathf.Max(screenResolution.width, screenResolution.height);
+    int screenResolutionHeight = Mathf.Min(screenResolution.width, screenResolution.height);
+
+    // Err on the side of most popular size
+    string variant = null;
+    if (screenResolutionWidth > _kMaxHDWidth || screenResolutionHeight > _kMaxHDHeight) {
+      variant = _kUHDVariant;
+    }
+    else if (screenResolutionWidth > _kMaxSDWidth || screenResolutionHeight > _kMaxSDHeight) {
+      variant = _kHDVariant;
+    }
+    else {
+      variant = _kSDVariant;
+    }
+
+
+    return variant;
   }
 
   private IEnumerator LoadAssetBundles(AssetBundleManager assetBundleManager) {
@@ -214,59 +240,59 @@ public class StartupManager : MonoBehaviour {
     // TODO: Don't hardcode this?
     assetBundleManager.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName,
       "ShaderHolder", (Cozmo.ShaderHolder sh) => {
-      Cozmo.ShaderHolder.SetInstance(sh);
-    });
+        Cozmo.ShaderHolder.SetInstance(sh);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(_BasicUIPrefabAssetBundleName,
       "AlertViewLoader", (Cozmo.UI.AlertViewLoader avl) => {
-      Cozmo.UI.AlertViewLoader.SetInstance(avl);
-    });
+        Cozmo.UI.AlertViewLoader.SetInstance(avl);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName,
       "UIColorPalette", (Cozmo.UI.UIColorPalette colorP) => {
-      Cozmo.UI.UIColorPalette.SetInstance(colorP);
-    });
+        Cozmo.UI.UIColorPalette.SetInstance(colorP);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName,
       "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
-      psc.Initialize();
-      Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
-    });
+        psc.Initialize();
+        Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName,
       "CubePalette", (Cozmo.CubePalette cp) => {
-      Cozmo.CubePalette.SetInstance(cp);
-    });
+        Cozmo.CubePalette.SetInstance(cp);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
       "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
-      Cozmo.ItemDataConfig.SetInstance(idc);
-    });
+        Cozmo.ItemDataConfig.SetInstance(idc);
+      });
 
     assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName,
       "DefaultChestConfig", (ChestData cd) => {
-      ChestData.SetInstance(cd);
-    });
+        ChestData.SetInstance(cd);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName,
       "HexItemList", (Cozmo.HexItemList cd) => {
-      Cozmo.HexItemList.SetInstance(cd);
-    });
+        Cozmo.HexItemList.SetInstance(cd);
+      });
 
     assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
       "ChallengeList", (ChallengeDataList cd) => {
-      ChallengeDataList.SetInstance(cd);
-    });
+        ChallengeDataList.SetInstance(cd);
+      });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName,
       "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
-      Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
-    });
-    
+        Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
+      });
+
     assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName,
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
-      Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
-    });
+        Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
+      });
 
 
 
