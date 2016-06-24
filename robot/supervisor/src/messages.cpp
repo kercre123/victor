@@ -303,10 +303,7 @@ namespace Anki {
 
       void ProcessBTLEMessages()
       {
-#ifdef TARGET_K02
-        HAL::Spine::Manage();
-        HAL::WiFi::Update();
-#else
+#ifndef TARGET_K02
         u32 dataLen;
 
         //ReliableConnection_printState(&connection);

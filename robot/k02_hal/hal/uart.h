@@ -39,6 +39,7 @@ namespace Anki
         void DebugPrintf(const char *format, ...);
         void DebugPrintProfile(int value);
         void DebugPutc(char c);
+        bool FoundSync();
         void WaitForSync();
         void pause(void);
         

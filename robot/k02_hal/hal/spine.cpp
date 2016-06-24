@@ -13,82 +13,71 @@ namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
   static CladBufferDown spinebuffer[QUEUE_DEPTH];
-  static volatile int spine_enter = 0;
-  static volatile int spine_exit = 0;
+  static bool active[QUEUE_DEPTH];
+  static volatile int spine_read = 0;
+  static volatile int spine_write = 0;
 
   void Spine::Dequeue(CladBufferDown* dest) {
-    if (spine_enter == spine_exit) {
+    if (active[spine_read]) {
+      // Skip flags field
+      memcpy(dest, &(spinebuffer[spine_read]), sizeof(CladBufferDown));
+      active[spine_read] = false;
+      spine_read = (spine_read+1) % QUEUE_DEPTH;
+    }
+    else
+    {
       dest->length = 0;
     }
-    else
-    {
-      // Skip flags field
-      memcpy(dest, &(spinebuffer[spine_enter]), sizeof(CladBufferDown));
-      spine_enter = (spine_enter+1) % QUEUE_DEPTH;
-    }
   }
-  
-  bool Spine::Enqueue(const u8* data, const u8 length, const u8 tag) {
-    const int exit = (spine_exit+1) % QUEUE_DEPTH;
-    u8 realTag;
-    u8 realLength;
-    if (tag == RobotInterface::GLOBAL_INVALID_TAG)
-    {
-      realTag = data[0];
-      realLength = length;
-    }
-    else
-    {
-      realTag = tag;
-      realLength = length + 1;
-    }
 
-    if (spine_enter == exit) {
+  bool Spine::Enqueue(const void* data, const u8 length, u8 tag) {
+    if (active[spine_write]) {
       return false;
     }
-    else if (realLength > SPINE_MAX_CLAD_MSG_SIZE_DOWN)
+    else if (tag == RobotInterface::GLOBAL_INVALID_TAG)
     {
-      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, realTag, realLength, SPINE_MAX_CLAD_MSG_SIZE_DOWN);
+      return true;
+    }
+    else if (length > SPINE_MAX_CLAD_MSG_SIZE_DOWN)
+    {
+      AnkiError( 128, "Spine.Enqueue.MessageTooLong", 382, "Message %x[%d] is too long to enqueue to body. MAX_SIZE = %d", 3, tag, length, SPINE_MAX_CLAD_MSG_SIZE_DOWN);
       return false;
     }
     else
     {
-      u8* dest = spinebuffer[spine_exit].data;
-      if (tag != RobotInterface::GLOBAL_INVALID_TAG)
-      {
-        *dest = tag;
-        dest++;
-      }
-      memcpy(dest, data, length);
-      spinebuffer[spine_exit].length = length;
-      spine_exit = exit;
+      spinebuffer[spine_write].msgID = tag;
+      memcpy(spinebuffer[spine_write].data, data, length);      
+      spinebuffer[spine_write].length = length + 1;
+      active[spine_write] = true;
+      spine_write = (spine_write+1) % QUEUE_DEPTH;
       return true;
     }
   }
 
   void Spine::Manage() {
-    RobotInterface::EngineToRobot* msg = reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
-    const u8 tag = msg->tag;
-    if (g_dataToHead.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
+
+    if (g_dataToHead.cladBuffer.length == 0)
     {
       // pass
     }
-    else if (tag < RobotInterface::TO_RTIP_START)
+    else if (msg.tag < RobotInterface::TO_RTIP_START)
     {
-      AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, tag, g_dataToHead.cladBuffer.length);
+      AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, msg.tag, g_dataToHead.cladBuffer.length);
     }
-    else if (tag > RobotInterface::TO_RTIP_END)
+    else if (msg.tag > RobotInterface::TO_RTIP_END)
     {
-      RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length-1, g_dataToHead.cladBuffer.data[0]);
+      RadioSendMessage(g_dataToHead.cladBuffer.data, g_dataToHead.cladBuffer.length - 1, g_dataToHead.cladBuffer.msgID);
     }
-    else if (msg->Size() != g_dataToHead.cladBuffer.length)
+    else if (msg.Size() != g_dataToHead.cladBuffer.length)
     {
-      AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
+      AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, msg.tag, g_dataToHead.cladBuffer.length, msg.Size());
     }
     else
     {
-      Messages::ProcessMessage(*msg);
+      Messages::ProcessMessage(msg);
     }
+
     // Prevent same message from getting processed twice (if the spine desyncs)
     g_dataToHead.cladBuffer.length = 0;
   }

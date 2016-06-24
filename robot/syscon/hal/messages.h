@@ -5,15 +5,15 @@
 #include "anki/cozmo/robot/spineData.h"
 
 namespace Spine {
-  void Dequeue(CladBufferUp* dest);
-  void ProcessHeadData();
-  void ProcessMessage(void*msg);
+  void dequeue(CladBufferUp* dest);
+  void processMessage(void* msg);
+  void init(void);
 }
 
 namespace Anki {
   namespace Cozmo {
     namespace HAL {
-      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID=0);
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
     }
   }
 }

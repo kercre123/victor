@@ -29,13 +29,14 @@ enum SPISource
 };
 
 // 32 bytes of payload plus tag
-#define SPINE_MAX_CLAD_MSG_SIZE_DOWN (41)
-#define SPINE_MAX_CLAD_MSG_SIZE_UP (29)
+#define SPINE_MAX_CLAD_MSG_SIZE_DOWN (40)
+#define SPINE_MAX_CLAD_MSG_SIZE_UP (28)
 
 struct CladBufferDown
 {
   uint16_t PADDING;
   uint8_t  length;
+  uint8_t  msgID;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
 };
 
@@ -43,6 +44,7 @@ struct CladBufferUp
 {
   uint16_t PADDING;
   uint8_t  length;
+  uint8_t  msgID;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
 

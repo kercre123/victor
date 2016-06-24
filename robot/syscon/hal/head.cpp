@@ -153,7 +153,7 @@ void Head::manage(void* userdata) {
     return ;
   }
 
-  Spine::Dequeue(&(g_dataToHead.cladBuffer));
+  Spine::dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
@@ -190,7 +190,11 @@ void UART0_IRQHandler()
         // We received a full packet
         if (++txRxIndex >= sizeof(GlobalDataToBody)) {
           memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-          Spine::ProcessHeadData();
+
+          if (g_dataToBody.cladBuffer.length > 0) {
+            Spine::processMessage(&g_dataToBody.cladBuffer);
+          }
+
           Head::spokenTo = true;
           RTOS::kick(WDOG_UART);
           
