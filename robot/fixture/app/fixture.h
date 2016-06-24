@@ -10,9 +10,8 @@
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
 
-#define FIXTURE_EXTRAS_TEST   3     // ID 2 + 1
-
-#define FIXTURE_MOTOR1_TEST   10    // ID 4 + 2  
+#define FIXTURE_MOTOR1A_TEST  10    // ID 4 + 2  
+#define FIXTURE_MOTOR1B_TEST  3     // ID 2 + 1
 #define FIXTURE_MOTOR2A_TEST  11    // ID 4 + 2 + 1
 #define FIXTURE_MOTOR2B_TEST  12    // ID 4 + 3
 
@@ -26,12 +25,15 @@
 #define FIXTURE_INFO_TEST     14    // ID 4 + 3 + 2
 #define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
-#define FIXTURE_DEBUG         16    // Should be last ID
+// These options are not selectable by dip switch (there are too many of them):
+#define FIXTURE_EXTRAS_TEST   16    // XXX - Should be 1,2,3,C
+
+#define FIXTURE_DEBUG         17    // Should be last ID
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1", "EXTRAS", "CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
-                        "ROBOT", "BODY2", "MOTOR1","MOTOR2A","MOTOR2B", "BODY3",  "INFO",  "PLAYPEN", \
-                        "DEBUG" }
+#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1",  "MOTOR1B","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
+                        "ROBOT", "BODY2", "MOTOR1A","MOTOR2A","MOTOR2B", "BODY3",  "INFO",  "PLAYPEN", \
+                        "EXTRAS","DEBUG" }
 
 extern FixtureType g_fixtureType;
 

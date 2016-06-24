@@ -387,7 +387,7 @@ void ProgramCubeWithSerial()
     
     // Patch accessory type/model: 0=charger, 1=cube1, etc
     int type = (g_fixtureType - FIXTURE_CHARGER_TEST);
-    if (type != (type & id[4]))
+    if (id[4] != 0xff && type != id[4])
       throw ERROR_CUBE_TYPE_CHANGE;
     cubeboot[0x3ff4] = type; 
     

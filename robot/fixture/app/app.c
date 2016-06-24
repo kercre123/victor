@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 30;
+u8 g_fixtureReleaseVersion = 32;
 const char* BUILD_INFO = "PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;
@@ -178,7 +178,8 @@ bool DetectDevice(void)
     case FIXTURE_ROBOT_TEST:
     case FIXTURE_PLAYPEN_TEST:
       return RobotDetect();
-    case FIXTURE_MOTOR1_TEST:
+    case FIXTURE_MOTOR1A_TEST:
+    case FIXTURE_MOTOR1B_TEST:
     case FIXTURE_MOTOR2A_TEST:      
     case FIXTURE_MOTOR2B_TEST:      
       return MotorDetect();
@@ -194,7 +195,7 @@ bool DetectDevice(void)
 void WaitForDeviceOff(void)
 {
   // In debug mode, keep device powered up so we can continue talking to it
-  if (g_fixtureType & FIXTURE_DEBUG)
+  if (g_fixtureType == FIXTURE_DEBUG)
   {
     while (g_isDevicePresent)
     {
@@ -391,7 +392,8 @@ static void MainExecution()
     case FIXTURE_PLAYPEN_TEST:
       m_functions = GetPlaypenTestFunctions();
       break;
-    case FIXTURE_MOTOR1_TEST:
+    case FIXTURE_MOTOR1A_TEST:
+    case FIXTURE_MOTOR1B_TEST:
       m_functions = GetMotor1TestFunctions();
       break;
     case FIXTURE_MOTOR2A_TEST:      

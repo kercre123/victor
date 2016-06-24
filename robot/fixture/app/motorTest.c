@@ -11,7 +11,7 @@
 #include "app/fixture.h"
 #include "binaries.h"
 
-#define ENCODER_DETECT_VOLTAGE  1400    // Above 1400mV, an encoder is probably pulling us up
+const int ENCODER_DETECT_VOLTAGE = 1400;  // Above 1400mV, an encoder is probably pulling us up
 
 void AllOn()
 {
@@ -82,7 +82,8 @@ void TestLEDs(void)
 
 // Test encoder (not motor)
 const int MIN_ENC_ON = 2310, MAX_ENC_OFF = 800;   // In millivolts (with padding) - must be 0.3x to 0.7x VDD
-const int ENC_SLOW_US = 1000, ENC_US = 227;       // Rise/fall time should be 112uS per Bryan
+const int ENC_SLOW_US = 1000;
+const int ENC_A_US = 112, ENC_B_US = 112;         // Rise/fall time should be 112uS/224uS per Bryan, but lets go with 112 on both
 void TestEncoders(void)
 {
   // Read encoder when turned on and off
@@ -91,7 +92,7 @@ void TestEncoders(void)
   // For slow reading, don't really care about timing, or if it was on or off
   ReadEncoder(true, ENC_SLOW_US, ona, onb);
   ReadEncoder(false, ENC_SLOW_US, offa, offb);
-  ConsolePrintf("slow-encoders,%d,%d,%d,%d\r\n", ona, onb, offa, offb);
+  ConsolePrintf("encoders,%d,%d,%d,%d,%d\r\n", ENC_SLOW_US, ona, onb, offa, offb);
   
   if (offa > MAX_ENC_OFF || offb > MAX_ENC_OFF)
     throw ERROR_ENCODER_FAULT;  
@@ -100,12 +101,18 @@ void TestEncoders(void)
       throw ERROR_ENCODER_UNDERVOLT;
     else
       throw ERROR_ENCODER_FAULT;
-  
-  ReadEncoder(true, ENC_US, ona, onb);
-  ReadEncoder(false, ENC_US, offa, offb);
+
+  // "Warm up" encoder by toggling the LED, then grab "A" side on last toggle
+  const int ENC_US = (g_fixtureType == FIXTURE_MOTOR1A_TEST) ? ENC_A_US : ENC_B_US;
+  for (int i = 0; i < 50; i++)
+  {
+    ReadEncoder(true, ENC_US, ona, onb);
+    ReadEncoder(false, ENC_US, offa, offb);
+  }
+  // Now grab "B" side
   ReadEncoder(true, ENC_US, skip, onb, true);
   ReadEncoder(false, ENC_US, skip, offb, true);
-  ConsolePrintf("fast-encoders,%d,%d,%d,%d\r\n", ona, onb, offa, offb);
+  ConsolePrintf("encoders,%d,%d,%d,%d,%d\r\n", ENC_US, ona, onb, offa, offb);
 
   if (ona < MIN_ENC_ON || onb < MIN_ENC_ON)
     throw ERROR_MOTOR_FAST;
@@ -167,7 +174,7 @@ int MeasureMotor(int speed)
   return aticks;
 }
 
-// Test motor with encoders
+// Motor A: Lift motor with encoders
 const int MOTOR_LOW_MV = 1000, MOTOR_FULL_MV = 5000;   // In millivolts
 void TestMotorA(void)
 {
@@ -195,7 +202,8 @@ TestFunction* GetMotor1TestFunctions(void)
 {
   static TestFunction functions[] =
   {
-    TestEncoders,
+    // LEDs are not yet wired in at this station
+    TestEncoders,   // 1A (lift) and 1B (head) use same test
     NULL
   };
 
