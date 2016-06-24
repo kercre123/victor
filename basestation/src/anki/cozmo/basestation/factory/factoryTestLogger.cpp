@@ -121,7 +121,7 @@ namespace Cozmo {
   bool FactoryTestLogger::Append(const CameraCalibration& data)
   {
     std::stringstream ss;
-    ss << "\n[CameraCalibration]"
+    ss << "\n[CameraCalibration]" << std::fixed
        << "\nfx: " << data.focalLength_x
        << "\nfy: " << data.focalLength_y
        << "\ncx: " << data.center_x
@@ -187,7 +187,7 @@ namespace Cozmo {
   bool FactoryTestLogger::Append(const IMUInfo& data)
   {
     std::stringstream ss;
-    ss << "\n[IMUInfo]"
+    ss << "\n[IMUInfo]" << std::fixed
     << "\nDriftRate_degPerSec: " << data.driftRate_degPerSec;
     
     PRINT_NAMED_INFO("FactoryTestLogger.Append.IMUInfo", "%s", ss.str().c_str());
@@ -205,7 +205,7 @@ namespace Cozmo {
   bool FactoryTestLogger::AppendPoseData(const std::string& poseName, const PoseData& data)
   {
     std::stringstream ss;
-    ss << "\n[" << poseName << "]"
+    ss << "\n[" << poseName << "]" << std::fixed
        << "\nRot: "   << data.angleX_rad << " " << data.angleY_rad << " " << data.angleZ_rad
        << "\nTrans: " << data.transX_mm << " " << data.transY_mm << " " << data.transZ_mm;
     

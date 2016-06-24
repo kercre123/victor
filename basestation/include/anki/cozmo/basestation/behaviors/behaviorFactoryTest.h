@@ -153,6 +153,7 @@ namespace Cozmo {
     FactoryTestResultCode _writeFailureCode;
 
     static PoseData ConvertToPoseData(const Pose3d& p);
+    u8 _numPlacementAttempts;
     
   }; // class BehaviorFactoryTest
 

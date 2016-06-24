@@ -215,6 +215,8 @@ namespace Cozmo {
     _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-50, 250, 0}, &robot.GetPose().FindOrigin());
     _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
 
+    _numPlacementAttempts = 0;
+    
     // Mute volume
     auto audioClient = robot.GetRobotAudioClient();
     if (audioClient) {
@@ -531,7 +533,7 @@ namespace Cozmo {
         // Move lift to correct height and head to correct angle
         CompoundActionParallel* headAndLiftAction = new CompoundActionParallel(robot, {
           new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
-          new MoveHeadToAngleAction(robot, 0),
+          new MoveHeadToAngleAction(robot, DEG_TO_RAD_F32(2)),
         });
         StartActing(robot, headAndLiftAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -989,7 +991,15 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");
           } else {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.placementCallback.Failed", "");
-            EndTest(robot, FactoryTestResultCode::PLACEMENT_FAILED);
+            
+            // HACK: Sometimes the robot doesn't even attempt to lower the lift during placement
+            //       but still thinks that it succeeded block placement. Just try it again.
+            if (_numPlacementAttempts <= 1 && robot.GetLiftHeight() > 70) {
+              PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Retrying", "");
+              SetCurrState(FactoryTestState::PickingUpBlock);
+            } else {
+              EndTest(robot, FactoryTestResultCode::PLACEMENT_FAILED);
+            }
           }
           return true;
         };
@@ -1000,6 +1010,7 @@ namespace Cozmo {
         StartActing(robot,
                     action,
                     placementCallback);
+        ++_numPlacementAttempts;
         SetCurrState(FactoryTestState::PlacingBlock);
         break;
       }
@@ -1458,17 +1469,15 @@ namespace Cozmo {
     Result writePoseResult = robot.GetVisionComponent().GetCalibrationPoseToRobot(0, calibPose);
     if (writePoseResult != RESULT_OK) {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.GetCalibPose.Failed", "");
-      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIB_POSE_GET_FAILED);
-    }
-    
-    
-    // Write calib pose to log on device
-    PoseData poseData = ConvertToPoseData(calibPose);
-    _factoryTestLogger.AppendCalibPose(poseData);
+      //END_TEST_IN_HANDLER(FactoryTestResultCode::CALIB_POSE_GET_FAILED);
+    } else {
+      // Write calib pose to log on device
+      PoseData poseData = ConvertToPoseData(calibPose);
+      _factoryTestLogger.AppendCalibPose(poseData);
 
-    // Write calib pose to robot
-    QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CalibPose, (u8*)&poseData, sizeof(poseData));
-    
+      // Write calib pose to robot
+      QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CalibPose, (u8*)&poseData, sizeof(poseData));
+    }
     
     
     // Check if calibration values are sane
