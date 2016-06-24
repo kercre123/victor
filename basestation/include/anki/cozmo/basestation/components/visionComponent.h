@@ -190,6 +190,19 @@ struct DockingErrorSignal;
     Result ClearToolCodeImages();    
     size_t  GetNumStoredToolCodeImages() const;
     std::list<std::vector<u8> > GetToolCodeImageJpegData();
+
+    // For factory test behavior use only: tell vision component to find the
+    // four dots for the test target and compute camera pose. Result is
+    // broadcast via an EngineToGame::RobotCompletedFactoryDotTest message.
+    void UseNextImageForFactoryDotTest() { _doFactoryDotTest = true; }
+    
+    // Called automatically when doFactoryDotTest=true. Exposed publicly for unit test
+    Result FindFactoryTestDotCentroids(const Vision::Image& image,
+                                       ExternalInterface::RobotCompletedFactoryDotTest& msg);
+    
+    // Used by FindFactoryTestDotCentroids iff camera is already calibrated.
+    // Otherwise call manually by populating obsQuad with the dot centroids.
+    Result ComputeCameraPoseVsIdeal(const Quad2f& obsQuad, Pose3d& pose) const;
     
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
@@ -309,6 +322,12 @@ struct DockingErrorSignal;
     Result UpdateToolCode(const VisionProcessingResult& result);
     
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
+    
+    // Factory centroid finder: returns the centroids of the 4 factory test dots,
+    // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest
+    // message. This runs on the main thread and should only be used for factory tests.
+    // Is run automatically when _doFactoryDotTest=true and sets it back to false when done.
+    bool _doFactoryDotTest = false;
     
   }; // class VisionComponent
   

@@ -541,6 +541,184 @@ const char *visionTestJsonFiles[] = {
   "visionTest_OffTheMat.json"
 };
 
+TEST(FactoryTest, IdealCameraPose)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Vision::CameraCalibration calib(240, 320, 290.f, 290.f, 160.f, 120.f);
+  const f32 kDotSpacingX_mm = 40.f;
+  const f32 kDotSpacingY_mm = 27.f;
+  const f32 kTargetDist_mm  = 60.f;
+  const Quad3f kTargetDotCenters(Point3f(-0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0),
+                                 Point3f(-0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0),
+                                 Point3f( 0.5f*kDotSpacingX_mm, -0.5f*kDotSpacingY_mm, 0),
+                                 Point3f( 0.5f*kDotSpacingX_mm,  0.5f*kDotSpacingY_mm, 0));
+  
+  const std::vector<f32> kPitchAngle_deg = {0, 0.5, 1, 2, 4, 5};
+  const std::vector<f32> kYawAngle_deg   = {0, 0.5, 1, 2, 4, 5};
+  const std::vector<f32> kRollAngle_deg  = {0, 0.1, 0.5, 1};
+  
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  Vision::Image image;
+  ExternalInterface::RobotCompletedFactoryDotTest msg;
+  Pose3d pose;
+  Quad2f imgQuad;
+  
+  
+  for(f32 pitch_deg : kPitchAngle_deg) {
+    for(f32 yaw_deg : kYawAngle_deg) {
+      for(f32 roll_deg : kRollAngle_deg) {
+        
+        Pose3d targetPose(RotationMatrix3d(Radians(DEG_TO_RAD(-pitch_deg)),
+                                           Radians(DEG_TO_RAD(-yaw_deg)),
+                                           Radians(DEG_TO_RAD(-roll_deg))),
+                          Vec3f(0.f, 0.f, kTargetDist_mm));
+        Quad3f targetDotCenters;
+        targetPose.ApplyTo(kTargetDotCenters, targetDotCenters);
+        
+        robot.GetVisionComponent().SetCameraCalibration(calib);
+        robot.GetVisionComponent().GetCamera().Project3dPoints(targetDotCenters, imgQuad);
+      
+        Result result = robot.GetVisionComponent().ComputeCameraPoseVsIdeal(imgQuad, pose);
+        ASSERT_EQ(result, RESULT_OK);
+        
+        {
+          const f32 kPositionTol_mm = 1.f;
+          EXPECT_NEAR(pose.GetTranslation().x(), 0.f, kPositionTol_mm);
+          EXPECT_NEAR(pose.GetTranslation().y(), 0.f, kPositionTol_mm);
+          EXPECT_NEAR(pose.GetTranslation().z(), 0.f, kPositionTol_mm);
+          
+          const f32 kAngleTol_deg = 1.f;
+          EXPECT_NEAR(pose.GetRotation().GetAngleAroundXaxis().getDegrees(), pitch_deg, kAngleTol_deg);
+          EXPECT_NEAR(pose.GetRotation().GetAngleAroundYaxis().getDegrees(), yaw_deg,   kAngleTol_deg);
+          EXPECT_NEAR(pose.GetRotation().GetAngleAroundZaxis().getDegrees(), roll_deg,  kAngleTol_deg);
+        }
+        
+        PRINT_NAMED_INFO("FactoryTest.IdealCameraPose.IdealHeadPose",
+                         "position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg (vs %.1f) Pitch=%.1fdeg (vs %.1f), Yaw=%.1fdeg (vs %.1f)",
+                         pose.GetTranslation().x(),
+                         pose.GetTranslation().y(),
+                         pose.GetTranslation().z(),
+                         pose.GetRotation().GetAngleAroundZaxis().getDegrees(), roll_deg,
+                         pose.GetRotation().GetAngleAroundXaxis().getDegrees(), pitch_deg,
+                         pose.GetRotation().GetAngleAroundYaxis().getDegrees(), yaw_deg);
+        
+        
+        // Imperfect calibration:
+        calib.SetFocalLength(288, 287);
+        calib.SetCenter(Point2f(155.f, 114.f));
+        robot.GetVisionComponent().SetCameraCalibration(calib);
+        
+        result = robot.GetVisionComponent().ComputeCameraPoseVsIdeal(imgQuad, pose);
+        ASSERT_EQ(result, RESULT_OK);
+        
+        {
+          const f32 kPositionTol_mm = 2.f;
+          EXPECT_NEAR(pose.GetTranslation().x(), 0.f, kPositionTol_mm);
+          EXPECT_NEAR(pose.GetTranslation().y(), 0.f, kPositionTol_mm);
+          EXPECT_NEAR(pose.GetTranslation().z(), 0.f, kPositionTol_mm);
+          
+          const f32 kAngleTol_deg = 2.f;
+          EXPECT_NEAR(pose.GetRotation().GetAngleAroundXaxis().getDegrees(), pitch_deg, kAngleTol_deg);
+          EXPECT_NEAR(pose.GetRotation().GetAngleAroundYaxis().getDegrees(), yaw_deg,   kAngleTol_deg);
+          EXPECT_NEAR(pose.GetRotation().GetAngleAroundZaxis().getDegrees(), roll_deg,  kAngleTol_deg);
+        }
+        
+        PRINT_NAMED_INFO("FactoryTest.IdealCameraPose.ImperfectCalib",
+                         "position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg (vs %.1f) Pitch=%.1fdeg (vs %.1f), Yaw=%.1fdeg (vs %.1f)",
+                         pose.GetTranslation().x(),
+                         pose.GetTranslation().y(),
+                         pose.GetTranslation().z(),
+                         pose.GetRotation().GetAngleAroundZaxis().getDegrees(), roll_deg,
+                         pose.GetRotation().GetAngleAroundXaxis().getDegrees(), pitch_deg,
+                         pose.GetRotation().GetAngleAroundYaxis().getDegrees(), yaw_deg);
+        
+      } // for each pitch
+    } // for each yaw
+  } // for each roll
+
+  
+}
+
+TEST(FactoryTest, FindDotsInImages)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+
+  struct TestData
+  {
+    std::string filename;
+    Vision::CameraCalibration calib;
+  };
+  
+  // TODO: Fill in actual calibration data for each test image
+  std::vector<TestData> tests = {
+    {
+      .filename = "test/factoryTests/factoryDotTarget.png",
+      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+    },
+    {
+      .filename = "test/factoryTests/factoryDotTarget_trulycam2.png",
+      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+    },
+    {
+      .filename = "test/factoryTests/rocky1.png",
+      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+    },
+    {
+      .filename = "test/factoryTests/rocky2.png",
+      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+    },
+  };
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  Vision::Image image;
+  ExternalInterface::RobotCompletedFactoryDotTest msg;
+  
+  for(auto & test : tests)
+  {
+    const std::string testFilename = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                     test.filename);
+    
+    robot.GetVisionComponent().SetCameraCalibration(test.calib);
+    
+    lastResult = image.Load(testFilename);
+    ASSERT_EQ(lastResult, RESULT_OK);
+    ASSERT_EQ(image.GetNumRows(), test.calib.GetNrows());
+    ASSERT_EQ(image.GetNumCols(), test.calib.GetNcols());
+    
+    lastResult = robot.GetVisionComponent().FindFactoryTestDotCentroids(image, msg);
+    ASSERT_EQ(lastResult, RESULT_OK);
+    
+    ASSERT_TRUE(msg.success);
+    
+    std::string centroidStr;
+    for(s32 iDot=0; iDot<4; ++iDot)
+    {
+      centroidStr += "(" + std::to_string(msg.dotCenX_pix[iDot]) + "," + std::to_string(msg.dotCenY_pix[iDot]) + ") ";
+    }
+    PRINT_NAMED_INFO("FactoryTest.FindDotsInImages.Centroids", "'%s':%s",
+                     test.filename.c_str(), centroidStr.c_str());
+    PRINT_NAMED_INFO("FactoryTest.FindDotsInImages.HeadPose",
+                     "'%s'[%s]: position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg Pitch=%.1fdeg, Yaw=%.1fdeg",
+                     test.filename.c_str(), msg.success ? "SUCCESS" : "FAIL",
+                     msg.camPoseX_mm, msg.camPoseY_mm, msg.camPoseZ_mm,
+                     RAD_TO_DEG(msg.camPoseRoll_rad),
+                     RAD_TO_DEG(msg.camPosePitch_rad),
+                     RAD_TO_DEG(msg.camPoseYaw_rad));
+    
+    // TODO: Check the rest of the message contents for sane values
+  }
+}
+
 /*
 // This actually creates the set of tests, one for each filename above.
 INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
