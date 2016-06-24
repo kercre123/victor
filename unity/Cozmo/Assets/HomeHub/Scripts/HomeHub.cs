@@ -164,13 +164,15 @@ namespace Cozmo.HomeHub {
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       // We need to initialize the dialog first before opening the view, so don't animate right away
-      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab,
-        newView => {
-          newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
-        });
+      if (_ChallengeDetailsDialogInstance == null) {
+        _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab,
+          newView => {
+            newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
+          });
 
-      // React to when we should start the challenge.
-      _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+        // React to when we should start the challenge.
+        _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+      }
     }
 
     private void HandleMiniGameLose() {

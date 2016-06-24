@@ -49,7 +49,7 @@ namespace Cozmo {
           _UseEndCap = false;
         }
         if (_EndCap != null && ((!_UseEndCap) ||
-            ((_FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width) < _EndCap.sprite.rect.width))) {
+            ((_FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width) < _EndCap.rectTransform.rect.width))) {
           _EndCap.gameObject.SetActive(false);
         }
       }
@@ -67,7 +67,7 @@ namespace Cozmo {
           // of the Foreground Image.
           if (_UseEndCap) {
             float capPos = 0.0f;
-            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width;
+            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width;
 
             if (capPos < _EndCap.sprite.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
               _EndCap.gameObject.SetActive(false);
@@ -129,9 +129,9 @@ namespace Cozmo {
           _FilledForegroundImage.fillAmount = _TargetProgress;
           if (_UseEndCap) {
             float capPos = 0.0f;
-            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.sprite.rect.width;
+            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width;
 
-            if (capPos < _EndCap.sprite.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
+            if (capPos < _EndCap.rectTransform.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
               _EndCap.gameObject.SetActive(false);
             }
             else {

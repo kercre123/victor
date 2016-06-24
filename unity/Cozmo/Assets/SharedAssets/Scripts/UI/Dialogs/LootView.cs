@@ -208,6 +208,7 @@ namespace Cozmo {
 
       private IEnumerator InitializeBox() {
         yield return new WaitForFixedUpdate();
+        _LootBox.gameObject.SetActive(true);
         CreateBoxAnimation();
       }
 

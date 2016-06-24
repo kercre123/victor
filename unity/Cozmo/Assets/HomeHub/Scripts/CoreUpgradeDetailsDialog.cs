@@ -135,7 +135,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     if (playerInventory.CanRemoveItemAmount(hexPieceId, unlockCost)) {
       playerInventory.RemoveItemAmount(hexPieceId, unlockCost);
-      UpdateInventoryLabel(hexPieceId, _FragmentInventoryLabel);
+      _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
 
       if (_ButtonCostPaidSuccessCallback != null) {
         _ButtonCostPaidSuccessCallback(_UnlockInfo);
@@ -158,6 +158,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private void ResolveOnNewUnlock() {
     UpdateState();
     _NewUnlock = true;
+    CloseView();
   }
 
   private void OnSparkClicked() {

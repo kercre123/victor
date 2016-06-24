@@ -215,8 +215,8 @@ namespace Cozmo.HomeHub {
 
     private void ResolveDooberBurst() {
       RewardedActionManager.Instance.PendingActionRewards.Clear();
-      UIManager.EnableTouchEvents();
       if (ChestRewardManager.Instance.ChestPending == false) {
+        UIManager.EnableTouchEvents();
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
         }
