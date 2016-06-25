@@ -42,6 +42,7 @@ namespace Cozmo {
 
       public Action<TronLight> OnLifeSpanEnd;
       private Direction _CurrDir = Direction.Up;
+      private Direction _AvoidDir = Direction.Down;
       private float _CurrLifeSpan;
       private float _CurrDist = 0.0f;
       private float _CurrInterval = 0.0f;
@@ -58,6 +59,7 @@ namespace Cozmo {
         transform.position = transform.parent.position;
         _CurrLifeSpan = UnityEngine.Random.Range(_LifeSpanMin, _LifeSpanMax);
         _CurrDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);
+        _AvoidDir = OppositeDir(_CurrDir);
         _CurrInterval = (_LifeSpanMax / (_CurrTurns + 1));
         _Trail.Clear();
         HandleTweenEnd();
@@ -158,8 +160,29 @@ namespace Cozmo {
           }
           break;
         }
+        // If the one we picked would turn us back towards the source direction,
+        // then use the alternate.
+        if (newD == _AvoidDir) {
+          return OppositeDir(newD);
+        }
         return newD;
       }
+
+
+      private Direction OppositeDir(Direction dir) {
+        switch (dir) {
+        case Direction.Up:
+          return Direction.Down;
+        case Direction.Right:
+          return Direction.Left;
+        case Direction.Down:
+          return Direction.Up;
+        case Direction.Left:
+          return Direction.Right;
+        }
+        return dir;
+      }
+
     }
   }
 }
