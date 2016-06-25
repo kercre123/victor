@@ -437,8 +437,6 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
                                                              payload.focalLength_x, payload.focalLength_y,
                                                              payload.center_x, payload.center_y);
                                             
-                                            const std::vector<f32> tempVector(payload.distCoeffs.begin(), payload.distCoeffs.end());
-                                            
                                             // Convert calibration message into a calibration object to pass to the robot
                                             Vision::CameraCalibration calib(payload.nrows,
                                                                             payload.ncols,
@@ -447,7 +445,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
                                                                             payload.center_x,
                                                                             payload.center_y,
                                                                             payload.skew,
-                                                                            tempVector);
+                                                                            payload.distCoeffs);
                                             
                                             robot->GetVisionComponent().SetCameraCalibration(calib);
                                           }

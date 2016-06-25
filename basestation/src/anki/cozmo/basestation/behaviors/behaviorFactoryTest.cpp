@@ -1496,34 +1496,18 @@ namespace Cozmo {
     _stationID = payload.param;
   }
   
-  Result BehaviorFactoryTest::HandleCameraCalibration(Anki::Cozmo::Robot &robot, const Anki::Cozmo::CameraCalibration &msg)
+  Result BehaviorFactoryTest::HandleCameraCalibration(Robot &robot, const CameraCalibration &calibMsg)
   {
  
-    Vision::CameraCalibration camCalib(msg.nrows, msg.ncols,
-                                       msg.focalLength_x, msg.focalLength_y,
-                                       msg.center_x, msg.center_y,
-                                       msg.skew);
+    Vision::CameraCalibration camCalib(calibMsg.nrows, calibMsg.ncols,
+                                       calibMsg.focalLength_x, calibMsg.focalLength_y,
+                                       calibMsg.center_x, calibMsg.center_y,
+                                       calibMsg.skew,
+                                       calibMsg.distCoeffs);
     
     // Set camera calibration
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-    
-    CameraCalibration calibMsg;
-    calibMsg.focalLength_x = camCalib.GetFocalLength_x();
-    calibMsg.focalLength_y = camCalib.GetFocalLength_y();
-    calibMsg.center_x = camCalib.GetCenter_x();
-    calibMsg.center_y = camCalib.GetCenter_y();
-    calibMsg.skew = camCalib.GetSkew();
-    calibMsg.nrows = camCalib.GetNrows();
-    calibMsg.ncols = camCalib.GetNcols();
-    
-    ASSERT_NAMED_EVENT(camCalib.GetDisortionCoeffs().size() <= calibMsg.distCoeffs.size(),
-                       "BehaviorFactoryTest.HandleCameraCalibration.TooManyDistCoeffs",
-                       "%zu > %zu", camCalib.GetDisortionCoeffs().size(),
-                       calibMsg.distCoeffs.size());
-    std::copy(camCalib.GetDisortionCoeffs().begin(), camCalib.GetDisortionCoeffs().end(),
-              calibMsg.distCoeffs.begin());
     
     // Write camera calibration to log on device
     _factoryTestLogger.Append(calibMsg);
@@ -1594,16 +1578,16 @@ namespace Cozmo {
     
     // Check if calibration values are sane
     #define CHECK_OOR(value, min, max) (value < min || value > max)
-    if (CHECK_OOR(msg.focalLength_x, 250, 310) ||
-        CHECK_OOR(msg.focalLength_y, 250, 310) ||
-        CHECK_OOR(msg.center_x, 130, 190) ||
-        CHECK_OOR(msg.center_y, 90, 150) ||
-        msg.nrows != 240 ||
-        msg.ncols != 320)
+    if (CHECK_OOR(calibMsg.focalLength_x, 250, 310) ||
+        CHECK_OOR(calibMsg.focalLength_y, 250, 310) ||
+        CHECK_OOR(calibMsg.center_x, 130, 190) ||
+        CHECK_OOR(calibMsg.center_y, 90, 150) ||
+        calibMsg.nrows != 240 ||
+        calibMsg.ncols != 320)
     {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
                           "focalLength (%f, %f), center (%f, %f)",
-                          msg.focalLength_x, msg.focalLength_y, msg.center_x, msg.center_y);
+                          calibMsg.focalLength_x, calibMsg.focalLength_y, calibMsg.center_x, calibMsg.center_y);
       END_TEST_IN_HANDLER(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
     }
     

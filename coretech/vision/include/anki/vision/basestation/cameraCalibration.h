@@ -26,6 +26,8 @@ namespace Anki {
     {
     public:
       
+      static const u32 kNumDistCoeffs = 8;
+      
       // Constructors:
       CameraCalibration();
       
@@ -38,7 +40,7 @@ namespace Anki {
                         f32 fx,       f32 fy,
                         f32 center_x, f32 center_y,
                         f32 skew,
-                        const std::vector<f32> &distCoeffs);
+                        const std::array<f32,kNumDistCoeffs> &distCoeffs);
       
       // Construct from a Json node
       CameraCalibration(const Json::Value& jsonNode);
@@ -64,7 +66,7 @@ namespace Anki {
       Radians ComputeVerticalFOV() const;
       Radians ComputeHorizontalFOV() const;
       
-      const std::vector<f32>& GetDisortionCoeffs() const;
+      const std::array<f32,kNumDistCoeffs>& GetDistortionCoeffs() const;
       
       // Returns the 3x3 camera calibration matrix:
       // [fx   skew*fx   center_x;
@@ -90,7 +92,7 @@ namespace Anki {
       Point2f _center;
       f32     _skew;
       
-      std::vector<f32> _distortionCoeffs; // radial distortion coefficients
+      std::array<f32,kNumDistCoeffs> _distortionCoeffs; // radial distortion coefficients
       
     }; // class CameraCalibration
     
@@ -139,7 +141,7 @@ namespace Anki {
       _center = center;
     }
     
-    inline const std::vector<f32>& CameraCalibration::GetDisortionCoeffs() const {
+    inline const std::array<f32,CameraCalibration::kNumDistCoeffs>& CameraCalibration::GetDistortionCoeffs() const {
       return _distortionCoeffs;
     }
     

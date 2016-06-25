@@ -1166,6 +1166,7 @@ namespace Cozmo {
       msg.nrows = calib.GetNrows();
       msg.ncols = calib.GetNcols();
       msg.skew = calib.GetSkew();
+      msg.distCoeffs = calib.GetDistortionCoeffs();
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
   

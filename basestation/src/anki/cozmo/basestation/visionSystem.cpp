@@ -3209,18 +3209,17 @@ namespace Cozmo {
     
 
     // Compute calibration
-    const s32 kNumDistCoeffs = 8;
     std::vector<cv::Vec3d> rvecs, tvecs;
     cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
-    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, kNumDistCoeffs);
+    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, Vision::CameraCalibration::kNumDistCoeffs);
     
     const f64 rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
 
     // Copy distortion coefficients into a f32 vector to set CameraCalibration
     const f64* distCoeffs_data = distCoeffs[0];
-    std::vector<f32> distCoeffsVec(kNumDistCoeffs);
-    std::copy(distCoeffs_data, distCoeffs_data+kNumDistCoeffs, distCoeffsVec.begin());
-
+    std::array<f32,Vision::CameraCalibration::kNumDistCoeffs> distCoeffsVec;
+    std::copy(distCoeffs_data, distCoeffs_data+Vision::CameraCalibration::kNumDistCoeffs, distCoeffsVec.begin());
+    
     calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
                                             cameraMatrix(0,0), cameraMatrix(1,1),
                                             cameraMatrix(0,2), cameraMatrix(1,2),
