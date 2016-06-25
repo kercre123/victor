@@ -33,6 +33,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/pathMotionProfile.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/rollingFileLogger.h"
 #include <fstream>
 
 namespace Anki {
@@ -112,8 +113,8 @@ namespace Anki {
       
         void Write(const std::string& s);
       
-        std::string _path;        // path for attempt log
-        std::string _imageFolder; // image folder name
+        Util::RollingFileLogger _logger;
+        std::string _imageFolder;  // image folder name
       
         bool _reset                = false; // test needs to be reset
         bool _yellForHelp          = false; // whether or not we should yell for help
