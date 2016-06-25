@@ -23,6 +23,7 @@
 #include "clad/types/animationEvents.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/featureGateTypes.clad"
+#include "clad/types/poseStructs.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -99,15 +100,9 @@ message Bogus {
 ///////////////////////////////////////////////////////////////////////////////
 
 message RobotState {
-    float_32 pose_x,
-    float_32 pose_y,
-    float_32 pose_z,
+    PoseStruct3d pose,
     float_32 poseAngle_rad,    // heading in X-Y plane
     float_32 posePitch_rad,    // robot pitch angle
-    float_32 pose_qw,          // full 3d rotation as a quaternion
-    float_32 pose_qx,          //  "
-    float_32 pose_qy,          //  "
-    float_32 pose_qz,          //  "
     float_32 leftWheelSpeed_mmps,
     float_32 rightWheelSpeed_mmps,
     float_32 headAngle_rad,
@@ -193,13 +188,7 @@ message RobotObservedObject {
     float_32 img_topLeft_y,  //     "
     float_32 img_width,      //     "
     float_32 img_height,     //     "
-    float_32 world_x,        // absolute 3D position in world coords
-    float_32 world_y,        //     "
-    float_32 world_z,        //     "
-    float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
-    float_32 quaternion_x,   //     "
-    float_32 quaternion_y,   //     "
-    float_32 quaternion_z,   //     "
+    PoseStruct3d pose,
     float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
     uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
     uint_8   isActive
@@ -217,13 +206,7 @@ message RobotObservedFace {
     int_32   faceID,         // negative: tracked but not recognized; positive: recognized face
     uint_32  robotID,
     uint_32  timestamp,
-    float_32 world_x,        // absolute 3D position in world coords
-    float_32 world_y,        //     "
-    float_32 world_z,        //     "
-    float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
-    float_32 quaternion_x,   //     "
-    float_32 quaternion_y,   //     "
-    float_32 quaternion_z,   //     "
+    PoseStruct3d pose,
     string   name            // Empty if none assigned yet
 // TODO: Add expression / landmark locations
 }

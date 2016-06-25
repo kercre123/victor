@@ -17,6 +17,7 @@ OUTPUT_DIR_PYTHON=../generated/cladPython/
 OUTPUT_DIR_ENGINE:=$(OUTPUT_DIR)engine/
 
 OUTPUT_DIR_CTI_VISION:=../coretech/generated/clad/vision/
+OUTPUT_DIR_CTI_COMMON:=../coretech/generated/clad/common/
 
 INPUT_ENGINE_DIR=./src/
 INPUT_ENGINE_FILES=$(shell cd $(INPUT_ENGINE_DIR); find . -type f -iname '*.clad')
@@ -60,36 +61,57 @@ OUTPUT_CTI_VISION_PYTHON=$(patsubst %.clad, %.py, $(INPUT_CTI_VISION_FILES))
 OUTPUT_CTI_VISION_LST=$(OUTPUT_DIR_CTI_VISION)vision.lst
 OUTPUT_CTI_VISION_ENGINE_LST=$(OUTPUT_DIR)vision.lst
 
-vpath %.clad $(INPUT_ENGINE_DIR):$(INPUT_VIZ_DIR):$(INPUT_ROBOT_DIR):$(INPUT_CTI_VISION_DIR)
+INPUT_CTI_COMMON_DIR=../coretech/common/clad/src/
+INPUT_CTI_COMMON_FILES=$(shell cd $(INPUT_CTI_COMMON_DIR); find . -type f -iname '*.clad')
+OUTPUT_CTI_COMMON_CPP=$(patsubst %.clad, %.cpp, $(INPUT_CTI_COMMON_FILES))
+OUTPUT_CTI_COMMON_H=$(patsubst %.clad, %.h, $(INPUT_CTI_COMMON_FILES))
+OUTPUT_CTI_COMMON_H_AND_CPP=$(OUTPUT_CTI_COMMON_H) $(OUTPUT_CTI_COMMON_CPP)
+OUTPUT_CTI_COMMON_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_CTI_COMMON_FILES))
+OUTPUT_CTI_COMMON_PYTHON=$(patsubst %.clad, %.py, $(INPUT_CTI_COMMON_FILES))
+OUTPUT_CTI_COMMON_LST=$(OUTPUT_DIR_CTI_COMMON)common.lst
+OUTPUT_CTI_COMMON_ENGINE_LST=$(OUTPUT_DIR)common.lst
+
+vpath %.clad $(INPUT_ENGINE_DIR):$(INPUT_VIZ_DIR):$(INPUT_ROBOT_DIR):$(INPUT_CTI_VISION_DIR):$(INPUT_CTI_COMMON_DIR)
 vpath %.h $(OUTPUT_DIR_ENGINE)/
 vpath %.cpp $(OUTPUT_DIR_ENGINE)/
 vpath %.cs $(OUTPUT_DIR_CSHARP)/
 vpath %.py $(OUTPUT_DIR_PYTHON)/
 vpath %.h $(OUTPUT_DIR_CTI_VISION)/
 vpath %.cpp $(OUTPUT_DIR_CTI_VISION)/
+vpath %.cpp $(OUTPUT_DIR_CTI_COMMON)/
 vpath %.cs $(OUTPUT_DIR_CTI_VISION)/
 vpath %.h $(OUTPUT_DIR_CTI_VISION)/
+vpath %.h $(OUTPUT_DIR_CTI_COMMON)/
 
 .PHONY: show clean
 
 all: cpp python 
 
-cpp: engineCpp robotCpp vizCpp ctiVisionCpp cppListFiles
-cppListFiles: $(OUTPUT_VIZ_LST) $(OUTPUT_ENGINE_LST) $(OUTPUT_ROBOT_LST) $(OUTPUT_CTI_VISION_LST) $(OUTPUT_CTI_VISION_ENGINE_LST)
+# C++
+cpp: engineCpp robotCpp vizCpp ctiVisionCpp ctiCommonCpp cppListFiles
+cppListFiles: $(OUTPUT_VIZ_LST) $(OUTPUT_ENGINE_LST) $(OUTPUT_ROBOT_LST) $(OUTPUT_CTI_VISION_LST) $(OUTPUT_CTI_VISION_ENGINE_LST) $(OUTPUT_CTI_COMMON_LST) $(OUTPUT_CTI_COMMON_ENGINE_LST)
 robotCpp: $(OUTPUT_ROBOT_CPP)
 engineCpp: $(OUTPUT_ENGINE_H_AND_CPP)
 vizCpp: $(OUTPUT_VIZ_H_AND_CPP)
 ctiVisionCpp: $(OUTPUT_CTI_VISION_H_AND_CPP)
-csharp: engineCsharp robotCsharp vizCsharp ctiVisionCsharp
+ctiCommonCpp: $(OUTPUT_CTI_COMMON_H_AND_CPP)
+
+# C-sharp
+csharp: engineCsharp robotCsharp vizCsharp ctiCommonCsharp ctiVisionCsharp 
 robotCsharp: $(OUTPUT_ROBOT_CSHARP)
 engineCsharp: $(OUTPUT_ENGINE_CSHARP)
 vizCsharp: $(OUTPUT_VIZ_CSHARP)
 ctiVisionCsharp: $(OUTPUT_CTI_VISION_CSHARP)
+ctiCommonCsharp: $(OUTPUT_CTI_COMMON_CSHARP)
+
+# Python
+python: enginePython robotPython vizPython ctiVisionPython ctiCommonPython
 robotPython: $(OUTPUT_ROBOT_PYTHON)
 enginePython: $(OUTPUT_ENGINE_PYTHON)
 vizPython: $(OUTPUT_VIZ_PYTHON)
 ctiVisionPython: $(OUTPUT_CTI_VISION_PYTHON)
-python: enginePython robotPython vizPython ctiVisionPython
+ctiCommonPython: $(OUTPUT_CTI_COMMON_PYTHON)
+
 
 $(OUTPUT_VIZ_H_AND_CPP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.h; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.h; fi
@@ -118,9 +140,9 @@ $(OUTPUT_ROBOT_H_AND_CPP): $(INPUT_ROBOT_CPP_FILES) $(CLAD_DEPENDENCIES) $(CLAD_
 $(OUTPUT_ENGINE_H_AND_CPP): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.h; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.h; fi
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.cpp; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.cpp; fi
-	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
-	$(CLAD_CPP_DECL) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
-	$(CLAD_CPP_SWITCH) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
+	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
+	$(CLAD_CPP_DECL) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
+	$(CLAD_CPP_SWITCH) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR_ENGINE)/$*.h
 	chmod -f 555 $(OUTPUT_DIR_ENGINE)/$*.cpp
 	
@@ -132,6 +154,15 @@ $(OUTPUT_CTI_VISION_H_AND_CPP): $(INPUT_CTI_VISION_FILES) $(CLAD_DEPENDENCIES) $
 	$(CLAD_CPP_SWITCH) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_CTI_VISION)/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR_CTI_VISION)/$*.h
 	chmod -f 555 $(OUTPUT_DIR_CTI_VISION)/$*.cpp
+	
+$(OUTPUT_CTI_COMMON_H_AND_CPP): $(INPUT_CTI_COMMON_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
+	if test -f $(OUTPUT_DIR_CTI_COMMON)/$*.h; then chmod -f 777 $(OUTPUT_DIR_CTI_COMMON)/$*.h; fi
+	if test -f $(OUTPUT_DIR_CTI_COMMON)/$*.cpp; then chmod -f 777 $(OUTPUT_DIR_CTI_COMMON)/$*.cpp; fi
+	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_CTI_COMMON)/ $*.clad
+	$(CLAD_CPP_DECL) -C $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_CTI_COMMON)/ $*.clad
+	$(CLAD_CPP_SWITCH) -C $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_CTI_COMMON)/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR_CTI_COMMON)/$*.h
+	chmod -f 555 $(OUTPUT_DIR_CTI_COMMON)/$*.cpp
 
 
 # in this target stem does not work. probably issue with patsubst,
@@ -146,7 +177,7 @@ $(OUTPUT_ROBOT_CSHARP): $(INPUT_ROBOT_SHARED_FILES) $(CLAD_DEPENDENCIES) $(CLAD_
 # instead of $*.clad use $(@:.cs=.clad)
 $(OUTPUT_ENGINE_CSHARP): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
 	if test -f $(OUTPUT_DIR_CSHARP)/$@; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$@; fi
-	$(CLAD_CSHARP) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
+	$(CLAD_CSHARP) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
 	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
 
 # in this target stem does not work. probably issue with patsubst,
@@ -162,6 +193,13 @@ $(OUTPUT_CTI_VISION_CSHARP): $(INPUT_CTI_VISION_FILES) $(CLAD_DEPENDENCIES) $(CL
 	if test -f $(OUTPUT_DIR_CSHARP)/$@; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$@; fi
 	$(CLAD_CSHARP) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
 	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
+	
+# in this target stem does not work. probably issue with patsubst,
+# instead of $*.clad use $(@:.cs=.clad)
+$(OUTPUT_CTI_COMMON_CSHARP): $(INPUT_CTI_COMMON_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
+	if test -f $(OUTPUT_DIR_CSHARP)/$@; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$@; fi
+	$(CLAD_CSHARP) -C $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
+	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
 
 # in this target stem does not work. probably issue with patsubst,
 # instead of $*.clad use $(@:.py=.clad)
@@ -174,7 +212,7 @@ $(OUTPUT_ROBOT_PYTHON): $(INPUT_ROBOT_SHARED_FILES) $(CLAD_DEPENDENCIES) $(CLAD_
 # instead of $*.clad use $(@:.py=.clad)
 $(OUTPUT_ENGINE_PYTHON): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
 	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
-	$(CLAD_PYTHON) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
+	$(CLAD_PYTHON) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
 	
 # in this target stem does not work. probably issue with patsubst,
@@ -189,6 +227,13 @@ $(OUTPUT_VIZ_PYTHON): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
 $(OUTPUT_CTI_VISION_PYTHON): $(INPUT_CTI_VISION_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
 	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
 	$(CLAD_PYTHON) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
+	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
+	
+# in this target stem does not work. probably issue with patsubst,
+# instead of $*.clad use $(@:.py=.clad)
+$(OUTPUT_CTI_COMMON_PYTHON): $(INPUT_CTI_COMMON_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
+	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
+	$(CLAD_PYTHON) -C $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
 	
 # clad specific paths in here..
@@ -213,6 +258,14 @@ $(OUTPUT_CTI_VISION_ENGINE_LST):
 	cat /dev/null > $(OUTPUT_CTI_VISION_ENGINE_LST)
 	for f in $(OUTPUT_CTI_VISION_H_AND_CPP); do echo ../../coretech/generated/clad/vision/$$f >> $(OUTPUT_CTI_VISION_ENGINE_LST); done
 
+$(OUTPUT_CTI_COMMON_LST):
+	cat /dev/null > $(OUTPUT_CTI_COMMON_LST)
+	for f in $(OUTPUT_CTI_COMMON_H_AND_CPP); do echo ../../generated/clad/common/$$f >> $(OUTPUT_CTI_COMMON_LST); done
+
+$(OUTPUT_CTI_COMMON_ENGINE_LST):
+	cat /dev/null > $(OUTPUT_CTI_COMMON_ENGINE_LST)
+	for f in $(OUTPUT_CTI_COMMON_H_AND_CPP); do echo ../../coretech/generated/clad/common/$$f >> $(OUTPUT_CTI_COMMON_ENGINE_LST); done
+
 show:
 	echo "*** input files ***"
 	echo $(INPUT_ENGINE_FILES)
@@ -222,16 +275,22 @@ show:
 	echo $(INPUT_ROBOT_SHARED_FILES)
 	echo "*** input files ctiVision ***"
 	echo $(INPUT_CTI_VISION_FILES)
+	echo "*** input files ctiCommon ***"
+	echo $(INPUT_CTI_COMMON_FILES)
 	echo "*** output files robot cpp ***"
 	echo $(OUTPUT_ROBOT_H_AND_CPP)
 	echo "*** output files ctiVision ***"
 	echo $(OUTPUT_CTI_VISION_H_AND_CPP)
+	echo "*** output files ctiCommon ***"
+	echo $(OUTPUT_CTI_COMMON_H_AND_CPP)
 	echo "*** output engine C# ***"
 	echo $(OUTPUT_ENGINE_CSHARP)
 	echo "*** output robot C# ***"
 	echo $(OUTPUT_ROBOT_CSHARP)
 	echo "*** output ctiVision C# ***"
 	echo $(OUTPUT_CTI_VISION_CSHARP)
+	echo "*** output ctiCommon C# ***"
+	echo $(OUTPUT_CTI_COMMON_CSHARP)
 	echo "*** output viz C# ***"
 	echo $(OUTPUT_VIZ_CSHARP)
 	echo "*** output engine python ***"
@@ -240,15 +299,18 @@ show:
 	echo $(OUTPUT_ROBOT_PYTHON)
 	echo "*** output ctiVision python ***"
 	echo $(OUTPUT_CTI_VISION_PYTHON)
+	echo "*** output ctiCommon python ***"
+	echo $(OUTPUT_CTI_COMMON_PYTHON)
 
 clean: cleanOutputDirs cleanCppListFiles
 
 cleanCppListFiles:
-	rm -rf $(OUTPUT_VIZ_LST) $(OUTPUT_ENGINE_LST) $(OUTPUT_ROBOT_LST) $(OUTPUT_CTI_VISION_LST) $(OUTPUT_CTI_VISION_ENGINE_LST)
+	rm -rf $(OUTPUT_VIZ_LST) $(OUTPUT_ENGINE_LST) $(OUTPUT_ROBOT_LST) $(OUTPUT_CTI_VISION_LST) $(OUTPUT_CTI_VISION_ENGINE_LST) $(OUTPUT_CTI_COMMON_LST) $(OUTPUT_CTI_COMMON_ENGINE_LST)
 
 cleanOutputDirs:
 	if test -d $(OUTPUT_DIR_ENGINE); then chmod -Rf 777 $(OUTPUT_DIR_ENGINE); fi
 	if test -d $(OUTPUT_DIR_CSHARP); then chmod -Rf 777 $(OUTPUT_DIR_CSHARP); fi
 	if test -d $(OUTPUT_DIR_PYTHON); then chmod -Rf 777 $(OUTPUT_DIR_PYTHON); fi
 	if test -d $(OUTPUT_DIR_CTI_VISION); then chmod -Rf 777 $(OUTPUT_DIR_CTI_VISION); fi
+	if test -d $(OUTPUT_DIR_CTI_COMMON); then chmod -Rf 777 $(OUTPUT_DIR_CTI_COMMON); fi
 	rm -rf $(OUTPUT_DIR_ENGINE) $(OUTPUT_DIR_CSHARP) $(OUTPUT_DIR_PYTHON)

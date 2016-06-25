@@ -3366,17 +3366,10 @@ ExternalInterface::RobotState Robot::GetRobotState()
       
   msg.robotID = GetID();
       
-  msg.pose_x = GetPose().GetTranslation().x();
-  msg.pose_y = GetPose().GetTranslation().y();
-  msg.pose_z = GetPose().GetTranslation().z();
+  msg.pose = PoseStruct3d(GetPose());
       
   msg.poseAngle_rad = GetPose().GetRotationAngle<'Z'>().ToFloat();
   msg.posePitch_rad = GetPitchAngle();
-  const UnitQuaternion<float>& q = GetPose().GetRotation().GetQuaternion();
-  msg.pose_qw = q.w();
-  msg.pose_qx = q.x();
-  msg.pose_qy = q.y();
-  msg.pose_qz = q.z();
       
   msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
   msg.rightWheelSpeed_mmps = GetRightWheelSpeed();

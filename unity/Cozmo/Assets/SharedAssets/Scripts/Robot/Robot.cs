@@ -159,6 +159,7 @@ public class Robot : IRobot {
   public Dictionary<int, LightCube> LightCubes { get; private set; }
 
   private List<LightCube> _VisibleLightCubes = new List<LightCube>();
+
   public List<LightCube> VisibleLightCubes {
     get {
       return _VisibleLightCubes;
@@ -397,8 +398,8 @@ public class Robot : IRobot {
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
     var bounds = new Bounds(
-                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f),
-                   Vector3.one * CozmoUtil.kBlockLengthMM);
+                 new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f),
+                 Vector3.one * CozmoUtil.kBlockLengthMM);
 
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
@@ -443,7 +444,7 @@ public class Robot : IRobot {
       TurnOffAllLights(true);
       DAS.Debug(this, "Robot data cleared");
     }
-
+   
     LightCubes.Clear();
     RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
     GameStatus = GameStatusFlag.Nothing;
@@ -482,8 +483,8 @@ public class Robot : IRobot {
       CarryingObjectID = message.carryingObjectID;
       HeadTrackingObjectID = message.headTrackingObjectID;
 
-      WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
-      Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
+      WorldPosition = new Vector3(message.pose.x, message.pose.y, message.pose.z);
+      Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
     }
   }
 
@@ -781,8 +782,8 @@ public class Robot : IRobot {
   private ObservedObject AddObservedObject(int id, uint factoryId, ObjectType objectType) {
     ObservedObject createdObject = null;
     bool isCube = ((objectType == ObjectType.Block_LIGHTCUBE1)
-                  || (objectType == ObjectType.Block_LIGHTCUBE2)
-                  || (objectType == ObjectType.Block_LIGHTCUBE3));
+                || (objectType == ObjectType.Block_LIGHTCUBE2)
+                || (objectType == ObjectType.Block_LIGHTCUBE3));
     if (isCube) {
       LightCube lightCube = null;
       if (!LightCubes.TryGetValue(id, out lightCube)) {

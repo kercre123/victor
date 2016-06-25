@@ -42,6 +42,8 @@
 
 #include "anki/common/basestation/exceptions.h"
 
+#include "clad/types/poseStructs.h"
+
 #include <list>
 
 namespace Anki {
@@ -206,6 +208,10 @@ namespace Anki {
     
     // TODO: Copy constructor?
     Pose3d(const Pose3d &otherPose);
+    
+    // To/from CLAD PoseStruct3d
+    Pose3d(const PoseStruct3d& poseStruct);
+    operator PoseStruct3d() const;
     
     //bool IsOrigin() const { return parent == nullptr; }
 

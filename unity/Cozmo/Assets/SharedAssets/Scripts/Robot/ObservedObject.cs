@@ -25,7 +25,7 @@ public class ObservedObject {
   }
 
   public delegate void InFieldOfViewStateChangedHandler(ObservedObject objectChanged,
-                                                        InFieldOfViewState oldState, InFieldOfViewState newState);
+                                                        InFieldOfViewState oldState,InFieldOfViewState newState);
 
   public static event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
 
@@ -89,6 +89,7 @@ public class ObservedObject {
   public PoseState CurrentPoseState { get; private set; }
 
   private InFieldOfViewState _CurrentInFieldOfViewState = InFieldOfViewState.NotVisible;
+
   public InFieldOfViewState CurrentInFieldOfViewState {
     get {
       return _CurrentInFieldOfViewState;
@@ -164,10 +165,10 @@ public class ObservedObject {
     RobotID = message.robotID;
     VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
 
-    Vector3 newPos = new Vector3(message.world_x, message.world_y, message.world_z);
+    Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);
     //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
     WorldPosition = newPos;
-    Rotation = new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w);
+    Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
     Size = Vector3.one * CozmoUtil.kBlockLengthMM;
 
     TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;

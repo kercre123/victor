@@ -14,38 +14,39 @@ public static class MockLightCubeUtil {
       cube.VizRect.y,
       cube.VizRect.width,
       cube.VizRect.height,
-      cube.WorldPosition.x,
-      cube.WorldPosition.y,
-      cube.WorldPosition.z,
-      cube.Rotation.w,
-      cube.Rotation.x,
-      cube.Rotation.y,
-      cube.Rotation.z,
+      new Anki.PoseStruct3d(cube.WorldPosition.x,
+        cube.WorldPosition.y,
+        cube.WorldPosition.z,
+        cube.Rotation.w,
+        cube.Rotation.x,
+        cube.Rotation.y,
+        cube.Rotation.z),
       cube.TopFaceNorthAngle,
       (byte)(cube.MarkersVisible ? 1 : 0),
       (byte)(cube.HasLights ? 1 : 0));
   }
 
   public static RobotObservedObject SetRotation(this RobotObservedObject obj, Quaternion rotation) {
-    obj.quaternion_x = rotation.x;
-    obj.quaternion_y = rotation.y;
-    obj.quaternion_z = rotation.z;
-    obj.quaternion_w = rotation.w;
+    obj.pose.q1 = rotation.x;
+    obj.pose.q2 = rotation.y;
+    obj.pose.q3 = rotation.z;
+    obj.pose.q0 = rotation.w;
     return obj;
   }
 
   public static Quaternion GetRotation(this RobotObservedObject obj) {
-    return new Quaternion(obj.quaternion_x, obj.quaternion_y, obj.quaternion_z, obj.quaternion_w);
+    return new Quaternion(obj.pose.q1, obj.pose.q2, obj.pose.q3, obj.pose.q0);
   }
 
   public static RobotObservedObject SetPosition(this RobotObservedObject obj, Vector3 worldPosition) {
-    obj.world_x = worldPosition.x;
-    obj.world_y = worldPosition.y;
-    obj.world_z = worldPosition.z;
+    obj.pose.x = worldPosition.x;
+    obj.pose.y = worldPosition.y;
+    obj.pose.z = worldPosition.z;
     return obj;
   }
+
   public static Vector3 GetPosition(this RobotObservedObject obj) {
-    return new Vector3(obj.world_x, obj.world_y, obj.world_z);
+    return new Vector3(obj.pose.x, obj.pose.y, obj.pose.z);
   }
 
   public static RobotObservedObject Rotate(this RobotObservedObject obj, Quaternion rotation) {

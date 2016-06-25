@@ -109,8 +109,7 @@ void BehaviorDistractedByFace::HandleWhileNotRunning(const EngineToGameEvent& ev
   
 void BehaviorDistractedByFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
 {
-  Pose3d facePose(Rotation3d(UnitQuaternion<f32>(msg.quaternion_w, msg.quaternion_x, msg.quaternion_y, msg.quaternion_z)),
-                  Point3f(msg.world_x, msg.world_y, msg.world_z));
+  Pose3d facePose( msg.pose );
   
   ReactionData* data = nullptr;
   const bool alreadyReacted  = GetReactionData(msg.faceID, data);

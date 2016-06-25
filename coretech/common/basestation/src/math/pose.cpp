@@ -216,6 +216,22 @@ namespace Anki {
     
   } // Constructor: Pose3d(Pose2d)
 
+  Pose3d::Pose3d(const PoseStruct3d& poseStruct)
+  : Pose3d(Rotation3d(UnitQuaternion<f32>(poseStruct.q0, poseStruct.q1, poseStruct.q2, poseStruct.q3)),
+           Vec3f(poseStruct.x, poseStruct.y, poseStruct.z))
+  {
+    
+  }
+  
+  Pose3d::operator PoseStruct3d() const
+  {
+    const Vec3f& T = GetTranslation();
+    const UnitQuaternion<f32>& Q = GetRotation().GetQuaternion();
+    
+    PoseStruct3d poseStruct(T.x(), T.y(), T.z(), Q.w(), Q.x(), Q.y(), Q.z());
+    
+    return poseStruct;
+  }
   
 #pragma mark --- Operator Overloads ---
   // Composition: this = this*other

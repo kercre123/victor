@@ -16,19 +16,26 @@
     'messaging_robot_library_type': 'static_library',
 
     'common_source': 'common.lst',
+    'common_clad': 'common-clad.lst',
     'common_test_source': 'common-test.lst',
     'common_shared_test_source': 'common-shared-test.lst',
     'common_robot_source': 'common-robot.lst',
+    
     'vision_source': 'vision.lst',
     'vision_clad': 'vision-clad.lst',
     'vision_test_source': 'vision-test.lst',
     'vision_robot_source': 'vision-robot.lst',
+    
     'planning_source': 'planning.lst',
     'planning_standalone_source': 'planning-standalone.lst',
     'planning_test_source': 'planning-test.lst',
     'planning_robot_source': 'planning-robot.lst',
+    
     'messaging_source': 'messaging.lst',
+    
     'vision_generated_source': '../../generated/clad/vision/vision.lst',
+    'common_generated_source': '../../generated/clad/common/common.lst',
+    
     'messaging_robot_source': 'messaging-robot.lst',
 
     # TODO: should this be passed in, or shared?
@@ -652,15 +659,20 @@
 
     {
       'target_name': 'ctiCommon',
-      'sources': [ '<!@(cat <(common_source))' ],
-      'include_dirs': [ 
+      'sources': [
+        '<!@(cat <(common_source))',
+        '<!@(cat <(common_clad))',
+      ],
+      'include_dirs': [
         '../../common/basestation/src',
         '../../common/include',
+        '../../generated/clad/common',
         '<@(opencv_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../common/include',
+          '../../generated/clad/common',
         ],
       },
       'defines': [
@@ -710,12 +722,13 @@
       'target_name': 'ctiMessaging',
       'sources': [ 
         '<!@(cat <(messaging_source))',
-        '<!@(cat <(vision_generated_source))'  
+        '<!@(cat <(vision_generated_source))',
+        '<!@(cat <(common_generated_source))',
       ],
       'conditions': [
         ['OS=="android"',{
           'sources/': [
-            ['exclude', 'utilMessaging|externalInterface|vision'], #TODO: COZMO-1271
+            ['exclude', 'utilMessaging|externalInterface|vision|common'], #TODO: COZMO-1271
           ]
         }],
       ], #'conditions'
@@ -723,6 +736,7 @@
         '../../messaging/basestation/src',
         '../../messaging/include',
         '../../generated/clad/vision',
+        '../../generated/clad/common',
         '../../../generated/clad/engine', # TODO: Fix. Reaches out to engine :-(
       ],
       'direct_dependent_settings': {
@@ -826,6 +840,7 @@
       'direct_dependent_settings': {
         'include_dirs': [
           '../../vision/include',
+          '../../generated/clad/vision',
         ],
       },
       'dependencies': [

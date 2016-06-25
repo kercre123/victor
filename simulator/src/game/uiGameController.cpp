@@ -37,8 +37,7 @@ namespace Anki {
     
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
-      _robotPose.SetTranslation({msg.pose_x, msg.pose_y, msg.pose_z});
-      _robotPose.SetRotation(msg.poseAngle_rad, Z_AXIS_3D());
+      _robotPose = msg.pose;
       
       _robotStateMsg = msg;
       
@@ -51,8 +50,6 @@ namespace Anki {
       s32 objID = msg.objectID;
       ObjectFamily objFamily = msg.objectFamily;
       ObjectType objType = msg.objectType;
-      UnitQuaternion<float> q(msg.quaternion_w, msg.quaternion_x, msg.quaternion_y, msg.quaternion_z);
-      Vec3f trans(msg.world_x, msg.world_y, msg.world_z);
       
       // If an object with the same ID already exists in the map, make sure that it's type hasn't changed
       auto it = _objectIDToFamilyTypeMap.find(objID);
@@ -67,7 +64,7 @@ namespace Anki {
       }
       
       // Update pose
-      _objectIDToPoseMap[objID] = Pose3d(q, trans);
+      _objectIDToPoseMap[objID] = msg.pose;
       
 
       

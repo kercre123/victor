@@ -130,8 +130,7 @@ void BehaviorDistractedByObject::HandleObjectObserved(const Robot& robot, const 
     return;
   }
   
-  Pose3d obsPose(Rotation3d(UnitQuaternion<f32>(msg.quaternion_w, msg.quaternion_x, msg.quaternion_y, msg.quaternion_z)),
-                 Point3f(msg.world_x, msg.world_y, msg.world_z));
+  Pose3d obsPose( msg.pose );
   
   ReactionData* data = nullptr;
   const bool alreadyReacted = GetReactionData(msg.objectID, data);

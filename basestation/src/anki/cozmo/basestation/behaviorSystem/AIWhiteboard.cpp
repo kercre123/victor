@@ -178,10 +178,7 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& m
   // decision then
   ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
   
-  // calculate pose for object
-  const UnitQuaternion<float> obsQuat(possibleObject.quaternion_w, possibleObject.quaternion_x, possibleObject.quaternion_y, possibleObject.quaternion_z);
-  const Rotation3d obsRot(obsQuat);
-  const Pose3d obsPose( obsRot, {possibleObject.world_x, possibleObject.world_y, possibleObject.world_z}, _robot.GetWorldOrigin());
+  const Pose3d obsPose( msg.pose );
   
   // iterate markers we previously had and remove them if we think they belong to this object
   RemovePossibleMarkersMatching(possibleObject.objectType, obsPose);
@@ -201,10 +198,7 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   // decision then
   ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
-  // calculate pose for new object
-  const UnitQuaternion<float> obsQuat(possibleObject.quaternion_w, possibleObject.quaternion_x, possibleObject.quaternion_y, possibleObject.quaternion_z);
-  const Rotation3d obsRot(obsQuat);
-  const Pose3d obsPose( obsRot, {possibleObject.world_x, possibleObject.world_y, possibleObject.world_z}, _robot.GetWorldOrigin());
+  const Pose3d obsPose( msg.possibleObject.pose );
 
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
     PRINT_NAMED_DEBUG("AIWhiteboard.ObservedPossible", "robot observed a possible marker");

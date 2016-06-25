@@ -480,9 +480,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           }
         }
         
-        const Vec3f& T = observedObject->GetPose().GetTranslation();
-        const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
-
         using namespace ExternalInterface;
 
         RobotObservedObject observation(_robot->GetID(),
@@ -494,8 +491,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                                         boundingBox.GetY(),
                                         boundingBox.GetWidth(),
                                         boundingBox.GetHeight(),
-                                        T.x(), T.y(), T.z(),
-                                        q.w(), q.x(), q.y(), q.z(),
+                                        PoseStruct3d(observedObject->GetPose()),
                                         topMarkerOrientation.ToFloat(),
                                         markersVisible,
                                         observedObject->IsActive());

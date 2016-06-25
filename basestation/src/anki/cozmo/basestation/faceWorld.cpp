@@ -325,18 +325,10 @@ namespace Cozmo {
       
       // Send out an event about this face being observed
       using namespace ExternalInterface;
-      const Vec3f& trans = knownFace->face.GetHeadPose().GetTranslation();
-      const UnitQuaternion<f32>& q = knownFace->face.GetHeadPose().GetRotation().GetQuaternion();
       _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                              _robot.GetID(),
                                                              face.GetTimeStamp(),
-                                                             trans.x(),
-                                                             trans.y(),
-                                                             trans.z(),
-                                                             q.w(),
-                                                             q.x(),
-                                                             q.y(),
-                                                             q.z(),
+                                                             PoseStruct3d(face.GetHeadPose()),
                                                              knownFace->face.GetName())));
       
       /*

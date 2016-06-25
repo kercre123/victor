@@ -1,0 +1,33 @@
+/**
+* File: poseStructs.clad
+*
+* Author: Andrew Stein
+* Date:   6/24/2016
+*
+* Description: CLAD struct for storing pose information
+*
+* Copyright: Anki, Inc. 2016
+**/
+
+
+namespace Anki {
+
+	// TODO: add PoseStruct2d as well?
+
+  structure PoseStruct3d
+  {
+    // Translation
+    float_32 x,
+    float_32 y,
+    float_32 z,
+    
+    // Rotation quaternion
+    float_32 q0,          
+    float_32 q1,          
+    float_32 q2,          
+    float_32 q3,          
+
+		// TODO: Add a member for "w.r.t. which origin"
+  }
+
+} // namespace Anki

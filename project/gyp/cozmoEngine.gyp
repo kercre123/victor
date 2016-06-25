@@ -8,6 +8,7 @@
 
     'engine_source': 'cozmoEngine.lst',
     'clad_vision_source': '../../generated/clad/vision.lst',
+    'clad_common_source': '../../generated/clad/common.lst',
     'clad_engine_source': '../../generated/clad/engine.lst',
     'clad_robot_source': '../../generated/clad/robot.lst',
     'clad_viz_source': '../../generated/clad/viz.lst',
@@ -1429,6 +1430,7 @@
       'sources': [ 
         '<!@(cat <(engine_source))',
         '<!@(cat <(clad_engine_source))',
+        '<!@(cat <(clad_common_source))',
         '<!@(cat <(clad_vision_source))',
         '<!@(cat <(clad_robot_source))',
         '<!@(cat <(clad_viz_source))',

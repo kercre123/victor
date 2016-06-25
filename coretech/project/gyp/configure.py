@@ -134,6 +134,7 @@ def main(scriptArgs):
   generator.processFolder(['common/basestation/test'], ['project/gyp/common-test.lst'])
   generator.processFolder(['common/shared/test'], ['project/gyp/common-shared-test.lst'])
   generator.processFolder(['common/robot/src', 'common/shared/src'], ['project/gyp/common-robot.lst'])
+  generator.processFolder(['common/clad/src'], ['project/gyp/common-clad.lst'])
   generator.processFolder(['vision/basestation/src', 'vision/include'], ['project/gyp/vision.lst'])
   generator.processFolder(['vision/basestation/test'], ['project/gyp/vision-test.lst'])
   generator.processFolder(['vision/clad/src'], ['project/gyp/vision-clad.lst'])
