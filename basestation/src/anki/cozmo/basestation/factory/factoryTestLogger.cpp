@@ -20,8 +20,8 @@
 namespace Anki {
 namespace Cozmo {
 
-  static const char* _kLogTextFileName = "mfgData.txt";
-  static const char* _kLogRootDirName = "factory_test_logs";
+  static const std::string _kLogTextFileName = "mfgData";
+  static const std::string _kLogRootDirName = "factory_test_logs";
   
   FactoryTestLogger::FactoryTestLogger(bool exportJson)
   : _logDir("")
@@ -76,7 +76,7 @@ namespace Cozmo {
     _logDir = newLogDir;
     PRINT_NAMED_INFO("FactoryTestLogger.StartLog.CreatingLogDir", "%s", _logDir.c_str());
     Util::FileUtils::CreateDirectory(_logDir);
-    _logFileName = Util::FileUtils::FullFilePath({_logDir, _kLogTextFileName});
+    _logFileName = Util::FileUtils::FullFilePath({_logDir, _kLogTextFileName + (_exportJson ? ".json" : ".txt")});
     
     if (_logFileHandle.is_open()) {
       PRINT_NAMED_WARNING("FactoryTestLogger.FileUnexpectedlyOpen", "");

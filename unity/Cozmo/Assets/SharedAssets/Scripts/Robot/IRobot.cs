@@ -287,6 +287,8 @@ public interface IRobot : IDisposable {
 
   #endregion
 
+  void EnableReactionaryBehaviors(bool enable);
+
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendDemoResetState();

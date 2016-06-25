@@ -97,6 +97,7 @@ public class FactoryIntroManager : MonoBehaviour {
 
     // runs the factory test.
     RobotEngineManager.Instance.CurrentRobot.WakeUp(true);
+    RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(false);
     RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
@@ -192,7 +193,7 @@ public class FactoryIntroManager : MonoBehaviour {
       TestFailed();
     }
   }
-    
+
   void HandleEnableNVStorageWrites(bool toggleValue) {
     PlayerPrefs.SetInt("EnableNStorageWritesToggle", toggleValue ? 1 : 0);
     PlayerPrefs.Save();

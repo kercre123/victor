@@ -834,6 +834,10 @@ public class MockRobot : IRobot {
 
   #endregion
 
+  public void EnableReactionaryBehaviors(bool enable) {
+  
+  }
+
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
   }

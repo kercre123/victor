@@ -1056,6 +1056,7 @@ namespace Anki {
                   if(behaviorName == "FactoryTest")
                   {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
                   }
                   
                   SendMessage(ExternalInterface::MessageGameToEngine(
