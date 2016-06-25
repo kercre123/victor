@@ -324,6 +324,8 @@ namespace Cozmo {
     PrintAndLightResult(robot,resCode);
     robot.Broadcast( ExternalInterface::MessageEngineToGame( FactoryTestResultEntry(_testResultEntry)));
 
+    _factoryTestLogger.CloseLog();
+    
     // Disconnect from robot
     if (kBFT_DisconnectAtEnd) {
       robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::DisconnectFromRobot>(robot.GetID());
@@ -1245,7 +1247,6 @@ namespace Cozmo {
                                                 } else {
                                                   SendTestResultToGame(robot, _testResult);
                                                 }
-                                                _factoryTestLogger.CloseLog();
                                               });
           
           

@@ -18,6 +18,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "json/json.h"
 #include <string>
 #include <vector>
 #include <fstream>
@@ -36,13 +37,15 @@ namespace Cozmo {
 
 class FactoryTestLogger {
 public:
-  FactoryTestLogger();
+  FactoryTestLogger(bool exportJson = true);
   ~FactoryTestLogger();
   
   // Specify the name of the log (i.e. log folder)
   // Optionally, specify if you want to append the current date and time to the log name
   bool StartLog(const std::string& logName, bool appendDateTime = false, Util::Data::DataPlatform* dataPlatform = nullptr);
   void CloseLog();
+  
+  bool IsOpen();
   
   std::string GetLogName() { return _logDir; }
   
@@ -68,8 +71,10 @@ private:
   
   std::string _logDir;
   std::string _logFileName;
-
   std::ofstream _logFileHandle;
+  
+  Json::Value _json;
+  bool _exportJson;
 };
 
 } // end namespace Cozmo

@@ -1788,15 +1788,6 @@ namespace Anki {
                 PRINT_NAMED_INFO("RetrievingAllMfgTestData", "...");
                 
                 // Get all Mfg test images and results
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_IMUInfo);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibMetaInfo);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
-                
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage2);
@@ -1808,6 +1799,14 @@ namespace Anki {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight);
                 }
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_IMUInfo);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibMetaInfo);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
                 
                 // Start log
                 _factoryTestLogger.StartLog("", true);
@@ -2429,7 +2428,11 @@ namespace Anki {
               result.Unpack(recvdData->data(), result.Size());
               
               _factoryTestLogger.Append(result);
-
+              
+              if (_factoryTestLogger.IsOpen()) {
+                _factoryTestLogger.CloseLog();
+              }
+              
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
