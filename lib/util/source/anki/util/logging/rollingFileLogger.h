@@ -28,6 +28,8 @@ namespace Dispatch {
 
 class RollingFileLogger : noncopyable {
 public:
+  using ClockType = std::chrono::steady_clock;
+  
   static constexpr std::size_t  kDefaultMaxFileSize = 1024 * 1024 * 20;
   static const char * const     kDefaultFileExtension;
   
@@ -36,7 +38,8 @@ public:
   
   void Write(const std::string& message);
   
-  static std::string GetDateTimeString(const std::chrono::system_clock::time_point& time);
+  static std::string GetDateTimeString(const ClockType::time_point& time);
+  static time_t GetTimeT(const ClockType::time_point& time);
   
 private:
   

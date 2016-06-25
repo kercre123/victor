@@ -1,0 +1,19 @@
+PROTO WebotsDevLogController [
+  field SFString name "WebotsDevLogController"
+  field SFString logsDirectory ""
+
+  # This is a dummy field created only to be accessed by the lua script below, which
+  # is only there to create a reference that results in variables in the PROTO existing.
+  # HACKS UPON HACKS
+  field SFInt32 dummyInt32ForRef 0
+]
+{
+Supervisor {
+  name IS name
+  controller "webotsCtrlDevLog"
+
+  # Referencing a field that is used in code but not in the proto model
+  # to suppress a Webots error message.
+  %{if fields.dummyInt32ForRef.value then end }%
+} # Supervisor definition
+} # PROTO definition

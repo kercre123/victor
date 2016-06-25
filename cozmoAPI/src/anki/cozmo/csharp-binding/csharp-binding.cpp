@@ -35,8 +35,9 @@
 #endif
 
 #if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
-#include "util/logging/saveToFileLoggerProvider.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #endif
 
@@ -172,7 +173,7 @@ int cozmo_startup(const char *configuration_data)
     , new Util::DasLoggerProvider()
 #endif
 #if ANKI_DEV_CHEATS
-    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+    , new DevLoggerProvider(Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
   Anki::Util::gLoggerProvider = loggerProvider;

@@ -12,9 +12,6 @@
 
 #include "util/logging/saveToFileLoggerProvider.h"
 #include "util/logging/rollingFileLogger.h"
-#include "util/dispatchQueue/dispatchQueue.h"
-#include <fstream>
-#include <assert.h>
 
 namespace Anki {
 namespace Util {

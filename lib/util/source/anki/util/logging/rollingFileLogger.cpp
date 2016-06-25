@@ -22,7 +22,7 @@
 #include <time.h> // Needed for the POSIX thread-safe version of local_time and put_time
 
 // This alternative error logging define imported from our DAS library implementation
-#define LOGD(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+#define LOGD(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr); }
 
 namespace Anki {
 namespace Util {
@@ -98,14 +98,14 @@ std::string RollingFileLogger::GetNextFileName()
     pathStream << _baseDirectory << '/';
   }
   
-  pathStream << GetDateTimeString(std::chrono::system_clock::now()) << _extension;
+  pathStream << GetDateTimeString(ClockType::now()) << _extension;
   return pathStream.str();
 }
   
-std::string RollingFileLogger::GetDateTimeString(const std::chrono::system_clock::time_point& time)
+std::string RollingFileLogger::GetDateTimeString(const ClockType::time_point& time)
 {
   std::ostringstream stringStream;
-  auto currTime_t = std::chrono::system_clock::to_time_t(time);
+  auto currTime_t = GetTimeT(time);
   auto numSecs = std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch());
   auto millisLeft = std::chrono::duration_cast<std::chrono::milliseconds>((time - numSecs).time_since_epoch());
   
@@ -118,6 +118,16 @@ std::string RollingFileLogger::GetDateTimeString(const std::chrono::system_clock
   
   stringStream << formatTimeBuffer << std::setfill('0') << std::setw(3) << millisLeft.count();
   return stringStream.str();
+}
+  
+time_t RollingFileLogger::GetTimeT(const ClockType::time_point& time)
+{
+  static const std::chrono::system_clock::time_point systemClockNow = std::chrono::system_clock::now();
+  static const ClockType::time_point clockTypeNow = ClockType::now();
+  
+  const auto timeDiff = std::chrono::duration_cast<std::chrono::system_clock::duration>(time.time_since_epoch() - clockTypeNow.time_since_epoch());
+  
+  return std::chrono::system_clock::to_time_t(systemClockNow + timeDiff);
 }
 
 } // end namespace Util

@@ -31,6 +31,13 @@ DevLoggingSystem* DevLoggingSystem::sInstance                                   
 const DevLoggingClock::time_point DevLoggingSystem::kAppRunStartTime            = DevLoggingClock::now();
 const std::string DevLoggingSystem::kWaitingForUploadDirName                    = "waiting_for_upload";
 const std::string DevLoggingSystem::kArchiveExtensionString                     = ".tar.gz";
+  
+const std::string DevLoggingSystem::kPrintName = "print";
+const std::string DevLoggingSystem::kGameToEngineName = "gameToEngine";
+const std::string DevLoggingSystem::kEngineToGameName = "engineToGame";
+const std::string DevLoggingSystem::kRobotToEngineName = "robotToEngine";
+const std::string DevLoggingSystem::kEngineToRobogName = "engineToRobot";
+const std::string DevLoggingSystem::kEngineToVizName = "engineToViz";
 
 void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory)
 {
@@ -54,11 +61,11 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
   ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
   
   _devLoggingBaseDirectory = GetPathString(_allLogsBaseDirectory, appRunTimeString);
-  _gameToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "gameToEngine")));
-  _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToGame")));
-  _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "robotToEngine")));
-  _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToRobot")));
-  _engineToVizLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToViz")));
+  _gameToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kGameToEngineName)));
+  _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToGameName)));
+  _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kRobotToEngineName)));
+  _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToRobogName)));
+  _engineToVizLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToVizName)));
 }
   
 void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension) const
@@ -156,14 +163,17 @@ std::string DevLoggingSystem::PrepareMessage(const MsgType& message) const
   data += sizeof(uint32_t);
   
   // Then write in the timestamp as a millisecond count since the app started running
-  auto timeNow = DevLoggingClock::now();
-  auto msElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - kAppRunStartTime);
-  *((uint32_t*)data) = Util::numeric_cast<uint32_t>(msElapsed.count());
+  *((uint32_t*)data) = GetAppRunMilliseconds();
   data += sizeof(uint32_t);
   
   message.Pack(data, messageSize);
   
   return std::string(reinterpret_cast<char*>(messageVector.data()), totalSize);
+}
+  
+uint32_t DevLoggingSystem::GetAppRunMilliseconds()
+{
+  return Util::numeric_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(DevLoggingClock::now() - kAppRunStartTime).count());
 }
 
 template<>

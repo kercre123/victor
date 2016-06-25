@@ -13,23 +13,17 @@
 #define __Basestation_Debug_DevLoggingSystem_H_
 
 #include "util/helpers/noncopyable.h"
+#include "util/logging/rollingFileLogger.h"
 
 #include <memory>
 #include <string>
 #include <chrono>
 #include <vector>
 
-// Forward declarations
-namespace Anki {
-namespace Util {
-  class RollingFileLogger;
-}
-}
-
 namespace Anki {
 namespace Cozmo {
   
-using DevLoggingClock = std::chrono::system_clock;
+using DevLoggingClock = Util::RollingFileLogger::ClockType;
 
 class DevLoggingSystem : Util::noncopyable {
 public:
@@ -37,6 +31,7 @@ public:
   static void DestroyInstance();
   static DevLoggingSystem* GetInstance() { return sInstance; }
   static const DevLoggingClock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
+  static uint32_t GetAppRunMilliseconds();
   
   ~DevLoggingSystem();
   
@@ -46,6 +41,13 @@ public:
   const std::string& GetDevLoggingBaseDirectory() const { return _devLoggingBaseDirectory; }
   
   void PrepareForUpload(const std::string& namePrefix) const;
+  
+  static const std::string kPrintName;
+  static const std::string kGameToEngineName;
+  static const std::string kEngineToGameName;
+  static const std::string kRobotToEngineName;
+  static const std::string kEngineToRobogName;
+  static const std::string kEngineToVizName;
   
 private:
   static DevLoggingSystem* sInstance;

@@ -28,11 +28,11 @@ public:
   static constexpr std::size_t kDefaultMaxFileSize = 1024 * 1024 * 20;
   
   SaveToFileLoggerProvider(const std::string& baseDirectory, std::size_t maxFileSize = kDefaultMaxFileSize);
-  ~SaveToFileLoggerProvider();
+  virtual ~SaveToFileLoggerProvider();
   
   void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) override;
   
-private:
+protected:
   
   // Don't want this to be copyable
   SaveToFileLoggerProvider( const SaveToFileLoggerProvider& ) = delete;

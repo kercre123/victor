@@ -21,6 +21,7 @@
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
     'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
+    'ctrlDevLog_source': 'ctrlDevLog.lst',
     'clad_source': 'clad.lst',
     'pluginPhysics_source': 'pluginPhysics.lst',
     'robot_generated_clad_source': 'robotGeneratedClad.lst',
@@ -782,6 +783,30 @@
           }, # end controller Keyboard
 
           {
+            'target_name': 'webotsCtrlDevLog',
+            'type': 'executable',
+            'include_dirs': [
+              '<(cti-cozmo_engine_path)/simulator/include',
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
+              '../../coretech/generated/clad/vision',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(ce-util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+            ],
+            'sources': [ '<!@(cat <(ctrlDevLog_source))' ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+          }, # end controller DevLog
+
+          {
             'target_name': 'webotsControllers',
             'type': 'none',
             'dependencies': [
@@ -791,6 +816,7 @@
               'webotsCtrlRobot',
               'webotsCtrlViz',
               'webotsCtrlLightCube',
+              'webotsCtrlDevLog',
               'cozmo_physics',
             ],
             
@@ -922,7 +948,16 @@
                   '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
                 ],
               },
-              
+              {
+                'action_name': 'create_symlink_webotsCtrlDevLog',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f',
+                  '<(PRODUCT_DIR)/webotsCtrlDevLog',
+                  '../../simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog',
+                ],
+              }
             ], # actions
             
           }, # end webotsControllers

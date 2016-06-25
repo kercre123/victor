@@ -24,8 +24,9 @@
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
-#include "util/logging/saveToFileLoggerProvider.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #endif
 
@@ -111,7 +112,7 @@ int main(int argc, char **argv)
     new Util::SosLoggerProvider()
     , new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)
 #if ANKI_DEV_CHEATS
-    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+    , new DevLoggerProvider(Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
