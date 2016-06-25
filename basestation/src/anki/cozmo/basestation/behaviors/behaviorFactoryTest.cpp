@@ -181,7 +181,8 @@ namespace Cozmo {
     
     
     // bind to specific handlers in the robot class
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam,    &BehaviorFactoryTest::HandleFactoryTestParameter);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
 
   }
   
@@ -219,6 +220,14 @@ namespace Cozmo {
     _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
 
     _numPlacementAttempts = 0;
+    
+    _activeObjectDiscovered = false;
+    
+    // Sim robot won't hear from any blocks
+    if(!robot.IsPhysical())
+    {
+      _activeObjectDiscovered = true;
+    }
     
     // Mute volume
     auto audioClient = robot.GetRobotAudioClient();
@@ -390,6 +399,7 @@ namespace Cozmo {
   {
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
+    
       _testResult = resCode;
       PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.PreWriteResult", "%s", EnumToString(_testResult));
       
@@ -941,6 +951,14 @@ namespace Cozmo {
         // Wait for it to finish backing up
         if (robot.GetMoveComponent().IsMoving()) {
           break;
+        }
+        
+        // If robot hasn't discovered any active objects by now it probably won't so fail
+        if(!_activeObjectDiscovered)
+        {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
+                           "Test ending no active objects discovered");
+          END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
         }
         
         
@@ -1656,6 +1674,16 @@ namespace Cozmo {
       _chargerConnected = true;
     }
     return RESULT_OK;
+  }
+  
+  void BehaviorFactoryTest::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
+  {
+    const ObjectDiscovered payload = msg.GetData().Get_activeObjectDiscovered();
+    ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+    if(objType != ObjectType::Unknown)
+    {
+      _activeObjectDiscovered = true;
+    }
   }
   
   

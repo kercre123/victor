@@ -77,6 +77,7 @@ namespace Cozmo {
     Result HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg);
     Result HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
+    void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     
     // Handlers for signals coming from robot
     void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -154,6 +155,8 @@ namespace Cozmo {
 
     static PoseData ConvertToPoseData(const Pose3d& p);
     u8 _numPlacementAttempts;
+    
+    bool _activeObjectDiscovered = false;
     
   }; // class BehaviorFactoryTest
 
