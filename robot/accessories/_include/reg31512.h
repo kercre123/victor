@@ -192,6 +192,9 @@ sbit  RFCKEN       = RFCON^2;
 #define RXREADY   (1 << 2)
 #define TXEMPTY   (1 << 1)
 #define TXREADY   (1 << 0)
+// SPIMCON
+#define SPIEN     (1 << 0)
+#define SPIPHASE  (1 << 1)
 // WUCON
 #define WAKE_ON_TICK  (2 << 4)
 #define WAKE_ON_RADIO (2 << 6)

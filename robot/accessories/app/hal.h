@@ -2,7 +2,7 @@
 #ifndef HAL_H__
 #define HAL_H__
 
-// #define DEBUG    // Uncomment this for debug prints on 2m baud UART
+//#define DEBUG    // Uncomment this for debug prints on 2m baud UART on P1.0
 
 #include "reg31512.h"
 #include "portable.h"
@@ -27,7 +27,7 @@ void RadioLegacyStart();
 
 // At 2mbaud, UART-print a 1 character note followed by len bytes of hex data
 #ifdef DEBUG
-void DebugPrint(u8 note, u8 idata *hex, u8 len);
+#define DebugPrint ((void (code *) (u8 note, u8 idata *hex, u8 len)) 0x3800)
 #else
 #define DebugPrint(note, hex, len)
 #endif

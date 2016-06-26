@@ -116,8 +116,8 @@ void RadioLegacyStart()
   RadioSetup(SETUP_OFF);
   RFCKEN = 0;
   
-  // From this moment (packet received), we need to rewind about 750uS or 25 ticks
+  // From this moment (packet received), we need to rewind about 42 ticks (measured)
   // Listen "center point" is 6 ticks, LedInit burns 3, radio receive is 11 (130+200), power up is ?? (150uS?)
-  _beatAdjust = -26;
-  _shakeWait = 8;     // Because legacy cubes space their handshakes 7 beats apart and we just ran one
+  _beatAdjust = -42;
+  _shakeWait = 7;     // Because legacy cubes space their handshakes 7 beats apart and we just ran one
 }

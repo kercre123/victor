@@ -33,8 +33,9 @@ enum FilterTypes {
 
 static FilterTypes filter_type = FILTER_DISABLED;
 
-static const int PIN_TX = PIN_TX_VEXT;
-static const int PIN_RX = PIN_TX_HEAD;
+// Fixture pin-out
+static const int PIN_TX = 17; 
+static const int PIN_RX = 18;
 static const int MAX_RSSI = 50;
 static unsigned int rssi[MAX_ACCESSORIES];
 
@@ -135,7 +136,8 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       int r = state->x, g = state->y, b = state->z;
       r = abs(r); g = abs(g); b = abs(b); 
       uint16_t color;
-
+      uart_printf("C%c%c%c%c", r, g, b, state->slot);
+      
       if (!r && !g && !b) {
         color = PACK_COLORS(0, 0xFF, 0xFF, 0xFF);
       }
@@ -184,9 +186,9 @@ int main(void)
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
   nrf_gpio_pin_set(PIN_TX);
 
-  NRF_UART0->BAUDRATE = NRF_BAUD(1000000);
+  NRF_UART0->BAUDRATE = NRF_BAUD(115200);
   NRF_UART0->PSELRXD = PIN_RX;
-  NRF_UART0->PSELTXD = PIN_RX;
+  NRF_UART0->PSELTXD = PIN_TX;
   NRF_UART0->TASKS_STARTRX = 1;
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->EVENTS_TXDRDY = 1;
@@ -202,6 +204,9 @@ int main(void)
 
   Timer::start();
 
+  // Tell the fixture we are awake
+  uart_printf("!");
+
   __enable_irq();
 
   // Run forever, because we are awesome.
@@ -211,7 +216,8 @@ int main(void)
   static bool write_ready = true;
   
   memset(&target, 0, sizeof(target));
-
+  set_test_mode(FILTER_ALL);
+  
   for (;;) {
     int32_t cur = NRF_RTC1->COUNTER;
 
@@ -225,16 +231,16 @@ int main(void)
         case 'C':
           set_test_mode(FILTER_ALL);
           break ;
-        case '1':
+        case '0':
           set_test_mode(FILTER_CHARGER);
           break ;
-        case '2':
+        case '1':
           set_test_mode(FILTER_CUBE1);
           break ;
-        case '3':
+        case '2':
           set_test_mode(FILTER_CUBE2);
           break ;
-        case '4':
+        case '3':
           set_test_mode(FILTER_CUBE3);
           break ;
         case 'X':

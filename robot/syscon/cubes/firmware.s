@@ -5,7 +5,6 @@
                 EXPORT  CUBE_FIRMWARE_LENGTH
 
 CUBE_UPDATE
-                INCBIN  ../../accessories/releases/xs-p5.safe
 CUBE_FIRMWARE_LENGTH
                 DCD     CUBE_FIRMWARE_LENGTH - CUBE_UPDATE
 

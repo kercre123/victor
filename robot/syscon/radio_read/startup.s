@@ -74,7 +74,6 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
                 DCD     SVC_Handler               ; 11
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved

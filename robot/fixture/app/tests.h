@@ -22,7 +22,7 @@ TestFunction* GetMotor1TestFunctions(void);
 TestFunction* GetMotor2ATestFunctions(void);
 TestFunction* GetMotor2BTestFunctions(void);
 
-bool ExtrasDetect(void);
-TestFunction* GetExtrasTestFunctions(void);
+bool FinishDetect(void);
+TestFunction* GetFinishTestFunctions(void);
 
 #endif

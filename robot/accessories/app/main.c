@@ -42,6 +42,12 @@ u8 _beatCount   _at_ SyncPkt-2;// Incremented when a new beat starts
 u8 _hop;        // Current hopping channel (before hopBlackout)
 u8 _shakeWait;  // How long until next handshake
 
+#ifdef DEBUG
+// Variables used by DebugPrint (if needed)
+u8 dp1 _at_ 0x23;
+u8 dp2 _at_ 0x24;
+#endif
+
 // Sleep until the next beat
 void Sleep()
 {
@@ -53,19 +59,15 @@ void Sleep()
 }
 
 extern u8 _tapTime;   // Hack until we get hopping sync in place
+typedef struct {      // Hack LED structure to reduce radio current to ~15mA
+  u8 dir, port, value;
+} LedValue;
+static LedValue idata _leds[1+12+1] _at_ LED_START;
 
 // Perform a radio handshake, then interpret and execute the message
 void MainExecution()
 {
   Sleep();    // Sleep first, to skip the runt beat at startup
-
-  // ISR-LED timing workaround - set LEDs at same moment each time
-  if (R2A_BASIC_SETLEDS == _radioIn[0])
-  {
-    LedSetValues(LED_START);
-    _radioIn[0] = 255;
-    _tapTime = _radioIn[13];
-  }
 
   // Do this first:  If we're ready for a handshake, talk to the robot
   if (!_shakeWait)
@@ -80,14 +82,26 @@ void MainExecution()
       
       // Process future commands here
     }
-    _tapTime++;    // Whether we get a packet or not, increment tap timer
-  }
-  
-  // If we're ready for the accelerometer, drain its FIFO
-  if (!_accelWait)
-  {
-    AccelRead();
-    _accelWait = _accelBeats;
+    _tapTime++;    // Whether we get a packet or not, increment tap timer  
+
+  // Do anything else but radio
+  } else {
+    // ISR-LED timing workaround - set LEDs at same moment each time
+    if (R2A_BASIC_SETLEDS == _radioIn[0])
+    {
+      _leds[0].dir = DEFDIR;  // Keep LEDs off for first..
+      _leds[0].port = 0;
+      _leds[0].value = 32*4;  // ..32 ticks, to reduce radio current draw
+      LedSetValues(_leds+1);
+      _radioIn[0] = 255;
+      _tapTime = _radioIn[13];
+    }
+
+    // If we're ready for the accelerometer, drain its FIFO
+    if (_accelWait & 0x80) {
+      AccelRead();
+      _accelWait += _accelBeats;
+    }
   }
   
   // Until next time...
@@ -107,12 +121,12 @@ void main()
 
   // Clear timing variables (there's no static init in patches)
   _beatCount = _hop = _shakeWait = 0;
-  
-  // Power up the accelerometer - this takes at least 2ms/70 ticks
+
+  // Power up the accelerometer before LEDs - this takes at least 2ms/70 ticks
   AccelInit();
   DebugPrint('s', SyncPkt, ADV_LEN);    // Print the start/sync packet
   RadioSetup(SETUP_TX_ADDRESS);         // Transmit on private address
-    
+
   // Sleep until robot is ready
   EA = 0;   // XXX: Can clean this up in production cubes
   WUF = 0;

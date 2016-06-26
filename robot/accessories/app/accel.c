@@ -1,7 +1,11 @@
 #include "hal.h"
 #include "bma222.h"
 
-// Borrow some SPI functions from the bootloader?
+// Borrow some SPI accel.c functions from the bootloader
+#define DataRead ((u8 (code *) (u8 addr)) 0x3B26)
+#define DataWrite ((void (code *) (u8 addr, u8 dataByte)) 0x3AFC)
+#define Read ((u8 (code *) (void)) 0x3DCC)
+#define Write ((u8 (code *) (u8 b)) 0x3B09)
 
 u8 idata _readings[33];
 
@@ -77,30 +81,42 @@ void AccelRead()
   u8 i;
   u8 idata *p = _readings;
   
+  // Chargers return all zero
   if (IsCharger())
   {
     for (i = 0; i < HAND_LEN; i++)
       _radioOut[i] = 0;
     return;
   }
-/*
-  Start(); //start condition
-  Write((I2C_ADDR << 1) | I2C_WRITE_BIT); //slave address send
-  Write(FIFO_DATA); //word address send
-  Stop();
-  Start();
-  Write((I2C_ADDR << 1) | I2C_READ_BIT);
+
+  // Set up SPI for reading the FIFO
+  SPIInit();
+  CSB = 0;
+  Write(SPI_READ | FIFO_DATA);
+  
+  // Now drive hardware SPI at max speed
+  SPIMCON0 = SPIEN + SPIPHASE;
+  LEDDIR = DEFDIR;        // DebugCube needs this
+  ACC = SPIMDAT;          // Drain anything left in the FIFO
+  ACC = SPIMDAT;
+  SPIMDAT = 0;            // Get SPI moving - 0 blinks IR LED
+  SPIMDAT = 0;
+  while (!(SPIMSTAT & RXREADY)) // Wait for start
+    ;
+  // This loop is cycle-counted to stay pipelined at exactly max speed
   for (i = 0; i < 33; i++)
   {
-    if (!(Read(I2C_ACK) & 1))   // Bail out early if FIFO runs dry
+    if (!(SPIMDAT & 1)) // Bail out early if FIFO runs dry
       break;
-    *p = Read(I2C_ACK);
+    SPIMDAT = 0;        // Pipeline next read
+    *p = SPIMDAT;       // Grab data (ready just in time)
     p++;
+    SPIMDAT = 0;        // Pipeline next read
   }
-  Read(I2C_NACK);
-  Stop();
-*/
-  // DebugPrint('x', _readings, i);   // See raw accelerometer data
+  CSB = 1;
+  SPIMCON0 = 0;
+
+  DebugPrint('x', _readings, i);   // See raw accelerometer data
   SimpleTap(i);
 }
 
@@ -108,20 +124,19 @@ void AccelRead()
 void AccelInit()
 {
   if (IsCharger())
-    return;   // Skip startup, DO NOT init P1.x (they're grounded on EP3)
+    return;   // Skip startup
   
   _taps = 0;
-/*
-  // Wake up accelerometer and 1.8ms fot it to boot (see datasheet)
-  DataRead(BGW_CHIPID);
+
+  // Wake up accelerometer and 1.8ms for it to boot (see datasheet)
   DataWrite(BGW_SOFTRESET,BGW_SOFTRESET_MAGIC);
   TimerStart(1800);
   while (TimerMSB())
   {}
   
   // Set up accelerometer to stream data
+  DataWrite(BGW_SPI3_WDT, 1);   // 3 wire mode
   DataWrite(PMU_RANGE, RANGE_2G);
   DataWrite(PMU_BW, BW_250);
   DataWrite(FIFO_CONFIG_1, FIFO_STREAM);
-*/
 }

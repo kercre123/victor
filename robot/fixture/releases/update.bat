@@ -6,12 +6,11 @@
 cd %~dp0
 copy ..\..\binaries\sys_boot.bin .
 copy ..\..\syscon\build\app\syscon.bin .
-copy ..\..\syscon\build\radio\radio.bin .
 copy ..\..\binaries\robot_boot.bin .
 copy ..\..\build\robot.fcc.bin .
 copy ..\..\build\robot.bin .
 copy ..\..\accessories\fcc\build\xsfcc.bin .
-copy ..\..\accessories\boot\build\xsboot.bin .
+rem copy ..\..\accessories\boot\build\xsboot.bin .
 copy ..\..\staging\factory.safe esp.safe.bin
 copy ..\..\staging\esp.factory.bin .
 copy ..\..\espressif_bootloader\firmware\cboot.bin esp.boot.bin

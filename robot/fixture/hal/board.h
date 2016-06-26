@@ -33,6 +33,11 @@
 #define PINA_NRF_SWC  12
 #define GPIOA_NRF_SWC (1 << PINA_NRF_SWC)
 
+#define PINC_NRF_RX  10
+#define GPIOC_NRF_RX (1 << PINC_NRF_RX)
+#define PINC_NRF_TX  11
+#define GPIOC_NRF_TX (1 << PINC_NRF_TX)
+
 #define PINB_DEBUGTX 6
 #define GPIOB_DEBUGTX (1 << PINB_DEBUGTX)
 

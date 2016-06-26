@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 32;
+u8 g_fixtureReleaseVersion = 34;
 const char* BUILD_INFO = "PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;
@@ -183,8 +183,12 @@ bool DetectDevice(void)
     case FIXTURE_MOTOR2A_TEST:      
     case FIXTURE_MOTOR2B_TEST:      
       return MotorDetect();
-    case FIXTURE_EXTRAS_TEST:
-      return ExtrasDetect();
+    case FIXTURE_FINISHC_TEST:
+    case FIXTURE_FINISH1_TEST:
+    case FIXTURE_FINISH2_TEST:
+    case FIXTURE_FINISH3_TEST:
+    case FIXTURE_FINISH_TEST:
+      return FinishDetect();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -402,8 +406,12 @@ static void MainExecution()
     case FIXTURE_MOTOR2B_TEST:      
       m_functions = GetMotor2BTestFunctions();
       break;
-    case FIXTURE_EXTRAS_TEST:
-      m_functions = GetExtrasTestFunctions();
+    case FIXTURE_FINISHC_TEST:
+    case FIXTURE_FINISH1_TEST:
+    case FIXTURE_FINISH2_TEST:
+    case FIXTURE_FINISH3_TEST:
+    case FIXTURE_FINISH_TEST:
+      m_functions = GetFinishTestFunctions();
       break;
     case FIXTURE_DEBUG:
       m_functions = GetDebugTestFunctions();

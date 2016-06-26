@@ -170,6 +170,9 @@ static void ota_ack_timeout(void* userdata) {
 }
 
 static uint8_t random() {
+#ifdef RADIO_READ
+  return 56-4;     // 2456MHz sounds nice and random
+#endif
   static uint8_t c = GetCounter() / 256;
   c = (c >> 1) ^ (c & 1 ? 0x2D : 0);
   return c;
@@ -277,6 +280,7 @@ void uesb_event_handler(uint32_t flags)
       // We are loading the slot
       AccessorySlot* acc = &accessories[slot]; 
       acc->id = advert.id;
+      acc->model = advert.model;
       acc->last_received = 0;
       
       if (acc->active == false)
@@ -458,8 +462,12 @@ void Radio::prepare(void* userdata) {
         tx_state.ledStatus[tx_index++] = 0x80;
         #endif
       }
-      tx_state._reserved[0] = target->last_received;
     }
+    tx_state._reserved[0] = target->last_received;
+
+    // Charger has no first LED channel - it must be zero or it causes some "interesting" LED effects
+    if (target->model == OBJECT_CHARGER)
+      tx_state.ledStatus[0] = tx_state.ledStatus[1] = tx_state.ledStatus[2] = 0;
 
     #ifdef CUBE_HOP
     // Perform first RF Hop

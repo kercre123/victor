@@ -34,6 +34,7 @@ enum RadioState {
 struct AccessorySlot {
   bool                  active;
   bool                  allocated;
+  uint16_t              model;
   int                   last_received;
 
   bool                  hopSkip;

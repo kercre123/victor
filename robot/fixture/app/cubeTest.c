@@ -46,7 +46,7 @@ void CubeBurn(void)
 }
 
 // Watch the device boot up, checking LED currents in the process
-const int LEDON_MA = 15, LEDOFF_MA = -15;// Delta current with LEDs on and off
+const int LEDON_MA = 18, LEDOFF_MA = -18;// Delta current with LEDs on and off
 const int CUBE_TEST_TIME = 2500 * 1000;  // 2.5 seconds is long enough, right?
 const int MAX_MA = 120, MIN_MA = 30;     // Shouldn't be drawing more or less than this during self-test
 const int STANDBY_UA = 200;              // Don't burn more than this number of microamps in standby

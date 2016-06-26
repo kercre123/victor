@@ -26,14 +26,19 @@
 #define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
 // These options are not selectable by dip switch (there are too many of them):
-#define FIXTURE_EXTRAS_TEST   16    // XXX - Should be 1,2,3,C
+#define FIXTURE_FINISHC_TEST   16   // Must be in order (charger, cube1, cube2, etc..)
+#define FIXTURE_FINISH1_TEST   17    
+#define FIXTURE_FINISH2_TEST   18    
+#define FIXTURE_FINISH3_TEST   19    
+#define FIXTURE_FINISH_TEST    20
 
-#define FIXTURE_DEBUG         17    // Should be last ID
+#define FIXTURE_DEBUG          21    // Should be last ID
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID", "BODY1", "HEAD1",  "MOTOR1B","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
-                        "ROBOT", "BODY2", "MOTOR1A","MOTOR2A","MOTOR2B", "BODY3",  "INFO",  "PLAYPEN", \
-                        "EXTRAS","DEBUG" }
+#define FIXTURE_TYPES { "NO ID",  "BODY1",  "HEAD1",  "MOTOR1B","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
+                        "ROBOT",  "BODY2",  "MOTOR1A","MOTOR2A","MOTOR2B", "BODY3",  "INFO",  "PLAYPEN", \
+                        "FINISHC","FINISH1","FINISH2","FINISH3","FINISH",  \
+                        "DEBUG" }
 
 extern FixtureType g_fixtureType;
 
@@ -62,7 +67,7 @@ typedef enum
 //  7xy - cube/charger errors - where X is the component (0 = CPU) and Y is the problem
 #define ERROR_OK                    0
 
-// Internal Errors
+// Internal Errors - generally programming or hardware errors
 #define ERROR_EMPTY_COMMAND         1
 #define ERROR_ACK1                  2
 #define ERROR_ACK2                  3
@@ -79,12 +84,15 @@ typedef enum
 #define ERROR_CUBE_ROM_MISPATCH     12    // When you can't patch the cube ROM
 #define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
 
+#define ERROR_RADIO_TIMEOUT         14    // On-board radio firmware failed to boot
+
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
-// Testport errors
+// Robot test errors
 #define ERROR_NO_PULSE              400   // Robot is not in debug/test mode
 
-// SWD errors
+// SWD errors - in head or body test, these are CPU failures
+// In finished good test, these are fixture (radio) failures
 #define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
 #define ERROR_SWD_READ_FAULT        451   // SWD read failed
 #define ERROR_SWD_WRITE_FAULT       452   // SWD write failed
