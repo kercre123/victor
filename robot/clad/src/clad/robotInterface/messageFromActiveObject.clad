@@ -20,7 +20,7 @@ message ObjectDiscovered
 
 // Indicates that an active object has connected or disconnected
 message ObjectConnectionState
-{  
+{
   uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 factoryID,
   ActiveObjectType  device_type,
@@ -60,6 +60,7 @@ structure PropState
   int_8  y,
   int_8  z,
   uint_8 shockCount,
+  int_8  rssi
 }
 
 } // Cozmo

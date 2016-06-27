@@ -34,9 +34,10 @@ enum FilterTypes {
 static FilterTypes filter_type = FILTER_DISABLED;
 
 // Fixture pin-out
-static const int PIN_TX = 17; 
+static const int PIN_TX = 17;
 static const int PIN_RX = 18;
-static const int MAX_RSSI = 50;
+static const int MAX_RSSI = 60;
+static const int FAR_THRESHOLD = 5;
 static unsigned int rssi[MAX_ACCESSORIES];
 
 static uint8_t print_read_index = 0;
@@ -130,9 +131,19 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
   case EngineToRobot::Tag_getPropState:
     {
       const PropState* state = (PropState*) buffer;
+      static int farcount[MAX_ACCESSORIES];
       LightState colors[4];
       LightState allState;
 
+      if (abs(state->rssi) > MAX_RSSI) {
+        if(++farcount[state->slot] > FAR_THRESHOLD) {
+          Radio::assignProp(state->slot, 0);
+          return ;
+        }
+      } else {
+        farcount[state->slot] = 0;
+      }
+      
       int r = state->x, g = state->y, b = state->z;
       r = abs(r); g = abs(g); b = abs(b); 
       uint16_t color;
@@ -154,7 +165,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       for (int i = 0; i < 4; i++) {
         memcpy(&colors[i], &allState, sizeof(LightState));
       }
-            
+
       Radio::setPropLights(state->slot, colors);
       break ;
     }
@@ -210,7 +221,7 @@ int main(void)
   __enable_irq();
 
   // Run forever, because we are awesome.
-  static const int32_t periods[] = { 256, 256, 32768 };
+  static const int32_t periods[] = { 256, 32768 };
   static const int total_periods = sizeof(periods) / sizeof(int32_t);
   static int32_t target[total_periods];
   static bool write_ready = true;
@@ -262,19 +273,20 @@ int main(void)
       write_ready = false;
     }
 
+    for (int i = 0; i < 8; i++) {
+      NRF_WDT->RR[i] = WDT_RR_RR_Reload;
+    }
+
     // Main loop for calculating counters
     for (int i = 0; i < total_periods; i++) {
-      if (target[i] - cur > 0) continue ;
+      int ticks_left = target[i] - cur;
+      
+      if (ticks_left > 0) continue ;
       target[i] += periods[i];
 
       switch (i) {
         case 0:
           Lights::manage();
-          break ;
-        case 1:
-          for (int i = 0; i < WDOG_TOTAL_CHANNELS; i++) {
-            RTOS::kick((watchdog_channels) i);
-          }
           break ;
         case 2:
           if (filter_type == FILTER_ADVERTISE) {

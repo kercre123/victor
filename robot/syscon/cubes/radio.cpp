@@ -364,6 +364,7 @@ void uesb_event_handler(uint32_t flags)
       msg.x = ap->x;
       msg.y = ap->y;
       msg.z = ap->z;
+      msg.rssi = rx_payload.rssi;
       msg.shockCount = ap->tap_count;
       RobotInterface::SendMessage(msg);
 
