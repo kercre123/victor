@@ -277,6 +277,11 @@ And the mome raths outgrabe.""".encode()
     def test_readAllFixture(self):
         self.read(0xC0000000, 0xC000000F)
         self.waitForPending()
+        
+    def test_writeBirthCertificate(self):
+        dts = time.gmtime()
+        payload = struct.Struct("BBBBBBBBBB").pack(0, 0, 0, 1, dts.tm_year & 0xff, dts.tm_mon, dts.tm_mday, dts.tm_hour, dts.tm_min, dts.tm_sec)
+        self.write(NVS.NVEntryTag.NVEntry_BirthCertificate, payload)
 
 if __name__ == "__main__":
     print("NVStorage Testbench")
