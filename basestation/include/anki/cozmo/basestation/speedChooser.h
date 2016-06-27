@@ -17,6 +17,7 @@
 #include "anki/cozmo/shared/cozmoConfig_common.h"
 #include "clad/types/pathMotionProfile.h"
 #include "util/random/randomGenerator.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -33,10 +34,16 @@ namespace Anki {
       
         // Generates a path motion profile based on the distance to the closest goal
         PathMotionProfile GetPathMotionProfile(const std::vector<Pose3d>& goals);
+
+        // Handle various message types
+        template<typename T>
+        void HandleMessage(const T& msg);
       
       private:
         Robot& _robot;
       
+        bool _enabled = true;
+
         // Max speed a generated motion profile can have
         const float maxSpeed_mmps = 200.0f;
       
@@ -49,6 +56,8 @@ namespace Anki {
         const float distToObjectForMaxSpeed_mm = 300;
       
         Util::RandomGenerator rng;
+        
+        std::vector<Signal::SmartHandle> _signalHandles;
     };
   }
 }

@@ -304,6 +304,7 @@ protected:
   void SetActualObjectPose(const std::string& name, const Pose3d& newPose);
   const Pose3d GetLightCubePoseActual(int lightCubeId);
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
+  bool HasActualLightCubePose(int lightCubeId) const;
   
   static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName();

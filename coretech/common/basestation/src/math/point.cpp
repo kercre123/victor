@@ -17,6 +17,18 @@ namespace Anki {
     }        
   }
 
+  const char* AxisToCString(AxisName axis)
+  {
+    switch( axis ) {
+      case AxisName::X_NEG: return "-X";
+      case AxisName::X_POS: return "+X";
+      case AxisName::Y_NEG: return "-Y";
+      case AxisName::Y_POS: return "+Y";
+      case AxisName::Z_NEG: return "-Z";
+      case AxisName::Z_POS: return "+Z";
+    }
+  }
+
   const Vec2f& X_AXIS_2D() {
     static const Vec2f xAxis(1.f, 0.f);
     return xAxis;

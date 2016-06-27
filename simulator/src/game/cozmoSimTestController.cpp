@@ -14,7 +14,7 @@
 // Also may want/need to change starting webots world viewpoint so that you can see everything
 // from a good pose
 #define RECORD_TEST 0
-const static std::string _recordingPath = "/Users/alchaussee/Desktop/webotsMovies/";
+const static std::string _recordingPath = "/Users/bneuman/Desktop/webotsMovies/";
 
 namespace Anki {
   namespace Cozmo {
@@ -61,7 +61,10 @@ namespace Anki {
         time_t t;
         time(&t);
         std::stringstream ss;
-        ss << _recordingPath << name << " " << std::asctime(std::localtime(&t)) << ".mp4";
+        std::string dateStr = std::asctime(std::localtime(&t));
+        dateStr.erase(std::remove(dateStr.begin(), dateStr.end(), '\n'), dateStr.end());
+
+        ss << _recordingPath << name << " " << dateStr << ".mp4";
         GetSupervisor()->startMovie(ss.str(), 854, 480, 0, 90, 1, false);
       }
     }
@@ -90,7 +93,57 @@ namespace Anki {
       message.Set_ReliableTransportRunMode(m1);
       SendMessage(message);
     }
-    
+
+    void CozmoSimTestController::DisableRandomPathSpeeds()
+    {
+      SendMessage( ExternalInterface::MessageGameToEngine( ExternalInterface::SetEnableSpeedChooser( false ) ) );
+    }
+
+    void CozmoSimTestController::PrintPeriodicBlockDebug()
+    {
+      const double currTime_s = GetSupervisor()->getTime();
+      
+      if( _nextPrintTime < 0 || currTime_s >= _nextPrintTime ) {
+        _nextPrintTime = currTime_s + _printInterval_s;
+
+        for( const auto& objPair : GetObjectPoseMap() ) {
+          const auto& objId = objPair.first;
+
+          {
+            const auto& pose = objPair.second;
+
+            PRINT_NAMED_INFO("CozmoSimTest.BlockDebug.Known",
+                             "object %d: (%f, %f, %f) theta_z=%fdeg, upAxis=%s%s",
+                             objId,
+                             pose.GetTranslation().x(),
+                             pose.GetTranslation().y(),
+                             pose.GetTranslation().z(),
+                             pose.GetRotationAngle<'Z'>().getDegrees(),
+                             AxisToCString( pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>() ),
+                             GetCarryingObjectID() == objId ? " CARRIED" : "");
+          }
+
+          if( HasActualLightCubePose(objId) ){
+            const Pose3d pose = GetLightCubePoseActual(objId);
+            PRINT_NAMED_INFO("CozmoSimTest.BlockDebug.Actual",
+                             "object %d: (%f, %f, %f) theta_z=%fdeg, upAxis=%s%s",
+                             objId,
+                             pose.GetTranslation().x(),
+                             pose.GetTranslation().y(),
+                             pose.GetTranslation().z(),
+                             pose.GetRotationAngle<'Z'>().getDegrees(),
+                             AxisToCString( pose.GetRotationMatrix().GetRotatedParentAxis<'Z'>() ),
+                             GetCarryingObjectID() == objId ? " CARRIED" : "");
+
+          }
+          else {
+            // TODO:(bn) warning. Could be a non-ligthcube though
+          }
+        }
+      }
+    }
+
+      
     // =========== CozmoSimTestFactory ============
     
     std::shared_ptr<CozmoSimTestController> CozmoSimTestFactory::Create(std::string name)
@@ -115,7 +168,7 @@ namespace Anki {
       // register the class factory function
       factoryFunctionRegistry[name] = classFactoryFunction;
     }
-    
+
     
     
   } // namespace Cozmo

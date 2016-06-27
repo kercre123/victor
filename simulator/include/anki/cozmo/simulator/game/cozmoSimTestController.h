@@ -84,6 +84,15 @@ protected:
   void StopMovie();
 
   void MakeSynchronous();
+
+  void DisableRandomPathSpeeds();
+
+  // call in the update loop to occasionally print info about blocks
+  void PrintPeriodicBlockDebug();
+  void SetBlockDebugPrintInterval(double interval_s) { _printInterval_s = interval_s; }
+
+  double _nextPrintTime = -1.0f;
+  double _printInterval_s = 1.0;
   
 }; // class CozmoSimTestController
 

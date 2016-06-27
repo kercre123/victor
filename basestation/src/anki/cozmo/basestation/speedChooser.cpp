@@ -10,9 +10,10 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "speedChooser.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "speedChooser.h"
 #include "util/logging/logging.h"
 
 
@@ -23,11 +24,21 @@ namespace Anki {
     : _robot(robot)
     {
 
+      if (_robot.HasExternalInterface() )
+      {
+        auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+        using namespace ExternalInterface;
+        helper.SubscribeGameToEngine<MessageGameToEngineTag::SetEnableSpeedChooser>();
+      }
     }
     
     PathMotionProfile SpeedChooser::GetPathMotionProfile(const Pose3d& goal)
     {
       PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE;
+
+      if( !_enabled ) {
+        return std::move(motionProfile);
+      }
       
       // Random acceleration
       motionProfile.accel_mmps2 = rng.RandDblInRange(minAccel_mmps2, maxAccel_mmps2);
@@ -52,7 +63,7 @@ namespace Anki {
                        motionProfile.reverseSpeed_mmps,
                        motionProfile.accel_mmps2);
       
-      return motionProfile;
+      return std::move(motionProfile);
     }
     
     PathMotionProfile SpeedChooser::GetPathMotionProfile(const std::vector<Pose3d>& goals)
@@ -80,5 +91,12 @@ namespace Anki {
       }
       return GetPathMotionProfile(closestPoseToRobot);
     }
+
+    template<>
+    void SpeedChooser::HandleMessage(const ExternalInterface::SetEnableSpeedChooser& msg)
+    {
+      _enabled = msg.enabled;
+    }
+  
   }
 }

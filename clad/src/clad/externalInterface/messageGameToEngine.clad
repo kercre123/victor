@@ -710,6 +710,11 @@ message EnableReactionaryBehaviors {
   bool enabled
 }
 
+// Message to disable path speed randomization (useful for webots tests)
+message SetEnableSpeedChooser {
+  bool enabled
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BlockPool

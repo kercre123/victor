@@ -204,7 +204,9 @@ namespace Anki {
         return ActionResult::SUCCESS;
       } else if(currentTime >= _waitUntilTime) {
         PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
-                         "Moving to action %s", (*_currentAction)->GetName().c_str());
+                         "Moving to action %s [%d]",
+                         (*_currentAction)->GetName().c_str(),
+                         (*_currentAction)->GetTag());
         
         // If the compound action is suppressing track locking then the constituent actions should too
         (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
