@@ -71,7 +71,12 @@ namespace Cozmo {
     
     void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
     
-    void         SetActiveID(ActiveID activeID)         { assert(IsActive()); _activeID = activeID; }
+    void         SetActiveID(ActiveID activeID)         { assert(IsActive());
+                                                          _activeID = activeID;
+                                                          if (_activeID >= 0) {
+                                                            _identityState = ActiveIdentityState::Identified;
+                                                          }
+                                                        }
     ActiveID     GetActiveID()                  const   { return _activeID; }
     virtual bool IsActive()                     const   { return false; }
     void         SetFactoryID(FactoryID factoryID)      { assert(IsActive()); _factoryID = factoryID; }
