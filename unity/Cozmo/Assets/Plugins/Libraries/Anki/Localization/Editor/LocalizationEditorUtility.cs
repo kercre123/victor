@@ -131,7 +131,7 @@ public static class LocalizationEditorUtility {
   public static LocalizationDictionary CreateLocalizationDictionary() {
     return new LocalizationDictionary() {
       Smartling = new SmartlingBlob() {
-        TranslatePaths = new List<string>{ "*/translation" },
+        TranslatePaths = new List<string> { "*/translation" },
         VariantsEnabled = true,
         TranslateMode = "custom",
         PlaceholderFormatCustom = new List<string> {
@@ -143,7 +143,7 @@ public static class LocalizationEditorUtility {
           "\\{\\{[^\\}\\{]+?\\}\\}",
           "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
         },
-        SourceKeyPaths = new List<string>{ "/{*}" }
+        SourceKeyPaths = new List<string> { "/{*}" }
       },
       Translations = new Dictionary<string, LocalizationDictionaryEntry>()
     };
@@ -173,7 +173,7 @@ public static class LocalizationEditorUtility {
 
     _LocalizationFiles = _LocalizationDictionaries.Keys.ToArray();
 
-    _LocalizationKeys = new[]{ string.Empty }.Concat(_LocalizationDictionaries.Values.SelectMany(x => x.Translations.Keys)).ToArray();
+    _LocalizationKeys = new[] { string.Empty }.Concat(_LocalizationDictionaries.Values.SelectMany(x => x.Translations.Keys)).ToArray();
     // sort them to make it easier to find
     Array.Sort(_LocalizationKeys);
   }
@@ -186,7 +186,7 @@ public static class LocalizationEditorUtility {
         return entry.Translation;
       }
     }
-    return string.Empty;      
+    return string.Empty;
   }
 
   // find key in any file
@@ -200,7 +200,7 @@ public static class LocalizationEditorUtility {
       }
     }
     fileName = string.Empty;
-    return string.Empty;      
+    return string.Empty;
   }
 
   public static bool KeyExists(string fileName, string key) {
@@ -208,7 +208,7 @@ public static class LocalizationEditorUtility {
     if (_LocalizationDictionaries.TryGetValue(fileName, out dict)) {
       return dict.Translations.ContainsKey(key);
     }
-    return false;      
+    return false;
   }
 
   public static void SetTranslation(string fileName, string key, string translation) {
@@ -229,7 +229,7 @@ public static class LocalizationEditorUtility {
     File.WriteAllText(kLocalizationFolder + fileName + ".json", JsonConvert.SerializeObject(dict, Formatting.Indented));
   }
 
-  private const string kGeneratedLocalizationKeysFilePath = "Assets/Plugins/Libraries/Anki/DriveEngine/Localization/GeneratedKeys/LocalizationKeys.cs";
+  private const string kGeneratedLocalizationKeysFilePath = "Assets/Plugins/Libraries/Anki/Localization/GeneratedKeys/LocalizationKeys.cs";
   private const string kGeneratedLocalizationKeysSourceLocale = "en-us";
 
   [MenuItem("Cozmo/Localization/Generate Localization Key Constants")]
@@ -240,7 +240,7 @@ public static class LocalizationEditorUtility {
     JSONObject localizationJson;
     string cSharpVariableName;
     foreach (var jsonFileName in Localization.GetLocalizationJsonFilePaths(kGeneratedLocalizationKeysSourceLocale)) {
-      
+
       fileContents += "\n\n  #region " + Path.GetFileNameWithoutExtension(jsonFileName) + "\n";
 
       localizationJson = Localization.GetJsonContentsFromLocalizationFile(kGeneratedLocalizationKeysSourceLocale, jsonFileName);

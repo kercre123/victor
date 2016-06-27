@@ -13,18 +13,18 @@ public static class Localization {
   public static string Get(string key) {
     string value;
     if (!_st.TryGetString(key, out value)) {
-      #if !UNITY_EDITOR
+#if !UNITY_EDITOR
       DAS.Warn("LocalizedString.Get.MissingKey", "");  //disabling populating of key name for COPPA reasons (JDN)
-      #else
+#else
       if (Application.isPlaying) {
         DAS.Warn("LocalizedString.Get.MissingKey", key);
       }
-      #endif
+#endif
       value = key;
     }
     else if (showDebugLocText) {
       value = new string('@', value.Length);
-    } 
+    }
 
     return value;
   }
@@ -43,7 +43,7 @@ public static class Localization {
     return _SupportedLocales.Contains(locale);
   }
 
-  private static List<string> _SupportedLocales = 
+  private static List<string> _SupportedLocales =
     new List<string>() { "en-US", "en-GB", "de-DE" };
 
   private static string _CurrentLocale = null;
@@ -54,7 +54,6 @@ public static class Localization {
 
     if (string.IsNullOrEmpty(_CurrentLocale)) {
       // TODO: INGO - Need to provide functionality for GetCurrentLocale that 
-      // doesn't rely on DriveEngine
       // string lang;
       // string country;
       // string deviceLocale = Anki.ApplicationServices.GetCurrentLocale(out lang, out country);
@@ -80,7 +79,7 @@ public static class Localization {
           break;
         }
       }
-        
+
       _CurrentLocale = deviceLocale;
       _CurrentCulture = new System.Globalization.CultureInfo(_CurrentLocale);
     }
@@ -95,7 +94,7 @@ public static class Localization {
     // For each localization file in the locale's directory
     string locale = GetStringsLocale();
     foreach (var filePath in GetLocalizationJsonFilePaths(locale)) {
-      
+
       // Load the localization into a string table so that we can query it at runtime
       JSONObject languageJson = GetJsonContentsFromLocalizationFile(locale, filePath);
 
@@ -109,11 +108,11 @@ public static class Localization {
   }
 
   public static string[] GetLocalizationJsonFilePaths(string locale) {
-    #if UNITY_EDITOR || !UNITY_ANDROID
+#if UNITY_EDITOR
     return Directory.GetFiles(Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath + locale, "*.json");
-    #else
-    return Directory.GetFiles(Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath +  locale, "*.json");
-    #endif
+#else
+    return Directory.GetFiles(PlatformUtil.GetResourcesBaseFolder() + kLocalizationStreamingAssetsFolderPath + locale, "*.json");
+#endif
   }
 
   public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFilePath) {

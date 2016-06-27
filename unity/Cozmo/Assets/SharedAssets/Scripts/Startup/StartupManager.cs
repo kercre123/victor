@@ -334,7 +334,7 @@ public class StartupManager : MonoBehaviour {
     // In Android the files in streamingAssetsPath are in the jar file which means our native code can't access them. Here
     // we extract them from the jar file into persistentDataPath using the resources manifest.
     string fromPath = Application.streamingAssetsPath + "/";
-    string toPath = Application.persistentDataPath + "/";
+    string toPath = PlatformUtil.GetResourcesBaseFolder() + "/";
 
     DAS.Info("StartupManager.Awake.ExtractResourceFiles", "About to extract resource files. fromPath = " + fromPath + ". toPath = " + toPath);
 

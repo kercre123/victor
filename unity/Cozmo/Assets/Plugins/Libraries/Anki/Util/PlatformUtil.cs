@@ -8,32 +8,32 @@ public class PlatformUtil {
     // to persistentDataPath so this is the path we have to send to the engine. On iOS we can access the
     // files on streamingAssetsPath directly
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     return Application.dataPath + "/../../../lib/anki/products-cozmo-assets";
-    #elif UNITY_IOS
+#elif UNITY_IOS
     return Application.streamingAssetsPath;
-    #elif UNITY_ANDROID
-    return Application.persistentDataPath;
-    #endif
+#elif UNITY_ANDROID
+    return Application.persistentDataPath + "/cozmo";
+#endif
   }
 
   public static string GetResourcesFolder() {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     return GetResourcesBaseFolder();
-    #elif UNITY_IOS || UNITY_ANDROID
+#elif UNITY_IOS || UNITY_ANDROID
     return GetResourcesBaseFolder() + "/cozmo_resources";
-    #endif
+#endif
   }
 
   public static string GetResourcesFolder(string resourcesSubfolder) {
     // On device the resources are all copied into the "assets" subfolder.
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     return GetResourcesFolder() + "/" + resourcesSubfolder;
-    #elif UNITY_IOS
+#elif UNITY_IOS
     return GetResourcesFolder() + "/assets/" + resourcesSubfolder;
-    #elif UNITY_ANDROID
+#elif UNITY_ANDROID
     return GetResourcesFolder() + "/assets/" + resourcesSubfolder;
-    #endif
+#endif
   }
 }
 
