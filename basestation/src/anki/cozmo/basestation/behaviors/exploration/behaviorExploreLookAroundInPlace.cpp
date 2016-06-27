@@ -125,7 +125,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   // [min,max] range for pause for step 2
   _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec", debugName);
   _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec", debugName);
-  _configParams.s2_WaitAnimGroupName = ParseString(config, "s2_WaitAnimGroupName", debugName);
+  _configParams.s2_WaitAnimTrigger = ParseString(config, "s2_WaitAnimTrigger", debugName);
   // [min,max] range for random angle turns for step 3
   _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg", debugName);
   _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg", debugName);
@@ -140,7 +140,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax", debugName);
   _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec", debugName);
   _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec", debugName);
-  _configParams.s4_WaitAnimGroupName = ParseString(config, "s4_WaitAnimGroupName", debugName);
+  _configParams.s4_WaitAnimTrigger = ParseString(config, "s4_WaitAnimTrigger", debugName);
   // [min,max] range for head move  for step 5
   _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg", debugName);
   _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg", debugName);
@@ -253,7 +253,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
 
   IAction* pauseAction = nullptr;
   
-  const std::string& animGroupName = _configParams.s2_WaitAnimGroupName;
+  const std::string& animGroupName = _configParams.s2_WaitAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
   {
@@ -343,7 +343,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
   };
   
   IAction* pauseAction = nullptr;
-  const std::string& animGroupName = _configParams.s4_WaitAnimGroupName;
+  const std::string& animGroupName = _configParams.s4_WaitAnimTrigger;
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
   {

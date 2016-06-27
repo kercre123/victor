@@ -122,7 +122,7 @@ private:
     // [min,max] range for pause for step 2
     float s2_WaitMin_sec;
     float s2_WaitMax_sec;
-    std::string s2_WaitAnimGroupName; // name of the animation that will play instead of the wait
+    std::string s2_WaitAnimTrigger; // name of the animation that will play instead of the wait
     // [min,max] range for random angle turns for step 3
     float s3_BodyAngleRangeMin_deg;
     float s3_BodyAngleRangeMax_deg;
@@ -137,7 +137,7 @@ private:
     float s4_WaitBetweenChangesMax_sec;
     uint8_t s4_HeadAngleChangesMin;
     uint8_t s4_HeadAngleChangesMax;
-    std::string s4_WaitAnimGroupName; // name of the animation that will play instead of the wait
+    std::string s4_WaitAnimTrigger; // name of the animation that will play instead of the wait
     // [min,max] range for head move  for step 5
     float s5_BodyAngleRelativeRangeMin_deg;
     float s5_BodyAngleRelativeRangeMax_deg;

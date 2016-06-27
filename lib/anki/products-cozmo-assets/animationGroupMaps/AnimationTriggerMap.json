@@ -117,6 +117,14 @@
       "AnimName": "interactWithFaces_squint"
     },
     {
+      "CladEvent": "LookInPlaceForFacesBodyPause",
+      "AnimName": "ag_lookInPlaceForFaces_bodyMovePause"
+    },
+    {
+      "CladEvent": "LookInPlaceForFacesHeadMovePause",
+      "AnimName": "ag_lookInPlaceForFaces_headMovePauses"
+    },
+    {
       "CladEvent": "MajorFail",
       "AnimName": "ag_majorFail"
     },

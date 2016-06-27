@@ -40,6 +40,8 @@ enum uint_16 AnimationTrigger
   InteractWithFacesInitial,
   InteractWithFacesSquint,
   InteractWithFacesWait,
+  LookInPlaceForFacesBodyPause,
+  LookInPlaceForFacesHeadMovePause,
   MajorFail,
   MajorWin,
   OnChargerLoopSleeping,
