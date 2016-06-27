@@ -7,8 +7,6 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame;
     private PointWinner _CurrentWinner;
-    private GameEvent _AnimationEventSent;
-    private RobotCallback _AnimationCallbackUsed;
 
     // INGO See HandleRoundEndAnimDone below
     //private bool _RobotAnimationEnded = false;
@@ -45,9 +43,9 @@ namespace SpeedTap {
       roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed);
 
       // Play banner animation with score
-      string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore, 
+      string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
                             _SpeedTapGame.PlayerRoundsWon, _SpeedTapGame.CozmoRoundsWon);
-      _SpeedTapGame.SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationDone, 
+      _SpeedTapGame.SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
         roundEndSlideScript.BannerAnimationDurationSeconds);
 
       // Play cozmo animation
@@ -56,7 +54,6 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      AnimationManager.Instance.RemoveAnimationEndedCallback(_AnimationEventSent, HandleRoundEndAnimDone);
     }
 
     public override void Pause() {
@@ -66,20 +63,25 @@ namespace SpeedTap {
     }
 
     private void PlayReactToRoundAnimationAndSendEvent() {
-      _AnimationEventSent = GameEvent.Count;
+      GameEvent gameEvent = GameEvent.Count;
+      AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
       if (_CurrentWinner == PointWinner.Player) {
         GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundPlayerWinAnyIntensity);
-        _AnimationEventSent = (highIntensity) ? 
+        gameEvent = (highIntensity) ?
           GameEvent.OnSpeedtapRoundPlayerWinHighIntensity : GameEvent.OnSpeedtapRoundPlayerWinLowIntensity;
+        animEvent = (highIntensity) ?
+                  AnimationTrigger.OnSpeedtapRoundPlayerWinHighIntensity : AnimationTrigger.OnSpeedtapRoundPlayerWinLowIntensity;
       }
       else {
         GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundCozmoWinAnyIntensity);
-        _AnimationEventSent = (highIntensity) ? 
+        gameEvent = (highIntensity) ?
           GameEvent.OnSpeedtapRoundCozmoWinHighIntensity : GameEvent.OnSpeedtapRoundCozmoWinLowIntensity;
+        animEvent = (highIntensity) ?
+                  AnimationTrigger.OnSpeedtapRoundCozmoWinHighIntensity : AnimationTrigger.OnSpeedtapRoundCozmoWinLowIntensity;
       }
-      AnimationManager.Instance.AddAnimationEndedCallback(_AnimationEventSent, HandleRoundEndAnimDone);
-      GameEventManager.Instance.SendGameEventToEngine(_AnimationEventSent);
+      _CurrentRobot.SendAnimationTrigger(animEvent, HandleRoundEndAnimDone);
+      GameEventManager.Instance.SendGameEventToEngine(gameEvent);
     }
 
     private void HandleRoundEndAnimDone(bool success) {

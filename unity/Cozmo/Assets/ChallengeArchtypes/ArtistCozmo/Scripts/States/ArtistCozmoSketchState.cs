@@ -18,7 +18,7 @@ namespace ArtistCozmo {
       _Game.ImageReceiver.OnImageReceived += HandleImageReceived;
       _Game.ImageReceiver.CaptureSnapshot();
 
-      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerThinking, HandleAnimationComplete);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeBreakerThinking, HandleAnimationComplete);
     }
 
     public override void Update() {

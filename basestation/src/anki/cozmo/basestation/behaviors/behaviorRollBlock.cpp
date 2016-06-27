@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -42,8 +43,8 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 {
   SetDefaultName("RollBlock");
 
-  _putDownAnimGroup = config.get(kPutDownAnimGroupKey, "").asCString();
-  
+  JsonTools::GetValueOptional(config,kPutDownAnimGroupKey,_putDownAnimTrigger);
+
   // set up the filter we will use for finding blocks we care about
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
@@ -111,7 +112,7 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
 {
   SET_STATE(SettingDownBlock);
 
-  if( _putDownAnimGroup.empty() ) {
+  if( _putDownAnimTrigger == AnimationTrigger::Count) {
     constexpr float kAmountToReverse_mm = 90.f;
     IActionRunner* actionsToDo = new CompoundActionSequential(robot, {
         new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
@@ -119,7 +120,7 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
     StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
   }
   else {
-    StartActing(new PlayAnimationGroupAction(robot, _putDownAnimGroup),
+    StartActing(new TriggerAnimationAction(robot, _putDownAnimTrigger),
                 [this](Robot& robot) {
                   // use same logic as put down block behavior
                   StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot, false),
@@ -150,18 +151,12 @@ void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
     _targetBlock.UnSet();
     return;
   }
-
-  if( !_initialAnimGroup.empty() ) {
-    // Turn towards the object and then react to it before performing the roll action
-    StartActing(new CompoundActionSequential(robot, {
-                  new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-                  new PlayAnimationGroupAction(robot, _initialAnimGroup),
-                }),
-                [this,&robot]{ this->TransitionToPerformingAction(robot); });
-  }
-  else {
-    TransitionToPerformingAction(robot);
-  }
+  // Turn towards the object and then react to it before performing the roll action
+  StartActing(new CompoundActionSequential(robot, {
+                new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
+    new TriggerAnimationAction(robot, AnimationTrigger::RollBlockInitial),
+              }),
+              [this,&robot]{ this->TransitionToPerformingAction(robot); });
 }
 
 void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
@@ -214,10 +209,8 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                 switch(msg.result)
                 {
                   case ActionResult::SUCCESS:
-                    if( !_successAnimGroup.empty() ) {
-                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
-                      IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
-                    }
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+                    IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
                     break;
                   
                   case ActionResult::FAILURE_RETRY:
@@ -267,16 +260,12 @@ void BehaviorRollBlock::SetupRetryAction(Robot& robot, const ExternalInterface::
     case ObjectInteractionResult::INCOMPLETE:
     case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
     {
-      if( ! _realignAnimGroup.empty() ) {
-        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
-      }
+      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRealign);
       break;
     }
       
     default: {
-      if( ! _retryActionAnimGroup.empty() ) {
-        animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
-      }
+      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRetry);
       break;
     }
   }

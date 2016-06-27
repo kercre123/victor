@@ -218,16 +218,15 @@ public class MockRobot : IRobot {
     QueueCallback(0.5f, callback);
   }
 
-  public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    QueueCallback(0.5f, callback);
-  }
-
-  public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  /*public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     // lets just say half a second, since its random anyway
     QueueCallback(0.5f, callback);
+  }*/
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    QueueCallback(0.5f, callback);
   }
 
-  public void SetIdleAnimation(string default_anim) {
+  public void SetIdleAnimation(AnimationTrigger default_anim) {
     // Do nothing
   }
 
@@ -239,7 +238,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void PushDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
+  public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim) {
     // Do nothing
   }
 
@@ -798,7 +797,7 @@ public class MockRobot : IRobot {
 
   #endregion
 
-  public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
   }
 

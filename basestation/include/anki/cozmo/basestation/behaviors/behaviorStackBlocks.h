@@ -39,10 +39,6 @@ protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     
 private:
-
-  std::string _retryActionAnimGroup = "rollCube_retry";
-  std::string _realignAnimGroup = "rollCube_realign";
-  std::string _successAnimGroup = "stackCube_success";
   const f32   _distToBackupOnStackFailure_mm = 40;
 
   mutable ObjectID _targetBlockTop;

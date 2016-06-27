@@ -6,13 +6,13 @@ namespace CodeBreaker {
   public class CodeBreakerEndState : State {
 
     LightCube[] _TargetCubes;
-    string _CozmoAnimationName;
+    Anki.Cozmo.AnimationTrigger _CozmoAnimationTrigger;
     string _ReadySlideTextLocKey;
 
-    public CodeBreakerEndState(LightCube[] targetCubes, string cozmoAnimationName,
+    public CodeBreakerEndState(LightCube[] targetCubes, Anki.Cozmo.AnimationTrigger cozmoAnimationName,
                                string readySlideTextLocKey) {
       _TargetCubes = targetCubes;
-      _CozmoAnimationName = cozmoAnimationName;
+      _CozmoAnimationTrigger = cozmoAnimationName;
       _ReadySlideTextLocKey = readySlideTextLocKey;
     }
 
@@ -20,7 +20,7 @@ namespace CodeBreaker {
       base.Enter();
 
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
-      _CurrentRobot.SendAnimation(_CozmoAnimationName, null);
+      _CurrentRobot.SendAnimationTrigger(_CozmoAnimationTrigger);
 
       // Show slide
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;

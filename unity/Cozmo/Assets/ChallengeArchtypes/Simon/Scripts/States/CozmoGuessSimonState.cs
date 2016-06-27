@@ -11,14 +11,6 @@ namespace Simon {
     private int _LastTargetID;
     private bool _IsAnimating = false;
 
-    // Still under review for what we want for audio.
-    // This is likely to be refactored into all different clips with unique sounds.
-    private const string _kPointDefault = "ag_simon_point_center";
-    private const string _kPointLeftSmall = "ag_simon_point_smallleft";
-    private const string _kPointRightSmall = "ag_simon_point_smallright";
-    private const string _kPointLeftBig = "ag_simon_point_bigleft";
-    private const string _kPointRightBig = "ag_simon_point_bigright";
-
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
@@ -31,18 +23,12 @@ namespace Simon {
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
-
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Cozmo, false);
     }
 
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
     }
 
     public override void Update() {
@@ -94,21 +80,21 @@ namespace Simon {
       if (_CurrentSequenceIndex > 0) {
         fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_CurrentSequence[_CurrentSequenceIndex - 1]);
       }
-      string animGroup = _kPointDefault;
+      Anki.Cozmo.AnimationTrigger animTrigger = Anki.Cozmo.AnimationTrigger.SimonPointCenter;
       if (goingToIndex - fromIndex == 1) {
-        animGroup = _kPointLeftSmall;
+        animTrigger = Anki.Cozmo.AnimationTrigger.SimonPointLeftSmall;
       }
       else if (goingToIndex - fromIndex == -1) {
-        animGroup = _kPointRightSmall;
+        animTrigger = Anki.Cozmo.AnimationTrigger.SimonPointRightSmall;
       }
       if (goingToIndex - fromIndex >= 2) {
-        animGroup = _kPointLeftBig;
+        animTrigger = Anki.Cozmo.AnimationTrigger.SimonPointLeftBig;
       }
       else if (goingToIndex - fromIndex <= -2) {
-        animGroup = _kPointRightBig;
+        animTrigger = Anki.Cozmo.AnimationTrigger.SimonPointRightBig;
       }
 
-      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animGroup));
+      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animTrigger));
     }
 
     public LightCube GetCurrentTarget() {
@@ -119,6 +105,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessWrong(_LastTargetID);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
       _IsAnimating = true;
 
@@ -131,6 +118,7 @@ namespace Simon {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
       _IsAnimating = true;
     }
 

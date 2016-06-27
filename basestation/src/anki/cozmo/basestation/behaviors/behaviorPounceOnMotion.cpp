@@ -33,16 +33,6 @@ namespace Cozmo {
 
 using namespace ExternalInterface;
   
-static const std::string s_PounceAnimGroup                = "ag_pounceOnMotionPounce";
-static const std::string s_PounceSuccessAnimGroup         = "ag_pounceOnMotionSuccess";
-static const std::string s_PounceFailAnimGroup            = "ag_pounceOnMotionFail";
-static const std::string s_pounceDriveFaceAnimGroup       = "ag_pounceDriveFace";
-static const std::string s_PounceGetOutAnimGroup          = "ag_pounceDriveFace_getOut";
-static const std::string s_PounceInitalWarningAnimGroup   = "ag_pounceWarningInitial";
-static const std::string s_PounceReactToMotionAnimGroup   = "ag_pounceReactToMotion";
-static const std::string s_PounceSneakDriveStartAnimGroup = "ag_pounceDriveStart";
-static const std::string s_PounceSneakDriveLoopAnimGroup  = "ag_pounceDriveLoop";
-static const std::string s_PounceSneakDriveEndAnimGroup   = "ag_pounceDriveEnd";
 static const char* kMaxNoMotionBeforeBored_running_Sec    = "maxNoGroundMotionBeforeBored_running_Sec";
 static const char* kMaxNoMotionBeforeBored_notRunning_Sec = "maxNoGroundMotionBeforeBored_notRunning_Sec";
 static const char* kTimeBeforeRotate_Sec                  = "TimeBeforeRotate_Sec";
@@ -260,7 +250,7 @@ void BehaviorPounceOnMotion::TransitionToInitialWarningAnim(Robot& robot)
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialWarningAnim","BehaviorPounceOnMotion.TransitionToInitialWarningAnim");
   SET_STATE(InitialAnim);
-  IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceInitalWarningAnimGroup);
+  IActionRunner* animAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceInitial);
   robot.GetActionList().QueueActionAtEnd(animAction);
   _waitForActionTag = animAction->GetTag();
 }
@@ -339,7 +329,7 @@ void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
     _backUpDistance = GetDriveDistance();
   }
   
-  IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceAnimGroup);
+  IActionRunner* animAction = new TriggerAnimationAction(robot, AnimationTrigger::PouncePounce);
   // when we're driving forward is when cliff reacts are most likely
   EnableCliffReacts(false,robot);
   _waitForActionTag = animAction->GetTag();
@@ -376,11 +366,11 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationGroupAction(robot, s_PounceSuccessAnimGroup);
+    newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceSuccess);
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationGroupAction(robot, s_PounceFailAnimGroup );
+    newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceFail );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
@@ -403,7 +393,7 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToGetOutBored(Robot& robot)
 {
   SET_STATE(GetOutBored);
-  IActionRunner* newAction = new PlayAnimationGroupAction(robot, s_PounceGetOutAnimGroup);
+  IActionRunner* newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceGetOut);
   _waitForActionTag = newAction->GetTag();
   robot.GetActionList().QueueActionNow(newAction);
 }
@@ -420,11 +410,11 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
   double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastMotionTime = (float)currentTime_sec;
   
-  robot.GetAnimationStreamer().PushIdleAnimation(s_pounceDriveFaceAnimGroup);
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PounceFace);
   
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations({s_PounceSneakDriveStartAnimGroup,
-                                                            s_PounceSneakDriveLoopAnimGroup,
-                                                            s_PounceSneakDriveEndAnimGroup});
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::PounceDriveStart,
+                                                            AnimationTrigger::PounceDriveLoop,
+                                                            AnimationTrigger::PounceDriveEnd});
   
   TransitionToInitialWarningAnim(robot);
   

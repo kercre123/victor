@@ -92,14 +92,14 @@ namespace CubePounce {
       if (PounceRoll <= _CurrentPounceChance) {
         // Enter Animation State to attempt a pounce.
         _CliffFlagTrown = false;
-        CurrentRobot.SendAnimationGroup(AnimationGroupName.kCubePounce_Pounce, HandlePounceEnd);
+        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePouncePounce, HandlePounceEnd);
         didPounce = true;
       }
       else {
         // If you do a fakeout instead, increase the likelyhood of a slap
         // attempt based on the max number of fakeouts.
         _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
-        CurrentRobot.SendAnimationGroup(AnimationGroupName.kCubePounce_Fake, HandleFakeoutEnd);
+        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceFake, HandleFakeoutEnd);
       }
       return didPounce;
     }
@@ -138,7 +138,8 @@ namespace CubePounce {
       PlayerScore++;
       UpdateScoreboard();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseHand, HandEndAnimationDone));
+
+      _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceLoseHand, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {
@@ -146,7 +147,7 @@ namespace CubePounce {
       UpdateScoreboard();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
       CurrentRobot.CancelCallback(HandleFakeoutEnd);
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinHand, HandEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceWinHand, HandEndAnimationDone));
     }
 
     public void HandEndAnimationDone(bool success) {
@@ -164,20 +165,20 @@ namespace CubePounce {
         if (AllRoundsCompleted) {
           GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
           if (CozmoRoundsWon > PlayerRoundsWon) {
-            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinSession, HandleLoseGameAnimationDone));
+            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceWinSession, HandleLoseGameAnimationDone));
           }
           else {
-            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseSession, HandleWinGameAnimationDone));
+            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceLoseSession, HandleWinGameAnimationDone));
           }
         }
         else {
           GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
           GameAudioClient.SetMusicState(_BetweenRoundsMusic);
           if (CozmoScore > PlayerScore) {
-            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinRound, RoundEndAnimationDone));
+            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceWinRound, RoundEndAnimationDone));
           }
           else {
-            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseRound, RoundEndAnimationDone));
+            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceLoseRound, RoundEndAnimationDone));
           }
         }
       }

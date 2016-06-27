@@ -6,17 +6,17 @@
   "do_second_request": true,
   
   "zero_block_config": {
-    "request_animName" : "requestGame_speedTap_request",
-    "deny_animName" : "requestGame_speedTap_deny",
+    "request_animName" : "RequestGameGenericRequest0",
+    "deny_animName" : "RequestGameGenericDeny0",
     "minRequestDelay_s" : 20.0,
     "score_factor": 0.2
   },
 
   "one_block_config": {
-    "initial_animName" : "requestGame_speedTap_initial",
-    "preDrive_animName" : "requestGame_speedTap_predrive",
-    "request_animName" : "requestGame_speedTap_request",
-    "deny_animName" : "requestGame_speedTap_deny",
+    "initial_animName" : "RequestGameGenericInitial1",
+    "preDrive_animName" : "RequestGameGenericPreDrive1",
+    "request_animName" : "RequestGameGenericRequest1",
+    "deny_animName" : "RequestGameGenericDeny1",
     "minRequestDelay_s" : 20.0
   },
 

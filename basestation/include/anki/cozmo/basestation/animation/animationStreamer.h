@@ -49,9 +49,6 @@ namespace Cozmo {
   {
   public:
     using Tag = u8;
-    
-    static const std::string   LiveAnimation;
-    static const std::string   AnimToolAnimation;
     static const std::string   NeutralFaceAnimName;
     
     static const Tag  NotAnimatingTag  = 0;
@@ -72,11 +69,11 @@ namespace Cozmo {
     
     // Set the animation to be played when no other animation has been specified.  Use the empty string to
     // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-    Result SetIdleAnimation(const std::string& animName);
+    Result SetIdleAnimation(AnimationTrigger animName);
     
     // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
     // idle (even if it came from SetIdleAnimation) is always on the stack
-    Result PushIdleAnimation(const std::string& animName);
+    Result PushIdleAnimation(AnimationTrigger animName);
     
     // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
     // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
@@ -169,7 +166,7 @@ namespace Cozmo {
     Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
-    std::vector<std::string> _idleAnimationNameStack;
+    std::vector<AnimationTrigger> _idleAnimationNameStack;
 
     std::string _lastPlayedAnimationId;
     

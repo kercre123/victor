@@ -4,7 +4,7 @@ using System.ComponentModel;
 namespace ScriptedSequences.Actions {
   public class PlayCozmoAnimationGroup : ScriptedSequenceAction {
 
-    public string AnimationGroupName;
+    public Anki.Cozmo.AnimationTrigger AnimationGroupName;
 
     public bool LoopForever;
 
@@ -22,15 +22,15 @@ namespace ScriptedSequences.Actions {
       }
       if (LoopForever) {
         bool loopComplete = false;
-        token.OnAbort += () => { 
+        token.OnAbort += () => {
           loopComplete = true;
-          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); 
+          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         };
         Action playAnimation = null;
 
-        playAnimation = () => {          
-          robot.SendAnimationGroup(AnimationGroupName, (s) => { 
-            if(!loopComplete) {
+        playAnimation = () => {
+          robot.SendAnimationTrigger(AnimationGroupName, (s) => {
+            if (!loopComplete) {
               playAnimation();
             }
           });
@@ -40,13 +40,13 @@ namespace ScriptedSequences.Actions {
       }
       else if (WaitToEnd) {
         token.OnAbort += () => { robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); };
-        robot.SendAnimationGroup(AnimationGroupName, (s) => { 
+        robot.SendAnimationTrigger(AnimationGroupName, (s) => {
           // Do we want to fail the action if playing the animation failed?
           token.Succeed();
         });
       }
       else {
-        robot.SendAnimationGroup(AnimationGroupName);
+        robot.SendAnimationTrigger(AnimationGroupName);
         token.Succeed();
       }
       return token;

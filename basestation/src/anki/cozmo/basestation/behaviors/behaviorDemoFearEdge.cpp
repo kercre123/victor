@@ -62,9 +62,10 @@ void BehaviorDemoFearEdge::TransitionToDrivingForward(Robot& robot)
   // drive pretty far (hopefully hitting the cliff), and just repeat if we don't hit it. We expect to be
   // interrupted by the cliff behavior
 
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations({_startDrivingAnimGroup,
-                                                            _drivingLoopAnimGroup,
-                                                            _stopDrivingAnimGroup});
+  // TODO:(bn) a better path here
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
+                                                            AnimationTrigger::DriveLoopLaunch,
+                                                            AnimationTrigger::DriveEndLaunch});
 
   DriveStraightAction* action = new DriveStraightAction(robot, 1000.0f, kInitialDriveSpeed);
   action->SetAccel(kInitialDriveAccel);

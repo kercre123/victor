@@ -312,7 +312,7 @@ namespace Anki {
       // disable the live idle animation, so we aren't moving during the "wait" sections
       if( ! _shouldPopIdle ) {
         _shouldPopIdle = true;
-        _robot.GetAnimationStreamer().PushIdleAnimation("NONE");
+        _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
       }
 
       // Go ahead and do the first Update for the compound action so we don't

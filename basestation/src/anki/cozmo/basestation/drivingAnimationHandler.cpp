@@ -25,7 +25,7 @@ namespace Anki {
     
     DrivingAnimationHandler::DrivingAnimationHandler(Robot& robot)
     : _robot(robot)
-    , kDefaultDrivingAnimations({kDefaultDrivingStartAnim, kDefaultDrivingLoopAnim, kDefaultDrivingEndAnim})
+    , kDefaultDrivingAnimations({AnimationTrigger::DriveStartDefault, AnimationTrigger::DriveLoopDefault, AnimationTrigger::DriveEndDefault})
     {
       PushDrivingAnimations(kDefaultDrivingAnimations);
       
@@ -100,7 +100,7 @@ namespace Anki {
       // Only start playing drivingLoop if start successfully completes
       if(msg.idTag == _drivingStartAnimTag && msg.result == ActionResult::SUCCESS)
       {
-        if(!_drivingAnimationStack.back().drivingLoopAnim.empty())
+        if(_drivingAnimationStack.back().drivingLoopAnim != AnimationTrigger::Count)
         {
           PlayDrivingLoopAnim();
         }
@@ -160,12 +160,12 @@ namespace Anki {
       _drivingEndAnimTag = ActionConstants::INVALID_TAG;
       _tracksToUnlock = tracksToUnlock;
       
-      if(!_drivingAnimationStack.back().drivingStartAnim.empty())
+      if(_drivingAnimationStack.back().drivingLoopAnim != AnimationTrigger::Count)
       {
         PlayDrivingStartAnim();
         _startedPlayingAnimation = true;
       }
-      else if(!_drivingAnimationStack.back().drivingLoopAnim.empty())
+      else if(_drivingAnimationStack.back().drivingLoopAnim != AnimationTrigger::Count)
       {
         PlayDrivingLoopAnim();
         _startedPlayingAnimation = true;
@@ -181,7 +181,7 @@ namespace Anki {
       _robot.GetActionList().Cancel(_drivingStartAnimTag);
       _robot.GetActionList().Cancel(_drivingLoopAnimTag);
       
-      if(!_drivingAnimationStack.back().drivingEndAnim.empty() && !_endAnimStarted && !_endAnimCompleted)
+      if(_drivingAnimationStack.back().drivingEndAnim != AnimationTrigger::Count && !_endAnimStarted && !_endAnimCompleted)
       {
         // Unlock our tracks so that endAnim can use them
         // This should be safe since we have finished driving
@@ -195,21 +195,21 @@ namespace Anki {
   
     void DrivingAnimationHandler::PlayDrivingStartAnim()
     {
-      IActionRunner* animAction = new PlayAnimationGroupAction(_robot, _drivingAnimationStack.back().drivingStartAnim, 1, true);
+      IActionRunner* animAction = new TriggerAnimationAction(_robot, _drivingAnimationStack.back().drivingStartAnim, 1, true);
       _drivingStartAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
     
     void DrivingAnimationHandler::PlayDrivingLoopAnim()
     {
-      IActionRunner* animAction = new PlayAnimationGroupAction(_robot, _drivingAnimationStack.back().drivingLoopAnim, 1, true);
+      IActionRunner* animAction = new TriggerAnimationAction(_robot, _drivingAnimationStack.back().drivingLoopAnim, 1, true);
       _drivingLoopAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
     
     void DrivingAnimationHandler::PlayDrivingEndAnim()
     {
-      IActionRunner* animAction = new PlayAnimationGroupAction(_robot, _drivingAnimationStack.back().drivingEndAnim, 1, true);
+      IActionRunner* animAction = new TriggerAnimationAction(_robot, _drivingAnimationStack.back().drivingEndAnim, 1, true);
       _drivingEndAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }

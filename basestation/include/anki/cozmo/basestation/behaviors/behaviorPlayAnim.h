@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayAnim_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -43,10 +44,8 @@ private:
   
   // ========== Members ==========
   
-  std::string   _animationName;
-  std::string   _animationGroupName;
-  bool          _useGroup;
-  int           _numLoops;
+  AnimationTrigger _animTrigger;
+  int              _numLoops;
 };
   
 

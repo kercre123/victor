@@ -15,10 +15,10 @@ namespace Vortex {
     public override void Enter() {
       base.Enter();
       if (_DidCozmoWin) {
-        _CurrentRobot.SendAnimation(AnimationName.kMajorWin, AnimationDone);
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MajorWin, AnimationDone);
       }
       else {
-        _CurrentRobot.SendAnimation(AnimationName.kShocked, AnimationDone);
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.Shocked, AnimationDone);
       }
     }
 
@@ -33,7 +33,7 @@ namespace Vortex {
     public override void Exit() {
       base.Exit();
     }
-      
+
   }
 
 }

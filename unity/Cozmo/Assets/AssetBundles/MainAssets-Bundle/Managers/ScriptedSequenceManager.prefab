@@ -39,8 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2cf909c64d0b9446ea88f48bcd80805f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SequenceTextAssets:
-  - {fileID: 4900000, guid: 1f1f54452c0984b7bb32c6e522b24df8, type: 3}
+  SequenceTextAssets: []
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -50,7 +49,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: SequenceTextAssets.Array.size
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: SequenceTextAssets.Array.data[2]

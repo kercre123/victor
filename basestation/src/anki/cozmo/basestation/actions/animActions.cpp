@@ -40,34 +40,6 @@ namespace Anki {
       
     }
     
-    PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent,
-                                             u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction(robot,animEvent,"GameEventNotFound",numLoops,interruptRunning)
-    {
-    }
-    
-    PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
-                                             u32 numLoops, bool interruptRunning)
-    : IAction(robot)
-    , _numLoopsRemaining(numLoops)
-    , _interruptRunning(interruptRunning)
-    {
-      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-      // The config is not up to date, use the backup name
-      if( !robot_mgr->HasAnimationResponseForEvent(animEvent) )
-      {
-        _animName = backupAnimName;
-      }
-      else
-      {
-        _animName = robot_mgr->GetAnimationResponseForEvent(animEvent);
-        
-        // Let game know this was triggered if something else needed to happen
-        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
-      }
-      _name = "PlayAnimation" + _animName + "Action";
-    }
-    
     PlayAnimationAction::PlayAnimationAction(Robot& robot,
                                              Animation* animation,
                                              u32 numLoops,
@@ -214,45 +186,31 @@ namespace Anki {
       completionUnion.Set_animationCompleted(std::move( info ));
     }
 
-    #pragma mark ---- PlayAnimationGroupAction ----
-
-    PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
-                                                       const std::string& animGroupName,
-                                                       u32 numLoops, bool interruptRunning)
-   : PlayAnimationAction(robot, "", numLoops, interruptRunning),
-    _animGroupName(animGroupName)
-    {
-      if(_animGroupName.empty()) {
-        // This is going to fail at Init() time
-        PRINT_NAMED_WARNING("PlayAnimationGroupAction.EmptyAnimaGroupName", "");
-      }
-    }
+    #pragma mark ---- TriggerAnimationAction ----
     
-    PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
-                             GameEvent animEvent,
+    TriggerAnimationAction::TriggerAnimationAction(Robot& robot,
+                             AnimationTrigger animEvent,
                              u32 numLoops,
                              bool interruptRunning)
     : PlayAnimationAction(robot, "", numLoops, interruptRunning),
     _animGroupName("")
     {
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      if( robot_mgr->HasAnimationForTrigger(animEvent) )
       {
-        _animGroupName = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        _animGroupName = robot_mgr->GetAnimationForTrigger(animEvent);
         if(_animGroupName.empty()) {
-          PRINT_NAMED_WARNING("PlayAnimationGroupAction.EmptyAnimGroupNameForEvent",
+          PRINT_NAMED_WARNING("TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
                               "Event: %s", EnumToString(animEvent));
         }
-        // Let game know this was triggered if something else needed to happen
-        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
       } else {
-        PRINT_NAMED_WARNING("PlayAnimationGroupAction.NoAnimationForEvent",
+        PRINT_NAMED_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
                             "Event: %s", EnumToString(animEvent));
       }
       // will FAILURE_ABORT on Init if not an event
     }
 
-    ActionResult PlayAnimationGroupAction::Init()
+    ActionResult TriggerAnimationAction::Init()
     {
       _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot);
       if( _animName.empty() ) {
@@ -261,66 +219,6 @@ namespace Anki {
       else {
         return PlayAnimationAction::Init();
       }
-    }
-    
-    // Factories that allows us to treat groups and animations the same.
-    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, u32 numLoops,bool interruptRunning)
-    {
-      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
-      {
-        std::string response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
-        if( robot_mgr->HasAnimationGroup(response_name)) // it's an animation group
-        {
-          return new PlayAnimationGroupAction(robot, animEvent, numLoops,interruptRunning);
-        }
-        else if( robot_mgr->HasCannedAnimation(response_name) )
-        {
-          return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
-        }
-      }
-      return nullptr;
-    }
-    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName, u32 numLoops,bool interruptRunning)
-    {
-      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-      std::string response_name = backupAnimName;
-      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
-      {
-        response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
-      }
-      if( robot_mgr->HasAnimationGroup(response_name))
-      {
-        return new PlayAnimationGroupAction(robot, response_name, numLoops,interruptRunning);
-      }
-      else if( robot_mgr->HasCannedAnimation(response_name) )
-      {
-        return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
-      }
-      return nullptr;
-    }
-    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, const std::string& animName, u32 numLoops,bool interruptRunning)
-    {
-      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-      if( robot_mgr->HasAnimationGroup(animName))
-      {
-        return new PlayAnimationGroupAction(robot, animName, numLoops,interruptRunning);
-      }
-      // similar to old behavior, can't return null and will error out on init.
-      return new PlayAnimationAction(robot, animName,numLoops,interruptRunning);;
-    }
-
-
-    IActionRunner* CreatePlayAnimtionListAction(Robot& robot,
-                                                const std::vector< std::string >& animNames,
-                                                bool interruptRunning )
-    {
-      CompoundActionSequential* action = new CompoundActionSequential(robot);
-      for( const auto& animStr : animNames ) {
-        action->AddAction( CreatePlayAnimationAction(robot, animStr, 1, interruptRunning) );
-      }
-
-      return action;
     }
 
     

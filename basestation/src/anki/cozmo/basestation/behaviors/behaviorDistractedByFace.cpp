@@ -56,7 +56,7 @@ Result BehaviorDistractedByFace::InitInternal(Robot& robot)
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     turnAction,
     verifyAction,
-    new PlayAnimationGroupAction(robot, _params.reactionAnimGroup),
+    new TriggerAnimationAction(robot, _params.reactionAnimTrigger),
   });
   
   StartActing(action, _params.scoreIncreaseWhileReacting,

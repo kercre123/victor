@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using Anki.Assets;
 using System.IO;
@@ -224,7 +224,6 @@ public class StartupManager : MonoBehaviour {
     // gameObject.AddComponent<ManagerTypeName>();
     gameObject.AddComponent<ExceptionReportManager>();
     gameObject.AddComponent<ObjectTagRegistryManager>();
-    AnimationManager.Instance.Initialize();
 
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();

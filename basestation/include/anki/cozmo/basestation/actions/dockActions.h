@@ -21,6 +21,7 @@
 #include "clad/types/dockingSignals.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "util/helpers/templateHelpers.h"
+#include "clad/types/animationTrigger.h"
 
 
 namespace Anki {
@@ -69,7 +70,7 @@ namespace Anki {
       
       // Sets the animation to play when lift moves after docking.
       // The animation should only contain a sound track!
-      void SetPostDockLiftMovingAnimation(const std::string& animName);
+      void SetPostDockLiftMovingAnimation(AnimationTrigger animTrigger);
       
       void SetDockingMethod(DockingMethod dockingMethod) { _dockingMethod = dockingMethod; }
       
@@ -177,7 +178,7 @@ namespace Anki {
       Signal::SmartHandle        _liftMovingSignalHandle;
       
       // Name of animation to play when moving lift post-dock
-      std::string                _liftMovingAnimation = "";
+      AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;
       
       AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       

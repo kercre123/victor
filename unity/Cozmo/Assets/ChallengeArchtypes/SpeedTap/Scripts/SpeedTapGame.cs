@@ -214,6 +214,7 @@ namespace SpeedTap {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
 
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
+      CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnSpeedtapGetOut);
     }
 
     public void InitialCubesDone() {

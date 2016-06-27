@@ -17,6 +17,7 @@
 #include "anki/common/shared/radians.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "clad/types/animationTrigger.h"
 
 #include <map>
 
@@ -31,7 +32,7 @@ protected:
   
   // Default configuration parameters which can be overriden by JSON config
   struct ConfigParams {
-    std::string reactionAnimGroup          = "interactWithFaces_initial";
+    AnimationTrigger reactionAnimTrigger   = AnimationTrigger::InteractWithFacesInitial;
     Radians     maxTurnAngle_rad           = DEG_TO_RAD_F32(45.f);
     Radians     samePoseAngleThreshold_rad = DEG_TO_RAD_F32(45.f);
     Radians     panTolerance_rad           = DEG_TO_RAD_F32(5.f);

@@ -72,9 +72,9 @@ namespace Cozmo {
   : IBehavior(robot, config)
   {
     SetDefaultName("Faces");
-
-    _initialTakeAnimGroup = config.get(kInitialTakeAnimGroupKey, "").asString();
-    _waitAnimGroup = config.get(kWaitAnimGroupKey, "").asString();
+    
+    JsonTools::GetValueOptional(config,kInitialTakeAnimGroupKey,_initialTakeAnimGroup);
+    JsonTools::GetValueOptional(config,kWaitAnimGroupKey,_waitAnimGroup);
 
     _faceEnrollEnabled = config.get(kFaceEnrollRequestEnabledKey, false).asBool();
     
@@ -414,7 +414,7 @@ namespace Cozmo {
     if(face->GetName().empty()) {
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
       compoundAction->AddAction(turnTowardsFaceAction);
-      compoundAction->AddAction( new PlayAnimationGroupAction(robot, _initialTakeAnimGroup) );
+      compoundAction->AddAction( new TriggerAnimationAction(robot, _initialTakeAnimGroup) );
       StartActing(compoundAction,
                   std::bind(&BehaviorInteractWithFaces::TransitionToWaitingForRecognition,
                             this,
@@ -467,7 +467,7 @@ namespace Cozmo {
       turnTowardsFaceAction->SetPanTolerance( DEG_TO_RAD(2.0) );
 
       compoundAction->AddAction(turnTowardsFaceAction);
-      compoundAction->AddAction( new PlayAnimationGroupAction(robot, _waitAnimGroup) );
+      compoundAction->AddAction( new TriggerAnimationAction(robot, _waitAnimGroup) );
 
       StartActing(compoundAction,
                   // go back to this state again in case we now have the face
@@ -508,15 +508,15 @@ namespace Cozmo {
 
     if( !faceData->_playedNewFaceAnim ) {
       if( face->GetName().empty() ) {
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnSawNewUnnamedFace) );
+        compoundAction->AddAction( new TriggerAnimationAction(robot, AnimationTrigger::OnSawNewUnnamedFace) );
         robot.GetMoodManager().TriggerEmotionEvent("NewUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
         // Say text and then play a happy animation
         SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
-        sayTextAction->SetGameEvent(GameEvent::OnSawNewNamedFace);
+        sayTextAction->SetAnimationTrigger(AnimationTrigger::OnSawNewNamedFace);
         compoundAction->AddAction( sayTextAction );
-        //compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
+        //compoundAction->AddAction( new TriggerAnimationAction(robot, GameEvent::OnWiggle) );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
 
@@ -528,12 +528,12 @@ namespace Cozmo {
     }
     else {
       if( face->GetName().empty() ) {
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnSawOldUnnamedFace) );
+        compoundAction->AddAction( new TriggerAnimationAction(robot, AnimationTrigger::OnSawOldUnnamedFace) );
         robot.GetMoodManager().TriggerEmotionEvent("OldUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
         SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
-        sayTextAction->SetGameEvent(GameEvent::OnSawOldNamedFace);
+        sayTextAction->SetAnimationTrigger(AnimationTrigger::OnSawOldNamedFace);
         compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
@@ -575,7 +575,7 @@ namespace Cozmo {
     // play a few loops of the wait animation. If this completes without a response, this is a time out
     // condition, so go to the usual reaction (which should be the unenrolled one). We expect to either be
     // interrupted by a denied message, or to be stopped by unity to run the activity
-    StartActing(new PlayAnimationGroupAction(robot, _waitAnimGroup, kRequestDelayNumLoops),
+    StartActing(new TriggerAnimationAction(robot, _waitAnimGroup, kRequestDelayNumLoops),
                 [this](Robot& robot) {
                   // this is a timeout, so let the UI know
                   SendDenyRequest(robot);

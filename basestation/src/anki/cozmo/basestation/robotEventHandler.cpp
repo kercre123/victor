@@ -69,7 +69,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::PlaceOnObject,
       MessageGameToEngineTag::PlaceRelObject,
       MessageGameToEngineTag::PlayAnimation,
-      MessageGameToEngineTag::PlayAnimationGroup,
+      MessageGameToEngineTag::PlayAnimationTrigger,
       MessageGameToEngineTag::PopAWheelie,
       MessageGameToEngineTag::ReadToolCode,
       MessageGameToEngineTag::RollObject,
@@ -612,10 +612,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       auto & playAnimation = actionUnion.Get_playAnimation();
       return new PlayAnimationAction(robot, playAnimation.animationName, playAnimation.numLoops);
     }
-    case RobotActionUnionTag::playAnimationGroup:
+    case RobotActionUnionTag::playAnimationTrigger:
     {
-      auto & playAnimationGroup = actionUnion.Get_playAnimationGroup();
-      return new PlayAnimationGroupAction(robot, playAnimationGroup.animationGroupName, playAnimationGroup.numLoops);
+      auto & playAnimationTrigger = actionUnion.Get_playAnimationTrigger();
+      return new TriggerAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
     }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
@@ -700,7 +700,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::sayText:
     {
       SayTextAction* sayTextAction = new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
-      sayTextAction->SetGameEvent(actionUnion.Get_sayText().playEvent);
+      sayTextAction->SetAnimationTrigger(actionUnion.Get_sayText().playEvent);
       return sayTextAction;
     }
       
@@ -842,10 +842,10 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       newAction = new PlayAnimationAction(robot, msg.animationName, msg.numLoops);
       break;
     }
-    case ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup:
+    case ExternalInterface::MessageGameToEngineTag::PlayAnimationTrigger:
     {
-      const ExternalInterface::PlayAnimationGroup& msg = event.GetData().Get_PlayAnimationGroup();
-      newAction = new PlayAnimationGroupAction(robot, msg.animationGroupName, msg.numLoops);
+      const ExternalInterface::PlayAnimationTrigger& msg = event.GetData().Get_PlayAnimationTrigger();
+      newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SearchForObject:

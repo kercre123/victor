@@ -24,9 +24,6 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
-static const char* kSleepStartAG = "ag_reactToCharger";
-static const char* kSleepLoopAG = "ag_SleepLoop";
 
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -54,7 +51,7 @@ bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
 Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
   _shouldStopBehavior = false;
-  StartActing(new PlayAnimationGroupAction(robot, kSleepStartAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnChargerStartSleeping),&BehaviorReactToOnCharger::TransitionToSleepLoop);
   
   return Result::RESULT_OK;
 }
@@ -84,7 +81,7 @@ void BehaviorReactToOnCharger::TransitionToSleepLoop(Robot& robot)
 {
   if( _isOnCharger )
   {
-    StartActing(new PlayAnimationGroupAction(robot, kSleepLoopAG),&BehaviorReactToOnCharger::TransitionToSleepLoop);
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnChargerLoopSleeping),&BehaviorReactToOnCharger::TransitionToSleepLoop);
   }
 }
 

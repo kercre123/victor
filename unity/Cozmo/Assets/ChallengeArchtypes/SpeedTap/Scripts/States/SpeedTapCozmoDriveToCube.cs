@@ -26,14 +26,14 @@ namespace SpeedTap {
         _SpeedTapGame.InitialCubesDone();
       }
 
-      _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
-        Cozmo.CubePalette.TapMeColor.lightColors, 
+      _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock,
+        Cozmo.CubePalette.TapMeColor.lightColors,
         Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
-      
+
       RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
 
       TryDrivingToCube(forceRaiseLift: false);
@@ -60,8 +60,8 @@ namespace SpeedTap {
     private void TryDrivingToCube(bool forceRaiseLift) {
       _ForceRaiseLift = forceRaiseLift;
       _CurrentRobot.SearchForCube(_SpeedTapGame.CozmoBlock, HandleSearchForCubeEnd);
-      _CurrentRobot.PushDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
-        AnimationGroupName.kSpeedTap_Driving_Loop, null);
+      _CurrentRobot.PushDrivingAnimations(Anki.Cozmo.AnimationTrigger.SpeedTapDrivingStart,
+        Anki.Cozmo.AnimationTrigger.SpeedTapDrivingLoop, Anki.Cozmo.AnimationTrigger.Count);
     }
 
     private void HandleSearchForCubeEnd(bool success) {
@@ -96,7 +96,7 @@ namespace SpeedTap {
     }
 
     private void DriveToPreDockPose() {
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kPreDockPoseDistanceFromCube_mm, 
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kPreDockPoseDistanceFromCube_mm,
         goToPreDockPose: true, callback: HandleDriveToPreDockPoseComplete);
     }
 
@@ -110,7 +110,7 @@ namespace SpeedTap {
     }
 
     private void RaiseLift() {
-      _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Driving_End, HandleLiftRaiseComplete);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.SpeedTapDrivingEnd, HandleLiftRaiseComplete);
     }
 
     private void HandleLiftRaiseComplete(bool success) {
@@ -123,7 +123,7 @@ namespace SpeedTap {
     }
 
     private void DriveToCube() {
-      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleDriveToCubeComplete, 
+      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleDriveToCubeComplete,
         useApproachAngle: false, usePreDockPose: false, alignmentType: Anki.Cozmo.AlignmentType.BODY);
     }
 

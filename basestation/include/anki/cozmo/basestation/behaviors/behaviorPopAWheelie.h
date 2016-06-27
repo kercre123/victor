@@ -38,13 +38,6 @@ namespace Anki {
       
     private:
       
-      //Currenty sharing animations with rollCube
-      std::string _initialAnimGroup = "rollCube_initial";
-      std::string _realignAnimGroup = "rollCube_realign";
-      std::string _retryActionAnimGroup = "rollCube_retry";
-      std::string _successAnimGroup = "rollCube_success";
-      
-      
       // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
       // UpdateWhileNotRunning
       mutable ObjectID _targetBlock;
@@ -63,7 +56,8 @@ namespace Anki {
       State _state = State::ReactingToBlock;
       
       void TransitionToReactingToBlock(Robot& robot);
-      void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
+      void TransitionToPerformingAction(Robot& robot);
+      void TransitionToPerformingAction(Robot& robot, bool isRetry);
       
       void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
       

@@ -4,6 +4,6 @@
   "flatScore": 0.3,
   "behaviorGroups": [
   ],
-  "ReactionAnimGroup": "ag_reactToNewBlockOnGround",
+  "ReactionAnimGroup": "ReactToNewBlockSmall",
   "SamePoseDistThresh_mm": 80
 }

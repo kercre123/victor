@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "util/console/consoleInterface.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 #include <cmath>
 
@@ -37,10 +38,10 @@
 namespace Anki {
 namespace Cozmo {
 
-  static std::string kIdleAnimName = "interactWithFaces_squint"; //"ag_keepAlive_eyes_01";
+  static AnimationTrigger kIdleAnimName = AnimationTrigger::InteractWithFacesSquint;
   
   static void SetIdleAnimName(ConsoleFunctionContextRef context) {
-    kIdleAnimName = ConsoleArg_Get_String(context, "name");
+    kIdleAnimName = AnimationTriggerFromString(ConsoleArg_Get_String(context, "name"));
   }
   
   CONSOLE_FUNC(SetIdleAnimName,             "Actions.EnrollNamedFace", const char* name);
@@ -537,20 +538,9 @@ namespace Cozmo {
             if(_sayNameWhenDone) {
               // Play success animation which says player's name
               SayTextAction* sayTextAction = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
-              sayTextAction->SetGameEvent(GameEvent::OnLearnedPlayerName);
+              sayTextAction->SetAnimationTrigger(AnimationTrigger::OnLearnedPlayerName);
               SetAction( sayTextAction );
             }
-            
-            //  // Test: trying saying name twice
-            //  SayTextAction* sayTextAction2 = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
-            //  sayTextAction2->SetGameEvent(GameEvent::OnLearnedPlayerName);
-            //  SetAction( new CompoundActionSequential(_robot, {sayTextAction, sayTextAction2}) );
-            
-            //  // Test: Play happy animation after say text
-            //  SetAction( new CompoundActionSequential(_robot, {sayTextAction,
-            //    new PlayAnimationAction(_robot, "anim_reactToBlock_success_01_45"),
-            //    new MoveHeadToAngleAction(_robot, DEG_TO_RAD(40))
-            //  }) );
             
             // Save the new album to the robot.
             if(_saveToRobot) {

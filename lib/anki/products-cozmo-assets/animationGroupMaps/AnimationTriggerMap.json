@@ -1,0 +1,484 @@
+{
+  "Pairs": [
+    {
+      "CladEvent": "AdmireStackAttemptGrabThirdCube",
+      "AnimName": "knockOverStack_grabAttempt"
+    },
+    {
+      "CladEvent": "AdmireStackFocusEyes",
+      "AnimName": "ag_reactToNewBlock"
+    },
+    {
+      "CladEvent": "AdmireStackKnockOverSuccess",
+      "AnimName": "knockOverStack_success"
+    },
+    {
+      "CladEvent": "AdmireStackReactToThirdCube",
+      "AnimName": "knockOverStack_react"
+    },
+    {
+      "CladEvent": "BlockReact",
+      "AnimName": "blockReact"
+    },
+    {
+      "CladEvent": "CodeBreakerNewIdea",
+      "AnimName": "ag_CodeBreakerNewIdea"
+    },
+    {
+      "CladEvent": "CodeBreakerThinking",
+      "AnimName": "ag_CodeBreakerThinking"
+    },
+    {
+      "CladEvent": "ConnectWakeUp",
+      "AnimName": "ag_ConnectWakeUp"
+    },
+    {
+      "CladEvent": "CubePounceFake",
+      "AnimName": "cubePounce_Fake"
+    },
+    {
+      "CladEvent": "CubePounceLoseHand",
+      "AnimName": "cubePounce_LoseHand"
+    },
+    {
+      "CladEvent": "CubePounceLoseRound",
+      "AnimName": "cubePounce_LoseRound"
+    },
+    {
+      "CladEvent": "CubePounceLoseSession",
+      "AnimName": "cubePounce_LoseSession"
+    },
+    {
+      "CladEvent": "CubePouncePounce",
+      "AnimName": "cubePounce_Pounce"
+    },
+    {
+      "CladEvent": "CubePounceWinHand",
+      "AnimName": "cubePounce_WinHand"
+    },
+    {
+      "CladEvent": "CubePounceWinRound",
+      "AnimName": "cubePounce_WinRound"
+    },
+    {
+      "CladEvent": "CubePounceWinSession",
+      "AnimName": "cubePounce_WinSession"
+    },
+    {
+      "CladEvent": "DriveEndAngry",
+      "AnimName": "ag_driving_upset_end"
+    },
+    {
+      "CladEvent": "DriveEndDefault",
+      "AnimName": "ag_driving01_endDriving"
+    },
+    {
+      "CladEvent": "DriveEndLaunch",
+      "AnimName": "ag_driving01_endDriving"
+    },
+    {
+      "CladEvent": "DriveLoopAngry",
+      "AnimName": "ag_driving_upset_Loop"
+    },
+    {
+      "CladEvent": "DriveLoopDefault",
+      "AnimName": "ag_driving01_drivingLoop"
+    },
+    {
+      "CladEvent": "DriveLoopLaunch",
+      "AnimName": "ag_driving01_drivingLoop"
+    },
+    {
+      "CladEvent": "DriveStartAngry",
+      "AnimName": "ag_driving_upset_start"
+    },
+    {
+      "CladEvent": "DriveStartDefault",
+      "AnimName": "ag_driving01_startDriving"
+    },
+    {
+      "CladEvent": "DriveStartLaunch",
+      "AnimName": "ag_driving01_startDriving"
+    },
+    {
+      "CladEvent": "FlipDownFromBack",
+      "AnimName": "FlipDownFromBack"
+    },
+    {
+      "CladEvent": "InteractWithFacesInitial",
+      "AnimName": "interactWithFaces_initial"
+    },
+    {
+      "CladEvent": "InteractWithFacesSquint",
+      "AnimName": "interactWithFaces_squint"
+    },
+    {
+      "CladEvent": "InteractWithFacesWait",
+      "AnimName": "interactWithFaces_squint"
+    },
+    {
+      "CladEvent": "MajorFail",
+      "AnimName": "ag_majorFail"
+    },
+    {
+      "CladEvent": "MajorWin",
+      "AnimName": "ag_majorWin"
+    },
+    {
+      "CladEvent": "OnChargerLoopSleeping",
+      "AnimName": "ag_SleepLoop"
+    },
+    {
+      "CladEvent": "OnChargerStartSleeping",
+      "AnimName": "ag_reactToCharger"
+    },
+    {
+      "CladEvent": "OnLearnedPlayerName",
+      "AnimName": "ag_faceEnrollment_LearnedPlayerName"
+    },
+    {
+      "CladEvent": "OnSawNewNamedFace",
+      "AnimName": "ag_interactFaces_Enrolled"
+    },
+    {
+      "CladEvent": "OnSawNewUnnamedFace",
+      "AnimName": "ag_interactFaces_Unenrolled"
+    },
+    {
+      "CladEvent": "OnSawOldNamedFace",
+      "AnimName": "ag_interactFaces_Enrolled"
+    },
+    {
+      "CladEvent": "OnSawOldUnnamedFace",
+      "AnimName": "ag_interactFaces_Unenrolled"
+    },
+    {
+      "CladEvent": "OnSimonCozmoHandComplete",
+      "AnimName": "ag_simon_successhand_cozmo"
+    },
+    {
+      "CladEvent": "OnSimonCozmoWin",
+      "AnimName": "ag_simon_failgame_player"
+    },
+    {
+      "CladEvent": "OnSimonPlayerHandComplete",
+      "AnimName": "ag_simon_successhand_player"
+    },
+    {
+      "CladEvent": "OnSimonPlayerWin",
+      "AnimName": "ag_simon_failgame_cozmo"
+    },
+    {
+      "CladEvent": "OnSimonPointCube",
+      "AnimName": "ag_simon_point"
+    },
+    {
+      "CladEvent": "OnSimonReactToPattern",
+      "AnimName": "ag_simon_cozmo_end_listen"
+    },
+    {
+      "CladEvent": "OnSpeedtapCozmoConfirm",
+      "AnimName": "ag_speedTap_tap"
+    },
+    {
+      "CladEvent": "OnSpeedtapHandCozmoWin",
+      "AnimName": "ag_speedTap_winHand"
+    },
+    {
+      "CladEvent": "OnSpeedtapFakeout",
+      "AnimName": "ag_speedTap_fake"
+    },
+    {
+      "CladEvent": "OnSpeedtapGameCozmoWinHighIntensity",
+      "AnimName": "ag_speedTap_winGame_intensity03"
+    },
+    {
+      "CladEvent": "OnSpeedtapGameCozmoWinLowIntensity",
+      "AnimName": "ag_speedTap_winGame_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapGamePlayerWinHighIntensity",
+      "AnimName": "ag_speedTap_loseGame_intensity03"
+    },
+    {
+      "CladEvent": "OnSpeedtapGamePlayerWinLowIntensity",
+      "AnimName": "ag_speedTap_loseGame_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapGetOut",
+      "AnimName": "ag_speedTap_getOut"
+    },
+    {
+      "CladEvent": "OnSpeedtapHandPlayerWin",
+      "AnimName": "ag_speedTap_loseHand"
+    },
+    {
+      "CladEvent": "OnSpeedtapIdle",
+      "AnimName": "ag_speedTap_peek"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundCozmoWinHighIntensity",
+      "AnimName": "ag_speedTap_winRound_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundCozmoWinLowIntensity",
+      "AnimName": "ag_speedTap_winRound_intensity01"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundPlayerWinHighIntensity",
+      "AnimName": "ag_speedTap_loseRound_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundPlayerWinLowIntensity",
+      "AnimName": "ag_speedTap_loseRound_intensity01"
+    },
+    {
+      "CladEvent": "OnSpeedtapTap",
+      "AnimName": "ag_speedTap_tap"
+    },
+    {
+      "CladEvent": "OnWaitForCubesMinigameSetup",
+      "AnimName": "ag_speedTap_wait"
+    },
+    {
+      "CladEvent": "OnWiggle",
+      "AnimName": "ag_faceEnrollment_Wiggle"
+    },
+    {
+      "CladEvent": "PopAWheelieInitial",
+      "AnimName": "rollCube_initial"
+    },
+    {
+      "CladEvent": "PopAWheelieRealign",
+      "AnimName": "rollCube_realign"
+    },
+    {
+      "CladEvent": "PopAWheelieRetry",
+      "AnimName": "rollCube_retry"
+    },
+    {
+      "CladEvent": "PounceDriveEnd",
+      "AnimName": "ag_pounceDriveEnd"
+    },
+    {
+      "CladEvent": "PounceDriveLoop",
+      "AnimName": "ag_pounceDriveLoop"
+    },
+    {
+      "CladEvent": "PounceDriveStart",
+      "AnimName": "ag_pounceDriveStart"
+    },
+    {
+      "CladEvent": "PounceFace",
+      "AnimName": "ag_pounceDriveFace"
+    },
+    {
+      "CladEvent": "PounceFail",
+      "AnimName": "ag_pounceOnMotionFail"
+    },
+    {
+      "CladEvent": "PounceGetOut",
+      "AnimName": "ag_pounceDriveFace_getOut"
+    },
+    {
+      "CladEvent": "PounceInitial",
+      "AnimName": "ag_pounceWarningInitial"
+    },
+    {
+      "CladEvent": "PouncePounce",
+      "AnimName": "ag_pounceOnMotionPounce"
+    },
+    {
+      "CladEvent": "PounceSuccess",
+      "AnimName": "ag_pounceOnMotionSuccess"
+    },
+    {
+      "CladEvent": "PutDownBlockKeepAlive",
+      "AnimName": "ag_lookAtFace_keepAlive"
+    },
+    {
+      "CladEvent": "PutDownBlockPutDown",
+      "AnimName": "ag_putDownBlock"
+    },
+    {
+      "CladEvent": "ReactToBlockPickupSuccess",
+      "AnimName": "ag_pickUpCube_success"
+    },
+    {
+      "CladEvent": "ReactToBlockRetryPickup",
+      "AnimName": "rollCube_retry"
+    },
+    {
+      "CladEvent": "ReactToCliff",
+      "AnimName": "reactToCliff"
+    },
+    {
+      "CladEvent": "ReactToNewBlockAsk",
+      "AnimName": "ag_askForBlock"
+    },
+    {
+      "CladEvent": "ReactToNewBlockBig",
+      "AnimName": "ag_reactToNewBlock"
+    },
+    {
+      "CladEvent": "ReactToNewBlockSmall",
+      "AnimName": "ag_reactToNewBlockOnGround"
+    },
+    {
+      "CladEvent": "ReactToPickup",
+      "AnimName": "reactToPickup"
+    },
+    {
+      "CladEvent": "ReactToPokeReaction",
+      "AnimName": "pokeReaction"
+    },
+    {
+      "CladEvent": "ReactToPokeStartled",
+      "AnimName": "pokeStartled"
+    },
+    {
+      "CladEvent": "ReactToStop",
+      "AnimName": "ag_reactToStop"
+    },
+    {
+      "CladEvent": "RequestGameDrivingFail",
+      "AnimName": "ag_RequestGameDriveFail"
+    },
+    {
+      "CladEvent": "RequestGameGenericDeny0",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameGenericDeny1",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameGenericInitial0",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameGenericInitial1",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameGenericPreDrive0",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameGenericPreDrive1",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameGenericRequest0",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameGenericRequest1",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGamePickupFail",
+      "AnimName": "ag_RequestGamePickupFail"
+    },
+    {
+      "CladEvent": "RollBlockInitial",
+      "AnimName": "rollCube_initial"
+    },
+    {
+      "CladEvent": "RollBlockPutDown",
+      "AnimName": "ag_putDownBlock"
+    },
+    {
+      "CladEvent": "RollBlockRealign",
+      "AnimName": "rollCube_realign"
+    },
+    {
+      "CladEvent": "RollBlockRetry",
+      "AnimName": "rollCube_retry"
+    },
+    {
+      "CladEvent": "RollBlockSuccess",
+      "AnimName": "rollCube_success"
+    },
+    {
+      "CladEvent": "Shiver",
+      "AnimName": "ag_shiver"
+    },
+    {
+      "CladEvent": "Shocked",
+      "AnimName": "ag_shocked"
+    },
+    {
+      "CladEvent": "SimonPointCenter",
+      "AnimName": "ag_simon_point_center"
+    },
+    {
+      "CladEvent": "SimonPointLeftBig",
+      "AnimName": "ag_simon_point_bigleft"
+    },
+    {
+      "CladEvent": "SimonPointLeftSmall",
+      "AnimName": "ag_simon_point_smallleft"
+    },
+    {
+      "CladEvent": "SimonPointRightBig",
+      "AnimName": "ag_simon_point_bigright"
+    },
+    {
+      "CladEvent": "SimonPointRightSmall",
+      "AnimName": "ag_simon_point_smallright"
+    },
+    {
+      "CladEvent": "Sleeping",
+      "AnimName": "ag_sleeping"
+    },
+    {
+      "CladEvent": "SoundOnlyLiftEffortPickup",
+      "AnimName": "LiftEffortPickup"
+    },
+    {
+      "CladEvent": "SoundOnlyLiftEffortPlaceHigh",
+      "AnimName": "LiftEffortPlaceHigh"
+    },
+    {
+      "CladEvent": "SoundOnlyLiftEffortPlaceLow",
+      "AnimName": "LiftEffortPlaceLow"
+    },
+    {
+      "CladEvent": "SoundOnlyLiftEffortPlaceRoll",
+      "AnimName": "LiftEffortRoll"
+    },
+    {
+      "CladEvent": "SoundOnlyTurnSmall",
+      "AnimName": "ag_soundOnlyTurnSmall"
+    },
+    {
+      "CladEvent": "SpeedTapDrivingEnd",
+      "AnimName": "ag_speedTap_endDriving"
+    },
+    {
+      "CladEvent": "SpeedTapDrivingLoop",
+      "AnimName": "ag_speedTap_drivingLoop"
+    },
+    {
+      "CladEvent": "SpeedTapDrivingStart",
+      "AnimName": "ag_speedTap_startDriving"
+    },
+    {
+      "CladEvent": "StackBlocksRetry",
+      "AnimName": "rollCube_retry"
+    },
+    {
+      "CladEvent": "StackBlocksSuccess",
+      "AnimName": "stackCube_success"
+    },
+    {
+      "CladEvent": "StartSleeping",
+      "AnimName": "ag_startSleeping"
+    },
+    {
+      "CladEvent": "Surprise",
+      "AnimName": "ag_surprise"
+    }
+  ]
+}

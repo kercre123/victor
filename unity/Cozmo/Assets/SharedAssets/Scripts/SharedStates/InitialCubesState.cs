@@ -36,13 +36,10 @@ public class InitialCubesState : State {
 
     CheckForNewlySeenCubes();
 
-    string waitAnimGroup = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnWaitForCubesMinigameSetup);
-    if (waitAnimGroup != null) {
-      Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
-      pushIdleAnimMsg.animationName = waitAnimGroup;
-      RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
-      RobotEngineManager.Instance.SendMessage();
-    }
+    Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
+    pushIdleAnimMsg.animTrigger = Anki.Cozmo.AnimationTrigger.OnWaitForCubesMinigameSetup;
+    RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public override void Update() {
@@ -160,11 +157,8 @@ public class InitialCubesState : State {
 
     _Game.SharedMinigameView.HideGameStateSlide();
 
-    string waitAnimGroup = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnWaitForCubesMinigameSetup);
-    if (waitAnimGroup != null) {
-      RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
-      RobotEngineManager.Instance.SendMessage();
-    }
+    RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
+    RobotEngineManager.Instance.SendMessage();
   }
 
   protected virtual void HandleContinueButtonClicked() {

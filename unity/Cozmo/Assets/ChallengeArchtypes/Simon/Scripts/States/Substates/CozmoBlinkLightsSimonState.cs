@@ -4,14 +4,11 @@ using UnityEngine;
 namespace Simon {
   public class CozmoBlinkLightsSimonState : State {
     private LightCube _TargetCube;
-    private string _AnimGroupName;
+    private Anki.Cozmo.AnimationTrigger _AnimGroupTrigger;
 
-    public CozmoBlinkLightsSimonState(LightCube targetCube, string animGroupName = null) {
+    public CozmoBlinkLightsSimonState(LightCube targetCube, Anki.Cozmo.AnimationTrigger animGroupTrigger = Anki.Cozmo.AnimationTrigger.OnSimonPointCube) {
       _TargetCube = targetCube;
-      _AnimGroupName = animGroupName;
-      if (_AnimGroupName == null) {
-        _AnimGroupName = AnimationManager.Instance.GetAnimGroupForEvent(Anki.Cozmo.GameEvent.OnSimonPointCube);
-      }
+      _AnimGroupTrigger = animGroupTrigger;
     }
 
     public override void Enter() {
@@ -21,7 +18,7 @@ namespace Simon {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(HandleRobotAnimationEvent);
 
       // Animation needs to have a robot event
-      _CurrentRobot.SendAnimationGroup(_AnimGroupName, HandleEndAnimationComplete);
+      _CurrentRobot.SendAnimationTrigger(_AnimGroupTrigger, HandleEndAnimationComplete);
     }
 
     public override void Exit() {

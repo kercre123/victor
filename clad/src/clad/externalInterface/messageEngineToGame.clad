@@ -16,7 +16,6 @@
 #include "clad/types/toolCodes.clad"
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/unlockTypes.clad"
-#include "clad/types/gameEvent.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/nvStorageTypes.clad"
@@ -505,13 +504,6 @@ message FirmwareUpdateComplete {
   uint_32 robotID,
   FirmwareUpdateResult  result,
   string  fwSig
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CozmoGameEvent, generic events unity might care about.
-///////////////////////////////////////////////////////////////////////////////
-message CozmoGameEvent {
-  GameEvent eventEnum,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

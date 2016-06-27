@@ -58,11 +58,6 @@ CONSOLE_VAR(f32, kBAS_ScoreIncreaseForAction, "Behavior.AdmireStack", 0.8f);
 
 CONSOLE_VAR(f32, kBAS_LookDownToSecond_deg, "Behavior.AdmireStack", 10.0f);
 
-const char* const kFocusEyesForKnockOverAnim = "anim_ReactToBlock_focusedEyes_01";
-
-const std::string kDrivingAngryStartAnim = "ag_driving_upset_start";
-const std::string kDrivingAngryLoopAnim  = "ag_driving_upset_Loop";
-const std::string kDrivingAngryEndAnim   = "ag_driving_upset_end";
 
 BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -183,7 +178,7 @@ void BehaviorAdmireStack::TransitionToReactingToThirdBlock(Robot& robot)
 {
   SET_STATE(ReactingToThirdBlock);
 
-  StartActing(new PlayAnimationGroupAction(robot, _reactToThirdCubeAnimGroup),
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::AdmireStackReactToThirdCube),
               &BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock);
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
@@ -194,8 +189,6 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
 
   //Disable Cliff Reaction
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
-  
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   ObjectID topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
   ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID(topPlacedBlock);
@@ -205,6 +198,8 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
                         topPlacedBlock.GetValue());
     return;
   }
+  
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   Pose3d poseWrtRobot;
   if( secondBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
@@ -215,7 +210,7 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
     }
   }
 
-  action->AddAction(new PlayAnimationGroupAction(robot, _tryToGrabThirdCubeAnimGroup));
+  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::AdmireStackAttemptGrabThirdCube));
 
   StartActing(action, &BehaviorAdmireStack::TransitionToKnockingOverStack);
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
@@ -232,9 +227,9 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
   
   // Push angry driving animations
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations({kDrivingAngryStartAnim,
-                                                            kDrivingAngryLoopAnim,
-                                                            kDrivingAngryEndAnim});
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartAngry,
+                                                            AnimationTrigger::DriveLoopAngry,
+                                                            AnimationTrigger::DriveEndAngry});
   
   // Backup
   DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
@@ -247,7 +242,7 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   
   // Look at face
   action->AddAction(new TurnTowardsFaceWrapperAction(robot,
-                                                     new PlayAnimationAction(robot, kFocusEyesForKnockOverAnim)));
+                                                     new TriggerAnimationAction(robot, AnimationTrigger::AdmireStackFocusEyes)));
   
   // Turn towards bottom block of stack
   TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(robot,
@@ -284,7 +279,7 @@ void BehaviorAdmireStack::TransitionToReactingToTopple(Robot& robot)
   robot.GetBlockWorld().ClearObject(_thirdBlockID);
 
   // Only consider the stack knocked over when the knock over success animation has completed
-  StartActing(new PlayAnimationGroupAction(robot, _succesAnimGroup), [this]()
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::AdmireStackKnockOverSuccess), [this]()
   {
     PRINT_NAMED_INFO("BehaviorAdmireStack.TransitionToReactingToTopple.Callback", "Setting did knock over stack");
     _didKnockOverStack = true;

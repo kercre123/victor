@@ -51,9 +51,6 @@ namespace CodeBreaker {
 
     public override void Enter() {
       _Game = _StateMachine.GetGame() as CodeBreakerGame;
-
-      // TODO: Play intermittent "impatient" animation? Use mood manager?
-      _CurrentRobot.SetIdleAnimation("_LIVE_");
       SetConstrictedLiveAnimation();
 
       _Game.ShowGamePanel(HandleSubmitButtonClicked);

@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/animationTrigger.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -28,9 +29,6 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
   
-static const char* kStopReactName = "ag_reactToStop";
-
-static const char* kCliffReactAnimName = "reactToCliff";
 static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 
@@ -87,7 +85,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
   // play the stop animation, but also wait at least the minimum time so we keep running 
   _gotCliff = false;
   StartActing(new CompoundActionParallel(robot, {
-        new PlayAnimationGroupAction(robot, kStopReactName),
+    new TriggerAnimationAction(robot, AnimationTrigger::ReactToStop),
         new WaitAction(robot, minWaitTime_s) }),
     &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
@@ -98,7 +96,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
   SET_STATE(PlayingCliffReaction);
 
   if( _gotCliff ) {
-    StartActing(new PlayAnimationGroupAction(robot, kCliffReactAnimName),
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToCliff),
                 &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now

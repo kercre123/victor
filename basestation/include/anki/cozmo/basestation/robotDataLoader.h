@@ -34,7 +34,7 @@ namespace Cozmo {
 class AnimationGroupContainer;
 class CannedAnimationContainer;
 class CozmoContext;
-class GameEventResponsesContainer;
+class AnimationTriggerResponsesContainer;
 
 class RobotDataLoader : private Util::noncopyable
 {
@@ -54,7 +54,7 @@ public:
 
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
-  GameEventResponsesContainer* GetGameEventResponses() const { return _gameEventResponses.get(); }
+  AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
 
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const { return _robotMoodConfig; }
@@ -68,7 +68,7 @@ private:
   void LoadAnimationGroups();
   void LoadAnimationGroupFile(const std::string& path);
   void LoadFaceAnimations();
-  void LoadGameEventResponses();
+  void LoadAnimationTriggerResponses();
   void LoadRobotConfigs();
 
   using TimestampMap = std::unordered_map<std::string, time_t>;
@@ -93,7 +93,7 @@ private:
   // animation data
   std::unique_ptr<CannedAnimationContainer> _cannedAnimations;
   std::unique_ptr<AnimationGroupContainer> _animationGroups;
-  std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
+  std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;
   TimestampMap _animFileTimestamps;
   TimestampMap _groupAnimFileTimestamps;
 

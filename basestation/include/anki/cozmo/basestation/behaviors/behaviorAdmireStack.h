@@ -47,10 +47,6 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
 
 private:
-
-  std::string _reactToThirdCubeAnimGroup = "knockOverStack_react";
-  std::string _tryToGrabThirdCubeAnimGroup = "knockOverStack_grabAttempt";
-  std::string _succesAnimGroup = "knockOverStack_success";
   
   enum class State {
     WatchingStack,

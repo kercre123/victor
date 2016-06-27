@@ -22,6 +22,8 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "util/console/consoleInterface.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 
 namespace Anki {
   
@@ -143,9 +145,9 @@ namespace Anki {
       _preActionPoseAngleTolerance = angleTolerance;
     }
 
-    void IDockAction::SetPostDockLiftMovingAnimation(const std::string& animName)
+    void IDockAction::SetPostDockLiftMovingAnimation(AnimationTrigger animTrigger)
     {
-      _liftMovingAnimation = animName;
+      _liftMovingAnimation = animTrigger;
     }
     
     void IDockAction::IsCloseEnoughToPreActionPose(Robot& robot, PreActionPoseInfo& preActionPoseInfo)
@@ -287,19 +289,10 @@ namespace Anki {
       using namespace RobotInterface;
       auto liftSoundLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
-        if (!_liftMovingAnimation.empty()) {
+        if (_liftMovingAnimation != AnimationTrigger::Count) {
           // Check that the animation only has sound keyframes
-          const Animation* anim = _robot.GetAnimationStreamer().GetCannedAnimation(_liftMovingAnimation);
-          if (nullptr != anim) {
-            auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
-            auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
-            auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
-            
-            if (!headTrack.IsEmpty() || !liftTrack.IsEmpty() || !bodyTrack.IsEmpty()) {
-              PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.AnimHasMotion",
-                                  "Animation must contain only sound.");
-              return;
-            }
+          bool has_response = _robot.GetContext()->GetDataLoader()->GetAnimationTriggerResponses()->HasResponse(_liftMovingAnimation);
+          if (has_response) {
             
             // Check that the action matches the current action
             DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;
@@ -313,14 +306,14 @@ namespace Anki {
             // Play the animation
             PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
                              "Playing animation %s ",
-                             _liftMovingAnimation.c_str());
-            IActionRunner* animAction = new PlayAnimationGroupAction(_robot, _liftMovingAnimation, 1, false);
+                             EnumToString(_liftMovingAnimation));
+            IActionRunner* animAction = new TriggerAnimationAction(_robot, _liftMovingAnimation, 1, false);
             animAction->ShouldEmitCompletionSignal(false);
             _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
           } else {
             PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
                                 "Could not find animation %s",
-                                _liftMovingAnimation.c_str());
+                                EnumToString(_liftMovingAnimation));
           }
         }
       };
@@ -704,7 +697,7 @@ namespace Anki {
     : IDockAction(robot, objectID, useManualSpeed)
     {
       _dockingMethod = (DockingMethod)kPickupDockingMethod;
-      SetPostDockLiftMovingAnimation("LiftEffortPickup");
+      SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPickup);
     }
     
     PickupObjectAction::~PickupObjectAction()
@@ -1081,7 +1074,9 @@ namespace Anki {
     {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
-      SetPostDockLiftMovingAnimation(placeOnGround ? "LiftEffortPlaceLow" : "LiftEffortPlaceHigh");
+      SetPostDockLiftMovingAnimation(placeOnGround ?
+                                     AnimationTrigger::SoundOnlyLiftEffortPlaceLow :
+                                     AnimationTrigger::SoundOnlyLiftEffortPlaceHigh);
     }
     
     const std::string& PlaceRelObjectAction::GetName() const
@@ -1293,7 +1288,7 @@ namespace Anki {
     {
       _dockingMethod = (DockingMethod)kRollDockingMethod;
       _dockAction = DockAction::DA_ROLL_LOW;
-      SetPostDockLiftMovingAnimation("LiftEffortRoll");
+      SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPlaceRoll);
     }
     
     const std::string& RollObjectAction::GetName() const

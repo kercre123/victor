@@ -21,7 +21,7 @@ namespace CodeBreaker {
       // Count the number of correct color and right position
       _NumCorrectPosAndColor = 0;
       List<int> usedGuessIndices = new List<int>();
-      for (int i = 0; i < guess.cubeColorIndex.Length; i++) { 
+      for (int i = 0; i < guess.cubeColorIndex.Length; i++) {
         if (guess.cubeColorIndex[i] == _WinningCode.cubeColorIndex[i]) {
           _NumCorrectPosAndColor++;
           usedGuessIndices.Add(i);
@@ -35,7 +35,7 @@ namespace CodeBreaker {
       // Count the number of correct color but wrong position
       _NumCorrectColor = 0;
       foreach (var kvp in winningColorIndexToNum) {
-        int numGuessesOfWinningColor; 
+        int numGuessesOfWinningColor;
         if (guessColorIndexToNum.TryGetValue(kvp.Key, out numGuessesOfWinningColor)) {
           _NumCorrectColor += Mathf.Min(kvp.Value, numGuessesOfWinningColor);
         }
@@ -44,7 +44,7 @@ namespace CodeBreaker {
 
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerThinking, HandleCozmoThinkAnimationFinished);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeBreakerThinking, HandleCozmoThinkAnimationFinished);
       _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_FRONT, Color.white);
       _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_MIDDLE, Color.white);
       _CurrentRobot.SetFlashingBackpackLED(LEDId.LED_BACKPACK_BACK, Color.white);
@@ -78,40 +78,40 @@ namespace CodeBreaker {
       // TODO: Play reaction animation and leave current state based on game state
       if (_NumCorrectPosAndColor >= _WinningCode.NumCubes) {
         DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
-        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kMajorFail, LocalizationKeys.kMinigameTextPlayerWins));
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), Anki.Cozmo.AnimationTrigger.MajorFail, LocalizationKeys.kMinigameTextPlayerWins));
       }
       else if (game.AnyGuessesLeft()) {
         if (_NumCorrectPosAndColor == _WinningCode.NumCubes - 1) {
           // Player really close to winning; be sad
           if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
-            _CurrentRobot.SendAnimation(AnimationName.kSurprise, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.Surprise, HandleTryAgainAnimationFinished);
           }
           else {
-            _CurrentRobot.SendAnimation(AnimationName.kShiver, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.Shiver, HandleTryAgainAnimationFinished);
           }
         }
         else if (_NumCorrectPosAndColor >= _WinningCode.NumCubes * 0.5f) {
           // Player halfway there
           if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
-            _CurrentRobot.SendAnimation(AnimationName.kConnect_WakeUp, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleTryAgainAnimationFinished);
           }
           else {
-            _CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MajorWin, HandleTryAgainAnimationFinished);
           }
         }
         else {
           if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
-            _CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MajorWin, HandleTryAgainAnimationFinished);
           }
           else {
-            _CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MajorFail, HandleTryAgainAnimationFinished);
           }
         }
       }
       else {
         // Player lost
         DisplayCorrectCode(_SortedCubeState, _WinningCode, game.ValidColors);
-        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), AnimationName.kCelebration2, LocalizationKeys.kMinigameTextCozmoWins));
+        _StateMachine.SetNextState(new CodeBreakerEndState(GetLightCubes(), Anki.Cozmo.AnimationTrigger.MajorWin, LocalizationKeys.kMinigameTextCozmoWins));
       }
     }
 

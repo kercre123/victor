@@ -38,7 +38,6 @@
 namespace Anki {
 namespace Cozmo {
 
-static const char* const kBlockReactAnimGroup = "blockReact";
 static const char* const kShouldHandleConfirmedKey = "shouldHandleConfirmedObject";
 static const char* const kShouldHandlePossibleKey = "shouldHandlePossibleObject";
 
@@ -140,7 +139,7 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robo
 Result BehaviorLookAround::ResumeInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.GetAnimationStreamer().PushIdleAnimation("NONE");
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   }
     
   TransitionToWaitForOtherActions(robot);
@@ -293,7 +292,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
   
   StartActing(new CompoundActionSequential(robot, {
                   new TurnTowardsObjectAction(robot, recentObjectID, PI_F),
-                  new PlayAnimationGroupAction(robot, kBlockReactAnimGroup) }),
+                  new TriggerAnimationAction(robot, AnimationTrigger::BlockReact) }),
                [this, &robot, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",

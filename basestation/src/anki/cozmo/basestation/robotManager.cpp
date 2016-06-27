@@ -12,13 +12,13 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
-#include "anki/cozmo/basestation/events/gameEventResponsesContainer.h"
+#include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/gameEvent.h"
+#include "clad/types/animationTrigger.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -40,7 +40,7 @@ namespace Anki {
     , _robotEventHandler(context)
     , _cannedAnimations(context->GetDataLoader()->GetCannedAnimations())
     , _animationGroups(context->GetDataLoader()->GetAnimationGroups())
-    , _gameEventResponses(context->GetDataLoader()->GetGameEventResponses())
+    , _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
     , _firmwareUpdater(new FirmwareUpdater(context))
     , _robotMessageHandler(new RobotInterface::MessageHandler())
     {
@@ -274,13 +274,13 @@ namespace Anki {
     {
       return _animationGroups->HasGroup(groupName);
     }
-    bool RobotManager::HasAnimationResponseForEvent( GameEvent ev )
+    bool RobotManager::HasAnimationForTrigger( AnimationTrigger ev )
     {
-      return _gameEventResponses->HasResponse(ev);
+      return _animationTriggerResponses->HasResponse(ev);
     }
-    std::string RobotManager::GetAnimationResponseForEvent( GameEvent ev )
+    std::string RobotManager::GetAnimationForTrigger( AnimationTrigger ev )
     {
-      return _gameEventResponses->GetResponse(ev);
+      return _animationTriggerResponses->GetResponse(ev);
     }
     
   } // namespace Cozmo

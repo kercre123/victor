@@ -30,7 +30,6 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _LastSequenceTime = Time.time;
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonExampleStarted);
     }
 
     public override void Update() {
@@ -47,7 +46,7 @@ namespace Simon {
           _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
         }
         else {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSimonStartTurn, HandEndAnimationDone));
+          _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.OnSimonReactToPattern, HandEndAnimationDone));
         }
       }
       else {

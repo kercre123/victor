@@ -201,7 +201,7 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
     if(canPickUp)
     {
       // React and then go get it!
-      action->AddAction(new PlayAnimationGroupAction(robot, _bigReactAnimGroup));
+      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::ReactToNewBlockBig));
       StartActing(action, kBRTNB_ScoreIncreaseForReaction,
                   [this,&robot](ActionResult res) {
                     if(ActionResult::SUCCESS != res) {
@@ -230,7 +230,7 @@ void BehaviorReactToNewBlock::TransitionToDoingInitialReaction(Robot& robot)
   else
   {
     // Simple case: not interested in picking up, so just react and move on
-    action->AddAction(new PlayAnimationGroupAction(robot, _smallReactAnimGroup));
+    action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::ReactToNewBlockSmall));
     
     StartActing(action, kBRTNB_ScoreIncreaseForReaction,
                 [this](ActionResult res) {
@@ -348,7 +348,7 @@ void BehaviorReactToNewBlock::TransitionToPickingUp(Robot& robot)
                   _reactedBlocks.insert(_targetBlock);
                   _targetBlock.UnSet();
                   
-                  StartActing(new PlayAnimationGroupAction(robot, _pickupSuccessAnimGroup),
+                  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess),
                               kBRTNB_ScoreIncreaseForPickup);
                 } else {
                   auto& completionInfo = completionEvent.completionInfo.Get_objectInteractionCompleted();
@@ -364,7 +364,7 @@ void BehaviorReactToNewBlock::TransitionToPickingUp(Robot& robot)
                     default:
                       // Pickup failed, play retry animation, finish, and let behavior
                       // be selected again
-                      StartActing(new PlayAnimationGroupAction(robot, _retryPickeupAnimGroup),
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockRetryPickup),
                                   kBRTNB_ScoreIncreaseForReaction);
                       break;
                   }
@@ -381,8 +381,8 @@ IActionRunner* BehaviorReactToNewBlock::CreateAskForAction(Robot& robot)
   
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     new TurnTowardsObjectAction(robot, _targetBlock, PI_F),                 // Look towards object
-    new PlayAnimationGroupAction(robot, _askForBlockAnimGroup),             // Play "ask for" animation
-    //new PlayAnimationGroupAction(robot, _askingLoopGroup),                  // Play "asksing" loop (?)
+    new TriggerAnimationAction(robot, AnimationTrigger::ReactToNewBlockAsk), // Play "ask for" animation
+    //new TriggerAnimationAction(robot, _askingLoopGroup),                  // Play "asksing" loop (?)
     moveHeadAndLift,                                                        // Make sure head and lift are down
     new WaitForImagesAction(robot, kBRTNB_numImagesToWaitWhileLookingDown, VisionMode::DetectingMarkers), // Wait for a few images to see the object
   });

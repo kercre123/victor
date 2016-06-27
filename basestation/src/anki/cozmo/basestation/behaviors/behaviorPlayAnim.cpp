@@ -12,42 +12,24 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
   
-static const char* kAnimNameKey = "animName";
-static const char* kAnimGroupNameKey = "animGroupName";
+static const char* kAnimTriggerKey = "animTrigger";
 static const char* kLoopsKey = "num_loops";
 
 BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _animationName()
 {
   SetDefaultName("PlayAnim");
   
   if (!config.isNull())
   {
-    const Json::Value& animNameJson = config[kAnimNameKey];
-    const Json::Value& animGroupNameJson = config[kAnimGroupNameKey];
-
-    if( animNameJson.isString() ) {
-      _animationName = animNameJson.asCString();
-    }
-    if( animGroupNameJson.isString() ) {
-      _animationGroupName = animGroupNameJson.asCString();
-      _useGroup = true;
-    }
-      
-    if( animNameJson.isString() && animGroupNameJson.isString() ) {
-      PRINT_NAMED_WARNING("BehaviorPlayAnim.ConfigError",
-                          "config for behavior '%s' specified keys '%s' and '%s', the group will be used",
-                          GetName().c_str(),
-                          kAnimNameKey,
-                          kAnimGroupNameKey);
-    }
+    JsonTools::GetValueOptional(config,kAnimTriggerKey,_animTrigger);
   }
 
   _numLoops = config.get(kLoopsKey, 1).asInt();
@@ -65,13 +47,7 @@ bool BehaviorPlayAnim::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorPlayAnim::InitInternal(Robot& robot)
 {
-  if( _useGroup ) {
-    StartActing(new PlayAnimationGroupAction(robot, _animationGroupName, _numLoops));
-  }
-  else {
-    StartActing(new PlayAnimationAction(robot, _animationName, _numLoops));
-  }
-  
+  StartActing(new TriggerAnimationAction(robot, _animTrigger, _numLoops));
   return Result::RESULT_OK;
 }  
 

@@ -17,17 +17,13 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "clad/types/animationTrigger.h"
 #include <vector>
 
 namespace Anki {
   namespace Cozmo {
   
     class Robot;
-    
-    // Default driving animations
-    static const char* kDefaultDrivingStartAnim = "ag_driving01_startDriving";
-    static const char* kDefaultDrivingLoopAnim = "ag_driving01_drivingLoop";
-    static const char* kDefaultDrivingEndAnim = "ag_driving01_endDriving";
     
     class DrivingAnimationHandler
     {
@@ -39,9 +35,9 @@ namespace Anki {
         // Container for the various driving animations
         struct DrivingAnimations
         {
-          std::string drivingStartAnim;
-          std::string drivingLoopAnim;
-          std::string drivingEndAnim;
+          AnimationTrigger drivingStartAnim;
+          AnimationTrigger drivingLoopAnim;
+          AnimationTrigger drivingEndAnim;
         };
       
         // Sets the driving animations

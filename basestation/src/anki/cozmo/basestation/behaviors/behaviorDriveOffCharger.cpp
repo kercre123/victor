@@ -120,9 +120,9 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
   {
     _timesResumed++;
     // Numbers shared with demoFearEdge but will move here since this is in freeplay
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations({_startDrivingAnimGroup,
-                                                              _drivingLoopAnimGroup,
-                                                              _stopDrivingAnimGroup});
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
+                                                              AnimationTrigger::DriveLoopLaunch,
+                                                              AnimationTrigger::DriveEndLaunch});
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm, kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);

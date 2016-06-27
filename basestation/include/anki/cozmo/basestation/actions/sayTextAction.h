@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "clad/types/sayTextStyles.h"
+#include "clad/types/animationTrigger.h"
 
 
 namespace Anki {
@@ -43,7 +44,7 @@ namespace Cozmo {
     // Use GameEvent::Count to use built-in animation (default).
     // The animation group should contain animations that have the special audio
     // keyframe for Audio::GameEvent::GenericEvent::Vo_Coz_External_Play.
-    void SetGameEvent(GameEvent gameEvent) { _gameEvent = gameEvent; }
+    void SetAnimationTrigger(AnimationTrigger trigger) { _animationTrigger = trigger; }
     
   protected:
     
@@ -58,7 +59,7 @@ namespace Cozmo {
     bool                      _clearOnCompletion    = true;
     bool                      _isAudioReady         = false;
     Animation                 _animation;
-    GameEvent                 _gameEvent            = GameEvent::Count; // Count == use built-in animation
+    AnimationTrigger          _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
     IActionRunner*            _playAnimationAction  = nullptr;
     f32                       _timeout_sec          = 30.f;
     

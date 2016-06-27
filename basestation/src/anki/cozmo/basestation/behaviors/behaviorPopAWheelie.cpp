@@ -85,20 +85,19 @@ bool BehaviorPopAWheelie::FilterBlocks(ObservableObject* obj) const
 void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
 {
   SET_STATE(ReactingToBlock);
-  
-  if( !_initialAnimGroup.empty() ) {
     // Turn towards the object and then react to it before performing the pop a wheelie action
     StartActing(new CompoundActionSequential(robot, {
       new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-      new PlayAnimationGroupAction(robot, _initialAnimGroup),
+      new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
     }),
-                [this,&robot]{ this->TransitionToPerformingAction(robot); });
-  }
-  else {
-    TransitionToPerformingAction(robot);
-  }
+    &BehaviorPopAWheelie::TransitionToPerformingAction);
 }
 
+void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot)
+{
+  TransitionToPerformingAction(robot,false);
+}
+  
 void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
   SET_STATE(PerformingAction);
@@ -128,7 +127,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 {
                   case ActionResult::SUCCESS:
                     /**if( !_successAnimGroup.empty() ) {
-                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
+                      StartActing(new TriggerAnimationAction(robot, _successAnimGroup));
                     }**/
                     break;
                     
@@ -175,16 +174,12 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
     case ObjectInteractionResult::INCOMPLETE:
     case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
     {
-      if( ! _realignAnimGroup.empty() ) {
-        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
-      }
+      animAction = new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
       break;
     }
       
     default: {
-      if( ! _retryActionAnimGroup.empty() ) {
-        animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
-      }
+      animAction = new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieRetry);
       break;
     }
   }

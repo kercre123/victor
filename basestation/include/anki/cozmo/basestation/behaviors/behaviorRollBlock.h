@@ -15,7 +15,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include <string>
+#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -38,13 +38,7 @@ protected:
     
 private:
 
-  std::string _initialAnimGroup = "rollCube_initial";
-  std::string _realignAnimGroup = "rollCube_realign";
-  std::string _retryActionAnimGroup = "rollCube_retry";
-  std::string _successAnimGroup = "rollCube_success";
-
-  // if this is empty, will use an action, otherwise will use this animation group in order to put down the cube
-  std::string _putDownAnimGroup = "";
+  AnimationTrigger _putDownAnimTrigger = AnimationTrigger::Count;
 
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
   // UpdateWhileNotRunning

@@ -27,9 +27,6 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
 
-// this is a stand-in for the real pickup animation
-static const char* kPickupReactAnimName = "reactToPickup";
-
 CONSOLE_VAR(f32, kMinTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 3.0f);
 CONSOLE_VAR(f32, kMaxTimeBetweenPickupAnims_sec, "Behavior.ReactToPickup", 6.0f);
 CONSOLE_VAR(f32, kRepeatAnimMultIncrease, "Behavior.ReactToPickup", 0.33f);
@@ -66,7 +63,7 @@ Result BehaviorReactToPickup::InitInternal(Robot& robot)
   
 void BehaviorReactToPickup::StartAnim(Robot& robot)
 {
-  StartActing(new PlayAnimationGroupAction(robot, kPickupReactAnimName));
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToPickup));
   
   const double minTime = _repeatAnimatingMultiplier * kMinTimeBetweenPickupAnims_sec;
   const double maxTime = _repeatAnimatingMultiplier * kMaxTimeBetweenPickupAnims_sec;

@@ -326,12 +326,12 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot, bool isRetry,
                       if(_numPickupRetries < kBSB_MaxNumPickupRetries)
                       {
                         bool forceDifferentPreactionPose = false;
-                        std::string animGroupName = "";
+                        AnimationTrigger animTrigger = AnimationTrigger::Count;
                         switch(msg.completionInfo.Get_objectInteractionCompleted().result)
                         {
                           case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
                           {
-                            animGroupName = _retryActionAnimGroup;
+                            animTrigger = AnimationTrigger::StackBlocksRetry;
                             forceDifferentPreactionPose = true;
                             break;
                           }
@@ -340,22 +340,22 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot, bool isRetry,
                           case ObjectInteractionResult::INCOMPLETE:
                           {
                             // Smaller reaction if we just didn't get to the pre-action pose
-                            animGroupName = _realignAnimGroup;
+                            animTrigger = AnimationTrigger::RollBlockRealign;
                             break;
                           }
                             
                           default:
-                            animGroupName = _retryActionAnimGroup;
+                            animTrigger = AnimationTrigger::StackBlocksRetry;
                             break;
                         } // switch(objectInteractionResult)
                         
                         // Transition to picking up a block as a retry, with options
                         // chosen in switch above.
                         const bool isRetry = true;
-                        if( ! animGroupName.empty() )
+                        if( animTrigger != AnimationTrigger::Count )
                         {
                           // Play any animation selected in switch above and then go back to pickup state
-                          StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
+                          StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
                                       [this,forceDifferentPreactionPose,&robot] () {
                                         this->TransitionToPickingUpBlock(robot, isRetry, forceDifferentPreactionPose);
                                       });
@@ -417,13 +417,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     TransitionToPlayingFinalAnim(robot);
                   }
                   else if( res == ActionResult::FAILURE_RETRY ) {
-                    if( ! _retryActionAnimGroup.empty() ) {                      
-                      StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
-                                  &BehaviorStackBlocks::TransitionToStackingBlock);
-                    }
-                    else {
-                      TransitionToStackingBlock(robot);
-                    }
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
+                                &BehaviorStackBlocks::TransitionToStackingBlock);
                   }
                   else if( res == ActionResult::FAILURE_ABORT ) {
                     TransitionToWaitForBlocksToBeValid(robot);
@@ -455,7 +450,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
 
   robot.GetBehaviorManager().GetWhiteboard().SetHasStackToAdmire(_targetBlockTop, _targetBlockBottom);
 
-  StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
 }
 

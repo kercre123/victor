@@ -68,10 +68,10 @@ private:
   // there are two sets of values, based on whether there are 0 or more blocks available (at the time of Init)
   struct ConfigPerNumBlocks {
     void LoadFromJson(const Json::Value& config);
-    std::string initialAnimationName;
-    std::string preDriveAnimationName;
-    std::string requestAnimationName;
-    std::string denyAnimationName;
+    AnimationTrigger initialAnimTrigger = AnimationTrigger::AnimNone;
+    AnimationTrigger preDriveAnimTrigger = AnimationTrigger::AnimNone;
+    AnimationTrigger requestAnimTrigger = AnimationTrigger::AnimNone;
+    AnimationTrigger denyAnimTrigger = AnimationTrigger::AnimNone;
     float       minRequestDelay;
     float       scoreFactor;
   };

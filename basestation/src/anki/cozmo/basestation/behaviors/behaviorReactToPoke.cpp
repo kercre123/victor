@@ -25,10 +25,6 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-
-static std::string _animStartledGroup = "pokeStartled";
-static std::string _animReactionsGroup = "pokeReactions";
-
   
 BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -85,7 +81,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
       robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked", currentTime_sec);
       
       // Do startled animation
-      StartActing(robot, new PlayAnimationGroupAction(robot, _animStartledGroup));
+      StartActing(robot, new TriggerAnimationAction(robot, AnimationTrigger::ReactToPokeStartled));
       _currentState = State::TurnToFace;
       break;
     }
@@ -111,7 +107,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
     }
     case State::ReactToFace:
     {
-      StartActing(robot, new PlayAnimationGroupAction(robot, _animReactionsGroup));
+      StartActing(robot, new TriggerAnimationAction(robot, AnimationTrigger::ReactToPokeReaction));
       _currentState = State::Inactive;
       _doReaction = false;
       

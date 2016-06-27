@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/gameEvent.h"
+#include "clad/types/animationTrigger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
@@ -30,20 +30,8 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      // Deprecated constructor hardcoded use of string names
       PlayAnimationAction(Robot& robot,
                           const std::string& animName,
-                          u32 numLoops = 1,
-                          bool interruptRunning = true);
-      // Preferred constructor, used by the factory CreatePlayAnimationAction
-      PlayAnimationAction(Robot& robot,
-                          GameEvent animName,
-                          u32 numLoops = 1,
-                          bool interruptRunning = true);
-      // Backup constructor for transition, allows to use designer driven config or hardcoded backup
-      PlayAnimationAction(Robot& robot,
-                          GameEvent animName,
-                          const std::string& backupAnimName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
       // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
@@ -88,17 +76,12 @@ namespace Anki {
     }; // class PlayAnimationAction
 
 
-    class PlayAnimationGroupAction : public PlayAnimationAction
+    class TriggerAnimationAction : public PlayAnimationAction
     {
     public:
-      // Deprecated
-      explicit PlayAnimationGroupAction(Robot& robot,
-                                        const std::string& animGroupName,
-                                        u32 numLoops = 1,
-                                        bool interruptRunning = true);
       // Preferred constructor, used by the factory CreatePlayAnimationAction
-      explicit PlayAnimationGroupAction(Robot& robot,
-                                        GameEvent animEvent,
+      explicit TriggerAnimationAction(Robot& robot,
+                                        AnimationTrigger animEvent,
                                         u32 numLoops = 1,
                                         bool interruptRunning = true);
       
@@ -107,21 +90,8 @@ namespace Anki {
       
       std::string   _animGroupName;
       
-    }; // class PlayAnimationGroupAction
+    }; // class TriggerAnimationAction
     
-    // Checks if something is an animation or a group and returns the right action
-    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent,
-                                                    u32 numLoops = 1,bool interruptRunning = true);
-    // This will fallback on a hardcoded name if used.
-    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
-                        u32 numLoops = 1,bool interruptRunning = true);
-    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, const std::string& animName,
-                                                   u32 numLoops = 1,bool interruptRunning = true);
-
-    // This will turn a vector into a compound action of play animation actions (from CreatePlayAnimationAction)
-    IActionRunner* CreatePlayAnimtionListAction(Robot& robot,
-                                                const std::vector< std::string >& animNames,
-                                                bool interruptRunning = true );
 
     class DeviceAudioAction : public IAction
     {

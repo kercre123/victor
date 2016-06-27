@@ -131,7 +131,7 @@ namespace Cozmo {
     if( !_shouldPopIdle )
     {
       _shouldPopIdle = true;
-      _robot.GetAnimationStreamer().PushIdleAnimation("NONE");
+      _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
     }
     
     return ActionResult::SUCCESS;

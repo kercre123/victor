@@ -27,9 +27,9 @@ public class StartView : BaseView {
   private void Awake() {
     _ConnectButton.Initialize(HandleConnectClicked, "wake_up_cozmo_button", DASEventViewName);
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     _SecretSkipButton.Initialize(HandleSecretSkipButtonClicked, "secret_button", DASEventViewName);
-    #endif
+#endif
 
     LoopRobotSleep();
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
@@ -59,7 +59,7 @@ public class StartView : BaseView {
       DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
-      robot.SendAnimation(AnimationName.kConnect_WakeUp, HandleWakeAnimationComplete);
+      robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
     }
   }
 
@@ -69,7 +69,7 @@ public class StartView : BaseView {
       DAS.Info(this, "Sending Sleeping Animation");
       // INGO: This is a bit of a hack so that Mooly can test animations while the StartView is open
       if (!DebugMenuManager.Instance.IsDialogOpen()) {
-        robot.SendAnimation(AnimationName.kSleeping, HandleSleepAnimationComplete);
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.Sleeping, HandleSleepAnimationComplete);
       }
     }
   }
@@ -87,8 +87,8 @@ public class StartView : BaseView {
       // Display Cozmo's default face
       robot.DisplayProceduralFace(
         0,
-        Vector2.zero, 
-        Vector2.one, 
+        Vector2.zero,
+        Vector2.one,
         ProceduralEyeParameters.MakeDefaultLeftEye(),
         ProceduralEyeParameters.MakeDefaultRightEye());
     }
@@ -108,7 +108,7 @@ public class StartView : BaseView {
   #region implemented abstract members of BaseView
 
   protected override void CleanUp() {
-    
+
     OnConnectClicked = null;
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {

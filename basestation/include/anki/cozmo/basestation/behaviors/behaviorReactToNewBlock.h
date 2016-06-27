@@ -48,13 +48,6 @@ protected:
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
 private:
-
-  std::string _bigReactAnimGroup      = "ag_reactToNewBlock";
-  std::string _smallReactAnimGroup    = "ag_reactToNewBlockOnGround";
-  std::string _askForBlockAnimGroup   = "ag_askForBlock";
-  std::string _askingLoopGroup        = "ag_askForBlockLookLoop";
-  std::string _pickupSuccessAnimGroup = "ag_pickUpCube_success";
-  std::string _retryPickeupAnimGroup  = "rollCube_retry";
   
   enum class State
   {

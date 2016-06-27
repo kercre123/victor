@@ -25,9 +25,6 @@ CONSOLE_VAR(f32, kBPDB_verifyBackupDist_mm,   "Behavior.PutDownBlock", -30.0f);
 CONSOLE_VAR(f32, kBPDB_putDownBackupSpeed_mm, "Behavior.PutDownBlock", 100.f);
 CONSOLE_VAR(f32, kBPDB_scoreIncreaseDuringPutDown,   "Behavior.PutDownBlock", 5.0);
 CONSOLE_VAR(f32, kBPDB_scoreIncreasePostPutDown,     "Behavior.PutDownBlock", 5.0);
-  
-static const char* const kLookAtFaceAnimGroup  = "ag_lookAtFace_keepAlive";
-static const char* const kPutDownAnimGroup     = "ag_putDownBlock";
 
 // For now, just use a list of fixed backup distances to iterate through (circularly),
 // until we plan smarter put down positions based on obstacles, etc. (COZMO-2188)
@@ -66,7 +63,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
   
   StartActing(new CompoundActionSequential(robot, {
                 new DriveStraightAction(robot, GetBackupDistance(), kBPDB_putDownBackupSpeed_mm),
-                new PlayAnimationGroupAction(robot, kPutDownAnimGroup),
+                new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockPutDown),
               }),
               kBPDB_scoreIncreaseDuringPutDown,
               &BehaviorPutDownBlock::LookDownAtBlock);
@@ -111,7 +108,7 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bo
     // in any case, look back at the last face after this is done (to give them a chance to show another cube)
     const bool sayName = false;
     action->AddAction(new TurnTowardsFaceWrapperAction(robot,
-                                                       new PlayAnimationGroupAction(robot, kLookAtFaceAnimGroup),
+                                                       new TriggerAnimationAction(robot, AnimationTrigger::PutDownBlockKeepAlive),
                                                        true, false, PI_F, sayName));
   }
   

@@ -129,32 +129,6 @@
   return NO;
 }
 
-- (BOOL)playAnimGroup:(NSString *)path
-{
-  NSData *postData = [request body];
-  if (postData)
-  {
-    NSArray* path_list = [path componentsSeparatedByString:@"/"];
-    if( path_list && [path_list count] > 2)
-    {
-      // strip name from path
-      std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
-      
-      CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
-      Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
-      if( external_interface)
-      {
-        Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
-        Anki::Cozmo::ExternalInterface::PlayAnimationGroup play_msg_content(1,1,anim_name);
-        play_msg.Set_PlayAnimationGroup(std::move(play_msg_content));
-        external_interface->BroadcastDeferred(std::move(play_msg));
-        return YES;
-      }
-    }
-  }
-  return NO;
-}
-
 - (BOOL)disableReactionGroup:(NSString *)path
 {
   CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
@@ -183,10 +157,6 @@
       if( [path containsString:@"cmd_anim_update/"] )
       {
         [self doAnimUpdate:path];
-      }
-      else if( [path containsString:@"cmd_play_group/"] )
-      {
-        [self playAnimGroup:path];
       }
       else if( [path containsString:@"cmd_enable_reactions/"] )
       {

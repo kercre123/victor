@@ -17,7 +17,7 @@ namespace CodeBreaker {
 
       // Update the UI
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
-      game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong, 
+      game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong,
         LocalizationKeys.kCodeBreakerButtonPickingCode, null);
       game.DisableReadyButton();
       game.ResetGuesses();
@@ -25,7 +25,7 @@ namespace CodeBreaker {
 
       // TODO: Turn towards the center of the cubes to emulate "thinking"
       // Play a think animation on Cozmo
-      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerThinking, HandleThinkAnimationDone);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeBreakerThinking, HandleThinkAnimationDone);
 
       foreach (var cube in _TargetCubes) {
         cube.SetFlashingLEDs(Color.white);
@@ -33,7 +33,7 @@ namespace CodeBreaker {
     }
 
     public void HandleThinkAnimationDone(bool success) {
-      _CurrentRobot.SendAnimation(AnimationName.kCodeBreakerNewIdea, HandleAhaAnimationDone);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeBreakerNewIdea, HandleAhaAnimationDone);
     }
 
     public void HandleAhaAnimationDone(bool success) {

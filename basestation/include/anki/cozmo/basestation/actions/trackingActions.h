@@ -21,6 +21,7 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/AnimationTrigger.h"
 
 #include <vector>
 
@@ -58,7 +59,7 @@ public:
   // Sound settings: which animation (should be sound only), how frequent, and
   // minimum angle required to play sound. Use empty animation name for sound to
   // disable. (Note that there *is* sound by default.)
-  void SetSound(const std::string& animName) { _turningSoundAnimation = animName; }
+  void SetSound(const AnimationTrigger animName) { _turningSoundAnimTrigger = animName; }
   void SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec);
   void SetMinPanAngleForSound(const Radians& angle) { _minPanAngleForSound = angle.getAbsoluteVal(); }
   void SetMinTiltAngleForSound(const Radians& angle) { _minTiltAngleForSound = angle.getAbsoluteVal(); }
@@ -110,8 +111,7 @@ private:
   u32      _eyeShiftTag;
   bool     _moveEyes    = false;
   f32      _originalEyeDartDist;
-  
-  std::string _turningSoundAnimation = "ID_MotionTrack_TurnSmall";
+  AnimationTrigger _turningSoundAnimTrigger = AnimationTrigger::SoundOnlyTurnSmall;
   f32      _soundSpacingMin_sec = 0.5f;
   f32      _soundSpacingMax_sec = 1.0f;
   f32      _nextSoundTime = 0.f;

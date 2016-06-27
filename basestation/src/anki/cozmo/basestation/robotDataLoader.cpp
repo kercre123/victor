@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/events/gameEventResponsesContainer.h"
+#include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
@@ -46,7 +46,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _platform(nullptr)
 , _cannedAnimations(new CannedAnimationContainer())
 , _animationGroups(new AnimationGroupContainer())
-, _gameEventResponses(new GameEventResponsesContainer())
+, _animationTriggerResponses(new AnimationTriggerResponsesContainer())
 {
 }
 
@@ -85,7 +85,7 @@ void RobotDataLoader::LoadData()
   Util::Time::PopTimedStep();
 
   Anki::Util::Time::PushTimedStep("LoadGameEventResponses");
-  LoadGameEventResponses();
+  LoadAnimationTriggerResponses();
   Anki::Util::Time::PopTimedStep();
 
   Anki::Util::Time::PushTimedStep("LoadRobotConfigs");
@@ -290,9 +290,9 @@ void RobotDataLoader::LoadFaceAnimations()
   FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
 }
 
-void RobotDataLoader::LoadGameEventResponses()
+void RobotDataLoader::LoadAnimationTriggerResponses()
 {
-  _gameEventResponses->Load(_platform, "assets/animationGroupMaps");
+  _animationTriggerResponses->Load(_platform, "assets/animationGroupMaps");
 }
 
 void RobotDataLoader::LoadRobotConfigs()

@@ -46,7 +46,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
-    RobotEngineManager.Instance.CurrentRobot.SendAnimation(AnimationName.kStartSleeping, HandleSleepAnimationComplete);
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.StartSleeping, HandleSleepAnimationComplete);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
     return true;
   }
@@ -158,7 +158,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
-    RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleSpeedTapYesAnimationEnd);
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapCozmoConfirm, HandleSpeedTapYesAnimationEnd);
   }
 
   private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver, bool playGameSpecificMusic) {
@@ -209,7 +209,7 @@ public class PressDemoHubWorld : HubWorldBase {
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       DAS.Info("PressHubWorld.LoopRobotSleep", "Sending Sleeping Animation");
-      robot.SendAnimation(AnimationName.kSleeping, HandleSleepAnimationComplete);
+      robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.Sleeping, HandleSleepAnimationComplete);
     }
   }
 

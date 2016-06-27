@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorDistractedInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 
 namespace Anki {
@@ -38,10 +39,7 @@ void IBehaviorDistracted::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
   
-  if(GetValueOptional(config, kReactionAnimGroupKey, _params.reactionAnimGroup)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetReactionAnimGroup",
-                      "%s", _params.reactionAnimGroup.c_str());
-  }
+  JsonTools::GetValueOptional(config,kReactionAnimGroupKey,_params.reactionAnimTrigger);
   
   if(GetAngleOptional(config, kMaxTurnAngleKey, _params.maxTurnAngle_rad, true)) {
     PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetMaxTurnAngle",

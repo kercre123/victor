@@ -228,10 +228,10 @@ ActionResult ITrackAction::CheckIfDone()
     }
     
     // Play sound if it's time and either angle was big enough
-    if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
+    if( currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      PlayAnimationAction* soundAction = new PlayAnimationAction(_robot, _turningSoundAnimation, 1, false);
+      PlayAnimationAction* soundAction = new TriggerAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
       _soundAnimTag = soundAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
       

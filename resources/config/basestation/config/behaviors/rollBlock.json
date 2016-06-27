@@ -3,7 +3,7 @@
   "name": "RollBlock",
   "requiredUnlockId": "CubeRollAction",
   "flatScore": 0.9,
-  "put_down_animation_group": "ag_putDownBlock",
+  "put_down_animation_group": "RollBlockPutDown",
   "behaviorGroups": [
     "AffectsBlocks",
     "FreeplayOne"

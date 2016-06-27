@@ -26,8 +26,6 @@ namespace Anki {
 namespace Cozmo {
   
   const std::string AnimationStreamer::NeutralFaceAnimName = "anim_neutral_eyes_01";
-  const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
-  const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
   const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
 
@@ -44,7 +42,7 @@ namespace Cozmo {
   , _context(context)
   , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
   , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
-  , _liveAnimation(LiveAnimation)
+  , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
   , _audioClient( audioClient )
   , _lastProceduralFace(new ProceduralFace)
   {
@@ -52,7 +50,7 @@ namespace Cozmo {
     
     // TODO: Provide a default idle animation via Json config? COZMO-1662
     // For now, default the idle to be doing nothing, since that what it used to be.
-    _idleAnimationNameStack.push_back("");
+    _idleAnimationNameStack.push_back(AnimationTrigger::Count);
     
     ASSERT_NAMED(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
     
@@ -87,12 +85,12 @@ namespace Cozmo {
     
     _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::SetIdleAnimation,
                                                    [this](const GameToEngineEvent& msg) {
-                                                     SetIdleAnimation(msg.GetData().Get_SetIdleAnimation().animationName);
+                                                     SetIdleAnimation(msg.GetData().Get_SetIdleAnimation().animTrigger);
                                                    }));
     
     _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PushIdleAnimation,
                                                    [this](const GameToEngineEvent& msg) {
-                                                     PushIdleAnimation(msg.GetData().Get_PushIdleAnimation().animationName);
+                                                     PushIdleAnimation(msg.GetData().Get_PushIdleAnimation().animTrigger);
                                                    }));
     
     _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PopIdleAnimation,
@@ -259,7 +257,7 @@ namespace Cozmo {
   } // Abort()
   
   
-  Result AnimationStreamer::SetIdleAnimation(const std::string &name)
+  Result AnimationStreamer::SetIdleAnimation(AnimationTrigger name)
   {
     if(!_idleAnimationNameStack.empty()) {
       PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation.ClearingIdleStack",
@@ -272,24 +270,22 @@ namespace Cozmo {
     
   } // SetIdleAnimation()
   
-  Result AnimationStreamer::PushIdleAnimation(const std::string& name)
+  Result AnimationStreamer::PushIdleAnimation(AnimationTrigger name)
   {
-    if(name.empty() || name == "NONE") {
+    if(name == AnimationTrigger::Count) {
       if(DEBUG_ANIMATION_STREAMING) {
         PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation.Disabling",
                           "Disabling idle animation.");
       }
-      _idleAnimationNameStack.push_back("");
       _idleAnimation = nullptr;
       _isIdling = false;
-    } else {
-      _idleAnimationNameStack.push_back(name);
     }
+    _idleAnimationNameStack.push_back(name);
     
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation",
                         "Setting idle animation to '%s'.\n",
-                        name.c_str());
+                        EnumToString(name));
     }
     
     return RESULT_OK;
@@ -301,7 +297,7 @@ namespace Cozmo {
     if(_idleAnimationNameStack.size() == 1) {
       PRINT_NAMED_INFO("AnimationStreamer.PopIdleAnimation.WillNotPopLast",
                        "Refusing to pop last idle animation '%s'",
-                       _idleAnimationNameStack.back().c_str());
+                       EnumToString(_idleAnimationNameStack.back()));
       return RESULT_OK;
     }
     
@@ -318,7 +314,7 @@ namespace Cozmo {
     ASSERT_NAMED(!_idleAnimationNameStack.empty(), "AnimationStreamer.PopIdleAnimation.EmptyIdleStack");
     
     // If what's left on the stack is "no idle", make sure to make idle null and isIdling = false:
-    if(_idleAnimationNameStack.back().empty()) {
+    if(_idleAnimationNameStack.back() == AnimationTrigger::Count) {
       // If we were just idling and there's nothing streaming, we don't want to leave
       // the face in a weird spot, so stream the neutral face, just in case
       if(_idleAnimation != nullptr && _streamingAnimation == nullptr) {
@@ -1361,13 +1357,12 @@ namespace Cozmo {
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
-    } else if(!_idleAnimationNameStack.empty() && !_idleAnimationNameStack.back().empty()) {
+    } else if(!_idleAnimationNameStack.empty() && _idleAnimationNameStack.back() != AnimationTrigger::Count) {
       
-      std::string& idleAnimationGroupName = _idleAnimationNameStack.back();
+      AnimationTrigger idleAnimationGroupTrigger = _idleAnimationNameStack.back();
       
       Animation* oldIdleAnimation = _idleAnimation;
-      
-      if(idleAnimationGroupName == LiveAnimation)
+      if(idleAnimationGroupTrigger == AnimationTrigger::ProceduralLive)
       {
         // Make sure these are set, in case we just popped an idle and came back to idle
         _idleAnimation = &_liveAnimation;
@@ -1384,13 +1379,15 @@ namespace Cozmo {
         // We aren't doing "live" idle and the robot is either done with the last
         // idle animation or hasn't started idling yet. So it's time to select the
         // next idle from the group.
-        if(!idleAnimationGroupName.empty())
+        RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+        if(robot_mgr->HasAnimationForTrigger(idleAnimationGroupTrigger) )
         {
+          std::string idleAnimationGroupName = robot_mgr->GetAnimationForTrigger(idleAnimationGroupTrigger);
           const std::string animName = GetAnimationNameFromGroup(idleAnimationGroupName, robot);
           if(animName.empty()) {
             PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
                               "Returned empty animation name for group %s. Popping the group.",
-                              idleAnimationGroupName.c_str());
+                              EnumToString(idleAnimationGroupTrigger));
             PopIdleAnimation();
             _idleAnimation = nullptr;
             return RESULT_FAIL;

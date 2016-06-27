@@ -12,7 +12,7 @@ using Anki.Cozmo;
 
 /// <summary>
 /// Animation event editor.
-/// Used for mapping AnimationGroups to Clad generated GameEvents
+/// Used for mapping AnimationGroups to Clad generated TriggerAnimations
 /// Can Filter out unwanted CladEvents and AnimationGroups
 /// </summary>
 public class AnimationEventEditor : EditorWindow {

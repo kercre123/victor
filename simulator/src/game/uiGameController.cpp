@@ -14,6 +14,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -1313,9 +1314,9 @@ namespace Anki {
       if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
       {
         PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animName);
-        ExternalInterface::PlayAnimationGroup m(1,1,animName);
+        ExternalInterface::PlayAnimationTrigger m(1,1,AnimationTriggerFromString(animName));
         ExternalInterface::MessageGameToEngine message;
-        message.Set_PlayAnimationGroup(m);
+        message.Set_PlayAnimationTrigger(m);
         SendMessage(message);
         lastSendTime_sec = _supervisor.getTime();
       } else {
@@ -1345,7 +1346,7 @@ namespace Anki {
     void UiGameController::SendSetIdleAnimation(const std::string &animName) {
       ExternalInterface::SetIdleAnimation msg;
       msg.robotID = 1;
-      msg.animationName = animName;
+      msg.animTrigger = AnimationTriggerFromString(animName.c_str());
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetIdleAnimation(msg);
       SendMessage(message);

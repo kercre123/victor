@@ -97,7 +97,6 @@ namespace Simon {
     public void InitColorsAndSounds() {
       // Adds it so it's always R Y B based on Cozmo's right to left
       if (_BlockIdToSound.Count() == 0) {
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonSetupComplete);
         List<LightCube> listCubes = new List<LightCube>();
         foreach (int cube in CubeIdsForGame) {
           listCubes.Add(CurrentRobot.LightCubes[cube]);

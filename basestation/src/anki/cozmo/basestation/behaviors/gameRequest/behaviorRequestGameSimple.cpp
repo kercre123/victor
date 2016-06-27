@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/pathMotionProfileHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -47,10 +48,6 @@ static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshol
 static const char* kShouldUseBlocksKey = "use_block";
 static const char* kDoSecondRequestKey = "do_second_request";
 
-// TODO:(bn) replace these with animation groups
-static const char* kDrivingFailAnimName = "ID_react2block_align_fail";
-static const char* kPickupFailAnimName = "ID_rollBlock_fail_01";
-
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
 static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
@@ -71,10 +68,11 @@ static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
 
 void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
 {
-  initialAnimationName = config.get(kInitialAnimationKey, "").asString();
-  preDriveAnimationName = config.get(kPreDriveAnimationKey, "").asString();
-  requestAnimationName = config.get(kRequestAnimNameKey, "").asString();
-  denyAnimationName = config.get(kDenyAnimNameKey, "").asString();
+  // Valid for some of these to be "AnimNone"
+  JsonTools::GetValueOptional(config,kInitialAnimationKey,initialAnimTrigger);
+  JsonTools::GetValueOptional(config,kPreDriveAnimationKey,preDriveAnimTrigger);
+  JsonTools::GetValueOptional(config,kRequestAnimNameKey,requestAnimTrigger);
+  JsonTools::GetValueOptional(config,kDenyAnimNameKey,denyAnimTrigger);
   minRequestDelay = config.get(kMinRequestDelayKey, kMinRequestDelayDefault).asFloat();
   scoreFactor = config.get(kScoreFactorKey, 1.0f).asFloat();
 }
@@ -147,7 +145,7 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   // disable idle animation, but save the old one on the stack
   if( ! _shouldPopIdle ) {
     _shouldPopIdle = true;
-    robot.GetAnimationStreamer().PushIdleAnimation("NONE");
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   }
 
   if( GetNumBlocks(robot) == 0 ) {
@@ -253,7 +251,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
 {
   IActionRunner* animationAction = new TurnTowardsFaceWrapperAction(
     robot,
-    CreatePlayAnimationAction(robot, _activeConfig->initialAnimationName) );
+    new TriggerAnimationAction(robot, _activeConfig->initialAnimTrigger) );
   StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
   SET_STATE(State::PlayingInitialAnimation);
 }
@@ -275,7 +273,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robot)
 {
-  IActionRunner* animationAction = CreatePlayAnimationAction(robot, _activeConfig->preDriveAnimationName);
+  IActionRunner* animationAction = new TriggerAnimationAction(robot, _activeConfig->preDriveAnimTrigger);
   StartActing(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
   SET_STATE(State::PlayingPreDriveAnimation);
 }
@@ -300,12 +298,12 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                     case ObjectInteractionResult::INCOMPLETE:
                     case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
                     {
-                      animAction = CreatePlayAnimationAction(robot, kDrivingFailAnimName);
+                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGameDrivingFail);
                       break;
                     }
             
                     default: {
-                      animAction = CreatePlayAnimationAction(robot, kPickupFailAnimName);
+                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail);
                       break;
                     }
                   }
@@ -472,7 +470,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
-        CreatePlayAnimationAction(robot, _activeConfig->requestAnimationName),
+        new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
         new TurnTowardsLastFacePoseAction(robot, PI_F)}),
     &BehaviorRequestGameSimple::TransitionToTrackingFace);
   SET_STATE(State::PlayingRequstAnim);
@@ -498,7 +496,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
-  IActionRunner* denyAnimAction = CreatePlayAnimationAction( robot, _activeConfig->denyAnimationName );
+  IActionRunner* denyAnimAction = new TriggerAnimationAction( robot, _activeConfig->denyAnimTrigger );
 
   if( _initialRequest && _doSecondRequest ) {
     // try again

@@ -20,7 +20,7 @@ namespace Minesweeper {
       base.Update();
 
       if (_Game.IsComplete()) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorWin, WinAnimationComplete));
+        _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.MajorWin, WinAnimationComplete));
       }
 
       var closestCell = _CurrentRobot.WorldPosition / MinesweeperGame.kCellWidth + new Vector3(_Game.Columns * 0.5f, _Game.Rows * 0.5f, 0);
@@ -56,7 +56,7 @@ namespace Minesweeper {
               }
             }
             if (neighbors >= mostKnownNeighbors) {
-              
+
               int distance = Mathf.Abs(i - row) + Mathf.Abs(j - col);
 
               if (neighbors > mostKnownNeighbors || distance < bestDistance) {
@@ -167,7 +167,7 @@ namespace Minesweeper {
 
     private void Dig() {
       if (!_Game.TryRevealSpace(_Row, _Col)) {
-        _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, LoseAnimationComplete));
+        _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.Shocked, LoseAnimationComplete));
       }
       else {
         _StateMachine.PopState();

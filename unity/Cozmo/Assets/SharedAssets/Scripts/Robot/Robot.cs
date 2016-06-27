@@ -409,7 +409,7 @@ public class Robot : IRobot {
     TrackToObject(null);
     CancelAllCallbacks();
     SetEnableFreeplayBehaviorChooser(false);
-    SetIdleAnimation("NONE");
+    SetIdleAnimation(AnimationTrigger.Count);
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
     float[] paramValues = { };
     SetLiveIdleAnimationParameters(paramNames, paramValues, true);
@@ -917,20 +917,23 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
-  public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-
-    DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
-    SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(ID, 1, animName), callback, queueActionPosition);
-  }
-
-  public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  /*public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending Group " + animGroupName + " with " + 1 + " loop");
 
     SendQueueSingleAction(Singleton<PlayAnimationGroup>.Instance.Initialize(ID, 1, animGroupName), callback, queueActionPosition);
+  }*/
+
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+
+    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop");
+    //RobotEngineManager.Instance.Message.PlayAnimationTrigger = Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent);
+    //RobotEngineManager.Instance.SendMessage();
+    //PlayAnimationGroup
+    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent), callback, queueActionPosition);
   }
 
-  public void SetIdleAnimation(string default_anim) {
+  public void SetIdleAnimation(AnimationTrigger default_anim) {
 
     DAS.Debug(this, "Setting idle animation to " + default_anim);
 
@@ -946,7 +949,7 @@ public class Robot : IRobot {
 
   }
 
-  public void PushDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
+  public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim) {
     RobotEngineManager.Instance.Message.PushDrivingAnimations =
       Singleton<PushDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
     RobotEngineManager.Instance.SendMessage();
@@ -1594,7 +1597,7 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + text);
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
   }

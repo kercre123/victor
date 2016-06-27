@@ -13,9 +13,6 @@ namespace CodeBreaker {
       game.ShowReadySlide(LocalizationKeys.kCodeBreakerTextHowToPlayLong,
         LocalizationKeys.kButtonReady, HandleReadyButtonClicked);
 
-      // Play an idle animation on Cozmo; will be inturrupted by 
-      // other animations.
-      _CurrentRobot.SetIdleAnimation("_LIVE_​");
       _CurrentRobot.TurnOffAllLights();
       List<LightCube> targetCubes = new List<LightCube>();
       foreach (ObservedObject obj in _CurrentRobot.VisibleLightCubes) {

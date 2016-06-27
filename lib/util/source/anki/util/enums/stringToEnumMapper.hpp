@@ -137,13 +137,22 @@ public:
     }
   }
   
-  T GetTypeFromString(const char* inString) const
+  bool HasType(const char* inString) const
+  {
+    const auto& it = _stringToEnumMap.find(inString);
+    return it != _stringToEnumMap.end();
+  }
+  
+  T GetTypeFromString(const char* inString, bool assertOnInvalidEnum = false) const
   {
     const auto& it = _stringToEnumMap.find(inString);
     if (it != _stringToEnumMap.end())
     {
       return it->second;
     }
+    
+    ASSERT_NAMED_EVENT(!assertOnInvalidEnum,"StringToEnumMapper.GetTypeFromString.NotFound",
+                       "No match found for '%s'", inString);
     
     PRINT_NAMED_WARNING("StringToEnumMapper.GetTypeFromString.NotFound", "No match found for '%s'", inString);
     

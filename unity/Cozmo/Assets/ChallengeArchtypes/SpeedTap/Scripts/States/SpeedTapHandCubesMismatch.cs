@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace SpeedTap {
   public class SpeedTapHandCubesMismatch : State {
-    
+
     private SpeedTapGame _SpeedTapGame;
 
     private float _LightsOnDuration_sec;
@@ -51,7 +51,6 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
     }
 
     private void HandleCozmoFakeoutAnimationEnd(bool success) {
@@ -63,12 +62,12 @@ namespace SpeedTap {
       float randomPercent = UnityEngine.Random.Range(0f, 1f);
       if (randomPercent < _SpeedTapGame.CozmoMistakeChance) {
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapTap);
       }
       else {
         randomPercent -= _SpeedTapGame.CozmoMistakeChance;
         if (randomPercent < _SpeedTapGame.CozmoFakeoutChance) {
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
-          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapFakeout);
+          _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
         }
       }
     }

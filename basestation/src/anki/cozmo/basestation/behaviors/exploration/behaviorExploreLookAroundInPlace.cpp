@@ -24,6 +24,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -251,10 +252,12 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
   SetStateName("TransitionToS2_Pause");
 
   IAction* pauseAction = nullptr;
+  
   const std::string& animGroupName = _configParams.s2_WaitAnimGroupName;
-  if ( !animGroupName.empty() )
+  AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
+  if ( trigger != AnimationTrigger::Count )
   {
-    pauseAction = CreatePlayAnimationAction(robot, animGroupName);
+    pauseAction = new TriggerAnimationAction(robot,trigger);
   }
   else
   {
@@ -341,9 +344,10 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
   
   IAction* pauseAction = nullptr;
   const std::string& animGroupName = _configParams.s4_WaitAnimGroupName;
-  if ( !animGroupName.empty() )
+  AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
+  if ( trigger != AnimationTrigger::Count )
   {
-    pauseAction = CreatePlayAnimationAction(robot, animGroupName);
+    pauseAction = new TriggerAnimationAction(robot, trigger);
   }
   else
   {

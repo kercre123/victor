@@ -50,10 +50,6 @@ private:
 
   State _state = State::DrivingForward;
 
-  std::string _startDrivingAnimGroup = "ag_launch_startDriving";
-  std::string _drivingLoopAnimGroup = "ag_launch_drivingLoop";
-  std::string _stopDrivingAnimGroup = "ag_launch_endDriving";
-
   void TransitionToDrivingForward(Robot& robot);
   void TransitionToBackingUpForPounce(Robot& robot);
   void TransitionToFinished();

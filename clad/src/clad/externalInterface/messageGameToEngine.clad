@@ -464,17 +464,17 @@ message ReplayLastAnimation {
 // SetIdleAnimation
 //  Set the animation group that will be played (in a continuous loop) if no other
 //  animation has been set using PlayAnimation above.
-//  Use the empty string to disable the idle animation.
+//  Use Count to disable the idle animation.
 message SetIdleAnimation {
     uint_8 robotID,
-    string animationName // Group name, not individual animation!
+    AnimationTrigger animTrigger
 }
 
 // PushIdleAnimation
 //  Switches the idle animation (the one played in a continuous loop while no other
 //  animation is requested via PlayAnimation) to the one specified.
 message PushIdleAnimation {
-    string animationName // Group name, not individual animation!
+    AnimationTrigger animTrigger
 }
 
 // PopIdleAnimation
@@ -519,9 +519,9 @@ message DisplayProceduralFace {
 
 // PushDrivingAnimations
 message PushDrivingAnimations {
-    string drivingStartAnim,
-    string drivingLoopAnim,
-    string drivingEndAnim
+    AnimationTrigger drivingStartAnim,
+    AnimationTrigger drivingLoopAnim,
+    AnimationTrigger drivingEndAnim
 }
 
 message PopDrivingAnimations {

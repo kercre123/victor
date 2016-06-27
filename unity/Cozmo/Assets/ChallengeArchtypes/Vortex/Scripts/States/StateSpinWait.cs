@@ -32,8 +32,7 @@ namespace Vortex {
     }
 
     private void CozmoTap() {
-      // Can always add a bit more randomness here
-      _CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Tap_01);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapTap);
       _VortexGame.HandleBlockTapped(0, Random.Range(1, 4), 0.0f);
     }
   }

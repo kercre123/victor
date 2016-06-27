@@ -23,7 +23,6 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
 
-static const char* const kFlipDownAnimGroupName = "FlipDownFromBack";
 static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
   
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config)
@@ -51,7 +50,7 @@ Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
 {
   if( robot.IsOnBack() ) {
-    StartActing(new PlayAnimationGroupAction(robot, kFlipDownAnimGroupName),
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FlipDownFromBack),
                 &BehaviorReactToRobotOnBack::DelayThenFlipDown);
   }
   else {

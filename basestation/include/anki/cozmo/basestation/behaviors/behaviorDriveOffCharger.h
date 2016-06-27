@@ -52,10 +52,6 @@ private:
 
   float _distToDrive_mm = 0.0f;
 
-  std::string _startDrivingAnimGroup = "ag_launch_startDriving";
-  std::string _drivingLoopAnimGroup = "ag_launch_drivingLoop";
-  std::string _stopDrivingAnimGroup = "ag_launch_endDriving";
-
   void TransitionToDrivingForward(Robot& robot);
   
   void SetState_internal(State state, const std::string& stateName);

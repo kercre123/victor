@@ -13,6 +13,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
@@ -37,6 +38,7 @@
 #include <webots/Display.hpp>
 #include <webots/GPS.hpp>
 #include <webots/ImageRef.hpp>
+
 
 
 // CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
@@ -209,7 +211,7 @@ namespace Anki {
 //            using namespace ExternalInterface;
 //            SayText sayText;
 //            sayText.text = completionInfo.name;
-//            //sayText.playEvent = GameEvent::OnLearnedPlayerName;
+//            //sayText.playEvent = AnimationTrigger::OnLearnedPlayerName;
 //            sayText.style = SayTextStyle::Name_Normal;
 //            
 //            SendMessage(MessageGameToEngine(std::move(sayText)));
@@ -502,9 +504,9 @@ namespace Anki {
             SendMessage(msg1);
           
             ExternalInterface::PushDrivingAnimations m;
-            m.drivingStartAnim = _drivingStartAnim;
-            m.drivingLoopAnim = _drivingLoopAnim;
-            m.drivingEndAnim = _drivingEndAnim;
+            m.drivingStartAnim = AnimationTriggerFromString(_drivingStartAnim.c_str());
+            m.drivingLoopAnim = AnimationTriggerFromString(_drivingLoopAnim.c_str());
+            m.drivingEndAnim = AnimationTriggerFromString(_drivingEndAnim.c_str());
             
             ExternalInterface::MessageGameToEngine msg2;
             msg2.Set_PushDrivingAnimations(m);
@@ -1933,7 +1935,7 @@ namespace Anki {
                   if(idleAnimToSendName.empty()) {
                     SendMessage(MessageGameToEngine(PopIdleAnimation()));
                   } else {
-                    SendMessage(MessageGameToEngine(PushIdleAnimation(idleAnimToSendName)));
+                    SendMessage(MessageGameToEngine(PushIdleAnimation(AnimationTriggerFromString(idleAnimToSendName.c_str()))));
                   }
 
                 }

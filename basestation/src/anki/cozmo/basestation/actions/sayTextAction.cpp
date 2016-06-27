@@ -95,7 +95,7 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayDurrationTooLong", "Durration: %f", duration_ms);
         }
         
-        const bool useBuiltInAnim = (GameEvent::Count == _gameEvent);
+        const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);
         if (useBuiltInAnim) {
           // Make our animation a "live" animation with a single audio keyframe at the beginning
           if (DEBUG_SAYTEXT_ACTION) {
@@ -109,10 +109,10 @@ namespace Cozmo {
           _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
         } else {
           if (DEBUG_SAYTEXT_ACTION) {
-            PRINT_NAMED_DEBUG("SayTextAction.Init.UsingAnimationGroup", "GameEvent=%hhu (%s)",
-                              _gameEvent, EnumToString(_gameEvent));
+            PRINT_NAMED_DEBUG("SayTextAction.Init.UsingAnimationGroup", "GameEvent=%hu (%s)",
+                              _animationTrigger, EnumToString(_animationTrigger));
           }
-          _playAnimationAction = new PlayAnimationGroupAction(_robot, _gameEvent);
+          _playAnimationAction = new TriggerAnimationAction(_robot, _animationTrigger);
         }
         _isAudioReady = true;
         

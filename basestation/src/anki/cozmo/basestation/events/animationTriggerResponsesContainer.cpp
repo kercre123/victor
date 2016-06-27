@@ -1,16 +1,16 @@
 /**
- * File: gameEventResponseContainer.cpp
+ * File: AnimationTriggerResponseContainer.cpp
  *
  * Authors: Molly Jameson
  * Created: 2016-4-4
  *
- * Description: Stores Responses to generic gameevents
+ * Description: Stores Responses to generic AnimationTriggers
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
 
-#include "anki/cozmo/basestation/events/gameEventResponsesContainer.h"
+#include "anki/cozmo/basestation/events/AnimationTriggerResponsesContainer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "json/json.h"
@@ -21,7 +21,7 @@ namespace Anki
 namespace Cozmo
 {
   
-  bool GameEventResponsesContainer::Load(const Anki::Util::Data::DataPlatform* data, std::string path)
+  bool AnimationTriggerResponsesContainer::Load(const Anki::Util::Data::DataPlatform* data, std::string path)
   {
     if (nullptr == data )
     {
@@ -51,20 +51,20 @@ namespace Cozmo
     return true;
   }
 
-  std::string GameEventResponsesContainer::GetResponse(Anki::Cozmo::GameEvent ev)
+  std::string AnimationTriggerResponsesContainer::GetResponse(Anki::Cozmo::AnimationTrigger ev)
   {
     auto retVal = _eventMap.find(EnumToString(ev));
     if(retVal == _eventMap.end())
     {
-      PRINT_NAMED_ERROR("GameEventResponsesContainer::GetResponse",
+      PRINT_NAMED_ERROR("AnimationTriggerResponsesContainer::GetResponse",
                         "Animation requested for unknown response '%s'.\n",
-                        GameEventToString(ev));
+                        AnimationTriggerToString(ev));
       return "";
     }
     return retVal->second;
   }
   
-  bool GameEventResponsesContainer::HasResponse(Anki::Cozmo::GameEvent ev)
+  bool AnimationTriggerResponsesContainer::HasResponse(Anki::Cozmo::AnimationTrigger ev)
   {
     auto retVal = _eventMap.find(EnumToString(ev));
     return retVal != _eventMap.end();

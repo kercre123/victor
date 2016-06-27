@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 #include <string>
 #include <unordered_map>
@@ -174,9 +175,9 @@ namespace Cozmo {
     // recognition system some more time. Then if we need more time, we play the _wait group (which can be cut
     // at any time). Then we check if the face data has _playedNewFaceAnim, and either play a new group or a
     // regular group. In either case, we play named or unnamed based on whether or not the face has an
-    // associated name. The Named or Unnamed are part of the "GameEvents" clad enum
-    std::string _initialTakeAnimGroup;
-    std::string _waitAnimGroup;
+    // associated name. The Named or Unnamed are part of the "AnimationTrigger" clad enum
+    AnimationTrigger _initialTakeAnimGroup = AnimationTrigger::Count;
+    AnimationTrigger _waitAnimGroup = AnimationTrigger::Count;
 
   }; // BehaviorInteractWithFaces
   

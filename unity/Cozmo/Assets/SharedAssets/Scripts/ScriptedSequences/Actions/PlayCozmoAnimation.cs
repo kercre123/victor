@@ -4,13 +4,13 @@ using System.ComponentModel;
 namespace ScriptedSequences.Actions {
   public class PlayCozmoAnimation : ScriptedSequenceAction {
 
-    public string AnimationName;
+    public Anki.Cozmo.AnimationTrigger AnimationName;
 
     public bool LoopForever;
 
     [DefaultValue(true)]
     public bool WaitToEnd = true;
-  
+
     public override ISimpleAsyncToken Act() {
       var robot = RobotEngineManager.Instance.CurrentRobot;
 
@@ -22,15 +22,15 @@ namespace ScriptedSequences.Actions {
       }
       if (LoopForever) {
         bool loopComplete = false;
-        token.OnAbort += () => { 
+        token.OnAbort += () => {
           loopComplete = true;
-          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); 
+          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         };
         Action playAnimation = null;
 
-        playAnimation = () => {          
-          robot.SendAnimation(AnimationName, (s) => { 
-            if(!loopComplete) {
+        playAnimation = () => {
+          robot.SendAnimationTrigger(AnimationName, (s) => {
+            if (!loopComplete) {
               playAnimation();
             }
           });
@@ -40,13 +40,13 @@ namespace ScriptedSequences.Actions {
       }
       else if (WaitToEnd) {
         token.OnAbort += () => { robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); };
-        robot.SendAnimation(AnimationName, (s) => { 
+        robot.SendAnimationTrigger(AnimationName, (s) => {
           // Do we want to fail the action if playing the animation failed?
           token.Succeed();
         });
       }
       else {
-        robot.SendAnimation(AnimationName);
+        robot.SendAnimationTrigger(AnimationName);
         token.Succeed();
       }
       return token;

@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
-#include "clad/types/gameEvent.h"
+#include "clad/types/animationTrigger.h"
 #include <map>
 #include <vector>
 #include <memory>
@@ -46,7 +46,7 @@ class CozmoContext;
 class CannedAnimationContainer;
 class AnimationGroupContainer;
 class FirmwareUpdater;
-class GameEventResponsesContainer;
+class AnimationTriggerResponsesContainer;
 
 class RobotManager : Util::noncopyable
 {
@@ -99,8 +99,8 @@ public:
   
   bool HasCannedAnimation(const std::string& animName);
   bool HasAnimationGroup(const std::string& groupName);
-  bool HasAnimationResponseForEvent( GameEvent ev );
-  std::string GetAnimationResponseForEvent( GameEvent ev );
+  bool HasAnimationForTrigger( AnimationTrigger ev );
+  std::string GetAnimationForTrigger( AnimationTrigger ev );
   
   // Read the animations in a dir
   void ReadAnimationDir();
@@ -124,7 +124,7 @@ protected:
   RobotEventHandler _robotEventHandler;
   CannedAnimationContainer* const _cannedAnimations;
   AnimationGroupContainer* const _animationGroups;
-  GameEventResponsesContainer* const _gameEventResponses;
+  AnimationTriggerResponsesContainer* const _animationTriggerResponses;
   std::unique_ptr<FirmwareUpdater> _firmwareUpdater;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;

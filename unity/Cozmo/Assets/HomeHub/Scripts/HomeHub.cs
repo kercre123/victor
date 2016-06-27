@@ -214,7 +214,7 @@ namespace Cozmo.HomeHub {
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
       _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
-      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("NONE");
+      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
     }
 
     private void HandleEndGameDialog() {

@@ -5,11 +5,11 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/faceEnrollmentSequences.clad"
-#include "clad/types/gameEvent.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/sayTextStyles.clad"
+#include "clad/types/animationTrigger.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -166,11 +166,11 @@ message PlayAnimation {
     string animationName
 }
 
-// PlayAnimationGroup
-message PlayAnimationGroup {
+// PlayAnimationTrigger
+message PlayAnimationTrigger {
   uint_8  robotID,
   uint_32 numLoops,
-  string animationGroupName
+  AnimationTrigger trigger
 }
 
 // PopAWheelie
@@ -201,7 +201,7 @@ message RollObject {
 // SayText
 message SayText {
     string       text,
-    GameEvent    playEvent,
+    AnimationTrigger    playEvent,
     SayTextStyle style  // "How" to say the text
 }
 
@@ -405,7 +405,7 @@ union RobotActionUnion {
   PlaceObjectOnGround       placeObjectOnGround,
   PlaceObjectOnGroundHere   placeObjectOnGroundHere,
   PlayAnimation             playAnimation,
-  PlayAnimationGroup        playAnimationGroup,
+  PlayAnimationTrigger      playAnimationTrigger,
   PopAWheelie               popAWheelie,
   ReadToolCode              readToolCode,
   RollObject                rollObject,
