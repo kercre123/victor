@@ -5,6 +5,7 @@
   "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [
     "Demo",
-    "FreeplayOne"
+    "FreeplayOne",
+    "FreeplayExplore"
   ]
 }

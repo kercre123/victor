@@ -48,6 +48,7 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIWhiteboard::AIWhiteboard(Robot& robot)
 : _robot(robot)
+, _gotOffChargerAtTime_sec(-1.0f)
 {
 }
 

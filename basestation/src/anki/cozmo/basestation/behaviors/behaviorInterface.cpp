@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -35,16 +36,18 @@ namespace Cozmo {
 // Static initializations
 const char* IBehavior::kBaseDefaultName = "no_name";
   
-static const char* kNameKey              = "name";
-static const char* kEmotionScorersKey    = "emotionScorers";
-static const char* kFlatScoreKey         = "flatScore";
-static const char* kRepetitionPenaltyKey = "repetitionPenalty";
-static const char* kRunningPenaltyKey    = "runningPenalty";
-static const char* kBehaviorGroupsKey    = "behaviorGroups";
-static const char* kRequiredUnlockKey    = "requiredUnlockId";
+static const char* kNameKey                    = "name";
+static const char* kEmotionScorersKey          = "emotionScorers";
+static const char* kFlatScoreKey               = "flatScore";
+static const char* kRepetitionPenaltyKey       = "repetitionPenalty";
+static const char* kRunningPenaltyKey          = "runningPenalty";
+static const char* kBehaviorGroupsKey          = "behaviorGroups";
+static const char* kRequiredUnlockKey          = "requiredUnlockId";
+static const char* kRequiredDriveOffChargerKey = "requiredRecentDriveOffCharger_sec";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredUnlockId( UnlockId::Count )
+  , _requiredRecentDriveOffCharger_sec(-1.0f)
   , _moodScorer()
   , _flatScore(0.0f)
   , _robot(robot)
@@ -94,6 +97,16 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
       PRINT_NAMED_ERROR("IBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
         requiredUnlockJson.asString().c_str());
     }
+  }
+
+  // - - - - - - - - - -
+  // Got off charger timer
+  // - - - - - - - - - -
+  const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
+  if ( !requiredDriveOffChargerJson.isNull() )
+  {
+    ASSERT_NAMED_EVENT(requiredDriveOffChargerJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s", kRequiredDriveOffChargerKey);
+    _requiredRecentDriveOffCharger_sec = requiredDriveOffChargerJson.asFloat();
   }
 
   // - - - - - - - - - -
@@ -290,6 +303,25 @@ bool IBehavior::IsRunnable(const Robot& robot) const
       return false;
     }
   }
+  
+  // if there's a timer requiring a recent drive off the charger, check with whiteboard
+  const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
+  if ( requiresRecentDriveOff )
+  {
+    const float lastDriveOff = robot.GetBehaviorManager().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+    const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
+    if ( !hasDrivenOff ) {
+      // never driven off the charger, can't run
+      return false;
+    }
+    
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const bool isRecent = FLT_LE(curTime, (lastDriveOff+_requiredRecentDriveOffCharger_sec));
+    if ( !isRecent ) {
+      // driven off, but not recently enough
+      return false;
+    }
+  }
 
   // no unlock or unlock passed, ask subclass
   const bool isRunnable = IsRunnableInternal(robot);
@@ -341,11 +373,9 @@ float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
-  float score = _flatScore;
-  if ( !_moodScorer.IsEmpty() ) {
-    score = _moodScorer.EvaluateEmotionScore(robot.GetMoodManager());
-  }
-  return score;
+  // unless specifically overriden it should mimic the non-running score
+  const float nonRunningScore = EvaluateScoreInternal(robot);
+  return nonRunningScore;
 }
   
 float IBehavior::EvaluateRepetitionPenalty() const

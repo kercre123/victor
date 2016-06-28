@@ -301,6 +301,10 @@ private:
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
   
+  // if a gotOffChargerLessThan_sec is greater than 0, this behavior is only runnable if last time the robot got off the charger by
+  // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
+  float _requiredRecentDriveOffCharger_sec;
+  
   MoodScorer              _moodScorer;
   Util::GraphEvaluator2d  _repetitionPenalty;
   Util::GraphEvaluator2d  _runningPenalty;

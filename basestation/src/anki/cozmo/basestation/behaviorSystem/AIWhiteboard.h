@@ -102,6 +102,10 @@ public:
   // return current active beacon if any, or nullptr if none are active
   const AIBeacon* GetActiveBeacon() const;
   
+  // return time at which Cozmo got off the charger by himself
+  void GotOffChargerAtTime(const float time_sec) { _gotOffChargerAtTime_sec = time_sec; }
+  float GetTimeAtWhichRobotGotOffCharger() const { return _gotOffChargerAtTime_sec; }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,7 +117,7 @@ public:
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Methods
+  // Markers
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // consider adding an object to possible object list
@@ -140,6 +144,9 @@ private:
   // signal handles for events we register to. These are currently unsubscribed when destroyed
   std::vector<Signal::SmartHandle> _signalHandles;
   
+  
+  // time at which the robot got off the charger by itself. Negative value means never
+  float _gotOffChargerAtTime_sec;
  
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
@@ -147,6 +154,7 @@ private:
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
 
+  //
   ObjectID _topOfStackToAdmire;
   ObjectID _bottomOfStackToAdmire;
 };

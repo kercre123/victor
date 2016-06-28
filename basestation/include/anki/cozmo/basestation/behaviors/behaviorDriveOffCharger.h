@@ -38,23 +38,35 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
-  // Only start this behavior if we're on the charge contacts
-  virtual float EvaluateScoreInternal(const Robot& robot) const override;
-
 private:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  using BaseClass = IBehavior;
 
   enum class State {
     DrivingForward,
   };
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  void TransitionToDrivingForward(Robot& robot);
+  
+  void SetState_internal(State state, const std::string& stateName);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Attributes
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
   State _state = State::DrivingForward;
   int   _timesResumed = 0;
 
   float _distToDrive_mm = 0.0f;
 
-  void TransitionToDrivingForward(Robot& robot);
-  
-  void SetState_internal(State state, const std::string& stateName);
 };
 
 }

@@ -9,16 +9,18 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-
-
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
+
+#include "anki/common/basestation/utils/timer.h"
+
 #include "clad/externalInterface/messageGameToEngine.h"
 
-#include "anki/cozmo/basestation/charger.h"
 
 
 namespace Anki {
@@ -31,6 +33,7 @@ static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
@@ -45,21 +48,19 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value
                     extraDist_mm);
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
 {
-  return robot.IsOnChargerPlatform();
+  // assumes it's not possible to be OnCharger without being OnChargerPlatform
+  ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
+    "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
+
+  // can run any time we are on a platform
+  const bool onChargerPlatform = robot.IsOnChargerPlatform();
+  return onChargerPlatform;
 }
 
-// Only want to run first if we're on the charger contacts, once running use the flat score in base EvaluateRunningScore
-float BehaviorDriveOffCharger::EvaluateScoreInternal(const Robot& robot) const
-{
-  if( robot.IsOnCharger())
-  {
-    return IBehavior::EvaluateScoreInternal(robot);
-  }
-  return 0.f;
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   TransitionToDrivingForward(robot);
@@ -108,6 +109,11 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
     return Status::Running;
   }
   else {
+  
+    // store in whiteboard our success
+    const float curTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+    robot.GetBehaviorManager().GetWhiteboard().GotOffChargerAtTime( curTime );
+  
     return Status::Complete;
   }
 }

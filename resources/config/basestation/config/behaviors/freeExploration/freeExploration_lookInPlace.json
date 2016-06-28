@@ -1,7 +1,8 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
   "name": "ExploreLookAroundInPlace",
-  "flatScore" : 1.0,
+  "flatScore" : 10.0,
+  "requiredRecentDriveOffCharger_sec" : 1.0,
   "behaviorGroups": [
       "FreeplayExplore"
   ],
