@@ -71,7 +71,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     // Get version and ESN information
     case TEST_GETVER:
-      0x1F000
+      //0x1F000
       return;   // Already replied
     
     // XXX: This test needs a timeout - the test fixture system needs a timeout

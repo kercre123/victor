@@ -122,7 +122,7 @@ void TestEncoders(void)
 
 // Count encoder ticks, check direction, and collect min/max a/b values
 const int OVERSAMPLE = 13;    // 8192 samples
-const int ENC_LOW = 800, ENC_HIGH = 2500;   // Low/high threshold
+const int ENC_LOW = 1000, ENC_HIGH = 2300;   // Low/high threshold
 int MeasureMotor(int speed)
 {
   int mina = 2800, minb = 2800, maxa = 0, maxb = 0;
@@ -133,6 +133,7 @@ int MeasureMotor(int speed)
   MicroWait(250000);  // Spin up time
 
   // Collect samples at full speed
+  int start = getMicroCounter();
   for (int i = 0; i < (1 << OVERSAMPLE); i++)
   {
     int a, b;
@@ -162,7 +163,8 @@ int MeasureMotor(int speed)
     if (b < minb)
       minb = b;
   }
-  ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d\r\n", speed, aticks, bticks, mina, maxa, minb, maxb);
+  int hz = (aticks*1000000)/(getMicroCounter()-start);  // Rising edges per second
+  ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, hz, aticks, mina, maxa, bticks, minb, maxb);
   MotorMV(0);
   
   int diff = aticks-bticks;
