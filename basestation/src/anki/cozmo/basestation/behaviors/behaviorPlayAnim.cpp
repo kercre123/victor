@@ -31,6 +31,8 @@ BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   {
     JsonTools::GetValueOptional(config,kAnimTriggerKey,_animTrigger);
   }
+  
+  ASSERT_NAMED(config.isMember(kAnimTriggerKey), "Invalid animation trigger key");
 
   _numLoops = config.get(kLoopsKey, 1).asInt();
 }

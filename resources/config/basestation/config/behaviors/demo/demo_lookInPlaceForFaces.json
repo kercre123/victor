@@ -54,7 +54,7 @@
     "s4_HeadAngleChangesMax":  5,
     "s4_WaitBetweenChangesMin_sec" : 0.01,
     "s4_WaitBetweenChangesMax_sec" : 0.2,
-    "s4_WaitAnimTrigger": "ag_lookInPlaceForFaces_headMovePauses",
+    "s4_WaitAnimTrigger": "LookInPlaceForFacesHeadMovePause",
     
     // state 5 - head angle change (can have body mini-turn), here to undo what state 4 does randomly, resetting head angle before 6
     "s5_BodyAngleRelativeRangeMin_deg" :  1.0, // +- body mini-turn from [min,max]
