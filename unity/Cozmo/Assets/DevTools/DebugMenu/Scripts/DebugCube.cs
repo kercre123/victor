@@ -12,6 +12,11 @@ public class DebugCube : MonoBehaviour {
 
   private LightCube _Cube;
 
+  // Default tap params 
+  private byte DefaultTapTime = 0;
+  private sbyte DefaultTapPos = 50;
+  private sbyte DefaultTapNeg = -50;
+
   private void Awake() {
     TapButton.onClick.AddListener(HandleTapButtonClicked);
   }
@@ -22,7 +27,7 @@ public class DebugCube : MonoBehaviour {
 
   private void HandleTapButtonClicked() {
     if (_Cube != null) {
-      _Cube.HandleObjectTapped(Singleton<Anki.Cozmo.ObjectTapped>.Instance.Initialize(0, (uint)_Cube.ID, _Cube.RobotID, 1));
+	  _Cube.HandleObjectTapped(Singleton<Anki.Cozmo.ObjectTapped>.Instance.Initialize(0, (uint)_Cube.ID, _Cube.RobotID, 1, DefaultTapTime, DefaultTapNeg, DefaultTapPos));
     }
   }
 

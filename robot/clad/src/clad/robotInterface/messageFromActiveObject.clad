@@ -51,6 +51,9 @@ message ObjectTapped
   uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 robotID,
   uint_8  numTaps,
+  uint_8  tapTime,
+  int_8   tapNeg,
+  int_8   tapPos,
 }
 
 structure PropState
@@ -60,6 +63,9 @@ structure PropState
   int_8  y,
   int_8  z,
   uint_8 shockCount,
+  uint_8 tapTime,
+  int_8 tapNeg,
+  int_8 tapPos,
 }
 
 } // Cozmo

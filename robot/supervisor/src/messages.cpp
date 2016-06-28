@@ -764,7 +764,8 @@ namespace Anki {
       {
 #ifdef TARGET_K02
         // Remapped for EP3
-        HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount);
+        HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount, 
+                          msg.tapTime, msg.tapNeg, msg.tapPos);
 #endif
       }
       

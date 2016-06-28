@@ -75,6 +75,8 @@ static AccessorySlot accessories[MAX_ACCESSORIES];
 // Current status values of cubes/chargers
 static RadioState        radioState;
 
+static uint8_t _tapTime = 0;
+
 void Radio::init() {
   ota_task = RTOS::create(ota_ack_timeout, false);
   lightGamma = 0x100;
@@ -375,6 +377,9 @@ void uesb_event_handler(uint32_t flags)
       msg.y = ap->y;
       msg.z = ap->z;
       msg.shockCount = ap->tap_count;
+      msg.tapTime = ap->tapTime;
+      msg.tapNeg = ap->tapNeg;
+      msg.tapPos = ap->tapPos;
       RobotInterface::SendMessage(msg);
 
       EnterState(RADIO_PAIRING);
@@ -436,6 +441,7 @@ void Radio::prepare(void* userdata) {
     // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;
+    ++_tapTime;
   }
 
   if (currentAccessory >= MAX_ACCESSORIES) return ;
@@ -458,6 +464,7 @@ void Radio::prepare(void* userdata) {
     // We send the previous LED state (so we don't get jitter on radio)    
     RobotHandshake tx_state;
     tx_state.msg_id = 0;
+    tx_state.tapTime = _tapTime;
 
     // Update the color status of the lights   
     static const int channel_order[] = { 3, 2, 1, 0 };
@@ -473,7 +480,6 @@ void Radio::prepare(void* userdata) {
         tx_state.ledStatus[tx_index++] = 0x80;
         #endif
       }
-      tx_state._reserved[0] = target->last_received;
     }
 
     #ifdef CUBE_HOP

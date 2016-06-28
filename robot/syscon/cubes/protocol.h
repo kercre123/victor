@@ -8,7 +8,8 @@ static const uint32_t CUBE_FIRMWARE_MAGIC = 0x65627543;
 __packed struct RobotHandshake {
   uint8_t msg_id;
   uint8_t ledStatus[12]; // 4-LEDs, three colors
-  uint8_t _reserved[4];
+  uint8_t tapTime;
+  uint8_t _reserved[3];
 };
 
 __packed struct AccessoryHandshake {

@@ -565,9 +565,10 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
       return;
     }
     PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.MessageActiveObjectTapped",
-                     "Received message that %s %d (Active ID %d) was tapped %d times.",
+                     "Received message that %s %d (Active ID %d) was tapped %d times (robotTime %d, tapTime %d, intensity: %d).",
                      EnumToString(object->GetType()),
-                     object->GetID().GetValue(), payload.objectID, payload.numTaps);
+                     object->GetID().GetValue(), payload.objectID, payload.numTaps,
+                     payload.timestamp, payload.tapTime, payload.tapPos - payload.tapNeg);
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = object->GetID();

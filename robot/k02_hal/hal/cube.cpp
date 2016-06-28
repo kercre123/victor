@@ -35,7 +35,8 @@ namespace Anki
   {
     namespace HAL
     {
-      void GetPropState(int id, int ax, int ay, int az, int shocks) {
+      void GetPropState(int id, int ax, int ay, int az, int shocks,
+                        uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
         // Tap detection
         if (id >= MAX_CUBES) {
           return ;
@@ -58,6 +59,9 @@ namespace Anki
           m.timestamp = currTime_ms;
           m.numTaps = count;
           m.objectID = id;
+          m.tapTime = tapTime;
+          m.tapNeg = tapNeg;
+          m.tapPos = tapPos;
           RobotInterface::SendMessage(m);
         }
 
