@@ -536,69 +536,118 @@ namespace UpgradeController {
             timer = 0;
           }
         }
-        else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
+        else
         {
-          const uint32 destAddr = fwWriteAddress + (fwb->blockAddress & ESP_FW_ADDR_MASK);
-          #if DEBUG_OTA
-          os_printf("WF 0x%x\r\n", destAddr);
-          #endif
-          const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
-          if (rslt != SPI_FLASH_RESULT_OK)
+          if ((fwb->blockAddress & (TRANSMIT_BLOCK_SIZE-1)) != 0)
           {
-            if (retries-- <= 0)
+            #if DEBUG_OTA
+            os_printf("\tBlock write address not on proper boundary\r\n");
+            #endif
+            ack.result = ERR_BAD_ADDRESS;
+            RobotInterface::SendMessage(ack);
+            Reset();
+          }
+          else if (fwb->blockAddress & ESPRESSIF_BLOCK) // Destined for the Espressif flash
+          {
+            const uint32 fwOffset = fwb->blockAddress & ESP_FW_ADDR_MASK;
+            const uint32 destAddr = fwWriteAddress + fwOffset;
+            #if DEBUG_OTA
+            os_printf("WF 0x%x\r\n", destAddr);
+            #endif
+            if (fwOffset == 0) // If this is the block that contains the app image header
+            {
+              // If the evil and image number words aren't 0xFFFFffff, someone is trying something nasty
+              if ((fwb->flashBlock[(APP_IMAGE_HEADER_OFFSET/sizeof(uint32_t)) + 1] != 0xFFFFffff) ||
+                  (fwb->flashBlock[(APP_IMAGE_HEADER_OFFSET/sizeof(uint32_t)) + 2] != 0xFFFFffff))
+              {
+                #if DEBUG_OTA
+                os_printf("\tInvalid evil!\r\n");
+                #endif
+                ack.result = ERR_BAD_DATA;
+                RobotInterface::SendMessage(ack);
+                Reset();
+                return;
+              }
+            }
+            else if (didWiFi == false)
             {
               #if DEBUG_OTA
-              os_printf("\tRan out of retries writing to Espressif flash\r\n");
+              os_printf("\tRejecting WiFi firmware out of order!\r\n");
               #endif
-              ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+              ack.result = OUT_OF_ORDER;
               RobotInterface::SendMessage(ack);
               Reset();
+              return;
             }
-          }
-          else
-          {
-            didWiFi = true;
-            retries = MAX_RETRIES;
-            bufferUsed -= sizeof(FirmwareBlock);
-            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-            bytesProcessed += sizeof(FirmwareBlock);
-            ack.bytesProcessed = bytesProcessed;
-            ack.result = OKAY;
-            RobotInterface::SendMessage(ack);
-            phase = OTAT_Flash_Verify;
-            counter = 0;
-            timer = 0;
-          }
-        }
-        else // This is bound for the RTIP or body
-        {
-          switch (i2spiGetRtipBootloaderState())
-          {
-            case STATE_NACK:
-            case STATE_ACK:
-            case STATE_IDLE:
+            const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+            if (rslt != SPI_FLASH_RESULT_OK)
             {
-              if (i2spiBootloaderPushChunk(fwb))
+              if (retries-- <= 0)
               {
-                didRTIP = true;
                 #if DEBUG_OTA
-                os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
+                os_printf("\tRan out of retries writing to Espressif flash\r\n");
                 #endif
-                timer = system_get_time() + 20000; // 20ms
-                phase = OTAT_Wait;
+                ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+                RobotInterface::SendMessage(ack);
+                Reset();
               }
-              // Else try again next time
-              break;
             }
-            case STATE_BUSY:
-            case STATE_SYNC:
-            default:
+            else
             {
-              // Just wait for this to clear
-              #if DEBUG_OTA > 2
-              os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
+              didWiFi = true;
+              retries = MAX_RETRIES;
+              bufferUsed -= sizeof(FirmwareBlock);
+              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+              bytesProcessed += sizeof(FirmwareBlock);
+              ack.bytesProcessed = bytesProcessed;
+              ack.result = OKAY;
+              RobotInterface::SendMessage(ack);
+              phase = OTAT_Flash_Verify;
+              counter = 0;
+              timer = 0;
+            }
+          }
+          else // This is bound for the RTIP or body
+          {
+            if ((didRTIP == false) && (fwb->blockAddress != FIRST_BODY_BLOCK))
+            {
+              #if DEBUG_OTA
+              os_printf("\tRejecting RTIP/Body firmware out of order\r\n");
               #endif
-              break;
+              ack.result = OUT_OF_ORDER;
+              RobotInterface::SendMessage(ack);
+              Reset();
+              return;
+            }
+            
+            switch (i2spiGetRtipBootloaderState())
+            {
+              case STATE_NACK:
+              case STATE_ACK:
+              case STATE_IDLE:
+              {
+                if (i2spiBootloaderPushChunk(fwb))
+                {
+                  didRTIP = true;
+                  #if DEBUG_OTA
+                  os_printf("Write RTIP 0x08%x\t", fwb->blockAddress);
+                  #endif
+                  timer = system_get_time() + 20000; // 20ms
+                  phase = OTAT_Wait;
+                }
+                // Else try again next time
+                break;
+              }
+              case STATE_BUSY:
+              case STATE_SYNC:
+              default:
+              {
+                // Just wait for this to clear
+                #if DEBUG_OTA > 2
+                os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
+                #endif
+                break;
+              }
             }
           }
         }
