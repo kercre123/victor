@@ -59,11 +59,19 @@ def run(args):
   #No problems
   exit_code = 0
 
-  animGroupPath = args.externalsPath + "/cozmo-assets/animationGroups"
+  externalsPath = args.externalsPath;
+  projectRoot = args.projectRoot;
+  if( externalsPath == None ):
+    externalsPath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), "../../EXTERNALS"))
+
+  if( projectRoot == None ):
+    projectRoot = os.path.abspath(os.path.join(os.path.dirname( __file__ ), "../.."))
+
+  animGroupPath = externalsPath + "/cozmo-assets/animationGroups"
 
   animGroupArray = getAllAnimGroups(animGroupPath)
 
-  animationTriggerMapFilename = args.projectRoot + "/lib/anki/products-cozmo-assets/animationGroupMaps/AnimationTriggerMap.json"
+  animationTriggerMapFilename = projectRoot + "/lib/anki/products-cozmo-assets/animationGroupMaps/AnimationTriggerMap.json"
 
   animationTriggerMapData = open(animationTriggerMapFilename)
   animationTriggerMapJson = json.load(animationTriggerMapData)
