@@ -128,6 +128,8 @@ public static class LocalizationEditorUtility {
 
   public static string[] LocalizationKeys { get { return _LocalizationKeys; } }
 
+  public static readonly char[] kFormatMarkers = { '<', '>' };
+
   public static LocalizationDictionary CreateLocalizationDictionary() {
     return new LocalizationDictionary() {
       Smartling = new SmartlingBlob() {
@@ -176,6 +178,28 @@ public static class LocalizationEditorUtility {
     _LocalizationKeys = new[] { string.Empty }.Concat(_LocalizationDictionaries.Values.SelectMany(x => x.Translations.Keys)).ToArray();
     // sort them to make it easier to find
     Array.Sort(_LocalizationKeys);
+  }
+
+  public static string GetTranslationSansFormatting(string key) {
+    string fileName = "";
+    string sansFormat = GetTranslation(key, out fileName);
+    string[] splitName = sansFormat.Split();
+    for (int i = 0; i < splitName.Length; i++) {
+      if (splitName[i].Contains(kFormatMarkers[0].ToString())) {
+        int markerStart = splitName[i].IndexOf(kFormatMarkers[0]);
+        int markerEnd = splitName[i].IndexOf(kFormatMarkers[1]);
+        int totalLength = splitName[i].Length;
+        if (markerStart == 0) {
+          markerEnd += 1;
+          splitName[i] = splitName[i].Substring(markerEnd, totalLength - markerEnd);
+        }
+        else {
+          splitName[i] = splitName[i].Substring(0, markerStart);
+        }
+      }
+    }
+    sansFormat = String.Join(" ", splitName);
+    return sansFormat;
   }
 
   public static string GetTranslation(string fileName, string key) {

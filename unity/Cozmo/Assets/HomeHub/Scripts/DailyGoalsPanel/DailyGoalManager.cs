@@ -202,7 +202,7 @@ public class DailyGoalManager : MonoBehaviour {
       toAdd = goalList[UnityEngine.Random.Range(0, goalList.Count)];
       // Remove from list to prevent dupes
       goalList.Remove(toAdd);
-      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority));
+      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority));
     }
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;

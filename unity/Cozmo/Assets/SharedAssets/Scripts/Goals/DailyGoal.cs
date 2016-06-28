@@ -13,7 +13,6 @@ namespace Cozmo {
 
       public GameEvent GoalEvent;
       public LocalizedString Title;
-      public LocalizedString Description;
       public string RewardType;
       private int _Progress;
 
@@ -53,12 +52,10 @@ namespace Cozmo {
       // Conditions that must be met in order for this to progress when its event is fired.
       public List<GoalCondition> ProgConditions = new List<GoalCondition>();
 
-      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int priority = 0, int currProg = 0) {
+      public DailyGoal(GameEvent gEvent, string titleKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int priority = 0, int currProg = 0) {
         GoalEvent = gEvent;
         Title = new LocalizedString();
-        Description = new LocalizedString();
         Title.Key = titleKey;
-        Description.Key = descKey;
         PointsRewarded = reward;
         Target = target;
         Progress = currProg;

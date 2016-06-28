@@ -44,7 +44,6 @@ namespace Anki.Cozmo {
     public class GoalEntry {
       public GoalEntry() {
         TitleKey = "dailyGoal.title.missing";
-        DescKey = "dailyGoal.description.missing";
         Target = 1;
         PointsRewarded = 0;
         RewardType = "experience";
@@ -59,10 +58,6 @@ namespace Anki.Cozmo {
       /// The title key for localization.
       /// </summary>
       public string TitleKey;
-      /// <summary>
-      /// The description key for localization.
-      /// </summary>
-      public string DescKey;
       /// <summary>
       /// The Item type of the reward.
       /// </summary>

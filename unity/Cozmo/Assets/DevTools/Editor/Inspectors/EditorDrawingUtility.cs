@@ -6,19 +6,17 @@ using System.Linq;
 
 public static class EditorDrawingUtility {
 
-  public static void DrawList<T>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, bool includeCreateFunc = true, GUIStyle titleStyle = null) {
+  public static void DrawList<T>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, bool includeCreateFunc = true, bool includeDeleteFunc = true) {
 
     EditorGUILayout.BeginHorizontal();
-    if (titleStyle != null) {
-      GUILayout.Label(label, titleStyle);
-    }
-    else {
-      GUILayout.Label(label);
-    }
+    GUILayout.Label(label, SubtitleStyle);
+
     if (includeCreateFunc) {
       if (GUILayout.Button("+", GUILayout.Width(30))) {
         list.Add(createFunc());
       }
+    }
+    if (includeDeleteFunc) {
       if (GUILayout.Button("-", GUILayout.Width(30))) {
         list.RemoveAt(0);
       }
@@ -63,16 +61,41 @@ public static class EditorDrawingUtility {
     }
   }
 
-  public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel, GUIStyle titleStyle = null, GUIStyle subtitleStyle = null)
+  /// <summary>
+  /// Draws the filtered grouped list. Filters based on U.ToString() containing filterVal, default Val is always visible even with filter used
+  /// </summary>
+  public static void DrawFilteredGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, string filterVal, U defaultVal, Func<U,string> getGroupLabel)
     where U : IComparable {
     EditorGUILayout.BeginVertical();
     EditorGUILayout.BeginHorizontal();
-    if (titleStyle != null) {
-      GUILayout.Label(label, titleStyle);
+    GUILayout.Label(label, TitleStyle);
+
+    if (GUILayout.Button("+", GUILayout.Width(30))) {
+      list.Insert(0, createFunc());
     }
-    else {
-      GUILayout.Label(label);
+    
+    EditorGUILayout.EndHorizontal();
+
+    var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
+
+    foreach (var entry in splitList) {
+      if (String.IsNullOrEmpty(filterVal) || (entry.Key.Equals(defaultVal)) || entry.Key.ToString().Contains(filterVal)) {
+        EditorDrawingUtility.DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc, false, false);
+      }
     }
+
+    var tmp = splitList.SelectMany(kvp => kvp.Value).ToArray();
+    list.Clear();
+    list.AddRange(tmp);
+
+    EditorGUILayout.EndVertical();
+  }
+
+  public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel)
+    where U : IComparable {
+    EditorGUILayout.BeginVertical();
+    EditorGUILayout.BeginHorizontal();
+    GUILayout.Label(label, TitleStyle);
     if (GUILayout.Button("+", GUILayout.Width(30))) {
       list.Insert(0, createFunc());
     }
@@ -84,7 +107,7 @@ public static class EditorDrawingUtility {
     var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
 
     foreach (var entry in splitList) {
-      DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc, false, subtitleStyle);
+      DrawList(getGroupLabel(entry.Key), entry.Value, drawControls, createFunc, false, false);
     }
 
     var tmp = splitList.SelectMany(kvp => kvp.Value).ToArray();
@@ -221,6 +244,8 @@ public static class EditorDrawingUtility {
     return emotionScorer;
   }
 
+  #region Style Settings
+
   // custom Unity Style for a toolbar button
   private static GUIStyle _ToolbarButtonStyle;
 
@@ -248,6 +273,108 @@ public static class EditorDrawingUtility {
       return _ToolbarStyle;
     }
   }
+
+  // Unity Style for the Main DAILY GOALS title at the top
+  private static GUIStyle _MainTitleStyle;
+
+  public static GUIStyle MainTitleStyle {
+    get {
+      if (_MainTitleStyle == null) {
+        _MainTitleStyle = new GUIStyle();
+        _MainTitleStyle.fontStyle = FontStyle.Bold;
+        _MainTitleStyle.normal.textColor = Color.white;
+        _MainTitleStyle.active.textColor = Color.white;
+        _MainTitleStyle.fontSize = 28;
+      }
+      return _MainTitleStyle;
+    }
+  }
+
+  // Unity Style for event labels that separate each group of daily goals
+  private static GUIStyle _TitleStyle;
+
+  public static GUIStyle TitleStyle {
+    get {
+      if (_TitleStyle == null) {
+        _TitleStyle = new GUIStyle();
+        _TitleStyle.fontStyle = FontStyle.Bold;
+        _TitleStyle.normal.textColor = Color.white;
+        _TitleStyle.active.textColor = Color.white;
+        _TitleStyle.fontSize = 20;
+      }
+      return _TitleStyle;
+    }
+  }
+
+  // Unity style for labels within each individual daily goal
+  private static GUIStyle _SubtitleStyle;
+
+  public static GUIStyle SubtitleStyle {
+    get {
+      if (_SubtitleStyle == null) {
+        _SubtitleStyle = new GUIStyle();
+        _SubtitleStyle.fontStyle = FontStyle.Bold;
+        _SubtitleStyle.normal.textColor = Color.white;
+        _SubtitleStyle.active.textColor = Color.white;
+        _SubtitleStyle.fontSize = 16;
+      }
+      return _SubtitleStyle;
+    }
+  }
+
+  // custom Unity Style for a button
+  private static GUIStyle _AddButtonStyle;
+
+  public static GUIStyle AddButtonStyle {
+    get {
+      if (_AddButtonStyle == null) {
+        _AddButtonStyle = new GUIStyle(EditorStyles.miniButton);
+        _AddButtonStyle.normal.textColor = Color.green;
+        _AddButtonStyle.active.textColor = Color.white;
+        _AddButtonStyle.fontSize = 12;
+      }
+      return _AddButtonStyle;
+    }
+  }
+
+  // custom Unity Style for a button
+  private static GUIStyle _RemoveButtonStyle;
+
+  public static GUIStyle RemoveButtonStyle {
+    get {
+      if (_RemoveButtonStyle == null) {
+        _RemoveButtonStyle = new GUIStyle(EditorStyles.miniButton);
+        _RemoveButtonStyle.normal.textColor = Color.red;
+        _RemoveButtonStyle.active.textColor = Color.white;
+        _RemoveButtonStyle.fontSize = 12;
+      }
+      return _RemoveButtonStyle;
+    }
+  }
+
+  // TODO: Add in a proper highlight background for when Foldouts are opened, Box Texture2D with some color
+  private static GUIStyle _FoldoutStyle;
+
+  public static GUIStyle FoldoutStyle {
+    get {
+      if (_FoldoutStyle == null) {
+        _FoldoutStyle = new GUIStyle(EditorStyles.foldout);
+        Color white = Color.white;
+        _FoldoutStyle.fontStyle = FontStyle.Bold;
+        _FoldoutStyle.normal.textColor = white;
+        _FoldoutStyle.onNormal.textColor = white;
+        _FoldoutStyle.hover.textColor = white;
+        _FoldoutStyle.onHover.textColor = white;
+        _FoldoutStyle.focused.textColor = white;
+        _FoldoutStyle.onFocused.textColor = white;
+        _FoldoutStyle.active.textColor = white;
+        _FoldoutStyle.onActive.textColor = white;
+      }
+      return _FoldoutStyle;
+    }
+  }
+
+  #endregion
 
   private static readonly string[] _TypeOptions;
 

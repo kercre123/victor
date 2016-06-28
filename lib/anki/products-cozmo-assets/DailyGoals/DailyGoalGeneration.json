@@ -1,20 +1,7 @@
 {
   "GenList": [
     {
-      "TitleKey": "dailyGoal.title.MeetNewFace",
-      "DescKey": "dailyGoal.description.MeetNewFace",
-      "RewardType": "experience",
-      "PointsRewarded": 20,
-      "Target": 2,
-      "Priority": 0,
-      "CladEvent": "OnMeetNewPerson",
-      "GenConditions": [],
-      "ProgressConditions": [],
-      "Id": 18
-    },
-    {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
-      "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
       "PointsRewarded": 20,
       "Target": 1,
@@ -25,8 +12,18 @@
       "Id": 19
     },
     {
+      "TitleKey": "dailyGoal.title.MeetNewFace",
+      "RewardType": "experience",
+      "PointsRewarded": 20,
+      "Target": 2,
+      "Priority": 0,
+      "CladEvent": "OnMeetNewPerson",
+      "GenConditions": [],
+      "ProgressConditions": [],
+      "Id": 18
+    },
+    {
       "TitleKey": "dailyGoal.title.UnlockMeetCozmo",
-      "DescKey": "dailyGoal.description.UnlockMeetCozmo",
       "RewardType": "experience",
       "PointsRewarded": 10,
       "Target": 1,
