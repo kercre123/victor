@@ -11,6 +11,7 @@
 #include "hardware.h"
 #include "backpack.h"
 #include "bluetooth.h"
+#include "tests.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
@@ -203,25 +204,24 @@ void UART0_IRQHandler()
 
         break ;
       case TRANSMIT_CHARGER_RX:
-        static const uint32_t PREFIX = 0x57746600;
-        static const uint32_t MASK = 0xFFFFFF00;
+        static const uint32_t PREFIX = 0x57740000;
+        static const uint32_t MASK = 0xFFFF0000;
         static uint32_t fixture_data = 0;
         
         fixture_data = (fixture_data << 8) | data;
       
         if ((fixture_data & MASK) == PREFIX) {
           using namespace Anki::Cozmo;
-          uint8_t mode = fixture_data & ~MASK;
-          
-          switch (mode) {
-          case 0x81:
-            Radio::sendTestPacket();
-            break ;
-          default:
+          uint8_t test = fixture_data & 0xff;
+          uint8_t param = (fixture_data>>8) & 0xff;
+          // Tests with high-bit set are handled locally, else routed up to Espressif
+          if (test & 0x80) {
+            TestFixtures::dispatch(test, param);
+          } else {
             RobotInterface::EnterFactoryTestMode msg;
-            msg.mode = mode;
+            msg.mode = test;
+            msg.param = param;
             RobotInterface::SendMessage(msg);
-            break;
           }
 
           fixture_data = 0;

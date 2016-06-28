@@ -8,6 +8,7 @@
 #include "hal/display.h"
 #include "hal/motorled.h"
 #include "hal/board.h"
+#include "hal/radio.h"
 #include "../../crypto/crypto.h"
 #include "../app/fixture.h"
 #include <stdarg.h>
@@ -393,6 +394,13 @@ void SendTestMessage(void)
   SendTestMode(test);
 }
 
+void SetRadio(void)
+{  
+  char* arg = GetArgument(1);
+  ConsolePrintf("Remember to use uppercase for most modes\r\n");
+  SetRadioMode(arg[0]);
+}
+
 void SetMotor(void)
 {
   int test = 0;
@@ -419,6 +427,7 @@ static CommandFunction m_functions[] =
   {"Send", SendTestMessage, FALSE},
   {"HeadESP", HeadESP, FALSE},
   {"SetMotor", SetMotor, FALSE},
+  {"SetRadio", SetRadio, FALSE},
 };
 
 static void ParseCommand(void)

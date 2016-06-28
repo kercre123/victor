@@ -639,7 +639,7 @@ void NRFSWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, cons
 
 // Update the radio chip with the latest program if needed, and start it running
 // Returns false is the chip is unresponsive - this should be handled by radio.c driver
-bool UpdateNRF()
+bool UpdateNRF(bool forceupdate)
 {
   // Try to contact via SWD
   InitNRFSWD();
@@ -648,7 +648,7 @@ bool UpdateNRF()
 
   // If the radio is not running the latest version, update it
   int nrfversion = swd_read32(16), myversion = *(int*)(g_Radio+16);
-  if (nrfversion != myversion)
+  if (nrfversion != myversion || forceupdate)
   {
     ConsolePrintf("Radio had version %08x, updating to %08x\r\n", nrfversion, myversion);
     NRFSWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);
@@ -657,7 +657,9 @@ bool UpdateNRF()
   
   // Try to run the program
   swd_write(0, 0x4, 0x54000000);    // Power up system and debug - place chip in reset  
+  MicroWait(1000);
   swd_write(0, 0x4, 0x50000000);    // Power up system and debug - disable reset    
-
+  // XXX: Unstable // NRFSWDRun(swd_read32(4));         // Jump into boot vector and get started
+  
   return true;
 }

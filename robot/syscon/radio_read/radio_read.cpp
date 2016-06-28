@@ -147,7 +147,6 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       int r = state->x, g = state->y, b = state->z;
       r = abs(r); g = abs(g); b = abs(b); 
       uint16_t color;
-      uart_printf("C%c%c%c%c", r, g, b, state->slot);
       
       if (!r && !g && !b) {
         color = PACK_COLORS(0, 0xFF, 0xFF, 0xFF);
@@ -227,8 +226,7 @@ int main(void)
   static bool write_ready = true;
   
   memset(&target, 0, sizeof(target));
-  set_test_mode(FILTER_ALL);
-  
+ 
   for (;;) {
     int32_t cur = NRF_RTC1->COUNTER;
 

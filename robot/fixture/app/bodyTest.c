@@ -35,7 +35,7 @@ bool BodyDetect(void)
 void BodyNRF51(void)
 {
   EnableVEXT();   // Turn on external power to the body
-  MicroWait(500000);
+  MicroWait(100000);
   
   // Try to talk to head on SWD
   SWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);

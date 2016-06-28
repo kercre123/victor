@@ -68,7 +68,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler             ; 1
                 DCD     NMI_Handler               ; 2
                 DCD     HardFault_Handler         ; 3
-                DCD     1                         ; radio_read VERSION NUMBER (Reserved)
+                DCD     3                         ; radio_read VERSION NUMBER (Reserved)
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved

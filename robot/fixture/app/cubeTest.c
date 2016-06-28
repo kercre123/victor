@@ -90,7 +90,7 @@ void CubePOST(void)
   {
     int diff = 0;
     if (g_fixtureType == FIXTURE_CHARGER_TEST)
-      current = ChargerGetCurrent() * 4;   // Because charger runs at 4x the voltage
+      current = ChargerGetCurrent() * 5;   // Because charger runs at 5x the voltage
     else
       current = BatGetCurrent();
     buf[sample&MASK] = current;

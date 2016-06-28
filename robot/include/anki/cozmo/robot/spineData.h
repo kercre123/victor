@@ -20,6 +20,7 @@ typedef s64 Fixed64;
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
 static const int spine_baud_rate    = 500000;
+static const int charger_baud_tx    = 250000;   // Transmits cause power to fade, so faster is better
 static const int charger_baud_rate  = 100000;
 
 enum SPISource

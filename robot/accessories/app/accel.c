@@ -113,6 +113,8 @@ void AccelRead()
     p++;
     SPIMDAT = 0;        // Pipeline next read
   }
+  while (!(SPIMSTAT & TXEMPTY))   // Let it drain out
+    ;
   CSB = 1;
   SPIMCON0 = 0;
 

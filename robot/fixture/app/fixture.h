@@ -126,6 +126,7 @@ typedef enum
 #define ERROR_CUBE_NO_COMMUNICATION 701   // MCU is not working (bad crystal?)
 #define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
 #define ERROR_CUBE_TYPE_CHANGE      704   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 
 #define ERROR_CUBE_MISSING_LED      750   // Bad LED
 #define ERROR_CUBE_NO_BOOT          751   // Bad accelometer, MCU, or crystal

@@ -10,7 +10,7 @@
 #include "hal/flash.h"
 #include "app/binaries.h"
 
-bool UpdateNRF();
+bool UpdateNRF(bool forceupdate);
 
 const int BAUDRATE = 115200;
 #define NRF_UART USART3
@@ -94,6 +94,16 @@ int GetCharWait(int timeout)
   return value;
 }
 
+// Send a character to the radio
+static void PutChar(u8 c)
+{    
+  NRF_UART->DR = c;
+  while (!(NRF_UART->SR & USART_FLAG_TXE))
+    ;
+}
+
+char g_mode = 'X';
+
 // Process incoming bytes from the radio - must call at least 12,000 times/second
 void RadioProcess()
 {
@@ -108,12 +118,14 @@ void RadioProcess()
   {
     // Process messages
     msg = c;
-    if (msg == 'C')
+    if (msg == 'C')   // Print cube ID
     {
       // Cube message has 4 bytes
       argbytes = 4;
       arg = 0;
     }
+    if (msg == '1')   // Watchdogged - restore mode
+      PutChar(g_mode);
   } else {
     // Grab arguments
     argbytes--;
@@ -125,39 +137,31 @@ void RadioProcess()
   }
 }
 
-// Send a character to the radio
-static void PutChar(u8 c)
-{    
-  NRF_UART->DR = c;
-  while (!(NRF_UART->SR & USART_FLAG_TXE))
-    ;
-}
-
 // Put the radio into a specific test mode
 void SetRadioMode(char mode)
 {
   static bool isRadioOK = false;
+  bool forceupdate = (mode == 'U');
   
-  if (!isRadioOK)
-  {
-    InitRadio();
-    // Try 5 times, since a buggy ISR in the NRF clobbers the update attempt
-    for (int i = 5; i >= 0; i--)
-      try {
-        GetChar();
-        isRadioOK = UpdateNRF();
-        // Wait for sign-on message
-        int c;
-        do {
-          c = GetCharWait(1000000);
-          if (-1 == c)
-            throw ERROR_RADIO_TIMEOUT;
-      } while ('!' != c);
-        break;
-      } catch (int e) {
-        if (i == 0)
-          throw e;
-      }
-  }
-  PutChar(mode);
+  InitRadio();
+  // Try 5 times, since a buggy ISR in the NRF clobbers the update attempt
+  for (int i = 5; i >= 0; i--)
+    try {
+      GetChar();
+      isRadioOK = UpdateNRF(forceupdate);
+      // Wait for sign-on message
+      int c;
+      do {
+        c = GetCharWait(1000000);
+        if (-1 == c)
+          throw ERROR_RADIO_TIMEOUT;
+    } while ('!' != c);
+      break;
+    } catch (int e) {
+      if (i == 0)
+        throw e;
+    }
+
+  g_mode = mode;
+  PutChar(g_mode);
 }

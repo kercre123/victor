@@ -24,9 +24,6 @@ enum TRANSMIT_MODE {
 static TRANSMIT_MODE uart_mode = TRANSMIT_NONE;
 static const int UART_TIMEOUT = 0x2000 << 8;
 
-static int light_channel = 0;
-static int light_intensity = 0;
-
 void UARTInit(void) {
   // Power on the peripheral
   NRF_UART0->POWER = 1;
@@ -155,28 +152,6 @@ static void writeByte(const uint8_t byte) {
   writeUart(&byte, sizeof(byte));
 }
 
-static bool EscapeFixture(void) {
-  nrf_gpio_pin_set(PIN_TX_VEXT);
-  nrf_gpio_cfg_output(PIN_TX_VEXT);
-
-  MicroWait(15);
-
-  setTransmitMode(TRANSMIT_CHARGER_RX);
-  
-  int waitTime = GetCounter() + (int)(0.0002f * 0x8000);
-  
-  do {
-    while (!NRF_UART0->EVENTS_RXDRDY) {
-      if (GetCounter() >= waitTime) {
-        return false;
-      }
-    }
-  } while (NRF_UART0->RXD != 0xA5);
-
-  return true;
-}
-
-
 static void SyncToHead(void) {
   uint32_t recoveryWord = 0;
 
@@ -304,7 +279,7 @@ extern "C" void EnterRecovery(void) {
 
   for (;;) {
     // Receive command packet
-    RECOVERY_STATE state;
+    RECOVERY_STATE state = STATE_UNKNOWN;
     
     switch (readByte()) {
       case COMMAND_DONE:

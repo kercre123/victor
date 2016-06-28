@@ -228,6 +228,10 @@ bool VerifyRom(const uint8_t *rom, int length)
     int left =  length - addr;
     int send = (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left;
 
+    // Do not attempt to verify "patch 2" since it may be installed
+    if (addr >= 0x3400 && addr < 0x3800)
+      continue;
+    
     uint8_t verify[CUBE_PAGE_SIZE];
     CubeRead(addr, verify, send);
     
@@ -383,13 +387,18 @@ void ProgramCubeWithSerial()
     if (!hadSerial)
       serial = GetRadioSequence();
     else
-      ConsolePrintf("old-serial,%08x\r\n", serial);
+      ConsolePrintf("old-serial,%08x,%08x\r\n", serial, *(u32*)(id+4));
+    
+    if (!serial || id[6] != 0xff)   // id[6] is the LSB of the patch byte
+      throw ERROR_CUBE_CANNOT_READ;
     
     // Patch accessory type/model: 0=charger, 1=cube1, etc
     int type = (g_fixtureType - FIXTURE_CHARGER_TEST);
     if (id[4] != 0xff && type != id[4])
       throw ERROR_CUBE_TYPE_CHANGE;
     cubeboot[0x3ff4] = type; 
+    // Remember how many patches we've already had (to retest finished board)
+    cubeboot[0x3ff7] = id[7];   
     
     // Patch each copy of the serial number
     Patch(cubeboot+0x3931, __REV(0xca11ab1e), serial);
