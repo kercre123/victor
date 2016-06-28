@@ -748,13 +748,13 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
       
       currentNavMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
-      
-      // also notify behavior whiteboard.
-      // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-      // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-      // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(_robot->GetBoundingQuadXY());
     }
+    
+    // also notify behavior whiteboard.
+    // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
+    // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
+    // robot component, like a VisualInformationProcessingComponent
+    _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(_robot->GetBoundingQuadXY());
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -764,7 +764,23 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     if ( !kEnableMapMemory ) {
       return;
     }
-  
+
+    // Since we are going to create a new memory map, check if any of the existing ones have become a zombie
+    // This could happen if either the current map never saw a localizable object, or if objects in previous maps
+    // have been moved or deactivated, which invalidates them as localizable
+    NavMemoryMapTable::iterator iter = _navMemoryMaps.begin();
+    while ( iter != _navMemoryMaps.end() )
+    {
+      const bool isZombie = IsZombiePoseOrigin( iter->first );
+      if ( isZombie ) {
+        PRINT_NAMED_DEBUG("BlockWorld.CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
+        iter = _navMemoryMaps.erase(iter);
+      } else {
+        PRINT_NAMED_DEBUG("BlockWorld.CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
+        ++iter;
+      }
+    }
+    
     // clear all memory map rendering because indexHints are changing
     #if ANKI_DEVELOPER_CODE
     {
@@ -1298,14 +1314,17 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
 
 
         // Broadcast object's existence as long as it was observed in the current frame.
-        if (&observedObject->GetPose().FindOrigin() == currFrame) {
+        Pose3d relPose;
+        if ( observedObject->GetPose().GetWithRespectTo(*currFrame, relPose) )
+        {
           BroadcastObjectObservation(observedObject, true);
-        }
-        
-        // Update navMemory map
-        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-        if ( nullptr != currentNavMemoryMap ) {
-          currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(), INavMemoryMap::EContentType::ObstacleCube);
+          
+          // to transform to Quad for the memory map we need to make sure that the Pose3d is with respect to the origin
+          // use the relativePose to create the boundingQuad
+          INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+          if ( nullptr != currentNavMemoryMap ) {
+            currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(relPose), INavMemoryMap::EContentType::ObstacleCube);
+          }
         }
         
         _didObjectsChange = true;
@@ -2294,35 +2313,40 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                           object->GetPose().GetParent()->IsOrigin());
           object->SetPoseParent(_robot->GetWorldOrigin());
 
-          // update navmesh with a quadrilateral between the robot and the seen object
+          // we are creating a quad projected on the ground from the robot to every marker we see. In order to do so
+          // the bottom corners of the ground quad match the forward ones of the robot (robotQuad::xLeft). The names
+          // cornerBR, cornerBL are the corners in the ground quads (BottomRight and BottomLeft).
+          // Later on we will generate the top corners for the ground quad (cornerTL, corner TR)
+          const Quad2f& robotQuad = _robot->GetBoundingQuadXY();
+          Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
+          Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
+        
           INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-          if ( nullptr != currentNavMemoryMap )
-          {
-            // robot corners
-            const Quad2f& robotQuad = _robot->GetBoundingQuadXY();
-            Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
-            Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
           
-            std::vector<const Vision::KnownMarker *> observedMarkers;
-            object->GetObservedMarkers(observedMarkers);
-            for ( const auto& observedMarkerIt : observedMarkers )
-            {
-              // marker corners
-              const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
-              Point3f cornerTL = markerCorners[Quad::BottomLeft];
-              Point3f cornerTR = markerCorners[Quad::BottomRight];
-              
-              // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
-              // the navmesh that it should be clear, since we saw the marker
-              Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
+          std::vector<const Vision::KnownMarker *> observedMarkers;
+          object->GetObservedMarkers(observedMarkers);
+          for ( const auto& observedMarkerIt : observedMarkers )
+          {
+            // An observerd marker. Assign the marker's bottom corners as the top corners for the ground quad
+            // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
+            const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
+            Point3f cornerTL = markerCorners[Quad::BottomLeft];
+            Point3f cornerTR = markerCorners[Quad::BottomRight];
+            
+            // Create a quad between the bottom corners of a marker and the robot forward corners, and tell
+            // the navmesh that it should be clear, since we saw the marker
+            Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
+            
+            // update navmesh with a quadrilateral between the robot and the seen object
+            if ( nullptr != currentNavMemoryMap ) {
               currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
-              
-              // also notify behavior whiteboard.
-              // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-              // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-              // robot component, like a VisualInformationProcessingComponent
-              _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
             }
+            
+            // also notify behavior whiteboard.
+            // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
+            // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
+            // robot component, like a VisualInformationProcessingComponent
+            _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
           }
           
         }
@@ -2535,6 +2559,24 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       
 
 
+    }
+  
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
+    {
+      // really, pass in an origin
+      ASSERT_NAMED(nullptr != origin && origin->IsOrigin(), "BlockWorld.IsZombiePoseOrigin.NotAnOrigin");
+    
+      // current world is not a zombie
+      const bool isCurrent = (origin == _robot->GetWorldOrigin());
+      if ( isCurrent ) {
+        return false;
+      }
+      
+      // check if there are any objects we can localize to
+      const bool hasLocalizableObjects = AnyRemainingLocalizableObjects(origin);
+      const bool isZombie = !hasLocalizableObjects;
+      return isZombie;
     }
   
     Result BlockWorld::AddCliff(const Pose3d& p)
@@ -3339,25 +3381,30 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       return FindObjectHelper(findLambda, filter);
     }
   
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     bool BlockWorld::AnyRemainingLocalizableObjects() const
     {
-      // There's no real find: we're relying entirely on the filter function here
+      return AnyRemainingLocalizableObjects(nullptr);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    bool BlockWorld::AnyRemainingLocalizableObjects(const Pose3d* origin) const
+    {
+      // any object not filtered out is good
       FindFcn findLambda = [](ObservableObject*, ObservableObject*) {
         return true;
       };
-      
-      // Filter out anything that can't be used for localization
-      BlockWorldFilter::FilterFcn filterLambda = [](ObservableObject* obj) {
-        return obj->CanBeUsedForLocalization();
+
+      // Filter out anything that can't be used for localization or is not at the desired origin
+      BlockWorldFilter::FilterFcn filterLambda = [origin](ObservableObject* obj) {
+        const bool atOrigin = (origin == nullptr) || ((&obj->GetPose().FindOrigin()) == origin);
+        return atOrigin && obj->CanBeUsedForLocalization();
       };
-      
+    
       BlockWorldFilter filter;
       filter.SetFilterFcn(filterLambda);
-      filter.SetIgnoreFamilies({
-        ObjectFamily::Block,
-        ObjectFamily::Charger,
-        ObjectFamily::MarkerlessObject,
-        ObjectFamily::Ramp,
+      filter.SetAllowedFamilies({
+        ObjectFamily::LightCube
       });
       
       if(nullptr != FindObjectHelper(findLambda, filter, true)) {

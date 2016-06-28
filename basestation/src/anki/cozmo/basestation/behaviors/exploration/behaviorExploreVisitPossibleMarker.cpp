@@ -17,7 +17,6 @@
 //#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -58,9 +57,9 @@ bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) 
 {
   // check whiteboard for known markers
   const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const AIWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
+  whiteboard.GetPossibleObjectsWRTOrigin(_possibleObjects);
 
-  const bool canRun = !markerList.empty(); // consider distance limit
+  const bool canRun = !_possibleObjects.empty(); // TODO: consider distance limit
   return canRun;
 }
 
@@ -68,46 +67,48 @@ bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) 
 Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
 {
   // 1) pick possible marker
-  const AIWhiteboard::PossibleMarker* closestMarker = nullptr;
+  const AIWhiteboard::PossibleObject* closestPossibleObject = nullptr;
   float distToClosestSQ = 0.0f;
 
   // get all markers from whiteboard
-  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const AIWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
-  for( const auto& marker : markerList )
+  for( const auto& possibleObject : _possibleObjects )
   {
+    // all possible objects have to be in robot's origin, otherwise whiteboard lied to us
+    ASSERT_NAMED( (&possibleObject.pose.FindOrigin()) == (&robot.GetPose().FindOrigin()),
+      "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
+  
     // pick closest marker to us
-    const Vec3f& dirToMarker = marker.pose.GetTranslation() - robot.GetPose().GetTranslation();
-    const float distToMarkerSQ = dirToMarker.LengthSq();
+    const Vec3f& dirToPossibleObject = possibleObject.pose.GetTranslation() - robot.GetPose().GetTranslation();
+    const float distToPosObjSQ = dirToPossibleObject.LengthSq();
     // don't think we need this anymore since we remove them once we look at them
     // if( distToMarkerSQ < std::pow( kEvpm_DistanceFromPossibleCubeMin_mm, 2) ) {      
     //   // ignore cubes which we are already close to and facing
     //   continue;
     // }
-    if ( (nullptr==closestMarker) || (distToMarkerSQ<distToClosestSQ) )
+    if ( (nullptr==closestPossibleObject) || (distToPosObjSQ<distToClosestSQ) )
     {
-      closestMarker = &marker;
-      distToClosestSQ = distToMarkerSQ;
+      closestPossibleObject = &possibleObject;
+      distToClosestSQ = distToPosObjSQ;
     }
   }
 
   // 2) create action to approach possible marker
   // we should have a closest marker
-  if ( nullptr != closestMarker )
+  if ( nullptr != closestPossibleObject )
   {
     PRINT_NAMED_DEBUG("BehaviorExploreVisitPossibleMarker.Init",
                       "Approaching possible marker which is sqrt(%f)mm away",
                       distToClosestSQ);
     
     // calculate best approach position
-    ApproachPossibleCube(robot, closestMarker->type, closestMarker->pose);
+    ApproachPossibleCube(robot, closestPossibleObject->type, closestPossibleObject->pose);
   
     return Result::RESULT_OK;
   }
   else
   {
-    //this could happen if markers can be removed between IsRunnable and InitInternal
-    PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.InitInternal", "Could not pick closest marker on init");
+    // this should not happen, otherwise we should have been not runnable
+    PRINT_NAMED_ERROR("BehaviorExploreVisitPossibleMarker.InitInternal", "Could not pick closest marker on init");
     return Result::RESULT_FAIL;
   }
 

@@ -138,7 +138,7 @@ namespace Anki {
           
           // Technically, this quad is already in the list of obstacles, so we could
           // find it rather than recomputing it...
-          const Quad2f boundingQuad = GetBoundingQuadXY();
+          const Quad2f& boundingQuad = GetBoundingQuadXY();
           
           for(auto & obstacle : obstacles) {
             

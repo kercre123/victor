@@ -1626,7 +1626,7 @@ namespace Anki {
               case (s32)'`':
               {
                 printf("Updating viz origin\n");
-                UpdateVizOrigin();
+                CycleVizOrigin();
                 break;
               }
                 

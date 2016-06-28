@@ -71,7 +71,8 @@ public:
   void QuitWebots(s32 status);
   void QuitController(s32 status);
   
-  void UpdateVizOrigin();
+  void CycleVizOrigin();
+  void UpdateVizOriginToRobot();
   void UpdateVizOrigin(const Pose3d& originPose);
   
 protected:
@@ -303,6 +304,8 @@ protected:
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
+  void HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg);
+  void HandleRobotPutDownBase(ExternalInterface::RobotPutDown const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
   void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);

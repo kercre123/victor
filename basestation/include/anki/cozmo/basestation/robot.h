@@ -808,6 +808,7 @@ protected:
   f32               _localizedMarkerDistToCameraSq;
   
   Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
+  void FlattenOutOrigins();
     
   const Pose3d     _neckPose;     // joint around which head rotates
   Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint

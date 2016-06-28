@@ -39,12 +39,34 @@ namespace Anki {
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
       _robotPose = msg.pose;
+
+      // if localization has changed, update VizOrigin to the robot automatically
+      // to better match the offsets
+      const bool hasChangedLocalization =(_robotStateMsg.localizedToObjectID != msg.localizedToObjectID);
+      if (hasChangedLocalization)
+      {
+        UpdateVizOriginToRobot();
+      }
       
       _robotStateMsg = msg;
       
       HandleRobotStateUpdate(msg);
     }
     
+    void UiGameController::HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg)
+    {
+      // the robot has delocalized, update VizOrigin to the robot automatically
+      // (for example if we forceDeloc with a message)
+      UpdateVizOriginToRobot();
+    }
+
+    void UiGameController::HandleRobotPutDownBase(ExternalInterface::RobotPutDown const& msg)
+    {
+      // the robot is in a new place, update VizOrigin to the robot automatically
+      // (for example after you put him down after picking it up)
+      UpdateVizOriginToRobot();
+    }
+
     void UiGameController::HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg)
     {
       // Get object info
@@ -371,6 +393,12 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotState:
             HandleRobotStateUpdateBase(message.Get_RobotState());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::RobotDelocalized:
+            HandleRobotDelocalizedBase(message.Get_RobotDelocalized());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::RobotPutDown:
+            HandleRobotPutDownBase(message.Get_RobotPutDown());
+            break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotObservedObject:
             HandleRobotObservedObjectBase(message.Get_RobotObservedObject());
             break;
@@ -644,23 +672,38 @@ namespace Anki {
       }
     }
     
-    void UiGameController::UpdateVizOrigin()
+    void UiGameController::CycleVizOrigin()
     {
       Pose3d correctionPose;
-      if(_robotStateMsg.localizedToObjectID >= 0)
+      if(_robotStateMsg.localizedToObjectID >= 0 && !_lightCubes.empty())
       {
-        // Align the pose of the object to which the robot is localized to the
-        // the next actual light cube in the world
-        ++_lightCubeOriginIter;
-        if(_lightCubeOriginIter == _lightCubes.end()) {
+        // iterator == end happens when we center to robot
+        if (_lightCubeOriginIter == _lightCubes.end()) {
+          // at robot, go to first cube
           _lightCubeOriginIter = _lightCubes.begin();
+        } else {
+          // at cube, go to next cube (or robot if at last)
+          ++_lightCubeOriginIter;
         }
-       
-        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
-                         "Aligning viz to match next known LightCube to object %d",
-                         _robotStateMsg.localizedToObjectID);
-        
-        correctionPose = _lightCubeOriginIter->second * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+
+        // if at robot
+        if(_lightCubeOriginIter == _lightCubes.end())
+        {
+          PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                          "Aligning viz to match robot's pose.");
+                         
+          correctionPose = _robotPoseActual * _robotPose.GetInverse();
+        }
+        else
+        {
+          // Align the pose of the object to which the robot is localized to the
+          // the next actual light cube in the world
+          PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                       "Aligning viz to match next known LightCube to object %d",
+                       _robotStateMsg.localizedToObjectID);
+      
+          correctionPose = _lightCubeOriginIter->second * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+        }
       } else {
         // Robot is not localized to any object, so align the robot's estimated
         // pose to its actual pose in the world
@@ -674,6 +717,15 @@ namespace Anki {
       UpdateVizOrigin(correctionPose);
     }
     
+    void UiGameController::UpdateVizOriginToRobot()
+    {
+      // set iterator to end
+      _lightCubeOriginIter = _lightCubes.end();
+      
+      Pose3d correctionPose = _robotPoseActual * _robotPose.GetInverse();
+      UpdateVizOrigin(correctionPose);
+    }
+
     void UiGameController::UpdateVizOrigin(const Pose3d& originPose)
     {
       SetVizOrigin msg;

@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreVisitPossibleMarker_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/objectTypes.h"
@@ -76,6 +77,13 @@ private:
 
   // mark the pose as invalid since we tried to search for something there and failed
   void MarkPossiblePoseAsEmpty(Robot& robot, ObjectType objectType, const Pose3d& pose);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // known possible objects we can obtain from the whiteboard (and cache for a run)
+  mutable AIWhiteboard::PossibleObjectVector _possibleObjects;
 
 };
   

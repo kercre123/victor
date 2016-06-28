@@ -345,6 +345,17 @@ void Robot::Delocalize()
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
   //_blockWorld.ClearAllExistingObjects();
       
+  // TODO rsam:
+  // origins are no longer destroyed to prevent children from having to rejigger as cubes do. This however
+  // has the problem of leaving zombie origins, and having systems never deleting dead poses that can never
+  // be transformed withRespectTo a current origin. The origins growing themselves is not a big problem since
+  // they are merely a Pose3d instance. However systems that keep Poses around because they have a valid
+  // origin could potentially be a problem. This would have to be profiled to identify those systems, so not
+  // really worth adding here a warning for "number of zombies is too big" without actually keeping track
+  // of how many children they hold, or for how long. Eg: zombies with no children could auto-delete themselves,
+  // but is the cost of bookkeeping bigger than what we are currently losing to zombies? That's the question
+  // to profile
+      
   // Add a new pose origin to use until the robot gets localized again
   _poseOrigins.emplace_back();
   _poseOrigins.back().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
@@ -374,6 +385,10 @@ void Robot::Delocalize()
       
   // notify behavior whiteboard
   _behaviorMgr.GetWhiteboard().OnRobotDelocalized();
+  
+  // send message to game. At the moment I implement this so that Webots can update the render, but potentially
+  // any system can listen to this
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized(GetID())));
       
 } // Delocalize()
     
@@ -1644,7 +1659,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     _worldOrigin->Invert();
     _worldOrigin->PreComposeWith(robotPoseWrtOrigin);
     _worldOrigin->SetParent(&robotPoseWrtObject.FindOrigin());
-    _worldOrigin->SetName("RejiggeredOrigin");
+    _worldOrigin->SetName( _worldOrigin->GetName() + "_REJ");
         
     assert(_worldOrigin->IsOrigin() == false);
         
@@ -1655,23 +1670,9 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     // Now we need to go through all objects whose poses have been adjusted
     // by this origin switch and notify the outside world of the change.
     _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
-        
+
     // after updating all block world objects, no one should be pointing to the oldOrigin
-    bool removed = false;
-    auto listIter = _poseOrigins.begin();
-    auto listEnd  = _poseOrigins.end();
-    for(; listIter != listEnd; ++listIter )
-    {
-      if ( &(*listIter) == oldOrigin )
-      {
-        listIter = _poseOrigins.erase(listIter);
-        removed = true;
-        break;
-      }
-    }
-    if ( !removed ) {
-      PRINT_NAMED_ERROR("Robot.LocalizeToObject", "Could not remove old origin from _poseOrigins");
-    }
+    FlattenOutOrigins();
         
   } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
@@ -1728,7 +1729,28 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   return RESULT_OK;
 } // LocalizeToObject()
     
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Robot::FlattenOutOrigins()
+{
+  for(auto& originIter : _poseOrigins)
+  {
+    // if this origin has a parent and it's not the current worldOrigin, we want to update
+    // this origin to be a direct child of the current origin
+    if ( (originIter.GetParent() != nullptr) && (originIter.GetParent() != _worldOrigin) )
+    {
+      // get WRT current origin, and if we can (because our parent's origin is the current worldOrigin), then assign
+      Pose3d iterWRTCurrentOrigin;
+      if ( originIter.GetWithRespectTo(*_worldOrigin, iterWRTCurrentOrigin) )
+      {
+        const std::string& newName = originIter.GetName() + "_FLT";
+        originIter = iterWRTCurrentOrigin;
+        originIter.SetName( newName );
+      }
+    }
+  }
+}
     
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
 {
   Result lastResult;

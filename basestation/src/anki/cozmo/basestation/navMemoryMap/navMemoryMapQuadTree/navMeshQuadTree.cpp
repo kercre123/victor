@@ -61,9 +61,16 @@ void NavMeshQuadTree::Draw(size_t mapIdxHint) const
     // so that we don't render on top of any other map
     if ( mapIdxHint > 0 )
     {
-      const float offSetPerIdx = MM_TO_M(-150.0f);
+      const float offSetPerIdx = MM_TO_M(-250.0f);
       for( auto& q : quadVector ) {
         q.center[2] += (mapIdxHint*offSetPerIdx);
+      }
+    }
+    else
+    {
+      // small offset to not clip with floor
+      for( auto& q : quadVector ) {
+        q.center[2] += MM_TO_M(10.0f);
       }
     }
     

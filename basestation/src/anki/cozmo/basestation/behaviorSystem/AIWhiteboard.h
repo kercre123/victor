@@ -41,12 +41,14 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // info for every marker that is a possible cube but we don't trust (based on distance or how quickly we saw it)
-  struct PossibleMarker {
-    PossibleMarker( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
+  // or other information, like old cubes that have moved, etc.
+  struct PossibleObject {
+    PossibleObject( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
     Pose3d pose;
     ObjectType type;
   };
-  using PossibleMarkerList = std::list<PossibleMarker>;
+  using PossibleObjectList = std::list<PossibleObject>;
+  using PossibleObjectVector = std::vector<PossibleObject>;
   
   using BeaconList = std::vector<AIBeacon>;
   
@@ -64,7 +66,7 @@ public:
   void OnRobotDelocalized();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Markers
+  // Possible Objects
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // called when Cozmo can identify a clear quad (no borders, obstacles, etc)
@@ -73,6 +75,10 @@ public:
   // called when we've searched for a possible object at a given pose, but failed to find it
   void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Cube Stacks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
   void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID);
   void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); _bottomOfStackToAdmire.UnSet(); }
@@ -80,15 +86,14 @@ public:
   bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
   ObjectID GetStackToAdmireTopBlockID() const { return _topOfStackToAdmire; }
   ObjectID GetStackToAdmireBottomBlockID() const { return _bottomOfStackToAdmire; }
-
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // list of possible markers
-  // TODO:(bn) this is more like "possible objects" now than markers, since I also look at unknown pose obejcts
-  const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
+  // This getter iterates the list of possible objects currently stored and retrieves only those that can be located in
+  // current origin. Note this causes a calculation WRT origin (consider caching in the future if need to optimize)
+  void GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObjects) const;
 
   // beacons
   void AddBeacon( const Pose3d& beaconPos );
@@ -111,14 +116,17 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // consider adding an object to possible markers list
-  void ConsiderNewPossibleMarker(ObjectType objectType, const Pose3d& pose);
+  // consider adding an object to possible object list
+  void ConsiderNewPossibleObject(ObjectType objectType, const Pose3d& pose);
   
-  // remove possible markers currently stored that
-  void RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose);
+  // remove possible objects currently stored close to the given pose and that match the object type
+  void RemovePossibleObjectsMatching(ObjectType objectType, const Pose3d& pose);
+
+  // removes markers that belong to a zombie map
+  void RemovePossibleObjectsFromZombieMaps();
   
   // update render of possible markers since they may have changed
-  void UpdatePossibleMarkerRender();
+  void UpdatePossibleObjectRender();
   // update render of beacons
   void UpdateBeaconRender();
 
@@ -133,9 +141,8 @@ private:
   std::vector<Signal::SmartHandle> _signalHandles;
   
  
-  // list of markers we have not checked out yet. Using list because we make assume possible markers of same type
-  // can be found at different locations
-  PossibleMarkerList _possibleMarkers;
+  // list of markers/objects we have not checked out yet
+  PossibleObjectList _possibleObjects;
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;

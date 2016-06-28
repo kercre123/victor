@@ -81,6 +81,13 @@ namespace Anki
       ObjectID AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
       
       //
+      
+      // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
+      // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
+      // is not a zombie even if it doesn't have any cubes yet.
+      bool IsZombiePoseOrigin(const Pose3d* origin) const;
+      
+      //
       // Object Access
       //
       
@@ -186,6 +193,10 @@ namespace Anki
       // Returns true if there are remaining objects that the robot could potentially
       // localize to
       bool AnyRemainingLocalizableObjects() const;
+      
+      // returns true if there are localizable objects at the specified origin. It iterates all localizable objects
+      // and returns true if any of them has the given origin as origin
+      bool AnyRemainingLocalizableObjects(const Pose3d* origin) const;
       
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
