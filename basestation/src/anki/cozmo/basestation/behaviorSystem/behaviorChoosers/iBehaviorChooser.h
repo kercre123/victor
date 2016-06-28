@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal.hpp"
 #include <map>
 #include <string>
 #include <set>
@@ -47,6 +48,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // constructor/destructor
+  IBehaviorChooser(Robot& robot, const Json::Value& config);
   virtual ~IBehaviorChooser() {}
   
   // events to notify the chooser when it becomes (in)active
@@ -72,7 +74,22 @@ public:
   
   // name (for debug/identification)
   virtual const char* GetName() const = 0;
+  
+  // ==================== Event/Message Handling ====================
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
+protected:
+  virtual std::vector<std::string> GetEnabledBehaviorList() = 0;
+  
+private:
+  Robot& _robot;
+  std::vector<Signal::SmartHandle> _signalHandles;
 
+  
+
+  
 }; // class IBehaviorChooser
   
   

@@ -62,6 +62,7 @@ public:
 
   // read which groups/behaviors are enabled/disabled from json configuration
   virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) override;
+  virtual std::vector<std::string> GetEnabledBehaviorList()  override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors

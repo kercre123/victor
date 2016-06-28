@@ -397,6 +397,11 @@ message StartTestMode {
     TestMode mode
 }
 
+//request currently enabled behavior list
+message RequestEnabledBehaviorList{
+
+}
+
 
 // EnableReactionaryBehaviors
 message RequestEnableReactionaryBehavior{

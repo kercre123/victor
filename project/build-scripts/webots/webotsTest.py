@@ -504,7 +504,7 @@ def runAll(options):
         testResultQueue = Queue.Queue(1)
         runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test, logFileName])
         runWebotsThread.start()
-        runWebotsThread.join(120) # with timeout
+        runWebotsThread.join(int(options.timeout)) # with timeout
         
         tar.add(logFileName, arcname=os.path.basename(logFileName))
 
@@ -543,6 +543,7 @@ def runAll(options):
 
 # returns true if there were no errors in the log file
 def parseOutput(options, logFile):
+  logLevel = options.logLevel;
   # read log file output
   fileHandle = open(logFile, 'r')
   lines = [line.strip() for line in fileHandle]
@@ -558,6 +559,12 @@ def parseOutput(options, logFile):
       errorCount = errorCount + 1
     if 'Warn' in line:
       warningCount = warningCount + 1
+    if int(logLevel) == 1:
+      if("##teamcity[buildStatisticValue" in line):
+        print line
+    if int(logLevel) == 2:
+      print line
+
 
   return (crashCount, errorCount, warningCount)
       
@@ -663,6 +670,20 @@ def main(scriptArgs):
                       be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
                       easily and also for build server/steps reasons.""")
   
+  parser.add_argument('--logLevel',
+                      dest='logLevel',
+                      action='store',
+                      default=0,
+                      help="""Set the log level of build log output.  0=Only log from python,
+                              1=Log any teamcity variables, 2=Dump full weebots log into build log""")
+  
+  parser.add_argument('--timeout',
+                      dest='timeout',
+                      action='store',
+                      default=120,
+                      help="""Set the log level of build log output.  0=Only log from python,
+                        1=Log any teamcity variables, 2=Dump full weebots log into build log""")
+  
   (options, args) = parser.parse_known_args(scriptArgs)
 
   if options.platform != "mac":
@@ -709,6 +730,7 @@ def main(scriptArgs):
     stopWebots(options)
     
     # run the tests
+    #Note, there are also log print statements inside runAll:parseOutput
     (testsSucceeded, testResults, totalErrorCount, totalWarningCount, testCount) = runAll(options)
 
     print 'Test results: '

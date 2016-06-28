@@ -50,6 +50,7 @@ static const char* kEnabledBehaviorsKey   = "enabledBehaviors";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SimpleBehaviorChooser::SimpleBehaviorChooser(Robot& robot, const Json::Value& config)
+  :IBehaviorChooser(robot, config)
 {
   ReloadFromConfig(robot, config);
 }
@@ -157,6 +158,16 @@ void SimpleBehaviorChooser::ReadEnabledBehaviorsConfiguration(const Json::Value&
   SetBehaviorEnabledFromBehaviorConfig( inJson[kEnabledBehaviorsKey], true );
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<std::string> SimpleBehaviorChooser::GetEnabledBehaviorList()
+{
+  std::vector<std::string> behaviorList;
+  for(const auto& entry : _nameToBehaviorInfoMap){
+    behaviorList.push_back(entry.first);
+  }
+  return behaviorList;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float SimpleBehaviorChooser::ScoreBonusForCurrentBehavior(float runningDuration) const
 {
@@ -277,7 +288,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
                       runningBehavior->GetName().c_str(),
                       runningBehaviorScore);
   }
-
+  
   return bestBehavior;
 }
   
@@ -353,6 +364,7 @@ Result SimpleBehaviorChooser::TryAddBehavior(IBehavior* behavior)
 {
   // try to add by behavior name
   const std::string& behaviorName = behavior->GetName();
+  
   const auto insertResult = _nameToBehaviorInfoMap.insert( std::make_pair(behaviorName, BehaviorInfo(behavior, true)) );
   const bool addedNewEntry = insertResult.second;
   if (!addedNewEntry)

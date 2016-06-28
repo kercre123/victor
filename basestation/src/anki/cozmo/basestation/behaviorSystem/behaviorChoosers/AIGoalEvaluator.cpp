@@ -29,6 +29,7 @@ const char* AIGoalEvaluator::kGoalsConfigKey = "goals";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoalEvaluator::AIGoalEvaluator(Robot& robot, const Json::Value& config)
+  :IBehaviorChooser(robot, config)
 {
   CreateFromConfig(robot, config);
 }

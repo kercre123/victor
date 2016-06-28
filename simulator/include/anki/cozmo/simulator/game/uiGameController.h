@@ -103,6 +103,8 @@ protected:
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   virtual void HandleFactoryTestResult(ExternalInterface::FactoryTestResult const& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
+  virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
+  virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   
   // Message senders
@@ -220,6 +222,7 @@ protected:
                                 const bool usePreDockPose,
                                 const bool useManualSpeed = false);
   
+  void SendRequestEnabledBehaviorList();
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
   void SendTrackToFace(const u32 faceID, bool headOnly = false);
   void SendExecuteTestPlan(PathMotionProfile motionProf);
@@ -323,6 +326,8 @@ private:
   void HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg);
   void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   void HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg);
+  void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
+  void HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg);
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   
   void UpdateActualObjectPoses();

@@ -141,7 +141,7 @@ private:
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopCurrentBehavior();
 
-  static void SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior);
+  void SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior);
   
   void AddReactionaryBehavior(IReactionaryBehavior* behavior);
 

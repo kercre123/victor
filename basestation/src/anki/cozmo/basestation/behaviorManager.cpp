@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -236,14 +237,17 @@ void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventT
 
 void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior)
 {
+  const std::string& oldBehaviorName = nullptr != oldBehavior ? oldBehavior->GetName() : "NULL";
+  const std::string& newBehaviorName = nullptr != newBehavior ? newBehavior->GetName() : "NULL";
+
   Anki::Util::sEvent("robot.behavior_transition",
-                     {{DDATA,
-                           nullptr != oldBehavior
-                           ? oldBehavior->GetName().c_str()
-                           : "NULL"}},
-                     nullptr != newBehavior
-                     ? newBehavior->GetName().c_str()
-                     : "NULL");
+                     {{DDATA, oldBehaviorName.c_str()}},
+                     newBehaviorName.c_str());
+  
+  ExternalInterface::BehaviorTransition msg;
+  msg.oldBehavior = oldBehaviorName;
+  msg.newBehavior = newBehaviorName;
+  _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }
 
 bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
@@ -254,26 +258,28 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
   }
 
   StopCurrentBehavior();
+  bool restartSuccess = true;
+  IBehavior* oldBehavior = _currentBehavior;
   _currentBehavior = nullptr; // immediately clear current since we just stopped it
 
   if( nullptr != nextBehavior ) {
     const Result initRet = nextBehavior->Init();
     if ( initRet != RESULT_OK ) {
+      // the previous behavior has been told to stop, but no new behavior has been started
       PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
                         "Failed to initialize %s behavior.",
                         nextBehavior->GetName().c_str());
-      // in this case, the current behavior is still running, not nextBehavior
-      return false;
+      nextBehavior = nullptr;
+      restartSuccess = false;
     }
     else {
-      SendDasTransitionMessage(_currentBehavior, nextBehavior);
       _currentBehavior = nextBehavior;
-      return true;
     }
   }
   
   // a null argument to this function means "switch to no behavior"
-  return true;
+  SendDasTransitionMessage(oldBehavior, nextBehavior);
+  return restartSuccess;
 }
 
 void BehaviorManager::SwitchToNextBehavior()
@@ -360,7 +366,7 @@ Result BehaviorManager::Update()
         // behavior is complete, switch to null (will also handle stopping current). If it was reactionary,
         // switch now to give the last behavior a chance to resume (if appropriate)
         PRINT_NAMED_DEBUG("BehaviorManager.Update.BehaviorComplete",
-                          "Behavior '%s' returned Status::Complete",
+                          "Behavior '%s' returned  Status::Complete",
                           _currentBehavior->GetName().c_str());
         if( _runningReactionaryBehavior ) {
           _runningReactionaryBehavior = false;

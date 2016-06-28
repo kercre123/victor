@@ -45,6 +45,7 @@ public:
 
   // read which groups/behaviors are enabled/disabled from json configuration
   virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) override { assert(false); } // todo rsam probably read goals, not behavior groups/behaviors
+  virtual std::vector<std::string> GetEnabledBehaviorList()  override {std::vector<std::string> list; return list;};
 
   // get next behavior by properly managing the goals
   virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override;

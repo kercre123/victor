@@ -305,6 +305,21 @@ namespace Anki {
       HandleEndOfMessage(msg);
     }
     
+    void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
+    {
+      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s", msg.oldBehavior.c_str(), msg.newBehavior.c_str());
+      
+      HandleBehaviorTransition(msg);
+    }
+    
+    void UiGameController::HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg)
+    {
+      PRINT_NAMED_INFO("HandleFreeplayBehaviorList", "Received message that freeplay list was requested");
+      
+      HandleEnabledBehaviorList(msg);
+    }
+
+    
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
     {
       if (_recvdNVStorageData.find(tag) != _recvdNVStorageData.end()) {
@@ -450,7 +465,11 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::EndOfMessage:
             HandleEndOfMessage(message.Get_EndOfMessage());
             break;
-
+          case ExternalInterface::MessageEngineToGameTag::BehaviorTransition:
+            HandleBehaviorTransitionBase(message.Get_BehaviorTransition());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::RespondEnabledBehaviorList:
+            HandleEnabledBehaviorListBase(message.Get_RespondEnabledBehaviorList());
           default:
             // ignore
             break;
@@ -1240,6 +1259,15 @@ namespace Anki {
     {
       SendMountCharger(-1, motionProf, usePreDockPose, useManualSpeed);
     }
+    
+    void UiGameController::SendRequestEnabledBehaviorList()
+    {
+      ExternalInterface::RequestEnabledBehaviorList m;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_RequestEnabledBehaviorList(m);
+      SendMessage(message);
+    }
+
     
     BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {
