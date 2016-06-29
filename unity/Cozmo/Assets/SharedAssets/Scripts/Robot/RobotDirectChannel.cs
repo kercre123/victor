@@ -45,7 +45,7 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
   }
 
   public override void Send(RobotMessageOut message) {
-    DAS.Debug("RobotDirectChannel.QueueMessage", "Tag=" + message.GetTag() + " value={" + message.Message.ToString() + "}");
+    LogMessage(message, "RobotDirectChannel.QueueMessage");
     message.Pack(_SendStream);
   }
 
@@ -63,7 +63,6 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
       return;
     }
 
-    DAS.Debug("RobotDirectChannel.SendMessages", "bytes=" + _SendStream.Position);
     CozmoBinding.cozmo_transmit_game_to_engine(_SendBytes, (System.UIntPtr)_SendStream.Position);
 
     // reset stream head
@@ -87,9 +86,25 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
       }
 
       // dispatch message
-      DAS.Debug("RobotDirectChannel.ReceiveMessages", "Tag=" + _InMessage.GetTag() + " value={" + _InMessage.Message.ToString() + "}");
+      LogMessage(_InMessage, "RobotDirectChannel.ReceiveMessages");
       RaiseMessageReceived(_InMessage);
     }
+  }
+
+  private void LogMessage(IMessageWrapper message, string channel) {
+    switch (message.GetTag()) {
+    case "Ping":
+    case "LatencyMessage":
+    case "DebugLatencyMessage":
+    case "RobotProcessedImage":
+    case "RobotObservedObject":
+    case "DebugString":
+    case "RobotState":
+    case "MoodState":
+      // don't log these messages
+      return;
+    }
+    DAS.Debug(channel, "Tag=" + message.GetTag());
   }
 
 }
