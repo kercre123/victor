@@ -168,11 +168,13 @@ namespace Anki {
       // loaded from the bundle will be destroyed automatically. When it is false, the assets won't be destroyed but the connection
       // with the bundle is lost. If the same bundle and asset are loaded again, a new copy of the asset will be created.
       public void UnloadAssetBundle(string assetBundleName, bool destroyObjectsCreatedFromBundle = true) {
-        Log(LogType.Log, "Unloading asset bundle " + assetBundleName);
+        Log(LogType.Log, "Try unloading asset bundle " + assetBundleName);
 
 #if UNITY_EDITOR
-        if (SimulateAssetBundleInEditor)
+        if (SimulateAssetBundleInEditor) {
+          Log(LogType.Log, "Unloaded asset bundle " + assetBundleName);
           return;
+        }
 #endif
 
         string variantAssetBundleName = RemapVariantName(assetBundleName);
@@ -411,7 +413,7 @@ namespace Anki {
         for (int i = 0; i < loadedAssetBundle.Dependencies.Length; i++) {
           loadedAssetBundle.Dependencies[i] = RemapVariantName(loadedAssetBundle.Dependencies[i]);
           string dependencyName = loadedAssetBundle.Dependencies[i];
-          Log(LogType.Log, "Loading asset bundle " + dependencyName);
+          Log(LogType.Warning, "Loading asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
 
           StartCoroutine(LoadAssetBundleAsyncInternal(loadedAssetBundle.Dependencies[i], (bool successful) => {
             loadedDependencies++;
@@ -453,6 +455,8 @@ namespace Anki {
         else {
           Log(LogType.Error, "Couldn't unload bundle " + assetBundleName + " because it is not loaded");
         }
+
+        PrintLoadedBundleInfo();
       }
 
       private IEnumerator LoadAssetAsyncInternal<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {
@@ -541,7 +545,7 @@ namespace Anki {
         foreach (var pair in _LoadedAssetBundles) {
           sb.Append(pair.Key + " (" + pair.Value.ReferenceCount + ")\n");
         }
-        Log(LogType.Log, sb.ToString());
+        Log(LogType.Error, sb.ToString());
       }
 
       private void PrintActiveVariants() {
@@ -577,7 +581,14 @@ namespace Anki {
       minigame_ui_sprites,
       basic_ui_sprites,
       debug_prefabs,
-      debug_assets
+      debug_assets,
+      home_view_prefabs,
+      home_view_ui_sprites,
+      loot_view_prefabs,
+      loot_view_ui_sprites,
+      start_view_prefabs,
+      start_view_ui_sprites,
+      main_assets
     }
 
     [Serializable]
@@ -589,6 +600,10 @@ namespace Anki {
     public class AssetBundleAssetLink<T> where T : UnityEngine.Object {
       [SerializeField]
       private SerializableAssetBundleNames _AssetBundle;
+
+      public string AssetBundle {
+        get { return _AssetBundle.Value.ToString(); }
+      }
 
       [SerializeField]
       private string _AssetDataName;

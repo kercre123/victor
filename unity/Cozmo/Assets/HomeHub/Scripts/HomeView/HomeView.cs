@@ -3,9 +3,9 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
+using Anki.Assets;
 using Cozmo.UI;
 using DataPersistence;
-using System.Linq;
 using System;
 using DG.Tweening;
 
@@ -67,13 +67,14 @@ namespace Cozmo.HomeHub {
     private Sprite _EmotionChipSprite_Full;
 
     [SerializeField]
-    private UnityEngine.UI.Text _CurrentRequirementPointsLabel;
+    private Text _CurrentRequirementPointsLabel;
 
     [SerializeField]
-    private UnityEngine.UI.ScrollRect _ScrollRect;
+    private ScrollRect _ScrollRect;
 
     [SerializeField]
-    private LootView _LootViewPrefab;
+    private GameObjectDataLink _LootViewPrefabData;
+
     private LootView _LootViewInstance = null;
 
     [SerializeField]
@@ -99,7 +100,7 @@ namespace Cozmo.HomeHub {
       private set { _HomeHubInstance = value; }
     }
 
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -174,18 +175,20 @@ namespace Cozmo.HomeHub {
         // Avoid dupes
         return;
       }
-      if (_LootViewPrefab == null) {
-        DAS.Error("HomeView.OpenLootView", "LootViewPrefab is NULL");
-        return;
-      }
       _EmotionChipTag.gameObject.SetActive(false);
-      LootView alertView = UIManager.OpenView(_LootViewPrefab);
-      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-      _LootViewInstance = alertView;
-      _LootViewInstance.ViewCloseAnimationFinished += (() => {
-        _EmotionChipTag.gameObject.SetActive(true);
-        CheckIfUnlockablesAffordableAndUpdateBadge();
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
+        _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
+          LootView alertView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+          alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+          _LootViewInstance = alertView;
+          _LootViewInstance.ViewCloseAnimationFinished += (() => {
+            _EmotionChipTag.gameObject.SetActive(true);
+            CheckIfUnlockablesAffordableAndUpdateBadge();
+            UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+            AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
+          });
+        });
       });
     }
 

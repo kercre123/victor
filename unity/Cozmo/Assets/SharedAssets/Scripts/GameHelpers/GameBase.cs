@@ -555,10 +555,9 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.TurnOffAllLights();
     }
 
-    // Get unparented reward icons TODO : Probably put this somewhere else
-    //Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIcons();
+    // Close minigame UI
+    CloseMinigameImmediately();
 
-    // Pass icons and xp to HomeHub
     if (_WonChallenge) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
@@ -574,8 +573,6 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
-    // Close minigame UI
-    CloseMinigameImmediately();
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }
 

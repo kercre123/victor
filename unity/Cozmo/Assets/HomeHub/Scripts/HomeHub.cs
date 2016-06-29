@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 using Cozmo.Util;
@@ -19,15 +20,21 @@ namespace Cozmo.HomeHub {
     }
 
     [SerializeField]
-    private StartView _StartViewPrefab;
+    private SerializableAssetBundleNames _MinigameDataPrefabAssetBundle;
+
+    [SerializeField]
+    private GameObjectDataLink _StartViewPrefabData;
+
     private StartView _StartViewInstance;
 
     [SerializeField]
-    private HomeView _HomeViewPrefab;
+    private GameObjectDataLink _HomeViewPrefabData;
+
     private HomeView _HomeViewInstance;
 
     [SerializeField]
-    private ChallengeDetailsDialog _ChallengeDetailsPrefab;
+    private GameObjectDataLink _ChallengeDetailsPrefabData;
+
     private ChallengeDetailsDialog _ChallengeDetailsDialogInstance;
 
     [SerializeField]
@@ -44,13 +51,6 @@ namespace Cozmo.HomeHub {
     }
 
     private CompletedChallengeData _CurrentChallengePlaying;
-
-    private void RefreshChallengeUnlockInfo(object message) {
-      LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
-      if (_HomeViewInstance != null) {
-        _HomeViewInstance.SetChallengeStates(_ChallengeStatesById);
-      }
-    }
 
     public override bool LoadHubWorld() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
@@ -77,33 +77,94 @@ namespace Cozmo.HomeHub {
       return true;
     }
 
+    private void RefreshChallengeUnlockInfo(object message) {
+      LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
+      if (_HomeViewInstance != null) {
+        _HomeViewInstance.SetChallengeStates(_ChallengeStatesById);
+      }
+    }
+
+    private void LoadChallengeData(ChallengeDataList sourceChallenges,
+                                   out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
+      // Initial load of what's unlocked and completed from data
+      challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
+
+      // For each challenge
+      ChallengeStatePacket statePacket;
+      foreach (ChallengeData data in sourceChallenges.ChallengeData) {
+        // Create a new data packet
+        statePacket = new ChallengeStatePacket();
+        statePacket.Data = data;
+
+        // Determine the current state of the challenge
+        statePacket.ChallengeUnlocked = UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value);
+        // Add the challenge to the dictionary
+        challengeStateByKey.Add(data.ChallengeID, statePacket);
+      }
+    }
+
     private void ShowStartView() {
       RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(0);
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-      _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
-      _StartViewInstance.OnConnectClicked += HandleConnectClicked;
+
+      // INGO
+      // Right now StartView and ConnectDialog use the same assets so don't bother unloading asset bundle.
+      // LoadStartViewAssetBundle(LoadStartView);
+      LoadStartView(true);
+    }
+
+    private void LoadStartViewAssetBundle(System.Action<bool> loadCallback) {
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_StartViewPrefabData.AssetBundle, loadCallback);
+    }
+
+    private void LoadStartView(bool assetBundleSuccess) {
+      _StartViewPrefabData.LoadAssetData((GameObject startViewPrefab) => {
+        _StartViewInstance = UIManager.OpenView(startViewPrefab.GetComponent<StartView>());
+        _StartViewInstance.OnConnectClicked += HandleConnectClicked;
+      });
     }
 
     private void HandleConnectClicked() {
+      _StartViewInstance.OnConnectClicked -= HandleConnectClicked;
       _StartViewInstance.CloseView();
-      ShowTimelineDialog();
+      _StartViewInstance.ViewCloseAnimationFinished += HandleStartViewClosed;
     }
 
-    private void ShowTimelineDialog() {
-      // Create dialog with the game prefabs
-      _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab);
-      _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
-      _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-      _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
-      _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
+    private void HandleStartViewClosed() {
+      _StartViewInstance.ViewCloseAnimationFinished -= HandleStartViewClosed;
+      _StartViewInstance = null;
+      UnloadStartViewAssetBundle();
+      ShowHomeView();
+    }
 
-      // Show the current state of challenges being locked/unlocked
-      _HomeViewInstance.Initialize(_ChallengeStatesById, this);
+    private void ShowHomeView() {
+      LoadHomeViewAssetBundle(LoadHomeView);
+    }
 
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
-      DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
+    private void UnloadStartViewAssetBundle() {
+      AssetBundleManager.Instance.UnloadAssetBundle(_StartViewPrefabData.AssetBundle);
+    }
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+    private void LoadHomeViewAssetBundle(System.Action<bool> loadCallback) {
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_HomeViewPrefabData.AssetBundle, loadCallback);
+    }
+
+    private void LoadHomeView(bool assetBundleSuccess) {
+      _HomeViewPrefabData.LoadAssetData((GameObject homeViewPrefab) => {
+        _HomeViewInstance = UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>());
+        _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
+        _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+        _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
+        _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
+
+        // Show the current state of challenges being locked/unlocked
+        _HomeViewInstance.Initialize(_ChallengeStatesById, this);
+
+        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
+        DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
+
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+      });
     }
 
     private void HandleSessionEndClicked() {
@@ -116,7 +177,6 @@ namespace Cozmo.HomeHub {
         else {
           ShowStartView();
         }
-
       });
     }
 
@@ -132,77 +192,39 @@ namespace Cozmo.HomeHub {
       OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
     }
 
-    private void HandleStartChallengeClicked(string challengeClicked) {
-
-      // Keep track of the current challenge
-      _CurrentChallengePlaying = new CompletedChallengeData() {
-        ChallengeId = challengeClicked,
-        StartTime = System.DateTime.UtcNow,
-      };
-
-      // Play minigame immediately
-      PlayMinigame(_ChallengeStatesById[challengeClicked].Data);
-    }
-
-    private void HandleStartChallengeRequest(string challengeRequested) {
-
-      // Keep track of the current challenge
-      _CurrentChallengePlaying = new CompletedChallengeData() {
-        ChallengeId = challengeRequested,
-        StartTime = System.DateTime.UtcNow,
-      };
-
-      // Play minigame immediately
-      PlayMinigame(_ChallengeStatesById[challengeRequested].Data);
-    }
-
     private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
     }
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
-      // We need to initialize the dialog first before opening the view, so don't animate right away
       if (_ChallengeDetailsDialogInstance == null) {
-        _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab,
-          newView => {
-            newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
-          });
+        _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
+          _ChallengeDetailsDialogInstance = UIManager.OpenView(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
+            newView => {
+              newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
+            });
 
-        // React to when we should start the challenge.
-        _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+          // React to when we should start the challenge.
+          _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+        });
       }
     }
 
-    private void HandleMiniGameLose() {
-      HandleMiniGameCompleted(didWin: false);
+    private void HandleStartChallengeClicked(string challengeClicked) {
+      PlayMinigame(challengeClicked);
     }
 
-    private void HandleMiniGameWin() {
-      HandleMiniGameCompleted(didWin: true);
+    private void HandleStartChallengeRequest(string challengeRequested) {
+      PlayMinigame(challengeRequested);
     }
 
-    private void HandleMiniGameCompleted(bool didWin) {
-      // If we are in a challenge that needs to be completed, complete it
-      if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying, didWin);
-        _CurrentChallengePlaying = null;
-      }
-      UnloadMinigameAssets();
-      ShowTimelineDialog();
-    }
+    private void PlayMinigame(string challengeId) {
+      // Keep track of the current challenge
+      _CurrentChallengePlaying = new CompletedChallengeData() {
+        ChallengeId = challengeId,
+        StartTime = System.DateTime.UtcNow,
+      };
 
-    private void HandleMiniGameQuit() {
-      // Reset the current challenge
-      _CurrentChallengePlaying = null;
-      UnloadMinigameAssets();
-      ShowTimelineDialog();
-    }
-
-    private void UnloadMinigameAssets() {
-      AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_data_prefabs.ToString());
-    }
-
-    private void PlayMinigame(ChallengeData challengeData) {
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
@@ -211,16 +233,27 @@ namespace Cozmo.HomeHub {
       // Close dialog
       CloseTimelineDialog();
 
+      LoadMinigameAssetBundle((bool prefabsSuccess) => {
+        if (prefabsSuccess) {
+          LoadMinigame(_ChallengeStatesById[challengeId].Data);
+        }
+        else {
+          // TODO show error dialog and boot to home
+        }
+      });
+    }
+
+    private void UnloadHomeViewAssetBundle() {
+      if (_HomeViewInstance != null) {
+        _HomeViewInstance.ViewCloseAnimationFinished -= UnloadHomeViewAssetBundle;
+        _HomeViewInstance = null;
+      }
+      AssetBundleManager.Instance.UnloadAssetBundle(_HomeViewPrefabData.AssetBundle);
+    }
+
+    private void LoadMinigameAssetBundle(System.Action<bool> loadCallback) {
       AssetBundleManager.Instance.LoadAssetBundleAsync(
-        AssetBundleNames.minigame_data_prefabs.ToString(),
-        (bool prefabsSuccess) => {
-          if (prefabsSuccess) {
-            LoadMinigame(challengeData);
-          }
-          else {
-            // TODO show error dialog and boot to home
-          }
-        });
+        _MinigameDataPrefabAssetBundle.Value.ToString(), loadCallback);
     }
 
     private void LoadMinigame(ChallengeData challengeData) {
@@ -228,10 +261,10 @@ namespace Cozmo.HomeHub {
         GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
         _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
         _MiniGameInstance.InitializeMinigame(challengeData);
-        _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+        _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
         _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
         _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
-        _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+        _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
         RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
       });
     }
@@ -243,6 +276,46 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
       // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
       RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
+    }
+
+    private void HandleMiniGameWin() {
+      HandleMiniGameCompleted(didWin: true);
+    }
+
+    private void HandleMiniGameLose() {
+      HandleMiniGameCompleted(didWin: false);
+    }
+
+    private void HandleMiniGameCompleted(bool didWin) {
+      // If we are in a challenge that needs to be completed, complete it
+      if (_CurrentChallengePlaying != null) {
+        CompleteChallenge(_CurrentChallengePlaying, didWin);
+        _CurrentChallengePlaying = null;
+      }
+      UnloadMinigameAssetBundle();
+      ShowHomeView();
+    }
+
+    private void HandleMiniGameQuit() {
+      // Reset the current challenge
+      _CurrentChallengePlaying = null;
+      UnloadMinigameAssetBundle();
+      ShowHomeView();
+    }
+
+    private void UnloadMinigameAssetBundle() {
+      AssetBundleManager.Instance.UnloadAssetBundle(_MinigameDataPrefabAssetBundle.Value.ToString());
+    }
+
+    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won) {
+      // the last session is not necessarily valid as the 'CurrentSession', as its possible
+      // the day rolled over while we were playing the challenge.
+      var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
+      if (session == null) {
+        DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
+      }
+
+      DataPersistenceManager.Instance.Save();
     }
 
     private void CloseMiniGameImmediately() {
@@ -268,6 +341,7 @@ namespace Cozmo.HomeHub {
       }
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
+        _HomeViewInstance.ViewCloseAnimationFinished += UnloadHomeViewAssetBundle;
         _HomeViewInstance.CloseView();
       }
     }
@@ -280,36 +354,6 @@ namespace Cozmo.HomeHub {
         _HomeViewInstance.OnEndSessionClicked -= HandleSessionEndClicked;
       }
       DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
-    }
-
-    private void LoadChallengeData(ChallengeDataList sourceChallenges,
-                                   out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
-      // Initial load of what's unlocked and completed from data
-      challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
-
-      // For each challenge
-      ChallengeStatePacket statePacket;
-      foreach (ChallengeData data in sourceChallenges.ChallengeData) {
-        // Create a new data packet
-        statePacket = new ChallengeStatePacket();
-        statePacket.Data = data;
-
-        // Determine the current state of the challenge
-        statePacket.ChallengeUnlocked = UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value);
-        // Add the challenge to the dictionary
-        challengeStateByKey.Add(data.ChallengeID, statePacket);
-      }
-    }
-
-    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won) {
-      // the last session is not necessarily valid as the 'CurrentSession', as its possible
-      // the day rolled over while we were playing the challenge.
-      var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-      if (session == null) {
-        DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
-      }
-
-      DataPersistenceManager.Instance.Save();
     }
 
     #region Testing
@@ -329,7 +373,7 @@ namespace Cozmo.HomeHub {
         // Force refresh of the dialog
         DeregisterDialogEvents();
         _HomeViewInstance.CloseViewImmediately();
-        ShowTimelineDialog();
+        ShowHomeView();
       }
     }
 

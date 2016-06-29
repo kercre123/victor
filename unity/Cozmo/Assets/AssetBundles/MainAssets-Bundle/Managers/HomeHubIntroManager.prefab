@@ -39,8 +39,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ConnectDialogPrefab: {fileID: 11419672, guid: d73c982d72b7d4050937088024507432,
-    type: 2}
+  _ConnectDialogPrefabData:
+    _AssetBundle:
+      _EnumValueAsString: start_view_prefabs
+      _EnumValue: 12
+    _AssetDataName: ConnectDialog
   _HubWorldPrefab: {fileID: 11476446, guid: 44f04469ca0784cb2976d4476c98a378, type: 2}
   _IntroScriptedSequenceName: 
 --- !u!1001 &100100000
@@ -49,7 +52,15 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _ConnectDialogPrefabData._AssetBundle._EnumValueAsString
+      value: start_view_prefabs
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _ConnectDialogPrefabData._AssetBundle._EnumValue
+      value: 12
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 147714}

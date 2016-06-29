@@ -7,7 +7,7 @@ using Anki.UI;
 namespace Cozmo {
   namespace UI {
     public abstract class BaseView : MonoBehaviour {
-  
+
       // Static events
       public delegate void BaseViewHandler(BaseView view);
 
@@ -28,7 +28,7 @@ namespace Cozmo {
       private string _DASEventViewName = "";
 
       public string DASEventViewName {
-        get { return _DASEventViewName; } 
+        get { return _DASEventViewName; }
         protected set { _DASEventViewName = value; }
       }
 
@@ -36,7 +36,7 @@ namespace Cozmo {
       private DASUtil.ViewType _DASEventViewType = DASUtil.ViewType.View;
 
       public DASUtil.ViewType DASEventViewType {
-        get { return _DASEventViewType; } 
+        get { return _DASEventViewType; }
       }
 
       /// <summary>
@@ -62,7 +62,7 @@ namespace Cozmo {
       #region Overriden Methods
 
       public void Initialize(bool? overrideCloseOnTapOutside = null) {
-        bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ? 
+        bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ?
           overrideCloseOnTapOutside.Value : _CloseDialogOnTapOutside;
         if (shouldCloseOnTapOutside) {
           CreateFullScreenCloseCollider();
@@ -164,46 +164,46 @@ namespace Cozmo {
       private void OnCloseAnimationsFinished() {
         DAS.Info(this, "OnCloseAnimationsFinished start");
         UIManager.EnableTouchEvents();
-        RaiseViewCloseAnimationFinished(this);
         CleanUp();
-        GameObject.Destroy(gameObject);
+        RaiseViewCloseAnimationFinished(this);
+        Destroy(gameObject);
         DAS.Info(this, "OnCloseAnimationsFinished finished");
       }
 
       private static void RaiseViewOpened(BaseView view) {
-        if (view.ViewOpened != null) {
-          view.ViewOpened();
-        }
         if (BaseViewOpened != null) {
           BaseViewOpened(view);
+        }
+        if (view.ViewOpened != null) {
+          view.ViewOpened();
         }
       }
 
       private static void RaiseViewOpenAnimationFinished(BaseView view) {
-        if (view.ViewOpenAnimationFinished != null) {
-          view.ViewOpenAnimationFinished();
-        }
         if (BaseViewOpenAnimationFinished != null) {
           BaseViewOpenAnimationFinished(view);
+        }
+        if (view.ViewOpenAnimationFinished != null) {
+          view.ViewOpenAnimationFinished();
         }
       }
 
 
       private static void RaiseViewClosed(BaseView view) {
-        if (view.ViewClosed != null) {
-          view.ViewClosed();
-        }
         if (BaseViewClosed != null) {
           BaseViewClosed(view);
+        }
+        if (view.ViewClosed != null) {
+          view.ViewClosed();
         }
       }
 
       private static void RaiseViewCloseAnimationFinished(BaseView view) {
-        if (view.ViewCloseAnimationFinished != null) {
-          view.ViewCloseAnimationFinished();
-        }
         if (BaseViewCloseAnimationFinished != null) {
           BaseViewCloseAnimationFinished(view);
+        }
+        if (view.ViewCloseAnimationFinished != null) {
+          view.ViewCloseAnimationFinished();
         }
       }
     }

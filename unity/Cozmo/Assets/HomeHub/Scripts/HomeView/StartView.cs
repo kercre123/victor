@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using Anki.UI;
 using UnityEngine.UI;
 using Cozmo.UI;
+using DG.Tweening;
 
 public class StartView : BaseView {
 
@@ -21,6 +19,12 @@ public class StartView : BaseView {
 
   [SerializeField]
   private CozmoButton _ConnectButton;
+
+  [SerializeField]
+  private CanvasGroup _AlphaController;
+
+  [SerializeField]
+  private float _FadeTweenDurationSeconds = 0.3f;
 
   public event System.Action OnConnectClicked;
 
@@ -103,6 +107,16 @@ public class StartView : BaseView {
     if (OnConnectClicked != null) {
       OnConnectClicked();
     }
+  }
+
+  protected override void ConstructOpenAnimation(Sequence openAnimation) {
+    // INGO
+    // Do nothing because the ConnectDialog looks very similar; uncomment to fade in
+    // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+  }
+
+  protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+    closeAnimation.Append(_AlphaController.DOFade(0, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
   }
 
   #region implemented abstract members of BaseView
