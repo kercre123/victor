@@ -78,7 +78,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
+CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", true); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
 CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // kDebugRenderOverheadEdges: enables/disables debug render
 
     BlockWorld::BlockWorld(Robot* robot)
@@ -87,6 +87,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     , _canDeleteObjects(true)
     , _canAddObjects(true)
     , _currentNavMemoryMapOrigin(nullptr)
+    , _isNavMemoryMapRenderEnabled(true)
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -229,6 +230,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           CycleSelectedObject();
         }));
       
+      // CreateObjectAtPose
       _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::CreateObjectAtPose,
         [this] (const EventType& event)
         {
@@ -240,6 +242,15 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           
           BlockWorld::AddCustomObject(newObjectPose, msg.depth_mm, msg.width_mm, msg.height_mm);
         }));
+      
+      // SetMemoryMapRenderEnabled
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMemoryMapRenderEnabled,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SetMemoryMapRenderEnabled& msg = event.GetData().Get_SetMemoryMapRenderEnabled();
+          SetMemoryMapRenderEnabled(msg.enabled);
+        }));
+      
     }
     
     BlockWorld::~BlockWorld()
@@ -782,14 +793,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     }
     
     // clear all memory map rendering because indexHints are changing
-    #if ANKI_DEVELOPER_CODE
-    {
-      for ( const auto& memMapPair : _navMemoryMaps )
-      {
-        memMapPair.second->ClearDraw();
-      }
-    }
-    #endif
+    ClearNavMemoryMapRender();
     
     // if the origin is null, we would never merge the map, which could leak if a new one was created
     // do not support this by not creating one at all if the origin is null
@@ -807,20 +811,45 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DrawNavMemoryMap() const
   {
-    #if ANKI_DEVELOPER_CODE
+    if(ANKI_DEVELOPER_CODE)
     {
-      size_t lastIndexNonCurrent = 0;
-    
-      // rendering all current maps with indexHint
-      for (const auto& memMapPair : _navMemoryMaps)
-      {
-        const bool isCurrent = memMapPair.first == _currentNavMemoryMapOrigin;
-        
-        size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
-        memMapPair.second->Draw(indexHint);
+      if ( _isNavMemoryMapRenderEnabled ) {
+        size_t lastIndexNonCurrent = 0;
+      
+        // rendering all current maps with indexHint
+        for (const auto& memMapPair : _navMemoryMaps)
+        {
+          const bool isCurrent = memMapPair.first == _currentNavMemoryMapOrigin;
+          
+          size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
+          memMapPair.second->Draw(indexHint);
+        }
       }
     }
-    #endif
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::ClearNavMemoryMapRender() const
+  {
+    if(ANKI_DEVELOPER_CODE)
+    {
+      for ( const auto& memMapPair : _navMemoryMaps )
+      {
+        memMapPair.second->ClearDraw();
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::SetMemoryMapRenderEnabled(bool enabled)
+  {
+    // if disabling, clear render now. If enabling wait until next render time
+    if ( _isNavMemoryMapRenderEnabled && !enabled ) {
+      ClearNavMemoryMapRender();
+    }
+  
+    // set new value
+    _isNavMemoryMapRenderEnabled = enabled;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

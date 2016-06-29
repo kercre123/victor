@@ -372,6 +372,16 @@ namespace Anki
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Nav memory map
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // remove current renders for all maps if any
+      void ClearNavMemoryMapRender() const;
+      
+      // enable/disable rendering of the memory maps
+      void SetMemoryMapRenderEnabled(bool enabled);
+      
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Vision border detection
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
@@ -428,6 +438,7 @@ namespace Anki
       using NavMemoryMapTable = std::map<const Pose3d*, std::unique_ptr<INavMemoryMap>>;
       NavMemoryMapTable _navMemoryMaps;
       const Pose3d* _currentNavMemoryMapOrigin;
+      bool _isNavMemoryMapRenderEnabled;
       
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;

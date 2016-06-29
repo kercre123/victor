@@ -107,8 +107,14 @@ namespace Anki.Cozmo.Viz {
         return _RenderMemoryMap;
       }
       set {
-        //TODO: Send engine message here
+        // Set new value
         _RenderMemoryMap = value;
+
+        // Send engine message because it is the one doing render requests for the quads of the map
+        Anki.Cozmo.ExternalInterface.SetMemoryMapRenderEnabled renderEnabledMsg = new Anki.Cozmo.ExternalInterface.SetMemoryMapRenderEnabled();
+        renderEnabledMsg.enabled = value;
+        RobotEngineManager.Instance.Message.SetMemoryMapRenderEnabled = renderEnabledMsg;
+        RobotEngineManager.Instance.SendMessage();
       }
     }
 
