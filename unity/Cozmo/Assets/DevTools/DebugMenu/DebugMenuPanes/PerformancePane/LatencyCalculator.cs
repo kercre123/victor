@@ -33,7 +33,7 @@ public class LatencyCalculator : MonoBehaviour {
     }
     // Wait til we have a real connection
     if (!_IsInitted && RobotEngineManager.Instance != null) {
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugLatencyMessage>(HandleDebugLatencyMsg);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.LatencyMessage>(HandleLatencyMsg);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
       _IsInitted = true;
       if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled) {
@@ -44,19 +44,24 @@ public class LatencyCalculator : MonoBehaviour {
 
   private void OnDestroy() {
     if (_IsInitted) {
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DebugLatencyMessage>(HandleDebugLatencyMsg);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LatencyMessage>(HandleLatencyMsg);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
     }
   }
 
-  private void HandleDebugLatencyMsg(Anki.Cozmo.ExternalInterface.DebugLatencyMessage msg) {
+  private void HandleLatencyMsg(Anki.Cozmo.ExternalInterface.LatencyMessage msg) {
     if (_Enabled) {
       if (_LatencyDisplayInst) {
         _LatencyDisplayInst.HandleDebugLatencyMsg(msg);
       }
-      else if (msg.wifiLatency.avgTime_ms > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
-        // Warning we are over the limit Warn people disconnects might happen.
-        ShowLatencyDisplay();
+      else {
+        bool badWifiLatency = msg.wifiLatency.avgTime_ms > LatencyDisplay.kMaxThresholdBeforeWarning_ms;
+        bool badAvgImageLatency = msg.imageLatency.avgTime_ms > LatencyDisplay.kMaxImageThresholdBeforeWarning_ms;
+        bool badLastImageLatency = msg.imageLatency.currentTime_ms > LatencyDisplay.kMaxLastImageThresholdBeforeWarning_ms;
+        if (badWifiLatency || badAvgImageLatency || badLastImageLatency) {
+          // Warning we are over the limit Warn people disconnects might happen.
+          ShowLatencyDisplay();
+        }
       }
     }
 

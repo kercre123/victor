@@ -20,31 +20,20 @@
 
 namespace Anki {
 namespace Util {
-  
-  
-#if REMOTE_CONSOLE_ENABLED
-  #define ENABLE_RELIABLE_CONNECTION_STATS 1
-#else
-  #define ENABLE_RELIABLE_CONNECTION_STATS 0
-#endif
-  
-#if ENABLE_RELIABLE_CONNECTION_STATS
-  CONSOLE_VAR_EXTERN(bool,   kNetConnStatsUpdate);
-  // Stats are written into console vars so they can be live viewed from console menu
-  CONSOLE_VAR_EXTERN(int,    gNetStat1NumConnections);
-  CONSOLE_VAR_EXTERN(float,  gNetStat2LatencyAvg);
-  CONSOLE_VAR_EXTERN(float,  gNetStat3LatencySD);
-  CONSOLE_VAR_EXTERN(float,  gNetStat4LatencyMin);
-  CONSOLE_VAR_EXTERN(float,  gNetStat5LatencyMax);
-  CONSOLE_VAR_EXTERN(float,  gNetStat6PingArrivedPC);
-  CONSOLE_VAR_EXTERN(float,  gNetStat7ExtQueuedAvg_ms);
-  CONSOLE_VAR_EXTERN(float,  gNetStat8ExtQueuedMin_ms);
-  CONSOLE_VAR_EXTERN(float,  gNetStat9ExtQueuedMax_ms);
-  CONSOLE_VAR_EXTERN(float,  gNetStatAQueuedAvg_ms);
-  CONSOLE_VAR_EXTERN(float,  gNetStatBQueuedMin_ms);
-  CONSOLE_VAR_EXTERN(float,  gNetStatCQueuedMax_ms);
-#endif // REMOTE_CONSOLE_ENABLED
 
+CONSOLE_VAR_EXTERN(bool, kNetConnStatsUpdate);
+extern int   gNetStat1NumConnections;
+extern float gNetStat2LatencyAvg;
+extern float gNetStat3LatencySD;
+extern float gNetStat4LatencyMin;
+extern float gNetStat5LatencyMax;
+extern float gNetStat6PingArrivedPC;
+extern float gNetStat7ExtQueuedAvg_ms;
+extern float gNetStat8ExtQueuedMin_ms;
+extern float gNetStat9ExtQueuedMax_ms;
+extern float gNetStatAQueuedAvg_ms;
+extern float gNetStatBQueuedMin_ms;
+extern float gNetStatCQueuedMax_ms;
 
 } // end namespace Util
 } // end namespace Anki

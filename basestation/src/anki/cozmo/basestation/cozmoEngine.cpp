@@ -367,7 +367,6 @@ Result CozmoEngine::Update(const float currTime_sec)
   
 void CozmoEngine::SendLatencyInfo()
 {
-#if ENABLE_RELIABLE_CONNECTION_STATS
   if (Util::kNetConnStatsUpdate)
   {
     ExternalInterface::TimingInfo wifiLatency(Util::gNetStat2LatencyAvg, Util::gNetStat4LatencyMin, Util::gNetStat5LatencyMax);
@@ -375,6 +374,13 @@ void CozmoEngine::SendLatencyInfo()
     ExternalInterface::TimingInfo sendQueueTime(Util::gNetStatAQueuedAvg_ms, Util::gNetStatBQueuedMin_ms, Util::gNetStatCQueuedMax_ms);
     const Util::Stats::StatsAccumulator& queuedTimes_ms = _context->GetRobotManager()->GetMsgHandler()->GetQueuedTimes_ms();
     ExternalInterface::TimingInfo recvQueueTime(queuedTimes_ms.GetMean(), queuedTimes_ms.GetMin(), queuedTimes_ms.GetMax());
+
+    // pull image stats from robot if available
+    Util::Stats::StatsAccumulator nullStats;
+    const Robot* firstRobot = GetFirstRobot();
+    const bool useRobotStats = firstRobot != nullptr;
+    const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? firstRobot->GetImageStats() : nullStats;
+    double currentImageDelay = useRobotStats ? firstRobot->GetCurrentImageDelay() : 0.0;
     
     const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
     const Util::Stats::StatsAccumulator& sdk1Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverUdp);
@@ -382,18 +388,19 @@ void CozmoEngine::SendLatencyInfo()
     const Util::Stats::StatsAccumulator& sdkLatency = (sdk1Latency.GetNumDbl() > sdk2Latency.GetNumDbl()) ? sdk1Latency : sdk2Latency;
     ExternalInterface::TimingInfo unityEngineLatency(unityLatency.GetMean(), unityLatency.GetMin(), unityLatency.GetMax());
     ExternalInterface::TimingInfo sdkEngineLatency(sdkLatency.GetMean(), sdkLatency.GetMin(), sdkLatency.GetMax());
+    ExternalInterface::CurrentTimingInfo imageLatency(imageStats.GetMean(), imageStats.GetMin(), imageStats.GetMax(), currentImageDelay * 1000.0);
     
-    ExternalInterface::MessageEngineToGame debugLatencyMessage(ExternalInterface::DebugLatencyMessage(
+    ExternalInterface::MessageEngineToGame debugLatencyMessage(ExternalInterface::LatencyMessage(
                                                                                      std::move(wifiLatency),
                                                                                      std::move(extSendQueueTime),
                                                                                      std::move(sendQueueTime),
                                                                                      std::move(recvQueueTime),
                                                                                      std::move(unityEngineLatency),
-                                                                                     std::move(sdkEngineLatency) ));
+                                                                                     std::move(sdkEngineLatency),
+                                                                                     std::move(imageLatency) ));
     
     _context->GetExternalInterface()->Broadcast( std::move(debugLatencyMessage) );
   }
-#endif // ENABLE_RELIABLE_CONNECTION_STATS
 }
 
 void CozmoEngine::SetEngineState(EngineState newState)

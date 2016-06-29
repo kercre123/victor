@@ -426,13 +426,22 @@ structure TimingInfo
   float_32  maxTime_ms
 }
 
-message DebugLatencyMessage {
+structure CurrentTimingInfo
+{
+  float_32 avgTime_ms,
+  float_32 minTime_ms,
+  float_32 maxTime_ms,
+  float_32 currentTime_ms
+}
+
+message LatencyMessage {
   TimingInfo wifiLatency,
   TimingInfo extSendQueueTime,
   TimingInfo sendQueueTime,
   TimingInfo recvQueueTime,
   TimingInfo unityEngineLatency,
-  TimingInfo sdkEngineLatency
+  TimingInfo sdkEngineLatency,
+  CurrentTimingInfo imageLatency
 }
 
 message DeviceDataMessage {

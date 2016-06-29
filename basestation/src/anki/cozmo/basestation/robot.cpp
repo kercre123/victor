@@ -1061,7 +1061,9 @@ Result Robot::Update(bool ignoreVisionModes)
   */
       
   GetContext()->GetVizManager()->SendEndRobotUpdate();
-      
+
+  // update time since last image received
+  _timeSinceLastImage_s = std::max(0.0, currentTime - _lastImageRecvTime);
       
   // Sending debug string to game and viz
   char buffer [128];

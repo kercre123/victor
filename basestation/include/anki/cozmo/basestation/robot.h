@@ -53,6 +53,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "util/signals/simpleSignal.hpp"
+#include "util/stats/recentStatsAccumulator.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -662,6 +663,9 @@ public:
   
   void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
   const u32 GetLastSentImageID() const { return _lastSentImageID; }
+
+  const Util::Stats::StatsAccumulator& GetImageStats() const { return _imageStats.GetPrimaryAccumulator(); }
+  double GetCurrentImageDelay() const { return std::max(_lastImageLatencyTime_s, _timeSinceLastImage_s); }
   
   MovementComponent& GetMoveComponent() { return _movementComponent; }
   const MovementComponent& GetMoveComponent() const { return _movementComponent; }
@@ -896,7 +900,10 @@ protected:
   EncodedImage _encodedImage;
   u32          _repeatedImageCount = 0;
   double       _lastImageRecvTime  = -1.0;
-  
+  double       _timeSinceLastImage_s = 0.0;
+  double       _lastImageLatencyTime_s = 0.0;
+  Util::Stats::RecentStatsAccumulator _imageStats{50};
+
   ///////// Modifiers ////////
   
   void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}

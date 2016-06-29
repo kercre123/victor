@@ -720,6 +720,12 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     const double currentMessageTime = message.GetCurrentTime();
     if (currentMessageTime != _lastImageRecvTime)
     {
+      if (_lastImageRecvTime > 0.0)
+      {
+        _lastImageLatencyTime_s = std::max(0.0, currentMessageTime - _lastImageRecvTime);
+        _imageStats.AddStat(_lastImageLatencyTime_s * 1000.0);
+        _timeSinceLastImage_s = 0.0;
+      }
       _lastImageRecvTime = currentMessageTime;
       _repeatedImageCount = 0;
     }

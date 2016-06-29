@@ -17,26 +17,36 @@
 
 namespace Anki {
 namespace Util {
-  
 
-#if ENABLE_RELIABLE_CONNECTION_STATS
-  const char* kNetworkStatsSection = "Network.Stats";
-  CONSOLE_VAR(bool,   kNetConnStatsUpdate,      kNetworkStatsSection, true);
-  // Stats are written into console vars so they can be live viewed from console menu
-  CONSOLE_VAR(int,    gNetStat1NumConnections,  kNetworkStatsSection, 0);
-  CONSOLE_VAR(float,  gNetStat2LatencyAvg,      kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat3LatencySD,       kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat4LatencyMin,      kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat5LatencyMax,      kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat6PingArrivedPC,   kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat7ExtQueuedAvg_ms, kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat8ExtQueuedMin_ms, kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStat9ExtQueuedMax_ms, kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStatAQueuedAvg_ms,    kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStatBQueuedMin_ms,    kNetworkStatsSection, 0.0f);
-  CONSOLE_VAR(float,  gNetStatCQueuedMax_ms,    kNetworkStatsSection, 0.0f);
-#endif // REMOTE_CONSOLE_ENABLED
+const char* kNetworkStatsSection = "Network.Stats";
 
+CONSOLE_VAR(bool, kNetConnStatsUpdate, kNetworkStatsSection, true);
+int   gNetStat1NumConnections  = 0;
+float gNetStat2LatencyAvg      = 0.0f;
+float gNetStat3LatencySD       = 0.0f;
+float gNetStat4LatencyMin      = 0.0f;
+float gNetStat5LatencyMax      = 0.0f;
+float gNetStat6PingArrivedPC   = 0.0f;
+float gNetStat7ExtQueuedAvg_ms = 0.0f;
+float gNetStat8ExtQueuedMin_ms = 0.0f;
+float gNetStat9ExtQueuedMax_ms = 0.0f;
+float gNetStatAQueuedAvg_ms    = 0.0f;
+float gNetStatBQueuedMin_ms    = 0.0f;
+float gNetStatCQueuedMax_ms    = 0.0f;
+
+// Stats are written into console vars so they can be live viewed from console menu
+WRAP_CONSOLE_VAR(int,    gNetStat1NumConnections,  kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat2LatencyAvg,      kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat3LatencySD,       kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat4LatencyMin,      kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat5LatencyMax,      kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat6PingArrivedPC,   kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat7ExtQueuedAvg_ms, kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat8ExtQueuedMin_ms, kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStat9ExtQueuedMax_ms, kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStatAQueuedAvg_ms,    kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStatBQueuedMin_ms,    kNetworkStatsSection);
+WRAP_CONSOLE_VAR(float,  gNetStatCQueuedMax_ms,    kNetworkStatsSection);
 
 } // end namespace Util
 } // end namespace Anki
