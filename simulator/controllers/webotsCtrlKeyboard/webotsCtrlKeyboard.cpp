@@ -1291,6 +1291,7 @@ namespace Anki {
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = false;
+                bool doDeepRoll = root_->getField("doDeepRoll")->getSFBool();
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendPopAWheelie(-1,
@@ -1301,6 +1302,7 @@ namespace Anki {
                                   useManualSpeed);
                 } else {
                   SendRollSelectedObject(pathMotionProfile_,
+                                         doDeepRoll,
                                          usePreDockPose,
                                          useApproachAngle,
                                          approachAngle_rad,
@@ -2116,6 +2118,17 @@ namespace Anki {
                                  ExternalInterface::RequestSetUnlock(unlock, val)));
 
                 }
+                break;
+              }
+                
+              case (s32)':':
+              {
+                
+                SendRollActionParams(root_->getField("rollLiftHeight_mm")->getSFFloat(),
+                                     root_->getField("rollDriveSpeed_mmps")->getSFFloat(),
+                                     root_->getField("rollDriveAccel_mmps2")->getSFFloat(),
+                                     root_->getField("rollDriveDuration_ms")->getSFInt32(),
+                                     root_->getField("rollBackupDist_mm")->getSFFloat());
                 break;
               }
                 

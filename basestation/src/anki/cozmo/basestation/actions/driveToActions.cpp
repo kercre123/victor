@@ -1157,9 +1157,9 @@ namespace Anki {
                                  sayName)
     , _objectID(objectID)
     {
-      RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
-      AddAction(action);
-      SetProxyTag(action->GetTag());
+      _rollAction = new RollObjectAction(robot, objectID, useManualSpeed);
+      AddAction(_rollAction);
+      SetProxyTag(_rollAction->GetTag());
     }
 
     void DriveToRollObjectAction::RollToUpright()
@@ -1216,6 +1216,20 @@ namespace Anki {
       }
       // else, Block must be upside down, so don't limit approach angle, or there are no poses
 
+    }
+    
+    Result DriveToRollObjectAction::EnableDeepRoll(bool enable)
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.EnableDeepRoll.Invalid",
+                            "[%d] Tried to set deep roll mode, but action has started",
+                            GetTag());
+        return RESULT_FAIL;
+      }
+      
+      ASSERT_NAMED(_rollAction != nullptr, "DriveToRollObjectAction.actionIsNull");
+      _rollAction->EnableDeepRoll(enable);
+      return RESULT_OK;
     }
     
 #pragma mark ---- DriveToPopAWheelieAction ----

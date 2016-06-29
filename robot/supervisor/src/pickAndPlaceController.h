@@ -38,6 +38,7 @@ namespace Anki {
         DOCKING,
         SET_LIFT_POSTDOCK,
         MOVING_LIFT_FOR_ROLL,
+        MOVING_LIFT_FOR_DEEP_ROLL,
         POPPING_A_WHEELIE,
         MOVING_LIFT_POSTDOCK,
         BACKOUT,
@@ -94,6 +95,12 @@ namespace Anki {
       // Abort whatever pick or place action we're currently doing
       void Reset();
 
+      void SetRollActionParams(const f32 liftHeight_mm,
+                               const f32 driveSpeed_mmps,
+                               const f32 driveAccel_mmps2,
+                               const u32 driveDuration_ms,
+                               const f32 backupDist_mm);
+      
     } // namespace PickAndPlaceController
   } // namespace Cozmo
 } // namespace Anki

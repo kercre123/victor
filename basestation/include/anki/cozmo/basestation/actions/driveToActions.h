@@ -370,6 +370,7 @@ namespace Anki {
     // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
     //                            approach angle closest to approachAngle_rad is considered.
     // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class RollObjectAction;
     class DriveToRollObjectAction : public IDriveToInteractWithObject
     {
     public:
@@ -386,10 +387,12 @@ namespace Anki {
       // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
       // the block is upside down or already upright, and roll action will be allowed
       void RollToUpright();
+
+      Result EnableDeepRoll(bool enable);
       
     private:
       ObjectID _objectID;
-
+      RollObjectAction* _rollAction = nullptr;
     };
     
     

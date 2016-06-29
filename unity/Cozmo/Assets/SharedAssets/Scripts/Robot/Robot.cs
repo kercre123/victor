@@ -1157,6 +1157,7 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<RollObject>.Instance.Initialize(
       selectedObject,
       PathMotionProfileDefault,
+      doDeepRoll: false,
       approachAngle_rad: 0f,
       useApproachAngle: false,
       usePreDockPose: usePreDockPose,

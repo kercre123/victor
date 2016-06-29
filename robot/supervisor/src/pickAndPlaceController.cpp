@@ -117,6 +117,22 @@ namespace Anki {
         const u8 PICKUP_ANIM_TRANSITION_TIME_MS = 100;
         const u8 PICKUP_ANIM_ACCEL_MMPS2 = 100;
 
+        
+        // Deep roll action params
+        // Note: These are mainly for tuning the deep roll and can be removed once it's locked down.
+        f32 _rollLiftHeight_mm = 35;        // The lift height to command when engaging the block for roll
+        f32 _rollDriveSpeed_mmps = 50;      // The forward driving speed while engaging the block for roll
+        f32 _rollDriveAccel_mmps2 = 40;     // The forward driving accel while engaging the block for roll
+        u32 _rollDriveDuration_ms = 1500;   // The forward driving duration while engaging the block for roll
+        f32 _rollBackupDist_mm = 100;       // The amount to back up once the lift has engaged the block for roll
+        
+        // Deep roll actions const params for a scooch adjustment
+        // Seems to help avoid treads rubbing up against cube corners causing roll to fail
+        const f32 _kRollLiftScoochSpeed_rad_per_sec = DEG_TO_RAD_F32(50);
+        const f32 _kRollLiftScoochAccel_rad_per_sec_2 = DEG_TO_RAD_F32(50);
+        const f32 _kRollLiftHeightScoochOffset_mm = 10;
+        const f32 _kRollLiftScoochDuration_ms = 250;
+        
       } // "private" namespace
 
 
@@ -191,7 +207,7 @@ namespace Anki {
 
       static void StartBackingOut()
       {
-        static const f32 MIN_BACKOUT_DIST_MM = 30.f;
+        static const f32 MIN_BACKOUT_DIST_MM = 35.f;
 
         f32 backoutDist_mm = 0;
         switch(action_)
@@ -200,6 +216,12 @@ namespace Anki {
           case DA_ROLL_LOW:
           {
             backoutDist_mm = MIN_BACKOUT_DIST_MM;
+            break;
+          }
+          case DA_DEEP_ROLL_LOW:
+          {
+            backoutDist_mm = _rollBackupDist_mm;
+            break;
           }
           case DA_PICKUP_HIGH:
           case DA_PICKUP_LOW:
@@ -207,13 +229,14 @@ namespace Anki {
           case DA_PLACE_LOW:
           {
             backoutDist_mm = BACKOUT_DISTANCE_MM;
+            break;
           }
           default:
           {
             AnkiInfo( 14, "PAP", 119, "Reached default switch statement in PAP case", 0);
           }
         }
-
+        
         const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
 
         AnkiInfo( 14, "PAP", 492, "Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)", 3,
@@ -264,6 +287,7 @@ namespace Anki {
                 dockOffsetDistX_ += ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_ROLL_LOW:
+              case DA_DEEP_ROLL_LOW:
               case DA_POP_A_WHEELIE:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
@@ -307,7 +331,7 @@ namespace Anki {
 
 #ifdef SIMULATOR
                 // Prevents lift from attaching to block right after a roll
-                if (action_ == DA_ROLL_LOW) {
+                if (action_ == DA_ROLL_LOW || action_ == DA_DEEP_ROLL_LOW) {
                   HAL::DisengageGripper();
                 }
 #endif
@@ -323,6 +347,7 @@ namespace Anki {
                   case DA_PICKUP_LOW:
                   case DA_PLACE_HIGH:
                   case DA_ROLL_LOW:
+                  case DA_DEEP_ROLL_LOW:
                   case DA_POP_A_WHEELIE:
                   case DA_ALIGN:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
@@ -435,6 +460,7 @@ namespace Anki {
                   case DA_PLACE_LOW_BLIND:
                   case DA_PLACE_HIGH:
                   case DA_ROLL_LOW:
+                  case DA_DEEP_ROLL_LOW:
                   case DA_POP_A_WHEELIE:
                   {
                     SendBlockPlacedMessage(false);
@@ -509,11 +535,23 @@ namespace Anki {
                 break;
               }
               case DA_ROLL_LOW:
+              case DA_DEEP_ROLL_LOW:
               {
                 ProxSensors::EnableCliffDetector(false);
-                LiftController::SetMaxSpeedAndAccel(0.75, 100);
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                mode_ = MOVING_LIFT_FOR_ROLL;
+                IMUFilter::EnablePickupDetect(false);
+
+                if (action_ == DA_DEEP_ROLL_LOW) {
+                  LiftController::SetMaxSpeedAndAccel(0.75, 100);
+                  LiftController::SetDesiredHeight(_rollLiftHeight_mm);
+                  SteeringController::ExecuteDirectDrive(_rollDriveSpeed_mmps, _rollDriveSpeed_mmps,
+                                                         _rollDriveAccel_mmps2, _rollDriveAccel_mmps2);
+                  transitionTime_ = HAL::GetTimeStamp() + _rollDriveDuration_ms;
+                  mode_ = MOVING_LIFT_FOR_DEEP_ROLL;
+                } else {
+                  LiftController::SetMaxSpeedAndAccel(0.75, 100);
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                  mode_ = MOVING_LIFT_FOR_ROLL;
+                }
                 break;
               }
               case DA_POP_A_WHEELIE:
@@ -537,6 +575,25 @@ namespace Anki {
           {
             if (LiftController::GetHeightMM() <= LIFT_HEIGHT_LOW_ROLL) {
               SteeringController::ExecuteDirectDrive(-60, -60);
+              
+              // In case lift has trouble getting to low position, we don't want to back up forever.
+              transitionTime_ = HAL::GetTimeStamp() + 1000;
+              
+              mode_ = MOVING_LIFT_POSTDOCK;
+            }
+            break;
+          }
+          case MOVING_LIFT_FOR_DEEP_ROLL:
+          {
+            if (HAL::GetTimeStamp() > transitionTime_ || IMUFilter::GetPitch() > DEG_TO_RAD_F32(35.f)) {
+              
+              // Just a little lift raise when the robot is most pitched.
+              // Thinking this helps the lift scooch forward a bit more to make sure
+              // it catches the lip of the corner.
+              SteeringController::ExecuteDirectDrive(0, 0);
+              LiftController::SetMaxSpeedAndAccel(_kRollLiftScoochSpeed_rad_per_sec, _kRollLiftScoochAccel_rad_per_sec_2);
+              LiftController::SetDesiredHeight(_rollLiftHeight_mm + _kRollLiftHeightScoochOffset_mm);
+              transitionTime_ = HAL::GetTimeStamp() + _kRollLiftScoochDuration_ms;
               mode_ = MOVING_LIFT_POSTDOCK;
             }
             break;
@@ -571,6 +628,7 @@ namespace Anki {
                 case DA_PLACE_LOW_BLIND:
                 case DA_PLACE_HIGH:
                 case DA_ROLL_LOW:
+                case DA_DEEP_ROLL_LOW:
                 {
                   SendBlockPlacedMessage(true);
                   carryState_ = CARRY_NONE;
@@ -594,6 +652,7 @@ namespace Anki {
 
               if (HeadController::IsInPosition()) {
                 ProxSensors::EnableCliffDetector(true);
+                IMUFilter::EnablePickupDetect(true);
                 mode_ = IDLE;
                 lastActionSucceeded_ = true;
               }
@@ -859,6 +918,24 @@ namespace Anki {
                     useManualSpeed);
       }
 
+      
+      void SetRollActionParams(const f32 liftHeight_mm,
+                               const f32 driveSpeed_mmps,
+                               const f32 driveAccel_mmps2,
+                               const u32 driveDuration_ms,
+                               const f32 backupDist_mm)
+      {
+        AnkiDebug( 187, "SetRollActionParams", 488, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
+                  liftHeight_mm, driveSpeed_mmps, driveAccel_mmps2, driveDuration_ms, backupDist_mm);
+        
+        _rollLiftHeight_mm = liftHeight_mm;
+        _rollDriveSpeed_mmps = driveSpeed_mmps;
+        _rollDriveAccel_mmps2 = driveAccel_mmps2;
+        _rollDriveDuration_ms = driveDuration_ms;
+        _rollBackupDist_mm = backupDist_mm;
+        
+      }
+      
     } // namespace PickAndPlaceController
   } // namespace Cozmo
 } // namespace Anki

@@ -193,7 +193,8 @@ message RollObject {
   int_32 objectID, // negative value means "currently selected object"
   PathMotionProfile motionProf,
   float_32 approachAngle_rad,
-  bool   useApproachAngle,
+  bool doDeepRoll,
+  bool useApproachAngle,
   bool usePreDockPose,
   bool useManualSpeed
 }

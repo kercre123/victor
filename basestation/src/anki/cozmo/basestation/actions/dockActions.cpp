@@ -1302,6 +1302,7 @@ namespace Anki {
       switch(_dockAction)
       {
         case DockAction::DA_ROLL_LOW:
+        case DockAction::DA_DEEP_ROLL_LOW:
           return RobotActionType::ROLL_OBJECT_LOW;
           
         default:
@@ -1311,12 +1312,18 @@ namespace Anki {
       }
     }
     
+    void RollObjectAction::EnableDeepRoll(bool enable)
+    {
+      _dockAction = enable ? DockAction::DA_DEEP_ROLL_LOW : DockAction::DA_ROLL_LOW;
+    }
+    
     void RollObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
       switch(_dockAction)
       {
         case DockAction::DA_ROLL_LOW:
+        case DockAction::DA_DEEP_ROLL_LOW:
         {
           if(_robot.IsCarryingObject()) {
             PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
@@ -1387,6 +1394,7 @@ namespace Anki {
       switch(_dockAction)
       {
         case DockAction::DA_ROLL_LOW:
+        case DockAction::DA_DEEP_ROLL_LOW:
         {
           if(_robot.GetLastPickOrPlaceSucceeded()) {
             

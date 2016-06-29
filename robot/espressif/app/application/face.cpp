@@ -566,7 +566,7 @@ namespace Face {
       const int number_width = digits * 16;
 
       if (x + number_width > COLS) {
-        AnkiWarn( 187, "Face.DisplayNumber", 488, "Too wide", 0);
+        AnkiWarn( 189, "Face.DisplayNumber", 493, "Too wide", 0);
         return;
       }
 

@@ -551,6 +551,15 @@ namespace Anki {
 #endif
       } // ProcessImageRequestMessage()
 
+      void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
+        PickAndPlaceController::SetRollActionParams(msg.liftHeight_mm,
+                                                    msg.driveSpeed_mmps,
+                                                    msg.driveAccel_mmps2,
+                                                    msg.driveDuration_ms,
+                                                    msg.backupDist_mm);
+      }
+      
+      
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {

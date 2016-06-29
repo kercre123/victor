@@ -454,7 +454,8 @@ namespace Anki {
         if(failureMode_ != BACKING_UP &&
            !PickAndPlaceController::IsCarryingBlock() &&
            PickAndPlaceController::GetCurAction() != DA_ALIGN &&
-           PickAndPlaceController::GetCurAction() != DA_ROLL_LOW)
+           PickAndPlaceController::GetCurAction() != DA_ROLL_LOW &&
+           PickAndPlaceController::GetCurAction() != DA_DEEP_ROLL_LOW)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -691,7 +692,8 @@ namespace Anki {
         
         // There are some special cases for aligning with a block (rolling is basically aligning)
         const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN ||
-                                PickAndPlaceController::GetCurAction() == DA_ROLL_LOW;
+                                PickAndPlaceController::GetCurAction() == DA_ROLL_LOW ||
+                                PickAndPlaceController::GetCurAction() == DA_DEEP_ROLL_LOW;
         
         switch(mode_)
         {
@@ -906,7 +908,8 @@ namespace Anki {
                     
                     // Raise the lift if rolling, don't do anything to the lift if aligning or carrying a block, everything else
                     // we want to lower the lift when backing up
-                    if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
+                    if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW ||
+                       PickAndPlaceController::GetCurAction() == DA_DEEP_ROLL_LOW)
                     {
                       LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                     }
@@ -1235,7 +1238,8 @@ namespace Anki {
             f32 distIntoBlock_mm = 0;
             
             // If we are rolling push the block a little by planning a path into it
-            if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
+            if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW ||
+               PickAndPlaceController::GetCurAction() == DA_DEEP_ROLL_LOW)
             {
               distIntoBlock_mm = PATH_END_DIST_INTO_BLOCK_MM;
             }

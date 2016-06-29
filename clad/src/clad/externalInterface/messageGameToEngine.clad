@@ -135,6 +135,15 @@ message ControllerGains
   ControllerChannel controller
 }
 
+message RollActionParams
+{
+  float_32 liftHeight_mm,
+  float_32 driveSpeed_mmps,
+  float_32 driveAccel_mmps2,
+  uint_32 driveDuration_ms,
+  float_32 backupDist_mm,
+}
+
 message SetMotionModelParams
 {
   float_32 slipFactor,

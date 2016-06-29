@@ -214,6 +214,15 @@ message ControllerGains
   ControllerChannel controller
 }
 
+message RollActionParams
+{
+   float_32 liftHeight_mm,
+   float_32 driveSpeed_mmps,
+   float_32 driveAccel_mmps2,
+   uint_32 driveDuration_ms,
+   float_32 backupDist_mm,
+}
+
 message SetMotionModelParams
 {
   float_32 slipFactor,
@@ -405,6 +414,7 @@ union EngineToRobot
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
+  RollActionParams              rollActionParams            = 0x59,
   
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,  

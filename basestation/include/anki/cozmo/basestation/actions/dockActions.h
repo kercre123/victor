@@ -407,6 +407,9 @@ namespace Anki {
       // on what we were doing.
       virtual RobotActionType GetType() const override;
       
+      // Whether or not to do the deep roll action instead of the default roll
+      void EnableDeepRoll(bool enable);
+      
     protected:
       
       // Override completion signal to fill in information about rolled objects

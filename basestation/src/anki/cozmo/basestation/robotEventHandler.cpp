@@ -336,6 +336,7 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
                                                                   msg.useApproachAngle,
                                                                   msg.approachAngle_rad,
                                                                   msg.useManualSpeed);
+    action->EnableDeepRoll(msg.doDeepRoll);
     if(msg.motionProf.isCustom)
     {
       action->SetMotionProfile(msg.motionProf);
@@ -345,6 +346,7 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
     RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    action->EnableDeepRoll(msg.doDeepRoll);
     return action;
   }
 }

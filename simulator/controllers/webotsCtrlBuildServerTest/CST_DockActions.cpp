@@ -155,7 +155,7 @@ namespace Anki {
             m.idTag = 11;
             m.numRetries = 3;
             // Roll object 0
-            m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile, 0, false, true, false));
+            m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile, 0, false, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

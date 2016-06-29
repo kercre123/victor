@@ -1174,6 +1174,7 @@ namespace Anki {
     
     void UiGameController::SendRollObject(const s32 objectID,
                                           PathMotionProfile motionProf,
+                                          const bool doDeepRoll,
                                           const bool usePreDockPose,
                                           const bool useApproachAngle,
                                           const f32 approachAngle_rad,
@@ -1181,6 +1182,7 @@ namespace Anki {
     {
       ExternalInterface::RollObject m;
       m.motionProf = motionProf;
+      m.doDeepRoll = doDeepRoll;
       m.usePreDockPose = usePreDockPose;
       m.useApproachAngle = useApproachAngle,
       m.approachAngle_rad = approachAngle_rad,
@@ -1192,6 +1194,7 @@ namespace Anki {
     }
     
     void UiGameController::SendRollSelectedObject(PathMotionProfile motionProf,
+                                                  const bool doDeepRoll,
                                                   const bool usePreDockPose,
                                                   const bool useApproachAngle,
                                                   const f32 approachAngle_rad,
@@ -1199,6 +1202,7 @@ namespace Anki {
     {
       SendRollObject(-1,
                      motionProf,
+                     doDeepRoll,
                      usePreDockPose,
                      useApproachAngle,
                      approachAngle_rad,
@@ -1321,6 +1325,19 @@ namespace Anki {
       m.maxIntegralError = maxErrorSum;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ControllerGains(m);
+      SendMessage(message);
+    }
+
+    void UiGameController::SendRollActionParams(f32 liftHeight_mm, f32 driveSpeed_mmps, f32 driveAccel_mmps2, u32 driveDuration_ms, f32 backupDist_mm)
+    {
+      ExternalInterface::RollActionParams m;
+      m.liftHeight_mm = liftHeight_mm;
+      m.driveSpeed_mmps = driveSpeed_mmps;
+      m.driveAccel_mmps2 = driveAccel_mmps2;
+      m.driveDuration_ms = driveDuration_ms;
+      m.backupDist_mm = backupDist_mm;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_RollActionParams(m);
       SendMessage(message);
     }
     

@@ -40,6 +40,17 @@ PROTO WebotsKeyboardController [
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
 
+  # Whether or not do deep roll as the rolling action
+  field SFBool  doDeepRoll FALSE
+
+  # Deep roll action params
+  # Can get rid of these once the maneuver is solid
+  field SFFloat rollLiftHeight_mm    35
+  field SFFloat rollDriveSpeed_mmps  50
+  field SFFloat rollDriveAccel_mmps2 40
+  field SFInt32 rollDriveDuration_ms 1500
+  field SFFloat rollBackupDist_mm    100
+
   field SFColor poseMarkerDiffuseColor 0.1 0.8 0.1
 
   # Slow speed in mm/s (hold shift)

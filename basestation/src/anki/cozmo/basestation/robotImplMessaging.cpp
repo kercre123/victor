@@ -994,6 +994,16 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
       SendRobotMessage<RobotInterface::SetMotionModelParams>(msg.slipFactor);
     }));
   
+
+  // SetRollActionParams
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::RollActionParams,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::RollActionParams& msg = event.GetData().Get_RollActionParams();
+
+      SendRobotMessage<RobotInterface::RollActionParams>(msg.liftHeight_mm, msg.driveSpeed_mmps, msg.driveAccel_mmps2, msg.driveDuration_ms, msg.backupDist_mm );
+    }));
+  
 }
   
 } // end namespace Cozmo

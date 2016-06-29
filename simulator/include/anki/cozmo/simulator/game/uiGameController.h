@@ -191,12 +191,14 @@ protected:
 
   void SendRollObject(const s32 objectID,
                       PathMotionProfile motionProf,
+                      const bool doDeepRoll,
                       const bool usePreDockPose,
                       const bool useApproachAngle = false,
                       const f32 approachAngle_rad = 0,
                       const bool useManualSpeed = false);
   
   void SendRollSelectedObject(PathMotionProfile motionProf,
+                              const bool doDeepRoll,
                               const bool usePreDockPose,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
@@ -234,6 +236,7 @@ protected:
   void SendDrawPoseMarker(const Pose3d& p);
   void SendErasePoseMarker();
   void SendControllerGains(ControllerChannel channel, f32 kp, f32 ki, f32 kd, f32 maxErrorSum);
+  void SendRollActionParams(f32 liftHeight_mm, f32 driveSpeed_mmps, f32 driveAccel_mmps2, u32 driveDuration_ms, f32 backupDist_mm);
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
