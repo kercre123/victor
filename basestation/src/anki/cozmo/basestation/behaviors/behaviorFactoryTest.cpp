@@ -77,13 +77,9 @@ namespace Cozmo {
   // Do NVStorage writes at end of test only if it passes.
   // Overrides kBFT_WriteToNVStorageAtEnd (i.e. treats it as if it were true).
   CONSOLE_VAR(bool,  kBFT_WriteToNVStorageOnPassOnly, "BehaviorFactoryTest",  true);
-  
-  // Disconnect at end of test
-  CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  true);
 
   // Read the centroid locations stored on the robot from the prePlaypen test and calculate camera pose
   CONSOLE_VAR(bool,  kBFT_ReadCentroidsFromRobot, "BehaviorFactoryTest",  false);
-  
   
   
   ////////////////////////////
@@ -325,11 +321,6 @@ namespace Cozmo {
     robot.Broadcast( ExternalInterface::MessageEngineToGame( FactoryTestResultEntry(_testResultEntry)));
 
     _factoryTestLogger.CloseLog();
-    
-    // Disconnect from robot
-    if (kBFT_DisconnectAtEnd) {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::DisconnectFromRobot>(robot.GetID());
-    }
   }
   
   

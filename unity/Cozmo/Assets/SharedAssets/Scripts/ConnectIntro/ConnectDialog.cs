@@ -158,7 +158,7 @@ public class ConnectDialog : MonoBehaviour {
   private void Connected(string connectionIdentifier) {
     _ConnectionStatus.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
     RobotEngineManager.Instance.StartEngine();
-    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
+    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP, _Simulated);
     // Set initial volumes
     // TODO: We need to connect to the engine as soon as the app launches so we can begin playing audio.
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();

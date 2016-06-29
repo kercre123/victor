@@ -2660,7 +2660,7 @@ namespace Anki {
     {
       Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
+        PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message of type %s.", _ID, EngineToRobotTagToString(msg.GetTag()));
       }
       return sendResult;
     }

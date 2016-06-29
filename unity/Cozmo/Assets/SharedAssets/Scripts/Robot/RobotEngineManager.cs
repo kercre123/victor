@@ -57,6 +57,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
   public event Action<int> RobotConnected;
+  public event Action<int> RobotDisconnected;
   public event Action<uint, bool,RobotActionType> SuccessOrFailure;
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
@@ -116,6 +117,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
+  private U2G.DisconnectFromRobot DisconnectFromRobotMessage = new U2G.DisconnectFromRobot();
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice(UiConnectionType.UI, 0);
 
   private U2G.GetAllDebugConsoleVarMessage _GetAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
@@ -154,8 +156,8 @@ public class RobotEngineManager : MonoBehaviour {
     Application.runInBackground = true;
 
     _Channel = new RobotUdpChannel();
-    _Channel.ConnectedToClient += Connected;
-    _Channel.DisconnectedFromClient += Disconnected;
+    _Channel.ConnectedToClient += ConnectedToEngine;
+    _Channel.DisconnectedFromClient += DisconnectedFromEngine;
     _Channel.MessageReceived += ReceivedMessage;
 
     Robots = new Dictionary<int, IRobot>();
@@ -172,7 +174,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (_Channel != null) {
       if (_Channel.IsActive) {
         Disconnect();
-        Disconnected(DisconnectionReason.UnityReloaded);
+        DisconnectedFromEngine(DisconnectionReason.UnityReloaded);
       }
 
       _Channel = null;
@@ -250,15 +252,18 @@ public class RobotEngineManager : MonoBehaviour {
     return reason;
   }
 
-  private void Connected(string connectionIdentifier) {
+  private void ConnectedToEngine(string connectionIdentifier) {
     if (ConnectedToClient != null) {
       ConnectedToClient(connectionIdentifier);
     }
   }
 
-  private void Disconnected(DisconnectionReason reason) {
-    DAS.Debug("RobotEngineManager.Disconnected", reason.ToString());
-    _IsRobotConnected = false;
+  private void DisconnectedFromEngine(DisconnectionReason reason) {
+    DAS.Debug("RobotEngineManager.DisconnectedFromEngine", reason.ToString());
+    if (_IsRobotConnected) {
+      DAS.Error("RobotEngineManager.DisconnectedFromEngine", "Robot is still connected");
+      _IsRobotConnected = false;
+    }
 
     _LastDisconnectionReason = reason;
     if (DisconnectedFromClient != null) {
@@ -442,7 +447,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.RobotOnBackFinished);
       break;
     default:
-      DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
+//      DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
     }
   }
@@ -503,9 +508,17 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
-    Disconnect();
-    Disconnected(DisconnectionReason.RobotDisconnected);
+    DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID);
+
+    if (_IsRobotConnected) {
+      _IsRobotConnected = false;
+
+
+      _LastDisconnectionReason = DisconnectionReason.RobotDisconnected;
+      if (RobotDisconnected != null) {
+        RobotDisconnected((int)message.robotID);
+      }
+    }
   }
 
   private void ReceivedSpecificMessage(G2U.EngineRobotCLADVersionMismatch message) {
@@ -722,7 +735,13 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
-    Robots[message.robotID].UpdateInfo(message);
+    IRobot robot = Robots[message.robotID];
+    if (robot != null) {
+      Robots[message.robotID].UpdateInfo(message);
+    }
+    else {
+      DAS.Error("RobotEngineManager.ReceivedRobotState.NoRobot", "There is no robot with Id " + message.robotID);
+    }
   }
 
   private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallback message) {
@@ -914,13 +933,7 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  /// <summary>
-  /// Forcibly adds a new robot.
-  /// </summary>
-  /// <param name="robotId">The robot identifier.</param>
-  /// <param name="robotIP">The ip address the robot is connected to.</param>
-  /// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
-  public void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated) {
+  public void ConnectToRobot(int robotID, string robotIP, bool robotIsSimulated) {
     if (robotID < 0 || robotID > 255) {
       throw new ArgumentException("ID must be between 0 and 255.", "robotID");
     }
@@ -939,6 +952,12 @@ public class RobotEngineManager : MonoBehaviour {
     ConnectToRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 
     Message.ConnectToRobot = ConnectToRobotMessage;
+    SendMessage();
+  }
+
+  public void DisconnectFromRobot(int robotId) {
+    DisconnectFromRobotMessage.robotID = (byte)robotId;
+    Message.DisconnectFromRobot = DisconnectFromRobotMessage;
     SendMessage();
   }
 

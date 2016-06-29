@@ -224,12 +224,7 @@ bool CozmoEngine::DisconnectFromRobot(const ExternalInterface::DisconnectFromRob
   
   _context->GetRobotManager()->GetMsgHandler()->RemoveRobotConnection(disconnectMsg.robotID);
   
-  // TODO: Need to call RemoveRobot(), but there's probably other things that need to get done in there
-  // or elsewhere for this to work properly. For now, not calling it to avoid an assert.
-  // Currently, this function is only called from BehaviorFactoryTest as part of the factory test app.
-  PRINT_NAMED_WARNING("CozmoEngine.DisconnectFromRobot.TODO", "DISCONNECT NOT YET FULLY FUNCTIONAL");
-  // return (RemoveRobot(disconnectMsg.robotID) == RESULT_OK);
-  return true;
+  return (RemoveRobot(disconnectMsg.robotID) == RESULT_OK);
 }
 
   
@@ -568,7 +563,7 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       const ExternalInterface::DisconnectFromRobot& msg = event.GetData().Get_DisconnectFromRobot();
       const bool success = DisconnectFromRobot(msg);
       if(success) {
-        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Disconnecting from robot %d!", msg.robotID);
+        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Disconnected from robot %d!", msg.robotID);
       } else {
         PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to disconnect from robot %d!", msg.robotID);
       }
