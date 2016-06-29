@@ -319,6 +319,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotState>(UpdateInfo);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
 
     ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace>(HandleRobotLoadedKnownFace);
@@ -342,6 +343,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotState>(UpdateInfo);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
 
     ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
@@ -444,7 +446,7 @@ public class Robot : IRobot {
       TurnOffAllLights(true);
       DAS.Debug(this, "Robot data cleared");
     }
-   
+
     LightCubes.Clear();
     RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
     GameStatus = GameStatusFlag.Nothing;
@@ -667,6 +669,15 @@ public class Robot : IRobot {
 
       if (index != -1) {
         Faces.RemoveAt(index);
+      }
+    }
+  }
+
+  private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
+    for (int i = 0; i < Faces.Count; i++) {
+      if (Faces[i].ID == message.oldID) {
+        Faces[i].UpdateFaceID(message.newID);
+        break;
       }
     }
   }

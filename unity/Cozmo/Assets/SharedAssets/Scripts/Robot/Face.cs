@@ -52,4 +52,10 @@ public class Face {
     //  TimeLastSeen = Time.time;
   }
 
+
+  // this should only be called in response to RobotChangedObservedFaceID
+  public void UpdateFaceID(int id) {
+    ID = id;
+  }
+
 }
