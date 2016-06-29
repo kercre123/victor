@@ -21,7 +21,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private PressDemoView _PressDemoViewPrefab;
   private PressDemoView _PressDemoViewInstance;
 
-  private bool _ProgressSceneWhenMinigameOver = false;
+  private bool _SpeedTapEndLogic;
 
   private int _PressDemoDebugSceneIndex = 0;
 
@@ -29,8 +29,23 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private Cozmo.UI.AlertView _RequestDialog = null;
 
+  private void SetDemoStartValues() {
+    _SpeedTapEndLogic = false;
+    _PressDemoDebugSceneIndex = 0;
+    _ExplicitFaceID = -1;
+  }
+
   private void Awake() {
     RobotEngineManager.Instance.CurrentRobot.LoadFaceAlbumFromFile("prDemo", true);
+    SkillSystem.Instance.DebugEraseStorage();
+    HackSkillSpeedTapSetup();
+  }
+
+  // HACK: demo hacked settings for skill level selection
+  private void HackSkillSpeedTapSetup() {
+    PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    playerProfile.GameDifficulty["SpeedTapGame"] = 1;
+    DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
   public override bool LoadHubWorld() {
@@ -78,11 +93,12 @@ public class PressDemoHubWorld : HubWorldBase {
     // last demo scene so shut off music
     if (demoNum == 7) {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      _PressDemoViewInstance.HideStartButtons(false, "Restart");
     }
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
-    DAS.Info("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Face Enroll");
+    DAS.Info("PressDemoHubWorld.HandleRequestEnrollFace", "Engine Requested Face Enroll");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     alertView.SetIcon(_FaceEnrollmentChallengeData.ChallengeIcon);
@@ -92,6 +108,7 @@ public class PressDemoHubWorld : HubWorldBase {
     alertView.DescriptionLocKey = "pressDemo.faceEnrollRequestDesc";
     _RequestDialog = alertView;
     _ExplicitFaceID = message.face_id;
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRequestGame);
   }
 
   private void HandleExternalRejection(object message) {
@@ -111,19 +128,21 @@ public class PressDemoHubWorld : HubWorldBase {
     if (message.firstRequest) {
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-      alertView.TitleLocKey = "pressDemo.speedTapRequestTitle";
-      alertView.DescriptionLocKey = "pressDemo.speedTapRequestDesc";
+      alertView.TitleLocKey = LocalizationKeys.kPressDemoSpeedTapRequestTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kPressDemoSpeedTapRequestDesc;
     }
     else {
-      alertView.SetPrimaryButton("pressDemo.ohAlright", StartSpeedTapGame);
-      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-      alertView.TitleLocKey = "pressDemo.speedTapRequestAgainTitle";
-      alertView.DescriptionLocKey = "pressDemo.speedTapRequestAgainDesc";
+      alertView.SetPrimaryButton(LocalizationKeys.kPressDemoYesSecondTime, StartSpeedTapGame);
+      alertView.SetSecondaryButton(LocalizationKeys.kPressDemoNoSecondTime, HandleRejection);
+      alertView.TitleLocKey = LocalizationKeys.kPressDemoSpeedTapRequestAgainTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kPressDemoSpeedTapRequestAgainDesc;
     }
     _RequestDialog = alertView;
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRequestGame);
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {
+    SetDemoStartValues();
     RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleSleepAnimationComplete);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
   }
@@ -140,7 +159,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void StartFaceEnrollmentActivity() {
     DAS.Info(this, "Starting Face Enrollment Activity");
-    FaceEnrollment.FaceEnrollmentGame faceEnrollment = PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: false) as FaceEnrollment.FaceEnrollmentGame;
+    FaceEnrollment.FaceEnrollmentGame faceEnrollment = PlayMinigame(_FaceEnrollmentChallengeData, playGameSpecificMusic: false) as FaceEnrollment.FaceEnrollmentGame;
     _RequestDialog = null;
     // demo mode should not be saving faces to the actual robot.
     faceEnrollment.SetSaveToRobot(false);
@@ -149,20 +168,18 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleSpeedTapYesAnimationEnd(bool success) {
     DAS.Info(this, "Starting Speed Tap Game");
-    PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: true);
-    int maxLevel = _SpeedTapChallengeData.MinigameConfig.SkillConfig.GetMaxLevel();
-    SkillSystem.Instance.SetDebugSkillsForGame(maxLevel, maxLevel, maxLevel);
+    PlayMinigame(_SpeedTapChallengeData, playGameSpecificMusic: true);
   }
 
   private void StartSpeedTapGame() {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    _SpeedTapEndLogic = true;
 
     RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapCozmoConfirm, HandleSpeedTapYesAnimationEnd);
   }
 
-  private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver, bool playGameSpecificMusic) {
-    _ProgressSceneWhenMinigameOver = progressSceneWhenMinigameOver;
+  private GameBase PlayMinigame(ChallengeData challengeData, bool playGameSpecificMusic) {
 
     _PressDemoViewInstance.OnForceProgress -= HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton -= HandleStartButtonPressed;
@@ -198,11 +215,34 @@ public class PressDemoHubWorld : HubWorldBase {
   private void HandleMiniGameQuit() {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
-    if (_ProgressSceneWhenMinigameOver) {
-      RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
-    }
+
     LoadPressDemoView();
+
+    if (_SpeedTapEndLogic) {
+      RequestSpeedTapLoop();
+    }
     _PressDemoViewInstance.HideStartButtons();
+    _PressDemoViewInstance.HideNoEdgeButton();
+  }
+
+  private void RequestSpeedTapLoop() {
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+
+    DAS.Info("PressDemoHubWorld.RequestSpeedTapLoop", "Request Speed Tap Loop");
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
+    alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
+
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleSpeedTapLoopEnd);
+    alertView.DescriptionLocKey = LocalizationKeys.kPressDemoSpeedTapLoopText;
+    _RequestDialog = alertView;
+  }
+
+  private void HandleSpeedTapLoopEnd() {
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
   }
 
   private void LoopRobotSleep() {

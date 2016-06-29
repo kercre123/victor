@@ -10,7 +10,6 @@ public class FeatureGate {
 
   public void Initialize() {
     // message engine and ask for our data
-    RequestData();
     RobotEngineManager.Instance.ConnectedToClient += (s) => RequestData();
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeatureToggles>(HandleFeatureToggles);
   }

@@ -35,7 +35,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
 
   void Start() {
     _ForceProgressSecretButton.onClick.AddListener(HandleForceProgressPressed);
-    _StartButton.onClick.AddListener(HandleStartButton);
+    _StartButton.Initialize(HandleStartButton, "press_demo_wakeup_button", "press_demo_view");
     _StartNoEdgeSecretButton.onClick.AddListener(HandleStartNoEdgeButton);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnClientDisconnect);
     _ResetButton.onClick.AddListener(HandleResetButton);
@@ -57,26 +57,33 @@ public class PressDemoView : Cozmo.UI.BaseView {
     _PressDebugBaseImage.overrideSprite = _PressDebugDatabase[index];
   }
 
-  public void HideStartButtons() {
-    _StartButton.Interactable = false;
-    _StartButtonText.text = "";
-    _StartNoEdgeSecretButton.gameObject.SetActive(false);
+  public void HideStartButtons(bool hide = true, string buttonText = "") {
+    _StartButton.Interactable = !hide;
+    _StartButtonText.text = buttonText;
+  }
+
+  public void HideNoEdgeButton(bool hide = true) {
+    _StartNoEdgeSecretButton.gameObject.SetActive(!hide);
   }
 
   private void HandleStartButton() {
     if (OnStartButton != null) {
       OnStartButton(true);
     }
+
     RobotEngineManager.Instance.CurrentRobot.WakeUp(true);
     HideStartButtons();
+    HideNoEdgeButton();
   }
 
   private void HandleStartNoEdgeButton() {
     if (OnStartButton != null) {
       OnStartButton(false);
     }
+
     RobotEngineManager.Instance.CurrentRobot.WakeUp(false);
     HideStartButtons();
+    HideNoEdgeButton();
   }
 
   private void HandleForceProgressPressed() {

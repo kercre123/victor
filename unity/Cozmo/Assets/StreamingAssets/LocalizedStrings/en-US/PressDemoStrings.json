@@ -34,9 +34,15 @@
     "translation": "Speed Tap"
   },
   "pressDemo.speedTapRequestAgainDesc": {
-    "translation": "Cozmo Really Wants To Play"
+    "translation": "Cozmo really wants to play!"
   },
-  "pressDemo.ohAlright": {
-    "translation": "Oh alright!"
+  "pressDemo.yesSecondTime": {
+    "translation": "Yes, I'll play"
+  },
+  "pressDemo.noSecondTime": {
+    "translation": "NO"
+  },
+  "pressDemo.speedTapLoopText": {
+    "translation": "Would you like to play again?"
   }
 }

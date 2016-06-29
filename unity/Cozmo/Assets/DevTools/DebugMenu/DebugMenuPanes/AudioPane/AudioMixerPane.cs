@@ -11,9 +11,14 @@ namespace Anki.Cozmo.Audio {
     [SerializeField]
     private MixerStrip _MixerStripPrefab;
 
-    private const float _kDefaultVolume = 0.7f;
+    private float _kDefaultVolume = 0.7f;
 
     private void Awake() {
+
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+        _kDefaultVolume = 1.0f;
+      }
+
       var types = System.Enum.GetValues(typeof(VolumeParameters.VolumeType));
       Dictionary<VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
       bool prefsChanged = false;

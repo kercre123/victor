@@ -287,5 +287,11 @@
   },
   "speedTap.text.roundScore": {
     "translation": "Player: {0} - Cozmo: {1}"
+  },
+  "pressDemoSpeedTap.difficulty.hardDescription": {
+    "translation": "Cozmo is better at Speed Tap."
+  },
+  "pressDemoSpeedTap.difficulty.hardDescription.locked": {
+    "translation": "Unlock by playing Speed Tap once."
   }
 }

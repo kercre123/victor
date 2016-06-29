@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b68eb6887e5e4bdca2b493bcee8427e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SpeedTapChallengeData: {fileID: 11400000, guid: 42702cbdf4c0c418a84f8792f3062612,
+  _SpeedTapChallengeData: {fileID: 11400000, guid: c940db26a90a9459e9eed1e624da02c6,
     type: 2}
   _FaceEnrollmentChallengeData: {fileID: 11400000, guid: 50f11b42a064240cb915820e1768cee5,
     type: 2}
@@ -55,7 +55,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _SpeedTapChallengeData
       value: 
-      objectReference: {fileID: 11400000, guid: 42702cbdf4c0c418a84f8792f3062612,
+      objectReference: {fileID: 11400000, guid: c940db26a90a9459e9eed1e624da02c6,
         type: 2}
     - target: {fileID: 0}
       propertyPath: _FaceEnrollmentChallengeData

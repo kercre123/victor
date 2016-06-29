@@ -278,10 +278,18 @@ public class StartupManager : MonoBehaviour {
         Cozmo.HexItemList.SetInstance(cd);
       });
 
-    assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
-      "ChallengeList", (ChallengeDataList cd) => {
-        ChallengeDataList.SetInstance(cd);
-      });
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+      assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
+        "PressDemoChallengeList", (ChallengeDataList cd) => {
+          ChallengeDataList.SetInstance(cd);
+        });
+    }
+    else {
+      assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
+        "ChallengeList", (ChallengeDataList cd) => {
+          ChallengeDataList.SetInstance(cd);
+        });
+    }
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName,
       "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
@@ -300,10 +308,13 @@ public class StartupManager : MonoBehaviour {
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
 #if FACTORY_TEST
     assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, "FactoryTest", loadAdditively: false, callback: null);
-#elif PRESS_DEMO
-    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, "PressDemo", loadAdditively: false, callback: null);
 #else
-    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+      assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, "PressDemo", loadAdditively: false, callback: null);
+    }
+    else {
+      assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
+    }
 #endif
   }
 

@@ -10,10 +10,12 @@ public class DebugProfile {
   public bool SOSLoggerEnabled;
   public bool LatencyDisplayEnabled;
   public bool DebugPauseEnabled;
+  public bool RunPressDemo;
 
   public DebugProfile() {
     SOSLoggerEnabled = false;
     LatencyDisplayEnabled = false;
     DebugPauseEnabled = false;
+    RunPressDemo = false;
   }
 }

@@ -7,7 +7,7 @@ using Cozmo.MinigameWidgets;
 
 public class DifficultySelectButtonPanel : MonoBehaviour {
 
-  public delegate void DifficultySelectedHandler(float buttonXWorldPosition,bool isUnlocked,DifficultySelectOptionData data);
+  public delegate void DifficultySelectedHandler(float buttonXWorldPosition, bool isUnlocked, DifficultySelectOptionData data);
 
   public event DifficultySelectedHandler OnDifficultySelected;
 
@@ -56,12 +56,19 @@ public class DifficultySelectButtonPanel : MonoBehaviour {
 
       var option = obj.GetComponent<DifficultySelectOption>();
       option.Initialize(options[i], enabled: options[i].DifficultyId <= _HighestDifficultyAvailable);
-      option.OnSelect += HandleDifficultySelected; 
+      option.OnSelect += HandleDifficultySelected;
       _SpawnedOptions.Add(option);
     }
 
     _SelectedDifficultyIndex = -1;
-    SelectOption(highestDifficultyAvailable);
+
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+      // HACK: press demo hack wants first option to be selected by default
+      SelectOption(0);
+    }
+    else {
+      SelectOption(highestDifficultyAvailable);
+    }
   }
 
   private void SelectOption(int index) {

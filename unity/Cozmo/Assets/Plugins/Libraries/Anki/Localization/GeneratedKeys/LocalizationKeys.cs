@@ -227,7 +227,9 @@ public static class LocalizationKeys {
   public const string kPressDemoSpeedTapRequestDesc = "pressDemo.speedTapRequestDesc";
   public const string kPressDemoSpeedTapRequestAgainTitle = "pressDemo.speedTapRequestAgainTitle";
   public const string kPressDemoSpeedTapRequestAgainDesc = "pressDemo.speedTapRequestAgainDesc";
-  public const string kPressDemoOhAlright = "pressDemo.ohAlright";
+  public const string kPressDemoYesSecondTime = "pressDemo.yesSecondTime";
+  public const string kPressDemoNoSecondTime = "pressDemo.noSecondTime";
+  public const string kPressDemoSpeedTapLoopText = "pressDemo.speedTapLoopText";
 
   #endregion
 

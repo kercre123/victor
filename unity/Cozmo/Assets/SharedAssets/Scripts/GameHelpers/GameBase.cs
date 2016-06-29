@@ -136,7 +136,7 @@ public abstract class GameBase : MonoBehaviour {
         newView.Initialize(_ChallengeData);
         SetupView(newView, _ChallengeData);
       });
-    
+
     PrepRobotForGame();
   }
 
@@ -332,30 +332,41 @@ public abstract class GameBase : MonoBehaviour {
   public virtual void HandleGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
     bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
-    GameEventManager.Instance.SendGameEventToEngine(
-      GameEventWrapperFactory.Create(GameEvent.OnGameComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, IsHighIntensityGame()));
+
+    if (!DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+      GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(GameEvent.OnGameComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, IsHighIntensityGame()));
+    }
+
     if (playerWon) {
-      PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-      int currentDifficultyUnlocked = 0;
-      if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
-        currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
-      }
-      // Set NewDifficultyUnlock to -1 so it will be ignored by ChallengeEndedDialog
-      RewardedActionManager.Instance.NewDifficultyUnlock = -1;
-      int newDifficultyUnlocked = CurrentDifficulty + 1;
-      if (currentDifficultyUnlocked < newDifficultyUnlocked &&
-          _ChallengeData.DifficultyOptions != null &&
-          newDifficultyUnlocked < _ChallengeData.DifficultyOptions.Count) {
-        playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
-        DataPersistence.DataPersistenceManager.Instance.Save();
-        // If a new Difficulty was unlocked, set that in the UnlockablesManager so it will show
-        // in ChallengeEndedDialog
-        RewardedActionManager.Instance.NewDifficultyUnlock = newDifficultyUnlocked;
-      }
+      HandleUnlockRewards();
       RaiseMiniGameWin();
     }
     else {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+        HandleUnlockRewards();
+      }
       RaiseMiniGameLose();
+    }
+  }
+
+  private void HandleUnlockRewards() {
+    PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    int currentDifficultyUnlocked = 0;
+    if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
+      currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
+    }
+    // Set NewDifficultyUnlock to -1 so it will be ignored by ChallengeEndedDialog
+    RewardedActionManager.Instance.NewDifficultyUnlock = -1;
+    int newDifficultyUnlocked = CurrentDifficulty + 1;
+    bool higherLevelUnlocked = currentDifficultyUnlocked < newDifficultyUnlocked;
+    bool highestOptionLevel = !(_ChallengeData.DifficultyOptions != null && newDifficultyUnlocked < _ChallengeData.DifficultyOptions.Count);
+
+    if (higherLevelUnlocked && !highestOptionLevel) {
+      playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
+      DataPersistence.DataPersistenceManager.Instance.Save();
+      // If a new Difficulty was unlocked, set that in the UnlockablesManager so it will show
+      // in ChallengeEndedDialog
+      RewardedActionManager.Instance.NewDifficultyUnlock = newDifficultyUnlocked;
     }
   }
 
