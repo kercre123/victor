@@ -1,0 +1,13 @@
+//this needs to call ndk build
+
+task buildLibs(type:Exec) {
+    doFirst {
+        println '*** Starting CrashReporting build'
+    }
+
+    commandLine 'ndk-build', '-j', Runtime.runtime.availableProcessors() + 2
+
+    doLast {
+        println '*** Finished CrashReporting build'
+    }
+}
