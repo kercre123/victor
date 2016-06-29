@@ -57,7 +57,8 @@ namespace Anki {
         return false;
       }
     
-      for(auto iter = _history.begin(); iter != _history.end(); ++iter)
+      // Start at beginning + 1 because there is no data before the first element
+      for(auto iter = _history.begin() + 1; iter != _history.end(); ++iter)
       {
         // If we get to the imu data after the timestamp
         // or We have gotten to the imu data that has yet to be given a timestamp and
@@ -67,10 +68,6 @@ namespace Anki {
            (iter->timestamp == 0 &&
             ABS((int)((iter - 1)->timestamp - t)) < RollingShutterCorrector::timeBetweenFrames_ms))
         {
-          if(iter == _history.begin())
-          {
-            return false;
-          }
           after = *iter;
           before = *(iter - 1);
           return true;
@@ -88,7 +85,24 @@ namespace Anki {
         return false;
       }
       
-      for(auto iter = _history.begin(); iter != _history.end(); ++iter)
+      auto iter = _history.begin();
+      // Seperate check for the first element due to there not being anything before it
+      if(iter->timestamp > t)
+      {
+        if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
+        {
+          return true;
+        }
+      }
+      // If the first element has a timestamp of zero then nothing else will have valid timestamps
+      // due to how ImuData comes in during an image so the data that we get for an image that we are in the process of receiving will not
+      // have timestamps
+      else if(iter->timestamp == 0)
+      {
+        return false;
+      }
+      
+      for(iter = _history.begin() + 1; iter != _history.end(); ++iter)
       {
         // If we get to the imu data after the timestamp
         // or We have gotten to the imu data that has yet to be given a timestamp and
@@ -96,12 +110,7 @@ namespace Anki {
         if(iter->timestamp > t ||
            (iter->timestamp == 0 &&
             ABS((int)((iter - 1)->timestamp - t)) < RollingShutterCorrector::timeBetweenFrames_ms))
-        {
-          if(iter == _history.begin())
-          {
-            return false;
-          }
-          
+        {          
           // Once we get to the imu data after the timestamp look at the numToLookBack imu data before it
           for(int i = 0; i < numToLookBack; i++)
           {
