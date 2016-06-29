@@ -169,6 +169,7 @@ namespace FaceEnrollment {
       if (success) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
       }
+      SharedMinigameView.ShowQuitButton();
       ShowFaceListSlide(SharedMinigameView);
       SharedMinigameView.HideSpinnerWidget();
     }
