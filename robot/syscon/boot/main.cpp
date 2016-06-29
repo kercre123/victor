@@ -36,12 +36,15 @@ int main (void) {
   Lights::init();
 
   // Power on the system
-  Battery::init();
-
-  // Do recovery until our signature is okay
-  EnterRecovery();
-  
-  Lights::stop();
+  if (Battery::init())
+  {
+    // If powered normally, do recovery until our signature is okay
+    EnterRecovery();
+    Lights::stop();
+  } else {
+    // If not powered normally, boot into test mode
+    *FIXTURE_HOOK = 0xDEADFACE;
+  }
   
   __enable_irq();
   sd_mbr_command_t cmd;

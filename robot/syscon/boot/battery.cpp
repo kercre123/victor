@@ -24,7 +24,7 @@ static inline void kickDog() {
   }
 }
 
-void Battery::init()
+bool Battery::init()
 {
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_PULLUP);
@@ -45,23 +45,24 @@ void Battery::init()
   // Disable charger during boot
   nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
- 
-  // Battery power: Disabled
-  nrf_gpio_pin_set(PIN_PWR_EN);
-  nrf_gpio_cfg_output(PIN_PWR_EN);
 
   // Wait here for Cozmo to sit soundly on his charger (in case we're not reliably powered yet)
-  // But if we find ourself powered for >500ms by some mystical force, that's probably the test fixture
-  int countdown = 500000/68;    // Each 10-bit ADC sample takes 68uS per datasheet
+  // But if we find ourself powered for >250ms by some mystical force, that's probably the test fixture
+  int countdown = 250000/68;    // Each 10-bit ADC sample takes 68uS per datasheet
   while (Battery::read() < VEXT_CONTACT_LEVEL)
     if (!--countdown)
-      SVC_Handler();  // Test fixture mode
+      return false;
+  
+  // Battery power: Enabled (Why?)
+  nrf_gpio_pin_set(PIN_PWR_EN);
+  nrf_gpio_cfg_output(PIN_PWR_EN);
 
   // Encoder and headboard power
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
   MicroWait(10000);
+  return true;
 }
 
 int32_t Battery::read(void) {

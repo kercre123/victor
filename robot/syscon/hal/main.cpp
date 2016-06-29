@@ -155,7 +155,7 @@ int main(void)
 
   // Initialize our scheduler
   RTOS::init();
-  Bootloader::init();
+  // XXX: Never for factory!  Bootloader::init();
 
   // Initialize the SoftDevice handler module.
   Bluetooth::init();

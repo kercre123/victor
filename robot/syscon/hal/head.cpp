@@ -87,7 +87,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   // Shut it down (because reasons)
   NRF_UART0->TASKS_STOPRX = 1;
   NRF_UART0->TASKS_STOPTX = 1;
-    
+  
   uart_mode = mode;
   txRxIndex = 0;
 
@@ -141,11 +141,13 @@ static inline void transmitByte() {
 
 void Head::manage(void* userdata) {
   if (*FIXTURE_HOOK == 0xDEADFACE) {
+    NRF_UART0->PSELRXD = 0xFFFFFFFF;
     nrf_gpio_pin_set(PIN_TX_VEXT);
     nrf_gpio_cfg_output(PIN_TX_VEXT);
     MicroWait(15);
+    uart_mode = TRANSMIT_UNKNOWN;
     setTransmitMode(TRANSMIT_CHARGER_RX);
-    
+    RTOS::kick(WDOG_UART);    // XXX: Belongs in testmode code?
     return ;
   }
 
@@ -214,16 +216,7 @@ void UART0_IRQHandler()
           using namespace Anki::Cozmo;
           uint8_t test = fixture_data & 0xff;
           uint8_t param = (fixture_data>>8) & 0xff;
-          // Tests with high-bit set are handled locally, else routed up to Espressif
-          if (test & 0x80) {
-            TestFixtures::dispatch(test, param);
-          } else {
-            RobotInterface::EnterFactoryTestMode msg;
-            msg.mode = test;
-            msg.param = param;
-            RobotInterface::SendMessage(msg);
-          }
-
+          TestFixtures::dispatch(test, param);
           fixture_data = 0;
         }
 
