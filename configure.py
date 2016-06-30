@@ -171,7 +171,7 @@ def parse_game_arguments():
     platforms = ['mac', 'ios', 'android']
     # TODO: add support for v8a and x86
     # NOTE: Both mac + ios here.
-    default_platforms = ['mac', 'ios']
+    default_platforms = ['mac', 'ios', 'android']
     parser.add_platform_arguments(platforms, default_platforms)
 
     add_unity_arguments(parser)

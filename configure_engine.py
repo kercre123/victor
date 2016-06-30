@@ -295,10 +295,10 @@ def parse_engine_arguments():
 #################################
 
 def install_dependencies(options):
-    options.deps = ['ninja', 'python3']
+    options.deps = ['ninja', 'python3', 'android-ndk-r10e', 'android-sdk']
     if options.deps:
         print_status('Checking dependencies...')
-        installer = ankibuild.installBuildDeps.DependencyInstaller(options);
+        installer = ankibuild.installBuildDeps.DependencyInstaller(options)
         if not installer.install():
             sys.exit("Failed to verify build tool dependencies")
 
