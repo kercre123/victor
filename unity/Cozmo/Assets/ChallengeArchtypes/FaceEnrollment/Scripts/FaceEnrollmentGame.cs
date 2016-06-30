@@ -47,11 +47,17 @@ namespace FaceEnrollment {
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.InitializeView(newView, data);
       ShowFaceListSlide(newView);
+    }
+
+    private void HandleOnBackFinished(Anki.Cozmo.ExternalInterface.RobotOnBackFinished message) {
+      // make cozmo look up after response to back
+      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
     }
 
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
@@ -196,6 +202,7 @@ namespace FaceEnrollment {
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
     }
 
   }
