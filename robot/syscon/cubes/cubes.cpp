@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "tests.h"
 #include "nrf.h"
 #include "nrf51_bitfields.h"
 #include "nrf_gpio.h"
@@ -12,8 +11,8 @@
   
 #include "protocol.h"
 #include "hardware.h"
-#include "radio.h"
 #include "timer.h"
+#include "cubes.h"
 #include "head.h"
 #include "lights.h"
 #include "messages.h"
@@ -32,9 +31,6 @@ using namespace Anki::Cozmo;
 static void EnterState(RadioState state);
 
 // Global head / body sync values
-extern GlobalDataToHead g_dataToHead;
-extern GlobalDataToBody g_dataToBody;
-
 extern uesb_mainstate_t  m_uesb_mainstate;
 
 // This is our internal copy of the cube firmware update
@@ -45,8 +41,7 @@ extern "C" const CubeFirmware CUBE_UPDATE;
 static const int CubeFirmwareBlocks = (CUBE_FIRMWARE_LENGTH+15) / 16 - 1;
 static const int wifiChannel = 1;
 
-static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
-static int next_resume  = next_prepare + SILENCE_PERIOD;
+static int ota_ack_timeout;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -63,8 +58,6 @@ static const uesb_address_desc_t NoiseAddress = {
 // These are variables used for handling OTA
 static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
 static int ota_block_index;
-static RTOS_Task *ota_task;
-static void ota_ack_timeout(void* userdata);
 static int ack_timeouts;
 static int lightGamma;
 
@@ -78,7 +71,6 @@ static RadioState        radioState;
 static uint8_t _tapTime = 0;
 
 void Radio::init() {
-  ota_task = RTOS::create(ota_ack_timeout, false);
   lightGamma = 0x100;
 }
 
@@ -87,8 +79,8 @@ void Radio::advertise(void) {
     RADIO_MODE_MODE_Nrf_1Mbit,
     UESB_CRC_16BIT,
     RADIO_TXPOWER_TXPOWER_0dBm,
-    4,    // Address length
-    RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
+    4,              // Address length
+    RADIO_PRIORITY  // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   // Clear our our states
@@ -96,13 +88,6 @@ void Radio::advertise(void) {
   currentAccessory = 0;
 
   uesb_init(&uesb_config);
-  
-  #ifdef NATHAN_CUBE_JUNK
-  assignProp(0, 0xca11ab1e);
-  assignProp(1, 0x6D093D09);
-  assignProp(2, 0x250B3D09);
-  assignProp(3, 0x31093D09);
-  #endif
 }
 
 void Radio::setLightGamma(uint8_t gamma) {
@@ -121,6 +106,20 @@ static int LocateAccessory(uint32_t id) {
 
   return -1;
 }
+
+#ifdef NATHAN_CUBE_JUNK
+static int AllocateAccessory(uint32_t id) {
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    if (accessories[i].allocated) continue ;
+    accessories[i].allocated = true;
+    accessories[i].id = id;
+    return i;
+  }
+  
+  return -1;
+}
+#endif
+
 
 static void EnterState(RadioState state) { 
   radioState = state;
@@ -155,10 +154,10 @@ static void ota_send_next_block() {
   memcpy(msg.block, CUBE_UPDATE.data[ota_block_index], sizeof(CubeFirmwareBlock));
   
   uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
-  RTOS::start(ota_task, OTA_ACK_TIMEOUT);
+  ota_ack_timeout = GetCounter() + OTA_ACK_TIMEOUT;
 }
 
-static void ota_ack_timeout(void* userdata) {
+static void ota_timeout() {
   // Give up, we didn't receive any acks soon enough
   if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {    
     // Disconnect cube if it has failed to connect
@@ -218,20 +217,6 @@ static void OTARemoteDevice(uint32_t id) {
   ota_send_next_block();
 }
 
-void Radio::sendTestPacket(void) {
-  const AdvertisePacket test_packet = {
-    0x0D0B3D09,
-    0xFF03,
-    0xE3FF,
-    0x04,
-    0xFF
-  };
-
-  static const uesb_address_desc_t test_address = { 81, 0xE7E7E7E7 };
-
-  uesb_write_tx_payload(&test_address, &test_packet, sizeof(test_packet));
-}
-
 void uesb_event_handler(uint32_t flags)
 {
   // Only respond to receive interrupts
@@ -244,9 +229,6 @@ void uesb_event_handler(uint32_t flags)
 
   switch (radioState) {
   case RADIO_OTA:
-    // Message acked, kill ota_task
-    RTOS::stop(ota_task);
-
     // Send noise and return to pairing
     if (++ota_block_index >= CubeFirmwareBlocks) {
       EnterState(RADIO_PAIRING);
@@ -264,6 +246,13 @@ void uesb_event_handler(uint32_t flags)
 
       // Attempt to locate existing accessory and repair
       int slot = LocateAccessory(advert.id);
+
+      #ifdef NATHAN_CUBE_JUNK
+      if (slot < 0 && rx_payload.rssi < 50 && rx_payload.rssi > -50) {
+        slot = AllocateAccessory(advert.id);
+      }
+      #endif
+      
       if (slot < 0) {     
         ObjectDiscovered msg;
         msg.device_type = advert.model;
@@ -334,9 +323,10 @@ void uesb_event_handler(uint32_t flags)
       if (ticks_to_next < SCHEDULE_PERIOD) {
         ticks_to_next += RADIO_TOTAL_PERIOD;
         acc->hopSkip = true;
+      } else {
+        acc->hopSkip = false;
       }
 
-      acc->hopSkip = false;
       acc->hopIndex = (random() & 0xF) + 0x12;
       acc->hopBlackout = (wifiChannel * 5) - 9;
       if (acc->hopBlackout < 0) {
@@ -435,7 +425,7 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   }
 }
 
-void Radio::prepare(void* userdata) {
+static void radio_prepare(void) {
   uesb_stop();
 
     // Transmit to accessories round-robin
@@ -470,14 +460,19 @@ void Radio::prepare(void* userdata) {
     static const int channel_order[] = { 3, 2, 1, 0 };
     int tx_index = 0;
     
+    #ifdef NATHAN_CUBE_JUNK
+    static uint8_t color = 0xFF;
+    lightGamma = 0x80;
+    #endif
+    
     for (int light = 0; light < NUM_PROP_LIGHTS; light++) {
-      uint8_t* rgbi = lightController.cube[currentAccessory][channel_order[light]].values;
+      uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[light]].values;
 
       for (int ch = 0; ch < 3; ch++) {
         #ifndef NATHAN_CUBE_JUNK
-        tx_state.ledStatus[tx_index++] = (rgbi[ch] * (lightGamma + 1)) >> 8;
+        tx_state.ledStatus[tx_index++] = (rgbi[ch] * lightGamma) >> 8;
         #else
-        tx_state.ledStatus[tx_index++] = 0x80;
+        tx_state.ledStatus[tx_index++] = (color * lightGamma) >> 8;
         #endif
       }
     }
@@ -518,31 +513,37 @@ void Radio::prepare(void* userdata) {
   }
 }
 
-void Radio::resume(void* userdata) {
+static void radio_resume(void) {
   // Reenable the radio
   uesb_start();
 }
 
 void Radio::manage(void) {
-  // We are in OTA mode which is free running
-  if (radioState == RADIO_OTA) {
-    return ;
-  }
-
   // We are in bluetooth mode, do not do this
   if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
     return ;
   }
-
+  
+  static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
+  static int next_resume  = next_prepare + SILENCE_PERIOD;
   int count = GetCounter();
+
+  // We are in OTA mode which is free running (timeout logic)
+  if (radioState == RADIO_OTA) {
+    if (ota_ack_timeout - count < 0) {
+      ota_timeout();
+    }
     
+    return ;
+  }
+
   if (next_prepare - count < 0) {
-    prepare(NULL);
+    radio_prepare();
     next_prepare += SCHEDULE_PERIOD;
   }
   
   if (next_resume - count < 0) {
-    resume(NULL);
+    radio_resume();
     next_resume += SCHEDULE_PERIOD;
   }
 }

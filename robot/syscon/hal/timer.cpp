@@ -3,19 +3,13 @@
 
 #include "hardware.h"
 #include "backpack.h"
-#include "rtos.h"
-#include "radio.h"
+#include "cubes.h"
 
+// This is the IRQ handler for various power modes
 static void (*irq_handler)(void);
-static void LowPower_IRQHandler(void);
-static void HighPower_IRQHandler(void);
 
 void Timer::init()
 {
-  // Enabling constant latency as indicated by PAN 11 "HFCLK: Base current with HFCLK 
-  // running is too high" found at Product Anomaly document found at
-  // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
-  
   // This setting will ensure correct behaviour when routing TIMER events through 
   // PPI and low power mode simultaneously.
   NRF_POWER->TASKS_CONSTLAT = 1;
@@ -35,9 +29,13 @@ void Timer::init()
   NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
   NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
 
-  irq_handler = HighPower_IRQHandler;
+  lowPowerMode(true);
   NVIC_SetPriority(RTC1_IRQn, TIMER_PRIORITY);
   NVIC_EnableIRQ(RTC1_IRQn);
+
+  // Configure lower-priority realtime trigger
+  NVIC_EnableIRQ(SWI0_IRQn);
+  NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
 }
 
 void Timer::start(void) {
@@ -70,10 +68,10 @@ void Timer::lowPowerMode(bool lowPower) {
   NRF_RTC1->TASKS_STOP = 1;
 
   if (lowPower) {
-    irq_handler = LowPower_IRQHandler;
+    irq_handler = Backpack::update;
     NRF_RTC1->PRESCALER = 0;
   } else {
-    irq_handler = HighPower_IRQHandler;
+    irq_handler = Radio::manage;
     NRF_RTC1->PRESCALER = 0;
   }
 
@@ -86,14 +84,5 @@ extern "C" void RTC1_IRQHandler() {
 
   NRF_RTC1->EVENTS_TICK = 0;
   irq_handler();
-}
-
-void LowPower_IRQHandler(void) {
-  Backpack::update();
-  RTOS::manage();
-}
-
-void HighPower_IRQHandler(void) {
-  Radio::manage();
-  RTOS::manage();
+  NVIC_SetPendingIRQ(SWI0_IRQn);
 }

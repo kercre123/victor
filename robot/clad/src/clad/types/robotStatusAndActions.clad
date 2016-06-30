@@ -66,7 +66,7 @@ structure RobotPose
   float_32 angle,
   float_32 pitch_angle,
 }
- 
+
 structure RobotState
 {
   uint_32 timestamp,
@@ -89,9 +89,10 @@ structure RobotState
 structure PowerState {
   int_32 VBatFixed,
   int_32 VExtFixed,
+  int_32 BodyTemp,
   uint_8 batteryLevel,
   bool   onCharger,
-  bool   isCharging,
+  bool   isCharging
 }
 
 namespace RobotInterface {

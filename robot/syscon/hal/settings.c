@@ -6,9 +6,9 @@
 
 #include "ble_advdata.h"
 #include "ble_hci.h"
-#include "ble_conn_params.h"
+#include "conn_params.h"
 #include "ble_stack_handler_types.h"
-#include "rtos.h"
+#include "timer.h"
 
 #include "anki/cozmo/robot/version.h"
 
@@ -23,7 +23,7 @@ const uint16_t COZMO_UUID_SERVICE           = 0xbeef;
 const uint16_t COZMO_UUID_RECEIVE_CHAR      = 0xbee1;
 const uint16_t COZMO_UUID_TRANSMIT_CHAR     = 0xbee0;
 
-const uint16_t MFG_DATA_ID                  = 0xefbe;
+#define MFG_DATA_ID 0xefbe
 
 // Gap connection parameters
 const ble_gap_conn_params_t gap_conn_params = {
@@ -64,7 +64,7 @@ const ble_gap_sec_params_t m_sec_params = {
   .max_key_size = 16
 };
 
-const uint8_t* DEVICE_NAME = "Cozmo";
+const uint8_t DEVICE_NAME[] = "Cozmo";
 const int DEVICE_NAME_LENGTH = 5;
 
 // Advertising settings

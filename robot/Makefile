@@ -73,7 +73,7 @@ export_key:
 	build/calcMont >> ./generated/publickeys.h
 
 crypto_files = ../crypto/bignum.cpp
-sign_test_files = ./robot-test/signtest.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp 
+sign_test_files = ./robot-test/signtest.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp
 diffie_test_files = ./robot-test/diffietest.cpp ../crypto/sha1.cpp
 
 tests: export_key $(sign_test_files)
@@ -115,7 +115,7 @@ vesp:
 esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
 	make $@ -C clad -j4
 	make -C espressif lib/libmain_w.a
-	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld FACTORY_FIRMWARE=0
+	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld FACTORY_FIRMWARE=0
 	python3 ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
 	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
 
@@ -123,7 +123,7 @@ esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	make -C espressif clean
 	cd espressif_bootloader; ./build.sh; cd ..
 	make esp -C clad -j4
-	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_factory.ld FACTORY_FIRMWARE=1
+	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_factory.ld FACTORY_FIRMWARE=1
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.factory.bin
 	python3 ./tools/sign.py --prepend_size_word --rtip ./binaries/robot.axf --body ./binaries/syscon.axf ./staging/factory.safe
 	make -C espressif clean
@@ -133,7 +133,7 @@ esp_factory_installer:
 
 esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
-  
+
 onBuildServer: esp
 
 clean:

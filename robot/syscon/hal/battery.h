@@ -4,12 +4,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 namespace Battery {
   // Initialize the charge pins and sensing
   void init();
 
+  void setOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
+  void updateOperatingMode();
+
   // Update the state of the battery
   void setHeadlight(bool status);
+  void manage(void);
   uint8_t getLevel(void);
   
   // Turn on power to the head

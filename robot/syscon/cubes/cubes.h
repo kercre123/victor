@@ -4,9 +4,9 @@
 #define RADIO_H
 
 #include "protocol.h"
-#include "rtos.h"
 #include "micro_esb.h"
 #include "clad/types/ledTypes.h"
+#include "timer.h"
 
 static const int NUM_PROP_LIGHTS = 4;
 
@@ -57,14 +57,10 @@ namespace Radio {
   void advertise();
   void shutdown();
 
-  void sendTestPacket(void) ;
-  void discover();
   void setPropLights(unsigned int slot, const Anki::Cozmo::LightState *state);
   void assignProp(unsigned int slot, uint32_t accessory);
   void setLightGamma(uint8_t gamma);
   
-  void prepare(void* userdata);
-  void resume(void* userdata);
   void manage();
 }
 

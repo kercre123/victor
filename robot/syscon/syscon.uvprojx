@@ -398,11 +398,6 @@
               <FilePath>.\hal\motors.cpp</FilePath>
             </File>
             <File>
-              <FileName>rtos.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\rtos.cpp</FilePath>
-            </File>
-            <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\timer.cpp</FilePath>
@@ -418,24 +413,24 @@
               <FilePath>.\hal\backpack.cpp</FilePath>
             </File>
             <File>
-              <FileName>tests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\tests.cpp</FilePath>
-            </File>
-            <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\lights.cpp</FilePath>
             </File>
             <File>
-              <FileName>messages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\messages.cpp</FilePath>
-            </File>
-            <File>
               <FileName>storage.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\storage.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>temp.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\temp.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>watchdog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\watchdog.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -463,19 +458,9 @@
               <FilePath>.\hal\bluetooth.cpp</FilePath>
             </File>
             <File>
-              <FileName>app_timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\app_timer.cpp</FilePath>
-            </File>
-            <File>
               <FileName>ble_advdata.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\components\ble\common\ble_advdata.c</FilePath>
-            </File>
-            <File>
-              <FileName>ble_conn_params.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\components\ble\common\ble_conn_params.c</FilePath>
             </File>
             <File>
               <FileName>settings.c</FileName>
@@ -483,15 +468,20 @@
               <FilePath>.\hal\settings.c</FilePath>
             </File>
             <File>
-              <FileName>ble_dtm.c</FileName>
+              <FileName>conn_params.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\components\ble\ble_dtm\ble_dtm.c</FilePath>
+              <FilePath>.\hal\conn_params.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>clad</GroupName>
           <Files>
+            <File>
+              <FileName>messages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\messages.cpp</FilePath>
+            </File>
             <File>
               <FileName>clad.cpp</FileName>
               <FileType>8</FileType>
@@ -553,29 +543,9 @@
               <FilePath>.\cubes\micro_esb.cpp</FilePath>
             </File>
             <File>
-              <FileName>radio.cpp</FileName>
+              <FileName>cubes.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\cubes\radio.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dtm.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\dtm.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>bootloader</GroupName>
-          <Files>
-            <File>
-              <FileName>bootloader.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bootloader.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bootbin.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\hal\bootbin.s</FilePath>
+              <FilePath>.\cubes\cubes.cpp</FilePath>
             </File>
           </Files>
         </Group>

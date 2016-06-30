@@ -3,11 +3,10 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
-#include "rtos.h"
 #include "timer.h"
 #include "lights.h"
 #include "backpack.h"
-#include "radio.h"
+#include "cubes.h"
 
 ControllerLights lightController;
 
@@ -47,30 +46,18 @@ static const uint16_t DivTable[] = {
 };
 
 static inline void AlphaBlend(
-  uint8_t* color, 
-  const uint16_t onColor, const uint16_t offColor, 
+  LightSet& color, 
+  const LightSet on, const LightSet off, 
   const uint16_t phase, const int frames)
 {
   const int coff = phase * DivTable[frames];
   const uint8_t alpha = coff >> 8;
   const uint8_t invAlpha = ~alpha;
 
-  const uint8_t onRed  = UNPACK_RED(onColor);
-  const uint8_t onGrn  = UNPACK_GREEN(onColor);
-  const uint8_t onBlu  = UNPACK_BLUE(onColor);
-  const uint8_t offRed = UNPACK_RED(offColor);
-  const uint8_t offGrn = UNPACK_GREEN(offColor);
-  const uint8_t offBlu = UNPACK_BLUE(offColor);
-
-  color[0] = (onRed * alpha + offRed * invAlpha) >> 8;
-  color[1] = (onGrn * alpha + offGrn * invAlpha) >> 8;
-  color[2] = (onBlu * alpha + offBlu * invAlpha) >> 8;
-  color[3] = UNPACK_IR(alpha >= 0x80 ? onColor : offColor);
-}
-
-static inline void UnpackColor(uint8_t* rgbi, uint16_t newColor) {
-  uint8_t colors[] = { UNPACK_COLORS(newColor) };
-  memcpy(rgbi, colors, sizeof(colors));
+  color.red = (on.red * alpha + off.red * invAlpha) >> 8;
+  color.green = (on.green * alpha + off.green * invAlpha) >> 8;
+  color.blue = (on.blue * alpha + off.blue * invAlpha) >> 8;
+  color.ir = (alpha >= 0x80) ? on.ir : off.ir;
 }
 
 static inline bool transition(const int time, int& phase, LightMode& mode, const LightMode next, const uint8_t frames) {
@@ -85,8 +72,6 @@ static inline bool transition(const int time, int& phase, LightMode& mode, const
 
 static void CalculateLEDColor(LightValues& light, const uint32_t time)
 { 
-  const LightState& state = light.state;
-  
   int delta = time - light.clock;
   light.clock = time;
 
@@ -96,24 +81,24 @@ static void CalculateLEDColor(LightValues& light, const uint32_t time)
     
   switch (light.mode) {
     case TRANSITION_UP:
-      AlphaBlend(light.values, state.onColor, state.offColor, light.phase, state.transitionOnFrames);
+      AlphaBlend(light.values, light.onColor, light.offColor, light.phase, light.transitionOnFrames);
       
-      if (transition(delta, light.phase, light.mode, HOLD_ON, state.transitionOnFrames)) {
-        UnpackColor(light.values, state.onColor);
+      if (transition(delta, light.phase, light.mode, HOLD_ON, light.transitionOnFrames)) {
+        memcpy(&light.values, &light.onColor, sizeof(LightSet));
       }
       break ;
     case HOLD_ON:
-      transition(delta, light.phase, light.mode, TRANSITION_DOWN, state.onFrames);
+      transition(delta, light.phase, light.mode, TRANSITION_DOWN, light.onFrames);
       break ;
     case TRANSITION_DOWN:
-      AlphaBlend(light.values, state.offColor, state.onColor, light.phase, state.transitionOffFrames);
+      AlphaBlend(light.values, light.offColor, light.onColor, light.phase, light.transitionOffFrames);
       
-      if (transition(delta, light.phase, light.mode, HOLD_OFF, state.transitionOffFrames)) {
-        UnpackColor(light.values, state.offColor);
+      if (transition(delta, light.phase, light.mode, HOLD_OFF, light.transitionOffFrames)) {
+        memcpy(&light.values, &light.offColor, sizeof(LightSet));
       }
       break ;
     case HOLD_OFF:
-      transition(delta, light.phase, light.mode, TRANSITION_UP, state.offFrames);
+      transition(delta, light.phase, light.mode, TRANSITION_UP, light.offFrames);
       break ;
     default:
       return ;
@@ -140,12 +125,21 @@ void Lights::manage() {
 }
 
 void Lights::update(LightValues& light, const LightState* params) {
-  memcpy(&light.state, params, sizeof(LightState));
-
+  // Convert from 5bpp to 16bpp
+  LightSet onColor = { UNPACK_COLORS(params->onColor) };
+  LightSet offColor = { UNPACK_COLORS(params->offColor) };
+  
+  memcpy(&light.onColor, &onColor, sizeof(LightSet));
+  memcpy(&light.offColor, &offColor, sizeof(LightSet));
+  light.onFrames = params->onFrames;
+  light.offFrames = params->offFrames;
+  light.transitionOnFrames = params->transitionOnFrames;
+  light.transitionOffFrames = params->transitionOffFrames;
+  
   // If this is a constant light
   if (params->onFrames == 255 || (params->onColor == params->offColor)) {
     light.mode = HOLD_VALUE;   
-    UnpackColor(light.values, params->onColor);
+    memcpy(&light.values, &light.onColor, sizeof(LightSet));
   } else {
     light.mode = TRANSITION_UP;
     light.phase = 0;

@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "rtos.h"
 #include "bluetooth.h"
 #include "crypto.h"
 #include "messages.h"
@@ -23,18 +22,17 @@
 // Softdevice settings
 static const nrf_clock_lfclksrc_t m_clock_source = NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM;
 static bool  m_sd_enabled;
-static const int TRANSMISSION_RATE = CYCLES_MS(5.0);
 
 // Service settings
 uint16_t                    Bluetooth::service_handle;
 ble_gatts_char_handles_t    Bluetooth::receive_handles;
 ble_gatts_char_handles_t    Bluetooth::transmit_handles;
-static RTOS_Task            *task;
 
 // Current connection state settings
 uint16_t                    Bluetooth::conn_handle;
-static uint8_t              m_nonce[member_size(Anki::Cozmo::BLE_SendHello, nonce)];
+static uint8_t              m_nonce[member_size(Anki::Cozmo::HelloPhone, nonce)];
 static bool                 m_authenticated;
+static bool                 m_task_enabled;
 
 static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
 static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
@@ -88,7 +86,7 @@ static void permissions_error(BLEError error) {
   sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 }
 
-void Bluetooth::authChallenge(const Anki::Cozmo::BLE_RecvHello& msg) {
+void Bluetooth::authChallenge(const Anki::Cozmo::HelloRobot& msg) {
   for (int i = 0; i < sizeof(m_nonce); i++) {
     if (msg.nonce[i] != m_nonce[i]) {
       permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
@@ -103,7 +101,7 @@ static void dh_complete(const void*, int) {
   using namespace Anki::Cozmo;
   
   // Transmit our encryped key
-  BLE_EncodedKey msg;
+  EncodedAESKey msg;
   memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
   memcpy(msg.encoded_key, dh_state.encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
@@ -117,7 +115,7 @@ static void dh_complete(const void*, int) {
   RobotInterface::SendMessage(dn);
 }
 
-void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {  
+void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
   using namespace Anki::Cozmo;
   
   // Copy in our secret code, and run
@@ -144,8 +142,8 @@ static bool message_encrypted(uint8_t op) {
   
   // These are the only messages that may be sent unencrypted over the wire
   switch (op) {
-    case EngineToRobot::Tag_bleEnterPairing:
-    case EngineToRobot::Tag_bleEncodedKey:
+    case EngineToRobot::Tag_enterPairing:
+    case EngineToRobot::Tag_encodedAESKey:
       return false;
   }
 
@@ -157,10 +155,10 @@ static bool message_authenticated(uint8_t op) {
 
   // These are the only messages that may be used unauthenticated
   switch (op) {
-    case EngineToRobot::Tag_bleEnterPairing:
-    case EngineToRobot::Tag_bleEncodedKey:
-    case EngineToRobot::Tag_bleRecvHelloMessage:
-    case EngineToRobot::Tag_bleSendHelloMessage:
+    case EngineToRobot::Tag_enterPairing:
+    case EngineToRobot::Tag_encodedAESKey:
+    case EngineToRobot::Tag_helloRobotMessage:
+    case EngineToRobot::Tag_helloPhoneMessage:
       return false;
   }
 
@@ -243,14 +241,20 @@ static void frame_receive(CozmoFrame& receive)
 static void send_welcome_message(const void*, int) {  
   using namespace Anki::Cozmo;
   
-  BLE_SendHello msg; 
+  HelloPhone msg; 
   memcpy(msg.signature, HELLO_SIGNATURE, sizeof(m_nonce));
   memcpy(msg.nonce, m_nonce, sizeof(m_nonce));
 
   RobotInterface::SendMessage(msg);
 }
 
-static void manage_ble(void*) {
+void Bluetooth::manage() {
+  ble_app_timer_manage();
+
+  if (!m_task_enabled) {
+    return ;
+  }
+
   // Manage outbound transmissions
   if (tx_pending) {
     // Calculate the length of the message we are trying to send
@@ -363,7 +367,7 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       t.callback = send_welcome_message;
       Crypto::execute(&t);
 
-      RTOS::start(task, TRANSMISSION_RATE);
+      m_task_enabled = true;
 
       using namespace Anki::Cozmo;
       // Disable test mode when we someone connects
@@ -375,7 +379,7 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
 
     case BLE_GAP_EVT_DISCONNECTED:
       Bluetooth::conn_handle = BLE_CONN_HANDLE_INVALID;
-      RTOS::stop(task);
+      m_task_enabled = false;
 
       // Resume advertising
       err_code = sd_ble_gap_adv_start(&adv_params);
@@ -552,15 +556,15 @@ uint32_t Bluetooth::init() {
   // Initialize SoftDevice.
   err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
   APP_ERROR_CHECK(err_code);
-
-  // Immediately disable (we only want it to bootstrap itself)
-  sd_softdevice_disable();
-  m_sd_enabled = false;
-
-  task = RTOS::create(manage_ble);
+  m_sd_enabled = true;
+  m_task_enabled = false;
 
   // Enable BLE event interrupt (interrupt priority has already been set by the stack).
   return sd_nvic_EnableIRQ(SWI2_IRQn);
+}
+
+bool Bluetooth::enabled(void) {
+  return m_sd_enabled;
 }
 
 void Bluetooth::advertise(void) {
@@ -593,8 +597,7 @@ void Bluetooth::advertise(void) {
   ble_gap_conn_sec_mode_t sec_mode;
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 
-
-  // THIS IS TEMPORARY
+  // Setup advertisment settings
   err_code = sd_ble_gap_device_name_set(&sec_mode, DEVICE_NAME, DEVICE_NAME_LENGTH);
   APP_ERROR_CHECK(err_code);
 
@@ -648,7 +651,8 @@ void Bluetooth::advertise(void) {
 void Bluetooth::shutdown(void) {
   if (!m_sd_enabled) { return ; }
 
-  RTOS::stop(task);
+  m_task_enabled = false;
+  
   sd_softdevice_disable();
   m_sd_enabled = false;
 }

@@ -21,6 +21,7 @@ namespace Backpack {
   void init();
   void update(void);
   void manage();
+  void flash();
   void setLights(const LightState* lights);
   void lightsOff();
   void lightMode(LightDriverMode mode);
