@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "clad/audio/messageAudioClient.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <utility>
 

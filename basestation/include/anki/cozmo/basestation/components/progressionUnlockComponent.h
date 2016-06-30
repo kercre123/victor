@@ -16,7 +16,7 @@
 #include "clad/types/unlockTypes.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <set>
 #include <vector>

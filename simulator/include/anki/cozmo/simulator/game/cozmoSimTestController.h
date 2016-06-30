@@ -19,7 +19,7 @@ namespace Cozmo {
 // Registration of test controller derived from CozmoSimTestController
 #define REGISTER_COZMO_SIM_TEST_CLASS(CLASS) static CozmoSimTestRegistrar<CLASS> registrar(#CLASS);
   
-  
+
 ////////// Macros for condition checking and exiting ////////
   
 // For local testing, set to 1 so that Webots doesn't exit

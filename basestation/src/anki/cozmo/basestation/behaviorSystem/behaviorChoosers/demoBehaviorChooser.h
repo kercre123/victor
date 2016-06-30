@@ -17,7 +17,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "json/json-forwards.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {

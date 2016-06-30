@@ -18,7 +18,7 @@
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <list>
 #include <map>
 

@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 
 

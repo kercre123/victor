@@ -16,7 +16,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <list>
 #include <set>
