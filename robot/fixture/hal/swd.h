@@ -13,6 +13,6 @@ void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end);
 void SWDDeinit(void);
 
 // Send a file to the stub, one block at a time
-void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial);
+void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial, bool quickcheck = false);
 
 #endif

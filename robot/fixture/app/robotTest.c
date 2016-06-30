@@ -26,61 +26,8 @@ bool RobotDetect(void)
   return MonitorGetCurrent() > 2000;
 }
 
-void SendTestChar(int c)
-{
-  u32 start = getMicroCounter();
-  
-  // Receive mode - TX low is floating
-  PIN_RESET(GPIOC, PINC_CHGTX);
-  PIN_OUT(GPIOC, PINC_CHGTX);
-  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
-  PIN_IN(GPIOC, PINC_CHGRX);
+void SendTestChar(int c);
 
-  // Wait for RX to go low/be low
-  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
-    if (getMicroCounter()-start > 1000000)
-      throw ERROR_NO_PULSE;
-    
-  // Now wait for it to go high
-  MicroWait(1000);    // Avoid false detects due to slow discharge
-  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
-    if (getMicroCounter()-start > 1000000)
-      throw ERROR_NO_PULSE;
-  
-  // If nothing to send, just return
-  if (c < 0)
-    return;
-    
-  // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
-  PIN_SET(GPIOC, PINC_CHGTX);
-  PIN_OUT(GPIOC, PINC_CHGTX);
-  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
-  PIN_RESET(GPIOC, PINC_CHGRX);
-  PIN_OUT(GPIOC, PINC_CHGRX);
-  
-  MicroWait(30);  // Enough time for robot to turn around
-  
-  // Bit bang the UART, since it's miswired on EP3
-  u32 now, last = getMicroCounter();
-  c <<= 1;      // Start bit
-  c |= (3<<9);  // Stop bits
-  for (int i = 0; i < 11; i++)
-  {
-    while ((u32)((now = getMicroCounter())-last) < 10)
-      ;
-    last = now;
-    if (c & (1<<i))
-      PIN_SET(GPIOC, PINC_CHGTX);
-    else
-      PIN_RESET(GPIOC, PINC_CHGTX);      
-  }
-  
-  // Receive mode - TX low is floating
-  PIN_RESET(GPIOC, PINC_CHGTX);
-  PIN_OUT(GPIOC, PINC_CHGTX);
-  PIN_PULL_UP(GPIOC, PINC_CHGRX);
-  PIN_IN(GPIOC, PINC_CHGRX);
-}
 void SendTestMode(int test)
 {
   for (int i = 0; i < 200; i++)

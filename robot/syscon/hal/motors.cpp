@@ -436,7 +436,8 @@ void Motors::manage(void* userdata)
     // Copy (valid) data to update motors
     for (int i = 0; i < MOTOR_COUNT; i++)
     {
-      Motors::setPower(i, 0);
+      if (*FIXTURE_HOOK != 0xDEADFACE)    // Fixture needs motors without head
+        Motors::setPower(i, 0);
     }
   }
 

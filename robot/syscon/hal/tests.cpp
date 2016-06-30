@@ -23,36 +23,63 @@ using namespace Anki::Cozmo;
 // Do a blocking send of a single byte out the testport, with all the horror that implies
 static void SendByte(int c)
 {
-  // The power system goes batshit while transmitting, so go as quick as we can
-  NRF_UART0->PSELTXD = PIN_TX_VEXT;
-  MicroWait(4);   // Enough time for a start bit
   NRF_UART0->TXD = c;
   while (NRF_UART0->EVENTS_TXDRDY != 1)
     ;
   NRF_UART0->EVENTS_TXDRDY = 0;
-  NRF_UART0->PSELTXD = 0xFFFFFFFF; // PIN_TX_VEXT;
+
 }
 
 // Send a complete packet of result data back to test fixture
-static void SendDown(int len, uint8_t* result)
+// You can't send more than 16 bytes due to bandwidth limitations
+void SendDown(int len, uint8_t* result)
 {
   NVIC_DisableIRQ(UART0_IRQn);
   NRF_UART0->PSELTXD = 0xFFFFFFFF;
   NRF_UART0->PSELRXD = 0xFFFFFFFF;
-  NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_tx);
+  NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
   NRF_UART0->TASKS_STARTTX = 1;
-  SendByte(0xBE);   // In honor of Palatucci
+  
+  // Extra delay for fixture turnaround/to ensure start-bit is found
+  nrf_gpio_pin_clear(PIN_TX_VEXT);
+  nrf_gpio_cfg_output(PIN_TX_VEXT);
+  MicroWait(150);
+  
+  // The power system goes batshit while transmitting, so go as quick as we can
+  NRF_UART0->PSELTXD = PIN_TX_VEXT;
+  MicroWait(12);   // Enough time for a start bit transition
+  
+  SendByte(~0xBE);   // In honor of Palatucci
   SendByte(len);
-  while (len--)
+  while (len--) {
     SendByte(*result++);
-  SendByte(0xEF);
+    SendByte(0);    // Keep robot alive with breaths of air
+  }
+  SendByte(~0xEF);
+  
+  MicroWait(12);   // Enough time for a stop bit
+  NRF_UART0->PSELTXD = 0xFFFFFFFF; // PIN_TX_VEXT;
   NVIC_EnableIRQ(UART0_IRQn);
 }
+
+extern GlobalDataToHead g_dataToHead;
+extern GlobalDataToBody g_dataToBody;
 
 // Tests dispatched by fixture
 // These generally disrupt correct RTOS/robot operation and leave things in a variety of bad states
 void TestFixtures::dispatch(uint8_t test, uint8_t param)
 {
+  // Test modes from 0..127 are routed up to Espressif
+  if (test < 64) {
+    RobotInterface::EnterFactoryTestMode msg;
+    msg.mode = test;
+    msg.param = param;
+    RobotInterface::SendMessage(msg);
+    SendDown(0, NULL);    // Send OK message
+    return;
+  }
+  
+  // Tests from 128..255 are handled in body
   switch (test)
   {
     case TEST_POWERON:
@@ -71,30 +98,31 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     // Get version and ESN information
     case TEST_GETVER:
-      //0x1F000
+    {
+      SendDown(8, (u8*)0x1F010);    // Bootloader/fixture version
       return;   // Already replied
+    }
     
-    // XXX: This test needs a timeout - the test fixture system needs a timeout
+    // XXX: This test needs a timeout (the whole test fixture mode needs a timeout)
     case TEST_RUNMOTOR:
+    {
+      for (int i = 0; i < 4; i++)
+        Motors::setPower(i, 0);
       int motor = param & 3;              // Motor number in LSBs
-      int power = (s8)(param & ~3) << 8;  // Motor direction/power in MSBs (-124..124 for MAX power)
+      int power = ((s8)param & ~3) << 8;  // Motor direction/power in MSBs (-124..124 for MAX power)
       Motors::disable(false);
       Motors::setPower(motor, power);
       break;    // Reply "OK"
+    }
     
-    case TEST_STOPMOTOR:
-      for (int i = 0; i < 4; i++)
-        Motors::setPower(i, 0);
-      // XXX
+    case TEST_GETMOTOR:
+      SendDown(16, (u8*)g_dataToHead.positions);  // All 4 motor positions
       return;   // Already replied
   }
   
   // By default, send down an "OK" message
   SendDown(0, NULL);
 }
-
-extern GlobalDataToHead g_dataToHead;
-extern GlobalDataToBody g_dataToBody;
 
 #if defined(DO_MOTOR_TESTING)
 static void TestMotors(void* discard) {

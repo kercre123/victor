@@ -119,12 +119,19 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
 
       break ;
     case TRANSMIT_CHARGER_RX:
-      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
+      nrf_gpio_cfg_input(PIN_TX_VEXT, (*FIXTURE_HOOK == 0xDEADFACE) ? NRF_GPIO_PIN_NOPULL : NRF_GPIO_PIN_PULLUP);
 
+      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->PSELRXD = PIN_TX_VEXT;
-      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
-
+      NRF_UART0->EVENTS_RXDRDY = 0;
+      { volatile uint8_t data = NRF_UART0->RXD; }
+      
+      // This magic trick will reset start bit processing
+      NRF_UART0->ENABLE = 0;
+      NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
+      NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
+      
       NRF_UART0->TASKS_STARTRX = 1;
       break ;
 
@@ -144,8 +151,9 @@ void Head::manage(void* userdata) {
     NRF_UART0->PSELRXD = 0xFFFFFFFF;
     nrf_gpio_pin_set(PIN_TX_VEXT);
     nrf_gpio_cfg_output(PIN_TX_VEXT);
-    MicroWait(15);
+    MicroWait(5);
     uart_mode = TRANSMIT_UNKNOWN;
+    NVIC_EnableIRQ(UART0_IRQn);
     setTransmitMode(TRANSMIT_CHARGER_RX);
     RTOS::kick(WDOG_UART);    // XXX: Belongs in testmode code?
     return ;
@@ -164,6 +172,8 @@ void Head::manage(void* userdata) {
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
 }
+
+void SendDown(int len, uint8_t* result);
 
 extern "C"
 void UART0_IRQHandler()
@@ -211,6 +221,14 @@ void UART0_IRQHandler()
         static uint32_t fixture_data = 0;
         
         fixture_data = (fixture_data << 8) | data;
+      
+        // Acknowledge reception of character (for fixture robustness)
+        MicroWait(100);
+        nrf_gpio_pin_set(PIN_TX_VEXT);
+        nrf_gpio_cfg_output(PIN_TX_VEXT);
+        NRF_UART0->PSELRXD = 0xFFFFFFFF;
+        MicroWait(10);
+        nrf_gpio_pin_clear(PIN_TX_VEXT);
       
         if ((fixture_data & MASK) == PREFIX) {
           using namespace Anki::Cozmo;

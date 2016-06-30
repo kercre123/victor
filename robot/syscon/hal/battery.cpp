@@ -237,7 +237,10 @@ void manage_adc(void*)
           startADCsample(ANALOG_V_BAT_SENSE);
         } else {
           resultLedOff = NRF_ADC->RESULT;
-          startADCsample(ANALOG_V_EXT_SENSE);
+          if (*FIXTURE_HOOK == 0xDEADFACE)
+            startADCsample(ANALOG_V_BAT_SENSE);
+          else
+            startADCsample(ANALOG_V_EXT_SENSE);
 
         }
         

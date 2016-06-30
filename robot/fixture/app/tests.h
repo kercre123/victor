@@ -4,7 +4,8 @@
 #include "hal/portable.h"
 
 bool BodyDetect(void);
-TestFunction* GetBodyTestFunctions(void);
+TestFunction* GetBody1TestFunctions(void);
+TestFunction* GetBody3TestFunctions(void);
 
 bool CubeDetect(void);
 TestFunction* GetCubeTestFunctions(void);

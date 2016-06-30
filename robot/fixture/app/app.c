@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 37;
+u8 g_fixtureReleaseVersion = 40;
 const char* BUILD_INFO = "PILOT ONLY";
 
 BOOL g_isDevicePresent = 0;
@@ -225,6 +225,7 @@ void WaitForDeviceOff(void)
           g_isDevicePresent = 0;
       }
       
+      ConsoleUpdate();  // No need to freeze up the console while waiting
       DisplayUpdate();  // While we wait, let screen saver kick in
     }
   }
@@ -307,55 +308,6 @@ static BOOL IsDevicePresent(void)
   return FALSE;
 }
 
-// This function is meant to wake up a Device that is placed on a charger once it is detected
-#if 0
-BOOL ToggleContacts(void)
-{
-  TestEnable();
-  TestEnableTx();
-  MicroWait(100000);  // 100ms
-  TestEnableRx();
-  MicroWait(200000);  // 200ms
-  return TRUE;
-  
-  /* 
-   * The below needs to be redone for Cozmo
-   *
-  u32 i;
-  BOOL sawPowerOn = FALSE;
-  
-  PIN_OD(GPIOC, 10);
-  
-  const u32 maxCycles = 5000;
-  for (i = 0; i < maxCycles; i++)
-  {
-    PIN_SET(GPIOC, 10);
-    PIN_OUT(GPIOC, 10);
-    PIN_SET(GPIOC, 12);
-    MicroWait(10);
-    PIN_RESET(GPIOC, 12);
-    PIN_RESET(GPIOC, 10);
-    MicroWait(5);
-    PIN_IN(GPIOC, 10);
-    MicroWait(5);
-    if (GPIO_READ(GPIOC) & (1 << 10))
-    {
-      sawPowerOn = TRUE;
-      break;
-    }
-  }
-  
-  PIN_PULL_NONE(GPIOC, 10);
-  PIN_OUT(GPIOC, 10);
-  PIN_PP(GPIOC, 10);
-  PIN_RESET(GPIOC, 10);
-  PIN_SET(GPIOC, 12);
-  PIN_OUT(GPIOC, 12);
-  
-  return sawPowerOn;*/
-}
-#endif
-
 // Wake up the board and try to talk to it
 static BOOL TryToRunTests(void)
 {
@@ -384,8 +336,10 @@ static void MainExecution()
       break;    
     case FIXTURE_BODY1_TEST:
     case FIXTURE_BODY2_TEST:
+      m_functions = GetBody1TestFunctions();
+      break;
     case FIXTURE_BODY3_TEST:
-      m_functions = GetBodyTestFunctions();
+      m_functions = GetBody3TestFunctions();
       break;
     case FIXTURE_INFO_TEST:
       m_functions = GetInfoTestFunctions();
@@ -496,7 +450,7 @@ int main(void)
   SetFixtureText();
   
   SlowPutString("Initializing Test Port...\r\n");
-  //InitTestPort(0);
+  InitTestPort(0);
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();

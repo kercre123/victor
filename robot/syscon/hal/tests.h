@@ -10,9 +10,9 @@ enum {
   TEST_RADIOTX       = 0x81,
   TEST_KILLHEAD      = 0x82,
   TEST_GETVER        = 0x83,
-  TEST_RUNMOTOR      = 0x84,
-  TEST_STOPMOTOR     = 0x85,
+  TEST_GETMOTOR      = 0x85,
   TEST_DROP          = 0x86,
+  TEST_RUNMOTOR      = 0x87,
 };
 
 #if defined(DO_ENCODER_TESTING) || defined(DO_MOTOR_TESTING) || defined(DO_LIGHTS_TESTING)

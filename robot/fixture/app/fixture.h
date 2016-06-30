@@ -10,9 +10,9 @@
 
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
 
-#define FIXTURE_MOTOR1A_TEST  10    // ID 4 + 2  
-#define FIXTURE_MOTOR1B_TEST  3     // ID 2 + 1
+#define FIXTURE_MOTOR1A_TEST  10    // ID 4 + 2         MOTORxL = lift
 #define FIXTURE_MOTOR2A_TEST  11    // ID 4 + 2 + 1
+#define FIXTURE_MOTOR1B_TEST  3     // ID 2 + 1         MOTORxH = head
 #define FIXTURE_MOTOR2B_TEST  12    // ID 4 + 3
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
@@ -35,8 +35,8 @@
 #define FIXTURE_DEBUG          21    // Should be last ID
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID",  "BODY1",  "HEAD1",  "MOTOR1B","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
-                        "ROBOT",  "BODY2",  "MOTOR1A","MOTOR2A","MOTOR2B", "BODY3",  "INFO",  "PLAYPEN", \
+#define FIXTURE_TYPES { "NO ID",  "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
+                        "ROBOT",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
                         "FINISHC","FINISH1","FINISH2","FINISH3","FINISH",  \
                         "DEBUG" }
 
@@ -88,8 +88,15 @@ typedef enum
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
-// Robot test errors
+#define ERROR_MOTOR_LEFT            310   // General problem driving left motor
+#define ERROR_MOTOR_RIGHT           320   // General problem driving r motor
+
+// Body/finished robot testport errors
 #define ERROR_NO_PULSE              400   // Robot is not in debug/test mode
+#define ERROR_NO_PULSE_ACK          401   // Robot can't hear test fixture
+#define ERROR_TESTPORT_TIMEOUT      402   // Robot didn't reply to test fixture
+#define ERROR_TESTPORT_TMI          403   // Robot misunderstood request (too much info in reply)
+#define ERROR_TESTPORT_PADDING      404   // Test fixture can't hear robot
 
 // SWD errors - in head or body test, these are CPU failures
 // In finished good test, these are fixture (radio) failures
