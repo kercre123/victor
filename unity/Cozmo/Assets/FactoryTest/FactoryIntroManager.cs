@@ -90,7 +90,7 @@ public class FactoryIntroManager : MonoBehaviour {
     SetStatusText("Factory App Connected To Robot");
 
     HandleEnableNVStorageWrites(PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1);
-    HandleCheckPreviousResults(PlayerPrefs.GetInt("CheckPreviousResult", 1) == 1);
+    HandleCheckPreviousResults(PlayerPrefs.GetInt("CheckPreviousResult", 0) == 1);
     HandleWipeNVStorageAtStart(PlayerPrefs.GetInt("WipeNVStorageAtStart", 0) == 1);
     HandleSkipBlockPickup(PlayerPrefs.GetInt("SkipBlockPickup", 0) == 1);
 
