@@ -377,5 +377,13 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemAdded -= HandleItemValueChanged;
       StopCoroutine(BurstAfterInit());
     }
+
+    protected override void ConstructOpenAnimation(Sequence openAnimation) {
+      // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+    }
+
+    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+      // closeAnimation.Append(_AlphaController.DOFade(0, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+    }
   }
 }

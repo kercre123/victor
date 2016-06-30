@@ -17,6 +17,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &113518
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22432196}
+  - 225: {fileID: 22564084}
+  m_Layer: 5
+  m_Name: BackgroundParticles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &116632
 GameObject:
   m_ObjectHideFlags: 1
@@ -601,10 +617,12 @@ MonoBehaviour:
   _MiddleWidgetContainer: {fileID: 22483326}
   _OverlayWidgetContainer: {fileID: 22494750}
   _LockedBackgroundImage: {fileID: 11418214}
+  _BackgroundCanvasGroup: {fileID: 22564084}
   _BackgroundImage: {fileID: 11400688}
   _BackgroundGradient: {fileID: 11468898}
   _MiddleBackgroundImage: {fileID: 11444978}
   _OverlayBackgroundImage: {fileID: 11419702}
+  _FadeTweenDurationSeconds: 0.2
   _QuitGameButtonPrefab: {fileID: 11462868, guid: 5cfc3c18e14be4897ab6b17b0035f685,
     type: 2}
   _BackButtonPrefab: {fileID: 11411752, guid: 62b1176b20cd5466bb8ffd57337a9a8b, type: 2}
@@ -635,6 +653,7 @@ MonoBehaviour:
     type: 2}
   _ShowCozmoCubesSlidePrefab: {fileID: 146872, guid: 95d62b6d570b642638e6e63c769a1b62,
     type: 2}
+  _ChallengeEndViewPrefab: {fileID: 0}
   _ScoreWidgetPrefab: {fileID: 11470090, guid: b9e65c08e72f64c788a56c09874e1484, type: 2}
   _ScoreEnterAnimationXOffset: 600
   _CozmoScoreContainer: {fileID: 22442982}
@@ -3862,9 +3881,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 22466208}
-  - {fileID: 22434972}
-  - {fileID: 22482086}
-  - {fileID: 22456566}
+  - {fileID: 22432196}
   m_Father: {fileID: 22430574}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -3895,6 +3912,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22432196
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 113518}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 22434972}
+  - {fileID: 22482086}
+  - {fileID: 22456566}
+  m_Father: {fileID: 22430074}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22434972
 RectTransform:
   m_ObjectHideFlags: 1
@@ -3902,11 +3939,11 @@ RectTransform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 166644}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 100}
+  m_LocalPosition: {x: 0, y: 0, z: 100.00021}
   m_LocalScale: {x: 2.5, y: 2.5, z: 2.5}
   m_Children: []
-  m_Father: {fileID: 22430074}
-  m_RootOrder: 1
+  m_Father: {fileID: 22432196}
+  m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -3974,12 +4011,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22430074}
-  m_RootOrder: 3
+  m_Father: {fileID: 22432196}
+  m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 2632, y: 1435.8833}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22458074
 RectTransform:
@@ -4076,11 +4113,11 @@ RectTransform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 149420}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 100.000374}
+  m_LocalPosition: {x: 0, y: 0, z: 100.00021}
   m_LocalScale: {x: 2.5, y: 2.5, z: 2.5}
   m_Children: []
-  m_Father: {fileID: 22430074}
-  m_RootOrder: 2
+  m_Father: {fileID: 22432196}
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -4141,6 +4178,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &22564084
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 113518}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

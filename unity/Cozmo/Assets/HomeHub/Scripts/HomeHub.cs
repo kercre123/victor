@@ -292,15 +292,15 @@ namespace Cozmo.HomeHub {
         CompleteChallenge(_CurrentChallengePlaying, didWin);
         _CurrentChallengePlaying = null;
       }
-      UnloadMinigameAssetBundle();
       ShowHomeView();
+      UnloadMinigameAssetBundle();
     }
 
     private void HandleMiniGameQuit() {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
-      UnloadMinigameAssetBundle();
       ShowHomeView();
+      UnloadMinigameAssetBundle();
     }
 
     private void UnloadMinigameAssetBundle() {

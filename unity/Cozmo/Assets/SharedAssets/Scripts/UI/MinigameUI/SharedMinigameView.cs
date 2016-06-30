@@ -36,6 +36,9 @@ namespace Cozmo {
       private Sequence _LockedBackgroundTween;
 
       [SerializeField]
+      private CanvasGroup _BackgroundCanvasGroup;
+
+      [SerializeField]
       private Image _BackgroundImage;
 
       [SerializeField]
@@ -44,14 +47,17 @@ namespace Cozmo {
       [SerializeField]
       private Image _MiddleBackgroundImage;
 
-      private bool _IsShowingMiddle = true;
+      private bool _IsShowingMiddle = false;
       private Sequence _MiddleBackgroundTween;
 
       [SerializeField]
       private Image _OverlayBackgroundImage;
 
-      private bool _IsShowingOverlay = true;
+      private bool _IsShowingOverlay = false;
       private Sequence _OverlayBackgroundTween;
+
+      [SerializeField]
+      private float _FadeTweenDurationSeconds = 0.2f;
 
       #endregion
 
@@ -132,13 +138,13 @@ namespace Cozmo {
       private RectTransform _NarrowGameSlideContainer;
 
       [SerializeField]
-      private UnityEngine.UI.LayoutElement _InfoTitleLayoutElement;
+      private LayoutElement _InfoTitleLayoutElement;
 
       [SerializeField]
       private Anki.UI.AnkiTextLabel _InfoTitleTextLabel;
 
       [SerializeField]
-      private UnityEngine.UI.LayoutElement _InfoTextSlideLayoutElement;
+      private LayoutElement _InfoTextSlideLayoutElement;
 
       [SerializeField]
       private RectTransform _InfoTextGameSlideContainer;
@@ -256,6 +262,13 @@ namespace Cozmo {
             openAnimation.Join(open);
           }
         }
+        _BackgroundCanvasGroup.alpha = 0;
+        openAnimation.Join(_BackgroundCanvasGroup.DOFade(1, _FadeTweenDurationSeconds));
+
+        Color bgColor = _BackgroundImage.color;
+        bgColor.a = 0;
+        _BackgroundImage.color = bgColor;
+        openAnimation.Join(_BackgroundImage.DOFade(1, _FadeTweenDurationSeconds));
         _OpenAnimationStarted = true;
       }
 
@@ -267,6 +280,23 @@ namespace Cozmo {
             closeAnimation.Join(close);
           }
         }
+        closeAnimation.Join(_BackgroundCanvasGroup.DOFade(0, _FadeTweenDurationSeconds));
+        closeAnimation.Join(_BackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
+
+        if (_LockedBackgroundTween != null) {
+          _LockedBackgroundTween.Kill();
+        }
+        closeAnimation.Join(_LockedBackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
+
+        if (_MiddleBackgroundTween != null) {
+          _MiddleBackgroundTween.Kill();
+        }
+        closeAnimation.Join(_MiddleBackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
+
+        if (_OverlayBackgroundTween != null) {
+          _OverlayBackgroundTween.Kill();
+        }
+        closeAnimation.Join(_OverlayBackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
       }
 
       #endregion
@@ -356,11 +386,18 @@ namespace Cozmo {
       public void InitializeColor(Color baseColor) {
         _BackgroundImage.color = baseColor;
         _BackgroundGradient.color = baseColor;
-        _MiddleBackgroundImage.color = baseColor;
-        _IsShowingLocked = _LockedBackgroundImage.color.a > 0;
-        _IsShowingMiddle = _MiddleBackgroundImage.color.a > 0;
-        _OverlayBackgroundImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
-        _IsShowingOverlay = _OverlayBackgroundImage.color.a > 0;
+
+        Color transparentBaseColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
+        _MiddleBackgroundImage.color = transparentBaseColor;
+        _IsShowingMiddle = false;
+
+        _OverlayBackgroundImage.color = transparentBaseColor;
+        _IsShowingOverlay = false;
+
+        Color lockedColor = _LockedBackgroundImage.color;
+        lockedColor.a = 0;
+        _LockedBackgroundImage.color = lockedColor;
+        _IsShowingLocked = false;
       }
 
       public void ShowLockedBackground() {
@@ -406,7 +443,7 @@ namespace Cozmo {
           sequenceToUse.Kill();
         }
         sequenceToUse = DOTween.Sequence();
-        sequenceToUse.Append(targetImage.DOFade(targetAlpha, 0.2f));
+        sequenceToUse.Append(targetImage.DOFade(targetAlpha, _FadeTweenDurationSeconds));
       }
 
       #endregion

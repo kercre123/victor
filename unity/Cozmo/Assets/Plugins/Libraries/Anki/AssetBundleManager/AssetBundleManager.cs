@@ -413,7 +413,7 @@ namespace Anki {
         for (int i = 0; i < loadedAssetBundle.Dependencies.Length; i++) {
           loadedAssetBundle.Dependencies[i] = RemapVariantName(loadedAssetBundle.Dependencies[i]);
           string dependencyName = loadedAssetBundle.Dependencies[i];
-          Log(LogType.Warning, "Loading asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
+          Log(LogType.Log, "Loading asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
 
           StartCoroutine(LoadAssetBundleAsyncInternal(loadedAssetBundle.Dependencies[i], (bool successful) => {
             loadedDependencies++;
@@ -545,7 +545,7 @@ namespace Anki {
         foreach (var pair in _LoadedAssetBundles) {
           sb.Append(pair.Key + " (" + pair.Value.ReferenceCount + ")\n");
         }
-        Log(LogType.Error, sb.ToString());
+        Log(LogType.Log, sb.ToString());
       }
 
       private void PrintActiveVariants() {

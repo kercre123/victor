@@ -1,15 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
-using Conversations;
 using Cozmo.UI;
 using DataPersistence;
 
 public class UIManager : MonoBehaviour {
-  
+
   private static UIManager _Instance;
 
   public static UIManager Instance {
@@ -46,7 +44,7 @@ public class UIManager : MonoBehaviour {
   private Canvas _HorizontalCanvas;
 
   public Camera MainCamera;
-  
+
   public EventSystem EventSystemScript;
 
   [SerializeField]
@@ -57,12 +55,16 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private GameObject _DimBackgroundPrefab;
+  private CanvasGroup _DimBackgroundPrefab;
+
+  [SerializeField]
+  private float _DimBackgroundFadeDurationSecond = 0.2f;
 
   private List<BaseView> _OpenViews;
   private TouchCatcher _TouchCatcherInstance;
-  private GameObject _DimBackgroundInstance;
+  private CanvasGroup _DimBackgroundInstance;
   private int _NumDialogsDimmingBackground;
+  private Sequence _DimBackgroundTweener;
 
   public TouchCatcher TouchCatcher { get { return _TouchCatcherInstance != null && _TouchCatcherInstance.isActiveAndEnabled ? _TouchCatcherInstance : null; } }
 
@@ -109,7 +111,7 @@ public class UIManager : MonoBehaviour {
   /// For BaseViews, use OpenView instead.
   /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab, Transform parentTransform) {
-    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    GameObject newUi = Instantiate(uiPrefab);
     newUi.transform.SetParent(parentTransform, false);
     return newUi;
   }
@@ -119,12 +121,12 @@ public class UIManager : MonoBehaviour {
   /// Plays open animations on that dialog by default. 
   /// </summary>
   public static T OpenView<T>(
-    T viewPrefab, 
+    T viewPrefab,
     System.Action<T> preInitFunc = null,
-    bool? overrideBackgroundDim = null, 
+    bool? overrideBackgroundDim = null,
     bool? overrideCloseOnTouchOutside = null) where T : BaseView {
 
-    GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
+    GameObject newView = Instantiate(viewPrefab.gameObject);
     T viewScript = newView.GetComponent<T>();
 
     Transform targetCanvas = Instance._HorizontalCanvas.transform;
@@ -212,10 +214,19 @@ public class UIManager : MonoBehaviour {
     view.DimBackground = true;
     _NumDialogsDimmingBackground++;
     if (_NumDialogsDimmingBackground == 1) {
-      // First dialog to dim the background, we need to create a dimmer
-      // on top of existing ui
-      _DimBackgroundInstance = GameObject.Instantiate(Instance._DimBackgroundPrefab);
-      _DimBackgroundInstance.transform.SetParent(targetCanvas, false);
+      if (_DimBackgroundInstance == null) {
+        // First dialog to dim the background, we need to create a dimmer
+        // on top of existing ui
+        _DimBackgroundInstance = Instantiate(Instance._DimBackgroundPrefab.gameObject).GetComponent<CanvasGroup>();
+        _DimBackgroundInstance.transform.SetParent(targetCanvas, false);
+        _DimBackgroundInstance.alpha = 0;
+      }
+
+      if (_DimBackgroundTweener != null) {
+        _DimBackgroundTweener.Kill();
+      }
+      _DimBackgroundTweener = DOTween.Sequence();
+      _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(1, _DimBackgroundFadeDurationSecond));
     }
   }
 
@@ -226,7 +237,12 @@ public class UIManager : MonoBehaviour {
         // Destroy the dimmer when no dialogs want it anymore
         _NumDialogsDimmingBackground = 0;
         if (_DimBackgroundInstance != null) {
-          Destroy(_DimBackgroundInstance);
+          if (_DimBackgroundTweener != null) {
+            _DimBackgroundTweener.Kill();
+          }
+          _DimBackgroundTweener = DOTween.Sequence();
+          _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(0, _DimBackgroundFadeDurationSecond));
+          _DimBackgroundTweener.AppendCallback(() => Destroy(_DimBackgroundInstance.gameObject));
         }
       }
     }
@@ -234,7 +250,7 @@ public class UIManager : MonoBehaviour {
 
   public void ShowTouchCatcher(System.Action onTouch = null) {
     if (_TouchCatcherInstance == null) {
-      _TouchCatcherInstance = GameObject.Instantiate<GameObject>(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
+      _TouchCatcherInstance = Instantiate(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
       _TouchCatcherInstance.transform.SetParent(_Instance._HorizontalCanvas.transform, false);
     }
     _TouchCatcherInstance.Enable();

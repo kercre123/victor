@@ -164,7 +164,6 @@ public abstract class GameBase : MonoBehaviour {
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
-    newView.HideMiddleBackground();
   }
 
   private void PrepRobotForGame() {
@@ -426,8 +425,33 @@ public abstract class GameBase : MonoBehaviour {
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 
+  private void QuitMinigame() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
+    _SharedMinigameViewInstance.CloseView();
+  }
+
+  private void QuitMinigameAnimationFinished() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= QuitMinigameAnimationFinished;
+
+    if (OnMiniGameQuit != null) {
+      OnMiniGameQuit();
+    }
+
+    CleanUp();
+  }
+
+  private void CloseMinigame() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished += CleanUp;
+    _SharedMinigameViewInstance.CloseView();
+  }
+
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
+    CleanUp();
+  }
+
+  public void CleanUp() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
@@ -466,11 +490,8 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
 
     DAS.Event(DASConstants.Game.kQuit, null);
-    if (OnMiniGameQuit != null) {
-      OnMiniGameQuit();
-    }
 
-    CloseMinigameImmediately();
+    QuitMinigame();
   }
 
   public void RaiseMiniGameWin(string subtitleText = null) {
@@ -556,7 +577,7 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     // Close minigame UI
-    CloseMinigameImmediately();
+    CloseMinigame();
 
     if (_WonChallenge) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);

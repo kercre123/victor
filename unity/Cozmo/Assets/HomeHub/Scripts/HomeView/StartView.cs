@@ -112,11 +112,11 @@ public class StartView : BaseView {
   protected override void ConstructOpenAnimation(Sequence openAnimation) {
     // INGO
     // Do nothing because the ConnectDialog looks very similar; uncomment to fade in
-    // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+    // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds));
   }
 
   protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-    closeAnimation.Append(_AlphaController.DOFade(0, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+    closeAnimation.Append(_AlphaController.DOFade(0, _FadeTweenDurationSeconds));
   }
 
   #region implemented abstract members of BaseView
