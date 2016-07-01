@@ -39,7 +39,9 @@ extern "C" const CubeFirmware CUBE_UPDATE;
 
 // Number of 16-byte chunks available
 static const int CubeFirmwareBlocks = (CUBE_FIRMWARE_LENGTH+15) / 16 - 1;
+#ifdef CUBE_HOP
 static const int wifiChannel = 1;
+#endif
 
 static int ota_ack_timeout;
 

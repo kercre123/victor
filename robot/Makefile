@@ -68,6 +68,7 @@ staging_dir:
 
 export_key:
 	mkdir -p generated build
+	rm -f build/calcMont*
 	python3 ./tools/export_public.py -d $(DIFFIE_KEY) -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickeys.h
 	g++ -o build/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
 	build/calcMont >> ./generated/publickeys.h
