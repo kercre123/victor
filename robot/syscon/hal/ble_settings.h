@@ -6,7 +6,7 @@
 #include "ble.h"
 #include "ble_advdata.h"
 #include "ble_hci.h"
-#include "ble_conn_params.h"
+#include "conn_params.h"
 #include "ble_stack_handler_types.h"
 
 __packed typedef struct {
@@ -26,7 +26,7 @@ extern const uint16_t COZMO_UUID_TRANSMIT_CHAR;
 
 extern const uint16_t MFG_DATA_ID;
 
-extern const uint8_t* DEVICE_NAME;
+extern const uint8_t DEVICE_NAME[];
 extern const int DEVICE_NAME_LENGTH;
 
 extern const ble_gap_adv_params_t adv_params;

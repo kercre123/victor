@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "radio.h"
+#include "cubes.h"
 
 #include "clad/types/ledTypes.h"
 
@@ -31,8 +31,6 @@ using namespace Anki::Cozmo;
    PACK_IR(i) \
 )
 
-static const int LIGHTS_PER_WORD = 4;
-
 enum LightMode {
   HOLD_VALUE,
   TRANSITION_UP,
@@ -41,12 +39,28 @@ enum LightMode {
   HOLD_OFF
 };
 
+struct LightSet {
+  uint8_t red;
+  uint8_t green;
+  uint8_t blue;
+  uint8_t ir;
+};
+
 struct LightValues {
-  LightState state;
+  // Operating mode
   LightMode mode;
+
+  // Phase info
   int clock;
   int phase;
-  uint8_t values[LIGHTS_PER_WORD];
+  LightSet values;
+
+  // Configuration
+  LightSet onColor, offColor;
+  uint8_t onFrames;
+  uint8_t offFrames;
+  uint8_t transitionOnFrames;
+  uint8_t transitionOffFrames;
 };
 
 union ControllerLights {

@@ -19,8 +19,6 @@ typedef s32 Fixed;
 namespace Motors {
   // Initialize the PWM peripheral on the designated pins in the source file.
   void init();
-  void start();
-  void stop();
   void teardown(void);  // Only used for rebooting the machine
   void disable(bool disable);
   
@@ -29,7 +27,7 @@ namespace Motors {
   Fixed getSpeed(u8 motorID);
   
   // Updates the PWM values for the timers in a safe manner
-  void manage(void* userdata = NULL);
+  void manage();
 
   // Print the raw encoder input values over the UART
   void printEncodersRaw();

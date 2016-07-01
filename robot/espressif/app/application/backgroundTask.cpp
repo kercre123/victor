@@ -63,9 +63,9 @@ void Exec(os_event_t *event)
   {
     AnkiWarn( 51, "BackgroundTask.IntervalTooLong", 295, "Background task interval too long: %dus!", 1, btInterval);
   }
-  
+
   clientUpdate();
-  
+
   switch (event->sig)
   {
     case 0:
@@ -123,7 +123,7 @@ void Exec(os_event_t *event)
       event->sig = -1; // So next call will be event 0
     }
   }
-  
+
   const u32 btRunTime = system_get_time() - btStart;
   if ((btRunTime > BT_MAX_RUN_TIME_US) && (periodicPrint++ == 0))
   {
@@ -218,10 +218,6 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
   // Tell body / k02 to go into gameplay power mode
   #if !FACTORY_FIRMWARE
   {
-    Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
-    bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
-    Anki::Cozmo::RobotInterface::SendMessage(bMsg);
-
     Anki::Cozmo::RobotInterface::SetHeadDeviceLock hMsg;
     hMsg.enable = true;
     Anki::Cozmo::RobotInterface::SendMessage(hMsg);
@@ -234,9 +230,19 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 
 static bool sendWifiConnectionState(const bool state)
 {
-  Anki::Cozmo::RobotInterface::RadioState rtipMsg;
+  using namespace Anki::Cozmo::RobotInterface;
+
+  SetBodyRadioMode bMsg;
+
+  bMsg.radioMode =
+    state ?
+      BODY_ACCESSORY_OPERATING_MODE :
+      BODY_BLUETOOTH_OPERATING_MODE;
+  SendMessage(bMsg);
+
+  RadioState rtipMsg;
   rtipMsg.wifiConnected = state;
-  return Anki::Cozmo::RobotInterface::SendMessage(rtipMsg);
+  return SendMessage(rtipMsg);
 }
 
 extern "C" void backgroundTaskOnConnect(void)
@@ -254,14 +260,14 @@ extern "C" void backgroundTaskOnConnect(void)
   {
     Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_None);
   }
-  
+
   sendWifiConnectionState(true);
-  
+
   if (FACTORY_FIRMWARE)
   {
     AnkiEvent( 186, "FactoryFirmware", 487, "Running factory firmware, EP3F", 0);
   }
-  
+
   // Send our version information to the engine
   {
     Anki::Cozmo::RobotInterface::FWVersionInfo vi;
@@ -284,7 +290,7 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
-  
+
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
@@ -292,6 +298,7 @@ extern "C" void backgroundTaskOnDisconnect(void)
   Anki::Cozmo::ActiveObjectManager::DisconnectAll();
   Anki::Cozmo::UpgradeController::OnDisconnect();
   sendWifiConnectionState(false);
+
   if (FACTORY_FIRMWARE && (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_PlayPenTest))
   {
     i2spiSwitchMode(I2SPI_SHUTDOWN);

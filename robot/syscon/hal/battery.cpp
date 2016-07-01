@@ -8,7 +8,12 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "hardware.h"
-#include "rtos.h"
+
+#include "bluetooth.h"
+#include "cubes.h"
+#include "backpack.h"
+#include "motors.h"
+#include "temp.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
 static const int MinContactTime = 20;    // .10s
@@ -30,13 +35,12 @@ static const Fixed VEXT_CHARGE_THRESHOLD  = TO_FIXED(4.00); // V
 static const u32 CLIFF_SENSOR_BLEED = 0;
 
 static int ContactTime = 0;
-
-void manage_adc(void*);
   
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
-static Fixed vBat, vExt;
+static Fixed vBat;
+static Fixed vExt;
 static bool isCharging = false;
 static bool disableCharge = true;
 
@@ -72,13 +76,14 @@ uint8_t Battery::getLevel(void) {
   return (vBat - VBAT_CHGD_LO_THRESHOLD) * 100 / (VBAT_CHGD_HI_THRESHOLD - VBAT_CHGD_LO_THRESHOLD);
 }
 
-static void SendPowerStateUpdate(void *userdata)
+static inline void sendPowerStateUpdate()
 {
   using namespace Anki::Cozmo;
   
   PowerState msg;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
+  msg.BodyTemp = Temp::getTemp();
   msg.batteryLevel = Battery::getLevel();
   msg.onCharger  = ContactTime > MinContactTime;
   msg.isCharging = isCharging;
@@ -127,9 +132,6 @@ void Battery::init()
   int temp = getADCsample(ANALOG_CLIFF_SENSE, VEXT_SCALE);
 
   startADCsample(ANALOG_CLIFF_SENSE);
-
-  RTOS::schedule(manage_adc);
-  RTOS::schedule(SendPowerStateUpdate, CYCLES_MS(60.0f));
 }
 
 void Battery::setHeadlight(bool status) {
@@ -138,6 +140,82 @@ void Battery::setHeadlight(bool status) {
   } else {
     nrf_gpio_pin_clear(PIN_IR_FORWARD);
   }
+}
+
+static Anki::Cozmo::RobotInterface::BodyRadioMode current_operating_mode = -1;
+static Anki::Cozmo::RobotInterface::BodyRadioMode active_operating_mode = -1;
+
+void Battery::setOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
+  current_operating_mode = mode;
+}
+
+void Battery::updateOperatingMode() { 
+  using namespace Anki::Cozmo::RobotInterface;
+
+  if (active_operating_mode == current_operating_mode) {
+    return ;
+  }
+
+  // Tear down existing mode
+  switch (active_operating_mode) {
+    case BODY_BLUETOOTH_OPERATING_MODE:
+      Bluetooth::shutdown();
+      break ;
+    
+    case BODY_ACCESSORY_OPERATING_MODE:
+      Radio::shutdown();
+      break ;
+
+    case BODY_IDLE_OPERATING_MODE:
+      break ;
+    
+    default:
+      Bluetooth::shutdown();
+      break ;
+  }
+
+  // Setup new mode
+  switch(current_operating_mode) {
+    case BODY_IDLE_OPERATING_MODE:
+      Motors::disable(true);  
+      Battery::powerOff();
+      Timer::lowPowerMode(true);
+      Backpack::lightMode(RTC_LEDS);
+      break ;
+    
+    case BODY_BLUETOOTH_OPERATING_MODE:
+      Motors::disable(true);
+      Battery::powerOn();
+      Timer::lowPowerMode(true);
+      Backpack::lightMode(RTC_LEDS);
+
+      // This is temporary until I figure out why this thing is being lame
+      {  
+        NVIC_DisableIRQ(UART0_IRQn);
+        NVIC_DisableIRQ(GPIOTE_IRQn);
+        NVIC_DisableIRQ(RTC1_IRQn);
+
+        Bluetooth::advertise();
+
+        NVIC_EnableIRQ(UART0_IRQn);
+        NVIC_EnableIRQ(GPIOTE_IRQn);
+        NVIC_EnableIRQ(RTC1_IRQn);
+      }
+      
+      break ;
+    
+    case BODY_ACCESSORY_OPERATING_MODE:
+      Motors::disable(false);
+      Battery::powerOn();
+      Backpack::lightMode(TIMER_LEDS);
+
+      Radio::advertise();
+
+      Timer::lowPowerMode(false);
+      break ;
+  }
+  
+  active_operating_mode = current_operating_mode;
 }
 
 void Battery::powerOn()
@@ -154,7 +232,7 @@ void Battery::powerOff()
   MicroWait(10000);
 }
 
-void manage_adc(void*)
+void Battery::manage()
 {
   using namespace Battery;
   static const int LOW_BAT_TIME = CYCLES_MS(60*1000); // 1 minute
@@ -187,6 +265,7 @@ void manage_adc(void*)
         }
       
         startADCsample(ANALOG_CLIFF_SENSE);
+        sendPowerStateUpdate();
 
         break ;
       }

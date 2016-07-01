@@ -6,16 +6,13 @@
 #include "anki/cozmo/robot/logging.h"
 #include "hardware.h"
 #include "lights.h"
-#include "radio.h"
+#include "cubes.h"
 #include "messages.h"
 #include "bluetooth.h"
 #include "backpack.h"
-#include "dtm.h"
 #include "battery.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
-
-//#define NATHAN_CUBE_JUNK
 
 extern void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
 
@@ -43,9 +40,7 @@ static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 
 static void Process_setCubeLights(const CubeLights& msg)
 {
-  #ifndef NATHAN_CUBE_JUNK
   Radio::setPropLights(msg.objectID, msg.lights);
-  #endif
 }
 
 static void Process_setCubeGamma(const SetCubeGamma& msg)
@@ -55,9 +50,7 @@ static void Process_setCubeGamma(const SetCubeGamma& msg)
 
 static void Process_setPropSlot(const SetPropSlot& msg)
 {
-  #ifndef NATHAN_CUBE_JUNK
   Radio::assignProp(msg.slot, msg.factory_id);
-  #endif
 }
 
 static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
@@ -65,19 +58,15 @@ static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
 }
 
 static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {
-  enterOperatingMode(msg.radioMode);
+  Battery::setOperatingMode(msg.radioMode);
 }
 
-static void Process_sendDTMCommand(const RobotInterface::SendDTMCommand& msg) {
-  DTM::testCommand(msg.command, msg.freq, msg.length, msg.payload);
-}
-
-static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
+static void Process_helloRobotMessage(const HelloRobot& msg)
 {
   Bluetooth::authChallenge(msg);
 }
 
-static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
+static void Process_enterPairing(const EnterPairing& msg)
 {
   Bluetooth::enterPairing(msg);
 }

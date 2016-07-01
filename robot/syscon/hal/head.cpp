@@ -6,8 +6,8 @@
 #include "nrf_gpio.h"
 #include "lights.h"
 
-#include "radio.h"
-#include "rtos.h"
+#include "cubes.h"
+#include "watchdog.h"
 #include "hardware.h"
 #include "backpack.h"
 #include "bluetooth.h"
@@ -22,8 +22,6 @@
 
 using namespace Anki::Cozmo;
 
-#define MAX(a, b) ((a > b) ? a : b)
-
 uint8_t   txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
 
 enum TRANSMIT_MODE {
@@ -35,12 +33,11 @@ enum TRANSMIT_MODE {
 
 static int txRxIndex;
 static TRANSMIT_MODE uart_mode;
-static bool m_enabled;
 
 bool Head::spokenTo = false;
 
-extern GlobalDataToHead g_dataToHead;
-extern GlobalDataToBody g_dataToBody;
+GlobalDataToHead g_dataToHead;
+GlobalDataToBody g_dataToBody;
 
 static void setTransmitMode(TRANSMIT_MODE mode);
 
@@ -67,15 +64,6 @@ void Head::init()
   NVIC_EnableIRQ(UART0_IRQn);
 
   nrf_gpio_pin_set(PIN_TX_HEAD);
-
-  // We begin in receive mode (slave)
-  m_enabled = true;
-
-  RTOS::schedule(Head::manage);
-}
-
-void Head::enable(bool enable) {
-  m_enabled = enable;
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -138,7 +126,7 @@ static inline void transmitByte() {
   NVIC_EnableIRQ(UART0_IRQn);
 }
 
-void Head::manage(void* userdata) {
+void Head::manage() {
   if (*FIXTURE_HOOK == 0xDEADFACE) {
     nrf_gpio_pin_set(PIN_TX_VEXT);
     nrf_gpio_cfg_output(PIN_TX_VEXT);
@@ -149,10 +137,6 @@ void Head::manage(void* userdata) {
   }
 
   // Head body sync is disabled, so just kick the watchdog
-  if (!m_enabled) {
-    return ;
-  }
-
   Spine::dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
@@ -196,7 +180,7 @@ void UART0_IRQHandler()
           }
 
           Head::spokenTo = true;
-          RTOS::kick(WDOG_UART);
+          Watchdog::kick(WDOG_UART);
           
           setTransmitMode(TRANSMIT_CHARGER_RX);
         } else if (txRxIndex + 1 == sizeof(GlobalDataToBody)) {
@@ -218,9 +202,6 @@ void UART0_IRQHandler()
           uint8_t mode = fixture_data & ~MASK;
           
           switch (mode) {
-          case 0x81:
-            Radio::sendTestPacket();
-            break ;
           default:
             RobotInterface::EnterFactoryTestMode msg;
             msg.mode = mode;

@@ -10,7 +10,6 @@
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/hardware.h"
-#include "bootloader.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -22,7 +21,6 @@
 #include "watchdog.h"
 #include "i2c.h"
 #include "imu.h"
-#include "fcc.h"
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -103,47 +101,34 @@ int main (void)
   IMU::Init();
   OLED::Init();
   
-  #ifdef ENABLE_FCC_TEST
-  UART::Init();
-  FCC::start();
-  I2C::Enable();
-  for (;;) {
-    UART::Transmit();
 
-    if (UART::HeadDataReceived) {
-      UART::HeadDataReceived = false;
-      FCC::mainDTMExecution();
+  CameraInit();
+
+  Anki::Cozmo::Robot::Init();
+
+  // We can now safely start camera DMA, which shortly after starts HALExec
+  // This function returns after the first call to HALExec is complete
+  SPI::Init();
+  Watchdog::init();
+  CameraStart();
+
+  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
+
+  // Run the main thread (lite)
+  for(;;)
+  {
+    // Pump Wifi clad as quickly as possible
+    while (!UART::FoundSync()) {
+      WiFi::Update();
+    }
+
+    // Wait for head body sync to occur
+    UART::WaitForSync();
+    Spine::Manage();
+
+    if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
+    {
+      NVIC_SystemReset();
     }
   }
-  #else
-    CameraInit();
-
-    Anki::Cozmo::Robot::Init();
-
-    // We can now safely start camera DMA, which shortly after starts HALExec
-    // This function returns after the first call to HALExec is complete
-    SPI::Init();
-    Watchdog::init();
-    CameraStart();
-
-    // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
-  
-    // Run the main thread (lite)
-    for(;;)
-    {
-      // Pump Wifi clad as quickly as possible
-      while (!UART::FoundSync()) {
-        WiFi::Update();
-      }
-
-      // Wait for head body sync to occur
-      UART::WaitForSync();
-      Spine::Manage();
-
-      if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
-      {
-        NVIC_SystemReset();
-      }
-    }
-  #endif
 }

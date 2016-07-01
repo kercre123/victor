@@ -83,8 +83,8 @@ namespace Anki {
 #ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-        
-        
+
+
         // Store camera calibration in nvStorage
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
         if(headCamInfo == NULL) {
@@ -101,11 +101,11 @@ namespace Anki {
             headCamInfo->nrows,
             headCamInfo->ncols
           };
-          
+
           for(s32 iCoeff=0; iCoeff<NUM_RADIAL_DISTORTION_COEFFS; ++iCoeff) {
             headCalib.distCoeffs[iCoeff] = headCamInfo->distortionCoeffs[iCoeff];
           }
-          
+
           NVStorage::NVStorageWrite nvWrite;
           nvWrite.entry.tag = NVStorage::NVEntry_CameraCalib;
           nvWrite.entry.blob_length = headCalib.Size();
@@ -116,9 +116,9 @@ namespace Anki {
           nvWrite.writeNotErase = true;
           nvWrite.reportTo = NVStorage::RTIP;
           SimNVStorageSpace::Write(nvWrite);
-          
+
         }
-        
+
 #endif
         return RESULT_OK;
       }
@@ -239,7 +239,7 @@ namespace Anki {
 #       else
         syncTimeAckMsg.isPhysical = true;
 #       endif
-        
+
         if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
           AnkiWarn( 102, "Messages.Process_syncTime.AckFailed", 352, "Failed to send syncTimeAckMsg", 0);
         }
@@ -253,7 +253,7 @@ namespace Anki {
 
         // Set drive center offset
         Localization::SetDriveCenterOffset(msg.driveCenterOffset);
-        
+
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 #ifndef TARGET_K02
@@ -398,13 +398,13 @@ namespace Anki {
         if (msg.calibrateHead) {
           HeadController::StartCalibrationRoutine();
         }
-        
+
         if (msg.calibrateLift) {
           LiftController::StartCalibrationRoutine();
         }
       }
-      
-      
+
+
       void Process_drive(const RobotInterface::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
@@ -599,7 +599,7 @@ namespace Anki {
       {
         Localization::SetMotionModelParams(msg.slipFactor);
       }
-      
+
       void Process_abortDocking(const AbortDocking& msg)
       {
         DockingController::StopDocking();
@@ -658,22 +658,22 @@ namespace Anki {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
           HAL::MotorSetPower(MOTOR_HEAD, p);
-          
+
           LiftController::Disable();
           p = CLIP(msg.liftPower, -0.5f, 0.5f);
           HAL::MotorSetPower(MOTOR_LIFT, p);
-          
+
         } else {
-          
+
           HAL::MotorSetPower(MOTOR_HEAD, 0);
           HeadController::Enable();
-          
+
           HAL::MotorSetPower(MOTOR_LIFT, 0);
           LiftController::Enable();
         }
       }
-      
-      
+
+
       // --------- Block control messages ----------
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
@@ -773,28 +773,28 @@ namespace Anki {
       {
 #ifdef TARGET_K02
         // Remapped for EP3
-        HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount, 
+        HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount,
                           msg.tapTime, msg.tapNeg, msg.tapPos);
 #endif
       }
-      
+
       void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
       {
         sendTestStateMessages = msg.enable;
       }
-      
+
       void Process_setHeadDeviceLock(const RobotInterface::SetHeadDeviceLock& msg) {
 #ifdef TARGET_K02
         // Remapped for EP3
         HAL::UnlockDevices = msg.enable;
 #endif
       }
-      
+
       void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
       {
         // Handled directly in spi to bypass main execution.
       }
-      
+
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
@@ -803,7 +803,7 @@ namespace Anki {
 #ifdef SIMULATOR
       void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
       {
-        
+
       }
       /// Stub message handlers to satisfy simulator build
       void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
@@ -830,11 +830,11 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_bleEncodedKey(Anki::Cozmo::BLE_EncodedKey const&)
+      void Process_encodedAESKey(Anki::Cozmo::EncodedAESKey const&)
       {
         // Nothing to do here
       }
-      void Process_bleEnterPairing(Anki::Cozmo::BLE_EnterPairing const&)
+      void Process_enterPairing(Anki::Cozmo::EnterPairing const&)
       {
         // Nothing to do here
       }
@@ -842,11 +842,11 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_bleRecvHelloMessage(Anki::Cozmo::BLE_RecvHello const&)
+      void Process_helloRobotMessage(Anki::Cozmo::HelloRobot const&)
       {
         // Nothing to do here
       }
-      void Process_bleSendHelloMessage(Anki::Cozmo::BLE_SendHello const&)
+      void Process_helloPhoneMessage(Anki::Cozmo::HelloPhone const&)
       {
         // Nothing to do here
       }
@@ -900,10 +900,6 @@ namespace Anki {
         // nothing to do here
       }
        */
-      void Process_sendDTMCommand(const RobotInterface::SendDTMCommand&)
-      {
-        // nothing to do here
-      }
       void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode&)
       {
         // nothing to do here
@@ -912,7 +908,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      
+
       // These are stubbed out just to get things compiling
       void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}
       void Process_wifiCfgResult(const Anki::Cozmo::RobotInterface::AppConnectConfigResult& msg) {}
@@ -943,7 +939,7 @@ namespace Anki {
           RobotInterface::SendMessage(tsm);
         }
 #endif
-        
+
         // Don't send robot state updates unless the init message was received
         if (!initReceived_) {
           return RESULT_FAIL;
@@ -974,7 +970,7 @@ namespace Anki {
         }
       }
 
-      
+
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
       {
         MotorCalibration m;
@@ -982,8 +978,8 @@ namespace Anki {
         m.calibStarted = calibStarted;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
-      
-      
+
+
 #ifndef TARGET_K02
       int SendText(const char *format, ...)
       {

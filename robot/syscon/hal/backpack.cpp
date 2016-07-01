@@ -5,9 +5,8 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "timer.h"
-#include "radio.h"
+#include "cubes.h"
 
-#include "rtos.h"
 #include "hardware.h"
 #include "hal/portable.h"
 
@@ -35,20 +34,20 @@ static const charliePlex_s RGBLightPins[] =
 };
 
 // Charlieplexing magic constants
-static const int numLights = 12;
+static const int numLights = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
 static const int TIMER_GRAIN = 6;
 static const int TIMER_THRESH = 0x10;
 
 static int active_channel = 0;
-static const charliePlex_s* currentChannel;
+static const charliePlex_s* currentChannel = &RGBLightPins[0];
 static uint8_t drive_value[numLights];
 static uint8_t drive_error[numLights];
 
 // Start all pins as input
 void Backpack::init()
 {
-  currentChannel = &RGBLightPins[0];
-  memset(drive_value, 0xFF, sizeof(drive_value));
+  // This prevents timers from deadlocking system
+  drive_value[numLights - 1] = 0xFF;
 
   static const LightState startUpLight = {
     0x03E0,
@@ -57,6 +56,24 @@ void Backpack::init()
   };
 
   Lights::update(lightController.backpack[2], &startUpLight);
+}
+
+void Backpack::flash()
+{
+  for (int l = 0; l < 2; l++) {
+    for (int i = 0; i < numLights; i++) {
+
+      uint8_t ann = RGBLightPins[i].anode;
+      uint8_t cath = RGBLightPins[i].cathode;
+
+      nrf_gpio_pin_set(ann);
+      nrf_gpio_cfg_output(ann);
+      nrf_gpio_pin_clear(cath);
+      nrf_gpio_cfg_output(cath);
+      
+      MicroWait(10000);
+    }
+  }
 }
 
 static inline void lights_out(void) {
@@ -68,7 +85,7 @@ static void next_channel(void) {
   NRF_TIMER0->TASKS_CAPTURE[3] = 1;
 
   for(;;) {
-    if (++active_channel > numLights) {
+    if (++active_channel >= numLights) {
       active_channel = 0;
     }
 
@@ -125,7 +142,7 @@ void Backpack::lightMode(LightDriverMode mode) {
 void Backpack::update(void) {
   lights_out();
   
-  if (++active_channel > numLights) {
+  if (++active_channel >= numLights) {
     active_channel = 0;
   }
   currentChannel = &RGBLightPins[active_channel];
@@ -150,45 +167,33 @@ void Backpack::update(void) {
 }
 
 void Backpack::manage() { 
-  // 8-bit pseudo log scale.  Gives us full bright (64 level)
-  static const uint8_t AdjustTable[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x09, 0x0b,
-    0x0d, 0x10, 0x13, 0x17, 0x1b, 0x20, 0x26, 0x2c,
-    0x34, 0x3c, 0x45, 0x4f, 0x59, 0x64, 0x70, 0x7c,
-    0x88, 0x94, 0x9f, 0xaa, 0xb4, 0xbe, 0xc6, 0xce,
-    0xd5, 0xdb, 0xe1, 0xe5, 0xe9, 0xed, 0xef, 0xf2,
-    0xf4, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc,
-    0xfc, 0xfc, 0xfd, 0xfd, 0xfd, 0xfe, 0xfe, 0xff
+  struct BackpackLightAdjust {
+    uint8_t pos;
+    uint8_t index;
+    uint8_t gamma;
   };
-
-  // Channel 1 is unused by the light mapping
-  static const int8_t index[] = { 
-    0, -1, -1,
-    5,  6,  7,
-    2,  3,  4,
-    8,  9, 10,
-    1, -1, -1,
+  
+  static const BackpackLightAdjust setting[] = {
+    { 0, 0, 0x10 }, // 0
+    { 4, 0, 0x10 }, // 1
+    { 2, 0, 0x0C }, // 2
+    { 2, 1, 0x09 }, // 3
+    { 2, 2, 0x10 }, // 4
+    { 1, 0, 0x0C }, // 5
+    { 1, 1, 0x09 }, // 6
+    { 1, 2, 0x10 }, // 7
+    { 3, 0, 0x0C }, // 8
+    { 3, 1, 0x09 }, // 9
+    { 3, 2, 0x10 }, // 10
   };
+  
+  static const int lightCount = sizeof(setting) / sizeof(setting[0]);
 
-  static const int gamma[] = { 
-    0x100, 0x000, 0x000,
-    0x0C0, 0x090, 0x100,
-    0x0C0, 0x090, 0x100,
-    0x0C0, 0x090, 0x100,
-    0x100, 0x000, 0x000,
-  };
-    
-  int idx = 0;
-  for (int g = 0; g < NUM_BACKPACK_LEDS; g++) {
-    uint8_t* levels = lightController.backpack[g].values;
-
-    for (int i = 0; i < 3; i++, idx++) {
-      // Disabled channel
-      if (index[idx] < 0) continue;
-      
-      drive_value[index[idx]] = AdjustTable[(gamma[idx] * levels[i]) >> 10];
-    }
+  for (int i = 0; i < lightCount; i++) {
+    const BackpackLightAdjust& light = setting[i];
+    uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.pos].values;
+    uint32_t drive = rgbi[light.index] * light.gamma;
+    drive_value[i] = (drive * drive) >> 16;
   }
 }
 

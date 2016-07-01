@@ -14,7 +14,6 @@
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
-#include "clad/types/bleMessages.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/fwTestMessages.clad"
 
@@ -143,9 +142,9 @@ union RobotToEngine {
   RobotStopped               robotStopped           = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
   FactoryTestParameter       factoryTestParam       = 0xD6,
-  
+
   OTA::Ack                   otaAck                 = 0xEF,
-  
+
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,
   AnimationState             animState              = 0xF1,

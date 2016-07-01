@@ -5,22 +5,14 @@
 
 static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
 
-enum watchdog_channels {
-  WDOG_RTOS,
-  WDOG_UART,
-  WDOG_TOTAL_CHANNELS
-};
-
 enum IRQ_Priority {
-  ENCODER_PRIORITY = 0,
-  TIMER_PRIORITY = 1,
-  LED_PRIORITY = 1,
-  UART_PRIORITY = 1,
+  ENCODER_PRIORITY = 1,
+  TIMER_PRIORITY = 2,
+  LED_PRIORITY = 2,
+  UART_PRIORITY = 2,
   RADIO_PRIORITY = 2,
   RTOS_PRIORITY = 3
 };
-
-static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
 
 enum e_nrf_gpio {
   // Encoders

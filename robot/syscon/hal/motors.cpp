@@ -1,6 +1,3 @@
-#include <limits.h>
-
-
 extern "C" {
   #include "nrf.h"
   #include "nrf_gpio.h"
@@ -8,11 +5,12 @@ extern "C" {
   #include "nrf_sdm.h"
 }
 
+#include <limits.h>
+
 #include "hardware.h"
 
 #include "motors.h"
 #include "timer.h"
-#include "rtos.h"
 #include "head.h"
 
 #include "anki/cozmo/robot/spineData.h"
@@ -68,7 +66,6 @@ const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
-static RTOS_Task *task;
 static bool motorDisable = true;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
@@ -173,10 +170,6 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   // 1: PWM n + 1
   // 2: timer wrap-around
   // 3: timer wrap-around
-}
-
-static void ConfigurePPI(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
-{
   sd_ppi_channel_assign(ppiChannel + 0, &timer->EVENTS_COMPARE[0], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
   sd_ppi_channel_assign(ppiChannel + 1, &timer->EVENTS_COMPARE[2], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
   sd_ppi_channel_assign(ppiChannel + 2, &timer->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
@@ -284,7 +277,7 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
   *timer = motorInfo->nextPWM < 0 ? -motorInfo->nextPWM : motorInfo->nextPWM;  
 }
 
-void Motors::start()
+void Motors::init()
 {
   // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
   ConfigureTimer(NRF_TIMER1, 0, 0);
@@ -294,10 +287,13 @@ void Motors::start()
   NRF_TIMER1->TASKS_START = 1;
   NRF_TIMER2->TASKS_START = 1;
 
+  // Enable PPI channels for timer PWM and reset
+  sd_ppi_channel_enable_set(0xFF);
+
   // Clear pending interrupts and enable the GPIOTE interrupt
-  NVIC_ClearPendingIRQ(GPIOTE_IRQn);
-  NVIC_SetPriority(GPIOTE_IRQn, ENCODER_PRIORITY);
-  NVIC_EnableIRQ(GPIOTE_IRQn);
+  sd_nvic_ClearPendingIRQ(GPIOTE_IRQn);
+  sd_nvic_SetPriority(GPIOTE_IRQn, ENCODER_PRIORITY);
+  sd_nvic_EnableIRQ(GPIOTE_IRQn);
 
     // Clear all GPIOTE interrupts
   NRF_GPIOTE->INTENCLR = 0xFFFFFFFF;
@@ -342,33 +338,6 @@ void Motors::start()
       nrf_gpio_cfg_input(motorConfig->encoderPins[1], NRF_GPIO_PIN_NOPULL);
     }
   }
-
-  RTOS::start(task);
-}
-
-void Motors::stop()
-{
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-    setPower(i, 0);
-  }
-
-  RTOS::stop(task);
-  
-  NRF_TIMER1->TASKS_STOP = 1;
-  NRF_TIMER2->TASKS_STOP = 1;
-
-  NVIC_DisableIRQ(GPIOTE_IRQn);
-}
-
-void Motors::init()
-{
-  ConfigurePPI(NRF_TIMER1, 0, 0);
-  ConfigurePPI(NRF_TIMER2, 2, 4);
-
-  // Enable PPI channels for timer PWM and reset
-  sd_ppi_channel_enable_set(0xFF);
-
-  task = RTOS::create(manage);  
 }
 
 void Motors::setPower(u8 motorID, s16 power)
@@ -417,7 +386,7 @@ Fixed Motors::getSpeed(u8 motorID)
   return FIXED_DIV(deltaPosition, deltaSeconds);
 }
 
-void Motors::manage(void* userdata)
+void Motors::manage()
 {
   // Verify the source
   if (Head::spokenTo && !motorDisable)
@@ -594,7 +563,7 @@ void GPIOTE_IRQHandler()
       m_motors[MOTOR_LIFT].count = count;
       if (!(state & (1 << PIN_ENCODER_LIFTA)))  // High to low transition
       {
-        fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_HIGH);      
+        fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_HIGH); 
         if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
           m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
         else
@@ -606,7 +575,7 @@ void GPIOTE_IRQHandler()
         else
           m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;  
       }    
-    }       
+    }
     // Left wheel
     if (whatChanged & (1 << PIN_ENCODER_LEFT))
     {
