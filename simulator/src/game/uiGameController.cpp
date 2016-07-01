@@ -1809,7 +1809,18 @@ namespace Anki {
         }
       }
     }
-    
+
+    bool UiGameController::HasActualLightCubePose(int lightCubeId) const
+    {
+      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++) {
+        webots::Field* id = iter->first->getField("ID");
+        if(id && id->getSFInt32() == lightCubeId) {
+          return true;
+        }
+      }
+      return false;
+    }  
+  
     const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
     {
       for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)

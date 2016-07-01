@@ -163,8 +163,12 @@ bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) con
 bool BehaviorStackBlocks::AreBlocksAreStillValid(const Robot& robot)
 {
   if( !_targetBlockTop.IsSet() || !_targetBlockBottom.IsSet() ) {
-    PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlocksNoLongerSet",
-                     "one of the blocks isn't set");
+
+    if( _state != State::WaitForBlocksToBeValid ) {
+      PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlocksNoLongerSet",
+                       "one of the blocks isn't set");
+    }
+    
     return false;
   }
 

@@ -19,7 +19,7 @@ namespace Cozmo {
 // Registration of test controller derived from CozmoSimTestController
 #define REGISTER_COZMO_SIM_TEST_CLASS(CLASS) static CozmoSimTestRegistrar<CLASS> registrar(#CLASS);
   
-  
+
 ////////// Macros for condition checking and exiting ////////
   
 // For local testing, set to 1 so that Webots doesn't exit
@@ -84,6 +84,15 @@ protected:
   void StopMovie();
 
   void MakeSynchronous();
+
+  void DisableRandomPathSpeeds();
+
+  // call in the update loop to occasionally print info about blocks
+  void PrintPeriodicBlockDebug();
+  void SetBlockDebugPrintInterval(double interval_s) { _printInterval_s = interval_s; }
+
+  double _nextPrintTime = -1.0f;
+  double _printInterval_s = 1.0;
   
 }; // class CozmoSimTestController
 

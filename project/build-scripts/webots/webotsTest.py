@@ -499,6 +499,7 @@ def runAll(options):
 
         # TODO: Crashes affect test result, but errors and warnings do not. Should they?
         logFileName = get_log_file_path(buildFolder, test, world_file, curTime)
+        UtilLog.info('results will be logged to %s' % logFileName)
 
         # Run test in thread
         testResultQueue = Queue.Queue(1)

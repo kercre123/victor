@@ -20,7 +20,7 @@
 #include "clad/types/emotionTypes.h"
 #include "clad/types/simpleMoodTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
 #include <map>
 #include <set>

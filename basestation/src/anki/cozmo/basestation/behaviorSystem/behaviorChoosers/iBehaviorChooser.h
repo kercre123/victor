@@ -19,7 +19,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <string>
 #include <set>
