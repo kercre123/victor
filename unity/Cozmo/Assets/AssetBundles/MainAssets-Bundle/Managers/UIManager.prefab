@@ -234,7 +234,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _HorizontalCanvas: {fileID: 22319488}
-  _EventSystemScript: {fileID: 11485194}
+  MainCamera: {fileID: 2070858}
+  EventSystemScript: {fileID: 11485194}
   _TouchCatcherPrefab: {fileID: 151494, guid: f9f945bbe0c2a4469a9e59ccfe209d55, type: 2}
   _DimBackgroundPrefab: {fileID: 177414, guid: 624443755833e44aa9939d4b069a9f3c, type: 2}
 --- !u!223 &22319488

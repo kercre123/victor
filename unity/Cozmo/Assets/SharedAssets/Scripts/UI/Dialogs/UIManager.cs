@@ -6,9 +6,10 @@ using System.Collections.Generic;
 using DG.Tweening;
 using Conversations;
 using Cozmo.UI;
+using DataPersistence;
 
 public class UIManager : MonoBehaviour {
-
+  
   private static UIManager _Instance;
 
   public static UIManager Instance {
@@ -43,9 +44,10 @@ public class UIManager : MonoBehaviour {
 
   [SerializeField]
   private Canvas _HorizontalCanvas;
+
+  public Camera MainCamera;
   
-  [SerializeField]
-  private EventSystem _EventSystemScript;
+  public EventSystem EventSystemScript;
 
   [SerializeField]
   private GameObject _TouchCatcherPrefab;
@@ -71,6 +73,7 @@ public class UIManager : MonoBehaviour {
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
+
 
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
@@ -191,11 +194,11 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void DisableTouchEvents() {
-    _Instance._EventSystemScript.gameObject.SetActive(false);
+    _Instance.EventSystemScript.gameObject.SetActive(false);
   }
 
   public static void EnableTouchEvents() {
-    _Instance._EventSystemScript.gameObject.SetActive(true);
+    _Instance.EventSystemScript.gameObject.SetActive(true);
   }
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {

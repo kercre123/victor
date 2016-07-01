@@ -11,11 +11,13 @@ public class DebugProfile {
   public bool LatencyDisplayEnabled;
   public bool DebugPauseEnabled;
   public bool RunPressDemo;
+  public Dictionary<string,List<FakeTouch>> FakeTouchRecordings;
 
   public DebugProfile() {
     SOSLoggerEnabled = false;
     LatencyDisplayEnabled = false;
     DebugPauseEnabled = false;
     RunPressDemo = false;
+    FakeTouchRecordings = new Dictionary<string,List<FakeTouch>>();
   }
 }

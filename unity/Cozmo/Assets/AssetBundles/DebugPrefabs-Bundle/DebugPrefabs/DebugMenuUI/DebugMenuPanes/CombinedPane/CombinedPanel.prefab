@@ -284,7 +284,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 22445570}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999994
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -335,7 +335,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 20
+  m_Spacing: 50
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
 --- !u!114 &11483344
@@ -532,7 +532,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _ChildPanels.Array.data[3]
       value: 
-      objectReference: {fileID: 148378, guid: 2d18fd0066a89493487b8970da08ddc2, type: 2}
+      objectReference: {fileID: 183772, guid: d5295c6abc723485eb37f70ee0b3b697, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 154368}

@@ -179,7 +179,7 @@ namespace Anki {
 
       private void HandleGlobalPress(AnkiButton button, bool isPressed) {
         if (button != this) {
-          _ButtonTouchesEnabled = isPressed;
+          _ButtonTouchesEnabled = !isPressed;
         }
       }
 

@@ -44,9 +44,11 @@ public class DebugMenuManager : MonoBehaviour {
 
   // TODO: Pragma out this code for production
   public void OnDebugMenuButtonTap() {
-#if ENABLE_DEBUG_PANEL
-    CreateDebugDialog();
-#endif
+    #if ENABLE_DEBUG_PANEL
+    if (FakeTouchManager.Instance.IsPlayingTouches == false && FakeTouchManager.Instance.IsSoakingTouches == false) {
+      CreateDebugDialog();
+    }
+    #endif
   }
 
   public GameBase GetCurrMinigame() {
@@ -75,6 +77,10 @@ public class DebugMenuManager : MonoBehaviour {
         }
       }
     }
+  }
+
+  public void CloseDebugMenuDialog() {
+    _DebugMenuDialogInstance.OnDebugMenuCloseTap();
   }
 
   private void OnDebugMenuDialogClose(int lastOpenTab) {
