@@ -37,7 +37,7 @@ namespace Anki {
       PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE;
 
       if( !_enabled ) {
-        return std::move(motionProfile);
+        return motionProfile;
       }
       
       // Random acceleration
@@ -63,7 +63,7 @@ namespace Anki {
                        motionProfile.reverseSpeed_mmps,
                        motionProfile.accel_mmps2);
       
-      return std::move(motionProfile);
+      return motionProfile;
     }
     
     PathMotionProfile SpeedChooser::GetPathMotionProfile(const std::vector<Pose3d>& goals)

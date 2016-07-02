@@ -40,7 +40,7 @@ void DevLogReader::DiscoverLogFiles()
   _files.clear();
   if (Util::FileUtils::DirectoryExists(_directory))
   {
-    auto fileList = Util::FileUtils::FilesInDirectory(_directory, true, { "log" });
+    auto fileList = Util::FileUtils::FilesInDirectory(_directory, true, "log" );
     for (const auto& file : fileList)
     {
       _files.push_back(file);

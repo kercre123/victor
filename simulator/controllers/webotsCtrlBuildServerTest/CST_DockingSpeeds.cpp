@@ -285,7 +285,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
             m.idTag = 10;
-            m.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,{VisionMode::DetectingMarkers}));
+            m.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,VisionMode::DetectingMarkers));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -304,7 +304,7 @@ namespace Anki {
             m2.robotID = 1;
             m2.position = QueueActionPosition::NEXT;
             m2.idTag = 30;
-            m2.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,{VisionMode::DetectingMarkers}));
+            m2.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,VisionMode::DetectingMarkers));
             ExternalInterface::MessageGameToEngine message2;
             message2.Set_QueueSingleAction(m2);
             SendMessage(message2);
