@@ -28,7 +28,7 @@ namespace Anki {
     PathMotionProfile SpeedChooser::GetPathMotionProfile(const Pose3d& goal)
     {
       PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE;
-      
+     
       // Random acceleration
       motionProfile.accel_mmps2 = rng.RandDblInRange(minAccel_mmps2, maxAccel_mmps2);
       

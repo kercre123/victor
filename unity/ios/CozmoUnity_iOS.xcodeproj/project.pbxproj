@@ -197,6 +197,7 @@
 		DBCA076DDB77D2E3C1930A4A /* EAGLContextHelper.h in Sources */ = {isa = PBXBuildFile; fileRef = 8B8E4BD5AA44C59E2B71FC05 /* EAGLContextHelper.h */; };
 		DCF9F6AD5A278885DED8F3D8 /* Bulk_Generics_10.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E9C1032951130D9DB2974A7 /* Bulk_Generics_10.cpp */; };
 		DD37D7B33548878A51FF4F9B /* Bulk_Assembly-CSharp_4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 128C338A16E7AD2B170E7F06 /* Bulk_Assembly-CSharp_4.cpp */; };
+		DD9B1D5805E1F03AADD2DD6B /* Il2CppGuids.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CCEA434FEA2DC48EB63573B9 /* Il2CppGuids.cpp */; };
 		DF92F79BAF6BFEA667F4AE31 /* Il2CppGenericMethodPointerTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C8630EC2926CC8F1F1AA46E /* Il2CppGenericMethodPointerTable.cpp */; };
 		E012A297444367E49097530F /* Bulk_Generics_3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1050D66FDD44AF93A60F66BC /* Bulk_Generics_3.cpp */; };
 		E02DBE886C3416B7691AEDCF /* Bulk_Generics_12.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 354F9DD6543375C01F0F563A /* Bulk_Generics_12.cpp */; };
@@ -419,6 +420,7 @@
 		C74A799119D4482FDE8A4E50 /* Bulk_Assembly-CSharp-firstpass_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp-firstpass_0.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp-firstpass_0.cpp"; sourceTree = "<group>"; };
 		C813C9E519945602B91BE4B2 /* CameraCapture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CameraCapture.h; path = UnityBuild/Classes/Unity/CameraCapture.h; sourceTree = "<group>"; };
 		CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMetadataRegistration.cpp; path = UnityBuild/Classes/Native/Il2CppMetadataRegistration.cpp; sourceTree = "<group>"; };
+		CCEA434FEA2DC48EB63573B9 /* Il2CppGuids.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppGuids.cpp; path = UnityBuild/Classes/Native/Il2CppGuids.cpp; sourceTree = "<group>"; };
 		CD2E52B7B6FE39E84DD463FD /* UnityView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = UnityView.mm; path = UnityBuild/Classes/UI/UnityView.mm; sourceTree = "<group>"; };
 		CDA9CE31FBE0C996FF9AB79A /* RenderPluginDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderPluginDelegate.h; path = UnityBuild/Classes/PluginBase/RenderPluginDelegate.h; sourceTree = "<group>"; };
 		D05B56D8F531979B83DCCC96 /* Bulk_System.Xml_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_System.Xml_0.cpp; path = UnityBuild/Classes/Native/Bulk_System.Xml_0.cpp; sourceTree = "<group>"; };
@@ -777,6 +779,7 @@
 				1733FE4010EEA8F9C363C9A8 /* Il2CppGenericMethodDefinitions.cpp */,
 				6C8630EC2926CC8F1F1AA46E /* Il2CppGenericMethodPointerTable.cpp */,
 				36BDDFF568A6239A8136E27B /* Il2CppGenericMethodTable.cpp */,
+				CCEA434FEA2DC48EB63573B9 /* Il2CppGuids.cpp */,
 				0A4EE89A6BAF578930CF5988 /* Il2CppInvokerTable.cpp */,
 				83BF13F00AF4A251214D6A6C /* Il2CppMarshalingFunctionsTable.cpp */,
 				CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */,
@@ -1057,6 +1060,7 @@
 				9A345AFB3CBEA6D09F5EAB67 /* Il2CppGenericMethodDefinitions.cpp in Sources */,
 				DF92F79BAF6BFEA667F4AE31 /* Il2CppGenericMethodPointerTable.cpp in Sources */,
 				85F44C1D5C0709D7AACE6C09 /* Il2CppGenericMethodTable.cpp in Sources */,
+				DD9B1D5805E1F03AADD2DD6B /* Il2CppGuids.cpp in Sources */,
 				D947CCEE681433936E1FE609 /* Il2CppInvokerTable.cpp in Sources */,
 				42FFE456E9C08D53297E0F5B /* Il2CppMarshalingFunctionsTable.cpp in Sources */,
 				7921A7066543F104AC8E8CB3 /* Il2CppMetadataRegistration.cpp in Sources */,
