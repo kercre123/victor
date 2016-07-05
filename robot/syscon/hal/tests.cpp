@@ -70,7 +70,7 @@ extern GlobalDataToBody g_dataToBody;
 void TestFixtures::dispatch(uint8_t test, uint8_t param)
 {
   // Test modes from 0..127 are routed up to Espressif
-  if (test < 64) {
+  if (test < 128) {
     RobotInterface::EnterFactoryTestMode msg;
     msg.mode = test;
     msg.param = param;

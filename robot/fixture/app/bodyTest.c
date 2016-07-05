@@ -67,7 +67,7 @@ void HeadlessBoot(void)
   SendTestChar(-1);  
 }
 
-static int TryMotor(u8 motor, s8 speed)
+int TryMotor(u8 motor, s8 speed)
 {
   const int MOTOR_RUNTIME = 100 * 1000;
   int first[4], second[4];

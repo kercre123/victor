@@ -41,8 +41,15 @@ void SendTestMode(int test)
 
 void InfoTest(void)
 {
+  unsigned int version[2];
+  
+  MicroWait(200000);
+  SendTestChar(-1);
+  SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
+  SendCommand(0x83, 0, 8, (u8*)version);
+  
   // XXX: Sample data so Smerp can start development of their info fixture reader
-  ConsolePrintf("version,00000026,00000006,00C0009A,00000001\r\n");
+  ConsolePrintf("version,%08d,%08d,%08x,00000000\r\n", version[0]>>16, version[0]&0xffff, version[1]);
 }
 
 void PlaypenTest(void)
@@ -88,6 +95,70 @@ void PlaypenWaitTest(void)
   }
 }
 
+void DropSensor(void);
+int TryMotor(u8 motor, s8 speed);
+
+// Run motors through their paces
+const int SLOW_DRIVE_THRESH = 10, FAST_DRIVE_THRESH = 100;
+const int SLOW_LIFT_THRESH = 10, FAST_LIFT_THRESH = 100;
+const int SLOW_HEAD_THRESH = 10, FAST_HEAD_THRESH = 100;
+
+void SlowMotors(void)
+{
+  TryMotor(0, 40);
+  TryMotor(0, -40);  
+  
+  TryMotor(1, 40);
+  TryMotor(1, -40);
+  
+  TryMotor(2, 40);
+  TryMotor(2, -40);
+
+  TryMotor(3, 40);
+  TryMotor(3, -40);
+}
+
+void FastMotors(void)
+{
+  int first[4], second[4];
+  
+  // Turn on motor test
+  TryMotor(0, 124);
+  SendCommand(6,0,0,0);
+  
+  // Check encoders
+  for (int i = 0; i < 2; i++)
+  {
+    SendCommand(0x85, 0, sizeof(first), (u8*)first);
+    MicroWait(1250000);
+    SendCommand(0x85, 0, sizeof(second), (u8*)second);
+    
+    for (int j = 0; j < 4; j++)
+      if (first[j] == second[j])
+      {
+        DisableVEXT();
+        MicroWait(1500000);
+        throw 300 + j*10;
+      }
+  }
+  
+  // Kill robot dead
+  DisableVEXT();
+  MicroWait(1500000);
+  /*
+  TryMotor(0, -124);  
+  
+  TryMotor(1, 124);
+  TryMotor(1, -124);
+  
+  TryMotor(2, 124);
+  TryMotor(2, -124);
+
+  TryMotor(3, 124);
+  TryMotor(3, -124);
+  */
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetInfoTestFunctions(void)
 {
@@ -119,6 +190,9 @@ TestFunction* GetRobotTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
+    //SlowMotors,
+    FastMotors,
+    DropSensor,
     NULL
   };
 

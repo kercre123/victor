@@ -575,7 +575,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
 void Process_EnterFactoryTestMode(const RobotInterface::EnterFactoryTestMode& msg)
 {
   modeTimeout = 0xFFFFffff; // Disable timeout
-  SetMode(msg.mode);
+  SetMode(msg.mode, msg.param);
 }
 
 } // Factory
