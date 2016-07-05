@@ -376,14 +376,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DebugContentPaneData:
-  - name: Console Log
-    panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
-  - name: Performance
-    panePrefab: {fileID: 113690, guid: 30ad73b1c18b443bdb77716d180d9439, type: 2}
-  - name: Audio
-    panePrefab: {fileID: 137948, guid: 76d4e2b85e93448c692795fe78d5479c, type: 2}
   - name: Animation
     panePrefab: {fileID: 113112, guid: 6edfb651b8cff462981b4979e7dd82f4, type: 2}
+  - name: Console Log
+    panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
+  - name: Audio
+    panePrefab: {fileID: 137948, guid: 76d4e2b85e93448c692795fe78d5479c, type: 2}
+  - name: Performance
+    panePrefab: {fileID: 113690, guid: 30ad73b1c18b443bdb77716d180d9439, type: 2}
   - name: Behavior
     panePrefab: {fileID: 113112, guid: b053830e566d3424a96bbb0aef9ec596, type: 2}
   - name: Debug Console
@@ -473,6 +473,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22457372}
   - {fileID: 22445322}
@@ -494,6 +495,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22403720}
   m_RootOrder: 2
@@ -511,6 +513,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22486850}
   m_Father: {fileID: 22403720}
@@ -529,6 +532,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22486350}
   m_RootOrder: 0
@@ -546,6 +550,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22403720}
   m_RootOrder: 0
@@ -563,6 +568,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22449030}
   m_Father: {fileID: 22403720}
@@ -581,6 +587,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22445322}
   m_RootOrder: 0
