@@ -146,7 +146,7 @@ namespace Anki.Cozmo.Viz {
 
     public static VizManager Instance { get; private set; }
 
-    public static bool EnableTexture = false;
+    public static bool Enabled = false;
 
     private void OnEnable() {
 
@@ -173,7 +173,7 @@ namespace Anki.Cozmo.Viz {
     }
 
     private void Update() {
-      if (EnableTexture == false) {
+      if (Enabled == false) {
         // since we the texture isn't enabled lets
         // dump all of our messages we're getting.
         _Channel.DumpReceiveBuffer();
