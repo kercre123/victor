@@ -109,6 +109,24 @@ static void setupOperatingMode() {
 
   // Setup new mode
   switch(current_operating_mode) {
+    case BODY_LOW_POWER_OPERATING_MODE:
+      // Shut-down non-essentials
+      __disable_irq();  
+      Motors::disable(true);
+      Battery::powerOn();
+      
+      // Power-down encoders and front facing LED
+      nrf_gpio_pin_set(PIN_VDDs_EN);
+      nrf_gpio_pin_clear(PIN_IR_FORWARD);
+
+      // Loop forever
+      for (;;) {
+        for (int i = 0; i < 8; i++) {
+          NRF_WDT->RR[i] = WDT_RR_RR_Reload;
+        }
+      }
+      break ;
+
     case BODY_IDLE_OPERATING_MODE:
       Motors::disable(true);  
       turnPowerOff = true;

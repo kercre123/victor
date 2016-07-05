@@ -1,10 +1,10 @@
 /** Clad definitions of all messages sent from the Cozmo engine to the robot and from one part of the robot to another.
  * This file name is now out of date since it should be messageToRobot since messages may not be coming from the engine.
  *
- * Used in the engine, all three robot processors and the test fixture, however, we don't have to build and flash in 
+ * Used in the engine, all three robot processors and the test fixture, however, we don't have to build and flash in
  * lockstep because of strict tag space partitioning.
  */
- 
+
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
@@ -24,18 +24,18 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
   message CubeSlots
   {
     uint_32 factory_id[uint_32:7] // Don't send more than MAX_NUM_ACTIVE_OBJECTS above
   }
-  
+
   structure SetPropSlot
   {
     uint_32 factory_id,
     uint_8  slot
   }
-  
+
   message SetCubeGamma
   {
     uint_8  gamma
@@ -103,7 +103,7 @@ message SetHeadAngle
   float_32 duration_sec,
 }
 
-message HeadAngleUpdate 
+message HeadAngleUpdate
 {
   float_32 newAngle,
 }
@@ -249,7 +249,8 @@ enum int_8 BodyRadioMode {
   BODY_BLUETOOTH_OPERATING_MODE = 0,
   BODY_ACCESSORY_OPERATING_MODE,
   BODY_DTM_OPERATING_MODE,
-  BODY_IDLE_OPERATING_MODE
+  BODY_IDLE_OPERATING_MODE,
+  BODY_LOW_POWER_OPERATING_MODE
 }
 
 message SetBodyRadioMode
@@ -264,9 +265,9 @@ message SetHeadDeviceLock
 
 message SendDTMCommand
 {
-  int_32 command, 
-  int_32 freq, 
-  int_32 length, 
+  int_32 command,
+  int_32 freq,
+  int_32 length,
   int_32 payload
 }
 
@@ -340,7 +341,7 @@ enum uint_32 ToRobotAddressSpace
 union EngineToRobot
 {
   // 0x00 Is invalid message
-  
+
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
   BackpackLights                setBackpackLights           = 0x03,
@@ -360,7 +361,7 @@ union EngineToRobot
 
   BLE_SendHello                 bleSendHelloMessage         = 0x28,
   BLE_EncodedKey                bleEncodedKey               = 0x29,
-  
+
   AppConnectRobotIP             robotIpInfo                 = 0x2e,
   AppConnectConfigResult        wifiCfgResult               = 0x2f,
 
@@ -405,9 +406,9 @@ union EngineToRobot
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
-  
+
   // 0x80 to 0xAF: To WiFi
-  // Available for future use                               = 0x80,  
+  // Available for future use                               = 0x80,
   // Available for future use                               = 0x81,
   // Available for future use                               = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
