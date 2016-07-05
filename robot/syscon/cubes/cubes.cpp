@@ -273,12 +273,12 @@ void uesb_event_handler(uint32_t flags)
       }
 
       // Radio firmware header is valid
-      for (int i = 0; ValidPerfs[i]; i++) {
-        ota_device = ValidPerfs[i];
+      for (const CubeFirmware** all_perfs = ValidPerfs; all_perfs; all_perfs++) {
+        ota_device = *all_perfs;
 
-        // Invalid in-memory firmware
+        // Unrecognized device
         if (ota_device->magic != CUBE_FIRMWARE_MAGIC) {
-          continue ;
+          return ;
         }
         
         // This is an invalid hardware version and we should not try to do anything with it
@@ -291,6 +291,9 @@ void uesb_event_handler(uint32_t flags)
           OTARemoteDevice(advert.id);
           return ;
         }
+        
+        // We found the image we want
+        break ;
       }
 
       // We are loading the slot

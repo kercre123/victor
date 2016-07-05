@@ -150,22 +150,12 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>NRF_GPIO-&gt;PIN_CNF[0]</ItemText>
+          <ItemText>ota_device</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>drive_value</ItemText>
-        </Ww>
-        <Ww>
-          <count>2</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>ValidPerfs[i]</ItemText>
-        </Ww>
-        <Ww>
-          <count>3</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>advert</ItemText>
+          <ItemText>*all_perfs</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
