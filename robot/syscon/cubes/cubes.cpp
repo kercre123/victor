@@ -26,6 +26,8 @@
 //#define NATHAN_CUBE_JUNK
 //#define CUBE_HOP
 
+#define TOTAL_BLOCKS(x) ((x)->dataLen / sizeof(CubeFirmwareBlock))
+
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
@@ -34,11 +36,14 @@ static void EnterState(RadioState state);
 extern uesb_mainstate_t  m_uesb_mainstate;
 
 // This is our internal copy of the cube firmware update
-extern "C" const uint32_t     CUBE_FIRMWARE_LENGTH;
-extern "C" const CubeFirmware CUBE_UPDATE;
+extern "C" const CubeFirmware __CUBE_XS;
+extern "C" const CubeFirmware __CUBE_XS6;
+static const CubeFirmware* ValidPerfs[] = {
+  &__CUBE_XS,
+  &__CUBE_XS6,
+  (const CubeFirmware*) NULL
+};
 
-// Number of 16-byte chunks available
-static const int CubeFirmwareBlocks = (CUBE_FIRMWARE_LENGTH+15) / 16 - 1;
 #ifdef CUBE_HOP
 static const int wifiChannel = 1;
 #endif
@@ -59,6 +64,7 @@ static const uesb_address_desc_t NoiseAddress = {
 
 // These are variables used for handling OTA
 static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
+static const CubeFirmware* ota_device;
 static int ota_block_index;
 static int ack_timeouts;
 static int lightGamma;
@@ -153,7 +159,7 @@ static void ota_send_next_block() {
   OTAFirmwareBlock msg;
   
   msg.messageId = 0xF0 | ota_block_index;
-  memcpy(msg.block, CUBE_UPDATE.data[ota_block_index], sizeof(CubeFirmwareBlock));
+  memcpy(msg.block, ota_device->data[ota_block_index], sizeof(CubeFirmwareBlock));
   
   uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
   ota_ack_timeout = GetCounter() + OTA_ACK_TIMEOUT;
@@ -232,14 +238,14 @@ void uesb_event_handler(uint32_t flags)
   switch (radioState) {
   case RADIO_OTA:
     // Send noise and return to pairing
-    if (++ota_block_index >= CubeFirmwareBlocks) {
+    if (++ota_block_index < TOTAL_BLOCKS(ota_device)) {
+      ack_timeouts = 0;
+      ota_send_next_block();
+    } else {
       EnterState(RADIO_PAIRING);
       uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
-      break ;
     }
-    
-    ack_timeouts = 0;
-    ota_send_next_block();
+
     break ;
   case RADIO_PAIRING:
     {
@@ -267,19 +273,25 @@ void uesb_event_handler(uint32_t flags)
       }
 
       // Radio firmware header is valid
-      if (CUBE_UPDATE.magic == CUBE_FIRMWARE_MAGIC) {
+      for (int i = 0; ValidPerfs[i]; i++) {
+        ota_device = ValidPerfs[i];
+
+        // Invalid in-memory firmware
+        if (ota_device->magic != CUBE_FIRMWARE_MAGIC) {
+          continue ;
+        }
+        
         // This is an invalid hardware version and we should not try to do anything with it
-        if (advert.hwVersion != CUBE_UPDATE.hwVersion) {
-          break ;
+        if (advert.hwVersion != ota_device->hwVersion) {
+          continue ;
         }
 
         // Check if the device firmware is out of date
-        if (advert.patchLevel & ~CUBE_UPDATE.patchLevel) {
+        if (advert.patchLevel & ~ota_device->patchLevel) {
           OTARemoteDevice(advert.id);
-          break ;
+          return ;
         }
       }
-
 
       // We are loading the slot
       AccessorySlot* acc = &accessories[slot]; 
@@ -347,7 +359,7 @@ void uesb_event_handler(uint32_t flags)
       pair.ticksToListen = 0;     // Currently unused
       pair.beatsPerRead = 4;
       pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
-      pair.patchStart = CUBE_UPDATE.patchStart;
+      pair.patchStart = ota_device->patchStart;
       
       // Send a pairing packet
       uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
