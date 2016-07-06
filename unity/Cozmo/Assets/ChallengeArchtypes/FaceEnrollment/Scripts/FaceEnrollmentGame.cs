@@ -164,7 +164,12 @@ namespace FaceEnrollment {
       else {
 
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnMeetNewPerson);
-        CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
+        if (CurrentRobot.EnrolledFaces.ContainsKey(_FaceIDToEnroll)) {
+          DAS.Error("FaceEnrollmentGame.HandleEnrolledFace", "Successfully enrolled already enrolled face. Duplicate face entries.");
+        }
+        else {
+          CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
+        }
       }
       EditOrEnrollFaceComplete(success);
       _AttemptedEnrollFace = false;
