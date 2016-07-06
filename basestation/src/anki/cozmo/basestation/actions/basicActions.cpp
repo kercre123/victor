@@ -31,7 +31,10 @@ namespace Anki {
   namespace Cozmo {
     
     TurnInPlaceAction::TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute)
-    : IAction(robot)
+    : IAction(robot,
+              "TurnInPlace",
+              RobotActionType::TURN_IN_PLACE,
+              (u8)AnimTrackFlag::BODY_TRACK)
     , _targetAngle(angle)
     , _isAbsoluteAngle(isAbsolute)
     {
@@ -57,12 +60,6 @@ namespace Anki {
         // stop the robot turning if the action is destroyed while running
         _robot.GetMoveComponent().StopAllMotors();
       }
-    }
-    
-    const std::string& TurnInPlaceAction::GetName() const
-    {
-      static const std::string name("TurnInPlaceAction");
-      return name;
     }
     
     void TurnInPlaceAction::SetMaxSpeed(f32 maxSpeed_radPerSec)
@@ -239,7 +236,10 @@ namespace Anki {
 #pragma mark ---- SearchSideToSideAction ----
 
     SearchSideToSideAction::SearchSideToSideAction(Robot& robot)
-      : IAction(robot)
+      : IAction(robot,
+                "SearchSideToSideAction",
+                RobotActionType::SEARCH_SIDE_TO_SIDE,
+                (u8)AnimTrackFlag::BODY_TRACK)
       , _compoundAction(robot)
     {
     }
@@ -336,7 +336,10 @@ namespace Anki {
 #pragma mark ---- DriveStraightAction ----
     
     DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps)
-    : IAction(robot)
+    : IAction(robot,
+              "DriveStraight",
+              RobotActionType::DRIVE_STRAIGHT,
+              (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
     {
@@ -391,8 +394,8 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
-      _name = ("DriveStraight" + std::to_string(_dist_mm) + "mm@" +
-               std::to_string(_speed_mmps) + "mmpsAction");
+      SetName("DriveStraight" + std::to_string(_dist_mm) + "mm@" +
+               std::to_string(_speed_mmps) + "mmps");
       
       _hasStarted = false;
       
@@ -437,11 +440,13 @@ namespace Anki {
 #pragma mark ---- MoveHeadToAngleAction ----
     
     MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Radians& headAngle, const Radians& tolerance, const Radians& variability)
-    : IAction(robot)
+    : IAction(robot,
+              "MoveHeadTo" + std::to_string(RAD_TO_DEG(headAngle.ToFloat())) + "Deg",
+              RobotActionType::MOVE_HEAD_TO_ANGLE,
+              (u8)AnimTrackFlag::HEAD_TRACK)
     , _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)
-    , _name("MoveHeadTo" + std::to_string(RAD_TO_DEG(_headAngle.ToFloat())) + "DegAction")
     , _inPosition(false)
     {
       if(_headAngle < MIN_HEAD_ANGLE) {
@@ -594,11 +599,13 @@ namespace Anki {
 #pragma mark ---- MoveLiftToHeightAction ----
     
     MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const f32 height_mm, const f32 tolerance_mm, const f32 variability)
-    : IAction(robot)
+    : IAction(robot,
+              "MoveLiftTo" + std::to_string(height_mm) + "mm",
+              RobotActionType::MOVE_LIFT_TO_HEIGHT,
+              (u8)AnimTrackFlag::LIFT_TRACK)
     , _height_mm(height_mm)
     , _heightTolerance(tolerance_mm)
     , _variability(variability)
-    , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
     , _inPosition(false)
     {
       
@@ -607,8 +614,7 @@ namespace Anki {
     MoveLiftToHeightAction::MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm)
     : MoveLiftToHeightAction(robot, GetPresetHeight(preset), tolerance_mm, 0.f)
     {
-      _name = "MoveLiftTo";
-      _name += GetPresetName(preset);
+      SetName("MoveLiftTo" + GetPresetName(preset));
     }
     
     
@@ -775,7 +781,10 @@ namespace Anki {
     
     PanAndTiltAction::PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                                        bool isPanAbsolute, bool isTiltAbsolute)
-    : IAction(robot)
+    : IAction(robot,
+              "PanAndTilt",
+              RobotActionType::PAN_AND_TILT,
+              (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK)
     , _compoundAction(robot)
     , _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
@@ -892,9 +901,8 @@ namespace Anki {
       _compoundAction.AddAction(headAction);
       
       // Put the angles in the name for debugging
-      _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
-               "AndTilt" + std::to_string(std::round(_headTiltAngle.getDegrees())) +
-               "Action");
+      SetName("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
+               "AndTilt" + std::to_string(std::round(_headTiltAngle.getDegrees())));
       
       // Prevent the compound action from signaling completion
       _compoundAction.ShouldEmitCompletionSignal(false);
@@ -935,7 +943,7 @@ namespace Anki {
                               visuallyVerifyWhenDone,
                               headTrackWhenDone)
     {
-      
+
     }
     
     TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
@@ -950,6 +958,9 @@ namespace Anki {
     , _whichCode(whichCode)
     , _headTrackWhenDone(headTrackWhenDone)
     {
+      SetName("TurnTowardsObject");
+      SetType(RobotActionType::TURN_TOWARDS_OBJECT);
+
       if(visuallyVerifyWhenDone) {
         _visuallyVerifyAction = new VisuallyVerifyObjectAction(robot, objectID, whichCode);
         
@@ -1101,13 +1112,6 @@ namespace Anki {
       return ActionResult::SUCCESS;
     } // TurnTowardsObjectAction::CheckIfDone()
     
-    
-    const std::string& TurnTowardsObjectAction::GetName() const
-    {
-      static const std::string name("TurnTowardsObjectAction");
-      return name;
-    }
-    
     void TurnTowardsObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
@@ -1119,17 +1123,14 @@ namespace Anki {
 #pragma mark ---- TraverseObjectAction ----
     
     TraverseObjectAction::TraverseObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
-    : IActionRunner(robot)
+    : IActionRunner(robot,
+                    "TraverseObject",
+                    RobotActionType::TRAVERSE_OBJECT,
+                    (u8)AnimTrackFlag::BODY_TRACK)
     , _objectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
   
-    }
-    
-    const std::string& TraverseObjectAction::GetName() const
-    {
-      static const std::string name("TraverseObjectAction");
-      return name;
     }
     
     void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) {
@@ -1187,7 +1188,8 @@ namespace Anki {
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     , _isPoseSet(true)
     {
-      
+      SetName("TurnTowardsPose");
+      SetType(RobotActionType::TURN_TOWARDS_POSE);
     }
     
     TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle)
@@ -1297,14 +1299,7 @@ namespace Anki {
         return PanAndTiltAction::CheckIfDone();
       }
     }
-    
-    
-    const std::string& TurnTowardsPoseAction::GetName() const
-    {
-      static const std::string name("TurnTowardsPoseAction");
-      return name;
-    }
-
+  
     
 #pragma mark ---- TurnTowardsLastFacePoseAction ----
 
@@ -1313,13 +1308,14 @@ namespace Anki {
     , _faceID(faceID)
     , _sayName(sayName)
     {
-     
+      SetName("TurnTowardsLastFacePose");
+      SetType(RobotActionType::TURN_TOWARDS_LAST_FACE_POSE);
+      SetTracksToLock((u8)AnimTrackFlag::NO_TRACKS);
     }
 
     void TurnTowardsFaceAction::SetAction(IActionRunner *action)
     {
       if(nullptr != _action) {
-        _action->PrepForCompletion();
         Util::SafeDelete(_action);
       }
       _action = action;
@@ -1560,13 +1556,6 @@ namespace Anki {
       
     } // TurnTowardsFaceAction::CheckIfDone()
 
-  
-    const std::string& TurnTowardsFaceAction::GetName() const
-    {
-      static const std::string name("TurnTowardsFaceAction");
-      return name;
-    }
-
 #pragma mark ---- TurnTowardsFaceWrapperAction ----
 
     TurnTowardsFaceWrapperAction::TurnTowardsFaceWrapperAction(Robot& robot,
@@ -1592,14 +1581,17 @@ namespace Anki {
 #pragma mark ---- WaitAction ----
     
     WaitAction::WaitAction(Robot& robot, f32 waitTimeInSeconds)
-    : IAction(robot)
+    : IAction(robot,
+              "WaitSeconds",
+              RobotActionType::WAIT,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _waitTimeInSeconds(waitTimeInSeconds)
     , _doneTimeInSeconds(-1.f)
     {
       // Put the wait time with two decimals of precision in the action's name
       char tempBuffer[32];
-      snprintf(tempBuffer, 32, "Wait%.2fSecondsAction", _waitTimeInSeconds);
-      _name = tempBuffer;
+      snprintf(tempBuffer, 32, "Wait%.2fSeconds", _waitTimeInSeconds);
+      SetName(tempBuffer);
     }
     
     ActionResult WaitAction::Init()
@@ -1621,12 +1613,15 @@ namespace Anki {
 #pragma mark ---- WaitForImagesAction ----
     
     WaitForImagesAction::WaitForImagesAction(Robot& robot, u32 numFrames, VisionMode visionMode, TimeStamp_t afterTimeStamp)
-    : IAction(robot)
+    : IAction(robot,
+              "WaitFor" + std::to_string(numFrames) + "Images",
+              RobotActionType::WAIT_FOR_IMAGES,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _numFramesToWaitFor(numFrames)
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
     {
-      _name = "WaitFor" + std::to_string(_numFramesToWaitFor) + "Images";
+    
     }
     
     ActionResult WaitForImagesAction::Init()
@@ -1680,7 +1675,10 @@ namespace Anki {
 #pragma mark ---- ReadToolCodeAction ----
     
     ReadToolCodeAction::ReadToolCodeAction(Robot& robot, bool doCalibration)
-    : IAction(robot)
+    : IAction(robot,
+              "ReadToolCode",
+              RobotActionType::READ_TOOL_CODE,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _doCalibration(doCalibration)
     , _headAndLiftDownAction(robot)
     {

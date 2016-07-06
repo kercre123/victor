@@ -44,6 +44,8 @@ namespace Anki {
                                  sayName)
     , _flipBlockAction(new FlipBlockAction(robot, objectID))
     {
+      SetName("DriveToAndFlipBlock");
+      SetProxyTag(_flipBlockAction->GetTag());
       GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
       {
         return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
@@ -59,12 +61,6 @@ namespace Anki {
       {
         return GetPossiblePoses(_robot, object, possiblePoses, alreadyInPosition, tf);
       });
-    }
-    
-    const std::string& DriveAndFlipBlockAction::GetName() const
-    {
-      static const std::string name("DriveAndFlipBlockAction");
-      return name;
     }
     
     ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
@@ -186,16 +182,12 @@ namespace Anki {
     DriveToFlipBlockPoseAction::DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID)
     : DriveToObjectAction(robot, objectID, PreActionPose::FLIPPING)
     {
+      SetName("DriveToFlipBlockPose");
+      SetType(RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE);
       SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
       {
         return DriveAndFlipBlockAction::GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
       });
-    }
-    
-    const std::string& DriveToFlipBlockPoseAction::GetName() const
-    {
-      static const std::string name("DriveToFlipBlockPoseAction");
-      return name;
     }
     
     void DriveToFlipBlockPoseAction::ShouldDriveToClosestPreActionPose(bool tf)
@@ -208,7 +200,10 @@ namespace Anki {
     
     
     FlipBlockAction::FlipBlockAction(Robot& robot, ObjectID objectID)
-    : IAction(robot)
+    : IAction(robot,
+              "FlipBlock",
+              RobotActionType::FLIP_BLOCK,
+              ((u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK))
     , _objectID(objectID)
     , _compoundAction(robot)
     {
@@ -222,12 +217,6 @@ namespace Anki {
       {
         _robot.GetActionList().Cancel(_flipTag);
       }
-    }
-    
-    const std::string& FlipBlockAction::GetName() const
-    {
-      static const std::string name("FlipBlockAction");
-      return name;
     }
     
     ActionResult FlipBlockAction::Init()

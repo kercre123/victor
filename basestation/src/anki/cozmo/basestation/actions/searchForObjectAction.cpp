@@ -23,7 +23,10 @@ namespace Cozmo {
   
   
   SearchForObjectAction::SearchForObjectAction(Robot& robot, ObjectFamily desiredObjectFamily, ObjectID desiredObjectId, bool matchAnyObjectId)
-    : IAction(robot)
+    : IAction(robot,
+              "SearchForObject",
+              RobotActionType::SEARCH_FOR_OBJECT,
+              (u8)AnimTrackFlag::BODY_TRACK)
     , _compoundAction(robot)
     , _desiredObjectFamily(desiredObjectFamily)
     , _desiredObjectId(desiredObjectId)
@@ -31,10 +34,8 @@ namespace Cozmo {
     , _foundObject(false)
     , _shouldPopIdle(false)
   {
-    {
-      std::string objectName = matchAnyObjectId ? "_Any" : ("_" + std::to_string(desiredObjectId));
-      _name = std::string("SearchForObject_") + EnumToString(desiredObjectFamily) + objectName;
-    }
+    std::string objectName = matchAnyObjectId ? "_Any" : ("_" + std::to_string(desiredObjectId));
+    SetName(std::string("SearchForObject_") + EnumToString(desiredObjectFamily) + objectName);
     
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
                      
@@ -45,7 +46,7 @@ namespace Cozmo {
       _signalHandles.push_back( externalInterface->Subscribe(MessageEngineToGameTag::RobotObservedObject, eventHandler) );
     }
     
-    PRINT_NAMED_INFO("SearchForObjectAction::SearchForObjectAction", "name = '%s'", _name.c_str());
+    PRINT_NAMED_INFO("SearchForObjectAction::SearchForObjectAction", "name = '%s'", GetName().c_str());
   }
   
   

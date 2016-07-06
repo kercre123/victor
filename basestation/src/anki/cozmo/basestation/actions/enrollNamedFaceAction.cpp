@@ -68,7 +68,10 @@ namespace Cozmo {
   }
   
   EnrollNamedFaceAction::EnrollNamedFaceAction(Robot& robot, Vision::FaceID_t faceID, const std::string& name)
-  : IAction(robot)
+  : IAction(robot,
+            "EnrollNamedFace",
+            RobotActionType::ENROLL_NAMED_FACE,
+            (u8)AnimTrackFlag::NO_TRACKS)
   , _faceID(faceID)
   , _faceName(name)
   {

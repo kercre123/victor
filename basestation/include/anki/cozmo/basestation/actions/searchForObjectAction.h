@@ -42,13 +42,6 @@ public:
   SearchForObjectAction(Robot& robot, ObjectFamily desiredObjectFamily, ObjectID desiredObjectId, bool matchAnyObjectId);
   virtual ~SearchForObjectAction();
   
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return RobotActionType::SEARCH_FOR_OBJECT; }
-  
-  virtual u8 GetTracksToLock() const override { 
-    return (u8)AnimTrackFlag::BODY_TRACK;
-  }
-  
 protected:
   
   virtual ActionResult Init() override;
@@ -59,8 +52,6 @@ private:
   void HandleEvent(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   
   CompoundActionSequential  _compoundAction;
-  
-  std::string   _name;
   
   std::vector<Signal::SmartHandle> _signalHandles;
   

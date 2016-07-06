@@ -46,7 +46,11 @@ namespace Anki {
     class IDockAction : public IAction
     {
     public:
-      IDockAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
+      IDockAction(Robot& robot,
+                  ObjectID objectID,
+                  const std::string name,
+                  const RobotActionType type,
+                  const bool useManualSpeed = false);
       
       virtual ~IDockAction();
       
@@ -73,17 +77,6 @@ namespace Anki {
       void SetPostDockLiftMovingAnimation(AnimationTrigger animTrigger);
       
       void SetDockingMethod(DockingMethod dockingMethod) { _dockingMethod = dockingMethod; }
-      
-      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual u8 GetTracksToLock() const override
-      {
-        u8 ignoredTracks = (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-        if (!_useManualSpeed)
-        {
-          ignoredTracks |= ((u8)AnimTrackFlag::BODY_TRACK);
-        }
-        return ignoredTracks;
-      }
       
       void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
@@ -191,12 +184,6 @@ namespace Anki {
     public:
       PopAWheelieAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
       
-      virtual const std::string& GetName() const override;
-      
-      // Override to determine type (low roll, or potentially other rolls) dynamically depending
-      // on what we were doing.
-      virtual RobotActionType GetType() const override;
-      
       // Override completion signal to fill in information about rolled objects
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -223,10 +210,6 @@ namespace Anki {
       
       virtual ~AlignWithObjectAction();
       
-      virtual const std::string& GetName() const override;
-      
-      virtual RobotActionType GetType() const override {return RobotActionType::ALIGN_WITH_OBJECT;};
-      
     protected:
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
@@ -249,13 +232,7 @@ namespace Anki {
                          const bool useManualSpeed = false);
       
       virtual ~PickupObjectAction();
-      
-      virtual const std::string& GetName() const override;
-      
-      // Override to determine type (pick/place, low/high) dynamically depending
-      // on what we were doing.
-      virtual RobotActionType GetType() const override;
-      
+
     protected:
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
@@ -291,11 +268,6 @@ namespace Anki {
         Util::SafeDelete(_faceAndVerifyAction);
       }
       
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
-      
     protected:
       
       virtual ActionResult Init() override;
@@ -329,8 +301,6 @@ namespace Anki {
                                       const bool checkFreeDestination = false,
                                       const float destinationObjectPadding_mm = 0.0f);
       
-      virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
-      
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
     private:
@@ -355,12 +325,6 @@ namespace Anki {
         }
         Util::SafeDelete(_placementVerifyAction);
       }
-      
-      virtual const std::string& GetName() const override;
-      
-      // Override to determine type (pick/place, low/high) dynamically depending
-      // on what we were doing.
-      virtual RobotActionType GetType() const override;
       
     protected:
       
@@ -401,12 +365,6 @@ namespace Anki {
         Util::SafeDelete(_rollVerifyAction);
       }
       
-      virtual const std::string& GetName() const override;
-      
-      // Override to determine type (low roll, or potentially other rolls) dynamically depending
-      // on what we were doing.
-      virtual RobotActionType GetType() const override;
-      
       // Whether or not to do the deep roll action instead of the default roll
       void EnableDeepRoll(bool enable);
       
@@ -440,9 +398,6 @@ namespace Anki {
     public:
       CrossBridgeAction(Robot& robot, ObjectID bridgeID, const bool useManualSpeed);
       
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::CROSS_BRIDGE; }
-      
     protected:
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
@@ -464,9 +419,6 @@ namespace Anki {
     public:
       AscendOrDescendRampAction(Robot& robot, ObjectID rampID, const bool useManualSpeed);
       
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ASCEND_OR_DESCEND_RAMP; }
-      
     protected:
       
       virtual Result SelectDockAction(ActionableObject* object) override;
@@ -486,9 +438,6 @@ namespace Anki {
     {
     public:
       MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::MOUNT_CHARGER; }
       
     protected:
       

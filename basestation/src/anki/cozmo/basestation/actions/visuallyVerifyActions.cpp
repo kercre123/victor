@@ -21,8 +21,15 @@ namespace Cozmo {
 #pragma mark - 
 #pragma mark IVisuallyVerifyAction
   
-  IVisuallyVerifyAction::IVisuallyVerifyAction(Robot& robot, VisionMode imageTypeToWaitFor, LiftPreset liftPosition)
-  : IAction(robot)
+  IVisuallyVerifyAction::IVisuallyVerifyAction(Robot& robot,
+                                               const std::string name,
+                                               const RobotActionType type,
+                                               VisionMode imageTypeToWaitFor,
+                                               LiftPreset liftPosition)
+  : IAction(robot,
+            name,
+            type,
+            (u8)AnimTrackFlag::HEAD_TRACK)
   , _imageTypeToWaitFor(imageTypeToWaitFor)
   , _liftPreset(liftPosition)
   {
@@ -82,7 +89,11 @@ namespace Cozmo {
 VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(Robot& robot,
                                                        ObjectID objectID,
                                                        Vision::Marker::Code whichCode)
-  : IVisuallyVerifyAction(robot, VisionMode::DetectingMarkers, LiftPreset::OUT_OF_FOV)
+  : IVisuallyVerifyAction(robot,
+                          "VisuallyVerifyObject" + std::to_string(objectID.GetValue()),
+                          RobotActionType::VISUALLY_VERIFY_OBJECT,
+                          VisionMode::DetectingMarkers,
+                          LiftPreset::OUT_OF_FOV)
 , _objectID(objectID)
 , _whichCode(whichCode)
 {
@@ -92,13 +103,6 @@ VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(Robot& robot,
 VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
 {
 
-}
-
-const std::string& VisuallyVerifyObjectAction::GetName() const
-{
-  static const std::string name("VisuallyVerifyObject" + std::to_string(_objectID.GetValue())
-                                + "Action");
-  return name;
 }
 
 ActionResult VisuallyVerifyObjectAction::InitInternal()
@@ -186,7 +190,11 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
 #pragma mark VisuallyVerifyFaceAction
 
 VisuallyVerifyFaceAction::VisuallyVerifyFaceAction(Robot& robot, Vision::FaceID_t faceID)
-: IVisuallyVerifyAction(robot, VisionMode::DetectingFaces, LiftPreset::LOW_DOCK)
+: IVisuallyVerifyAction(robot,
+                        "VisuallyVerifyFace" + std::to_string(faceID),
+                        RobotActionType::VISUALLY_VERIFY_FACE,
+                        VisionMode::DetectingFaces,
+                        LiftPreset::LOW_DOCK)
 , _faceID(faceID)
 {
   
@@ -195,12 +203,6 @@ VisuallyVerifyFaceAction::VisuallyVerifyFaceAction(Robot& robot, Vision::FaceID_
 VisuallyVerifyFaceAction::~VisuallyVerifyFaceAction()
 {
   
-}
-
-const std::string& VisuallyVerifyFaceAction::GetName() const
-{
-  static const std::string name("VisuallyVerifyFace" + std::to_string(_faceID) + "Action");
-  return name;
 }
 
 ActionResult VisuallyVerifyFaceAction::InitInternal()

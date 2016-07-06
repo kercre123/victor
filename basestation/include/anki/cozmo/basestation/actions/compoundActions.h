@@ -36,16 +36,11 @@ namespace Anki {
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       
-      virtual const std::string& GetName() const override { return _name; }
-      
-      virtual RobotActionType GetType() const override;
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
 
       // The proxy action, if set, is the one whose type and completion info are used.
       // Specify it by the constituent action's tag.
-      void SetProxyTag(u32 tag) { _proxyTag = tag; _proxySet = true; }
+      void SetProxyTag(u32 tag);
 
     protected:
       
@@ -53,8 +48,6 @@ namespace Anki {
       virtual void Reset(bool shouldUnlockTracks = true) override;
       
       std::list<IActionRunner*> _actions;
-      
-      std::string _name;
       
       bool ShouldIgnoreFailure(IActionRunner* action) const;
       
@@ -91,10 +84,6 @@ namespace Anki {
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
       void SetDelayBetweenActions(f32 seconds);
-      
-      // We want to override and not ignore any movement tracks ourselves; our constituent actions will
-      // ignore what they want to when running
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
       // Called at the very beginning of UpdateInternal, so derived classes can
       // do additional work. If this does not return RESULT_OK, then UpdateInternal

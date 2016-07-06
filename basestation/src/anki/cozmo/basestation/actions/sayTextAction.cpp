@@ -21,7 +21,10 @@ namespace Anki {
 namespace Cozmo {
   
   SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style, bool clearOnCompletion)
-  : IAction(robot)
+  : IAction(robot,
+            "SayText",
+            RobotActionType::SAY_TEXT,
+            (u8)AnimTrackFlag::NO_TRACKS)
   , _text(text)
   , _style(style)
   , _clearOnCompletion(clearOnCompletion)
@@ -30,7 +33,7 @@ namespace Cozmo {
     if (ANKI_DEVELOPER_CODE) {
       // Only put the text in the action name in dev mode because the text
       // could be a person's name and we don't want that logged for privacy reasons
-      _name = "SayText_" + _text + "_Action";
+      SetName("SayText_" + _text);
     }
     
     {

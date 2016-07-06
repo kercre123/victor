@@ -44,7 +44,7 @@ public:
   };
   
   // Choose whether to track with head, body, or both (default)
-  void SetMode(Mode newMode) { _mode = newMode; }
+  void SetMode(Mode newMode);
   Mode GetMode() const { return _mode; }
   
   // Set how long the tracker will run without seeing whatever it is trying to
@@ -64,9 +64,6 @@ public:
   void SetMinPanAngleForSound(const Radians& angle) { _minPanAngleForSound = angle.getAbsoluteVal(); }
   void SetMinTiltAngleForSound(const Radians& angle) { _minTiltAngleForSound = angle.getAbsoluteVal(); }
   
-  // Tracking will lock animation and movement for head and/or body, depending on Mode.
-  virtual u8 GetTracksToLock() const override;
-  
   // Tracking is meant to be ongoing, so "never" timeout
   virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
   
@@ -82,7 +79,7 @@ public:
   
 protected:
 
-  ITrackAction(Robot& robot);
+  ITrackAction(Robot& robot, const std::string name, const RobotActionType type);
   virtual ~ITrackAction();
   
   // Note that derived classes should override InitInternal, which is called by Init
@@ -138,9 +135,6 @@ class TrackObjectAction : public ITrackAction
 public:
   TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType = true);
   virtual ~TrackObjectAction();
-  
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return RobotActionType::TRACK_OBJECT; }
 
 protected:
   
@@ -154,7 +148,6 @@ private:
   ObjectID             _objectID;
   ObjectType           _objectType;
   bool                 _trackByType;
-  std::string          _name = "TrackObjectAction";
   Pose3d               _lastTrackToPose;
   
 }; // class TrackObjectAction
@@ -168,9 +161,6 @@ public:
   
   TrackFaceAction(Robot& robot, FaceID faceID);
   virtual ~TrackFaceAction();
-  
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return RobotActionType::TRACK_FACE; }
 
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
   
@@ -185,7 +175,6 @@ private:
 
   FaceID               _faceID;
   TimeStamp_t          _lastFaceUpdate = 0;
-  std::string          _name = "TrackFaceAction";
 
 
 }; // class TrackFaceAction
@@ -195,10 +184,7 @@ class TrackMotionAction : public ITrackAction
 {
 public:
   
-  TrackMotionAction(Robot& robot) : ITrackAction(robot) { }
-  
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return RobotActionType::TRACK_MOTION; }
+  TrackMotionAction(Robot& robot) : ITrackAction(robot, "TrackMotion", RobotActionType::TRACK_MOTION) { }
   
 protected:
   
@@ -208,8 +194,6 @@ protected:
   virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
   
 private:
-  
-  std::string _name = "TrackMotionAction";
   
   bool _gotNewMotionObservation = false;
   

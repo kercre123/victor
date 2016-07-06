@@ -46,8 +46,11 @@ namespace Anki {
     class IActionRunner
     {
     public:
+      IActionRunner(Robot& robot,
+                    const std::string name,
+                    const RobotActionType type,
+                    const u8 trackToLock);
       
-      IActionRunner(Robot& robot);
       virtual ~IActionRunner();
       
       ActionResult Update();
@@ -67,14 +70,22 @@ namespace Anki {
       // be retried before return FAILURE_ABORT.
       void SetNumRetries(const u8 numRetries) {_numRetriesRemaining = numRetries;}
       
-      // Override this in derived classes to get more helpful messages for
-      // debugging. Otherwise, defaults to "UnnamedAction".
-      virtual const std::string& GetName() const;
+      // If a subclass wants to update their name or type after construction they can call these
+      // setters
+      void SetName(const std::string& name) { _name = name; }
+      const std::string& GetName() const { return _name; }
+
+      void SetType(const RobotActionType type) { _type = type; }
+      const RobotActionType GetType() const { return _type; }
       
-      // Override this in derived classes to return a (probably unique) integer
-      // representing this action's type. This will be reported in any
-      // completion signal that is emitted.
-      virtual RobotActionType GetType() const = 0;
+      // Allow the robot to move certain subsystems while the action executes,
+      // also disables any tracks used by animations that may have already been
+      // streamed and are in the robot's buffer, so they don't interfere
+      // with the action. I.e., by default actions will lockout all control of the robot,
+      // and extra movement commands are ignored.
+      // Note: uses the bits defined by AnimTrackFlag.
+      void SetTracksToLock(const u8 tracks);
+      const u8 GetTracksToLock() const { return _tracks; }
       
       // If this method returns true, then it means the derived class is interruptible,
       // can safely be re-queued using "NOW_AND_RESUME", and will pick back up safely
@@ -88,14 +99,6 @@ namespace Anki {
       
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
-      
-      // Override to have the action allow the robot to move certain
-      // subsystems while the action executes, also disables any tracks used by animations
-      // that may have already been streamed and are in the robot's buffer, so they don't interfere
-      // with the action. I.e., by default actions will lockout all control of the robot,
-      // and extra movement commands are ignored.
-      // Note: uses the bits defined by AnimTrackFlag.
-      virtual u8 GetTracksToLock() const;
       
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action should not try to lock or unlock tracks it uses
@@ -194,7 +197,11 @@ namespace Anki {
     {
     public:
       
-      IAction(Robot& robot);
+      IAction(Robot& robot,
+              const std::string name,
+              const RobotActionType type,
+              const u8 trackToLock);
+      
       virtual ~IAction() { }
       
       

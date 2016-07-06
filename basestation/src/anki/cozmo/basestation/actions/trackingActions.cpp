@@ -32,8 +32,11 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark ITrackAction
   
-ITrackAction::ITrackAction(Robot& robot)
-: IAction(robot)
+ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActionType type)
+: IAction(robot,
+          name,
+          type,
+          ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
 {
   
@@ -76,19 +79,23 @@ void ITrackAction::SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec)
   }
 }
 
-  
-u8 ITrackAction::GetTracksToLock() const
+void ITrackAction::SetMode(Mode newMode)
 {
-  switch(_mode)
+  _mode = newMode;
+  if(GetState() == ActionResult::FAILURE_NOT_STARTED)
   {
-    case Mode::HeadAndBody:
-      return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
-      
-    case Mode::HeadOnly:
-      return (u8)AnimTrackFlag::HEAD_TRACK;
-      
-    case Mode::BodyOnly:
-      return (u8)AnimTrackFlag::BODY_TRACK;
+    switch(_mode)
+    {
+      case Mode::HeadAndBody:
+        SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
+        break;
+      case Mode::HeadOnly:
+        SetTracksToLock((u8)AnimTrackFlag::HEAD_TRACK);
+        break;
+      case Mode::BodyOnly:
+        SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
+        break;
+    }
   }
 }
   
@@ -290,7 +297,9 @@ ActionResult ITrackAction::CheckIfDone()
 #pragma mark TrackObjectAction
 
 TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType)
-: ITrackAction(robot)
+: ITrackAction(robot,
+               "TrackObject",
+               RobotActionType::TRACK_OBJECT)
 , _objectID(objectID)
 , _trackByType(trackByType)
 {
@@ -320,9 +329,9 @@ ActionResult TrackObjectAction::InitInternal()
   _lastTrackToPose = object->GetPose();
   
   if(_trackByType) {
-    _name = "TrackObject" + std::string(EnumToString(_objectType)) + "Action";
+    SetName("TrackObject" + std::string(EnumToString(_objectType)));
   } else {
-    _name = "TrackObject" + std::to_string(_objectID) + "Action";
+    SetName("TrackObject" + std::to_string(_objectID));
   }
   
   _robot.GetMoveComponent().SetTrackToObject(_objectID);
@@ -433,7 +442,9 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
 #pragma mark TrackFaceAction
   
 TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
-  : ITrackAction(robot)
+  : ITrackAction(robot,
+                 "TrackFace",
+                 RobotActionType::TRACK_FACE)
   , _faceID(faceID)
 {
   
@@ -447,7 +458,7 @@ TrackFaceAction::~TrackFaceAction()
 
 ActionResult TrackFaceAction::InitInternal()
 {
-  _name = "TrackFace" + std::to_string(_faceID) + "Action";
+  SetName("TrackFace" + std::to_string(_faceID));
   _robot.GetMoveComponent().SetTrackToFace(_faceID);
   _lastFaceUpdate = 0;
   return ActionResult::SUCCESS;

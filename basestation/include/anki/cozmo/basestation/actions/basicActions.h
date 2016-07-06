@@ -43,11 +43,6 @@ namespace Cozmo {
       TurnInPlaceAction(Robot& robot, const Radians& angle, const bool isAbsolute);
       virtual ~TurnInPlaceAction();
       
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
-      
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxSpeed(f32 maxSpeed_radPerSec);
       void SetAccel(f32 accel_radPerSec2);
@@ -94,14 +89,6 @@ namespace Cozmo {
       SearchSideToSideAction(Robot& robot);
       virtual ~SearchSideToSideAction();
 
-      virtual const std::string& GetName() const override { return _name; }
-      
-      virtual RobotActionType GetType() const override { return RobotActionType::SEARCH_SIDE_TO_SIDE; }
-
-      virtual u8 GetTracksToLock() const override {
-        return (u8)AnimTrackFlag::BODY_TRACK;
-      }
-
       void SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads);
       void SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s);
 
@@ -117,8 +104,6 @@ namespace Cozmo {
       f32 _minSearchAngle_rads = DEG_TO_RAD(15.0f);
       f32 _maxSearchAngle_rads = DEG_TO_RAD(20.0f);
       bool _shouldPopIdle = false;
-
-      std::string _name = "SearchSideToSideAction";
     };
 
     // A simple action for drving a straight line forward or backward, without
@@ -130,11 +115,6 @@ namespace Cozmo {
       // Speed should be positive.
       DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps);
       virtual ~DriveStraightAction();
-      
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_STRAIGHT; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
       
       void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
       void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
@@ -155,8 +135,6 @@ namespace Cozmo {
       
       bool _hasStarted = false;
       
-      std::string _name = "DriveStraightAction";
-      
       bool _shouldPlayDrivingAnimation = true;
       
     }; // class DriveStraightAction
@@ -173,14 +151,6 @@ namespace Cozmo {
       PanAndTiltAction(Robot& robot, Radians bodyPan, Radians headTilt,
                        bool isPanAbsolute, bool isTiltAbsolute);
       virtual ~PanAndTiltAction();
-      
-      virtual const std::string& GetName() const override { return _name; }
-      
-      virtual RobotActionType GetType() const override { return RobotActionType::PAN_AND_TILT; }
-      
-      virtual u8 GetTracksToLock() const override {
-        return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
-      }
       
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec);
@@ -221,8 +191,6 @@ namespace Cozmo {
       f32     _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
       f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
       
-      std::string _name = "PanAndTiltAction";
-      
     }; // class PanAndTiltAction
     
     
@@ -234,11 +202,6 @@ namespace Cozmo {
                             const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
       virtual ~MoveHeadToAngleAction();
-      
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
       
       // Modify default parameters (must be called before Init() to have an effect)
       // TODO: Use setters for variability and tolerance too
@@ -263,7 +226,6 @@ namespace Cozmo {
       Radians     _angleTolerance;
       Radians     _variability;
       
-      std::string _name;
       bool        _inPosition;
       
       f32         _maxSpeed_radPerSec = 15.f;
@@ -299,11 +261,6 @@ namespace Cozmo {
                              const f32 tolerance_mm = 5.f, const f32 variability = 0);
       MoveLiftToHeightAction(Robot& robot, const Preset preset, const f32 tolerance_mm = 5.f);
       
-      virtual const std::string& GetName() const override { return _name; };
-      virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::LIFT_TRACK; }
-      
       // how long this action should take (which, in turn, effects lift speed)
       void SetDuration(float duration_sec) { _duration = duration_sec; }
       
@@ -330,7 +287,6 @@ namespace Cozmo {
       f32         _maxLiftSpeedRadPerSec = 10.0f;
       f32         _liftAccelRacPerSec2 = 20.0f;
       
-      std::string _name;
       bool        _inPosition;
       bool        _motionStarted = false;
       
@@ -351,9 +307,6 @@ namespace Cozmo {
         }
         Util::SafeDelete(_chosenAction);
       }
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }
       
       void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
       
@@ -380,9 +333,6 @@ namespace Cozmo {
     public:
       // Note that the rotation information in pose will be ignored
       TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_POSE; }
       
     protected:
       virtual ActionResult Init() override;
@@ -417,11 +367,6 @@ namespace Cozmo {
       WaitForImagesAction(Robot& robot, u32 numFrames, VisionMode visionMode = VisionMode::Count, TimeStamp_t afterTimeStamp = 0);
       virtual ~WaitForImagesAction() { }
       
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_IMAGES; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
-      
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
     protected:
@@ -429,8 +374,6 @@ namespace Cozmo {
       virtual ActionResult Init() override;
       
       virtual ActionResult CheckIfDone() override;
-      
-      std::string _name = "WaitForImages";
       
     private:
       u32 _numFramesToWaitFor;
@@ -441,7 +384,6 @@ namespace Cozmo {
       u32                             _numModeFramesSeen = 0;
       
     }; // WaitForImagesAction()
-  
   
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
@@ -468,9 +410,6 @@ namespace Cozmo {
                               bool headTrackWhenDone = false);
       
       virtual ~TurnTowardsObjectAction();
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_OBJECT; }
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -506,12 +445,6 @@ namespace Cozmo {
     public:
       TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle = PI_F, bool sayName = false);
       virtual ~TurnTowardsFaceAction();
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_FACE; }
-
-      // Will manually manage locking head and body internally
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
       // Set the maximum number of frames we are will to wait to see a face after
       // the initial blind turn to the last face pose.
@@ -559,15 +492,6 @@ namespace Cozmo {
       {
         
       }
-      
-      virtual const std::string& GetName() const override {
-        static const std::string name("TurnTowardsLastFacePoseAction");
-        return name;
-      }
-      
-      virtual RobotActionType GetType() const override {
-        return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE;
-      }
     };
   
     // Turn towards the last face before or after another action
@@ -594,11 +518,6 @@ namespace Cozmo {
     public:
       WaitAction(Robot& robot, f32 waitTimeInSeconds);
       
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::WAIT; }
-
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
-      
     protected:
       
       virtual ActionResult Init() override;
@@ -606,7 +525,6 @@ namespace Cozmo {
       
       f32         _waitTimeInSeconds;
       f32         _doneTimeInSeconds;
-      std::string _name;
       
     };
 
@@ -615,10 +533,10 @@ namespace Cozmo {
     class HangAction : public IAction
     {
     public:
-      HangAction(Robot& robot) : IAction(robot) {}
-      
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::HANG; }
+      HangAction(Robot& robot) : IAction(robot,
+                                         "Hang",
+                                         RobotActionType::HANG,
+                                         (u8)AnimTrackFlag::NO_TRACKS) {}
 
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
@@ -626,8 +544,6 @@ namespace Cozmo {
       
       virtual ActionResult Init() override { return ActionResult::SUCCESS; }
       virtual ActionResult CheckIfDone() override { return ActionResult::RUNNING; }
-      
-      std::string _name = "Hang";
 
     };
 
@@ -635,16 +551,14 @@ namespace Cozmo {
     {
     public:
       WaitForLambdaAction(Robot& robot, std::function<bool(Robot&)> lambda)
-        : IAction(robot)
+        : IAction(robot,
+                  "WaitForLambda",
+                  RobotActionType::WAIT_FOR_LAMBDA,
+                  (u8)AnimTrackFlag::NO_TRACKS)
         , _lambda(lambda)
         {
         }
       virtual ~WaitForLambdaAction() { }
-      
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_LAMBDA; }
-
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
 
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
@@ -659,8 +573,6 @@ namespace Cozmo {
           return ActionResult::RUNNING;
         }
       }
-      
-      std::string _name = "WaitForLambda";
 
     private:
       
@@ -675,14 +587,6 @@ namespace Cozmo {
       
       ReadToolCodeAction(Robot& robot, bool doCalibration = false);
       virtual ~ReadToolCodeAction();
-      
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::READ_TOOL_CODE; }
-      
-      // Let internal head and lift action do locking
-      virtual u8 GetTracksToLock() const override {
-        return (u8)AnimTrackFlag::NO_TRACKS;
-      }
       
       virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
       

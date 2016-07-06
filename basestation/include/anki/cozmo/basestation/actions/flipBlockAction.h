@@ -34,8 +34,6 @@ namespace Anki {
                               Radians maxTurnTowardsFaceAngle_rad = 0.f,
                               const bool sayName = false);
       
-      virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
-      virtual const std::string& GetName() const override;
       void ShouldDriveToClosestPreActionPose(bool tf);
       
       static ActionResult GetPossiblePoses(Robot& robot,
@@ -54,8 +52,6 @@ namespace Anki {
     public:
       DriveToFlipBlockPoseAction(Robot& robot, ObjectID objectID);
       
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
       void ShouldDriveToClosestPreActionPose(bool tf);
     };
     
@@ -66,10 +62,6 @@ namespace Anki {
     public:
       FlipBlockAction(Robot& robot, ObjectID objectID);
       virtual ~FlipBlockAction();
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::FLIP_BLOCK; }
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       virtual ActionResult Init() override;

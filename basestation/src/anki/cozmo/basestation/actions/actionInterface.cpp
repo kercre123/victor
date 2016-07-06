@@ -32,8 +32,15 @@ namespace Anki {
     u32 IActionRunner::sTagCounter = 10000;
     std::set<u32> IActionRunner::sInUseTagSet;
     
-    IActionRunner::IActionRunner(Robot& robot)
+    IActionRunner::IActionRunner(Robot& robot,
+                                 const std::string name,
+                                 const RobotActionType type,
+                                 const u8 trackToLock)
     : _robot(robot)
+    , _completionUnion(ActionCompletedUnion())
+    , _type(type)
+    , _name(name)
+    , _tracks(trackToLock)
     {
       // Assign every action a unique tag that is not currently in use
       while (IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG) ||
@@ -43,6 +50,91 @@ namespace Anki {
       
       _idTag = IActionRunner::sTagCounter++;
       _customTag = _idTag;
+      
+      // This giant switch is necessary to set the appropriate completion union tags in order
+      // to avoid emitting a completion union with an invalid tag
+      // There is no default case in order to prevent people from forgetting to add it here
+      switch(type)
+      {
+        case RobotActionType::ALIGN_WITH_OBJECT:
+        case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
+        case RobotActionType::PICKUP_OBJECT_HIGH:
+        case RobotActionType::PICKUP_OBJECT_LOW:
+        case RobotActionType::PLACE_OBJECT_HIGH:
+        case RobotActionType::PLACE_OBJECT_LOW:
+        case RobotActionType::POP_A_WHEELIE:
+        case RobotActionType::ROLL_OBJECT_LOW:
+        case RobotActionType::TURN_TOWARDS_OBJECT:
+        {
+          _completionUnion.Set_objectInteractionCompleted(ObjectInteractionCompleted());
+          break;
+        }
+      
+        case RobotActionType::READ_TOOL_CODE:
+        {
+          _completionUnion.Set_readToolCodeCompleted(ReadToolCodeCompleted());
+          break;
+        }
+        
+        case RobotActionType::PLAY_ANIMATION:
+        {
+          _completionUnion.Set_animationCompleted(AnimationCompleted());
+          break;
+        }
+      
+        case RobotActionType::DEVICE_AUDIO:
+        {
+          _completionUnion.Set_deviceAudioCompleted(DeviceAudioCompleted());
+          break;
+        }
+        
+        case RobotActionType::TRACK_FACE:
+        {
+          _completionUnion.Set_trackFaceCompleted(TrackFaceCompleted());
+          break;
+        }
+        
+        case RobotActionType::ENROLL_NAMED_FACE:
+        {
+          _completionUnion.Set_faceEnrollmentCompleted(FaceEnrollmentCompleted());
+          break;
+        }
+        
+        // These actions don't set completion unions
+        case RobotActionType::ASCEND_OR_DESCEND_RAMP:
+        case RobotActionType::COMPOUND:
+        case RobotActionType::CROSS_BRIDGE:
+        case RobotActionType::DRIVE_STRAIGHT:
+        case RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE:
+        case RobotActionType::DRIVE_TO_OBJECT:
+        case RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT:
+        case RobotActionType::DRIVE_TO_POSE:
+        case RobotActionType::FLIP_BLOCK:
+        case RobotActionType::HANG:
+        case RobotActionType::MOUNT_CHARGER:
+        case RobotActionType::MOVE_HEAD_TO_ANGLE:
+        case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+        case RobotActionType::PAN_AND_TILT:
+        case RobotActionType::SAY_TEXT:
+        case RobotActionType::SEARCH_FOR_OBJECT:
+        case RobotActionType::SEARCH_SIDE_TO_SIDE:
+        case RobotActionType::TRACK_MOTION:
+        case RobotActionType::TRACK_OBJECT:
+        case RobotActionType::TRAVERSE_OBJECT:
+        case RobotActionType::TURN_IN_PLACE:
+        case RobotActionType::TURN_TOWARDS_FACE:
+        case RobotActionType::TURN_TOWARDS_LAST_FACE_POSE:
+        case RobotActionType::TURN_TOWARDS_POSE:
+        case RobotActionType::UNKNOWN:
+        case RobotActionType::VISUALLY_VERIFY_FACE:
+        case RobotActionType::VISUALLY_VERIFY_OBJECT:
+        case RobotActionType::WAIT:
+        case RobotActionType::WAIT_FOR_IMAGES:
+        case RobotActionType::WAIT_FOR_LAMBDA:
+        {
+          break;
+        }
+      }
     }
     
     IActionRunner::~IActionRunner()
@@ -222,9 +314,6 @@ namespace Anki {
       if(!_preppedForCompletion)
       {
         GetCompletionUnion(_completionUnion);
-        _type = GetType();
-        _name = GetName();
-        _tracks = GetTracksToLock();
         _preppedForCompletion = true;
       } else {
         PRINT_NAMED_DEBUG("IActionRunner.PrepForCompletion.AlreadyPrepped", "%s [%d]", _name.c_str(), GetTag());
@@ -241,11 +330,6 @@ namespace Anki {
       }
     }
     
-    const std::string& IActionRunner::GetName() const {
-      static const std::string name("UnnamedAction");
-      return name;
-    }
-    
 #   if USE_ACTION_CALLBACKS
     void IActionRunner::AddCompletionCallback(ActionCompletionCallback callback)
     {
@@ -260,10 +344,6 @@ namespace Anki {
     }
 #   endif // USE_ACTION_CALLBACKS
 
-    u8 IActionRunner::GetTracksToLock() const
-    {
-      return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK;
-    }
     
     void IActionRunner::UnlockTracks()
     {
@@ -282,10 +362,28 @@ namespace Anki {
       }
     }
     
+    void IActionRunner::SetTracksToLock(const u8 tracks)
+    {
+      if(_state == ActionResult::FAILURE_NOT_STARTED)
+      {
+        _tracks = tracks;
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("IActionRunner.SetTracksToLock", "Trying to set tracks to lock while running");
+      }
+    }
+    
 #pragma mark ---- IAction ----
     
-    IAction::IAction(Robot& robot)
-    : IActionRunner(robot)
+    IAction::IAction(Robot& robot,
+                     const std::string name,
+                     const RobotActionType type,
+                     const u8 trackToLock)
+    : IActionRunner(robot,
+                    name,
+                    type,
+                    trackToLock)
     {
       Reset();
     }

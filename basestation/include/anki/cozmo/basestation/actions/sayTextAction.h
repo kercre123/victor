@@ -31,14 +31,7 @@ namespace Cozmo {
     
     virtual ~SayTextAction();
     
-    virtual const std::string& GetName() const override { return _name; }
-    virtual RobotActionType GetType() const override { return RobotActionType::SAY_TEXT; }
-    
     virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
-    
-    virtual u8 GetTracksToLock() const override { 
-      return (u8)AnimTrackFlag::NO_TRACKS;
-    }
     
     // Use a the animation group tied to a specific GameEvent.
     // Use GameEvent::Count to use built-in animation (default).
@@ -54,7 +47,6 @@ namespace Cozmo {
   private:
     
     std::string               _text;
-    std::string               _name                 = "SayTextAction";
     SayTextStyle              _style;
     bool                      _clearOnCompletion    = true;
     bool                      _isAudioReady         = false;

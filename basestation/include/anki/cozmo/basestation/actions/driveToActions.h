@@ -68,15 +68,6 @@ namespace Anki {
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
-
-      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
-      virtual u8 GetTracksToLock() const override
-      {
-        return (_useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK);
-      }
 
     protected:
       
@@ -132,11 +123,6 @@ namespace Anki {
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::BODY_TRACK; }
       
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
@@ -203,9 +189,6 @@ namespace Anki {
                                       const bool useManualSpeed = false,
                                       const bool checkDestinationFree = false,
                                       const float destinationObjectPadding_mm = 0.0f);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT; }
       
     protected:
     
@@ -427,8 +410,6 @@ namespace Anki {
       
       virtual ~DriveToAndTraverseObjectAction() { }
       
-      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
-      
     };
     
     
@@ -442,8 +423,6 @@ namespace Anki {
                                    const bool sayName = false);
       
       virtual ~DriveToAndMountChargerAction() { }
-      
-      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
       
     };
   }

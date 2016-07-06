@@ -43,14 +43,9 @@ namespace Anki {
       
       virtual ~PlayAnimationAction();
       
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
-      
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
     protected:
       
@@ -58,7 +53,6 @@ namespace Anki {
       virtual ActionResult CheckIfDone() override;
       
       std::string               _animName;
-      std::string               _name;
       u32                       _numLoopsRemaining;
       bool                      _startedPlaying;
       bool                      _stoppedPlaying;
@@ -109,12 +103,7 @@ namespace Anki {
       // Change Music state
       DeviceAudioAction(Robot& robot, const Audio::GameState::Music state);
       
-      virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
-      
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
-      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
     protected:
       
@@ -128,7 +117,6 @@ namespace Anki {
       };
       
       AudioActionType                   _actionType;
-      std::string                       _name;
       bool                              _isCompleted    = false;
       bool                              _waitUntilDone  = false;
       Audio::GameEvent::GenericEvent    _event          = Audio::GameEvent::GenericEvent::Invalid;

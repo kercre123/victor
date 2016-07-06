@@ -32,13 +32,6 @@ namespace Cozmo {
     
     virtual ~EnrollNamedFaceAction();
     
-    virtual const std::string& GetName() const override { return _actionName; }
-    virtual RobotActionType GetType() const override { return RobotActionType::ENROLL_NAMED_FACE; }
-        
-    virtual u8 GetTracksToLock() const override {
-      return (u8)AnimTrackFlag::NO_TRACKS;
-    }
-    
     virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
     
     // Specify which enrollment sequence to use
@@ -73,7 +66,6 @@ namespace Cozmo {
     FaceEnrollmentSequence _whichSeq = FaceEnrollmentSequence::Default;
 
     // Member variables:
-    std::string               _actionName = "EnrollNamedFace";
     Vision::FaceID_t          _faceID = Vision::UnknownFaceID;
     std::string               _faceName;
     Radians                   _lastRelBodyAngle = 0.f;

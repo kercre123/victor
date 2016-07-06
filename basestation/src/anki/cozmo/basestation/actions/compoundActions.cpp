@@ -22,7 +22,10 @@ namespace Anki {
 #pragma mark ---- ICompoundAction ----
     
     ICompoundAction::ICompoundAction(Robot& robot, std::list<IActionRunner*> actions)
-    : IActionRunner(robot)
+    : IActionRunner(robot,
+                    "ICompoundAction",
+                    RobotActionType::COMPOUND,
+                    (u8)AnimTrackFlag::NO_TRACKS)
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
@@ -49,11 +52,12 @@ namespace Anki {
     
     void ICompoundAction::AddAction(IActionRunner* action, bool ignoreFailure)
     {
+      std::string name = GetName();
       if(_actions.empty()) {
-        _name = "["; // initialize with opening bracket for first action
+        name = "["; // initialize with opening bracket for first action
       } else {
-        _name.pop_back(); // remove last char ']'
-        _name += "+";
+        name.pop_back(); // remove last char ']'
+        name += "+";
       }
       
       // All added actions have the same message display setting as the parent
@@ -64,8 +68,10 @@ namespace Anki {
       action->ShouldEmitCompletionSignal(false);
       
       _actions.emplace_back(action);
-      _name += action->GetName();
-      _name += "]";
+      name += action->GetName();
+      name += "]";
+      
+      SetName(name);
       
       if(ignoreFailure) {
         _ignoreFailure.insert(action);
@@ -115,26 +121,21 @@ namespace Anki {
       return _ignoreFailure.find(action) != _ignoreFailure.end();
     }
     
-    RobotActionType ICompoundAction::GetType() const
+    void ICompoundAction::SetProxyTag(u32 tag)
     {
-      if(_proxySet)
-      {
-        for(auto action : _actions) {
-          if(action->GetTag() == _proxyTag) {
-            return action->GetType();
-          }
+      _proxyTag = tag;
+      _proxySet = true;
+    
+      for(auto action : _actions) {
+        if(action->GetTag() == _proxyTag) {
+          SetType(action->GetType());
         }
-
-        auto iter = _completedActionInfoStack.find(_proxyTag);
-        if(iter != _completedActionInfoStack.end()) {
-          return iter->second.type;
-        }
-        
-        PRINT_NAMED_WARNING("ICompoundAction.GetType.InvalidProxyTag",
-                            "Completion data with proxy tag=%d not found", _proxyTag);
       }
       
-      return RobotActionType::COMPOUND;
+      auto iter = _completedActionInfoStack.find(_proxyTag);
+      if(iter != _completedActionInfoStack.end()) {
+        SetType(iter->second.type);
+      }
     }
     
     void ICompoundAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const

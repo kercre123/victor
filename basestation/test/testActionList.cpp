@@ -36,26 +36,21 @@ class TestAction : public IAction
 {
   public:
     TestAction(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
-    virtual ~TestAction() { actionsDestroyed.push_back(_name); }
-    virtual const std::string& GetName() const override { return _name; }
-    virtual RobotActionType GetType() const override { return _type; }
-    virtual u8 GetTracksToLock() const override { return _tracks; }
+    virtual ~TestAction() { actionsDestroyed.push_back(GetName()); }
     int _numRetries = 0;
     bool _complete = false;
   protected:
     virtual ActionResult Init() override;
     virtual ActionResult CheckIfDone() override;
-    std::string _name = "Default";
-    RobotActionType _type;
-    u8 _tracks;
 };
 
 TestAction::TestAction(Robot& robot, std::string name, RobotActionType type, u8 tracks)
-: IAction(robot)
+: IAction(robot,
+          name,
+          type,
+          tracks)
 {
-  _name = name;
-  _type = type;
-  _tracks = tracks;
+
 }
 
 ActionResult TestAction::Init() { return ActionResult::SUCCESS; }
@@ -75,28 +70,22 @@ class TestInterruptAction : public IAction
 {
 public:
   TestInterruptAction(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
-  virtual ~TestInterruptAction() { actionsDestroyed.push_back(_name); }
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return _type; }
-  virtual u8 GetTracksToLock() const override { return _tracks; }
+  virtual ~TestInterruptAction() { actionsDestroyed.push_back(GetName()); }
   bool _complete;
 protected:
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
   virtual bool InterruptInternal() override { return true; }
-  std::string _name;
-  RobotActionType _type;
-  u8 _tracks;
 };
 
 
 TestInterruptAction::TestInterruptAction(Robot& robot, std::string name, RobotActionType type, u8 tracks)
-: IAction(robot)
+: IAction(robot,
+          name,
+          type,
+          tracks)
 {
-  _name = name;
   _complete = false;
-  _type = type;
-  _tracks = tracks;
 }
 
 ActionResult TestInterruptAction::Init() { return ActionResult::SUCCESS; }
@@ -123,6 +112,7 @@ TestCompoundActionSequential::TestCompoundActionSequential(Robot& robot,
 : CompoundActionSequential(robot, actions)
 {
   _name = name;
+  SetName(name);
 }
 
 // Simple parallel action with a function to expose its internal list of actions
@@ -130,10 +120,10 @@ class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
   TestCompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
-  virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(_name); }
+  virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(GetName()); }
   virtual std::list<IActionRunner*> GetActions() { return _actions; }
 private:
-  std::string name;
+  std::string _name;
 };
 
 TestCompoundActionParallel::TestCompoundActionParallel(Robot& robot,
@@ -142,6 +132,7 @@ TestCompoundActionParallel::TestCompoundActionParallel(Robot& robot,
 : CompoundActionParallel(robot, actions)
 {
   _name = name;
+  SetName(name);
 }
 
 // Simple Interruptable action that can be set to complete
@@ -149,29 +140,25 @@ class TestActionWithinAction : public IAction
 {
 public:
   TestActionWithinAction(Robot& robot, std::string name, RobotActionType type);
-  virtual ~TestActionWithinAction() { actionsDestroyed.push_back(_name); }
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return _type; }
-  virtual u8 GetTracksToLock() const override { return track1 | track2; }
+  virtual ~TestActionWithinAction() { actionsDestroyed.push_back(GetName()); }
   TestCompoundActionSequential* GetAction() { return &_compoundAction; }
   bool _complete;
 protected:
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
   virtual bool InterruptInternal() override { return true; }
-  std::string _name;
-  RobotActionType _type;
 private:
   TestCompoundActionSequential _compoundAction;
 };
 
 TestActionWithinAction::TestActionWithinAction(Robot& robot, std::string name, RobotActionType type)
-: IAction(robot)
+: IAction(robot,
+          name,
+          type,
+          track1 | track2)
 , _compoundAction(robot, {}, "Comp1")
 {
-  _name = name;
   _complete = false;
-  _type = type;
 }
 
 ActionResult TestActionWithinAction::Init()
@@ -202,32 +189,27 @@ public:
   TestActionThatCancels(Robot& robot, std::string name, RobotActionType type, u8 tracks = 0);
   virtual ~TestActionThatCancels()
   {
-    actionsDestroyed.push_back(_name);
+    actionsDestroyed.push_back(GetName());
     for(auto tag : _tagsToCancelOnDestroy)
     {
       _robot.GetActionList().Cancel(tag);
     }
   }
-  virtual const std::string& GetName() const override { return _name; }
-  virtual RobotActionType GetType() const override { return _type; }
-  virtual u8 GetTracksToLock() const override { return _tracks; }
   int _numRetries = 0;
   bool _complete = false;
   std::vector<u32> _tagsToCancelOnDestroy;
 protected:
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
-  std::string _name = "Default";
-  RobotActionType _type;
-  u8 _tracks;
 };
 
 TestActionThatCancels::TestActionThatCancels(Robot& robot, std::string name, RobotActionType type, u8 tracks)
-: IAction(robot)
+: IAction(robot,
+          name,
+          type,
+          tracks)
 {
-  _name = name;
-  _type = type;
-  _tracks = tracks;
+
 }
 
 ActionResult TestActionThatCancels::Init() { return ActionResult::SUCCESS; }
@@ -246,8 +228,10 @@ ActionResult TestActionThatCancels::CheckIfDone()
 void CheckActionDestroyed(std::vector<std::string> actualNames)
 {
   ASSERT_EQ(actionsDestroyed.size(), actualNames.size());
+  
   for(int i = 0; i < actionsDestroyed.size(); i++)
   {
+    PRINT_NAMED_INFO("", "%s %s", actionsDestroyed[i].c_str(), actualNames[i].c_str());
     EXPECT_TRUE(actionsDestroyed[i] == actualNames[i]);
   }
   actionsDestroyed.clear();

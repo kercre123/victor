@@ -69,8 +69,17 @@ namespace Anki {
 
     #pragma mark ---- IDockAction ----
 
-    IDockAction::IDockAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
-    : IAction(robot)
+    IDockAction::IDockAction(Robot& robot,
+                             ObjectID objectID,
+                             const std::string name,
+                             const RobotActionType type,
+                             const bool useManualSpeed)
+    : IAction(robot,
+              name,
+              type,
+              ((u8)AnimTrackFlag::HEAD_TRACK |
+               (u8)AnimTrackFlag::LIFT_TRACK |
+               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK)))
     , _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
     , _dockingMethod((DockingMethod)kDefaultDockingMethod)
@@ -469,29 +478,13 @@ namespace Anki {
     PopAWheelieAction::PopAWheelieAction(Robot& robot,
                                          ObjectID objectID,
                                          const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(robot,
+                  objectID,
+                  "PopAWheelie",
+                  RobotActionType::POP_A_WHEELIE,
+                  useManualSpeed)
     {
       
-    }
-    
-    const std::string& PopAWheelieAction::GetName() const
-    {
-      static const std::string name("PopAWheelieAction");
-      return name;
-    }
-    
-    RobotActionType PopAWheelieAction::GetType() const
-    {
-      switch(_dockAction)
-      {
-        case DockAction::DA_POP_A_WHEELIE:
-          return RobotActionType::POP_A_WHEELIE;
-          
-        default:
-          PRINT_NAMED_WARNING("PopAWheelieAction",
-                              "Dock action not set before determining action type.");
-          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
-      }
     }
     
     void PopAWheelieAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -602,7 +595,11 @@ namespace Anki {
                                                  const f32 distanceFromMarker_mm,
                                                  const AlignmentType alignmentType,
                                                  const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(robot,
+                  objectID,
+                  "AlignWithObject",
+                  RobotActionType::ALIGN_WITH_OBJECT,
+                  useManualSpeed)
     {
       f32 distance = 0;
       switch(alignmentType)
@@ -635,13 +632,6 @@ namespace Anki {
     {
       
     }
-    
-    const std::string& AlignWithObjectAction::GetName() const
-    {
-      static const std::string name("AlignWithObjectAction");
-      return name;
-    }
-    
     
     void AlignWithObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
@@ -694,7 +684,11 @@ namespace Anki {
 #pragma mark ---- PickupObjectAction ----
     
     PickupObjectAction::PickupObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(robot,
+                  objectID,
+                  "PickupObject",
+                  RobotActionType::PICK_AND_PLACE_INCOMPLETE,
+                  useManualSpeed)
     {
       _dockingMethod = (DockingMethod)kPickupDockingMethod;
       SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPickup);
@@ -706,29 +700,6 @@ namespace Anki {
       {
         _verifyAction->PrepForCompletion();
         Util::SafeDelete(_verifyAction);
-      }
-    }
-    
-    const std::string& PickupObjectAction::GetName() const
-    {
-      static const std::string name("PickupObjectAction");
-      return name;
-    }
-    
-    RobotActionType PickupObjectAction::GetType() const
-    {
-      switch(_dockAction)
-      {
-        case DockAction::DA_PICKUP_HIGH:
-          return RobotActionType::PICKUP_OBJECT_HIGH;
-          
-        case DockAction::DA_PICKUP_LOW:
-          return RobotActionType::PICKUP_OBJECT_LOW;
-          
-        default:
-          PRINT_NAMED_INFO("PickupObjectAction.GetType.DockActionNotSet",
-                           "Dock action not set before determining action type.");
-          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
       }
     }
     
@@ -782,6 +753,7 @@ namespace Anki {
       // carrying a block
       const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - _robot.GetPose().GetTranslation().z();
       _dockAction = DockAction::DA_PICKUP_LOW;
+      SetType(RobotActionType::PICKUP_OBJECT_LOW);
       
       if (_robot.IsCarryingObject()) {
         PRINT_NAMED_INFO("PickupObjectAction.SelectDockAction", "Already carrying object. Can't pickup object. Aborting.");
@@ -789,6 +761,7 @@ namespace Anki {
         return RESULT_FAIL;
       } else if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { // TODO: Stop using constant ROBOT_BOUNDING_Z for this
         _dockAction = DockAction::DA_PICKUP_HIGH;
+        SetType(RobotActionType::PLACE_OBJECT_HIGH);
       }
       
       return RESULT_OK;
@@ -922,15 +895,12 @@ namespace Anki {
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction(Robot& robot)
-    : IAction(robot)
+    : IAction(robot,
+              "PlaceObjectOnGround",
+              RobotActionType::PLACE_OBJECT_LOW,
+              (u8)AnimTrackFlag::LIFT_TRACK)
     {
       
-    }
-    
-    const std::string& PlaceObjectOnGroundAction::GetName() const
-    {
-      static const std::string name("PlaceObjectOnGroundAction");
-      return name;
     }
     
     ActionResult PlaceObjectOnGroundAction::Init()
@@ -1070,36 +1040,17 @@ namespace Anki {
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(robot,
+                  objectID,
+                  "PlaceRelObject",
+                  RobotActionType::PICK_AND_PLACE_INCOMPLETE,
+                  useManualSpeed)
     {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
       SetPostDockLiftMovingAnimation(placeOnGround ?
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceLow :
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceHigh);
-    }
-    
-    const std::string& PlaceRelObjectAction::GetName() const
-    {
-      static const std::string name("PlaceRelObjectAction");
-      return name;
-    }
-    
-    RobotActionType PlaceRelObjectAction::GetType() const
-    {
-      switch(_dockAction)
-      {
-        case DockAction::DA_PLACE_HIGH:
-          return RobotActionType::PLACE_OBJECT_HIGH;
-          
-        case DockAction::DA_PLACE_LOW:
-          return RobotActionType::PLACE_OBJECT_LOW;
-          
-        default:
-          PRINT_NAMED_WARNING("PlaceRelObjectAction.GetType",
-                              "Dock action not set before determining action type.");
-          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
-      }
     }
     
     void PlaceRelObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1159,7 +1110,12 @@ namespace Anki {
       _dockAction = _placeObjectOnGroundIfCarrying ? DockAction::DA_PLACE_LOW : DockAction::DA_PLACE_HIGH;
       
       if(_dockAction == DockAction::DA_PLACE_HIGH) {
+        SetType(RobotActionType::PLACE_OBJECT_HIGH);
         _dockingMethod = (DockingMethod)kStackDockingMethod;
+      }
+      else
+      {
+        SetType(RobotActionType::PLACE_OBJECT_LOW);
       }
       
       // Need to record the object we are currently carrying because it
@@ -1284,37 +1240,21 @@ namespace Anki {
 #pragma mark ---- RollObjectAction ----
     
     RollObjectAction::RollObjectAction(Robot& robot, ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(robot, objectID, useManualSpeed)
+    : IDockAction(robot,
+                  objectID,
+                  "RollObject",
+                  RobotActionType::ROLL_OBJECT_LOW,
+                  useManualSpeed)
     {
       _dockingMethod = (DockingMethod)kRollDockingMethod;
       _dockAction = DockAction::DA_ROLL_LOW;
       SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPlaceRoll);
     }
     
-    const std::string& RollObjectAction::GetName() const
-    {
-      static const std::string name("RollObjectAction");
-      return name;
-    }
-    
-    RobotActionType RollObjectAction::GetType() const
-    {
-      switch(_dockAction)
-      {
-        case DockAction::DA_ROLL_LOW:
-        case DockAction::DA_DEEP_ROLL_LOW:
-          return RobotActionType::ROLL_OBJECT_LOW;
-          
-        default:
-          PRINT_NAMED_WARNING("RollObjectAction.GetType",
-                              "Dock action not set before determining action type.");
-          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
-      }
-    }
-    
     void RollObjectAction::EnableDeepRoll(bool enable)
     {
       _dockAction = enable ? DockAction::DA_DEEP_ROLL_LOW : DockAction::DA_ROLL_LOW;
+      SetName(enable ? "DeepRollObject" : "RollObject");
     }
     
     void RollObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1470,15 +1410,13 @@ namespace Anki {
 #pragma mark ---- AscendOrDescendRampAction ----
     
     AscendOrDescendRampAction::AscendOrDescendRampAction(Robot& robot, ObjectID rampID, const bool useManualSpeed)
-    : IDockAction(robot, rampID, useManualSpeed)
+    : IDockAction(robot,
+                  rampID,
+                  "AscendOrDescendRamp",
+                  RobotActionType::ASCEND_OR_DESCEND_RAMP,
+                  useManualSpeed)
     {
       
-    }
-    
-    const std::string& AscendOrDescendRampAction::GetName() const
-    {
-      static const std::string name("AscendOrDescendRampAction");
-      return name;
     }
     
     Result AscendOrDescendRampAction::SelectDockAction(ActionableObject* object)
@@ -1530,17 +1468,15 @@ namespace Anki {
 #pragma mark ---- MountChargerAction ----
     
     MountChargerAction::MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed)
-    : IDockAction(robot, chargerID, useManualSpeed)
+    : IDockAction(robot,
+                  chargerID,
+                  "MountCharger",
+                  RobotActionType::MOUNT_CHARGER,
+                  useManualSpeed)
     {
       // TODO: Charger marker pose still oscillates so just do your best from where you are
       //       rather than oscillating between jumpy predock poses.
       SetDoNearPredockPoseCheck(false);
-    }
-    
-    const std::string& MountChargerAction::GetName() const
-    {
-      static const std::string name("MountChargerAction");
-      return name;
     }
     
     Result MountChargerAction::SelectDockAction(ActionableObject* object)
@@ -1579,15 +1515,13 @@ namespace Anki {
 #pragma mark ---- CrossBridgeAction ----
     
     CrossBridgeAction::CrossBridgeAction(Robot& robot, ObjectID bridgeID, const bool useManualSpeed)
-    : IDockAction(robot, bridgeID, useManualSpeed)
+    : IDockAction(robot,
+                  bridgeID,
+                  "CrossBridge",
+                  RobotActionType::CROSS_BRIDGE,
+                  useManualSpeed)
     {
       
-    }
-    
-    const std::string& CrossBridgeAction::GetName() const
-    {
-      static const std::string name("CrossBridgeAction");
-      return name;
     }
     
     const Vision::KnownMarker* CrossBridgeAction::GetDockMarker2(const std::vector<PreActionPose> &preActionPoses, const size_t closestIndex)

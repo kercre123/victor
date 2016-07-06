@@ -78,7 +78,10 @@ namespace Anki {
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
                                              const bool useManualSpeed)
-    : IAction(robot)
+    : IAction(robot,
+              "DriveToObject",
+              RobotActionType::DRIVE_TO_OBJECT,
+              (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _objectID(objectID)
     , _actionType(actionType)
     , _distance_mm(-1.f)
@@ -100,7 +103,10 @@ namespace Anki {
                                              const ObjectID& objectID,
                                              const f32 distance,
                                              const bool useManualSpeed)
-    : IAction(robot)
+    : IAction(robot,
+              "DriveToObject",
+              RobotActionType::DRIVE_TO_OBJECT,
+              (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
     , _distance_mm(distance)
@@ -122,12 +128,6 @@ namespace Anki {
     {
       _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
       _compoundAction.PrepForCompletion();
-    }
-    
-    const std::string& DriveToObjectAction::GetName() const
-    {
-      static const std::string name("DriveToObjectAction");
-      return name;
     }
     
     void DriveToObjectAction::SetApproachAngle(const f32 angle_rad)
@@ -460,12 +460,8 @@ namespace Anki {
     , _checkDestinationFree(checkDestinationFree)
     , _destinationObjectPadding_mm(destinationObjectPadding_mm)
     {
-    }
-    
-    const std::string& DriveToPlaceCarriedObjectAction::GetName() const
-    {
-      static const std::string name("DriveToPlaceCarriedObjectAction");
-      return name;
+      SetName("DriveToPlaceCarriedObject");
+      SetType(RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT);
     }
     
     ActionResult DriveToPlaceCarriedObjectAction::Init()
@@ -570,7 +566,10 @@ namespace Anki {
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
-    : IAction(robot)
+    : IAction(robot,
+              "DriveToPose",
+              RobotActionType::DRIVE_TO_POSE,
+              (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
@@ -682,12 +681,6 @@ namespace Anki {
       _isGoalSet = true;
       
       return RESULT_OK;
-    }
-    
-    const std::string& DriveToPoseAction::GetName() const
-    {
-      static const std::string name("DriveToPoseAction");
-      return name;
     }
     
     void DriveToPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
@@ -1274,6 +1267,7 @@ namespace Anki {
                                  sayName)
     {
       TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
+      SetProxyTag(action->GetTag());
       AddAction(action);
     }
     
@@ -1300,6 +1294,7 @@ namespace Anki {
       driveAction->DoPositionCheckOnPathCompletion(false);
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
+      SetProxyTag(action->GetTag());
       AddAction(action);
     }
   }

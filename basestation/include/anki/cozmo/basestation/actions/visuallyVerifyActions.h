@@ -31,11 +31,13 @@ namespace Cozmo {
   public:
     using LiftPreset = MoveLiftToHeightAction::Preset;
     
-    IVisuallyVerifyAction(Robot& robot, VisionMode imageTypeToWaitFor, LiftPreset liftPosition);
+    IVisuallyVerifyAction(Robot& robot,
+                          const std::string name,
+                          const RobotActionType type,
+                          VisionMode imageTypeToWaitFor,
+                          LiftPreset liftPosition);
     
     virtual ~IVisuallyVerifyAction();
-    
-    virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::HEAD_TRACK; }
     
     virtual int GetNumImagesToWaitFor() const { return _numImagesToWaitFor; }
     void SetNumImagesToWaitFor(int numImages) { _numImagesToWaitFor = numImages; }
@@ -76,9 +78,6 @@ namespace Cozmo {
     
     virtual ~VisuallyVerifyObjectAction();
     
-    virtual const std::string& GetName() const override;
-    virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-    
   protected:
     
     virtual ActionResult InitInternal() override;
@@ -98,9 +97,6 @@ namespace Cozmo {
     VisuallyVerifyFaceAction(Robot& robot, Vision::FaceID_t faceID);
     
     virtual ~VisuallyVerifyFaceAction();
-    
-    virtual const std::string& GetName() const override;
-    virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_FACE; }
     
   protected:
     

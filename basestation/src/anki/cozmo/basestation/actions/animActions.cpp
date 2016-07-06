@@ -29,11 +29,15 @@ namespace Anki {
 
     #pragma mark ---- PlayAnimationAction ----
 
-    PlayAnimationAction::PlayAnimationAction(Robot& robot, const std::string& animName,
-                                             u32 numLoops, bool interruptRunning)
-    : IAction(robot)
+    PlayAnimationAction::PlayAnimationAction(Robot& robot,
+                                             const std::string& animName,
+                                             u32 numLoops,
+                                             bool interruptRunning)
+    : IAction(robot,
+              "PlayAnimation" + animName,
+              RobotActionType::PLAY_ANIMATION,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _animName(animName)
-    , _name("PlayAnimation" + animName + "Action")
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     {
@@ -44,9 +48,11 @@ namespace Anki {
                                              Animation* animation,
                                              u32 numLoops,
                                              bool interruptRunning)
-    : IAction(robot)
+    : IAction(robot,
+              "PlayAnimation" + animation->GetName(),
+              RobotActionType::PLAY_ANIMATION,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _animName(animation->GetName())
-    , _name("PlayAnimation" + _animName + "Action")
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     , _animPointer(animation)
@@ -229,9 +235,11 @@ namespace Anki {
                                          const Audio::GameEvent::GenericEvent event,
                                          const Audio::GameObjectType gameObj,
                                          const bool waitUntilDone)
-    : IAction(robot)
+    : IAction(robot,
+              "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)),
+              RobotActionType::DEVICE_AUDIO,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _actionType( AudioActionType::Event )
-    , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
     , _waitUntilDone( waitUntilDone )
     , _event( event )
     , _gameObj( gameObj )
@@ -240,17 +248,21 @@ namespace Anki {
     // Stop All Events on Game Object, pass in Invalid to stop all audio
     DeviceAudioAction::DeviceAudioAction(Robot& robot,
                                          const Audio::GameObjectType gameObj)
-    : IAction(robot)
+    : IAction(robot,
+              "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)),
+              RobotActionType::DEVICE_AUDIO,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _actionType( AudioActionType::StopEvents )
-    , _name( "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)) )
     , _gameObj( gameObj )
     { }
 
     // Change Music state
     DeviceAudioAction::DeviceAudioAction(Robot& robot, const Audio::GameState::Music state)
-    : IAction(robot)
+    : IAction(robot,
+              "PlayAudioMusicState_" + std::string(EnumToString(state)),
+              RobotActionType::DEVICE_AUDIO,
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _actionType( AudioActionType::SetState )
-    , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
     , _stateGroup( Audio::GameState::StateGroupType::Music )
     , _state( static_cast<Audio::GameState::GenericState>(state) )
     { }
