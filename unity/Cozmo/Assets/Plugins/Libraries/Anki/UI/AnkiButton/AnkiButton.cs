@@ -20,9 +20,9 @@ namespace Anki {
 
       public bool Interactable {
         get { return _Interactable; }
-        set { 
+        set {
           if (value != _Interactable) {
-            _Interactable = value; 
+            _Interactable = value;
 
             UpdateVisuals();
           }
@@ -91,7 +91,7 @@ namespace Anki {
           }
           return _TextLabel.text;
         }
-        set { 
+        set {
           if (_TextLabel != null) {
             _TextLabel.text = value;
           }
@@ -114,17 +114,17 @@ namespace Anki {
       }
 
       public string DASEventButtonName {
-        get { 
+        get {
           if (string.IsNullOrEmpty(_DASEventButtonName)) {
             _DASEventButtonName = this.gameObject.name;
           }
-          return _DASEventButtonName; 
+          return _DASEventButtonName;
         }
         set { _DASEventButtonName = value; }
       }
 
       public string DASEventViewController {
-        get { 
+        get {
           // If no view controller is provided, use the names of this object's parents
           if (string.IsNullOrEmpty(_DASEventViewController)) {
             string[] parentNames = new string[kViewControllerParentSearchLimit];
@@ -149,8 +149,8 @@ namespace Anki {
               _DASEventViewController = "(parent is null)";
             }
           }
-          return _DASEventViewController; 
-        } 
+          return _DASEventViewController;
+        }
         set { _DASEventViewController = value; }
       }
 
@@ -173,7 +173,7 @@ namespace Anki {
         base.Start();
         AnkiButton.OnAnyButtonPress += HandleGlobalPress;
         if (!_Initialized && Application.isPlaying) {
-          DAS.Error("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
+          DAS.Warn("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
         }
       }
 
@@ -191,11 +191,11 @@ namespace Anki {
         _DASEventViewController = dasEventViewController;
 
         if (string.IsNullOrEmpty(_DASEventButtonName)) {
-          DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.", 
+          DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.",
             this.gameObject.name));
         }
         if (string.IsNullOrEmpty(_DASEventViewController)) {
-          DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.", 
+          DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.",
             this.gameObject.name));
         }
 
@@ -277,14 +277,14 @@ namespace Anki {
         UpdateVisuals();
         _OnRelease.Invoke();
       }
-  
+
       // Trigger all registered callbacks.
       public virtual void OnPointerClick(PointerEventData eventData) {
         if (eventData.button != PointerEventData.InputButton.Left) {
           return;
         }
 
-        DAS.Event("ui.button", DASEventButtonName, new Dictionary<string,string>{ { "$data", DASEventViewController } });
+        DAS.Event("ui.button", DASEventButtonName, new Dictionary<string, string> { { "$data", DASEventViewController } });
 
         Tap();
       }
