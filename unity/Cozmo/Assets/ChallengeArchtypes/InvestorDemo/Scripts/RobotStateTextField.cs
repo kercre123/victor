@@ -13,6 +13,9 @@ public class RobotStateTextField : MonoBehaviour {
   public static void UseAnimString(bool enable) {
     _sUseAnimString = enable;
   }
+  public static bool IsAnimString() {
+    return _sUseAnimString;
+  }
 
   private void Update() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {

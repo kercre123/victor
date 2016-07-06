@@ -13,6 +13,7 @@ namespace Cozmo {
     LastAppRunID,
     GameID,
     UserID,
+    BuildVersion,
 
     Count
   }

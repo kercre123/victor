@@ -68,6 +68,12 @@ void DeviceData::Refresh()
   {
     _dataMap[DeviceDataType::UserID] = tempString.UTF8String;
   }
+  
+  tempString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.das.version"];
+  if (nil != tempString)
+  {
+    _dataMap[DeviceDataType::BuildVersion] = tempString.UTF8String;
+  }
 }
 #else // TARGET_OS_IPHONE
 void DeviceData::Refresh() { }

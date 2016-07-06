@@ -23,22 +23,6 @@ namespace DataPersistence {
     [SerializeField]
     private ChallengeDataList _ChallengeDataList;
 
-    [SerializeField]
-    private InputField _NotificationTextInput;
-
-    [SerializeField]
-    private Button _SubmitNotificationButton;
-
-    [SerializeField]
-    private InputField _NotificationDay;
-    [SerializeField]
-    private InputField _NotificationMonth;
-    [SerializeField]
-    private InputField _NotificationYear;
-    [SerializeField]
-    private InputField _NotificationHour;
-    [SerializeField]
-    private InputField _NotificationMinute;
 
     [SerializeField]
     private InputField _SaveStringInput;
@@ -73,18 +57,10 @@ namespace DataPersistence {
     private void Start() {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
-      _SubmitNotificationButton.onClick.AddListener(SubmitNotificationButtonClicked);
 
       _SubmitSaveButton.onClick.AddListener(SubmitSaveButtonClicked);
       _SubmitSkillsButton.onClick.AddListener(SubmitSkillsButtonClicked);
       _ResetRobotDataButton.onClick.AddListener(SubmitResetRobotData);
-       
-      var now = DateTime.Now;
-      _NotificationYear.text = now.Year.ToString();
-      _NotificationMonth.text = now.Month.ToString();
-      _NotificationDay.text = now.Day.ToString();
-      _NotificationHour.text = now.Hour.ToString();
-      _NotificationMinute.text = now.Minute.ToString();
 
       _SaveStringInput.text = DataPersistenceManager.Instance.GetSaveJSON();
       InitSkills();
@@ -137,19 +113,5 @@ namespace DataPersistence {
       SkillSystem.Instance.DebugEraseStorage();
     }
 
-    private void SubmitNotificationButtonClicked() {
-      var year = int.Parse(_NotificationYear.text);
-
-      var month = int.Parse(_NotificationMonth.text);
-
-      var day = int.Parse(_NotificationDay.text);
-
-      var hour = int.Parse(_NotificationHour.text);
-      var minute = int.Parse(_NotificationMinute.text);
-
-      var dateTime = new DateTime(year, month, day, hour, minute, 0);
-
-      LocalNotificationManager.ScheduleNotification(dateTime, _NotificationTextInput.text);
-    }
   }
 }

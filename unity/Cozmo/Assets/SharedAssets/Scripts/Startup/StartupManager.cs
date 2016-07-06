@@ -134,6 +134,10 @@ public class StartupManager : MonoBehaviour {
     // Load main scene
     StopCoroutine(_UpdateDotsCoroutine);
     LoadMainScene(assetBundleManager);
+
+    int startSeed = System.Environment.TickCount;
+    UnityEngine.Random.seed = startSeed;
+    DAS.Info("Unity.Random.StartSeed", startSeed.ToString());
   }
 
   private IEnumerator InitializeAssetBundleManager(AssetBundleManager assetBundleManager) {
