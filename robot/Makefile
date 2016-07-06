@@ -142,4 +142,6 @@ clean:
 	make -C clad clean
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
+	make -C espressif_flasher clean
+	make -C espressif_factory_upgrade clean
 	rm -f $(VERSION_HEADER)

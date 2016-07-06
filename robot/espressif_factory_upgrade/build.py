@@ -8,7 +8,7 @@ BUILD_DIR = 'build'
 FW_DIR    = 'firmware'
 STAGING   = '../staging'
 SECTOR_SIZE = 4096
-WIFI_IMAGE_SECTORS = 0xc5-0x80
+WIFI_IMAGE_SECTORS = 0xc8-0x80
 
 env = os.environ.copy()
 env['PATH'] += ":/opt/xtensa-lx106-elf/bin"
@@ -28,6 +28,9 @@ img.write(b"\xff" * fillLen)
 
 img.write(open(os.path.join(STAGING, "esp.factory.bin"), "rb").read())
 fillLen = ((WIFI_IMAGE_SECTORS + 1) * SECTOR_SIZE) - img.tell()
+if fillLen < 0:
+    sys.stderr.write("WiFi image too long!")
+    sys.exit(1)
 img.write(b"\xff" * fillLen)
 
 img.write(open(os.path.join(STAGING, "factory.safe"), "rb").read())
