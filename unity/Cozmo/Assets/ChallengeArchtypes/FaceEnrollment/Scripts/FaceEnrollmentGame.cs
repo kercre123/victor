@@ -48,11 +48,20 @@ namespace FaceEnrollment {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.InitializeView(newView, data);
       ShowFaceListSlide(newView);
+    }
+
+    private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
+      if (_FixedFaceID != -1) {
+        if (_FixedFaceID == message.oldID) {
+          _FixedFaceID = message.newID;
+        }
+      }
     }
 
     private void HandleOnBackFinished(Anki.Cozmo.ExternalInterface.RobotOnBackFinished message) {
@@ -165,10 +174,12 @@ namespace FaceEnrollment {
 
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnMeetNewPerson);
         if (CurrentRobot.EnrolledFaces.ContainsKey(_FaceIDToEnroll)) {
-          DAS.Error("FaceEnrollmentGame.HandleEnrolledFace", "Successfully enrolled already enrolled face. Duplicate face entries.");
+          DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
+          CurrentRobot.EnrolledFaces[_FaceIDToEnroll] = _NameForFace;
         }
         else {
           CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
+          DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
         }
       }
       EditOrEnrollFaceComplete(success);
@@ -208,6 +219,7 @@ namespace FaceEnrollment {
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
     }
 
   }
