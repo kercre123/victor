@@ -27,10 +27,10 @@ class BehaviorAdmireStack : public IBehavior
 {
 public:
 
-  // for demo to know if this worked
-  // TODO:(COZMO-2165) We need to find a better solution for behavior-related state that needs to persist and be manipulated
-  // across multiple runs of a behavior. Either the AI Whiteboard (or something like it) needs to be better organized/planned,
-  // or some other data structure needs to track this kind of state data.
+  // for demo to know if this behavior successfully knocked over the stack
+  // TODO:(COZMO-2165) We need to find a better solution for behavior-related state that needs to persist and
+  // be manipulated across multiple runs of a behavior. Either the AI Whiteboard (or something like it) needs
+  // to be better organized/planned, or some other data structure needs to track this kind of state data.
   bool DidKnockOverStack() const { return _didKnockOverStack; }
   void ResetDidKnockOverStack() { _didKnockOverStack = false; }
   
@@ -42,7 +42,8 @@ protected:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result ResumeInternal(Robot& robot) override { return Result::RESULT_FAIL; }
+  virtual Result ResumeInternal(Robot& robot) override;
+
   virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
@@ -52,6 +53,7 @@ private:
     WatchingStack,
     ReactingToThirdBlock,
     TryingToGrabThirdBlock,
+    PreparingToKnockOverStack,
     KnockingOverStack,
     ReactingToTopple,
     SearchingForStack,
@@ -64,6 +66,7 @@ private:
   void TransitionToWatchingStack(Robot& robot);
   void TransitionToReactingToThirdBlock(Robot& robot);
   void TransitionToTryingToGrabThirdBlock(Robot& robot);
+  void TransitionToPreparingToKnockOverStack(Robot& robot);
   void TransitionToKnockingOverStack(Robot& robot);
   void TransitionToReactingToTopple(Robot& robot);
   void TransitionToSearchingForStack(Robot& robot);
@@ -71,7 +74,7 @@ private:
   void TransitionToLookDownAndUp(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
-  void ResetBehavior(Robot& robot);  
+
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   // virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 

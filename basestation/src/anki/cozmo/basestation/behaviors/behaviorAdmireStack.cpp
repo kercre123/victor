@@ -30,7 +30,7 @@
 // Whether or not we need to have recently seen the 2nd block when watching stack for 3rd block
 #define NEED_TO_SEE_SECOND_BLOCK 0
 
-#define DEBUG_ADMIRE_STACK_BEHAVIOR 1
+#define DEBUG_ADMIRE_STACK_BEHAVIOR 0
 
 namespace Anki {
 namespace Cozmo {
@@ -93,6 +93,42 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
+Result BehaviorAdmireStack::ResumeInternal(Robot& robot)
+{
+  switch(_state) {
+    case State::WatchingStack:      
+    case State::ReactingToThirdBlock:
+    case State::TryingToGrabThirdBlock:
+    case State::SearchingForStack:
+    case State::LookDownAndUp:
+      // restart from the beginning
+      return InitInternal(robot);
+      
+    case State::PreparingToKnockOverStack: {
+      // We got an interruption (likely cliff) on the way to our pre-dock pose. Blindly retry for now. This is
+      // bad long term because it could end up with an infinite loop of trying over and over again
+      PRINT_NAMED_INFO("BehaviorAdmireStack.Resume.PreparingToKnockOver",
+                       "Resumed while behavior was preparing to knock over stack. Retrying from this state");
+      TransitionToPreparingToKnockOverStack(robot);
+      return Result::RESULT_OK;
+    }
+      
+    case State::KnockingOverStack:
+    case State::ReactingToTopple:
+    case State::KnockingOverStackFailed: {
+      // in these cases, we got interrupted while doing the actual knock, or reacting to it, so just make sure
+      // we set that we knocked it over (to unblock the demo scene) and fail
+      PRINT_NAMED_INFO("BehaviorAdmireStack.Resume.AfterTopple",
+                       "Resuming in a state that is too late, just setting knocked over to true and bailing");
+      
+      robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
+      _didKnockOverStack = true;
+      _state = State::WatchingStack;
+      return Result::RESULT_FAIL;
+    }
+  }
+}
+
 void BehaviorAdmireStack::StopInternal(Robot& robot)
 {
   if( _state == State::TryingToGrabThirdBlock ) {
@@ -108,7 +144,7 @@ void BehaviorAdmireStack::StopInternal(Robot& robot)
     _didKnockOverStack = true;
   }
   
-  ResetBehavior(robot);
+  // don't change _state here because we want to be able to Resume this state
 }
 
 IBehavior::Status BehaviorAdmireStack::UpdateInternal(Robot& robot)
@@ -212,13 +248,13 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
 
   action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::AdmireStackAttemptGrabThirdCube));
 
-  StartActing(action, &BehaviorAdmireStack::TransitionToKnockingOverStack);
+  StartActing(action, &BehaviorAdmireStack::TransitionToPreparingToKnockOverStack);
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
 
-void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
+void BehaviorAdmireStack::TransitionToPreparingToKnockOverStack(Robot& robot)
 {
-  SET_STATE(KnockingOverStack);
+  SET_STATE(PreparingToKnockOverStack);
 
   //Enable Cliff Reaction
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
@@ -228,8 +264,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   
   // Push angry driving animations
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartAngry,
-                                                            AnimationTrigger::DriveLoopAngry,
-                                                            AnimationTrigger::DriveEndAngry});
+        AnimationTrigger::DriveLoopAngry,
+        AnimationTrigger::DriveEndAngry});
   
   // Backup
   DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
@@ -252,12 +288,32 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
                                                                                  false);
   turnTowardsObjectAction->SetRefinedTurnAngleTol(kTurnTowardsObjectAngleTol_rad);
   action->AddAction(turnTowardsObjectAction);
-  
-  // Knock over
-  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
-  action->AddAction(flipBlockAction);
+
+  // retry this action, then give up
+  action->SetNumRetries(1);
 
   StartActing(action, [this, &robot](ActionResult res) {
+      if( res == ActionResult::SUCCESS ) {
+        TransitionToKnockingOverStack(robot);
+      }
+      else {
+        // couldn't get into position to knock over the stack, Try one last time
+        TransitionToKnockingOverStackFailed(robot);
+      }
+    });
+  
+  IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
+}
+
+void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
+{
+  SET_STATE(KnockingOverStack);
+
+  ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
+  
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
+
+  StartActing(flipBlockAction, [this, &robot](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
         TransitionToReactingToTopple(robot);
       } else {
@@ -267,6 +323,7 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
       // Pop the angry driving animations
       robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     });
+  
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
 
@@ -329,6 +386,10 @@ void BehaviorAdmireStack::TransitionToKnockingOverStackFailed(Robot& robot)
     {
       TransitionToReactingToTopple(robot);
     }
+
+    // this was a hail mary anyway, so just assume it worked. This is a bit of a hack for the PR demo so we
+    // don't get stuck thinking this behavior didn't run (and fail to advance to the game request)
+    _didKnockOverStack = true;
   });
 }
 
@@ -376,6 +437,10 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
 
   const auto& msg = event.GetData().Get_RobotObservedObject();
 
+  if( ! msg.markersVisible ) {
+    return;
+  }
+
   ObjectID secondBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
 
   ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(msg.objectID);
@@ -387,7 +452,8 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
   }
   
   // If we're in the states following or during the knock-over-stack actions, ignore objects we're observing
-  if (State::KnockingOverStack == _state ||
+  if (State::PreparingToKnockOverStack == _state ||
+      State::KnockingOverStack == _state ||     
       State::KnockingOverStackFailed == _state ||
       State::ReactingToTopple == _state)
   {
@@ -398,8 +464,7 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
   if( _state == State::WatchingStack )
   {
     // check if this could possibly be the 3rd stacked block
-    if(msg.markersVisible &&
-       msg.objectFamily == ObjectFamily::LightCube &&
+    if(msg.objectFamily == ObjectFamily::LightCube &&
        msg.objectID != secondBlockID &&
        msg.objectID != robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID())
     {
@@ -450,12 +515,11 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
     }
     else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
       PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.SawNewBlockWhileWatching",
-                        "Saw %s with ID %d with %smarkers visible while watching stack",
-                        EnumToString(msg.objectType), msg.objectID,
-                        (msg.markersVisible ? "" : "no "));
+                        "Saw %s with ID %d with markers visible while watching stack",
+                        EnumToString(msg.objectType), msg.objectID);
     }
   }
-  else if( msg.objectID == secondBlockID && msg.markersVisible )
+  else if( msg.objectID == secondBlockID )
   {
     _topBlockLastSeentime = msg.timestamp;
 
@@ -485,11 +549,6 @@ void BehaviorAdmireStack::SetState_internal(State state, const std::string& stat
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorAdmireStack.TransitionTo", "%s", stateName.c_str());
   SetStateName(stateName);
-}
-
-void BehaviorAdmireStack::ResetBehavior(Robot& robot)
-{
-  _state = State::WatchingStack;
 }
 
 }

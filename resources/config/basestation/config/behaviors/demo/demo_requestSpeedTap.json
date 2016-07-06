@@ -8,8 +8,7 @@
   "zero_block_config": {
     "request_animName" : "RequestGameGenericRequest0",
     "deny_animName" : "RequestGameGenericDeny0",
-    "minRequestDelay_s" : 20.0,
-    "score_factor": 0.2
+    "minRequestDelay_s" : 20.0
   },
 
   "one_block_config": {

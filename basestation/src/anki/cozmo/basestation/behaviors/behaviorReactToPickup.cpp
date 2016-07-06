@@ -49,6 +49,14 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
 
 }
 
+bool BehaviorReactToPickup::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
+{
+  ASSERT_NAMED( event.GetTag() == EngineToGameTag::RobotPickedUp, "BehaviorReactToPickup.TriggerForWrongTag" );
+
+  // always run, unless we are on the charger // TODO:(bn) a reaction for being carried in the charger?
+  return ! robot.IsOnCharger();
+}
+
 bool BehaviorReactToPickup::IsRunnableInternal(const Robot& robot) const
 {
   return _disableIDs.size() == 0;
@@ -76,6 +84,11 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
 {
   const bool isActing = IsActing();
   if( !isActing && !_isInAir ) {
+    return Status::Complete;
+  }
+
+  if( robot.IsOnCharger() && !isActing ) {
+    PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
     return Status::Complete;
   }
   

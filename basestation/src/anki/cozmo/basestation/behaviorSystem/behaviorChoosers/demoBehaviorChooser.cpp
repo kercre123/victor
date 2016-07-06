@@ -45,7 +45,7 @@ static const char* kDriveOffChargerBehavior = "DriveOffCharger";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
 // static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
-static const char* kSleepOnChargerBehavior = "ReactToOnCharger";
+// static const char* kSleepOnChargerBehavior = "ReactToOnCharger";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
 static const char* kKnockOverStackBehavior = "AdmireStack";
 
@@ -339,7 +339,8 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   SetBehaviorGroupEnabled(BehaviorGroup::DemoRequestSpeedTap);
 
   // when mini game starts, will go to selection chooser, then back to this chooser
-  _checkTransition = [this]() { return IsBehaviorRunning(kSleepOnChargerBehavior); };
+  // need to fix COZMO-2700 then re-enable this
+  _checkTransition = nullptr; // [this]() { return IsBehaviorRunning(kSleepOnChargerBehavior); };
 }
 
 void DemoBehaviorChooser::TransitionToSleep()

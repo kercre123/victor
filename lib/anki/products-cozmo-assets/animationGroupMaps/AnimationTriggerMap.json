@@ -9,6 +9,10 @@
       "AnimName": "ag_reactToNewBlock"
     },
     {
+      "CladEvent": "AdmireStackKnockOverPreDrivingFailure",
+      "AnimName": "ag_RequestGamePickupFail"
+    },
+    {
       "CladEvent": "AdmireStackKnockOverSuccess",
       "AnimName": "knockOverStack_success"
     },
