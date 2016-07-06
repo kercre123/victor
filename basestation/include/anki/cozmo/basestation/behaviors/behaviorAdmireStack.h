@@ -42,7 +42,8 @@ protected:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result ResumeInternal(Robot& robot) override { return Result::RESULT_FAIL; }
+  virtual Result ResumeInternal(Robot& robot) override;
+
   virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
@@ -73,7 +74,7 @@ private:
   void TransitionToLookDownAndUp(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
-  void ResetBehavior(Robot& robot);  
+
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   // virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 

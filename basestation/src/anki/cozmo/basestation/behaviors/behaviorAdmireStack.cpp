@@ -93,6 +93,42 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
+Result BehaviorAdmireStack::ResumeInternal(Robot& robot)
+{
+  switch(_state) {
+    case State::WatchingStack:      
+    case State::ReactingToThirdBlock:
+    case State::TryingToGrabThirdBlock:
+    case State::SearchingForStack:
+    case State::LookDownAndUp:
+      // restart from the beginning
+      return InitInternal(robot);
+      
+    case State::PreparingToKnockOverStack: {
+      // We got an interruption (likely cliff) on the way to our pre-dock pose. Blindly retry for now. This is
+      // bad long term because it could end up with an infinite loop of trying over and over again
+      PRINT_NAMED_INFO("BehaviorAdmireStack.Resume.PreparingToKnockOver",
+                       "Resumed while behavior was preparing to knock over stack. Retrying from this state");
+      TransitionToPreparingToKnockOverStack(robot);
+      return Result::RESULT_OK;
+    }
+      
+    case State::KnockingOverStack:
+    case State::ReactingToTopple:
+    case State::KnockingOverStackFailed: {
+      // in these cases, we got interrupted while doing the actual knock, or reacting to it, so just make sure
+      // we set that we knocked it over (to unblock the demo scene) and fail
+      PRINT_NAMED_INFO("BehaviorAdmireStack.Resume.AfterTopple",
+                       "Resuming in a state that is too late, just setting knocked over to true and bailing");
+      
+      robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
+      _didKnockOverStack = true;
+      _state = State::WatchingStack;
+      return Result::RESULT_FAIL;
+    }
+  }
+}
+
 void BehaviorAdmireStack::StopInternal(Robot& robot)
 {
   if( _state == State::TryingToGrabThirdBlock ) {
@@ -108,7 +144,7 @@ void BehaviorAdmireStack::StopInternal(Robot& robot)
     _didKnockOverStack = true;
   }
   
-  ResetBehavior(robot);
+  // don't change _state here because we want to be able to Resume this state
 }
 
 IBehavior::Status BehaviorAdmireStack::UpdateInternal(Robot& robot)
@@ -513,11 +549,6 @@ void BehaviorAdmireStack::SetState_internal(State state, const std::string& stat
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorAdmireStack.TransitionTo", "%s", stateName.c_str());
   SetStateName(stateName);
-}
-
-void BehaviorAdmireStack::ResetBehavior(Robot& robot)
-{
-  _state = State::WatchingStack;
 }
 
 }
