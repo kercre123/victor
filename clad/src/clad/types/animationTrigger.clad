@@ -11,8 +11,11 @@ namespace Cozmo {
 enum uint_16 AnimationTrigger
 {
   AnimNone, // can't conflict with python keyword'
+
+  // Animation triggers, sorted alphabetically
   AdmireStackAttemptGrabThirdCube,
   AdmireStackFocusEyes,
+  AdmireStackKnockOverPreDrivingFailure,
   AdmireStackKnockOverSuccess,
   AdmireStackReactToThirdCube,
   BlockReact,
@@ -58,13 +61,13 @@ enum uint_16 AnimationTrigger
   OnSimonPointCube,
   OnSimonReactToPattern,
   OnSpeedtapCozmoConfirm,
-  OnSpeedtapHandCozmoWin,
   OnSpeedtapFakeout,
   OnSpeedtapGameCozmoWinHighIntensity,
   OnSpeedtapGameCozmoWinLowIntensity,
   OnSpeedtapGamePlayerWinHighIntensity,
   OnSpeedtapGamePlayerWinLowIntensity,
   OnSpeedtapGetOut,
+  OnSpeedtapHandCozmoWin,
   OnSpeedtapHandPlayerWin,
   OnSpeedtapIdle,
   OnSpeedtapRoundCozmoWinHighIntensity,

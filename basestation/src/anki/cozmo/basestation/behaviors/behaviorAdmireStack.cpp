@@ -212,13 +212,13 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
 
   action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::AdmireStackAttemptGrabThirdCube));
 
-  StartActing(action, &BehaviorAdmireStack::TransitionToKnockingOverStack);
+  StartActing(action, &BehaviorAdmireStack::TransitionToPreparingToKnockOverStack);
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
 
-void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
+void BehaviorAdmireStack::TransitionToPreparingToKnockOverStack(Robot& robot)
 {
-  SET_STATE(KnockingOverStack);
+  SET_STATE(PreparingToKnockOverStack);
 
   //Enable Cliff Reaction
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
@@ -228,8 +228,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   
   // Push angry driving animations
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartAngry,
-                                                            AnimationTrigger::DriveLoopAngry,
-                                                            AnimationTrigger::DriveEndAngry});
+        AnimationTrigger::DriveLoopAngry,
+        AnimationTrigger::DriveEndAngry});
   
   // Backup
   DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
@@ -252,12 +252,32 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
                                                                                  false);
   turnTowardsObjectAction->SetRefinedTurnAngleTol(kTurnTowardsObjectAngleTol_rad);
   action->AddAction(turnTowardsObjectAction);
-  
-  // Knock over
-  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
-  action->AddAction(flipBlockAction);
+
+  // retry this action, then give up
+  action->SetNumRetries(1);
 
   StartActing(action, [this, &robot](ActionResult res) {
+      if( res == ActionResult::SUCCESS ) {
+        TransitionToKnockingOverStack(robot);
+      }
+      else {
+        // couldn't get into position to knock over the stack, Try one last time
+        TransitionToKnockingOverStackFailed(robot);
+      }
+    });
+  
+  IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
+}
+
+void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
+{
+  SET_STATE(KnockingOverStack);
+
+  ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
+  
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot, bottomBlockID);
+
+  StartActing(flipBlockAction, [this, &robot](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
         TransitionToReactingToTopple(robot);
       } else {
@@ -267,6 +287,7 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
       // Pop the angry driving animations
       robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     });
+  
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
 
@@ -329,6 +350,10 @@ void BehaviorAdmireStack::TransitionToKnockingOverStackFailed(Robot& robot)
     {
       TransitionToReactingToTopple(robot);
     }
+
+    // this was a hail mary anyway, so just assume it worked. This is a bit of a hack for the PR demo so we
+    // don't get stuck thinking this behavior didn't run (and fail to advance to the game request)
+    _didKnockOverStack = true;
   });
 }
 
@@ -391,7 +416,8 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
   }
   
   // If we're in the states following or during the knock-over-stack actions, ignore objects we're observing
-  if (State::KnockingOverStack == _state ||
+  if (State::PreparingToKnockOverStack == _state ||
+      State::KnockingOverStack == _state ||     
       State::KnockingOverStackFailed == _state ||
       State::ReactingToTopple == _state)
   {

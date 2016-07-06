@@ -27,10 +27,10 @@ class BehaviorAdmireStack : public IBehavior
 {
 public:
 
-  // for demo to know if this worked
-  // TODO:(COZMO-2165) We need to find a better solution for behavior-related state that needs to persist and be manipulated
-  // across multiple runs of a behavior. Either the AI Whiteboard (or something like it) needs to be better organized/planned,
-  // or some other data structure needs to track this kind of state data.
+  // for demo to know if this behavior successfully knocked over the stack
+  // TODO:(COZMO-2165) We need to find a better solution for behavior-related state that needs to persist and
+  // be manipulated across multiple runs of a behavior. Either the AI Whiteboard (or something like it) needs
+  // to be better organized/planned, or some other data structure needs to track this kind of state data.
   bool DidKnockOverStack() const { return _didKnockOverStack; }
   void ResetDidKnockOverStack() { _didKnockOverStack = false; }
   
@@ -52,6 +52,7 @@ private:
     WatchingStack,
     ReactingToThirdBlock,
     TryingToGrabThirdBlock,
+    PreparingToKnockOverStack,
     KnockingOverStack,
     ReactingToTopple,
     SearchingForStack,
@@ -64,6 +65,7 @@ private:
   void TransitionToWatchingStack(Robot& robot);
   void TransitionToReactingToThirdBlock(Robot& robot);
   void TransitionToTryingToGrabThirdBlock(Robot& robot);
+  void TransitionToPreparingToKnockOverStack(Robot& robot);
   void TransitionToKnockingOverStack(Robot& robot);
   void TransitionToReactingToTopple(Robot& robot);
   void TransitionToSearchingForStack(Robot& robot);
