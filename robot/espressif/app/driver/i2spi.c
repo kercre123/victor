@@ -327,11 +327,14 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_BL_RX:
     {
-      const uint16_t* buf = (const uint16_t*)(desc->buf_ptr);
-      const uint16_t newState = buf[DMA_BUF_SIZE/2 - 1]; // Last half-word in buffer is latest state we know
-      if (newState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
-      if (rtipBootloaderState == STATE_BUSY && newState == STATE_IDLE) rtipBootloaderState = STATE_ACK;
-      else rtipBootloaderState = newState;
+      if (outgoingPhase == BOOTLOADER_SYNC_PHASE || outgoingPhase == BOOTLOADER_XFER_PHASE)
+      {
+        const uint16_t* buf = (const uint16_t*)(desc->buf_ptr);
+        const uint16_t newState = buf[DMA_BUF_SIZE/2 - 1]; // Last half-word in buffer is latest state we know
+        if (newState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
+        if (rtipBootloaderState == STATE_BUSY && newState == STATE_IDLE) rtipBootloaderState = STATE_ACK;
+        else rtipBootloaderState = newState;
+      }  
       prepSdioQueue(desc, 0);
       break;
     }

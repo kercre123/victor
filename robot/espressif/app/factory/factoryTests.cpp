@@ -8,7 +8,9 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
+#include "driver/crash.h"
 #include "driver/i2spi.h"
+#include "foregroundTask.h"
 }
 #include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
@@ -19,10 +21,14 @@ extern "C" {
 #include "nvStorage.h"
 #include "wifi_configuration.h"
 
+#include "wifi-cozmo-img.h"
+
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/birthCertificate.h"
+#include "clad/types/imu.h"
 
 extern const unsigned int COZMO_VERSION_COMMIT;
 extern const char* DAS_USER;
@@ -45,23 +51,38 @@ static RobotInterface::FactoryTestMode mode;
 static u32 lastExecTime;
 static u32 modeTimeout;
 static int modeParam;
+static s32 minPositions[4];
+static s32 maxPositions[4];
+static BirthCertificate birthCert;
 static s8  menuIndex;
+static void* testModeData;
+
+#if FACTORY_FIRMWARE
+extern "C" bool hasBirthCertificate(void) { return birthCert.second != 0xFF; }
+#endif
 
 #define MENU_TIMEOUT 100000000
 
-static const FTMenuItem rootMenuItems[] = {
+static const FTMenuItem factoryMenuItems[] = {
   {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
-#if FACTORY_FIRMWARE
   {"Playpen test",    RobotInterface::FTM_PlayPenTest,   0xFFFFffff },
   {"Cube test",       RobotInterface::FTM_cubeTest,      0xFFFFffff },
+  {"IMU calibration", RobotInterface::FTM_IMUCalibration, 120000000 }
 #if 0
   {"BLE",             RobotInterface::FTM_BLE_Menu,      15000000 },
 #endif
-#endif
 };
-#define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
+#define NUM_FACTORY_MENU_ITEMS (sizeof(factoryMenuItems)/sizeof(FTMenuItem))
+
+static const FTMenuItem userMenuItems[] = {
+  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
+  {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
+  {"Motor test",      RobotInterface::FTM_motorLifeTest, 10000000 },
+  {"Turn off",        RobotInterface::FTM_Off,           0xFFFFffff},
+};
+#define NUM_USER_MENU_ITEMS (sizeof(userMenuItems)/sizeof(FTMenuItem))
 
 static const FTMenuItem stateMenuItems[] = {
   {"ADC info",        RobotInterface::FTM_ADCInfo,       30000000 },
@@ -78,12 +99,22 @@ static const FTMenuItem bleMenuItems[] = {
 };
 #define NUM_BLE_MENU_ITEMS (sizeof(bleMenuItems)/sizeof(FTMenuItem))
 
+struct IMUCalibrationState
+{
+  int32_t  gyroSum[3];
+  int32_t  accSum[3];
+  int32_t  samples;
+  uint32_t flashPos;
+  bool     headInPosition;
+};
 
 bool Init()
 {
   mode = RobotInterface::FTM_None;
   modeTimeout = 0xFFFFffff;
   menuIndex = 0;
+  testModeData = NULL;
+  birthCert.second = 0xFF; // Mark invalid
   return true;
 }
 
@@ -93,8 +124,21 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   {
     case RobotInterface::FTM_menus:
     {
-      *items = rootMenuItems;
-      return NUM_ROOT_MENU_ITEMS;
+      #if FACTORY_FIRMWARE
+      if (hasBirthCertificate())
+      {
+        *items = userMenuItems;
+        return NUM_USER_MENU_ITEMS;
+      }
+      else
+      {
+        *items = factoryMenuItems;
+        return NUM_FACTORY_MENU_ITEMS;
+      }
+      #else
+      *items = userMenuItems;
+      return NUM_USER_MENU_ITEMS;
+      #endif
     }
     case RobotInterface::FTM_StateMenu:
     {
@@ -114,6 +158,45 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   }
 }
 
+static void IMUCalibrationReadCallback(NVStorage::NVStorageBlob* blob, const NVStorage::NVResult result)
+{
+  if (result != NVStorage::NV_OKAY)
+  {
+    AnkiDebug( 192, "IMUCalibration.Read.NotFound", 501, "No IMU calibration data available", 0);
+  }
+  else
+  {
+    RobotInterface::IMUCalibrationData* calD = reinterpret_cast<RobotInterface::IMUCalibrationData*>(blob->blob);
+    for (int run = (1024/sizeof(RobotInterface::IMUCalibrationData)) - 1; run >= 0; --run)
+    {
+      uint8_t* bytes = reinterpret_cast<uint8_t*>(&calD[run]);
+      for(unsigned int b=0; b<sizeof(RobotInterface::IMUCalibrationData); ++b)
+      {
+        if (bytes[b] != 0xFF)
+        {
+          AnkiDebug( 193, "IMUCalibrationData.Read.Success",
+                     502, "Got calibration data: gyro={%d, %d, %d}, acc={%d, %d, %d}", 
+                     6, calD[run].gyro[0], calD[run].gyro[1], calD[run].gyro[2],
+                        calD[run].acc[0], calD[run].acc[1], calD[run].acc[2]);
+          RobotInterface::SendMessage(calD[run]);
+          return;
+        }
+      }
+    }
+    AnkiDebug( 194, "IMUCalibrationData.Read.NotFound", 503, "No IMU calibration data written", 0);
+  }
+}
+
+static bool requestIMUCal(uint32_t param)
+{
+  if (NVStorage::Read(NVStorage::NVEntry_IMUAverages, IMUCalibrationReadCallback) != NVStorage::NV_SCHEDULED)
+  {
+    os_printf("Failed to request imu calibration data\r\n");
+    return true;
+  }
+  return false;
+}
+
 static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
 {
   if (result == NVStorage::NV_NOT_FOUND && FACTORY_FIRMWARE)
@@ -122,8 +205,11 @@ static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVRes
   }
   else
   {
+    if (result == NVStorage::NV_OKAY) memcpy(&birthCert, entry->blob, sizeof(BirthCertificate));
     SetMode(RobotInterface::FTM_Sleepy);
   }
+  
+  foregroundTaskPost(requestIMUCal, 0);
 }
 
 void Update()
@@ -214,7 +300,7 @@ void Update()
       #endif
       case RobotInterface::FTM_motorLifeTest:
       {
-        if ((now - lastExecTime) > 1000000)
+        if ((now - lastExecTime) >> 19)
         {
           const u32 phase = now >> 20;
           const float wheelSpd = phase & 0x01 ? 200.0f : -200.0f;
@@ -245,7 +331,6 @@ void Update()
         const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
         u64 frame[COLS];
         Draw::Clear(frame);
-        // Draw::Copy(frame, Face::SLEEPY_EYES); // XXX: Artwork was not popular with design
         Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
         Draw::Mask(frame, columnMask);
         Draw::Flip(frame);
@@ -255,15 +340,28 @@ void Update()
         }
         break;
       }
+      case RobotInterface::FTM_SSID:
+      {
+        using namespace Anki::Cozmo::Face;
+        // Display WiFi password, alternate rows about every 2 minutes
+        u64 frame[COLS];
+        Draw::Copy(frame, SSID_IMG);
+        Draw::Number(frame, 6, getSSID(), 68, 34, false);
+        //Draw::Mask(frame, columnMask);
+        Draw::Flip(frame);
+        break;
+      }
       case RobotInterface::FTM_FAC:
       {
         {
           using namespace Anki::Cozmo::Face;
           // Display DISPLAY FACTORY WARNING
-          const u64 columnMask = ((now/1000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
+          const bool odd = (now/1000000) % 2;
+          const u64 columnMask = odd ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
+          const int xOffset = odd ? 18 : 58;
           u64 frame[COLS];
           Draw::Clear(frame);
-          Draw::Number(frame, 3, 0xFAC, 38, 8);
+          Draw::Number(frame, 3, 0xFAC, xOffset, 8);
           Draw::Invert(frame);
           Draw::Mask(frame, columnMask);
           Draw::Flip(frame);
@@ -301,6 +399,13 @@ void Update()
 void Process_TestState(const RobotInterface::TestState& state)
 {
   const u32 now = system_get_time();
+  
+  for (int m=0; m<4; ++m)
+  {
+    if (state.positionsFixed[m] < minPositions[m]) minPositions[m] = state.positionsFixed[m];
+    if (state.positionsFixed[m] > maxPositions[m]) maxPositions[m] = state.positionsFixed[m];
+  }
+  
   switch (mode)
   {
     case RobotInterface::FTM_entry:
@@ -309,11 +414,38 @@ void Process_TestState(const RobotInterface::TestState& state)
     case RobotInterface::FTM_FAC:
     case RobotInterface::FTM_Off:
     {
-      if ((now > 2000000) && (ABS(state.speedsFixed[0]) > 1000))
+      if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
+      {
+        lastExecTime = now;
+        SetMode(RobotInterface::FTM_SSID);
+        modeTimeout = now + 10000000;
+        for (int i=0; i<4; ++i)
+        {
+          minPositions[i] = state.positionsFixed[i];
+          maxPositions[i] = state.positionsFixed[i];
+        }
+      }
+      break;
+    }
+    case RobotInterface::FTM_SSID:
+    {
+      if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
+      {
+        lastExecTime = now;
+        SetMode(RobotInterface::FTM_Sleepy);
+        modeTimeout = 0xFFFFffff;
+        for (int i=0; i<4; ++i)
+        {
+          minPositions[i] = state.positionsFixed[i];
+          maxPositions[i] = state.positionsFixed[i];
+        }
+      }
+      else if ((state.positionsFixed[3] - minPositions[3]) > 70000)
       {
         lastExecTime = now;
         SetMode(RobotInterface::FTM_menus);
         modeTimeout = now + MENU_TIMEOUT;
+        minPositions[3] = state.positionsFixed[3];
       }
       break;
     }
@@ -369,6 +501,121 @@ void Process_TestState(const RobotInterface::TestState& state)
                        (state.positionsFixed[2]), (state.positionsFixed[3]));
       break;
     }
+    #if FACTORY_FIRMWARE
+    case RobotInterface::FTM_IMUCalibration:
+    {
+      if (testModeData == NULL) 
+      {
+        Face::FacePrintf("IMU Callibration\ntest mode data error");
+        SetMode(RobotInterface::FTM_entry);
+      }
+      else
+      {
+        static const int32_t GYRO_CAL_THRESHOLD = 100;
+        static const int32_t ACC_CAL_THRESHOLD  = 100;
+        static const int32_t IMU_CAL_SAMPLES    = 100;
+        IMUCalibrationState* test = reinterpret_cast<IMUCalibrationState*>(testModeData);
+        if (test->headInPosition == false)
+        {
+          Face::FacePrintf("Positioning head\r\n");
+          if  (((now - lastExecTime) > 2000000) && (ABS(state.speedsFixed[3]) == 0))
+          {
+            RobotInterface::EngineToRobot msg;
+            msg.tag = RobotInterface::EngineToRobot::Tag_moveHead;
+            msg.moveHead.speed_rad_per_sec = 1.0f;
+            RTIP::SendMessage(msg);
+            test->headInPosition = true;
+          }
+        }
+        else if (test->samples < IMU_CAL_SAMPLES)
+        {
+          int i;
+          Face::FacePrintf("Collecting samples\n  %d\n", test->samples);
+          if (test->samples <= 0) // Collect 1st sample
+          {
+            for (i=0; i<3; ++i)
+            {
+              test->gyroSum[i] = state.gyro[i];
+              test->accSum[i]  = state.acc[i];
+            }
+            test->samples = 1;
+          }
+          else // Collect more samples and restart if nessisary
+          {
+            int32_t gyroAvg[3];
+            int32_t accAvg[3];
+            bool restart = false;
+            for (i=0; i<3; ++i)
+            {
+              gyroAvg[i] = test->gyroSum[i] / test->samples;
+              if (ABS(state.gyro[i] - gyroAvg[i]) > GYRO_CAL_THRESHOLD)
+              {
+                restart = true;
+                break;
+              }
+              accAvg[i]  = test->accSum[i]  / test->samples;
+              if (ABS(state.acc[i] - accAvg[i]) > ACC_CAL_THRESHOLD)
+              {
+                restart = true;
+                break;
+              }
+            }
+            if (restart)
+            {
+              test->samples = 0;
+            }
+            else
+            {
+              for (i=0; i<3; ++i)
+              {
+                test->gyroSum[i] += state.gyro[i];
+                test->accSum[i]  += state.acc[i];
+              }
+              test->samples++;
+            }
+          }
+        }
+        else // Store the average
+        {
+          Face::FacePrintf("Storing result:\n  %d\n", test->flashPos);
+          if ((test->flashPos + sizeof(RobotInterface::IMUCalibrationData)) < SECTOR_SIZE) // Haven't run out of space yet
+          {
+            STORE_ATTR RobotInterface::IMUCalibrationData ce;
+            uint32_t* cePtr = reinterpret_cast<uint32_t*>(&ce);
+            const uint32_t proposedAddress = ((FIXTURE_STORAGE_SECTOR + 1) * SECTOR_SIZE) + test->flashPos;
+            SpiFlashOpResult rslt = spi_flash_read(proposedAddress, cePtr, sizeof(RobotInterface::IMUCalibrationData));
+            if (rslt != SPI_FLASH_RESULT_OK)
+            {
+              AnkiWarn( 189, "FactoryTests.IMUCalibration", 493, "Flash read error %d", 1, rslt);
+            }
+            for (uint32_t w=0; w<(sizeof(RobotInterface::IMUCalibrationData)/sizeof(uint32_t)); ++w)
+            {
+              if (cePtr[w] != 0xFFFFffff) // Can't store it here
+              {
+                test->flashPos += sizeof(RobotInterface::IMUCalibrationData);
+                return;
+              }
+            }
+            for (int i=0; i<3; ++i)
+            {
+              ce.gyro[i] = test->gyroSum[i]/test->samples;
+              ce.acc[i]  = test->accSum[i]/test->samples;
+            }
+            rslt = spi_flash_write(proposedAddress, cePtr, sizeof(RobotInterface::IMUCalibrationData));
+            if (rslt != SPI_FLASH_RESULT_OK)
+            {
+              AnkiWarn( 189, "FactoryTests.IMUCalibration", 494, "Flash write error %d", 1, rslt);
+            }
+            else
+            {
+              SetMode(RobotInterface::FTM_entry);
+            }
+          }
+        }
+      }
+      break;
+    }
+    #endif
     default:
     {
       break;
@@ -458,22 +705,38 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     case RobotInterface::FTM_WiFiInfo:
     case RobotInterface::FTM_StateMenu:
     case RobotInterface::FTM_BLE_Menu:
+    case RobotInterface::FTM_EncoderInfo:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = true;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
-    // #if FACTORY_FIRMWARE
+    #if FACTORY_FIRMWARE
     case RobotInterface::FTM_cubeTest:
     {
       RTIP::HookWifi(NULL);
       break;
     }
-    // #endif
+    case RobotInterface::FTM_IMUCalibration:
+    {
+      Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
+      bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_IDLE_OPERATING_MODE;
+      Anki::Cozmo::RobotInterface::SendMessage(bMsg);
+      if (testModeData != NULL)
+      {
+        os_free(testModeData);
+        testModeData = NULL;
+      }
+      break;
+    }
+    #endif
     case RobotInterface::FTM_motorLifeTest:
     {
       msg.tag = RobotInterface::EngineToRobot::Tag_stop;
+      RTIP::SendMessage(msg);
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
       RTIP::SendMessage(msg);
       break;
     }
@@ -491,10 +754,13 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       lastExecTime = system_get_time();
       break;
     }
+    case RobotInterface::FTM_SSID:
     case RobotInterface::FTM_menus:
     case RobotInterface::FTM_WiFiInfo:
     case RobotInterface::FTM_StateMenu:
     case RobotInterface::FTM_BLE_Menu:
+    case RobotInterface::FTM_EncoderInfo:
+    case RobotInterface::FTM_Sleepy:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = false;
@@ -514,6 +780,12 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
+    }
+    case RobotInterface::FTM_motorLifeTest:
+    {
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+      RTIP::SendMessage(msg);
     }
     #if FACTORY_FIRMWARE
     case RobotInterface::FTM_cubeTest:
@@ -548,6 +820,23 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       }
       break;
     }
+    case RobotInterface::FTM_IMUCalibration:
+    {
+      testModeData = os_zalloc(sizeof(IMUCalibrationState));
+      if (testModeData != NULL)
+      {
+        os_memset(testModeData, 0, sizeof(IMUCalibrationState));
+        Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
+        bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+        Anki::Cozmo::RobotInterface::SendMessage(bMsg);
+        msg.tag = RobotInterface::EngineToRobot::Tag_moveHead;
+        msg.moveHead.speed_rad_per_sec = 3.0f;
+        RTIP::SendMessage(msg);
+        lastExecTime = system_get_time();
+      }
+      break;
+    }
+    #endif
     case RobotInterface::FTM_Off:
     {
       Face::Clear();
@@ -555,12 +844,11 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
       RTIP::SendMessage(msg);
       msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_LOW_POWER_OPERATING_MODE;
       RTIP::SendMessage(msg);
       WiFiConfiguration::Off(false);
       break;
     }
-    #endif
     default:
     {
       // Nothing to do

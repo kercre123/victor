@@ -40,6 +40,12 @@ structure ImuRequest
   uint_32 length_ms
 }
 
+structure IMUCalibrationData
+{
+  int_16 gyro[3],
+  int_16 acc[3],
+}
+
 } // RobotInterface
 } // Cozmo
 } // Anki

@@ -133,6 +133,7 @@ static void resetErase()
   nv.multiEraseDidAny = false;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
+  nv.segment &= ~NV_SEGMENT_F & ~NV_SEGMENT_X;
   nv.flashPointer = getStartOfSegment();
 }
 
@@ -804,25 +805,17 @@ Result Update()
       { // A valid entry  
         if ((nv.pendingWrite != NULL) && (header.tag == nv.pendingWrite->tag))
         { // This is something we need to invalidate to "overwrite"
-          if (nv.segment & NV_SEGMENT_F)
-          { // We don't allow overwrite in factory space
-            endWrite(NV_BAD_ARGS);
-          }
-          else
+          if (nv.pendingOverwriteHeaderAddress != 0)
           {
-            
-            if (nv.pendingOverwriteHeaderAddress != 0)
-            {
-              AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
-            }
-            else 
-            {
-              nv.pendingOverwriteHeaderAddress = nv.flashPointer;
-              db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
-            }
-            nv.flashPointer += header.size;
-            nv.phase = 0;
+            AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
           }
+          else 
+          {
+            nv.pendingOverwriteHeaderAddress = nv.flashPointer;
+            db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
+          }
+          nv.flashPointer += header.size;
+          nv.phase = 0;
         } //  Done queing overwrite
         
         else if (nv.pendingEraseStart <= header.tag && header.tag <= nv.pendingEraseEnd)
@@ -951,12 +944,10 @@ NVResult Write(NVStorageBlob* entry, WriteDoneCB callback)
   if (entry == NULL) return NV_BAD_ARGS;
   if (entry->tag == NVEntry_Invalid) return NV_BAD_ARGS;
   if (isBusy()) return NV_BUSY; // Already have something queued
-  if ((entry->tag & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT)
-  {
-    return NV_BAD_ARGS; // Can't write fixture data through this interface
-  }
+  if ((entry->tag & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT) return NV_BAD_ARGS; // Can't write fixture data through this interface
   else if (entry->tag & FACTORY_DATA_BIT) 
   {
+    if (FACTORY_FIRMWARE == 0) return NV_BAD_ARGS; // Can only write factory region in factory firmware
     nv.segment |= NV_SEGMENT_F;
   }
   nv.flashPointer = getStartOfSegment();
@@ -977,7 +968,13 @@ NVResult Erase(const u32 tag, EraseDoneCB callback)
 NVResult EraseRange(const u32 start, const u32 end, EraseDoneCB eachCallback, MultiOpDoneCB finishedCallback)
 {
   if (isBusy()) return NV_BUSY; // Already have something queued
-  else if (start & FACTORY_DATA_BIT) return NV_BAD_ARGS; // Cannot erase factory storage
+  if ((start & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT) return NV_BAD_ARGS; // Can't erase fixture data
+  else if (start & FACTORY_DATA_BIT)
+  {
+    if (FACTORY_FIRMWARE == 0) return NV_BAD_ARGS; // Only allow factory erase in factory firmware
+    if (!(end & FACTORY_DATA_BIT)) return NV_BAD_ARGS;
+    nv.segment |= NV_SEGMENT_F;
+  }
   nv.flashPointer = getStartOfSegment();
   nv.pendingEraseStart = start;
   nv.pendingEraseEnd   = end;
@@ -999,12 +996,14 @@ NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, Mult
   if (isBusy()) return NV_BUSY; // Already have something queued
   if ((start & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT)
   {
+    if ((end & FIXTURE_DATA_BIT) != FIXTURE_DATA_BIT) return NV_BAD_ARGS;
     if ((start - FIXTURE_DATA_BIT) >= FIXTURE_DATA_NUM_ENTRIES) return NV_BAD_ARGS;
     else if ((end - FIXTURE_DATA_BIT) >= FIXTURE_DATA_NUM_ENTRIES) return NV_BAD_ARGS;
     else nv.segment |= NV_SEGMENT_X;
   }
   else if (start & FACTORY_DATA_BIT)
   {
+    if (!(end & FACTORY_DATA_BIT)) return NV_BAD_ARGS;
     nv.segment |= NV_SEGMENT_F;
   }
   nv.flashPointer = getStartOfSegment();

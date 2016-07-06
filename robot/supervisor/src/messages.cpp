@@ -481,6 +481,11 @@ namespace Anki {
       {
         IMUFilter::RecordAndSend(msg.length_ms);
       }
+      
+      void Process_setIMUCalibration(const Anki::Cozmo::RobotInterface::IMUCalibrationData& msg)
+      {
+        // TODO @kevingatanki implement this message handler
+      }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
         //AnkiInfo( 118, "Messages.Process_turnInPlaceAtSpeed.Recvd", 366, "speed %f rad/s, accel %f rad/s2", 2, msg.speed_rad_per_sec, msg.accel_rad_per_sec2);

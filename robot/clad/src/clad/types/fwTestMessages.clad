@@ -9,6 +9,7 @@ namespace RobotInterface {
   /// Note:  These modes must have explicit IDs and should not be reordered, because they're used by already-deployed fixture firmware
   enum int_32 FactoryTestMode
   {
+    FTM_SSID  = -3, ///< Display user facing SSID.
     FTM_menus = -2, ///< Display menus on face
     FTM_entry = -1, ///< Default disconnected state
     FTM_None  = 0,   ///< Exit factory test mode
@@ -27,6 +28,7 @@ namespace RobotInterface {
     FTM_Sleepy,
     FTM_FAC,
     FTM_Off,
+    FTM_IMUCalibration,
   }
   
   /// The active test mode of the robot

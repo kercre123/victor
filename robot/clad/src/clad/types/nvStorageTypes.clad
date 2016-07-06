@@ -74,7 +74,8 @@ namespace NVStorage {
 
     // ==== Pre-playpen tags =====
     NVEntry_PrePlaypenResults   = 0xC0000000,
-    NVEntry_PrePlaypenCentroids = 0xC0000001
+    NVEntry_PrePlaypenCentroids = 0xC0000001,
+    NVEntry_IMUAverages         = 0xC0000004,
   }
 
   // Nominally 0 is success > 0 is conditional success and < 0 is error

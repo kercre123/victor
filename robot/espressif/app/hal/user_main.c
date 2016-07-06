@@ -97,11 +97,11 @@ void user_init(void)
   if (getSerialNumber() == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
-    os_sprintf(ssid, "Proto_%03d%03d", macaddr[4], macaddr[5]);
+    os_sprintf(ssid, "cozmo_%02x%02x%02x", macaddr[3], macaddr[4], macaddr[5]);
   }
   else
   {
-    os_sprintf(ssid, "Proto_%04d", getSerialNumber() % 1000);
+    os_sprintf(ssid, "cozmo_%06X", getSSID());
   }
 
   struct softap_config ap_config;

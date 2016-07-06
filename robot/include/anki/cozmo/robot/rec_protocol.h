@@ -11,6 +11,8 @@ typedef uint16_t commandWord;
 #define BODY_SECURE_SPACE 0x18000
 #define BODY_BOOTLOADER 0x1F000
 #define ROBOT_BOOTLOADER 0x1000
+#define FIRST_BODY_BLOCK  (BODY_BLOCK | 0x18000)
+#define FIRST_RTIP_BLOCK  (0x1000)
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;

@@ -406,7 +406,9 @@ union EngineToRobot
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
-
+  
+  IMUCalibrationData            setIMUCalibration           = 0x60,
+  
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,
   // Available for future use                               = 0x81,
