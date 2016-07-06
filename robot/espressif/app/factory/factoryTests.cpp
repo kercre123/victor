@@ -76,6 +76,14 @@ static const FTMenuItem factoryMenuItems[] = {
 };
 #define NUM_FACTORY_MENU_ITEMS (sizeof(factoryMenuItems)/sizeof(FTMenuItem))
 
+static const FTMenuItem userMenuItems[] = {
+  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
+  {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
+  {"Motor test",      RobotInterface::FTM_motorLifeTest, 10000000 },
+  {"Turn off",        RobotInterface::FTM_Off,           0xFFFFffff},
+};
+#define NUM_USER_MENU_ITEMS (sizeof(userMenuItems)/sizeof(FTMenuItem))
+
 static const FTMenuItem stateMenuItems[] = {
   {"ADC info",        RobotInterface::FTM_ADCInfo,       30000000 },
   {"IMU info",        RobotInterface::FTM_ImuInfo,       30000000 },
@@ -116,8 +124,21 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   {
     case RobotInterface::FTM_menus:
     {
-      *items = factoryMenuItems;
-      return NUM_FACTORY_MENU_ITEMS;
+      #if FACTORY_FIRMWARE
+      if (hasBirthCertificate())
+      {
+        *items = userMenuItems;
+        return NUM_USER_MENU_ITEMS;
+      }
+      else
+      {
+        *items = factoryMenuItems;
+        return NUM_FACTORY_MENU_ITEMS;
+      }
+      #else
+      *items = userMenuItems;
+      return NUM_USER_MENU_ITEMS;
+      #endif
     }
     case RobotInterface::FTM_StateMenu:
     {
@@ -422,16 +443,8 @@ void Process_TestState(const RobotInterface::TestState& state)
       else if ((state.positionsFixed[3] - minPositions[3]) > 70000)
       {
         lastExecTime = now;
-        if (hasBirthCertificate())
-        {
-          SetMode(RobotInterface::FTM_WiFiInfo);
-          modeTimeout = now + 30000000;
-        }
-        else
-        {
-          SetMode(RobotInterface::FTM_menus);
-          modeTimeout = now + MENU_TIMEOUT;
-        }
+        SetMode(RobotInterface::FTM_menus);
+        modeTimeout = now + MENU_TIMEOUT;
         minPositions[3] = state.positionsFixed[3];
       }
       break;
