@@ -521,9 +521,6 @@ namespace AnimationController {
 
   Result Update()
   {
-#if FACTORY_FIRMWARE
-    return RESULT_OK;
-#endif
 #ifndef TARGET_ESPRESSIF
     if (PumpAudioData(NULL))
 #endif
