@@ -30,7 +30,7 @@
 // Whether or not we need to have recently seen the 2nd block when watching stack for 3rd block
 #define NEED_TO_SEE_SECOND_BLOCK 0
 
-#define DEBUG_ADMIRE_STACK_BEHAVIOR 1
+#define DEBUG_ADMIRE_STACK_BEHAVIOR 0
 
 namespace Anki {
 namespace Cozmo {
@@ -376,6 +376,10 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
 
   const auto& msg = event.GetData().Get_RobotObservedObject();
 
+  if( ! msg.markersVisible ) {
+    return;
+  }
+
   ObjectID secondBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
 
   ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(msg.objectID);
@@ -398,8 +402,7 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
   if( _state == State::WatchingStack )
   {
     // check if this could possibly be the 3rd stacked block
-    if(msg.markersVisible &&
-       msg.objectFamily == ObjectFamily::LightCube &&
+    if(msg.objectFamily == ObjectFamily::LightCube &&
        msg.objectID != secondBlockID &&
        msg.objectID != robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID())
     {
@@ -450,12 +453,11 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
     }
     else if(DEBUG_ADMIRE_STACK_BEHAVIOR) {
       PRINT_NAMED_INFO("BehaviorAdmireStack.HandleBlockUpdate.SawNewBlockWhileWatching",
-                        "Saw %s with ID %d with %smarkers visible while watching stack",
-                        EnumToString(msg.objectType), msg.objectID,
-                        (msg.markersVisible ? "" : "no "));
+                        "Saw %s with ID %d with markers visible while watching stack",
+                        EnumToString(msg.objectType), msg.objectID);
     }
   }
-  else if( msg.objectID == secondBlockID && msg.markersVisible )
+  else if( msg.objectID == secondBlockID )
   {
     _topBlockLastSeentime = msg.timestamp;
 
