@@ -11,11 +11,13 @@ namespace Anki.Cozmo.Viz {
     public Button _MemoryMapToggleButton;
 
     void Start() {
+      VizManager.Enabled = true;
       _MemoryMapToggleButton.onClick.AddListener(ToggleMemoryMap);
       _MemoryMapToggleText.text = string.Format("Toggle Memory Map Viz : {0}", VizManager.Instance.RenderMemoryMap);
     }
 
     void OnDestroy() {
+      VizManager.Enabled = false;
       _MemoryMapToggleButton.onClick.RemoveAllListeners();
     }
 

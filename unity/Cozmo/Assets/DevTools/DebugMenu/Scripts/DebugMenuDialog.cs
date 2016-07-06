@@ -51,7 +51,8 @@ public class DebugMenuDialog : MonoBehaviour {
 
   private void OnTabTapped(int tabId) {
     if (_CurrentPaneObject != null) {
-      GameObject.Destroy(_CurrentPaneObject);
+      // Destroy immediate so the current pane's OnDestroy is called before the new pane's Start.
+      GameObject.DestroyImmediate(_CurrentPaneObject);
     }
     OpenTab(tabId);
   }
