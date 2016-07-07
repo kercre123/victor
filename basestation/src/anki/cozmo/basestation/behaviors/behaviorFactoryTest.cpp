@@ -552,7 +552,7 @@ namespace Cozmo {
         
         // Move lift to correct height and head to correct angle
         CompoundActionParallel* headAndLiftAction = new CompoundActionParallel(robot, {
-          new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
+          new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY),
           new MoveHeadToAngleAction(robot, DEG_TO_RAD_F32(2)),
         });
         StartActing(robot, headAndLiftAction,
@@ -633,9 +633,10 @@ namespace Cozmo {
           // 2) Move head down slowly. If head is stiff, hopefully this will catch it
           //    by triggering a motor calibration.
           auto driveAction = new DriveStraightAction(robot, 250, 100);
-          auto headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
+          auto headAction = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
+          auto liftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
           headAction->SetMaxSpeed(DEG_TO_RAD_F32(20));
-          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction});
+          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
           compoundAction->ShouldEmitCompletionSignal(true);
           
           StartActing(robot, compoundAction,
