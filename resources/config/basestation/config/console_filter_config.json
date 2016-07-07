@@ -1,0 +1,61 @@
+{
+  // Example: define the channel name and whether it's enabled or disabled. 'enabled=true' means its logs will print,
+  // while 'enabled=false' means they will be filtered out, and won't show up in the console.
+  //    {
+  //      "channel": "**",
+  //      "enabled": true/false
+  //    },
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "osx" :
+  {
+    "channels":
+    [
+      { "channel": "Unnamed" , "enabled": false }, // Unnamed is currently the default channel
+      { "channel": "Unity"   , "enabled": false },
+      { "channel": "Keyboard", "enabled": true }
+    ],
+    "levels":
+    [
+      { "level" : "event", "enabled" : false },
+      { "level" : "debug", "enabled" : false }
+    ]
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "android" :
+  {
+    "channels":
+    [
+      { "channel": "Unnamed", "enabled": false }, // Unnamed is currently the default channel
+      { "channel": "Unity"  , "enabled": false }
+    ],
+    "levels":
+    [
+      { "level" : "event", "enabled" : false },
+      { "level" : "debug", "enabled" : false }
+    ]
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "ios" :
+  {
+    "channels":
+    [
+      { "channel": "Unnamed", "enabled": false }, // Unnamed is currently the default channel
+      { "channel": "Unity"  , "enabled": false }
+    ],
+    "levels":
+    [
+      { "level" : "event", "enabled" : false },
+      { "level" : "debug", "enabled" : false }
+    ]
+  }
+
+}

@@ -22,7 +22,7 @@ GTEST_API_ int main(int argc, char * argv[])
     char buf[20];
     if(sscanf(argv[i], "-d%d", &newLevel) == 1) {
       printf("Setting default log level to %d\n", newLevel);
-      printfLoggerProvider.SetMinLogLevel(newLevel);
+      printfLoggerProvider.SetMinLogLevel((Anki::Util::ILoggerProvider::LogLevel)newLevel);
     }
     else if (sscanf(argv[i], "-timing=%19s", buf) == 1) {
       if (strcmp(buf, "valgrind") == 0) {

@@ -72,6 +72,18 @@ std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::
   return s;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string DataPlatform::GetOSPlatformString()
+{
+  #if defined(ANKI_IOS_BUILD)
+    return "ios";
+  #elif defined(ANDROID)
+    return "android";
+  #else
+    return "osx";
+  #endif
+}
+
 // reads resource as json file. returns true if successful.
 bool DataPlatform::readAsJson(const Scope& resourceScope, const std::string& resourceName, Json::Value& data) const
 {

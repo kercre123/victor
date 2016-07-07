@@ -18,6 +18,7 @@
 
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/channelFilter.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/sosLoggerProvider.h"
@@ -89,7 +90,7 @@ void Unity_DAS_LogI(const char* eventName, const char* eventValue, const char** 
   for(int i = 0; i < keyValueCount; ++i) {
     keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
   }
-  Anki::Util::sInfoF(eventName, keyValues, "%s", eventValue);
+  Anki::Util::sChanneledInfoF("Unity", eventName, keyValues, "%s", eventValue);
 }
 
 void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
@@ -167,8 +168,9 @@ int cozmo_startup(const char *configuration_data)
     DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
   #endif
   
+  Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();
   Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
-    new Util::SosLoggerProvider()
+    sosLoggerProvider
 #if USE_DAS
     , new Util::DasLoggerProvider()
 #endif
@@ -177,6 +179,32 @@ int cozmo_startup(const char *configuration_data)
 #endif
   });
   Anki::Util::gLoggerProvider = loggerProvider;
+  
+  // - console filter for logs
+  {
+    using namespace Anki::Util;
+    ChannelFilter* consoleFilter = new ChannelFilter();
+    
+    // load file config
+    Json::Value consoleFilterConfig;
+    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
+    if (!dataPlatform->readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
+    {
+      PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+    }
+    
+    // initialize console filter for this platform
+    const std::string& platformOS = dataPlatform->GetOSPlatformString();
+    const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
+    consoleFilter->Initialize(consoleFilterConfigOnPlatform);
+    
+    // set filter in the loggers
+    std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
+    sosLoggerProvider->SetFilter(filterPtr);
+    
+    // also parse additional info for providers
+    sosLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+  }
   
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
   PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s", filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());

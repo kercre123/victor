@@ -23,6 +23,7 @@
 
 // This alternative error logging define imported from our DAS library implementation
 #define LOGD(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr); }
+#define LOGO(...) {fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout); }
 
 namespace Anki {
 namespace Util {
@@ -87,6 +88,8 @@ void RollingFileLogger::RollLogFile()
   if (!_currentLogFileHandle)
   {
     LOGD("Error getting handle for file %s: %s !!", nextFilename.c_str(), strerror(errno));
+  } else {
+    LOGO("New log file created '%s'", nextFilename.c_str());
   }
 }
 

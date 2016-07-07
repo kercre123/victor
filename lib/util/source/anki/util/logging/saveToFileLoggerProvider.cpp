@@ -18,8 +18,7 @@ namespace Util {
   
   
 SaveToFileLoggerProvider::SaveToFileLoggerProvider(const std::string& baseDirectory, std::size_t maxFileSize)
-: IFormattedLoggerProvider()
-, _fileLogger(new RollingFileLogger(baseDirectory, RollingFileLogger::kDefaultFileExtension, maxFileSize))
+: _fileLogger(new RollingFileLogger(baseDirectory, RollingFileLogger::kDefaultFileExtension, maxFileSize))
 {
   
 }

@@ -29,6 +29,9 @@ public:
     const std::string &resourcesPath);
 
   std::string pathToResource(const Scope& resourceScope, const std::string& resourceName) const;
+  
+  // returns a key for the current platform/OS (eg: osx, android, ios)
+  static std::string GetOSPlatformString();
 
   // reads resource as json file. returns true if successful.
   bool readAsJson(const Scope& resourceScope, const std::string& resourceName, Json::Value& data) const;

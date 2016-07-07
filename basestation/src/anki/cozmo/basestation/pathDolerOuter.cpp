@@ -55,14 +55,14 @@ void PathDolerOuter::Dole(size_t numToDole)
   if(endIdx >= pathSizeOnBasestation_)
     endIdx = pathSizeOnBasestation_ - 1;
 
-  printf("PathDolerOuter: should dole from %d to %lu (totalSegments = %lu)\n",
+  PRINT_NAMED_DEBUG("PathDolerOuter", "should dole from %d to %lu (totalSegments = %lu)",
          lastDoledSegmentIdx_ + 1,
          (unsigned long)endIdx,
          (unsigned long)pathSizeOnBasestation_);
 
   for(size_t i = (size_t)lastDoledSegmentIdx_ + 1; i <= endIdx; ++i) {
 
-    printf("PathDolerOuter: doling out basestation idx %zu :  ", i);
+    PRINT_NAMED_DEBUG("PathDolerOuter", "doling out basestation idx %zu :  ", i);
     path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).Print();
 
     switch(path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetType()) {
@@ -81,7 +81,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
             
       if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
-        printf("ERROR: failed to send message!");
+        PRINT_NAMED_ERROR("PathDolerOuter.Dole", "ERROR: failed to send message!");
         return;
       }
       break;
@@ -101,7 +101,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
             
       if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
-        printf("ERROR: failed to send message!");
+        PRINT_NAMED_ERROR("PathDolerOuter.Dole", "ERROR: failed to send message!");
         return;
       }
       break;
@@ -120,7 +120,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.useShortestDir = t->useShortestDir;
 
       if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
-        printf("ERROR: failed to send message!");
+        PRINT_NAMED_ERROR("PathDolerOuter.Dole", "ERROR: failed to send message!");
         return;
       }
       break;
@@ -143,7 +143,7 @@ void PathDolerOuter::Update(const s8 currPathIdx, const u8 numFreeSlots)
   if(numFreeSlots >= numSegmentsToDole                     // Are there enough free slots?
      && (lastDoledSegmentIdx_ < pathSizeOnBasestation_-1)  // Have we already doled out?
      && ((lastDoledSegmentIdx_ - currPathIdx) <= numSegmentsToDole)) {  // Are there any segments left to dole?
-    printf("PDO::Update(%i) re-doling upto %d path segments\n", currPathIdx, numFreeSlots);
+    PRINT_NAMED_DEBUG("PathDolerOuter", "PDO::Update(%i) re-doling upto %d path segments", currPathIdx, numFreeSlots);
 
     Dole(numSegmentsToDole);
   }   

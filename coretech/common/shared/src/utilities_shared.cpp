@@ -9,11 +9,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <stdio.h>
 #include "anki/common/shared/utilities_shared.h"
+#include "util/logging/logging.h"
 
 namespace Anki
 {
     namespace {
-      int (*CoreTechPrintFunc)(const char * format, va_list) = vprintf;
+      int (*CoreTechPrintFunc)(const char * format, va_list) = nullptr; // default to not set
     }
     
     int CoreTechPrint(const char * format, ...)
@@ -33,6 +34,8 @@ namespace Anki
       int printed = 0;
       if (CoreTechPrintFunc) {
         printed = (*CoreTechPrintFunc)(format, argList);
+      } else {
+        PRINT_CH_INFO("CoreTech", "", format, argList);
       }
       return printed;
     }

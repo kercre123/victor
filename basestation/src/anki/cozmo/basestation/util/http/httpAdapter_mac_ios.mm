@@ -60,7 +60,7 @@ namespace Util {
         break;
     }
     
-    PRINT_CHANNELED_INFO("HTTP", "http_adapter.request", "%s :: %s",
+    PRINT_CH_INFO("HTTP", "http_adapter.request", "%s :: %s",
                          HttpMethodToString(request.method),
                          request.uri.c_str());
 
@@ -96,7 +96,7 @@ namespace Util {
       }
     }
     
-    PRINT_CHANNELED_INFO("HTTP", "http_adapter.response", "%d :: %s",
+    PRINT_CH_INFO("HTTP", "http_adapter.response", "%d :: %s",
                          responseCode,
                          request.uri.c_str());
 

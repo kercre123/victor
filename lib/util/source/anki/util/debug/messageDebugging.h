@@ -30,7 +30,7 @@ namespace Anki { namespace Util {
 
 #if ANKI_NET_MESSAGE_LOGGING_ENABLED
   #define ANKI_NET_MESSAGE_VERBOSE( expr )               if (kEnableVerboseNetworkLogging) { Anki::Util::LogVerboseMessage  expr; }
-  #define ANKI_NET_PRINT_VERBOSE( name, format, ... )    if (kEnableVerboseNetworkLogging) { PRINT_CHANNELED_INFO("Network", name, format, ##__VA_ARGS__); }
+  #define ANKI_NET_PRINT_VERBOSE( name, format, ... )    if (kEnableVerboseNetworkLogging) { PRINT_CH_INFO("Network", name, format, ##__VA_ARGS__); }
   #define ANKI_NET_MESSAGE_LOGGING_ENABLED_ONLY( expr )  expr
 #else
   #define ANKI_NET_MESSAGE_VERBOSE( expr )

@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
-
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 #include "util/console/consoleInterface.h"

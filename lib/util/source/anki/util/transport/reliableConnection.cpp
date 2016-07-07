@@ -218,7 +218,7 @@ bool ReliableConnection::UpdateLastAckedMessage(ReliableSequenceId seqId)
     static NetTimeStamp sMaxTimeBetweenRecvMessages = 0.0;
     if (timeSinceLast > sMaxTimeBetweenRecvMessages)
     {
-      PRINT_CHANNELED_INFO("Network", "ReliableConnection.LongestTimeout", "%p '%s' Longest Time between received messages  = %.2f ms (was %.2f)",
+      PRINT_CH_INFO("Network", "ReliableConnection.LongestTimeout", "%p '%s' Longest Time between received messages  = %.2f ms (was %.2f)",
                            this, _transportAddress.ToString().c_str(), timeSinceLast, sMaxTimeBetweenRecvMessages);
       
       sMaxTimeBetweenRecvMessages = timeSinceLast;
@@ -620,13 +620,13 @@ void DumpPacketTimeStats(const char* name, const Stats::RecentStatsAccumulator& 
     const double min = stats.GetMin();
     const double max = stats.GetMax();
     
-    PRINT_CHANNELED_INFO("Network", "ReliableConnection.PacketTimeStats",
+    PRINT_CH_INFO("Network", "ReliableConnection.PacketTimeStats",
                          "%s: %.1f samples, %.2f ms avg (%.2f sd) (%.2f..%.2f ms)",
                          name, num, avg, sd, min, max);
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "ReliableConnection.PacketTimeStats", "%s: NO SAMPLES!", name);
+    PRINT_CH_INFO("Network", "ReliableConnection.PacketTimeStats", "%s: NO SAMPLES!", name);
   }
 }
   
@@ -645,13 +645,13 @@ void DumpMessageStats(const char* name, const char* typeName, const Stats::Recen
     const double min = stats.GetMin();
     const double max = stats.GetMax();
     
-    PRINT_CHANNELED_INFO("Network", "ReliableConnection.MessageStats",
+    PRINT_CH_INFO("Network", "ReliableConnection.MessageStats",
                          "%s: %.1f %s, %.2f Byte avg (%.2f sd) (%.0f..%.0f Bytes) (%.1f KB total)",
                          name, num, typeName, avg, sd, min, max, totalKB);
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "ReliableConnection.MessageStats", "%s: NO SAMPLES!", name);
+    PRINT_CH_INFO("Network", "ReliableConnection.MessageStats", "%s: NO SAMPLES!", name);
   }
 }
 #endif //ENABLE_RC_PACKET_TIME_DIAGNOSTICS
@@ -688,14 +688,14 @@ bool ReliableConnection::HasConnectionTimedOut() const
 
       if (_lastNewIncomingPacketTime != kNetTimeStampZero)
       {
-        PRINT_CHANNELED_INFO("Network", "ReliableConnection.PacketTimeStats",
+        PRINT_CH_INFO("Network", "ReliableConnection.PacketTimeStats",
                              "%.2fms since last new incoming packet (at %.2f)",
                              currentTime - _lastNewIncomingPacketTime, _lastNewIncomingPacketTime);
       }
 
       if (_unackedNewIncomingPacketTime != kNetTimeStampZero)
       {
-        PRINT_CHANNELED_INFO("Network", "ReliableConnection.PacketTimeStats",
+        PRINT_CH_INFO("Network", "ReliableConnection.PacketTimeStats",
                              "Still not acked an input message since %.2fms ago (at %.2f)",
                              currentTime - _unackedNewIncomingPacketTime, _unackedNewIncomingPacketTime);
       }
@@ -704,7 +704,7 @@ bool ReliableConnection::HasConnectionTimedOut() const
       {
         const TransmissionStats& stats = (i==0) ? _sentStatsEver : _sentStatsRecent;
 
-        PRINT_CHANNELED_INFO("Network", "ReliableConnection.SentStats", (i==0) ? "Sent Ever:" : "Sent Recent:");
+        PRINT_CH_INFO("Network", "ReliableConnection.SentStats", (i==0) ? "Sent Ever:" : "Sent Recent:");
         DumpMessageStats("Queued Reliable",   "messages", stats._reliable._bytesPerUniqueMessage);
         DumpMessageStats("Sent   Reliable",   "messages", stats._reliable._bytesPerRepeatableMessage);
         DumpMessageStats("Queued Unreliable", "messages", stats._unreliable._bytesPerUniqueMessage);
@@ -717,7 +717,7 @@ bool ReliableConnection::HasConnectionTimedOut() const
       {
         const TransmissionStats& stats = (i==0) ? _recvStatsEver : _recvStatsRecent;
         
-        PRINT_CHANNELED_INFO("Network", "ReliableConnection.RecvStats", (i==0) ? "Recv Ever:" : "Recv Recent:");
+        PRINT_CH_INFO("Network", "ReliableConnection.RecvStats", (i==0) ? "Recv Ever:" : "Recv Recent:");
         DumpMessageStats("Recv New  Reliable",   "messages", stats._reliable._bytesPerUniqueMessage);
         DumpMessageStats("Recv Dupe Reliable",   "messages", stats._reliable._bytesPerRepeatableMessage);
         DumpMessageStats("Recv Unreliable", "messages", stats._unreliable._bytesPerUniqueMessage);
@@ -931,19 +931,19 @@ void ReliableConnection::Print() const
   const NetTimeStamp timeSinceLastRecv = currentTime - _latestRecvTime;
   const NetTimeStamp timeSinceLastPingSent = currentTime - _latestPingSentTime;
 
-  PRINT_CHANNELED_INFO("Network", "ReliableConnection.Print", "'%s': now = %.1f: Out: %zu unacked (%u..%u), next out %u",
+  PRINT_CH_INFO("Network", "ReliableConnection.Print", "'%s': now = %.1f: Out: %zu unacked (%u..%u), next out %u",
                        _transportAddress.ToString().c_str(), currentTime, _pendingMessageList.size(),
                        GetFirstUnackedOutId(), GetLastUnackedOutId(), _nextOutSequenceId);
 
-  PRINT_CHANNELED_INFO("Network", "ReliableConnection.Print", "'%s': ms since last: send=%.1f, recv=%.1f",
+  PRINT_CH_INFO("Network", "ReliableConnection.Print", "'%s': ms since last: send=%.1f, recv=%.1f",
                        _transportAddress.ToString().c_str(), timeSinceLastSend, timeSinceLastRecv);
 
-  PRINT_CHANNELED_INFO("Network", "ReliableConnection.Print", "'%s': In: Last Acked %u, Waiting for %u",
+  PRINT_CH_INFO("Network", "ReliableConnection.Print", "'%s': In: Last Acked %u, Waiting for %u",
                        _transportAddress.ToString().c_str(), _lastInAckedMessageId, _nextInSequenceId);
 
   if (_pendingMultiPartMessage.IsWaitingForParts())
   {
-    PRINT_CHANNELED_INFO("Network", "ReliableConnection.Print", "'%s': Pending waiting on %u of %u (%u bytes received)",
+    PRINT_CH_INFO("Network", "ReliableConnection.Print", "'%s': Pending waiting on %u of %u (%u bytes received)",
                          _transportAddress.ToString().c_str(), _pendingMultiPartMessage.GetNextExpectedPart(), _pendingMultiPartMessage.GetLastExpectedPart(), _pendingMultiPartMessage.GetSize());
   }
 
@@ -954,10 +954,10 @@ void ReliableConnection::Print() const
   const float pingRTMin = (numPingSamples > 0) ? _pingRoundTripTimes.GetMin() : 0.0f;
   const float pingRTMax = (numPingSamples > 0) ? _pingRoundTripTimes.GetMax() : 0.0f;
 
-  PRINT_CHANNELED_INFO("Network", "ReliableConnection.Print", "'%s': Ping RoundTrip: %u samples (%.2f ms mean, %.2f sd) (%.2f min, %.2f max)",
+  PRINT_CH_INFO("Network", "ReliableConnection.Print", "'%s': Ping RoundTrip: %u samples (%.2f ms mean, %.2f sd) (%.2f min, %.2f max)",
                        _transportAddress.ToString().c_str(), numPingSamples, averagePingRoundTrip, stdDevPingRoundTrip, pingRTMin, pingRTMax);
 
-  PRINT_CHANNELED_INFO("Network", "ReliableConnection.Print", "'%s': Ping Last sent %.1f ms ago. %u of %u (%.1f%%) delivered. %u of %u (%.1f%%) received.",
+  PRINT_CH_INFO("Network", "ReliableConnection.Print", "'%s': Ping Last sent %.1f ms ago. %u of %u (%.1f%%) delivered. %u of %u (%.1f%%) received.",
                        _transportAddress.ToString().c_str(), timeSinceLastPingSent,
                        _numPingsSentThatArrived, _numPingsSent, GetPingAckedPercentage(),
                        _numPingsReceived, _numPingsSentTowardsUs, GetPingArrivedPercentage());

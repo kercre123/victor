@@ -38,9 +38,11 @@ public:
     const char* eventValue) override {
     _DAS_LogKv(DASLogLevel_Warn, eventName, eventValue, keyValues);
   };
-  inline void PrintLogI(const char* eventName,
+  inline void PrintLogI(const char* channel,
+    const char* eventName,
     const std::vector<std::pair<const char*, const char*>>& keyValues,
     const char* eventValue) override {
+    // note: ignoring channel in this provider
     _DAS_LogKv(DASLogLevel_Info, eventName, eventValue, keyValues);
   };
   inline void PrintLogD(const char* eventName,

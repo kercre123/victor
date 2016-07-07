@@ -676,13 +676,13 @@ void DumpUpdateStats(const Stats::StatsAccumulator& timesBetweenUpdates)
     const double min = timesBetweenUpdates.GetMin();
     const double max = timesBetweenUpdates.GetMax();
     
-    PRINT_CHANNELED_INFO("Network", "ReliableTransport.UpdateStats",
+    PRINT_CH_INFO("Network", "ReliableTransport.UpdateStats",
                          "UpdateTimes: %.1f samples, %.2f ms avg (%.2f sd) (%.2f..%.2f ms)", num, avg, sd, min, max);
 
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "ReliableTransport.UpdateStats", "UpdateTimes: NO SAMPLES!");
+    PRINT_CH_INFO("Network", "ReliableTransport.UpdateStats", "UpdateTimes: NO SAMPLES!");
   }
 }
 #endif //ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
@@ -724,7 +724,7 @@ void ReliableTransport::Update()
       const bool disconnectOnTimeout = true;
       if (disconnectOnTimeout)
       {
-        PRINT_CHANNELED_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!\n", existingConnection->GetAddress().ToString().c_str());
+        PRINT_CH_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!\n", existingConnection->GetAddress().ToString().c_str());
         
         #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
         {
@@ -888,7 +888,7 @@ void ReliableTransport::UpdateNetStats()
 void ReliableTransport::Print() const
 {
 #if ANKI_NET_MESSAGE_LOGGING_ENABLED
-  PRINT_CHANNELED_INFO("Network", "ReliableTransport.Print", "NumConnections: %zu", _reliableConnectionMap.size());
+  PRINT_CH_INFO("Network", "ReliableTransport.Print", "NumConnections: %zu", _reliableConnectionMap.size());
   _transportStats.Print();
   _unreliable->Print();
   for (auto& it : _reliableConnectionMap)

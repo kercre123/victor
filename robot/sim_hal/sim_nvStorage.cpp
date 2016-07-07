@@ -20,6 +20,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
 
 // Whether or not to save to/load from file
 #define LOAD_FROM_FILE 0
@@ -127,7 +128,7 @@ namespace Anki {
       // Write
       if(msg.writeNotErase)
       {
-        printf("Sim_Robot.NVWrite: Writing tag %u\n", msg.entry.tag);
+        PRINT_NAMED_INFO("SIM", "Sim_Robot.NVWrite: Writing tag %u\n", msg.entry.tag);
         // Safe to overwrite existing tags
         if(nvStorage_.find(msg.entry.tag) != nvStorage_.end())
         {
@@ -258,7 +259,7 @@ namespace Anki {
         
         while(lower != upper)
         {
-          printf("Sim_Robot.NVRead: Reading tag 0x%x\n", lower->first);
+          PRINT_NAMED_INFO("SIM", "Sim_Robot.NVRead: Reading tag 0x%x\n", lower->first);
           RobotInterface::NVReadResultToEngine m;
           m.robotAddress = 1;
           m.blob = lower->second;
@@ -276,7 +277,7 @@ namespace Anki {
       // Single tag
       else
       {
-        printf("Sim_Robot.NVRead: Reading tag 0x%x\n", msg.tag);
+        PRINT_NAMED_INFO("SIM", "Sim_Robot.NVRead: Reading tag 0x%x\n", msg.tag);
         RobotInterface::NVReadResultToEngine m;
         m.robotAddress = 1;
         m.blob = nvStorage_[msg.tag];

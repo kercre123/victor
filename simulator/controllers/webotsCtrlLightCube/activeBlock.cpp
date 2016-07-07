@@ -11,6 +11,7 @@
 #include "clad/types/activeObjectTypes.h"
 #include "clad/robotInterface/lightCubeMessage.h"
 #include "anki/cozmo/robot/ledController.h"
+#include "util/logging/logging.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -272,7 +273,7 @@ namespace Anki {
         // Generate a factory ID
         factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
         factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
-        printf("Starting active object %d (factoryID %d)\n", blockID_, factoryID_);
+        PRINT_NAMED_INFO("ActiveBlock", "Starting active object %d (factoryID %d)\n", blockID_, factoryID_);
         
         
         // Get all LED handles
@@ -467,7 +468,7 @@ namespace Anki {
               prevAccelFiltVal = currAccelFiltVal;
               
               if (currAccelFiltVal > TAP_DETECT_THRESH) {
-                printf("ActiveBlock.TapDetected: axis %d, val %f\n", axis, currAccelFiltVal);
+                PRINT_NAMED_INFO("ActiveBlock", "TapDetected: axis %d, val %f", axis, currAccelFiltVal);
                 tapDetected = true;
                 
                 // Fast forward in buffer so that we don't allow tap detection again until
@@ -582,7 +583,7 @@ namespace Anki {
                 }
                 
                 if(isMoving) {
-                  printf("Block %d appears to be moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
+                  PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, currentUpAxis_);
                   
                   // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
                   BlockMessages::LightCubeMessage msg;
@@ -604,7 +605,7 @@ namespace Anki {
                   
                 } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
                   
-                  printf("Block %d stopped moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
+                  PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, currentUpAxis_);
                   
                   // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
                   BlockMessages::LightCubeMessage msg;

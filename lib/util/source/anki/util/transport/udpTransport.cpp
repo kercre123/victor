@@ -320,7 +320,7 @@ public:
       PRINT_NAMED_WARNING("GetLocalIpAddressFromIfAddr", "No address found, defaulting to localhost!" );
     }
 
-    PRINT_CHANNELED_INFO("Network", "UDPTransport.GetIpAddress", "IP address = %s", TransportAddress(localIpAddress, 0).ToString().c_str());
+    PRINT_CH_INFO("Network", "UDPTransport.GetIpAddress", "IP address = %s", TransportAddress(localIpAddress, 0).ToString().c_str());
     
     return localIpAddress;
   }
@@ -387,7 +387,7 @@ uint32_t UDPTransport::GetLocalIpAddress()
   assert(g_ipRetriever != nullptr);
   
   const uint32_t ipAddress = g_ipRetriever->GetIpAddress();
-  PRINT_CHANNELED_INFO("Network", "UDPTransport.GetLocalIpAddress", "Our IP address: %s", TransportAddress(ipAddress,0).ToString().c_str());
+  PRINT_CH_INFO("Network", "UDPTransport.GetLocalIpAddress", "Our IP address: %s", TransportAddress(ipAddress,0).ToString().c_str());
   return ipAddress;
 }
 
@@ -416,7 +416,7 @@ uint32_t UDPTransport::GetBroadcastAddressFromIfAddr()
     broadcastAddress = (ipAddress & subnetMask) | (~subnetMask);
   }
 
-  PRINT_CHANNELED_INFO("Network", "UDPTransport.GetBroadcastAddressFromIfAddr", "Broadcast address = %s", TransportAddress(broadcastAddress, 0).ToString().c_str());
+  PRINT_CH_INFO("Network", "UDPTransport.GetBroadcastAddressFromIfAddr", "Broadcast address = %s", TransportAddress(broadcastAddress, 0).ToString().c_str());
   return broadcastAddress;
 }
 #endif // !defined(ANDROID)
@@ -450,7 +450,7 @@ bool UDPTransport::OpenSocket(int port)
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "UDPTransport.OpenSocket", "Opened Socket %d", _socketId);
+    PRINT_CH_INFO("Network", "UDPTransport.OpenSocket", "Opened Socket %d", _socketId);
   }
   
   int sockOptionEnable = 1;
@@ -484,10 +484,10 @@ bool UDPTransport::OpenSocket(int port)
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "UDPTransport.OpenSocket.BindSuccess", "Bind result successful - %d", bindResult );
+    PRINT_CH_INFO("Network", "UDPTransport.OpenSocket.BindSuccess", "Bind result successful - %d", bindResult );
   }
   
-  PRINT_CHANNELED_INFO("Network", "UDPTransport.OpenSocket.Success", "Socket %d open on port %d. Bind %ssuccessful", _socketId, ntohs(socketAddress.sin_port), (bindResult < 0) ? "Un" : "");
+  PRINT_CH_INFO("Network", "UDPTransport.OpenSocket.Success", "Socket %d open on port %d. Bind %ssuccessful", _socketId, ntohs(socketAddress.sin_port), (bindResult < 0) ? "Un" : "");
 
   return true;
 }
@@ -508,7 +508,7 @@ bool UDPTransport::CloseSocket()
   }
   else
   {
-    PRINT_CHANNELED_INFO("Network", "UDPTransport.CloseSocket.Success", "Socket %d closed successfully", _socketId);
+    PRINT_CH_INFO("Network", "UDPTransport.CloseSocket.Success", "Socket %d closed successfully", _socketId);
   }
 
   _socketId = -1;

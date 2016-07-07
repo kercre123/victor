@@ -383,7 +383,10 @@ namespace Anki {
       
       // Startup comms with engine
       if (!_gameComms) {
-        printf("Registering with advertising service at %s:%d", engineIP.c_str(), UI_ADVERTISEMENT_REGISTRATION_PORT);
+        PRINT_NAMED_INFO("UiGameController.Init",
+                          "Registering with advertising service at %s:%d",
+                          engineIP.c_str(),
+                          UI_ADVERTISEMENT_REGISTRATION_PORT);
         _gameComms = new GameComms(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
                                    engineIP.c_str(),
                                    UI_ADVERTISEMENT_REGISTRATION_PORT);
@@ -708,7 +711,7 @@ namespace Anki {
         // if at robot
         if(_lightCubeOriginIter == _lightCubes.end())
         {
-          PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+          PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
                           "Aligning viz to match robot's pose.");
                          
           correctionPose = _robotPoseActual * _robotPose.GetInverse();
@@ -717,7 +720,7 @@ namespace Anki {
         {
           // Align the pose of the object to which the robot is localized to the
           // the next actual light cube in the world
-          PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+          PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
                        "Aligning viz to match next known LightCube to object %d",
                        _robotStateMsg.localizedToObjectID);
       
@@ -727,7 +730,7 @@ namespace Anki {
         // Robot is not localized to any object, so align the robot's estimated
         // pose to its actual pose in the world
 
-        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+        PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
                          "Aligning viz to match robot's pose.");
                          
         correctionPose = _robotPoseActual * _robotPose.GetInverse();

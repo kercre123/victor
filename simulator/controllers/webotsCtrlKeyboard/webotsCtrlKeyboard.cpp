@@ -28,6 +28,8 @@
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
+#include "util/math/math.h"
+#include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/fileUtils/fileUtils.h"
 #include <fstream>
@@ -1627,7 +1629,7 @@ namespace Anki {
                 
               case (s32)'`':
               {
-                printf("Updating viz origin\n");
+                PRINT_CH_INFO("Keyboard", "KeyboardCtrl.ProcessKeyStroke", "Updating viz origin");
                 CycleVizOrigin();
                 break;
               }
@@ -1763,11 +1765,11 @@ namespace Anki {
                         PRINT_NAMED_INFO("SendNVStorageWriteEntry.ReadInputImage", "Tag: %s, read %zu bytes\n", EnumToString(tag), numBytes);
                         
                         ExternalInterface::NVStorageWriteEntry temp;
-                        u32 MAX_BLOB_SIZE = temp.data.size();
+                        size_t MAX_BLOB_SIZE = temp.data.size();
                         u8 numTotalBlobs = static_cast<u8>(ceilf(static_cast<f32>(numBytes) / MAX_BLOB_SIZE));
                         
                         PRINT_NAMED_INFO("SendNVStorageWriteEntry.Sending",
-                                         "Tag: %s, NumBlobs %d, maxBlobSize %d",
+                                         "Tag: %s, NumBlobs %d, maxBlobSize %zu",
                                          EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
 
                         for (int i=0; i<numTotalBlobs; ++i) {
@@ -2553,11 +2555,52 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  Anki::Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  Anki::Util::PrintfLoggerProvider loggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
+  
+  // - console filter for logs
+  {
+    // Get the last position of '/'
+    std::string aux(argv[0]);
+  #if defined(_WIN32) || defined(WIN32)
+    size_t pos = aux.rfind('\\');
+  #else
+    size_t pos = aux.rfind('/');
+  #endif
+    // Get the path and the name
+    std::string path = aux.substr(0,pos+1);
+    //std::string name = aux.substr(pos+1);
+    std::string resourcePath = path + "resources";
+    std::string filesPath = path + "files";
+    std::string cachePath = path + "temp";
+    std::string externalPath = path + "temp";
+    Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  
+    using namespace Anki::Util;
+    ChannelFilter* consoleFilter = new ChannelFilter();
+    
+    // load file config
+    Json::Value consoleFilterConfig;
+    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
+    if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
+    {
+      PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+    }
+    
+    // initialize console filter for this platform
+    const std::string& platformOS = dataPlatform.GetOSPlatformString();
+    const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
+    consoleFilter->Initialize(consoleFilterConfigOnPlatform);
+    
+    // set filter in the loggers
+    std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
+    loggerProvider.SetFilter(filterPtr);
+    
+    // also parse info for providers
+    loggerProvider.ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+  }
 
   webotsCtrlKeyboard.PreInit();
   webotsCtrlKeyboard.WaitOnKeyboardToConnect();
