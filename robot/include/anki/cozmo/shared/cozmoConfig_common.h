@@ -17,8 +17,8 @@ const f32 WHEEL_BASE_MM      = 48.f;
 const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
 const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
 
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-24.5f);
-const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
+const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
+const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
 
 const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
 const f32 kIdealViewBlockLiftUpHeadAngle = DEG_TO_RAD(-22.5f);

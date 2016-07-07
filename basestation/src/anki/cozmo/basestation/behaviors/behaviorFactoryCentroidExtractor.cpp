@@ -62,7 +62,9 @@ namespace Cozmo {
 
   Result BehaviorFactoryCentroidExtractor::InitInternal(Robot& robot)
   {
-    _factoryTestLogger.StartLog(std::to_string(robot.GetSerialNumber()) + "_centroids", true, robot.GetDataPlatform());
+    std::stringstream serialNumString;
+    serialNumString << std::hex << robot.GetSerialNumber();
+    _factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetDataPlatform());
     PRINT_NAMED_INFO("BehaviorFactoryCentroidExtractor.WillLogToDevice",
                      "Log name: %s",
                      _factoryTestLogger.GetLogName().c_str());

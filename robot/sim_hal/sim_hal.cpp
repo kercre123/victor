@@ -538,7 +538,11 @@ namespace Anki {
     } // HAL::UpdateDisplay()
 
 
-
+    void HAL::IMUSetCalibrationOffsets(const s16* acc, const s16* gyro)
+    {
+      // Does nothing in sim
+    }
+    
     bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
       const double* vals = gyro_->getValues();  // rad/s

@@ -484,7 +484,7 @@ namespace Anki {
       
       void Process_setIMUCalibration(const Anki::Cozmo::RobotInterface::IMUCalibrationData& msg)
       {
-        // TODO @kevingatanki implement this message handler
+        HAL::IMUSetCalibrationOffsets(msg.acc, msg.gyro);
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {

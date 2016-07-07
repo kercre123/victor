@@ -86,6 +86,7 @@ enum uint_8 FactoryTestResultCode {
   NO_PREPLAYPEN_CENTROIDS,
   COMPUTE_CAM_POSE_FAILED,
   CAM_POSE_OOR,
+  PLAY_SOUND_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
