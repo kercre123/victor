@@ -6,7 +6,7 @@
     },
     {
       "CladEvent": "AdmireStackFocusEyes",
-      "AnimName": "ag_reactToNewBlock"
+      "AnimName": "ag_reacttoblock_focusedeyes"
     },
     {
       "CladEvent": "AdmireStackKnockOverPreDrivingFailure",
