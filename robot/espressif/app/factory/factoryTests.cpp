@@ -57,9 +57,7 @@ static BirthCertificate birthCert;
 static s8  menuIndex;
 static void* testModeData;
 
-#if FACTORY_FIRMWARE
 extern "C" bool hasBirthCertificate(void) { return birthCert.second != 0xFF; }
-#endif
 
 #define MENU_TIMEOUT 100000000
 
