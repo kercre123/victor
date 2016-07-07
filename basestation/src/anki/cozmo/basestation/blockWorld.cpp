@@ -811,7 +811,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DrawNavMemoryMap() const
   {
-    if(ANKI_DEV_CHEATS)
+    if(ANKI_DEVELOPER_CODE)
     {
       if ( _isNavMemoryMapRenderEnabled ) {
         size_t lastIndexNonCurrent = 0;
@@ -831,7 +831,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::ClearNavMemoryMapRender() const
   {
-    if(ANKI_DEV_CHEATS)
+    if(ANKI_DEVELOPER_CODE)
     {
       for ( const auto& memMapPair : _navMemoryMaps )
       {
