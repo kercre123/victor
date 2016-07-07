@@ -1027,7 +1027,7 @@ typedef enum {
 
 struct WipeAllTaskState {
   EraseDoneCB callback;
-  uint32_t sectorCount;
+  int16_t sectorCount;
   int8_t   retries;
   bool     includeFactory;
   bool     reboot;
@@ -1046,31 +1046,31 @@ bool WipeAllTask(uint32_t param)
       if (i2spiMessageQueueIsEmpty())
       {
         i2spiSwitchMode(I2SPI_PAUSED);
-        state->sectorCount = 0;
+        state->sectorCount = (NV_STORAGE_AREA_SIZE * NV_STORAGE_NUM_AREAS / SECTOR_SIZE) - 1;
         state->phase = WAT_segments;
       }
       return true;
     }
     case WAT_segments:
     {
-      if (state->sectorCount < (NV_STORAGE_AREA_SIZE * NV_STORAGE_NUM_AREAS / SECTOR_SIZE))
+      if (state->sectorCount >= 0)
       {
         const SpiFlashOpResult rslt = spi_flash_erase_sector(NV_STORAGE_SECTOR + state->sectorCount);
-        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount += 1;
+        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount -= 1;
       }
       else
       {
-        state->sectorCount = 0;
+        state->sectorCount = (NV_STORAGE_AREA_SIZE / SECTOR_SIZE) - 1;
         state->phase = WAT_factory;
       }
       return true;
     }
     case WAT_factory:
     {
-      if (state->includeFactory && (state->sectorCount < (NV_STORAGE_AREA_SIZE / SECTOR_SIZE)))
+      if (state->includeFactory && (state->sectorCount >= 0))
       {
         const SpiFlashOpResult rslt = spi_flash_erase_sector(FACTORY_NV_STORAGE_SECTOR + state->sectorCount);
-        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount += 1;
+        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount -= 1;
       }
       else
       {
@@ -1107,15 +1107,6 @@ bool WipeAllTask(uint32_t param)
       return false;
     }
   }
-}
-
-bool IsFactoryStorageEmpty()
-{
-  NVEntryHeader header;
-  SpiFlashOpResult r = spi_flash_read(FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32_t*>(&header), sizeof(NVEntryHeader));
-  if (r != SPI_FLASH_RESULT_OK || header.tag != NVEntry_Invalid)
-    return false;
-  return true;
 }
 
 NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)

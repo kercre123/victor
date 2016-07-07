@@ -785,17 +785,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     {
       static bool afixMode = false;
       // If we need to wipe up the factory info (on a second run), do that now
-      if (!NVStorage::IsFactoryStorageEmpty()) {
-        // Really need wipeall to have battery power to prevent interruption - hopefully rare
-        Anki::Cozmo::RobotInterface::SetBodyRadioMode bMsg;
-        bMsg.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
-        Anki::Cozmo::RobotInterface::SendMessage(bMsg);
-        
-        os_printf("Playpen test is wiping all\n");
-        NVStorage::WipeAll(true, 0, true, true);
-
-      // If we haven't already, create config for test fixture open AP
-      } else if (!afixMode) {
+      if (!afixMode) {
         struct softap_config ap_config;
         wifi_softap_get_config(&ap_config);
         os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
