@@ -68,13 +68,15 @@ using namespace Anki::Cozmo::RobotInterface;
 
 // Not in a known operating mode until later in main()
 static BodyRadioMode current_operating_mode = -1;
-static BodyRadioMode active_operating_mode = -1;
 
 void enterOperatingMode(BodyRadioMode mode) {
   current_operating_mode = mode;
 }
 
 static void setupOperatingMode() {
+  static BodyRadioMode active_operating_mode = -1;
+  BodyRadioMode new_mode = current_operating_mode;
+
   // XXX: Factory only - to support test modes:  Dirty hack to run battery for 4 seconds after power-up regardless of mode
   static bool turnPowerOff = false;
   if (turnPowerOff && GetCounter() > (4<<23))
@@ -83,7 +85,9 @@ static void setupOperatingMode() {
     turnPowerOff = false;
   }
   
-  if (active_operating_mode == current_operating_mode) {
+  
+  
+  if (active_operating_mode == new_mode) {
     return ;
   }
 
@@ -108,7 +112,7 @@ static void setupOperatingMode() {
   }
 
   // Setup new mode
-  switch(current_operating_mode) {
+  switch(new_mode) {
     case BODY_LOW_POWER_OPERATING_MODE:
       // Shut-down non-essentials
       __disable_irq();  
@@ -163,7 +167,7 @@ static void setupOperatingMode() {
       break ;
   }
   
-  active_operating_mode = current_operating_mode;
+  active_operating_mode = new_mode;
 }
 
 int main(void)
