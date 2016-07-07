@@ -17,7 +17,7 @@ extern "C" {
 #include "lights.h"
 #include "cubes.h"
 #include "random.h"
-#include "crypto.h"
+#include "tasks.h"
 #include "bluetooth.h"
 #include "messages.h"
 #include "watchdog.h"
@@ -67,7 +67,7 @@ int main(void)
 
   // Initialize the SoftDevice handler module.
   Bluetooth::init();
-  Crypto::init();
+  Tasks::init();
   Lights::init();
 
   // Setup all tasks
@@ -87,9 +87,9 @@ int main(void)
   // Run forever, because we are awesome.
   for (;;) {
     Battery::updateOperatingMode();
-    
+
     // This means that if the crypto engine is running, the lights will stop pulsing. 
-    Crypto::manage();
+    Tasks::manage();
     Lights::manage();
     Backpack::manage();
     Temp::manage();

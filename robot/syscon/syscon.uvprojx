@@ -432,6 +432,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\watchdog.cpp</FilePath>
             </File>
+            <File>
+              <FileName>tasks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\tasks.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -492,11 +497,6 @@
         <Group>
           <GroupName>crypto</GroupName>
           <Files>
-            <File>
-              <FileName>crypto.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\crypto.cpp</FilePath>
-            </File>
             <File>
               <FileName>aes.cpp</FileName>
               <FileType>8</FileType>

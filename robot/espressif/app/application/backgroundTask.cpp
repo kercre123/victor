@@ -57,6 +57,7 @@ void Exec(os_event_t *event)
 {
   static u32 lastBTT = system_get_time();
   static u8 periodicPrint = 0;
+  static u8 lastStaCount = 0;
   const u32 btStart  = system_get_time();
   const u32 btInterval = btStart - lastBTT;
   if ((btInterval > EXPECTED_BT_INTERVAL_US*2) && (periodicPrint++ == 0))
@@ -115,6 +116,24 @@ void Exec(os_event_t *event)
         lastErrorReport = i2spiPhaseErrorCount;
         AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, i2spiPhaseErrorCount, i2spiIntegralDrift);
       }
+      break;
+    }
+    case 6:
+    {
+      using namespace RobotInterface;
+      const u8 currentStaCount = wifi_softap_get_station_num();
+      SetBodyRadioMode bMsg;
+      if (currentStaCount > 0 && lastStaCount == 0)
+      {
+        bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
+        SendMessage(bMsg);
+      }
+      else if (currentStaCount == 0 && lastStaCount > 0)
+      {
+        bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
+        SendMessage(bMsg);
+      }
+      lastStaCount = currentStaCount;
       break;
     }
     // Add new "long execution" tasks as switch cases here.
@@ -231,15 +250,6 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 static bool sendWifiConnectionState(const bool state)
 {
   using namespace Anki::Cozmo::RobotInterface;
-
-  SetBodyRadioMode bMsg;
-
-  bMsg.radioMode =
-    state ?
-      BODY_ACCESSORY_OPERATING_MODE :
-      BODY_BLUETOOTH_OPERATING_MODE;
-  SendMessage(bMsg);
-
   RadioState rtipMsg;
   rtipMsg.wifiConnected = state;
   return SendMessage(rtipMsg);

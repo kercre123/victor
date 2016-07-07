@@ -14,6 +14,7 @@
 #include "backpack.h"
 #include "motors.h"
 #include "temp.h"
+#include "tasks.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
 static const int MinContactTime = 20;    // .10s
@@ -206,6 +207,7 @@ void Battery::updateOperatingMode() {
     
     case BODY_ACCESSORY_OPERATING_MODE:
       Motors::disable(false);
+
       Battery::powerOn();
       Backpack::lightMode(TIMER_LEDS);
 

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "bluetooth.h"
-#include "crypto.h"
+#include "tasks.h"
 #include "messages.h"
 #include "storage.h"
 
@@ -14,7 +14,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-//#define DISABLE_CRYPTO_CHECK
+//#define DISABLE_TASK_CHECK
 //#define DISABLE_AUTHENTIFICATION
 
 #define member_size(type, member) sizeof(((type *)0)->member)
@@ -108,7 +108,7 @@ static void dh_complete(const void*, int) {
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = *(const uint32_t*)Crypto::aes_key();
+  dn.value = *(const uint32_t*)Tasks::aes_key();
   dn.digits = 8;
   dn.x = 0;
   dn.y = 16;
@@ -122,11 +122,11 @@ void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {
   memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
   
   // Run the completed DH stack
-  CryptoTask t;
-  t.op = CRYPTO_FINISH_DIFFIE_HELLMAN;
+  Task t;
+  t.op = TASK_FINISH_DIFFIE_HELLMAN;
   t.state = &dh_state;
   t.callback = dh_complete;
-  Crypto::execute(&t);
+  Tasks::execute(&t);
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
@@ -214,7 +214,7 @@ static void frame_receive(CozmoFrame& receive)
   
   rx_buffer.message_size = rx_buffer.pointer;
 
-  #ifndef DISABLE_CRYPTO_CHECK
+  #ifndef DISABLE_TASK_CHECK
   // Attemped to send a protected message unencrypted
   if (message_encrypted(rx_buffer.msgID) != encrypted) {
     permissions_error(BLE_ERROR_MESSAGE_ENCRYPTION_WRONG);
@@ -224,14 +224,14 @@ static void frame_receive(CozmoFrame& receive)
 
   // rx_buffer.pointer
   if (encrypted) {
-    CryptoTask t;
+    Task t;
     
-    t.op = CRYPTO_AES_DECODE;
+    t.op = TASK_AES_DECODE;
     t.callback = frame_data_received;
     t.state = rx_buffer.raw;
     t.length = rx_buffer.message_size;
 
-    Crypto::execute(&t);
+    Tasks::execute(&t);
   } else {
     // Feed unencrypted data through to the engine
     frame_data_received(NULL, rx_buffer.message_size);
@@ -322,15 +322,15 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
   }
 
   if (encrypted) {
-    CryptoTask t;
+    Task t;
 
-    t.op = CRYPTO_AES_ENCODE;
+    t.op = TASK_AES_ENCODE;
     tx_buffer.message_size = tx_buffer.length + 2;
     t.callback = start_message_transmission;
     t.state = tx_buffer.raw;
     t.length = tx_buffer.message_size;
         
-    Crypto::execute(&t);
+    Tasks::execute(&t);
   } else {
     tx_pending = true;
   }
@@ -344,7 +344,7 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
   static ble_gap_sec_keyset_t keys_exchanged;
   
   uint32_t                    err_code;
-  CryptoTask t;
+  Task t;
 
   switch (p_ble_evt->header.evt_id)
   {
@@ -355,17 +355,17 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       tx_buffered = false;
 
       // Initalize our DH state
-      t.op = CRYPTO_START_DIFFIE_HELLMAN;
+      t.op = TASK_START_DIFFIE_HELLMAN;
       t.state = &dh_state;
       t.callback = NULL;
-      Crypto::execute(&t);
+      Tasks::execute(&t);
 
       // Generate our welcome nonce
-      t.op = CRYPTO_GENERATE_RANDOM;
+      t.op = TASK_GENERATE_RANDOM;
       t.state = &m_nonce;
       t.length = sizeof(m_nonce);
       t.callback = send_welcome_message;
-      Crypto::execute(&t);
+      Tasks::execute(&t);
 
       m_task_enabled = true;
 

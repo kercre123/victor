@@ -529,21 +529,6 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\power.cpp</FilePath>
             </File>
-            <File>
-              <FileName>fcc.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\fcc.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bootloader.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bootbin.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\k02_hal\hal\bootbin.s</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -1210,21 +1195,6 @@
               <FileName>power.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>fcc.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\fcc.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bootloader.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bootbin.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\k02_hal\hal\bootbin.s</FilePath>
             </File>
           </Files>
         </Group>

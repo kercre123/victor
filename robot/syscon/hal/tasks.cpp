@@ -11,23 +11,23 @@ extern "C" {
 #include "timer.h"
 
 #include "aes.h"
-#include "crypto.h"
+#include "tasks.h"
 #include "diffie.h"
 #include "random.h"
 #include "storage.h"
 
 static volatile int fifoHead;
 static volatile int fifoTail;
-static CryptoTask fifoQueue[MAX_CRYPTO_TASKS];
+static Task fifoQueue[MAX_TASKS];
 
-void Crypto::init() {
+void Tasks::init() {
   fifoHead = 0;
   fifoTail = 0;
 
   memset(fifoQueue, 0, sizeof(fifoQueue));
   
   // Setup key
-  if (Crypto::aes_key() != NULL) {
+  if (Tasks::aes_key() != NULL) {
     return ;
   }
   
@@ -37,21 +37,21 @@ void Crypto::init() {
 }
 
 // Top 16 bytes of application space
-const void* Crypto::aes_key() {
+const void* Tasks::aes_key() {
   return Storage::get_lazy(STORAGE_AES_KEY);
 }
 
-void Crypto::execute(const CryptoTask* task) {
+void Tasks::execute(const Task* task) {
   if (fifoTail + 1 == fifoHead) {
     return ;
   }
 
-  memcpy(&fifoQueue[fifoTail], task, sizeof(CryptoTask));
-  fifoTail = (fifoTail+1) % MAX_CRYPTO_TASKS;
+  memcpy(&fifoQueue[fifoTail], task, sizeof(Task));
+  fifoTail = (fifoTail+1) % MAX_TASKS;
 }
 
-void Crypto::manage(void) {
-  CryptoTask* task = &fifoQueue[fifoHead];
+void Tasks::manage(void) {
+  Task* task = &fifoQueue[fifoHead];
 
   // We have no pending messages
   if (fifoHead == fifoTail) {
@@ -61,13 +61,13 @@ void Crypto::manage(void) {
   int length = task->length;
   
   switch (task->op) {
-    case CRYPTO_GENERATE_RANDOM:
+    case TASK_GENERATE_RANDOM:
       gen_random((uint8_t*)task->state, task->length);
       break ;
-    case CRYPTO_ECB:
+    case TASK_ECB:
       aes_ecb((ecb_data_t*) task->state);
       break ;
-    case CRYPTO_AES_DECODE:
+    case TASK_AES_DECODE:
       {
         uint8_t* data = (uint8_t*) task->state;
 
@@ -75,7 +75,7 @@ void Crypto::manage(void) {
         length = task->length - AES_KEY_LENGTH;
         break ;
       }
-    case CRYPTO_AES_ENCODE:
+    case TASK_AES_ENCODE:
       {
         uint8_t* data = (uint8_t*) task->state;
         
@@ -84,10 +84,10 @@ void Crypto::manage(void) {
         length = task->length + AES_KEY_LENGTH;
       }
       break ;
-    case CRYPTO_START_DIFFIE_HELLMAN:
+    case TASK_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);
       break ;
-    case CRYPTO_FINISH_DIFFIE_HELLMAN:
+    case TASK_FINISH_DIFFIE_HELLMAN:
       dh_finish(aes_key(), (DiffieHellman*) task->state);
       break ;
   }
@@ -97,5 +97,5 @@ void Crypto::manage(void) {
   }
 
   // Dequeue message
-  fifoHead = (fifoHead+1) % MAX_CRYPTO_TASKS;
+  fifoHead = (fifoHead+1) % MAX_TASKS;
 }
