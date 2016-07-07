@@ -45,6 +45,7 @@ struct AccessorySlot {
   uint8_t               hopIndex;
   int8_t                hopBlackout;
   uint8_t               hopChannel;
+  uint16_t              model;
   
   uint32_t              id;
   
