@@ -83,6 +83,24 @@ void Anki::Cozmo::HAL::DAC::Sync() {
   write_pointer = ((DAC0_C2 >> 4) - 1) % DAC_WORDS;
 }
 
+#include <math.h>
+
+void GenerateTestTone(void) {
+  using namespace Anki::Cozmo::HAL::DAC;
+  
+  __disable_irq();
+  GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
+  EnableAudio(true);
+
+  static const float peak = 0x200;
+  
+  for (int i = 0; i < DAC_WORDS; i++) {
+    DAC_WRITE[i] = (int)(peak * sinf(i * M_PI_2 / DAC_WORDS) + peak);
+  }
+
+  for (;;) ;
+}
+
 void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {  
   #ifdef GENERATE_WHITE_NOISE
   static uint64_t lsfr = ~0L;

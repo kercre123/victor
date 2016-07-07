@@ -41,6 +41,7 @@
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
 extern bool Anki::Cozmo::HAL::UnlockDevices;
+extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
@@ -559,6 +560,12 @@ namespace Anki {
 #endif
       } // ProcessImageRequestMessage()
 
+      void Process_generateTestTone(const RobotInterface::GenerateTestTone& msg) {
+        #ifdef TARGET_K02
+        GenerateTestTone();
+        #endif
+      }
+      
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
