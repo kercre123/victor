@@ -82,6 +82,10 @@ namespace Cozmo {
   // Read the centroid locations stored on the robot from the prePlaypen test and calculate camera pose
   CONSOLE_VAR(bool,  kBFT_ReadCentroidsFromRobot, "BehaviorFactoryTest",  false);
   
+  // Play sound
+  // (Sound resource not available in webots tests because they run before game configure)
+  CONSOLE_VAR(bool,  kBFT_PlaySound,              "BehaviorFactoryTest",  true);
+  
   
   ////////////////////////////
   // Static consts
@@ -509,16 +513,17 @@ namespace Cozmo {
         
         
         // Play sound
-        PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
-        StartActing(robot, soundAction,
-                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                      if (result != ActionResult::SUCCESS) {
-                        EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
-                        return false;
-                      }
-                      return true;
-                    });
-        
+        if (kBFT_PlaySound) {
+          PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
+          StartActing(robot, soundAction,
+                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        if (result != ActionResult::SUCCESS) {
+                          EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
+                          return false;
+                        }
+                        return true;
+                      });
+        }
         
         // Start motor calibration
         robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
