@@ -176,6 +176,11 @@ namespace SpeedTap {
       GameEvent gameEventToSend = GameEvent.Count;
       AnimationTrigger animationEventToSend = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
+
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+        highIntensity = true;
+      }
+
       if (_CurrentWinner == PointWinner.Player) {
         GameEventManager.Instance.SendGameEventToEngine(
           GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, _SpeedTapGame.ChallengeID, _SpeedTapGame.CurrentDifficulty, true, highIntensity));
