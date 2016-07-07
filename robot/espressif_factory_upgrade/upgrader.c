@@ -121,8 +121,13 @@ void call_user_start() {
     }
   }
   
-  ets_printf("Finished installing upgrade, self destructing\r\n");
-  while (SPIEraseSector(codeSector) != SPI_FLASH_RESULT_OK) ets_printf("Error erasing sector 0x%x\r\n", codeSector);
+  
+  ets_printf("Finished installing upgrade\r\n");
+  ets_printf("Erasing other app...\r\n"); // Destroy other app first in case we don't completely erase ourselves
+  const uint32_t otherAppSector = codeSector == APPLICATION_A_SECTOR ? APPLICATION_B_SECTOR : APPLICATION_A_SECTOR;
+  while (SPIEraseSector(otherAppSector)) ets_printf("Trouble erasing sector 0x%x\r\n", otherAppSector);
+  ets_printf("Self destructing\r\n");
+  while (SPIEraseSector(codeSector) != SPI_FLASH_RESULT_OK) ets_printf("Trouble erasing sector 0x%x\r\n", codeSector);
   ets_printf("Done\r\n");
   magic = 0;
 }

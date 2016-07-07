@@ -130,11 +130,7 @@ esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 
 factory_upgrade: esp_factory
 	cd espressif_factory_upgrade; python3 build.py
-	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi espressif_factory_upgrade/firmware/upgrader-image.bin ./staging/factory_upgrade.safe
-	python3 ./tools/sign.py               --wifi espressif_factory_upgrade/firmware/upgrader-image.bin ./staging/factory_upgrade.unsafe
-
-esp_factory_safe: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
-	python3 ./tools/sign.py --prepend_size_word --rtip ./build/app/robot.axf --body ./syscon/build/app/syscon.axf ./staging/factory.safe
+	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi espressif_factory_upgrade/firmware/upgrader-image.bin --rtip ./binaries/robot.axf --body ./binaries/syscon.axf ./staging/factory_upgrade.safe
   
 onBuildServer: esp
 

@@ -686,6 +686,12 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
   switch (mode)
   {
     case RobotInterface::FTM_entry:
+    {
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
+      RTIP::SendMessage(msg);
+      // Explicit fall through to next case
+    }
     case RobotInterface::FTM_menus:
     case RobotInterface::FTM_WiFiInfo:
     case RobotInterface::FTM_StateMenu:
@@ -720,9 +726,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     {
       msg.tag = RobotInterface::EngineToRobot::Tag_stop;
       RTIP::SendMessage(msg);
-      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
-      RTIP::SendMessage(msg);
       break;
     }
     default:
@@ -739,8 +742,14 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       lastExecTime = system_get_time();
       break;
     }
-    case RobotInterface::FTM_SSID:
     case RobotInterface::FTM_menus:
+    {
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+      RTIP::SendMessage(msg);
+      // Explicit fall through to next case
+    }
+    case RobotInterface::FTM_SSID:
     case RobotInterface::FTM_WiFiInfo:
     case RobotInterface::FTM_StateMenu:
     case RobotInterface::FTM_BLE_Menu:
@@ -765,12 +774,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
-    }
-    case RobotInterface::FTM_motorLifeTest:
-    {
-      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
-      RTIP::SendMessage(msg);
     }
     #if FACTORY_FIRMWARE
     case RobotInterface::FTM_cubeTest:
