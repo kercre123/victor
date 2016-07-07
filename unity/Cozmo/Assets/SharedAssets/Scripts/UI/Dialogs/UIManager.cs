@@ -53,20 +53,21 @@ public class UIManager : MonoBehaviour {
   public GameObject TouchCatcherPrefab {
     get { return _TouchCatcherPrefab; }
   }
+  private TouchCatcher _TouchCatcherInstance;
+  public TouchCatcher TouchCatcher { get { return _TouchCatcherInstance != null && _TouchCatcherInstance.isActiveAndEnabled ? _TouchCatcherInstance : null; } }
 
   [SerializeField]
   private CanvasGroup _DimBackgroundPrefab;
 
-  [SerializeField]
-  private float _DimBackgroundFadeDurationSecond = 0.2f;
-
-  private List<BaseView> _OpenViews;
-  private TouchCatcher _TouchCatcherInstance;
   private CanvasGroup _DimBackgroundInstance;
   private int _NumDialogsDimmingBackground;
   private Sequence _DimBackgroundTweener;
 
-  public TouchCatcher TouchCatcher { get { return _TouchCatcherInstance != null && _TouchCatcherInstance.isActiveAndEnabled ? _TouchCatcherInstance : null; } }
+  [SerializeField]
+  private BackgroundColorController _BackgroundColorController;
+  public BackgroundColorController BackgroundColorController { get { return _BackgroundColorController; } }
+
+  private List<BaseView> _OpenViews;
 
   void Awake() {
     Instance = this;
@@ -76,6 +77,9 @@ public class UIManager : MonoBehaviour {
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
 
+  void Start() {
+    BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
+  }
 
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
@@ -226,7 +230,8 @@ public class UIManager : MonoBehaviour {
         _DimBackgroundTweener.Kill();
       }
       _DimBackgroundTweener = DOTween.Sequence();
-      _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(1, _DimBackgroundFadeDurationSecond));
+      _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(1, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
+                                   .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
     }
   }
 
@@ -241,7 +246,8 @@ public class UIManager : MonoBehaviour {
             _DimBackgroundTweener.Kill();
           }
           _DimBackgroundTweener = DOTween.Sequence();
-          _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(0, _DimBackgroundFadeDurationSecond));
+          _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(0, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
+                                       .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
           _DimBackgroundTweener.AppendCallback(() => Destroy(_DimBackgroundInstance.gameObject));
         }
       }

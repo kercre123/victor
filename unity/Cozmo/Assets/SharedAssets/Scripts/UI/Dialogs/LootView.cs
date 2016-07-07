@@ -27,7 +27,7 @@ namespace Cozmo {
       [SerializeField]
       private float _ShakeDuration = 1.0f;
       // Rotation Shake Settings
-      [SerializeField] 
+      [SerializeField]
       private float _ShakeRotationMinAngle = 15.0f;
       [SerializeField]
       private float _ShakeRotationMaxAngle = 30.0f;
@@ -194,7 +194,10 @@ namespace Cozmo {
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
         _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
         _ActiveDooberTransforms = new List<Transform>();
-        _LootGlow.DOFade(0.0f, 0.0f);
+
+        Color transparentColor = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, 0);
+        _LootGlow.color = transparentColor;
+
         StartCoroutine(InitializeBox());
         _BoxOpened = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
@@ -326,7 +329,7 @@ namespace Cozmo {
         if (iData != null) {
           rewardIcon = iData.Icon;
         }
-        
+
         if (rewardIcon != null) {
           newDoob.GetComponent<Image>().overrideSprite = rewardIcon;
         }
@@ -448,7 +451,7 @@ namespace Cozmo {
         if (_AlphaController != null) {
           closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
         }
-        
+
         SendDoobersAway(closeAnimation);
       }
     }

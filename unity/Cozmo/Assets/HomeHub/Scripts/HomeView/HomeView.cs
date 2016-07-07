@@ -380,6 +380,8 @@ namespace Cozmo.HomeHub {
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
       // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+
+      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Bone);
     }
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {

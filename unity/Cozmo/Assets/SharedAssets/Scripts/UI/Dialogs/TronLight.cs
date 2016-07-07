@@ -55,7 +55,8 @@ namespace Cozmo {
         if (_CurrTurns < 1) {
           _CurrTurns = 1;
         }
-        _Spark.DOFade(1.0f, 0.0f);
+        Color opaqueColor = new Color(_Spark.color.r, _Spark.color.g, _Spark.color.b, 1);
+        _Spark.color = opaqueColor;
         transform.position = transform.parent.position;
         _CurrLifeSpan = UnityEngine.Random.Range(_LifeSpanMin, _LifeSpanMax);
         _CurrDir = (Direction)UnityEngine.Random.Range(0, (int)Direction.Down);

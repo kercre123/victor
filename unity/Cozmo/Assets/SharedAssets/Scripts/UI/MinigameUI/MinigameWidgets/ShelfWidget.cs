@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
-using Anki.UI;
+using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -80,9 +80,6 @@ namespace Cozmo {
 
       [SerializeField]
       private Image _CenterAlignedCircuitry;
-
-      [SerializeField]
-      private float _CircuitryFadeDuration_sec = 0.5f;
 
       private Tweener _CircuitryTweenIn;
       private Tweener _CircuitryTweenOut;
@@ -174,7 +171,7 @@ namespace Cozmo {
         _ContentContainer.interactable = false;
         _ContentContainer.alpha = 0;
         _ContentTween = DOTween.Sequence();
-        _ContentTween.Append(_ContentContainer.DOFade(1, _ContentFadeTweenDurationSeconds));
+        _ContentTween.Append(_ContentContainer.DOFade(1, _ContentFadeTweenDurationSeconds).SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
         _ContentTween.Join(_ContentContainer.transform.DOLocalMoveX(
           -_ContentTweenXOffset, _ContentFadeTweenDurationSeconds).From().SetEase(Ease.OutQuad));
         _ContentTween.AppendCallback(AddContentFinished);
@@ -197,7 +194,7 @@ namespace Cozmo {
           _ContentContainer.alpha = 1;
           ResetTween(_ContentTween);
           _ContentTween = DOTween.Sequence();
-          _ContentTween.Append(_ContentContainer.DOFade(0, _ContentFadeTweenDurationSeconds));
+          _ContentTween.Append(_ContentContainer.DOFade(0, _ContentFadeTweenDurationSeconds).SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
           _ContentTween.Join(_ContentContainer.transform.DOLocalMoveX(
             _ContentTweenXOffset, _ContentFadeTweenDurationSeconds).SetEase(Ease.OutQuad));
           _ContentTween.AppendCallback(HideContentFinished);
@@ -255,16 +252,20 @@ namespace Cozmo {
       }
 
       private void FadeInCircuitry(Image circuitry) {
-        PlayFadeTween(ref _CircuitryTweenIn, circuitry, 1f);
+        PlayFadeTween(ref _CircuitryTweenIn, circuitry, 1f,
+                      UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds,
+                      UIDefaultTransitionSettings.Instance.FadeInEasing);
       }
 
       private void FadeOutCircuitry(Image circuitry) {
-        PlayFadeTween(ref _CircuitryTweenOut, circuitry, 0f);
+        PlayFadeTween(ref _CircuitryTweenOut, circuitry, 0f,
+                      UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds,
+                      UIDefaultTransitionSettings.Instance.FadeOutEasing);
       }
 
-      private void PlayFadeTween(ref Tweener tween, Image target, float targetAlpha) {
+      private void PlayFadeTween(ref Tweener tween, Image target, float targetAlpha, float duration, Ease easing) {
         ResetTween(tween);
-        tween = target.DOFade(targetAlpha, _CircuitryFadeDuration_sec).SetEase(Ease.OutQuad);
+        tween = target.DOFade(targetAlpha, duration).SetEase(easing);
       }
 
       private void ResetTween(Tween tween) {

@@ -128,13 +128,13 @@ namespace Cozmo.HomeHub {
       _StartViewInstance.OnConnectClicked -= HandleConnectClicked;
       _StartViewInstance.CloseView();
       _StartViewInstance.ViewCloseAnimationFinished += HandleStartViewClosed;
+      ShowHomeView();
     }
 
     private void HandleStartViewClosed() {
       _StartViewInstance.ViewCloseAnimationFinished -= HandleStartViewClosed;
       _StartViewInstance = null;
       UnloadStartViewAssetBundle();
-      ShowHomeView();
     }
 
     private void ShowHomeView() {
@@ -151,20 +151,45 @@ namespace Cozmo.HomeHub {
 
     private void LoadHomeView(bool assetBundleSuccess) {
       _HomeViewPrefabData.LoadAssetData((GameObject homeViewPrefab) => {
-        _HomeViewInstance = UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>());
-        _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
-        _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-        _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
-        _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
-
-        // Show the current state of challenges being locked/unlocked
-        _HomeViewInstance.Initialize(_ChallengeStatesById, this);
-
-        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
-        DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
-
-        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+        StartCoroutine(ShowHomeViewAfterStartViewClosed(homeViewPrefab));
       });
+    }
+
+    private IEnumerator ShowHomeViewAfterStartViewClosed(GameObject homeViewPrefab) {
+      while (_StartViewInstance != null) {
+        yield return 0;
+      }
+
+      _HomeViewInstance = UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>());
+      _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
+      _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+      _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
+      _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
+
+      // Show the current state of challenges being locked/unlocked
+      _HomeViewInstance.Initialize(_ChallengeStatesById, this);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+    }
+
+    private void HandleWakeAnimationComplete(bool success) {
+      DAS.Info(this, "HandleWakeAnimationComplete: success: " + success);
+
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        // Display Cozmo's default face
+        robot.DisplayProceduralFace(
+          0,
+          Vector2.zero,
+          Vector2.one,
+          ProceduralEyeParameters.MakeDefaultLeftEye(),
+          ProceduralEyeParameters.MakeDefaultRightEye());
+
+        robot.SetEnableFreeplayBehaviorChooser(true);
+        DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
+      }
     }
 
     private void HandleSessionEndClicked() {

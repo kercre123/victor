@@ -56,9 +56,6 @@ namespace Cozmo {
       private bool _IsShowingOverlay = false;
       private Sequence _OverlayBackgroundTween;
 
-      [SerializeField]
-      private float _FadeTweenDurationSeconds = 0.2f;
-
       #endregion
 
       #region Top widgets
@@ -255,6 +252,9 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        float fadeInSeconds = UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds;
+        Ease fadeInEasing = UIDefaultTransitionSettings.Instance.FadeInEasing;
+
         Sequence open;
         foreach (MinigameWidget widget in _ActiveWidgets) {
           open = widget.CreateOpenAnimSequence();
@@ -263,16 +263,21 @@ namespace Cozmo {
           }
         }
         _BackgroundCanvasGroup.alpha = 0;
-        openAnimation.Join(_BackgroundCanvasGroup.DOFade(1, _FadeTweenDurationSeconds));
+        openAnimation.Join(_BackgroundCanvasGroup.DOFade(1, fadeInSeconds).SetEase(fadeInEasing));
 
         Color bgColor = _BackgroundImage.color;
         bgColor.a = 0;
         _BackgroundImage.color = bgColor;
-        openAnimation.Join(_BackgroundImage.DOFade(1, _FadeTweenDurationSeconds));
+        openAnimation = JoinFadeTween(openAnimation, null, _BackgroundImage, 1f, fadeInSeconds, fadeInEasing);
         _OpenAnimationStarted = true;
+
+        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, _BackgroundImage.color);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+        float fadeOutSeconds = UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds;
+        Ease fadeOutEasing = UIDefaultTransitionSettings.Instance.FadeOutEasing;
+
         Sequence close;
         foreach (MinigameWidget widget in _ActiveWidgets) {
           close = widget.CreateCloseAnimSequence();
@@ -280,23 +285,20 @@ namespace Cozmo {
             closeAnimation.Join(close);
           }
         }
-        closeAnimation.Join(_BackgroundCanvasGroup.DOFade(0, _FadeTweenDurationSeconds));
-        closeAnimation.Join(_BackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
+        closeAnimation.Join(_BackgroundCanvasGroup.DOFade(0, fadeOutSeconds).SetEase(fadeOutEasing));
+        closeAnimation = JoinFadeTween(closeAnimation, null, _BackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, _LockedBackgroundTween, _LockedBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, _MiddleBackgroundTween, _MiddleBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, _OverlayBackgroundTween, _OverlayBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+      }
 
-        if (_LockedBackgroundTween != null) {
-          _LockedBackgroundTween.Kill();
+      private Sequence JoinFadeTween(Sequence sequenceToUse, Tween tween, Image targetImage, float targetAlpha,
+                                float duration, Ease easing) {
+        if (tween != null) {
+          tween.Kill();
         }
-        closeAnimation.Join(_LockedBackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
-
-        if (_MiddleBackgroundTween != null) {
-          _MiddleBackgroundTween.Kill();
-        }
-        closeAnimation.Join(_MiddleBackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
-
-        if (_OverlayBackgroundTween != null) {
-          _OverlayBackgroundTween.Kill();
-        }
-        closeAnimation.Join(_OverlayBackgroundImage.DOFade(0, _FadeTweenDurationSeconds));
+        sequenceToUse.Join(targetImage.DOFade(targetAlpha, duration).SetEase(easing));
+        return sequenceToUse;
       }
 
       #endregion
@@ -427,23 +429,28 @@ namespace Cozmo {
       public void ShowBackground(ref bool currentlyShowing, ref Sequence sequence, Image targetImage) {
         if (!currentlyShowing) {
           currentlyShowing = true;
-          PlayFadeTween(ref sequence, targetImage, 1);
+          PlayFadeTween(ref sequence, targetImage, 1,
+                        UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds,
+                        UIDefaultTransitionSettings.Instance.FadeInEasing);
         }
       }
 
       public void HideBackground(ref bool currentlyShowing, ref Sequence sequence, Image targetImage) {
         if (currentlyShowing) {
           currentlyShowing = false;
-          PlayFadeTween(ref sequence, targetImage, 0);
+          PlayFadeTween(ref sequence, targetImage, 0,
+                        UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds,
+                        UIDefaultTransitionSettings.Instance.FadeOutEasing);
         }
       }
 
-      private void PlayFadeTween(ref Sequence sequenceToUse, Image targetImage, float targetAlpha) {
+      private void PlayFadeTween(ref Sequence sequenceToUse, Image targetImage, float targetAlpha,
+                                float duration, Ease easing) {
         if (sequenceToUse != null) {
           sequenceToUse.Kill();
         }
         sequenceToUse = DOTween.Sequence();
-        sequenceToUse.Append(targetImage.DOFade(targetAlpha, _FadeTweenDurationSeconds));
+        sequenceToUse.Append(targetImage.DOFade(targetAlpha, duration).SetEase(easing));
       }
 
       #endregion

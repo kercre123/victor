@@ -158,8 +158,12 @@ public abstract class GameBase : MonoBehaviour {
     data.LoadPrefabData((ChallengePrefabData prefabData) => titleWidget.Icon = prefabData.ChallengeIconPlainStyle);
     newView.ShowQuitButton();
 
-    // TODO use different color for activities vs games
-    newView.InitializeColor(UIColorPalette.GameBackgroundColor);
+    if (data.IsMinigame) {
+      newView.InitializeColor(UIColorPalette.GameBackgroundColor);
+    }
+    else {
+      newView.InitializeColor(UIColorPalette.ActivityBackgroundColor);
+    }
 
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();

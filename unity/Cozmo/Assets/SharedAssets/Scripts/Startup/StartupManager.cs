@@ -253,6 +253,12 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.UIColorPalette.SetInstance(colorP);
       });
 
+
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.UIDefaultTransitionSettings>(_BasicUIPrefabAssetBundleName,
+      "UIDefaultTransitionSettings", (Cozmo.UI.UIDefaultTransitionSettings colorP) => {
+        Cozmo.UI.UIDefaultTransitionSettings.SetInstance(colorP);
+      });
+
     assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName,
       "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
         psc.Initialize();
