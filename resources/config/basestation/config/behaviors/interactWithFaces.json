@@ -3,11 +3,7 @@
   "name": "interactWithFaces",
   "initial_take_anim_group": "InteractWithFacesInitial",
   "wait_anim_group": "InteractWithFacesWait",
-  "new_unnamed_face_anim_group": "interactWithFaces_unenrolled",
-  "new_named_face_anim_group": "interactWithFaces_unenrolled",
-  "unnamed_face_anim_group": "interactWithFaces_unenrolled",
-  "named_face_anim_group": "interactWithFaces_unenrolled",
-
+  
   "smartScore" : {
     "flatScore_whileRunning"              : 1.0, // score while running
     "flatScore_newKnownFace"              : 1.0, // score if we have a new known face

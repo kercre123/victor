@@ -178,6 +178,11 @@ namespace Cozmo {
     // associated name. The Named or Unnamed are part of the "AnimationTrigger" clad enum
     AnimationTrigger _initialTakeAnimGroup = AnimationTrigger::Count;
     AnimationTrigger _waitAnimGroup = AnimationTrigger::Count;
+    
+    AnimationTrigger _sawNewUnnamedFaceTrigger = AnimationTrigger::OnSawNewUnnamedFace;
+    AnimationTrigger _sawNewNamedFaceTrigger = AnimationTrigger::OnSawNewNamedFace;
+    AnimationTrigger _sawOldUnnamedFaceTrigger = AnimationTrigger::OnSawOldUnnamedFace;
+    AnimationTrigger _sawOldNamedFaceTrigger = AnimationTrigger::OnSawOldNamedFace;
 
   }; // BehaviorInteractWithFaces
   
