@@ -25,7 +25,7 @@ DEVELOPMENT_KEY=certs/development.pem
 AES_KEY=FA67CE138A376CD21A26118615326AA5
 SIGN_FLAGS=--sign $(AES_KEY) $(DEVELOPMENT_KEY)
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app export_key tests
+.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp esp_factory k02 nrf sim fresh app export_key tests
 
 all: k02 esp sim
 

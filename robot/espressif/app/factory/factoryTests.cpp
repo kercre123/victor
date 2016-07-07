@@ -311,7 +311,7 @@ void Update()
         Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
         Draw::Mask(frame, columnMask);
         Draw::Flip(frame);
-        if (now > 300000000 && FACTORY_FIRMWARE)
+        if ((now - lastExecTime) > 300000000)
         {
           SetMode(RobotInterface::FTM_Off);
         }
@@ -343,7 +343,8 @@ void Update()
           Draw::Mask(frame, columnMask);
           Draw::Flip(frame);
         }
-        if ((now - lastExecTime) > 2000000) {
+        if ((now - lastExecTime) > 2000000)
+        {
           RobotInterface::EngineToRobot msg;
           os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
           msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
@@ -359,7 +360,7 @@ void Update()
           RTIP::SendMessage(msg);
           lastExecTime = now;
         }
-        if (now > 300000000 && FACTORY_FIRMWARE)
+        if (now > 300000000)
         {
           SetMode(RobotInterface::FTM_Off);
         }
@@ -385,11 +386,8 @@ void Process_TestState(const RobotInterface::TestState& state)
   
   switch (mode)
   {
-    case RobotInterface::FTM_entry:
-    case RobotInterface::FTM_WaitNV:
     case RobotInterface::FTM_Sleepy:
     case RobotInterface::FTM_FAC:
-    case RobotInterface::FTM_Off:
     {
       if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
       {
@@ -669,37 +667,13 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
   
   os_printf("SM %d -> %d\r\n", mode, newMode);
   
-  if (mode == RobotInterface::FTM_None && newMode != RobotInterface::FTM_None)
-  {
-    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
-    msg.enableLiftPower.enable = true;
-    Anki::Cozmo::RTIP::SendMessage(msg);
-  }
-  else if (mode != RobotInterface::FTM_None && newMode == RobotInterface::FTM_None)
-  {
-    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
-    msg.enableLiftPower.enable = false;
-    Anki::Cozmo::RTIP::SendMessage(msg);
-  }
-  
   // Do cleanup on current mode
   switch (mode)
   {
-    case RobotInterface::FTM_entry:
+    case RobotInterface::FTM_None:
     {
-      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
-      RTIP::SendMessage(msg);
-      // Explicit fall through to next case
-    }
-    case RobotInterface::FTM_menus:
-    case RobotInterface::FTM_WiFiInfo:
-    case RobotInterface::FTM_StateMenu:
-    case RobotInterface::FTM_BLE_Menu:
-    case RobotInterface::FTM_EncoderInfo:
-    {
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-      msg.enableLiftPower.enable = true;
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
+      msg.enableTestStateMessage.enable = true;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }
@@ -737,9 +711,23 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
   // Do entry to new mode
   switch (newMode)
   {
+    case RobotInterface::FTM_None:
+    {
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
+      msg.enableLiftPower.enable = true;
+      const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
+      os_printf("Enable lift power %d\r\n", success);
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
+      msg.enableTestStateMessage.enable = false;
+      Anki::Cozmo::RTIP::SendMessage(msg);
+      break;
+    }
     case RobotInterface::FTM_entry:
     {
       lastExecTime = system_get_time();
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
+      RTIP::SendMessage(msg);
       break;
     }
     case RobotInterface::FTM_menus:
@@ -755,10 +743,20 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     case RobotInterface::FTM_BLE_Menu:
     case RobotInterface::FTM_EncoderInfo:
     case RobotInterface::FTM_Sleepy:
+    case RobotInterface::FTM_FAC:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = false;
-      Anki::Cozmo::RTIP::SendMessage(msg);
+      const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
+      os_printf("Disable lift power %d\r\n", success);
+      break;
+    }
+    case RobotInterface::FTM_motorLifeTest:
+    {
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
+      msg.enableLiftPower.enable = true;
+      const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
+      os_printf("Enable lift power %d\r\n", success);
       break;
     }
     case RobotInterface::FTM_BLE_On:
@@ -783,19 +781,21 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     }
     case RobotInterface::FTM_PlayPenTest:
     {
-      static bool afixMode = false;
-      // If we need to wipe up the factory info (on a second run), do that now
-      if (!afixMode) {
-        struct softap_config ap_config;
-        wifi_softap_get_config(&ap_config);
-        os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-        os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
-        ap_config.authmode = AUTH_OPEN;
-        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-        ap_config.beacon_interval = 100;
-        wifi_softap_set_config_current(&ap_config);
-        afixMode = true;
-      }
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
+      msg.enableLiftPower.enable = true;
+      const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
+      os_printf("Enable lift power %d\r\n", success);
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
+      msg.enableTestStateMessage.enable = false;
+      Anki::Cozmo::RTIP::SendMessage(msg);
+      struct softap_config ap_config;
+      wifi_softap_get_config(&ap_config);
+      os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
+      os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
+      ap_config.authmode = AUTH_OPEN;
+      ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+      ap_config.beacon_interval = 100;
+      wifi_softap_set_config_current(&ap_config);
       break;
     }
     case RobotInterface::FTM_IMUCalibration:
@@ -822,7 +822,14 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
       RTIP::SendMessage(msg);
       msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_LOW_POWER_OPERATING_MODE;
+      if (FACTORY_FIRMWARE)
+      {
+        msg.setBodyRadioMode.radioMode = RobotInterface::BODY_LOW_POWER_OPERATING_MODE;
+      }
+      else
+      {
+        msg.setBodyRadioMode.radioMode = RobotInterface::BODY_BLUETOOTH_OPERATING_MODE;
+      }
       RTIP::SendMessage(msg);
       WiFiConfiguration::Off(false);
       break;
