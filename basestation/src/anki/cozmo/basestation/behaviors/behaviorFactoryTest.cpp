@@ -107,7 +107,7 @@ namespace Cozmo {
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
-  static constexpr f32 _kExpectedCubePoseHeighThresh_mm = 15;
+  static constexpr f32 _kExpectedCubePoseHeightThresh_mm = 15;
   static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
@@ -509,7 +509,7 @@ namespace Cozmo {
         
         
         // Play sound
-        PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "testSound");
+        PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
         StartActing(robot, soundAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if (result != ActionResult::SUCCESS) {
@@ -1048,7 +1048,7 @@ namespace Cozmo {
                                                        _kExpectedCubePoseAngleThresh_rad,
                                                        true,
                                                        Tdiff, angleDiff) ||
-            (std::fabsf(oObject->GetPose().GetTranslation().z() - (0.5f*oObject->GetSize().z())) > _kExpectedCubePoseHeighThresh_mm) ) {
+            (std::fabsf(oObject->GetPose().GetTranslation().z() - (0.5f*oObject->GetSize().z())) > _kExpectedCubePoseHeightThresh_mm) ) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
                               oObject->GetPose().GetTranslation().x(),
