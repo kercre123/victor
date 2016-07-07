@@ -1057,6 +1057,7 @@ namespace Anki {
                   {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
+                    SendSetRobotVolume(1.f);
                   }
                   
                   SendMessage(ExternalInterface::MessageGameToEngine(

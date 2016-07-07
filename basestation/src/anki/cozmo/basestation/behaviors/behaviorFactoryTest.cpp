@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -106,6 +107,7 @@ namespace Cozmo {
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
+  static constexpr f32 _kExpectedCubePoseHeighThresh_mm = 15;
   static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
@@ -225,15 +227,11 @@ namespace Cozmo {
       _activeObjectDiscovered = true;
     }
     
-    // Mute volume
-    auto audioClient = robot.GetRobotAudioClient();
-    if (audioClient) {
-      audioClient->SetRobotVolume(0);
-    }
-    
     // Setup logging to device
     if (kBFT_SaveLogsOnDevice) {
-      _factoryTestLogger.StartLog( std::to_string(robot.GetSerialNumber()), true, robot.GetDataPlatform());
+      std::stringstream serialNumString;
+      serialNumString << std::hex << robot.GetSerialNumber();
+      _factoryTestLogger.StartLog( serialNumString.str(), true, robot.GetDataPlatform());
       PRINT_NAMED_INFO("BehaviorFactoryTest.WillLogToDevice",
                        "Log name: %s",
                        _factoryTestLogger.GetLogName().c_str());
@@ -475,6 +473,10 @@ namespace Cozmo {
         }
         */
         
+        if (robot.IsCliffSensorOn()) {
+          END_TEST(FactoryTestResultCode::CLIFF_UNEXPECTED);
+        }
+        
         if (kBFT_WipeNVStorage) {
           robot.GetNVStorageComponent().WipeAll(true);
           END_TEST(FactoryTestResultCode::WIPED_ALL);
@@ -504,6 +506,18 @@ namespace Cozmo {
           // Check if charger is discovered
           robot.BroadcastAvailableObjects(true);
         }
+        
+        
+        // Play sound
+        PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "testSound");
+        StartActing(robot, soundAction,
+                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                      if (result != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
+                        return false;
+                      }
+                      return true;
+                    });
         
         
         // Start motor calibration
@@ -956,9 +970,10 @@ namespace Cozmo {
         
         
         // Goto pose where block is visible
-        DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
-        //action->SetMotionProfile(_motionProfile);
-        StartActing(robot, action,
+        DriveToPoseAction* driveAction = new DriveToPoseAction(robot, _prePickupPose, false);
+        MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, 0);
+        CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction});
+        StartActing(robot, compoundAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       // NOTE: This result check should be ok, but in sim the action often doesn't result in
                       // the robot being exactly where it's supposed to be so the action itself sometimes fails.
@@ -1031,7 +1046,8 @@ namespace Cozmo {
                                                        _kExpectedCubePoseDistThresh_mm,
                                                        _kExpectedCubePoseAngleThresh_rad,
                                                        true,
-                                                       Tdiff, angleDiff)) {
+                                                       Tdiff, angleDiff) ||
+            (std::fabsf(oObject->GetPose().GetTranslation().z() - (0.5f*oObject->GetSize().z())) > _kExpectedCubePoseHeighThresh_mm) ) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
                               oObject->GetPose().GetTranslation().x(),
