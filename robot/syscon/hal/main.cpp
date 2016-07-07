@@ -113,7 +113,8 @@ static void setupOperatingMode() {
       // Shut-down non-essentials
       __disable_irq();  
       Motors::disable(true);
-      Battery::powerOn();
+      Motors::manage(0);        // Otherwise disable doesn't take effect
+      Battery::powerOff();      // Make sure we reboot when removed from charger
       
       // Power-down encoders and front facing LED
       nrf_gpio_pin_set(PIN_VDDs_EN);

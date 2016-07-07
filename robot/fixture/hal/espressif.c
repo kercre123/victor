@@ -88,7 +88,7 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 #else
   { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
   { "USER", 0x080000, g_EspUserEnd - g_EspUser, g_EspUser },
-  { "SAFE", 0x0c5000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
+  { "SAFE", 0x0c8000, g_EspSafeEnd - g_EspSafe, g_EspSafe },
   { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
   { "BLANK",0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
 #endif

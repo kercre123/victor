@@ -155,7 +155,7 @@ void Battery::powerOn()
 void Battery::powerOff()
 {
   disableCharge = true;
-  // Shutdown the extra things
+  nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_pin_clear(PIN_PWR_EN);
   MicroWait(10000);
 }
