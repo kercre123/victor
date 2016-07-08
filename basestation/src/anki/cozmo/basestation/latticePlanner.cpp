@@ -479,22 +479,22 @@ void LatticePlannerImpl::worker()
                                << "endState = " << endState << std::endl
                                << "next plan start = " << _planner.GetPlan().start_ << std::endl);
 
-            std::cout<<"\ntotalPlan_:\n";
+            PRINT_NAMED_DEBUG("LatticePlannerImpl", "totalPlan_:");
             _context.env.PrintPlan(_totalPlan);
 
-            std::cout<<"\nnew plan:\n";
+            PRINT_NAMED_DEBUG("LatticePlannerImpl", "new plan:");
             _context.env.PrintPlan(_planner.GetPlan());
 
             _internalComputeStatus = EPlannerStatus::Error;
           }
         }
 
-        printf("old plan:\n");
+        PRINT_NAMED_DEBUG("LatticePlannerImpl", "old plan:\n");
         _context.env.PrintPlan(_totalPlan);
 
         _totalPlan.Append( _planner.GetPlan() );
 
-        printf("new plan:\n");
+        PRINT_NAMED_DEBUG("LatticePlannerImpl", "new plan:\n");
         _context.env.PrintPlan(_planner.GetPlan());
 
         if( _planner.GetPlan().Size() == 0 ) {
@@ -702,7 +702,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
                        planIdx, validOldPlan.Size());
     }
 
-    std::cout<<"currentRobotState: "<<currentRobotState<<endl;
+    PRINT_STREAM_INFO("", "currentRobotState:"<<currentRobotState);
 
     // uncomment to print debugging info
     // impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, true);
@@ -820,7 +820,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
     return false;
   }
 
-  printf("total path:\n");
+  PRINT_NAMED_DEBUG("LatticePlannerImpl", "total path:\n");
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
  

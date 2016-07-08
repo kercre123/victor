@@ -46,7 +46,7 @@ void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
       const float minLatency = (numSamples > 0) ? _latencyStats.GetMin() : 0.0f;
       const float maxLatency = (numSamples > 0) ? _latencyStats.GetMax() : 0.0f;
     
-      PRINT_CHANNELED_INFO("Network", "UiMessageHandler.Latency", "Latency Data (sec): Samples= %u Average= %.5f Sd= %.5f Min= %.5f Max %.5f",
+      PRINT_CH_INFO("Network", "UiMessageHandler.Latency", "Latency Data (sec): Samples= %u Average= %.5f Sd= %.5f Min= %.5f Max %.5f",
                            numSamples, averageLatency, stdDevLatency, minLatency, maxLatency);
     }
   }

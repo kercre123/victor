@@ -194,7 +194,7 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
   // the quad should be contained, if it's not, we have reached the limit of expansions and the quad does not
   // fit, which will cause information loss
   if ( !quadFitsInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.AddCliff.InsufficientExpansion",
+    PRINT_NAMED_ERROR("NavMeshQuadTree.Expand.InsufficientExpansion",
       "Quad caused expansion, but expansion was not enough.");
   }
   

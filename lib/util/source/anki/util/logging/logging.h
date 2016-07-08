@@ -66,16 +66,18 @@ void sWarningV(const char* eventName, const std::vector<std::pair<const char*, c
 __attribute__((__used__))
 void sWarning(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
+//__attribute__((__used__))
+//void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
 __attribute__((__used__))
-void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
-  __attribute__((__used__))
 void sChanneledInfoF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
-__attribute__((__used__))
-void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
+//__attribute__((__used__))
+//void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
 __attribute__((__used__))
 void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
+//__attribute__((__used__))
+//void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 __attribute__((__used__))
-void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sChanneledInfo(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
 void sDebugF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
@@ -106,7 +108,7 @@ void sSetGlobal(const char* key, const char* value);
 #define PRINT_NAMED_DEBUG(name, format, ...) do{::Anki::Util::sDebugF(name, {}, format, ##__VA_ARGS__);}while(0)
 
 // Logging with channels.
-#define PRINT_CHANNELED_INFO(channel, name, format, ...) do{::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
+#define PRINT_CH_INFO(channel, name, format, ...) do{::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
 
 // Streams
 #define PRINT_STREAM_ERROR(eventName, args) do{         \
@@ -121,7 +123,7 @@ void sSetGlobal(const char* key, const char* value);
 
 #define PRINT_STREAM_INFO(eventName, args) do{          \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sInfo(eventName, {}, ss.str().c_str()); \
+      ::Anki::Util::sChanneledInfo(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
     }while(0)
 
 #define PRINT_STREAM_DEBUG(eventName, args) do{         \

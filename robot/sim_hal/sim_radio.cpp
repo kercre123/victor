@@ -25,6 +25,7 @@
 
 #include "clad/types/advertisementTypes.h"
 #include "util/helpers/arrayHelpers.h"
+#include "util/logging/logging.h"
 
 // For getting local host's IP address
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
@@ -127,7 +128,7 @@ namespace Anki {
 
     Result InitSimRadio(const char* advertisementIP)
     {
-      printf("Cozmo START LISTENING (port %d) ...\n", ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
+      PRINT_NAMED_INFO("SIM", "Cozmo START LISTENING (port %d) ...\n", ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
       if (!server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn)) {
         printf("ERROR: Cozmo couldn't start UDP server\n");
       }

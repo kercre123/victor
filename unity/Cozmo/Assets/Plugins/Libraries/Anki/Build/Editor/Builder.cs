@@ -107,54 +107,59 @@ namespace Anki {
       }
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Copy Engine Assets to StreamingAssets")]
-      public static void CopyEngineAssetsToStreamingAssets() {
+      public static string CopyEngineAssetsToStreamingAssets() {
+        try {
+          // Delete and create the directory to make sure we don't leave stale assets
+          FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources");
+          Directory.CreateDirectory("Assets/StreamingAssets/cozmo_resources");
 
-        // Delete and create the directory to make sure we don't leave stale assets
-        FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources");
-        Directory.CreateDirectory("Assets/StreamingAssets/cozmo_resources");
+          // Copy engine resources
+          // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
+          // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
+          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
+          FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources/assets/.svn");
+          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
+            "Assets/StreamingAssets/cozmo_resources/assets/animationGroupMaps");
+          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
+            "Assets/StreamingAssets/cozmo_resources/assets/DailyGoals");
 
-        // Copy engine resources
-        // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
-        // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
-        FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources/assets/.svn");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
-                                                   "Assets/StreamingAssets/cozmo_resources/assets/animationGroupMaps");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
-                                                   "Assets/StreamingAssets/cozmo_resources/assets/DailyGoals");
+          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", "Assets/StreamingAssets/cozmo_resources/config");
+          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", "Assets/StreamingAssets/cozmo_resources/pocketsphinx");
 
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", "Assets/StreamingAssets/cozmo_resources/config");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", "Assets/StreamingAssets/cozmo_resources/pocketsphinx");
+          // Delete compressed animation files that we don't need
+          string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
+          foreach (string tf in tarFiles) {
+            File.Delete(tf);
+          }
 
-        // Delete compressed animation files that we don't need
-        string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
-        foreach (string tf in tarFiles) {
-          File.Delete(tf);
+          // Copy audio banks from a specific folder depending on the platform
+          string soundFolder;
+          switch (EditorUserBuildSettings.activeBuildTarget) {
+          case BuildTarget.Android:
+            soundFolder = "Android";
+            break;
+
+          case BuildTarget.iOS:
+            soundFolder = "iOS";
+            break;
+
+          case BuildTarget.StandaloneOSXIntel:
+          case BuildTarget.StandaloneOSXIntel64:
+          case BuildTarget.StandaloneOSXUniversal:
+            soundFolder = "Mac";
+            break;
+
+          default:
+            throw new NotImplementedException();
+          }
+          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
+
+          Debug.Log("Engine assets copied to StreamingAssets");
+          return null;
+        } catch (Exception e) {
+          Debug.LogException(e);
+          return e.ToString();
         }
-
-        // Copy audio banks from a specific folder depending on the platform
-        string soundFolder;
-        switch (EditorUserBuildSettings.activeBuildTarget) {
-        case BuildTarget.Android:
-          soundFolder = "Android";
-          break;
-
-        case BuildTarget.iOS:
-          soundFolder = "iOS";
-          break;
-
-        case BuildTarget.StandaloneOSXIntel:
-        case BuildTarget.StandaloneOSXIntel64:
-        case BuildTarget.StandaloneOSXUniversal:
-          soundFolder = "Mac";
-          break;
-
-        default:
-          throw new NotImplementedException();
-        }
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
-
-        Debug.Log("Engine assets copied to StreamingAssets");
       }
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles %#a")]
@@ -323,7 +328,10 @@ namespace Anki {
         }
 
         // Copy engine assets
-        CopyEngineAssetsToStreamingAssets();
+        result = CopyEngineAssetsToStreamingAssets();
+        if (!string.IsNullOrEmpty(result)) {
+          return result;
+        }
 
         // Generate the manifest
         GenerateResourcesManifest();

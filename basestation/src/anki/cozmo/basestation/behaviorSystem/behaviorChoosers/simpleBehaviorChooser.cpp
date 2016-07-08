@@ -76,20 +76,23 @@ Result SimpleBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
   // add the proper behaviors and enable/disable appropriately
   ReadEnabledBehaviorsConfiguration(config);
 
-  // - score bonus
+  // - score bonus for current behavior [optional]
   _scoreBonusForCurrentBehavior.Clear();
-
   const Json::Value& scoreBonusJson = config[kScoreBonusForCurrentBehaviorKey];
-  if (scoreBonusJson.isNull() || !_scoreBonusForCurrentBehavior.ReadFromJson(scoreBonusJson))
+  if (!scoreBonusJson.isNull())
   {
-    PRINT_NAMED_WARNING("SimpleBehaviorChooser.ReadFromJson.BadScoreBonus",
-      "'%s' failed to read (%s)", kScoreBonusForCurrentBehaviorKey, scoreBonusJson.isNull() ? "Missing" : "Bad");
-  }
+    const bool scoreBonusLoadedOk = _scoreBonusForCurrentBehavior.ReadFromJson(scoreBonusJson);
+    if ( !scoreBonusLoadedOk )
+    {
+      PRINT_NAMED_WARNING("SimpleBehaviorChooser.ReadFromJson.BadScoreBonus",
+        "'%s' failed to read (%s)", kScoreBonusForCurrentBehaviorKey, scoreBonusJson.isNull() ? "Missing" : "Bad");
+    }
   
-  if (_scoreBonusForCurrentBehavior.GetNumNodes() == 0)
-  {
-    PRINT_NAMED_WARNING("SimpleBehaviorChooser.ReadFromJson.EmptyScoreBonus", "Forcing to default (no bonuses)");
-    _scoreBonusForCurrentBehavior.AddNode(0.0f, 0.0f); // no bonus for any X
+    if (_scoreBonusForCurrentBehavior.GetNumNodes() == 0)
+    {
+      PRINT_NAMED_WARNING("SimpleBehaviorChooser.ReadFromJson.EmptyScoreBonus", "Forcing to default (no bonuses)");
+      _scoreBonusForCurrentBehavior.AddNode(0.0f, 0.0f); // no bonus for any X
+    }
   }
 
   return RESULT_OK;

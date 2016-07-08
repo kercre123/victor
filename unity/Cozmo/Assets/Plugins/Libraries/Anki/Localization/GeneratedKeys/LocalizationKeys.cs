@@ -207,6 +207,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextBestOf = "speedTap.text.bestOf";
   public const string kSpeedTapTextDisplayWinnerSubtitle = "speedTap.text.displayWinnerSubtitle";
   public const string kSpeedTapTextRoundScore = "speedTap.text.roundScore";
+  public const string kPressDemoSpeedTapDifficultyHardDescription = "pressDemoSpeedTap.difficulty.hardDescription";
+  public const string kPressDemoSpeedTapDifficultyHardDescriptionLocked = "pressDemoSpeedTap.difficulty.hardDescription.locked";
 
   #endregion
 
@@ -261,6 +263,8 @@ public static class LocalizationKeys {
   public const string kButtonAgain = "button.again";
   public const string kButtonReady = "button.ready";
   public const string kButtonClose = "button.close";
+  public const string kButtonDone = "button.done";
+  public const string kButtonPlay = "button.play";
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kLabelXCount = "label.xCount";

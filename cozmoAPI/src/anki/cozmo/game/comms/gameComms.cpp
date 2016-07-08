@@ -131,7 +131,7 @@ namespace Cozmo {
         
         isInitialized_ = true;
       } else {
-        printf("GameComms: waiting to connect to advertisement service...\n");
+        PRINT_NAMED_INFO("GameComms","waiting to connect to advertisement service...\n");
         return;
       }
     }
@@ -234,7 +234,7 @@ namespace Cozmo {
     regMsg_.enableAdvertisement = 1;
     regMsg_.oneShot = 1;
     
-    printf("GameComms: Sending registration for UI device %d at address %s on port %d/%d\n", regMsg_.id, regMsg_.ip.c_str(),
+    PRINT_NAMED_INFO("GameComms", "Sending registration for UI device %d at address %s on port %d/%d\n", regMsg_.id, regMsg_.ip.c_str(),
            (int)regMsg_.toEnginePort, (int)regMsg_.fromEnginePort);
   
     Cozmo::ExternalInterface::MessageGameToEngine outMessage;

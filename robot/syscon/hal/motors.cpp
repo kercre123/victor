@@ -15,6 +15,11 @@ extern "C" {
 
 #include "anki/cozmo/robot/spineData.h"
 
+#include "messages.h"
+
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
@@ -66,7 +71,7 @@ const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
-static bool motorDisable = true;
+static volatile bool motorDisable = true;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 static const MotorConfig m_config[MOTOR_COUNT] = {
@@ -177,6 +182,20 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
 }
 
 void Motors::disable(bool disable) {
+  if (motorDisable == disable) {
+    return ;
+  }
+  
+  // Enable motors, recalibrate encoders
+  if (!disable) {
+    using namespace Anki::Cozmo::RobotInterface;
+    
+    StartMotorCalibration msg;
+    msg.calibrateHead = true;
+    msg.calibrateLift = true;
+    SendMessage(msg);
+  }
+
   motorDisable = disable;
 }
 
@@ -352,8 +371,7 @@ void Motors::setPower(u8 motorID, s16 power)
     power = -TIMER_TICKS_END + 1;
 
   // Store the PWM value for the MotorsUpdate() and keep the sign
-  MotorInfo* motorInfo = &m_motors[motorID];
-  motorInfo->nextPWM = power;
+  m_motors[motorID].nextPWM = power;
 }
 
 Fixed Motors::getSpeed(u8 motorID)
@@ -388,22 +406,12 @@ Fixed Motors::getSpeed(u8 motorID)
 
 void Motors::manage()
 {
-  // Verify the source
-  if (Head::spokenTo && !motorDisable)
+  bool enable = Head::spokenTo && !motorDisable;
+
+  // Copy (valid) data to update motors
+  for (int i = 0; i < MOTOR_COUNT; i++)
   {
-    // Copy (valid) data to update motors
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      Motors::setPower(i, g_dataToBody.motorPWM[i]);
-    }
-  }
-  else
-  {
-    // Copy (valid) data to update motors
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      Motors::setPower(i, 0);
-    }
+    Motors::setPower(i, enable ? g_dataToBody.motorPWM[i] : 0);
   }
 
   // Stop the timer task and clear it, along with GPIO for the motors

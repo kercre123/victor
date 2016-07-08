@@ -3,10 +3,10 @@
   "name": "demo_interactWithFaces",
   "initial_take_anim_group": "InteractWithFacesInitial",
   "wait_anim_group": "InteractWithFacesWait",
-  "new_unnamed_face_anim_group": "interactWithFaces_unenrolled",
-  "new_named_face_anim_group": "interactWithFaces_unenrolled",
-  "unnamed_face_anim_group": "interactWithFaces_unenrolled",
-  "named_face_anim_group": "interactWithFaces_unenrolled",
+  "new_unnamed_face_anim_trigger": "DemoOnSawNewUnnamedFace",
+  "new_named_face_anim_trigger": "DemoOnSawNewNamedFace",
+  "unnamed_face_anim_trigger": "DemoOnSawOldUnnamedFace",
+  "named_face_anim_trigger": "DemoOnSawOldNamedFace",
 
   "enable_face_enrollment_request": true,
   

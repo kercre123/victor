@@ -50,6 +50,7 @@ namespace HeadController {
 #endif
       
       // Motor burnout protection
+      u32 potentialBurnoutStartTime_ms_ = 0;
       const f32 BURNOUT_POWER_THRESH = Ki_ * MAX_ERROR_SUM;
       const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
@@ -104,6 +105,8 @@ namespace HeadController {
         prevAngleError_ = 0;
         angleErrorSum_ = 0.f;
 
+        potentialBurnoutStartTime_ms_ = 0;
+        
         power_ = 0;
         HAL::MotorSetPower(MOTOR_HEAD, power_);
       }
@@ -113,7 +116,9 @@ namespace HeadController {
     void StartCalibrationRoutine()
     {
       AnkiEvent( 7, "HeadController", 90, "Starting Head calibration", 0);
-
+      Enable();
+      potentialBurnoutStartTime_ms_ = 0;
+      
 #ifdef SIMULATOR
       // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
       // it's at the joint limit.  The arm flies off the robot!
@@ -398,19 +403,16 @@ namespace HeadController {
     // Returns true if a protection action was triggered.
     bool MotorBurnoutProtection() {
       
-      static u32 potentialBurnoutStartTime_ms = 0;
-      
       if (ABS(power_) < BURNOUT_POWER_THRESH) {
-        potentialBurnoutStartTime_ms = 0;
+        potentialBurnoutStartTime_ms_ = 0;
         return false;
       }
       
-      if (potentialBurnoutStartTime_ms == 0) {
-        potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
-      } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
+      if (potentialBurnoutStartTime_ms_ == 0) {
+        potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
+      } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
         AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
         StartCalibrationRoutine();
-        potentialBurnoutStartTime_ms = 0;
         return true;
       }
       return false;

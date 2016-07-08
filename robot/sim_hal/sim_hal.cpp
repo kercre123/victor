@@ -6,11 +6,11 @@
 #include <set>
 
 // Our Includes
-#include "anki/common/robot/errorHandling.h"
-
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
+#include "util/logging/logging.h"
 #include "messages.h"
 #include "wheelController.h"
 
@@ -323,7 +323,7 @@ namespace Anki {
       // capture time from now on.
       // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
       cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
-      printf("Setting camera start time as %d.\n", cameraStartTime_ms_);
+      PRINT_NAMED_INFO("SIM", "Setting camera start time as %d.\n", cameraStartTime_ms_);
 
       enableVideo_ = robotNode->getField("enableVideo")->getSFBool();
       if (!enableVideo_) {
@@ -337,12 +337,12 @@ namespace Anki {
       if (lastDelimPos != std::string::npos) {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
-          printf("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+          PRINT_NAMED_ERROR("SIM.RobotID", "***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
           return RESULT_FAIL;
         }
-        printf("Initializing robot ID: %d\n", robotID_);
+        PRINT_NAMED_INFO("SIM", "Initializing robot ID: %d\n", robotID_);
       } else {
-        printf("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+        PRINT_NAMED_ERROR("SIM.RobotName", "***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return RESULT_FAIL;
       }
 
@@ -790,7 +790,7 @@ namespace Anki {
               if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.device_type)) {
                 for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                   if (activeObjectSlots_[i].assignedFactoryID == 0) {
-                    printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%hx, slot %d\n",
+                    PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%hx, slot %d\n",
                            odMsg.factory_id, odMsg.device_type, i);
                     activeObjectSlots_[i].assignedFactoryID = odMsg.factory_id;
                     activeObjectSlots_[i].device_type = odMsg.device_type;
@@ -832,7 +832,7 @@ namespace Anki {
               break;
             }
             default:
-              AnkiWarn("sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", "Expected discovery tag but got %d", lcm.tag);
+              AnkiWarn( 193, "sim_hal.ReadingDiscoveryChannel.UnexpectedMsg", 497, "Expected discovery tag but got %d", 1, lcm.tag);
               break;
           }
 
@@ -1014,22 +1014,18 @@ namespace Anki {
     void HAL::CameraGetFrame(u8* frame, ImageResolution res, bool enableLight)
     {
       // TODO: enableLight?
-      AnkiConditionalErrorAndReturn(frame != NULL, "SimHAL.CameraGetFrame.NullFramePointer",
-                                    "NULL frame pointer provided to CameraGetFrame(), check "
-                                    "to make sure the image allocation succeeded.\n");
+      AnkiConditionalErrorAndReturn(frame != NULL, 190, "SimHAL.CameraGetFrame.NullFramePointer", 494, "NULL frame pointer provided to CameraGetFrame(), check "
+                                    "to make sure the image allocation succeeded.\n", 0);
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
       static u32 lastFrameTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
       u32 currentTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
-      AnkiConditionalWarn(currentTime_ms - lastFrameTime_ms > headCam_->getSamplingPeriod(),
-                          "SimHAL.CameraGetFrame",
-                          "Image requested too soon -- new frame may not be ready yet.\n");
+      AnkiConditionalWarn(currentTime_ms - lastFrameTime_ms > headCam_->getSamplingPeriod(), 191, "SimHAL.CameraGetFrame", 495, "Image requested too soon -- new frame may not be ready yet.\n", 0);
 #endif
 
       const u8* image = headCam_->getImage();
 
-      AnkiConditionalErrorAndReturn(image != NULL, "SimHAL.CameraGetFrame.NullImagePointer",
-                                    "NULL image pointer returned from simulated camera's getFrame() method.\n");
+      AnkiConditionalErrorAndReturn(image != NULL, 192, "SimHAL.CameraGetFrame.NullImagePointer", 496, "NULL image pointer returned from simulated camera's getFrame() method.\n", 0);
 
       s32 pixel = 0;
       s32 imgWidth = headCam_->getWidth();

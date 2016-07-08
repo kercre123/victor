@@ -90,6 +90,10 @@ namespace Anki {
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
         const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 700;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
+        
+        // Wait flag for StartMotorCalibration that we expect to receive
+        // from the body when wifi connects
+        bool waitForFirstMotorCalibAfterConnect_ = true;
 
       } // Robot private namespace
 
@@ -105,14 +109,6 @@ namespace Anki {
       //
       // Methods:
       //
-
-      void StartMotorCalibrationRoutine()
-      {
-        LiftController::StartCalibrationRoutine();
-        HeadController::StartCalibrationRoutine();
-        SteeringController::ExecuteDirectDrive(0,0);
-      }
-
 
       // The initial "stretch" and reset motor positions routine
       // Returns true when done.
@@ -202,12 +198,10 @@ namespace Anki {
 #ifndef TARGET_K02
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 249, "AnimationController init failed.\n", 0);
+        
+        LiftController::StartCalibrationRoutine();
+        HeadController::StartCalibrationRoutine();
 #endif
-        // Start calibration
-        StartMotorCalibrationRoutine();
-
-        // Set starting state
-        mode_ = INIT_MOTOR_CALIBRATION;
 
         robotStateMessageCounter_ = 0;
 
@@ -300,6 +294,8 @@ namespace Anki {
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::Init();
+          waitForFirstMotorCalibAfterConnect_ = true;
+          mode_ = INIT_MOTOR_CALIBRATION;
 
 #ifdef ACTIVE_OBJECT_DISCONNECT_ON_ENGINE_DISCONNECT
           // TEMP: Disconnecting active objects from K02 because it seems the Espressif's
@@ -375,6 +371,8 @@ namespace Anki {
             if(MotorCalibrationUpdate()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
+              waitForFirstMotorCalibAfterConnect_ = false;
+              
 #ifndef TARGET_K02
               RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
@@ -426,7 +424,7 @@ namespace Anki {
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         ++robotStateMessageCounter_;
-        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
+        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY && !waitForFirstMotorCalibAfterConnect_) {
           Messages::SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
         }

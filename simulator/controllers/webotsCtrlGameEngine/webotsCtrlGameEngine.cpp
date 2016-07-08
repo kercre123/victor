@@ -8,6 +8,7 @@
 
 #include "anki/cozmo/cozmoAPI.h"
 #include "util/logging/logging.h"
+#include "util/logging/channelFilter.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
@@ -107,10 +108,13 @@ int main(int argc, char **argv)
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, ""));
 #endif
-  
+
+  // - create and set logger
+  Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({
-    new Util::SosLoggerProvider()
-    , new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)
+    sosLoggerProvider
+    , printfLoggerProvider
 #if ANKI_DEV_CHEATS
     , new DevLoggerProvider(Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
@@ -118,7 +122,53 @@ int main(int argc, char **argv)
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
+  
+  // allow filtering unless specified in command line
+  bool filterConsole = true;
+  if ( argc > 1 )
+  {
+    const std::string kNoFilterParam = "--noLogFilters";
+    for( int i=1; i<argc; ++i) {
+      if ( kNoFilterParam == argv[i] ) {
+        filterConsole = false;
+        break;
+      }
+    }
+  }
 
+  // - console filter for logs
+  if ( filterConsole )
+  {
+    using namespace Anki::Util;
+    ChannelFilter* consoleFilter = new ChannelFilter();
+    
+    // load file config
+    Json::Value consoleFilterConfig;
+    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
+    if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
+    {
+      PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+    }
+    
+    // initialize console filter for this platform
+    const std::string& platformOS = dataPlatform.GetOSPlatformString();
+    const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
+    consoleFilter->Initialize(consoleFilterConfigOnPlatform);
+    
+    // set filter in the loggers
+    std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
+    printfLoggerProvider->SetFilter(filterPtr);
+    sosLoggerProvider->SetFilter(filterPtr);
+    
+    // also parse additional info for providers
+    printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+    sosLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+  }
+  else
+  {
+    PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
+  }
+  
   // Start with a step so that we can attach to the process here for debugging
   basestationController.step(BS_TIME_STEP);
   

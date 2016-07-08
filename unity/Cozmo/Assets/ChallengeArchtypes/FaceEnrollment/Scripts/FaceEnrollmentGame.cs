@@ -185,6 +185,10 @@ namespace FaceEnrollment {
       EditOrEnrollFaceComplete(success);
       _AttemptedEnrollFace = false;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
+      // reset fixed face ID constraint after doing an enrollment
+      // this handles the edge case of if a fixed ID was set at the start
+      // of the activity but we want to enroll multiple faces in the same session
+      _FixedFaceID = -1;
     }
 
     private void EditOrEnrollFaceComplete(bool success) {

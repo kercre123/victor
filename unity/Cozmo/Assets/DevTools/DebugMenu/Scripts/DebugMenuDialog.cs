@@ -16,7 +16,7 @@ public class DebugMenuDialog : MonoBehaviour {
 
   [SerializeField]
   private DebugContentPane[] _DebugContentPaneData;
-  
+
   [SerializeField]
   private DebugMenuDialogTab _TabButtonPrefab;
 
@@ -25,6 +25,17 @@ public class DebugMenuDialog : MonoBehaviour {
 
   [SerializeField]
   private GameObject _ContentPaneContainer;
+
+  [SerializeField]
+  private UnityEngine.UI.ScrollRect _MenuScrollRect;
+
+  [SerializeField]
+  private GameObject _ContentPaneWrapperPrefab;
+  private GameObject _ContentPaneWrapper = null;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _BackButtonPrefab;
+  private Cozmo.UI.CozmoButton _BackButtonInstance = null;
 
   private int _CurrentTab;
   private GameObject _CurrentPaneObject;
@@ -38,8 +49,7 @@ public class DebugMenuDialog : MonoBehaviour {
       newTabScript.Initialize(i, _DebugContentPaneData[i].name);
       newTabScript.OnTabTapped += OnTabTapped;
     }
-
-    OpenTab(lastOpenedTab);
+    _MenuScrollRect.verticalNormalizedPosition = 1.0f;
   }
 
   public void OnDebugMenuCloseTap() {
@@ -50,18 +60,30 @@ public class DebugMenuDialog : MonoBehaviour {
   }
 
   private void OnTabTapped(int tabId) {
-    if (_CurrentPaneObject != null) {
-      // Destroy immediate so the current pane's OnDestroy is called before the new pane's Start.
-      GameObject.DestroyImmediate(_CurrentPaneObject);
-    }
+    CloseTab();
     OpenTab(tabId);
   }
 
   private void OpenTab(int tabNumber) {
-    if (tabNumber >= 0 && tabNumber < _DebugContentPaneData.Length
-        && _DebugContentPaneData.Length > 0) {
+    if (tabNumber >= 0 && tabNumber < _DebugContentPaneData.Length && _DebugContentPaneData.Length > 0) {
       _CurrentTab = tabNumber;
+      _ContentPaneWrapper = CreateUI(_ContentPaneWrapperPrefab, _ContentPaneContainer.transform);
       _CurrentPaneObject = CreateUI(_DebugContentPaneData[tabNumber].panePrefab, _ContentPaneContainer.transform);
+      _BackButtonInstance = CreateUI(_BackButtonPrefab.gameObject, _ContentPaneContainer.transform).GetComponent<Cozmo.UI.CozmoButton>();
+      _BackButtonInstance.Initialize(CloseTab, "debug_menu_back_button", "debug_menu");
+    }
+  }
+
+  private void CloseTab() {
+    if (_CurrentPaneObject != null) {
+      // Destroy immediate so the current pane's OnDestroy is called before the new pane's Start.
+      GameObject.DestroyImmediate(_CurrentPaneObject);
+    }
+    if (_ContentPaneWrapper != null) {
+      GameObject.DestroyImmediate(_ContentPaneWrapper);
+    }
+    if (_BackButtonInstance != null) {
+      GameObject.DestroyImmediate(_BackButtonInstance.gameObject);
     }
   }
 

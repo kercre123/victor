@@ -41,6 +41,11 @@ namespace Cozmo {
 
   static const char * const kInitialTakeAnimGroupKey = "initial_take_anim_group";
   static const char * const kWaitAnimGroupKey = "wait_anim_group";
+  static const char * const kNewUnnamedAnimTriggerKey = "new_unnamed_face_anim_trigger";
+  static const char * const kNewNamedAnimTriggerKey = "new_named_face_anim_trigger";
+  static const char * const kOldUnnamedAnimTriggerKey = "unnamed_face_anim_trigger";
+  static const char * const kOldNamedAnimTriggerKey = "named_face_anim_trigger";
+
   static const char * const kFaceEnrollRequestEnabledKey = "enable_face_enrollment_request";
 
   // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
@@ -75,6 +80,11 @@ namespace Cozmo {
     
     JsonTools::GetValueOptional(config,kInitialTakeAnimGroupKey,_initialTakeAnimGroup);
     JsonTools::GetValueOptional(config,kWaitAnimGroupKey,_waitAnimGroup);
+
+    JsonTools::GetValueOptional(config, kNewUnnamedAnimTriggerKey, _sawNewUnnamedFaceTrigger);
+    JsonTools::GetValueOptional(config, kNewNamedAnimTriggerKey, _sawNewNamedFaceTrigger);
+    JsonTools::GetValueOptional(config, kOldUnnamedAnimTriggerKey, _sawOldUnnamedFaceTrigger);
+    JsonTools::GetValueOptional(config, kOldNamedAnimTriggerKey, _sawOldNamedFaceTrigger);
 
     _faceEnrollEnabled = config.get(kFaceEnrollRequestEnabledKey, false).asBool();
     
@@ -508,13 +518,13 @@ namespace Cozmo {
 
     if( !faceData->_playedNewFaceAnim ) {
       if( face->GetName().empty() ) {
-        compoundAction->AddAction( new TriggerAnimationAction(robot, AnimationTrigger::OnSawNewUnnamedFace) );
+        compoundAction->AddAction( new TriggerAnimationAction(robot, _sawNewUnnamedFaceTrigger) );
         robot.GetMoodManager().TriggerEmotionEvent("NewUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
         // Say text and then play a happy animation
         SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
-        sayTextAction->SetAnimationTrigger(AnimationTrigger::OnSawNewNamedFace);
+        sayTextAction->SetAnimationTrigger(_sawNewNamedFaceTrigger);
         compoundAction->AddAction( sayTextAction );
         //compoundAction->AddAction( new TriggerAnimationAction(robot, GameEvent::OnWiggle) );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
@@ -528,12 +538,12 @@ namespace Cozmo {
     }
     else {
       if( face->GetName().empty() ) {
-        compoundAction->AddAction( new TriggerAnimationAction(robot, AnimationTrigger::OnSawOldUnnamedFace) );
+        compoundAction->AddAction( new TriggerAnimationAction(robot, _sawOldUnnamedFaceTrigger) );
         robot.GetMoodManager().TriggerEmotionEvent("OldUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
         SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, false);
-        sayTextAction->SetAnimationTrigger(AnimationTrigger::OnSawOldNamedFace);
+        sayTextAction->SetAnimationTrigger(_sawOldNamedFaceTrigger);
         compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
       }

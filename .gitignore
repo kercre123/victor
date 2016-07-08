@@ -16,6 +16,7 @@ simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
 simulator/controllers/webotsCtrlGameEngine/resources
 simulator/controllers/webotsCtrlGameEngine/temp
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
+simulator/controllers/webotsCtrlKeyboard/resources
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib

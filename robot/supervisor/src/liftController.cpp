@@ -40,6 +40,7 @@ namespace Anki {
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
         
         // Motor burnout protection
+        u32 potentialBurnoutStartTime_ms_ = 0;
         const f32 BURNOUT_POWER_THRESH = 0.6;
         const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
@@ -168,6 +169,8 @@ namespace Anki {
           power_ = 0;
           HAL::MotorSetPower(MOTOR_LIFT, power_);
           
+          potentialBurnoutStartTime_ms_ = 0;
+          
           if (autoReEnable) {
             enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
           }
@@ -193,6 +196,7 @@ namespace Anki {
         Enable();
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
+        potentialBurnoutStartTime_ms_ = 0;
         Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true);
       }
 
@@ -457,23 +461,20 @@ namespace Anki {
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
         
-        static u32 potentialBurnoutStartTime_ms = 0;
-
         if (ABS(power_) < BURNOUT_POWER_THRESH) {
-          potentialBurnoutStartTime_ms = 0;
+          potentialBurnoutStartTime_ms_ = 0;
           return false;
         }
         
-        if (potentialBurnoutStartTime_ms == 0) {
-          potentialBurnoutStartTime_ms = HAL::GetTimeStamp();
-        } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms > BURNOUT_TIME_THRESH_MS) {
+        if (potentialBurnoutStartTime_ms_ == 0) {
+          potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
+        } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
           if (IsInPosition()) {
             AnkiWarn( 16, "LiftController", 149, "burnout protection triggered. Stop messing with the lift! Going limp until you do!", 0);
             Disable(true);
           } else {
             AnkiWarn( 16, "LiftController", 150, "burnout protection triggered. Recalibrating.", 0);
             StartCalibrationRoutine();
-            potentialBurnoutStartTime_ms = 0;
           }
           return true;
         }

@@ -833,6 +833,27 @@
                   '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard',
                 ],
               },
+              # create folder 'resources' so that we can create the symlink for webotsCtrlKeyboard
+              {
+                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlKeyboard',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','../../simulator/controllers/webotsCtrlKeyboard/resources',
+                ],
+              },
+              # create symlink to config, so that webotsCtrlKeyboard can also load json configuration files
+              # shared with webotsCtrlGameEngine
+              {
+                'action_name': 'create_symlink_resources_configs_webotsCtrlKeyboard',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '../../simulator/controllers/webotsCtrlKeyboard/resources/config',
+                ],
+              },
               {
                 'action_name': 'create_symlink_webotsCtrlBuildServerTest',
                 'inputs':[],

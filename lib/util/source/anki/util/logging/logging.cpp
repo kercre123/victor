@@ -23,6 +23,9 @@
 #include "util/logging/channelFilter.h"
 #include "util/logging/iEventProvider.h"
 #include <cstdlib>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace Anki{
 namespace Util {
@@ -53,14 +56,101 @@ std::string HexDump(const void *value, const size_t len, char delimiter)
 
 ITickTimeProvider* gTickTimeProvider = nullptr;
 ILoggerProvider*gLoggerProvider = nullptr;
-ChannelFilter gChannelFilter;
 IEventProvider* gEventProvider = nullptr;
 bool _errG = false;
 const size_t kMaxStringBufferSize = 1024;
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// helpers
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+using KVV = std::vector<std::pair<const char*, const char*>>;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void LogError(const char* eventName, const KVV& keyValues, const char* string)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+
+  // set tick count if available
+  std::stringstream finalLogStr;
+  if ( gTickTimeProvider ) {
+    finalLogStr << "(tc";
+    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
+    finalLogStr << ") : ";
+  }
+ 
+  // append string to tick count
+  finalLogStr << string;
+  gLoggerProvider->PrintLogE(eventName, keyValues, finalLogStr.str().c_str());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void LogWarning(const char* eventName, const KVV& keyValues, const char* string)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+
+  // set tick count if available
+  std::stringstream finalLogStr;
+  if ( gTickTimeProvider ) {
+    finalLogStr << "(tc";
+    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
+    finalLogStr << ") : ";
+  }
+ 
+  // append string to tick count
+  finalLogStr << string;
+  gLoggerProvider->PrintLogW(eventName, keyValues, finalLogStr.str().c_str());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void LogChanneledInfo(const char* channel, const char* eventName, const KVV& keyValues, const char* string)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+
+  // set tick count if available
+  std::stringstream finalLogStr;
+  if ( gTickTimeProvider ) {
+    finalLogStr << "(tc";
+    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
+    finalLogStr << ") : ";
+  }
+ 
+  // append string to tick count
+  finalLogStr << string;
+  gLoggerProvider->PrintChanneledLogI(channel, eventName, keyValues, finalLogStr.str().c_str());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void LogDebug(const char* eventName, const KVV& keyValues, const char* string)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+
+  // set tick count if available
+  std::stringstream finalLogStr;
+  if ( gTickTimeProvider ) {
+    finalLogStr << "(tc";
+    finalLogStr << std::right << std::setw(4) << std::setfill('0') << gTickTimeProvider->GetTickCount();
+    finalLogStr << ") : ";
+  }
+ 
+  // append string to tick count
+  finalLogStr << string;
+  gLoggerProvider->PrintLogD(eventName, keyValues, finalLogStr.str().c_str());
+}
+
+}
 
 
-void sEventF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sEventF(const char* eventName, const KVV& keyValues, const char* format, ...)
 {
   if (gLoggerProvider == nullptr) {
     return;
@@ -75,7 +165,8 @@ void sEventF(const char* eventName, const std::vector<std::pair<const char*, con
   gLoggerProvider->PrintEvent(eventName, keyValues, logString);
 }
 
-void sEventV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sEventV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
   if (gLoggerProvider == nullptr) {
     return;
@@ -87,7 +178,8 @@ void sEventV(const char* eventName, const std::vector<std::pair<const char*, con
   gLoggerProvider->PrintEvent(eventName, keyValues, logString);
 }
 
-void sEvent(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sEvent(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
   if (gLoggerProvider == nullptr) {
     return;
@@ -95,253 +187,183 @@ void sEvent(const char* eventName, const std::vector<std::pair<const char*, cons
   gLoggerProvider->PrintEvent(eventName, keyValues, eventValue);
 }
 
-
-
-void sErrorF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sErrorF(const char* eventName, const KVV& keyValues, const char* format, ...)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
+
+  // parse string
   va_list args;
   char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
   va_start(args, format);
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
   va_end(args);
-  gLoggerProvider->PrintLogE(eventName, keyValues, logString);
+
+  // log it
+  LogError(eventName, keyValues, logString);
 }
 
-void sErrorV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sErrorV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
+
+  // parse string
   char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  gLoggerProvider->PrintLogE(eventName, keyValues, logString);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
+
+  // log it
+  LogError(eventName, keyValues, logString);
 }
 
-void sError(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sError(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
-  if (gTickTimeProvider != nullptr) {
-    char logString[kMaxStringBufferSize]{0};
-    snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : %s", gTickTimeProvider->GetTickCount(), eventValue);
-    gLoggerProvider->PrintLogE(eventName, keyValues, logString);
-  } else {
-    gLoggerProvider->PrintLogE(eventName, keyValues, eventValue);
-  }
+
+  // log it
+  LogError(eventName, keyValues, eventValue);
 }
 
-
-
-
-void sWarningF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sWarningF(const char* eventName, const KVV& keyValues, const char* format, ...)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
+
+  // parse string
   va_list args;
   char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
   va_start(args, format);
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
   va_end(args);
-  gLoggerProvider->PrintLogW(eventName, keyValues, logString);
+
+  // log it
+  LogWarning(eventName, keyValues, logString);
 }
 
-void sWarningV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sWarningV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
+
+  // parse string
   char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  gLoggerProvider->PrintLogW(eventName, keyValues, logString);
-}
-
-void sWarning(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue)
-{
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
-  if (gTickTimeProvider != nullptr) {
-    char logString[kMaxStringBufferSize]{0};
-    snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : %s", gTickTimeProvider->GetTickCount(), eventValue);
-    gLoggerProvider->PrintLogW(eventName, keyValues, logString);
-  } else {
-    gLoggerProvider->PrintLogW(eventName, keyValues, eventValue);
-  }
-}
-
-
-
-
-void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...)
-{
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
-  va_list args;
-  char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  va_start(args, format);
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  va_end(args);
-  gLoggerProvider->PrintLogI(eventName, keyValues, logString);
-}
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
   
-void sChanneledInfoF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...)
+  // log it
+  LogWarning(eventName, keyValues, logString);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sWarning(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
-  va_list args;
-  char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  std::string channelNameString(channelName);
-  if(gChannelFilter.IsInitialized()) {
-    if(!gChannelFilter.IsChannelRegistered(channelNameString)) {
-      PRINT_NAMED_ERROR("UnregisteredChannel", "Channel @%s not registered!", channelName);
-    } else {
-      if (!gChannelFilter.IsChannelEnabled(channelNameString)) {
-        return;
-      }
-    }
-    offset += snprintf(logString, kMaxStringBufferSize, "[@%s] ", channelName);
+
+  // log it
+  LogWarning(eventName, keyValues, eventValue);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sChanneledInfoF(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, ...)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
   }
   
-  if (gTickTimeProvider != nullptr) {
-    offset += snprintf(&logString[offset], kMaxStringBufferSize - offset, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  va_start(args, format);
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  va_end(args);
-  gLoggerProvider->PrintLogI(eventName, keyValues, logString);
-}
-
-void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args)
-{
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
-  char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  gLoggerProvider->PrintLogI(eventName, keyValues, logString);
-}
-
-void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args)
-{
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
-  char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  std::string channelNameString(channelName);
-  if(gChannelFilter.IsInitialized()) {
-    if(!gChannelFilter.IsChannelRegistered(channelNameString)) {
-      PRINT_NAMED_ERROR("UnregisteredChannel", "Channel @%s not registered!", channelName);
-    } else {
-      if (!gChannelFilter.IsChannelEnabled(channelNameString)) {
-        return;
-      }
-    }
-    offset += snprintf(logString, kMaxStringBufferSize, "[@%s] ", channelName);
-  }
-  if (gTickTimeProvider != nullptr) {
-    offset += snprintf(&logString[offset], kMaxStringBufferSize - offset, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  gLoggerProvider->PrintLogI(eventName, keyValues, logString);
-}
-
-void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue)
-{
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
-  if (gTickTimeProvider != nullptr) {
-    char tickLogString[kMaxStringBufferSize]{0};
-    snprintf(tickLogString, kMaxStringBufferSize, "(tc%04zd) : %s", gTickTimeProvider->GetTickCount(), eventValue);
-    gLoggerProvider->PrintLogI(eventName, keyValues, tickLogString);
-  } else {
-    gLoggerProvider->PrintLogI(eventName, keyValues, eventValue);
-  }
-}
-
-
-
-
-void sDebugF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...)
-{
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
+  // parse string
   va_list args;
   char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
   va_start(args, format);
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
   va_end(args);
-  gLoggerProvider->PrintLogD(eventName, keyValues, logString);
+
+  // log it
+  LogChanneledInfo(channelName, eventName, keyValues, logString);
 }
 
-void sDebugV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sChanneledInfoV(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
+  
+  // parse string
   char logString[kMaxStringBufferSize]{0};
-  int offset = 0;
-  if (gTickTimeProvider != nullptr) {
-    offset = snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : ", gTickTimeProvider->GetTickCount());
-  }
-  vsnprintf(&logString[offset], kMaxStringBufferSize - offset, format, args);
-  gLoggerProvider->PrintLogD(eventName, keyValues, logString);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
+  
+  // log it
+  LogChanneledInfo(channelName, eventName, keyValues, logString);
 }
 
-void sDebug(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sChanneledInfo(const char* channelName, const char* eventName, const KVV& keyValues, const char* eventValue)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
-  if (gTickTimeProvider != nullptr) {
-    char logString[kMaxStringBufferSize]{0};
-    snprintf(logString, kMaxStringBufferSize, "(tc%04zd) : %s", gTickTimeProvider->GetTickCount(), eventValue);
-    gLoggerProvider->PrintLogD(eventName, keyValues, logString);
-  } else {
-    gLoggerProvider->PrintLogD(eventName, keyValues, eventValue);
-  }
+  
+  // log it
+  LogChanneledInfo(channelName, eventName, keyValues, eventValue);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sDebugF(const char* eventName, const KVV& keyValues, const char* format, ...)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+  
+  // parse string
+  va_list args;
+  char logString[kMaxStringBufferSize]{0};
+  va_start(args, format);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
+  va_end(args);
 
+  // log it
+  LogDebug(eventName, keyValues, logString);
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sDebugV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+  
+  // parse string
+  char logString[kMaxStringBufferSize]{0};
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
+
+  // log it
+  LogDebug(eventName, keyValues, logString);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void sDebug(const char* eventName, const KVV& keyValues, const char* eventValue)
+{
+  if (gLoggerProvider == nullptr) {
+    return;
+  }
+  
+  // log it
+  LogDebug(eventName, keyValues, eventValue);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sSetGlobal(const char* key, const char* value)
 {
   if (gEventProvider == nullptr) {

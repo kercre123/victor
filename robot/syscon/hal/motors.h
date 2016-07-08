@@ -21,7 +21,7 @@ namespace Motors {
   void init();
   void teardown(void);  // Only used for rebooting the machine
   void disable(bool disable);
-  
+
   // Set the (unitless) power for a specified motor in the range [-798, 798].
   void setPower(u8 motorID, s16 power);
   Fixed getSpeed(u8 motorID);

@@ -54,6 +54,12 @@
   "button.close": {
     "translation": "Close"
   },
+  "button.done": {
+    "translation": "Done"
+  },
+  "button.play": {
+    "translation": "Play"
+  },
   "label.percentComplete": {
     "translation": "{0:P2} Complete"
   },

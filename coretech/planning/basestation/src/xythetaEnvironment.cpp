@@ -1613,10 +1613,10 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
   State_c curr_c = State2State_c(plan.start_);
   StateID currID = plan.start_.GetStateID();
 
-  cout<<"plan start: "<<plan.start_<<endl;
+  PRINT_STREAM_DEBUG("xythetaEnvironment.PrintPlan", "plan start: " << plan.start_);
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
-    printf("%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)\n",
+    PRINT_NAMED_DEBUG("xythetaEnvironment.PrintPlan", "%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)\n",
            (unsigned long)i,
            curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.s.theta, 
            actionTypes_[plan.actions_[i]].GetName().c_str(),

@@ -145,13 +145,13 @@ static void EnterState(RadioState state) {
   }
 }
 
-static void SendObjectConnectionState(int slot, uint16_t deviceType = OBJECT_UNKNOWN)
+static void SendObjectConnectionState(int slot)
 {
   ObjectConnectionState msg;
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
-  msg.device_type = deviceType;
+  msg.device_type = accessories[slot].model;
   RobotInterface::SendMessage(msg);
 }
 
@@ -177,8 +177,9 @@ static void ota_timeout() {
       if (acc->failure_count++ > MAX_OTA_FAILURES) {
         acc->allocated = false;
         acc->active = false;
+        acc->model = OBJECT_OTA_FAIL;
         
-        SendObjectConnectionState(slot, OBJECT_OTA_FAIL);
+        SendObjectConnectionState(slot);
       }
     }
 
@@ -280,7 +281,7 @@ void uesb_event_handler(uint32_t flags)
         if (ota_device->magic != CUBE_FIRMWARE_MAGIC) {
           return ;
         }
-        
+
         // This is an invalid hardware version and we should not try to do anything with it
         if (advert.hwVersion != ota_device->hwVersion) {
           continue ;
@@ -300,13 +301,14 @@ void uesb_event_handler(uint32_t flags)
       AccessorySlot* acc = &accessories[slot]; 
       acc->id = advert.id;
       acc->last_received = 0;
+      acc->model = advert.model;
       
       if (acc->active == false)
       {
         acc->allocated = true;
         acc->active = true;
         
-        SendObjectConnectionState(slot, advert.model);
+        SendObjectConnectionState(slot);
       }
 
       // This is where the cube shall live
@@ -482,7 +484,10 @@ static void radio_prepare(void) {
     lightGamma = 0x80;
     #endif
     
-    for (int light = 0; light < NUM_PROP_LIGHTS; light++) {
+    memset(tx_state.ledStatus, 0, sizeof(tx_state.ledStatus));
+    const int num_lights = (target->model == OBJECT_CHARGER) ? 3 : 4;
+    
+    for (int light = 0; light < num_lights; light++) {
       uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[light]].values;
 
       for (int ch = 0; ch < 3; ch++) {
