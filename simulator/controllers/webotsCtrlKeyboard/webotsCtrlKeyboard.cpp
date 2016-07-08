@@ -1055,6 +1055,9 @@ namespace Anki {
                   // FactoryTest behavior has to start on a charger so we need to wake up the robot first
                   if(behaviorName == "FactoryTest")
                   {
+                    // Mute sound because annoying
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
+                    
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
                     SendSetRobotVolume(1.f);

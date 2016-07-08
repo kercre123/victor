@@ -84,7 +84,7 @@ namespace HeadController {
 
       const u32 HEAD_STOP_TIME = 500;  // ms
 
-      bool enable_ = true;
+      bool enable_ = false;
 
     } // "private" members
 
@@ -112,6 +112,7 @@ namespace HeadController {
     void StartCalibrationRoutine()
     {
       AnkiEvent( 7, "HeadController", 90, "Starting Head calibration", 0);
+      Enable();
 
 #ifdef SIMULATOR
       // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when

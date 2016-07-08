@@ -115,7 +115,7 @@ namespace Anki {
 
 
         // Whether or not to command anything to motor
-        bool enable_ = true;
+        bool enable_ = false;
         
         // If disabled, lift motor is automatically re-enabled at this time if non-zero.
         u32 enableAtTime_ms_ = 0;
@@ -190,6 +190,7 @@ namespace Anki {
       void StartCalibrationRoutine()
       {
         AnkiEvent( 16, "LiftController", 144, "Starting calibration", 0);
+        Enable();
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true);

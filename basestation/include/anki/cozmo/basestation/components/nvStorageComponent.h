@@ -252,7 +252,7 @@ private:
   u8 _numWriteMsgAttempts;
   
   // Max num of retry attempts allowed for a write message
-  const u8 _kNumWriteRetryAttempts = 2;
+  const u8 _kNumWriteRetryAttempts = 4;
 
   // Returns false if number of allowable retries exceeded
   bool ResendLastWrite();

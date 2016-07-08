@@ -9,6 +9,7 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 FactoryTestState {
+  GetPrevTestResults,
   InitRobot,
   WaitingForMotorCalibration,
   ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
@@ -22,9 +23,12 @@ enum uint_8 FactoryTestState {
   StartPickup,
   PickingUpBlock,
   PlacingBlock,
-  DockToCharger,
-  BLE_TestControl,
   WaitingForWritesToRobot,
+
+  // NB: IF YOU ADD STATES HERE YOU MAY NEED TO INCREASE THE SIZE OF
+  //     FactoryTestResultEntry.timestamps ARRAY TO BE AT LEAST
+  //     THE NUMBER OF STATES + 1. HOWEVER, THIS BREAKS BACKWARDS COMPATIBILITY!
+
 }
 
 enum uint_8 FactoryTestResultCode {
@@ -87,6 +91,7 @@ enum uint_8 FactoryTestResultCode {
   COMPUTE_CAM_POSE_FAILED,
   CAM_POSE_OOR,
   PLAY_SOUND_FAILED,
+  PREV_TEST_RESULTS_READ_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
@@ -95,7 +100,7 @@ enum uint_8 FactoryTestResultCode {
 message FactoryTestResultEntry {
   uint_64 utcTime,
   uint_32 engineSHA1,
-  uint_32 timestamps[16],
+  uint_32 timestamps[18],
   int_32 stationID,
   FactoryTestResultCode result,
 }
