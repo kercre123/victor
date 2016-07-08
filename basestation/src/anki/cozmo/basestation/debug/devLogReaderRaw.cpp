@@ -25,8 +25,8 @@ bool DevLogReaderRaw::FillLogData(std::ifstream& fileHandle, LogData& logData_ou
   }
   
   static constexpr uint32_t metaDataSize = sizeof(sizeInBytes) + sizeof(logData_out._timestamp_ms);
-  // Individual pieces of data are supposed to fit into packets that are no larger than 2K
-  static constexpr uint32_t kLargestReasonableDataSize = 2 * 1024;
+  // There is no exact limit on the largest size a message could be, so this is a really a rough sanity check
+  static constexpr uint32_t kLargestReasonableDataSize = 4 * 1024;
   
   // Verify the size makes sense
   bool sizeMakesSense = (sizeInBytes > metaDataSize) && (sizeInBytes <= kLargestReasonableDataSize);
