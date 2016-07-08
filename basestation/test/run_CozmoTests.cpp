@@ -64,8 +64,25 @@ TEST(BlockWorld, AddAndRemoveObject)
 
   // Fake a state message update for robot
   RobotState stateMsg;
-  stateMsg.pose_frame_id = 0;
   stateMsg.timestamp = 0;
+  stateMsg.pose_frame_id = 0;
+  stateMsg.pose.x = 0.0f;
+  stateMsg.pose.y = 0.0f;
+  stateMsg.pose.z = 0.0f;
+  stateMsg.pose.angle = 0.0f;
+  stateMsg.pose.pitch_angle = 0.0f;
+  stateMsg.lwheel_speed_mmps = 0.0f;
+  stateMsg.rwheel_speed_mmps = 0.0f;
+  stateMsg.headAngle = 0.0f;
+  stateMsg.liftAngle = 0.0f;
+  stateMsg.liftHeight = 0.0f;
+  stateMsg.rawGyroZ = 0.0f;
+  stateMsg.rawAccelY = 0.0f;
+  stateMsg.status = 0;
+  stateMsg.lastPathID = 0;
+  stateMsg.currPathSegment = 0;
+  stateMsg.numFreeSegmentSlots = 0;
+  stateMsg.battVolt10x = 0;
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
 
