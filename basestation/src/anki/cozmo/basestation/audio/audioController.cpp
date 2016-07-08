@@ -12,17 +12,22 @@
  */
 
 #include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/musicConductor.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/audio/audioBusses.h"
+#include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
+#include "clad/audio/audioStateTypes.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/helpers/templateHelpers.h"
-#include "util/time/universalTime.h"
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/math/numericCast.h"
+#include "util/time/universalTime.h"
+
 #include <unordered_map>
 
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
@@ -59,7 +64,7 @@ using namespace AudioEngine;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
-  : _pluginInterface( new AudioControllerPluginInterface(*this) )
+: _pluginInterface( new AudioControllerPluginInterface( *this ) )
 {
 #if USE_AUDIO_ENGINE
   {
@@ -116,6 +121,13 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 
 #endif
   
+    // Setup Music Conductor
+    _musicConductor = new MusicConductor( *this,
+                                          static_cast<AudioGameObject>( GameObjectType::Default ),
+                                          Util::numeric_cast<AudioStateGroupId>( GameState::StateGroupType::Music ),
+                                          Util::numeric_cast<AudioEventId>( GameEvent::GenericEvent::Music_Play ),
+                                          Util::numeric_cast<AudioEventId>( GameEvent::GenericEvent::Music_Stop ) );
+    
     // Setup our update method to be called periodically
     _dispatchQueue = Util::Dispatch::Create( "AudioController" );
     const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(UPDATE_LOOP_SLEEP_DURATION_MS);
@@ -134,7 +146,8 @@ AudioController::~AudioController()
     Util::Dispatch::Stop( _dispatchQueue );
     Util::Dispatch::Release( _dispatchQueue );
   }
-
+  
+  Util::SafeDelete( _musicConductor );
   Util::SafeDelete( _pluginInterface );
   
   ClearGarbageCollector();
@@ -466,10 +479,11 @@ void AudioController::Update()
   }
 #endif // ENABLE_AC_SLEEP_TIME_DIAGNOSTICS
   
+  // Tick Music Conductor & Audio Engine
+  _musicConductor->UpdateTick();
   
   // NOTE: Don't need time delta
   _audioEngine->Update( 0.0 );
-
 
 
 #if ENABLE_AC_RUN_TIME_DIAGNOSTICS

@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "util/signals/simpleSignal_fwd.h"
+#include "util/signals/signalHolder.h"
 #include <vector>
 
 
@@ -26,7 +26,7 @@ namespace Audio {
 class MessageAudioClient;
 class AudioEngineMessageHandler;
   
-class AudioEngineClientConnection : public AudioClientConnection {
+class AudioEngineClientConnection : public AudioClientConnection, protected Anki::Util::SignalHolder {
   
 public:
   // Transfer Message Handler Ownership
@@ -41,8 +41,6 @@ public:
 private:
   
   AudioEngineMessageHandler* _messageHandler;
-  std::vector<Signal::SmartHandle> _signalHandles;
-  
   
   void HandleEvents(const AnkiEvent<MessageAudioClient>& event);
   

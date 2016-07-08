@@ -11,6 +11,7 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+// Event messages
 
 message PostAudioEvent
 {
@@ -46,6 +47,15 @@ message PostAudioParameter
   CurveType                     curve,
 }
 
+
+// Music Messages
+
+message PostAudioMusicState
+{
+  GameState::GenericState   stateValue,
+  bool                      interrupt                 = 0,
+  uint_32                   minDurationInMilliSeconds = 0,
+}
 
 }
 }

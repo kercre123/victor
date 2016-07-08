@@ -33,6 +33,7 @@ AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface& exte
   _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioGameState, callback ) );
   _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioSwitchState, callback ) );
   _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioParameter, callback ) );
+  _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioMusicState, callback ) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -62,6 +63,10 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
       
     case ExternalInterface::MessageGameToEngineTag::PostAudioParameter:
       HandleMessage( event.GetData().Get_PostAudioParameter() );
+      break;
+      
+    case ExternalInterface::MessageGameToEngineTag::PostAudioMusicState:
+      HandleMessage( event.GetData().Get_PostAudioMusicState() );
       break;
       
     default:

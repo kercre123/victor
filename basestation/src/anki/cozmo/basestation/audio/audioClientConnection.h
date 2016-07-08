@@ -28,6 +28,7 @@ struct StopAllAudioEvents;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
+struct PostAudioMusicState;
 struct AudioCallback;
   
   
@@ -53,6 +54,7 @@ protected:
   virtual void HandleMessage( const PostAudioGameState& gameStateMessage );
   virtual void HandleMessage( const PostAudioSwitchState& switchStateMessage );
   virtual void HandleMessage( const PostAudioParameter& parameterMessage );
+  virtual void HandleMessage( const PostAudioMusicState& musicStateMessage );
   
 private:
   

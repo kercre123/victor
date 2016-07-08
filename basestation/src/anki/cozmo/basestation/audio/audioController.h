@@ -14,6 +14,7 @@
 #ifndef __Basestation_Audio_AudioController_H__
 #define __Basestation_Audio_AudioController_H__
 
+
 #include "DriveAudioEngine/audioTypes.h"
 #include "DriveAudioEngine/audioCallback.h"
 #include "util/helpers/noncopyable.h"
@@ -44,7 +45,8 @@ namespace Data {
 }
 namespace Cozmo {
 namespace Audio {
-  
+
+class MusicConductor;
 class AudioControllerPluginInterface;
 class RobotAudioBuffer;
 class AudioWaveFileReader;
@@ -116,6 +118,10 @@ public:
   
   // Expose PlugIn functionality
   AudioControllerPluginInterface* GetPluginInterface() const { return _pluginInterface; }
+  
+  // Music
+  MusicConductor* GetMusicConductor() const { return _musicConductor; }
+  
 
 private:
 
@@ -142,6 +148,9 @@ private:
   CallbackContextMap _eventCallbackContexts;
   
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
+  
+  MusicConductor*  _musicConductor = nullptr;
+  
 
   // Setup HijackAudio plug-in & robot buffers
   void SetupHijackAudioPlugInAndRobotAudioBuffers();
@@ -155,7 +164,7 @@ private:
   // Clean up call back messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
-  
+
   
   // Debug Cozmo PlugIn Logs
 #if HijackAudioPlugInDebugLogs

@@ -41,9 +41,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
                                                                   CallbackFunc callback )
 {
   if ( nullptr != _messageHandler ) {
-    
     const CallbackIdType callbackId = nullptr != callback ? GetNewCallbackId() : kInvalidCallbackId;
-    
     // Store callback
     if ( nullptr != callback ) {
       _callbackMap.emplace( callbackId, callback );
@@ -106,7 +104,7 @@ void AudioEngineClient::PostParameter( GameParameter::ParameterType parameter,
                                        CurveType curve ) const
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve) );
+    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -114,7 +112,19 @@ void AudioEngineClient::PostParameter( GameParameter::ParameterType parameter,
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::PostMusicState( GameState::GenericState musicState, bool interrupt, uint32_t minDuration_ms )
+{
+  if ( nullptr != _messageHandler ) {
+    const MessageAudioClient msg( PostAudioMusicState( musicState, interrupt, minDuration_ms ) );
+    _messageHandler->Broadcast( std::move( msg ) );
+  }
+  else {
+    PRINT_NAMED_WARNING("AudioEngineClient.PostMusicState", "Message Handler is Null Can NOT post Music State");
+  }
+}
+  
+  
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
