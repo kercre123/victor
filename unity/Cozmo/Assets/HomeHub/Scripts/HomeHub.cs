@@ -128,13 +128,13 @@ namespace Cozmo.HomeHub {
       _StartViewInstance.OnConnectClicked -= HandleStartClicked;
       _StartViewInstance.CloseView();
       _StartViewInstance.ViewCloseAnimationFinished += HandleStartViewClosed;
-      StartLoadHomeView();
     }
 
     private void HandleStartViewClosed() {
       _StartViewInstance.ViewCloseAnimationFinished -= HandleStartViewClosed;
       _StartViewInstance = null;
       UnloadStartViewAssetBundle();
+      StartLoadHomeView();
     }
 
     private void StartLoadHomeView() {
@@ -257,23 +257,23 @@ namespace Cozmo.HomeHub {
 
       // Close dialog
       CloseHomeView();
+    }
+
+    private void HandleHomeViewCloseAnimationFinished() {
+      if (_HomeViewInstance != null) {
+        _HomeViewInstance.ViewCloseAnimationFinished -= HandleHomeViewCloseAnimationFinished;
+        _HomeViewInstance = null;
+      }
+      AssetBundleManager.Instance.UnloadAssetBundle(_HomeViewPrefabData.AssetBundle);
 
       LoadMinigameAssetBundle((bool prefabsSuccess) => {
         if (prefabsSuccess) {
-          LoadMinigame(_ChallengeStatesById[challengeId].Data);
+          LoadMinigame(_ChallengeStatesById[_CurrentChallengePlaying.ChallengeId].Data);
         }
         else {
           // TODO show error dialog and boot to home
         }
       });
-    }
-
-    private void UnloadHomeViewAssetBundle() {
-      if (_HomeViewInstance != null) {
-        _HomeViewInstance.ViewCloseAnimationFinished -= UnloadHomeViewAssetBundle;
-        _HomeViewInstance = null;
-      }
-      AssetBundleManager.Instance.UnloadAssetBundle(_HomeViewPrefabData.AssetBundle);
     }
 
     private void LoadMinigameAssetBundle(System.Action<bool> loadCallback) {
@@ -305,7 +305,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleSharedMinigameViewInitialized(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
-      newView.ViewClosed += HandleMinigameStartedClosing;
+      _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished += HandleMinigameFinishedClosing;
     }
 
     private void HandleEndGameDialog() {
@@ -338,16 +338,11 @@ namespace Cozmo.HomeHub {
       _CurrentChallengePlaying = null;
     }
 
-    private void HandleMinigameStartedClosing() {
-      _MiniGameInstance.SharedMinigameView.ViewClosed -= HandleMinigameStartedClosing;
-      _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished += HandleMinigameFinishedClosing;
-      StartLoadHomeView();
-    }
-
     private void HandleMinigameFinishedClosing() {
       _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
       _MiniGameInstance = null;
       UnloadMinigameAssetBundle();
+      StartLoadHomeView();
     }
 
     private void UnloadMinigameAssetBundle() {
@@ -380,7 +375,6 @@ namespace Cozmo.HomeHub {
         _MiniGameInstance.OnShowEndGameDialog -= HandleEndGameDialog;
         _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
         if (MiniGameInstance.SharedMinigameView != null) {
-          _MiniGameInstance.SharedMinigameView.ViewClosed -= HandleMinigameStartedClosing;
           _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
         }
       }
@@ -395,7 +389,7 @@ namespace Cozmo.HomeHub {
 
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
-        _HomeViewInstance.ViewCloseAnimationFinished += UnloadHomeViewAssetBundle;
+        _HomeViewInstance.ViewCloseAnimationFinished += HandleHomeViewCloseAnimationFinished;
         _HomeViewInstance.CloseView();
       }
     }

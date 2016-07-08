@@ -257,8 +257,6 @@ namespace Cozmo {
           }
         }
         _OpenAnimationStarted = true;
-
-        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, _BackgroundGradient.color);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
@@ -389,6 +387,8 @@ namespace Cozmo {
         lockedColor.a = 0;
         _LockedBackgroundImage.color = lockedColor;
         _IsShowingLocked = false;
+
+        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, baseColor);
       }
 
       public void ShowLockedBackground() {
