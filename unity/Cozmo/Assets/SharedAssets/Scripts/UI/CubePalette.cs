@@ -14,9 +14,6 @@ namespace Cozmo {
           if (_sInstance == null) {
             _sInstance = value;
           }
-          else {
-            Destroy(value);
-          }
         }
       }
 

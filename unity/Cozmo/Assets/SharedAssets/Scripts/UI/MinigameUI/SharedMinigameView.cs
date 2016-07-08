@@ -36,12 +36,6 @@ namespace Cozmo {
       private Sequence _LockedBackgroundTween;
 
       [SerializeField]
-      private CanvasGroup _BackgroundCanvasGroup;
-
-      [SerializeField]
-      private Image _BackgroundImage;
-
-      [SerializeField]
       private Image _BackgroundGradient;
 
       [SerializeField]
@@ -197,6 +191,9 @@ namespace Cozmo {
 
       #endregion
 
+      [SerializeField]
+      private ParticleSystem[] _BackgroundParticles;
+
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
       private Sequence _SlideInTween;
@@ -252,9 +249,6 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
-        float fadeInSeconds = UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds;
-        Ease fadeInEasing = UIDefaultTransitionSettings.Instance.FadeInEasing;
-
         Sequence open;
         foreach (MinigameWidget widget in _ActiveWidgets) {
           open = widget.CreateOpenAnimSequence();
@@ -262,16 +256,9 @@ namespace Cozmo {
             openAnimation.Join(open);
           }
         }
-        _BackgroundCanvasGroup.alpha = 0;
-        openAnimation.Join(_BackgroundCanvasGroup.DOFade(1, fadeInSeconds).SetEase(fadeInEasing));
-
-        Color bgColor = _BackgroundImage.color;
-        bgColor.a = 0;
-        _BackgroundImage.color = bgColor;
-        openAnimation = JoinFadeTween(openAnimation, null, _BackgroundImage, 1f, fadeInSeconds, fadeInEasing);
         _OpenAnimationStarted = true;
 
-        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, _BackgroundImage.color);
+        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, _BackgroundGradient.color);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
@@ -285,11 +272,14 @@ namespace Cozmo {
             closeAnimation.Join(close);
           }
         }
-        closeAnimation.Join(_BackgroundCanvasGroup.DOFade(0, fadeOutSeconds).SetEase(fadeOutEasing));
-        closeAnimation = JoinFadeTween(closeAnimation, null, _BackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, null, _BackgroundGradient, 0f, fadeOutSeconds, fadeOutEasing);
         closeAnimation = JoinFadeTween(closeAnimation, _LockedBackgroundTween, _LockedBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
         closeAnimation = JoinFadeTween(closeAnimation, _MiddleBackgroundTween, _MiddleBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
         closeAnimation = JoinFadeTween(closeAnimation, _OverlayBackgroundTween, _OverlayBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+
+        foreach (ParticleSystem system in _BackgroundParticles) {
+          system.Stop();
+        }
       }
 
       private Sequence JoinFadeTween(Sequence sequenceToUse, Tween tween, Image targetImage, float targetAlpha,
@@ -386,7 +376,6 @@ namespace Cozmo {
       #region Background Color
 
       public void InitializeColor(Color baseColor) {
-        _BackgroundImage.color = baseColor;
         _BackgroundGradient.color = baseColor;
 
         Color transparentBaseColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0);

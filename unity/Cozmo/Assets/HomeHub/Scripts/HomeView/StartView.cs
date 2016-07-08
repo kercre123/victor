@@ -97,10 +97,11 @@ public class StartView : BaseView {
   }
 
   protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-    closeAnimation.Append(transform.DOScale(_CloseTargetScale, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
+    UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
+    float scaleDuration = defaultSettings.MoveCloseDurationSeconds;
+    closeAnimation.Append(transform.DOScale(_CloseTargetScale, scaleDuration)
                           .SetEase(Ease.InBack));
-    closeAnimation.Join(_AlphaController.DOFade(0, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
-                        .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
+    closeAnimation.Join(defaultSettings.CreateFadeOutTween(_AlphaController, Ease.Unset, scaleDuration));
   }
 
   #region implemented abstract members of BaseView

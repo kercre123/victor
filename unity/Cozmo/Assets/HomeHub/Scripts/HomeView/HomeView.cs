@@ -93,6 +93,33 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private ParticleSystem _EnergyBarEmitter;
 
+    [SerializeField]
+    private CanvasGroup _TabContentContainer;
+
+    [SerializeField]
+    private float _TabContentAnimationXOriginOffset;
+
+    [SerializeField]
+    private Ease _TabContentOpenEase = Ease.OutBack;
+
+    [SerializeField]
+    private RectTransform _TabButtonContainer;
+
+    [SerializeField]
+    private float _TabButtonAnimationXOriginOffset;
+
+    [SerializeField]
+    private RectTransform _TopBarContainer;
+
+    [SerializeField]
+    private float _TopBarAnimationYOriginOffset;
+
+    [SerializeField]
+    private Ease _TopBarOpenEase = Ease.OutBack;
+
+    [SerializeField]
+    private Ease _TopBarCloseEase = Ease.InBack;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
@@ -379,13 +406,50 @@ namespace Cozmo.HomeHub {
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
-      // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+      UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
+      openAnimation.Append(defaultSettings.CreateOpenMoveTween(_TabButtonContainer,
+                                                               _TabButtonAnimationXOriginOffset,
+                                                               0));
+
+      openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TopBarContainer,
+                                                             0,
+                                                             _TopBarAnimationYOriginOffset,
+                                                             _TopBarOpenEase)
+                         .SetDelay(defaultSettings.CascadeDelay));
+
+      float contentContainerAnimDuration = defaultSettings.MoveOpenDurationSeconds;
+      openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TabContentContainer.transform,
+                                                             _TabContentAnimationXOriginOffset,
+                                                             0,
+                                                             _TabContentOpenEase,
+                                                             contentContainerAnimDuration)
+                         .SetDelay(defaultSettings.CascadeDelay));
+
+      _TabContentContainer.alpha = 0f;
+      openAnimation.Join(defaultSettings.CreateFadeInTween(_TabContentContainer, Ease.Unset, contentContainerAnimDuration * 0.3f));
 
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Bone);
     }
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-      // closeAnimation.Append(_AlphaController.DOFade(0, _FadeTweenDurationSeconds).SetEase(Ease.OutQuad));
+      UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
+      closeAnimation.Append(defaultSettings.CreateCloseMoveTween(_TabContentContainer.transform,
+                                                                 _TabContentAnimationXOriginOffset,
+                                                                 0));
+      closeAnimation.Join(defaultSettings.CreateFadeOutTween(_TabContentContainer,
+                                                             Ease.Unset,
+                                                             UIDefaultTransitionSettings.Instance.MoveCloseDurationSeconds));
+
+      closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TopBarContainer,
+                                                               0,
+                                                               _TopBarAnimationYOriginOffset,
+                                                               _TopBarCloseEase)
+                          .SetDelay(defaultSettings.CascadeDelay));
+
+      closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TabButtonContainer,
+                                                               _TabButtonAnimationXOriginOffset,
+                                                               0)
+                          .SetDelay(defaultSettings.CascadeDelay));
     }
   }
 }

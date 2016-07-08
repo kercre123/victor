@@ -31,6 +31,9 @@ namespace Cozmo {
       [SerializeField]
       private Sprite _TintMeBGGradient;
 
+      [SerializeField]
+      private float _BackgroundColorTransition_sec;
+
       private Tween _TransitionTween;
       private Color _TargetTintColor;
 
@@ -55,7 +58,7 @@ namespace Cozmo {
         _ToBackgroundImage.color = transparentTint;
 
         _TargetTintColor = tintColor;
-        _TransitionTween = _ToBackgroundImage.DOFade(1, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
+        _TransitionTween = _ToBackgroundImage.DOFade(1, _BackgroundColorTransition_sec)
                                              .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing)
                                              .OnComplete(() => _FromBackgroundImage.gameObject.SetActive(false));
         _TransitionTween.Play();

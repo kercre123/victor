@@ -120,15 +120,15 @@ namespace Cozmo.HomeHub {
     private void LoadStartView(bool assetBundleSuccess) {
       _StartViewPrefabData.LoadAssetData((GameObject startViewPrefab) => {
         _StartViewInstance = UIManager.OpenView(startViewPrefab.GetComponent<StartView>());
-        _StartViewInstance.OnConnectClicked += HandleConnectClicked;
+        _StartViewInstance.OnConnectClicked += HandleStartClicked;
       });
     }
 
-    private void HandleConnectClicked() {
-      _StartViewInstance.OnConnectClicked -= HandleConnectClicked;
+    private void HandleStartClicked() {
+      _StartViewInstance.OnConnectClicked -= HandleStartClicked;
       _StartViewInstance.CloseView();
       _StartViewInstance.ViewCloseAnimationFinished += HandleStartViewClosed;
-      ShowHomeView();
+      StartLoadHomeView();
     }
 
     private void HandleStartViewClosed() {
@@ -137,7 +137,7 @@ namespace Cozmo.HomeHub {
       UnloadStartViewAssetBundle();
     }
 
-    private void ShowHomeView() {
+    private void StartLoadHomeView() {
       LoadHomeViewAssetBundle(LoadHomeView);
     }
 
@@ -151,12 +151,12 @@ namespace Cozmo.HomeHub {
 
     private void LoadHomeView(bool assetBundleSuccess) {
       _HomeViewPrefabData.LoadAssetData((GameObject homeViewPrefab) => {
-        StartCoroutine(ShowHomeViewAfterStartViewClosed(homeViewPrefab));
+        StartCoroutine(ShowHomeViewAfterOtherViewClosed(homeViewPrefab));
       });
     }
 
-    private IEnumerator ShowHomeViewAfterStartViewClosed(GameObject homeViewPrefab) {
-      while (_StartViewInstance != null) {
+    private IEnumerator ShowHomeViewAfterOtherViewClosed(GameObject homeViewPrefab) {
+      while (_StartViewInstance != null || _MiniGameInstance != null) {
         yield return 0;
       }
 
@@ -194,7 +194,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleSessionEndClicked() {
       RobotEngineManager.Instance.CurrentRobot.ResetRobotState(() => {
-        CloseTimelineDialog();
+        CloseHomeView();
         ObservedObject charger = RobotEngineManager.Instance.CurrentRobot.GetCharger();
         if (charger != null) {
           RobotEngineManager.Instance.CurrentRobot.MountCharger(charger, HandleChargerMounted);
@@ -256,7 +256,7 @@ namespace Cozmo.HomeHub {
       }
 
       // Close dialog
-      CloseTimelineDialog();
+      CloseHomeView();
 
       LoadMinigameAssetBundle((bool prefabsSuccess) => {
         if (prefabsSuccess) {
@@ -283,15 +283,29 @@ namespace Cozmo.HomeHub {
 
     private void LoadMinigame(ChallengeData challengeData) {
       challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
-        GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
-        _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-        _MiniGameInstance.InitializeMinigame(challengeData);
-        _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
-        _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
-        _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
-        _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-        RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
+        StartCoroutine(ShowMinigameAfterHomeViewCloses(challengeData, prefabData));
       });
+    }
+
+    private IEnumerator ShowMinigameAfterHomeViewCloses(ChallengeData challengeData, ChallengePrefabData prefabData) {
+      while (_HomeViewInstance != null || _ChallengeDetailsDialogInstance != null) {
+        yield return 0;
+      }
+
+      GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
+      _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+      _MiniGameInstance.InitializeMinigame(challengeData);
+      _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+      _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
+      _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
+      _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+      _MiniGameInstance.OnSharedMinigameViewInitialized += HandleSharedMinigameViewInitialized;
+      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
+    }
+
+    private void HandleSharedMinigameViewInitialized(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
+      newView.ViewClosed += HandleMinigameStartedClosing;
     }
 
     private void HandleEndGameDialog() {
@@ -317,14 +331,22 @@ namespace Cozmo.HomeHub {
         CompleteChallenge(_CurrentChallengePlaying, didWin);
         _CurrentChallengePlaying = null;
       }
-      ShowHomeView();
-      UnloadMinigameAssetBundle();
     }
 
     private void HandleMiniGameQuit() {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
-      ShowHomeView();
+    }
+
+    private void HandleMinigameStartedClosing() {
+      _MiniGameInstance.SharedMinigameView.ViewClosed -= HandleMinigameStartedClosing;
+      _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished += HandleMinigameFinishedClosing;
+      StartLoadHomeView();
+    }
+
+    private void HandleMinigameFinishedClosing() {
+      _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
+      _MiniGameInstance = null;
       UnloadMinigameAssetBundle();
     }
 
@@ -356,19 +378,31 @@ namespace Cozmo.HomeHub {
         _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
         _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
         _MiniGameInstance.OnShowEndGameDialog -= HandleEndGameDialog;
+        _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
+        if (MiniGameInstance.SharedMinigameView != null) {
+          _MiniGameInstance.SharedMinigameView.ViewClosed -= HandleMinigameStartedClosing;
+          _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
+        }
       }
     }
 
-    private void CloseTimelineDialog() {
+    private void CloseHomeView() {
       if (_ChallengeDetailsDialogInstance != null) {
         _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
-        _ChallengeDetailsDialogInstance.CloseViewImmediately();
+        _ChallengeDetailsDialogInstance.ViewCloseAnimationFinished += HandleCloseDetailsDialogAnimationFinished;
+        _ChallengeDetailsDialogInstance.CloseView();
       }
+
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
         _HomeViewInstance.ViewCloseAnimationFinished += UnloadHomeViewAssetBundle;
         _HomeViewInstance.CloseView();
       }
+    }
+
+    private void HandleCloseDetailsDialogAnimationFinished() {
+      _ChallengeDetailsDialogInstance.ViewCloseAnimationFinished -= HandleCloseDetailsDialogAnimationFinished;
+      _ChallengeDetailsDialogInstance = null;
     }
 
     private void DeregisterDialogEvents() {
@@ -398,7 +432,7 @@ namespace Cozmo.HomeHub {
         // Force refresh of the dialog
         DeregisterDialogEvents();
         _HomeViewInstance.CloseViewImmediately();
-        ShowHomeView();
+        StartLoadHomeView();
       }
     }
 

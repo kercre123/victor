@@ -33,6 +33,9 @@ public abstract class GameBase : MonoBehaviour {
 
   public event EndGameDialogHandler OnShowEndGameDialog;
 
+  public delegate void SharedMinigameViewHandler(SharedMinigameView newView);
+  public event SharedMinigameViewHandler OnSharedMinigameViewInitialized;
+
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private SharedMinigameView _SharedMinigameViewInstance;
@@ -145,6 +148,10 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
         newView.Initialize(_ChallengeData);
         SetupView(newView, _ChallengeData);
+
+        if (OnSharedMinigameViewInitialized != null) {
+          OnSharedMinigameViewInitialized(newView);
+        }
       });
 
       PrepRobotForGame();
