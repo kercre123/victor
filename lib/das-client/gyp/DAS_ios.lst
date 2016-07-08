@@ -1,11 +1,10 @@
-../ios/DASClientInfo.h
-../ios/DASClientInfo.m
 ../ios/DASFileSearch.h
 ../ios/DASFileSearch.m
 ../ios/dasLocalAppender.cpp
 ../ios/dasLogMacros.h
 ../ios/dasNSLog.h
 ../ios/dasNSLog.mm
+../ios/dasPlatform_ios.mm
 ../ios/dasPostToServer.mm
 ../ios/NSData+Base64.h
 ../ios/NSData+Base64.m

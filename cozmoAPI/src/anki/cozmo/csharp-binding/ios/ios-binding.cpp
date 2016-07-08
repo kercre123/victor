@@ -21,9 +21,9 @@ using namespace Anki::Cozmo::iOSBinding;
 
 WifiConfigure* wifiConfigure = nullptr;
 
-int Anki::Cozmo::iOSBinding::cozmo_startup(Anki::Util::Data::DataPlatform* dataPlatform)
+int Anki::Cozmo::iOSBinding::cozmo_startup(Anki::Util::Data::DataPlatform* dataPlatform, const std::string& apprun)
 {
-  ConfigureDASForPlatform(dataPlatform);
+  ConfigureDASForPlatform(dataPlatform, apprun);
   CreateHockeyApp();
   
   wifiConfigure = new WifiConfigure();

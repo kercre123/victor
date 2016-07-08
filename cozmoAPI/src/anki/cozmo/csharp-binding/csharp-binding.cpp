@@ -44,12 +44,8 @@
 
 #ifdef USE_IOS
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
-#endif
-
-#if defined(USE_IOS) || defined(ANDROID)
-#define USE_DAS 1
-#else
-#define USE_DAS 0
+#elif ANDROID
+#include <DAS/dasPlatform_android.h>
 #endif
 
 using namespace Anki;
@@ -158,6 +154,7 @@ int cozmo_startup(const char *configuration_data)
   std::string externalPath = config["DataPlatformExternalPath"].asCString();
   std::string resourcesPath = config["DataPlatformResourcesPath"].asCString();
   std::string resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
+  std::string appRunId = config["appRunId"].asCString();
 
   dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
 
@@ -210,9 +207,14 @@ int cozmo_startup(const char *configuration_data)
   PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s", filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
 
 #ifdef USE_IOS
-    result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform);
+    // init DAS among other things
+    result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
+#elif ANDROID
+    std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId)};
+    dasPlatform->InitForUnityPlayer();
+    DASNativeInit(std::move(dasPlatform), "cozmo");
 #endif
-    
+
   configure_engine(config);
 
   Cozmo::CozmoAPI* created_engine = new Cozmo::CozmoAPI();

@@ -29,6 +29,8 @@ public static class CozmoBinding {
 
   private static bool initialized = false;
 
+  public static Guid AppRunId = Guid.Empty;
+
   #if UNITY_IOS || UNITY_STANDALONE
 
   [DllImport("__Internal")]
@@ -71,16 +73,19 @@ public static class CozmoBinding {
 
   #endif
 
-  public static void Startup(string configurationData) {
+  public static void Startup(JSONObject configurationData) {
     if (initialized) {
       sDAS.Warn("Reinitializing because Startup was called twice...");
       Shutdown();
     }
 
+    AppRunId = Guid.NewGuid();
+    configurationData.AddField("appRunId", AppRunId.ToString());
+
     AnkiResult result = AnkiResult.RESULT_OK;
     #if !UNITY_EDITOR && !UNITY_STANDALONE
     Profiler.BeginSample ("CozmoBinding.cozmo_startup");
-    result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData);
+    result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData.ToString());
     Profiler.EndSample ();
     #endif
     

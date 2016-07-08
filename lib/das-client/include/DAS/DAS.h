@@ -11,6 +11,11 @@
 
 #ifdef __cplusplus
 #include <vector>
+#include <memory>
+
+namespace DAS {
+class IDASPlatform;
+}
 #endif
 
 #pragma mark DASLogLevel
@@ -171,6 +176,11 @@ void DASClose() __attribute__((visibility("default")));
 void DASEnableNetwork(DASDisableNetworkReason reason) __attribute__((visibility("default")));
 void DASDisableNetwork(DASDisableNetworkReason reason) __attribute__((visibility("default")));
 void DASForceFlushNow() __attribute__((visibility("default")));
+
+#ifdef __cplusplus
+void DASNativeInit(std::unique_ptr<const DAS::IDASPlatform> platform, const char* product) __attribute__((visibility("default")));
+const DAS::IDASPlatform* DASGetPlatform() __attribute__((visibility("default")));
+#endif
   
 #ifdef __cplusplus
 } // extern "C"

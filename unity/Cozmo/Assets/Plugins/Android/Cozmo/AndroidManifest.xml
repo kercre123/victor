@@ -8,6 +8,7 @@
 		  
 	<!-- This is needed to access the WiFi manager and get the IP address -->
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <application>
         <meta-data android:name="dasVersionName" android:value="1.0" />
     </application>  

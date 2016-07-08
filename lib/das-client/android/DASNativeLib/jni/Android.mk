@@ -25,6 +25,7 @@ DAS_SRC_FILES := \
 	../../../src/dasGameLogAppender.cpp \
 	dasLocalAppender.cpp \
 	dasJni.cpp \
+	dasPlatform_android.cpp \
 	../../../src/stringUtils.cpp \
 	../../../src/fileUtils.cpp \
 	../../../src/taskExecutor.cpp \

@@ -11,8 +11,6 @@ namespace Cozmo {
     DeviceModel,
     AppRunID,
     LastAppRunID,
-    GameID,
-    UserID,
     BuildVersion,
 
     Count

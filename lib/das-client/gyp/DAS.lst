@@ -10,6 +10,7 @@
 ../src/dasPostToServer.h
 ../src/dasFilter.h
 ../src/dasFilter.cpp
+../src/dasInit.cpp
 ../src/DASPrivate.h
 ../src/fileUtils.cpp
 ../src/fileUtils.h

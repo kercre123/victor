@@ -1,18 +1,15 @@
-#import <Foundation/Foundation.h>
 #import "dasConfiguration.h"
 #import <DAS/DAS.h>
-#import <DASClientInfo.h>
-#include <string>
+#import <DAS/dasPlatform_ios.h>
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
-void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform * platform)
+void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform * platform, const std::string& apprun)
 {
-  @autoreleasepool {
 #if TARGET_IPHONE_SIMULATOR
-    DASDisableNetwork(DASDisableNetworkReason_Simulator);
+  DASDisableNetwork(DASDisableNetworkReason_Simulator);
 #endif
-    
-    NSString *dasVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.das.version"];
-    [[DASClientInfo sharedInfo] eventsMainStart:"build" appVersion:dasVersion.UTF8String product:"cozmo"];
-  }
+
+  std::unique_ptr<DAS::DASPlatform_IOS> dasPlatform{new DAS::DASPlatform_IOS(apprun)};
+  dasPlatform->Init();
+  DASNativeInit(std::move(dasPlatform), "cozmo");
 }

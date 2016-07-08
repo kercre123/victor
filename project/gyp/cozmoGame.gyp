@@ -325,6 +325,15 @@
         {
           'defines': [
             'ANKI_IOS_BUILD=1',
+            'USE_DAS=1',
+          ],
+        },
+      ],
+      [
+        "OS=='android'",
+        {
+          'defines': [
+            'USE_DAS=1',
           ],
         },
       ],

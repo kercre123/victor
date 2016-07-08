@@ -9,6 +9,8 @@
 #ifndef __ios_binding__
 #define __ios_binding__
 
+#include <string>
+
 namespace Anki {
     
 namespace Util {
@@ -20,8 +22,8 @@ namespace Data {
 namespace Cozmo {
 namespace iOSBinding {
 
-// iOS specific initialization 
-int cozmo_startup(Anki::Util::Data::DataPlatform* dataPlatform);
+// iOS specific initialization
+int cozmo_startup(Anki::Util::Data::DataPlatform* dataPlatform, const std::string& apprun);
 
 // iOS specific finalization
 int cozmo_shutdown();

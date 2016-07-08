@@ -104,9 +104,10 @@ public class RobotEngineManager : MonoBehaviour {
       DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
     }
     else {
-      string configuration = AddDataPlatformPathsToConfiguration(config.text);
+      JSONObject configJson = JSONObject.Create(config.text);
+      AddDataPlatformPathsToConfiguration(configJson);
 
-      CozmoBinding.Startup(configuration);
+      CozmoBinding.Startup(configJson);
       _CozmoBindingStarted = true;
     }
 
@@ -393,17 +394,12 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  private string AddDataPlatformPathsToConfiguration(string configuration) {
-    StringBuilder sb = new StringBuilder(configuration);
-    sb.Remove(configuration.IndexOf('}') - 1, 3);
-    sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-    ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-    ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-    ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
-    ", \n  \"DataPlatformResourcesBasePath\" : \"" + PlatformUtil.GetResourcesBaseFolder() + "\"" +
-    "\n}");
-
-    return sb.ToString();
+  private void AddDataPlatformPathsToConfiguration(JSONObject json) {
+    json.AddField("DataPlatformFilesPath", Application.persistentDataPath);
+    json.AddField("DataPlatformCachePath", Application.temporaryCachePath);
+    json.AddField("DataPlatformExternalPath", Application.temporaryCachePath);
+    json.AddField("DataPlatformResourcesPath", PlatformUtil.GetResourcesFolder());
+    json.AddField("DataPlatformResourcesBasePath", PlatformUtil.GetResourcesBaseFolder());
   }
 
   #region Mocks

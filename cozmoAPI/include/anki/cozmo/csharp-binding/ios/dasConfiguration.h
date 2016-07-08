@@ -13,6 +13,8 @@
 #ifndef __Ios_DasConfiguration_H__
 #define __Ios_DasConfiguration_H__
 
+#include <string>
+
 // Forward declaration:
 namespace Anki {
 namespace Util {
@@ -22,6 +24,6 @@ namespace Data {
 } // end namespace Cozmo
 } // end namespace Anki
 
-void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform* platform);
+void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform* platform, const std::string& apprun);
 
 #endif // __Ios_DasConfiguration_H__

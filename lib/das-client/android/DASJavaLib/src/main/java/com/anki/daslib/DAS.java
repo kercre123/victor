@@ -12,6 +12,18 @@
 
 package com.anki.daslib;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.BatteryManager;
+import android.os.Build;
+import android.os.Environment;
+import android.os.StatFs;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
 
@@ -21,8 +33,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.net.HttpURLConnection;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -143,6 +156,183 @@ public class DAS {
 
         return result.toString();
     }
+
+    ////////////////////////////////////////////////////////////
+    // device info accessors, copied from OverDriveActivity.java
+    ////////////////////////////////////////////////////////////
+
+    public static String getCombinedSystemVersion() {
+        String s = String.format("%s-%s-%s-%s",
+                getSystemName(),
+                getModel(),
+                getAndroidOsVersion(),
+                getOsBuildVersion());
+        return s;
+    }
+
+    private static String getSystemName() {
+        return "Android OS";
+    }
+
+    private static String capitalize(final String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        final char first = s.charAt(0);
+        if (Character.isUpperCase(first)) {
+            return s;
+        } else {
+            return Character.toUpperCase(first) + s.substring(1);
+        }
+    }
+
+    public static String getModel() {
+        final String manufacturer = Build.MANUFACTURER;
+        final String model = Build.MODEL;
+        if (model.startsWith(manufacturer)) {
+            return capitalize(model);
+        } else {
+            return capitalize(manufacturer) + " " + model;
+        }
+    }
+
+    private static boolean IsOnKindle() {
+        return getModel().toLowerCase().contains("amazon");
+    }
+
+    private static String getAndroidOsVersion() {
+        return Build.VERSION.RELEASE;
+    }
+
+    private static String getOsBuildVersion() {
+        return Build.VERSION.INCREMENTAL;
+    }
+
+    public static String getOsVersion() {
+        String s = String.format("%s-%s-%s",
+                getSystemName(),
+                getAndroidOsVersion(),
+                getOsBuildVersion());
+        return s;
+    }
+
+    public static String getDeviceID(Context context) {
+        final TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+
+        final String tmDevice, tmSerial, androidId;
+        tmDevice = "" + tm.getDeviceId();
+        tmSerial = "" + tm.getSimSerialNumber();
+        androidId = "" + android.provider.Settings.Secure.getString(context.getContentResolver(),
+                android.provider.Settings.Secure.ANDROID_ID);
+
+        UUID deviceUuid = new UUID(androidId.hashCode(), ((long) tmDevice.hashCode() << 32) | tmSerial.hashCode());
+        String deviceId = deviceUuid.toString();
+
+        return deviceId;
+    }
+
+    public static String getFreeDiskSpace() {
+        StatFs statFs = new StatFs(Environment.getRootDirectory().getAbsolutePath());
+        long free = statFs.getFreeBytes();
+        String freeDiskSpace = String.valueOf(free);
+        return freeDiskSpace;
+    }
+
+    public static String getTotalDiskSpace() {
+        StatFs statFs = new StatFs(Environment.getRootDirectory().getAbsolutePath());
+        long total = statFs.getTotalBytes();
+        String totalDiskSpace = String.valueOf(total);
+        return totalDiskSpace;
+    }
+
+    public static String getBatteryLevel(Context context) {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = context.registerReceiver(null, ifilter);
+
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        double batteryLevel = level / (double) scale; // should produce values from 0.0 to 1.0
+
+        return String.valueOf(batteryLevel);
+    }
+
+    public static String getBatteryState(Context context) {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = context.registerReceiver(null, ifilter);
+
+        // Return our status as a string
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+
+        String statusString = "unknown";
+
+        switch (status) {
+            case BatteryManager.BATTERY_STATUS_NOT_CHARGING:
+                statusString = "not charging";
+                break;
+            case BatteryManager.BATTERY_STATUS_DISCHARGING:
+                statusString = "discharging";
+                break;
+            case BatteryManager.BATTERY_STATUS_CHARGING:
+                statusString = "charging";
+                break;
+            case BatteryManager.BATTERY_STATUS_FULL:
+                statusString = "charged";
+                break;
+            case BatteryManager.BATTERY_STATUS_UNKNOWN:
+            default:
+                statusString = "unknown";
+                break;
+        }
+        return statusString;
+    }
+
+    public static String getPlatform() {
+        return IsOnKindle() ? "kindle" : "android";
+    }
+
+    public static String getDasVersion(Context context) {
+        try {
+            ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo(
+                context.getPackageName(), PackageManager.GET_META_DATA);
+            if (appInfo != null && appInfo.metaData != null) {
+                String dVersion = appInfo.metaData.getString("dasVersionName");
+                if (dVersion != null) {
+                    return dVersion;
+                }
+            }
+        }
+        catch (Exception e) {}
+        try {
+            PackageInfo pkgInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return pkgInfo.versionName;
+        }
+        catch (Exception e) {}
+        return "";
+    }
+
+    private static boolean isUsingART() {
+        boolean usingART = false;
+
+        String vmVersion = System.getProperty("java.vm.version");
+        String[] versionVals = vmVersion.split("\\.");
+        if (versionVals.length > 0) {
+            int majorVersion = Integer.valueOf(versionVals[0]);
+            if (majorVersion >= 2) {
+                usingART = true;
+            }
+        }
+        return usingART;
+    }
+
+    public static String[] getMiscInfo() {
+        ArrayList<String> list = new ArrayList<String>();
+        list.add("device.art_in_use");
+        list.add(Boolean.toString(isUsingART()));
+        return list.toArray(new String[0]);
+    }
+
+
 
     public static native void nativeLog(int dasLogLevel, String eventName, String eventValue);
 

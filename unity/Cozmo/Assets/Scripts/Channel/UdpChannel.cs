@@ -842,7 +842,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     }
 
     IPAddress ipAddress = new IPAddress(BitConverter.GetBytes(intIPAddress));
-    Debug.Log("WiFi IP address: " + ipAddress.ToString());
+    DAS.Info("UdpChannel.GetLocalIPv4", "WiFi IP address: " + ipAddress.ToString());
  
     return ipAddress;
 #endif

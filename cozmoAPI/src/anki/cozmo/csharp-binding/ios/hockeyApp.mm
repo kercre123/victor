@@ -9,7 +9,7 @@
 #import "hockeyApp.h"
 
 #import <DAS/DAS.h>
-#import <DASClientInfo.h>
+#import <DAS/DASPlatform.h>
 #import <HockeySDK/HockeySDK.h>
 
 #include <string>
@@ -132,35 +132,26 @@ BOOL gWaitingForCrashUpload = NO;
 }
 
 - (NSString *)lastCrashDescriptionJSON {
-  NSMutableDictionary *metadata = [NSMutableDictionary dictionaryWithDictionary:@{ @"device": [DASClientInfo deviceID] }];
-  // Check for cached DAS data in NSUserDefaults
-  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-  
-  NSString *lastAppRunID = [[DASClientInfo sharedInfo] lastAppRunID];
-  if (!lastAppRunID) {
-    // TODO (OD-2012): We need to eliminate or refactor DASClientInfo.  Here, we are directly
-    // pulling the lastAppRunID from NSUserDefaults because DASClientInfo's eventsMainStart hasn't
-    // been called yet.  This "fix" should be temporary.
-    lastAppRunID = [defaults stringForKey:DASAppRunKey];
+  const DAS::IDASPlatform* dasPlatform = DASGetPlatform();
+  if (dasPlatform == nullptr) {
+    assert(false);
+    return @"";
   }
-  if ( [lastAppRunID isKindOfClass:[NSString class]] ) {
-    metadata[@"apprun"] = lastAppRunID;
-  }
-  
-  NSString *gameID = [defaults stringForKey:DASGameIDKey];
-  if ( [gameID isKindOfClass:[NSString class]] ) {
-    metadata[@"game"] = gameID;
-  }
-  
-  NSString *userID = [defaults stringForKey:DASUserIDKey];
-  if ( [userID isKindOfClass:[NSString class]] ) {
-    metadata[@"name"] = userID;
+  NSString *deviceId = [NSString stringWithUTF8String:dasPlatform->GetDeviceId()];
+  NSMutableDictionary *metadata = [NSMutableDictionary dictionaryWithDictionary:@{ @"device": deviceId }];
+
+  const auto& miscInfoMap = dasPlatform->GetMiscInfo();
+  const auto lastAppRunIt = miscInfoMap.find("lastAppRunId");
+  if (lastAppRunIt != miscInfoMap.end()) {
+    NSString *appRunString = [NSString stringWithUTF8String:lastAppRunIt->second.c_str()];
+    metadata[@"apprun"] = appRunString;
   }
   
   NSError *error = nil;
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:metadata options:NSJSONWritingPrettyPrinted error:&error];
-  if ( !jsonData || error )
+  if ( !jsonData || error ) {
     return @"";
+  }
   
   NSString *jsonMetadata = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
   return jsonMetadata;

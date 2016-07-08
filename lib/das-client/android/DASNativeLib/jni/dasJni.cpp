@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include "DAS.h"
 #include "DASPrivate.h"
+#include "dasPlatform_android.h"
 
 #include <string>
 #ifdef __cplusplus
@@ -192,6 +193,7 @@ JNIEnv* getJniEnv()
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
   sJvm = vm;
+  DAS::DASPlatform_Android::SetJVM(vm);
 
   JNIEnv* env = getJniEnv();
   jclass localClass = env->FindClass("com/anki/daslib/DAS");
