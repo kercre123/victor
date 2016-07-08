@@ -79,7 +79,6 @@ struct NVStorageState {
 
 static NVStorageState nv;
 
-
 static s32 getStartOfSegment(void)
 {
   if (nv.segment & NV_SEGMENT_X) return FIXTURE_STORAGE_SECTOR * SECTOR_SIZE;
@@ -1139,6 +1138,26 @@ NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool for
         return NV_OKAY;
       }
     }
+  }
+}
+
+bool IsFactoryNVClear()
+{
+  #define NUM_HEADER_WORDS (sizeof(NVEntryHeader)/sizeof(uint32_t))
+  uint32_t buff[NUM_HEADER_WORDS];
+  const SpiFlashOpResult rslt = spi_flash_read(FACTORY_NV_STORAGE_SECTOR*SECTOR_SIZE, buff, sizeof(NVEntryHeader));
+  if (rslt != SPI_FLASH_RESULT_OK)
+  {
+    AnkiError( 195, "NVStorage.IsFactoryNVClear.ReadFailure", 504, "Error reading from 0x%x: %d", 2, FACTORY_NV_STORAGE_SECTOR*SECTOR_SIZE, rslt);
+    return false;
+  }
+  else
+  {
+    for (unsigned int w=0; w<NUM_HEADER_WORDS; ++w)
+    {
+      if (buff[w] != 0xFFFFffff) return false;
+    }
+    return true;
   }
 }
 

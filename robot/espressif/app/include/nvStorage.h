@@ -116,6 +116,10 @@ namespace Anki {
        */
       NVResult WipeAll(const bool includeFactory, EraseDoneCB callback=0, const bool fork=true, const bool reboot=false);
       
+      /** Returns true if the factory NVStorage region is clear, with no entries, even erased ones.
+       */
+      bool IsFactoryNVClear();
+      
        extern "C" {
          /** Run garbage collection
           * @warning This method must only be called when it is safe to do flash erase operations.

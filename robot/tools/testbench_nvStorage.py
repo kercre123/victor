@@ -282,6 +282,9 @@ And the mome raths outgrabe.""".encode()
         dts = time.gmtime()
         payload = struct.Struct("BBBBBBBBBB").pack(0, 0, 0, 1, dts.tm_year & 0xff, dts.tm_mon, dts.tm_mday, dts.tm_hour, dts.tm_min, dts.tm_sec)
         self.write(NVS.NVEntryTag.NVEntry_BirthCertificate, payload)
+    
+    def test_eraseBirthCertificate(self):
+        self.erase(NVS.NVEntryTag.NVEntry_BirthCertificate)
         
     def test_readIMUCal(self):
         self.read(0xC0000004)

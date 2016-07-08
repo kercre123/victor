@@ -240,6 +240,14 @@ void Update()
         break;
       }
       case RobotInterface::FTM_PlayPenTest:
+      {
+        if ((hasBirthCertificate() == false) && (NVStorage::IsFactoryNVClear() == false))
+        {
+          Face::FacePrintf("\n\n\nClearing flash");
+          break;
+        }
+        /// Explicit fall through
+      }
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
@@ -781,21 +789,32 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     }
     case RobotInterface::FTM_PlayPenTest:
     {
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-      msg.enableLiftPower.enable = true;
-      const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
-      os_printf("Enable lift power %d\r\n", success);
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
-      msg.enableTestStateMessage.enable = false;
-      Anki::Cozmo::RTIP::SendMessage(msg);
-      struct softap_config ap_config;
-      wifi_softap_get_config(&ap_config);
-      os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-      os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
-      ap_config.authmode = AUTH_OPEN;
-      ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-      ap_config.beacon_interval = 100;
-      wifi_softap_set_config_current(&ap_config);
+      if ((hasBirthCertificate() == false) && (NVStorage::IsFactoryNVClear() == false))
+      {
+        // Enable battery power for wipe all
+        msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+        msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+        Anki::Cozmo::RTIP::SendMessage(msg);
+        NVStorage::WipeAll(true, NULL, true, true);
+      }
+      else
+      {
+        msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
+        msg.enableLiftPower.enable = true;
+        const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
+        os_printf("Enable lift power %d\r\n", success);
+        msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
+        msg.enableTestStateMessage.enable = false;
+        Anki::Cozmo::RTIP::SendMessage(msg);
+        struct softap_config ap_config;
+        wifi_softap_get_config(&ap_config);
+        os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
+        os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
+        ap_config.authmode = AUTH_OPEN;
+        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+        ap_config.beacon_interval = 100;
+        wifi_softap_set_config_current(&ap_config);
+      }
       break;
     }
     case RobotInterface::FTM_IMUCalibration:
