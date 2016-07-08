@@ -108,6 +108,13 @@ namespace Cozmo {
     Result            _lastHandlerResult;
     PathMotionProfile _motionProfile;
     s32               _stationID;
+    
+    FactoryTestResultCode _prevResult;
+    bool                  _prevResultReceived;    
+    bool                  _hasBirthCertificate;
+    
+    bool                  _writeTestResult;
+    bool                  _eraseBirthCertificate;
  
     // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;
@@ -116,8 +123,6 @@ namespace Cozmo {
     // ID of block to pickup
     ObjectID _blockObjectID;
     ObjectID _cliffObjectID;
-    ObjectID _chargerObjectID;
-    
     
     u32      _camCalibPoseIndex = 0;
     f32      _watchdogTriggerTime = -1.0;

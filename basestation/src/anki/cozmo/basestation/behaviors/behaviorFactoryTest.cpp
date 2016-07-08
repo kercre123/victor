@@ -71,13 +71,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool,  kBFT_SaveLogsOnDevice,       "BehaviorFactoryTest",  true);
 
   // Write to NVStorage when test complete (versus throughout the test)
-  // This is only honored if kBFT_WriteToNVStorageOnPassOnly is false.
-  // If kBFT_WriteToNVStorageOnPassOnly == true, this var is effectively true as well.
   CONSOLE_VAR(bool,  kBFT_WriteToNVStorageAtEnd, "BehaviorFactoryTest",  true);
-  
-  // Do NVStorage writes at end of test only if it passes.
-  // Overrides kBFT_WriteToNVStorageAtEnd (i.e. treats it as if it were true).
-  CONSOLE_VAR(bool,  kBFT_WriteToNVStorageOnPassOnly, "BehaviorFactoryTest",  true);
 
   // Read the centroid locations stored on the robot from the prePlaypen test and calculate camera pose
   CONSOLE_VAR(bool,  kBFT_ReadCentroidsFromRobot, "BehaviorFactoryTest",  false);
@@ -106,6 +100,7 @@ namespace Cozmo {
     {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
   };
 
+  static constexpr f32 _kWaitForPrevTestResultsTimeout_sec = 2;
   static constexpr f32 _kMotorCalibrationTimeout_sec = 4.f;
   static constexpr f32 _kCalibrationTimeout_sec = 8.f;
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
@@ -133,9 +128,14 @@ namespace Cozmo {
   
   BehaviorFactoryTest::BehaviorFactoryTest(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _currentState(FactoryTestState::InitRobot)
+  , _currentState(FactoryTestState::GetPrevTestResults)
   , _lastHandlerResult(RESULT_OK)
   , _stationID(-1)
+  , _prevResult(FactoryTestResultCode::UNKNOWN)
+  , _prevResultReceived(false)
+  , _hasBirthCertificate(false)
+  , _writeTestResult(true)
+  , _eraseBirthCertificate(false)
   , _testResult(FactoryTestResultCode::UNKNOWN)
   {
     SetDefaultName("FactoryTest");
@@ -271,8 +271,8 @@ namespace Cozmo {
     // Set head device lock so that video will stream down
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadDeviceLock(true)));
     
-    _stateTransitionTimestamps.resize(16);
-    SetCurrState(FactoryTestState::InitRobot);
+    _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
+    SetCurrState(FactoryTestState::GetPrevTestResults);
 
     return lastResult;
   } // Init()
@@ -358,7 +358,7 @@ namespace Cozmo {
         if (res != NVStorage::NVResult::NV_OKAY) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToRobot.Failed", "Tag: %s", EnumToString(tag));
           
-          if (kBFT_WriteToNVStorageAtEnd || kBFT_WriteToNVStorageOnPassOnly) {
+          if (kBFT_WriteToNVStorageAtEnd) {
             _writeFailureCode = resCode;
           } else {
             EndTest(robot, resCode);
@@ -369,7 +369,7 @@ namespace Cozmo {
         }
       };
 
-      if (kBFT_WriteToNVStorageAtEnd || kBFT_WriteToNVStorageOnPassOnly) {
+      if (kBFT_WriteToNVStorageAtEnd) {
         _queuedWrites.emplace_back(tag, data, size, callback);
       } else {
         robot.GetNVStorageComponent().Write(tag, data, size, callback);
@@ -404,10 +404,23 @@ namespace Cozmo {
       // Stop robot actions
       robot.GetActionList().Cancel();
       
+      
+      // If robot had previously passed, and it passed this time, we don't write anything to the robot
+      //
+      // Previously passed  | Currently passed | What to do
+      // ==========================================================
+      //         0          |         -        | Write everything (NVStorage should have been wiped)
+      //         1          |         0        | Overwrite test result and erase birth certificate
+      //         1          |         1        | Do nothing
+      bool previouslyPassed = _prevResult == FactoryTestResultCode::SUCCESS && _hasBirthCertificate;
+      bool currentlyPassed = _testResult == FactoryTestResultCode::SUCCESS;
+      _writeTestResult = !(previouslyPassed && currentlyPassed);
+      _eraseBirthCertificate = previouslyPassed && !currentlyPassed;
+      
+      
       // Sending all queued writes to robot
-      bool sendWrites = !kBFT_WriteToNVStorageOnPassOnly || (_testResult == FactoryTestResultCode::SUCCESS);
       _writeFailureCode = FactoryTestResultCode::UNKNOWN;
-      if (sendWrites && !SendQueuedWrites(robot)) {
+      if (!previouslyPassed && !SendQueuedWrites(robot)) {
         _testResult = FactoryTestResultCode::NVSTORAGE_SEND_FAILED;
       }
       
@@ -465,9 +478,45 @@ namespace Cozmo {
     
     switch(_currentState)
     {
+      // - - - - - - - - - - - - - - GET PREVIOUS TEST RESULS - - - - - - - - - - - - - - -
+      case FactoryTestState::GetPrevTestResults:
+      {
+        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_BirthCertificate,
+                                           [this,&robot](u8* data, size_t size, NVStorage::NVResult res){
+                                             _hasBirthCertificate = (res == NVStorage::NVResult::NV_OKAY);
+                                             PRINT_NAMED_INFO("BehaviorFactoryTest.Update.BirthCertificateReceived",
+                                                              "%d", _hasBirthCertificate);
+                                           });
+        
+        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
+                                           [this,&robot](u8* data, size_t size, NVStorage::NVResult res){
+                                             FactoryTestResultEntry entry;
+                                             if (res == NVStorage::NVResult::NV_OKAY &&
+                                                 NVStorageComponent::MakeWordAligned(entry.Size()) == size) {
+                                               entry.Unpack(data, size);
+                                               _prevResult = entry.result;
+                                             }
+                                             PRINT_NAMED_INFO("BehaviorFactoryTest.Update.PrevTestResultReceived",
+                                                              "%s (%s)", EnumToString(_prevResult), EnumToString(res));
+                                             _prevResultReceived = true;
+                                           });
+        
+        _holdUntilTime = currentTime_sec + _kWaitForPrevTestResultsTimeout_sec;
+        SetCurrState(FactoryTestState::InitRobot);
+        break;
+      }
+        
       // - - - - - - - - - - - - - - INIT ROBOT - - - - - - - - - - - - - - -
       case FactoryTestState::InitRobot:
       {
+        if (!_prevResultReceived) {
+          if (currentTime_sec > _holdUntilTime) {
+            END_TEST(FactoryTestResultCode::PREV_TEST_RESULTS_READ_FAILED);
+          }
+          break;
+        }
+        
+        
         // Too much stuff is changing now.
         // Maybe put this back later.
         /*
@@ -1150,47 +1199,6 @@ namespace Cozmo {
         EndTest(robot, FactoryTestResultCode::SUCCESS);
         break;
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        // Look at charger
-        StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)),
-                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                      if (result != ActionResult::SUCCESS) {
-                        EndTest(robot, FactoryTestResultCode::GOTO_PRE_MOUNT_CHARGER_POSE_ACTION_FAILED);
-                      } else {
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
-                      }
-                      return true;
-                    });
-        SetCurrState(FactoryTestState::DockToCharger);
-        break;
-      }
-        
-      // - - - - - - - - - - - - - - DOCK TO CHARGER - - - - - - - - - - - - - - -
-      case FactoryTestState::DockToCharger:
-      {
-        if (!_chargerObjectID.IsSet()) {
-          if (currentTime_sec > _holdUntilTime) {
-            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectedChargerToExist", "");
-            END_TEST(FactoryTestResultCode::CHARGER_NOT_FOUND);
-          }
-          break;
-        }
-        
-        auto chargerCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-          if (result == ActionResult::SUCCESS && robot.IsOnCharger()) {
-            EndTest(robot, FactoryTestResultCode::SUCCESS);
-          } else {
-            EndTest(robot, FactoryTestResultCode::CHARGER_DOCK_FAILED);
-          }
-          return true;
-        };
-        
-        DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(robot, _chargerObjectID);
-        //action->SetMotionProfile(_motionProfile);
-        StartActing(robot,
-                    action,
-                    chargerCallback);
-        break;
       }
         
       // - - - - - - - - - - - - - - WAITING FOR WRITES TO ROBOT - - - - - - - - - - - - - - -
@@ -1204,6 +1212,12 @@ namespace Cozmo {
         if (_writeFailureCode != FactoryTestResultCode::UNKNOWN) {
           _testResult = _writeFailureCode;
           _testResultEntry.result = _testResult;
+          
+          // If there was a write failure, go ahead and wipe all nvStorage
+          // and don't bother attempting to write anything more to robot.
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.WaitingForWritesToRobot.WipingAll", "");
+          robot.GetNVStorageComponent().WipeAll(true);
+          _writeTestResult = false;
         }
         
         
@@ -1211,8 +1225,7 @@ namespace Cozmo {
         _factoryTestLogger.Append(_testResultEntry);
         
         
-        bool sendWrites = !kBFT_WriteToNVStorageOnPassOnly || (_testResult == FactoryTestResultCode::SUCCESS);
-        if (sendWrites && kBFT_EnableNVStorageWrites) {
+        if (kBFT_EnableNVStorageWrites && _writeTestResult) {
           u8 buf[_testResultEntry.Size()];
           size_t numBytes = _testResultEntry.Pack(buf, sizeof(buf));
           
@@ -1255,6 +1268,12 @@ namespace Cozmo {
                                                                                         } else {
                                                                                           PRINT_NAMED_INFO("BehaviorFactoryTest.BCWriteSuccess","");
                                                                                         }
+                                                                                        SendTestResultToGame(robot, _testResult);
+                                                                                      });
+                                                } else if (_eraseBirthCertificate) {
+                                                  robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_BirthCertificate,
+                                                                                      [this,&robot](NVStorage::NVResult res){
+                                                                                        // We're only erasing the BC upon failure anyway so don't bother changing the result code
                                                                                         SendTestResultToGame(robot, _testResult);
                                                                                       });
                                                 } else {
@@ -1454,16 +1473,6 @@ namespace Cozmo {
           return RESULT_OK;
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-          END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
-        }
-        break;
-        
-      case ObjectType::Charger_Basic:
-        if (!_chargerObjectID.IsSet() || _chargerObjectID == objectID) {
-          _chargerObjectID = objectID;
-          return RESULT_OK;
-        } else {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedCharger", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
           END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
         }
         break;
