@@ -214,7 +214,7 @@ s32 CST_StackBlockBehavior::UpdateInternal()
 
     case TestState::PickingUp:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT( GetCarryingObjectID() >= 0, 10) {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT( GetCarryingObjectID() >= 0, 20) {
         // move the cube we aren't holding
         _cubeIdToMove = GetCarryingObjectID() == 0 ? 1 : 0;
 
