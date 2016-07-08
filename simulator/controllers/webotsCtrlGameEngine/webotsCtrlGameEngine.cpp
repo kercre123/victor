@@ -122,8 +122,22 @@ int main(int argc, char **argv)
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
+  
+  // allow filtering unless specified in command line
+  bool filterConsole = true;
+  if ( argc > 1 )
+  {
+    const std::string kNoFilterParam = "--noLogFilters";
+    for( int i=1; i<argc; ++i) {
+      if ( kNoFilterParam == argv[i] ) {
+        filterConsole = false;
+        break;
+      }
+    }
+  }
 
   // - console filter for logs
+  if ( filterConsole )
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
@@ -149,6 +163,10 @@ int main(int argc, char **argv)
     // also parse additional info for providers
     printfLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
     sosLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+  }
+  else
+  {
+    PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
   }
   
   // Start with a step so that we can attach to the process here for debugging

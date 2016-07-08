@@ -7,6 +7,7 @@ PROTO BlockWorldComms [
 Supervisor {
   name IS name
   controller "webotsCtrlGameEngine"
+  controllerArgs "--noLogFilters"
 
   # Referencing a field that is used in code but not in the proto model
   # to suppress a Webots error message.
