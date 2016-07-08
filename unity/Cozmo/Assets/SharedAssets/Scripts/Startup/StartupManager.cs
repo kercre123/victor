@@ -61,8 +61,6 @@ public class StartupManager : MonoBehaviour {
 
   private bool _IsDebugBuild = false;
 
-  private Coroutine _UpdateDotsCoroutine;
-
   // Use this for initialization
   private IEnumerator Start() {
 
@@ -79,7 +77,7 @@ public class StartupManager : MonoBehaviour {
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
     _CurrentNumDots = 0;
-    _UpdateDotsCoroutine = StartCoroutine(UpdateLoadingDots());
+    StartCoroutine(UpdateLoadingDots());
 
     // Extract resource files in platforms that need it
     yield return ExtractResourceFiles();
@@ -88,7 +86,9 @@ public class StartupManager : MonoBehaviour {
     if (!string.IsNullOrEmpty(_ExtractionErrorMessage)) {
       _LoadingBarLabel.color = Color.red;
       _LoadingBarLabel.text = _ExtractionErrorMessage;
-      StopCoroutine(_UpdateDotsCoroutine);
+
+      // Stop loading dots coroutine
+      StopAllCoroutines();
       yield break;
     }
 
@@ -128,8 +128,10 @@ public class StartupManager : MonoBehaviour {
 
     _LoadingBar.SetProgress(1.0f);
 
+    // Stop loading dots coroutine
+    StopAllCoroutines();
+
     // Load main scene
-    StopCoroutine(_UpdateDotsCoroutine);
     LoadMainScene(assetBundleManager);
 
     int startSeed = System.Environment.TickCount;

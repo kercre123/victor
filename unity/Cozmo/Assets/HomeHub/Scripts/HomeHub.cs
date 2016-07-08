@@ -305,7 +305,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleSharedMinigameViewInitialized(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
-      _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished += HandleMinigameFinishedClosing;
+      newView.ViewCloseAnimationFinished += HandleMinigameFinishedClosing;
     }
 
     private void HandleEndGameDialog() {
