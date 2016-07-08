@@ -257,7 +257,7 @@ namespace Cozmo {
     // update tick
     static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
     
-    Util::RandomGenerator _rng;
+    Util::RandomGenerator& _rng;
     
     // For live animation
     Animation      _liveAnimation;

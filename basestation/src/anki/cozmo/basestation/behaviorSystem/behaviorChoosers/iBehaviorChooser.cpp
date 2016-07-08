@@ -40,6 +40,11 @@ void IBehaviorChooser::HandleMessage(const ExternalInterface::RequestEnabledBeha
   
 }
 
+Util::RandomGenerator& IBehaviorChooser::GetRNG() const
+{
+  return _robot.GetRNG();
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

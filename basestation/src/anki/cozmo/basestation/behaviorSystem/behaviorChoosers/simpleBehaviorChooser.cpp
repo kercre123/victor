@@ -183,8 +183,6 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
 {
   const float kRandomFactor = 0.1f;
   
-  Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
-  
   VIZ_BEHAVIOR_SELECTION_ONLY( VizInterface::RobotBehaviorSelectData robotBehaviorSelectData );
 
   const IBehavior* runningBehavior = nullptr;
@@ -236,7 +234,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
       else
       {
         // randomization only for non-running behaviors
-        scoreData.totalScore += rng.RandDbl(kRandomFactor);
+        scoreData.totalScore += GetRNG().RandDbl(kRandomFactor);
 
         if( DEBUG_SHOW_ALL_SCORES ) {
           PRINT_NAMED_DEBUG("BehaviorChooser.Score.NotRunning",

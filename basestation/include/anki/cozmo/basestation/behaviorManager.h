@@ -215,9 +215,6 @@ private:
 
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
-  
-  // For random numbers
-  Util::RandomGenerator _rng;
     
   // For storing event handlers
   std::vector<Signal::SmartHandle> _eventHandlers;

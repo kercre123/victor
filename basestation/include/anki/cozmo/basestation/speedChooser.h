@@ -54,8 +54,6 @@ namespace Anki {
         const float maxAccel_mmps2 = 100.0f;
       
         const float distToObjectForMaxSpeed_mm = 300;
-      
-        Util::RandomGenerator rng;
         
         std::vector<Signal::SmartHandle> _signalHandles;
     };

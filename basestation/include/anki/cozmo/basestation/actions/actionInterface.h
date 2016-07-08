@@ -56,6 +56,7 @@ namespace Anki {
       ActionResult Update();
       
       Robot& GetRobot() { return _robot; }
+      const Robot& GetRobot() const { return _robot; }
       
       // Tags can be used to identify specific actions. A unique tag is assigned
       // at construction, or it can be overridden with SetTag(). The Tag is
@@ -250,11 +251,6 @@ namespace Anki {
       f32           _startTime_sec;
       
     }; // class IAction
-    
-    inline Util::RandomGenerator& IAction::GetRNG() const {
-      static Util::RandomGenerator sRNG;
-      return sRNG;
-    }
     
   } // namespace Cozmo
 } // namespace Anki

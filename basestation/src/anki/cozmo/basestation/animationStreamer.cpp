@@ -42,6 +42,7 @@ namespace Cozmo {
   , _context(context)
   , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
   , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
+  , _rng(*_context->GetRandom())
   , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
   , _audioClient( audioClient )
   , _lastProceduralFace(new ProceduralFace)

@@ -41,7 +41,7 @@ namespace Anki {
       }
       
       // Random acceleration
-      motionProfile.accel_mmps2 = rng.RandDblInRange(minAccel_mmps2, maxAccel_mmps2);
+      motionProfile.accel_mmps2 = _robot.GetRNG().RandDblInRange(minAccel_mmps2, maxAccel_mmps2);
       
       // Deceleration is opposite of acceleration
       motionProfile.decel_mmps2 = maxAccel_mmps2 - motionProfile.accel_mmps2 + minAccel_mmps2;

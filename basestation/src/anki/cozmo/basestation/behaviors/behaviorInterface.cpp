@@ -329,8 +329,7 @@ bool IBehavior::IsRunnable(const Robot& robot) const
 }
 
 Util::RandomGenerator& IBehavior::GetRNG() const {
-  static Util::RandomGenerator sRNG;
-  return sRNG;
+  return _robot.GetRNG();
 }
 
 void IBehavior::SetDefaultName(const char* inName)

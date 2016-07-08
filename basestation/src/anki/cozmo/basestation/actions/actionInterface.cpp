@@ -399,6 +399,11 @@ namespace Anki {
       ResetState();
     }
     
+    Util::RandomGenerator& IAction::GetRNG() const
+    {
+      return _robot.GetRNG();
+    }
+    
     ActionResult IAction::UpdateInternal()
     {
       ActionResult result = ActionResult::RUNNING;

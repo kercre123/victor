@@ -241,15 +241,13 @@ void BehaviorExploreCliff::GenerateVantagePoints(Robot& robot, const BorderScore
   ASSERT_NAMED(robot.GetPose().GetParent()->IsOrigin(), "BehaviorExploreCliff.PickGoals.RobotPoseParentIsOrigin");
   const Pose3d* origin = robot.GetPose().GetParent();
 
-  Util::RandomGenerator rng; // TODO: rsam replay-ability issue
-
   // TODO Shouldn't this be asked to the robot instance instead? Otherwise we only support 1 robot size
   const float robotWidth = ROBOT_BOUNDING_Y;
 
   outVantagePoints.clear();
   for ( const auto& goal : goals )
   {
-    const float randomFactor = rng.RandDblInRange(kEcDistanceMinWidthFactor, kEcDistanceMaxWidthFactor);
+    const float randomFactor = GetRNG().RandDblInRange(kEcDistanceMinWidthFactor, kEcDistanceMaxWidthFactor);
     const float distanceFromGoal = robotWidth * randomFactor;
     
     const Point3f vantagePointPos = goal.borderInfo.GetCenter() + (goal.borderInfo.normal * distanceFromGoal);

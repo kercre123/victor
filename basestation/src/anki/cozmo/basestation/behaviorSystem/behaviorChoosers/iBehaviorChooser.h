@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
+#include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <string>
@@ -82,6 +83,7 @@ public:
   
 protected:
   virtual std::vector<std::string> GetEnabledBehaviorList() = 0;
+  Util::RandomGenerator& GetRNG() const;
   
 private:
   Robot& _robot;

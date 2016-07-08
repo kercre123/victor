@@ -699,6 +699,9 @@ public:
   
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
+  
+  const Util::RandomGenerator& GetRNG() const { return *_context->GetRandom(); }
+  Util::RandomGenerator& GetRNG() { return *_context->GetRandom(); }
 
   // Handle various message types
   template<typename T>
