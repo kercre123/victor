@@ -191,24 +191,36 @@ namespace Anki {
 
       static void StartBackingOut()
       {
-        static const f32 MIN_BACKOUT_DIST = 15.f;
-
-        if (action_ == DA_PLACE_LOW_BLIND || action_ == DA_ROLL_LOW) {
-          lastMarkerDist_ = 30.f;
-        } else {
-          lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
-        }
-
-        f32 backoutDist_mm = MIN_BACKOUT_DIST;
-        if(lastMarkerDist_ > 0.f && lastMarkerDist_ <= BACKOUT_DISTANCE_MM) {
-          backoutDist_mm = MAX(MIN_BACKOUT_DIST, BACKOUT_DISTANCE_MM - lastMarkerDist_);
+        static const f32 MIN_BACKOUT_DIST_MM = 35.f;
+        
+        f32 backoutDist_mm = 0;
+        switch(action_)
+        {
+          case DA_PLACE_LOW_BLIND:
+          case DA_ROLL_LOW:
+          {
+            backoutDist_mm = MIN_BACKOUT_DIST_MM;
+            break;
+          }
+          case DA_PICKUP_HIGH:
+          case DA_PICKUP_LOW:
+          case DA_PLACE_HIGH:
+          case DA_PLACE_LOW:
+          {
+            backoutDist_mm = BACKOUT_DISTANCE_MM;
+            break;
+          }
+          default:
+          {
+            AnkiInfo( 14, "PAP", 119, "Reached default switch statement in PAP case", 0);
+          }
         }
 
         const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
-
-        AnkiInfo( 14, "PAP", 119, "Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)", 3,
-              lastMarkerDist_, backoutDist_mm, backoutTime_sec);
-
+        
+        AnkiInfo( 14, "PAP", 492, "Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)", 3,
+                 lastMarkerDist_, backoutDist_mm, backoutTime_sec);
+        
         transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3f);
 
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
