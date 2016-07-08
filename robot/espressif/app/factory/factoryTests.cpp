@@ -659,12 +659,13 @@ int GetParam()
   return modeParam;
 }
 
-
-  static void WipeAllDoneCB(const u32 param, const NVStorage::NVResult rslt)
+#if FACTORY_FIRMWARE
+static void WipeAllDoneCB(const u32 param, const NVStorage::NVResult rslt)
 {
   SetMode(RobotInterface::FTM_PlayPenTest, GetParam());
 }
-  
+#endif
+
 void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
 {
   RobotInterface::EngineToRobot msg;
