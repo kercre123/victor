@@ -240,14 +240,6 @@ void Update()
         break;
       }
       case RobotInterface::FTM_PlayPenTest:
-      {
-        if ((hasBirthCertificate() == false) && (NVStorage::IsFactoryNVClear() == false))
-        {
-          Face::FacePrintf("\n\n\nClearing flash");
-          break;
-        }
-        /// Explicit fall through
-      }
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
@@ -667,6 +659,12 @@ int GetParam()
   return modeParam;
 }
 
+
+  static void WipeAllDoneCB(const u32 param, const NVStorage::NVResult rslt)
+{
+  SetMode(RobotInterface::FTM_PlayPenTest, GetParam());
+}
+  
 void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
 {
   RobotInterface::EngineToRobot msg;
@@ -795,7 +793,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
         msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
         msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
         Anki::Cozmo::RTIP::SendMessage(msg);
-        NVStorage::WipeAll(true, NULL, true, true);
+        NVStorage::WipeAll(0, true, WipeAllDoneCB, true, false);
       }
       else
       {

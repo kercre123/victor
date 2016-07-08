@@ -470,7 +470,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
     dah.journalNumber = 1;
     os_printf("NVInit initalizing flash to (%d, %d) at %x\r\n", dah.nvStorageVersion, dah.journalNumber, addr);
-    WipeAll(true, 0, false, false);
+    WipeAll(NV_STORAGE_NUM_AREAS, true, 0, false, false);
     const SpiFlashOpResult flashResult = spi_flash_write(addr, reinterpret_cast<u32*>(&dah), sizeof(NVDataAreaHeader));
     if (flashResult != SPI_FLASH_RESULT_OK)
     {
@@ -1028,6 +1028,7 @@ struct WipeAllTaskState {
   EraseDoneCB callback;
   int16_t sectorCount;
   int8_t   retries;
+  uint8_t  doSegments;
   bool     includeFactory;
   bool     reboot;
   WipeAllTaskPhase phase;
@@ -1045,7 +1046,7 @@ bool WipeAllTask(uint32_t param)
       if (i2spiMessageQueueIsEmpty())
       {
         i2spiSwitchMode(I2SPI_PAUSED);
-        state->sectorCount = (NV_STORAGE_AREA_SIZE * NV_STORAGE_NUM_AREAS / SECTOR_SIZE) - 1;
+        state->sectorCount = (NV_STORAGE_AREA_SIZE * state->doSegments / SECTOR_SIZE) - 1;
         state->phase = WAT_segments;
       }
       return true;
@@ -1108,7 +1109,7 @@ bool WipeAllTask(uint32_t param)
   }
 }
 
-NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)
+NVResult WipeAll(const u8 doSegments, const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)
 {
   if (isBusy()) return NV_BUSY;
   else
@@ -1118,6 +1119,7 @@ NVResult WipeAll(const bool includeFactory, EraseDoneCB callback, const bool for
     else
     {
       wats->callback = callback;
+      wats->doSegments = doSegments;
       wats->includeFactory = includeFactory;
       wats->reboot = reboot;
       wats->sectorCount = 0;

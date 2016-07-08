@@ -50,7 +50,8 @@ namespace NVStorage {
   message NVWipeAll
   {
     NVReportDest to,
-    bool includeFactory,
+    uint_8 doSegments = 2,
+    bool includeFactory = 1,
     string key, // Key must be "Yes I really want to do this!"
   }
 

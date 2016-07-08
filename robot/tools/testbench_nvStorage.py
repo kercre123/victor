@@ -253,7 +253,7 @@ And the mome raths outgrabe.""".encode()
         
     def test_wipeAll(self):
         to = Anki.Cozmo.NVStorage.NVReportDest.ENGINE
-        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, True, "Yes I really want to do this!")))
+        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, 2, True, "Yes I really want to do this!")))
         time.sleep(30)
         
     def test_readCameraCalib(self):
