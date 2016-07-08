@@ -78,12 +78,19 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       return;
     }
     
-    // Set Language Local
-    const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
+    // Config engine
+    AudioEngine::SetupConfig config{};
+    // Assets
+    config.assetFilePath = assetPath;
+    config.audioLocal = AudioLocaleType::EnglishUS;
+    // Memory
+    config.defaultMemoryPoolSize      = ( 4 * 1024 * 1024 );
+    config.defaultLEMemoryPoolSize    = ( 4 * 1024 * 1024 );
+    config.defaultPoolBlockSize       = 1024;
+    config.defaultMaxNumPools         = 30;
+    config.enableGameSyncPreparation  = true;
     
-    _audioEngine->SetLanguageLocale( localeType );
-    
-    _isInitialized = _audioEngine->Initialize( assetPath );
+    _isInitialized = _audioEngine->Initialize( config );
     
     // If we're using the audio engine, assert that it was successfully initialized.
     ASSERT_NAMED(_isInitialized, "AudioController.Initialize Audio Engine fail");
