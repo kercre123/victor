@@ -246,8 +246,8 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.MoodState:
                         msg = fromEngMsg.MoodState
                         self.moodManager.UpdateMoodState(msg)         
-                    elif fromEngMsg.tag == fromEngMsg.Tag.DebugLatencyMessage:
-                        msg = fromEngMsg.DebugLatencyMessage
+                    elif fromEngMsg.tag == fromEngMsg.Tag.LatencyMessage:
+                        msg = fromEngMsg.LatencyMessage
                         # sys.stdout.write("wifiLatency = " + str(msg.wifiLatency) + os.linesep);
                         # sys.stdout.write("extSendQueueTime = " + str(msg.extSendQueueTime) + os.linesep);
                         # sys.stdout.write("sendQueueTime = " + str(msg.sendQueueTime) + os.linesep);
