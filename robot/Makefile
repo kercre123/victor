@@ -107,6 +107,7 @@ release: stage_binaries
 	#if [ -a $(UV4) ]; then make keil; fi;
 	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(UNSIGNED_BINARY)
 	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(SIGNED_BINARY)
+	if test -e ./staging/factory_upgrade.safe; then cp -v ./staging/factory_upgrade.safe releases/; fi
 	make tests
 
 vesp:
