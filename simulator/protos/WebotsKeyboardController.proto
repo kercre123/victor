@@ -35,7 +35,8 @@ PROTO WebotsKeyboardController [
   # Console name/value pair
   field SFString consoleVarName ""
   field SFString consoleVarValue ""
-  
+
+  field SFBool filterLogs FALSE
   field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
@@ -275,6 +276,14 @@ Supervisor {
   ]
   name IS name
   controller "webotsCtrlKeyboard"
-  controllerArgs IS controllerArgs
+
+  # append filter command line parameter if filter is set to TRUE
+  %{ if fields.filterLogs.value then }%
+    %{ autoArgs=fields.controllerArgs.value .. "--applyLogFilter"}%
+  %{ else }%
+    %{ autoArgs=fields.controllerArgs.value}%
+  %{ end }%
+  controllerArgs "%{=autoArgs}%"
+
 } # Supervisor definition
 } # PROTO definition

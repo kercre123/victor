@@ -168,6 +168,9 @@ void WebotsDevLogController::HandlePrintLines(const DevLogReader::LogData& logDa
 
 int main(int argc, char **argv)
 {
+  // Note: we don't allow logFiltering in DevLog like we do in the other controllers because this
+  // controller is meant to show all logs.
+
   Anki::Util::PrintfLoggerProvider loggerProvider;
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  

@@ -99,6 +99,7 @@ LightCube {
 #  shortSideMarker "symbols/inverted/bangBangBang.png"
 #}
 BlockWorldComms {
+  filterLogs TRUE
 }
 CozmoBot {
   name "CozmoBot_1"

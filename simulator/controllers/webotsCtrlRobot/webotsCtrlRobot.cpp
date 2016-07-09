@@ -10,13 +10,14 @@
  * You may need to add include files like <webots/distance_sensor.h> or
  * <webots/differential_wheels.h>, etc.
  */
-#include <stdio.h>
-
-#include "anki/cozmo/robot/cozmoBot.h"
+ 
+#include "../shared/ctrlCommonInitialization.h"
 #include "testModeController.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/simulator/robot/keyboardController.h"
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #include "anki/cozmo/robot/hal.h"
+#include <cstdio>
 
 // If this is enabled here, it should be disabled in the basestation. (See ENABLE_BS_KEYBOARD_CONTROL.)
 #define ENABLE_KEYBOARD_CONTROL 0
@@ -28,7 +29,15 @@
  */
 int main(int argc, char **argv)
 {
+  using namespace Anki;
   using namespace Anki::Cozmo;
+  
+  // parse commands
+  WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
+  // create platform
+  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
+  // initialize logger
+  WebotsCtrlShared::DefaultAutoGlobalLogger(dataPlatform, params.filterLog);
 
   if(Robot::Init() != Anki::RESULT_OK) {
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");

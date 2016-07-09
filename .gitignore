@@ -5,18 +5,31 @@
 *.swp
 matlab.mat
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Webots
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 *.wbproj
+#
 simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
+#
 simulator/controllers/webotsCtrlViz/webotsCtrlViz
+simulator/controllers/webotsCtrlViz/resources
+#
 simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
+simulator/controllers/webotsCtrlRobot/resources
+#
 simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
-simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
+simulator/controllers/webotsCtrlLightCube/resources
+#
 simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
+#
+simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
 simulator/controllers/webotsCtrlGameEngine/resources
 simulator/controllers/webotsCtrlGameEngine/temp
+#
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/controllers/webotsCtrlKeyboard/resources
+#
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
@@ -24,7 +37,9 @@ simulator/worlds/__generated__.wbt
 simulator/worlds/__GENERATED_FOR_*__.wbt
 project/build-scripts/webots/__GENERATED_ANIMATIONS_TEST__.cfg
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Symlinks for face libraries:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 simulator/controllers/webotsCtrlGameEngine/lib 
 simulator/controllers/webotsCtrlGameEngine/libfsdk.dylib
 simulator/controllers/webotsCtrlKeyboard/lib

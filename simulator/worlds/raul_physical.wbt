@@ -3,8 +3,8 @@ CozmoWorldInfo {
 }
 Viewpoint {
   fieldOfView 0.8
-  orientation 0.996297 -0.0598501 -0.0617206 1.54371
-  position -0.211964 -1.50915 0.137761
+  orientation 1 0 0 0.56
+  position 0 -0.55 0.84
 }
 Background {
   skyColor [
@@ -15,24 +15,24 @@ DirectionalLight {
   ambientIntensity 0.75
 }
 CozmoMat {
+  showMarkers FALSE
 }
 DEF CozmoViz_1 CozmoBot {
-  hidden rotation_8 0 -1 0 0.104756
-  hidden rotation_24 0 1 0 0.00633511
-  translation 0.983856 -0.848441 0
-  rotation 0 0 -1 0.824274
+  translation 0 1 0
   name "CozmoBot_1"
-  headAngle 0.104756
-  liftAngle -0.00633511
+  filterLogs TRUE
   vizMode TRUE
 }
 DEF WorldComms BlockWorldComms {
   filterLogs TRUE
 }
 CozmoVizDisplay {
+  moodViz TRUE
+  behaviorSelectionViz TRUE
+  filterLogs TRUE
 }
 WebotsKeyboardController {
-  animationToSendName "ID_offCharger_thrustFwd"
-  forcedRobotIsSimulated FALSE
+  filterLogs TRUE
   forcedRobotIP "172.31.1.1"
+  forcedRobotIsSimulated FALSE
 }

@@ -29,6 +29,7 @@ CozmoMat {
   showMarkers FALSE
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 CozmoBot {
   name "CozmoBot_1"

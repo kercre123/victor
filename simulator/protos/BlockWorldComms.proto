@@ -2,12 +2,19 @@ PROTO BlockWorldComms [
   field SFString name "BlockWorldComms"
   
   field SFInt32 numUIDevicesToWaitFor 1
+
+  field SFBool filterLogs FALSE
 ]
 {
 Supervisor {
   name IS name
   controller "webotsCtrlGameEngine"
-  controllerArgs "--noLogFilters"
+
+  %{ if fields.filterLogs.value then }%
+  controllerArgs "--applyLogFilter"
+  %{ else }%
+  controllerArgs ""
+  %{ end }%
 
   # Referencing a field that is used in code but not in the proto model
   # to suppress a Webots error message.

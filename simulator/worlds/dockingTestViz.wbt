@@ -41,6 +41,7 @@ DEF CozmoViz_1 CozmoBot {
   vizMode TRUE
 }
 DEF WorldComms BlockWorldComms {
+  filterLogs TRUE
 }
 CozmoVizDisplay {
   moodViz TRUE

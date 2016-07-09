@@ -15,6 +15,7 @@
     'api_source': 'cozmoAPI.lst',
     'api_library_type': 'static_library',
     'engine_test_source': 'cozmoEngine-test.lst',
+    'ctrlShared_source': 'ctrlShared.lst',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -517,9 +518,13 @@
             'dependencies': [
               'robotClad',
               '<(ce-util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
-            'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
+            'sources': [
+              '<!@(cat <(ctrlLightCube_source))',
+              '<!@(cat <(ctrlShared_source))'
+            ],
             'defines': [
               'COZMO_ROBOT',
               'SIMULATOR'
@@ -545,7 +550,10 @@
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
             ],
-            'sources': [ '<!@(cat <(ctrlViz_source))' ],
+            'sources': [
+              '<!@(cat <(ctrlViz_source))',
+              '<!@(cat <(ctrlShared_source))'
+              ],
             'defines': [
               # 'COZMO_ROBOT',
               # 'SIMULATOR'
@@ -595,6 +603,7 @@
               '../../simulator/include',
             ],
             'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-cti_gyp_path):ctiMessagingRobot',
@@ -602,7 +611,10 @@
               '<(ce-util_gyp_path):util',
               'robotClad',
             ],
-            'sources': [ '<!@(cat <(ctrlRobot_source))' ],
+            'sources': [
+              '<!@(cat <(ctrlRobot_source))',
+              '<!@(cat <(ctrlShared_source))'
+              ],
             'defines': [
               'COZMO_ROBOT',
               'SIMULATOR',
@@ -649,7 +661,10 @@
               '<(ce-util_gyp_path):util',
               '<(ce-util_gyp_path):jsoncpp',
             ],
-            'sources': [ '<!@(cat <(ctrlGameEngine_source))' ],
+            'sources': [
+              '<!@(cat <(ctrlGameEngine_source))',
+              '<!@(cat <(ctrlShared_source))'
+              ],
             'libraries': [
               'libCppController.dylib',
               '$(SDKROOT)/System/Library/Frameworks/Security.framework',
@@ -734,7 +749,10 @@
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-cti_gyp_path):ctiPlanning',
             ],
-            'sources': [ '<!@(cat <(ctrlKeyboard_source))' ],
+            'sources': [
+              '<!@(cat <(ctrlKeyboard_source))',
+              '<!@(cat <(ctrlShared_source))'
+              ],
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
@@ -784,7 +802,10 @@
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-cti_gyp_path):ctiPlanning',
             ],
-            'sources': [ '<!@(cat <(ctrlBuildServerTest_source))' ],
+            'sources': [
+              '<!@(cat <(ctrlBuildServerTest_source))',
+              '<!@(cat <(ctrlShared_source))'
+            ],
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
@@ -832,6 +853,11 @@
             # Create symlinks to controller binaries
             # For some reason this is necessary in order to be able to attach to their processes from Xcode.
             'actions': [
+            
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlKeyboard
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # controller binary
               {
                 'action_name': 'create_symlink_webotsCtrlKeyboard',
                 'inputs':[],
@@ -852,17 +878,21 @@
                 ],
               },
               # create symlink to config, so that webotsCtrlKeyboard can also load json configuration files
-              # shared with webotsCtrlGameEngine
+              # shared with other controllers
               {
                 'action_name': 'create_symlink_resources_configs_webotsCtrlKeyboard',
-                'inputs':[],
-                'outputs':[],
+                'inputs':[], 'outputs':[],
                 'action': [
                   'ln', '-s', '-f', '-n',
                   '<(cozmo_engine_path)/resources/config',
                   '../../simulator/controllers/webotsCtrlKeyboard/resources/config',
                 ],
               },
+              
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlBuildServerTest
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # controller binary
               {
                 'action_name': 'create_symlink_webotsCtrlBuildServerTest',
                 'inputs':[],
@@ -872,7 +902,11 @@
                   '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
                   '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest',
                 ],
-              },              
+              },
+              
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlGameEngine
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               {
                 'action_name': 'create_symlink_webotsCtrlGameEngine',
                 'inputs':[],
@@ -938,6 +972,11 @@
                   '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
                 ],
               },
+              
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlRobot
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # controller binary
               {
                 'action_name': 'create_symlink_webotsCtrlRobot',
                 'inputs':[],
@@ -948,6 +987,30 @@
                   '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot',
                 ],
               },
+              # create folder 'resources' so that we can create the symlink for webotsCtrlRobot
+              {
+                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlRobot',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','../../simulator/controllers/webotsCtrlRobot/resources',
+                ],
+              },
+              # create symlink to config, so that webotsCtrlRobot can also load json configuration files
+              # shared with other controllers
+              {
+                'action_name': 'create_symlink_resources_configs_webotsCtrlRobot',
+                'inputs':[], 'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '../../simulator/controllers/webotsCtrlRobot/resources/config',
+                ],
+              },
+              
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlViz
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               {
                 'action_name': 'create_symlink_webotsCtrlViz',
                 'inputs':[],
@@ -958,6 +1021,30 @@
                   '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz',
                 ],
               },
+              # create folder 'resources' so that we can create the symlink for webotsCtrlViz
+              {
+                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlViz',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','../../simulator/controllers/webotsCtrlViz/resources',
+                ],
+              },
+              # create symlink to config, so that webotsCtrlViz can also load json configuration files
+              # shared with other controllers
+              {
+                'action_name': 'create_symlink_resources_configs_webotsCtrlViz',
+                'inputs':[], 'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '../../simulator/controllers/webotsCtrlViz/resources/config',
+                ],
+              },
+              
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlLightCube
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               {
                 'action_name': 'create_symlink_webotsCtrlLightCube',
                 'inputs':[],
@@ -968,6 +1055,30 @@
                   '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
                 ],
               },
+              # create folder 'resources' so that we can create the symlink for webotsCtrlLightCube
+              {
+                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlLightCube',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  'mkdir', '-p','../../simulator/controllers/webotsCtrlLightCube/resources',
+                ],
+              },
+              # create symlink to config, so that webotsCtrlLightCube can also load json configuration files
+              # shared with other controllers
+              {
+                'action_name': 'create_symlink_resources_configs_webotsCtrlLightCube',
+                'inputs':[], 'outputs':[],
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '../../simulator/controllers/webotsCtrlLightCube/resources/config',
+                ],
+              },
+              
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsPluginPhysics
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               {
                 'action_name': 'create_symlink_webotsPluginPhysics',
                 'inputs':[],
@@ -978,6 +1089,10 @@
                   '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
                 ],
               },
+
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlDevLog
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               {
                 'action_name': 'create_symlink_webotsCtrlDevLog',
                 'inputs':[],
@@ -1228,250 +1343,6 @@
         ], # end targets
       },
     ], # end if mac
-
-    [
-      "OS=='linux'",
-      {
-        'target_defaults': {
-          'variables': {
-            'linux_target_archs': [ '$(ARCHS_STANDARD)' ]
-          },
-        },
-
-
-        'targets': [
-
-          {
-            'target_name': 'cozmo_physics',
-            'type': 'shared_library',
-            'include_dirs': [
-              '../../include',
-              '<@(opencv_includes)',
-              '<@(webots_includes)', # After opencv!
-            ],
-            'dependencies': [
-              'cozmoEngine',
-              '<(ce-cti_gyp_path):ctiCommon',
-              '<(ce-cti_gyp_path):ctiVision',
-              '<(ce-cti_gyp_path):ctiMessaging',
-              '<(ce-util_gyp_path):util',
-            ],
-            'sources': [
-              '<!@(cat <(pluginPhysics_source))',
-            ],
-            'defines': [
-              'LINUX',
-            ],
-            'libraries': [
-              'libCppController.dylib',
-              '<@(opencv_libs)',
-            ],
-          }, # end cozmo_physics
-
-          {
-            'target_name': 'webotsCtrlLightCube',
-            'type': 'executable',
-            'include_dirs': [
-              '../../robot/include',
-              '../../include',
-              '../../simulator/include',
-              '<@(webots_includes)',
-            ],
-            'dependencies': [
-              'robotClad',
-              '<(ce-cti_gyp_path):ctiCommonRobot',
-            ],
-            'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
-            'defines': [
-              'COZMO_ROBOT',
-              'SIMULATOR'
-            ],
-            'libraries': [
-              'libCppController.dylib',
-            ],
-          }, # end controller Block
-
-          {
-            'target_name': 'webotsCtrlViz',
-            'type': 'executable',
-            'include_dirs': [
-              '../../include',
-              '../../robot/include',
-              '<@(opencv_includes)',
-              '<@(webots_includes)', # After opencv!
-            ],
-            'dependencies': [
-              'cozmoEngine',
-              '<(ce-cti_gyp_path):ctiCommon',
-              '<(ce-cti_gyp_path):ctiVision',
-              '<(ce-cti_gyp_path):ctiMessaging',
-              '<(ce-util_gyp_path):util',
-            ],
-            'sources': [ '<!@(cat <(ctrlViz_source))' ],
-            'defines': [
-              # 'COZMO_ROBOT',
-              # 'SIMULATOR'
-            ],
-            'libraries': [
-              'libCppController.dylib',
-              '<@(opencv_libs)',
-            ],
-            'conditions': [
-              # For some reason, need to link directly against FacioMetric libs
-              # when using them for recognition, which also means they have to be
-              # present (symlinked) in the executable dir
-              ['face_library == "faciometric"', {
-                'libraries': [
-                  '<@(face_library_libs)',
-                ],
-                'actions' : [
-                  {
-                    'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
-                      'action': [
-                        'ln', '-s', '-f', '-n',
-                        '<(face_library_lib_path)',
-                        '../../simulator/controllers/webotsCtrlViz/',
-                      ],
-                  },
-                ], # actions
-              }], # conditions
-            ],
-          }, # end controller viz
-
-          # {
-          #   'target_name': 'webotsCtrlRobot',
-          #   'type': 'executable',
-          #   'include_dirs': [
-          #     '../../robot/include',
-          #     '../../include',
-          #     '../../simulator/include',
-          #     '<@(webots_includes)',
-          #     '<@(opencv_includes)',
-          #   ],
-          #   'dependencies': [
-          #     '<(ce-cti_gyp_path):ctiCommonRobot',
-          #     '<(ce-cti_gyp_path):ctiVisionRobot',
-          #     '<(ce-cti_gyp_path):ctiMessagingRobot',
-          #     '<(ce-cti_gyp_path):ctiPlanningRobot',
-          #     '<(ce-util_gyp_path):utilEmbedded',
-          #     'robotClad',
-          #   ],
-          #   'sources': [ '<!@(cat <(ctrlRobot_source))' ],
-          #   'defines': [
-          #     'COZMO_ROBOT',
-          #     'SIMULATOR'
-          #   ],
-          #   'libraries': [
-          #     'libCppController.dylib',
-          #     '<@(opencv_libs)',
-          #   ],
-          # }, # end controller Robot
-
-          # {
-          #   'target_name': 'cozmoEngineUnitTest',
-          #   'type': 'executable',
-          #   'include_dirs': [
-          #     '../../basestation/test',
-          #     '../../robot/include',
-          #     '<@(opencv_includes)',
-          #   ],
-          #   'dependencies': [
-          #     'cozmoEngine',
-          #     '<(ce-cti_gyp_path):ctiCommon',
-          #     '<(ce-cti_gyp_path):ctiCommonRobot',
-          #     '<(ce-cti_gyp_path):ctiMessaging',
-          #     '<(ce-cti_gyp_path):ctiPlanning',
-          #     '<(ce-cti_gyp_path):ctiVision',
-          #     '<(ce-cti_gyp_path):ctiVisionRobot',
-          #     '<(ce-util_gyp_path):jsoncpp',
-          #     '<(ce-util_gyp_path):util',
-          #   ],
-          #   'sources': [ '<!@(cat <(engine_test_source))' ],
-          #   'sources/': [
-          #     ['exclude', 'run_pc_embeddedTests.cpp'],
-          #     ['exclude', 'run_m4_embeddedTests.cpp'],
-          #     ['exclude', 'resaveBlockImages.m'],
-          #   ],
-          #   'libraries': [
-          #     '<(ce-gtest_path)/gtest-linux',
-          #     '<@(opencv_libs)',
-          #     '<@(face_library_libs)',
-          #   ],
-          #   'actions': [
-          #     # { # in engine only mode, we do not know where the assets are
-          #     #   'action_name': 'create_symlink_resources_assets',
-          #     #   'inputs': [
-          #     #     '<(cozmo_asset_path)',
-          #     #   ],
-          #     #   'outputs': [
-          #     #     '<(PRODUCT_DIR)/resources/assets',
-          #     #   ],
-          #     #   'action': [
-          #     #     'ln',
-          #     #     '-s',
-          #     #     '-f',
-          #     #     '-h',
-          #     #     '<@(_inputs)',
-          #     #     '<@(_outputs)',
-          #     #   ],
-          #     # },
-          #     {
-          #       'action_name': 'create_symlink_resources_configs',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(cozmo_engine_path)/resources/config',
-          #         '<(PRODUCT_DIR)/resources/config',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_resources_test',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(cozmo_engine_path)/resources/test',
-          #         '<(PRODUCT_DIR)/resources/test',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_resources_pocketsphinx',
-          #       'action': [
-          #         'ln', '-s', '-f', '-n',
-          #         '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-          #         '<(PRODUCT_DIR)/resources/pocketsphinx',
-          #       ],
-          #     },
-          #     {
-          #       'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
-          #       'conditions': [
-          #         ['face_library=="faciometric"', {
-          #           'action': [
-          #             'ln', '-s', '-f', '-n',
-          #             '<(face_library_lib_path)',
-          #             '<(PRODUCT_DIR)/',
-          #           ],
-          #         }],
-          #         ['face_library=="facesdk"', {
-          #           'action': [
-          #             'ln', '-s', '-f',
-          #             '<(face_library_lib_path)/libfsdk.dylib',
-          #             '<(PRODUCT_DIR)',
-          #           ],
-          #         }],
-          #         ['face_library=="opencv"', {
-          #           'action': [
-          #           'echo',
-          #           'dummyOpenCVEngineAction',
-          #           ],
-          #         }],
-          #       ], # conditions
-          #     },
-          #   ],
-          # }, # end unittest target
-
-
-
-        ], # end targets
-      },
-    ] # end if linux
 
   ], #end conditions
 

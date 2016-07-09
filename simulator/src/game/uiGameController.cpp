@@ -765,11 +765,11 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
     
-    void UiGameController::SetDataPlatform(Util::Data::DataPlatform* dataPlatform) {
+    void UiGameController::SetDataPlatform(const Util::Data::DataPlatform* dataPlatform) {
       _dataPlatform = dataPlatform;
     }
     
-    Util::Data::DataPlatform* UiGameController::GetDataPlatform()
+    const Util::Data::DataPlatform* UiGameController::GetDataPlatform() const
     {
       return _dataPlatform;
     }

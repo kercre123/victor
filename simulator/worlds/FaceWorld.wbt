@@ -45,6 +45,7 @@ LightCube {
   ID 3
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   rotation 0 1 0 0

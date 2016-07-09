@@ -17,6 +17,8 @@ PROTO CozmoVizDisplay
   field SFBool dockViz FALSE
   field SFBool infoViz TRUE
   field SFBool camViz TRUE
+
+  field SFBool filterLogs FALSE
 ]
 {
 Supervisor {
@@ -193,6 +195,13 @@ Supervisor {
   ]
 
   controller "webotsCtrlViz"
+
+  # append filter command line parameter if filter is set to TRUE
+  %{ if fields.filterLogs.value then }%
+    %{ autoArgs="--applyLogFilter"}%
+  %{ end }%
+  controllerArgs "%{=autoArgs}%"
+
 } # Supervisor
 
 } # PROTO

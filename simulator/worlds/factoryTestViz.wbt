@@ -45,6 +45,7 @@ LightCube {
   translation -0.05 0.25 0.0219952
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   translation -0.13 0 0.001

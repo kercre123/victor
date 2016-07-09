@@ -9,6 +9,7 @@
  */
 
 #include "vizControllerImpl.h"
+#include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/vizTypes.h"
 #include "clad/vizInterface/messageViz.h"
@@ -21,10 +22,18 @@
 #include <string>
 
 
-using namespace Anki::Cozmo;
-
 int main(int argc, char **argv)
 {
+  using namespace Anki;
+  using namespace Anki::Cozmo;
+
+  // parse commands
+  WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
+  // create platform
+  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
+  // initialize logger
+  WebotsCtrlShared::DefaultAutoGlobalLogger(dataPlatform, params.filterLog);
+
   webots::Supervisor vizSupervisor;
   VizControllerImpl vizController(vizSupervisor);
   const size_t maxPacketSize{(size_t)VizConstants::MaxMessageSize};

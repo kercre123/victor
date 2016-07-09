@@ -26,6 +26,7 @@ DirectionalLight {
 }
 LightCube {
   translation -0.128297 -0.193646 0.271993
+  filterLogs TRUE
 }
 DirectionalLight {
   ambientIntensity 0.5
@@ -49,19 +50,24 @@ LightCube {
   translation -0.081448 -0.141559 0.271993
   rotation 1.59038e-05 -1.83704e-06 1 0.23
   ID 1
+  filterLogs TRUE
 }
 Table {
   rotation 1 0 0 1.5708
   size 0.75 0.25 1
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   translation 0 0 0.25
   name "CozmoBot_1"
+  filterLogs TRUE
 }
 WebotsKeyboardController {
   behaviorName "ExploreLookAroundInPlace"
+  filterLogs TRUE
 }
 CozmoVizDisplay {
+  filterLogs TRUE
 }

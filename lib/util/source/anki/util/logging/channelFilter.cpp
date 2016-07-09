@@ -57,8 +57,6 @@ void ChannelFilter::Initialize(const Json::Value& config)
   {
     std::stringstream enabledStr;
     std::stringstream disabledStr;
-    enabledStr  << "Channels enabled for console output: ";
-    disabledStr << "Channels disabled for console output: ";
     int enCount = 0;
     int disCount = 0;
     for( const auto& pair : _channelEnableList ) {
@@ -76,8 +74,9 @@ void ChannelFilter::Initialize(const Json::Value& config)
     if ( disCount == 0 ) {
       disabledStr << "(None were disabled)";
     }
-    PRINT_CH_INFO("LOG", "ChannelFilter.Initialize", "%s", enabledStr.str().c_str());
-    PRINT_CH_INFO("LOG", "ChannelFilter.Initialize", "%s", disabledStr.str().c_str());
+    PRINT_CH_INFO("LOG", "ChannelFilter.Channels", ": Enabled [%s]; Disabled [%s]",
+      enabledStr.str().c_str(),
+      disabledStr.str().c_str());
   }
   
   _initialized = true;

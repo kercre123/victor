@@ -33,6 +33,7 @@ Ruler {
   rotation 0 1 0 0
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"

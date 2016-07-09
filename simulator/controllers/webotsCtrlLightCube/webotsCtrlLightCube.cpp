@@ -5,10 +5,11 @@
  * Author:        
  * Modifications: 
  */
-
-#include <stdio.h>
 #include "activeBlock.h"
+#include "../shared/ctrlCommonInitialization.h"
 #include "anki/common/types.h"
+#include <cstdio>
+#include <string>
 
 /*
  * This is the main program.
@@ -17,7 +18,15 @@
  */
 int main(int argc, char **argv)
 {
+  using namespace Anki;
   using namespace Anki::Cozmo;
+
+  // parse commands
+  WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
+  // create platform
+  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
+  // initialize logger
+  WebotsCtrlShared::DefaultAutoGlobalLogger(dataPlatform, params.filterLog);
   
   if (ActiveBlock::Init() == Anki::RESULT_FAIL) {
     printf("ERROR (webotsCtrlLightCube): Failed to init block");

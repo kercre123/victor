@@ -50,34 +50,41 @@ Face {
 LightCube {
   translation -0.129737 0.444911 0.022
   rotation -0.113999 0.986919 0.113999 1.58396
+  filterLogs TRUE
 }
 LightCube {
   translation -0.0200182 0.441269 0.022
   rotation 0 0 1 0.23
   ID 2
+  filterLogs TRUE
 }
 LightCube {
   translation 0.0509967 0.474244 0.062
   rotation 0 0 1 0.23
   ID 1
+  filterLogs TRUE
 }
 SolidBox {
   translation -0.0310205 0.357748 6.66134e-16
   size 0.3 0.05 0.2
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
+  filterLogs TRUE
 }
 WebotsKeyboardController {
   robotVolume 0
   behaviorName "lookAround"
   behaviorChooserName "Demo"
   userName "Billy"
+  filterLogs TRUE
   autoConnect FALSE
 }
 CozmoVizDisplay {
   moodViz TRUE
   behaviorSelectionViz TRUE
+  filterLogs TRUE
 }

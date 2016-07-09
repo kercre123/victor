@@ -6,6 +6,7 @@
  * Modifications: 
  */
 
+#include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/cozmoAPI.h"
 #include "util/logging/logging.h"
 #include "util/logging/channelFilter.h"
@@ -89,21 +90,14 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  // Get the last position of '/'
-  std::string aux(argv[0]);
-#if defined(_WIN32) || defined(WIN32)
-  size_t pos = aux.rfind('\\');
-#else
-  size_t pos = aux.rfind('/');
-#endif
-  // Get the path and the name
-  std::string path = aux.substr(0,pos+1);
-  //std::string name = aux.substr(pos+1);
-  std::string resourcePath = path + "resources";
-  std::string filesPath = path + "files";
-  std::string cachePath = path + "temp";
-  std::string externalPath = path + "temp";
-  Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  // parse commands
+  WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
+  
+  // create platform.
+  // Unfortunately, CozmoAPI does not properly receive a const DataPlatform, and that change
+  // is too big of a change, since it involves changing down to the context, so create a non-const platform
+  //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
+  Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, ""));
@@ -123,21 +117,8 @@ int main(int argc, char **argv)
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
   
-  // allow filtering unless specified in command line
-  bool filterConsole = true;
-  if ( argc > 1 )
-  {
-    const std::string kNoFilterParam = "--noLogFilters";
-    for( int i=1; i<argc; ++i) {
-      if ( kNoFilterParam == argv[i] ) {
-        filterConsole = false;
-        break;
-      }
-    }
-  }
-
   // - console filter for logs
-  if ( filterConsole )
+  if ( params.filterLog )
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
@@ -166,7 +147,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
+    PRINT_CH_INFO("LOG", "webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
   }
   
   // Start with a step so that we can attach to the process here for debugging

@@ -65,8 +65,8 @@ public:
   void Init();
   s32 Update();
   
-  void SetDataPlatform(Util::Data::DataPlatform* dataPlatform);
-  Util::Data::DataPlatform* GetDataPlatform();
+  void SetDataPlatform(const Util::Data::DataPlatform* dataPlatform);
+  const Util::Data::DataPlatform* GetDataPlatform() const;
   
   void QuitWebots(s32 status);
   void QuitController(s32 status);
@@ -371,7 +371,7 @@ private:
   GameMessageHandler _msgHandler;
   GameComms *_gameComms = nullptr;
   
-  Util::Data::DataPlatform* _dataPlatform = nullptr;
+  const Util::Data::DataPlatform* _dataPlatform = nullptr;
 
   
 }; // class UiGameController

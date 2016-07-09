@@ -45,6 +45,7 @@ LightCube {
   ID 3
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   hidden position_0_2 -0.0100033

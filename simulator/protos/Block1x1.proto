@@ -1,6 +1,7 @@
 #VRML_SIM V7.3.0 utf8
 
 PROTO Block1x1 [
+  field SFBool filterLogs FALSE
   field SFString name "Block000"
   field SFString type "1" # BlockType
   field SFVec3f translation 0 0 0.022
@@ -35,6 +36,12 @@ Supervisor {
 
   %{ if fields.active.value then }%
     controller "webotsCtrlLightCube"
+
+    # append filter command line parameter if filter is set to TRUE
+    %{ if fields.filterLogs.value then }%
+      %{ autoArgs="--applyLogFilter"}%
+    %{ end }%
+    controllerArgs "%{=autoArgs}%"
   %{ end }%
 
   name IS name

@@ -17,6 +17,7 @@ DirectionalLight {
 CozmoMat {
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF CozmoViz_1 CozmoBot {
   translation 0 1 0

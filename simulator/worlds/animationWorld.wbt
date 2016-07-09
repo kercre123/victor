@@ -29,13 +29,17 @@ CozmoMat {
   showMarkers FALSE
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
+  filterLogs TRUE
   enableVideo FALSE
 }
 WebotsKeyboardController {
   idleAnimationName "_ANIM_TOOL_"
+  filterLogs TRUE
 }
 CozmoVizDisplay {
+  filterLogs TRUE
 }

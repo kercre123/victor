@@ -43,6 +43,7 @@ LightCube {
   ID 1
 }
 BlockWorldComms {
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"

@@ -10,13 +10,11 @@
 *
 */
 
-#include "util/logging/logging.h"
-#include "util/logging/printfLoggerProvider.h"
+#include "../shared/ctrlCommonInitialization.h"
 #include <stdio.h>
 #include <string.h>
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #if (DO_NOT_QUIT_WEBOTS == 1)
 #define QUIT_WEBOTS(status) return status;
@@ -30,25 +28,16 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  // Setup logger
-  Anki::Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
-  Anki::Util::gLoggerProvider = &loggerProvider;
-  
-  // Get the last position of '/'
-  std::string aux(argv[0]);
-  size_t pos = aux.rfind('/');
-  
-  // Get the path and the name
-  std::string path = aux.substr(0,pos+1);
-  std::string resourcePath = path;
-  std::string filesPath = path + "temp";
-  std::string cachePath = path + "temp";
-  std::string externalPath = path + "temp";
-  Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  // Note: we don't allow logFiltering in BuildServerTest like we do in the other controllers because this
+  // controller is meant to show all logs.
 
+  // create platform
+  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformTest(argv[0]);
   
+  // initialize logger
+  const bool filterLog = false;
+  WebotsCtrlShared::DefaultAutoGlobalLogger(dataPlatform, filterLog);
+
   // Create specified test controller.
   // Only a single argument is supported and it must the name of a valid test.
   if (argc < 2) {

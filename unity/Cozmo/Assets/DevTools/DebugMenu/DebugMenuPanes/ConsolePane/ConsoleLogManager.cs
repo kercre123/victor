@@ -66,7 +66,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _LastToggleValues.Add(LogPacket.ELogKind.Debug, true);
     _LastToggleValues.Add(LogPacket.ELogKind.Global, true);
 
-    DAS.AddTarget(this);
+    //DAS.AddTarget(this);
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
 

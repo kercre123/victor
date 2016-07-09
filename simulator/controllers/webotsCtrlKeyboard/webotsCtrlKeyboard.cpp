@@ -8,6 +8,7 @@
 
 #include "webotsCtrlKeyboard.h"
 
+#include "../shared/ctrlCommonInitialization.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
@@ -2550,58 +2551,19 @@ namespace Anki {
 
 // =======================================================================
 
-using namespace Anki;
-using namespace Anki::Cozmo;
-
 int main(int argc, char **argv)
 {
-  Anki::Util::PrintfLoggerProvider loggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  
-  Anki::Util::gLoggerProvider = &loggerProvider;
-  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
-  
-  // - console filter for logs
-  {
-    // Get the last position of '/'
-    std::string aux(argv[0]);
-  #if defined(_WIN32) || defined(WIN32)
-    size_t pos = aux.rfind('\\');
-  #else
-    size_t pos = aux.rfind('/');
-  #endif
-    // Get the path and the name
-    std::string path = aux.substr(0,pos+1);
-    //std::string name = aux.substr(pos+1);
-    std::string resourcePath = path + "resources";
-    std::string filesPath = path + "files";
-    std::string cachePath = path + "temp";
-    std::string externalPath = path + "temp";
-    Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
-  
-    using namespace Anki::Util;
-    ChannelFilter* consoleFilter = new ChannelFilter();
-    
-    // load file config
-    Json::Value consoleFilterConfig;
-    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
-    if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
-    {
-      PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
-    }
-    
-    // initialize console filter for this platform
-    const std::string& platformOS = dataPlatform.GetOSPlatformString();
-    const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
-    consoleFilter->Initialize(consoleFilterConfigOnPlatform);
-    
-    // set filter in the loggers
-    std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
-    loggerProvider.SetFilter(filterPtr);
-    
-    // also parse info for providers
-    loggerProvider.ParseLogLevelSettings(consoleFilterConfigOnPlatform);
-  }
+  using namespace Anki;
+  using namespace Anki::Cozmo;
 
+  // parse commands
+  WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
+  // create platform
+  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
+  // initialize logger
+  WebotsCtrlShared::DefaultAutoGlobalLogger(dataPlatform, params.filterLog);
+
+  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
   webotsCtrlKeyboard.PreInit();
   webotsCtrlKeyboard.WaitOnKeyboardToConnect();
   
