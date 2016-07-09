@@ -43,6 +43,11 @@ public class DebugMenuDialog : MonoBehaviour {
   public void Initialize(int lastOpenedTab) {
     GameObject newTab = null;
     DebugMenuDialogTab newTabScript = null;
+
+    System.Array.Sort(_DebugContentPaneData, delegate (DebugContentPane pane1, DebugContentPane pane2) {
+      return pane1.name.CompareTo(pane2.name);
+    });
+
     for (int i = 0; i < _DebugContentPaneData.Length; i++) {
       newTab = CreateUI(_TabButtonPrefab.gameObject, _TabContainer.transform);
       newTabScript = newTab.GetComponent<DebugMenuDialogTab>();
