@@ -16,10 +16,11 @@ copy ..\..\staging\esp.factory.bin .
 copy ..\..\espressif_bootloader\firmware\cboot.bin esp.boot.bin
 @echo.
 @echo ===========================================
-@echo Note:  Remember to:
-@echo make release
-@echo make esp_factory_safe
-@echo make -C espressif clean ^&^& make esp_factory
+@echo REMEMBER TO:
+@echo 1) Manually build syscon and robot41 first - batch build doesn't work 
+@echo 2) make force_stage_binaries ^&^& make release ^&^& make -C espressif clean ^&^& make esp_factory
+@echo 3) make factory_upgrade
+@rem make force_stage_binaries && make release && make -C espressif clean && make esp_factory
 @echo ===========================================
 @echo.
 @pause

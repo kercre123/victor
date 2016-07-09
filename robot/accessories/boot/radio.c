@@ -138,16 +138,16 @@ bit RadioBeacon()
   RadioSetup(ADVERTISEMENT);
   
   // Wait for TX complete
-  WUF = RFF = 0;
+  IRCON = 0;
   RFCE = 1;
-  PWRDWN = STANDBY;
+  PWRDWN = STANDBY;   // Note: Supposed to set PWRDWN=0 afterward (but so far not needed?)
   RFCE = 0;
 
   // Start RX
   RadioSetup(SETUP_RX);
   
   // Listen for packet or timeout (either will wake us)
-  RFF = 0;
+  IRCON = 1;          // Note: Weird hack to clear interrupt flags without changing code size
   RFCE = 1;
   PWRDWN = STANDBY;
   RFCE = 0;
@@ -157,7 +157,7 @@ bit RadioBeacon()
   if (gotPacket)
     RadioRead((u8 idata *)SyncPkt, SyncLen);
   
-  // Power down radio again - this makes RFF 'forget'
+  // Power down radio again - this makes RFF 'forget' its state
   RadioSetup(SETUP_OFF);
   RFCKEN = 0;
   

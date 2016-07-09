@@ -196,6 +196,7 @@ sbit  RFCKEN       = RFCON^2;
 #define SPIEN     (1 << 0)
 #define SPIPHASE  (1 << 1)
 // WUCON
+#define WAKE_ON_XOSC  (2 << 0)
 #define WAKE_ON_TICK  (2 << 4)
 #define WAKE_ON_RADIO (2 << 6)
 // RTC2CON
@@ -220,6 +221,7 @@ sbit  RFCKEN       = RFCON^2;
 #define CLKLF_RC      (1 << 0)
 #define CLKLF_XOSC    (2 << 0)
 // CLKCTRL
+#define X16IRQ        (1 << 3)
 #define XOSC_ON       (1 << 7)
 // OPMCON
 #define OPM_LATCH     (1 << 1)

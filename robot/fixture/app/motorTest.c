@@ -83,7 +83,7 @@ void TestLEDs(void)
 // Test encoder (not motor)
 const int MIN_ENC_ON = 2310, MAX_ENC_OFF = 800;   // In millivolts (with padding) - must be 0.3x to 0.7x VDD
 const int ENC_SLOW_US = 1000;
-const int ENC_A_US = 112, ENC_B_US = 112;         // Rise/fall time should be 112uS/224uS per Bryan, but lets go with 112 on both
+const int ENC_A_US = 200, ENC_B_US = 200;   // Rise/fall time for 2.5KHz (since real thing must get to 2KHz)
 void TestEncoders(void)
 {
   // Read encoder when turned on and off
@@ -188,11 +188,11 @@ void TestMotorA(void)
     throw ERROR_MOTOR_FAST;    
 }
 
-// Motor B (head motor) makes more ticks
+// Motor B (head motor) makes about same number of ticks
 void TestMotorB(void)
 {
-  const int TICKS_SLOW = 20;
-  const int TICKS_FAST = 160;
+  const int TICKS_SLOW = 10;
+  const int TICKS_FAST = 80;
   if (MeasureMotor(MOTOR_LOW_MV) < TICKS_SLOW)
     throw ERROR_MOTOR_SLOW;
   if (MeasureMotor(MOTOR_FULL_MV) < TICKS_FAST)

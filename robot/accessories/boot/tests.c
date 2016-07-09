@@ -13,11 +13,10 @@ void Sleep()
 void LedTest()
 {
   // On power-up (first reset), light LEDs: "red", "green", "blue", "IR"
-  u8 i = 0, j;
+  u8 i, j;
   if (!RSTREAS)
   {
-    RSTREAS = 0;
-    j = 0;
+    i = j = 0;
     do {
       do {
         LightOn((i & 3) | j);
@@ -39,6 +38,7 @@ void LedTest()
       Sleep();
     } while (--i);    // About 0.4 sec (256*0.77ms)
   }
+  RSTREAS = 0;
 }
 
 // Run startup self-tests for fixture, accelerometer, and LEDs
@@ -49,6 +49,7 @@ void RunTests()
   LightOn(2);
   
   // If accelerometer is okay, blink the LEDs red, green, and blue
+  // Note:  This often fails because IMU is jammed in sleep mode
   if (AccelInit())
     LedTest();
 }

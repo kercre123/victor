@@ -67,7 +67,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler
                 DCD     NMI_Handler
                 DCD     HardFault_Handler
-                DCD     1                         ; Syscon version - 1 = Pilot
+                DCD     2                         ; Syscon version - 1 = Pilot, 2 = Prod
                 DCD     0                         ; Body ESN
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved

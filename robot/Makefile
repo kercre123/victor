@@ -99,6 +99,12 @@ stage_binaries:
 	@if test ./syscon/build/app/syscon.axf -nt ./binaries/syscon.axf; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf; fi
 	@if test ./staging/esp.user.bin  -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin  ./binaries/esp.user.bin; fi
 
+# This is needed when timestamps get screwed up (as they constantly do with Vagrant/VM)
+force_stage_binaries:
+	cp -v ./build/app/robot.axf ./binaries/robot.axf
+	cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf
+#	cp -v ./staging/esp.user.bin  ./binaries/esp.user.bin
+
 stage_factory_upgrade:
 	cp -v staging/esp.factory.bin binaries/esp.factory.bin
 	cp -v staging/factory.safe    binaries/factory.safe

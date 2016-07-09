@@ -61,9 +61,11 @@ const Fixed_8_24 METERS_PER_TICK = TO_FIXED_8_24((0.948 * 0.125 * 0.0292 * 3.141
 // compute the radians per tick on the lift as:
 const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
 
-// Given a gear ratio of 348.77:1 and 8 encoder ticks per revolution, we
+// Given a gear ratio of 348.77:1 and 4 encoder ticks per revolution, we
 // compute the radians per tick on the head as:
-const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
+// Pilot: const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
+const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.25 * 3.14159265359) / 348.77);
+
 // If no encoder activity for 200ms, we may as well be stopped
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;

@@ -17,8 +17,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 42;
-const char* BUILD_INFO = "CEC TEST";
+u8 g_fixtureReleaseVersion = 45;
+const char* BUILD_INFO = "PS SMT";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;
