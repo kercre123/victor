@@ -108,13 +108,14 @@ namespace Anki {
       
       /** Wipe all contents of NVStorage
        * This does more than erase all entries, it actually erases all the sectors of flash which store NVData
+       * @param doSegments, the number of regular segments to erase
        * @param includeFactory whether or not to also wipe factory NVStorage.
        * @param callback a function to call when the wipe is complete, default none
        * @param fork whether to run the wipe in a task or in the calling task, default true
        * @param reboot whether to reboot after applying the update
        * @return either scheduled or busy
        */
-      NVResult WipeAll(const bool includeFactory, EraseDoneCB callback=0, const bool fork=true, const bool reboot=false);
+      NVResult WipeAll(const u8 doSegments, const bool includeFactory, EraseDoneCB callback=0, const bool fork=true, const bool reboot=false);
       
       /** Returns true if the factory NVStorage region is clear, with no entries, even erased ones.
        */

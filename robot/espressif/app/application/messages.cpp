@@ -206,7 +206,7 @@ namespace Anki {
               }
               else
               {
-                result.result = NVStorage::WipeAll(msg.wipeAllNV.includeFactory, NVEraseDoneCallback, true, true);
+                result.result = NVStorage::WipeAll(msg.wipeAllNV.doSegments, msg.wipeAllNV.includeFactory, NVEraseDoneCallback, true, true);
                 if (result.result >= 0) nvOpReportTo = msg.wipeAllNV.to;
                 else SendNVOpResult(&result, msg.wipeAllNV.to);
               }

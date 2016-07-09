@@ -32,7 +32,7 @@ LightCube {
   translation 0.142 0 0.022
 }
 LightCube {
-  translation 0.212 0 0.022
+  translation 0.202 0 0.022
   ID 1
 }
 BlockWorldComms {

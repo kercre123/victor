@@ -119,7 +119,7 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
 	python3 ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
 	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
 
-esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
+esp_factory: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir export_key
 	make -C espressif clean
 	cd espressif_bootloader; ./build.sh; cd ..
 	make esp -C clad -j4
