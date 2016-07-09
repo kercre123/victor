@@ -315,10 +315,10 @@ Result CozmoEngine::Update(const float currTime_sec)
     }
     case EngineState::Running:
     {
-      _context->GetRobotManager()->UpdateRobotConnection();
-      
       // Update time
       BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(currTime_sec));
+      
+      _context->GetRobotManager()->UpdateRobotConnection();
       
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.

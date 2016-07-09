@@ -47,6 +47,7 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -133,6 +134,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _speedChooser(new SpeedChooser(*this))
   , _blockFilter(new BlockFilter(this))
+  , _tapFilterComponent(new BlockTapFilterComponent(*this))
   , _traceHandler(_context->GetDataPlatform())
   , _hasMismatchedEngineToRobotCLAD(false)
   , _hasMismatchedRobotToEngineCLAD(false)
@@ -239,6 +241,7 @@ Robot::~Robot()
   Util::SafeDelete(_shortMinAnglePathPlanner);
   Util::SafeDelete(_moodManager);
   Util::SafeDelete(_progressionUnlockComponent);
+  Util::SafeDelete(_tapFilterComponent);
   Util::SafeDelete(_blockFilter);
   Util::SafeDelete(_drivingAnimationHandler);
   Util::SafeDelete(_speedChooser);
@@ -838,6 +841,8 @@ Result Robot::Update(bool ignoreVisionModes)
   _moodManager->Update(currentTime);
       
   _progressionUnlockComponent->Update();
+  
+  _tapFilterComponent->Update();
       
   const char* behaviorChooserName = "";
   std::string behaviorDebugStr("<disabled>");

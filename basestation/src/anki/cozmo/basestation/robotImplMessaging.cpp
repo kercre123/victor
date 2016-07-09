@@ -74,7 +74,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectConnectionState, &Robot::HandleActiveObjectConnectionState);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectMoved,           &Robot::HandleActiveObjectMoved);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectStopped,         &Robot::HandleActiveObjectStopped);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectTapped,          &Robot::HandleActiveObjectTapped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::goalPose,                    &Robot::HandleGoalPose);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotStopped,                &Robot::HandleRobotStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
@@ -545,36 +544,6 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
 
   // Set moving state of object
   object->SetIsMoving(false, payload.timestamp);
-}
-
-void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  // We make a copy of this message so we can update the object ID before broadcasting
-  ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
-  
-  if(nullptr == object)
-  {
-    PRINT_NAMED_WARNING("Robot.HandleActiveObjectTapped.UnknownActiveID",
-                        "Could not find match for active object ID %d", payload.objectID);
-  } else {
-    assert(object->IsActive());
-    if( object->GetID() == _chargerID )
-    {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.Charger","Charger sending garbage tap messages");
-      return;
-    }
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.MessageActiveObjectTapped",
-                     "Received message that %s %d (Active ID %d) was tapped %d times (robotTime %d, tapTime %d, intensity: %d).",
-                     EnumToString(object->GetType()),
-                     object->GetID().GetValue(), payload.objectID, payload.numTaps,
-                     payload.timestamp, payload.tapTime, payload.tapPos - payload.tapNeg);
-    
-    // Update the ID to be the blockworld ID before broadcasting
-    payload.objectID = object->GetID();
-    payload.robotID = GetID();
-    Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
-  }
 }
 
 void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message)

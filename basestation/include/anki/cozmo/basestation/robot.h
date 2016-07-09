@@ -103,6 +103,7 @@ class PathDolerOuter;
 class ProgressionUnlockComponent;
 class VisionComponent;
 class BlockFilter;
+class BlockTapFilterComponent;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -929,6 +930,9 @@ protected:
   //////// Block pool ////////
   BlockFilter* _blockFilter;
   
+  //////// Block Taps Filter ////////
+  BlockTapFilterComponent* _tapFilterComponent;
+  
   // Set of desired objects to connect to. Set by BlockFilter.
   struct ObjectToConnectToInfo {
     FactoryID factoryID;
@@ -998,7 +1002,6 @@ protected:
   void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
   void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);

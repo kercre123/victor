@@ -120,6 +120,10 @@ message EnableCliffSensor {
     bool enable
 }
 
+message EnableBlockTapFilter {
+  bool enable
+}
+
 // StopAllMotors
 message StopAllMotors {
 
