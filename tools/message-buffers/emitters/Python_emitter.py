@@ -389,7 +389,7 @@ class MessageEmitter(BaseEmitter):
         
         if node.members():
             self.output.write("\t\treturn '{type}(")
-            self.output.write(', '.join('{%s}' % member.name for member in node.members()))
+            self.output.write(', '.join(('%s={%s}' % (member.name, member.name) for member in node.members())))
             self.output.write(")'.format(\n")
             
             self.output.write('\t\t\ttype=type(self).__name__,\n')
@@ -411,7 +411,7 @@ class MessageEmitter(BaseEmitter):
         self.output.write('\tdef __repr__(self):\n')
         if node.members():
             self.output.write("\t\treturn '{type}(")
-            self.output.write(', '.join('{%s}' % member.name for member in node.members()))
+            self.output.write(', '.join(('%s={%s}' % (member.name, member.name) for member in node.members())))
             self.output.write(")'.format(\n")
             
             self.output.write('\t\t\ttype=type(self).__name__,\n')
