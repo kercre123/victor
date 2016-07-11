@@ -36,8 +36,8 @@ int main(int argc, char **argv)
   
   // initialize logger
   const bool filterLog = false;
-  WebotsCtrlShared::DefaultAutoGlobalLogger(dataPlatform, filterLog);
-
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, filterLog);
+  
   // Create specified test controller.
   // Only a single argument is supported and it must the name of a valid test.
   if (argc < 2) {
