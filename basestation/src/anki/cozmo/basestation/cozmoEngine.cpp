@@ -45,7 +45,7 @@
 #include "util/transport/connectionStats.h"
 #include <cstdlib>
 
-#if ANDROID
+#ifdef ANDROID
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_android.h"
 #else
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_ios_mac.h"
@@ -69,7 +69,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
   //, _bleSystem(new BLESystem())
-#if ANKI_DEV_CHEATS && !ANDROID
+#if ANKI_DEV_CHEATS && !defined(ANDROID)
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
 #endif
 {

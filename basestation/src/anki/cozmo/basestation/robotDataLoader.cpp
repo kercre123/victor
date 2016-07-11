@@ -27,7 +27,7 @@
 #include <string>
 #include <sys/stat.h>
 
-#if ANKI_DEV_CHEATS && !ANDROID
+#if ANKI_DEV_CHEATS && !defined(ANDROID)
 #define USE_USB_TUNNEL 1
 #else
 #define USE_USB_TUNNEL 0

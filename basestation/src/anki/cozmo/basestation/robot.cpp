@@ -698,7 +698,7 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   // them We do this regardless of previous state to ensure it works when adding 1st simulated robot (as
   // _isPhysical already == false in that case) Note: We don't do this on phone by default, they also have a
   // remote connection to the simulator so removing timeout would force user to restart both sides each time.
-  #if !(ANKI_IOS_BUILD || ANDROID)
+  #if !(defined(ANKI_IOS_BUILD) || defined(ANDROID))
   {
     static const double kPhysicalRobotNetConnectionTimeoutInMS =
       Anki::Util::ReliableConnection::GetConnectionTimeoutInMS(); // grab default on 1st call

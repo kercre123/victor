@@ -231,7 +231,8 @@ namespace Cozmo {
     
     // Last time we streamed anything
     f32 _lastStreamTime = std::numeric_limits<f32>::lowest();
-    
+
+#   define PLAY_ROBOT_AUDIO_ON_DEVICE 0
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
     // TODO: Remove these once we aren't playing robot audio on the device
     TimeStamp_t _playedRobotAudio_ms;

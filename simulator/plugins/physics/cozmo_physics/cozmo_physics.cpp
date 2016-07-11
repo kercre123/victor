@@ -10,7 +10,10 @@
  * Modifications: 
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundef"
 #include <ode/ode.h>
+#pragma GCC diagnostic pop
 #include <plugins/physics.h>
 #include "physVizController.h"
 

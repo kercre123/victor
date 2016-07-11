@@ -72,7 +72,7 @@
       '-Wall',
       '-Woverloaded-virtual',
       '-Werror',
-      # '-Wundef', # Disabled until define usage is refactored to code standards
+      '-Wundef',
       '-Wheader-guard',
       '-fsigned-char',
       '-fvisibility-inlines-hidden',
@@ -334,6 +334,14 @@
         {
           'defines': [
             'USE_DAS=1',
+          ],
+        },
+      ],
+      [
+        "OS=='mac'",
+        {
+          'defines': [
+            'USE_DAS=0',
           ],
         },
       ],

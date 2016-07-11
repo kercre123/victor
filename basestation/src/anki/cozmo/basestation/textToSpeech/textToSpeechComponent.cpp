@@ -14,7 +14,10 @@
 
 
 extern "C" {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundef"
 #include "flite.h"
+#pragma GCC diagnostic pop
   cst_voice* register_cmu_us_rms(const char* voxdir);
   void unregister_cmu_us_rms(cst_voice* vox);
 }

@@ -31,7 +31,7 @@ namespace Anki {
     {
       _httpAdapter = nullptr;
 #ifdef ANDROID
-#elif LINUX
+#elif defined(LINUX)
 #else
       _httpAdapter = CreateHttpAdapter();
 #endif

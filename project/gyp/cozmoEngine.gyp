@@ -149,7 +149,7 @@
       '-Wall',
       '-Woverloaded-virtual',
       '-Werror',
-      # '-Wundef', # Disabled until define usage is refactored to code standards (ANS: common.h ODE inside Webots fails this)
+      '-Wundef',
       '-Wheader-guard',
       '-fsigned-char',
       '-fvisibility-inlines-hidden',
@@ -423,6 +423,14 @@
           ],
         },
       ],
+      [
+        "OS=='mac'",
+        {
+          'defines': [
+            'USE_DAS=0',
+          ],
+        },
+      ],
     ],
   },
 
@@ -497,6 +505,12 @@
             'defines': [
               'MACOS',
             ],
+            'cflags': [
+              '-Wno-undef'
+            ],
+            'xcode_settings': {
+              'OTHER_CFLAGS': ['-Wno-undef'],
+            },
             'libraries': [
               'libCppController.dylib',
               'libode.dylib',
@@ -1135,7 +1149,15 @@
               ['exclude', 'run_m4_embeddedTests.cpp'],
               ['exclude', 'resaveBlockImages.m'],
             ],
+            'cflags': [
+              '-Wno-undef'
+            ],
+            'cflags_cc': [
+              '-Wno-undef'
+            ],
             'xcode_settings': {
+              'OTHER_CFLAGS': ['-Wno-undef'],
+              'OTHER_CPLUSPLUSFLAGS': ['-Wno-undef'],
               'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
             },
             'libraries': [

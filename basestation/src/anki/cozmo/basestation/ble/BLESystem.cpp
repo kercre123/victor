@@ -11,7 +11,7 @@
 **/
 
 #include "anki/cozmo/basestation/ble/BLESystem.h"
-#if __APPLE__
+#ifdef __APPLE__
 #include "anki/cozmo/basestation/ble/BLECozmoController_ios.h"
 #elif defined (ANDROID)
 #include "anki/cozmo/basestation/ble/BLECozmoController_android.h"

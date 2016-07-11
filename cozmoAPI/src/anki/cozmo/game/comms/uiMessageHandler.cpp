@@ -38,7 +38,7 @@
 #include "util/enums/enumOperators.h"
 #include "util/time/universalTime.h"
 
-#if ANDROID || ANKI_IOS_BUILD
+#if defined(ANDROID) || defined(ANKI_IOS_BUILD)
 #define USE_DIRECT_COMMS 1
 #else
 #define USE_DIRECT_COMMS 0
@@ -48,7 +48,7 @@ namespace Anki {
   namespace Cozmo {
     
     
-#if (ANKI_IOS_BUILD || ANDROID)
+#if (defined(ANKI_IOS_BUILD) || defined(ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   #define ANKI_ENABLE_SDK_OVER_TCP  1
 #else

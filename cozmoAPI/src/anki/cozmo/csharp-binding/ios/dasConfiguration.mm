@@ -5,7 +5,7 @@
 
 void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform * platform, const std::string& apprun)
 {
-#if TARGET_IPHONE_SIMULATOR
+#ifdef TARGET_IPHONE_SIMULATOR
   DASDisableNetwork(DASDisableNetworkReason_Simulator);
 #endif
 

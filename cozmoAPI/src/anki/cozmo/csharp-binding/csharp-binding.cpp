@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-#if __APPLE__
+#ifdef __APPLE__
 #include "TargetConditionals.h"
 #if TARGET_OS_IPHONE
 #define USE_IOS
@@ -44,7 +44,7 @@
 
 #ifdef USE_IOS
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
-#elif ANDROID
+#elif defined(ANDROID) && USE_DAS
 #include <DAS/dasPlatform_android.h>
 #endif
 
@@ -209,7 +209,7 @@ int cozmo_startup(const char *configuration_data)
 #ifdef USE_IOS
     // init DAS among other things
     result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
-#elif ANDROID
+#elif defined(ANDROID) && USE_DAS
     std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId)};
     dasPlatform->InitForUnityPlayer();
     DASNativeInit(std::move(dasPlatform), "cozmo");

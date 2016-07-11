@@ -17,7 +17,10 @@
 #include "anki/common/basestation/exceptions.h"
 #include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundef"
 #include <plugins/physics.h>
+#pragma GCC diagnostic pop
 #include <GLUT/GLUT.h>
 
 #if DEBUG_COZMO_PHYSICS
