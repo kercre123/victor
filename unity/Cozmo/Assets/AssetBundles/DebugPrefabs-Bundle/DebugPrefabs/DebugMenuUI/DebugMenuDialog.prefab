@@ -481,7 +481,7 @@ MonoBehaviour:
   - name: Animation
     panePrefab: {fileID: 113112, guid: 6edfb651b8cff462981b4979e7dd82f4, type: 2}
   - name: Console Log
-    panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
+    panePrefab: {fileID: 100452, guid: cdef2c268c6894768b953f4cffc23866, type: 2}
   - name: Audio
     panePrefab: {fileID: 137948, guid: 76d4e2b85e93448c692795fe78d5479c, type: 2}
   - name: Performance
