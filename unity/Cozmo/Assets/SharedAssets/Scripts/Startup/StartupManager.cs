@@ -61,8 +61,15 @@ public class StartupManager : MonoBehaviour {
 
   private bool _IsDebugBuild = false;
 
+  private bool _EngineConnected = false;
+
   // Use this for initialization
   private IEnumerator Start() {
+
+#if !UNITY_EDITOR
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
+    ConnectToEngine();
+#endif
 
     // Initialize DAS first so we can have error messages during intialization
 #if ANIMATION_TOOL
@@ -126,6 +133,10 @@ public class StartupManager : MonoBehaviour {
       AddComponents();
     }
 
+#if !UNITY_EDITOR
+    yield return CheckForEngineConnection();
+#endif
+
     _LoadingBar.SetProgress(1.0f);
 
     // Stop loading dots coroutine
@@ -146,6 +157,11 @@ public class StartupManager : MonoBehaviour {
     while (!initializedAssetManager) {
       yield return 0;
     }
+  }
+
+  private void HandleConnectedToEngine(string connectionIdentifier) {
+    DAS.Info("StartupManager.HandleConnectedToEngine", "Engine connected!");
+    _EngineConnected = true;
   }
 
   private IEnumerator LoadDebugAssetBundle(AssetBundleManager assetBundleManager, bool isDebugBuild) {
@@ -220,6 +236,18 @@ public class StartupManager : MonoBehaviour {
     while (loadedAssetBundles < _AssetBundlesToLoad.Length) {
       yield return 0;
     }
+  }
+
+  private void ConnectToEngine() {
+    RobotEngineManager.Instance.Disconnect();
+    RobotEngineManager.Instance.Connect(RobotEngineManager.kEngineIP);
+  }
+
+  private IEnumerator CheckForEngineConnection() {
+    while (!_EngineConnected) {
+      yield return 0;
+    }
+
   }
 
   private void AddComponents() {
@@ -299,6 +327,9 @@ public class StartupManager : MonoBehaviour {
       "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
         Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
       });
+
+    SkillSystem.Instance.Initialize();
+
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {

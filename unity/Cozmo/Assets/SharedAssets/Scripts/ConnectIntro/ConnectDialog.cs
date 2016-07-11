@@ -4,9 +4,6 @@ using UnityEngine.UI;
 public class ConnectDialog : MonoBehaviour {
 
   [SerializeField]
-  private Text _ConnectionStatus;
-
-  [SerializeField]
   private Cozmo.UI.CozmoButton _ConnectButton;
 
   [SerializeField]
@@ -25,44 +22,9 @@ public class ConnectDialog : MonoBehaviour {
   private string _CurrentScene;
   private bool _Connecting = false;
 
-  private IRobot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
-
-  private string EngineIP {
-    get { return PlayerPrefs.GetString("EngineIP", "127.0.0.1"); }
-
-    set { PlayerPrefs.SetString("EngineIP", value); }
-  }
-
-  private string RobotIP {
-    get { return PlayerPrefs.GetString("RobotIP", RobotEngineManager.kRobotIP); }
-
-    set { PlayerPrefs.SetString("RobotIP", value); }
-  }
-
-  private string SimRobotIP {
-    get { return PlayerPrefs.GetString("SimRobotIP", "127.0.0.1"); }
-
-    set { PlayerPrefs.SetString("SimRobotIP", value); }
-  }
-
-  private string RobotID {
-    get { return PlayerPrefs.GetString("RobotID", "1"); }
-
-    set { PlayerPrefs.SetString("RobotID", value); }
-  }
-
-  private string RobotName {
-    get { return PlayerPrefs.GetString("RobotName", "OK0000"); }
-
-    set { PlayerPrefs.SetString("RobotName", value); }
-  }
-
   private void Start() {
-    if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.IsConnected)
-      RobotEngineManager.Instance.Disconnect();
-
     if (RobotEngineManager.Instance != null) {
-      RobotEngineManager.Instance.ConnectedToClient += Connected;
+      RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
     }
@@ -79,6 +41,7 @@ public class ConnectDialog : MonoBehaviour {
     _MockButton.Initialize(HandleMockButton, "mock_button", "connect_dialog");
 
 #if !UNITY_EDITOR
+    // hide sim and mock buttons for on device deployments
     _SimButton.gameObject.SetActive(false);
     _MockButton.gameObject.SetActive(false);
 #endif
@@ -101,28 +64,30 @@ public class ConnectDialog : MonoBehaviour {
     this.Play(true);
   }
 
+  private void ConnectToEngine() {
+    RobotEngineManager.Instance.Disconnect();
+    RobotEngineManager.Instance.Connect(RobotEngineManager.kEngineIP);
+  }
+
+  private void ConnectToRobot() {
+    DAS.Info("ConnectDialog.ConnectToRobot", "Trying to connect to robot");
+    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
+  }
+
   private void OnDestroy() {
     if (RobotEngineManager.Instance != null) {
-      RobotEngineManager.Instance.ConnectedToClient -= Connected;
+      RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToEngine;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
     }
   }
 
   private void Update() {
-
     if (_Connecting || !_PingStatus.GetPingStatus()) {
       _ConnectButton.Interactable = false;
     }
     else {
       _ConnectButton.Interactable = true;
-    }
-
-    if (RobotEngineManager.Instance != null) {
-      DisconnectionReason reason = RobotEngineManager.Instance.GetLastDisconnectionReason();
-      if (reason != DisconnectionReason.None) {
-        _ConnectionStatus.text = "Disconnected: " + reason.ToString();
-      }
     }
   }
 
@@ -130,45 +95,49 @@ public class ConnectDialog : MonoBehaviour {
     _Connecting = true;
     _ConnectButton.Interactable = false;
     _SimButton.Interactable = false;
-    Localization.Get(LocalizationKeys.kLabelLoading);
-
+    _MockButton.Interactable = false;
     _Simulated = sim;
-    RobotEngineManager.Instance.Disconnect();
 
-    string errorText = null;
-    string ipText = _Simulated ? SimRobotIP : RobotIP;
-
-    if (string.IsNullOrEmpty(errorText)) {
-      _CurrentRobotIP = ipText;
-
-      RobotEngineManager.Instance.Connect(EngineIP);
-      _ConnectionStatus.text = "<color=#ffffff>Connecting to engine at " + EngineIP + "....</color>";
+    if (sim) {
+      _CurrentRobotIP = RobotEngineManager.kSimRobotIP;
     }
     else {
-      _ConnectionStatus.text = errorText;
+      _CurrentRobotIP = RobotEngineManager.kRobotIP;
     }
+
+#if UNITY_EDITOR
+    // In editor we delay the connection to the engine. This is so we can use things
+    // like mock mode which does not require the engine.
+    ConnectToEngine();
+#else
+    ConnectToRobot();
+#endif
+
   }
 
   public void PlayMock() {
     RobotEngineManager.Instance.MockConnect();
   }
 
-  public void ConfigureWifi() {
-    CozmoBinding.WifiSetup(RobotName, "2manysecrets");
+  private void HandleConnectedToEngine(string connectionIdentifier) {
+#if UNITY_EDITOR
+    // in editor we have to wait to connect to the engine first before connecting
+    // to the robot.
+    DAS.Info("ConnectDialog.HandleConnectedToEngine", "In Editor so connecting to robot after connecting to engine");
+    SetupEngine();
+    ConnectToRobot();
+#endif
   }
 
-  private void Connected(string connectionIdentifier) {
-    _ConnectionStatus.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
+  private void Disconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
+    DAS.Error("ConnectDialog", "Robot Disconnected");
+  }
+
+  private void SetupEngine() {
     RobotEngineManager.Instance.StartEngine();
-    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
     // Set initial volumes
-    // TODO: We need to connect to the engine as soon as the app launches so we can begin playing audio.
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
-  }
-
-  private void Disconnected(object message) {
-    _ConnectionStatus.text = "Disconnected";
   }
 
   private void RobotConnected(Anki.Cozmo.ExternalInterface.RobotConnected message) {
@@ -186,8 +155,6 @@ public class ConnectDialog : MonoBehaviour {
 
     // Set initial Robot Volume when connecting
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
-
-    _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");
   }
 

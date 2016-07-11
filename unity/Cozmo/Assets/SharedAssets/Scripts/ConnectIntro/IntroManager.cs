@@ -18,20 +18,29 @@ public class IntroManager : MonoBehaviour {
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
   void Start() {
-    ShowDevConnectDialog();
-
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleConnected);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectedFromClient);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnected);
+    ShowConnectDialog();
+#if !UNITY_EDITOR
+    SetupEngine();
+#endif
   }
 
   void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleConnected);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectedFromClient);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnected);
   }
 
-  private void HandleConnected(object message) {
+  private void SetupEngine() {
+    RobotEngineManager.Instance.StartEngine();
+    // Set initial volumes
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+  }
 
-    HideDevConnectDialog();
+  private void HandleRobotConnected(Anki.Cozmo.ExternalInterface.RobotConnected message) {
+
+    HideConnectDialog();
 
     if (string.IsNullOrEmpty(_IntroScriptedSequenceName)) {
       HandleIntroSequenceDone(_IntroSequenceDoneToken);
@@ -42,7 +51,7 @@ public class IntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleDisconnectedFromClient(object message) {
+  private void HandleDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     // Force quit hub world and show connect dialog again
     if (_HubWorldInstance != null) {
       _HubWorldInstance.DestroyHubWorld();
@@ -51,7 +60,7 @@ public class IntroManager : MonoBehaviour {
 
     UIManager.CloseAllViewsImmediately();
 
-    ShowDevConnectDialog();
+    ShowConnectDialog();
   }
 
   private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
@@ -63,7 +72,7 @@ public class IntroManager : MonoBehaviour {
     _HubWorldInstance.LoadHubWorld();
   }
 
-  private void ShowDevConnectDialog() {
+  private void ShowConnectDialog() {
     AssetBundleManager.Instance.LoadAssetBundleAsync(_ConnectDialogPrefabData.AssetBundle, LoadConnectView);
   }
 
@@ -75,7 +84,7 @@ public class IntroManager : MonoBehaviour {
     });
   }
 
-  private void HideDevConnectDialog() {
+  private void HideConnectDialog() {
     if (_ConnectDialogInstance != null) {
       Destroy(_ConnectDialogInstance);
       _ConnectDialogInstance = null;

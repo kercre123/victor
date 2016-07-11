@@ -16,6 +16,8 @@ using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
 public class RobotEngineManager : MonoBehaviour {
 
   public const string kRobotIP = "172.31.1.1";
+  public const string kEngineIP = "127.0.0.1";
+  public const string kSimRobotIP = "127.0.0.1";
 
   public static RobotEngineManager Instance = null;
 
@@ -86,8 +88,6 @@ public class RobotEngineManager : MonoBehaviour {
   private Anki.Cozmo.ExternalInterface.ResetFirmware _ResetFirmwareMessage = new Anki.Cozmo.ExternalInterface.ResetFirmware();
   private Anki.Cozmo.ExternalInterface.RequestDeviceData _RequestDeviceDataMessage = new Anki.Cozmo.ExternalInterface.RequestDeviceData();
 
-  public bool InitSkillSystem;
-
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
@@ -124,10 +124,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     Robots = new Dictionary<int, IRobot>();
 
-    // Startup Singletons depending on RobotEvents
-    if (InitSkillSystem) {
-      SkillSystem.Instance.Initialize();
-    }
     FeatureGate.Instance.Initialize();
     Anki.Debug.DebugConsoleData.Instance.RegisterEngineCallbacks();
   }
@@ -188,6 +184,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void Connect(string engineIP) {
+    DAS.Info("RobotEngineManager.Connect", "Unity attempting to connect to engine");
     _Channel.Connect(_UIDeviceID, _UILocalPort, engineIP, _UIAdvertisingRegistrationPort);
   }
 
