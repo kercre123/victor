@@ -53,10 +53,6 @@ bool Battery::init()
     if (!--countdown)
       return false;
   
-  // Battery power: Disabled (only for boot / recovery)
-  nrf_gpio_pin_clear(PIN_PWR_EN);
-  nrf_gpio_cfg_output(PIN_PWR_EN);
-
   // Encoder and headboard power
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
