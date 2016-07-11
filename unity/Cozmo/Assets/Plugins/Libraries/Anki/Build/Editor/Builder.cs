@@ -10,13 +10,13 @@ using System;
 
 namespace Anki {
   namespace Build {
-    
+
     public class Builder {
 
       public const string _kProjectName = "Cozmo";
       private const string _kBuildOuputFolder = "../../build/";
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
 
       [MenuItem(_kSimulationMode)]
@@ -29,7 +29,7 @@ namespace Anki {
         Menu.SetChecked(_kSimulationMode, Assets.AssetBundleManager.SimulateAssetBundleInEditor);
         return true;
       }
-      #endif
+#endif
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Find Duplicate Assets in Bundles")]
       public static void FindDuplicateAssetsInBundles() {
@@ -70,8 +70,7 @@ namespace Anki {
                     assetToBundle[line].Add(fileName);
                   }
                 }
-              }
-              catch (Exception e) {
+              } catch (Exception e) {
                 Debug.LogError("Builder.FindDuplicateAssetsInBundles: Error reading file: " + fileName + " error: " + e.Message);
               }
             }
@@ -109,7 +108,6 @@ namespace Anki {
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Copy Engine Assets to StreamingAssets")]
       public static string CopyEngineAssetsToStreamingAssets() {
-
         try {
           // Delete and create the directory to make sure we don't leave stale assets
           FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources");
@@ -137,7 +135,7 @@ namespace Anki {
           // Copy audio banks from a specific folder depending on the platform
           string soundFolder;
           switch (EditorUserBuildSettings.activeBuildTarget) {
-          case BuildTarget.Android: 
+          case BuildTarget.Android:
             soundFolder = "Android";
             break;
 
@@ -158,8 +156,7 @@ namespace Anki {
 
           Debug.Log("Engine assets copied to StreamingAssets");
           return null;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
           Debug.LogException(e);
           return e.ToString();
         }
@@ -203,41 +200,34 @@ namespace Anki {
         while (i < argv.Length) {
           string arg = argv[i++];
           switch (arg) {
-          case "--platform":
-            {
+          case "--platform": {
               platform = argv[i++];
               break;
             }
-          case "--config":
-            {
+          case "--config": {
               config = argv[i++];
               break;
             }
-          case "--build-number":
-            {
-              if (!Int32.TryParse (argv [i++], out buildNumber)){
+          case "--build-number": {
+              if (!Int32.TryParse(argv[i++], out buildNumber)) {
                 buildNumber = 1;
               }
               PlayerSettings.Android.bundleVersionCode = buildNumber;
               break;
             }
-          case "--build-path":
-            {
+          case "--build-path": {
               outputFolder = argv[i++];
               break;
             }
-          case "--debug":
-            {
+          case "--debug": {
               enableDebugging = true;
               break;
             }
-          case "--sdk":
-            {
+          case "--sdk": {
               sdk = argv[i++];
               break;
             }
-          case "--profile":
-            {
+          case "--profile": {
               connectWithProfiler = true;
               break;
             }
@@ -253,19 +243,16 @@ namespace Anki {
 
         BuildTarget buildTarget = BuildTarget.StandaloneOSXIntel64;
         switch (platform) {
-        case "android":
-          {
+        case "android": {
             buildTarget = BuildTarget.Android;
             break;
           }
         case "mac":
-        case "osx":
-          {
+        case "osx": {
             buildTarget = BuildTarget.StandaloneOSXIntel64;
             break;
           }
-        case "ios":
-          {
+        case "ios": {
             buildTarget = BuildTarget.iOS;
             if (sdk == "iphoneos") {
               PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
@@ -313,7 +300,7 @@ namespace Anki {
           Directory.CreateDirectory(outputPath);
         }
 
-        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, buildTarget);
+        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.UncompressedAssetBundle, buildTarget);
         if (manifest == null) {
           return "Error building asset bundles. See the Unity log for more information";
         }
@@ -329,7 +316,7 @@ namespace Anki {
       private static string BuildPlayerInternal(string outputFolder, BuildTarget buildTarget, BuildOptions buildOptions) {
         if (outputFolder == null)
           return "No output folder specified for the build";
-        
+
         if (!Directory.Exists(outputFolder)) {
           Directory.CreateDirectory(outputFolder);
         }
@@ -388,16 +375,14 @@ namespace Anki {
 
         switch (config) {
         case "debug":
-        case "Debug":
-          {
+        case "Debug": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
           }
           break;
         case "profile":
         case "Profile":
         case "release":
-        case "Release":
-          {
+        case "Release": {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception
             // in the DOTween library.
@@ -418,8 +403,7 @@ namespace Anki {
           // CopyFileOrDirectory requires the target to not exist so delete it first
           FileUtil.DeleteFileOrDirectory(outputFolder);
           FileUtil.CopyFileOrDirectory(sourceFolder, outputFolder);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
           DAS.Error(null, e.Message);
           return false;
         }
@@ -457,7 +441,7 @@ namespace Anki {
           if (EditorBuildSettings.scenes[i].enabled)
             scenes.Add(EditorBuildSettings.scenes[i].path);
         }
-  	
+
         return scenes.ToArray();
       }
 
@@ -465,8 +449,7 @@ namespace Anki {
       private static string GetOutputFolder(BuildTarget buildTarget) {
         switch (buildTarget) {
         case BuildTarget.Android:
-        case BuildTarget.iOS:
-          {
+        case BuildTarget.iOS: {
             string configuration = Debug.isDebugBuild ? "Debug" : "Release";
             string platformName = Assets.AssetBundleManager.GetPlatformName(buildTarget);
             string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-" + platformName;

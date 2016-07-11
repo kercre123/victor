@@ -1,0 +1,26 @@
+﻿using UnityEngine;
+using System.Collections;
+
+/// <summary>
+/// This class is for prefab or asset data that is only needed once the minigame starts.
+/// </summary>
+public class ChallengePrefabData : ScriptableObject {
+
+  // the mini game prefab to load for this challenge
+  [SerializeField]
+  private GameObject _MinigamePrefab;
+
+  public GameObject MinigamePrefab {
+    get { return _MinigamePrefab; }
+  }
+
+  // icon to show to represent this challenge
+  [SerializeField]
+  private Sprite _ChallengeIconPlainStyle;
+
+  public Sprite ChallengeIconPlainStyle {
+    get {
+      return _ChallengeIconPlainStyle;
+    }
+  }
+}

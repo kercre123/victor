@@ -3,9 +3,9 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
+using Anki.Assets;
 using Cozmo.UI;
 using DataPersistence;
-using System.Linq;
 using System;
 using DG.Tweening;
 
@@ -67,13 +67,14 @@ namespace Cozmo.HomeHub {
     private Sprite _EmotionChipSprite_Full;
 
     [SerializeField]
-    private UnityEngine.UI.Text _CurrentRequirementPointsLabel;
+    private Text _CurrentRequirementPointsLabel;
 
     [SerializeField]
-    private UnityEngine.UI.ScrollRect _ScrollRect;
+    private ScrollRect _ScrollRect;
 
     [SerializeField]
-    private LootView _LootViewPrefab;
+    private GameObjectDataLink _LootViewPrefabData;
+
     private LootView _LootViewInstance = null;
 
     [SerializeField]
@@ -92,6 +93,33 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private ParticleSystem _EnergyBarEmitter;
 
+    [SerializeField]
+    private CanvasGroup _TabContentContainer;
+
+    [SerializeField]
+    private float _TabContentAnimationXOriginOffset;
+
+    [SerializeField]
+    private Ease _TabContentOpenEase = Ease.OutBack;
+
+    [SerializeField]
+    private RectTransform _TabButtonContainer;
+
+    [SerializeField]
+    private float _TabButtonAnimationXOriginOffset;
+
+    [SerializeField]
+    private RectTransform _TopBarContainer;
+
+    [SerializeField]
+    private float _TopBarAnimationYOriginOffset;
+
+    [SerializeField]
+    private Ease _TopBarOpenEase = Ease.OutBack;
+
+    [SerializeField]
+    private Ease _TopBarCloseEase = Ease.InBack;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
@@ -99,7 +127,7 @@ namespace Cozmo.HomeHub {
       private set { _HomeHubInstance = value; }
     }
 
-    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -174,18 +202,20 @@ namespace Cozmo.HomeHub {
         // Avoid dupes
         return;
       }
-      if (_LootViewPrefab == null) {
-        DAS.Error("HomeView.OpenLootView", "LootViewPrefab is NULL");
-        return;
-      }
       _EmotionChipTag.gameObject.SetActive(false);
-      LootView alertView = UIManager.OpenView(_LootViewPrefab);
-      alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-      _LootViewInstance = alertView;
-      _LootViewInstance.ViewCloseAnimationFinished += (() => {
-        _EmotionChipTag.gameObject.SetActive(true);
-        CheckIfUnlockablesAffordableAndUpdateBadge();
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
+        _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
+          LootView alertView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+          alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+          _LootViewInstance = alertView;
+          _LootViewInstance.ViewCloseAnimationFinished += (() => {
+            _EmotionChipTag.gameObject.SetActive(true);
+            CheckIfUnlockablesAffordableAndUpdateBadge();
+            UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+            AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
+          });
+        });
       });
     }
 
@@ -373,6 +403,53 @@ namespace Cozmo.HomeHub {
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;
       StopCoroutine(BurstAfterInit());
+    }
+
+    protected override void ConstructOpenAnimation(Sequence openAnimation) {
+      UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
+      openAnimation.Append(defaultSettings.CreateOpenMoveTween(_TabButtonContainer,
+                                                               _TabButtonAnimationXOriginOffset,
+                                                               0));
+
+      openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TopBarContainer,
+                                                             0,
+                                                             _TopBarAnimationYOriginOffset,
+                                                             _TopBarOpenEase)
+                         .SetDelay(defaultSettings.CascadeDelay));
+
+      float contentContainerAnimDuration = defaultSettings.MoveOpenDurationSeconds;
+      openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TabContentContainer.transform,
+                                                             _TabContentAnimationXOriginOffset,
+                                                             0,
+                                                             _TabContentOpenEase,
+                                                             contentContainerAnimDuration)
+                         .SetDelay(defaultSettings.CascadeDelay));
+
+      _TabContentContainer.alpha = 0f;
+      openAnimation.Join(defaultSettings.CreateFadeInTween(_TabContentContainer, Ease.Unset, contentContainerAnimDuration * 0.3f));
+
+      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Bone);
+    }
+
+    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+      UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
+      closeAnimation.Append(defaultSettings.CreateCloseMoveTween(_TabContentContainer.transform,
+                                                                 _TabContentAnimationXOriginOffset,
+                                                                 0));
+      closeAnimation.Join(defaultSettings.CreateFadeOutTween(_TabContentContainer,
+                                                             Ease.Unset,
+                                                             UIDefaultTransitionSettings.Instance.MoveCloseDurationSeconds));
+
+      closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TopBarContainer,
+                                                               0,
+                                                               _TopBarAnimationYOriginOffset,
+                                                               _TopBarCloseEase)
+                          .SetDelay(defaultSettings.CascadeDelay));
+
+      closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TabButtonContainer,
+                                                               _TabButtonAnimationXOriginOffset,
+                                                               0)
+                          .SetDelay(defaultSettings.CascadeDelay));
     }
   }
 }

@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using Cozmo.UI;
 using DG.Tweening;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Cozmo {
@@ -37,21 +36,18 @@ namespace Cozmo {
       private Sequence _LockedBackgroundTween;
 
       [SerializeField]
-      private Image _BackgroundImage;
-
-      [SerializeField]
       private Image _BackgroundGradient;
 
       [SerializeField]
       private Image _MiddleBackgroundImage;
 
-      private bool _IsShowingMiddle = true;
+      private bool _IsShowingMiddle = false;
       private Sequence _MiddleBackgroundTween;
 
       [SerializeField]
       private Image _OverlayBackgroundImage;
 
-      private bool _IsShowingOverlay = true;
+      private bool _IsShowingOverlay = false;
       private Sequence _OverlayBackgroundTween;
 
       #endregion
@@ -133,13 +129,13 @@ namespace Cozmo {
       private RectTransform _NarrowGameSlideContainer;
 
       [SerializeField]
-      private UnityEngine.UI.LayoutElement _InfoTitleLayoutElement;
+      private LayoutElement _InfoTitleLayoutElement;
 
       [SerializeField]
       private Anki.UI.AnkiTextLabel _InfoTitleTextLabel;
 
       [SerializeField]
-      private UnityEngine.UI.LayoutElement _InfoTextSlideLayoutElement;
+      private LayoutElement _InfoTextSlideLayoutElement;
 
       [SerializeField]
       private RectTransform _InfoTextGameSlideContainer;
@@ -153,6 +149,12 @@ namespace Cozmo {
 
       [SerializeField]
       private AnimationSlide _AnimationSlidePrefab;
+
+      [SerializeField]
+      private GameObject _ShowCozmoCubesSlidePrefab;
+
+      [SerializeField]
+      private ChallengeEndedDialog _ChallengeEndViewPrefab;
 
       #endregion
 
@@ -188,6 +190,9 @@ namespace Cozmo {
       }
 
       #endregion
+
+      [SerializeField]
+      private ParticleSystem[] _BackgroundParticles;
 
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
@@ -255,6 +260,9 @@ namespace Cozmo {
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+        float fadeOutSeconds = UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds;
+        Ease fadeOutEasing = UIDefaultTransitionSettings.Instance.FadeOutEasing;
+
         Sequence close;
         foreach (MinigameWidget widget in _ActiveWidgets) {
           close = widget.CreateCloseAnimSequence();
@@ -262,6 +270,23 @@ namespace Cozmo {
             closeAnimation.Join(close);
           }
         }
+        closeAnimation = JoinFadeTween(closeAnimation, null, _BackgroundGradient, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, _LockedBackgroundTween, _LockedBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, _MiddleBackgroundTween, _MiddleBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+        closeAnimation = JoinFadeTween(closeAnimation, _OverlayBackgroundTween, _OverlayBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
+
+        foreach (ParticleSystem system in _BackgroundParticles) {
+          system.Stop();
+        }
+      }
+
+      private Sequence JoinFadeTween(Sequence sequenceToUse, Tween tween, Image targetImage, float targetAlpha,
+                                float duration, Ease easing) {
+        if (tween != null) {
+          tween.Kill();
+        }
+        sequenceToUse.Join(targetImage.DOFade(targetAlpha, duration).SetEase(easing));
+        return sequenceToUse;
       }
 
       #endregion
@@ -349,13 +374,21 @@ namespace Cozmo {
       #region Background Color
 
       public void InitializeColor(Color baseColor) {
-        _BackgroundImage.color = baseColor;
         _BackgroundGradient.color = baseColor;
-        _MiddleBackgroundImage.color = baseColor;
-        _IsShowingLocked = _LockedBackgroundImage.color.a > 0;
-        _IsShowingMiddle = _MiddleBackgroundImage.color.a > 0;
-        _OverlayBackgroundImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
-        _IsShowingOverlay = _OverlayBackgroundImage.color.a > 0;
+
+        Color transparentBaseColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
+        _MiddleBackgroundImage.color = transparentBaseColor;
+        _IsShowingMiddle = false;
+
+        _OverlayBackgroundImage.color = transparentBaseColor;
+        _IsShowingOverlay = false;
+
+        Color lockedColor = _LockedBackgroundImage.color;
+        lockedColor.a = 0;
+        _LockedBackgroundImage.color = lockedColor;
+        _IsShowingLocked = false;
+
+        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, baseColor);
       }
 
       public void ShowLockedBackground() {
@@ -385,23 +418,28 @@ namespace Cozmo {
       public void ShowBackground(ref bool currentlyShowing, ref Sequence sequence, Image targetImage) {
         if (!currentlyShowing) {
           currentlyShowing = true;
-          PlayFadeTween(ref sequence, targetImage, 1);
+          PlayFadeTween(ref sequence, targetImage, 1,
+                        UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds,
+                        UIDefaultTransitionSettings.Instance.FadeInEasing);
         }
       }
 
       public void HideBackground(ref bool currentlyShowing, ref Sequence sequence, Image targetImage) {
         if (currentlyShowing) {
           currentlyShowing = false;
-          PlayFadeTween(ref sequence, targetImage, 0);
+          PlayFadeTween(ref sequence, targetImage, 0,
+                        UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds,
+                        UIDefaultTransitionSettings.Instance.FadeOutEasing);
         }
       }
 
-      private void PlayFadeTween(ref Sequence sequenceToUse, Image targetImage, float targetAlpha) {
+      private void PlayFadeTween(ref Sequence sequenceToUse, Image targetImage, float targetAlpha,
+                                float duration, Ease easing) {
         if (sequenceToUse != null) {
           sequenceToUse.Kill();
         }
         sequenceToUse = DOTween.Sequence();
-        sequenceToUse.Append(targetImage.DOFade(targetAlpha, 0.2f));
+        sequenceToUse.Append(targetImage.DOFade(targetAlpha, duration).SetEase(easing));
       }
 
       #endregion
@@ -648,10 +686,18 @@ namespace Cozmo {
       #region Game State Slides
 
       public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, TweenCallback endInTweenCallback = null) {
-        GameObject slideObject = ShowWideGameStateSlide(MinigameUIPrefabHolder.Instance.InitialCubesSlide, "setup_cubes_slide", endInTweenCallback);
+        GameObject slideObject = ShowWideGameStateSlide(_ShowCozmoCubesSlidePrefab, "setup_cubes_slide", endInTweenCallback);
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.InViewColor, Cozmo.CubePalette.OutOfViewColor);
+        cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor);
         return cubeSlide;
+      }
+
+      public ChallengeEndedDialog ShowChallengeEndedSlide(string subtitleText, ChallengeData data) {
+        GameObject challengeEndSlide = ShowNarrowGameStateSlide(
+          _ChallengeEndViewPrefab.gameObject, "challenge_end_slide");
+        ChallengeEndedDialog challengeEndSlideScript = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
+        challengeEndSlideScript.SetupDialog(subtitleText, data);
+        return challengeEndSlideScript;
       }
 
       public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback, string headerLocKey = null) {

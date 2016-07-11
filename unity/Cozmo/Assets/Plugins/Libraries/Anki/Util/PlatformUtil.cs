@@ -14,6 +14,8 @@ public class PlatformUtil {
     return Application.streamingAssetsPath;
 #elif UNITY_ANDROID
     return Application.persistentDataPath + "/cozmo";
+#else
+    return null;
 #endif
   }
 
@@ -22,6 +24,8 @@ public class PlatformUtil {
     return GetResourcesBaseFolder();
 #elif UNITY_IOS || UNITY_ANDROID
     return GetResourcesBaseFolder() + "/cozmo_resources";
+#else
+    return null;
 #endif
   }
 
@@ -33,7 +37,8 @@ public class PlatformUtil {
     return GetResourcesFolder() + "/assets/" + resourcesSubfolder;
 #elif UNITY_ANDROID
     return GetResourcesFolder() + "/assets/" + resourcesSubfolder;
+#else
+    return null;
 #endif
   }
 }
-

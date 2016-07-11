@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using Anki.UI;
 using UnityEngine.UI;
 using Cozmo.UI;
+using DG.Tweening;
 
 public class StartView : BaseView {
 
@@ -21,6 +19,12 @@ public class StartView : BaseView {
 
   [SerializeField]
   private CozmoButton _ConnectButton;
+
+  [SerializeField]
+  private CanvasGroup _AlphaController;
+
+  [SerializeField]
+  private float _CloseTargetScale = 1.25f;
 
   public event System.Action OnConnectClicked;
 
@@ -54,12 +58,10 @@ public class StartView : BaseView {
   }
 
   private void HandleConnectClicked() {
-    var robot = RobotEngineManager.Instance.CurrentRobot;
-    if (robot != null) {
-      DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
-      robot.CancelCallback(HandleSleepAnimationComplete);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
-      robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
+
+    if (OnConnectClicked != null) {
+      OnConnectClicked();
     }
   }
 
@@ -79,30 +81,27 @@ public class StartView : BaseView {
     LoopRobotSleep();
   }
 
-  private void HandleWakeAnimationComplete(bool success) {
-    DAS.Info(this, "HandleWakeAnimationComplete: success: " + success);
-
-    var robot = RobotEngineManager.Instance.CurrentRobot;
-    if (robot != null) {
-      // Display Cozmo's default face
-      robot.DisplayProceduralFace(
-        0,
-        Vector2.zero,
-        Vector2.one,
-        ProceduralEyeParameters.MakeDefaultLeftEye(),
-        ProceduralEyeParameters.MakeDefaultRightEye());
-    }
-
-    if (OnConnectClicked != null) {
-      OnConnectClicked();
-    }
-  }
-
   private void HandleSecretSkipButtonClicked() {
     // just trigger our callback. Everything should get cleaned up
     if (OnConnectClicked != null) {
       OnConnectClicked();
     }
+  }
+
+  protected override void ConstructOpenAnimation(Sequence openAnimation) {
+    // INGO
+    // Do nothing because the ConnectDialog looks very similar; uncomment to fade in
+    // openAnimation.Append(_AlphaController.DOFade(1, _FadeTweenDurationSeconds));
+
+    UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
+  }
+
+  protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+    UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
+    float scaleDuration = defaultSettings.MoveCloseDurationSeconds;
+    closeAnimation.Append(transform.DOScale(_CloseTargetScale, scaleDuration)
+                          .SetEase(Ease.InBack));
+    closeAnimation.Join(defaultSettings.CreateFadeOutTween(_AlphaController, Ease.Unset, scaleDuration));
   }
 
   #region implemented abstract members of BaseView
@@ -114,7 +113,6 @@ public class StartView : BaseView {
     if (robot != null) {
       // if the startup view got interrupted somehow, clean up our animation callbacks.
       robot.CancelCallback(HandleSleepAnimationComplete);
-      robot.CancelCallback(HandleWakeAnimationComplete);
     }
   }
 

@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using Cozmo.UI;
 using System.Collections.Generic;
 
 public class InitialCubesState : State {
@@ -101,11 +100,11 @@ public class InitialCubesState : State {
       if (_Game.CubeIdsForGame.Count < _CubesRequired) {
         _Game.CubeIdsForGame.Add(cube.ID);
         addCube = true;
-        cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+        cube.SetLEDs(CubePalette.Instance.InViewColor.lightColor);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
       }
       else {
-        cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
+        cube.SetLEDs(CubePalette.Instance.InViewColor.lightColor);
       }
     }
     return addCube;
@@ -113,7 +112,7 @@ public class InitialCubesState : State {
 
   private bool RemoveFromValidCubes(LightCube cube) {
     bool removedCube = false;
-    cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
+    cube.SetLEDs(CubePalette.Instance.OutOfViewColor.lightColor);
     if (_Game.CubeIdsForGame.Contains(cube.ID)) {
       _Game.CubeIdsForGame.Remove(cube.ID);
       removedCube = true;

@@ -1,14 +1,11 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
-using DG.Tweening;
 using Anki.Cozmo;
-using System.Linq;
-using Cozmo.Util;
 using Anki.Cozmo.ExternalInterface;
+using Anki.Assets;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -35,6 +32,9 @@ public abstract class GameBase : MonoBehaviour {
   public delegate void EndGameDialogHandler();
 
   public event EndGameDialogHandler OnShowEndGameDialog;
+
+  public delegate void SharedMinigameViewHandler(SharedMinigameView newView);
+  public event SharedMinigameViewHandler OnSharedMinigameViewInitialized;
 
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
@@ -130,30 +130,51 @@ public abstract class GameBase : MonoBehaviour {
 
     RegisterInterruptionStartedEvents();
 
-    _SharedMinigameViewInstance = UIManager.OpenView(
-      MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab,
-      newView => {
+    LoadMinigameUIAssetBundle();
+  }
+
+  private void LoadMinigameUIAssetBundle() {
+    string minigameAssetBundleName = AssetBundleNames.minigame_ui_prefabs.ToString();
+    AssetBundleManager.Instance.LoadAssetBundleAsync(
+      minigameAssetBundleName, (bool success) => {
+        LoadSharedMinigameView(minigameAssetBundleName);
+        CubePalette.LoadCubePalette(minigameAssetBundleName);
+      });
+  }
+
+  private void LoadSharedMinigameView(string minigameAssetBundleName) {
+    MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab(minigameAssetBundleName, (GameObject viewPrefab) => {
+      SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
+      _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
         newView.Initialize(_ChallengeData);
         SetupView(newView, _ChallengeData);
+
+        if (OnSharedMinigameViewInitialized != null) {
+          OnSharedMinigameViewInitialized(newView);
+        }
       });
 
-    PrepRobotForGame();
+      PrepRobotForGame();
+    });
   }
 
   private void SetupView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    titleWidget.Icon = data.ChallengeIconPlainStyle;
+    data.LoadPrefabData((ChallengePrefabData prefabData) => titleWidget.Icon = prefabData.ChallengeIconPlainStyle);
     newView.ShowQuitButton();
 
-    // TODO use different color for activities vs games
-    newView.InitializeColor(UIColorPalette.GameBackgroundColor);
+    if (data.IsMinigame) {
+      newView.InitializeColor(UIColorPalette.GameBackgroundColor);
+    }
+    else {
+      newView.InitializeColor(UIColorPalette.ActivityBackgroundColor);
+    }
 
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
-    newView.HideMiddleBackground();
   }
 
   private void PrepRobotForGame() {
@@ -411,10 +432,37 @@ public abstract class GameBase : MonoBehaviour {
 
     DeregisterInterruptionStartedEvents();
     DeregisterInterruptionEndedEvents();
+
+    AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
+  }
+
+  private void QuitMinigame() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
+    _SharedMinigameViewInstance.CloseView();
+  }
+
+  private void QuitMinigameAnimationFinished() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= QuitMinigameAnimationFinished;
+
+    if (OnMiniGameQuit != null) {
+      OnMiniGameQuit();
+    }
+
+    CleanUp();
+  }
+
+  private void CloseMinigame() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished += CleanUp;
+    _SharedMinigameViewInstance.CloseView();
   }
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
+    CleanUp();
+  }
+
+  public void CleanUp() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
@@ -453,11 +501,8 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
 
     DAS.Event(DASConstants.Game.kQuit, null);
-    if (OnMiniGameQuit != null) {
-      OnMiniGameQuit();
-    }
 
-    CloseMinigameImmediately();
+    QuitMinigame();
   }
 
   public void RaiseMiniGameWin(string subtitleText = null) {
@@ -501,11 +546,7 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.CloseHowToPlayView();
 
     // Open confirmation dialog instead
-    GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                     MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject,
-                                     "challenge_end_slide");
-    _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
-    _ChallengeEndViewInstance.SetupDialog(subtitleText, _ChallengeData);
+    _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
 
     SoftEndGameRobotReset();
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
@@ -546,10 +587,9 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.TurnOffAllLights();
     }
 
-    // Get unparented reward icons TODO : Probably put this somewhere else
-    //Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIcons();
+    // Close minigame UI
+    CloseMinigame();
 
-    // Pass icons and xp to HomeHub
     if (_WonChallenge) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
@@ -565,8 +605,6 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
-    // Close minigame UI
-    CloseMinigameImmediately();
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }
 

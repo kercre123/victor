@@ -13,11 +13,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: CubeStackAction
-    _EnumValue: 3
+    _EnumValue: 1
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
+  NeverAvailable: 0
   DescriptionKey: unlockable.CubeStackAction.Description
   TitleKey: unlockable.CubeStackAction.Title
   UpgradeCostItemId: TestHexItem0
@@ -25,5 +26,5 @@ MonoBehaviour:
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradeGreen
-  CoreUpgradeIcon: {fileID: 21300000, guid: c4f0007665de74c5d9a236f3c88ab04e, type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   CubesRequired: 2

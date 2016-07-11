@@ -1,39 +1,17 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Anki.Assets;
 
 namespace Cozmo {
   namespace UI {
     public class MinigameUIPrefabHolder : ScriptableObject {
-
-      private static MinigameUIPrefabHolder _sInstance;
-
-      public static void SetInstance(MinigameUIPrefabHolder instance) {
-        _sInstance = instance;
-      }
-
-      public static MinigameUIPrefabHolder Instance {
-        get { return _sInstance; }
-      }
-
       [SerializeField]
-      private Cozmo.MinigameWidgets.SharedMinigameView _SharedMinigameViewPrefab;
+      private GameObjectDataLink _SharedMinigameViewPrefabData;
 
-      public Cozmo.MinigameWidgets.SharedMinigameView SharedMinigameViewPrefab {
-        get { return _SharedMinigameViewPrefab; }
-      }
-
-      [SerializeField]
-      private ChallengeEndedDialog _ChallengeEndViewPrefab;
-
-      public ChallengeEndedDialog ChallengeEndViewPrefab {
-        get { return _ChallengeEndViewPrefab; }
-      }
-
-      [SerializeField]
-      private GameObject _ShowCozmoCubeSlide;
-
-      public GameObject InitialCubesSlide {
-        get { return _ShowCozmoCubeSlide; }
+      public static void LoadSharedMinigameViewPrefab(string assetBundleName, System.Action<GameObject> dataLoadedCallback) {
+        AssetBundleManager.Instance.LoadAssetAsync(
+          assetBundleName, "MinigameUIPrefabHolder", (MinigameUIPrefabHolder prefabHolder) => {
+            prefabHolder._SharedMinigameViewPrefabData.LoadAssetData(dataLoadedCallback);
+          });
       }
     }
   }

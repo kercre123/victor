@@ -12,6 +12,8 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class ObservedObject {
 
+  private const uint _kFindCubesTimeoutFrames = 1;
+
   public enum PoseState {
     Known,
     Dirty,
@@ -25,7 +27,7 @@ public class ObservedObject {
   }
 
   public delegate void InFieldOfViewStateChangedHandler(ObservedObject objectChanged,
-                                                        InFieldOfViewState oldState,InFieldOfViewState newState);
+                                                        InFieldOfViewState oldState, InFieldOfViewState newState);
 
   public static event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
 
@@ -196,7 +198,7 @@ public class ObservedObject {
   public void MarkNotVisibleThisFrame() {
     // If not seen frame count of cube is greater than limit, mark object NotVisible
     _ConsecutiveVisionFramesNotSeen++;
-    if (_ConsecutiveVisionFramesNotSeen > Cozmo.CubePalette.FindCubesTimeoutFrames) {
+    if (_ConsecutiveVisionFramesNotSeen > _kFindCubesTimeoutFrames) {
       CurrentInFieldOfViewState = InFieldOfViewState.NotVisible;
       MarkersVisible = false;
     }

@@ -113,11 +113,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     Application.runInBackground = true;
 
-    #if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
+#if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
     _Channel = new RobotDirectChannel();
-    #else
+#else
     _Channel = new RobotUdpChannel();
-    #endif
+#endif
     _Channel.ConnectedToClient += Connected;
     _Channel.DisconnectedFromClient += Disconnected;
     _Channel.MessageReceived += ReceivedMessage;

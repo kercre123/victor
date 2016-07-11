@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 public class ConnectDialog : MonoBehaviour {
 
@@ -85,6 +84,8 @@ public class ConnectDialog : MonoBehaviour {
 #endif
 
     _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
+
+    UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
   }
 
   private void HandleMockButton() {

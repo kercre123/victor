@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Anki.Assets;
 
 public class IntroManager : MonoBehaviour {
 
   [SerializeField]
-  private ConnectDialog _ConnectDialogPrefab;
+  private GameObjectDataLink _ConnectDialogPrefabData;
+
   private GameObject _ConnectDialogInstance;
 
   [SerializeField]
@@ -63,14 +64,27 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void ShowDevConnectDialog() {
-    if (_ConnectDialogInstance == null && _ConnectDialogPrefab != null) {
-      _ConnectDialogInstance = UIManager.CreateUIElement(_ConnectDialogPrefab.gameObject);
-    }
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_ConnectDialogPrefabData.AssetBundle, LoadConnectView);
+  }
+
+  private void LoadConnectView(bool assetBundleSuccess) {
+    _ConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+      if (_ConnectDialogInstance == null && connectViewPrefab != null) {
+        _ConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
+      }
+    });
   }
 
   private void HideDevConnectDialog() {
     if (_ConnectDialogInstance != null) {
       Destroy(_ConnectDialogInstance);
+      _ConnectDialogInstance = null;
+
+      // INGO
+      // Right now StartView and ConnectDialog use the same assets so don't bother unloading asset bundle.
+      // AssetBundleManager.Instance.UnloadAssetBundle(_ConnectDialogPrefabData.AssetBundle);
     }
+
+    // Don't unload the asset bundle because other assets use it
   }
 }

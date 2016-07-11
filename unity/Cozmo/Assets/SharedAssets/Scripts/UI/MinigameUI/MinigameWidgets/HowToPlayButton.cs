@@ -40,7 +40,7 @@ namespace Cozmo {
       }
 
       public string DASEventViewController {
-        get { return _HowToPlayButtonInstance.DASEventViewController; } 
+        get { return _HowToPlayButtonInstance.DASEventViewController; }
         set { _HowToPlayButtonInstance.DASEventViewController = value; }
       }
 
@@ -91,7 +91,7 @@ namespace Cozmo {
       }
 
       public void OpenHowToPlayView(bool? overrideBackgroundDim, bool? overrideCloseOnTouchOutside) {
-        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab, 
+        _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab,
           overrideBackgroundDim: overrideBackgroundDim,
           overrideCloseOnTouchOutside: overrideCloseOnTouchOutside
         );

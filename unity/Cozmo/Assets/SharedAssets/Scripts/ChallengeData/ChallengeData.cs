@@ -1,13 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Anki.Assets;
 
 public class ChallengeData : ScriptableObject {
-  // the mini game prefab to load for this challenge
-  [SerializeField]
-  private GameObject _MinigamePrefab;
 
-  public GameObject MinigamePrefab {
-    get { return _MinigamePrefab; }
+  [System.Serializable]
+  private class ChallengePrefabDataLink : AssetBundleAssetLink<ChallengePrefabData> { }
+
+  [SerializeField]
+  private ChallengePrefabDataLink _ChallengePrefabData;
+
+  public void LoadPrefabData(System.Action<ChallengePrefabData> dataLoadedCallback) {
+    _ChallengePrefabData.LoadAssetData(dataLoadedCallback);
   }
 
   // the key used to find this specific challenge
@@ -42,19 +46,6 @@ public class ChallengeData : ScriptableObject {
 
   public Sprite ChallengeIcon {
     get { return _ChallengeIcon; }
-  }
-
-  // icon to show to represent this challenge
-  [SerializeField]
-  private Sprite _ChallengeIconPlainStyle;
-
-  public Sprite ChallengeIconPlainStyle {
-    get {
-      if (_ChallengeIconPlainStyle == null) {
-        return ChallengeIcon;
-      }
-      return _ChallengeIconPlainStyle;
-    }
   }
 
   [SerializeField]

@@ -46,9 +46,6 @@ public class StartupManager : MonoBehaviour {
   private string _MainSceneName;
 
   [SerializeField]
-  private string _MinigameUIPrefabAssetBundleName;
-
-  [SerializeField]
   private string _BasicUIPrefabAssetBundleName;
 
   [SerializeField]
@@ -63,8 +60,6 @@ public class StartupManager : MonoBehaviour {
   private string _ExtractionErrorMessage;
 
   private bool _IsDebugBuild = false;
-
-  private Coroutine _UpdateDotsCoroutine;
 
   // Use this for initialization
   private IEnumerator Start() {
@@ -82,7 +77,7 @@ public class StartupManager : MonoBehaviour {
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
     _CurrentNumDots = 0;
-    _UpdateDotsCoroutine = StartCoroutine(UpdateLoadingDots());
+    StartCoroutine(UpdateLoadingDots());
 
     // Extract resource files in platforms that need it
     yield return ExtractResourceFiles();
@@ -91,7 +86,9 @@ public class StartupManager : MonoBehaviour {
     if (!string.IsNullOrEmpty(_ExtractionErrorMessage)) {
       _LoadingBarLabel.color = Color.red;
       _LoadingBarLabel.text = _ExtractionErrorMessage;
-      StopCoroutine(_UpdateDotsCoroutine);
+
+      // Stop loading dots coroutine
+      StopAllCoroutines();
       yield break;
     }
 
@@ -131,8 +128,10 @@ public class StartupManager : MonoBehaviour {
 
     _LoadingBar.SetProgress(1.0f);
 
+    // Stop loading dots coroutine
+    StopAllCoroutines();
+
     // Load main scene
-    StopCoroutine(_UpdateDotsCoroutine);
     LoadMainScene(assetBundleManager);
 
     int startSeed = System.Environment.TickCount;
@@ -170,7 +169,7 @@ public class StartupManager : MonoBehaviour {
         AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName,
           prefabName, (GameObject prefab) => {
             if (prefab != null) {
-              GameObject go = GameObject.Instantiate(prefab);
+              GameObject go = Instantiate(prefab);
               go.transform.SetParent(transform);
             }
             loadedDebugAssets++;
@@ -256,15 +255,16 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.UIColorPalette.SetInstance(colorP);
       });
 
+
+    assetBundleManager.LoadAssetAsync<Cozmo.UI.UIDefaultTransitionSettings>(_BasicUIPrefabAssetBundleName,
+      "UIDefaultTransitionSettings", (Cozmo.UI.UIDefaultTransitionSettings colorP) => {
+        Cozmo.UI.UIDefaultTransitionSettings.SetInstance(colorP);
+      });
+
     assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName,
       "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
         psc.Initialize();
         Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
-      });
-
-    assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName,
-      "CubePalette", (Cozmo.CubePalette cp) => {
-        Cozmo.CubePalette.SetInstance(cp);
       });
 
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
@@ -299,14 +299,6 @@ public class StartupManager : MonoBehaviour {
       "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
         Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
       });
-
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName,
-      "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
-        Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
-      });
-
-
-
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {

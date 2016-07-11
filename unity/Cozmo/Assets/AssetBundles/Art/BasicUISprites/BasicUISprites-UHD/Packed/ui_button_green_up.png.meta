@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: eccf0d7ea36bd47fbb85c8ced7961a86
-timeCreated: 1463086204
+timeCreated: 1467928891
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -43,12 +43,13 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spriteBorder: {x: 49, y: 63, z: 51, w: 38}
+  spriteBorder: {x: 55, y: 70, z: 55, w: 50}
   spritePixelsToUnits: 100
   alphaIsTransparency: 1
   textureType: 8
   buildTargetSettings: []
   spriteSheet:
+    serializedVersion: 2
     sprites: []
     outline: []
   spritePackingTag: BasicUISpritesUHDAtlas

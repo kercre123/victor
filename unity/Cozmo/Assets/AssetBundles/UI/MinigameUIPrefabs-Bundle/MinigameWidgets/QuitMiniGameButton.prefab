@@ -113,11 +113,6 @@ Prefab:
       value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 0}
-      propertyPath: m_FontData.m_Font
-      value: 
-      objectReference: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093,
-        type: 3}
-    - target: {fileID: 0}
       propertyPath: m_FontData.m_Alignment
       value: 4
       objectReference: {fileID: 0}
