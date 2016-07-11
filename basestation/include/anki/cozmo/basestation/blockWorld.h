@@ -102,7 +102,9 @@ namespace Anki
 
       // First clears the object and then actually deletes it, removing it from
       // BlockWorld entirely.
+      void DeleteAllExistingObjects();
       bool DeleteObject(const ObjectID withID);
+      bool DeleteObject(ObservableObject* object);
       
       void DeleteObjectsByFamily(const ObjectFamily family);
       void DeleteObjectsByType(const ObjectType type);

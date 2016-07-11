@@ -212,7 +212,22 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
           ClearAllExistingObjects();
         }));
-      
+      // DeleteAllObjects
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::DeleteAllObjects,
+        [this] (const EventType& event)
+        {
+          _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
+          DeleteAllExistingObjects();
+          _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllObjects>(_robot->GetID());
+        }));
+      // DeleteAllCustomObjects
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::DeleteAllCustomObjects,
+        [this] (const EventType& event)
+        {
+          _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
+          DeleteObjectsByFamily(ObjectFamily::CustomObject);
+          _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>(_robot->GetID());
+        }));
       // SetObjectAdditionAndDeletion
       _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetObjectAdditionAndDeletion,
         [this] (const EventType& event)
@@ -3181,7 +3196,32 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                             "Will not clear all objects because object deletion is disabled.");
       }
     }
-    
+  
+  void BlockWorld::DeleteAllExistingObjects()
+  {
+    // TODO Fix the lightcube calls which rely on these objects still existing
+    if(_canDeleteObjects) {
+      for(auto& objectsByFamily : _existingObjects) {
+        for(const auto& objectsByType : objectsByFamily.second) {
+          for(const auto& objectsByID : objectsByType.second) {
+            
+            ObservableObject* object = objectsByID.second;
+            // Need to do all the same cleanup as Clear() calls
+            ClearObjectHelper(object);
+            
+            delete object;
+          }
+        }
+      }
+      
+      //finally clear the entire map, now that everything inside has been deleted
+      _existingObjects.clear();
+    }  else {
+      PRINT_NAMED_WARNING("BlockWorld.DeleteAllExistingObjects.DeleteDisabled",
+                          "Will not delete all objects because object deletion is disabled.");
+    }
+  }
+  
     void BlockWorld::ClearObjectHelper(ObservableObject* object)
     {
       if(object == nullptr) {
@@ -3599,9 +3639,14 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   
     bool BlockWorld::DeleteObject(const ObjectID withID)
     {
-      bool retval = false;
       ObservableObject* object = GetObjectByIdHelper(withID);
       
+      return DeleteObject(object);
+    }
+  
+    bool BlockWorld::DeleteObject(ObservableObject* object)
+    {
+      bool retval = false;
       if(nullptr != object)
       {
         // Inform caller that we found the requested ID:
@@ -3613,12 +3658,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // Actually delete the object we found
         ObjectFamily inFamily = object->GetFamily();
         ObjectType   withType = object->GetType();
-        delete object;
         
         // And remove it from the container
-        _existingObjects[inFamily][withType].erase(withID);
+        _existingObjects[inFamily][withType].erase(object->GetID());
+        
+        delete object;
       }
-      
       return retval;
     } // DeleteObject()
 

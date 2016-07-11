@@ -8,34 +8,21 @@ If he sees 0 blocks he will play an angry animation and stop. If he sees 1 block
 try to roll that block to its upright position. If it is currently upright he will not do anything
 If he sees 2 blocks or more, he will try to stack the blocks, but only if they are currently upright"""
 
-cozmo = CozmoInterface(False, 0)
+cozmo = CozmoInterface()
 
-cozmo.StartSim()
-
-cozmo.UnlockAll()
-print("Looking around for blocks, 30 seconds")
 cozmo.LookAround()
-numCubes = cozmo.WaitUntilSeeBlocks(3, timeout=30)
+numCubes = cozmo.WaitUntilSeeBlocks(2, timeout=20)
 cozmo.StopBehavior()
-time.sleep(1)
-print("Done with LookAround, numCubes = " + str(numCubes))
+
 if numCubes == 0:
-    print("Playing angry!")
-    cozmo.PlayAnimation("anim_speedTap_loseSession_03")
+    cozmo.PlayAnimationTrigger("CubePounceLoseSession")
+
 if numCubes == 1:
-    print("Playing RollBlock") 
-    cozmo.RollBlock()
-    time.sleep(60)
-    cozmo.StopBehavior()
+    cozmo.RollBlock(duration = 60)
+    cozmo.PlayAnimationTrigger("MajorWin")
+
 if numCubes > 1:
-    print("Playing StackBlocks")
-    cozmo.StackBlocks()
-    time.sleep(60)
-    cozmo.StopBehavior()
-time.sleep(1)
-print("Behavior done, playing majorWin")
-cozmo.PlayAnimation("majorWin")
-cozmo.Stop()
-time.sleep(1)
-print("Bye!")
+    cozmo.StackBlocks(duration = 60)
+    cozmo.PlayAnimationTrigger("MajorWin")
+
 cozmo.Shutdown()

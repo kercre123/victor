@@ -7,25 +7,14 @@ This is a special case script where the first block must be in view at the begin
 And then once he finishes picking up the first block he MUST be able to see the second or
 else it will not work."""
 
-cozmo = CozmoInterface(False, 0)
+cozmo = CozmoInterface()
 
-cozmo.StartSim()
+cozmo.WaitUntilSeeBlocks(1, timeout = 60)
 
-cozmo.UnlockAll()
+cozmo.PickupObject(0)
 
-time.sleep(5)
+cozmo.WaitUntilSeeBlocks(2, timeout = 60)
 
-print("Trying to align!")
+cozmo.PlaceOnObject(1)
 
-state = cozmo.GetState()
-if len(state.cubeOrder):
-    cozmo.PickupObject(state.cubeOrder[0])
-print("After lifting, driving backwards now")
-if len(state.cubeOrder) > 1:
-    cozmo.PlaceOnObject(state.cubeOrder[1])
-
-
-cozmo.Stop()
-time.sleep(1)
-print("Bye!")
 cozmo.Shutdown()

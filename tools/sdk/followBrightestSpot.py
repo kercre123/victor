@@ -9,30 +9,27 @@ import cv2
 A image will show up with his camera and the brightest spot in his view
 He will drive in the direction of that brightest spot until you press escape'''
 
-cozmo = CozmoInterface(False, 0)
-
-cozmo.StartSim()
-time.sleep(1)
-cozmo.SetRobotImageSendMode()
+cozmo = CozmoInterface()
 
 width = 320
 height = 240
 
 maxTreadSpeed = 25
 maxHeadRads = .1
+radius = 41
 # This is adapted from http://www.pyimagesearch.com/2014/09/29/finding-brightest-spot-image-using-python-opencv/
 while True:
 
     state = cozmo.GetState()
     image = state.GetImage()
     # Numpy's non-empty check
-    if (image != None) and image.any():
+    if image.any():
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(grey, (21,21), 0)
+        blurred = cv2.GaussianBlur(grey, (radius,radius), 0)
         # print(str(blurred.type()))
         (minval, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred)
         final = blurred.copy()
-        cv2.circle(final, maxLoc, 21, (255,0,0), 2)
+        cv2.circle(final, maxLoc, radius, (255,0,0), 2)
         cv2.imshow("Brightest spot circle!", final)
         (x,y) = maxLoc
         # print(x,y)
@@ -50,7 +47,5 @@ while True:
         if k == 27:
             break
 
-cozmo.Stop()
-time.sleep(1)
 cozmo.Shutdown()
 

@@ -33,7 +33,7 @@ class MessageMaker:
         toEngMessageConnect = self.GToEM(ConnectToRobot = connectMsg)
         return [toEngMessageStart, toEngMessageConnect]
 
-    def SetRobotImageSendMode(self, stream = True):
+    def SetRobotImageSendMode(self, stream):
         imageSendModeMsg = self.GToEI.SetRobotImageSendMode()
         imageSendModeMsg.robotID = 1
         if stream:
@@ -130,16 +130,16 @@ class MessageMaker:
         toEngMessage = self.GToEM(QueueSingleAction = queueMessage);
         return toEngMessage
 
-    def PlayAnimationGroup(self, idTag, animGroupName, robotID, numLoops):
-        playAnimGroupMsg = self.GToEI.PlayAnimationGroup()
-        playAnimGroupMsg.robotID = 1
+    def PlayAnimationTrigger(self, idTag, animTrigger, robotID, numLoops):
+        playAnimTriggerMsg = self.GToEI.PlayAnimationTrigger()
+        playAnimTriggerMsg.robotID = robotID
 
-        playAnimGroupMsg.animationGroupName = animGroupName
-        
-        playAnimGroupMsg.numLoops = numLoops
+        playAnimTriggerMsg.trigger = animTrigger
+
+        playAnimTriggerMsg.numLoops = numLoops
 
         queueMessage = self._BuildQueueSingleAction(idTag)
-        queueMessage.action.playAnimationGroup = playAnimationGroupMsg
+        queueMessage.action.playAnimationTrigger = playAnimTriggerMsg
 
         toEngMessage = self.GToEM(QueueSingleAction = queueMessage);
         
@@ -179,9 +179,11 @@ class MessageMaker:
         
         return toEngMessage 
 
-    def AlignWithObject(self, idTag, objectID):
+    def AlignWithObject(self, idTag, objectID, usePreDockPose, useManualSpeed):
         alignMsg = self.GToEI.AlignWithObject()
         alignMsg.objectID = objectID
+        alignMsg.usePreDockPose = usePreDockPose
+        alignMsg.useManualSpeed = useManualSpeed
 
         queueMessage = self._BuildQueueSingleAction(idTag)
         queueMessage.action.alignWithObject = alignMsg
@@ -204,10 +206,11 @@ class MessageMaker:
         
         return toEngMessage
 
-    def PlaceOnObject(self, idTag, objectID):
+    def PlaceOnObject(self, idTag, objectID, usePreDockPose, useManualSpeed):
         placeMsg = self.GToEI.PlaceOnObject()
         placeMsg.objectID = objectID
-
+        placeMsg.usePreDockPose = usePreDockPose
+        placeMsg.useManualSpeed = useManualSpeed
         queueMessage = self._BuildQueueSingleAction(idTag)
         queueMessage.action.placeOnObject = placeMsg
 
@@ -215,12 +218,14 @@ class MessageMaker:
         
         return toEngMessage
 
-    def PickupObject(self, idTag, objectID):
+    def PickupObject(self, idTag, objectID, usePreDockPose, useManualSpeed):
         pickupMsg = self.GToEI.PickupObject()
         pickupMsg.objectID = objectID
-
+        pickupMsg.usePreDockPose = usePreDockPose
+        pickupMsg.useManualSpeed = useManualSpeed
         queueMessage = self._BuildQueueSingleAction(idTag)
         queueMessage.action.pickupObject = pickupMsg
+
 
         toEngMessage = self.GToEM(QueueSingleAction = queueMessage);
         
@@ -229,8 +234,8 @@ class MessageMaker:
     def SayTextQueue(self, idTag, text):
         textMsg = self.GToEI.SayText()
         textMsg.text = text
-        textMsg.playEvent = self.EToG.GameEvent.OnSawOldNamedFace
-        textMsg.style = self.GToE.SayTextStyle.Normal
+        textMsg.playEvent = self.GToE.AnimationTrigger.OnSawNewNamedFace
+        textMsg.style = self.GToE.SayTextStyle.Name_Normal
         
         queueMessage = self._BuildQueueSingleAction(idTag)
         queueMessage.action.sayText = textMsg
@@ -242,8 +247,8 @@ class MessageMaker:
     def SayText(self, text):
         textMsg = self.GToEI.SayText()
         textMsg.text = text
-        textMsg.playEvent = self.EToG.GameEvent.OnSawOldNamedFace
-        textMsg.style = self.GToE.SayTextStyle.Normal
+        textMsg.playEvent = self.GToE.AnimationTrigger.OnSawNewNamedFace
+        textMsg.style = self.GToE.SayTextStyle.Name_Normal
         
         toEngMessage = self.GToEM(SayText = textMsg);
 
@@ -273,4 +278,106 @@ class MessageMaker:
 
         toEngMessage = self.GToEM(MountCharger = mountMsg);
         
+        return toEngMessage
+
+    def ClearAllObjects(self):
+        clearMsg = self.GToEI.ClearAllObjects()
+        clearMsg.robotID = 1
+
+        toEngMessage = self.GToEM(ClearAllObjects = clearMsg)
+
+        return toEngMessage
+
+    def DeleteAllObjects(self):
+        deleteMsg = self.GToEI.DeleteAllObjects()
+        deleteMsg.robotID = 1
+
+        toEngMessage = self.GToEM(DeleteAllObjects = deleteMsg)
+
+        return toEngMessage
+
+    def DeleteAllCustomObjects(self):
+        deleteMsg = self.GToEI.DeleteAllCustomObjects()
+        deleteMsg.robotID = 1
+
+        toEngMessage = self.GToEM(DeleteAllCustomObjects=deleteMsg)
+
+        return toEngMessage
+
+    def SetBackpackLEDs(self, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms):
+        setLEDMsg = self.GToEI.SetBackpackLEDs()
+        setLEDMsg.onColor = onColor
+        setLEDMsg.offColor = offColor
+        setLEDMsg.onPeriod_ms = onPeriod_ms
+        setLEDMsg.offPeriod_ms =offPeriod_ms
+        setLEDMsg.transitionOnPeriod_ms = transitionOnPeriod_ms
+        setLEDMsg.transitionOffPeriod_ms = transitionOffPeriod_ms
+        setLEDMsg.robotID = 1
+        
+        toEngMessage = self.GToEM(SetBackpackLEDs = setLEDMsg)
+
+        return toEngMessage
+
+
+    def EnrollNamedFace(self, idTag, name, faceID):
+        enrollMsg = self.GToEI.EnrollNamedFace()
+        enrollMsg.faceID = faceID
+        enrollMsg.name = name
+
+        queueMessage = self._BuildQueueSingleAction(idTag)
+        queueMessage.action.enrollNamedFace = enrollMsg
+
+        toEngMessage = self.GToEM(QueueSingleAction=queueMessage)
+
+        return toEngMessage
+
+    def TurnTowardsFace(self, idTag, faceID, maxTurnAngle_rad):
+        turnMsg = self.GToEI.TurnTowardsFace()
+        turnMsg.robotID = 1
+        turnMsg.faceID = faceID
+        turnMsg.maxTurnAngle_rad = maxTurnAngle_rad
+
+        queueMessage = self._BuildQueueSingleAction(idTag)
+        queueMessage.action.turnTowardsFace = turnMsg
+
+        toEngMessage = self.GToEM(QueueSingleAction=queueMessage)
+
+        return toEngMessage
+
+    def TurnTowardsPose(self, idTag, x_mm, y_mm, z_mm, maxTurnAngle_rad):
+        turnMsg = self.GToEI.TurnTowardsPose()
+        turnMsg.robotID = 1
+        turnMsg.world_x = x_mm
+        turnMsg.world_y = y_mm
+        turnMsg.world_z = z_mm
+        turnMsg.maxTurnAngle_rad = maxTurnAngle_rad
+
+        queueMessage = self._BuildQueueSingleAction(idTag)
+        queueMessage.action.turnTowardsPose = turnMsg
+
+        toEngMessage = self.GToEM(QueueSingleAction=queueMessage)
+
+        return toEngMessage
+
+    def SetActiveObjectLEDs(self, objectID, onColor, offColor, onPeriod_ms, offPeriod_ms,
+                            transitionOnPeriod_ms, transitionOffPeriod_ms, relativeToX, relativeToY,
+                            whichLEDs, makeRelative, turnOffUnspecifiedLEDs, robotID):
+        lightMsg = self.GToEI.SetActiveObjectLEDs()
+
+        lightMsg.objectID = objectID
+        lightMsg.onColor = onColor
+        lightMsg.offColor = offColor
+        lightMsg.onPeriod_ms = onPeriod_ms
+        lightMsg.offPeriod_ms = offPeriod_ms
+        lightMsg.transitionOnPeriod_ms = transitionOnPeriod_ms
+        lightMsg.transitionOffPeriod_ms = transitionOffPeriod_ms
+        lightMsg.relativeToX = relativeToX
+        lightMsg.relativeToY = relativeToY
+        lightMsg.whichLEDs = whichLEDs
+        lightMsg.makeRelative = makeRelative
+        lightMsg.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs
+        lightMsg.robotID = robotID
+
+        toEngMessage = self.GToEM(SetActiveObjectLEDs=lightMsg)
+
         return toEngMessage

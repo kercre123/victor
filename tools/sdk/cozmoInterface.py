@@ -42,25 +42,37 @@ gKey = 0
 gState = []
 
 class CozmoInterface:
-    def __init__(self, useTcpConnection, verboseLevel):
+    def __init__(self, verboseLevel = 0, enableReactionaryBehaviors = False):
         "Initalize the engine interface. Must be called before any other methods"
 
         self.verboseLevel = verboseLevel
         self.asyncEngineInterfaceInstance = None
 
-        self.asyncEngineInterfaceInstance = AsyncEngineInterface(useTcpConnection, verboseLevel)
+        self.asyncEngineInterfaceInstance = AsyncEngineInterface(verboseLevel = verboseLevel)
         self.asyncEngineInterfaceInstance.start()
 
         self.messageMaker = MessageMaker(GToEI,GToEM,EToG,GToE)
+
+        # Initial speeds of head/treads. These are used to prevent message spam in DriveWheels
+        # and MoveHead
+        self.sentSpeeds = (0,0)
+        self.sentHeadSpeed = 0
 
         while not self.IsConnected():
             time.sleep(.05)
             continue
         # Time to load on-startup engine information
         # TODO wait for an "engine loaded" message instead of sleeping
-        time.sleep(2)
+        # time.sleep(2)
+        self.StartSim()
+        self.EnableReactionaryBehaviors(enableReactionaryBehaviors)
+        self.SetRobotImageSendMode(True)
+        self.UnlockAll()
+        self.DeleteAllCustomObjects()
 
     def Shutdown(self):
+        self.Stop()
+        time.sleep(1)
         if self.asyncEngineInterfaceInstance is not None:
             del self.asyncEngineInterfaceInstance
             self.asyncEngineInterfaceInstance = None
@@ -108,15 +120,29 @@ class CozmoInterface:
             return num
         return 0
 
-    def CreateObjectRelRobot(self, x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm):
+    def WaitUntilSeeFaces(self, numFaces, timeout = 0):
+        startTime = time.time()
+        # If timeout is the default value 0, just wait until the inside condition is satisfied 
         currState = self.GetState()
-        if currState:
-            currX = currState.robotState.pose_x
-            currY = currState.robotState.pose_y
-            currRad = currState.robotState.poseAngle_rad
-            self.CreateObjectAtPose(currX + x_mm, currY + y_mm, currRad + angle_rad, depth_mm, width_mm, height_mm)
+        if not currState:
+            print("State is currently None")
+            return 0
         else:
-            print("Cozmo's state is None!")
+            num = currState.numFaces
+            while ((not timeout) or ((time.time() - startTime) < timeout)):
+                if (num >= numFaces):
+                    return num
+                currState = self.GetState()
+                num = currState.numFaces
+                time.sleep(.05)
+
+            sys.stdout.write("WaitUntilSeeFace timed out: NumFaceSeen = " + str(num) + os.linesep)
+            return num
+        return 0
+
+    def CreateObjectRelativeToRobotPose(self, x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm):
+        (x,y,angle) = self.GetPoseRelRobot(x_mm, y_mm, angle_rad)
+        self.CreateObjectAtPose(x, y, angle, depth_mm, width_mm, height_mm)
 
     def CreateObjectAtPose(self, x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm):
         self.QueueMessage(self.messageMaker.CreateObjectAtPose(x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm))
@@ -126,30 +152,52 @@ class CozmoInterface:
         # TODO: Need to wait for a success message from engine
         time.sleep(1)
 
-    def SetRobotImageSendMode(self):
+    def SetRobotImageSendMode(self, stream):
         "Enables cozmo sending image chunks to the SDK, necessary before attempting to get messages"
-        self.QueueMessage(self.messageMaker.SetRobotImageSendMode())
+        self.QueueMessage(self.messageMaker.SetRobotImageSendMode(stream))
 
     def UnlockAll(self):
         self.QueueMessage(self.messageMaker.UnlockAll())
 
-    def StackBlocks(self):
+    def StackBlocks(self, duration = 0):
         self.QueueMessage(self.messageMaker.StackBlocks())
+        if duration:
+            time.sleep(duration)
+            self.StopBehavior()
 
-    def RollBlock(self):
+    def RollBlock(self, duration = 0):
         self.QueueMessage(self.messageMaker.RollBlock())
+        if duration:
+            time.sleep(duration)
+            self.StopBehavior()
 
     def StopBehavior(self):
         self.QueueMessage(self.messageMaker.StopBehavior())
 
-    def LookAround(self):
+    def LookAround(self, duration = 0):
         self.QueueMessage(self.messageMaker.LookAround())
+        if duration:
+            time.sleep(duration)
+            self.StopBehavior()
 
-    def DriveWheels(self, lWheelSpeed = 20, rWheelSpeed = 20, lWheelAcc = 20, rWheelAcc = 20):
-        self.QueueMessage(self.messageMaker.DriveWheels(lWheelSpeed, rWheelSpeed, lWheelAcc, rWheelAcc))
+    def DriveWheels(self, lWheelSpeed = 50, rWheelSpeed = 50, lWheelAcc = 50, rWheelAcc = 50, duration = 0.0):
+        # Should help to prevent spam
+        if (lWheelSpeed, rWheelSpeed) == self.sentSpeeds:
+            return False
+        self.QueueMessage(self.messageMaker.DriveWheels(lWheelSpeed, rWheelSpeed, 
+                                                        lWheelAcc, rWheelAcc))
+        self.sentSpeeds = (lWheelSpeed, rWheelSpeed)
+        if duration:
+            time.sleep(duration)
+            self.Stop()
+            time.sleep(.5)
 
     def Stop(self):
+        if (0, 0) == self.sentSpeeds:
+            return False
         self.QueueMessage(self.messageMaker.Stop())
+        self.sentSpeeds = (0, 0)
+
 
     def PlayAnimation(self, animName, robotID = 1, numLoops = 1):
         if not self.asyncEngineInterfaceInstance.InAnimationNames(animName):
@@ -159,17 +207,22 @@ class CozmoInterface:
         Lock()
         return True
 
-    def PlayAnimationGroup(self, animGroupName, robotID = 1, numLoops = 1):
-        if not self.asyncEngineInterfaceInstance.InAnimationGroupNames(animGroupName):
-            sys.stderr.write("[PlayAnimation] Error: Animation requested not in list of possible animations" + os.linesep)
+    def PlayAnimationTrigger(self, trigger, robotID = 1, numLoops = 1):
+        try:
+            animTrigger = eval("GToE.AnimationTrigger."+trigger)
+        except:
+            print("Not a valid AnimationTrigger, AnimationTrigger lookup unsuccessful")
             return False
-        self.QueueMessage(self.messageMaker.PlayAnimationGroup(gIdTag, animGroupName, robotID, numLoops))
+        self.QueueMessage(self.messageMaker.PlayAnimationTrigger(gIdTag, animTrigger, robotID, numLoops))
         Lock()
         return True
 
     def MoveHead(self, velocity):
         "Moves cozmos head, velocity in rad/s"
+        if velocity == self.sentHeadSpeed:
+            return False
         self.QueueMessage(self.messageMaker.MoveHead(velocity))
+        self.sentHeadSpeed = velocity
 
     def MoveLift(self, velocity):
         self.QueueMessage(self.messageMaker.MoveLift(velocity))
@@ -183,30 +236,48 @@ class CozmoInterface:
         self.QueueMessage(self.messageMaker.PopAWheelie())
         Lock(LockTypes.onBack)
 
-    def AlignWithObject(self, objectID = -1):
-        self.QueueMessage(self.messageMaker.AlignWithObject(gIdTag, objectID))
+    def AlignWithObject(self, objectID = -1, usePreDockPose = True, useManualSpeed = False):
+        self.QueueMessage(self.messageMaker.AlignWithObject(gIdTag, objectID, usePreDockPose, useManualSpeed))
         Lock()
 
     def GoToPose(self, x_mm, y_mm, rad):
         self.QueueMessage(self.messageMaker.GoToPose(gIdTag, x_mm, y_mm, rad))
 
-    def DriveDistance(self, x_mm, y_mm, rad = 0):
+    def GetPoseRelRobot(self, x_mm, y_mm, angle_rad):
         currState = self.GetState()
-        if currState:
-            currX = currState.robotState.pose_x
-            currY = currState.robotState.pose_y
-            currRad = currState.robotState.poseAngle_rad
-            self.GoToPose(currX + x_mm, currY + y_mm, currRad + rad)
+        if not currState:
+            print("Cozmo's state is none!")
+            return (0,0,0)
+        currX = currState.robotState.pose.x
+        currY = currState.robotState.pose.y
+        currRad = currState.robotState.poseAngle_rad
+        finalX = currX + math.cos(currRad)*x_mm - math.sin(currRad)*y_mm
+        finalY = currY + math.sin(currRad)*x_mm + math.cos(currRad)*y_mm
+        finalRad = currRad + angle_rad
+        return (finalX, finalY, finalRad)
+
+    def DriveDistance(self, x_mm, y_mm = 0, angle_rad = 0, duration = 0):
+        (x,y,angle) = self.GetPoseRelRobot(x_mm,y_mm,angle_rad)
+        self.GoToPose(x, y, angle)
+        if duration:
+            time.sleep(duration)
+            self.Stop()
+
+    def PlaceOnObject(self, blockIndex = -1, usePreDockPose = True, useManualSpeed = False):
+        state = self.GetState()
+        if len(state.cubeOrder) > blockIndex:
+            self.QueueMessage(self.messageMaker.PlaceOnObject(gIdTag, state.cubeOrder[blockIndex], usePreDockPose, useManualSpeed))
+            Lock()
         else:
-            print("Cozmo's state is None!")
-
-    def PlaceOnObject(self, objectID = -1):
-        self.QueueMessage(self.messageMaker.PlaceOnObject(gIdTag, objectID))
-        Lock()
-
-    def PickupObject(self, objectID = -1):
-        self.QueueMessage(self.messageMaker.PickupObject(gIdTag, objectID))
-        Lock()
+            sys.stdout.write('Numblocks < blockIndex, there is no block at that index' + os.linesep)
+        
+    def PickupObject(self, blockIndex = -1, usePreDockPose = True, useManualSpeed = False):
+        state = self.GetState()
+        if len(state.cubeOrder) > blockIndex:
+            self.QueueMessage(self.messageMaker.PickupObject(gIdTag, state.cubeOrder[blockIndex], usePreDockPose, useManualSpeed))
+            Lock()
+        else:
+            sys.stdout.write('Numblocks < blockIndex, there is no block at that index' + os.linesep)
 
     # Sounds are linked with specific behaviors and animations, so a sound is an animation basically
     # (Which is also linked to playing some sound)
@@ -215,25 +286,116 @@ class CozmoInterface:
 
     def SayText(self, text):
         self.QueueMessage(self.messageMaker.SayText(text))
+        # TODO get completion message
+        time.sleep(2)
 
     def EnableReactionaryBehaviors(self, on = True):
         self.QueueMessage(self.messageMaker.EnableReactionaryBehaviors(on))
 
-    def TurnInPlace(self, rad = math.pi/2):
+    def TurnInPlace(self, radians = 0.0, degrees = 0.0, duration = 0):
         "Positive rad turns left, negative turns right"
-        self.QueueMessage(self.messageMaker.TurnInPlace(rad))
+        angle = radians if radians else degrees * math.pi / 180
+        self.QueueMessage(self.messageMaker.TurnInPlace(angle))
+        dur = duration if duration else angle * 2.0
+        time.sleep(dur)
+        self.Stop()
+        # Give himself time to stop
+        time.sleep(.5)
 
-    def MountCharger(self):
+    def MountCharger(self, objectID):
         currState = self.GetState()
         if currState.ChargerExists():
             self.QueueMessage(self.messageMaker.MountCharger(currState.charger[objectID]))
 
+    def GetObjectImageCenter(self, object):
+        state = self.GetState()
+        centerX = (object.img_topLeft_x + (object.img_width/2)) 
+        centerY = (object.img_topLeft_y + (object.img_height/2))
+        return (centerX, centerY)
+
+    def GetImage(self, drawViz = False):
+        state = self.GetState()
+        if state != None:
+            return state.GetImage(drawViz)
+        return None
+
+    def ClearAllObjects(self):
+        self.QueueMessage(self.messageMaker.ClearAllObjects())
+
+    def DeleteAllObjects(self):
+        self.QueueMessage(self.messageMaker.DeleteAllObjects())
+        Lock(LockTypes.robotDeletedAllObjects)
+        self.asyncEngineInterfaceInstance.DeleteAllObjects()
+
+    def DeleteAllCustomObjects(self):
+        self.QueueMessage(self.messageMaker.DeleteAllCustomObjects())
+        Lock(LockTypes.robotDeletedAllCustomObjects)
+
+    def _ColorLookup(self, color):
+        try:
+            colorHex = eval("GToE.LEDColor." + color) << 8
+        except:
+            colorHex = 0x00000000
+            sys.stdout.write("Color lookup failed, " + color + " is not a valid LEDColor" + os.linesep)
+            sys.stdout.write("""Possible colors LED_RED,LED_GREEN,LED_YELLOW,
+                                LED_BLUE,LED_PURPLE,LED_CYAN,LED_WHITE,LED_IR""")
+
+        return colorHex
+
+    def SetBackpackLEDs(self, onColor = 0xffffffff,
+                              offColor = 0, 
+                              onPeriod_ms = [250,250,250,250,250], 
+                              offPeriod_ms = [0,0,0,0,0], 
+                              transitionOnPeriod_ms = [0,0,0,0,0], 
+                              transitionOffPeriod_ms = [0,0,0,0,0]):
+        """
+        Sets the color values of the backpack LEDs, each field is a list of length 5, for the 5 
+        different leds on the backpack. LEDs 0 and 4 are red only.
+        The color format is 0xRRGGBB??
+        """
+        finalColors = []
+        if isinstance(onColor, str):
+            finalColors = [self._ColorLookup(onColor)] * 5
+        elif isinstance(onColor, int):
+            finalColors = [onColor] * 5
+        else:
+            for color in onColor:
+                finalColors.append(self._ColorLookup(color) if isinstance(color,str) else color)
+
+        if not offColor:
+            offColor = finalColors
+        self.QueueMessage(self.messageMaker.SetBackpackLEDs(finalColors, offColor, 
+                                                            onPeriod_ms, offPeriod_ms, 
+                                                            transitionOnPeriod_ms, transitionOffPeriod_ms))
+
+    def SetActiveObjectLEDs(self, objectID, onColor = 0xffffffff, offColor = 0,
+                            onPeriod_ms = 255, offPeriod_ms = 0,
+                            transitionOnPeriod_ms = 0, transitionOffPeriod_ms = 0,
+                            relativeToX = 0, relativeToY = 0,
+                            whichLEDs = 255, makeRelative = 2, turnOffUnspecifiedLEDs = 1, robotID = 1):
+        if not offColor:
+            offColor = onColor
+        self.QueueMessage(self.messageMaker.SetActiveObjectLEDs(objectID, onColor, offColor, onPeriod_ms, offPeriod_ms,
+                                                transitionOnPeriod_ms, transitionOffPeriod_ms, relativeToX, relativeToY,
+                                                whichLEDs, makeRelative, turnOffUnspecifiedLEDs, robotID))
+
+    def EnrollNamedFace(self, name, faceID):
+        self.QueueMessage(self.messageMaker.EnrollNamedFace(gIdTag, name, faceID))
+
+    # Hard coded angle because 2*pi rounds to zero
+    def TurnTowardsFace(self, faceID, maxTurnAngle_rad = math.pi):
+        self.QueueMessage(self.messageMaker.TurnTowardsFace(gIdTag, faceID, maxTurnAngle_rad))
+
+    def TurnTowardsPose(self, x_mm, y_mm, z_mm = 0, maxTurnAngle_rad= math.pi):
+        self.QueueMessage(self.messageMaker.TurnTowardsPose(gIdTag, x_mm, y_mm, z_mm, maxTurnAngle_rad))
+
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
     
-    def __init__(self, useTcpConnection, verboseLevel):
-
-        self.useTcpConnection = useTcpConnection;
+    def __init__(self, verboseLevel):
+        self.useTcpConnection = True
+        for arg in sys.argv:
+            if arg == "-u": self.useTcpConnection = False
         self.verboseLevel = verboseLevel
 
         self.debugConsoleManager = DebugConsoleManager()
@@ -289,13 +451,9 @@ class _EngineInterfaceImpl:
         # Request any one-off state info (e.g. lists of anything only known at load-time)
         self.SendMessage(GToEM(GetAllDebugConsoleVarMessage    =  GToEI.GetAllDebugConsoleVarMessage()),    False)
         self.SendMessage(GToEM(RequestAvailableAnimations      =  GToEI.RequestAvailableAnimations()),      False)
-        self.SendMessage(GToEM(RequestAvailableAnimationGroups =  GToEI.RequestAvailableAnimationGroups()), False)
 
     def SetVerboseLevel(self, newLevel):
         self.verboseLevel = newLevel
-
-    def InAnimationGroupNames(self, animGroupName):
-        return self.animationManager.InAnimationGroupNames(animGroupName)
 
     def InAnimationNames(self, animName):
         return self.animationManager.InAnimationNames(animName)
@@ -370,8 +528,8 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedFace:
                         msg = fromEngMsg.RobotObservedFace
                         self.worldManager._ObservedFace(msg)
-                        if self.verboseLevel >= VerboseLevel.High:
-                            sys.stdout.write("Observed Face: Name: " + str(msg.name) + os.linesep)
+                        # if self.verboseLevel >= VerboseLevel.High:
+                        #     sys.stdout.write("Observed Face: Name: " + str(msg.name) + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotProcessedImage:
                         pass
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotChangedObservedFaceID:
@@ -408,9 +566,6 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.AnimationAvailable:
                         msg = fromEngMsg.AnimationAvailable
                         self.animationManager.UpdateAnimations(msg)
-                    elif fromEngMsg.tag == fromEngMsg.Tag.AnimationGroupAvailable:
-                        msg = fromEngMsg.AnimationGroupAvailable
-                        self.animationManager.UpdateAnimationGroups(msg)
                     elif fromEngMsg.tag == fromEngMsg.Tag.InitDebugConsoleVarMessage:
                         # multiple of these arrive after we send GetAllDebugConsoleVarMessage (they don't all fit in 1 message)
                         msg = fromEngMsg.InitDebugConsoleVarMessage
@@ -433,12 +588,12 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.MoodState:
                         msg = fromEngMsg.MoodState
                         self.moodManager.UpdateMoodState(msg)         
-                    elif fromEngMsg.tag == fromEngMsg.Tag.DebugLatencyMessage:
+                    elif fromEngMsg.tag == fromEngMsg.Tag.LatencyMessage:
                         # [MARKW:TODO], update this locally for anything that wants to query engine<->robot latency
                         pass
                     elif fromEngMsg.tag == fromEngMsg.Tag.UnlockStatus:
-                         msg = fromEngMsg.UnlockStatus
-                         #sys.stdout.write("Recv: UnlockStatus length=" + str(len(msg.unlocks)) + " c= " + str(msg.unlocks) + os.linesep)
+                        msg = fromEngMsg.UnlockStatus
+                        #sys.stdout.write("Recv: UnlockStatus length=" + str(len(msg.unlocks)) + " c= " + str(msg.unlocks) + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.AnimationAborted:
                         msg = fromEngMsg.AnimationAborted                        
                         if self.verboseLevel >= VerboseLevel.High:
@@ -461,6 +616,12 @@ class _EngineInterfaceImpl:
                         self.worldManager._ImageChunk(msg)
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotOnBack:
                         Unlock(LockTypes.onBack)
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotDeletedAllObjects:
+                        Unlock(LockTypes.robotDeletedAllObjects)
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotDeletedAllCustomObjects:
+                        Unlock(LockTypes.robotDeletedAllCustomObjects)
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotPoked:
+                        pass
                     else:
                         if self.verboseLevel >= VerboseLevel.High:
                             sys.stdout.write("Recv: Unhandled " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(srcAddr) +  os.linesep);
@@ -493,12 +654,15 @@ class _EngineInterfaceImpl:
         sys.stdout.write("Forcing ResetConnection..." + os.linesep)
         self.engineConnection.ResetConnection()
 
+    def DeleteAllObjects(self):
+        self.worldManager.DeleteAllObjects()
+
 
 class AsyncEngineInterface(threading.Thread):
     "Async Wrapper of EngineInterface"
     
-    def __init__(self, useTcpConnection, verboseLevel):
-        self.engineInterface =  _EngineInterfaceImpl(useTcpConnection, verboseLevel)
+    def __init__(self, verboseLevel):
+        self.engineInterface =  _EngineInterfaceImpl(verboseLevel)
         if os.name == 'posix' and sys.version_info.major > 2:
             threading.Thread.__init__(self, daemon=True)
         else:
@@ -579,11 +743,11 @@ class AsyncEngineInterface(threading.Thread):
     def SetVerboseLevel(self, newLevel):
         self.engineInterface.SetVerboseLevel(newLevel)
 
-    def InAnimationGroupNames(self, animGroupName):
-        return self.engineInterface.InAnimationGroupNames(animGroupName)
-
     def InAnimationNames(self, animName):
         return self.engineInterface.InAnimationNames(animName)
+
+    def DeleteAllObjects(self):
+        self.engineInterface.DeleteAllObjects()
 
 
 def Lock(lockType = 0):
@@ -594,8 +758,9 @@ def Lock(lockType = 0):
     if lockType:
         gKey = lockType
     else:
-        key = gIdTag
+        gKey = gIdTag
     while gKey:
+        time.sleep(.05)
         continue
     gIdTag += 1
 
@@ -607,6 +772,6 @@ def Unlock(idTag):
 class LockTypes():
     "An enum for storing a few types of locks (so its not random numbers)"
     onBack = 1
-
-
+    robotDeletedAllObjects = 2
+    robotDeletedAllCustomObjects = 3
 

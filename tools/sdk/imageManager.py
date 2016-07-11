@@ -3,15 +3,21 @@ Image Manger to store current/past images from the robot
 """
 __author__ = "Alec Solder"
 
-import sys
-import os
+import io, sys, os
+
+hasImageDecoding = True
 
 try:
-  import cv2
   import numpy as np
 except ImportError:
-  print("Cannot import opencv or numpy, cannot use GetImage")
-  pass
+  print("imageManager.py: Cannot import numpy: cannot decode or use Images. Do `pip3 install numpy` to install")
+  hasImageDecoding = False
+
+try:
+  from PIL import Image, ImageDraw
+except ImportError:
+  print("imageManager.py: Cannot import from PIL: cannot decode or use Images. Do `pip3 install pillow` to install")
+  hasImageDecoding = False
 
 # ================================================================================    
 # Image Manager
@@ -21,7 +27,7 @@ class ImageManager:
 
     def __init__(self, EToG, GToE):
         self.EToG = EToG
-        self.GToE = GToE 
+        self.GToE = GToE
         self.images = []
         self.incompleteImageMsgs = []
         self.incompleteImages = [[None]*10] * 10
@@ -64,13 +70,39 @@ class ImageManager:
         "Returns the final image in decoded jpeg form (in a numpy array)"
         # Images coming from the robot are of type JPEGMinimizedGray
         # Images coming from webots simulated robot are of type JPEGColor
+        # Standard for a QVGA image
+
+        if not hasImageDecoding:
+          sys.stderr.write("imageManager.py: image decoding disabled - GetImage() unavailable" + os.linesep)
+          return None
+
+        width = 320
+        height = 240
         if len(self.images) > 1:
             arr = np.asarray(self.images[index], dtype=np.uint8)
             if self.incompleteImageMsgs[0].imageEncoding == self.EToG.ImageEncoding.JPEGMinimizedGray:
-                arr = self.miniGrayToJpeg(arr, len(arr), 240, 320)
-            return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                arr = self._MiniGrayToJpeg(arr, len(arr), height, width)
+            image = Image.open(io.BytesIO(arr))
+            image = image.convert("RGB")
+            return image
 
-    def miniGrayToJpeg(self, arrIn, bufferLength,  height,  width):
+    def DrawRectangle(self, image, x1, y1, x2, y2, fill = None, outline = None):
+        if image is None:
+            return None
+        # Colors are BGR
+        # scaled variables
+        draw = ImageDraw.Draw(image)
+        draw.rectangle([(x1, y1), (x2, y2)], fill = fill, outline = outline)
+        del draw
+
+    def DrawText(self, image, x, y, text, fill = None):
+        if image is None:
+            return None
+        draw = ImageDraw.Draw(image)
+        draw.text((x,y), text, fill = fill)
+        del draw
+
+    def _MiniGrayToJpeg(self, arrIn, bufferLength,  height,  width):
         "Converts miniGrayToJpeg format to normal jpeg format"
         # Does not work correctly yet
         bufferIn = arrIn.tolist()

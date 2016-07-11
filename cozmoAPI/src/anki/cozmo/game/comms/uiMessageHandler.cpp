@@ -35,6 +35,7 @@
 #include <anki/messaging/basestation/IComms.h>
 #include <anki/messaging/basestation/advertisementService.h>
 
+#include "util/console/consoleInterface.h"
 #include "util/enums/enumOperators.h"
 #include "util/time/universalTime.h"
 
@@ -59,6 +60,25 @@ namespace Anki {
     
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
     
+    
+    CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "SDK", true);
+    CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "SDK", true);
+    
+    
+    bool IsSdkConnection(UiConnectionType type)
+    {
+      switch(type)
+      {
+        case UiConnectionType::UI:          return false;
+        case UiConnectionType::SdkOverUdp:  return true;
+        case UiConnectionType::SdkOverTcp:  return true;
+        default:
+        {
+          assert(0);
+          return false;
+        }
+      }
+    }
     
     
     ISocketComms* CreateSocketComms(UiConnectionType type, GameMessagePort* gameMessagePort, ISocketComms::DeviceId hostDeviceId)
@@ -147,6 +167,22 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    
+    bool UiMessageHandler::ShouldHandleMessagesFromConnection(UiConnectionType type) const
+    {
+      switch(type)
+      {
+        case UiConnectionType::UI:          return kAcceptMessagesFromUI;
+        case UiConnectionType::SdkOverUdp:  return kAcceptMessagesFromSDK;
+        case UiConnectionType::SdkOverTcp:  return kAcceptMessagesFromSDK;
+        default:
+        {
+          assert(0);
+          return false;
+        }
+      }
+    }
+    
 
     uint32_t UiMessageHandler::GetNumConnectedDevicesOnAnySocket() const
     {
@@ -209,7 +245,7 @@ namespace Anki {
  
     
     Result UiMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes, const size_t packetSize,
-                                                 UiConnectionType connectionType, const bool isSingleMessage)
+                                                 UiConnectionType connectionType, bool isSingleMessage, bool handleMessagesFromConnection)
     {
       ExternalInterface::MessageGameToEngine message;
       uint16_t bytesRemaining = packetSize;
@@ -237,14 +273,43 @@ namespace Anki {
         bytesRemaining -= bytesUnpacked;
         messagePtr += bytesUnpacked;
 
-        HandleProcessedMessage(message, connectionType);
+        HandleProcessedMessage(message, connectionType, handleMessagesFromConnection);
       }
 
       return RESULT_OK;
     }
-
-    void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType)
+    
+    
+    bool AlwaysHandleMessageTypeForConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
     {
+      // Return true for small subset of message types that we handle even if we're not listening to that connection
+      // We still want to accept certain message types (e.g. console vars to allow a connection to enable itself)
+      
+      using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+      switch (messageTag)
+      {
+        case GameToEngineTag::SetDebugConsoleVarMessage:    return true;
+        case GameToEngineTag::GetDebugConsoleVarMessage:    return true;
+        case GameToEngineTag::GetAllDebugConsoleVarMessage: return true;
+        default:
+          return false;
+      }
+    }
+
+    
+    void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
+                                                  UiConnectionType connectionType, bool handleMessagesFromConnection)
+    {
+      const ExternalInterface::MessageGameToEngine::Tag messageTag = message.GetTag();
+      if (!handleMessagesFromConnection)
+      {
+        // We still want to accept certain message types (e.g. console vars to allow a connection to enable itself)
+        if (!AlwaysHandleMessageTypeForConnection(messageTag))
+        {
+          return;
+        }
+      }
+      
       #if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
@@ -253,7 +318,7 @@ namespace Anki {
       #endif
       // We must handle pings at this level because they are a connection type specific message
       // and must be dealt with at the transport level rather than at the app level
-      if (message.GetTag() == ExternalInterface::MessageGameToEngineTag::Ping)
+      if (messageTag == ExternalInterface::MessageGameToEngineTag::Ping)
       {
         ISocketComms* socketComms = GetSocketComms(connectionType);
         if (socketComms)
@@ -358,6 +423,7 @@ namespace Anki {
           {
             bool keepReadingMessages = true;
             const bool isSingleMessage = !socketComms->AreMessagesGrouped();
+            const bool handleMessagesFromConnection = ShouldHandleMessagesFromConnection(i);
             while(keepReadingMessages)
             {
               std::vector<uint8_t> buffer;
@@ -365,7 +431,7 @@ namespace Anki {
 
               if (keepReadingMessages)
               {
-                Result res = ProcessMessageBytes(buffer.data(), buffer.size(), i, isSingleMessage);
+                Result res = ProcessMessageBytes(buffer.data(), buffer.size(), i, isSingleMessage, handleMessagesFromConnection);
                 if (res != RESULT_OK)
                 {
                   retVal = RESULT_FAIL;

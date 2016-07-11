@@ -7,27 +7,11 @@ forwards, left, back, and right. This is relative to his current positions
 so if you move him, he will not account for that when he plans the next movement.
 This uses path planning to get to the points so it accounts for the need to turn"""
 
-cozmo = CozmoInterface(False, 0)
+cozmo = CozmoInterface()
 
-cozmo.StartSim()
+for i in range(4):
+    cozmo.DriveWheels(50,50,50,50, duration = 3)
+    cozmo.TurnInPlace(radians = math.pi/2, duration = 3.5)
 
-cozmo.EnableReactionaryBehaviors(False)
-time.sleep(1)
 
-#Relative to cozmo
-while(True):
-    cozmo.DriveDistance(100,0,math.pi/2)
-    time.sleep(5)
-
-    cozmo.DriveDistance(0,100,math.pi/2)
-    time.sleep(5)
-
-    cozmo.DriveDistance(-100,0,math.pi/2)
-    time.sleep(5)
-
-    cozmo.DriveDistance(0,-100,math.pi/2)
-    time.sleep(5)
-
-cozmo.Stop()
-time.sleep(1)
 cozmo.Shutdown()

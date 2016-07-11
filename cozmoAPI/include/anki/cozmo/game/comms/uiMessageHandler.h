@@ -95,6 +95,8 @@ namespace Anki {
       
       uint32_t GetNumConnectedDevicesOnAnySocket() const;
       
+      bool ShouldHandleMessagesFromConnection(UiConnectionType type) const;
+      
     protected:
       
       ISocketComms* _socketComms[(size_t)UiConnectionType::Count];
@@ -110,8 +112,8 @@ namespace Anki {
       
       // Process a raw byte buffer as a GameToEngine CLAD message and broadcast it
       Result ProcessMessageBytes(const uint8_t* packetBytes, size_t packetSize,
-                                 UiConnectionType connectionType, bool isSingleMessage);
-      void HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType);
+                                 UiConnectionType connectionType, bool isSingleMessage, bool handleMessagesFromConnection);
+      void HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType, bool handleMessagesFromConnection);
       
       // Send a message to a specified ID
       virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId = kDestinationIdEveryone) override;

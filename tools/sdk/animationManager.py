@@ -31,9 +31,6 @@ class AnimationManager:
     def GetMatchingAnimNames(self,text):
         return GetMatchingNameFromList(self.animationNames,text)
 
-    def GetMatchingAnimGroupNames(self,text):
-        return GetMatchingNameFromList(self.animationGroupNames,text)
-
     def InAnimationNames(self,name):
         return name in self.animationNames
 

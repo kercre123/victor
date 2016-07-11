@@ -304,6 +304,19 @@ message ClearAllObjects {
     uint_8 robotID
 }
 
+// DeleteAllObjects
+// Deletes all current objects out of blockworld completely, while clear only marks as unknown
+message DeleteAllObjects {
+    uint_8 robotID
+}
+
+// DeleteAllCustomObjects
+// Deletes all custom objects, leaves blocks, chargers, faces and ledges
+message DeleteAllCustomObjects {
+    uint_8 robotID
+}
+
+
 message SetObjectAdditionAndDeletion {
     uint_8 robotID,
     bool   enableAddition,
