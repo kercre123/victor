@@ -195,6 +195,12 @@ namespace Anki {
       float rateY = 0;
       float rateZ = 0;
       
+      if(poseData.imuDataHistory.size() == 0)
+      {
+        shift = Vec2f(0,0);
+        return;
+      }
+      
       bool beforeAfterSet = false;
       // Find the ImuData before and after the timestamp if it exists
       for(auto iter = poseData.imuDataHistory.begin(); iter != poseData.imuDataHistory.end(); ++iter)
