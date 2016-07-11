@@ -13,9 +13,14 @@
   {
     "channels":
     [
-      { "channel": "Unnamed" , "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unity"   , "enabled": false },
-      { "channel": "Keyboard", "enabled": true }
+      { "channel": "Unnamed" ,        "enabled": false }, // Unnamed is currently the default channel
+      { "channel": "CoreTech",        "enabled": false },
+      { "channel": "Keyboard",        "enabled": true },
+      { "channel": "Network",         "enabled": false },
+      { "channel": "Profiler",        "enabled": false },
+      { "channel": "Unity"   ,        "enabled": false },
+      { "channel": "VisionComponent", "enabled": false },
+      { "channel": "VisionSystem",    "enabled": false }
     ],
     "levels":
     [

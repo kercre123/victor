@@ -26,12 +26,14 @@ namespace Cozmo {
   
   EncodedImage::EncodedImage()
   : _timestamp(0)
+  , _prevTimestamp(0)
   , _imgWidth(0)
   , _imgHeight(0)
   , _imgID(std::numeric_limits<u32>::max())
   , _encoding(ImageEncoding::NoneImageEncoding)
   , _expectedChunkId(0)
   , _isImgValid(false)
+  , _numChunksReceived(0)
   {
     
   }
@@ -39,7 +41,7 @@ namespace Cozmo {
   bool EncodedImage::AddChunk(const ImageChunk &chunk)
   {
     if(chunk.data.size() > static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE)) {
-      PRINT_NAMED_WARNING("EncodedImage.AddChunk",
+      PRINT_NAMED_WARNING("EncodedImage.AddChunk.ChunkTooBig",
                           "Expecting chunks of size no more than %d, got %zu.",
                           ImageConstants::IMAGE_CHUNK_SIZE, chunk.data.size());
       return false;
@@ -58,22 +60,47 @@ namespace Cozmo {
       
       _buffer.clear();
       _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
+      
+      _numChunksReceived = 0;
     }
     
     // Check if a chunk was received out of order
     if (chunk.chunkId != _expectedChunkId) {
-      PRINT_NAMED_INFO("EncodedImage.AddChunk.ChunkDropped",
-                       "Expected chunk %d, got %d", _expectedChunkId, chunk.chunkId);
+      PRINT_NAMED_WARNING("EncodedImage.AddChunk.ChunkOutOfOrder",
+                          "Expected chunk %d, got chunk %d", _expectedChunkId, chunk.chunkId);
       _isImgValid = false;
     }
     
     _expectedChunkId = chunk.chunkId + 1;
+    ++_numChunksReceived;
     
     // We've received all data when the msg chunkSize is less than the max
     const bool isLastChunk =  chunk.chunkId == chunk.imageChunkCount-1;
     if(isLastChunk) {
-      // Set timestamp using last chunk
-      _timestamp = chunk.frameTimeStamp;
+      // Check if we received as many chunks as we should have
+      if(_numChunksReceived != chunk.imageChunkCount)
+      {
+        PRINT_NAMED_WARNING("EncodedImage.AddChunk.UnexpectedNumberOfChunks",
+                            "Got last chunk, expected %d chunks but recieved %d chunks",
+                            chunk.imageChunkCount,
+                            _numChunksReceived);
+        _isImgValid = false;
+      }
+      else
+      {
+        // Set timestamp using last chunk
+        _prevTimestamp = _timestamp;
+        _timestamp = chunk.frameTimeStamp;
+        
+        if(_prevTimestamp > _timestamp)
+        {
+          PRINT_NAMED_WARNING("EncodedImage.AddChunk.TimestampNotIncreasing",
+                              "Got last chunk but current timestamp %u is less than previous timestamp %u",
+                              _timestamp,
+                              _prevTimestamp);
+          _isImgValid = false;
+        }
+      }
     }
     
     if (!_isImgValid) {

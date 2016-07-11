@@ -57,6 +57,7 @@ namespace Cozmo {
     std::vector<u8>        _buffer;
     
     TimeStamp_t            _timestamp;
+    TimeStamp_t            _prevTimestamp;
     s32                    _imgWidth;
     s32                    _imgHeight;
     u32                    _imgID;
@@ -64,6 +65,8 @@ namespace Cozmo {
     ImageEncoding          _encoding;
     u8                     _expectedChunkId;
     bool                   _isImgValid;
+    u8                     _numChunksReceived;
+    
 
     static void MiniGrayToJpeg(const std::vector<u8>& bufferIn, const u16 height, const u16 width,
                                std::vector<u8>& bufferOut);

@@ -89,8 +89,7 @@ namespace Vision {
   
   void Profiler::SetProfileGroupName(const char *name)
   {
-    _eventName = "Profiler.";
-    _eventName += name;
+    _eventName = name;
   }
   
   void Profiler::PrintAverageTiming()
@@ -109,7 +108,7 @@ namespace Vision {
     const double avgOverAllTime = (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0);
     const double avgSinceLastPrint = (countSinceLastPrint > 0 ? (double)timeSinceLastPrint / (double)countSinceLastPrint : 0);
     
-    PRINT_NAMED_INFO(_eventName.c_str(), "%s averaged %.2fms over %d calls (%.2fms over %d calls since last print)",
+    PRINT_CH_INFO("Profiler", _eventName.c_str(), "%s averaged %.2fms over %d calls (%.2fms over %d calls since last print)",
                      name,
                      avgOverAllTime,
                      timer.count,

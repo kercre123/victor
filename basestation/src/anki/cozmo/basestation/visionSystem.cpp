@@ -740,7 +740,7 @@ namespace Cozmo {
                  quad.corners[i].y < 0)
               {
                 quad = crntMarker.corners;
-                PRINT_NAMED_INFO("VisionSystem.DetectMarkers", "Reiniting tracker and warping quad put it off the image using unwarped quad");
+                PRINT_CH_INFO("VisionSystem", "DetectMarkers", "Reiniting tracker and warping quad put it off the image using unwarped quad");
                 break;
               }
             }
@@ -1736,7 +1736,7 @@ namespace Cozmo {
       
       if(imgRegionArea > 0 || groundRegionArea > 0.f)
       {
-        PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
+        PRINT_CH_INFO("VisionSystem", "DetectMotion.FoundCentroid",
                          "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                          "-- %.1f%% of ground area at (%.1f,%.1f)",
                          imgRegionArea, centroid.x(), centroid.y(),

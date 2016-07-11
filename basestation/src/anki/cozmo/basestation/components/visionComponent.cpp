@@ -307,25 +307,26 @@ namespace Cozmo {
   
   Result VisionComponent::SetNextImage(EncodedImage& encodedImage)
   {
+    if(!_isInitialized) {
+      PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "");
+      return RESULT_FAIL;
+    }
+    
+    if (!_enabled) {
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.SetNextImage", "Set next image but not enabled");
+      return RESULT_OK;
+    }
+  
     // Track how fast we are receiving frames
     if(_lastReceivedImageTimeStamp_ms > 0) {
       // Time should not move backwards!
       ASSERT_NAMED_EVENT(encodedImage.GetTimeStamp() >= _lastReceivedImageTimeStamp_ms,
                          "VisionComponent.SetNextImage.UnexpectedTimeStamp",
-                         "Current:%d Last:%d",
+                         "Current:%u Last:%u",
                          encodedImage.GetTimeStamp(), _lastReceivedImageTimeStamp_ms);
       _framePeriod_ms = encodedImage.GetTimeStamp() - _lastReceivedImageTimeStamp_ms;
     }
     _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
-    
-    if(!_isInitialized) {
-      PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "");
-      return RESULT_FAIL;
-    }
-
-    if (!_enabled) {
-      return RESULT_OK;
-    }
     
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
@@ -467,7 +468,7 @@ namespace Cozmo {
             Lock();
             
             if(!_nextImg.IsEmpty()) {
-              PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
+              PRINT_CH_INFO("VisionComponent", "SetNextImage.DroppedFrame",
                                "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
                                encodedImage.GetTimeStamp(),
                                _nextImg.GetTimeStamp(),
@@ -535,7 +536,7 @@ namespace Cozmo {
         // Only store this homography if the ROI still projects into the image
         _groundPlaneHomographyLUT[headAngle_rad] = H;
       } else {
-        PRINT_NAMED_INFO("VisionComponent.PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
+        PRINT_CH_INFO("VisionComponent", "PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
                          "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
         break;
       }
