@@ -294,12 +294,18 @@ namespace Cozmo.HomeHub {
 
       GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
       _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+
+      // OnSharedMinigameViewInitialized is called as part of the InitializeMinigame flow; 
+      // On device this involves loading assets from data but in editor it may be instantaneous
+      // so we need to listen to the event first and then initialize
+      _MiniGameInstance.OnSharedMinigameViewInitialized += HandleSharedMinigameViewInitialized;
       _MiniGameInstance.InitializeMinigame(challengeData);
+
       _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-      _MiniGameInstance.OnSharedMinigameViewInitialized += HandleSharedMinigameViewInitialized;
+
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
     }
 
