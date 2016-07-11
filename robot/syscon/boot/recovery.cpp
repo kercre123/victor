@@ -152,7 +152,7 @@ static void writeByte(const uint8_t byte) {
   writeUart(&byte, sizeof(byte));
 }
 
-static void SyncToHead(void) {
+void SyncToHead(void) {
   uint32_t recoveryWord = 0;
 
   MicroWait(10000);
@@ -270,13 +270,6 @@ static inline bool FlashBlock() {
 
 
 extern "C" void EnterRecovery(void) {
-  UARTInit();
-  
-  // Disconnect input so we don't dump current into the charge pin
-  NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
-
-  SyncToHead();
-
   for (;;) {
     // Receive command packet
     RECOVERY_STATE state = STATE_UNKNOWN;
