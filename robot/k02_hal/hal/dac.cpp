@@ -104,6 +104,19 @@ void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {
   #endif
 }
 
+// This is temporary
+#include <math.h>
+
+void Anki::Cozmo::HAL::DAC::Tone(void) {
+  static const float MAGNITUDE = 0x200;
+  
+  for (int i = 0; i < DAC_WORDS; i++) {
+    DAC_WRITE[i] = (int)(sinf(M_PI_2 * i / DAC_WORDS) * MAGNITUDE + MAGNITUDE);
+  }
+
+  EnableAudio(true);
+}
+
 void Anki::Cozmo::HAL::DAC::Mute(void) {
   for (int i = 0; i < DAC_WORDS; i++) {
     DAC_WRITE[i] = 0;

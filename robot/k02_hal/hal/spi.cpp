@@ -179,6 +179,8 @@ void DMA2_IRQHandler(void) {
     return ;
   }
 
+  DAC::Tone();
+
   // Check for silence in the 
   static const int MaximumSilence = 32;
   static transmissionWord lastWord = 0;
