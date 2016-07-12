@@ -48,9 +48,9 @@ namespace Anki {
         // object: the further away, the more slop we're allowed.
         Pose3d objectWrtRobot;
         if(false == actionObject->GetPose().GetWithRespectTo(preActionPose, objectWrtRobot)) {
-          PRINT_NAMED_ERROR("IDockAction.Init.ObjectPoseOriginProblem",
-                            "Could not get object %d's pose w.r.t. _robot.",
-                            actionObject->GetID().GetValue());
+          PRINT_NAMED_WARNING("IDockAction.Init.ObjectPoseOriginProblem",
+                              "Could not get object %d's pose w.r.t. _robot.",
+                              actionObject->GetID().GetValue());
           return -1.f;
         }
         
@@ -174,9 +174,9 @@ namespace Anki {
       // Make sure the object we were docking with still exists in the world
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
       if(dockObject == nullptr) {
-        PRINT_NAMED_ERROR("IsCloseEnoughToPreActionPose.ActionObjectNotFound",
-                          "Action object with ID=%d no longer exists in the world.",
-                          objectID.GetValue());
+        PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.ActionObjectNotFound",
+                            "Action object with ID=%d no longer exists in the world.",
+                            objectID.GetValue());
         preActionPoseInfo.actionResult = ActionResult::FAILURE_ABORT;
         preActionPoseInfo.interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         return;
@@ -184,9 +184,9 @@ namespace Anki {
       
       if(objectID == robot.GetCarryingObject())
       {
-        PRINT_NAMED_ERROR("IsCloseEnoughToPreActionPose.CarryingSelectedObject",
-                          "Robot is currently carrying action object with ID=%d",
-                          objectID.GetValue());
+        PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.CarryingSelectedObject",
+                            "Robot is currently carrying action object with ID=%d",
+                            objectID.GetValue());
         preActionPoseInfo.actionResult = ActionResult::FAILURE_ABORT;
         preActionPoseInfo.interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         return;
@@ -202,9 +202,9 @@ namespace Anki {
                                            std::set<Vision::Marker::Code>(), obstacles, nullptr, placementOffsetX_mm);
       
       if(preActionPoses.empty()) {
-        PRINT_NAMED_ERROR("IsCloseEnoughToPreActionPose.NoPreActionPoses",
-                          "Action object with ID=%d returned no pre-action poses of the given type.",
-                          objectID.GetValue());
+        PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.NoPreActionPoses",
+                            "Action object with ID=%d returned no pre-action poses of the given type.",
+                            objectID.GetValue());
         preActionPoseInfo.actionResult = ActionResult::FAILURE_ABORT;
         preActionPoseInfo.interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
         return;
@@ -288,8 +288,8 @@ namespace Anki {
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       
       if(SelectDockAction(dockObject) != RESULT_OK) {
-        PRINT_NAMED_ERROR("IDockAction.CheckPreconditions.DockActionSelectionFailure",
-                          "");
+        PRINT_NAMED_WARNING("IDockAction.CheckPreconditions.DockActionSelectionFailure",
+                            "");
         // NOTE: SelectDockAction should set _interactionResult on failure
         return ActionResult::FAILURE_ABORT;
       }
@@ -409,8 +409,8 @@ namespace Anki {
             }
             
           } else {
-            PRINT_NAMED_ERROR("IDockAction.CheckIfDone.VisualVerifyFailed",
-                              "VisualVerification of object failed, stopping IDockAction.");
+            PRINT_NAMED_WARNING("IDockAction.CheckIfDone.VisualVerifyFailed",
+                                "VisualVerification of object failed, stopping IDockAction.");
             _interactionResult = ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
             return actionResult;
           }
@@ -505,8 +505,13 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
-                              "Dock action not set before filling completion signal.");
+        {
+          if(GetState() != ActionResult::FAILURE_NOT_STARTED)
+          {
+            PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
+                                "Dock action not set before filling completion signal.");
+          }
+        }
       }
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
       IDockAction::GetCompletionUnion(completionUnion);
@@ -669,8 +674,8 @@ namespace Anki {
         } // ALIGN
           
         default:
-          PRINT_NAMED_ERROR("AlignWithObjectAction.Verify.ReachedDefaultCase",
-                            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          PRINT_NAMED_WARNING("AlignWithObjectAction.Verify.ReachedDefaultCase",
+                              "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
           _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
           result = ActionResult::FAILURE_ABORT;
           break;
@@ -729,8 +734,14 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_INFO("PickupObjectAction.GetCompletionUnion.DockActionNotSet", "");
-          break;
+        {
+          // Not setting dock action is only an issue if the action has started
+          if(GetState() != ActionResult::FAILURE_NOT_STARTED)
+          {
+            PRINT_NAMED_WARNING("PickupObjectAction.EmitCompletionSignal",
+                                "Dock action not set before filling compeltion signal");
+          }
+        }
       }
       
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
@@ -743,8 +754,8 @@ namespace Anki {
       // verify later whether we succeeded.
       // Make it w.r.t. robot's parent so we can compare heights fairly.
       if(object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
-        PRINT_NAMED_ERROR("PickupObjectAction.SelectDockAction.PoseWrtFailed",
-                          "Could not get pose of dock object w.r.t. robot parent.");
+        PRINT_NAMED_WARNING("PickupObjectAction.SelectDockAction.PoseWrtFailed",
+                            "Could not get pose of dock object w.r.t. robot parent.");
         _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         return RESULT_FAIL;
       }
@@ -798,8 +809,8 @@ namespace Anki {
         case DockAction::DA_PICKUP_HIGH:
         {
           if(_robot.IsCarryingObject() == false) {
-            PRINT_NAMED_ERROR("PickupObjectAction.Verify.RobotNotCarryingObject",
-                              "Expecting robot to think it's carrying an object at this point.");
+            PRINT_NAMED_WARNING("PickupObjectAction.Verify.RobotNotCarryingObject",
+                                "Expecting robot to think it's carrying an object at this point.");
             _interactionResult = ObjectInteractionResult::NOT_CARRYING;
             result = ActionResult::FAILURE_RETRY;
             break;
@@ -812,9 +823,9 @@ namespace Anki {
           // block's original position because we should now be carrying it.
           ObservableObject* carryObject = blockWorld.GetObjectByID(_robot.GetCarryingObject());
           if(carryObject == nullptr) {
-            PRINT_NAMED_ERROR("PickupObjectAction.Verify.CarryObjectNoLongerExists",
-                              "Object %d we were carrying no longer exists in the world.",
-                              _robot.GetCarryingObject().GetValue());
+            PRINT_NAMED_WARNING("PickupObjectAction.Verify.CarryObjectNoLongerExists",
+                                "Object %d we were carrying no longer exists in the world.",
+                                _robot.GetCarryingObject().GetValue());
             _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
             result = ActionResult::FAILURE_ABORT;
             break;
@@ -880,8 +891,8 @@ namespace Anki {
         } // PICKUP
           
         default:
-          PRINT_NAMED_ERROR("PickupObjectAction.Verify.ReachedDefaultCase",
-                            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          PRINT_NAMED_WARNING("PickupObjectAction.Verify.ReachedDefaultCase",
+                              "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
           _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
           result = ActionResult::FAILURE_ABORT;
           break;
@@ -911,8 +922,8 @@ namespace Anki {
       
       // Robot must be carrying something to put something down!
       if(_robot.IsCarryingObject() == false) {
-        PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
-                          "Robot %d executing PlaceObjectOnGroundAction but not carrying object.", _robot.GetID());
+        PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
+                            "Robot %d executing PlaceObjectOnGroundAction but not carrying object.", _robot.GetID());
         _interactionResult = ObjectInteractionResult::NOT_CARRYING;
         result = ActionResult::FAILURE_ABORT;
       } else {
@@ -924,8 +935,8 @@ namespace Anki {
         {
           result = ActionResult::SUCCESS;
         } else {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
-                            "Robot's SendPlaceObjectOnGround method reported failure.");
+          PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+                              "Robot's SendPlaceObjectOnGround method reported failure.");
           _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
           result = ActionResult::FAILURE_ABORT;
         }
@@ -973,9 +984,9 @@ namespace Anki {
         actionResult = _faceAndVerifyAction->Update();
         
         if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
-                            "FaceAndVerify action reported failure, just deleting object %d.",
-                            _carryingObjectID.GetValue());
+          PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckIfDone",
+                              "FaceAndVerify action reported failure, just deleting object %d.",
+                              _carryingObjectID.GetValue());
           _robot.GetBlockWorld().ClearObject(_carryingObjectID);
           _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
         }
@@ -1065,9 +1076,9 @@ namespace Anki {
           // TODO: Be able to fill in more objects in the stack
           ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
           if(object == nullptr) {
-            PRINT_NAMED_ERROR("PlaceRelObjectAction.EmitCompletionSignal",
-                              "Docking object %d not found in world after placing.",
-                              _dockObjectID.GetValue());
+            PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal",
+                                "Docking object %d not found in world after placing.",
+                                _dockObjectID.GetValue());
           } else {
             auto objectStackIter = info.objectIDs.begin();
             info.objectIDs.fill(-1);
@@ -1085,8 +1096,14 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_ERROR("PlaceRelObjectAction.EmitCompletionSignal",
-                            "Dock action not set before filling completion signal.");
+        {
+          // Not setting dock action is only an issue if the action has started
+          if(GetState() != ActionResult::FAILURE_NOT_STARTED)
+          {
+            PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal",
+                                "Dock action not set before filling completion signal.");
+          }
+        }
       }
       
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
@@ -1139,8 +1156,8 @@ namespace Anki {
           if(_robot.GetLastPickOrPlaceSucceeded()) {
             
             if(_robot.IsCarryingObject() == true) {
-              PRINT_NAMED_ERROR("PlaceRelObjectAction.Verify",
-                                "Expecting robot to think it's NOT carrying an object at this point.");
+              PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+                                  "Expecting robot to think it's NOT carrying an object at this point.");
               _interactionResult = ObjectInteractionResult::STILL_CARRYING;
               return ActionResult::FAILURE_ABORT;
             }
@@ -1172,18 +1189,18 @@ namespace Anki {
               
               if(result != ActionResult::SUCCESS) {
                 if(_dockAction == DockAction::DA_PLACE_LOW) {
-                  PRINT_NAMED_ERROR("PlaceRelObjectAction.Verify",
-                                    "Robot thinks it placed the object low, but verification of placement "
-                                    "failed. Not sure where carry object %d is, so deleting it.",
-                                    _carryObjectID.GetValue());
+                  PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+                                      "Robot thinks it placed the object low, but verification of placement "
+                                      "failed. Not sure where carry object %d is, so deleting it.",
+                                      _carryObjectID.GetValue());
                   
                   _robot.GetBlockWorld().ClearObject(_carryObjectID);
                 } else {
                   assert(_dockAction == DockAction::DA_PLACE_HIGH);
-                  PRINT_NAMED_ERROR("PlaceRelObjectAction.Verify",
-                                    "Robot thinks it placed the object high, but verification of placement "
-                                    "failed. Assuming we are still carrying object %d.",
-                                    _carryObjectID.GetValue());
+                  PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+                                      "Robot thinks it placed the object high, but verification of placement "
+                                      "failed. Assuming we are still carrying object %d.",
+                                      _carryObjectID.GetValue());
                   
                   _robot.SetObjectAsAttachedToLift(_carryObjectID, _carryObjectMarker);
                 }
@@ -1216,9 +1233,9 @@ namespace Anki {
           } else {
             // If the robot thinks it failed last pick-and-place, it is because it
             // failed to dock/track, so we are probably still holding the block
-            PRINT_NAMED_ERROR("PlaceRelObjectAction.Verify",
-                              "Robot reported placement failure. Assuming docking failed "
-                              "and robot is still holding same block.");
+            PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+                                "Robot reported placement failure. Assuming docking failed "
+                                "and robot is still holding same block.");
             result = ActionResult::FAILURE_RETRY;
           }
           
@@ -1226,8 +1243,8 @@ namespace Anki {
         } // PLACE
           
         default:
-          PRINT_NAMED_ERROR("PlaceRelObjectAction.Verify.ReachedDefaultCase",
-                            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify.ReachedDefaultCase",
+                              "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
           result = ActionResult::FAILURE_ABORT;
           break;
           
@@ -1277,8 +1294,14 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
-                              "Dock action not set before filling completion signal.");
+        {
+          // Not setting dock action is only an issue if the action has started
+          if(GetState() != ActionResult::FAILURE_NOT_STARTED)
+          {
+            PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
+                                "Dock action not set before filling completion signal.");
+          }
+        }
       }
       
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
