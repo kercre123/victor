@@ -130,6 +130,9 @@ namespace Anki {
 #ifdef TARGET_K02
           #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
           // Need to add additional messages for special cases handled both on the Espressif and K02
+          case RobotInterface::EngineToRobot::Tag_setBackpackLights:  // This one is actually handled only on K02 and body
+            Process_setBackpackLights(msg.setBackpackLights);
+            break;
           case RobotInterface::EngineToRobot::Tag_animHeadAngle:
             Process_animHeadAngle(msg.animHeadAngle);
             break;
@@ -141,6 +144,12 @@ namespace Anki {
             break;
           case RobotInterface::EngineToRobot::Tag_animEventToRTIP:
             Process_animEventToRTIP(msg.animEventToRTIP);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animBackpackLights:
+            Process_animBackpackLights(msg.animBackpackLights);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
+            Process_animEndOfAnimation(msg.animEndOfAnimation);
             break;
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
@@ -754,14 +763,22 @@ namespace Anki {
         emsg.tag = msg.tag;
         SendMessage(emsg);
       }
-#ifndef TARGET_K02
+
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
       {
         for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-          HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+          u16 color = msg.colors[iLED];
+          BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0);
         }
+        BackpackLightController::EnableLayer(BackpackLightController::BPL_ANIM, true);
       }
-#endif
+
+      void Process_animEndOfAnimation(const AnimKeyFrame::EndOfAnimation& msg)
+      {
+        // Set backpack lights back to user layer
+        BackpackLightController::EnableLayer(BackpackLightController::BPL_USER);
+      }
+      
       void Process_powerState(const PowerState& msg)
       {
         vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
@@ -799,6 +816,18 @@ namespace Anki {
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
       }
+      
+      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+      {
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
+          BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)i,
+                                             msg.lights[i].onColor, msg.lights[i].offColor,
+                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
+                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
+        }
+        BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
+      }
+
 
 #ifdef SIMULATOR
       void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
@@ -881,14 +910,6 @@ namespace Anki {
       void Process_setCubeLights(const CubeLights& msg)
       {
         BlockLightController::SetLights(msg.objectID, msg.lights);
-      }
-      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
-      {
-        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
-          BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
-                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
-                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
-        }
       }
       void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
       {

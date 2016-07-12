@@ -70,7 +70,7 @@ namespace AnimKeyFrame {
   
   message BackpackLights
   {
-    uint_32 colors[5],
+    uint_16 colors[5],
   }
   
   message BodyMotion

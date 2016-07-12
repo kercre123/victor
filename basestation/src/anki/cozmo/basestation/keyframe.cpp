@@ -16,6 +16,7 @@
 
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/animations/animEventHelpers.h"
@@ -504,7 +505,7 @@ if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
                     animNameDebug.c_str(), QUOTE(__NAME__));            \
   return RESULT_FAIL;                                                   \
 }                                                                       \
-_streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift the Alpha out, since it's unused
+_streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
 
       GET_COLOR_FROM_JSON(Back, (int)LEDId::LED_BACKPACK_BACK);
       GET_COLOR_FROM_JSON(Front, (int)LEDId::LED_BACKPACK_FRONT);
