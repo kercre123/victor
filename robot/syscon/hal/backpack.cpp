@@ -40,8 +40,6 @@ static const charliePlex_s* currentChannel = &RGBLightPins[0];
 static uint8_t drive_value[numLights];
 static int drive_error[numLights];
 
-static inline void lights_out(void);
-static int next_channel(void);
 static void setup_timer();
 
 // Helper function
@@ -160,7 +158,7 @@ void Backpack::update(void) {
 // Timer powered lights
 static const int TIMER_GRAIN = 5;
 static const int TIMER_THRASH = 0x10;
-static const int TIMER_DELTA_MINIMUM = 0x10;
+static const int TIMER_DELTA_MINIMUM = 0x20;
 
 static void setup_timer() {
   NRF_TIMER0->TASKS_STOP = 1;
@@ -181,24 +179,6 @@ static void setup_timer() {
   NVIC_SetPriority(TIMER0_IRQn, LED_PRIORITY);
 
   NRF_TIMER0->TASKS_START = 1;
-}
-
-
-static int next_channel(void) {
-  for (;;) {
-    if (++active_channel >= numLights) {
-      active_channel = 0;
-    }
-
-    currentChannel = &RGBLightPins[active_channel];
-    int delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel];
-    
-    if (delta > TIMER_DELTA_MINIMUM) {
-      return delta;
-    } else {
-      drive_error[active_channel] = 0;
-    }
-  }
 }
 
 extern "C" void TIMER0_IRQHandler(void) { 
@@ -222,14 +202,14 @@ extern "C" void TIMER0_IRQHandler(void) {
       return ;
     }
     
-    delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel] - TIMER_THRASH;
+    delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel];
     drive_error[active_channel] = 0;
   } while (delta < TIMER_DELTA_MINIMUM);
 
   // Light that mo-fo up
   currentChannel = &RGBLightPins[active_channel];
   NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-  NRF_TIMER0->CC[0] = NRF_TIMER0->CC[3] + delta;
-    
+  NRF_TIMER0->CC[0] = NRF_TIMER0->CC[3] + delta - TIMER_THRASH;
+
   light_on();
 }
