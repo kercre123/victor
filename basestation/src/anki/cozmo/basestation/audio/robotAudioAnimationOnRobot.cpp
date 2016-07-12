@@ -68,7 +68,10 @@ uint8_t encodeMuLaw(float in_val)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot( Animation* anAnimation, RobotAudioClient* audioClient )
+RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot( Animation* anAnimation,
+                                                        RobotAudioClient* audioClient,
+                                                        Util::RandomGenerator* randomGenerator )
+: Anki::Cozmo::Audio::RobotAudioAnimation( randomGenerator )
 {
   InitAnimation( anAnimation, audioClient );
 }
@@ -258,7 +261,7 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
     const AnimationEvent* nextEvent = GetNextEvent();
     // Loop thorugh events to remove invalid events and get next vaile event
     while ( nextEvent != nullptr ) {
-      if ( nextEvent->State != AnimationEvent::AnimationEventState::Error ) {
+      if ( nextEvent->state != AnimationEvent::AnimationEventState::Error ) {
         // Valid event
         break;
       }
@@ -271,13 +274,13 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
     if ( nextEvent != nullptr ) {
       // Have next valid event
       // Check if it's time for play the next valid event
-      if ( nextEvent->TimeInMS <= relevantTime_ms ) {
+      if ( nextEvent->time_ms <= relevantTime_ms ) {
         if ( isAudioStreamReady ) {
           // Determine the first valid event
           if ( !_didPlayFirstStream ) {
             // Setup inital contition for the fist event
             _didPlayFirstStream = true;
-            _streamAnimationOffsetTime_ms = nextStream->GetCreatedTime_ms() - nextEvent->TimeInMS;
+            _streamAnimationOffsetTime_ms = nextStream->GetCreatedTime_ms() - nextEvent->time_ms;
           }
           // Setup stream
           _currentBufferStream = nextStream;
@@ -285,7 +288,7 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
           if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
             PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
                               "Set Next Stream | EventTime - StartTime_ms %d | AnimTime_ms %d",
-                              nextEvent->TimeInMS, relevantTime_ms );
+                              nextEvent->time_ms, relevantTime_ms );
           }
         }
         else {
@@ -304,7 +307,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
 {
   // Send silence frame by default
   out_RobotAudioMessagePtr = nullptr;
-  const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
+  const TimeStamp_t relevantTime_ms = streamingTime_ms - startTime_ms;
   
   // Get data from stream
   if ( HasCurrentBufferStream() ) {
@@ -336,7 +339,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     // Ignore any animation events that belong to this frame
     while ( GetEventIndex() < _animationEvents.size() ) {
       AnimationEvent* currentEvent = &_animationEvents[GetEventIndex()];
-      if ( currentEvent->TimeInMS < relevantTimeMS ) {
+      if ( currentEvent->time_ms < relevantTime_ms ) {
         IncrementEventIndex();
       }
       else {
@@ -365,6 +368,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot()
+: Anki::Cozmo::Audio::RobotAudioAnimation( nullptr )
 { }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -384,36 +388,55 @@ void RobotAudioAnimationOnRobot::PrepareAnimation()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
 {
+  if ( _animationEvents.empty() ) {
+    SetAnimationState( Anki::Cozmo::Audio::RobotAudioAnimation::AnimationState::AnimationCompleted );
+    PRINT_NAMED_WARNING( "RobotAudioAnimationOnRobot.BeginBufferingAudioOnRobotMode", "_animationEvents.IsEmpty" );
+    return;
+  }
+  
+  
  // Begin Loading robot audio buffer by posting animation audio events
   SetAnimationState( AnimationState::LoadingStream );
   
-  const uint32_t firstAudioEventOffset = _animationEvents.front().TimeInMS;
+  const uint32_t firstAudioEventOffset = _animationEvents.front().time_ms;
   for ( auto& anEvent : _animationEvents ) {
     AnimationEvent* animationEvent = &anEvent;
     std::weak_ptr<char> isAliveWeakPtr(_isAliveSharedPtr);
     Util::Dispatch::After( _postEventTimerQueue,
-                           std::chrono::milliseconds( anEvent.TimeInMS - firstAudioEventOffset ),
+                           std::chrono::milliseconds( anEvent.time_ms - firstAudioEventOffset ),
                            [this, animationEvent, isAliveWeakPtr] ()
-                          {
-                            // Trigger events if animation is still alive
-                            if ( isAliveWeakPtr.expired() ) {
-                              return;
-                            }
-                            
-                            {
-                              std::lock_guard<std::mutex> lock( _animationEventLock );
-                              animationEvent->State = AnimationEvent::AnimationEventState::Posted;
-                            }
-                            
-                            _audioClient->PostCozmoEvent( animationEvent->AudioEvent,
-                                                          [this, animationEvent, isAliveWeakPtr] ( AudioCallback callback )
-                                                           {
-                                                             if ( !isAliveWeakPtr.expired() ) {
-                                                               HandleCozmoEventCallback( animationEvent, callback );
-                                                             }
-                                                           } );
-                            
-                          },
+      {
+        // Trigger events if animation is still alive
+        if ( isAliveWeakPtr.expired() ) {
+          return;
+        }
+        
+        {
+          std::lock_guard<std::mutex> lock( _animationEventLock );
+          animationEvent->state = AnimationEvent::AnimationEventState::Posted;
+        }
+        
+        // Post Event
+        using namespace AudioEngine;
+        using PlayId = RobotAudioClient::CozmoPlayId;
+        const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr]
+        ( const AudioEngine::AudioCallbackInfo& callbackInfo )
+        {
+          if ( !isAliveWeakPtr.expired() ) {
+            HandleCozmoEventCallback( animationEvent, callbackInfo );
+          }
+          
+        };
+        const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
+                                                            GameObjectType::CozmoAnimation,
+                                                            callbackFunc );
+        // Set event's volume RTPC
+        // FIXME: Parameter Type
+        _audioClient->SetCozmoEventParameter( playId,
+                                              GameParameter::ParameterType::Invalid,
+                                              animationEvent->volume );
+        
+      },
                            "PostAudioEventToRobotDelay" );
   }
 }

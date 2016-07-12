@@ -182,8 +182,25 @@ namespace Cozmo {
   class RobotAudioKeyFrame : public IKeyFrame
   {
   public:
+    
+    struct AudioRef {
+      Audio::GameEvent::GenericEvent audioEvent;
+      float volume;
+      float weight;   // random play weight
+      bool audioAlts; // The audio event has altrnate or random audio track playback, avoid replaying event
+      
+      AudioRef( Audio::GameEvent::GenericEvent audioEvent = Audio::GameEvent::GenericEvent::Invalid,
+               float volume = 1.0f,
+               float weight = 1.0f,
+               bool audioAlts = false )
+      : audioEvent( audioEvent )
+      , volume( volume )
+      , weight( weight )
+      , audioAlts( audioAlts ) {};
+    };
+    
     RobotAudioKeyFrame() { }
-    RobotAudioKeyFrame(Audio::GameEvent::GenericEvent audioEvent, TimeStamp_t triggerTime_ms);
+    RobotAudioKeyFrame( AudioRef&& audioRef, TimeStamp_t triggerTime_ms);
     
     // NOTE: Always returns nullptr for RobotAudioKeyframe!
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };
@@ -193,11 +210,6 @@ namespace Cozmo {
       return ClassName;
     }
     
-    struct AudioRef {
-      Audio::GameEvent::GenericEvent audioEvent;
-      // TODO: We can add other audio controls to animation data - JMR
-    };
-    
     const AudioRef& GetAudioRef() const;
     
   protected:
@@ -205,7 +217,7 @@ namespace Cozmo {
     
   private:
     
-    Result AddAudioRef(const Audio::GameEvent::GenericEvent event);
+    Result AddAudioRef(AudioRef&& audioRef);
 
     std::vector<AudioRef> _audioReferences;
     

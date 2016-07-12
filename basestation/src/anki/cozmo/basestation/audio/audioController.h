@@ -89,6 +89,11 @@ public:
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
                      AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
+  bool SetParameterWithPlayingId( AudioEngine::AudioParameterId parameterId,
+                                  AudioEngine::AudioRTPCValue rtpcValue,
+                                  AudioEngine::AudioPlayingId playingId,
+                                  AudioEngine::AudioTimeMs valueChangeDuration = 0,
+                                  AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
   // Create and store a Robot Audio Buffer with the corresponding GameObject and PluginId
   RobotAudioBuffer* RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,

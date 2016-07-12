@@ -12,6 +12,7 @@
 #ifndef __Basestation_Audio_RobotAudioClient_H__
 #define __Basestation_Audio_RobotAudioClient_H__
 
+
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimation.h"
 #include "util/helpers/templateHelpers.h"
@@ -49,7 +50,13 @@ public:
   virtual RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
 
   // Post Cozmo specific Audio events
-  CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );
+  using CozmoPlayId = uint32_t;
+  using CozmoEventCallbackFunc = std::function<void( const AudioEngine::AudioCallbackInfo& callbackInfo )>;
+  CozmoPlayId PostCozmoEvent( GameEvent::GenericEvent event,
+                              GameObjectType GameObjId = GameObjectType::Invalid,
+                              const CozmoEventCallbackFunc& callbackFunc = nullptr );
+  
+  bool SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value );
 
    // Create an Audio Animation for a specific animation. Only one animation can be played at a time
   void CreateAudioAnimation( Animation* anAnimation );

@@ -205,7 +205,7 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioEventId eventId,
                                                              AudioEngine::AudioGameObject gameObjectId,
-                                                             AudioEngine::AudioCallbackContext* callbackContext  )
+                                                             AudioEngine::AudioCallbackContext* callbackContext )
 {
   AudioPlayingId playingId = kInvalidAudioPlayingId;
 #if USE_AUDIO_ENGINE
@@ -287,6 +287,22 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
     success = _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
+  }
+#endif
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioController::SetParameterWithPlayingId( AudioEngine::AudioParameterId parameterId,
+                                                 AudioEngine::AudioRTPCValue rtpcValue,
+                                                 AudioEngine::AudioPlayingId playingId,
+                                                 AudioEngine::AudioTimeMs valueChangeDuration,
+                                                 AudioEngine::AudioCurveType curve ) const
+{
+  bool success = false;
+#if USE_AUDIO_ENGINE
+  if ( _isInitialized ) {
+    success = _audioEngine->SetRTPCValueWithPlayingId( parameterId, rtpcValue, playingId, valueChangeDuration, curve );
   }
 #endif
   return success;
