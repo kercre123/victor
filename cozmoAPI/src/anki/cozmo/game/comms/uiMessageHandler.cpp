@@ -21,7 +21,6 @@
 #include "anki/cozmo/game/comms/tcpSocketComms.h"
 #include "anki/cozmo/game/comms/udpSocketComms.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
-#include "anki/cozmo/basestation/multiClientComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 

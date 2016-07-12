@@ -55,7 +55,6 @@ namespace Cozmo {
 class Robot;
 class IExternalInterface;
 class CozmoContext;
-class MultiClientChannel;
 class UiMessageHandler;
 class GameMessagePort;
 class USBTunnelServer;

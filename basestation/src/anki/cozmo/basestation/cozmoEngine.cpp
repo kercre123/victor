@@ -32,7 +32,6 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
-#include "anki/cozmo/basestation/multiClientChannel.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
@@ -250,7 +249,7 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(connectMsg.robotID);
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
-  return RESULT_OK;
+  return true;
 }
 
 void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -451,7 +450,6 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     lastResult = RESULT_FAIL;
   } else {
     PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
-    lastResult = robot->SyncTime();
     
     // Requesting camera calibration
     robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib,

@@ -43,7 +43,7 @@ namespace Cozmo {
 
 class RobotManager;
 class CozmoContext;
-class MultiClientChannel;
+class RobotConnectionManager;
   
 namespace ExternalInterface {
   struct ConnectToRobot;
@@ -78,16 +78,13 @@ public:
 protected:
   void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
   void Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message);
+  
 private:
-  void ProcessPacket(const Comms::IncomingPacket& packet);
-  void VerifyRobotConnection();
-
   AnkiEventMgr<RobotInterface::RobotToEngine, MailboxSignalMap<RobotInterface::RobotToEngine> > _eventMgr;
-  std::unique_ptr<MultiClientChannel> _channel;
   RobotManager* _robotManager;
+  std::unique_ptr<RobotConnectionManager> _robotConnectionManager;
   bool _isInitialized;
   std::vector<Signal::SmartHandle> _signalHandles;
-  std::unique_ptr<Util::TransportAddress> _cachedAddress;
   
 };
 

@@ -1167,8 +1167,8 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
-  AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
   ReliableTransport_FinishConnection(connection); // Accept the connection
+  AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
