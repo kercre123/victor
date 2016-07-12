@@ -60,7 +60,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
       textureImporter.spritePackingTag = null;
     }
 
-    textureImporter.spritePixelsPerUnit = _kSpritePixelsPerUnit;
+    textureImporter.spritePixelsPerUnit = GetPixelsPerUnit();
     textureImporter.mipmapEnabled = false;
     textureImporter.filterMode = FilterMode.Bilinear;
     textureImporter.maxTextureSize = _kMaxTextureSize;
@@ -78,6 +78,17 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     tis.spriteAlignment = (int)SpriteAlignment.Center;
 
     textureImporter.SetTextureSettings(tis);
+  }
+
+  private float GetPixelsPerUnit() {
+    float ppu = _kSpritePixelsPerUnit;
+    if (IsSDAsset()) {
+      ppu *= 0.25f;
+    }
+    else if (IsHDAsset()) {
+      ppu *= 0.5f;
+    }
+    return ppu;
   }
 
   private Vector4 GetBorderFromUHDSprite() {
@@ -163,7 +174,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   }
 
   private bool IsHDAsset() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kHDBundleTag);
+    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kHDBundleTag) && !assetPath.Contains(_kUHDBundleTag);
   }
 
   private bool IsSDAsset() {
