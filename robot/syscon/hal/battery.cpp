@@ -209,11 +209,10 @@ void Battery::updateOperatingMode() {
       Motors::disable(false);
 
       Battery::powerOn();
-      Backpack::lightMode(TIMER_LEDS);
-
       Radio::advertise();
 
       Timer::lowPowerMode(false);
+      Backpack::lightMode(TIMER_LEDS);
       break ;
   }
   
