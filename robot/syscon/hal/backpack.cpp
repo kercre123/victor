@@ -29,102 +29,47 @@ static const charliePlex_s RGBLightPins[] =
   { PIN_LED3, PIN_LED4 },
   { PIN_LED4, PIN_LED1 },
   { PIN_LED4, PIN_LED3 },
-  { PIN_LED4, PIN_LED2 },
-  { PIN_LED4, PIN_LED4 }
+  { PIN_LED4, PIN_LED2 }
 };
 
 // Charlieplexing magic constants
 static const int numLights = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
-static const int TIMER_GRAIN = 6;
-static const int TIMER_THRESH = 0x10;
 
 static int active_channel = 0;
 static const charliePlex_s* currentChannel = &RGBLightPins[0];
 static uint8_t drive_value[numLights];
-static uint8_t drive_error[numLights];
+static int drive_error[numLights];
+
+static inline void lights_out(void);
+static int next_channel(void);
+static void setup_timer();
+
+// Helper function
+static inline void light_off(void) {
+  nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(currentChannel->cathode, NRF_GPIO_PIN_NOPULL);
+}
+
+static inline void light_on(void) {
+  nrf_gpio_pin_set(currentChannel->anode);
+  nrf_gpio_cfg_output(currentChannel->anode);
+  nrf_gpio_pin_clear(currentChannel->cathode);
+  nrf_gpio_cfg_output(currentChannel->cathode);
+}
 
 // Start all pins as input
 void Backpack::init()
 {
   // This prevents timers from deadlocking system
-  drive_value[numLights - 1] = 0xFF;
-
-  static const LightState startUpLight = {
-    0x03E0,
-    0x0180,
-    0x14,0x06,0x14,0x06
+  static const LightState lights[] = {
+    { 0x0000, 0x0000, 34, 67, 17, 17 },
+    { 0x0000, 0x0000, 34, 67, 17, 17 },
+    { 0x7FFF, 0x0000, 34, 67, 17, 17 },
+    { 0x0000, 0x0000, 34, 67, 17, 17 },
+    { 0x0000, 0x0000, 34, 67, 17, 17 }
   };
 
-  Lights::update(lightController.backpack[2], &startUpLight);
-}
-
-void Backpack::flash()
-{
-  for (int l = 0; l < 2; l++) {
-    for (int i = 0; i < numLights; i++) {
-
-      uint8_t ann = RGBLightPins[i].anode;
-      uint8_t cath = RGBLightPins[i].cathode;
-
-      nrf_gpio_pin_set(ann);
-      nrf_gpio_cfg_output(ann);
-      nrf_gpio_pin_clear(cath);
-      nrf_gpio_cfg_output(cath);
-      
-      MicroWait(10000);
-    }
-  }
-}
-
-static inline void lights_out(void) {
-  nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(currentChannel->cathode, NRF_GPIO_PIN_NOPULL);
-}
-
-static void next_channel(void) {
-  NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-
-  for(;;) {
-    if (++active_channel >= numLights) {
-      active_channel = 0;
-    }
-
-    currentChannel = &RGBLightPins[active_channel];
-    int delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel] - TIMER_THRESH;
-    
-    if (delta > 0) {
-      // Turn on our light
-      nrf_gpio_pin_set(currentChannel->anode);
-      nrf_gpio_cfg_output(currentChannel->anode);
-      nrf_gpio_pin_clear(currentChannel->cathode);
-      nrf_gpio_cfg_output(currentChannel->cathode);
-
-      NRF_TIMER0->CC[0] = NRF_TIMER0->CC[3] + delta;
-
-      return ;
-    } else {
-      drive_error[active_channel] = 0;
-    }
-  }
-}
-
-static void setup_timer() {
-  NRF_TIMER0->TASKS_STOP = 1;
-
-  NRF_TIMER0->MODE = TIMER_MODE_MODE_Timer;
-  NRF_TIMER0->TASKS_CLEAR = 1;
- 
-  NRF_TIMER0->PRESCALER = 0;
-  NRF_TIMER0->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
-  
-  NRF_TIMER0->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
-
-  next_channel();
-
-  NVIC_EnableIRQ(TIMER0_IRQn);
-  NVIC_SetPriority(TIMER0_IRQn, LED_PRIORITY);
-
-  NRF_TIMER0->TASKS_START = 1;
+  setLights(lights);
 }
 
 void Backpack::lightMode(LightDriverMode mode) {
@@ -139,30 +84,14 @@ void Backpack::lightMode(LightDriverMode mode) {
   }
 }
 
-void Backpack::update(void) {
-  lights_out();
-  
-  if (++active_channel >= numLights) {
-    active_channel = 0;
-  }
-  currentChannel = &RGBLightPins[active_channel];
-
-  static uint8_t pwm[numLights];
-
-  // Minimum display value
-  if (drive_value[active_channel] < 0x18) {
-    return ;
-  }
-  
-  // Calculate PDM value
-  int overflow = pwm[active_channel] + (int)drive_value[active_channel];
-  pwm[active_channel] = overflow;
-
-  if (overflow > 0xFF) {
-    nrf_gpio_pin_set(currentChannel->anode);
-    nrf_gpio_cfg_output(currentChannel->anode);
-    nrf_gpio_pin_clear(currentChannel->cathode);
-    nrf_gpio_cfg_output(currentChannel->cathode);
+void Backpack::flash()
+{
+  for (int l = 0; l < 2; l++) {
+    for (int i = 0; i < numLights; i++) {
+      currentChannel = &RGBLightPins[i];
+      light_on();
+      MicroWait(10000);
+    }
   }
 }
 
@@ -203,17 +132,104 @@ void Backpack::setLights(const LightState* update) {
   }
 }
 
-extern "C" void TIMER0_IRQHandler(void) { 
-  if (!NRF_TIMER0->EVENTS_COMPARE[0]) {
+// RTC powered lights
+void Backpack::update(void) {
+  light_off();
+  
+  if (++active_channel >= numLights) {
+    active_channel = 0;
+  }
+  currentChannel = &RGBLightPins[active_channel];
+
+  static uint8_t pwm[numLights];
+
+  // Minimum display value
+  if (drive_value[active_channel] < 0x18) {
     return ;
   }
   
-  NRF_TIMER0->EVENTS_COMPARE[0] = 0;
-  NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-  
-  lights_out();
-  
-  drive_error[active_channel] = NRF_TIMER0->CC[3] - drive_value[active_channel];
+  // Calculate PDM value
+  int overflow = pwm[active_channel] + (int)drive_value[active_channel];
+  pwm[active_channel] = overflow;
 
-  next_channel();
+  if (overflow > 0xFF) {
+    light_on();
+  }
+}
+
+// Timer powered lights
+static const int TIMER_GRAIN = 5;
+static const int TIMER_THRASH = 0x10;
+static const int TIMER_DELTA_MINIMUM = 0x10;
+
+static void setup_timer() {
+  NRF_TIMER0->TASKS_STOP = 1;
+
+  NRF_TIMER0->MODE = TIMER_MODE_MODE_Timer;
+  NRF_TIMER0->TASKS_CLEAR = 1;
+ 
+  NRF_TIMER0->PRESCALER = 0;
+  NRF_TIMER0->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
+  
+  NRF_TIMER0->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
+
+  // This is the blackout stage
+  active_channel = -1;
+  NRF_TIMER0->CC[0] = 0;
+
+  NVIC_EnableIRQ(TIMER0_IRQn);
+  NVIC_SetPriority(TIMER0_IRQn, LED_PRIORITY);
+
+  NRF_TIMER0->TASKS_START = 1;
+}
+
+
+static int next_channel(void) {
+  for (;;) {
+    if (++active_channel >= numLights) {
+      active_channel = 0;
+    }
+
+    currentChannel = &RGBLightPins[active_channel];
+    int delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel];
+    
+    if (delta > TIMER_DELTA_MINIMUM) {
+      return delta;
+    } else {
+      drive_error[active_channel] = 0;
+    }
+  }
+}
+
+extern "C" void TIMER0_IRQHandler(void) { 
+  // Clear out our interupt
+  NRF_TIMER0->EVENTS_COMPARE[0] = 0;
+  
+  if (active_channel >= 0) {
+    NRF_TIMER0->TASKS_CAPTURE[3] = 1;
+    drive_error[active_channel] = NRF_TIMER0->CC[3] - NRF_TIMER0->CC[0];
+    light_off();
+  }
+
+  // Locate next channel with appropriate brightness
+  int delta;
+  
+  do {
+    // Did we reach the end of our time together
+    if (++active_channel >= numLights) {
+      NRF_TIMER0->CC[0] = 0;
+      active_channel = -1;
+      return ;
+    }
+    
+    delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel] - TIMER_THRASH;
+    drive_error[active_channel] = 0;
+  } while (delta < TIMER_DELTA_MINIMUM);
+
+  // Light that mo-fo up
+  currentChannel = &RGBLightPins[active_channel];
+  NRF_TIMER0->TASKS_CAPTURE[3] = 1;
+  NRF_TIMER0->CC[0] = NRF_TIMER0->CC[3] + delta;
+    
+  light_on();
 }
