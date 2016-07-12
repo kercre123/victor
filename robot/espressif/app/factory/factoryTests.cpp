@@ -56,6 +56,16 @@ static s32 maxPositions[4];
 static BirthCertificate birthCert;
 static s8  menuIndex;
 static void* testModeData;
+static int testModePhase;
+
+typedef enum {
+  PP_entry = 0,
+  PP_pause,
+  PP_wipe,
+  PP_postWipeDelay,
+  PP_setWifi,
+  PP_running,
+} PlayPenTestState;
 
 extern "C" bool hasBirthCertificate(void) { return birthCert.second != 0xFF; }
 
@@ -104,6 +114,7 @@ bool Init()
   modeTimeout = 0xFFFFffff;
   menuIndex = 0;
   testModeData = NULL;
+  testModePhase = 0;
   birthCert.second = 0xFF; // Mark invalid
   return true;
 }
@@ -151,9 +162,7 @@ static void IMUCalibrationReadCallback(NVStorage::NVStorageBlob* blob, const NVS
       {
         if (bytes[b] != 0xFF)
         {
-          AnkiDebug( 193, "IMUCalibrationData.Read.Success",
-                     502, "Got calibration data: gyro={%d, %d, %d}, acc={%d, %d, %d}", 
-                     6, calD[run].gyro[0], calD[run].gyro[1], calD[run].gyro[2],
+          AnkiDebug( 193, "IMUCalibrationData.Read.Success", 502, "Got calibration data: gyro={%d, %d, %d}, acc={%d, %d, %d}", 6, calD[run].gyro[0], calD[run].gyro[1], calD[run].gyro[2],
                         calD[run].acc[0], calD[run].acc[1], calD[run].acc[2]);
           RobotInterface::SendMessage(calD[run]);
           return;
@@ -188,6 +197,25 @@ static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVRes
   
   foregroundTaskPost(requestIMUCal, 0);
 }
+
+static void WipeAllDoneCB(const u32 param, const NVStorage::NVResult rslt)
+{
+  switch(mode)
+  {
+    case RobotInterface::FTM_PlayPenTest:
+    {
+      testModePhase = PP_postWipeDelay;
+      lastExecTime = system_get_time();
+      i2spiBootloaderCommandDone();
+      break;
+    }
+    default:
+    {
+      AnkiWarn( 196, "FactoryTests.WipeAllDoneCB", 505, "Unexpected mode", 0);
+    }
+  }
+}
+
 
 void Update()
 {
@@ -240,6 +268,55 @@ void Update()
         break;
       }
       case RobotInterface::FTM_PlayPenTest:
+      {
+        bool fallThrough = false;
+        switch(testModePhase)
+        {
+          case PP_entry:
+          {
+            break;
+          }
+          case PP_pause:
+          {
+            if (i2spiMessageQueueIsEmpty())
+            {
+              i2spiSwitchMode(I2SPI_PAUSED);
+              NVStorage::WipeAll(0, true, WipeAllDoneCB, true, false);
+              testModePhase = PP_wipe;
+            }
+            break;
+          }
+          case PP_wipe:
+          {
+            break;
+          }
+          case PP_postWipeDelay:
+          {
+            break;
+          }
+          case PP_setWifi:
+          {
+            os_printf("AFIX wifi\r\n");
+            struct softap_config ap_config;
+            wifi_softap_get_config(&ap_config);
+            os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
+            os_sprintf((char*)ap_config.ssid, "Afix%02d", modeParam & 63);
+            ap_config.authmode = AUTH_OPEN;
+            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+            ap_config.beacon_interval = 100;
+            wifi_softap_set_config_current(&ap_config);
+            testModePhase = PP_running;
+            os_printf("AFIX running\r\n");
+            break;
+          }
+          case PP_running:
+          {
+            fallThrough = true;
+          }
+        }
+        if (!fallThrough) break;
+        // Else ecplicitly fallthrough to wifi info
+      }
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
@@ -659,13 +736,6 @@ int GetParam()
   return modeParam;
 }
 
-#if FACTORY_FIRMWARE
-static void WipeAllDoneCB(const u32 param, const NVStorage::NVResult rslt)
-{
-  SetMode(RobotInterface::FTM_PlayPenTest, GetParam());
-}
-#endif
-
 void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
 {
   RobotInterface::EngineToRobot msg;
@@ -791,16 +861,23 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     }
     case RobotInterface::FTM_PlayPenTest:
     {
-      if ((hasBirthCertificate() == false) && (NVStorage::IsFactoryNVClear() == false))
+      if (mode != RobotInterface::FTM_PlayPenTest)
       {
-        // Enable battery power for wipe all
-        msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-        msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
-        Anki::Cozmo::RTIP::SendMessage(msg);
-        NVStorage::WipeAll(0, true, WipeAllDoneCB, true, false);
-      }
-      else
-      {
+        if ((hasBirthCertificate() == false) && (NVStorage::IsFactoryNVClear() == false))
+        {
+          testModePhase = PP_pause;
+          // Enable battery power for wipe all
+          msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+          msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+          RTIP::SendMessage(msg);
+          msg.tag = RobotInterface::EngineToRobot::Tag_enterRecoveryMode;
+          msg.enterRecoveryMode.mode = RobotInterface::OTA::OTA_Mode;
+          RTIP::SendMessage(msg);
+        }
+        else
+        {
+          testModePhase = PP_setWifi;
+        }
         msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
         msg.enableLiftPower.enable = true;
         const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
@@ -808,14 +885,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
         msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
         msg.enableTestStateMessage.enable = false;
         Anki::Cozmo::RTIP::SendMessage(msg);
-        struct softap_config ap_config;
-        wifi_softap_get_config(&ap_config);
-        os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-        os_sprintf((char*)ap_config.ssid, "Afix%02d", param & 63);
-        ap_config.authmode = AUTH_OPEN;
-        ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-        ap_config.beacon_interval = 100;
-        wifi_softap_set_config_current(&ap_config);
       }
       break;
     }
