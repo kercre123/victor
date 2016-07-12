@@ -431,9 +431,8 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
                                                             GameObjectType::CozmoAnimation,
                                                             callbackFunc );
         // Set event's volume RTPC
-        // FIXME: Parameter Type
         _audioClient->SetCozmoEventParameter( playId,
-                                              GameParameter::ParameterType::Invalid,
+                                              GameParameter::ParameterType::Event_Volume,
                                               animationEvent->volume );
         
       },
