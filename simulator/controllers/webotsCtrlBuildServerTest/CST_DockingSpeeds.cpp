@@ -92,7 +92,7 @@ namespace Anki {
     
     CST_DockingSpeeds::CST_DockingSpeeds()
     : _startingRobotPose(0, Z_AXIS_3D(), {0, 0, 0})
-    , _startingCubePose(0, Z_AXIS_3D(), {150, 0, 22})
+    , _startingCubePose(0, Z_AXIS_3D(), {150.f, 0.f, 22.f})
     {
       
     }
@@ -276,7 +276,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            _placeActionCompleted &&
-                                           NEAR(pose0.GetTranslation().z(), 0.02, 0.01), 55)
+                                           NEAR(pose0.GetTranslation().z(), 22, 1), 55)
           {
             ResetTest();
             

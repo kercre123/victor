@@ -622,9 +622,9 @@ void PhysVizController::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface:
   _globalRotation[2] = payload.rot_axis_y;
   _globalRotation[3] = payload.rot_axis_z;
   
-  _globalTranslation[0] = MM_TO_M(payload.trans_x);
-  _globalTranslation[1] = MM_TO_M(payload.trans_y);
-  _globalTranslation[2] = MM_TO_M(payload.trans_z);
+  _globalTranslation[0] = MM_TO_M(payload.trans_x_mm);
+  _globalTranslation[1] = MM_TO_M(payload.trans_y_mm);
+  _globalTranslation[2] = MM_TO_M(payload.trans_z_mm);
   
   PRINT("Processing SetVizOrigin: %.1fdeg @(%.1f %.1f %.1f), (%.1f %.1f %.1f)\n",
         RAD_TO_DEG(_globalRotation[0]), _globalRotation[1], _globalRotation[2], _globalRotation[3],

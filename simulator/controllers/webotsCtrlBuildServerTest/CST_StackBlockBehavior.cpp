@@ -314,10 +314,10 @@ s32 CST_StackBlockBehavior::UpdateInternal()
         !IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
         GetCarryingObjectID() == -1 &&
         // (x,y) positions are nearly on top of each other
-        NEAR(pose0.GetTranslation().x(), pose1.GetTranslation().x(), MM_TO_M(stackingTolerance_mm)) &&
-        NEAR(pose0.GetTranslation().y(), pose1.GetTranslation().y(), MM_TO_M(stackingTolerance_mm)) &&
+        NEAR(pose0.GetTranslation().x(), pose1.GetTranslation().x(), stackingTolerance_mm) &&
+        NEAR(pose0.GetTranslation().y(), pose1.GetTranslation().y(), stackingTolerance_mm) &&
         // difference between z's is about a block height
-        NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), MM_TO_M(44.0f), MM_TO_M(10.0f)), 20)
+        NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), 44.0f, 10.0f), 20)
       {
         StopMovie();
         CST_EXIT();

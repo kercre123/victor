@@ -71,7 +71,14 @@ public:
   void QuitWebots(s32 status);
   void QuitController(s32 status);
   
+  ///
+  // @brief      Cycles the viz origin between all observed cubes and the robot itself.
+  //
   void CycleVizOrigin();
+
+  ///
+  // @brief Update the viz origin to be at the robot.
+  //
   void UpdateVizOriginToRobot();
   void UpdateVizOrigin(const Pose3d& originPose);
   
@@ -298,16 +305,51 @@ protected:
   const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
   void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
   bool IsMultiBlobEntryTag(u32 tag) const;
-  
-  // Actually move objects in the simulated world
+
+  ///
+  // @brief      Sets the actual robot pose.
+  // @param[in]  newPose  The new pose with translation in millimeters.
+  //
   void SetActualRobotPose(const Pose3d& newPose);
+
   void SetActualObjectPose(const std::string& name, const Pose3d& newPose);
   const Pose3d GetLightCubePoseActual(int lightCubeId);
+
+
+  ///
+  // @brief      Sets the light cube pose.
+  // @param[in]  lightCubeId  The light cube identifier
+  // @param[in]  pose         Pose with translation in millimeters.
+  //
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   bool HasActualLightCubePose(int lightCubeId) const;
   
   static size_t MakeWordAligned(size_t size);
-  const std::string GetAnimationTestName();
+  const std::string GetAnimationTestName() const;
+  const double GetSupervisorTime() const;
+
+  ///
+  // @brief      Gets the node by definition name defined in the webots world files (.wbt).
+  // @param[in]  defName  The definition name
+  // @return     The node with the definition name.
+  //
+  webots::Node* GetNodeByDefName(const std::string& defName) const;
+
+
+  ///
+  // @brief      Determines if x seconds passed since the first time this function was called.
+  //             Useful in the CST test controllers where the same code block in each state can be
+  //             called many times repeatedly as UpdateInternal is called on every tick and waiting
+  //             by blocking the thread is not an option as the time will not advance if the thread
+  //             is blocked.
+  // @param      waitTimer  Requires that there is a variable that persists outside the function
+  //                        scope to keep track of the first time the function was called (the time
+  //                        the timer started). Needs to be a negative number to start with. Will be
+  //                        returned to a negative number after function returns true.
+  // @param[in]  xSeconds   Number of seconds to wait for.
+  // @return     True if has x seconds passed since the first call of the function, False otherwise.
+  //
+  const bool HasXSecondsPassedYet(double& waitTimer, double xSeconds);
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
@@ -336,6 +378,21 @@ private:
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
+
+  ///
+  // @brief      Packages the pose of a webots node into a Pose3d object
+  // @param[in]  node  Node to get the pose for
+  // @return     The pose of the webots node; translation units are in millimeters.
+  //
+  const Pose3d GetPose3dOfNode(webots::Node* node);
+
+  ///
+  // @brief      Iterates through _lightCubes and returns the first light cube with the given ID
+  //             (should be unique).
+  // @param[in]  id    The identifier
+  // @return     The webots node for the light cube.
+  //
+  webots::Node* GetLightCubeById(int lightCubeId) const;
   
   const f32 TIME_UNTIL_READY_SEC = 1.5;
   
@@ -343,8 +400,9 @@ private:
   webots::Supervisor _supervisor;
   
   webots::Node* _robotNode = nullptr;
-  std::vector<std::pair<webots::Node*, Pose3d> > _lightCubes;
-  std::vector<std::pair<webots::Node*, Pose3d> >::iterator _lightCubeOriginIter = _lightCubes.end();
+
+  std::vector<webots::Node*> _lightCubes;
+  std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();
   
   Pose3d _robotPose;
   Pose3d _robotPoseActual;

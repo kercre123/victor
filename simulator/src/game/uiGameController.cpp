@@ -630,7 +630,7 @@ namespace Anki {
             break;
           }
           else if(nodeName.find("LightCube") != std::string::npos) {
-            _lightCubes.emplace_back(std::make_pair(nd, Pose3d()));
+            _lightCubes.emplace_back(nd);
             _lightCubeOriginIter = _lightCubes.begin();
             
             PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
@@ -659,27 +659,6 @@ namespace Anki {
                                     static_cast<f32>(orientationActual[7]),
                                     static_cast<f32>(orientationActual[8])} );
       
-      
-      for(auto & lightCube : _lightCubes)
-      {
-        transActual = lightCube.first->getPosition();
-        orientationActual = lightCube.first->getOrientation();
-        
-        lightCube.second.SetTranslation({static_cast<f32>(M_TO_MM(transActual[0])),
-          static_cast<f32>(M_TO_MM(transActual[1])),
-          static_cast<f32>(M_TO_MM(transActual[2]))} );
-
-        lightCube.second.SetRotation({static_cast<f32>(orientationActual[0]),
-          static_cast<f32>(orientationActual[1]),
-          static_cast<f32>(orientationActual[2]),
-          static_cast<f32>(orientationActual[3]),
-          static_cast<f32>(orientationActual[4]),
-          static_cast<f32>(orientationActual[5]),
-          static_cast<f32>(orientationActual[6]),
-          static_cast<f32>(orientationActual[7]),
-          static_cast<f32>(orientationActual[8])} );
-      }
-      
       // if it's the first time that we set the proper pose for the robot, update the visualization origin to
       // the robot, since debug render expects to be centered around the robot
       if ( _firstRobotPoseUpdate )
@@ -693,50 +672,41 @@ namespace Anki {
         _firstRobotPoseUpdate = false;
       }
     }
-    
+
     void UiGameController::CycleVizOrigin()
     {
+      auto UpdateVizOriginToRobotAndLog = [this]() {
+        PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
+        "Aligning viz to match robot's pose.");
+        UpdateVizOriginToRobot();
+      };
+
       Pose3d correctionPose;
-      if(_robotStateMsg.localizedToObjectID >= 0 && !_lightCubes.empty())
-      {
-        // iterator == end happens when we center to robot
+      if (_robotStateMsg.localizedToObjectID >= 0 && !_lightCubes.empty()) {
+        // Cycle through the _lightCubes vector
         if (_lightCubeOriginIter == _lightCubes.end()) {
-          // at robot, go to first cube
           _lightCubeOriginIter = _lightCubes.begin();
         } else {
-          // at cube, go to next cube (or robot if at last)
           ++_lightCubeOriginIter;
         }
-
-        // if at robot
-        if(_lightCubeOriginIter == _lightCubes.end())
-        {
+        
+        if (_lightCubeOriginIter != _lightCubes.end()) {
+          // If we haven't iterated through all the observed light cubes yet, localize to the newly
+          // iterated light cube.
           PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-                          "Aligning viz to match robot's pose.");
-                         
-          correctionPose = _robotPoseActual * _robotPose.GetInverse();
-        }
-        else
-        {
-          // Align the pose of the object to which the robot is localized to the
-          // the next actual light cube in the world
-          PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-                       "Aligning viz to match next known LightCube to object %d",
-                       _robotStateMsg.localizedToObjectID);
-      
-          correctionPose = _lightCubeOriginIter->second * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+                        "Aligning viz to match next known LightCube to object %d",
+                        _robotStateMsg.localizedToObjectID);
+          
+          correctionPose = GetPose3dOfNode(*_lightCubeOriginIter)  * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+          UpdateVizOrigin(correctionPose);
+        } else {
+          // We have cycled through all the available light cubes, so localize to robot now.
+          UpdateVizOriginToRobotAndLog();
         }
       } else {
-        // Robot is not localized to any object, so align the robot's estimated
-        // pose to its actual pose in the world
-
-        PRINT_CH_INFO("Keyboard", "UiGameController.UpdateVizOrigin",
-                         "Aligning viz to match robot's pose.");
-                         
-        correctionPose = _robotPoseActual * _robotPose.GetInverse();
+        // Robot haven't observed any cubes, so localize to robot.
+        UpdateVizOriginToRobotAndLog();
       }
-      
-      UpdateVizOrigin(correctionPose);
     }
     
     void UiGameController::UpdateVizOriginToRobot()
@@ -758,9 +728,9 @@ namespace Anki {
       msg.rot_axis_y = Rvec.GetAxis().y();
       msg.rot_axis_z = Rvec.GetAxis().z();
       
-      msg.trans_x = originPose.GetTranslation().x();
-      msg.trans_y = originPose.GetTranslation().y();
-      msg.trans_z = originPose.GetTranslation().z();
+      msg.trans_x_mm = originPose.GetTranslation().x();
+      msg.trans_y_mm = originPose.GetTranslation().y();
+      msg.trans_z_mm = originPose.GetTranslation().z();
       
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
@@ -1785,69 +1755,33 @@ namespace Anki {
     
     void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
     {
-      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)
-      {
-        webots::Field* id = iter->first->getField("ID");
-        if(id && id->getSFInt32() == lightCubeId)
-        {
-          webots::Field* rotField = iter->first->getField("rotation");
-          assert(rotField != nullptr);
-          
-          webots::Field* transField = iter->first->getField("translation");
-          assert(transField != nullptr);
-          
-          const RotationVector3d Rvec = newPose.GetRotationVector();
-          const double rotation[4] = {
-            Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
-            Rvec.GetAngle().ToFloat()
-          };
-          rotField->setSFRotation(rotation);
-          
-          const double translation[3] = {
-            MM_TO_M(newPose.GetTranslation().x()),
-            MM_TO_M(newPose.GetTranslation().y()),
-            MM_TO_M(newPose.GetTranslation().z())
-          };
-          transField->setSFVec3f(translation);
-        }
-      }
-    }
+      webots::Node* lightCube = GetLightCubeById(lightCubeId);
 
-    bool UiGameController::HasActualLightCubePose(int lightCubeId) const
-    {
-      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++) {
-        webots::Field* id = iter->first->getField("ID");
-        if(id && id->getSFInt32() == lightCubeId) {
-          return true;
-        }
-      }
-      return false;
-    }  
+      webots::Field* rotField = lightCube->getField("rotation");
+      assert(rotField != nullptr);
+      
+      webots::Field* transField = lightCube->getField("translation");
+      assert(transField != nullptr);
+      
+      const RotationVector3d& Rvec = newPose.GetRotationVector();
+      const double rotation[4] = {
+        Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+        Rvec.GetAngle().ToFloat()
+      };
+      rotField->setSFRotation(rotation);
+      
+      const double translation[3] = {
+        MM_TO_M(newPose.GetTranslation().x()),
+        MM_TO_M(newPose.GetTranslation().y()),
+        MM_TO_M(newPose.GetTranslation().z())
+      };
+      transField->setSFVec3f(translation);
+    }
   
     const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
     {
-      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)
-      {
-        webots::Field* id = iter->first->getField("ID");
-        if(id && id->getSFInt32() == lightCubeId)
-        {
-          webots::Field* rotField = iter->first->getField("rotation");
-          assert(rotField != nullptr);
-          
-          webots::Field* transField = iter->first->getField("translation");
-          assert(transField != nullptr);
-        
-          const double* rot = rotField->getSFRotation();
-          const RotationVector3d rotation(rot[3], Vec3f(rot[0], rot[1], rot[2]));
-          
-          const double* trans = transField->getSFVec3f();
-          const Vec3f translation(trans[0], trans[1], trans[2]);
-          
-          return Pose3d(rotation, translation);
-        }
-      }
-      PRINT_NAMED_ERROR("UiGameController.GetLightCubePoseActual", "Unable to get actual pose for light cube %d", lightCubeId);
-      return Pose3d();
+      webots::Node* lightCube = GetLightCubeById(lightCubeId);
+      return GetPose3dOfNode(lightCube);
     }
 
     size_t UiGameController::MakeWordAligned(size_t size) {
@@ -1858,10 +1792,85 @@ namespace Anki {
       return size;
     }
 
-    const std::string UiGameController::GetAnimationTestName()
+    const std::string UiGameController::GetAnimationTestName() const
     {
       return _robotNode->getField("animationTestName")->getSFString();
     }
-    
+
+    const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node)
+    {
+      const double* transActual = node->getPosition();
+      const double* orientationActual = node->getOrientation();
+
+      Pose3d pose;
+
+      pose.SetTranslation({
+        static_cast<f32>(M_TO_MM(transActual[0])),
+        static_cast<f32>(M_TO_MM(transActual[1])),
+        static_cast<f32>(M_TO_MM(transActual[2]))
+      } );
+
+      pose.SetRotation({
+        static_cast<f32>(orientationActual[0]),
+        static_cast<f32>(orientationActual[1]),
+        static_cast<f32>(orientationActual[2]),
+        static_cast<f32>(orientationActual[3]),
+        static_cast<f32>(orientationActual[4]),
+        static_cast<f32>(orientationActual[5]),
+        static_cast<f32>(orientationActual[6]),
+        static_cast<f32>(orientationActual[7]),
+        static_cast<f32>(orientationActual[8])
+      } );
+
+      return pose;
+    }
+
+    bool UiGameController::HasActualLightCubePose(int lightCubeId) const
+    {
+      for (auto lightCube : _lightCubes) {
+        webots::Field* id = lightCube->getField("ID");
+        if (id && id->getSFInt32() == lightCubeId) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    webots::Node* UiGameController::GetLightCubeById(int lightCubeId) const
+    {
+      for (auto lightCube : _lightCubes) {
+        webots::Field* id = lightCube->getField("ID");
+        if (id && id->getSFInt32() == lightCubeId) {
+          return lightCube;
+        }
+      }
+
+      ASSERT_NAMED_EVENT(false, "UiGameController.GetLightCubeById",
+        "Can't find the light cube with id %d in the world", lightCubeId);
+    }
+
+    const double UiGameController::GetSupervisorTime() const
+    {
+      return _supervisor.getTime();
+    }
+    const bool UiGameController::HasXSecondsPassedYet(double& waitTimer, double xSeconds)
+    {
+      if (waitTimer < 0){
+        waitTimer = GetSupervisorTime();
+      }
+
+      if (GetSupervisorTime() > waitTimer + xSeconds){
+        // reset waitTimer so it can be reused next time.
+        waitTimer = -1;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    webots::Node* UiGameController::GetNodeByDefName(const std::string& defName) const
+    {
+      return _supervisor.getFromDef(defName);
+    }
   } // namespace Cozmo
 } // namespace Anki
