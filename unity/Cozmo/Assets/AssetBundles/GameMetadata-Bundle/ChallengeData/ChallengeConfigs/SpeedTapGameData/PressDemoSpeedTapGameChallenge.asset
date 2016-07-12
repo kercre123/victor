@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: Count
     _EnumValue: 6
   _Music:
-    _Music: -527946100
+    _Music: -340344697
   MinigameConfig: {fileID: 11400000, guid: bb54c8b70204c4ae2b5a583d5c3d855f, type: 2}
   IsMinigame: 1
   DifficultyOptions:
