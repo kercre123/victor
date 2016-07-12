@@ -7,6 +7,7 @@ namespace GameParameter {
 
 enum uint_32 ParameterType
 {
+  Event_Volume = 3530059848,
   External_Name_Duration = 2145805753,
   Invalid = 0,
   Mood = 3128647864,
