@@ -82,7 +82,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
     _PressDemoViewInstance.SetPressDemoDebugState(_PressDemoDebugSceneIndex);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
   }
 
   private void HandleDemoState(DemoState demoStateMessage) {
@@ -146,7 +146,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private void HandleStartButtonPressed(bool startWithEdge) {
     SetDemoStartValues();
     RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleSleepAnimationComplete);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
   }
 
   private void HandleForceProgressPressed() {
