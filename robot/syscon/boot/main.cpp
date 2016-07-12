@@ -16,6 +16,9 @@
 
 #include "anki/cozmo/robot/rec_protocol.h"
 
+void UARTInit(void);
+void SyncToHead(void);
+
 extern "C" void SVC_Handler(void) {
   *FIXTURE_HOOK = 0xDEADFACE;
   __enable_irq();
@@ -38,6 +41,13 @@ int main (void) {
   // Power on the system
   if (Battery::init())
   {
+    UARTInit();
+    
+    // Disconnect input so we don't dump current into the charge pin
+    NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
+
+    SyncToHead();
+
     // If powered normally, do recovery until our signature is okay
     EnterRecovery();
     Lights::stop();
