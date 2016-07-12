@@ -27,18 +27,12 @@ extern "C" void FacePrintf(const char *format, ...);
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
+#include "backpackLightController.h"
 static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp(); }
 #endif
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 #define DEBUG_ANIMATION_CONTROLLER 0
-
-/// Converts 32 bit RGBA color to 16 bit
-#define ENCODED_COLOR(color) (((color << 24) & (u32)LED_IR) ? (u16)LED_ENC_IR : 0) | \
-                             ((((color >> 8) & (u32)LED_RED)   >> (16 + 3)) << (u32)LED_ENC_RED_SHIFT) | \
-                             ((((color >> 8) & (u32)LED_GREEN) >> ( 8 + 3)) << (u32)LED_ENC_GRN_SHIFT) | \
-                             ((((color >> 8) & (u32)LED_BLUE)  >> ( 0 + 3)) << (u32)LED_ENC_BLU_SHIFT)
-
 
 namespace Anki {
 namespace Cozmo {
@@ -173,6 +167,22 @@ namespace AnimationController {
       }
     }
     _tracksInUse = 0;
+  }
+  
+  void SendAnimationEnded()
+  {
+    #ifdef TARGET_ESPRESSIF
+    // Send animation ended keyframe to K02
+    RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_animEndOfAnimation);
+    #else 
+    // Basically invoking messages::Process_animEndOfAnimation()
+    BackpackLightController::EnableLayer(BackpackLightController::BackpackLightLayer::BPL_USER);
+    #endif
+    
+    // Send animation ended to engine
+    RobotInterface::AnimationEnded aem;
+    aem.tag = _currentTag;
+    RobotInterface::SendMessage(aem);
   }
 
   void Clear()
@@ -430,9 +440,7 @@ namespace AnimationController {
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample)
         {
           // Shut down, and report back what happened
-          RobotInterface::AnimationEnded aem;
-          aem.tag = _currentTag;
-          RobotInterface::SendMessage(aem);
+          SendAnimationEnded();
         }
 
         switch(msgID)
@@ -600,10 +608,8 @@ namespace AnimationController {
               #endif
             }
 
-            RobotInterface::AnimationEnded aem;
-            aem.tag = _currentTag;
-            RobotInterface::SendMessage(aem);
-
+            SendAnimationEnded();
+            
             _tracksInUse = 0;
             break;
           }
@@ -660,17 +666,14 @@ namespace AnimationController {
 #               endif
 
               #ifdef TARGET_ESPRESSIF
-                RobotInterface::BackpackLights bplm;
-                for (int l=0; l<NUM_BACKPACK_LEDS; ++l)
-                {
-                  bplm.lights[l].offColor = bplm.lights[l].onColor = ENCODED_COLOR(msg.animBackpackLights.colors[l]);
-                  bplm.lights[l].onFrames = 0xff;
-                }
+                // Relay message to k02
                 RTIP::SendMessage(msg);
               #else
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-                  HAL::SetLED(static_cast<LEDId>(iLED), msg.animBackpackLights.colors[iLED]);
+                  u16 color = msg.animBackpackLights.colors[iLED];
+                  BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0);
                 }
+                BackpackLightController::EnableLayer(BackpackLightController::BPL_ANIM, true);
               #endif
               _tracksInUse |= BACKPACK_LIGHTS_TRACK;
             }

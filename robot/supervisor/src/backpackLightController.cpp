@@ -14,7 +14,7 @@
 
 
 #include "backpackLightController.h"
-
+#include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #ifdef SIMULATOR
 #include "anki/cozmo/robot/ledController.h"
@@ -33,7 +33,11 @@ namespace BackpackLightController {
   namespace {
 
     // User-defined light params
-    RobotInterface::BackpackLights  _ledParams;
+    RobotInterface::BackpackLights  _ledParams[BPL_NUM_LAYERS];
+    
+    // Currently animated layer
+    BackpackLightLayer _layer;
+    
 #ifdef SIMULATOR
     TimeStamp_t _ledPhases[NUM_BACKPACK_LEDS];
 #endif
@@ -74,7 +78,7 @@ namespace BackpackLightController {
     // s32 _isChargedCount = 0;
 
     // The current LED params being played
-    const RobotInterface::BackpackLights* _currParams = &_ledParams;
+    const RobotInterface::BackpackLights* _currParams = &_ledParams[BPL_USER];
 
     bool       _enable;
   };
@@ -88,7 +92,20 @@ namespace BackpackLightController {
     RobotInterface::SendMessage(params);
 #endif
   }
+  
+  void EnableLayer(const BackpackLightLayer layer, bool forceUpdate)
+  {
+    if (layer >= BPL_NUM_LAYERS) {
+      AnkiWarn( 194, "BackpackLightController.EnableLayer.InvalidLayer", 498, "Layer %d is invalid", 1, layer);
+      return;
+    }
 
+    if (forceUpdate || (_layer != layer)) {
+      _layer = layer;
+      SetParams(_ledParams[_layer]);
+    }
+  }
+  
   void Enable()
   {
     _enable = true;
@@ -101,7 +118,7 @@ namespace BackpackLightController {
 
   Result Init()
   {
-    memcpy(&_ledParams, &_defaultOffChargerParams, sizeof(_ledParams));
+    memcpy(&_ledParams[BPL_USER], &_defaultOffChargerParams, sizeof(_ledParams[BPL_USER]));
     _enable = true;
 
     return RESULT_OK;
@@ -121,7 +138,7 @@ namespace BackpackLightController {
     else if (!HAL::BatteryIsOnCharger() && wasOnCharger)
     {
       // Reset current lights and switch to user-defined lights
-      SetParams(_ledParams);
+      SetParams(_ledParams[_layer]);
     }
     wasOnCharger = HAL::BatteryIsOnCharger();
   }
@@ -149,10 +166,15 @@ namespace BackpackLightController {
     return RESULT_OK;
   }
 
-  void SetParams(const LEDId whichLED, const u16 onColor, const u16 offColor,
+  void SetParams(const BackpackLightLayer layer, const LEDId whichLED, const u16 onColor, const u16 offColor,
                  const u8 onFrames, const u8 offFrames, const u8 transitionOnFrames, const u8 transitionOffFrames)
   {
-    LightState& params = _ledParams.lights[whichLED];
+    if (layer >= BPL_NUM_LAYERS) {
+      AnkiWarn( 195, "BackpackLightController.SetParams.InvalidLayer", 498, "Layer %d is invalid", 1, layer);
+      return;
+    }
+    
+    LightState& params = _ledParams[layer].lights[whichLED];
 
     params.onColor = onColor;
     params.offColor = offColor;
@@ -162,11 +184,6 @@ namespace BackpackLightController {
     params.transitionOffFrames = transitionOffFrames;
 #ifdef SIMULATOR
     _ledPhases[whichLED] = HAL::GetTimeStamp();
-#else
-    if (_currParams == &_ledParams)
-    {
-      SetParams(_ledParams);
-    }
 #endif
   }
 
@@ -176,8 +193,10 @@ namespace BackpackLightController {
       HAL::SetLED((LEDId)i,0);
     }
 #else
-    memset(&_ledParams, 0, sizeof(_ledParams));
-    SetParams(_ledParams);
+    for(int i=0; i<NUM_BACKPACK_LEDS; ++i) {
+      SetParams(BPL_USER, i, 0, 0, 0, 0, 0, 0);
+    }
+    EnableLayer(BPL_USER, true);
 #endif
   }
 
