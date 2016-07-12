@@ -33,7 +33,9 @@ namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnDevice::RobotAudioAnimationOnDevice( Animation* anAnimation,
-                                                          RobotAudioClient* audioClient )
+                                                          RobotAudioClient* audioClient,
+                                                          Util::RandomGenerator* randomGenerator )
+: Anki::Cozmo::Audio::RobotAudioAnimation( randomGenerator )
 {
   InitAnimation( anAnimation, audioClient );
 }
@@ -100,7 +102,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
   // Audio events are played in context of animation streaming time
   AnimationEvent* currentEvent = &_animationEvents[GetEventIndex()];
   const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
-  while ( (currentEvent->TimeInMS <= relevantTimeMS) && (GetEventIndex() < _animationEvents.size()) ) {
+  while ( (currentEvent->time_ms <= relevantTimeMS) && (GetEventIndex() < _animationEvents.size()) ) {
     
     AnimationEvent* animationEvent = currentEvent;
     std::weak_ptr<char> isAliveWeakPtr(_isAliveSharedPtr);
@@ -113,16 +115,27 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                             
                             {
                               std::lock_guard<std::mutex> lock( _animationEventLock );
-                              animationEvent->State = AnimationEvent::AnimationEventState::Posted;
+                              animationEvent->state = AnimationEvent::AnimationEventState::Posted;
                             }
-                            
-                            _audioClient->PostCozmoEvent( animationEvent->AudioEvent,
-                                                          [this, animationEvent, isAliveWeakPtr] ( AudioCallback callback )
-                                                         {
-                                                           if ( !isAliveWeakPtr.expired() ) {
-                                                             HandleCozmoEventCallback( animationEvent, callback );
-                                                           }
-                                                         } );
+                            // FIXME: Change to Robot Playing Frame Callback keyframe
+                            using namespace AudioEngine;
+                            using PlayId = RobotAudioClient::CozmoPlayId;
+                            const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr]
+                            ( const AudioEngine::AudioCallbackInfo& callbackInfo )
+                            {
+                              if ( !isAliveWeakPtr.expired() ) {
+                                HandleCozmoEventCallback( animationEvent, callbackInfo );
+                              }
+                              
+                            };
+                            const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
+                                                                                GameObjectType::CozmoAnimation,
+                                                                                callbackFunc );
+                            // Set event's volume RTPC
+                            // FIXME: Parameter Type
+                            _audioClient->SetCozmoEventParameter( playId,
+                                                                  GameParameter::ParameterType::Invalid,
+                                                                  animationEvent->volume );
                           },
                            "PostAudioEventToDeviceDelay" );
     

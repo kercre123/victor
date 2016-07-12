@@ -108,7 +108,7 @@ namespace Cozmo {
           const Audio::GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
           
           _animation.SetIsLive(true);
-          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(audioEvent, 0));
+          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
           _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
         } else {
           if (DEBUG_SAYTEXT_ACTION) {

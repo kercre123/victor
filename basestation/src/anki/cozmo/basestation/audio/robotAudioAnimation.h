@@ -24,7 +24,16 @@
 #include <vector>
 
 
+namespace AudioEngine {
+struct AudioCallbackInfo;
+}
+
 namespace Anki {
+  
+namespace Util {
+class RandomGenerator;
+}
+  
 namespace Cozmo {
 
 class Animation;
@@ -38,7 +47,6 @@ namespace Audio {
 class RobotAudioClient;
 class RobotAudioBuffer;
 class RobotAudioFrameStream;
-
 
 
 class RobotAudioAnimation {
@@ -58,7 +66,7 @@ public:
   };
   
   // Use sub-class constructor, this class will return an invalid animation
-  RobotAudioAnimation();
+  explicit RobotAudioAnimation( Util::RandomGenerator* randomGenerator );
   
   virtual ~RobotAudioAnimation();
   
@@ -103,15 +111,18 @@ protected:
       Error         // Event had play error
     };
     
-    AnimationEventId EventId = kInvalidAnimationEventId;
-    GameEvent::GenericEvent AudioEvent = GameEvent::GenericEvent::Invalid;
-    uint32_t TimeInMS = 0;
-    AnimationEventState State = AnimationEventState::None;
+    AnimationEventId eventId = kInvalidAnimationEventId;
+    GameEvent::GenericEvent audioEvent = GameEvent::GenericEvent::Invalid;
+    uint32_t time_ms = 0;
+    float volume = 1.0f; // scale event's volume 1.0 = 100%
+    AnimationEventState state = AnimationEventState::None;
+
     
-    AnimationEvent( AnimationEventId eventId, GameEvent::GenericEvent audioEvent, uint32_t timeInMS ) :
-    EventId( eventId ),
-    AudioEvent( audioEvent ),
-    TimeInMS( timeInMS ) {}
+    AnimationEvent( AnimationEventId eventId, GameEvent::GenericEvent audioEvent, uint32_t time_ms, float volume = 0.0f )
+    : eventId( eventId )
+    , audioEvent( audioEvent )
+    , time_ms( time_ms )
+    , volume( volume ) {}
   };
 
   // Set Animation State
@@ -160,7 +171,7 @@ protected:
   virtual void PrepareAnimation() {};
 
   // Handle AudioClient's PostCozmo() callbacks from audio engine (Wwise)s
-  void HandleCozmoEventCallback( AnimationEvent* animationEvent, AudioCallback& callback );
+  void HandleCozmoEventCallback( AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo );
   
   // FIXME: This is a temp fix, will remove once we have an Audio Mixer
   float _robotVolume = 1.0f;
@@ -168,8 +179,11 @@ protected:
 
 private:
 
+  Util::RandomGenerator* _randomGenerator = nullptr;
+  
   // Current state of the animation
   AnimationState _state = AnimationState::Preparing;
+  bool _hasAlts = false; // Audio Event has alternate audio playback
   
   // Track current event
   int _eventIndex = 0;

@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
+#include "DriveAudioEngine/audioCallback.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
@@ -149,11 +150,37 @@ RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObje
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback )
+RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event,
+                                                                GameObjectType gameObjId,
+                                                                const CozmoEventCallbackFunc& callbackFunc )
 {
-  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation, callback );
+  const auto audioEventId = Util::numeric_cast<AudioEngine::AudioEventId>( event );
+  const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
+  AudioEngine::AudioCallbackContext* audioCallbackContext = nullptr;
   
-  return callbackId;
+  if ( callbackFunc != nullptr ) {
+    audioCallbackContext = new AudioEngine::AudioCallbackContext();
+    // Set callback flags
+    audioCallbackContext->SetCallbackFlags( AudioEngine::AudioCallbackFlag::AllCallbacks );
+    // Register callbacks for event
+    audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc ]
+    ( const AudioEngine::AudioCallbackContext* thisContext, const AudioEngine::AudioCallbackInfo& callbackInfo )
+    {
+      callbackFunc( callbackInfo );
+    } );
+  }
+  
+  return _audioController->PostAudioEvent( audioEventId, audioGameObjId, audioCallbackContext );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value )
+{
+  using namespace AudioEngine;
+  const AudioParameterId parameterId = Util::numeric_cast<AudioParameterId>( parameter );
+  const AudioRTPCValue rtpcVal = Util::numeric_cast<AudioRTPCValue>( value );
+  const AudioPlayingId audioPlayId = Util::numeric_cast<AudioPlayingId>( playId );
+  return _audioController->SetParameterWithPlayingId( parameterId, rtpcVal, audioPlayId );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,12 +201,16 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
   switch ( _outputSource ) {
   
     case RobotAudioOutputSource::PlayOnDevice:
-      audioAnimation = dynamic_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnDevice( anAnimation, this ) );
+    {
+      audioAnimation = static_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnDevice( anAnimation, this, &_robot->GetRNG() ) );
       break;
+    }
       
     case RobotAudioOutputSource::PlayOnRobot:
-      audioAnimation = dynamic_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnRobot( anAnimation, this ) );
+    {
+      audioAnimation = static_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnRobot( anAnimation, this, &_robot->GetRNG() ) );
       break;
+    }
       
     default:
       // Do Nothing

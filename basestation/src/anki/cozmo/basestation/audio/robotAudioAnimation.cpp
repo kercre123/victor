@@ -19,9 +19,14 @@
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/animation/animation.h"
+#include "clad/audio/audioCallbackMessage.h"
 #include "clad/audio/messageAudioClient.h"
+#include "DriveAudioEngine/audioCallback.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
+#include "util/random/randomGenerator.h"
+
 
 #define DEBUG_ROBOT_AUDIO_ANIMATION_OVERRIDE 1
 
@@ -31,7 +36,8 @@ namespace Cozmo {
 namespace Audio {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioAnimation::RobotAudioAnimation()
+RobotAudioAnimation::RobotAudioAnimation( Util::RandomGenerator* randomGenerator )
+: _randomGenerator( randomGenerator )
 {
   // This base class is not intended to be used, use a sub-class
   SetAnimationState( AnimationState::AnimationError );
@@ -40,6 +46,7 @@ RobotAudioAnimation::RobotAudioAnimation()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimation::~RobotAudioAnimation()
 {
+  _randomGenerator = nullptr;
   if ( _postEventTimerQueue != nullptr ) {
     Util::Dispatch::Stop( _postEventTimerQueue );
     Util::Dispatch::Release( _postEventTimerQueue );
@@ -94,7 +101,7 @@ uint32_t RobotAudioAnimation::GetNextEventTime_ms()
 {
   const AnimationEvent* event = GetNextEvent();
   if ( event != nullptr ) {
-    return event->TimeInMS;
+    return event->time_ms;
   }
   
   return kInvalidEventTime;
@@ -123,20 +130,39 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
 {
   // Load animation audio events
   _animationName = anAnimation->GetName();
- 
+
   SetAnimationState( AnimationState::Preparing );
-  
+
   // Loop through tracks
   // Prep animation audio events
   Animations::Track<RobotAudioKeyFrame>& audioTrack = anAnimation->GetTrack<RobotAudioKeyFrame>();
   
   AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
   while ( audioTrack.HasFramesLeft() ) {
-    RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
-    
-    const GameEvent::GenericEvent event = aFrame.GetAudioRef().audioEvent;
+    const RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
+    const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef();
+    const GameEvent::GenericEvent event = audioRef.audioEvent;
     if ( GameEvent::GenericEvent::Invalid != event ) {
-      _animationEvents.emplace_back( ++eventId, aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
+      
+      // Apply random weight
+      bool playEvent = Util::IsFltNear( audioRef.weight, 1.0f );
+      if ( _randomGenerator != nullptr && !playEvent ) {
+        playEvent = audioRef.weight >= _randomGenerator->RandDbl( 1.0 );
+      }
+      else {
+        // No random generator
+        playEvent = true;
+      }
+      
+      if ( playEvent ) {
+        // Add Event to queue
+        _animationEvents.emplace_back( ++eventId, event, aFrame.GetTriggerTime(), audioRef.volume );
+        // Check if buffer should only play once
+        if ( !_hasAlts && audioRef.audioAlts ) {
+          // Don't replay buffer
+          _hasAlts = true;
+        }
+      }
     }
     
     // Don't advance before we've had a chance to use aFrame, because it could be "live"
@@ -163,16 +189,16 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   // Sort events by start time
   std::sort( _animationEvents.begin(),
              _animationEvents.end(),
-             [] (const AnimationEvent& lhs, const AnimationEvent& rhs) { return lhs.TimeInMS < rhs.TimeInMS; } );
+             [] (const AnimationEvent& lhs, const AnimationEvent& rhs) { return lhs.time_ms < rhs.time_ms; } );
   
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
     PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events Size: %lu - Enter", (unsigned long)_animationEvents.size());
     for (size_t idx = 0; idx < _animationEvents.size(); ++idx ) {
       PRINT_NAMED_INFO( "RobotAudioAnimation::LoadAnimation",
                         "Event Id: %d AudioEvent: %s TimeInMS: %d",
-                        _animationEvents[idx].EventId,
-                        EnumToString( _animationEvents[idx].AudioEvent ),
-                        _animationEvents[idx].TimeInMS );
+                        _animationEvents[idx].eventId,
+                        EnumToString( _animationEvents[idx].audioEvent ),
+                        _animationEvents[idx].time_ms );
     }
     PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events - Exit");
   }
@@ -185,26 +211,26 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEvent, AudioCallback& callback )
+void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo )
 {
   // Mark events completed or error event callbacks
-  switch ( callback.callbackInfo.GetTag() ) {
+  switch ( callbackInfo.callbackType ) {
       
-    case AudioCallbackInfoTag::callbackError:
+    case AudioEngine::AudioCallbackType::Error:
     {
-      PRINT_NAMED_INFO( "RobotAudioAnimation.HandleCozmoEventCallback", "ErrorType: %s",
-                        EnumToString(callback.callbackInfo.Get_callbackError().callbackError) );
+      PRINT_NAMED_INFO( "RobotAudioAnimation.HandleCozmoEventCallback", "Error: %s",
+                        callbackInfo.GetDescription().c_str() );
       IncrementCompletedEventCount();
       std::lock_guard<std::mutex> lock(_animationEventLock);
-      animationEvent->State = AnimationEvent::AnimationEventState::Error;
+      animationEvent->state = AnimationEvent::AnimationEventState::Error;
     }
       break;
       
-    case AudioCallbackInfoTag::callbackComplete:
+    case AudioEngine::AudioCallbackType::Complete:
     {
       IncrementCompletedEventCount();
       std::lock_guard<std::mutex> lock(_animationEventLock);
-      animationEvent->State = AnimationEvent::AnimationEventState::Completed;
+      animationEvent->state = AnimationEvent::AnimationEventState::Completed;
     }
       break;
       

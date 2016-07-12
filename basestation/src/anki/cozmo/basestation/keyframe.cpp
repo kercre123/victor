@@ -360,17 +360,16 @@ return RESULT_FAIL; \
     //
     // RobotAudioKeyFrame
     //
-    RobotAudioKeyFrame::RobotAudioKeyFrame(Audio::GameEvent::GenericEvent audioEvent, TimeStamp_t triggerTime_ms)
+    RobotAudioKeyFrame::RobotAudioKeyFrame(AudioRef&& audioRef, TimeStamp_t triggerTime_ms)
     {
       SetTriggerTime(triggerTime_ms);
-      AddAudioRef(audioEvent);
+      AddAudioRef( std::move( audioRef ) );
     }
     
-    Result RobotAudioKeyFrame::AddAudioRef(const Audio::GameEvent::GenericEvent event)
+    Result RobotAudioKeyFrame::AddAudioRef(AudioRef&& audioRef)
     {
       // TODO: Need a way to verify the event is valid while loading animation metadata - JMR
-      _audioReferences.push_back({.audioEvent = event});
-      
+      _audioReferences.emplace_back( std::move( audioRef ) );
       return RESULT_OK;
     }
     
@@ -379,7 +378,7 @@ return RESULT_FAIL; \
       if(_audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
                           "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef{.audioEvent = Audio::GameEvent::GenericEvent::Invalid};
+        static const AudioRef InvalidRef( Audio::GameEvent::GenericEvent::Invalid );
         return InvalidRef;
       }
       
@@ -397,9 +396,14 @@ return RESULT_FAIL; \
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       // Get volume
-      f32 volume = 1.0;
+      f32 volume = 1.0f;
       JsonTools::GetValueOptional(jsonRoot, "volume", volume);
-      
+      // Get Random Weight
+      f32 weight = 1.0f;
+      JsonTools::GetValueOptional(jsonRoot, "weight", weight);
+      // Get Has Alternate audio flag
+      bool hasAlts = false;
+      JsonTools::GetValueOptional(jsonRoot, "hasAlts", hasAlts);
       
       if(!jsonRoot.isMember("audioName")) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
@@ -412,14 +416,16 @@ return RESULT_FAIL; \
       if(jsonAudioNames.isArray()) {
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
           // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-          Result addResult = AddAudioRef( static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() ));
+          const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() );
+          Result addResult = AddAudioRef( AudioRef( eventId, volume, weight, hasAlts ) );
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } else {
         // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-        Result addResult = AddAudioRef( static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() ));
+        const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() );
+        Result addResult = AddAudioRef( AudioRef( eventId, volume, weight, hasAlts ) );
         if(addResult != RESULT_OK) {
           return addResult;
         }
