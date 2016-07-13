@@ -33,59 +33,20 @@
   "challengeDetails.label.playerAndCubeNeeded": {
     "translation": "{0} Player, {1} Power Cube"
   },
+  "challengeEnded.label.reward": {
+    "translation": "Rewards:"
+  },
+  "artistCozmo.title": {
+    "translation": "Artist Cozmo"
+  },
+  "artistCozmo.description": {
+    "translation": "Artist Cozmo Description"
+  },
   "askCozmo01.title": {
     "translation": "Ask Cozmo Challenge 1"
   },
   "askCozmo01.description": {
     "translation": "Ask Cozmo Challenge 1 Description"
-  },
-  "investorDemo.investorDemoScene1": {
-    "translation": "Investor Scene 1"
-  },
-  "investorDemo.investorDemoScene2": {
-    "translation": "Investor Scene 2"
-  },
-  "investorDemo.investorDemoScene3": {
-    "translation": "Investor Scene 3"
-  },
-  "investorDemo.investorDemoScene4": {
-    "translation": "Investor Scene 4"
-  },
-  "simonGame.title": {
-    "translation": "Simon"
-  },
-  "simonGame.description": {
-    "translation": "Simon is a game of sound and memory. Listen carefully and remember each note!"
-  },
-  "treasureHuntGame01.title": {
-    "translation": "Treasure Hunt Challenge"
-  },
-  "treasureHuntGame01.description": {
-    "translation": "Find the treasure!"
-  },
-  "selfieGame01.title": {
-    "translation": "Selfie Time"
-  },
-  "selfieGame01.description": {
-    "translation": "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
-  },
-  "minesweeper01.title": {
-    "translation": "Minesweeper"
-  },
-  "minesweeper01.description": {
-    "translation": "These mines aren't going to sweep themselves."
-  },
-  "investorDemo.investorDemoFull": {
-    "translation": "Full"
-  },
-  "investorDemo.investorDemoCubes": {
-    "translation": "Cubes"
-  },
-  "investorDemo.investorDemoFaces": {
-    "translation": "Faces"
-  },
-  "investorDemo.investorDemoMotion": {
-    "translation": "Motion"
   },
   "codeBreaker01.title": {
     "translation": "Code Breaker"
@@ -99,11 +60,59 @@
   "cubeSlap.description": {
     "translation": "Think you're faster than Cozmo? Put your reaction time to the test!"
   },
+  "faceEnrollment.title": {
+    "translation": "Meet Cozmo"
+  },
+  "faceEnrollment.description": {
+    "translation": "Cozmo can recognize you, and save your name in his memory banks."
+  },
+  "investorDemo.investorDemoScene1": {
+    "translation": "Investor Scene 1"
+  },
+  "investorDemo.investorDemoScene2": {
+    "translation": "Investor Scene 2"
+  },
+  "investorDemo.investorDemoScene3": {
+    "translation": "Investor Scene 3"
+  },
+  "investorDemo.investorDemoScene4": {
+    "translation": "Investor Scene 4"
+  },
+  "investorDemo.investorDemoFull": {
+    "translation": "Full"
+  },
+  "investorDemo.investorDemoCubes": {
+    "translation": "Cubes"
+  },
+  "investorDemo.investorDemoFaces": {
+    "translation": "Faces"
+  },
+  "investorDemo.investorDemoMotion": {
+    "translation": "Motion"
+  },
+  "minesweeper01.title": {
+    "translation": "Minesweeper"
+  },
+  "minesweeper01.description": {
+    "translation": "These mines aren't going to sweep themselves."
+  },
   "playhouseGame01.title": {
     "translation": "Playhouse"
   },
   "playhouseGame01.description": {
     "translation": "Make a play with Cozmo by stringing together a series of actions."
+  },
+  "selfieGame01.title": {
+    "translation": "Selfie Time"
+  },
+  "selfieGame01.description": {
+    "translation": "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
+  },
+  "simonGame.title": {
+    "translation": "Simon"
+  },
+  "simonGame.description": {
+    "translation": "Simon is a game of sound and memory. Listen carefully and remember each note!"
   },
   "speedTap.title": {
     "translation": "Speed Tap"
@@ -111,49 +120,16 @@
   "speedTap.description": {
     "translation": "Speed Tap is a test of fast reflexes and sharp wits. Pay close attention, and try to keep your cool!"
   },
-  "speedTapLightCount.title": {
-    "translation": "Speed Tap Light Count"
+  "treasureHuntGame01.title": {
+    "translation": "Treasure Hunt Challenge"
   },
-  "speedTapLightCount.description": {
-    "translation": "Tap same light count"
-  },
-  "speedTapLightCountSameColorNoTap.title": {
-    "translation": "Speed Tap Count Same Color No Tap"
-  },
-  "speedTapLightCountSameColorNoTap.description": {
-    "translation": "Tap the same count, but if it is same color do not tap."
-  },
-  "speedTapHard.title": {
-    "translation": "Speed Tap Hard Mode"
-  },
-  "speedTapHard.description": {
-    "translation": "Tap when color and light count matches, but don't tap on red"
-  },
-  "speedTapNoRed.title": {
-    "translation": "Speed Tap No Red"
-  },
-  "speedTapNoRed.description": {
-    "translation": "Tap same color, unless it is red then don't tap"
+  "treasureHuntGame01.description": {
+    "translation": "Find the treasure!"
   },
   "whackAMole.title": {
     "translation": "Whack A Mole"
   },
   "whackAMole.description": {
     "translation": "Tap an active Button to turn it off and trick Cozmo."
-  },
-  "challengeEnded.label.reward": {
-    "translation": "Rewards:"
-  },
-  "artistCozmo.title": {
-    "translation": "Artist Cozmo"
-  },
-  "artistCozmo.description": {
-    "translation": "Artist Cozmo Description"
-  },
-  "faceEnrollment.title": {
-    "translation": "Meet Cozmo"
-  },
-  "faceEnrollment.description": {
-    "translation": "Cozmo can recognize you, and save your name in his memory banks."
   }
 }
