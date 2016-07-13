@@ -26,9 +26,9 @@ void Timer::init()
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
   // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
-  NRF_RTC1->EVTENSET = RTC_EVTENSET_COMPARE0_Msk |
-                       RTC_EVTENSET_COMPARE1_Msk;
-  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE1_Msk;
+  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE0_Msk |
+                       RTC_INTENSET_COMPARE1_Msk |
+                       RTC_INTENSET_COMPARE2_Msk;
   
   lowPowerMode(true);
 
@@ -61,8 +61,8 @@ loop
 }
 
 static void low_power_timer(void) {
-  NRF_RTC1->EVENTS_COMPARE[0] = 0;
-  NRF_RTC1->CC[0] += PRESCALAR;
+  NRF_RTC1->EVENTS_COMPARE[3] = 0;
+  NRF_RTC1->CC[3] += PRESCALAR;
 
   NVIC_SetPendingIRQ(SWI0_IRQn);
 }
@@ -79,15 +79,13 @@ void Timer::lowPowerMode(bool lowPower) {
   NRF_RTC1->TASKS_STOP = 1;
 
   // Clear existing interrupt mode
-  NRF_RTC1->INTENCLR = RTC_INTENCLR_COMPARE0_Msk | RTC_INTENCLR_TICK_Msk;
+  NRF_RTC1->INTENCLR = RTC_INTENCLR_COMPARE3_Msk | RTC_INTENCLR_TICK_Msk;
   
   // Setup new mode (compare used for prescalar)
   if (lowPower) {
-    NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE0_Msk;
-
-    NRF_RTC1->EVENTS_COMPARE[0] = 0;
-
-    NRF_RTC1->CC[0] = NRF_RTC1->COUNTER + PRESCALAR;
+    NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk;
+    NRF_RTC1->EVENTS_COMPARE[3] = 0;
+    NRF_RTC1->CC[3] = NRF_RTC1->COUNTER + PRESCALAR;
 
     irq_handler = low_power_timer;
   } else {
@@ -101,11 +99,13 @@ void Timer::lowPowerMode(bool lowPower) {
 }
 
 extern "C" void RTC1_IRQHandler() {
-  if (NRF_RTC1->EVENTS_COMPARE[1]) {
-    NRF_RTC1->EVENTS_COMPARE[1] = 0;
-    
-    Backpack::update();
+  for (int i = 0; i < 3; i++) {
+    if (NRF_RTC1->EVENTS_COMPARE[i]) {
+      NRF_RTC1->EVENTS_COMPARE[i] = 0;
+      
+      Backpack::update(i);
+    }
   }
-  
+
   irq_handler();
 }

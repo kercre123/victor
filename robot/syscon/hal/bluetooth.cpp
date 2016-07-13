@@ -642,6 +642,8 @@ void crypto_setup(const void*, int) {
 void Bluetooth::advertise(void) {
   uint32_t err_code;
 
+  return ;
+  
   if (!m_sd_enabled) {
     err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
     APP_ERROR_CHECK(err_code);

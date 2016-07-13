@@ -76,8 +76,8 @@ int main(void)
   Radio::init();
   Head::init();
   Battery::init();
-  Backpack::init();
   Timer::init();
+  Backpack::init();
 
   // Startup the system
   Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);

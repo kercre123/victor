@@ -19,7 +19,7 @@ const int32_t VEXT_CONTACT_LEVEL  = CALC_LEVEL(3.75, VEXT_SCALE);
 
 namespace Battery {
   // Initialize the charge pins and sensing
-  void init();
+  bool init();
 
   // Update the state of the battery
   void manage();

@@ -8,7 +8,7 @@ using namespace Anki::Cozmo;
 
 namespace Backpack {
   void init();
-  void update(void);
+  void update(int channel);
   void manage();
   void flash();
   void setLights(const LightState* lights);

@@ -24,9 +24,6 @@ enum TRANSMIT_MODE {
 static TRANSMIT_MODE uart_mode = TRANSMIT_NONE;
 static const int UART_TIMEOUT = 0x2000 << 8;
 
-static int light_channel = 0;
-static int light_intensity = 0;
-
 void UARTInit(void) {
   // Power on the peripheral
   NRF_UART0->POWER = 1;
@@ -155,29 +152,7 @@ static void writeByte(const uint8_t byte) {
   writeUart(&byte, sizeof(byte));
 }
 
-static bool EscapeFixture(void) {
-  nrf_gpio_pin_set(PIN_TX_VEXT);
-  nrf_gpio_cfg_output(PIN_TX_VEXT);
-
-  MicroWait(15);
-
-  setTransmitMode(TRANSMIT_CHARGER_RX);
-  
-  int waitTime = GetCounter() + (int)(0.0002f * 0x8000);
-  
-  do {
-    while (!NRF_UART0->EVENTS_RXDRDY) {
-      if (GetCounter() >= waitTime) {
-        return false;
-      }
-    }
-  } while (NRF_UART0->RXD != 0xA5);
-
-  return true;
-}
-
-
-static void SyncToHead(void) {
+void SyncToHead(void) {
   uint32_t recoveryWord = 0;
 
   MicroWait(10000);
@@ -262,6 +237,20 @@ static inline bool FlashBlock() {
     return false;
   }
  
+  // Unaligned block
+  if (packet.blockAddress % TRANSMIT_BLOCK_SIZE) {
+    return false;
+  }
+
+  // Verify that our header is valid
+  if (packet.blockAddress == BOOT_HEADER_LOCATION) {
+    BootLoaderSignature* header = (BootLoaderSignature*) packet.flashBlock;
+
+    if (header->sig != HEADER_SIGNATURE || !header->evil_word) {
+      return false;
+    }
+  }
+
   // Check the SHA-1 of the packet to verify that transmission actually worked
   uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
 
@@ -281,16 +270,9 @@ static inline bool FlashBlock() {
 
 
 extern "C" void EnterRecovery(void) {
-  UARTInit();
-  
-  // Disconnect input so we don't dump current into the charge pin
-  NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
-
-  SyncToHead();
-
   for (;;) {
     // Receive command packet
-    RECOVERY_STATE state;
+    RECOVERY_STATE state = STATE_UNKNOWN;
     
     switch (readByte()) {
       case COMMAND_DONE:
