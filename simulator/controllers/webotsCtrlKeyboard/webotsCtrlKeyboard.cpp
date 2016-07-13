@@ -337,6 +337,7 @@ namespace Anki {
         printf("    Toggle cliff sensor handling:  Alt+l\n");
         printf("                 Next Demo State:  j\n");
         printf("            Start Demo (hasEdge):  Shift+j\n");
+        printf("                Reset demo state:  Alt+j\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
@@ -2089,6 +2090,8 @@ namespace Anki {
                   else {
                     printf("ERROR: no field 'demoHasEdge', not sending edge message\n");
                   }
+                } if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                  SendMessage(MessageGameToEngine(DemoResetState()));
                 }
                 else {
                   SendMessage(MessageGameToEngine(TransitionToNextDemoState()));

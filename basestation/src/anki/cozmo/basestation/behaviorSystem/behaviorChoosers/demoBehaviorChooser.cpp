@@ -48,14 +48,12 @@ static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 // static const char* kSleepOnChargerBehavior = "ReactToOnCharger";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
 static const char* kKnockOverStackBehavior = "AdmireStack";
+static const char* kDemoGameRequestBehaviorName = "demo_RequestSpeedTap";
 
 static const float kTimeCubesMustBeUpright_s = 3.0f;
 
-// if we are in the mini game state and need a face, use this score
-static const float kEcouragedFaceBehaviorScore = 1.1f;
-
-// NOTE: this must match the game request max face age! // TODO:(bn) read it from the behavior?
-static const u32 kMaxFaceAge_ms = 30000;
+// score to force a behavior to run immediately
+static const float kRunBehaviorNowScore = 100.0f;
 
 DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config)
   : SimpleBehaviorChooser(robot, config)
@@ -69,6 +67,7 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::TransitionToNextDemoState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WakeUp>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DemoResetState>();
   }
 
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
@@ -79,6 +78,13 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
     PRINT_NAMED_ERROR("DemoBehaviorChooser.NoFaceSearchBehavior",
                       "couldnt get pointer to behavior '%s', won't be able to search for faces in mini game scene",
                       kFindFacesBehavior);
+  }
+
+  _gameRequestBehavior = _robot.GetBehaviorFactory().FindBehaviorByName(kDemoGameRequestBehaviorName);
+  if( nullptr == _gameRequestBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoGameRequestBehavior",
+                      "couldnt get pointer to behavior '%s', won't be able to search for faces in mini game scene",
+                      kDemoGameRequestBehaviorName);
   }
 
   _fearEdgeBehavior = static_cast<BehaviorDemoFearEdge*>(
@@ -124,6 +130,10 @@ void DemoBehaviorChooser::OnSelected()
   if( DEBUG_SKIP_DIRECTLY_TO_CUBES ) {
     TransitionToCubes();
   }
+
+  // if we overrode any scores, reset those now (this will happen when coming out of activities and back to
+  // demo)
+  _modifiedBehaviorScores.clear();
 }
 
 Result DemoBehaviorChooser::Update()
@@ -131,17 +141,23 @@ Result DemoBehaviorChooser::Update()
   if( _checkTransition && _checkTransition() ) {
     TransitionToNextState();
   }
-  
-  _encourageFaceBehavior = false;
-  if( _state == State::MiniGame && ! _robot.IsCarryingObject() ) {
-    // mini game requires a face, so if the last seen face is really old, encourage the search for a new one
+
+  if( _state == State::MiniGame ) {
     Pose3d waste;
     TimeStamp_t lastFaceTime = _robot.GetFaceWorld().GetLastObservedFace(waste);
-    TimeStamp_t lastMessageTime = _robot.GetLastImageTimeStamp();
 
-    if( lastFaceTime == 0 || lastMessageTime - lastFaceTime > kMaxFaceAge_ms ) {
-      _encourageFaceBehavior = true;
+    if( lastFaceTime == 0 ) {
+      // we don't have any face, so we need to search for it. Make sure this happens now
+      _modifiedBehaviorScores[ _faceSearchBehavior ] = kRunBehaviorNowScore;
     }
+    else {
+      // otherwise don't run this behavior at all in this mode
+      _modifiedBehaviorScores[ _faceSearchBehavior ] = 0.0f;
+    }
+  }
+  else {
+    // no forced scores in any other states
+    _modifiedBehaviorScores.clear();
   }
   
   return Result::RESULT_OK;
@@ -149,15 +165,9 @@ Result DemoBehaviorChooser::Update()
 
 void DemoBehaviorChooser::ModifyScore(const IBehavior* behavior, float& score) const
 {
-  if( nullptr != _faceSearchBehavior && _state == State::MiniGame &&
-      behavior == _faceSearchBehavior ) {
-    if( _encourageFaceBehavior ) {
-      score = kEcouragedFaceBehaviorScore;
-    }
-    else {
-      // we are in mini game, but don't want to encourage this behavior, so don't do it
-      score = 0.0f;
-    }
+  const auto& modPair = _modifiedBehaviorScores.find(behavior);
+  if( modPair != _modifiedBehaviorScores.end() ) {
+    score = modPair->second;
   }
 }
 
@@ -333,6 +343,9 @@ void DemoBehaviorChooser::TransitionToMiniGame()
 {
   SET_STATE(MiniGame);
 
+  // default face search behavior to disabled
+  _modifiedBehaviorScores[ _faceSearchBehavior ] = 0.0f;
+  
   _robot.GetBehaviorManager().SetAvailableGame(BehaviorGameFlag::SpeedTap);
   
   // leave block behaviors active, but also enable speed tap game request
@@ -469,6 +482,25 @@ void DemoBehaviorChooser::HandleMessage(const ExternalInterface::WakeUp& msg)
     TransitionToNextState();
   }
 }
+
+// TODO:(bn) This message name should probably change to TriggerDemoHack or something because it isn't
+// actually resetting the state
+template<>
+void DemoBehaviorChooser::HandleMessage(const ExternalInterface::DemoResetState& msg)
+{
+  if( State::MiniGame == _state ) {
+    // this is the "oh shit game request isn't happening" button. Force it to run
+    PRINT_NAMED_WARNING("DemoBehaviorChooser.ForceGameRequest", "Forcing selection of game request behavior");
+
+    _modifiedBehaviorScores[_gameRequestBehavior] = kRunBehaviorNowScore;
+
+    _robot.GetBehaviorManager().ForceStopCurrentBehavior("DemoStateResetButton");
+
+    // cancel any other actions just in case
+    _robot.GetActionList().Cancel(RobotActionType::UNKNOWN);
+  }
+}
+
   
 void DemoBehaviorChooser::ResetDemoRelatedState()
 {
