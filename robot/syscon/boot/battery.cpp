@@ -53,10 +53,6 @@ bool Battery::init()
     if (!--countdown)
       return false;
   
-  // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_VDDs_EN);
-  nrf_gpio_cfg_output(PIN_VDDs_EN);
-
   MicroWait(10000);
   return true;
 }
