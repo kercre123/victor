@@ -61,11 +61,6 @@ static BLE_CladBuffer tx_buffer;
 static bool tx_pending;
 static bool tx_buffered;
 
-static DiffieHellman dh_state = {
-  &RSA_DIFFIE_MONT,
-  &RSA_DIFFIE_EXP_MONT,
-};
-
 extern "C" void conn_params_error_handler(uint32_t nrf_error)
 {
   APP_ERROR_HANDLER(nrf_error);
@@ -97,13 +92,15 @@ void Bluetooth::authChallenge(const Anki::Cozmo::HelloRobot& msg) {
   m_authenticated = true;
 }
 
-static void dh_complete(const void*, int) {
+static void dh_complete(const void* state, int) {
   using namespace Anki::Cozmo;
+  
+  const DiffieHellman* dh = (const DiffieHellman*) state;
   
   // Transmit our encryped key
   EncodedAESKey msg;
-  memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
-  memcpy(msg.encoded_key, dh_state.encoded_key, AES_KEY_LENGTH);  
+  memcpy(msg.secret, dh->local_secret, SECRET_LENGTH);
+  memcpy(msg.encoded_key, dh->encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
 
   // Display the pin number
@@ -115,26 +112,44 @@ static void dh_complete(const void*, int) {
   RobotInterface::SendMessage(dn);
 }
 
-void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+static void dh_begin(const void* state, int) {
   using namespace Anki::Cozmo;
   
-  // Copy in our secret code, and run
-  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
-  
-  // Run the completed DH stack
-  Task t;
-  t.op = TASK_FINISH_DIFFIE_HELLMAN;
-  t.state = &dh_state;
-  t.callback = dh_complete;
-  Tasks::execute(&t);
+  const DiffieHellman* dh = (const DiffieHellman*) state;
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = dh_state.pin;
+  dn.value = dh->pin;
   dn.digits = 8;
   dn.x = 0;
   dn.y = 16;
   RobotInterface::SendMessage(dn);
+
+  // Run the completed DH stack
+  Task t;
+  t.op = TASK_FINISH_DIFFIE_HELLMAN;
+  t.state = state;
+  t.callback = dh_complete;
+  Tasks::execute(&t);
+}
+
+void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+  using namespace Anki::Cozmo;
+  
+  static DiffieHellman dh_state = {
+    &RSA_DIFFIE_MONT,
+    &RSA_DIFFIE_EXP_MONT,
+  };
+
+  // Copy in our secret code, and run
+  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  
+  // Initalize our DH state
+  Task t;
+  t.op = TASK_START_DIFFIE_HELLMAN;
+  t.state = &dh_state;
+  t.callback = dh_begin;
+  Tasks::execute(&t);
 }
 
 static bool message_encrypted(uint8_t op) {
@@ -238,7 +253,7 @@ static void frame_receive(CozmoFrame& receive)
   }
 }
 
-static void send_welcome_message(const void*, int) {  
+static void send_welcome_message(const void*, int) {
   using namespace Anki::Cozmo;
   
   HelloPhone msg; 
@@ -353,12 +368,6 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       m_authenticated = false;
       tx_pending = false;
       tx_buffered = false;
-
-      // Initalize our DH state
-      t.op = TASK_START_DIFFIE_HELLMAN;
-      t.state = &dh_state;
-      t.callback = NULL;
-      Tasks::execute(&t);
 
       // Generate our welcome nonce
       t.op = TASK_GENERATE_RANDOM;
