@@ -229,6 +229,11 @@ public abstract class GameBase : MonoBehaviour {
   /// <param name="minigameConfigData">Minigame config data.</param>
   protected abstract void InitializeGame(MinigameConfigBase minigameConfigData);
 
+  /// <summary>
+  /// Called after Cozmo is "Ready". At this point the SharedMinigameView has already been instantiated.
+  /// Use this method to initialize the SharedMinigameView.
+  /// </summary>
+  /// <param name="minigameConfigData">Minigame config data.</param>
   protected virtual void SetupViewAfterCozmoReady(SharedMinigameView newView, ChallengeData data) {
   }
 

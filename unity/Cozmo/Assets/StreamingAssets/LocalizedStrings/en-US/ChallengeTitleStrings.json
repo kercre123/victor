@@ -60,6 +60,12 @@
   "cubeSlap.description": {
     "translation": "Think you're faster than Cozmo? Put your reaction time to the test!"
   },
+  "droneMode.title": {
+    "translation": "Explore Mode"
+  },
+  "droneMode.description": {
+    "translation": "Cozmo allows you to pilot him."
+  },
   "faceEnrollment.title": {
     "translation": "Meet Cozmo"
   },

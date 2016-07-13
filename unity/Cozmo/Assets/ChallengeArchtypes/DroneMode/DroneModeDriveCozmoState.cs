@@ -1,0 +1,193 @@
+﻿using UnityEngine;
+using System.Collections;
+
+namespace Cozmo {
+  namespace Minigame {
+    namespace DroneMode {
+      public class DroneModeDriveCozmoState : State {
+        private const float _kSendMessageInterval_sec = 0.1f;
+        private const float _kDriveSpeedChangeThreshold_mmps = 5f;
+        private const float _kTurnDirectionChangeThreshold = 0.05f;
+        private const float _kHeadTiltChangeThreshold_radps = 0.05f;
+
+        private DroneModeGame _DroneModeGame;
+        private DroneModeView _DroneModeView;
+
+        private float _CurrentDriveSpeed_mmps;
+        private float _TargetDriveSpeed_mmps;
+        private float _CurrentTurnDirection;
+        private float _TargetTurnDirection;
+        private float _CurrentDriveHeadSpeed_radps;
+        private float _TargetDriveHeadSpeed_radps;
+
+        private float _LastMessageSentTimestamp;
+
+        public override void Enter() {
+          _LastMessageSentTimestamp = Time.time;
+
+          _DroneModeGame = _StateMachine.GetGame() as DroneModeGame;
+
+          GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
+            _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
+          _DroneModeView = slide.GetComponent<DroneModeView>();
+          _DroneModeView.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
+          _DroneModeView.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
+          _DroneModeView.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
+
+          _DroneModeGame.EnableTiltInput();
+          _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
+
+
+          SetupRobotForDriveState();
+        }
+
+        public override void Exit() {
+          _DroneModeView.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
+          _DroneModeView.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
+          _DroneModeView.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
+          _DroneModeGame.DisableTiltInput();
+          _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
+        }
+
+        public override void Update() {
+          // TODO Check for visible objects and follow if there is no input
+
+          // Send drive wheels / drive head messages if needed
+          SendDriveRobotMessages();
+        }
+
+        public override void Pause() {
+          // Don't show the "don't move cozmo" ui
+        }
+
+        public override void Resume() {
+          SetupRobotForDriveState();
+        }
+
+        private void SetupRobotForDriveState() {
+          // TODO: Set robot idle animation (head/face only)
+          // TODO: Set driving animations (or play them)
+          _CurrentRobot.SetLiftHeight(_DroneModeGame.StartingLiftHeight);
+        }
+
+        private void SendDriveRobotMessages() {
+          if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec) {
+            _LastMessageSentTimestamp = Time.time;
+            DriveWheelsIfNeeded();
+            DriveHeadIfNeeded();
+            DriveLiftIfNeeded();
+          }
+        }
+
+        private void DriveWheelsIfNeeded() {
+          if (ShouldPointTurn(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
+            PointTurnRobotWheels(_TargetTurnDirection);
+            _CurrentDriveSpeed_mmps = _TargetDriveSpeed_mmps;
+            _CurrentTurnDirection = _TargetTurnDirection;
+          }
+          else if (ShouldDrive(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
+            DriveRobotWheels(_TargetDriveSpeed_mmps, _TargetTurnDirection);
+            _CurrentDriveSpeed_mmps = _TargetDriveSpeed_mmps;
+            _CurrentTurnDirection = _TargetTurnDirection;
+          }
+          else {
+            _CurrentDriveSpeed_mmps = 0;
+            _CurrentTurnDirection = 0;
+            _CurrentRobot.DriveWheels(0f, 0f);
+          }
+        }
+
+        private void DriveHeadIfNeeded() {
+          if (ShouldDriveHead(_TargetDriveHeadSpeed_radps)) {
+            _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
+            _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
+          }
+          else {
+            _CurrentDriveHeadSpeed_radps = 0f;
+            _CurrentRobot.DriveHead(0f);
+          }
+        }
+
+        private void DriveLiftIfNeeded() {
+          // Ideally we could do this check after every animation end, but this works for now.
+          if (!_CurrentRobot.LiftHeightFactor.IsNear(_DroneModeGame.StartingLiftHeight)) {
+            _CurrentRobot.SetLiftHeight(_DroneModeGame.StartingLiftHeight);
+          }
+        }
+
+        private bool ShouldPointTurn(float targetDriveSpeed, float targetTurnDirection) {
+          return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+                                 && !targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)
+                                 && !targetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold);
+        }
+
+        private bool ShouldDrive(float targetDriveSpeed, float targetTurnDirection) {
+          return !targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+                                  && (!targetDriveSpeed.IsNear(_CurrentDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)
+                                      || !targetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold));
+        }
+
+        private bool ShouldDriveHead(float targetHeadSpeed) {
+          return !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
+        }
+
+        private void DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
+          float leftWheelSpeed_mmps = driveSpeed_mmps;
+          float rightWheelSpeed_mmps = driveSpeed_mmps;
+          float halfSpeed = driveSpeed_mmps * 0.5f;
+          if (turnDirection < 0) {
+            leftWheelSpeed_mmps = Mathf.Lerp(-halfSpeed, halfSpeed, 1 - Mathf.Abs(turnDirection));
+          }
+          else if (turnDirection > 0) {
+            rightWheelSpeed_mmps = Mathf.Lerp(-halfSpeed, halfSpeed, 1 - turnDirection);
+          }
+
+          _CurrentRobot.DriveWheels(leftWheelSpeed_mmps, rightWheelSpeed_mmps);
+        }
+
+        private void PointTurnRobotWheels(float turnDirection) {
+          float pointTurnSpeed = _DroneModeGame.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
+          float leftWheelSpeed_mmps = pointTurnSpeed;
+          float rightWheelSpeed_mmps = pointTurnSpeed;
+
+          // Special case point turns with no speed
+          if (turnDirection < 0) {
+            leftWheelSpeed_mmps = -pointTurnSpeed;
+          }
+          else if (turnDirection > 0) {
+            rightWheelSpeed_mmps = -pointTurnSpeed;
+          }
+
+          _CurrentRobot.DriveWheels(leftWheelSpeed_mmps, rightWheelSpeed_mmps);
+        }
+
+        private void HandleDriveSpeedValueChanged(DroneModeView.SpeedSliderSegment newPosition, float newNormalizedValue) {
+          float newDriveSpeed_mmps = _DroneModeGame.CalculateDriveWheelSpeed(newPosition, newNormalizedValue);
+          if (!newDriveSpeed_mmps.IsNear(_TargetDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)) {
+            _TargetDriveSpeed_mmps = newDriveSpeed_mmps;
+          }
+        }
+
+        private void HandleTurnDirectionChanged(float newTurnDirection) {
+          if (!newTurnDirection.IsNear(_TargetTurnDirection, _kTurnDirectionChangeThreshold)) {
+            _TargetTurnDirection = newTurnDirection;
+
+            // TODO Remove debug text field
+            _DroneModeView.TiltText.text = "Tilt: " + _TargetTurnDirection;
+          }
+        }
+
+        private void HandleDriveSpeedFamilyChanged(DroneModeView.SpeedSliderSegment newPosition, float newNormalizedValue) {
+          // TODO: Play some sounds / change driving animations
+        }
+
+        private void HandleHeadTiltValueChanged(DroneModeView.HeadSliderSegment newPosition, float newNormalizedValue) {
+          float newDriveHeadSpeed_radps = _DroneModeGame.CalculateDriveHeadSpeed(newPosition, newNormalizedValue);
+          if (!newDriveHeadSpeed_radps.IsNear(_TargetDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)) {
+            _TargetDriveHeadSpeed_radps = newDriveHeadSpeed_radps;
+          }
+        }
+      }
+    }
+  }
+}

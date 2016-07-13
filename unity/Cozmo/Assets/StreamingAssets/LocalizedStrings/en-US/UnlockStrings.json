@@ -49,10 +49,10 @@
     "translation": "With this upgrade, Cozmo gains the ability to roll Cubes if he sees one on its side."
   },
   "unlockable.DroneMode.Title": {
-    "translation": "Drone Mode Activity"
+    "translation": "Explore Mode Activity"
   },
   "unlockable.DroneMode.Description": {
-    "translation": "With this upgrade, Cozmo will allow you to pilot him in Drone Mode."
+    "translation": "With this upgrade, Cozmo will allow you to pilot him in Explore Mode."
   },
   "unlockable.CubeStackAction.Title": {
     "translation": "Cube Stack"

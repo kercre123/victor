@@ -123,6 +123,9 @@ namespace Cozmo {
       #region Slide System
 
       [SerializeField]
+      private RectTransform _FullScreenGameSlideContainer;
+
+      [SerializeField]
       private RectTransform _WideGameSlideContainer;
 
       [SerializeField]
@@ -453,6 +456,11 @@ namespace Cozmo {
         }
       }
 
+      public void HideTitleWidget() {
+        HideWidget(_TitleWidgetInstance);
+        _TitleWidgetInstance = null;
+      }
+
       #endregion
 
       #region StaminaBar
@@ -643,7 +651,9 @@ namespace Cozmo {
       public void HideContinueButton() {
         HideWidget(_ContinueButtonInstance);
         _ContinueButtonInstance = null;
-        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
+        if (_ShelfWidgetInstance != null) {
+          ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
+        }
       }
 
       public void EnableContinueButton(bool enable) {
@@ -710,6 +720,20 @@ namespace Cozmo {
         GameObject slide = ShowWideGameStateSlide(_InfoTextSlidePrefab.gameObject, "wide_info_slide_" + descLocKey, endInTweenCallback);
         Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
         textLabel.text = Localization.Get(descLocKey);
+      }
+
+      public GameObject ShowFullScreenGameStateSlide(GameObject prefab, string slideDasName, TweenCallback endInTweenCallback = null) {
+        if (slideDasName == _CurrentSlideName) {
+          return _CurrentSlide.gameObject;
+        }
+        InfoTitleText = null;
+        HideGameStateSlide();
+        HidePlayerScoreboard();
+        HideCozmoScoreboard();
+        HideTitleWidget();
+        HideShelf();
+        HideContinueButton();
+        return ShowGameStateSlide(slideDasName, prefab, _FullScreenGameSlideContainer, endInTweenCallback);
       }
 
       public GameObject ShowWideGameStateSlide(GameObject prefab, string slideDasName, TweenCallback endInTweenCallback = null) {
