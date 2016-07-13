@@ -38,6 +38,8 @@ void Timer::init()
 
   NVIC_SetPriority(RTC1_IRQn, TIMER_PRIORITY);
   NVIC_EnableIRQ(RTC1_IRQn);
+  
+  NRF_RTC1->TASKS_START = 1;
 }
 
 __asm void MicroWait(u32 microseconds)
@@ -63,39 +65,30 @@ loop
 static void low_power_timer(void) {
   NRF_RTC1->EVENTS_COMPARE[3] = 0;
   NRF_RTC1->CC[3] += PRESCALAR;
-
-  NVIC_SetPendingIRQ(SWI0_IRQn);
 }
 
 static void high_power_timer(void) {
   NRF_RTC1->EVENTS_TICK = 0;
-
   Radio::manage();
-  NVIC_SetPendingIRQ(SWI0_IRQn);
 }
 
 void Timer::lowPowerMode(bool lowPower) {
-  // Do not manage radio in low power mode
-  NRF_RTC1->TASKS_STOP = 1;
-
   // Clear existing interrupt mode
   NRF_RTC1->INTENCLR = RTC_INTENCLR_COMPARE3_Msk | RTC_INTENCLR_TICK_Msk;
   
   // Setup new mode (compare used for prescalar)
   if (lowPower) {
-    NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk;
     NRF_RTC1->EVENTS_COMPARE[3] = 0;
     NRF_RTC1->CC[3] = NRF_RTC1->COUNTER + PRESCALAR;
 
     irq_handler = low_power_timer;
+    NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk;
   } else {
-    NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
     NRF_RTC1->EVENTS_TICK = 0;
 
     irq_handler = high_power_timer;
+    NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
   }
-
-  NRF_RTC1->TASKS_START = 1;
 }
 
 extern "C" void RTC1_IRQHandler() {
@@ -107,5 +100,6 @@ extern "C" void RTC1_IRQHandler() {
     }
   }
 
+  NVIC_SetPendingIRQ(SWI0_IRQn);
   irq_handler();
 }

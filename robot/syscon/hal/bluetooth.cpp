@@ -55,12 +55,6 @@ struct BLE_CladBuffer {
   bool encrypted;
 };
 
-// This is our inital state for pairing
-static DiffieHellman dh_state = {
-  &RSA_DIFFIE_MONT,
-  &RSA_DIFFIE_EXP_MONT,
-};
-
 // Buffers for queueing and dequeueing
 static BLE_CladBuffer rx_buffer;
 static BLE_CladBuffer tx_buffer;
@@ -121,26 +115,44 @@ static void dh_complete(const void* state, int) {
   RobotInterface::SendMessage(dn);
 }
 
-void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+static void dh_setup(const void* state, int) {
   using namespace Anki::Cozmo;
   
-  // Copy in our secret code, and run
-  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  const DiffieHellman* dh = (const DiffieHellman*) state;
   
   // Finish DH process
   Task t;
   t.op = TASK_FINISH_DIFFIE_HELLMAN;
-  t.state = &dh_state;
+  t.state = dh;
   t.callback = dh_complete;
   Tasks::execute(&t);
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = dh_state.pin;
+  dn.value = dh->pin;
   dn.digits = 8;
   dn.x = 0;
   dn.y = 16;
   RobotInterface::SendMessage(dn);
+}
+
+void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+  // This is our inital state for pairing
+  static DiffieHellman dh_state = {
+    &RSA_DIFFIE_MONT,
+    &RSA_DIFFIE_EXP_MONT,
+  };
+
+  // Copy in our secret code, and run
+  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  
+  Task t;
+  
+  t.op = TASK_START_DIFFIE_HELLMAN;
+  t.state = &dh_state;
+  t.callback = dh_setup;
+  
+  Tasks::execute(&t);
 }
 
 static bool message_encrypted(uint8_t op) {
@@ -567,9 +579,18 @@ bool Bluetooth::enabled(void) {
   return m_sd_enabled;
 }
 
-void crypto_setup(const void*, int) {
+void Bluetooth::advertise(void) {
   uint32_t err_code;
-  
+
+  if (!m_sd_enabled) {
+    err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
+    APP_ERROR_CHECK(err_code);
+
+    sd_nvic_EnableIRQ(SWI2_IRQn);
+
+    m_sd_enabled      = true;
+  }
+
   // Enable BLE stack 
   ble_enable_params_t ble_enable_params;
   memset(&ble_enable_params, 0, sizeof(ble_enable_params));
@@ -637,29 +658,6 @@ void crypto_setup(const void*, int) {
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);
   APP_ERROR_CHECK(err_code);
-}
-
-void Bluetooth::advertise(void) {
-  uint32_t err_code;
-
-  return ;
-  
-  if (!m_sd_enabled) {
-    err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
-    APP_ERROR_CHECK(err_code);
-
-    sd_nvic_EnableIRQ(SWI2_IRQn);
-
-    m_sd_enabled      = true;
-  }
-
-  Task t;
-  
-  t.op = TASK_START_DIFFIE_HELLMAN;
-  t.state = &dh_state;
-  t.callback = crypto_setup;
-  
-  Tasks::execute(&t);
 }
 
 void Bluetooth::shutdown(void) {

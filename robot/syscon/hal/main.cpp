@@ -30,7 +30,6 @@ extern "C" {
 
 extern "C" void HardFault_Handler(void) {
   __disable_irq();
-  Backpack::flash();
   NVIC_SystemReset();
 }
 

@@ -64,19 +64,6 @@ void Backpack::init()
   NRF_RTC1->CC[1] = NRF_RTC1->COUNTER + 0x100;
 }
 
-void Backpack::flash()
-{
-  /*
-  for (int l = 0; l < 2; l++) {
-    for (int i = 0; i < numLights; i++) {
-      //currentChannel = &RGBLightPins[i];
-      //light_on();
-      MicroWait(10000);
-    }
-  }
-  */
-}
-
 void Backpack::manage() {
   struct BackpackLightAdjust {
     uint8_t controller_pos;

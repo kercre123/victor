@@ -10,9 +10,7 @@ namespace Backpack {
   void init();
   void update(int channel);
   void manage();
-  void flash();
   void setLights(const LightState* lights);
-  void lightsOff();
 }
 
 #endif /* LIGHTS_H */
