@@ -195,19 +195,22 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
-    challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
-      GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
-      _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-      _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
-      _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-      _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
-      _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
-      _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+    Anki.Assets.AssetBundleManager.Instance.LoadAssetBundleAsync(
+      challengeData.PrefabDataAssetBundle, (bool success) => {
+        challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
+          GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
+          _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+          _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
+          _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+          _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
+          _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
+          _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
 
-      if (gameFinishedLoadingCallback != null) {
-        gameFinishedLoadingCallback(_MiniGameInstance);
-      }
-    });
+          if (gameFinishedLoadingCallback != null) {
+            gameFinishedLoadingCallback(_MiniGameInstance);
+          }
+        });
+      });
   }
 
   private void HandleEndGameDialog() {

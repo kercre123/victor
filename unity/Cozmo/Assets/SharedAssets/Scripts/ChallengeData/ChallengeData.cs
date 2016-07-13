@@ -10,6 +10,10 @@ public class ChallengeData : ScriptableObject {
   [SerializeField]
   private ChallengePrefabDataLink _ChallengePrefabData;
 
+  public string PrefabDataAssetBundle {
+    get { return _ChallengePrefabData.AssetBundle; }
+  }
+
   public void LoadPrefabData(System.Action<ChallengePrefabData> dataLoadedCallback) {
     _ChallengePrefabData.LoadAssetData(dataLoadedCallback);
   }
