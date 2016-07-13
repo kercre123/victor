@@ -84,6 +84,9 @@ public static class CozmoBinding {
 
     AnkiResult result = AnkiResult.RESULT_OK;
     #if !UNITY_EDITOR && !UNITY_STANDALONE
+    #if UNITY_ANDROID
+    new AndroidJavaClass("java.lang.System").CallStatic("loadLibrary", "DAS");
+    #endif
     Profiler.BeginSample ("CozmoBinding.cozmo_startup");
     result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData.ToString());
     Profiler.EndSample ();
