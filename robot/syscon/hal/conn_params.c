@@ -188,10 +188,6 @@ static void conn_params_negotiation(void)
             }
 
             app_timer_start(timeout_ticks);
-            if (m_conn_params_config.error_handler != NULL)
-            {
-                m_conn_params_config.error_handler(NRF_SUCCESS);
-            }
         }
     }
     else
@@ -232,10 +228,6 @@ static void on_disconnect(ble_evt_t * p_ble_evt)
     m_update_count = 0; // Connection parameters updates should happen during every connection
 
     ble_conn_params_stop();
-    if (m_conn_params_config.error_handler != NULL)
-    {
-        m_conn_params_config.error_handler(NRF_SUCCESS);
-    }
 }
 
 
@@ -260,10 +252,6 @@ static void on_write(ble_evt_t * p_ble_evt)
         {
             // Stop timer if running
             ble_conn_params_stop();
-            if (m_conn_params_config.error_handler != NULL)
-            {
-                m_conn_params_config.error_handler(NRF_SUCCESS);
-            }
         }
     }
 }

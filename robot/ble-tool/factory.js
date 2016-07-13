@@ -17,10 +17,32 @@ noble.on('discover', function (device) {
   var data = device.advertisement.manufacturerData;
 
   // Check manufacturer ID and data bundle to verify this is a cozmo
-  if (!data || data.readUInt16BE(0) != 0xBEEF) { return ; }
-  
+  if (!data || data.length < 2 || data.readUInt16BE(0) != 0xBEEF) { return ; }
+
+  // THIS CONTAINS SPECIAL MANUFACTURER CODE
+  if (data.length != 14) {
+    return ;
+  }
+
+  var sha = data.readUInt32LE(2);
+
+  function pad(v) { return (v+0x100000000).toString(16).substr(1) }
+
+  // Display info we found out about cozmo
+  var deviceVersion = data.readUInt32LE(2);
+  var deviceID = pad(data.readUInt32LE(6)) + pad(data.readUInt32LE(10));
+
+  emitter.emit('advertised', { 
+    device,
+    name: device.advertisement.localName || "<noname>", 
+    revision: deviceVersion.toString(16),
+    id: deviceID
+  });
+
   // Scan for characteristics
-  device.on('connect', function () { device.discoverServices(); });
+  device.on('connect', function () { 
+    device.discoverServices(); 
+  });
 
   device.on('servicesDiscover', function (services) {
     services.forEach(function (service) {
@@ -49,26 +71,12 @@ noble.on('discover', function (device) {
           return ;
         }
 
-        function pad(v) { while (v.length < 8) v = "0" + v; return v }
-
-        // Display info we found out about cozmo
-        var deviceVersion = data.readUInt32LE(2);
-        var deviceID0 = pad(data.readUInt32LE(6).toString(16));
-        var deviceID1 = pad(data.readUInt32LE(10).toString(16));
-
-        emitter.emit('discovered', {
-          name: device.advertisement.localName || "<noname>", 
-          revision: deviceVersion.toString(16),
-          id: deviceID0 + deviceID1,
-          interface: new Cozmo(device, service, send, receive)
-        });
+        emitter.emit('connected', new Cozmo(device, service, send, receive));
       });
 
       service.discoverCharacteristics();
     });
   });
-
-  device.connect();
 });
 
 module.exports = emitter;

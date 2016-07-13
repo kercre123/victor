@@ -46,22 +46,20 @@ void dh_start(DiffieHellman* dh) {
   gen_random(&dh->pin, sizeof(dh->pin));
   fix_pin(dh->pin);
   gen_random(dh->local_secret, SECRET_LENGTH);
-
-  // Encode our secret as an exponent
-  big_num_t secret;
-
-  dh_encode_random(secret, dh->pin, dh->local_secret);
-  mont_power(*dh->mont, dh->state, *dh->gen, secret);
 }
 
 void dh_finish(const void* key, DiffieHellman* dh) {
   // Encode their secret for exponent
   big_num_t temp;
+  big_num_t state;
+
+  dh_encode_random(temp, dh->pin, dh->local_secret);
+  mont_power(*dh->mont, state, *dh->gen, temp);
 
   dh_encode_random(temp, dh->pin, dh->remote_secret);
+  mont_power(*dh->mont, state, state, temp);
 
-  mont_power(*dh->mont, dh->state, dh->state, temp);
-  mont_from(*dh->mont, temp, dh->state);
+  mont_from(*dh->mont, temp, state);
 
   // Override the secret with 
   ecb_data_t ecb;
@@ -78,14 +76,15 @@ void dh_finish(const void* key, DiffieHellman* dh) {
 void dh_reverse(DiffieHellman* dh, uint8_t* key) {
   // Encode our secret as an exponent
   big_num_t temp;
+  big_num_t state;
 
   dh_encode_random(temp, dh->pin, dh->local_secret);
-  mont_power(*dh->mont, dh->state, *dh->gen, temp);
+  mont_power(*dh->mont, state, *dh->gen, temp);
 
   dh_encode_random(temp, dh->pin, dh->remote_secret);
-  mont_power(*dh->mont, dh->state, dh->state, temp);
+  mont_power(*dh->mont, state, state, temp);
 
-  mont_from(*dh->mont, temp, dh->state);
+  mont_from(*dh->mont, temp, state);
 
   AES128_ECB_decrypt(dh->encoded_key, (uint8_t*)temp.digits, key);
 }
