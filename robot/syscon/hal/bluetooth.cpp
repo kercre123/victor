@@ -82,11 +82,14 @@ static void permissions_error(BLEError error) {
 }
 
 void Bluetooth::authChallenge(const Anki::Cozmo::HelloRobot& msg) {
-  for (int i = 0; i < sizeof(m_nonce); i++) {
-    if (msg.nonce[i] != m_nonce[i]) {
-      permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
-      return ;
-    }
+  if (memcmp(msg.signature, HELLO_SIGNATURE, sizeof(m_nonce))) {
+    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+    return ;
+  }
+
+  if (memcmp(msg.nonce, m_nonce, sizeof(m_nonce))) {
+    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+    return ;
   }
 
   m_authenticated = true;
