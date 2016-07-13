@@ -76,12 +76,11 @@ int main(void)
   Radio::init();
   Head::init();
   Battery::init();
-  Timer::init();
   Backpack::init();
+  Timer::init();
 
   // Startup the system
   Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
-  Timer::start();
 
   // NOTE: HERE DOWN SOFTDEVICE ACCESS IS NOT GUARANTEED
   // Run forever, because we are awesome.

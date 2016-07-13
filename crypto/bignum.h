@@ -14,6 +14,7 @@ static const int CELL_SIZE = 129;
 // 2048-bit safe (RSA Pub)
 static const int CELL_SIZE = 257;
 #endif
+
 static const int CELL_BITS = (sizeof(big_num_cell_t) * 8);
 
 struct big_num_t {

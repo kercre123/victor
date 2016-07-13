@@ -19,12 +19,14 @@ extern "C" {
 static volatile int fifoHead;
 static volatile int fifoTail;
 static Task fifoQueue[MAX_TASKS];
+static bool fifoActive[MAX_TASKS];
 
 void Tasks::init() {
   fifoHead = 0;
   fifoTail = 0;
 
   memset(fifoQueue, 0, sizeof(fifoQueue));
+  memset(fifoActive, 0, sizeof(fifoActive));
   
   // Setup key
   if (Tasks::aes_key() != NULL) {
@@ -42,19 +44,23 @@ const void* Tasks::aes_key() {
 }
 
 void Tasks::execute(const Task* task) {
-  if (fifoTail + 1 == fifoHead) {
+  int index = fifoTail;
+
+  if (fifoActive[fifoTail]) {
     return ;
   }
-
-  memcpy(&fifoQueue[fifoTail], task, sizeof(Task));
+  
   fifoTail = (fifoTail+1) % MAX_TASKS;
+
+  memcpy(&fifoQueue[index], task, sizeof(Task));
+  fifoActive[index] = true;
 }
 
 void Tasks::manage(void) {
   Task* task = &fifoQueue[fifoHead];
 
   // We have no pending messages
-  if (fifoHead == fifoTail) {
+  if (!fifoActive[fifoHead]) {
     return ;
   }
 
@@ -97,5 +103,6 @@ void Tasks::manage(void) {
   }
 
   // Dequeue message
+  fifoActive[fifoHead] = false;
   fifoHead = (fifoHead+1) % MAX_TASKS;
 }

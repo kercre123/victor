@@ -93,6 +93,6 @@ extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
   if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
-    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+    //Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
   }
 }

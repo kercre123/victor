@@ -15,7 +15,6 @@
 #ifdef __cplusplus
 namespace Timer {
   void init();
-  void start();
   void lowPowerMode(bool power);
 }
 #endif
