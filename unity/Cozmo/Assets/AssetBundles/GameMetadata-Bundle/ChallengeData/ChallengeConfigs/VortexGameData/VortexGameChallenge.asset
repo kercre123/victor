@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: CubeRollAction
     _EnumValue: 0
   _Music:
-    _Music: -527946100
+    _Music: 713847863
   MinigameConfig: {fileID: 11400000, guid: 5402331bff10447aaa1c7f7a58b6ee77, type: 2}
   IsMinigame: 0
   DifficultyOptions: []

@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: CubePounceGame
     _EnumValue: 4
   _Music:
-    _Music: -527946100
+    _Music: 579475288
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}
   IsMinigame: 1
   DifficultyOptions: []
