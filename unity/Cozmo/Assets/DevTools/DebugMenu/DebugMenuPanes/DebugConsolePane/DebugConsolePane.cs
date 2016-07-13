@@ -15,6 +15,9 @@ namespace Anki.Debug {
     public Text PaneStatusText;
 
     [SerializeField]
+    private InputField _SearchFilterField;
+
+    [SerializeField]
     public GameObject PrefabVarUIText;
     [SerializeField]
     public GameObject PrefabVarUICheckbox;
@@ -26,17 +29,22 @@ namespace Anki.Debug {
     [SerializeField]
     public GameObject CategoryPanelPrefab;
 
-    private Dictionary<string, GameObject > _CategoryPanels;
+    private Dictionary<string, GameObject> _CategoryPanels;
 
     private void Start() {
 
       _CategoryPanels = new Dictionary<string, GameObject>();
       DebugConsoleData.Instance.ConsolePane = this;
-      // Clear UI update until we get back info from IniDebugConsole
-      DebugConsoleData.Instance.OnUIUpdated();
+      DebugConsoleData.Instance.SetNeedsUIUpdate(true);
 
       // Query for our initial data so DebugConsoleData gets populated when dirty in update.
       RobotEngineManager.Instance.InitDebugConsole();
+
+      _SearchFilterField.onValueChanged.AddListener(HandleFilterUpdate);
+    }
+
+    private void HandleFilterUpdate(string filter) {
+      DebugConsoleData.Instance.SetNeedsUIUpdate(true);
     }
 
     void Update() {
@@ -44,18 +52,30 @@ namespace Anki.Debug {
       // We get AddVars over multiple updates so this can add once the menu has been opened
       if (DebugConsoleData.Instance.NeedsUIUpdate()) {
         List<string> categories = DebugConsoleData.Instance.GetSortedCategories();
+        string filterText = _SearchFilterField.text.ToLower();
         for (int i = 0; i < categories.Count; ++i) {
           // Get existing child if it exists, otherwise create it.
           GameObject categoryPanel = null;
-          if (!_CategoryPanels.TryGetValue(categories[i], out  categoryPanel)) {
+          if (!_CategoryPanels.TryGetValue(categories[i], out categoryPanel)) {
             categoryPanel = UIManager.CreateUIElement(CategoryPanelPrefab, UIContainer);
             _CategoryPanels.Add(categories[i], categoryPanel);
           }
+          else {
+            // Re-sort since we might have gotten more categories and are
+            // looping through alphabetically.
+            categoryPanel.transform.SetAsLastSibling();
+          }
 
+          bool isCatActive = true;
+          if (filterText != "") {
+            isCatActive = categories[i].ToLower().Contains(filterText);
+          }
           ConsoleCategoryPanel panelscript = categoryPanel.GetComponent<ConsoleCategoryPanel>();
           panelscript.TitleText.text = categories[i];
           // Add the new field if it exists
-          DebugConsoleData.Instance.RefreshCategory(panelscript.UIContainer.transform, categories[i]);
+          // Don't filter if we want to show the whole category.
+          bool contentActive = DebugConsoleData.Instance.RefreshCategory(panelscript.UIContainer.transform, categories[i], isCatActive ? "" : filterText);
+          categoryPanel.SetActive(isCatActive || contentActive);
         }
         DebugConsoleData.Instance.OnUIUpdated();
       }

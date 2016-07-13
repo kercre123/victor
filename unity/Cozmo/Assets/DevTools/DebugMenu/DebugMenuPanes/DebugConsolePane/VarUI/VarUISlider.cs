@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 using Anki.Cozmo;
 
 namespace Anki.Debug {
@@ -12,8 +11,8 @@ namespace Anki.Debug {
     [SerializeField]
     private Text _SliderLabel;
 
-    public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
-      base.Init(singleVar);
+    public override void Init(DebugConsoleData.DebugConsoleVarData singleVar, GameObject go) {
+      base.Init(singleVar, go);
 
       _Slider.minValue = (float)singleVar.MinValue;
       _Slider.maxValue = (float)singleVar.MaxValue;
@@ -35,8 +34,9 @@ namespace Anki.Debug {
     private void HandleValueChanged(float val) {
       // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
       // otherwise it will send another Set to a valid value.
-      if (_VarData.UnityVarHandler != null) {
-        _VarData.UnityVarHandler(val);
+      if (_VarData.UnityObject != null) {
+        SetUnityValue(val);
+        _VarData.ValueAsDouble = val;
       }
       else {
         RobotEngineManager.Instance.SetDebugConsoleVar(_VarData.VarName, val.ToString());

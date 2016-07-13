@@ -55,7 +55,7 @@ namespace Simon {
     }
 
     private static bool _sShowWrongCubeTap = false;
-    private void HandleDebugShowWrongTapColor(System.Object setvar) {
+    private void HandleDebugShowWrongTapColor(string str) {
       _sShowWrongCubeTap = !_sShowWrongCubeTap;
     }
 
@@ -64,11 +64,11 @@ namespace Simon {
       BetweenRoundsMusic = _Config.BetweenRoundsMusic;
       InitializeMinigameObjects();
 
-      DebugConsoleData.Instance.AddConsoleFunctionUnity("Simon Toggle Debug Show Wrong", "Minigames", HandleDebugShowWrongTapColor);
+      DebugConsoleData.Instance.AddConsoleFunction("Simon Toggle Debug Show Wrong", "Minigames", HandleDebugShowWrongTapColor);
     }
 
     protected override void CleanUpOnDestroy() {
-      DebugConsoleData.Instance.RemoveConsoleFunctionUnity("Simon Toggle Debug Show Wrong", "Minigames");
+      DebugConsoleData.Instance.RemoveConsoleData("Simon Toggle Debug Show Wrong", "Minigames");
     }
 
     // Use this for initialization

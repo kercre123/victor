@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using Anki.Cozmo;
+using System.Reflection;
 
 namespace Anki.Debug {
   public abstract class ConsoleVarLine : MonoBehaviour {
@@ -11,14 +10,30 @@ namespace Anki.Debug {
 
     protected DebugConsoleData.DebugConsoleVarData _VarData;
 
-    public virtual void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
+    public virtual void Init(DebugConsoleData.DebugConsoleVarData singleVar, GameObject go) {
       _VarData = singleVar;
       _StatLabel.text = singleVar.VarName;
-      _VarData.UIAdded = true;
+      _VarData.UIAdded = go;
     }
 
     public void OnDestroy() {
-      _VarData.UIAdded = false;
+      // Clear UI reference.
+      _VarData.UIAdded = null;
+    }
+
+    protected virtual void SetUnityValue(object val) {
+      // The debug console can see privates.
+      BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                                                      | BindingFlags.Static;
+      // Set directly if the value was static else it's a member of an object
+      if (_VarData.UnityObject is System.Type) {
+        System.Reflection.FieldInfo info = ((System.Type)_VarData.UnityObject).GetField(_VarData.VarName, bindFlags);
+        info.SetValue(null, val);
+      }
+      else {
+        System.Reflection.FieldInfo info = _VarData.UnityObject.GetType().GetField(_VarData.VarName, bindFlags);
+        info.SetValue(_VarData.UnityObject, val);
+      }
     }
 
   }

@@ -3,10 +3,10 @@ using Anki.Debug;
 
 
 public class ExceptionReportManager : MonoBehaviour {
-  private void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
+  private void HandleDebugConsoleCrashFromUnityButton(string str) {
     DAS.Event("ExceptionReportManager.ForceDebugCrash", "ExceptionReportManager.ForceDebugCrash");
     // Apparently dividing by 0 only forces an exception on mac not iOS. So just throw.
-    if (setvar.ToString() != "exception") {
+    if (str != "exception") {
       throw new UnityException("ForcedExceptionTest");
     }
     DAS.Info("test.crash", "test.crash");
@@ -15,7 +15,7 @@ public class ExceptionReportManager : MonoBehaviour {
   void OnEnable() {
     System.AppDomain.CurrentDomain.UnhandledException += OnHandleUnresolvedException;
     Application.logMessageReceived += OnHandleLogCallback;
-    DebugConsoleData.Instance.AddConsoleFunctionUnity("Unity Exception", "Debug", HandleDebugConsoleCrashFromUnityButton);
+    DebugConsoleData.Instance.AddConsoleFunction("Unity Exception", "Debug", HandleDebugConsoleCrashFromUnityButton);
   }
 
   void OnDisable() {
@@ -40,17 +40,17 @@ public class ExceptionReportManager : MonoBehaviour {
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   /// <param name="type">The type of the log message.</param>
   private void OnHandleLogCallback(string logString, string stackTrace, LogType type) {
-    if (LogType.Assert == type || LogType.Exception == type || LogType.Error == type) { 
+    if (LogType.Assert == type || LogType.Exception == type || LogType.Error == type) {
       HandleException(logString, stackTrace);
-    } 
+    }
   }
 
   private void OnHandleUnresolvedException(object sender, System.UnhandledExceptionEventArgs args) {
-    if (args == null || args.ExceptionObject == null) { 
-      return; 
+    if (args == null || args.ExceptionObject == null) {
+      return;
     }
 
-    if (args.ExceptionObject.GetType() == typeof(System.Exception)) { 
+    if (args.ExceptionObject.GetType() == typeof(System.Exception)) {
       System.Exception e = (System.Exception)args.ExceptionObject;
       HandleException(e.Source, e.StackTrace);
     }
