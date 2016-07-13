@@ -259,9 +259,14 @@ public abstract class GameBase : MonoBehaviour {
   #region Scoring
 
   // Score in the Current Round
+  [HideInInspector]
   public int CozmoScore;
+
+  [HideInInspector]
   public int PlayerScore;
+
   // Points needed to win Round
+  [HideInInspector]
   public int MaxScorePerRound;
 
   public void ResetScore() {
@@ -280,11 +285,16 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // Number of Rounds Won this Game
+  [HideInInspector]
   public int PlayerRoundsWon;
+
+  [HideInInspector]
   public int CozmoRoundsWon;
 
   // Total number of Rounds in this Game
+  [HideInInspector]
   public int TotalRounds;
+
   // Number of Rounds Played this Game
   public int RoundsPlayed {
     get {
