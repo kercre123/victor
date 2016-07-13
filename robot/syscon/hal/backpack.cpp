@@ -16,6 +16,12 @@ using namespace Anki::Cozmo;
 
 extern GlobalDataToBody g_dataToBody;
 
+struct charliePlex_s
+{
+  uint8_t anode;
+  uint8_t cathode;
+};
+
 // Define charlie wiring here:
 static const charliePlex_s RGBLightPins[] =
 {
@@ -39,8 +45,6 @@ static int active_channel = 0;
 static const charliePlex_s* currentChannel = &RGBLightPins[0];
 static uint8_t drive_value[numLights];
 static int drive_error[numLights];
-
-static void setup_timer();
 
 // Helper function
 static inline void light_off(void) {
@@ -68,18 +72,8 @@ void Backpack::init()
   };
 
   setLights(lights);
-}
 
-void Backpack::lightMode(LightDriverMode mode) {
-  switch (mode) {
-    case RTC_LEDS:
-      NRF_TIMER0->TASKS_STOP = 1;
-      NVIC_DisableIRQ(TIMER0_IRQn);
-      break ;
-    case TIMER_LEDS:
-      setup_timer();
-      break ;
-  }
+  NRF_RTC1->CC[1] = NRF_RTC1->COUNTER + 0x100;
 }
 
 void Backpack::flash()
@@ -131,85 +125,34 @@ void Backpack::setLights(const LightState* update) {
 }
 
 // RTC powered lights
-void Backpack::update(void) {
-  light_off();
-  
-  if (++active_channel >= numLights) {
-    active_channel = 0;
-  }
-  currentChannel = &RGBLightPins[active_channel];
+static const int TIMER_GRAIN = 3;
+static const int TIMER_DELTA_MINIMUM = 0x10;
 
-  static uint8_t pwm[numLights];
-
-  // Minimum display value
-  if (drive_value[active_channel] < 0x18) {
-    return ;
-  }
-  
-  // Calculate PDM value
-  int overflow = pwm[active_channel] + (int)drive_value[active_channel];
-  pwm[active_channel] = overflow;
-
-  if (overflow > 0xFF) {
-    light_on();
-  }
-}
-
-// Timer powered lights
-static const int TIMER_GRAIN = 5;
-static const int TIMER_THRASH = 0x10;
-static const int TIMER_DELTA_MINIMUM = 0x20;
-
-static void setup_timer() {
-  NRF_TIMER0->TASKS_STOP = 1;
-
-  NRF_TIMER0->MODE = TIMER_MODE_MODE_Timer;
-  NRF_TIMER0->TASKS_CLEAR = 1;
- 
-  NRF_TIMER0->PRESCALER = 0;
-  NRF_TIMER0->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
-  
-  NRF_TIMER0->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
-
-  // This is the blackout stage
-  active_channel = -1;
-  NRF_TIMER0->CC[0] = 0;
-
-  NVIC_EnableIRQ(TIMER0_IRQn);
-  NVIC_SetPriority(TIMER0_IRQn, LED_PRIORITY);
-
-  NRF_TIMER0->TASKS_START = 1;
-}
-
-extern "C" void TIMER0_IRQHandler(void) { 
+void Backpack::update(void) { 
   // Clear out our interupt
-  NRF_TIMER0->EVENTS_COMPARE[0] = 0;
-  
   if (active_channel >= 0) {
-    NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-    drive_error[active_channel] = NRF_TIMER0->CC[3] - NRF_TIMER0->CC[0];
+    drive_error[active_channel] = NRF_RTC1->COUNTER - NRF_RTC1->CC[1];
     light_off();
   }
 
   // Locate next channel with appropriate brightness
   int delta;
-  
+
   do {
     // Did we reach the end of our time together
     if (++active_channel >= numLights) {
-      NRF_TIMER0->CC[0] = 0;
+      NRF_RTC1->CC[1] = (NRF_RTC1->COUNTER + 0x400) & ~0x3FF;
       active_channel = -1;
       return ;
     }
     
-    delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel];
+    delta = (drive_value[active_channel] >> TIMER_GRAIN) - drive_error[active_channel];
     drive_error[active_channel] = 0;
   } while (delta < TIMER_DELTA_MINIMUM);
 
   // Light that mo-fo up
   currentChannel = &RGBLightPins[active_channel];
-  NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-  NRF_TIMER0->CC[0] = NRF_TIMER0->CC[3] + delta - TIMER_THRASH;
+  NRF_RTC1->CC[1] = NRF_RTC1->COUNTER + delta;
 
   light_on();
 }

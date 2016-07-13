@@ -26,8 +26,10 @@ void Timer::init()
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
   // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
-  NRF_RTC1->EVTENSET = RTC_EVTENSET_COMPARE0_Msk;
-
+  NRF_RTC1->EVTENSET = RTC_EVTENSET_COMPARE0_Msk |
+                       RTC_EVTENSET_COMPARE1_Msk;
+  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE1_Msk;
+  
   lowPowerMode(true);
 
   // Configure lower-priority realtime trigger
@@ -62,7 +64,6 @@ static void low_power_timer(void) {
   NRF_RTC1->EVENTS_COMPARE[0] = 0;
   NRF_RTC1->CC[0] += PRESCALAR;
 
-  Backpack::update();
   NVIC_SetPendingIRQ(SWI0_IRQn);
 }
 
@@ -100,5 +101,11 @@ void Timer::lowPowerMode(bool lowPower) {
 }
 
 extern "C" void RTC1_IRQHandler() {
+  if (NRF_RTC1->EVENTS_COMPARE[1]) {
+    NRF_RTC1->EVENTS_COMPARE[1] = 0;
+    
+    Backpack::update();
+  }
+  
   irq_handler();
 }
