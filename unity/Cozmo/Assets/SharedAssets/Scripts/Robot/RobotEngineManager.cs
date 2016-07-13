@@ -98,19 +98,6 @@ public class RobotEngineManager : MonoBehaviour {
       Instance = this;
     }
 
-    TextAsset config = _Configuration;
-
-    if (config == null) {
-      DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
-    }
-    else {
-      JSONObject configJson = JSONObject.Create(config.text);
-      AddDataPlatformPathsToConfiguration(configJson);
-
-      CozmoBinding.Startup(configJson);
-      _CozmoBindingStarted = true;
-    }
-
     Application.runInBackground = true;
 
 #if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
@@ -162,6 +149,23 @@ public class RobotEngineManager : MonoBehaviour {
       return;
 
     CurrentRobot.UpdateLightMessages();
+  }
+
+  public void CozmoEngineInitialization() {
+
+    TextAsset config = _Configuration;
+
+    if (config == null) {
+      DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
+    }
+    else {
+      JSONObject configJson = JSONObject.Create(config.text);
+      AddDataPlatformPathsToConfiguration(configJson);
+
+      CozmoBinding.Startup(configJson);
+      _CozmoBindingStarted = true;
+    }
+
   }
 
   public List<string> GetRobotAnimationNames() {
