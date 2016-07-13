@@ -147,7 +147,7 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
       _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
         newView.Initialize(_ChallengeData);
-        SetupView(newView, _ChallengeData);
+        InitializeMinigameView(newView, _ChallengeData);
 
         if (OnSharedMinigameViewInitialized != null) {
           OnSharedMinigameViewInitialized(newView);
@@ -158,7 +158,7 @@ public abstract class GameBase : MonoBehaviour {
     });
   }
 
-  private void SetupView(SharedMinigameView newView, ChallengeData data) {
+  private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
@@ -219,12 +219,12 @@ public abstract class GameBase : MonoBehaviour {
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
 
     Initialize(_ChallengeData.MinigameConfig);
-    InitializeView(_SharedMinigameViewInstance, _ChallengeData);
+    SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
-  protected virtual void InitializeView(SharedMinigameView newView, ChallengeData data) {
+  protected virtual void SetupViewAfterCozmoReady(SharedMinigameView newView, ChallengeData data) {
   }
 
   #endregion
@@ -271,11 +271,11 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Add any effects for Scoring Points here to propogate to all minigames for consistency
-  public virtual void AddCozmoPoint() {
+  public void AddCozmoPoint() {
     CozmoScore++;
   }
 
-  public virtual void AddPlayerPoint() {
+  public void AddPlayerPoint() {
     PlayerScore++;
   }
 
@@ -350,7 +350,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
-  public virtual void HandleGameEnd() {
+  public void HandleGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
     bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
 
@@ -497,12 +497,17 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Minigame Exit
 
-  protected virtual void RaiseMiniGameQuit() {
+  protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
     DAS.Event(DASConstants.Game.kQuit, null);
+    SendCustomEndGameDasEvents();
 
     QuitMinigame();
+  }
+
+  protected virtual void SendCustomEndGameDasEvents() {
+    // Implement in subclasses if desired
   }
 
   public void RaiseMiniGameWin(string subtitleText = null) {
@@ -853,14 +858,14 @@ public abstract class GameBase : MonoBehaviour {
     HandleRobotInterruptionEventStarted();
   }
 
-  protected virtual void HandleRobotInterruptionEventStarted() {
+  protected void HandleRobotInterruptionEventStarted() {
     DeregisterInterruptionStartedEvents();
     RegisterInterruptionEndedEvents();
 
     PauseStateMachine();
   }
 
-  protected virtual void HandleRobotInterruptionEventEnded(object messageObject) {
+  protected void HandleRobotInterruptionEventEnded(object messageObject) {
     DeregisterInterruptionEndedEvents();
     RegisterInterruptionStartedEvents();
 

@@ -219,8 +219,7 @@ namespace Simon {
         _BannerAnimationDurationSeconds);
     }
 
-    protected override void RaiseMiniGameQuit() {
-      base.RaiseMiniGameQuit();
+    protected override void SendCustomEndGameDasEvents() {
       DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
     }
   }

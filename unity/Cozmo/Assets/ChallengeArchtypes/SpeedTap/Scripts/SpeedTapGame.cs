@@ -340,8 +340,7 @@ namespace SpeedTap {
       }
     }
 
-    protected override void RaiseMiniGameQuit() {
-      base.RaiseMiniGameQuit();
+    protected override void SendCustomEndGameDasEvents() {
       Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
       Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
 

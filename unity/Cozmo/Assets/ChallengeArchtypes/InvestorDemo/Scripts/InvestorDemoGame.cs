@@ -28,7 +28,7 @@ namespace InvestorDemo {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.Idle, true);
     }
 
-    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
+    protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       newView.ShowQuitButton();
     }
 
