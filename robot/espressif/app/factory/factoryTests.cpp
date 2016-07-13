@@ -760,6 +760,9 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     }
     case RobotInterface::FTM_motorLifeTest:
     {
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
+      RTIP::SendMessage(msg);
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = true;
       const bool success = Anki::Cozmo::RTIP::SendMessage(msg);
