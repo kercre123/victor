@@ -54,7 +54,7 @@ namespace Anki {
       
     private:
       
-      virtual s32 UpdateInternal() override;
+      virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::Init;
     };
@@ -65,14 +65,16 @@ namespace Anki {
     
     // =========== Test class implementation ===========
     
-    s32 CST_VariableHeightHigh::UpdateInternal()
+    s32 CST_VariableHeightHigh::UpdateSimInternal()
     {
       switch (_testState) {
         case TestState::Init:
         {
           MakeSynchronous();
           SetActualRobotPose(Pose3d(0, Z_AXIS_3D(), {0, -100, 0}));
-          StartMovie("VariableHeightHigh");
+          StartMovieConditional("VariableHeightHigh");
+          //TakeScreenshotsAtInterval("VariableHeightHigh", 1.f);
+          
           
           SendMoveHeadToAngle(DEG_TO_RAD(10), 100, 100);
           _testState = TestState::PickupHigh;

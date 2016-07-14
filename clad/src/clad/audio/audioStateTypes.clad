@@ -27,14 +27,32 @@ enum uint_32 Mood
 
 enum uint_32 Music
 {
-  Activities_Copycat = 1963393666,
-  Cube_Detect = 4025311760,
-  Face_Detect = 1148468660,
-  Generic_Activity = 3767021196,
-  Hub = 646625282,
+  Alarm_Clock = 3653788539,
+  Freeplay = 150865113,
+  Freeplay__Active = 2128690441,
+  Freeplay__Cube_First_Contact = 4267023226,
+  Freeplay__Happy = 2777933599,
+  Freeplay__Minimal = 1854937300,
+  Freeplay__Sad = 2096125369,
+  Hex_Puzzle = 3005470335,
   Invalid = 0,
+  Minigame__Generic = 713847863,
+  Minigame__Keep_Away = 579475288,
+  Minigame__Keep_Away_Pounce = 3317810949,
+  Minigame__Keep_Away_Tension = 22918831,
+  Minigame__Meet_Cozmo = 1580491744,
+  Minigame__Memory_Match_Fanfare = 2262040721,
+  Minigame__Memory_Match_Round1 = 2348421527,
+  Minigame__Memory_Match_Round2 = 2348421524,
+  Minigame__Quick_Tap_Round1 = 3954622599,
+  Minigame__Quick_Tap_Round2 = 3954622596,
+  Minigame__Quick_Tap_Round3 = 3954622597,
+  Minigame__Quick_Tap_Win = 2079381016,
+  Minigame__Ride_Along = 3234084100,
+  Minigame__Setup = 1317044071,
   Silent = 3160623154,
   Sleep = 3671647190,
+  Spark = 155090436,
 }
 
 enum uint_32 StateGroupType

@@ -65,12 +65,6 @@ public class StartupManager : MonoBehaviour {
 
   // Use this for initialization
   private IEnumerator Start() {
-
-#if !UNITY_EDITOR
-    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
-    ConnectToEngine();
-#endif
-
     // Initialize DAS first so we can have error messages during intialization
 #if ANIMATION_TOOL
     DAS.AddTarget(new ConsoleDasTarget());
@@ -98,6 +92,13 @@ public class StartupManager : MonoBehaviour {
       StopAllCoroutines();
       yield break;
     }
+
+    RobotEngineManager.Instance.CozmoEngineInitialization();
+
+#if !UNITY_EDITOR
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
+    ConnectToEngine();
+#endif
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;

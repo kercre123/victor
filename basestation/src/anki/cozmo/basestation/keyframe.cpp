@@ -399,9 +399,9 @@ return RESULT_FAIL; \
       // Get volume
       f32 volume = 1.0f;
       JsonTools::GetValueOptional(jsonRoot, "volume", volume);
-      // Get Random Weight
-      f32 weight = 1.0f;
-      JsonTools::GetValueOptional(jsonRoot, "weight", weight);
+      // Get Random probability
+      f32 probability = 1.0f;
+      JsonTools::GetValueOptional(jsonRoot, "probability", probability);
       // Get Has Alternate audio flag
       bool hasAlts = false;
       JsonTools::GetValueOptional(jsonRoot, "hasAlts", hasAlts);
@@ -418,7 +418,7 @@ return RESULT_FAIL; \
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
           // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
           const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() );
-          Result addResult = AddAudioRef( AudioRef( eventId, volume, weight, hasAlts ) );
+          Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
           if(addResult != RESULT_OK) {
             return addResult;
           }
@@ -426,7 +426,7 @@ return RESULT_FAIL; \
       } else {
         // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
         const auto eventId = static_cast<Audio::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() );
-        Result addResult = AddAudioRef( AudioRef( eventId, volume, weight, hasAlts ) );
+        Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
         if(addResult != RESULT_OK) {
           return addResult;
         }

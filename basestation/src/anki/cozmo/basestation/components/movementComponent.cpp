@@ -96,6 +96,116 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     }
   }
   
+  CheckForUnexpectedMovement(robotState);
+}
+
+void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
+{
+  // Disabling for sim robot due to odd behavior of measured wheel speeds and the lack
+  // of wheel slip that is what allows this detection to work on the real robot
+  if(!_robot.IsPhysical())
+  {
+    return;
+  }
+
+  f32 lWheelSpeed_mmps = robotState.lwheel_speed_mmps;
+  f32 rWheelSpeed_mmps = robotState.rwheel_speed_mmps;
+  f32 zGyro_radps = robotState.rawGyroZ;
+  
+  // Don't check for unexpected movement when picked up, on charger, or while a cliff is detected
+  if(robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ||
+     robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER ||
+     robotState.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED)
+  {
+    _unexpectedMovementCount = 0;
+    return;
+  }
+  
+  f32 speedDiff = rWheelSpeed_mmps - lWheelSpeed_mmps;
+  
+  // Outside velocity and inside velocity (outside velocity is the faster of the two)
+  f32 vO = MAX(rWheelSpeed_mmps, lWheelSpeed_mmps);
+  f32 vI = MIN(rWheelSpeed_mmps, lWheelSpeed_mmps);
+  
+  // Radius of the circle produced by the inside wheel during a turn
+  f32 rR = vI*WHEEL_BASE_MM / (vO - vI);
+  
+  // Expected rotational velocity based on the two wheel speeds
+  f32 omega = ABS(vO / (rR + WHEEL_BASE_MM));
+  
+  UnexpectedMovementType unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
+  
+  // Wheels aren't moving (using kMinWheelSpeed_mmps as a dead band)
+  if(ABS(lWheelSpeed_mmps) + ABS(rWheelSpeed_mmps) < kMinWheelSpeed_mmps)
+  {
+    if(_unexpectedMovementCount > 0)
+    {
+      _unexpectedMovementCount--;
+    }
+    return;
+  }
+  
+  // Gyro says we aren't turning
+  if(NEAR(zGyro_radps, 0, kGyroTol_radps))
+  {
+    // But wheels say we are turning (the direction of the wheels are different like during a point turn)
+    if(signbit(lWheelSpeed_mmps) != signbit(rWheelSpeed_mmps))
+    {
+      _unexpectedMovementCount++;
+      unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
+    }
+    // Wheels are moving in same direction but the difference between what the gyro is reporting and what we expect
+    // it to be reporting is too great
+    // The expected rotational velocity, omega, is divided by 2 here due to the fact that the world isn't perfect
+    // (lots of wheel slip and friction) so its tends to report velocities 2 times greater than what we are actually
+    // measuring
+    else if(ABS(ABS(omega*0.5f) - ABS(zGyro_radps)) > kExpectedVsActualGyroTol_radps)
+    {
+      _unexpectedMovementCount++;
+      unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
+    }
+  }
+  // Wheel speeds and gyro agree on the direction we are turning
+  else if(signbit(speedDiff) == signbit(zGyro_radps))
+  {
+    // This check is for detecting if we are being turned in the direction we are already turning
+    // this is difficult to detect due to physics. For example, we spin faster when carrying a block
+    // than not carrying one. The surface we are on will also greatly affect this type of movement detection
+    // for these reasons this is not enabled
+    // With this commented out the case of being spun in the same direction will trigger TURNED_IN_OPPOSITE_DIRECTION
+    // when we pass the target turn angle
+//    if(!_robot.IsCarryingObject() &&
+//       ABS(speedDiff) > kWheelDifForTurning_mmps &&
+//       ABS(ABS(speedDiff) - ABS(zGyro_radps)*100) > 30 * MAX(ABS(speedDiff), 100.f) / 100.f)
+//    {
+//      _unexpectedMovementCount++;
+//      unexpectedMovementType = UnexpectedMovementType::TURNED_IN_SAME_DIRECTION;
+//    }
+    if(_unexpectedMovementCount > 0)
+    {
+      _unexpectedMovementCount--;
+      return;
+    }
+  }
+  // Otherwise gyro says we are turning but our wheel speeds don't agree
+  else
+  {
+    // Increment by 2 here to get this case to trigger twice as fast as other cases
+    // The intuition is that this case is easier and more reliable to detect so there should not be any false positives
+    _unexpectedMovementCount+=2;
+    unexpectedMovementType = UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION;
+  }
+  
+  if(_unexpectedMovementCount > kMaxUnexpectedMovementCount)
+  {
+    PRINT_NAMED_WARNING("MovementComponent.CheckForUnexpectedMovement",
+                        "Unexpected movement detected %s",
+                        EnumToString(unexpectedMovementType));
+    
+    _unexpectedMovementCount = 0;
+    
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnexpectedMovement(robotState.timestamp, unexpectedMovementType)));
+  }
 }
 
 void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)

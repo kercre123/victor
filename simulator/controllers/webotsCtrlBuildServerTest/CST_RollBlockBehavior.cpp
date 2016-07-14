@@ -39,7 +39,7 @@ static const char* kBehaviorName = "RollBlock";
 class CST_RollBlockBehavior : public CozmoSimTestController {
 private:
       
-  virtual s32 UpdateInternal() override;
+  virtual s32 UpdateSimInternal() override;
 
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg) override;
   
@@ -56,7 +56,7 @@ private:
 REGISTER_COZMO_SIM_TEST_CLASS(CST_RollBlockBehavior);
 
 
-s32 CST_RollBlockBehavior::UpdateInternal()
+s32 CST_RollBlockBehavior::UpdateSimInternal()
 {
   PrintPeriodicBlockDebug();
   
@@ -65,7 +65,8 @@ s32 CST_RollBlockBehavior::UpdateInternal()
     {
       MakeSynchronous();
       DisableRandomPathSpeeds();
-      StartMovie("RollBlockBehavior");
+      StartMovieConditional("RollBlockBehavior");
+      TakeScreenshotsAtInterval("RollBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
       UnlockId unlock = UnlockIdsFromString("CubeRollAction");

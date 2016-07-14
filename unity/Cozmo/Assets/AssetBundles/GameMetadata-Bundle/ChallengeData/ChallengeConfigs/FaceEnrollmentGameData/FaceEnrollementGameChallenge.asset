@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: FaceEnrollmentGame
     _EnumValue: 5
   _Music:
-    _Music: -527946100
+    _Music: 1580491744
   MinigameConfig: {fileID: 11400000, guid: b674784e041d447f7bc1db7987a1d0d9, type: 2}
   IsMinigame: 0
   DifficultyOptions: []

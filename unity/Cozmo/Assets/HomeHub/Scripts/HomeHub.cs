@@ -169,7 +169,7 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
 
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
     }

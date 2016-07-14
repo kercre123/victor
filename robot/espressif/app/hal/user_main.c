@@ -76,7 +76,7 @@ void user_init(void)
 
   wifi_status_led_uninstall();
   //system_phy_set_tpw_via_vdd33(system_get_vdd33());
-  system_phy_set_max_tpw(MAX_TPW);
+  system_phy_set_max_tpw(MAX_TPW-12); // take off another 3dB in the office where there are so many cozmos. need to make this a debug feature
   
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
@@ -118,7 +118,7 @@ void user_init(void)
   os_sprintf((char*)ap_config.ssid, ssid);
   os_sprintf((char*)ap_config.password, "%08d", wifiPin);
   ap_config.ssid_len = 0;
-  ap_config.channel = (system_get_time() % 11) + 1;
+  ap_config.channel = (macaddr[5] % 11) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
   ap_config.max_connection = AP_MAX_CONNECTIONS;
   ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems

@@ -64,7 +64,7 @@ MonoBehaviour:
   MatchChanceIncrease: 0.1
   CozmoFakeoutChance: 0.2
   _BetweenRoundMusic:
-    _Music: -527946100
+    _Music: 2079381016
   DifficultySettings:
   - DifficultyID: 0
     Colors:

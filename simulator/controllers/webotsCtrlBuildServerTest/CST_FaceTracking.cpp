@@ -29,7 +29,7 @@ public:
   CST_FaceTracking();
 
 private:
-  s32 UpdateInternal() override;
+  s32 UpdateSimInternal() override;
 
   TestState _testState = TestState::Init;
   s32 _result = 0;
@@ -47,7 +47,7 @@ REGISTER_COZMO_SIM_TEST_CLASS(CST_FaceTracking);
 
 CST_FaceTracking::CST_FaceTracking() {}
 
-s32 CST_FaceTracking::UpdateInternal()
+s32 CST_FaceTracking::UpdateSimInternal()
 {
   auto ZeroVelocityAfterXSeconds = [this](webots::Node* node, double xSeconds, TestState nextState){
     IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(_waitTimer, xSeconds), xSeconds + 1){

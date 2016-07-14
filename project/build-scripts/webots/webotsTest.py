@@ -467,12 +467,10 @@ def runAll(options):
 
   buildFolder = get_build_folder(options)
 
-
   # tarfile.open will only create the file but not the path to the file if it doesn't exist; need to
   # create the directory of the tar file first.
   if not os.path.exists(buildFolder):
     os.makedirs(buildFolder)
-
 
   with tarfile.open(os.path.join(buildFolder, "webots_out_{0}.tar.gz".format(curTime)), "w:gz") as tar:
     for test in testNames:
@@ -501,25 +499,12 @@ def runAll(options):
         logFileName = get_log_file_path(buildFolder, test, world_file, curTime)
         UtilLog.info('results will be logged to %s' % logFileName)
 
-        # Run test in thread
+        #Run webots tests with the ability to re-try on a failure
         testResultQueue = Queue.Queue(1)
-        runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test, logFileName])
-        runWebotsThread.start()
-        runWebotsThread.join(int(options.timeout)) # with timeout
-        
+        allTestsPassed = runWebotsTestWithRetrys(options.numRetries, options, test, testResultQueue, logFileName, testStatuses, allTestsPassed)
         tar.add(logFileName, arcname=os.path.basename(logFileName))
 
-        # Check if timeout exceeded
-        if runWebotsThread.isAlive():
-          UtilLog.error(test + ' exceeded timeout.')
-          stopWebots(options)
-          allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
-          print 'allTestsPassed ' + str(allTestsPassed)
-          continue
-
-
         # Check log for crashes, errors, and warnings
-
         (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
         totalErrorCount += errorCount
         totalWarningCount += warningCount
@@ -540,6 +525,30 @@ def runAll(options):
 
   return (allTestsPassed, testStatuses, totalErrorCount, totalWarningCount, len (testNames))
 
+def runWebotsTestWithRetrys(numRetries, options, test, testResultQueue, logFileName, testStatuses, allTestsPassed):
+  # Run test in thread
+  numRetries += 1 #to account for the original run
+  while(numRetries > 0):
+    numRetries -= 1
+
+    runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test, logFileName])
+    runWebotsThread.start()
+    runWebotsThread.join(options.timeout) # with timeout
+
+    # Check if timeout exceeded
+    if runWebotsThread.isAlive():
+      UtilLog.error(test + ' exceeded timeout.')
+      stopWebots(options)
+
+      if(numRetries  == 0):
+        allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
+        print 'allTestsPassed ' + str(allTestsPassed)
+
+    (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
+    retVal = testResultQueue.get()
+    if(crashCount == 0 and retVal == 0) or numRetries == 0:
+      testResultQueue.put(retVal)#return value for testing outside
+      return allTestsPassed
 
 
 # returns true if there were no errors in the log file
@@ -682,8 +691,16 @@ def main(scriptArgs):
                       dest='timeout',
                       action='store',
                       default=120,
+                      type=int,
                       help="""Set the log level of build log output.  0=Only log from python,
                         1=Log any teamcity variables, 2=Dump full weebots log into build log""")
+
+  parser.add_argument('--numRetries',
+                    dest='numRetries',
+                    action='store',
+                    default=3,
+                    type=int,
+                    help="""Set the number of times that webots tests will re-run if there is a failure""")
   
   (options, args) = parser.parse_known_args(scriptArgs)
 

@@ -60,7 +60,7 @@ namespace Cozmo {
     // TODO: This should be 6 but marker detection range needs to be improved!
     const u32 NUM_BLOCKS_EXPECTED_ON_START = 6;
     
-    virtual s32 UpdateInternal() override;
+    virtual s32 UpdateSimInternal() override;
     
     TestState _testState = TestState::MoveHead;
     
@@ -84,7 +84,7 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   
-  s32 CST_PickAndPlace::UpdateInternal()
+  s32 CST_PickAndPlace::UpdateSimInternal()
   {
     switch (_testState) {
 

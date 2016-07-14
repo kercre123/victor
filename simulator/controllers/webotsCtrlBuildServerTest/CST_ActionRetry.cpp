@@ -58,7 +58,7 @@ namespace Anki {
       
     private:
       
-      virtual s32 UpdateInternal() override;
+      virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::Init;
       
@@ -72,14 +72,15 @@ namespace Anki {
     
     // =========== Test class implementation ===========
     
-    s32 CST_ActionRetry::UpdateInternal()
+    s32 CST_ActionRetry::UpdateSimInternal()
     {
       switch (_testState) {
         case TestState::Init:
         {
           MakeSynchronous();
-          StartMovie("ActionRetry");
-          
+          StartMovieConditional("ActionRetry");
+          //TakeScreenshotsAtInterval("ActionRetry", 1.f);
+
           SendMoveHeadToAngle(0, 100, 100);
           
           ExternalInterface::QueueSingleAction m;

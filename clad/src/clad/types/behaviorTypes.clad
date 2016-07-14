@@ -48,6 +48,8 @@ enum uint_8 BehaviorType {
   PopAWheelie,
   DistractedByObject,
   DistractedByFace,
+  DrivePath,
+  ReactToUnexpectedMovement,
 
   Count
 }

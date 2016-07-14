@@ -39,6 +39,12 @@ public:
   
   void Update(const RobotState& robotState);
   
+  // Checks for unexpected movement specifically while turning such as
+  // - Cozmo is turning one direction but you turn him the other way
+  // - Cozmo is turning one direction and you turn him faster so he overshoots his turn angle
+  // - Cozmo is stuck on an object and is unable to turn
+  void CheckForUnexpectedMovement(const RobotState& robotState);
+  
   // True if wheel speeds are non-zero in most recent RobotState message
   bool   IsMoving() const {return _isMoving;}
   
@@ -114,8 +120,6 @@ private:
   Vision::FaceID_t _trackToFaceID = Vision::UnknownFaceID;
   
   //bool _trackWithHeadOnly = false;
-
-  
   
   std::array<int, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
   
@@ -124,6 +128,13 @@ private:
     bool        headWasMoving;
   };
   std::map<AnimationStreamer::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
+  
+  u8 _unexpectedMovementCount              = 0;
+  const f32 kGyroTol_radps                 = DEG_TO_RAD(10);
+  const f32 kWheelDifForTurning_mmps       = 30;
+  const u8  kMaxUnexpectedMovementCount    = 10;
+  const f32 kMinWheelSpeed_mmps            = 20;
+  const f32 kExpectedVsActualGyroTol_radps = 0.2;
   
 }; // class MovementComponent
   

@@ -82,7 +82,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
     _PressDemoViewInstance.SetPressDemoDebugState(_PressDemoDebugSceneIndex);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
   }
 
   private void HandleDemoState(DemoState demoStateMessage) {
@@ -146,7 +146,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private void HandleStartButtonPressed(bool startWithEdge) {
     SetDemoStartValues();
     RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleSleepAnimationComplete);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
   }
 
   private void HandleForceProgressPressed() {
@@ -195,19 +195,22 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
-    challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
-      GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
-      _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-      _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
-      _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-      _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
-      _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
-      _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+    Anki.Assets.AssetBundleManager.Instance.LoadAssetBundleAsync(
+      challengeData.PrefabDataAssetBundle, (bool success) => {
+        challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
+          GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
+          _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+          _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
+          _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+          _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
+          _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
+          _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
 
-      if (gameFinishedLoadingCallback != null) {
-        gameFinishedLoadingCallback(_MiniGameInstance);
-      }
-    });
+          if (gameFinishedLoadingCallback != null) {
+            gameFinishedLoadingCallback(_MiniGameInstance);
+          }
+        });
+      });
   }
 
   private void HandleEndGameDialog() {

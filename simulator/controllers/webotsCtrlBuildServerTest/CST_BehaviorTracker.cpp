@@ -17,6 +17,7 @@
 #include "util/logging/logging.h"
 #include <iostream>
 #include <fstream>
+#include <time.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -39,14 +40,14 @@ private:
     float elapsedTime = 0.f;
   };
   
-  
-  virtual s32 UpdateInternal() override;
+  virtual s32 UpdateSimInternal() override;
  
   //Constants
   const float kFreeplayLengthSeconds = 600;
   
   //Tracking Data
-  double _startTime;
+  time_t _startTime;
+  
   std::vector<std::string> _freeplayBehaviorList;
   TestState _testState = TestState::StartUpFreeplayMode;
   std::vector<BehaviorStateChange> _stateChangeList;
@@ -63,18 +64,19 @@ REGISTER_COZMO_SIM_TEST_CLASS(CST_BehaviorTracker);
 CST_BehaviorTracker::CST_BehaviorTracker()
 {
   //Get the start time of the test
-  _startTime = GetSupervisor()->getTime();
-  
+  time(&_startTime);
 }
   
 
-s32 CST_BehaviorTracker::UpdateInternal()
+s32 CST_BehaviorTracker::UpdateSimInternal()
 {
   switch (_testState) {
     case TestState::StartUpFreeplayMode:
     {
       MakeSynchronous();
-      
+      StartMovieConditional("BehaviorTracker", 8);
+      TakeScreenshotsAtInterval("BehaviorTracker", 1.f);
+
       //Send message to start Cozmo in freeplay mode
       ExternalInterface::ActivateBehaviorChooser behavior;
       behavior.behaviorChooserType = BehaviorChooserType::Freeplay;
@@ -87,24 +89,23 @@ s32 CST_BehaviorTracker::UpdateInternal()
       //Request the list of freeplay bahivors from the behavior chooser class
       //this will be stored to ensure cozmo enters all freeplay behavior types
       SendRequestEnabledBehaviorList();
-      
+
       _testState = TestState::FreePlay;
       break;
     }
     case TestState::FreePlay:
     {
       
-      //Check for the end of the test
-      double currentTime;
-      currentTime = GetSupervisor()->getTime();
-      double timeElapsed = currentTime - _startTime;
-            
-      if(timeElapsed > kFreeplayLengthSeconds){
+      time_t timer;
+      time(&timer);
+      double totalElapsed = difftime(timer, _startTime);
+      
+      if(totalElapsed > kFreeplayLengthSeconds){
         //Final state
         BehaviorStateChange change;
         change.newBehavior = "END";
         change.oldBehavior = _stateChangeList.back().newBehavior;
-        change.elapsedTime = timeElapsed;
+        change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);
         
         _testState = TestState::TestDone;
@@ -113,7 +114,11 @@ s32 CST_BehaviorTracker::UpdateInternal()
     }
     case TestState::TestDone:
     {
+      
+      //Print info for graphs
       std::map<std::string, float> timeMap;
+      std::map<std::string, int> countMap;
+      std::map<std::string, int>::iterator countMapIter;
       std::map<std::string, float>::iterator timeMapIter;
       std::vector<BehaviorStateChange>::iterator stateChangeIter;
       float fullTime = 0.f;
@@ -122,6 +127,7 @@ s32 CST_BehaviorTracker::UpdateInternal()
       //Ensure all behaviors print
       for(const auto& behavior: _freeplayBehaviorList){
         timeMap.insert(std::make_pair(behavior, 0.f));
+        countMap.insert(std::make_pair(behavior, 0));
       }
       
       for(stateChangeIter = _stateChangeList.begin(); stateChangeIter != _stateChangeList.end(); ++stateChangeIter){
@@ -133,6 +139,7 @@ s32 CST_BehaviorTracker::UpdateInternal()
           timeDiff = elapsedTime - fullTime;
           fullTime = elapsedTime;
           
+          //time per behavior increment
           timeMapIter = timeMap.find(prev->newBehavior);
           
           if(timeMapIter != timeMap.end()){
@@ -140,6 +147,15 @@ s32 CST_BehaviorTracker::UpdateInternal()
           }else{
             timeMap.insert(std::make_pair(prev->newBehavior, timeDiff));
           }
+          
+          //count encountered increment
+          countMapIter = countMap.find(prev->newBehavior);
+          if(countMapIter != countMap.end()){
+            countMapIter->second += 1;
+          }else{
+            countMap.insert(std::make_pair(prev->newBehavior, 1));
+          }
+          
         }
       } //End for stateChangeIter loop
       
@@ -160,6 +176,12 @@ s32 CST_BehaviorTracker::UpdateInternal()
         PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%f']", "wbtsBehavior_", timeMapIter->first.c_str(), timeMapIter->second);
       }
       
+      for(countMapIter = countMap.begin(); countMapIter != countMap.end(); ++countMapIter){
+        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%d']", "wbtsBehavior_count_", countMapIter->first.c_str(), countMapIter->second);
+      }
+      
+      
+      StopMovie();
       CST_EXIT();
       break;
     }
@@ -170,11 +192,12 @@ s32 CST_BehaviorTracker::UpdateInternal()
 // ================ Message handler callbacks ==================
 void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
-  double currentTime = GetSupervisor()->getTime();
+  time_t currentTime;
+  time(&currentTime);
   BehaviorStateChange change;
   change.newBehavior = msg.newBehavior;
   change.oldBehavior = msg.oldBehavior;
-  change.elapsedTime = currentTime -  _startTime;
+  change.elapsedTime = difftime(currentTime, _startTime);
   
   _stateChangeList.push_back(change);
 }

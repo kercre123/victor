@@ -18,6 +18,10 @@
 #include <cstdio>
 #include <string>
 
+const static std::string kRootDirectory = "../../../";
+const static std::string kBuildPath = "build/mac/Debug/playbackLogs/";
+
+
 namespace Anki {
 namespace WebotsCtrlShared {
 
@@ -41,7 +45,7 @@ ParsedCommandLine ParseCommandLine(int argc, char** argv)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Anki::Util::Data::DataPlatform CreateDataPlatformBS(const std::string& runningPath)
+Anki::Util::Data::DataPlatform CreateDataPlatformBS(const std::string& runningPath, const std::string& platformID)
 {
   #if defined(_WIN32) || defined(WIN32)
     size_t pos = runningPath.rfind('\\');
@@ -50,18 +54,20 @@ Anki::Util::Data::DataPlatform CreateDataPlatformBS(const std::string& runningPa
   #endif
   
   // Get the path
-  std::string path = runningPath.substr(0,pos+1);
-  std::string resourcePath = path + "resources";
-  std::string filesPath = path + "files";
-  std::string cachePath = path + "temp";
-  std::string externalPath = path + "temp";
+  const std::string path = runningPath.substr(0,pos+1);
+  const std::string outputPath = path + kRootDirectory + kBuildPath + platformID;
+  
+  const std::string resourcePath = path + "resources";
+  const std::string filesPath = path + "files";
+  const std::string& cachePath = outputPath;
+  const std::string& externalPath = outputPath;
   Anki::Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
   
   return dataPlatform;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Anki::Util::Data::DataPlatform CreateDataPlatformTest(const std::string& runningPath)
+Anki::Util::Data::DataPlatform CreateDataPlatformTest(const std::string& runningPath, const std::string& platformID)
 {
   #if defined(_WIN32) || defined(WIN32)
     size_t pos = runningPath.rfind('\\');
@@ -70,11 +76,13 @@ Anki::Util::Data::DataPlatform CreateDataPlatformTest(const std::string& running
   #endif
   
   // Get the path
-  std::string path = runningPath.substr(0,pos+1);
-  std::string resourcePath = path + "temp";
-  std::string filesPath = path + "temp";
-  std::string cachePath = path + "temp";
-  std::string externalPath = path + "temp";
+  const std::string path = runningPath.substr(0,pos+1);
+  const std::string outputPath = path + kRootDirectory + kBuildPath + platformID;
+  
+  const std::string resourcePath = path + "temp";
+  const std::string filesPath = path + "temp";
+  const std::string& cachePath = outputPath;
+  const std::string& externalPath = outputPath;
   Anki::Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
   
   return dataPlatform;

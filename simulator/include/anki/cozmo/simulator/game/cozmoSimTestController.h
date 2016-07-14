@@ -56,9 +56,10 @@ if (!(x)) { \
 #define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double startTime##__LINE__ = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, startTime##__LINE__, timeout, __FILE__, __FUNCTION__, __LINE__))
   
   
+
   
 /////////////// CozmoSimTestController /////////////////
-  
+
 // Base class from which all cozmo simulation tests should be derived
 class CozmoSimTestController : public UiGameController {
 
@@ -68,9 +69,18 @@ public:
   
 protected:
   
-  virtual s32 UpdateInternal() = 0;
+  s32 UpdateInternal() final;
+  virtual s32 UpdateSimInternal() = 0;
   
   u8 _result;
+  bool _isRecording;
+  
+  //Variables for taking screenshots
+  f32 _screenshotInterval;
+  time_t _timeOfLastScreenshot;
+  std::string _screenshotID;
+  int _screenshotNum;
+  
   
   bool IsTrueBeforeTimeout(bool cond,
                            std::string condAsString,
@@ -80,8 +90,15 @@ protected:
                            std::string func,
                            int line);
   
-  void StartMovie(std::string name);
+  //Only runs if #define RECORD_TEST 1, use for local testing
+  void StartMovieConditional(const std::string& name, int speed = 1);
+
+  //Use for movies on teamcity - be sure to add to build artifacts
+  void StartMovieAlways(const std::string& name, int speed = 1);
   void StopMovie();
+  
+  //Use to take regular screenshots - on the build server this is preferable to recording movies
+  void TakeScreenshotsAtInterval(const std::string& screenshotID, f32 interval);
 
   void MakeSynchronous();
 

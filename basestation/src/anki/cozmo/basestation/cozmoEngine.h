@@ -109,7 +109,7 @@ public:
   bool   HasRobotWithID(const RobotID_t robotID) const;
   std::vector<RobotID_t> const& GetRobotIDList() const;
   
-  virtual bool ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg);
+  virtual Result ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg);
   
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
