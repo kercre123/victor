@@ -7,11 +7,10 @@ static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
 
 enum IRQ_Priority {
   ENCODER_PRIORITY = 1,
-  TIMER_PRIORITY = 2,
   RADIO_TIMER_PRIORITY = 2,
   UART_PRIORITY = 2,
   RADIO_PRIORITY = 2,
-  RTOS_PRIORITY = 3
+  TIMER_PRIORITY = 3
 };
 
 enum e_nrf_gpio {

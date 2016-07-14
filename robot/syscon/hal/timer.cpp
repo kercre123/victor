@@ -25,9 +25,10 @@ void Timer::init()
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
   // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
-  NRF_RTC1->INTENSET = 
-    RTC_INTENSET_COMPARE0_Msk |
-    RTC_INTENSET_COMPARE1_Msk;
+  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk |
+                       RTC_INTENSET_COMPARE0_Msk |
+                       RTC_INTENSET_COMPARE1_Msk |
+                       RTC_INTENSET_COMPARE2_Msk;
   
   setup_next_main_exec();
 
@@ -76,9 +77,11 @@ extern "C" void RTC1_IRQHandler() {
   }
 
   // Light management loop
-  if (NRF_RTC1->EVENTS_COMPARE[TIMER_CC_LIGHTS_VALUE]) {
-    NRF_RTC1->EVENTS_COMPARE[TIMER_CC_LIGHTS_VALUE] = 0;
+  for (int i = TIMER_CC_LIGHTS_CATH1; i <= TIMER_CC_LIGHTS_CATH3; i++) {
+    if (NRF_RTC1->EVENTS_COMPARE[i]) {
+      NRF_RTC1->EVENTS_COMPARE[i] = 0;
 
-    Backpack::lightsValue();
+      Backpack::update(i - TIMER_CC_LIGHTS_CATH1);
+    }
   }
 }

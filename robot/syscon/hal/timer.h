@@ -11,9 +11,10 @@
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
 enum TimerComparitor {
-  TIMER_CC_MAIN,
-  TIMER_CC_LIGHTS_VALUE,
-  TIMER_CC_LIGHTS_OFF
+  TIMER_CC_LIGHTS_CATH1,
+  TIMER_CC_LIGHTS_CATH2,
+  TIMER_CC_LIGHTS_CATH3,
+  TIMER_CC_MAIN
 };
 
 // Initialize the RTC peripheral

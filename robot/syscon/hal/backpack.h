@@ -10,8 +10,7 @@ namespace Backpack {
   void init();
   void manage();
   
-  void lightsOff(void);
-  void lightsValue(void);
+  void update(int channel);
 
   void setLights(const LightState* lights);
 }
