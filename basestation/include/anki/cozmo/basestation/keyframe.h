@@ -186,16 +186,16 @@ namespace Cozmo {
     struct AudioRef {
       Audio::GameEvent::GenericEvent audioEvent;
       float volume;
-      float weight;   // random play weight
+      float probability;   // random play weight
       bool audioAlts; // The audio event has altrnate or random audio track playback, avoid replaying event
       
       AudioRef( Audio::GameEvent::GenericEvent audioEvent = Audio::GameEvent::GenericEvent::Invalid,
-               float volume = 1.0f,
-               float weight = 1.0f,
-               bool audioAlts = false )
+                float volume      = 1.0f,
+                float probability = 1.0f,
+                bool audioAlts    = false )
       : audioEvent( audioEvent )
       , volume( volume )
-      , weight( weight )
+      , probability( probability )
       , audioAlts( audioAlts ) {};
     };
     

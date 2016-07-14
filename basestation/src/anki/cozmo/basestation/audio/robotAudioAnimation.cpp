@@ -145,9 +145,9 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
     if ( GameEvent::GenericEvent::Invalid != event ) {
       
       // Apply random weight
-      bool playEvent = Util::IsFltNear( audioRef.weight, 1.0f );
+      bool playEvent = Util::IsFltNear( audioRef.probability, 1.0f );
       if ( _randomGenerator != nullptr && !playEvent ) {
-        playEvent = audioRef.weight >= _randomGenerator->RandDbl( 1.0 );
+        playEvent = audioRef.probability >= _randomGenerator->RandDbl( 1.0 );
       }
       else {
         // No random generator
