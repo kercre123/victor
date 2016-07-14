@@ -37,7 +37,7 @@ void GoSlow (void);
 /* MCG_C1: CLKS=0,FRDIV=3,IREFS=1,IRCLKEN=1,IREFSTEN=0 - Divide by 256 */
 #define SYSTEM_MCG_C1_VALUE          0x1EU               /* MCG_C1 */
 /* MCG_C2: LOCRE0=0,FCFTRIM=0,RANGE=2,HGO=0,EREFS=1,LP=0,IRCS=0 */
-#define SYSTEM_MCG_C2_VALUE          0x24U               /* MCG_C2 */
+#define SYSTEM_MCG_C2_VALUE          0x20U               /* MCG_C2 */
 /* MCG_C4: DMX32=0,DRST_DRS=3,FCTRIM=0,SCFTRIM=0 */
 #define SYSTEM_MCG_C4_VALUE          0x60U               /* MCG_C4 */
 /* MCG_SC: ATME=0,ATMS=0,ATMF=0,FLTPRSRV=0,FCRDIV=0,LOCS0=0 */
