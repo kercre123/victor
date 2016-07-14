@@ -34,18 +34,7 @@ extern "C" void HardFault_Handler(void) {
 }
 
 // This is our near-realtime loop
-extern "C" void SWI0_IRQHandler(void) {
-  static const int PERIOD = CYCLES_MS(5.0f);
-  static int target = PERIOD + GetCounter();
-
-  int ticks = target - GetCounter();
-
-  if (ticks > 0) {
-    return ;
-  }
-  
-  target += PERIOD;
-
+void main_execution(void) {
   Head::manage();
   Motors::manage();
   Battery::manage();
@@ -79,7 +68,7 @@ int main(void)
   Backpack::init();
 
   // Startup the system
-  Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  Battery::setOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
 
   // NOTE: HERE DOWN SOFTDEVICE ACCESS IS NOT GUARANTEED
   // Run forever, because we are awesome.

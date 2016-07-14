@@ -8,11 +8,14 @@
 #include "clad/types/ledTypes.h"
 #include "timer.h"
 
+#define CYCLES(ms) (int)(16000000.0f * (ms) / 1000.0f)
+#define CYCLES_TO_COUNT(c) (int)((c) * 32768.0f / 16000000.0f)
+
 static const int NUM_PROP_LIGHTS = 4;
 
-static const int RADIO_TOTAL_PERIOD = CYCLES_MS(35.0f);
-static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
-static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
+static const int RADIO_TOTAL_PERIOD = CYCLES(35.0f);
+static const int SCHEDULE_PERIOD = CYCLES(5.0f);
+static const int SILENCE_PERIOD = CYCLES(1.0f);
 static const int NEXT_CYCLE_FUDGE = 78;
 
 static const int TICK_LOOP = RADIO_TOTAL_PERIOD / SCHEDULE_PERIOD;
@@ -22,8 +25,8 @@ static const int MAX_ACCESSORIES = TICK_LOOP;
 
 static const int ADV_CHANNEL = 81;
 
-static const int OTA_ACK_TIMEOUT = CYCLES_MS(2);
-static const int MAX_ACK_TIMEOUTS = CYCLES_MS(500) / OTA_ACK_TIMEOUT;
+static const int OTA_ACK_TIMEOUT = CYCLES(2);
+static const int MAX_ACK_TIMEOUTS = CYCLES(500) / OTA_ACK_TIMEOUT;
 static const int MAX_OTA_FAILURES = 5;
 
 // Advertising settings
@@ -62,7 +65,7 @@ namespace Radio {
   void assignProp(unsigned int slot, uint32_t accessory);
   void setLightGamma(uint8_t gamma);
   
-  void manage();
+  void configureTime(void);
 }
 
 #endif

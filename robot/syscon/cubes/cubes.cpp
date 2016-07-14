@@ -11,7 +11,6 @@
   
 #include "protocol.h"
 #include "hardware.h"
-#include "timer.h"
 #include "cubes.h"
 #include "head.h"
 #include "lights.h"
@@ -23,7 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-//#define NATHAN_CUBE_JUNK
+#define NATHAN_CUBE_JUNK
 //#define CUBE_HOP
 
 #define TOTAL_BLOCKS(x) ((x)->dataLen / sizeof(CubeFirmwareBlock))
@@ -47,8 +46,6 @@ static const CubeFirmware* ValidPerfs[] = {
 #ifdef CUBE_HOP
 static const int wifiChannel = 1;
 #endif
-
-static int ota_ack_timeout;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -82,6 +79,13 @@ void Radio::init() {
   lightGamma = 0x100;
 }
 
+enum TIMER_COMPARE {
+  PREPARE_COMPARE,
+  RESUME_COMPARE,
+  TIMEOUT_COMPARE,
+  CAPTURE_COMPARE
+};
+
 void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
     RADIO_MODE_MODE_Nrf_1Mbit,
@@ -96,6 +100,28 @@ void Radio::advertise(void) {
   currentAccessory = 0;
 
   uesb_init(&uesb_config);
+
+  // Timer scheduling
+  NRF_TIMER0->POWER = 1;
+  
+  NRF_TIMER0->TASKS_STOP = 1;
+  NRF_TIMER0->TASKS_CLEAR = 1;
+  
+  NRF_TIMER0->MODE = TIMER_MODE_MODE_Timer;
+  NRF_TIMER0->PRESCALER = 0;
+  NRF_TIMER0->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+  
+  NRF_TIMER0->INTENCLR = ~0;
+  NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk |
+                         TIMER_INTENSET_COMPARE1_Msk;
+  
+  NVIC_EnableIRQ(TIMER0_IRQn);
+  NVIC_SetPriority(TIMER0_IRQn, RADIO_TIMER_PRIORITY);
+
+  NRF_TIMER0->CC[PREPARE_COMPARE] = SCHEDULE_PERIOD;
+  NRF_TIMER0->CC[RESUME_COMPARE] = SCHEDULE_PERIOD + SILENCE_PERIOD;
+
+  NRF_TIMER0->TASKS_START = 1;
 }
 
 void Radio::setLightGamma(uint8_t gamma) {
@@ -103,6 +129,9 @@ void Radio::setLightGamma(uint8_t gamma) {
 }
 
 void Radio::shutdown(void) {
+  NRF_TIMER0->TASKS_STOP = 1;
+  NVIC_DisableIRQ(TIMER0_IRQn);
+
   uesb_disable();
 }
 
@@ -132,11 +161,13 @@ static int AllocateAccessory(uint32_t id) {
 static void EnterState(RadioState state) { 
   radioState = state;
 
+  NRF_TIMER0->INTENCLR = TIMER_INTENCLR_COMPARE2_Msk;
+
   switch (state) {
     case RADIO_PAIRING:
       uesb_set_rx_address(&PairingAddress);
       break;
-    case RADIO_TALKING:
+    case RADIO_TALKING:   
       uesb_set_rx_address(&accessories[currentAccessory].address);
       break ;
     case RADIO_OTA:
@@ -162,33 +193,10 @@ static void ota_send_next_block() {
   memcpy(msg.block, ota_device->data[ota_block_index], sizeof(CubeFirmwareBlock));
   
   uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
-  ota_ack_timeout = GetCounter() + OTA_ACK_TIMEOUT;
-}
 
-static void ota_timeout() {
-  // Give up, we didn't receive any acks soon enough
-  if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {    
-    // Disconnect cube if it has failed to connect
-    int slot = LocateAccessory(OTAAddress.address);
-    
-    if (slot >= 0) {
-      AccessorySlot* acc = &accessories[slot];
-      
-      if (acc->failure_count++ > MAX_OTA_FAILURES) {
-        acc->allocated = false;
-        acc->active = false;
-        acc->model = OBJECT_OTA_FAIL;
-        
-        SendObjectConnectionState(slot);
-      }
-    }
-
-    EnterState(RADIO_PAIRING);
-    uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
-    return ;
-  }
-
-  ota_send_next_block();
+  NRF_TIMER0->TASKS_CAPTURE[CAPTURE_COMPARE];
+  NRF_TIMER0->CC[TIMEOUT_COMPARE] = NRF_TIMER0->CC[CAPTURE_COMPARE] + OTA_ACK_TIMEOUT;
+  NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE2_Msk;
 }
 
 static uint8_t random() {
@@ -239,8 +247,7 @@ void uesb_event_handler(uint32_t flags)
   switch (radioState) {
   case RADIO_OTA:
     // Send noise and return to pairing
-    if (++ota_block_index < TOTAL_BLOCKS(ota_device)) {
-      ack_timeouts = 0;
+    if (++ota_block_index < TOTAL_BLOCKS(ota_device)) {     
       ota_send_next_block();
     } else {
       EnterState(RADIO_PAIRING);
@@ -444,7 +451,36 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   }
 }
 
+static void ota_timeout() {
+  NRF_TIMER0->INTENCLR = TIMER_INTENCLR_COMPARE2_Msk;
+  
+  // Give up, we didn't receive any acks soon enough
+  if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {    
+    // Disconnect cube if it has failed to connect
+    int slot = LocateAccessory(OTAAddress.address);
+    
+    if (slot >= 0) {
+      AccessorySlot* acc = &accessories[slot];
+      
+      if (acc->failure_count++ > MAX_OTA_FAILURES) {
+        acc->allocated = false;
+        acc->active = false;
+        acc->model = OBJECT_OTA_FAIL;
+        
+        SendObjectConnectionState(slot);
+      }
+    }
+
+    EnterState(RADIO_PAIRING);
+    uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
+    return ;
+  }
+
+  ota_send_next_block();
+}
+
 static void radio_prepare(void) {
+  // Schedule our next radio prepare
   uesb_stop();
 
     // Transmit to accessories round-robin
@@ -478,12 +514,7 @@ static void radio_prepare(void) {
     // Update the color status of the lights   
     static const int channel_order[] = { 3, 2, 1, 0 };
     int tx_index = 0;
-    
-    #ifdef NATHAN_CUBE_JUNK
-    static uint8_t color = 0xFF;
-    lightGamma = 0x80;
-    #endif
-    
+        
     memset(tx_state.ledStatus, 0, sizeof(tx_state.ledStatus));
     const int num_lights = (target->model == OBJECT_CHARGER) ? 3 : 4;
     
@@ -494,7 +525,7 @@ static void radio_prepare(void) {
         #ifndef NATHAN_CUBE_JUNK
         tx_state.ledStatus[tx_index++] = (rgbi[ch] * lightGamma) >> 8;
         #else
-        tx_state.ledStatus[tx_index++] = (color * lightGamma) >> 8;
+        tx_state.ledStatus[tx_index++] = 0x80;
         #endif
       }
     }
@@ -540,32 +571,29 @@ static void radio_resume(void) {
   uesb_start();
 }
 
-void Radio::manage(void) {
+extern "C" void TIMER0_IRQHandler(void) {
   // We are in bluetooth mode, do not do this
   if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
     return ;
   }
-  
-  static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
-  static int next_resume  = next_prepare + SILENCE_PERIOD;
-  int count = GetCounter();
-
-  // We are in OTA mode which is free running (timeout logic)
-  if (radioState == RADIO_OTA) {
-    if (ota_ack_timeout - count < 0) {
-      ota_timeout();
-    }
     
-    return ;
+  if (NRF_TIMER0->EVENTS_COMPARE[TIMEOUT_COMPARE]) {
+    NRF_TIMER0->EVENTS_COMPARE[TIMEOUT_COMPARE] = 0;
+
+    ota_timeout();
   }
 
-  if (next_prepare - count < 0) {
+  if (NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE]) {
+    NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
+    NRF_TIMER0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
+
     radio_prepare();
-    next_prepare += SCHEDULE_PERIOD;
   }
-  
-  if (next_resume - count < 0) {
+
+  if (NRF_TIMER0->EVENTS_COMPARE[RESUME_COMPARE]) {
+    NRF_TIMER0->EVENTS_COMPARE[RESUME_COMPARE] = 0;
+    NRF_TIMER0->CC[RESUME_COMPARE] += SCHEDULE_PERIOD;
+
     radio_resume();
-    next_resume += SCHEDULE_PERIOD;
   }
 }

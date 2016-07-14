@@ -6,9 +6,8 @@
 #include "cubes.h"
 
 // This is the IRQ handler for various power modes
-static void (*irq_handler)(void);
-
-static const int PRESCALAR = 0x10;
+static void setup_next_main_exec();
+void main_execution();
 
 void Timer::init()
 {
@@ -26,19 +25,16 @@ void Timer::init()
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
   // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
-  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE0_Msk |
-                       RTC_INTENSET_COMPARE1_Msk |
-                       RTC_INTENSET_COMPARE2_Msk;
+  NRF_RTC1->INTENSET = 
+    RTC_INTENSET_COMPARE0_Msk |
+    RTC_INTENSET_COMPARE1_Msk;
   
-  lowPowerMode(true);
+  setup_next_main_exec();
 
   // Configure lower-priority realtime trigger
-  NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
-  NVIC_EnableIRQ(SWI0_IRQn);
-
   NVIC_SetPriority(RTC1_IRQn, TIMER_PRIORITY);
   NVIC_EnableIRQ(RTC1_IRQn);
-  
+
   NRF_RTC1->TASKS_START = 1;
 }
 
@@ -62,44 +58,27 @@ loop
     BX lr
 }
 
-static void low_power_timer(void) {
-  NRF_RTC1->EVENTS_COMPARE[3] = 0;
-  NRF_RTC1->CC[3] += PRESCALAR;
-}
+static void setup_next_main_exec() {
+  static const int PERIOD = CYCLES_MS(5.0f);
+  static int target = PERIOD + GetCounter();
 
-static void high_power_timer(void) {
-  NRF_RTC1->EVENTS_TICK = 0;
-  Radio::manage();
-}
+  NRF_RTC1->CC[TIMER_CC_MAIN] = target >> 8;
 
-void Timer::lowPowerMode(bool lowPower) {
-  // Clear existing interrupt mode
-  NRF_RTC1->INTENCLR = RTC_INTENCLR_COMPARE3_Msk | RTC_INTENCLR_TICK_Msk;
-  
-  // Setup new mode (compare used for prescalar)
-  if (lowPower) {
-    NRF_RTC1->EVENTS_COMPARE[3] = 0;
-    NRF_RTC1->CC[3] = NRF_RTC1->COUNTER + PRESCALAR;
-
-    irq_handler = low_power_timer;
-    NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk;
-  } else {
-    NRF_RTC1->EVENTS_TICK = 0;
-
-    irq_handler = high_power_timer;
-    NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
-  }
+  target += PERIOD;
 }
 
 extern "C" void RTC1_IRQHandler() {
-  for (int i = 0; i < 3; i++) {
-    if (NRF_RTC1->EVENTS_COMPARE[i]) {
-      NRF_RTC1->EVENTS_COMPARE[i] = 0;
-      
-      Backpack::update(i);
-    }
+  // Main execution will fire
+  if (NRF_RTC1->EVENTS_COMPARE[TIMER_CC_MAIN]) {
+    NRF_RTC1->EVENTS_COMPARE[TIMER_CC_MAIN] = 0;
+    setup_next_main_exec();
+    main_execution();
   }
 
-  NVIC_SetPendingIRQ(SWI0_IRQn);
-  irq_handler();
+  // Light management loop
+  if (NRF_RTC1->EVENTS_COMPARE[TIMER_CC_LIGHTS_VALUE]) {
+    NRF_RTC1->EVENTS_COMPARE[TIMER_CC_LIGHTS_VALUE] = 0;
+
+    Backpack::lightsValue();
+  }
 }
