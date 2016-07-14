@@ -565,19 +565,6 @@ namespace Cozmo {
         }
         
         
-        // Play sound
-        if (kBFT_PlaySound) {
-          PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
-          StartActing(robot, soundAction,
-                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                        if (result != ActionResult::SUCCESS) {
-                          EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
-                          return false;
-                        }
-                        return true;
-                      });
-        }
-        
         // Start motor calibration
         robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
         _holdUntilTime = currentTime_sec + _kMotorCalibrationTimeout_sec;
@@ -626,6 +613,20 @@ namespace Cozmo {
                       
                       // Take photo for checking starting pose
                       robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
+                      
+                      // Play sound
+                      if (kBFT_PlaySound) {
+                        PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
+                        StartActing(robot, soundAction,
+                                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                                      if (result != ActionResult::SUCCESS) {
+                                        EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
+                                        return false;
+                                      }
+                                      return true;
+                                    });
+                      }
+                      
                       
                       SetCurrState(FactoryTestState::ChargerAndIMUCheck);
                       return true;

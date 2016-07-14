@@ -1,16 +1,14 @@
 {
   "soundTestAnim": [
     {
-      "pathFromRoot": "\\robot\\demo\\Celebration",
       "audioName": [
-        "Dev_Placeholder"
+        "Dev_Robot_Tone_1K_1Sec_Play"
       ],
       "Name": "RobotAudioKeyFrame",
-      "$type": "AnimationTool.AudioRobotPointData, AnimationTool",
       "volume": 1.0,
-      "durationTime_ms": 800,
+      "durationTime_ms": 500,
       "audioEventId": [
-        594803606
+        1083086921
       ],
       "triggerTime_ms": 0
     }
