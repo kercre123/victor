@@ -92,28 +92,42 @@ void AccelRead()
   // Set up SPI for reading the FIFO
   SPIInit();
   CSB = 0;
-  Write(SPI_READ | FIFO_DATA);
+
+  // Bit-bang Write(SPI_READ | FIFO_DATA) at ~2MHz
+  SCK = 0;          SCK = 1;
+  SCK = 0; SDI = 0; SCK = 1;
+  SCK = 0; SDI = 1; SCK = 1;
+  SCK = 0;          SCK = 1;
+  SCK = 0;          SCK = 1;
+  SCK = 0;          SCK = 1;
+  SCK = 0;          SCK = 1;
+  SCK = 0;          SCK = 1;
   
-  // Now drive hardware SPI at max speed
-  SPIMCON0 = SPIEN + SPIPHASE;
+  // Now drive hardware SPI at max (safe) speed - 4MHz
+  SPIMCON0 = SPIEN + SPI4M + SPIPOL+SPIPHASE; // Mode 3: Idle high, sample on rising edge
+  SPIMDAT = 0;            // Get SPI moving - 0 blinks IR LED
   LEDDIR = DEFDIR;        // DebugCube needs this
   ACC = SPIMDAT;          // Drain anything left in the FIFO
   ACC = SPIMDAT;
-  SPIMDAT = 0;            // Get SPI moving - 0 blinks IR LED
   SPIMDAT = 0;
-  while (!(SPIMSTAT & RXREADY)) // Wait for start
-    ;
-  // This loop is cycle-counted to stay pipelined at exactly max speed
+
+  // Read out up to 66 bytes from SPI (store 33 of them - MSB only)
   for (i = 0; i < 33; i++)
   {
+    while (!(SPIMSTAT & RXREADY)) // Wait for byte ready
+      ;
     if (!(SPIMDAT & 1)) // Bail out early if FIFO runs dry
       break;
     SPIMDAT = 0;        // Pipeline next read
-    *p = SPIMDAT;       // Grab data (ready just in time)
+
+    while (!(SPIMSTAT & RXREADY)) // Wait for byte ready
+      ;
+    *p = SPIMDAT;       // Grab data
     p++;
     SPIMDAT = 0;        // Pipeline next read
   }
-  while (!(SPIMSTAT & TXEMPTY))   // Let it drain out
+  // Must let final byte clock out, or BMA's FIFO gets pissed
+  while (!(SPIMSTAT & TXEMPTY))
     ;
   CSB = 1;
   SPIMCON0 = 0;
