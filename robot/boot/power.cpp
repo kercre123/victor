@@ -30,6 +30,11 @@ void Anki::Cozmo::HAL::Power::init()
   GPIO_IN(GPIO_DEBUG_UART, PIN_DEBUG_UART);
   SOURCE_SETUP(GPIO_DEBUG_UART, SOURCE_DEBUG_UART, SourceGPIO | SourcePullUp);
 
+  // Drive the OLED reset line low on startup
+  GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
+  GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
+  SOURCE_SETUP(GPIO_OLED_RST, SOURCE_OLED_RST, SourceGPIO);
+
   MicroWait(5000);
 
   // We are on likely on a test fixure, power up espressif
