@@ -479,6 +479,7 @@ void dmaisr(void* arg) {
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = outWord;
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        if (txFillCount > 0); txFillCount--;
         while (resumePhase < DMA_BUF_SIZE/2)
           resumePhase += DROP_SPACING/2;
         resumePhase -= DMA_BUF_SIZE/2;
