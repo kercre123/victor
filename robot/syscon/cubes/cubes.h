@@ -8,8 +8,10 @@
 #include "clad/types/ledTypes.h"
 #include "timer.h"
 
-#define CYCLES(ms) (int)(16000000.0f * (ms) / 1000.0f)
-#define CYCLES_TO_COUNT(c) (int)((c) * 32768.0f / 16000000.0f)
+#define NRF_CLOCK_FREQUENCY 16000000.0f
+
+#define CYCLES(ms) (int)((ms) * NRF_CLOCK_FREQUENCY / 1000.0f)
+#define CLOCKS(c) (int)((((c) / NRF_CLOCK_FREQUENCY) + 0.5) * 32768.0f)
 
 static const int NUM_PROP_LIGHTS = 4;
 

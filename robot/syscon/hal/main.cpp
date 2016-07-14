@@ -68,7 +68,7 @@ int main(void)
   Backpack::init();
 
   // Startup the system
-  Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
+  Battery::setOperatingMode(BODY_ACCESSORY_OPERATING_MODE);
 
   // NOTE: HERE DOWN SOFTDEVICE ACCESS IS NOT GUARANTEED
   // Run forever, because we are awesome.

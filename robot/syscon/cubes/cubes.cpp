@@ -82,8 +82,7 @@ void Radio::init() {
 enum TIMER_COMPARE {
   PREPARE_COMPARE,
   RESUME_COMPARE,
-  TIMEOUT_COMPARE,
-  CAPTURE_COMPARE
+  TIMEOUT_COMPARE
 };
 
 void Radio::advertise(void) {
@@ -194,13 +193,13 @@ static void ota_send_next_block() {
   
   uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
 
-  NRF_TIMER0->TASKS_CAPTURE[CAPTURE_COMPARE];
-  NRF_TIMER0->CC[TIMEOUT_COMPARE] = NRF_TIMER0->CC[CAPTURE_COMPARE] + OTA_ACK_TIMEOUT;
+  NRF_TIMER0->TASKS_CAPTURE[TIMEOUT_COMPARE];
+  NRF_TIMER0->CC[TIMEOUT_COMPARE] += OTA_ACK_TIMEOUT;
   NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE2_Msk;
 }
 
 static uint8_t random() {
-  static uint8_t c = GetCounter() / 256;
+  static uint8_t c = 0xFF;
   c = (c >> 1) ^ (c & 1 ? 0x2D : 0);
   return c;
 }
@@ -342,9 +341,9 @@ void uesb_event_handler(uint32_t flags)
         target_slot += TICK_LOOP;
       }
       
-      int ticks_to_next = 
-        (target_slot * SCHEDULE_PERIOD) +
-        (next_resume - GetCounter());
+      NRF_TIMER0->TASKS_CAPTURE[3] = 1;
+      int clocks = NRF_TIMER0->CC[RESUME_COMPARE] - NRF_TIMER0->CC[3] + (target_slot * SCHEDULE_PERIOD);
+      int ticks_to_next = (clocks << 5) / ((int)NRF_CLOCK_FREQUENCY >> 10);
 
       if (ticks_to_next < SCHEDULE_PERIOD) {
         ticks_to_next += RADIO_TOTAL_PERIOD;
@@ -360,12 +359,12 @@ void uesb_event_handler(uint32_t flags)
       }
       acc->hopChannel = 0;
 
-      pair.ticksUntilStart = CYCLES_TO_COUNT(ticks_to_next) - NEXT_CYCLE_FUDGE;
+      pair.ticksUntilStart = ticks_to_next - NEXT_CYCLE_FUDGE;
       pair.hopIndex = acc->hopIndex;
       pair.hopBlackout = acc->hopBlackout;
       #endif
 
-      pair.ticksPerBeat = CYCLES_TO_COUNT(SCHEDULE_PERIOD);
+      pair.ticksPerBeat = CLOCKS(SCHEDULE_PERIOD);
       pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
 
       pair.ticksToListen = 0;     // Currently unused
