@@ -57,7 +57,7 @@ namespace Anki {
       
       void ClearAcks();
       
-      virtual s32 UpdateInternal() override;
+      virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::WriteSingleBlob;
       
@@ -110,7 +110,7 @@ namespace Anki {
     
     // =========== Test class implementation ===========
     
-    s32 CST_NVStorage::UpdateInternal()
+    s32 CST_NVStorage::UpdateSimInternal()
     {
       switch (_testState) {
         case TestState::WriteSingleBlob:

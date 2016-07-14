@@ -31,7 +31,7 @@ namespace Anki {
       
     private:
       
-      virtual s32 UpdateInternal() override;
+      virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::TurnToFace;
       
@@ -51,7 +51,7 @@ namespace Anki {
     
     // =========== Test class implementation ===========
     
-    s32 CST_FaceActions::UpdateInternal()
+    s32 CST_FaceActions::UpdateSimInternal()
     {
       switch (_testState) {
         case TestState::TurnToFace:

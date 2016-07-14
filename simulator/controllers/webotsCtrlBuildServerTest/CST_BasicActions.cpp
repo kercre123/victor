@@ -39,7 +39,7 @@ namespace Anki {
       
     private:
       
-      virtual s32 UpdateInternal() override;
+      virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::MoveLiftUp;
       
@@ -55,14 +55,15 @@ namespace Anki {
     
     // =========== Test class implementation ===========
     
-    s32 CST_BasicActions::UpdateInternal()
+    s32 CST_BasicActions::UpdateSimInternal()
     {
       switch (_testState) {
         case TestState::MoveLiftUp:
         {
           MakeSynchronous();
-          StartMovie("BasicActions");
-        
+          StartMovieConditional("BasicActions");
+          TakeScreenshotsAtInterval("BasicActions", 1.f);
+
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
           _testState = TestState::MoveLiftDown;
           break;

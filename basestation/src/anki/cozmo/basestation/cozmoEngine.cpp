@@ -237,11 +237,11 @@ void CozmoEngine::HandleFeatureRequests(const AnkiEvent<ExternalInterface::Messa
   }
 }
   
-bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
+Result CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
 {
   if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", connectMsg.robotID);
-    return true;
+    return RESULT_OK;
   }
   
   _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(connectMsg);
@@ -249,7 +249,7 @@ bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connec
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(connectMsg.robotID);
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
-  return true;
+  return RESULT_OK;
 }
 
 void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -564,8 +564,8 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     case ExternalInterface::MessageGameToEngineTag::ConnectToRobot:
     {
       const ExternalInterface::ConnectToRobot& msg = event.GetData().Get_ConnectToRobot();
-      const bool success = ConnectToRobot(msg);
-      if(success) {
+      const Result success = ConnectToRobot(msg);
+      if(success == RESULT_OK) {
         PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
       } else {
         PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);

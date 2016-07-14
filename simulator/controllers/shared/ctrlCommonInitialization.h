@@ -42,9 +42,9 @@ ParsedCommandLine ParseCommandLine(int argc, char** argv);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // creates a data platform with paths pointing at BaseStation defaults
-Anki::Util::Data::DataPlatform CreateDataPlatformBS(const std::string& runningPath);
+  Anki::Util::Data::DataPlatform CreateDataPlatformBS(const std::string& runningPath, const std::string& platformID);
 // creates a data platform with paths pointing at test defaults
-Anki::Util::Data::DataPlatform CreateDataPlatformTest(const std::string& runningPath);
+Anki::Util::Data::DataPlatform CreateDataPlatformTest(const std::string& runningPath, const std::string& platformID);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Logging

@@ -40,7 +40,7 @@ namespace Cozmo {
     const f32     _poseDistThresh_mm = 25.f;
     const Radians _poseAngleThresh;
     
-    virtual s32 UpdateInternal() override;
+    virtual s32 UpdateSimInternal() override;
     
     TestState _testState = TestState::MoveHead;
     
@@ -66,12 +66,14 @@ namespace Cozmo {
     
   }
   
-  s32 CST_RobotKidnapping::UpdateInternal()
+  s32 CST_RobotKidnapping::UpdateSimInternal()
   {
     switch (_testState) {
       case TestState::MoveHead:
       {
         MakeSynchronous();
+        TakeScreenshotsAtInterval("Robot Kidnapping", 1.f);
+
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
         _testState = TestState::InitialLocalization;
         break;

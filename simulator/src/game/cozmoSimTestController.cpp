@@ -8,13 +8,16 @@
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include <sys/stat.h>
 
 // Set to have StartMovie() and StopMovie() do things
 // Note: Change _recordingPath to where ever you want the recordings to be saved
 // Also may want/need to change starting webots world viewpoint so that you can see everything
 // from a good pose
 #define RECORD_TEST 0
-const static std::string _recordingPath = "/Users/bneuman/Desktop/webotsMovies/";
+const static std::string kBuildDirectory = "../../../build/";
+//This folder is created with a build script on teamCity - make the folder locally manually for now
+const static std::string kScreenShotsPath = kBuildDirectory + "mac/Debug/webots_screenshots/";
 
 namespace Anki {
   namespace Cozmo {
@@ -27,6 +30,9 @@ namespace Anki {
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP)
     , _result(0)
+    , _isRecording(false)
+    , _screenshotInterval(-1.f)
+    , _screenshotNum(0)
     { }
     
     CozmoSimTestController::~CozmoSimTestController()
@@ -54,29 +60,93 @@ namespace Anki {
       return cond;
     }
     
-    void CozmoSimTestController::StartMovie(std::string name)
+    
+    s32 CozmoSimTestController::UpdateInternal()
+    {
+      PRINT_NAMED_INFO("ScreenshotInterval","%f", _screenshotInterval);
+      //Check if screenshots need to be taken
+      if(_screenshotInterval > 0){
+        time_t now;
+        time(&now);
+        if(difftime(now, _timeOfLastScreenshot) > _screenshotInterval){
+          std::stringstream ss;
+          ss << kScreenShotsPath << _screenshotID << "_" << _screenshotNum << ".png";
+          GetSupervisor()->exportImage(ss.str(), 80);
+          
+          _screenshotNum++;
+          time(&_timeOfLastScreenshot);
+        }
+        
+      }
+      
+      return UpdateSimInternal();
+    }
+
+    
+    //Only runs if #define RECORD_TEST 1, use for local testing
+    void CozmoSimTestController::StartMovieConditional(const std::string& name, int speed)
     {
       if(RECORD_TEST)
       {
         time_t t;
         time(&t);
-        std::stringstream ss;
         std::string dateStr = std::asctime(std::localtime(&t));
         dateStr.erase(std::remove(dateStr.begin(), dateStr.end(), '\n'), dateStr.end());
-
-        ss << _recordingPath << name << " " << dateStr << ".mp4";
-        GetSupervisor()->startMovie(ss.str(), 854, 480, 0, 90, 1, false);
+        
+        std::stringstream ss;
+        ss << name << dateStr;
+        StartMovieAlways(name, speed);
+        _isRecording = true;
       }
     }
     
+    //Use for movies on teamcity - be sure to add to build artifacts
+    void CozmoSimTestController::StartMovieAlways(const std::string& name, int speed)
+    {
+      time_t t;
+      time(&t);
+      std::stringstream ss;
+      ss << kBuildDirectory << name << ".mp4";
+      GetSupervisor()->startMovie(ss.str(), 854, 480, 0, 90, speed, false);
+      _isRecording =  GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_RECORDING;
+      PRINT_NAMED_INFO("Is Movie Recording?","_isRecording:%d", _isRecording);
+    }
+    
+    
+    
     void CozmoSimTestController::StopMovie()
     {
-      if(RECORD_TEST && GetSupervisor()->getMovieStatus() == GetSupervisor()->MOVIE_RECORDING)
+      if(_isRecording && GetSupervisor()->getMovieStatus() == GetSupervisor()->MOVIE_RECORDING)
       {
         GetSupervisor()->stopMovie();
-        sleep(10); // Wait a few seconds for the movie to be encoded and saved
+        PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie Stop Command issued");
+        
+        while(GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_SAVING){
+        }
+        PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie stopped with status: %d", GetSupervisor()->getMovieStatus());
+        _isRecording = false;
       }
     }
+    
+    
+    void CozmoSimTestController::TakeScreenshotsAtInterval(const std::string& screenshotID, f32 interval)
+    {
+      if(interval <= 0){
+        PRINT_NAMED_ERROR("CozmoSimTestController.TakeShotsAtInterval.InvalidInterval", "Interval passed in: %f", interval);
+        return;
+      }
+      
+      //Set up output folder
+      struct stat st;
+      if(stat(kScreenShotsPath.c_str(), &st) != 0){
+        system(("mkdir -p " + kScreenShotsPath).c_str());
+      }
+      
+      _screenshotInterval = interval;
+      _screenshotID = screenshotID;
+      time(&_timeOfLastScreenshot);
+    }
+
     
     void CozmoSimTestController::MakeSynchronous()
     {
@@ -152,9 +222,9 @@ namespace Anki {
       
       // find name in the registry and call factory method.
       auto it = factoryFunctionRegistry.find(name);
-      if(it != factoryFunctionRegistry.end())
+      if(it != factoryFunctionRegistry.end()){
         instance = it->second();
-      
+      }
       // wrap instance in a shared ptr and return
       if(instance != nullptr)
         return std::shared_ptr<CozmoSimTestController>(instance);

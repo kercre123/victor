@@ -97,7 +97,8 @@ int main(int argc, char **argv)
   // Unfortunately, CozmoAPI does not properly receive a const DataPlatform, and that change
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
-  Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
+  Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine");
+  
   
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, ""));
@@ -251,7 +252,6 @@ int main(int argc, char **argv)
 #endif
     
   } // while still stepping
-  
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();
 #endif

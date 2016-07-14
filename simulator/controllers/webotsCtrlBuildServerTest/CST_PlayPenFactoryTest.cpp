@@ -20,7 +20,7 @@ namespace Anki {
       
     private:
       
-      virtual s32 UpdateInternal() override;
+      virtual s32 UpdateSimInternal() override;
       
       bool _testStarted = false;
       bool _testResultReceived = false;
@@ -36,13 +36,15 @@ namespace Anki {
     
     // =========== Test class implementation ===========
     
-    s32 CST_PlayPenFactoryTest::UpdateInternal()
+    s32 CST_PlayPenFactoryTest::UpdateSimInternal()
     {
       if (!_testStarted) {
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("FactoryTest")));
-        StartMovie("PlayPenFactoryTest");
+        StartMovieConditional("PlayPenFactoryTest");
+        //TakeScreenshotsAtInterval("PlayPenFactoryTest", 1.f);
+        
         _testStarted = true;
       } else {
 

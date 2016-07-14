@@ -13,7 +13,6 @@
 #include "../shared/ctrlCommonInitialization.h"
 #include <stdio.h>
 #include <string.h>
-
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 
 #if (DO_NOT_QUIT_WEBOTS == 1)
@@ -21,7 +20,6 @@
 #else
 #define QUIT_WEBOTS(status) webots::Supervisor dummySupervisor; dummySupervisor.simulationQuit(status);
 #endif
-
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -32,7 +30,7 @@ int main(int argc, char **argv)
   // controller is meant to show all logs.
 
   // create platform
-  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformTest(argv[0]);
+  const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformTest(argv[0], "webotsCtrlBuildServer");
   
   // initialize logger
   const bool filterLog = false;
@@ -55,13 +53,10 @@ int main(int argc, char **argv)
   PRINT_NAMED_INFO("WebotsCtrlBuildServerTest.main.StartingTest", "%s", testName.c_str());
   
   // Init test
-  cstCtrl->SetDataPlatform(&dataPlatform);
   cstCtrl->Init();
-  
   // Run update loop
   while (cstCtrl->Update() == 0) {}
-  
-  Anki::Util::gLoggerProvider = nullptr;
+
   return 0;
 }
 

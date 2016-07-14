@@ -32,7 +32,7 @@ namespace Cozmo {
   class CST_Animations : public CozmoSimTestController {
     
   private:
-    virtual s32 UpdateInternal() override;
+    virtual s32 UpdateSimInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
     virtual void HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg) override;
@@ -52,7 +52,7 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
 
-  s32 CST_Animations::UpdateInternal()
+  s32 CST_Animations::UpdateSimInternal()
   {
     switch (_testState) {
       case TestState::InitCheck:

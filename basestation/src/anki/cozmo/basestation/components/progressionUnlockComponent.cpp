@@ -70,7 +70,6 @@ void ProgressionUnlockComponent::Init(const Json::Value &config)
 bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 {
   bool success = false;
-
   // depending on whether we want to set/unset the unlock
   if ( unlocked )
   {
@@ -86,7 +85,7 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
                         UnlockIdToString(unlock), (int)unlock);
     } else {
       // already unlocked
-      PRINT_NAMED_ERROR("ProgressionUnlockComponent.SetUnlock.DuplicatedUnlock",
+      PRINT_NAMED_WARNING("ProgressionUnlockComponent.SetUnlock.DuplicatedUnlock",
                         "Tried to unlock '%s' (%d), but it's already unlocked",
                         UnlockIdToString(unlock), (int)unlock);
     }

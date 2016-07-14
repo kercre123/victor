@@ -49,7 +49,7 @@ namespace {
 class CST_StackBlockBehavior : public CozmoSimTestController {
 private:
       
-  virtual s32 UpdateInternal() override;
+  virtual s32 UpdateSimInternal() override;
 
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg) override;
   
@@ -68,7 +68,7 @@ private:
 REGISTER_COZMO_SIM_TEST_CLASS(CST_StackBlockBehavior);
 
 
-s32 CST_StackBlockBehavior::UpdateInternal()
+s32 CST_StackBlockBehavior::UpdateSimInternal()
 {
   PrintPeriodicBlockDebug();
 
@@ -77,7 +77,8 @@ s32 CST_StackBlockBehavior::UpdateInternal()
     {
       MakeSynchronous();
       DisableRandomPathSpeeds();
-      StartMovie("StackBlockBehavior");
+      StartMovieConditional("StackBlockBehavior");
+      //TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
       UnlockId unlock = UnlockIdsFromString("CubeStackAction");
