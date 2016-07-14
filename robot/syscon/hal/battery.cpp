@@ -180,15 +180,11 @@ void Battery::updateOperatingMode() {
     case BODY_IDLE_OPERATING_MODE:
       Motors::disable(true);  
       Battery::powerOff();
-      Timer::lowPowerMode(true);
-      Backpack::lightMode(RTC_LEDS);
       break ;
     
     case BODY_BLUETOOTH_OPERATING_MODE:
       Motors::disable(true);
       Battery::powerOn();
-      Timer::lowPowerMode(true);
-      Backpack::lightMode(RTC_LEDS);
 
       // This is temporary until I figure out why this thing is being lame
       {  
@@ -211,11 +207,9 @@ void Battery::updateOperatingMode() {
       Battery::powerOn();
       Radio::advertise();
 
-      Timer::lowPowerMode(false);
-      Backpack::lightMode(TIMER_LEDS);
       break ;
   }
-  
+
   active_operating_mode = current_operating_mode;
 }
 

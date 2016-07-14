@@ -14,46 +14,40 @@
 
 using namespace Anki::Cozmo;
 
+extern const unsigned int COZMO_VERSION_COMMIT;
+
 extern GlobalDataToBody g_dataToBody;
 
-// Define charlie wiring here:
-static const charliePlex_s RGBLightPins[] =
+static const int CATHODE_COUNT = 3;
+static const int CHANNEL_COUNT = 4;
+
+static const int TIMER_GRAIN = 2;
+static const int TIMER_DELTA_MINIMUM = 2;
+static const int MAX_DARK = (0x100 >> TIMER_GRAIN) + 16;
+
+struct charliePlex_s
 {
-  { PIN_LED1, PIN_LED2 },
-  { PIN_LED1, PIN_LED4 },
-  { PIN_LED2, PIN_LED1 },
-  { PIN_LED2, PIN_LED3 },
-  { PIN_LED2, PIN_LED4 },
-  { PIN_LED3, PIN_LED1 },
-  { PIN_LED3, PIN_LED2 },
-  { PIN_LED3, PIN_LED4 },
-  { PIN_LED4, PIN_LED1 },
-  { PIN_LED4, PIN_LED3 },
-  { PIN_LED4, PIN_LED2 }
+  uint8_t anode;
+  uint8_t cathodes[CATHODE_COUNT];
+};
+
+// Define charlie wiring here:
+
+static const charliePlex_s PinSet[CHANNEL_COUNT] =
+{
+  { PIN_LED1, { PIN_LED2, PIN_LED3, PIN_LED4 } },
+  { PIN_LED2, { PIN_LED1, PIN_LED3, PIN_LED4 } },
+  { PIN_LED3, { PIN_LED4, PIN_LED1, PIN_LED2 } },
+  { PIN_LED4, { PIN_LED1, PIN_LED3, PIN_LED2 } },
 };
 
 // Charlieplexing magic constants
-static const int numLights = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
-
 static int active_channel = 0;
-static const charliePlex_s* currentChannel = &RGBLightPins[0];
-static uint8_t drive_value[numLights];
-static int drive_error[numLights];
-
-static void setup_timer();
-
-// Helper function
-static inline void light_off(void) {
-  nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(currentChannel->cathode, NRF_GPIO_PIN_NOPULL);
-}
-
-static inline void light_on(void) {
-  nrf_gpio_pin_set(currentChannel->anode);
-  nrf_gpio_cfg_output(currentChannel->anode);
-  nrf_gpio_pin_clear(currentChannel->cathode);
-  nrf_gpio_cfg_output(currentChannel->cathode);
-}
+static const charliePlex_s* currentChannel = &PinSet[0];
+static uint8_t drive_value[CHANNEL_COUNT][CATHODE_COUNT];
+static bool active[CATHODE_COUNT] = { false, false, false };
+static int total_active = 0;
+static int off_time = 0;
 
 // Start all pins as input
 void Backpack::init()
@@ -61,67 +55,69 @@ void Backpack::init()
   // This prevents timers from deadlocking system
   static const LightState lights[] = {
     { 0x0000, 0x0000, 34, 67, 17, 17 },
-    { 0x0000, 0x0000, 34, 67, 17, 17 },
+    { COZMO_VERSION_COMMIT & 0xFFFF, 0x0000, 34, 67, 17, 17 },
     { 0x7FFF, 0x0000, 34, 67, 17, 17 },
-    { 0x0000, 0x0000, 34, 67, 17, 17 },
+    { COZMO_VERSION_COMMIT >> 16, 0x0000, 34, 67, 17, 17 },
     { 0x0000, 0x0000, 34, 67, 17, 17 }
   };
 
   setLights(lights);
+
+  // Prime our counter
+  Backpack::update(0);
 }
 
-void Backpack::lightMode(LightDriverMode mode) {
-  switch (mode) {
-    case RTC_LEDS:
-      NRF_TIMER0->TASKS_STOP = 1;
-      NVIC_DisableIRQ(TIMER0_IRQn);
-      break ;
-    case TIMER_LEDS:
-      setup_timer();
-      break ;
+// This is a temporary fix until I can make the comparisons not jam
+static const void unjam(void) {
+  static const uint32_t STALLED_PERIOD = 0x8000;
+  
+  bool stalled = true;
+  for (int i = 0; i < 3; i++) {
+    uint32_t count = (NRF_RTC1->CC[i] - NRF_RTC1->COUNTER) << 8;
+    if (count < STALLED_PERIOD) return ;
   }
-}
-
-void Backpack::flash()
-{
-  for (int l = 0; l < 2; l++) {
-    for (int i = 0; i < numLights; i++) {
-      currentChannel = &RGBLightPins[i];
-      light_on();
-      MicroWait(10000);
-    }
+  
+  for (int i = 0; i < 3; i++) {
+    active[i] = false;
+    total_active = 0;
   }
+
+  NRF_RTC1->CC[0] = NRF_RTC1->COUNTER + 0x20;
 }
 
-void Backpack::manage() { 
+void Backpack::manage() {
   struct BackpackLightAdjust {
-    uint8_t pos;
-    uint8_t index;
+    uint8_t controller_pos;
+    uint8_t controller_index;
+    uint8_t channel;
+    uint8_t cathode;
     uint8_t gamma;
   };
   
   static const BackpackLightAdjust setting[] = {
-    { 0, 0, 0x10 }, // 0
-    { 4, 0, 0x10 }, // 1
-    { 2, 0, 0x0C }, // 2
-    { 2, 1, 0x09 }, // 3
-    { 2, 2, 0x10 }, // 4
-    { 1, 0, 0x0C }, // 5
-    { 1, 1, 0x09 }, // 6
-    { 1, 2, 0x10 }, // 7
-    { 3, 0, 0x0C }, // 8
-    { 3, 1, 0x09 }, // 9
-    { 3, 2, 0x10 }, // 10
+    { 0, 0, 0, 0, 0x10 }, // 0
+    { 4, 0, 0, 1, 0x10 }, // 1
+    { 2, 0, 1, 0, 0x0C }, // 2
+    { 2, 1, 1, 1, 0x09 }, // 3
+    { 2, 2, 1, 2, 0x10 }, // 4
+    { 1, 0, 2, 1, 0x0C }, // 5
+    { 1, 1, 2, 2, 0x09 }, // 6
+    { 1, 2, 2, 0, 0x10 }, // 7
+    { 3, 0, 3, 0, 0x0C }, // 8
+    { 3, 1, 3, 1, 0x09 }, // 9
+    { 3, 2, 3, 2, 0x10 }, // 10
   };
-  
+
   static const int lightCount = sizeof(setting) / sizeof(setting[0]);
 
   for (int i = 0; i < lightCount; i++) {
     const BackpackLightAdjust& light = setting[i];
-    uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.pos].values;
-    uint32_t drive = rgbi[light.index] * light.gamma;
-    drive_value[i] = (drive * drive) >> 16;
+    uint8_t* rgbi = (uint8_t*) &lightController.backpack[light.controller_pos].values;
+    uint32_t drive = rgbi[light.controller_index] * light.gamma;
+    drive_value[light.channel][light.cathode] = (drive * drive) >> 16;
   }
+
+  unjam();
 }
 
 void Backpack::setLights(const LightState* update) {
@@ -130,86 +126,50 @@ void Backpack::setLights(const LightState* update) {
   }
 }
 
-// RTC powered lights
-void Backpack::update(void) {
-  light_off();
-  
-  if (++active_channel >= numLights) {
-    active_channel = 0;
-  }
-  currentChannel = &RGBLightPins[active_channel];
+void Backpack::update(int compare) { 
+  // Turn off channel that is currently active
+  if (active[compare]) {
+    nrf_gpio_cfg_input(currentChannel->cathodes[compare], NRF_GPIO_PIN_NOPULL);
+    active[compare] = false;
 
-  static uint8_t pwm[numLights];
-
-  // Minimum display value
-  if (drive_value[active_channel] < 0x18) {
-    return ;
-  }
-  
-  // Calculate PDM value
-  int overflow = pwm[active_channel] + (int)drive_value[active_channel];
-  pwm[active_channel] = overflow;
-
-  if (overflow > 0xFF) {
-    light_on();
-  }
-}
-
-// Timer powered lights
-static const int TIMER_GRAIN = 5;
-static const int TIMER_THRASH = 0x10;
-static const int TIMER_DELTA_MINIMUM = 0x20;
-
-static void setup_timer() {
-  NRF_TIMER0->TASKS_STOP = 1;
-
-  NRF_TIMER0->MODE = TIMER_MODE_MODE_Timer;
-  NRF_TIMER0->TASKS_CLEAR = 1;
- 
-  NRF_TIMER0->PRESCALER = 0;
-  NRF_TIMER0->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
-  
-  NRF_TIMER0->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
-
-  // This is the blackout stage
-  active_channel = -1;
-  NRF_TIMER0->CC[0] = 0;
-
-  NVIC_EnableIRQ(TIMER0_IRQn);
-  NVIC_SetPriority(TIMER0_IRQn, LED_PRIORITY);
-
-  NRF_TIMER0->TASKS_START = 1;
-}
-
-extern "C" void TIMER0_IRQHandler(void) { 
-  // Clear out our interupt
-  NRF_TIMER0->EVENTS_COMPARE[0] = 0;
-  
-  if (active_channel >= 0) {
-    NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-    drive_error[active_channel] = NRF_TIMER0->CC[3] - NRF_TIMER0->CC[0];
-    light_off();
-  }
-
-  // Locate next channel with appropriate brightness
-  int delta;
-  
-  do {
-    // Did we reach the end of our time together
-    if (++active_channel >= numLights) {
-      NRF_TIMER0->CC[0] = 0;
-      active_channel = -1;
-      return ;
+    // We want to go dark
+    if (--total_active == 0) {
+      nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
+      NRF_RTC1->CC[0] = off_time;
     }
     
-    delta = (drive_value[active_channel] << TIMER_GRAIN) - drive_error[active_channel];
-    drive_error[active_channel] = 0;
-  } while (delta < TIMER_DELTA_MINIMUM);
+    // We turned off an LED this cycle, wait a few more ticks before moving on
+    return ;
+  }
 
-  // Light that mo-fo up
-  currentChannel = &RGBLightPins[active_channel];
-  NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-  NRF_TIMER0->CC[0] = NRF_TIMER0->CC[3] + delta - TIMER_THRASH;
+  // Select next channel
+  if (++active_channel >= CHANNEL_COUNT) {
+    active_channel = 0;
+  }
 
-  light_on();
+  currentChannel = &PinSet[active_channel];
+  off_time = NRF_RTC1->COUNTER + MAX_DARK;
+  NRF_RTC1->CC[0] = off_time;
+
+  // Turn on our anode
+  nrf_gpio_pin_set(currentChannel->anode);
+  nrf_gpio_cfg_output(currentChannel->anode);
+
+  // Light LEDs for required amount of time
+  for (int cath = 0; cath < CATHODE_COUNT; cath++) {
+    int delta = drive_value[active_channel][cath] >> TIMER_GRAIN;
+    
+    if (delta < TIMER_DELTA_MINIMUM) {
+      nrf_gpio_cfg_input(currentChannel->cathodes[cath], NRF_GPIO_PIN_NOPULL);
+      continue ;
+    }
+
+    NRF_RTC1->CC[cath] = NRF_RTC1->COUNTER + delta;
+
+    nrf_gpio_pin_clear(currentChannel->cathodes[cath]);
+    nrf_gpio_cfg_output(currentChannel->cathodes[cath]);
+    
+    active[cath] = true;
+    total_active++;
+  }
 }

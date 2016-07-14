@@ -6,7 +6,8 @@
 #include "cubes.h"
 
 // This is the IRQ handler for various power modes
-static void (*irq_handler)(void);
+static void setup_next_main_exec();
+void main_execution();
 
 void Timer::init()
 {
@@ -24,22 +25,17 @@ void Timer::init()
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
   // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
+  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk |
+                       RTC_INTENSET_COMPARE0_Msk |
+                       RTC_INTENSET_COMPARE1_Msk |
+                       RTC_INTENSET_COMPARE2_Msk;
   
-  // Configure the interrupts
-  NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
-  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
+  setup_next_main_exec();
 
-  lowPowerMode(true);
+  // Configure lower-priority realtime trigger
   NVIC_SetPriority(RTC1_IRQn, TIMER_PRIORITY);
   NVIC_EnableIRQ(RTC1_IRQn);
 
-  // Configure lower-priority realtime trigger
-  NVIC_EnableIRQ(SWI0_IRQn);
-  NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
-}
-
-void Timer::start(void) {
-  // Start the RTC
   NRF_RTC1->TASKS_START = 1;
 }
 
@@ -63,26 +59,29 @@ loop
     BX lr
 }
 
-void Timer::lowPowerMode(bool lowPower) {
-  // Do not manage radio in low power mode, RTOS grainularity severely reduced
-  NRF_RTC1->TASKS_STOP = 1;
+static void setup_next_main_exec() {
+  static const int PERIOD = CYCLES_MS(5.0f);
+  static int target = PERIOD + GetCounter();
 
-  if (lowPower) {
-    irq_handler = Backpack::update;
-    NRF_RTC1->PRESCALER = 0;
-  } else {
-    irq_handler = Radio::manage;
-    NRF_RTC1->PRESCALER = 0;
-  }
+  NRF_RTC1->CC[TIMER_CC_MAIN] = target >> 8;
 
-  NRF_RTC1->TASKS_START = 1;
+  target += PERIOD;
 }
 
 extern "C" void RTC1_IRQHandler() {
-  if (!NRF_RTC1->EVENTS_TICK)
-    return ;
+  // Main execution will fire
+  if (NRF_RTC1->EVENTS_COMPARE[TIMER_CC_MAIN]) {
+    NRF_RTC1->EVENTS_COMPARE[TIMER_CC_MAIN] = 0;
+    setup_next_main_exec();
+    main_execution();
+  }
 
-  NRF_RTC1->EVENTS_TICK = 0;
-  irq_handler();
-  NVIC_SetPendingIRQ(SWI0_IRQn);
+  // Light management loop
+  for (int i = 0; i <= 3; i++) {
+    if (NRF_RTC1->EVENTS_COMPARE[i]) {
+      NRF_RTC1->EVENTS_COMPARE[i] = 0;
+
+      Backpack::update(i);
+    }
+  }
 }

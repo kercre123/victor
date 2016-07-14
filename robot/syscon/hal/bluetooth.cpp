@@ -61,11 +61,6 @@ static BLE_CladBuffer tx_buffer;
 static bool tx_pending;
 static bool tx_buffered;
 
-static DiffieHellman dh_state = {
-  &RSA_DIFFIE_MONT,
-  &RSA_DIFFIE_EXP_MONT,
-};
-
 extern "C" void conn_params_error_handler(uint32_t nrf_error)
 {
   APP_ERROR_HANDLER(nrf_error);
@@ -87,23 +82,28 @@ static void permissions_error(BLEError error) {
 }
 
 void Bluetooth::authChallenge(const Anki::Cozmo::HelloRobot& msg) {
-  for (int i = 0; i < sizeof(m_nonce); i++) {
-    if (msg.nonce[i] != m_nonce[i]) {
-      permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
-      return ;
-    }
+  if (memcmp(msg.signature, HELLO_SIGNATURE, sizeof(m_nonce))) {
+    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+    return ;
+  }
+
+  if (memcmp(msg.nonce, m_nonce, sizeof(m_nonce))) {
+    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+    return ;
   }
 
   m_authenticated = true;
 }
 
-static void dh_complete(const void*, int) {
+static void dh_complete(const void* state, int) {
   using namespace Anki::Cozmo;
+  
+  const DiffieHellman* dh = (const DiffieHellman*) state;
   
   // Transmit our encryped key
   EncodedAESKey msg;
-  memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
-  memcpy(msg.encoded_key, dh_state.encoded_key, AES_KEY_LENGTH);  
+  memcpy(msg.secret, dh->local_secret, SECRET_LENGTH);
+  memcpy(msg.encoded_key, dh->encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
 
   // Display the pin number
@@ -115,26 +115,44 @@ static void dh_complete(const void*, int) {
   RobotInterface::SendMessage(dn);
 }
 
-void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+static void dh_setup(const void* state, int) {
   using namespace Anki::Cozmo;
   
-  // Copy in our secret code, and run
-  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  const DiffieHellman* dh = (const DiffieHellman*) state;
   
-  // Run the completed DH stack
+  // Finish DH process
   Task t;
   t.op = TASK_FINISH_DIFFIE_HELLMAN;
-  t.state = &dh_state;
+  t.state = dh;
   t.callback = dh_complete;
   Tasks::execute(&t);
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
-  dn.value = dh_state.pin;
+  dn.value = dh->pin;
   dn.digits = 8;
   dn.x = 0;
   dn.y = 16;
   RobotInterface::SendMessage(dn);
+}
+
+void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+  // This is our inital state for pairing
+  static DiffieHellman dh_state = {
+    &RSA_DIFFIE_MONT,
+    &RSA_DIFFIE_EXP_MONT,
+  };
+
+  // Copy in our secret code, and run
+  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  
+  Task t;
+  
+  t.op = TASK_START_DIFFIE_HELLMAN;
+  t.state = &dh_state;
+  t.callback = dh_setup;
+  
+  Tasks::execute(&t);
 }
 
 static bool message_encrypted(uint8_t op) {
@@ -238,7 +256,7 @@ static void frame_receive(CozmoFrame& receive)
   }
 }
 
-static void send_welcome_message(const void*, int) {  
+static void send_welcome_message(const void*, int) {
   using namespace Anki::Cozmo;
   
   HelloPhone msg; 
@@ -353,12 +371,6 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       m_authenticated = false;
       tx_pending = false;
       tx_buffered = false;
-
-      // Initalize our DH state
-      t.op = TASK_START_DIFFIE_HELLMAN;
-      t.state = &dh_state;
-      t.callback = NULL;
-      Tasks::execute(&t);
 
       // Generate our welcome nonce
       t.op = TASK_GENERATE_RANDOM;
@@ -569,7 +581,7 @@ bool Bluetooth::enabled(void) {
 
 void Bluetooth::advertise(void) {
   uint32_t err_code;
-  
+
   if (!m_sd_enabled) {
     err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
     APP_ERROR_CHECK(err_code);
@@ -641,7 +653,7 @@ void Bluetooth::advertise(void) {
   APP_ERROR_CHECK(err_code);
   
   // Set BLE power to +0db
-  sd_ble_gap_tx_power_set(0);
+  sd_ble_gap_tx_power_set(-4);
   
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);

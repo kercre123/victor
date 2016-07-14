@@ -161,6 +161,11 @@ static inline bool FlashBlock() {
     return false;
   }
 
+  // Unaligned block
+  if (flash.packet.blockAddress % TRANSMIT_BLOCK_SIZE) {
+    return false;
+  }
+
   // Upper 2gB is body space
   if (flash.packet.blockAddress >= 0x80000000) {
     SetLight(2);
@@ -173,6 +178,15 @@ static inline bool FlashBlock() {
   // We will not override the boot loader
   if (flash.packet.blockAddress < ROBOT_BOOTLOADER || flash.packet.blockAddress >= 0x10000) {
     return false;
+  }
+
+  // Verify that our header is valid
+  if (flash.packet.blockAddress == BOOT_HEADER_ADDRESS) {
+    BootLoaderSignature* header = (BootLoaderSignature*) flash.packet.flashBlock;
+
+    if (header->sig != HEADER_SIGNATURE || !header->evil_word) {
+      return false;
+    }
   }
 
   MicroWait(1000);

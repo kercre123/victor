@@ -1,52 +1,37 @@
 const factory = require("./factory.js");
 const aes = require("./aes.js");
 
-const BLUE = 0x001F;
-const GREEN = 0x03E0;
-const RED = 0x7C00;
+var BRYON_COZMO = "db083e35f3031e1d";
 
-const PALETTE = {
-	red: RED,
-	green: GREEN,
-	yellow: RED | GREEN,
-	blue: BLUE,
-	cyan: BLUE | GREEN,
-	magenta: BLUE | RED,
-	white: BLUE | RED | GREEN,
-};
+const ENTER_PAIRING_MESSAGE = 0x27
 
+factory.on('advertised', (info) => {
+	console.log(`Cozmo: ${info.id} (${info.revision})`);
 
-var KEYS = Object.keys(PALETTE);
-const key = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-var a = 0, b = 0;
+	if (info.id != BRYON_COZMO) { return ; }
 
-factory.on('discovered', function(info) {
+	info.device.connect();
+});
 
-	var color_a = KEYS[a];
-	var color_b = KEYS[b];
+factory.on('connected', function(interface) {
+	console.log("Connected");
 
-	if (++a >= KEYS.length) b++, a = 0;
+	var hello = false;
+	var last_msg = +new Date();
 
-	console.log("Located cozmo:", info.name, `(id: ${info.id}, git: ${info.revision})`, color_a, color_b, color_a)
+	interface.on('data', (data, encrypted) => {
+		console.log(encrypted ? "ENC*:" : "RECV:", data.length, data);
 
-	color_a = PALETTE[color_a];
-	color_b = PALETTE[color_b];
+		console.log("Clock:", (+new Date() - last_msg) / 1000);
+		last_msg = +new Date();
 
-	var message = [
-		0x27, 
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0
-	];
-
-	info.interface.on('data', (data, encrypted) => {
-		if (encrypted) {
-			console.log("ENC*:", data.length, data) 
-			data = aes.decode(key, data);
+		if (!hello) {
+			interface.send([ENTER_PAIRING_MESSAGE, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16]);
+			hello = true;
 		}
-
-		console.log("RECV:", data.length, data) 
-
-		info.interface.send(message);
 	});
-	info.interface.on('disconnect', (data) => console.log("disconnected", info.name) );
+
+	interface.on('disconnect', (data) => {
+		console.log("disconnected");
+	});
 });

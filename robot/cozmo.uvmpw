@@ -8,17 +8,7 @@
   <WorkspaceName>WorkSpace</WorkspaceName>
 
   <project>
-    <PathAndName>.\robot_boot.uvprojx</PathAndName>
-    <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
-  </project>
-
-  <project>
     <PathAndName>.\robot41.uvprojx</PathAndName>
-    <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
-  </project>
-
-  <project>
-    <PathAndName>.\syscon\sys_boot.uvprojx</PathAndName>
     <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
   </project>
 

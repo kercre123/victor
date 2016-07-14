@@ -9,14 +9,13 @@
 // Wraps every 512 seconds - use unsigned overflow math to hide wrapping
 #define COUNT_PER_MS (8389)
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
-#define CYCLES_TO_COUNT(c) (((c) + 128) / 256)
+
+static const int TIMER_CC_MAIN = 3;
 
 // Initialize the RTC peripheral
 #ifdef __cplusplus
 namespace Timer {
   void init();
-  void start();
-  void lowPowerMode(bool power);
 }
 #endif
 
