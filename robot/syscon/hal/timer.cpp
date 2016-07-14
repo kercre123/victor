@@ -77,11 +77,11 @@ extern "C" void RTC1_IRQHandler() {
   }
 
   // Light management loop
-  for (int i = TIMER_CC_LIGHTS_CATH1; i <= TIMER_CC_LIGHTS_CATH3; i++) {
+  for (int i = 0; i <= 3; i++) {
     if (NRF_RTC1->EVENTS_COMPARE[i]) {
       NRF_RTC1->EVENTS_COMPARE[i] = 0;
 
-      Backpack::update(i - TIMER_CC_LIGHTS_CATH1);
+      Backpack::update(i);
     }
   }
 }

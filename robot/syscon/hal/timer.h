@@ -10,12 +10,7 @@
 #define COUNT_PER_MS (8389)
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
-enum TimerComparitor {
-  TIMER_CC_LIGHTS_CATH1,
-  TIMER_CC_LIGHTS_CATH2,
-  TIMER_CC_LIGHTS_CATH3,
-  TIMER_CC_MAIN
-};
+static const int TIMER_CC_MAIN = 3;
 
 // Initialize the RTC peripheral
 #ifdef __cplusplus

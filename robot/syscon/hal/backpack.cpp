@@ -21,10 +21,9 @@ extern GlobalDataToBody g_dataToBody;
 static const int CATHODE_COUNT = 3;
 static const int CHANNEL_COUNT = 4;
 
-static const int TIMER_GRAIN = 3;
-static const int TIMER_DELTA_MINIMUM = 2;
-static const int DARK_TIME_OFFSET = 16;
-static const int MAX_DARK = (0x100 >> TIMER_GRAIN) + DARK_TIME_OFFSET;
+static const int TIMER_GRAIN = 2;
+static const int TIMER_DELTA_MINIMUM = 4;
+static const int MAX_DARK = (0x100 >> TIMER_GRAIN) + 16;
 
 struct charliePlex_s
 {
@@ -107,27 +106,20 @@ void Backpack::setLights(const LightState* update) {
 void Backpack::update(int compare) { 
   static bool active[CATHODE_COUNT] = { false, false, false };
   static int total_active = 0;
-  static int light_time = 0;
+  static int off_time = 0;
 
   // Turn off channel that is currently active
   if (active[compare]) {
     nrf_gpio_cfg_input(currentChannel->cathodes[compare], NRF_GPIO_PIN_NOPULL);
     active[compare] = false;
-    total_active--;
-  }
 
-  // we are still lighting channels, wait for next event before reconfiguring channels
-  if (total_active > 0) {
-    return ;
-  }
-
-  // Turn everything off
-  nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
-
-  // Down period
-  if (light_time > 0) {
-    NRF_RTC1->CC[TIMER_CC_LIGHTS_CATH1] = NRF_RTC1->COUNTER + MAX_DARK - light_time;
-    light_time = 0;
+    // We want to go dark
+    if (--total_active == 0) {
+      nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
+      NRF_RTC1->CC[0] = off_time;
+    }
+    
+    // We turned off an LED this cycle, wait a few more ticks before moving on
     return ;
   }
   
@@ -135,11 +127,14 @@ void Backpack::update(int compare) {
   if (++active_channel >= CHANNEL_COUNT) {
     active_channel = 0;
   }
-  currentChannel = &PinSet[active_channel];
 
-  // Fallback to darkness (if nessessary)
-  light_time = 0;
-  NRF_RTC1->CC[TIMER_CC_LIGHTS_CATH1] = NRF_RTC1->COUNTER + MAX_DARK;
+  currentChannel = &PinSet[active_channel];
+  off_time = NRF_RTC1->COUNTER + MAX_DARK;
+  NRF_RTC1->CC[0] = off_time;
+
+  // Turn on our anode
+  nrf_gpio_pin_set(currentChannel->anode);
+  nrf_gpio_cfg_output(currentChannel->anode);
 
   // Light LEDs for required amount of time
   for (int cath = 0; cath < CATHODE_COUNT; cath++) {
@@ -149,21 +144,12 @@ void Backpack::update(int compare) {
       continue ;
     }
 
-    NRF_RTC1->CC[cath + TIMER_CC_LIGHTS_CATH1] = NRF_RTC1->COUNTER + delta;
-    active[cath] = true;
-    
+    NRF_RTC1->CC[cath] = NRF_RTC1->COUNTER + delta;
+
     nrf_gpio_pin_clear(currentChannel->cathodes[cath]);
     nrf_gpio_cfg_output(currentChannel->cathodes[cath]);
     
-    // Setup dark time to offset intensity
-    if (delta > light_time) {
-      light_time = delta;
-    }
-    
+    active[cath] = true;
     total_active++;
   }
-
-  // Turn on our anode
-  nrf_gpio_pin_set(currentChannel->anode);
-  nrf_gpio_cfg_output(currentChannel->anode);
 }
