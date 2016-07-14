@@ -125,6 +125,10 @@ g_RadioEnd
 
   ALIGN
   EXPORT g_canary
+#ifndef INCBIN
 g_canary    DCD     0xcab00d1e
-
+#else
+g_canary    DCD     0xffffffff
+#endif
+  
   END

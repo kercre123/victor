@@ -23,16 +23,20 @@ bool RobotDetect(void)
   PIN_OUT(GPIOC, PINC_CHGTX);
   PIN_IN(GPIOC, PINC_CHGRX);
   MicroWait(500);
-  return MonitorGetCurrent() > 2000;
+  return MonitorGetCurrent() > BOOTED_CURRENT;
 }
 
 void SendTestChar(int c);
 
 void SendTestMode(int test)
 {
-  for (int i = 0; i < 200; i++)
-    SendTestChar(-1);   // Give the robot 1 second (200 ticks) to warm up
-  
+  // Pump the comm-link 4 times before trying to send
+  for (int i = 0; i < 4; i++)
+    try {
+      SendTestChar(-1);
+    } catch (int e) { }
+    
+  // Send the message
   SendTestChar('W');
   SendTestChar('t');
   SendTestChar('f');
@@ -54,7 +58,8 @@ void InfoTest(void)
 
 void PlaypenTest(void)
 {
-  SendTestMode(7);    // Lucky 7 is Playpen fixture mode
+//  SendTestMode(7);    // Lucky 7 is Playpen fixture mode
+  SendTestMode(9);     // 6 is motor test, 9 is menus
 }
 
 extern int g_stepNumber;

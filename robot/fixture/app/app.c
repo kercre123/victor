@@ -17,7 +17,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 45;
+u8 g_fixtureReleaseVersion = 46;
 const char* BUILD_INFO = "PS SMT";
 
 BOOL g_isDevicePresent = 0;
@@ -96,6 +96,7 @@ int GetSequence(void)
   return sequence;
 }
 
+extern int g_canary;
 // Show the name of the fixture and version information
 void SetFixtureText(void)
 {
@@ -122,7 +123,6 @@ void SetFixtureText(void)
   DisplayMoveCursor(55, 0);
   DisplayPutString(BUILD_INFO);
 #endif
-  
   DisplayFlip();
 }
 
@@ -434,12 +434,16 @@ int main(void)
   InitUART();
   FetchParams();
   InitConsole();
-  
+ 
   SlowPutString("STARTUP!\r\n");
 
-  // Figure out which fixture type we are
+  // If we don't have a full upload, this is version 0 type NO ID
   g_fixtureType = (FixtureType)InitBoard();
-  if (g_fixtureType == FIXTURE_NONE && g_flashParams.fixtureTypeOverride > 1 && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
+  if (g_canary != 0xcab00d1e)
+    g_fixtureType = g_fixtureReleaseVersion = 0; 
+
+  // Else, figure out which fixture type we are
+  else if (g_fixtureType == FIXTURE_NONE && g_flashParams.fixtureTypeOverride > 1 && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
     g_fixtureType = g_flashParams.fixtureTypeOverride;
   
   SlowPutString("Initializing Display...\r\n");
