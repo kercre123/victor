@@ -48,6 +48,8 @@ namespace Anki
     void PathSegment::DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                                 f32 targetSpeed, f32 accel, f32 decel)
     {
+      assert(radius >= 0);
+      
       type_ = PST_ARC;
       def_.arc.centerPt_x = x_center;
       def_.arc.centerPt_y = y_center;

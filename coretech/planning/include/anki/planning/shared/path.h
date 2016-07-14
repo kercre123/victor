@@ -266,7 +266,7 @@ namespace Anki
                           f32 final_straight_approach_length = 0,
                           f32 *path_length = 0);
    
-  } // namespace Cozmo
+  } // namespace Planning
 } // namespace Anki
 
 #endif

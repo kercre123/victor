@@ -58,6 +58,7 @@ enum int_32 RobotActionType {
     SAY_TEXT, 
     ENROLL_NAMED_FACE,
     FLIP_BLOCK,
+    DRIVE_PATH,
     DRIVE_TO_FLIP_BLOCK_POSE,
     WAIT_FOR_IMAGES
 }

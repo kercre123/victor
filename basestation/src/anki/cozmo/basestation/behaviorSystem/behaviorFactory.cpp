@@ -45,6 +45,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
 
@@ -228,6 +229,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DistractedByFace:
     {
       newBehavior = new BehaviorDistractedByFace(robot, config);
+      break;
+    }
+    case BehaviorType::DrivePath:
+    {
+      newBehavior = new BehaviorDrivePath(robot, config);
       break;
     }
     case BehaviorType::ReactToUnexpectedMovement:
