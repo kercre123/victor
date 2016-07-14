@@ -83,6 +83,8 @@ void * __aeabi_vec_ctor_nocookie_nodtor(   void* user_array,
     return user_array;
 }
 
+void GenerateTestTone();
+
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
@@ -90,7 +92,7 @@ int main (void)
   // Enable reset filtering
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
-
+  
   Power::enableEspressif();
 
   UART::DebugInit();
@@ -102,7 +104,7 @@ int main (void)
   I2C::Init();
   IMU::Init();
   OLED::Init();
-  
+
   #ifdef ENABLE_FCC_TEST
   UART::Init();
   FCC::start();

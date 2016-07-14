@@ -45,8 +45,8 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
   PDB0_DACINTC0 = PDB_INTC_TOE_MASK ;   // DAC output delay from PDB Software trigger
   
   // Configure our timing
-  PDB0_MOD = CLOCK_MOD-1;                 // This is our clock divided by our sampling rate
-  PDB0_DACINT0 = CLOCK_MOD-1;             // Effective after writting PDBSC_DACTOE = 1, DAC output changes are base on the interval defined by this value  
+  PDB0_MOD = CLOCK_MOD-1;               // This is our clock divided by our sampling rate
+  PDB0_DACINT0 = CLOCK_MOD-1;           // Effective after writting PDBSC_DACTOE = 1, DAC output changes are base on the interval defined by this value  
   PDB0_SC |= PDB_SC_LDOK_MASK ;         // Load values into registers
  
   // Start counting
@@ -85,20 +85,57 @@ void Anki::Cozmo::HAL::DAC::Sync() {
 
 #include <math.h>
 
-void GenerateTestTone(void) {
-  using namespace Anki::Cozmo::HAL::DAC;
+static int next_write_index(void) {
+  static int last_index = -1;
+  int index;
+
+  do {
+    index  = DAC0_C2 >> 4;
+  } while (index == last_index);
   
+  last_index = index;
+  return (index - 1) & 0xF;
+}
+
+void GenerateTestTone(void) {
+  using namespace Anki::Cozmo::HAL;
+   
   __disable_irq();
   GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
-  EnableAudio(true);
-
-  static const float peak = 0x200;
+  MCG_C1 |= MCG_C1_IREFS_MASK;
+  MicroWait(20000);
   
-  for (int i = 0; i < DAC_WORDS; i++) {
-    DAC_WRITE[i] = (int)(peak * sinf(i * M_PI_2 / DAC_WORDS) + peak);
-  }
+  // THIS ALL NEEDS TO BE ADJUSTED
+  static const int CPU_OLD_CLOCK = 100000000;
+  static const int CPU_NEW_CLOCK = 32768*2560;
+  static const float FREQ_DILATION = (float)CPU_OLD_CLOCK / (float)CPU_NEW_CLOCK;
+  
+  static const float peak = 0x400;
+  static const int ticks_per_freq = (int)(SAMPLE_RATE * FREQ_DILATION * 40 / 1000); // 40ms
 
-  for (;;) ;
+  float freq = M_PI_2 * 8000.0f / SAMPLE_RATE * FREQ_DILATION;
+
+  uint8_t write_index = 0;
+  
+  DAC::EnableAudio(true);
+  for (int g = 0; g < 8; g++) {   
+    // Tone
+    float phase = 0;
+    for (int i = 0; i < ticks_per_freq; i++) {
+      DAC_WRITE[next_write_index()] = (int)(peak * sinf(phase) + peak);
+      phase += freq;
+    }
+
+    // Silence
+    for (int i = 0; i < ticks_per_freq; i++) {
+      DAC_WRITE[next_write_index()] = (int)peak;
+    }
+
+    // Pitch shift
+    freq /= 2;
+  }
+  
+  NVIC_SystemReset();
 }
 
 void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {  
