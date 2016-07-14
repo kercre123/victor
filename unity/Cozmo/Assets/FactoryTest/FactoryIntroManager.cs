@@ -6,6 +6,11 @@ using Anki.Cozmo.ExternalInterface;
 
 public class FactoryIntroManager : MonoBehaviour {
 
+  public const int kRobotID = 1;
+  public const string kEngineIP = "127.0.0.1";
+  public const string kRobotSimIP = "127.0.0.1";
+  public const string kRobotIP = "172.31.1.1";
+
   [SerializeField]
   private UnityEngine.UI.Image _Background;
 
@@ -22,15 +27,14 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Button _StartButton;
 
   [SerializeField]
+  private UnityEngine.UI.Text _NetworkStatusText;
+
+  [SerializeField]
   private UnityEngine.UI.Text _PingStatusText;
 
   [SerializeField]
   private FactoryOptionsPanel _FactoryOptionsPanelPrefab;
   private FactoryOptionsPanel _FactoryOptionsPanelInstance;
-
-  [SerializeField]
-  private FactoryOTAPanel _FactoryOTAPanelPrefab;
-  private FactoryOTAPanel _FactoryOTAPanelInstance;
 
   [SerializeField]
   private UnityEngine.UI.Text _StatusText;
@@ -41,11 +45,12 @@ public class FactoryIntroManager : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
+  private PingStatus _PingStatusComponent;
   private bool _IsSim = false;
 
-  private const int kRobotID = 1;
-
   void Start() {
+    _PingStatusComponent = GetComponent<PingStatus>();
+
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
     ConsoleLogManager.Instance.LogFilter = PlayerPrefs.GetString("LogFilter");
 
@@ -63,9 +68,7 @@ public class FactoryIntroManager : MonoBehaviour {
 
     _InProgressSpinner.gameObject.SetActive(false);
 
-    _OptionsButton.gameObject.SetActive(BuildFlags.kIsFactoryDevMode);
-
-    RobotEngineManager.Instance.Connect("127.0.0.1");
+    RobotEngineManager.Instance.Connect(kEngineIP);
   }
 
   private void HandleSetSimType(bool isSim) {
@@ -77,8 +80,8 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(true);
     _InProgressSpinner.gameObject.SetActive(true);
 
-    SetStatusText("Factory App Connecting To Robot");
-    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _IsSim ? "127.0.0.1" : "172.31.1.1", _IsSim);
+    SetStatusText("Connecting To Robot");
+    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _IsSim ? kRobotSimIP : kRobotIP, _IsSim);
   }
 
   private void HandleConnectedToClient(string connectionIdentifier) {
@@ -87,14 +90,20 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleRobotConnected(int robotID) {
-    SetStatusText("Factory App Connected To Robot");
+    SetStatusText("Connected To Robot");
 
-    HandleEnableNVStorageWrites(PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1);
-    HandleCheckPreviousResults(PlayerPrefs.GetInt("CheckPreviousResult", 0) == 1);
-    HandleWipeNVStorageAtStart(PlayerPrefs.GetInt("WipeNVStorageAtStart", 0) == 1);
-    HandleSkipBlockPickup(PlayerPrefs.GetInt("SkipBlockPickup", 0) == 1);
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", PlayerPrefs.GetInt("CheckPreviousResult", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", PlayerPrefs.GetInt("WipeNVStorageAtStart", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", PlayerPrefs.GetInt("SkipBlockPickup", 0).ToString());
 
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
+
+    // Send the volume message
+    bool soundEnabled = PlayerPrefs.GetInt("EnableRobotSound", 1) == 1;
+    RobotEngineManager.Instance.Message.SetRobotVolume = new SetRobotVolume();
+    RobotEngineManager.Instance.Message.SetRobotVolume.volume = soundEnabled ? 1.0f : 0;
+    RobotEngineManager.Instance.SendMessage();
 
     // runs the factory test.
     RobotEngineManager.Instance.CurrentRobot.WakeUp(true);
@@ -113,34 +122,22 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
-    _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
-    _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
+    _FactoryOptionsPanelInstance.OnOTAStarted += HandleOTAStarted;
+    _FactoryOptionsPanelInstance.OnOTAFinished += HandleOTAFinished;
 
-    _FactoryOptionsPanelInstance.OnEnableNVStorageWrites += HandleEnableNVStorageWrites;
-    _FactoryOptionsPanelInstance.OnCheckPreviousResults += HandleCheckPreviousResults;
-    _FactoryOptionsPanelInstance.OnWipeNVstorageAtStart += HandleWipeNVStorageAtStart;
-    _FactoryOptionsPanelInstance.OnSkipBlockPickup += HandleSkipBlockPickup;
-
-    _FactoryOptionsPanelInstance.Initialize(_IsSim, ConsoleLogManager.Instance.LogFilter);
+    _FactoryOptionsPanelInstance.Initialize(_IsSim, ConsoleLogManager.Instance.LogFilter, _Canvas, _PingStatusComponent);
   }
 
-  private void HandleSetConsoleLogFilter(string input) {
-    ConsoleLogManager.Instance.LogFilter = input;
-  }
-
-  private void HandleOTAButton() {
-    RobotEngineManager.Instance.Disconnect();
-    RobotEngineManager.Instance.Connect("127.0.0.1");
-
+  private void HandleOTAStarted() {
+    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
     RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
-    RobotEngineManager.Instance.RobotConnected += HandleOTAConnected;
-    _FactoryOTAPanelInstance = GameObject.Instantiate(_FactoryOTAPanelPrefab).GetComponent<FactoryOTAPanel>();
-    _FactoryOTAPanelInstance.transform.SetParent(_Canvas.transform, false);
   }
 
-  private void HandleOTAConnected(int robotID) {
-    _FactoryOTAPanelInstance.OnRestartButton += HandleRestartButtonClick;
-    RobotEngineManager.Instance.UpdateFirmware(0);
+  private void HandleOTAFinished() {
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
   }
 
   private void SetStatusText(string txt) {
@@ -183,7 +180,7 @@ public class FactoryIntroManager : MonoBehaviour {
     RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
 
     if (!RobotEngineManager.Instance.IsConnected) {
-      RobotEngineManager.Instance.Connect("127.0.0.1");
+      RobotEngineManager.Instance.Connect(kEngineIP);
     } 
   }
 
@@ -197,68 +194,20 @@ public class FactoryIntroManager : MonoBehaviour {
     }
   }
 
-  void HandleEnableNVStorageWrites(bool toggleValue) {
-    PlayerPrefs.SetInt("EnableNStorageWritesToggle", toggleValue ? 1 : 0);
-    PlayerPrefs.Save();
-
-    if (toggleValue) {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", "1");
-    }
-    else {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", "0");
-    }
-  }
-
-  void HandleCheckPreviousResults(bool toggleValue) {
-    PlayerPrefs.SetInt("CheckPreviousResult", toggleValue ? 1 : 0);
-    PlayerPrefs.Save();
-
-    if (toggleValue) {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", "1");
-    }
-    else {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", "0");
-    }
-  }
-
-  void HandleWipeNVStorageAtStart(bool toggleValue) {
-    PlayerPrefs.SetInt("WipeNVStorageAtStart", toggleValue ? 1 : 0);
-    PlayerPrefs.Save();
-
-    if (toggleValue) {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", "1");
-    }
-    else {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", "0");
-    }
-  }
-
-  void HandleSkipBlockPickup(bool toggleValue) {
-    PlayerPrefs.SetInt("SkipBlockPickup", toggleValue ? 1 : 0);
-    PlayerPrefs.Save();
-
-    if (toggleValue) {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", "1");
-    }
-    else {
-      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", "0");
-    }
-  }
-
   void Update() {
-    if (GetComponent<PingStatus>().GetPingStatus() || _IsSim) {
+    _NetworkStatusText.text = _PingStatusComponent.GetNetworkStatus() ? "Network: Connected" : "Network: Disconnected";
+
+    if (_PingStatusComponent.GetPingStatus() || _IsSim) {
       _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "START";
       _StartButton.image.color = Color.green;
       _StartButton.interactable = true;
-      _PingStatusText.text = "Ping Status: Connected";
+      _PingStatusText.text = "Ping: Success";
     }
     else {
       _StartButton.image.color = Color.gray;
       _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
       _StartButton.interactable = false;
-      _PingStatusText.text = "Ping Status: Not Connected";
+      _PingStatusText.text = "Ping: Fail";
     }
-
-
   }
 }

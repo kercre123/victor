@@ -2,20 +2,55 @@
 using System.Collections;
 
 public class FactoryOTAPanel : MonoBehaviour {
+
+  public System.Action OnOTAStarted;
+  public System.Action OnOTAFinished;
+
   [SerializeField]
   private UnityEngine.UI.Text _OTAStatus;
 
   [SerializeField]
-  private UnityEngine.UI.Button _RestartButton;
-
-  public System.Action OnFirmwareComplete;
-  public System.Action OnRestartButton;
+  private UnityEngine.UI.Button _CloseButton;
 
   void Start() {
+    if (OnOTAStarted != null) {
+      OnOTAStarted();
+    }
+
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
+    RobotEngineManager.Instance.RobotDisconnected += HandleRobotDisconnected;
     RobotEngineManager.Instance.OnFirmwareUpdateProgress += OnFirmwareUpdateProgress;
     RobotEngineManager.Instance.OnFirmwareUpdateComplete += OnFirmwareUpdateComplete;
-    _RestartButton.gameObject.SetActive(false);
-    _RestartButton.onClick.AddListener(HandleRestartButton);
+
+    if (!RobotEngineManager.Instance.IsConnected) {
+      _OTAStatus.text = "Connecting to engine";
+      RobotEngineManager.Instance.Connect(FactoryIntroManager.kEngineIP);
+    } 
+    else {
+      HandleConnectedToClient(null);
+    }
+
+    _CloseButton.onClick.AddListener(HandleCloseButton);
+  }
+
+  private void HandleConnectedToClient(string connectionIdentifier) {
+    _OTAStatus.text = "Connecting to robot";
+    RobotEngineManager.Instance.ConnectToRobot(FactoryIntroManager.kRobotID, FactoryIntroManager.kRobotIP, false);
+  }
+
+  private void HandleDisconnectedFromClient(DisconnectionReason obj) {
+    _OTAStatus.text = "Disconnected from engine";
+  }
+
+  private void HandleRobotConnected(int robotID) {
+    _OTAStatus.text = "Sending update firmware message";
+    RobotEngineManager.Instance.UpdateFirmware(0);
+  }
+
+  private void HandleRobotDisconnected(int robotID) {
+    _OTAStatus.text = "Disconnected from robot";
   }
 
   private void OnFirmwareUpdateProgress(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
@@ -24,21 +59,23 @@ public class FactoryOTAPanel : MonoBehaviour {
   }
 
   private void OnFirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
-    _OTAStatus.text = "Complete: Robot " + message.robotID + " Result: " + message.result
-    + "\nFwSig = " + message.fwSig;
-
-    _RestartButton.gameObject.SetActive(true);
-
-    if (OnFirmwareComplete != null) {
-      OnFirmwareComplete();
-    }
+    _OTAStatus.text = "Complete: Robot " + message.robotID + " Result: " + message.result + "\nFwSig = " + message.fwSig;
   }
 
-  private void HandleRestartButton() {
-    if (OnRestartButton != null) {
-      OnRestartButton();
+  private void HandleCloseButton() {
+    RobotEngineManager.Instance.DisconnectFromRobot(FactoryIntroManager.kRobotID);
+
+    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
+    RobotEngineManager.Instance.RobotDisconnected -= HandleRobotDisconnected;
+    RobotEngineManager.Instance.OnFirmwareUpdateProgress -= OnFirmwareUpdateProgress;
+    RobotEngineManager.Instance.OnFirmwareUpdateComplete -= OnFirmwareUpdateComplete;
+
+    if (OnOTAFinished != null) {
+      OnOTAFinished();
     }
+
+    GameObject.Destroy(gameObject);
   }
-
-
 }
