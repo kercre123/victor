@@ -1,0 +1,17 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Al Chaussee
+// Copyright: Anki Inc (c) 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 UnexpectedMovementType
+{
+  TURNED_BUT_STOPPED = 0,       // Trying to turn but is stuck
+  TURNED_IN_SAME_DIRECTION,     // Turning and forced to turn faster
+  TURNED_IN_OPPOSITE_DIRECTION  // Turning and spun in opposite direction
+}
+
+} // namespace Cozmo
+} // namespace Anki

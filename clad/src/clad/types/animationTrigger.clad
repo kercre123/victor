@@ -106,6 +106,7 @@ enum uint_16 AnimationTrigger
   ReactToPokeReaction,
   ReactToPokeStartled,
   ReactToStop,
+  ReactToUnexpectedMovement,
   RequestGameDrivingFail,
   RequestGameGenericDeny0,
   RequestGameGenericDeny1,

@@ -103,6 +103,8 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     //  behaviorFactory.CreateBehavior(BehaviorType::ReactToOnCharger,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior(
     //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToUnexpectedMovement, _robot, config)->AsReactionaryBehavior() );
   }
   
   // initialize whiteboard

@@ -369,6 +369,10 @@
       "AnimName": "ag_reactToStop"
     },
     {
+      "CladEvent": "ReactToUnexpectedMovement",
+      "AnimName": "ag_reactToStop"
+    },
+    {
       "CladEvent": "RequestGameDrivingFail",
       "AnimName": "ag_RequestGameDriveFail"
     },

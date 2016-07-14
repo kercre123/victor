@@ -5,6 +5,7 @@
 
 #include "clad/audio/audioEventTypes.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/unexpectedMovementTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
