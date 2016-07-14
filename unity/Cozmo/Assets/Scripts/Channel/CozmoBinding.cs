@@ -29,7 +29,7 @@ public static class CozmoBinding {
 
   private static bool initialized = false;
 
-  public static Guid AppRunId = Guid.Empty;
+  public static Guid AppRunId = Guid.NewGuid();
 
   #if UNITY_IOS || UNITY_STANDALONE
 
@@ -71,6 +71,12 @@ public static class CozmoBinding {
   [DllImport("cozmoEngine")]
   public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
 
+  [DllImport("cozmoEngine")]
+  public static extern void cozmo_install_google_breakpad(string path);
+
+  [DllImport("cozmoEngine")]
+  public static extern void cozmo_uninstall_google_breakpad();
+
   #endif
 
   public static void Startup(JSONObject configurationData) {
@@ -79,7 +85,6 @@ public static class CozmoBinding {
       Shutdown();
     }
 
-    AppRunId = Guid.NewGuid();
     configurationData.AddField("appRunId", AppRunId.ToString());
 
     AnkiResult result = AnkiResult.RESULT_OK;

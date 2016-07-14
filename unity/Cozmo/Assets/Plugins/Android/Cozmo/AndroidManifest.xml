@@ -11,5 +11,6 @@
 	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <application>
         <meta-data android:name="dasVersionName" android:value="1.0" />
+        <meta-data android:name="HOCKEYAPP_APP_ID" android:value="" />
     </application>  
 </manifest>

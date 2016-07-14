@@ -44,8 +44,11 @@
 
 #ifdef USE_IOS
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
-#elif defined(ANDROID) && USE_DAS
+#elif defined(ANDROID)
+#include "anki/cozmo/csharp-binding/android/android-binding.h"
+#if USE_DAS
 #include <DAS/dasPlatform_android.h>
+#endif
 #endif
 
 using namespace Anki;
@@ -130,6 +133,20 @@ static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki
   std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
   DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
 #endif
+}
+
+void cozmo_install_google_breakpad(const char* path)
+{
+  #ifdef ANDROID
+  Anki::Cozmo::AndroidBinding::InstallGoogleBreakpad(path);
+  #endif
+}
+
+void cozmo_uninstall_google_breakpad()
+{
+  #ifdef ANDROID
+  Anki::Cozmo::AndroidBinding::UnInstallGoogleBreakpad();
+  #endif
 }
 
 int cozmo_startup(const char *configuration_data)
@@ -244,6 +261,8 @@ int cozmo_shutdown()
   DevLoggingSystem::DestroyInstance();
 #endif
   Anki::Util::SafeDelete(dataPlatform);
+
+  cozmo_uninstall_google_breakpad();
 
   return result;
 }

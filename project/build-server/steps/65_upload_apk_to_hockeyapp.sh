@@ -33,8 +33,6 @@ if [ -z ${APP_ID+x} ]; then
     exit 1
 fi
 
-pushdir ${BUILT_PRODUCTS_PATH}
-
 #if [ ${ANKI_BUILD_TYPE} == "Release" ]; then
   APK_FILE_NAME="Cozmo"
 #else
@@ -43,5 +41,3 @@ pushdir ${BUILT_PRODUCTS_PATH}
 
 echo "${APP_ID}"
 ${ANKI_BUILD_TOOLS_ROOT}/upload-to-hockeyapp.sh ${1} ${APP_ID} "${ANKI_BUILD_ROOT}/android/${APK_FILE_NAME}.apk" "${ANKI_BUILD_ROOT}/android/${APK_FILE_NAME}.apk-symbols.zip"
-
-popdir

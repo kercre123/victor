@@ -30,7 +30,12 @@ extern "C" {
   
   // Hook for triggering setup of the desired wifi details
   int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey);
-  
+
+  // Install/uninstall Google Breakpad for Android C++ crash reporting
+  // (no-op on other platforms)
+  void cozmo_install_google_breakpad(const char* path);
+  void cozmo_uninstall_google_breakpad();
+
   void cozmo_send_to_clipboard(const char* log);
   
   void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);

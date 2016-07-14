@@ -2,8 +2,6 @@
 
 # Java generated files
 *.class
-*.jar
-*.aar
 
 .gradle/
 

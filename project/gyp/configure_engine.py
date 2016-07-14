@@ -55,6 +55,8 @@ def main(scriptArgs):
                       help='Use BLECozmo repo checked out at BLE_COZMO_PATH')
   parser.add_argument('--das', metavar='DAS_PATH', dest='dasPath', action='store', default=None,
                       help='Use das-client repo checked out at DAS_PATH')
+  parser.add_argument('--crashReporting', metavar='CRASH_REPORTING_PATH', dest='crashPath', action='store', default=None,
+                      help='Use CrashReportingAndroid repo checked out at CRASH_REPORTING_PATH')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
@@ -145,6 +147,13 @@ def main(scriptArgs):
     UtilLog.error('das-client not found [%s]' % (options.dasPath) )
     return False
   dasProjectPath = os.path.join(options.dasPath, 'gyp/das-client.gyp')
+
+  if not options.crashPath:
+    options.crashPath = os.path.join(options.projectRoot, 'lib/crash-reporting-android')
+  if not os.path.exists(options.crashPath):
+    UtilLog.error('crash-reporting-android not found [%s]' % (options.crashPath) )
+    return False
+  crashPath = options.crashPath
 
   # do not check for coretech external, and gyp if we are only updating list files
   if not options.updateListsOnly:
@@ -468,6 +477,7 @@ def main(scriptArgs):
                                 ce-ble_cozmo_path={13}
                                 ce-das_path={14}
                                 clad_dir={15}
+                                crash_path={16}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -485,6 +495,7 @@ def main(scriptArgs):
                                   bleCozmoProjectPath,
                                   dasProjectPath,
                                   clad_dir_rel,
+                                  crashPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')

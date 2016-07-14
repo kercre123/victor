@@ -9,6 +9,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 472660}
   - 114: {fileID: 11479852}
+  - 114: {fileID: 11456402}
   m_Layer: 0
   m_Name: StartupManager
   m_TagString: Untagged
@@ -28,6 +29,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!114 &11456402
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 117198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e78a1b88fa854825acf2c27a34a2601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  appID: 3e78b35bae854fa8b3137db388bed136
+  packageID: com.anki.cozmo
+  serverURL: 
+  authenticatorType: 0
+  secret: 19dc92b213e578932ae6da1e27f05bd6
+  autoUploadCrashes: 1
+  exceptionLogging: 1
+  userMetrics: 1
+  updateAlert: 0
 --- !u!114 &11479852
 MonoBehaviour:
   m_ObjectHideFlags: 1

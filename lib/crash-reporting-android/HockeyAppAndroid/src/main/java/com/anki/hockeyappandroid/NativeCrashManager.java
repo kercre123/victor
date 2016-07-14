@@ -140,7 +140,7 @@ public class NativeCrashManager {
             };
             return dir.list(filter);
         } else {
-            Log.d(Constants.TAG, "Can't search for files as file path is null.");
+            Log.d("HockeyApp", "Can't search for files as file path is null.");
             return new String[0];
         }
     }
@@ -173,7 +173,7 @@ public class NativeCrashManager {
 
             return filename;
         } catch (final Exception e) {
-            Log.d(Constants.TAG, "Error creating trace file: " + path + " e = " + e);
+            Log.d("HockeyApp", "Error creating trace file: " + path + " e = " + e);
         }
 
         return null;
@@ -192,7 +192,7 @@ public class NativeCrashManager {
 
             return filename;
         } catch (final Exception e) {
-            Log.d(Constants.TAG, "Error creating description file: " + path + " e = " + e);
+            Log.d("HockeyApp", "Error creating description file: " + path + " e = " + e);
         }
 
         return null;
@@ -265,24 +265,24 @@ public class NativeCrashManager {
                         int statusCode = statusLine.getStatusCode();
                         if (statusCode >= HttpStatus.SC_OK
                             && statusCode < HttpStatus.SC_MULTIPLE_CHOICES) {
-                            Log.v(Constants.TAG,
+                            Log.v("HockeyApp",
                                   "Successfully uploaded dump file: " + dumpFilename
                                   + ", statusCode = " + statusCode);
                             deleteFile(logFilename);
                             deleteFile(dumpFilename);
                             deleteFile(descriptionFilename);
                         } else {
-                            Log.d(Constants.TAG,
+                            Log.d("HockeyApp",
                                   "Error uploading dump file: " + dumpFilename
                                   + ", statusCode = " + statusCode);
                         }
                     } else {
-                        Log.d(Constants.TAG,
+                        Log.d("HockeyApp",
                               "Error uploading dump file: " + dumpFilename
                               + ", no statusLine in response");
                     }
                 } catch (final Exception e) {
-                    Log.d(Constants.TAG, "Error uploading dump file: " + dumpFilename + ", e = " + e);
+                    Log.d("HockeyApp", "Error uploading dump file: " + dumpFilename + ", e = " + e);
                     e.printStackTrace();
                 }
             }
@@ -307,7 +307,7 @@ public class NativeCrashManager {
             };
             return dir.list(filter);
         } else {
-            Log.d(Constants.TAG, "Can't search for dump files as file path is null.");
+            Log.d("HockeyApp", "Can't search for dump files as file path is null.");
             return new String[0];
         }
     }

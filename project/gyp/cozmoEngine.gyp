@@ -1482,6 +1482,7 @@
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoEx.a',    # Facial Expression estimation
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
               '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
+              '<(crash_path)/prebuilt/armeabi-v7a/libbreakpadclient.a',   # Google Breakpad
               # does not work with ninja?!?!
               # '<@(face_library_libs)',
               # '<@(opencv_libs)',
@@ -1536,6 +1537,12 @@
               '-lOpenSLES',
               '-landroid',
 
+            ],
+            'include_dirs': [
+              '<(crash_path)/Breakpad/include',
+            ],
+            'defines': [
+              'USE_GOOGLE_BREAKPAD=1',
             ],
           }
         ],
