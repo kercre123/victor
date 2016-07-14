@@ -163,6 +163,8 @@ namespace Cozmo {
     
     bool _activeObjectDiscovered = false;
     
+    Pose3d _closestPredockPose;
+    
   }; // class BehaviorFactoryTest
 
 } // namespace Cozmo

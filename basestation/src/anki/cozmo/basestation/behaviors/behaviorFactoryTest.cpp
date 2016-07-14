@@ -93,8 +93,8 @@ namespace Cozmo {
   
   // Pan and tilt angles to command robot to look at calibration targets
   static const std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles =
-   {{0,               0},
-    {0,               DEG_TO_RAD(25)},
+   {{0,               DEG_TO_RAD(25)},
+    {0,               0},
     {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
     {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
     {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
@@ -102,10 +102,10 @@ namespace Cozmo {
 
   static constexpr f32 _kWaitForPrevTestResultsTimeout_sec = 2;
   static constexpr f32 _kMotorCalibrationTimeout_sec = 4.f;
-  static constexpr f32 _kCalibrationTimeout_sec = 8.f;
-  static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
+  static constexpr f32 _kCalibrationTimeout_sec = 5.f;
+  static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 15;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
-  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
+  static constexpr f32 _kExpectedCubePoseDistThresh_mm = 40;
   static constexpr f32 _kExpectedCubePoseHeightThresh_mm = 15;
   static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr u32 _kNumPickupRetries = 1;
@@ -146,9 +146,9 @@ namespace Cozmo {
     _motionProfile.speed_mmps = 100.0f;
     _motionProfile.accel_mmps2 = 200.0f;
     _motionProfile.decel_mmps2 = 200.0f;
-    _motionProfile.pointTurnSpeed_rad_per_sec = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
+    _motionProfile.pointTurnSpeed_rad_per_sec = 0.5f * MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
     _motionProfile.pointTurnAccel_rad_per_sec2 = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
-    _motionProfile.pointTurnDecel_rad_per_sec2 = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
+    _motionProfile.pointTurnDecel_rad_per_sec2 = 0.5f * MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
     _motionProfile.reverseSpeed_mmps = 80.0f;
     _motionProfile.isCustom = true;
@@ -409,18 +409,22 @@ namespace Cozmo {
       //
       // Previously passed  | Currently passed | What to do
       // ==========================================================
-      //         0          |         -        | Write everything (NVStorage should have been wiped)
+      //         0          |         0        | Do nothing (No writes on failure)
+      //         0          |         1        | Write everything
       //         1          |         0        | Overwrite test result and erase birth certificate
       //         1          |         1        | Do nothing
-      bool previouslyPassed = _prevResult == FactoryTestResultCode::SUCCESS && _hasBirthCertificate;
+      bool previouslyPassed = _hasBirthCertificate;
       bool currentlyPassed = _testResult == FactoryTestResultCode::SUCCESS;
-      _writeTestResult = !(previouslyPassed && currentlyPassed);
+      bool writeTestData = !previouslyPassed && currentlyPassed;
+      _writeTestResult = previouslyPassed != currentlyPassed;
       _eraseBirthCertificate = previouslyPassed && !currentlyPassed;
+      PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.PassFailStatus",
+                       "prevPassed: %d, currPassed: %d", previouslyPassed, currentlyPassed);
       
       
       // Sending all queued writes to robot
       _writeFailureCode = FactoryTestResultCode::UNKNOWN;
-      if (!previouslyPassed && !SendQueuedWrites(robot)) {
+      if (writeTestData && !SendQueuedWrites(robot)) {
         _testResult = FactoryTestResultCode::NVSTORAGE_SEND_FAILED;
       }
       
@@ -806,15 +810,9 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - COMPUTE CAMERA CALIBRATION - - - - - - - - - - - - - - -
       case FactoryTestState::ComputeCameraCalibration:
       {
-        // Move head down to line up for readToolCode.
-        // Hopefully this reduces some readToolCode errors
-        MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
-        DriveStraightAction* backupAction = new DriveStraightAction(robot, -20.0, -100.f);
-        backupAction->SetAccel(1000);
-        backupAction->SetDecel(1000);
-        CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {headAction, backupAction});
-        StartActing(robot, compoundAction);
-        
+        // Turn towards block
+        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, PIDIV2_F);
+        StartActing(robot, turnAction);
         
         // Start calibration computation
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
@@ -831,6 +829,26 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
         
+          // Verify that block exists
+          if (!_blockObjectID.IsSet()) {
+            if (currentTime_sec > _holdUntilTime) {  // Note: This is using the same holdUntilTime specified in FactoryTestState::ComputeCameraCalibration
+              PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.ExpectingCubeToExist", "currTime %f", currentTime_sec);
+              END_TEST(FactoryTestResultCode::CUBE_NOT_FOUND);
+            }
+            
+            // Waiting for block to exist. Should be seeing it very soon!
+            break;
+          }
+          
+          
+          // If robot hasn't discovered any active objects by now it probably won't so fail
+          if(!_activeObjectDiscovered)
+          {
+            PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
+                             "Test ending no active objects discovered");
+            END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
+          }
+          
         
           if(kBFT_ReadCentroidsFromRobot)
           {
@@ -1010,24 +1028,46 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - READ LIFT TOOL CODE - - - - - - - - - - - - - - -
       case FactoryTestState::ReadLiftToolCode:
       {
-        // Wait for it to finish backing up
-        if (robot.GetMoveComponent().IsMoving()) {
-          break;
+        
+        // Get closest predock pose. Default to _prePickupPose.
+        _closestPredockPose = _prePickupPose;
+        Pose3d blockPose = _expectedLightCubePose;
+        ObservableObject* obsObj = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        if (nullptr != obsObj) {
+          blockPose = obsObj->GetPose();
+          ActionableObject* actObj = dynamic_cast<ActionableObject*>(obsObj);
+          if (nullptr != actObj) {
+            std::vector<PreActionPose> preActionPoses;
+            actObj->GetCurrentPreActionPoses(preActionPoses,
+                                             {PreActionPose::DOCKING},
+                                             std::set<Vision::Marker::Code>());
+            
+            if (!preActionPoses.empty()) {
+              f32 distToClosestPredockPose = 1000;
+              for(auto & p : preActionPoses) {
+                f32 dist = ComputeDistanceBetween(p.GetPose(), robot.GetPose());
+                if (dist < distToClosestPredockPose) {
+                  distToClosestPredockPose = dist;
+                  _closestPredockPose = p.GetPose();
+                }
+              }
+            }
+
+            
+          } else {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToCastObservableObjectToActionableObject", "");
+          }
+        } else {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindCubeObject", "");
         }
         
-        // If robot hasn't discovered any active objects by now it probably won't so fail
-        if(!_activeObjectDiscovered)
-        {
-          PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
-                           "Test ending no active objects discovered");
-          END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
-        }
         
         
-        // Goto pose where block is visible
-        DriveToPoseAction* driveAction = new DriveToPoseAction(robot, _prePickupPose, false);
-        MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, 0);
-        CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction});
+        // Goto predock pose and then turn towards the block again for good alignment
+        DriveToPoseAction* driveAction = new DriveToPoseAction(robot, _closestPredockPose, false);
+        TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, blockPose, PIDIV2_F);
+        CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, {driveAction, turnAction});
+        
         StartActing(robot, compoundAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       // NOTE: This result check should be ok, but in sim the action often doesn't result in
@@ -1039,9 +1079,9 @@ namespace Cozmo {
                                             robot.GetPose().GetTranslation().x(),
                                             robot.GetPose().GetTranslation().y(),
                                             robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
-                                            _prePickupPose.GetTranslation().x(),
-                                            _prePickupPose.GetTranslation().y(),
-                                            _prePickupPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
+                                            _closestPredockPose.GetTranslation().x(),
+                                            _closestPredockPose.GetTranslation().y(),
+                                            _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
                         EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
                       } else {
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
@@ -1057,27 +1097,16 @@ namespace Cozmo {
       case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
-        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_closestPredockPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInPrePickupPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),
                               robot.GetPose().GetTranslation().y(),
                               robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
-                              _prePickupPose.GetTranslation().x(),
-                              _prePickupPose.GetTranslation().y(),
-                              _prePickupPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
+                              _closestPredockPose.GetTranslation().x(),
+                              _closestPredockPose.GetTranslation().y(),
+                              _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
           END_TEST(FactoryTestResultCode::NOT_IN_PRE_PICKUP_POSE);
-        }
-        
-        // Verify that block exists
-        if (!_blockObjectID.IsSet()) {
-          if (currentTime_sec > _holdUntilTime) {
-            PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.ExpectingCubeToExist", "currTime %f", currentTime_sec);
-            END_TEST(FactoryTestResultCode::CUBE_NOT_FOUND);
-          }
-          
-          // Waiting for block to exist. Should be seeing it very soon!
-          break;
         }
 
         // Write cube's pose to nv storage
@@ -1148,8 +1177,6 @@ namespace Cozmo {
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
-        //DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
-        //action->SetMotionProfile(_motionProfile);
         PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectID);
         StartActing(robot,
                     action,
@@ -1271,6 +1298,7 @@ namespace Cozmo {
                                                                                         SendTestResultToGame(robot, _testResult);
                                                                                       });
                                                 } else if (_eraseBirthCertificate) {
+                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.BCErase","");
                                                   robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_BirthCertificate,
                                                                                       [this,&robot](NVStorage::NVResult res){
                                                                                         // We're only erasing the BC upon failure anyway so don't bother changing the result code
