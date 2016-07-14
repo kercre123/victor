@@ -14,7 +14,7 @@ namespace InvestorDemo {
 
     private InvestorDemoConfig _DemoConfig;
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       _DemoConfig = minigameConfig as InvestorDemoConfig;
       if (_DemoConfig == null) {
         DAS.Error(this, "Failed to load config InvestorDemoConfig!");

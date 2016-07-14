@@ -144,7 +144,7 @@ namespace SpeedTap {
       get { return _SpeedTapRoundEndSlidePrefab; }
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfigData) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       SpeedTapGameConfig speedTapConfig = minigameConfigData as SpeedTapGameConfig;
       // Set all Config based values
       TotalRounds = speedTapConfig.Rounds;

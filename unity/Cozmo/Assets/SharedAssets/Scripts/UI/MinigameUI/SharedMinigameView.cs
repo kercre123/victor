@@ -611,7 +611,7 @@ namespace Cozmo {
       #region ContinueButtonShelfWidget
 
       public void ShowContinueButtonOffset(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
-                                           string buttonText, string shelfText, Color shelfColor, string dasButtonName) {
+                                           string buttonText, string shelfText, Color shelfTextColor, string dasButtonName) {
         if (_IsContinueButtonCentered) {
           if (_ContinueButtonInstance != null) {
             HideContinueButton();
@@ -620,7 +620,7 @@ namespace Cozmo {
         CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonOffsetPrefab);
         _IsContinueButtonCentered = false;
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
-        _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor, dasButtonName, dasViewControllerName);
+        _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfTextColor, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
         SetCircuitryBasedOnText(shelfText);
       }

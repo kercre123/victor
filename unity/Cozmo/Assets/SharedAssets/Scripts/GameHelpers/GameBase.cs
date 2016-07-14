@@ -218,11 +218,16 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
 
-    Initialize(_ChallengeData.MinigameConfig);
+    InitializeGame(_ChallengeData.MinigameConfig);
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }
 
-  protected abstract void Initialize(MinigameConfigBase minigameConfigData);
+  /// <summary>
+  /// Called after Cozmo is "Ready". At this point the SharedMinigameView has already been instantiated.
+  /// Use this method to initialize the state machine.
+  /// </summary>
+  /// <param name="minigameConfigData">Minigame config data.</param>
+  protected abstract void InitializeGame(MinigameConfigBase minigameConfigData);
 
   protected virtual void SetupViewAfterCozmoReady(SharedMinigameView newView, ChallengeData data) {
   }

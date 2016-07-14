@@ -31,7 +31,7 @@ public class ArtistCozmoGame : GameBase {
 
   private ArtistCozmoGameConfig _Config;
 
-  protected override void Initialize(MinigameConfigBase minigameConfigData) {
+  protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
 
     _Config = minigameConfigData as ArtistCozmoGameConfig;
 

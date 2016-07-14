@@ -13,7 +13,7 @@ public class SelfieGame : GameBase {
 
   public int CountdownTimer { get { return _Config.CountdownTimer; } }
 
-  protected override void Initialize(MinigameConfigBase minigameConfig) {
+  protected override void InitializeGame(MinigameConfigBase minigameConfig) {
     _Config = (SelfieGameConfig)minigameConfig;
 
     if (WebCamTexture.devices == null || WebCamTexture.devices.Length == 0) {

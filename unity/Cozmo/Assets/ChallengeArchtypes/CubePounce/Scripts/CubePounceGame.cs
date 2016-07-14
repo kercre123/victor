@@ -38,7 +38,7 @@ namespace CubePounce {
       }
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
       TotalRounds = config.Rounds;
       _MinAttemptDelay = config.MinAttemptDelay;

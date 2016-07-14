@@ -35,7 +35,7 @@ namespace CodeBreaker {
 
     private int _NumGuessesLeft;
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       DAS.Info(this, "Game Created");
 
       _Config = minigameConfig as CodeBreakerGameConfig;
