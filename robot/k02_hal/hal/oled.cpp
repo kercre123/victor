@@ -67,8 +67,8 @@ static int FaceRemaining = 0;
 void Anki::Cozmo::HAL::OLED::Init(void) {
   using namespace Anki::Cozmo::HAL;
   
-  MicroWait(80);
   GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
+  MicroWait(80);
 
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), I2C_FORCE_START);
 
