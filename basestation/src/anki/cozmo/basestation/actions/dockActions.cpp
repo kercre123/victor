@@ -1398,7 +1398,11 @@ namespace Anki {
               if(result != ActionResult::SUCCESS) {
                 PRINT_NAMED_INFO("RollObjectAction.Verify",
                                  "Robot thinks it rolled the object, but verification failed. ");
-                result = ActionResult::FAILURE_ABORT;
+                
+                // Automatically set to deep roll in case the action is retried
+                EnableDeepRoll(true);
+                
+                result = ActionResult::FAILURE_RETRY;
               }
             } else {
               // Mostly for debugging when verification takes too long
