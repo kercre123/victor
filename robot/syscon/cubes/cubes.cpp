@@ -38,7 +38,7 @@ extern uesb_mainstate_t  m_uesb_mainstate;
 extern "C" const CubeFirmware __CUBE_XS;
 extern "C" const CubeFirmware __CUBE_XS6;
 static const CubeFirmware* ValidPerfs[] = {
-  &__CUBE_XS,
+  //&__CUBE_XS,
   &__CUBE_XS6,
   (const CubeFirmware*) NULL
 };
@@ -64,7 +64,7 @@ static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
 static const CubeFirmware* ota_device;
 static int ota_block_index;
 static int ack_timeouts;
-static int lightGamma;
+static int light_gamma;
 
 // Variables for talking to an accessory
 static uint8_t currentAccessory;
@@ -76,7 +76,7 @@ static RadioState        radioState;
 static uint8_t _tapTime = 0;
 
 void Radio::init() {
-  lightGamma = 0x100;
+  light_gamma = 0x100;
 }
 
 enum TIMER_COMPARE {
@@ -124,7 +124,7 @@ void Radio::advertise(void) {
 }
 
 void Radio::setLightGamma(uint8_t gamma) {
-  lightGamma = gamma + 1;
+  light_gamma = gamma + 1;
 }
 
 void Radio::shutdown(void) {
@@ -204,14 +204,14 @@ static uint8_t random() {
   return c;
 }
 
-static void OTARemoteDevice(uint32_t id) {
+static void OTARemoteDevice(const uint32_t id) {
   // Reset our block count
   ota_block_index = 0;
   ack_timeouts = 0;
   
   // This is address
   OTAAddress.address = id;
-  OTAAddress.rf_channel = (random() & 0x3F) + 4;
+  OTAAddress.rf_channel = 80;//(random() & 0x3F) + 4;
 
   EnterState(RADIO_OTA);
 
@@ -220,13 +220,13 @@ static void OTARemoteDevice(uint32_t id) {
   pair.ticksUntilStart = 132; // Lowest legal value
   pair.hopIndex = 0;
   pair.hopBlackout = OTAAddress.rf_channel;
-  pair.ticksPerBeat = 164;    // 32768/164 = 200Hz
-  pair.beatsPerHandshake = 7; // 1 out of 7 beats handshakes with this cube
+  pair.ticksPerBeat = CLOCKS(SCHEDULE_PERIOD);    // 32768/164 = 200Hz
+  pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
   pair.ticksToListen = 0;     // Currently unused
   pair.beatsPerRead = 4;
   pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
   pair.patchStart = 0;
-  
+
   uesb_address_desc_t address = { ADV_CHANNEL, id };  
   uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
 
@@ -246,7 +246,7 @@ void uesb_event_handler(uint32_t flags)
   switch (radioState) {
   case RADIO_OTA:
     // Send noise and return to pairing
-    if (++ota_block_index < TOTAL_BLOCKS(ota_device)) {     
+    if (++ota_block_index < TOTAL_BLOCKS(ota_device)) {
       ota_send_next_block();
     } else {
       EnterState(RADIO_PAIRING);
@@ -522,7 +522,7 @@ static void radio_prepare(void) {
 
       for (int ch = 0; ch < 3; ch++) {
         #ifndef NATHAN_CUBE_JUNK
-        tx_state.ledStatus[tx_index++] = (rgbi[ch] * lightGamma) >> 8;
+        tx_state.ledStatus[tx_index++] = (rgbi[ch] * light_gamma) >> 8;
         #else
         tx_state.ledStatus[tx_index++] = 0x80;
         #endif

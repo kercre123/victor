@@ -11,7 +11,7 @@
 #define NRF_CLOCK_FREQUENCY 16000000.0f
 
 #define CYCLES(ms) (int)((ms) * NRF_CLOCK_FREQUENCY / 1000.0f)
-#define CLOCKS(c) (int)((((c) / NRF_CLOCK_FREQUENCY) + 0.5) * 32768.0f)
+#define CLOCKS(c) (int)((((c) / NRF_CLOCK_FREQUENCY)) * 32768.0f + 0.5f)
 
 static const int NUM_PROP_LIGHTS = 4;
 
