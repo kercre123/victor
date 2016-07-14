@@ -85,7 +85,7 @@ namespace Cozmo {
         float duration_ms = 0.0f;
         const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text,
                                                                             _style,
-                                                                            Audio::GameObjectType::CozmoAnimation,
+                                                                            Audio::GameObjectType::CozmoBus_1,
                                                                             duration_ms);
         if (!success) {
           PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");

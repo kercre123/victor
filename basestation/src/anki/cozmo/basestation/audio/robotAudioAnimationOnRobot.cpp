@@ -70,8 +70,9 @@ uint8_t encodeMuLaw(float in_val)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot( Animation* anAnimation,
                                                         RobotAudioClient* audioClient,
+                                                        GameObjectType gameObject,
                                                         Util::RandomGenerator* randomGenerator )
-: Anki::Cozmo::Audio::RobotAudioAnimation( randomGenerator )
+: Anki::Cozmo::Audio::RobotAudioAnimation( gameObject, randomGenerator )
 {
   InitAnimation( anAnimation, audioClient );
 }
@@ -373,7 +374,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot()
-: Anki::Cozmo::Audio::RobotAudioAnimation( nullptr )
+: Anki::Cozmo::Audio::RobotAudioAnimation( GameObjectType::Invalid, nullptr )
 { }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -437,7 +438,7 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
           
         };
         const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
-                                                            GameObjectType::CozmoAnimation,
+                                                            _gameObj,
                                                             callbackFunc );
         // Set event's volume RTPC
         _audioClient->SetCozmoEventParameter( playId,

@@ -40,7 +40,10 @@ class RobotAudioAnimationOnRobot : public RobotAudioAnimation {
 public:
   
   // Default Constructor
-  RobotAudioAnimationOnRobot( Animation* anAnimation, RobotAudioClient* audioClient, Util::RandomGenerator* randomGenerator );
+  RobotAudioAnimationOnRobot( Animation* anAnimation,
+                              RobotAudioClient* audioClient,
+                              GameObjectType gameObject,
+                              Util::RandomGenerator* randomGenerator );
   
   // Call at the beginning of the update loop to update the animation's state for the upcoming loop cycle
   virtual AnimationState Update( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms ) override;

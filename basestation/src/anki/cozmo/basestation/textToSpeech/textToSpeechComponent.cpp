@@ -45,7 +45,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
-: _dispatchQueue( Util::Dispatch::Create("TtSpeechComponent_File_Operations") )
+: _dispatchQueue( Util::Dispatch::Create("TtSpeechComponent") )
 {
   flite_init();
   

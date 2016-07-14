@@ -36,8 +36,9 @@ namespace Cozmo {
 namespace Audio {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioAnimation::RobotAudioAnimation( Util::RandomGenerator* randomGenerator )
-: _randomGenerator( randomGenerator )
+RobotAudioAnimation::RobotAudioAnimation( GameObjectType gameObject, Util::RandomGenerator* randomGenerator )
+: _gameObj( gameObject )
+, _randomGenerator( randomGenerator )
 {
   // This base class is not intended to be used, use a sub-class
   SetAnimationState( AnimationState::AnimationError );
@@ -69,10 +70,12 @@ void RobotAudioAnimation::AbortAnimation()
   }
   
   // Stop all animation audio events being played
-  _audioClient->StopCozmoEvent( GameObjectType::CozmoAnimation );
+  _audioClient->StopCozmoEvent( _gameObj );
   
   // Notify buffer
-  _audioBuffer->ResetAudioBuffer();
+  if (nullptr != _audioBuffer) {
+    _audioBuffer->ResetAudioBuffer();
+  }
     
   SetAnimationState( AnimationState::AnimationAbort );
 }
@@ -178,15 +181,20 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   }
   
   _audioClient = audioClient;
-  if ( _audioClient != nullptr ) {
-    _audioBuffer = _audioClient->GetRobotAudiobuffer( GameObjectType::CozmoAnimation );
-  }
   
-  // Return error
-  if ( _audioClient == nullptr || _audioBuffer == nullptr ) {
-    SetAnimationState( AnimationState::AnimationError );
-    PRINT_NAMED_ERROR("RobotAudioAnimation.InitAnimation", "Must set _audioClient and _audioBuffer pointers");
-    return;
+  // HACK: Don't need Audio buffer for playing on device
+  if (_gameObj != GameObjectType::Cozmo_OnDevice) {
+    // When playing animation on robot get audio buffer
+    if ( _audioClient != nullptr ) {
+      _audioBuffer = _audioClient->GetRobotAudiobuffer( _gameObj );
+    }
+    
+    // Return error
+    if ( _audioClient == nullptr || _audioBuffer == nullptr ) {
+      SetAnimationState( AnimationState::AnimationError );
+      PRINT_NAMED_ERROR("RobotAudioAnimation.InitAnimation", "Must set _audioClient and _audioBuffer pointers");
+      return;
+    }
   }
   
   // Sort events by start time

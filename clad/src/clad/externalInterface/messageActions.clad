@@ -175,6 +175,13 @@ message PlayAnimationTrigger {
   AnimationTrigger trigger
 }
 
+// PlayAnimation -- TEMP CODE!! Iterating animation code
+message PlayAnimation_DEV {
+  uint_8  robotId,
+  uint_32 numLoops,
+  string animationName
+}
+
 // PopAWheelie
 message PopAWheelie {
   int_32 objectID, // negative value means "currently selected object"

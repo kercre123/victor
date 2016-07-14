@@ -257,6 +257,7 @@ protected:
   void SendEnableRobotPickupParalysis(bool enable);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendAnimationGroup(const char* animName);
+  void SendDevAnimation(const char* animName, u32 numLoops); // FIXME: Remove after code refactor - JMR
   void SendReplayLastAnimation();
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);

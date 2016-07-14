@@ -34,8 +34,9 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnDevice::RobotAudioAnimationOnDevice( Animation* anAnimation,
                                                           RobotAudioClient* audioClient,
+                                                          GameObjectType gameObject,
                                                           Util::RandomGenerator* randomGenerator )
-: Anki::Cozmo::Audio::RobotAudioAnimation( randomGenerator )
+: Anki::Cozmo::Audio::RobotAudioAnimation( gameObject, randomGenerator )
 {
   InitAnimation( anAnimation, audioClient );
 }
@@ -132,7 +133,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                               
                             };
                             const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
-                                                                                GameObjectType::CozmoAnimation,
+                                                                                _gameObj,
                                                                                 callbackFunc );
                             // Set event's volume RTPC
                             _audioClient->SetCozmoEventParameter( playId,
@@ -163,6 +164,25 @@ void RobotAudioAnimationOnDevice::PrepareAnimation()
   
   // Use audio controller to play sounds therefore we are ready to go
   SetAnimationState( AnimationState::AudioFramesReady );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioAnimationOnDevice::IsAnimationDone() const
+{
+  // Compare completed event count with number of events && there are no more audio streams
+  const bool isDone = GetCompletedEventCount() >= _animationEvents.size();
+  
+  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnDevice.IsAnimationDone",
+                  "eventCount: %zu  eventIdx: %d  completedCount: %d | Result %s",
+                  _animationEvents.size(),
+                  GetEventIndex(),
+                  GetCompletedEventCount(),
+                  isDone ? "T" : "F" );
+  }
+  
+  return isDone;
 }
 
 } // Audio

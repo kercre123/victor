@@ -8,6 +8,9 @@ PROTO WebotsKeyboardController [
   field SFString animationToSendName "ANIM_TEST"
   field SFInt32  animationNumLoops 1
   field SFString idleAnimationName "_LIVE_"
+
+  # Test Animations to send
+  field SFString DEV_AnimationName "ANIM_NAME"
   
   # Behavior to send
   #  Use "DISABLED" to disable behaviors

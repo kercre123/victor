@@ -14,7 +14,7 @@
 #ifndef __Basestation_Audio_AudioClientConnection_H__
 #define __Basestation_Audio_AudioClientConnection_H__
 
-#include <util/helpers/noncopyable.h>
+#include "util/helpers/noncopyable.h"
 #include <stdio.h>
 #include <stdint.h>
 

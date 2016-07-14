@@ -43,12 +43,12 @@
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
-#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
@@ -64,6 +64,7 @@
 #include <time.h>
 #include <utility>
 #include <fstream>
+
 
 namespace Anki {
   
@@ -118,11 +119,14 @@ class BehaviorManager;
 class RobotIdleTimeoutComponent;
 class ObjectPoseConfirmer;
 
-  
+namespace RobotAnimation {
+class EngineAnimationController;
+}
+
 namespace Audio {
 class RobotAudioClient;
 }
-    
+  
 namespace RobotInterface {
 class MessageHandler;
 class EngineToRobot;
@@ -812,6 +816,9 @@ protected:
   u8  _animationTag                    = 0;
   
   DrivingAnimationHandler* _drivingAnimationHandler;
+  
+  ///////// NEW Animation /////////
+  std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
   // Note that we want _actionList as a pointer instead of unique_ptr. This is because unique_ptrs are
   // set to nullptr before being deleted, while regular pointers are not. Actions sometimes interact with
