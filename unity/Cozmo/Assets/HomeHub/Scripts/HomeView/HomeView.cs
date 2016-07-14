@@ -132,7 +132,6 @@ namespace Cozmo.HomeHub {
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
     public event ButtonClickedHandler OnCompletedChallengeClicked;
-    public event Action OnEndSessionClicked;
 
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 

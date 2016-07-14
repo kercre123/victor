@@ -12,7 +12,7 @@ public class PingStatus : MonoBehaviour {
   private Coroutine _coroutine;
   private bool _PingCompleted = true;
   private bool _PingSuccessful = false;
-//  private float _LastLogTime = 0.0f;
+  //  private float _LastLogTime = 0.0f;
   private float _LastPingTime = 0.0f;
 
   public bool GetPingStatus() {
@@ -30,7 +30,7 @@ public class PingStatus : MonoBehaviour {
       _coroutine = null;
     }
   }
-	
+
   void Update() {
     if (_PingCompleted) {
       if (!_PingSuccessful) {
@@ -38,7 +38,8 @@ public class PingStatus : MonoBehaviour {
           _coroutine = StartCoroutine(PingCoroutine());
           _LastPingTime = Time.time;
         }
-      } else {
+      }
+      else {
         if (Time.time - _LastPingTime > kWaitBetweenSuccesfulPings) {
           _coroutine = StartCoroutine(PingCoroutine());
           _LastPingTime = Time.time;
@@ -48,32 +49,32 @@ public class PingStatus : MonoBehaviour {
   }
 
   private IEnumerator PingCoroutine() {
-//    DAS.Debug(this, "Pinging " + RobotEngineManager.kRobotIP);
-//    _Ping = new Ping(RobotEngineManager.kRobotIP);
-//    _PingCompleted = false;
-//
-//    float startTime = Time.time;
-//    _LastLogTime = Time.time;
-//
-//    // Cancel the ping if it is not comleted in a certain amount of time to make sure it doesn't keep running forever
-//    while (!_Ping.isDone && ((Time.time - startTime) < kKillPingTime)) {
-//      if ((Time.time - _LastLogTime) > kLogTime) {
-//        DAS.Debug(this, "Still pinging " + RobotEngineManager.kRobotIP);
-//        _LastLogTime = Time.time;
-//      }
-//      yield return null;
-//    }
-//
-//    if (_Ping.isDone) {
-//      DAS.Debug(this, "Ping completed. Time is = " + _Ping.time);
-//    } else {
-//      DAS.Debug(this, "Ping failed");
-//    }
-//
-//    _PingSuccessful = _Ping.time > 0;
-//    _Ping.DestroyPing();
-//    _Ping = null;
-//    _PingCompleted = true;
+    //    DAS.Debug(this, "Pinging " + RobotEngineManager.kRobotIP);
+    //    _Ping = new Ping(RobotEngineManager.kRobotIP);
+    //    _PingCompleted = false;
+    //
+    //    float startTime = Time.time;
+    //    _LastLogTime = Time.time;
+    //
+    //    // Cancel the ping if it is not comleted in a certain amount of time to make sure it doesn't keep running forever
+    //    while (!_Ping.isDone && ((Time.time - startTime) < kKillPingTime)) {
+    //      if ((Time.time - _LastLogTime) > kLogTime) {
+    //        DAS.Debug(this, "Still pinging " + RobotEngineManager.kRobotIP);
+    //        _LastLogTime = Time.time;
+    //      }
+    //      yield return null;
+    //    }
+    //
+    //    if (_Ping.isDone) {
+    //      DAS.Debug(this, "Ping completed. Time is = " + _Ping.time);
+    //    } else {
+    //      DAS.Debug(this, "Ping failed");
+    //    }
+    //
+    //    _PingSuccessful = _Ping.time > 0;
+    //    _Ping.DestroyPing();
+    //    _Ping = null;
+    //    _PingCompleted = true;
 
     // Disabling using Ping since it is leaking threads on device which
     // is causing multiple issues especially in the factory test app.

@@ -294,10 +294,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e845915dad1d04901b548f0f273b77f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ConnectionStatus: {fileID: 11409176}
   _ConnectButton: {fileID: 11439468}
   _SimButton: {fileID: 11499096}
   _MockButton: {fileID: 11493334}
+  _ConnectionFlowBackgroundPrefab: {fileID: 11491276, guid: 97543cd3679914675a9d9c0d72388147,
+    type: 2}
+  _SearchForCozmoScreenPrefab: {fileID: 11444488, guid: c677cbd7776a840608bc4f5b163d7f91,
+    type: 2}
+  _SearchForCozmoFailedScreenPrefab: {fileID: 11473130, guid: 1415aad84f16e4344961253b2c208889,
+    type: 2}
+  _SecuringConnectionScreenPrefab: {fileID: 11466002, guid: 815460a25f88d47e1a0291c7f90845f7,
+    type: 2}
+  _ConnectingToCozmoScreenPrefab: {fileID: 11467300, guid: 064d2b5ecb36c43d7abcc053f91a244f,
+    type: 2}
+  _WakingUpCozmoScreenPrefab: {fileID: 108122, guid: 68ce0b13cb2cc48a9b8a3f2009a88614,
+    type: 2}
   _PingStatus: {fileID: 11444738}
 --- !u!114 &11422778
 MonoBehaviour:

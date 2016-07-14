@@ -18,27 +18,19 @@ public class IntroManager : MonoBehaviour {
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
   void Start() {
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnected);
     ShowConnectDialog();
 #if !UNITY_EDITOR
     SetupEngine();
 #endif
   }
 
-  void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnected);
-  }
-
   private void SetupEngine() {
     RobotEngineManager.Instance.StartEngine();
     // Set initial volumes
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
   }
 
-  private void HandleRobotConnected(Anki.Cozmo.ExternalInterface.RobotConnected message) {
+  private void HandleRobotConnected() {
 
     HideConnectDialog();
 
@@ -51,24 +43,12 @@ public class IntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
-    // Force quit hub world and show connect dialog again
-    if (_HubWorldInstance != null) {
-      _HubWorldInstance.DestroyHubWorld();
-      Destroy(_HubWorldInstance);
-    }
-
-    UIManager.CloseAllViewsImmediately();
-
-    ShowConnectDialog();
-  }
-
   private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
     // Spawn HubWorld
     GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
     hubWorldObject.transform.SetParent(transform, false);
     _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
-
     _HubWorldInstance.LoadHubWorld();
   }
 
@@ -80,13 +60,16 @@ public class IntroManager : MonoBehaviour {
     _ConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
       if (_ConnectDialogInstance == null && connectViewPrefab != null) {
         _ConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
+        _ConnectDialogInstance.GetComponent<ConnectDialog>().ConnectionFlowComplete += HandleRobotConnected;
       }
     });
+
   }
 
   private void HideConnectDialog() {
     if (_ConnectDialogInstance != null) {
-      Destroy(_ConnectDialogInstance);
+      _ConnectDialogInstance.GetComponent<ConnectDialog>().ConnectionFlowComplete -= HandleRobotConnected;
+      GameObject.Destroy(_ConnectDialogInstance);
       _ConnectDialogInstance = null;
 
       // INGO

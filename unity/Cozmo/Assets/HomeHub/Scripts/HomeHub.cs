@@ -23,11 +23,6 @@ namespace Cozmo.HomeHub {
     private SerializableAssetBundleNames _MinigameDataPrefabAssetBundle;
 
     [SerializeField]
-    private GameObjectDataLink _StartViewPrefabData;
-
-    private StartView _StartViewInstance;
-
-    [SerializeField]
     private GameObjectDataLink _HomeViewPrefabData;
 
     private HomeView _HomeViewInstance;
@@ -56,7 +51,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
-      ShowStartView();
+      StartLoadHomeView();
       return true;
     }
 
@@ -71,9 +66,6 @@ namespace Cozmo.HomeHub {
         _HomeViewInstance.CloseViewImmediately();
       }
 
-      if (_StartViewInstance != null) {
-        _StartViewInstance.CloseViewImmediately();
-      }
       return true;
     }
 
@@ -103,46 +95,8 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void ShowStartView() {
-      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(0);
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-
-      // INGO
-      // Right now StartView and ConnectDialog use the same assets so don't bother unloading asset bundle.
-      // LoadStartViewAssetBundle(LoadStartView);
-      LoadStartView(true);
-    }
-
-    private void LoadStartViewAssetBundle(System.Action<bool> loadCallback) {
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_StartViewPrefabData.AssetBundle, loadCallback);
-    }
-
-    private void LoadStartView(bool assetBundleSuccess) {
-      _StartViewPrefabData.LoadAssetData((GameObject startViewPrefab) => {
-        _StartViewInstance = UIManager.OpenView(startViewPrefab.GetComponent<StartView>());
-        _StartViewInstance.OnConnectClicked += HandleStartClicked;
-      });
-    }
-
-    private void HandleStartClicked() {
-      _StartViewInstance.OnConnectClicked -= HandleStartClicked;
-      _StartViewInstance.CloseView();
-      _StartViewInstance.ViewCloseAnimationFinished += HandleStartViewClosed;
-    }
-
-    private void HandleStartViewClosed() {
-      _StartViewInstance.ViewCloseAnimationFinished -= HandleStartViewClosed;
-      _StartViewInstance = null;
-      UnloadStartViewAssetBundle();
-      StartLoadHomeView();
-    }
-
     private void StartLoadHomeView() {
       LoadHomeViewAssetBundle(LoadHomeView);
-    }
-
-    private void UnloadStartViewAssetBundle() {
-      AssetBundleManager.Instance.UnloadAssetBundle(_StartViewPrefabData.AssetBundle);
     }
 
     private void LoadHomeViewAssetBundle(System.Action<bool> loadCallback) {
@@ -156,7 +110,7 @@ namespace Cozmo.HomeHub {
     }
 
     private IEnumerator ShowHomeViewAfterOtherViewClosed(GameObject homeViewPrefab) {
-      while (_StartViewInstance != null || _MiniGameInstance != null) {
+      while (_MiniGameInstance != null) {
         yield return 0;
       }
 
@@ -164,18 +118,11 @@ namespace Cozmo.HomeHub {
       _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
-      _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
 
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
-
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
-    }
-
-    private void HandleWakeAnimationComplete(bool success) {
-      DAS.Info(this, "HandleWakeAnimationComplete: success: " + success);
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
@@ -190,23 +137,6 @@ namespace Cozmo.HomeHub {
         robot.SetEnableFreeplayBehaviorChooser(true);
         DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
       }
-    }
-
-    private void HandleSessionEndClicked() {
-      RobotEngineManager.Instance.CurrentRobot.ResetRobotState(() => {
-        CloseHomeView();
-        ObservedObject charger = RobotEngineManager.Instance.CurrentRobot.GetCharger();
-        if (charger != null) {
-          RobotEngineManager.Instance.CurrentRobot.MountCharger(charger, HandleChargerMounted);
-        }
-        else {
-          ShowStartView();
-        }
-      });
-    }
-
-    private void HandleChargerMounted(bool success) {
-      ShowStartView();
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -410,7 +340,6 @@ namespace Cozmo.HomeHub {
         _HomeViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
         _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
         _HomeViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
-        _HomeViewInstance.OnEndSessionClicked -= HandleSessionEndClicked;
       }
       DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
     }
