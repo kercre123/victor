@@ -22,7 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-#define NATHAN_CUBE_JUNK
+//#define NATHAN_CUBE_JUNK
 //#define CUBE_HOP
 
 #define TOTAL_BLOCKS(x) ((x)->dataLen / sizeof(CubeFirmwareBlock))
@@ -38,7 +38,7 @@ extern uesb_mainstate_t  m_uesb_mainstate;
 extern "C" const CubeFirmware __CUBE_XS;
 extern "C" const CubeFirmware __CUBE_XS6;
 static const CubeFirmware* ValidPerfs[] = {
-  //&__CUBE_XS,
+  &__CUBE_XS,
   &__CUBE_XS6,
   (const CubeFirmware*) NULL
 };
@@ -113,7 +113,7 @@ void Radio::advertise(void) {
   NRF_TIMER0->INTENCLR = ~0;
   NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk |
                          TIMER_INTENSET_COMPARE1_Msk;
-  
+
   NVIC_EnableIRQ(TIMER0_IRQn);
   NVIC_SetPriority(TIMER0_IRQn, RADIO_TIMER_PRIORITY);
 
@@ -193,7 +193,7 @@ static void ota_send_next_block() {
   
   uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
 
-  NRF_TIMER0->TASKS_CAPTURE[TIMEOUT_COMPARE];
+  NRF_TIMER0->TASKS_CAPTURE[TIMEOUT_COMPARE] = 1;
   NRF_TIMER0->CC[TIMEOUT_COMPARE] += OTA_ACK_TIMEOUT;
   NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE2_Msk;
 }
@@ -247,6 +247,7 @@ void uesb_event_handler(uint32_t flags)
   case RADIO_OTA:
     // Send noise and return to pairing
     if (++ota_block_index < TOTAL_BLOCKS(ota_device)) {
+      ack_timeouts = 0;
       ota_send_next_block();
     } else {
       EnterState(RADIO_PAIRING);
@@ -479,6 +480,10 @@ static void ota_timeout() {
 }
 
 static void radio_prepare(void) {
+  if (radioState == RADIO_OTA) {
+    return ;
+  }
+
   // Schedule our next radio prepare
   uesb_stop();
 
@@ -581,7 +586,7 @@ extern "C" void TIMER0_IRQHandler(void) {
 
     ota_timeout();
   }
-
+  
   if (NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE]) {
     NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
     NRF_TIMER0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
