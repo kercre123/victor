@@ -1,19 +1,12 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using System.Collections;
 
-public class ConnectDialog : MonoBehaviour {
+public class ConnectionFlow : MonoBehaviour {
 
   public System.Action ConnectionFlowComplete;
+  public System.Action ConnectionFlowQuit;
+
   public const float kConnectionFlowDelay = 1.0f;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButton _ConnectButton;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButton _SimButton;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButton _MockButton;
 
   [SerializeField]
   private ConnectionFlowBackground _ConnectionFlowBackgroundPrefab;
@@ -46,82 +39,22 @@ public class ConnectDialog : MonoBehaviour {
 
   private bool _Simulated = false;
   private string _CurrentRobotIP;
-  private string _CurrentScene;
 
   private bool _RobotConnected = false;
 
   private void Start() {
-    if (RobotEngineManager.Instance != null) {
-      RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
-    }
-
-    Application.targetFrameRate = 30;
-    Screen.sleepTimeout = SleepTimeout.NeverSleep;
-
-    Input.gyro.enabled = true;
-    Input.compass.enabled = true;
-    Input.multiTouchEnabled = true;
-
-    _ConnectButton.Initialize(HandleConnectButton, "connect_button", "connect_dialog");
-    _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
-    _MockButton.Initialize(HandleMockButton, "mock_button", "connect_dialog");
-
-#if !UNITY_EDITOR
-    // hide sim and mock buttons for on device deployments
-    _SimButton.gameObject.SetActive(false);
-    _MockButton.gameObject.SetActive(false);
-#endif
-
-    _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
-
-    UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
-  }
-
-  private void HandleMockButton() {
-    this.PlayMock();
-  }
-
-  private void HandleConnectButton() {
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
-    this.Play(false);
-  }
-
-  private void HandleSimButton() {
-    this.Play(true);
-  }
-
-  private void ConnectToEngine() {
-    RobotEngineManager.Instance.Disconnect();
-    RobotEngineManager.Instance.Connect(RobotEngineManager.kEngineIP);
-  }
-
-  private void ConnectToRobot() {
-    DAS.Info("ConnectDialog.ConnectToRobot", "Trying to connect to robot");
-    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
   }
 
   private void OnDestroy() {
-    if (RobotEngineManager.Instance != null) {
-      RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToEngine;
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
-    }
-  }
-
-  private void RestartConnectionFlow() {
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
-    _ConnectButton.Interactable = true;
-    _SimButton.Interactable = true;
-    _MockButton.Interactable = true;
+    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToEngine;
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnected);
   }
 
   public void Play(bool sim) {
-
-    _ConnectButton.Interactable = false;
-    _SimButton.Interactable = false;
-    _MockButton.Interactable = false;
     _Simulated = sim;
 
     if (sim) {
@@ -133,7 +66,13 @@ public class ConnectDialog : MonoBehaviour {
 
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
+  }
 
+  private void RestartConnectionFlow() {
+    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+    if (ConnectionFlowQuit != null) {
+      ConnectionFlowQuit();
+    }
   }
 
   private void CreateConnectionFlowBackground() {
@@ -242,11 +181,14 @@ public class ConnectDialog : MonoBehaviour {
     }
   }
 
-  public void PlayMock() {
-    RobotEngineManager.Instance.MockConnect();
-    if (ConnectionFlowComplete != null) {
-      ConnectionFlowComplete();
-    }
+  private void ConnectToEngine() {
+    RobotEngineManager.Instance.Disconnect();
+    RobotEngineManager.Instance.Connect(RobotEngineManager.kEngineIP);
+  }
+
+  private void ConnectToRobot() {
+    DAS.Info("ConnectDialog.ConnectToRobot", "Trying to connect to robot");
+    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
   }
 
   private void HandleConnectedToEngine(string connectionIdentifier) {
@@ -291,5 +233,4 @@ public class ConnectDialog : MonoBehaviour {
       _ConnectingToCozmoScreenInstance.RobotConnected();
     }
   }
-
 }

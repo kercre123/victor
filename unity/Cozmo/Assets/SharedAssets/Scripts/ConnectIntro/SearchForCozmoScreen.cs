@@ -11,7 +11,7 @@ public class SearchForCozmoScreen : MonoBehaviour {
   }
 
   private void Start() {
-    Invoke("ShowScreenComplete", ConnectDialog.kConnectionFlowDelay);
+    Invoke("ShowScreenComplete", ConnectionFlow.kConnectionFlowDelay);
   }
 
   private void ShowScreenComplete() {

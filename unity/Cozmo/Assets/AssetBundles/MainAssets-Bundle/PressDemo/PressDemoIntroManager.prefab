@@ -25,6 +25,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -39,11 +40,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ConnectDialogPrefabData:
+  _SimpleConnectDialogPrefabData:
     _AssetBundle:
       _EnumValueAsString: start_view_prefabs
       _EnumValue: 12
-    _AssetDataName: ConnectDialog
+    _AssetDataName: SimpleConnectDialog
   _HubWorldPrefab: {fileID: 11477898, guid: bd9cdefcf513c4aa38b7a3dd570334b2, type: 2}
   _IntroScriptedSequenceName: 
 --- !u!1001 &100100000

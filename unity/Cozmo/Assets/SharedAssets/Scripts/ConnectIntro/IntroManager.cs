@@ -4,9 +4,9 @@ using Anki.Assets;
 public class IntroManager : MonoBehaviour {
 
   [SerializeField]
-  private GameObjectDataLink _ConnectDialogPrefabData;
+  private GameObjectDataLink _SimpleConnectDialogPrefabData;
 
-  private GameObject _ConnectDialogInstance;
+  private GameObject _SimpleConnectDialogInstance;
 
   [SerializeField]
   private HubWorldBase _HubWorldPrefab;
@@ -18,6 +18,13 @@ public class IntroManager : MonoBehaviour {
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
   void Start() {
+
+    Application.targetFrameRate = 30;
+    Screen.sleepTimeout = SleepTimeout.NeverSleep;
+    Input.gyro.enabled = true;
+    Input.compass.enabled = true;
+    Input.multiTouchEnabled = true;
+
     ShowConnectDialog();
 #if !UNITY_EDITOR
     SetupEngine();
@@ -30,7 +37,7 @@ public class IntroManager : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
-  private void HandleRobotConnected() {
+  private void HandleConnectionFlowComplete() {
 
     HideConnectDialog();
 
@@ -43,9 +50,16 @@ public class IntroManager : MonoBehaviour {
     }
   }
 
+  private void HandleConnectionFlowQuit() {
+    // destroy and re-create the connect dialog to restart the flow
+    DAS.Info("IntroManager.HandleConnectionFlowQuit", "Restarting Connection Dialog Flow");
+    HideConnectDialog();
+    ShowConnectDialog();
+  }
+
   private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
-    // Spawn HubWorld
+
     GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
     hubWorldObject.transform.SetParent(transform, false);
     _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
@@ -53,30 +67,27 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void ShowConnectDialog() {
-    AssetBundleManager.Instance.LoadAssetBundleAsync(_ConnectDialogPrefabData.AssetBundle, LoadConnectView);
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_SimpleConnectDialogPrefabData.AssetBundle, LoadConnectView);
   }
 
   private void LoadConnectView(bool assetBundleSuccess) {
-    _ConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
-      if (_ConnectDialogInstance == null && connectViewPrefab != null) {
-        _ConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
-        _ConnectDialogInstance.GetComponent<ConnectDialog>().ConnectionFlowComplete += HandleRobotConnected;
+    _SimpleConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+      if (_SimpleConnectDialogInstance == null && connectViewPrefab != null) {
+        _SimpleConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
+        _SimpleConnectDialogInstance.GetComponent<SimpleConnectDialog>().ConnectionFlowComplete += HandleConnectionFlowComplete;
+        _SimpleConnectDialogInstance.GetComponent<SimpleConnectDialog>().ConnectionFlowQuit += HandleConnectionFlowQuit;
       }
     });
 
   }
 
   private void HideConnectDialog() {
-    if (_ConnectDialogInstance != null) {
-      _ConnectDialogInstance.GetComponent<ConnectDialog>().ConnectionFlowComplete -= HandleRobotConnected;
-      GameObject.Destroy(_ConnectDialogInstance);
-      _ConnectDialogInstance = null;
-
-      // INGO
-      // Right now StartView and ConnectDialog use the same assets so don't bother unloading asset bundle.
-      // AssetBundleManager.Instance.UnloadAssetBundle(_ConnectDialogPrefabData.AssetBundle);
+    AssetBundleManager.Instance.UnloadAssetBundle(_SimpleConnectDialogPrefabData.AssetBundle);
+    if (_SimpleConnectDialogInstance != null) {
+      _SimpleConnectDialogInstance.GetComponent<SimpleConnectDialog>().ConnectionFlowComplete -= HandleConnectionFlowComplete;
+      _SimpleConnectDialogInstance.GetComponent<SimpleConnectDialog>().ConnectionFlowQuit -= HandleConnectionFlowQuit;
+      GameObject.Destroy(_SimpleConnectDialogInstance);
+      _SimpleConnectDialogInstance = null;
     }
-
-    // Don't unload the asset bundle because other assets use it
   }
 }

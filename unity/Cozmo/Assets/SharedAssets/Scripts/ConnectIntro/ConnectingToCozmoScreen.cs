@@ -6,7 +6,7 @@ public class ConnectingToCozmoScreen : MonoBehaviour {
   private bool _RobotConnected = false;
 
   private void Start() {
-    Invoke("ShowScreenComplete", ConnectDialog.kConnectionFlowDelay);
+    Invoke("ShowScreenComplete", ConnectionFlow.kConnectionFlowDelay);
   }
 
   private void ShowScreenComplete() {
