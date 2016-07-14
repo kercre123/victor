@@ -141,6 +141,7 @@ void Backpack::update(int compare) {
     int delta = drive_value[active_channel][cath] >> TIMER_GRAIN;
     
     if (delta < TIMER_DELTA_MINIMUM) {
+      nrf_gpio_cfg_input(currentChannel->cathodes[cath], NRF_GPIO_PIN_NOPULL);
       continue ;
     }
 
