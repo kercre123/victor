@@ -51,9 +51,9 @@ struct AccessorySlot {
   int8_t                hopBlackout;
   uint8_t               hopChannel;
   uint16_t              model;
-  
+
   uint32_t              id;
-  
+
   uesb_address_desc_t   address;
 };
 
@@ -66,8 +66,6 @@ namespace Radio {
   void setPropLights(unsigned int slot, const Anki::Cozmo::LightState *state);
   void assignProp(unsigned int slot, uint32_t accessory);
   void setLightGamma(uint8_t gamma);
-  
-  void configureTime(void);
 }
 
 #endif
