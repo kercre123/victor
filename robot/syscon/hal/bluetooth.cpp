@@ -637,8 +637,8 @@ void Bluetooth::advertise(void) {
   err_code = ble_conn_params_init(&cp_init);
   APP_ERROR_CHECK(err_code);
   
-  // Set BLE power to +0db
-  sd_ble_gap_tx_power_set(0);
+  // Set BLE power to -4db
+  sd_ble_gap_tx_power_set(-4);
   
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);
