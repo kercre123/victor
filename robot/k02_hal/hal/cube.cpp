@@ -59,6 +59,7 @@ namespace Anki
           m.timestamp = currTime_ms;
           m.numTaps = count;
           m.objectID = id;
+          m.robotID = 0;
           m.tapTime = tapTime;
           m.tapNeg = tapNeg;
           m.tapPos = tapPos;
@@ -122,6 +123,7 @@ namespace Anki
           ObjectMoved m;
           m.timestamp = HAL::GetTimeStamp();
           m.objectID = id;
+          m.robotID = 0;
           m.accel.x = ax;
           m.accel.y = ay;
           m.accel.z = az;
@@ -133,6 +135,7 @@ namespace Anki
           ObjectStoppedMoving m;
           m.timestamp = HAL::GetTimeStamp();
           m.objectID = id;
+          m.robotID = 0;
           m.upAxis = upAxis;  // This should get processed on engine eventually
           m.rolled = 0;  // This should get processed on engine eventually
           RobotInterface::SendMessage(m);
