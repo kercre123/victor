@@ -110,7 +110,7 @@ void GenerateTestTone(void) {
   static const int CPU_NEW_CLOCK = 32768*2560;
   static const float FREQ_DILATION = (float)CPU_OLD_CLOCK / (float)CPU_NEW_CLOCK;
   
-  static const float peak = 0x400;
+  static const float peak = 0x800;
   static const int ticks_per_freq = (int)(SAMPLE_RATE * FREQ_DILATION * 20 / 1000); // 40ms
 
   float freq = M_PI_2 * 8000.0f / SAMPLE_RATE * FREQ_DILATION;
