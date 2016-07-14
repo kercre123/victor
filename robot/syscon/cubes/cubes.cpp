@@ -211,7 +211,7 @@ static void OTARemoteDevice(const uint32_t id) {
   
   // This is address
   OTAAddress.address = id;
-  OTAAddress.rf_channel = 80;//(random() & 0x3F) + 4;
+  OTAAddress.rf_channel = (random() & 0x3F) + 4;
 
   EnterState(RADIO_OTA);
 
