@@ -400,7 +400,7 @@ void Update()
         // Display WiFi password, alternate rows about every 2 minutes
         u64 frame[COLS];
         Draw::Copy(frame, SSID_IMG);
-        Draw::Number(frame, 6, getSSID(), 68, 34, false);
+        Draw::Number(frame, 6, getSSIDNumber(), 68, 34, false);
         //Draw::Mask(frame, columnMask);
         Draw::Flip(frame);
         break;

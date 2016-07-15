@@ -350,13 +350,13 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
  */
 void NOINLINE setupSerial(void)
 {
-  set_gpio(HANDSHAKE_PIN, 0);
   // Update the clock rate here since it's the first function we call
   uart_div_modify(0, (50*1000000)/230400);
   // Debugging delay
-  //ets_delay_us(2000000);
+  ets_delay_us(100);
+  set_gpio(HANDSHAKE_PIN, 0);
   
-  ets_printf("Welcome to cboot\r\nVersion 2.0\r\n");
+  ets_printf("Welcome to cboot\r\nVersion 2.1\r\n");
 }
 
 /** Command SPI flash to make certain sectors read only until next power cycle

@@ -47,7 +47,7 @@ int crashHandlerGetReport(uint32_t* dest, const int available);
 uint32_t getSerialNumber(void);
 
 /// Returns the SSID for the robot based on serial number
-uint32_t getSSID(void);
+uint32_t getSSIDNumber(void);
 
 /// Returns the robot's model number or 0xffff if not set
 uint16_t getModelNumber(void);

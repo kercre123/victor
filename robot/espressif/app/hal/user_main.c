@@ -101,7 +101,7 @@ void user_init(void)
   }
   else
   {
-    os_sprintf(ssid, "cozmo_%06X", getSSID());
+    os_sprintf(ssid, "cozmo_%06X", getSSIDNumber());
   }
 
   struct softap_config ap_config;
