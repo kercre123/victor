@@ -81,12 +81,16 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData)
   loaderData->SetComplete();
 }
   
-const char* GetFileNameForState(FirmwareUpdateStage state)
+const char* FirmwareUpdater::GetFileNameForState(FirmwareUpdateStage state)
 {
   switch(state)
   {
     case FirmwareUpdateStage::Flashing:
-      return "cozmo.safe";
+      if (_version == -1) {
+        return "factory_upgrade.safe";
+      } else {
+        return "cozmo.safe";
+      }
     default:
       assert(0);
       return "";
@@ -430,20 +434,22 @@ void FirmwareUpdater::LoadHeaderData()
     stringEnd = stringBegin + kFirmwareHeaderMaxSize;
   }
   
-  Json::Reader jsonReader;
-  Json::Value headerData;
-  if (jsonReader.parse(stringBegin, stringEnd, headerData))
-  {
-    // if success, try to get the values that we want
-    std::string versionString;
-    if (headerData.isObject() && JsonTools::GetValueOptional(headerData, "version", versionString))
+  if (_version != -1) {
+    Json::Reader jsonReader;
+    Json::Value headerData;
+    if (jsonReader.parse(stringBegin, stringEnd, headerData))
     {
-      GetFwSignature(FirmwareUpdateStage::Flashing) = std::move(versionString);
+      // if success, try to get the values that we want
+      std::string versionString;
+      if (headerData.isObject() && JsonTools::GetValueOptional(headerData, "version", versionString))
+      {
+        GetFwSignature(FirmwareUpdateStage::Flashing) = std::move(versionString);
+      }
     }
-  }
-  else
-  {
-    PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData.ReadHeaderFailed", "%s", jsonReader.getFormattedErrorMessages().c_str());
+    else
+    {
+      PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData.ReadHeaderFailed", "%s", jsonReader.getFormattedErrorMessages().c_str());
+    }
   }
 }
   

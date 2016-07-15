@@ -46,7 +46,7 @@ public class FactoryOTAPanel : MonoBehaviour {
 
   private void HandleRobotConnected(int robotID) {
     _OTAStatus.text = "Sending update firmware message";
-    RobotEngineManager.Instance.UpdateFirmware(0);
+    RobotEngineManager.Instance.UpdateFirmware(-1);
   }
 
   private void HandleRobotDisconnected(int robotID) {

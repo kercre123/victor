@@ -125,6 +125,8 @@ private:
   
   void VerifyActiveRobots(const RobotMap& robots);
 
+  const char* GetFileNameForState(FirmwareUpdateStage state);
+  
   void SetSubState(const RobotMap& robots, FirmwareUpdateSubStage newState);
   void GotoFailedState(const RobotMap& robots, FirmwareUpdateResult updateResult);
   void AdvanceState(const RobotMap& robots);
