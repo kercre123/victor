@@ -3,7 +3,7 @@ CozmoWorldInfo {
 }
 Viewpoint {
   orientation 0.807305 -0.297377 -0.509731 1.21513
-  position -1.79315 -2.07671 1.70014
+  position -2.5808 -3.0242 2.44543
 }
 Background {
   skyColor [
@@ -27,6 +27,8 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+  xSize 100
+  ySize 100
 }
 LightCube {
   translation 0.342 0.1 0.03
