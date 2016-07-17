@@ -117,9 +117,6 @@ void GenerateTestTone(void) {
 
   uint8_t write_index = 0;
 
-  // Switch to internal clock - no need to wait - it'll switch soon enough
-  MCG_C1 &= ~MCG_C1_IREFS_MASK;
-  
   DAC::EnableAudio(true);
   for (int g = 0; g < 8; g++) {   
     // Tone
