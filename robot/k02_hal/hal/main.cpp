@@ -44,7 +44,6 @@ namespace Anki
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
-      u32 GetID() { return *(uint32_t*) 0xFFC; }
 
       void HALInit(void) {
         UART::Init();

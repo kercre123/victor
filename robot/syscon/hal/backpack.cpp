@@ -43,6 +43,7 @@ static int active_channel = 0;
 static const charliePlex_s* currentChannel;
 static uint8_t drive_value[numLights];
 static uint8_t drive_error[numLights];
+static bool disableLights = false;
 
 // Start all pins as input
 void Backpack::init()
@@ -122,7 +123,27 @@ void Backpack::lightMode(LightDriverMode mode) {
   }
 }
 
+// For test fixture purposes only: 0=stop testing, 1-12 = LED channel to test
+void Backpack::testLight(int index)
+{
+  if (index)
+  {
+    disableLights = true;
+    lights_out();
+    currentChannel = &RGBLightPins[index-1];
+    nrf_gpio_pin_set(currentChannel->anode);
+    nrf_gpio_cfg_output(currentChannel->anode);
+    nrf_gpio_pin_clear(currentChannel->cathode);
+    nrf_gpio_cfg_output(currentChannel->cathode);
+  } else {
+    disableLights = false;
+  }
+}
+
 void Backpack::update(void) {
+  if (disableLights)
+    return;
+  
   lights_out();
   
   if (++active_channel > numLights) {
@@ -205,7 +226,10 @@ extern "C" void TIMER0_IRQHandler(void) {
   
   NRF_TIMER0->EVENTS_COMPARE[0] = 0;
   NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-  
+
+  if (disableLights)
+    return;
+    
   lights_out();
   
   drive_error[active_channel] = NRF_TIMER0->CC[3] - drive_value[active_channel];

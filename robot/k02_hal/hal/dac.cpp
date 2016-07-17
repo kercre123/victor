@@ -116,6 +116,9 @@ void GenerateTestTone(void) {
   float freq = M_PI_2 * 8000.0f / SAMPLE_RATE * FREQ_DILATION;
 
   uint8_t write_index = 0;
+
+  // Switch to internal clock - no need to wait - it'll switch soon enough
+  MCG_C1 &= ~MCG_C1_IREFS_MASK;
   
   DAC::EnableAudio(true);
   for (int g = 0; g < 8; g++) {   

@@ -24,7 +24,7 @@
 
 static __align(4) u8 m_globalBuffer[1024 * 16];
 
-#define DEBUG_TESTPORT
+// #define DEBUG_TESTPORT
 
 // Enable the test port
 void InitTestPort(int baudRate)
@@ -100,7 +100,7 @@ int TestGetCharWait(int timeout)
       value = TESTPORT->DR & 0xFF;
       
 #ifdef DEBUG_TESTPORT
-    SlowPrintf(">%d ", value);
+    SlowPrintf(">%02x ", value);
 #endif
       
       break;
@@ -180,7 +180,7 @@ void SendTestChar(int val)
       
       // Success!
 #ifdef DEBUG_TESTPORT
-    SlowPrintf("<%d ", val);
+    SlowPrintf("<%02x ", val);
 #endif  
       return;
         
@@ -232,6 +232,10 @@ int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)
       if ((0xEF^0xFF) != TestGetCharWait(CHAR_TIMEOUT))
         throw ERROR_TESTPORT_TIMEOUT;
       PIN_IN(GPIOC, PINC_CHGRX);
+          
+#ifdef DEBUG_TESTPORT
+    SlowPrintf(" - OK!\r\n");
+#endif
       
       return len;
     } catch (int err) {

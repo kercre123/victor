@@ -10,6 +10,7 @@
 #include "hal/cube.h"
 #include "app/fixture.h"
 #include "hal/espressif.h"
+#include "hal/random.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -17,8 +18,8 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 46;
-const char* BUILD_INFO = "PS SMT";
+u8 g_fixtureReleaseVersion = 47;
+const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;
@@ -94,6 +95,12 @@ int GetSequence(void)
   SlowPrintf("Allocated serial: %x\n", sequence);
   
   return sequence;
+}
+
+// Get a serial number for a device in the normal 12.20 fixture.sequence format
+u32 GetSerial()
+{
+  return (FIXTURE_SERIAL << 20) | (GetSequence() & 0xFFffff);
 }
 
 extern int g_canary;
@@ -434,6 +441,7 @@ int main(void)
   InitUART();
   FetchParams();
   InitConsole();
+  InitRandom();
  
   SlowPutString("STARTUP!\r\n");
 
@@ -443,7 +451,9 @@ int main(void)
     g_fixtureType = g_fixtureReleaseVersion = 0; 
 
   // Else, figure out which fixture type we are
-  else if (g_fixtureType == FIXTURE_NONE && g_flashParams.fixtureTypeOverride > 1 && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
+  else if (g_fixtureType == FIXTURE_NONE 
+            && g_flashParams.fixtureTypeOverride > FIXTURE_NONE 
+            && g_flashParams.fixtureTypeOverride < FIXTURE_DEBUG)
     g_fixtureType = g_flashParams.fixtureTypeOverride;
   
   SlowPutString("Initializing Display...\r\n");

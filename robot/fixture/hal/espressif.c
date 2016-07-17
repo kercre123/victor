@@ -3,6 +3,8 @@
 #include "hal/portable.h"
 
 #include "hal/timers.h"
+#include "hal/random.h"
+
 #include "../app/fixture.h"
 #include "../app/binaries.h"
 
@@ -418,8 +420,20 @@ void ProgramEspressif(int serial)
   #ifndef FCC
     // Set serial number, model number, random data in Espressif
     if (!setserial) {
-      SlowPrintf("Load SERIAL data\n");
-      ESPFlashLoad(0x1000, 4, (uint8_t*)&serial);
+      const int DATALEN = 2+16;
+      u32 data[DATALEN];
+      data[0] = serial; // Serial
+      data[1] = 0;      // Model
+      
+      // Add 64 bytes of random gibberish, at Daniel's request
+      for (int i = 2; i < DATALEN; i++)
+        data[i] = GetRandom();
+      
+      SlowPrintf("Load SERIAL data: ");
+      for (int i = 0; i < DATALEN; i++)
+        SlowPrintf("%08x,", data[i]);
+      SlowPrintf("\n");
+      ESPFlashLoad(0x1000, sizeof(data), (uint8_t*)&data);
       setserial = true;
     }
   #endif

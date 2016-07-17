@@ -160,13 +160,12 @@ void Battery::powerOff()
   MicroWait(10000);
 }
 
+int resultLedOn;
+int resultLedOff;
 void manage_adc(void*)
 {
   using namespace Battery;
   static const int LOW_BAT_TIME = CYCLES_MS(60*1000); // 1 minute
-
-  static int resultLedOn;
-  static int resultLedOff;
 
   if (!NRF_ADC->EVENTS_END) {
     return ;

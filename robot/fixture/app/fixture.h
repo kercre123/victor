@@ -46,18 +46,9 @@ extern char g_lotCode[15];
 extern u32 g_time;
 extern u32 g_dateCode;
 
-// Diagnostic mode commands are used to speak to the robot over the test port (charge contacts)
-typedef enum
-{
-  DMC_ENTER                 = 0xA3,
-  DMC_FIRST                 = 0x01,
-  
-  DMC_NACK                  = 0x01,
-  DMC_ACK                   = 0x02,
-  
-  DMC_LAST
-} DiagnosticModeCommand;
-
+// Get a serial number for a device in the normal 12.20 fixture.sequence format
+u32 GetSerial();
+                        
 // Error numbers - these are thrown and eventually arrive on the display for the factory operator
 // To aid memorization, error numbers are grouped logically:
 //  3xy - motor errors - where X is the motor 1 (left), 2 (right), 3 (lift), or 4 (head) - and Y is the problem (reversed, encoder, etc)

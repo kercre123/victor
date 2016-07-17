@@ -73,19 +73,18 @@ void enterOperatingMode(BodyRadioMode mode) {
   current_operating_mode = mode;
 }
 
+int g_powerOffTime = (4<<23);   // 4 seconds from power-on
 static void setupOperatingMode() {
   static BodyRadioMode active_operating_mode = -1;
   BodyRadioMode new_mode = current_operating_mode;
 
   // XXX: Factory only - to support test modes:  Dirty hack to run battery for 4 seconds after power-up regardless of mode
   static bool turnPowerOff = false;
-  if (turnPowerOff && GetCounter() > (4<<23))
+  if (turnPowerOff && GetCounter() > g_powerOffTime)
   {
     Battery::powerOff();
     turnPowerOff = false;
   }
-  
-  
   
   if (active_operating_mode == new_mode) {
     return ;

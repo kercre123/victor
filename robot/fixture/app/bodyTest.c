@@ -10,6 +10,9 @@
 #include "app/fixture.h"
 #include "app/binaries.h"
 
+#include "../syscon/hal/tests.h"
+using namespace Anki::Cozmo::RobotInterface;
+
 // Return true if device is detected on contacts
 bool BodyDetect(void)
 {
@@ -72,19 +75,22 @@ int TryMotor(u8 motor, s8 speed)
   const int MOTOR_RUNTIME = 100 * 1000;
   int first[4], second[4];
   
+  // Reset motor watchdog
+  SendCommand(TEST_POWERON, 0, 0, NULL);
+  
   // Get motor up to speed
-  SendCommand(0x87, (speed&0xFC) + motor, 0, NULL);
+  SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
   MicroWait(MOTOR_RUNTIME);
   
   // Get start point
-  SendCommand(0x85, 0, sizeof(first), (u8*)first);
+  SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
   MicroWait(MOTOR_RUNTIME);
   
   // Get end point
-  SendCommand(0x85, 0, sizeof(second), (u8*)second);
+  SendCommand(TEST_GETMOTOR, 0, sizeof(second), (u8*)second);
   
   // Stop motor
-  SendCommand(0x87, 0 + motor, 0, NULL);
+  SendCommand(TEST_RUNMOTOR, 0 + motor, 0, NULL);
   int ticks = second[motor] - first[motor];
   
   ConsolePrintf("speedtest,%d,%d,%d\r\n", motor, speed, ticks);
@@ -107,6 +113,9 @@ void BodyMotor(void)
 
 void DropSensor(void)
 {
+  int onoff[2];
+  SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
+  ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
 }
 
 // List of all functions invoked by the test, in order

@@ -10,8 +10,6 @@
 
 extern FixtureType g_fixtureType;
 extern u8 g_fixtureReleaseVersion;
-extern u32 g_modelIDs[4];
-extern u8 g_modelIndex;
 
 static u8 m_bitMap[TARGET_MAX_BLOCK];
 static u8 m_decryptedBuffer[SAFE_BLOCK_SIZE];

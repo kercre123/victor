@@ -354,7 +354,7 @@ static void swd_setcsw(int addr, int size)
   swd_write(1, 0, csw);
 }
 
-static int swd_read32(int addr)
+int swd_read32(int addr)
 {
   unsigned long value;
   int r = swd_write(1, 0x4, addr);   // Set address
@@ -587,7 +587,6 @@ void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
     }
 }
 
-int GetSequence(void);
 // Send a file to the stub, one block at a time
 void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial, bool quickcheck)
 { 
@@ -596,7 +595,7 @@ void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u
   {
     serial = swd_read32(serialaddr);    // Existing serial number
     if (0 == serial || 0xffffFFFF == serial)
-      serial = GetSequence();           // Missing serial, get a new one
+      serial = GetSerial();           // Missing serial, get a new one
     ConsolePrintf("serial,%08x\r\n", serial);
   }
   

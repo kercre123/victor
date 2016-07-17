@@ -36,6 +36,9 @@ static FilterTypes filter_type = FILTER_DISABLED;
 // Fixture pin-out
 static const int PIN_TX = 17;
 static const int PIN_RX = 18;
+// Test thresholds
+static const int ONEG = 64;                 // Cube default settings define ONE G as "64"
+static const int ACCEL_THRESH = ONEG*0.18;  // Rejected if beyond 0.18G
 static const int MAX_RSSI = 60;
 static const int FAR_THRESHOLD = 5;
 static unsigned int rssi[MAX_ACCESSORIES];
@@ -138,7 +141,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       if (abs(state->rssi) > MAX_RSSI) {
         if(++farcount[state->slot] > FAR_THRESHOLD) {
           Radio::assignProp(state->slot, 0);
-          return ;
+          return false;
         }
       } else {
         farcount[state->slot] = 0;
@@ -151,7 +154,10 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
       if (!r && !g && !b) {
         color = PACK_COLORS(0, 0xFF, 0xFF, 0xFF);
       }
-      else if (abs(state->x) < 6 && abs(state->z) < 6 && state->y > 58) {
+      else if (abs(state->x) < ACCEL_THRESH 
+            && abs(state->z) < ACCEL_THRESH 
+            && abs(state->y-ONEG) < ACCEL_THRESH) 
+      {
         color = PACK_COLORS(0, 0x00, 0xFF, 0x00);
       }
       else {

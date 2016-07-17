@@ -72,6 +72,7 @@ const u32 ENCODER_NONE = 0xFF;
 
 static RTOS_Task *task;
 static bool motorDisable = true;
+bool motorOverride = false;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 static const MotorConfig m_config[MOTOR_COUNT] = {
@@ -425,7 +426,11 @@ Fixed Motors::getSpeed(u8 motorID)
 void Motors::manage(void* userdata)
 {
   // Verify the source
-  if (Head::spokenTo && !motorDisable)
+  if (motorOverride)
+  {
+    // Fixture is in charge, don't update anything
+  } 
+  else if (Head::spokenTo && !motorDisable)
   {
     // Copy (valid) data to update motors
     for (int i = 0; i < MOTOR_COUNT; i++)
@@ -435,11 +440,10 @@ void Motors::manage(void* userdata)
   }
   else
   {
-    // Copy (valid) data to update motors
+    // Zero out the motors
     for (int i = 0; i < MOTOR_COUNT; i++)
     {
-      if (*FIXTURE_HOOK != 0xDEADFACE)    // Fixture needs motors without head
-        Motors::setPower(i, 0);
+      Motors::setPower(i, 0);
     }
   }
 

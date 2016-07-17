@@ -618,6 +618,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\swdnrf.c</FilePath>
             </File>
+            <File>
+              <FileName>random.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\random.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1243,6 +1248,11 @@
               <FileName>swdnrf.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\swdnrf.c</FilePath>
+            </File>
+            <File>
+              <FileName>random.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\random.c</FilePath>
             </File>
           </Files>
         </Group>

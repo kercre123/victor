@@ -8,6 +8,7 @@
 #include "timer.h"
 #include "lights.h"
 #include "rtos.h"
+#include "backpack.h"
 #include "anki/cozmo/robot/spineData.h"
 
 #include "hardware.h"
@@ -20,6 +21,12 @@
 
 using namespace Anki::Cozmo;
 
+// Some internals we hijack for testing purposes
+extern bool motorOverride;
+extern int resultLedOn;
+extern int resultLedOff;
+extern int g_powerOffTime;
+
 // Do a blocking send of a single byte out the testport, with all the horror that implies
 static void SendByte(int c)
 {
@@ -27,7 +34,6 @@ static void SendByte(int c)
   while (NRF_UART0->EVENTS_TXDRDY != 1)
     ;
   NRF_UART0->EVENTS_TXDRDY = 0;
-
 }
 
 // Send a complete packet of result data back to test fixture
@@ -82,8 +88,10 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
   // Tests from 128..255 are handled in body
   switch (test)
   {
+    // This hack keeps the battery on for 4 more seconds (see main.cpp)
+    // It operates as a kind of watchdog - if you stop calling it the robot will turn off
     case TEST_POWERON:
-      Battery::powerOn();      
+      g_powerOffTime = GetCounter() + (1<<23);  // Last 1 second longer
       break;    // Reply "OK"
     
     case TEST_RADIOTX:
@@ -91,10 +99,19 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       break;    // Reply "OK"
     
     case TEST_KILLHEAD:
+    {
       RobotInterface::OTA::EnterRecoveryMode msg;
       msg.mode = RobotInterface::OTA::Recovery_Mode;
       RobotInterface::SendMessage(msg);
       break;    // Reply "OK"
+    }
+    
+    case TEST_PLAYTONE:
+    {
+      RobotInterface::GenerateTestTone msg;
+      RobotInterface::SendMessage(msg);     
+      break;    // Reply "OK"
+    }
     
     // Get version and ESN information
     case TEST_GETVER:
@@ -103,9 +120,9 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       return;   // Already replied
     }
     
-    // XXX: This test needs a timeout (the whole test fixture mode needs a timeout)
     case TEST_RUNMOTOR:
     {
+      motorOverride = true;
       for (int i = 0; i < 4; i++)
         Motors::setPower(i, 0);
       int motor = param & 3;              // Motor number in LSBs
@@ -118,6 +135,19 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     case TEST_GETMOTOR:
       SendDown(16, (u8*)g_dataToHead.positions);  // All 4 motor positions
       return;   // Already replied
+    
+    case TEST_DROP:
+    {
+      int data[2] = {resultLedOn, resultLedOff};
+      SendDown(sizeof(data), (u8*)data);  // On time, off time
+      return;   // Already replied
+    }
+    
+    // param[4] = IR forward, param[0:3] = 0 (no backpack), 1-12 (backpack LED)
+    case TEST_LIGHT:
+      Backpack::testLight(param & 0xF);
+      Battery::setHeadlight(param & 0x10); 
+      break;    // Reply "OK"
   }
   
   // By default, send down an "OK" message

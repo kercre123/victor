@@ -7,9 +7,13 @@
 #include "hal/uart.h"
 #include "hal/swd.h"
 #include "hal/monitor.h"
+#include "hal/radio.h"
 
 #include "app/fixture.h"
 #include "app/binaries.h"
+
+#include "../syscon/hal/tests.h"
+using namespace Anki::Cozmo::RobotInterface;
 
 // XXX: Fix this if you ever fix current monitoring units
 // Robot is up and running - usually around 48K, rebooting at 32K - what a mess!
@@ -50,7 +54,7 @@ void InfoTest(void)
   MicroWait(200000);
   SendTestChar(-1);
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
-  SendCommand(0x83, 0, 8, (u8*)version);
+  SendCommand(0x83, 0, sizeof(version), (u8*)version);
   
   // XXX: Sample data so Smerp can start development of their info fixture reader
   ConsolePrintf("version,%08d,%08d,%08x,00000000\r\n", version[0]>>16, version[0]&0xffff, version[1]);
@@ -58,8 +62,13 @@ void InfoTest(void)
 
 void PlaypenTest(void)
 {
-//  SendTestMode(7);    // Lucky 7 is Playpen fixture mode
-  SendTestMode(9);     // 6 is motor test, 9 is menus
+  // Try to put robot into playpen mode
+  SendTestMode(FTM_PlayPenTest);    
+  
+  // Do this last:  Try to put fixture radio in advertising mode
+  static bool setRadio = false;
+  if (!setRadio)
+    SetRadioMode('A');
 }
 
 extern int g_stepNumber;
@@ -125,11 +134,11 @@ void SlowMotors(void)
 
 void FastMotors(void)
 {
+  /*
   int first[4], second[4];
   
   // Turn on motor test
   TryMotor(0, 124);
-  SendCommand(6,0,0,0);
   
   // Check encoders
   for (int i = 0; i < 2; i++)
@@ -150,7 +159,7 @@ void FastMotors(void)
   // Kill robot dead
   DisableVEXT();
   MicroWait(1500000);
-  /*
+
   TryMotor(0, -124);  
   
   TryMotor(1, 124);
@@ -195,7 +204,7 @@ TestFunction* GetRobotTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
-    //SlowMotors,
+    SlowMotors,
     FastMotors,
     DropSensor,
     NULL

@@ -23,8 +23,6 @@
 #define BAUD_RATE   1000000
 
 extern BOOL g_isDevicePresent;
-extern u8 g_modelIndex;
-extern u32 g_modelIDs[8];
 extern FixtureType g_fixtureType;
 extern char* FIXTYPES[];
 
@@ -302,7 +300,7 @@ static void SetSerial(void)
 }
 
 extern int g_canary;
-static void GetSerial(void)
+static void GetSerialCmd(void)
 {
   // Serial number, fixture type, build version
   ConsolePrintf("serial,%i,%s,%i\r\n", 
@@ -413,7 +411,7 @@ void HeadESP();
 void CubePOST(void);
 static CommandFunction m_functions[] =
 {
-  {"GetSerial", GetSerial, FALSE},
+  {"GetSerial", GetSerialCmd, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},

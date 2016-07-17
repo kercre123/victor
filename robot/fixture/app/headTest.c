@@ -42,21 +42,26 @@ bool HeadDetect(void)
   return !!(GPIO_READ(GPIOB) & GPIOB_SWD);
 }
 
-int GetSequence(void);
 int serial_;
+int swd_read32(int addr);
 
 // Connect to and flash the K02
 void HeadK02(void)
 { 
+  const int SERIAL_ADDR = 0xFFC;
+  
   // Try to talk to head on SWD
   SWDInitStub(0x20000000, 0x20001800, g_stubK02, g_stubK02End);
 
-  serial_ = GetSequence();
-  
   // If we get this far, allocate a serial number
+  serial_ = swd_read32(SERIAL_ADDR);    // Check existing serial number
+  if (0 == serial_ || 0xffffFFFF == serial_)
+    serial_ = GetSerial();              // Missing serial, get a new one
+  ConsolePrintf("serial,%08x\r\n", serial_);
+  
   // Send the bootloader and app
-  SWDSend(0x20001000, 0x800, 0x0,    g_K02Boot, g_K02BootEnd,   0xFFC,  serial_);   // Put serial number at 0xFFC
-  SWDSend(0x20001000, 0x800, 0x1000, g_K02,     g_K02End,       0,      0);
+  SWDSend(0x20001000, 0x800, 0x0,    g_K02Boot, g_K02BootEnd,   SERIAL_ADDR,  serial_);
+  SWDSend(0x20001000, 0x800, 0x1000, g_K02,     g_K02End,       0,            0);
 }
 
 // Connect to and flash the Espressif
@@ -77,7 +82,7 @@ void HeadESP(void)
   InitEspressif();
   EnableBAT();
 
-  // Program espressif, which will start up following the program
+  // Program espressif, which will start up, following the program
   ProgramEspressif(serial_);
 }
 

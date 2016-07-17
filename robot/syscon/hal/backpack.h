@@ -24,6 +24,7 @@ namespace Backpack {
   void setLights(const LightState* lights);
   void lightsOff();
   void lightMode(LightDriverMode mode);
+  void testLight(int index);
 }
 
 #endif /* LIGHTS_H */
