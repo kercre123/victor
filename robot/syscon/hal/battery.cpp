@@ -32,7 +32,7 @@ static const u32 CLIFF_SENSOR_BLEED = 0;
 static int ContactTime = 0;
 
 void manage_adc(void*);
-  
+
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
@@ -48,7 +48,7 @@ extern GlobalDataToHead g_dataToHead;
 static inline void startADCsample(AnalogInput channel)
 {
   m_pinIndex = channel; // This is super cheap
-  
+
   NRF_ADC->CONFIG &= ~ADC_CONFIG_PSEL_Msk; // Clear any existing mux
   NRF_ADC->CONFIG |= channel << ADC_CONFIG_PSEL_Pos; // Activate analog input above
   NRF_ADC->EVENTS_END = 0;
@@ -75,7 +75,7 @@ uint8_t Battery::getLevel(void) {
 static void SendPowerStateUpdate(void *userdata)
 {
   using namespace Anki::Cozmo;
-  
+
   PowerState msg;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
@@ -90,14 +90,14 @@ void Battery::init()
   // Configure charge pins
   nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
- 
+
   // Configure cliff sensor pins
   nrf_gpio_cfg_output(PIN_IR_DROP);
-  
+
   // Syscon power - this should always be on until battery fail
   nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
-  
+
   // Encoder and LED power (enabled)
   nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
@@ -129,7 +129,7 @@ void Battery::init()
   startADCsample(ANALOG_CLIFF_SENSE);
 
   /*
-  NRF_ADC->INTENSET = ADC_INTENSET_END_Msk;  
+  NRF_ADC->INTENSET = ADC_INTENSET_END_Msk;
   NVIC_EnableIRQ(ADC_IRQn);
   NVIC_SetPriority(ADC_IRQn, 3);
   */
@@ -181,14 +181,16 @@ void manage_adc(void*)
         static int lowBatTimer = GetCounter() + LOW_BAT_TIME;
 
         if (vBat < VBAT_CHGD_LO_THRESHOLD) {
-          if (lowBatTimer - GetCounter() < 0) {
+          int ticks_left = lowBatTimer - GetCounter();
+
+          if (ticks_left < 0) {
             powerOff();
             NVIC_SystemReset();
           }
         } else {
           lowBatTimer = GetCounter() + LOW_BAT_TIME;
         }
-      
+
         startADCsample(ANALOG_CLIFF_SENSE);
 
         break ;
@@ -197,7 +199,7 @@ void manage_adc(void*)
       {
         // Are our power pins shorted?
         static int ground_short = 0;
-        
+
         if (NRF_ADC->RESULT < 0x30) {
           if (++ground_short > 30) {
             Battery::powerOff();
@@ -209,7 +211,7 @@ void manage_adc(void*)
 
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD || (isCharging && vExt > VEXT_CHARGE_THRESHOLD);
-        
+
         if (!onContacts) {
           ContactTime = 0;
         } else {
@@ -223,14 +225,14 @@ void manage_adc(void*)
           nrf_gpio_pin_clear(PIN_CHARGE_EN);
           isCharging = false;
         }
-        
+
         startADCsample(ANALOG_CLIFF_SENSE);
         break ;
-      }      
+      }
     case ANALOG_CLIFF_SENSE:
       {
         static const uint32_t PIN_IR_DROP_MASK = 1 << PIN_IR_DROP;
-        
+
         if (NRF_GPIO->OUT & PIN_IR_DROP_MASK) {
           resultLedOn = NRF_ADC->RESULT;
           startADCsample(ANALOG_V_BAT_SENSE);
@@ -242,12 +244,12 @@ void manage_adc(void*)
             startADCsample(ANALOG_V_EXT_SENSE);
 
         }
-        
+
         int result = resultLedOn - resultLedOff - CLIFF_SENSOR_BLEED;
         g_dataToHead.cliffLevel = (result < 0) ? 0 : result;
-        
+
         nrf_gpio_pin_toggle(PIN_IR_DROP);
-        
+
         break ;
       }
   }
