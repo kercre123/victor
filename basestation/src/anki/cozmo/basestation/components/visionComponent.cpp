@@ -354,7 +354,7 @@ namespace Cozmo {
       }
 
       if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
+        PRINT_NAMED_WARNING("VisionComponent.SetNextImage.PoseHistoryFail",
                           "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)\n",
                           encodedImage.GetTimeStamp(),
                           _robot.GetPoseHistory()->GetNumRawPoses(),
