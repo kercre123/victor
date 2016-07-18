@@ -36,6 +36,8 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "clad/types/fwTestMessages.h"
+
 #include "util/console/consoleInterface.h"
 
 #define TEST_CHARGER_CONNECT 0
@@ -79,6 +81,10 @@ namespace Cozmo {
   // Play sound
   // (Sound resource not available in webots tests because they run before game configure)
   CONSOLE_VAR(bool,  kBFT_PlaySound,              "BehaviorFactoryTest",  true);
+  
+  // Turns off robot wifi at end of test
+  CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  true);
+  
   
   
   ////////////////////////////
@@ -323,6 +329,13 @@ namespace Cozmo {
     robot.Broadcast( ExternalInterface::MessageEngineToGame( FactoryTestResultEntry(_testResultEntry)));
 
     _factoryTestLogger.CloseLog();
+    
+    // Immediately disconnect wifi
+    if (kBFT_DisconnectAtEnd) {
+      RobotInterface::EnterFactoryTestMode m;
+      m.mode = RobotInterface::FactoryTestMode::FTM_Off;
+      robot.SendMessage(RobotInterface::EngineToRobot(std::move(m)));
+    }
   }
   
   

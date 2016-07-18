@@ -1228,6 +1228,11 @@ namespace Anki {
       return cliffSensor_->getValue() < 220;
     }
 
+    u16 HAL::GetRawCliffData()
+    {
+      return static_cast<u16>(cliffSensor_->getValue());
+    }
+    
     namespace HAL {
       int UARTGetFreeSpace()
       {

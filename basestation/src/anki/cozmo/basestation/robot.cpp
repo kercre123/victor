@@ -520,6 +520,9 @@ namespace Anki {
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
       
+      // Raw cliff data
+      _cliffDataRaw = msg.cliffDataRaw;
+      
       // Update other state vars
       SetCurrPathSegment( msg.currPathSegment );
       SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);

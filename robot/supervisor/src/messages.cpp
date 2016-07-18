@@ -199,6 +199,8 @@ namespace Anki {
         robotState_.rawAccelY = imuData.acc_y;
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
+        robotState_.cliffDataRaw = HAL::GetRawCliffData();
+        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
