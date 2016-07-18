@@ -565,7 +565,7 @@ def parseOutput(options, logFile):
   for line in lines:
     if 'The process crashed some time after starting successfully.' in line:
       crashCount = crashCount + 1
-    if 'Error' in line or 'ERROR' in line:
+    if '[Error]' in line:
       errorCount = errorCount + 1
     if 'Warn' in line:
       warningCount = warningCount + 1
