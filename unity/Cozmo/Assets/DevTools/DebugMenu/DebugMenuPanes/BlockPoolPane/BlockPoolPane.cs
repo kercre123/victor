@@ -9,7 +9,7 @@ using Anki.Cozmo;
 
 public class BlockPoolPane : MonoBehaviour {
 
-  private const int _DefaultRSSIFilter = 50;
+  private const int _DefaultRSSIFilter = 58;
 
   [SerializeField]
   private GameObject _ButtonPrefab;
@@ -90,7 +90,6 @@ public class BlockPoolPane : MonoBehaviour {
   }
 
   private void HandleInitBlockPool(Anki.Cozmo.ExternalInterface.InitBlockPoolMessage initMsg) {
-
     // Might stomp game setup but hopefully people are using this debug menu before playing.
     foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
       kvp.Value.SetLEDs(0, 0, 0, 0);
@@ -109,7 +108,8 @@ public class BlockPoolPane : MonoBehaviour {
       // has already connected to some objects.
       LightCube lc = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(initMsg.blockData[i].factory_id);
       if (lc != null) {
-        AddButton(initMsg.blockData[i].factory_id, lc.ObjectType, initMsg.blockData[i].enabled, 0);
+        BlockData data = AddButton(initMsg.blockData[i].factory_id, lc.ObjectType, initMsg.blockData[i].enabled, 0);
+        EnableButton(data.BlockButton, Color.cyan);
 
         // Show all our enabled lights to blue so we can see what is currently connected
         lc.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
@@ -118,11 +118,18 @@ public class BlockPoolPane : MonoBehaviour {
         ObservedObject oo = RobotEngineManager.Instance.CurrentRobot.GetObservedObjectWithFactoryID(initMsg.blockData[i].factory_id);
         if (oo != null) {
           // Create the button with the information that we know
-          AddButton(initMsg.blockData[i].factory_id, oo.ObjectType, initMsg.blockData[i].enabled, 0);
+          BlockData data = AddButton(initMsg.blockData[i].factory_id, oo.ObjectType, initMsg.blockData[i].enabled, 0);
+          EnableButton(data.BlockButton, Color.cyan);
+
+          // Turn on the lights to show that we are connected
+          if (oo.ObjectType == ObjectType.Charger_Basic) {
+            oo.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
+          }
         }
         else {
-          // Create the button with the information that we know
-          AddButton(initMsg.blockData[i].factory_id, ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
+          // Create the button with the information that we know and disable the button until we hear from the object
+          BlockData data = AddButton(initMsg.blockData[i].factory_id, ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
+          DisableButton(data.BlockButton, Color.grey);
         }
       }
     }
@@ -148,17 +155,39 @@ public class BlockPoolPane : MonoBehaviour {
         kvp.Value.SetLEDs(0, 0, 0, 0);
         kvp.Value.SetAllLEDs();
       }
+
+      if (RobotEngineManager.Instance.CurrentRobot.GetCharger() != null) {
+        RobotEngineManager.Instance.CurrentRobot.GetCharger().SetLEDs(0, 0, 0, 0);
+      }
     }
   }
 
   private void HandleObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
     // Turn on or off the lights depending on whether we are connecting or disconnecting
+    if ((message.device_type == ActiveObjectType.OBJECT_CHARGER) && (RobotEngineManager.Instance.CurrentRobot.GetCharger() != null)) {
+      uint onColor = message.connected ? Color.blue.ToUInt() : 0;
+      uint offColor = message.connected ? Color.cyan.ToUInt() : 0;
+      uint period_ms = message.connected ? uint.MaxValue : 0;
+      RobotEngineManager.Instance.CurrentRobot.GetCharger().SetLEDs(onColor, offColor, period_ms);
+    }
+
     LightCube lc = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(message.factoryID);
     if (lc != null) {
       uint onColor = message.connected ? Color.blue.ToUInt() : 0;
       uint offColor = message.connected ? Color.cyan.ToUInt() : 0;
       uint period_ms = message.connected ? uint.MaxValue : 0;
       lc.SetLEDs(onColor, offColor, period_ms);
+    }
+
+    // Update or create the button for the object
+    BlockPoolPane.BlockData data;
+    if (_BlockStatesById.TryGetValue(message.factoryID, out data)) {
+      UpdateButton(data);
+      if (message.connected) {
+        EnableButton(data.BlockButton, (data.IsEnabled ? Color.cyan : Color.grey));
+      } else {
+        DisableButton(data.BlockButton, Color.grey);
+      }
     }
   }
 
@@ -168,7 +197,9 @@ public class BlockPoolPane : MonoBehaviour {
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE2:
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE3:
     case Anki.Cozmo.ObjectType.Charger_Basic:
-      AddButton(objAvailableMsg.factory_id, objAvailableMsg.objectType, false, objAvailableMsg.rssi);
+      BlockData data = AddButton(objAvailableMsg.factory_id, objAvailableMsg.objectType, false, objAvailableMsg.rssi);
+      EnableButton(data.BlockButton, (data.IsEnabled ? Color.cyan : Color.white));
+
       break;
     default:
       break;
@@ -179,21 +210,17 @@ public class BlockPoolPane : MonoBehaviour {
   private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
-      Destroy(data.BlockButton.gameObject);
-
-      _BlockStatesById.Remove(objUnAvailableMsg.factory_id);
-
-      int index = _BlockStates.FindIndex(obj => objUnAvailableMsg.factory_id == obj.FactoryID);
-      _BlockStates.RemoveAt(index);
+      DisableButton(data.BlockButton, Color.grey);
     }
   }
 
   private void HandleButtonClick(uint factoryID) {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(factoryID, out data)) {
-      bool is_enabled = !data.IsEnabled;
-      data.IsEnabled = is_enabled;
-      UpdateButton(data);
+      data.IsEnabled = !data.IsEnabled;
+
+      // Turn the button to a different color to signal we are trying to connect/disconnect from/to the object
+      DisableButton(data.BlockButton, Color.yellow);
 
       // Send the message to engine
       _BlockSelectedMessage.factoryId = factoryID;
@@ -218,29 +245,33 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void AddButton(uint factoryID, Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength) {
+  private BlockData AddButton(uint factoryID, Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength) {
     BlockPoolPane.BlockData data;
     if (!_BlockStatesById.TryGetValue(factoryID, out data)) {
       RectTransform parentTransform = is_enabled ? _EnabledScrollView : _AvailableScrollView;
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, parentTransform);
       gameObject.name = "object_" + factoryID.ToString("X");
+
       Button button = gameObject.GetComponent<Button>();
+      button.onClick.AddListener(() => HandleButtonClick(factoryID));
 
       data = new BlockPoolPane.BlockData(type, factoryID, is_enabled, signal_strength, button);
       _BlockStatesById.Add(factoryID, data);
       _BlockStates.Add(data);
 
       UpdateButton(data);
-      button.onClick.AddListener(() => HandleButtonClick(factoryID));
+      SortList();
     }
-    else if (data.RSSI != signal_strength || data.ObjectType != type) {
-      // enabled is only changed form unity.
-      data.RSSI = signal_strength;
-      data.ObjectType = type;
-      UpdateButton(data);
+    else {
+      if (data.RSSI != signal_strength || data.ObjectType != type) {
+        data.RSSI = signal_strength;
+        data.ObjectType = type;
+        UpdateButton(data);
+        SortList();
+      } 
     }
 
-    SortList();
+    return data;
   }
 
   private void UpdateButton(BlockData data) {
@@ -250,10 +281,9 @@ public class BlockPoolPane : MonoBehaviour {
 
     Text txt = data.BlockButton.GetComponentInChildren<Text>();
     if (txt) {
-      txt.text = "ID: " + data.FactoryID.ToString("X") + " \n " +
-      "type: " + data.ObjectType + "\n" +
-      "enabled: " + (data.IsEnabled ? "Y" : "N") + "\n" +
-      "rssi: " + data.RSSI;
+      txt.text = data.ObjectType + "\n" +
+      "ID: " + data.FactoryID.ToString("X") + " \n " +
+      "RSSI: " + data.RSSI;
     }
 
     // Move the button to the correct list depending on whether it is enabled or not
@@ -263,9 +293,6 @@ public class BlockPoolPane : MonoBehaviour {
     else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
       data.BlockButton.transform.SetParent(_AvailableScrollView);
     }
-
-    // Sort the list after buttons have been moved between lists
-    SortList();
   }
 
   private void SortList() {
@@ -287,5 +314,15 @@ public class BlockPoolPane : MonoBehaviour {
         data.BlockButton.gameObject.transform.SetSiblingIndex(i);
       }
     }
+  }
+
+  private void EnableButton(Button button, Color enabledColor) {
+    button.interactable = true;
+    button.image.color = enabledColor;
+  }
+
+  private void DisableButton(Button button, Color disabledColor) {
+    button.interactable = false;
+    button.image.color = disabledColor;
   }
 }

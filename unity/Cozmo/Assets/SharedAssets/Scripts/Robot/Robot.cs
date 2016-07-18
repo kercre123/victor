@@ -1576,7 +1576,7 @@ public class Robot : IRobot {
     if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnected)
       return;
 
-    if (Time.time > LightCube.Light.MessageDelay || now) {
+    if (Time.time > ObservedObject.Light.MessageDelay || now) {
       var enumerator = LightCubes.GetEnumerator();
 
       while (enumerator.MoveNext()) {
@@ -1584,6 +1584,10 @@ public class Robot : IRobot {
 
         if (lightCube.LightsChanged)
           lightCube.SetAllLEDs();
+      }
+
+      if ((Charger != null) && Charger.LightsChanged) {
+        Charger.SetAllLEDs();
       }
     }
 

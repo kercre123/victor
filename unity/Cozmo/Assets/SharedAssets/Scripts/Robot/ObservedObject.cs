@@ -12,6 +12,24 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class ObservedObject {
 
+  public class Light : Robot.Light {
+    public static new float MessageDelay = 0f;
+
+    public override void ClearData() {
+      base.ClearData();
+      MessageDelay = 0f;
+    }
+
+    public void SetFlashingLED(Color onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
+      OnColor = onColor.ToUInt();
+      OffColor = 0;
+      OnPeriodMs = onDurationMs;
+      OffPeriodMs = offDurationMs;
+      TransitionOnPeriodMs = transitionMs;
+      TransitionOffPeriodMs = transitionMs;
+    }
+  }
+
   private const uint _kFindCubesTimeoutFrames = 1;
 
   public enum PoseState {
@@ -90,6 +108,22 @@ public class ObservedObject {
 
   public PoseState CurrentPoseState { get; private set; }
 
+  public Light[] Lights { get; private set; }
+
+  public bool LightsChanged {
+    get {
+      if (lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY)
+        return true;
+
+      for (int i = 0; i < Lights.Length; ++i) {
+        if (Lights[i].Changed)
+          return true;
+      }
+
+      return false;
+    }
+  }
+
   private InFieldOfViewState _CurrentInFieldOfViewState = InFieldOfViewState.NotVisible;
 
   public InFieldOfViewState CurrentInFieldOfViewState {
@@ -111,14 +145,22 @@ public class ObservedObject {
 
   private int _ConsecutiveVisionFramesNotSeen = 0;
 
+  private float lastRelativeToX;
+  public float relativeToX;
+  private float lastRelativeToY;
+  public float relativeToY;
+
+  private MakeRelativeMode lastRelativeMode;
+  public MakeRelativeMode relativeMode;
+
+  private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
+
+
+
   public ObservedObject() {
   }
 
   public ObservedObject(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
-    Constructor(objectID, factoryID, objectFamily, objectType);
-  }
-
-  protected void Constructor(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) {
     Family = objectFamily;
     ObjectType = objectType;
     ID = objectID;
@@ -136,6 +178,15 @@ public class ObservedObject {
     LastMovementMessageEngineTimestamp = 0;
 
     _ConsecutiveVisionFramesNotSeen = 0;
+
+
+    SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
+
+    Lights = new Light[SetAllActiveObjectLEDsMessage.onColor.Length];
+
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i] = new Light();
+    }
 
     DAS.Debug("ObservedObject.Constructed", "ObservedObject from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
   }
@@ -223,5 +274,132 @@ public class ObservedObject {
   }
 
   public virtual void HandleObjectTapped(ObjectTapped message) {
+  }
+
+  public void SetAllLEDs() { // should only be called from update loop
+    SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
+    SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
+
+    for (int i = 0; i < Lights.Length; ++i) {
+      SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = Lights[i].OnPeriodMs;
+      SetAllActiveObjectLEDsMessage.offPeriod_ms[i] = Lights[i].OffPeriodMs;
+      SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].TransitionOnPeriodMs;
+      SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
+      SetAllActiveObjectLEDsMessage.onColor[i] = Lights[i].OnColor;
+      SetAllActiveObjectLEDsMessage.offColor[i] = Lights[i].OffColor;
+    }
+
+    SetAllActiveObjectLEDsMessage.makeRelative = relativeMode;
+    SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
+    SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
+
+    RobotEngineManager.Instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
+    RobotEngineManager.Instance.SendMessage();
+
+    SetLastLEDs();
+  }
+
+  private void SetLastLEDs() {
+    lastRelativeMode = relativeMode;
+    lastRelativeToX = relativeToX;
+    lastRelativeToY = relativeToY;
+
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i].SetLastInfo();
+    }
+  }
+
+  public void SetLEDsOff() {
+    SetLEDs((uint)LEDColor.LED_OFF);
+  }
+
+  public void SetLEDs(Color onColor) {
+    SetLEDs(onColor.ToUInt());
+  }
+
+  public void SetLEDs(Color[] onColor) {
+    uint[] colors = new uint[onColor.Length];
+    for (int i = 0; i < onColor.Length; i++) {
+      colors[i] = onColor[i].ToUInt();
+    }
+    SetLEDs(colors);
+  }
+
+  public void SetFlashingLEDs(Color onColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
+    SetLEDs(onColor.ToUInt(), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
+  }
+
+  public void SetFlashingLEDs(uint onColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
+    SetLEDs(onColor, 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
+  }
+
+  public void SetFlashingLEDs(Color[] onColors, Color offColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
+    uint[] onColorsUint = new uint[onColors.Length];
+    for (int i = 0; i < onColorsUint.Length; i++) {
+      onColorsUint[i] = onColors[i].ToUInt();
+    }
+    SetLEDs(onColorsUint, offColor.ToUInt(), onDurationMs, offDurationMs, transitionMs, transitionMs);
+  }
+
+  public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+
+    Light light; 
+    for (int i = 0; i < Lights.Length; ++i) {
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+    }
+
+    relativeMode = 0;
+    relativeToX = 0;
+    relativeToY = 0;
+  }
+
+  public void SetLEDs(uint[] lightColors, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+
+    uint onColor;
+    Light light; 
+    for (int i = 0; i < Lights.Length; ++i) {
+      onColor = lightColors[i % lightColors.Length];
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+    }
+
+    relativeMode = 0;
+    relativeToX = 0;
+    relativeToY = 0;
+  }
+
+  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
+    uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {  
+    SetLEDsRelative(relativeTo.x, relativeTo.y, onColor, offColor, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+  }
+
+  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
+    uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+    SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+
+    this.relativeMode = relativeMode;
+    this.relativeToX = relativeToX;
+    this.relativeToY = relativeToY;
+  }
+
+  public Color[] GetLEDs() {
+    Color[] lightColors = new Color[Lights.Length];
+    for (int i = 0; i < Lights.Length; ++i) {
+      lightColors[i] = Lights[i].OnColor.ToColor();
+    }
+    return lightColors;
   }
 }
