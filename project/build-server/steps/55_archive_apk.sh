@@ -13,8 +13,8 @@ APK_FILE_NAME=Cozmo.apk
 SYMBOL_STORE=${ANKI_BUILD_ROOT}/android/symbols
 mkdir -p "${SYMBOL_STORE}"
 
-cp -p ./unity/Cozmo/Assets/Plugins/Android/libs/armeabi-v7a/*.so ${SYMBOL_STORE}
-cp -p ./unity/Cozmo/Assets/Plugins/Android/libs/*.so ${SYMBOL_STORE}
+cp -p ./build/android/libs-prestrip/armeabi-v7a/*.so ${SYMBOL_STORE}
+cp -p ./build/android/libs-prestrip/*.so ${SYMBOL_STORE}
 
 # archive debug symbols
 SYMBOLS_ARCHIVE_FILE="${APK_FILE_NAME}-symbols.zip"

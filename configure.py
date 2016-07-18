@@ -102,6 +102,19 @@ def copytree(src, dst, symlinks=False, ignore=None):
             if not os.path.exists(d) or os.stat(s).st_mtime - os.stat(d).st_mtime > 1:
                 shutil.copy2(s, d)
 
+#stolen from above
+def getfilesrecursive(src):
+    files = []
+    if not os.path.exists(src):
+        return files
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        if (os.path.isdir(s)):
+            files.extend(getfilesrecursive(s))
+        else:
+            files.append(s)
+    return files
+
 ####################
 # ARGUMENT PARSING #
 ####################
@@ -260,6 +273,8 @@ class GamePlatformConfiguration(object):
 
         #because these is being deleted no matter what it must exist for all configurations.
         self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs')
+        self.android_lib_dir = os.path.join(self.platform_build_dir, 'libs')
+        self.android_prestrip_lib_dir = os.path.join(self.platform_build_dir, 'libs-prestrip')
 
 
         self.symlink_keys = ['opencv', 'sphinx', 'HockeyApp']
@@ -430,10 +445,10 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
             ankibuild.util.File.mkdir_p(self.artifact_dir)
         elif self.platform == 'android':
-            ankibuild.util.File.mkdir_p(self.android_unity_plugin_dir)
+            ankibuild.util.File.mkdir_p(self.android_prestrip_lib_dir)
             for chipset in self.processors:
                 # TODO: create a cp_r in util.
-                libfolder = os.path.join(self.android_unity_plugin_dir, chipset)
+                libfolder = os.path.join(self.android_prestrip_lib_dir, chipset)
                 # TODO: change cp -r steps to linking steps for android assets
                 copytree(os.path.join(self.android_opencv_target, chipset), libfolder)
         else:
@@ -461,11 +476,13 @@ class GamePlatformConfiguration(object):
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                "libcozmoEngine.so"), self.android_unity_plugin_dir)
+                                                "libcozmoEngine.so"), self.android_prestrip_lib_dir)
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                "libDAS.so"), self.android_unity_plugin_dir)
+                                                "libDAS.so"), self.android_prestrip_lib_dir)
             # move third ndk libs.
             self.move_ndk()
+            # strip libraries and copy into unity
+            self.strip_libs()
             # Call unity for game
             self.call_unity()
 
@@ -517,11 +534,23 @@ class GamePlatformConfiguration(object):
             for lib_type in ndk:
                 original = os.path.join(self.android_ndk_root, ndk_values['{0}_path'.format(lib_type)],
                                         chipset, ndk_values[lib_type])
-                copy = os.path.join(self.android_unity_plugin_dir, chipset)
+                copy = os.path.join(self.android_prestrip_lib_dir, chipset)
                 if os.path.isfile(original):
                     ankibuild.util.File.cp(original, copy)
                 else:
                     sys.exit("Cannot locate {0}".format(original))
+
+    def strip_libs(self):
+        print_status('Stripping library symbols (if necessary)...')
+        args = [os.path.join(self.gyp_dir, 'android-strip-libs.py')]
+        args += ["--ndk-toolchain", os.path.join(self.android_ndk_root, 'toolchains',
+                                                 'arm-linux-androideabi-4.8', 'prebuilt', 'darwin-x86_64')]
+        args += ["--source-libs-dir", self.android_prestrip_lib_dir]
+        args += ["--target-libs-dir", self.android_lib_dir]
+        ankibuild.util.File.execute(args)
+
+        # copy libs to unity plugin folder
+        copytree(self.android_lib_dir, self.android_unity_plugin_dir)
 
     def call_unity(self):
 
