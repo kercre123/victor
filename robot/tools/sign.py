@@ -26,16 +26,14 @@ parser.add_argument("-b", "--body", type=str,
                     help="NRF ELF Image")
 parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
-
-parser.add_argument('--factory_restore', type=str,
-                    help="Factory restore firmware for WiFi")
 parser.add_argument("-s", "--sign", nargs=2, type=str,
                     help="Create signature block")
 parser.add_argument("-c", "--comment", action="store_true",
                     help="Add version information comment block")
 parser.add_argument("--prepend_size_word", action="store_true",
                     help="Put a single u32 size word at the front of the file for recovery images.")
-args = parser.parse_args()
+parser.add_argument("--factory_upgrade", nargs=2, type=str,
+                    help="Generate a factory firmware upgrade image")
 
 FILE_TYPE_VERSION   = 0x00000001
 
@@ -43,6 +41,7 @@ AES_BLOCK_LENGTH    = 16
 BLOCK_LENGTH        = 0x800
 BODY_BLOCK          = 0x80000000
 WIFI_BLOCK          = 0x40000000
+FACTORY_UPGRD_BLOCK = 0xFFfacfac
 COMMENT_BLOCK       = 0xFFFFFFFC    # this is the JSON used for the app
 HEADER_INFORMATION  = 0xFFFFFFFE    # this is used for the robot
 CERTIFICATE_BLOCK   = 0xFFFFFFFF
@@ -255,14 +254,15 @@ if __name__ == '__main__':
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block+base_addr, aes_key)
     
-    if args.factory_restore is not None:
-        wifi,rtip = args.factory_restore.split(',')
+    if args.factory_upgrade is not None:
+        fo.write(b"", FACTORY_UPGRD_BLOCK, aes_key)
+        wifi,rtip = args.factory_upgrade
         rom_data = open(wifi, 'rb').read()
         for block, data in chunk(rom_data, BLOCK_LENGTH):
-            fo.write(data, block + 0xFF400000)
+            fo.write(data, block + WIFI_BLOCK)
         rom_data = open(rtip, 'rb').read()
         for block, data in chunk(rom_data, BLOCK_LENGTH):
-            fo.write(data, block + 0xFF400000 + 0x45000)
+            fo.write(data, block + WIFI_BLOCK + 0x45000)
 
     fo.writeCert(cert)    
     fo.close()

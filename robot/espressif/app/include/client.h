@@ -42,9 +42,4 @@ bool clientConnected(void);
 /// Retrieve the approximate number of bytes available in the transmit queue
 sint16 clientQueueAvailable(void);
 
-#if FACTORY_FIRMWARE
-/// Returns whether the factory lockout function has been set
-bool hasFactoryLockout(void);
-#endif
-
 #endif

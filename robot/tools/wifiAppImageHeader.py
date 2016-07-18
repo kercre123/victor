@@ -33,11 +33,17 @@ class EspressifNewStyleHeader(struct.Struct):
         return self.pack(*self.fields)
 
 def fix_image(inFile, outFile):
-    eh = EspressifNewStyleHeader(open(inFile, 'rb').read())
+    if hasattr(inFile, "read"):
+        eh = EspressifNewStyleHeader(inFile.read())
+    else:
+        eh = EspressifNewStyleHeader(open(inFile, 'rb').read())
     eh.image += b"\xff" * (BLOCK_SIZE - (len(eh.image) % BLOCK_SIZE))
     aih = AppImageHeader(eh.image)
     eh.fields[-1] += aih.size # Length is last field, add size of our additional header
-    of = open(outFile, 'wb')
+    if hasattr(outFile, "write"):
+        of = outFile
+    else:
+        of = open(outFile, 'wb')
     of.write(eh.header)
     of.write(aih.serialize())
     of.write(eh.image)

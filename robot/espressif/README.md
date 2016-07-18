@@ -23,12 +23,8 @@ gperf bison flex texinfo libtool wget gawk crosstool-ng autoconf automake gcc
 ```
 
 ### Python
-The Anki scripts are written primarily targeting python3 but the Espressif scripts target python2 so you'll need to
-have both installed and have ```python2``` and ```python3``` in your path. On OSX you need to create a python2 symlink
-```
-cd /usr/bin
-sudo ln -s python python2
-```
+The Anki scripts are written primarily targeting python3 but the Espressif scripts target python2 and rely on having
+python2.7 in the path.
 
 #### Serial tools
 If you will be programming the Espressif directly over serial you'll need to install the open source esptool
