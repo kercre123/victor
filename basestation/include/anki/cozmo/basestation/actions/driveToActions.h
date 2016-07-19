@@ -28,6 +28,7 @@ namespace Anki {
   namespace Cozmo {
     
     class PickupObjectAction;
+    class IDockAction;
 
     class DriveToPoseAction : public IAction
     {
@@ -234,6 +235,11 @@ namespace Anki {
         return _driveToObjectAction;
       }
       
+      // Subclasses that are a drive-to action followed by a dock action should be calling
+      // this function instead of the base classes AddAction() in order to set the approriate
+      // preDock pose offset for the dock action
+      void AddDockAction(IDockAction* dockAction, bool ignoreFailure = false);
+      
     protected:
 
       virtual Result UpdateDerived() override;
@@ -246,6 +252,7 @@ namespace Anki {
       DriveToObjectAction* _driveToObjectAction = nullptr;
       ObjectID _objectID;
       bool     _lightsSet = false;
+      f32      _preDockPoseDistOffsetX_mm = 0;
       
     }; // class IDriveToInteractWithObject
         
@@ -271,9 +278,6 @@ namespace Anki {
                                    const bool sayName = false);
       
       virtual ~DriveToAlignWithObjectAction() { }
-      
-    private:
-      IAction* _alignAction = nullptr;
     };
     
     

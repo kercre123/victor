@@ -948,6 +948,7 @@ namespace Anki {
       msg.approachAngle_rad = approachAngle_rad;
       msg.usePreDockPose = usePreDockPose;
       msg.useManualSpeed = useManualSpeed;
+      msg.alignmentType = AlignmentType::CUSTOM;
       
       ExternalInterface::MessageGameToEngine msgWrapper;
       msgWrapper.Set_AlignWithObject(msg);
