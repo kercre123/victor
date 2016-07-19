@@ -51,16 +51,17 @@ void dh_start(DiffieHellman* dh) {
 void dh_finish(const void* key, DiffieHellman* dh) {
   // Encode their secret for exponent
   big_num_t temp;
+  big_num_t state;
 
   dh_encode_random(temp, dh->pin, dh->local_secret);
-  mont_power(*dh->mont, dh->state, *dh->gen, temp);
+  mont_power(*dh->mont, state, *dh->gen, temp);
 
   dh_encode_random(temp, dh->pin, dh->remote_secret);
-  mont_power(*dh->mont, dh->state, dh->state, temp);
+  mont_power(*dh->mont, state, state, temp);
 
-  mont_from(*dh->mont, temp, dh->state);
+  mont_from(*dh->mont, temp, state);
 
-  // Override the secret with 
+  // Encode our AES key with the DH output
   ecb_data_t ecb;
   
   memcpy(ecb.key, temp.digits, AES_KEY_LENGTH);
