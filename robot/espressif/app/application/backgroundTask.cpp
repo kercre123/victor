@@ -16,6 +16,7 @@ extern "C" {
 #include "rtip.h"
 #include "activeObjectManager.h"
 #include "face.h"
+#include "dhTask.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
@@ -135,6 +136,11 @@ void Exec(os_event_t *event)
       }
       lastStaCount = currentStaCount;
       break;
+    }
+    case 7:
+    {
+      DiffieHellman::Update();
+      break ;
     }
     // Add new "long execution" tasks as switch cases here.
     default:
