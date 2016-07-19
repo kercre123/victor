@@ -33,6 +33,10 @@ struct QueueSlot{
 static const int QUEUE_DEPTH = 4;
 static QueueSlot queue[QUEUE_DEPTH];
 
+static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
+  Bluetooth::diffieHellmanResults(msg);
+}
+
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
   Backpack::setLights(msg.lights);

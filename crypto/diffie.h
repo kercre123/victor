@@ -13,6 +13,9 @@ struct DiffieHellman {
   uint32_t          pin;
   uint8_t           local_secret[SECRET_LENGTH];
   uint8_t           remote_secret[SECRET_LENGTH];
+  uint8_t           local_encoded[SECRET_LENGTH];
+  uint8_t           remote_encoded[SECRET_LENGTH];
+  uint8_t           diffie_result[SECRET_LENGTH];
   uint8_t           encoded_key[AES_KEY_LENGTH];
 };
 

@@ -38,6 +38,12 @@ static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
 static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
 static const uint8_t HELLO_SIGNATURE[] = { 'C', 'Z', 'M', '0' };
 
+// This is our inital state for pairing
+static DiffieHellman dh_state = {
+  &RSA_DIFFIE_MONT,
+  &RSA_DIFFIE_EXP_MONT,
+};
+
 struct BLE_CladBuffer {
   uint16_t  PADDING;
   
@@ -115,18 +121,28 @@ static void dh_complete(const void* state, int) {
   RobotInterface::SendMessage(dn);
 }
 
+void Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg) {
+  memcpy(dh_state.diffie_result, msg.result, SECRET_LENGTH);
+
+  Task t;
+  t.op = TASK_FINISH_DIFFIE_HELLMAN;
+  t.state = &dh_state;
+  t.callback = dh_complete;
+  Tasks::execute(&t);
+}
+
 static void dh_setup(const void* state, int) {
   using namespace Anki::Cozmo;
   
   const DiffieHellman* dh = (const DiffieHellman*) state;
   
-  // Finish DH process
-  Task t;
-  t.op = TASK_FINISH_DIFFIE_HELLMAN;
-  t.state = dh;
-  t.callback = dh_complete;
-  Tasks::execute(&t);
-
+  CalculateDiffieHellman cdh;
+  memcpy(cdh.remote, dh->remote_encoded, SECRET_LENGTH);
+  memcpy(cdh.local, dh->local_encoded, SECRET_LENGTH);
+  RobotInterface::SendMessage(cdh);
+  
+  // TODO: ENCODE AND 
+  
   // Display the pin number
   RobotInterface::DisplayNumber dn;
   dn.value = dh->pin;
@@ -137,12 +153,6 @@ static void dh_setup(const void* state, int) {
 }
 
 void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
-  // This is our inital state for pairing
-  static DiffieHellman dh_state = {
-    &RSA_DIFFIE_MONT,
-    &RSA_DIFFIE_EXP_MONT,
-  };
-
   // Copy in our secret code, and run
   memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
   
