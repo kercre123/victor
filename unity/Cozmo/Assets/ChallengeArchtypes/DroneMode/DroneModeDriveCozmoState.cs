@@ -37,6 +37,7 @@ namespace Cozmo {
           _DroneModeGame.EnableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
 
+          Anki.Cozmo.Viz.VizManager.Enabled = true;
 
           SetupRobotForDriveState();
         }
@@ -47,6 +48,7 @@ namespace Cozmo {
           _DroneModeView.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
           _DroneModeGame.DisableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
+          Anki.Cozmo.Viz.VizManager.Enabled = true;
         }
 
         public override void Update() {
