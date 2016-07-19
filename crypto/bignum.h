@@ -33,6 +33,18 @@ struct big_mont_t {
   big_num_t minv;
 };
 
+struct big_mont_pow_t {
+  const big_mont_t* mont;
+  big_num_t exp;
+  big_num_t working[3];
+
+  big_num_t *base;
+  big_num_t *result;
+  big_num_t *temp;
+
+  int msb, bit;
+};
+
 // This is used for public decryption
 struct big_rsa_t {
   big_num_t modulo;
@@ -87,5 +99,9 @@ bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in);
 bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in);
 bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b);
 bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp);
+
+// Async montgomery power
+void mont_power_async_init(big_mont_pow_t& state, const big_mont_t& mont, const big_num_t& base, const big_num_t& exp);
+bool mont_power_async(big_mont_pow_t& state, big_num_t& out);
 
 #endif

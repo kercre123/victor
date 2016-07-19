@@ -356,6 +356,7 @@ union EngineToRobot
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyRestart              bodyRestart                 = 0x0D,
 
+  DiffieHellmanResults          diffieHellmanResults        = 0x25,
   HelloRobot                    helloRobotMessage           = 0x26,
   EnterPairing                  enterPairing                = 0x27,
 
@@ -438,13 +439,15 @@ union EngineToRobot
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
+  CalculateDiffieHellman        calculateDiffieHellman      = 0xA4,
+
   OTA::Write                    otaWrite                    = 0xAF,
 
   AppConnectConfigString        appConCfgString             = 0xAA,
   AppConnectConfigFlags         appConCfgFlags              = 0xAB,
   AppConnectConfigIPInfo        appConCfgIPInfo             = 0xAC,
   AppConnectGetRobotIP          appConGetRobotIP            = 0xAD,
-  WiFiOff                       wifiOff                     = 0xAE,
+  WiFiOff                       wifiOff                     = 0xAE
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
