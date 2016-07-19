@@ -23,6 +23,10 @@ namespace Anki.Debug {
         break;
       }
 
+      if (singleVar.UnityObject != null) {
+        _StatInputField.text = GetUnityValue().ToString();
+      }
+
       _StatInputField.onValueChanged.AddListener(HandleValueChanged);
     }
 
@@ -34,7 +38,6 @@ namespace Anki.Debug {
             float result;
             if (float.TryParse(strValue, out result)) {
               SetUnityValue(result);
-              _VarData.ValueAsDouble = result;
             }
           }
           break;
@@ -42,7 +45,6 @@ namespace Anki.Debug {
             int result;
             if (int.TryParse(strValue, out result)) {
               SetUnityValue(result);
-              _VarData.ValueAsInt64 = result;
             }
           }
           break;

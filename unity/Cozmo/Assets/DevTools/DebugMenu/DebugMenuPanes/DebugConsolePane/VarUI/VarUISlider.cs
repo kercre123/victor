@@ -25,7 +25,10 @@ namespace Anki.Debug {
         setVal = (float)singleVar.ValueAsUInt64;
         break;
       }
-      _Slider.value = (float)setVal;
+      if (singleVar.UnityObject != null) {
+        setVal = (float)GetUnityValue();
+      }
+      _Slider.value = setVal;
       SetSliderVal(_Slider.value);
 
       _Slider.onValueChanged.AddListener(HandleValueChanged);
@@ -36,7 +39,6 @@ namespace Anki.Debug {
       // otherwise it will send another Set to a valid value.
       if (_VarData.UnityObject != null) {
         SetUnityValue(val);
-        _VarData.ValueAsDouble = val;
       }
       else {
         RobotEngineManager.Instance.SetDebugConsoleVar(_VarData.VarName, val.ToString());

@@ -21,6 +21,24 @@ namespace Anki.Debug {
       _VarData.UIAdded = null;
     }
 
+    protected virtual object GetUnityValue() {
+      // The debug console can see privates.
+      if (_VarData.UnityObject != null) {
+        BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                                                       | BindingFlags.Static;
+        // Set directly if the value was static else it's a member of an object
+        if (_VarData.UnityObject is System.Type) {
+          System.Reflection.FieldInfo info = ((System.Type)_VarData.UnityObject).GetField(_VarData.VarName, bindFlags);
+          return info.GetValue(null);
+        }
+        else {
+          System.Reflection.FieldInfo info = _VarData.UnityObject.GetType().GetField(_VarData.VarName, bindFlags);
+          return info.GetValue(_VarData.UnityObject);
+        }
+      }
+      return null;
+    }
+
     protected virtual void SetUnityValue(object val) {
       // The debug console can see privates.
       BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
@@ -29,10 +47,12 @@ namespace Anki.Debug {
       if (_VarData.UnityObject is System.Type) {
         System.Reflection.FieldInfo info = ((System.Type)_VarData.UnityObject).GetField(_VarData.VarName, bindFlags);
         info.SetValue(null, val);
+        DebugConsoleData.Instance.UnityConsoleDataUpdated(_VarData.VarName);
       }
       else {
         System.Reflection.FieldInfo info = _VarData.UnityObject.GetType().GetField(_VarData.VarName, bindFlags);
         info.SetValue(_VarData.UnityObject, val);
+        DebugConsoleData.Instance.UnityConsoleDataUpdated(_VarData.VarName);
       }
     }
 

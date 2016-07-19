@@ -11,7 +11,9 @@ namespace Anki.Debug {
       base.Init(singleVar, go);
 
       _Checkbox.isOn = singleVar.ValueAsUInt64 != 0;
-
+      if (singleVar.UnityObject != null) {
+        _Checkbox.isOn = (bool)GetUnityValue();
+      }
       _Checkbox.onValueChanged.AddListener(HandleValueChanged);
     }
 
@@ -21,7 +23,6 @@ namespace Anki.Debug {
       // Empty string just means toggle.
       if (_VarData.UnityObject != null) {
         SetUnityValue(val);
-        _VarData.ValueAsUInt64 = val ? 1ul : 0;
       }
       else {
         RobotEngineManager.Instance.SetDebugConsoleVar(_VarData.VarName, "");
