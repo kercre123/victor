@@ -561,6 +561,10 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
           UtilLog.error('No result code received from {test_controller}'.format(test_controller))
           continue
 
+        if output.test_return_code != 0:
+          UtilLog.error('Recieved non-zero return code from webots. Recieved {return_code}'.format(return_code=output.test_return_code))
+          continue
+
         # if error_count > 0:
         #   UtilLog.error('There was an error in the webots log.')
         #   continue
