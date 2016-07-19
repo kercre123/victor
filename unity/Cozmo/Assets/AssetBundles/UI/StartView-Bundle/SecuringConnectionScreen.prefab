@@ -29,11 +29,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 537a59100e70d41839980a605f59e709, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: securing_connection_screen
-  _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  DimBackground: 0
 --- !u!114 &11470632
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -66,7 +61,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Securing your connection...
+  m_Text: '#connectivity.securingConnection'
   _AllUppercase: 0
   GlowText: 0
 --- !u!222 &22266952
