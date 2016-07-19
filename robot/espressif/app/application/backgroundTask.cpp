@@ -191,6 +191,11 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;
   }
+  else if (DiffieHellman::Init() != true)
+  {
+    os_printf("\tCouldn't initalize Diffie Hellman module\r\n");
+    return -2;
+  }
   else if (Anki::Cozmo::RTIP::Init() != true)
   {
     os_printf("\tCouldn't initalize RTIP interface module\r\n");

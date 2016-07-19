@@ -234,8 +234,9 @@ namespace Anki {
             }
             case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
             {
+              os_printf("Farts");
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              DiffieHellman::Init(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
+              DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
               break ;
             }
             case RobotInterface::EngineToRobot::Tag_setRTTO:

@@ -135,14 +135,7 @@ static void dh_setup(const void* state, int) {
   using namespace Anki::Cozmo;
   
   const DiffieHellman* dh = (const DiffieHellman*) state;
-  
-  CalculateDiffieHellman cdh;
-  memcpy(cdh.remote, dh->remote_encoded, SECRET_LENGTH);
-  memcpy(cdh.local, dh->local_encoded, SECRET_LENGTH);
-  RobotInterface::SendMessage(cdh);
-  
-  // TODO: ENCODE AND 
-  
+
   // Display the pin number
   RobotInterface::DisplayNumber dn;
   dn.value = dh->pin;
@@ -150,6 +143,12 @@ static void dh_setup(const void* state, int) {
   dn.x = 0;
   dn.y = 16;
   RobotInterface::SendMessage(dn);
+
+  // Ask another processor to nicely calculate our heavy function
+  CalculateDiffieHellman cdh;
+  memcpy(cdh.remote, dh->remote_encoded, SECRET_LENGTH);
+  memcpy(cdh.local, dh->local_encoded, SECRET_LENGTH);
+  RobotInterface::SendMessage(cdh);
 }
 
 void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  

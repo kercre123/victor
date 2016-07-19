@@ -417,7 +417,7 @@ union EngineToRobot
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
   NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
-  // Available for future use                               = 0x86,
+  CalculateDiffieHellman        calculateDiffieHellman      = 0x86,
   RTIPVersionInfo               rtipVersion                 = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
@@ -440,7 +440,6 @@ union EngineToRobot
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
-  CalculateDiffieHellman        calculateDiffieHellman      = 0xA4,
 
   OTA::Write                    otaWrite                    = 0xAF,
 
