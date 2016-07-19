@@ -81,6 +81,8 @@ namespace Anki
   // or after the last absolute pose update was sent to the robot.
   typedef u32 PoseFrameID_t;
 
+  typedef u32 PoseOriginID_t;
+  
 #ifdef __cplusplus
 } // namespace Anki
 #endif

@@ -858,7 +858,7 @@ namespace Anki {
                                "AngleDiff=%.1fdeg",
                                object.first.GetValue(),
                                Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
-              objectInOriginalPose = object.second;
+              objectInOriginalPose = object.second.get();
               break;
             }
           }

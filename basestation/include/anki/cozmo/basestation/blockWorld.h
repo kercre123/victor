@@ -48,7 +48,7 @@ namespace Anki
     {
     public:
       
-      using ObjectsMapByID_t     = std::map<ObjectID, ObservableObject*>;
+      using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
@@ -96,16 +96,16 @@ namespace Anki
       void ClearAllExistingObjects();
       void ClearObjectsByFamily(const ObjectFamily family);
       void ClearObjectsByType(const ObjectType type);
-      bool ClearObject(const ObjectID withID); // Returns true if object with ID is found and cleared, false otherwise.
+      bool ClearObject(const ObjectID& withID); // Returns true if object with ID is found and cleared, false otherwise.
       bool ClearObject(ObservableObject* object);
       
 
       // First clears the object and then actually deletes it, removing it from
       // BlockWorld entirely.
       void DeleteAllExistingObjects();
-      bool DeleteObject(const ObjectID withID);
+      bool DeleteObject(const ObjectID& withID);
       bool DeleteObject(ObservableObject* object);
-      
+      void DeleteObjectsByOrigin(const Pose3d* origin, bool clearFirst); // can disable clearing before deletion
       void DeleteObjectsByFamily(const ObjectFamily family);
       void DeleteObjectsByType(const ObjectType type);
       
@@ -117,29 +117,39 @@ namespace Anki
       const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
       const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType whichType) const;
       
-      // Return a pointer to an object with the specified ID. If that object
-      // does not exist, nullptr is returned.  Be sure to ALWAYS check
-      // for the return being null!
-      ObservableObject* GetObjectByID(const ObjectID objectID);
-      const ObservableObject* GetObjectByID(const ObjectID objectID) const;
+      // Return a pointer to an object with the specified ID (in the current world
+      // coordinate frame. If that object does not exist, nullptr is returned.
+      // Be sure to ALWAYS check for the return being null!
+      // Optionally, specify a family to search within.
+      // For more complex queries, use one of the Find methods with a BlockWorldFilter.
+      ObservableObject* GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ObservableObject* GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
-      // Same as above, but only searches a given family of objects
-      ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily);
-      const ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
-      
-      // Dynamically cast the given object ID into the templated active object type
-      // Return nullptr on failure to find ActiveObject
-      ActiveObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ActiveObject* GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      // Like GetObjectByID but dynamically casts the given object ID into the
+      // ActiveObject type.
+      ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
       // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
-      ActiveObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ActiveObject* GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily = ObjectFamily::Unknown) const;
+      ActiveObject* GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily = ObjectFamily::Unknown);
+      const ActiveObject* GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
-      
-      // returns (in arguments) all objects matching a filter
+      // Returns (in arguments) all objects matching a filter
       // NOTE: does not clear result (thus can be used multiple times with the same vector)
-      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result) const;
+      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<const ObservableObject*>& result) const;
+      void FindMatchingObjects(const BlockWorldFilter& filter, std::vector<ObservableObject*>& result);
+      
+      // Returns first object matching filter
+      const ObservableObject* FindMatchingObject(const BlockWorldFilter& filter) const;
+      ObservableObject* FindMatchingObject(const BlockWorldFilter& filter);
+      
+      // Applies given filter or modifier to all objects.
+      // NOTE: Calling FilterObjects this way doesn't return anything, so the only
+      //  way it has any effect is via the filter's FilterFcn, which presumably
+      //  is doing useful work for you somehow. Otherwise what are you doing?
+      using ModifierFcn = std::function<void(ObservableObject*)>;
+      void FilterObjects(const BlockWorldFilter& filter) const;
+      void ModifyObjects(const ModifierFcn& modiferFcn, const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension, relative to world origin!) and
@@ -151,46 +161,74 @@ namespace Anki
                                     const f32 padding,
                                     std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
                                     const BlockWorldFilter& filter = BlockWorldFilter()) const;
-
+      
       // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
       // of the given pose. Returns nullptr if no objects match. Returns closest
       // if multiple matches are found.
-      ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                            const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      const ObservableObject* FindObjectClosestTo(const Pose3d& pose,
+                                                  const BlockWorldFilter& filter = BlockWorldFilter()) const;
 
+      const ObservableObject* FindObjectClosestTo(const Pose3d& pose,
+                                                  const Vec3f&  distThreshold,
+                                                  const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
       ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                            const Vec3f&  distThreshold,
-                                            const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                                  const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      ObservableObject* FindObjectClosestTo(const Pose3d& pose,
+                                                  const Vec3f&  distThreshold,
+                                                  const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Finds a matching object (one with the same type) that is closest to the
       // given object, within the specified distance and angle thresholds.
       // Returns nullptr if none found.
+      const ObservableObject* FindClosestMatchingObject(const ObservableObject& object,
+                                                        const Vec3f& distThreshold,
+                                                        const Radians& angleThreshold,
+                                                        const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
       ObservableObject* FindClosestMatchingObject(const ObservableObject& object,
                                                   const Vec3f& distThreshold,
                                                   const Radians& angleThreshold,
                                                   const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Same as above, except type and pose are specified directly
+      const ObservableObject* FindClosestMatchingObject(ObjectType withType,
+                                                        const Pose3d& pose,
+                                                        const Vec3f& distThreshold,
+                                                        const Radians& angleThreshold,
+                                                        const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
       ObservableObject* FindClosestMatchingObject(ObjectType withType,
                                                   const Pose3d& pose,
                                                   const Vec3f& distThreshold,
                                                   const Radians& angleThreshold,
                                                   const BlockWorldFilter& filter = BlockWorldFilter());
       
-      ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      const ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's
       // XY bounding box, with the exception of those that are of ignoreFamilies or
       // ignoreTypes.
       void FindIntersectingObjects(const ObservableObject* objectSeen,
-                                   std::vector<ObservableObject*>& intersectingExistingObjects,
+                                   std::vector<const ObservableObject*>& intersectingExistingObjects,
                                    f32 padding_mm,
                                    const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       void FindIntersectingObjects(const Quad2f& quad,
-                                   std::vector<ObservableObject *> &intersectingExistingObjects,
+                                   std::vector<const ObservableObject*> &intersectingExistingObjects,
                                    f32 padding,
                                    const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
+      void FindIntersectingObjects(const ObservableObject* objectSeen,
+                                   std::vector<ObservableObject*>& intersectingExistingObjects,
+                                   f32 padding_mm,
+                                   const BlockWorldFilter& filter = BlockWorldFilter());
+      
+      void FindIntersectingObjects(const Quad2f& quad,
+                                   std::vector<ObservableObject*> &intersectingExistingObjects,
+                                   f32 padding,
+                                   const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Returns true if there are remaining objects that the robot could potentially
       // localize to
@@ -203,14 +241,22 @@ namespace Anki
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
+      const ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                f32 zTolerance,
+                                                const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
       ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
                                           f32 zTolerance,
-                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                          const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Same as above, but in revers: find object directly underneath given object
+      const ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                   f32 zTolerance,
+                                                   const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+      
       ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
                                              f32 zTolerance,
-                                             const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+                                             const BlockWorldFilter& filterIn = BlockWorldFilter());
     
       
       // Wrapper for above that returns bounding boxes of objects that are
@@ -236,7 +282,7 @@ namespace Anki
       
       // Try to select the object with the specified ID. Return true if that
       // object ID is found and the object is successfully selected.
-      bool SelectObject(const ObjectID objectID);
+      bool SelectObject(const ObjectID& objectID);
       void DeselectCurrentObject();
       
       void EnableObjectDeletion(bool enable);
@@ -291,10 +337,9 @@ namespace Anki
       //
       
       // Note these are marked const but return non-const pointers.
-      ObservableObject* GetObjectByIdHelper(const ObjectID objectID) const;
-      ObservableObject* GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
-      ActiveObject* GetActiveObjectByIDHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
-      ActiveObject* GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const;
+      ObservableObject* GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
+      ActiveObject* GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
+      ActiveObject* GetActiveObjectByActiveIdHelper(const u32 activeID, ObjectFamily inFamily) const;
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -309,6 +354,8 @@ namespace Anki
 
       // Finds existing objects that overlap with and are of the same type as objectSeen,
       // where overlap is defined by the IsSameAs() function.
+      // NOTE: these populate return vectors with non-const ObservableObject pointers
+      //       even though the methods are marked const, but these are protected helpers
       void FindOverlappingObjects(const ObservableObject* objectSeen,
                                   const ObjectsMapByType_t& objectsExisting,
                                   std::vector<ObservableObject*>& overlappingExistingObjects) const;
@@ -334,13 +381,21 @@ namespace Anki
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
-      void AddNewObject(ObservableObject* object);
-      void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object);
+      void AddNewObject(const std::shared_ptr<ObservableObject>& object);
+      void AddNewObject(ObjectsMapByType_t& existingFamily, const std::shared_ptr<ObservableObject>& object);
       
-      //template<class ObjectType>
+      // NOTE: this function takes control over the passed-in ObservableObject*'s and
+      //  will either directly add them to BlockWorld's existing objects or delete them
+      //  if/when they are no longer needed.
       Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
                                  const ObjectFamily& inFamily,
                                  const TimeStamp_t atTimestamp);
+      
+      // Updates poses of stacks of objects by finding the difference between old object
+      // poses and applying that to the new observed poses. Used when an object's
+      // pose is updated to correct anything stacked on top of it to match.
+      void UpdateRotationOfObjectsStackedOn(const ObservableObject* existingObjectOnBottom,
+                                            ObservableObject* objSeen);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
@@ -366,10 +421,24 @@ namespace Anki
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
       
-      using FindFcn = std::function<bool(ObservableObject* current, ObservableObject* best)>;
-      
-      ObservableObject* FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter = BlockWorldFilter(),
+      // Note: these helpers return non-const pointers despite being marked const,
+      // but that's because they are protected helpers wrapped by const/non-const
+      // public methods:
+      ObservableObject* FindObjectHelper(const BlockWorldFilter& filter = BlockWorldFilter(),
+                                         const ModifierFcn& modiferFcn = nullptr,
                                          bool returnFirstFound = false) const;
+      
+      ObservableObject* FindObjectOnTopOfHelper(const ObservableObject& objectOnBottom,
+                                                f32 zTolerance,
+                                                const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+
+      ObservableObject* FindObjectUnderneathHelper(const ObservableObject& objectOnTop,
+                                                   f32 zTolerance,
+                                                   const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+      
+      ObservableObject* FindObjectClosestToHelper(const Pose3d& pose,
+                                                  const Vec3f&  distThreshold,
+                                                  const BlockWorldFilter& filterIn) const;
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
@@ -407,25 +476,13 @@ namespace Anki
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
       std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
-      //Vision::Vision::ObservableObjectLibrary blockLibrary_;
-      //Vision::Vision::ObservableObjectLibrary matLibrary_;
-      //Vision::Vision::ObservableObjectLibrary rampLibrary_;
-      
       
       // Store all observed objects, indexed first by Type, then by ID
       // NOTE: If a new ObjectsMap_t is added here, a pointer to it needs to
       //   be stored in allExistingObjects_ (below), initialized in the
       //   BlockWorld cosntructor.
-      ObjectsMapByFamily_t _existingObjects;
-      // ObjectsMapByID_t _existingObjectsByID; TODO: flat list for faster finds?
-      
-      //ObjectsMap_t existingBlocks_;
-      //ObjectsMap_t existingMatPieces_;
-      //ObjectsMap_t existingRamps_;
-      
-      // An array storing pointers to all the ObjectsMap_t's above so that we
-      // we can easily loop over all types of objects.
-      //std::array<ObjectsMap_t*, 3> allExistingObjects_;
+      using ObjectsByOrigin_t = std::map<const Pose3d*, ObjectsMapByFamily_t>;
+      ObjectsByOrigin_t _existingObjects;
       
       bool _didObjectsChange;
       bool _canDeleteObjects;
@@ -466,71 +523,33 @@ namespace Anki
       }
     }
     
-    inline const BlockWorld::ObjectsMapByFamily_t& BlockWorld::GetAllExistingObjects() const
+    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily) {
+      return GetObjectByIdHelper(objectID, inFamily); // returns non-const*
+    }
+    
+    inline const ObservableObject* BlockWorld::GetObjectByID(const ObjectID& objectID, ObjectFamily inFamily) const {
+      return GetObjectByIdHelper(objectID, inFamily); // returns const*
+    }
+    
+    inline ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily) {
+      return GetActiveObjectByIdHelper(objectID, inFamily); // returns non-const*
+    }
+    
+    inline const ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily) const {
+      return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
+    }
+    
+    inline ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily) {
+      return GetActiveObjectByActiveIdHelper(activeID, inFamily); // returns non-const*
+    }
+    
+    inline const ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily) const {
+      return GetActiveObjectByActiveIdHelper(activeID, inFamily); // returns const*
+    }
+    
+    inline void BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object)
     {
-      return _existingObjects;
-    }
-    
-    inline const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily whichFamily) const
-    {
-      auto objectsWithFamilyIter = _existingObjects.find(whichFamily);
-      if(objectsWithFamilyIter != _existingObjects.end()) {
-        return objectsWithFamilyIter->second;
-      } else {
-        static const BlockWorld::ObjectsMapByType_t EmptyObjectMapByType;
-        return EmptyObjectMapByType;
-      }
-    }
-    
-    inline const BlockWorld::ObjectsMapByID_t& BlockWorld::GetExistingObjectsByType(const ObjectType whichType) const
-    {
-      for(auto & objectsByFamily : _existingObjects) {
-        auto objectsWithType = objectsByFamily.second.find(whichType);
-        if(objectsWithType != objectsByFamily.second.end()) {
-          return objectsWithType->second;
-        }
-      }
-      
-      // Type not found!
-      static const BlockWorld::ObjectsMapByID_t EmptyObjectMapByID;
-      return EmptyObjectMapByID;
-    }
-    
-    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) {
-      return GetObjectByIdHelper(objectID); // returns non-const*
-    }
-    
-    inline const ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const {
-      return GetObjectByIdHelper(objectID); // returns const*
-    }
-    
-    inline const ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const {
-      return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns const*
-    }
-    
-    inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) {
-      return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns non-const*
-    }
-
-    inline ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) {
-      return GetActiveObjectByIDHelper(objectID, inFamily); // returns non-const*
-    }
-    
-    inline const ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID objectID, const ObjectFamily inFamily) const {
-      return GetActiveObjectByIDHelper(objectID, inFamily); // returns const*
-    }
-    
-    inline ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) {
-      return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns non-const*
-    }
-    
-    inline const ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, const ObjectFamily inFamily) const {
-      return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns const*
-    }
-    
-    inline void BlockWorld::AddNewObject(ObservableObject* object)
-    {
-      AddNewObject(_existingObjects[object->GetFamily()], object);
+      AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object);
     }
 
     /*
@@ -553,6 +572,85 @@ namespace Anki
     inline void BlockWorld::EnableObjectDeletion(bool enable) {
       _canDeleteObjects = enable;
     }
+    
+    inline void BlockWorld::ModifyObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter) {
+      if(modifierFcn == nullptr) {
+        PRINT_NAMED_WARNING("BlockWorld.ModifyObjects.NullModifierFcn",
+                            "Consider just using FilterObjects?");
+      }
+      FindObjectHelper(filter, modifierFcn, false);
+    }
+    
+    inline void BlockWorld::FilterObjects(const BlockWorldFilter& filter) const {
+      FindObjectHelper(filter, nullptr, false);
+    }
+    
+    inline const ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                                 f32 zTolerance,
+                                                                 const BlockWorldFilter& filter) const
+    {
+      return FindObjectOnTopOfHelper(objectOnBottom, zTolerance, filter); // returns const
+    }
+    
+    inline ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                                           f32 zTolerance,
+                                                           const BlockWorldFilter& filter)
+    {
+      return FindObjectOnTopOfHelper(objectOnBottom, zTolerance, filter); // returns non-const
+    }
+    
+    inline const ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                                 f32 zTolerance,
+                                                                 const BlockWorldFilter& filter) const
+    {
+      return FindObjectUnderneathHelper(objectOnTop, zTolerance, filter); // returns const
+    }
+    
+    inline ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
+                                                              f32 zTolerance,
+                                                              const BlockWorldFilter& filter)
+    {
+      return FindObjectUnderneathHelper(objectOnTop, zTolerance, filter); // returns non-const
+    }
+    
+    
+    inline const ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                                   const BlockWorldFilter& filter) const
+    {
+      return FindObjectClosestTo(pose, Vec3f{FLT_MAX}, filter); // returns const
+    }
+    
+    inline ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                             const BlockWorldFilter& filter)
+    {
+      return FindObjectClosestTo(pose, Vec3f{FLT_MAX}, filter); // returns non-const
+    }
+    
+    inline const ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                                   const Vec3f&  distThreshold,
+                                                                   const BlockWorldFilter& filter) const
+    {
+      return FindObjectClosestToHelper(pose, distThreshold, filter); // returns const
+    }
+    
+    inline ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                             const Vec3f&  distThreshold,
+                                                             const BlockWorldFilter& filter)
+    {
+      return FindObjectClosestToHelper(pose, distThreshold, filter); // returns non-const
+    }
+    
+    inline const ObservableObject* BlockWorld::FindMatchingObject(const BlockWorldFilter& filter) const
+    {
+      return FindObjectHelper(filter, nullptr, true); // returns const
+    }
+    
+    inline ObservableObject* BlockWorld::FindMatchingObject(const BlockWorldFilter& filter)
+    {
+      return FindObjectHelper(filter, nullptr, true); // returns non-const
+    }
+
+
     
   } // namespace Cozmo
 } // namespace Anki

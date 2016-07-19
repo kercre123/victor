@@ -110,7 +110,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
     Quad2f candidateQuad = object->GetBoundingQuadXY(outPose);
 
     // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
-    std::vector<ObservableObject *> intersectingObjects;
+    std::vector<const ObservableObject *> intersectingObjects;
     robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm);
     
     isFree = intersectingObjects.empty();
@@ -178,35 +178,30 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) co
     else
     {
       // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
-      static const std::vector<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
-      for(const auto& family : familyList)
-      {
-        const auto& blocksByType = robot.GetBlockWorld().GetExistingObjectsByFamily(family);
-        for (const auto& blocksOfSameType : blocksByType)
+      BlockWorldFilter filter;
+      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+      filter.SetFilterFcn([this,&beaconList](const ObservableObject* blockPtr) {
+        if(blockPtr->IsPoseStateKnown())
         {
-          for(const auto& block : blocksOfSameType.second)
-          {
-            bool isBlockInAnyBeacon = false;
-            const ObservableObject* blockPtr = block.second;
-            if ( !blockPtr->IsPoseStateKnown() ) {
-              continue;
-            }
-            
-            // check if the object is within any beacon
-            for ( const auto& beacon : beaconList ) {
-              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-              if ( isBlockInAnyBeacon ) {
-                break;
-              }
-            }
-            
-            // this block should be carried to a beacon
-            if ( !isBlockInAnyBeacon ) {
-              _candidateObjects.emplace_back( blockPtr->GetID(), family );
+          bool isBlockInAnyBeacon = false;
+          
+          // check if the object is within any beacon
+          for ( const auto& beacon : beaconList ) {
+            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+            if ( isBlockInAnyBeacon ) {
+              break;
             }
           }
+          
+          // this block should be carried to a beacon
+          if ( !isBlockInAnyBeacon ) {
+            _candidateObjects.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
+          }
         }
-      }
+        return false; // have to return true/false, even though not used
+      });
+      
+      robot.GetBlockWorld().FilterObjects(filter);
     }
   }
 
@@ -427,49 +422,47 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   const AIBeacon* beacon, const Robot& robot) const
 {
   // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
-  static const std::vector<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
-  for(const auto& family : familyList)
-  {
-    const auto& blocksByType = robot.GetBlockWorld().GetExistingObjectsByFamily(family);
-    for (const auto& blocksOfSameType : blocksByType)
+  BlockWorldFilter filter;
+  filter.SetAllowedFamilies({{ ObjectFamily::Block, ObjectFamily::LightCube }});
+  
+  // additional threshold so that we don't stack on top of a cube in the border. This prevents stacking on
+  // a cube close to the border, which would cause the stacked cube to be out of the beacon
+  const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
+  const float inwardThreshold_mm = object->GetSize().x() + kPrecisionOffset_mm;
+  
+  filter.SetFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr) {
+    // if this is our block or state is not good, skip
+    if ( blockPtr == object || !blockPtr->IsPoseStateKnown() ) {
+      return false;
+    }
+    
+    // if we don't want to stack on this cube, skip
+    if ( _invalidCubesToStackOn.find(blockPtr->GetID()) != _invalidCubesToStackOn.end() )
     {
-      for(const auto& block : blocksOfSameType.second)
+      return false;
+    }
+    
+    ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) ,
+                 "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
+    
+    // check it this cube is in beacon, but also if it's actually closer than
+    const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose(), inwardThreshold_mm);
+    if ( isBlockInSelectedBeacon )
+    {
+      // check if we can stack on top of this object
+      const bool canStackOnObject = robot.CanStackOnTopOfObject(*blockPtr);
+      if ( canStackOnObject )
       {
-        // if this is our block or state is not good, skip
-        const ObservableObject* blockPtr = block.second;
-        if ( blockPtr == object || !blockPtr->IsPoseStateKnown() ) {
-          continue;
-        }
-        
-        // if we don't want to stack on this cube, skip
-        if ( _invalidCubesToStackOn.find(blockPtr->GetID()) != _invalidCubesToStackOn.end() )
-        {
-          continue;
-        }
-        
-        // additional threshold so that we don't stack on top of a cube in the border. This prevents stacking on
-        // a cube close to the border, which would cause the stacked cube to be out of the beacon
-        const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
-        const float inwardThreshold_mm = object->GetSize().x() + kPrecisionOffset_mm;
-        ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
-        
-        // check it this cube is in beacon, but also if it's actually closer than
-        const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose(), inwardThreshold_mm);
-        if ( isBlockInSelectedBeacon )
-        {
-          // check if we can stack on top of this object
-          const bool canStackOnObject = robot.CanStackOnTopOfObject(*blockPtr);
-          if ( canStackOnObject )
-          {
-            // TODO rsam: this stops at the first found, not closest or anything fancy
-            return blockPtr;
-          }
-        }
+        // TODO rsam: this stops at the first found, not closest or anything fancy
+        return true;
       }
     }
-  }
+    
+    return false;
+  });
+                      
+  return robot.GetBlockWorld().FindMatchingObject(filter);
   
-  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -560,7 +553,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::GetCandidate(const Blo
 {
   const ObservableObject* ret = nullptr;
   if ( index < _candidateObjects.size() ) {
-    ret = world.GetObjectByIDandFamily(_candidateObjects[index].id, _candidateObjects[index].family);
+    ret = world.GetObjectByID(_candidateObjects[index].id, _candidateObjects[index].family);
   }
   return ret;
 }

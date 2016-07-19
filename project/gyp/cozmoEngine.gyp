@@ -770,7 +770,12 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
-              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for Keyboard controller?
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',      # Why is this needed for KB controller?
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for KB controller?
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',  # Why is this needed for KB controller?
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',     # Why is this needed for KB controller?
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',     # Why is this needed for KB controller?
+              '<@(routing_http_server_libs)',                                 # Why is this needed for KB controller?
             ],
             'conditions': [
               # For some reason, need to link directly against FacioMetric libs

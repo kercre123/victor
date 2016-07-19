@@ -390,7 +390,7 @@ bool DemoBehaviorChooser::ShouldTransitionOutOfCubesState()
   return false;
 }
 
-bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
+bool DemoBehaviorChooser::FilterBlocks(const ObservableObject* obj) const
 {
   if( nullptr == obj ) {
     return false;

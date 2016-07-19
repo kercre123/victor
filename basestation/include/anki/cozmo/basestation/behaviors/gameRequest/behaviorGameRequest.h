@@ -109,9 +109,9 @@ private:
 
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
 
-  bool FilterBlocks(const Robot* robot, ObservableObject* obj) const;
+  bool FilterBlocks(const Robot* robot, const ObservableObject* obj) const;
 
-  ObservableObject* GetClosestBlock(const Robot& robot) const;
+  const ObservableObject* GetClosestBlock(const Robot& robot) const;
   
   void HandleObservedFace(const Robot& robot,
                           const ExternalInterface::RobotObservedFace& msg);

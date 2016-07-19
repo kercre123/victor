@@ -34,6 +34,9 @@ namespace Anki {
 
       // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();
+      
+      // Get the current pose origin ID
+      PoseOriginID_t GetPoseOriginId();
 
       // Clears internal pose history and sets pose frame ID to 0
       void ResetPoseFrame();
@@ -46,7 +49,7 @@ namespace Anki {
       // by the pose-diff between the historical pose at time t and the current pose.
       // Also updates the current pose frame ID.
       // If t==0, updates the current pose. i.e. Pretty much calls SetCurrentMatPose()
-      Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
+      Result UpdatePoseWithKeyframe(PoseOriginID_t originID, PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
 
       // Retrieves the closest historical pose at time t.
       // Returns OK if t is between the oldest and newest timestamps in history.

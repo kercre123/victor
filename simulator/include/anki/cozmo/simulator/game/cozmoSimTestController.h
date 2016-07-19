@@ -72,7 +72,7 @@ protected:
   s32 UpdateInternal() final;
   virtual s32 UpdateSimInternal() = 0;
   
-  u8 _result;
+  u8 _result = RESULT_OK;
   bool _isRecording;
   
   //Variables for taking screenshots

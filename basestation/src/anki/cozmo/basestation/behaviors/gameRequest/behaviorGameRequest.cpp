@@ -130,7 +130,7 @@ void IBehaviorRequestGame::SendDeny(Robot& robot)
   robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
 }
 
-bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, ObservableObject* obj) const
+bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const ObservableObject* obj) const
 {
 
   // if we have the "cube roll" behavior unlocked, then only do a game request with an upright
@@ -151,13 +151,13 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, ObservableObject
 
 u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
 {  
-  std::vector<ObservableObject*> blocks;
+  std::vector<const ObservableObject*> blocks;
   robot.GetBlockWorld().FindMatchingObjects(*_blockworldFilter, blocks);
   
   return Util::numeric_cast<u32>( blocks.size() );
 }
 
-ObservableObject* IBehaviorRequestGame::GetClosestBlock(const Robot& robot) const
+const ObservableObject* IBehaviorRequestGame::GetClosestBlock(const Robot& robot) const
 {
   return robot.GetBlockWorld().FindMostRecentlyObservedObject( *_blockworldFilter );
 }
@@ -167,7 +167,7 @@ ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot)
 {
   if( ! _robotsBlockID.IsSet() ) {
     // set the block ID, but then leave it the same for the duration of the behavior
-    ObservableObject* closestObj = GetClosestBlock(robot);
+    const ObservableObject* closestObj = GetClosestBlock(robot);
   
     if( closestObj != nullptr ) {
       PRINT_NAMED_DEBUG("BehaviorRequestGame.SetRobotBlockID", "%d",
@@ -192,11 +192,11 @@ bool IBehaviorRequestGame::SwitchRobotsBlock(const Robot& robot)
 
   // In this case (and only this case) we want to filter out _badBlocks, so make a new filter
   BlockWorldFilter filter( *_blockworldFilter );
-  filter.SetFilterFcn( [this,&robot](ObservableObject* obj) {
+  filter.SetFilterFcn( [this,&robot](const ObservableObject* obj) {
       return FilterBlocks(&robot, obj) && _badBlocks.find( obj->GetID() ) == _badBlocks.end();
     } );
 
-  ObservableObject* newBlock = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+  const ObservableObject* newBlock = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
   if( newBlock != nullptr ) {
     PRINT_NAMED_DEBUG("BehaviorRequestGame.SwitchRobotsBlock", "switch from %d to %d",
                       _robotsBlockID.GetValue(),
@@ -219,7 +219,7 @@ bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot)
 {
-  ObservableObject* obj = GetClosestBlock(robot);
+  const ObservableObject* obj = GetClosestBlock(robot);
   if( obj != nullptr ) {
     _hasBlockPose = true;
     _lastBlockPose = obj->GetPose();

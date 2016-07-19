@@ -36,7 +36,10 @@ const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD
   (1.f, 0.1f, 1.0f, 0.75f);
 const ColorRGBA LOCALIZATION_OBJECT
   (1.0, 0.0f, 1.0f, 1.0f);
-
-
+const ColorRGBA UNKNOWN_OBJECT
+  (0.7f, 0.7f, 0.7f);
+const ColorRGBA DIRTY_OBJECT
+  (0.4f, 0.4f, 0.4f);
+  
 } // end namespace NamedColors
 } // end namespace Anki

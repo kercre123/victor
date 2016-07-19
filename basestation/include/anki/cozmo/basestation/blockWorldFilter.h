@@ -19,6 +19,7 @@
 #define __Anki_Cozmo_BlockWorldFilter_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/common/basestation/math/poseOrigin.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
@@ -43,58 +44,83 @@ namespace Cozmo {
     // object families, types, and IDs to decide whether to continue.
     // An object cannot be in an ignore list and either the allowed list must be
     // empty or the object must be in it in order to pass.
+    bool ConsiderOrigin(PoseOrigin objectOrigin, PoseOrigin robotOrigin) const;
     bool ConsiderFamily(ObjectFamily family) const;
     bool ConsiderType(ObjectType type) const;
-    bool ConsiderObject(ObservableObject* object) const; // Checks ID and runs FilterFcn(object)
+    bool ConsiderObject(const ObservableObject* object) const; // Checks ID and runs FilterFcn(object)
     
     // Set the entire set of IDs, types, or families to ignore in one go.
     void SetIgnoreIDs(std::set<ObjectID>&& IDs);
     void SetIgnoreTypes(std::set<ObjectType>&& types);
     void SetIgnoreFamilies(std::set<ObjectFamily>&& families);
+    void SetIgnoreOrigins(std::set<PoseOrigin>&& origins);
     
     // Add to the existing set of IDs, types, or families
-    void AddIgnoreID(ObjectID ID);
+    void AddIgnoreID(const ObjectID& ID);
     void AddIgnoreIDs(std::set<ObjectID>&& IDs);
     void AddIgnoreType(ObjectType type);
     void AddIgnoreFamily(ObjectFamily family);
+    void AddIgnoreOrigin(PoseOrigin origin);
     
     // Set the entire set of IDs, types, or families to be allowed in one go.
     void SetAllowedIDs(std::set<ObjectID>&& IDs);
     void SetAllowedTypes(std::set<ObjectType>&& types);
     void SetAllowedFamilies(std::set<ObjectFamily>&& families);
+    void SetAllowedOrigins(std::set<PoseOrigin>&& origins);
     
     // Add to the existing set of IDs, types, or families
-    void AddAllowedID(ObjectID ID);
+    void AddAllowedID(const ObjectID& ID);
     void AddAllowedIDs(std::set<ObjectID>&& IDs);
     void AddAllowedType(ObjectType type);
     void AddAllowedFamily(ObjectFamily family);
+    void AddAllowedOrigin(PoseOrigin origin);
     
     // Set the filtering function used at the object level
-    using FilterFcn = std::function<bool(ObservableObject*)>;
-    void SetFilterFcn(FilterFcn filterFcn);
+    // NOTE: Default filter requires object to have poseState != Unknown
+    using FilterFcn = std::function<bool(const ObservableObject*)>;
+    void SetFilterFcn(const FilterFcn& filterFcn); // replace any existing
+    void AddFilterFcn(const FilterFcn& filterFcn); // add to list of filters (all must pass)
     
+    // Handy, commonly-used filter functions
+    static bool PoseStateNotUnknownFilter(const ObservableObject* object); // Added by default
+    static bool ActiveObjectsFilter(const ObservableObject* object);
+
     // Normally, all objects known to BlockWorld are checked. Setting this to
     // true will only check those objects observed in the most recent BlockWorld
     // Update() call.
     void OnlyConsiderLatestUpdate(bool tf) { _onlyConsiderLatestUpdate = tf; }
     bool IsOnlyConsideringLatestUpdate() const { return _onlyConsiderLatestUpdate; }
     
-  protected:
-    std::set<ObjectID>      _ignoreIDs, _allowedIDs;
-    std::set<ObjectType>    _ignoreTypes, _allowedTypes;
-    std::set<ObjectFamily>  _ignoreFamilies, _allowedFamilies;
+    enum class OriginMode : uint8_t {
+      InRobotFrame,     // Only objects in the current robot coordinate frame are returned (Default)
+      NotInRobotFrame,  // Only objects *not* in the current robot coordinate frame are returned
+      InAnyFrame,       // Objects in any frame considered (ignore/allowed sets empty)
+      Custom            // Uses allowed/ignored sets provided using methods above
+    };
+    void SetOriginMode(OriginMode mode) { _originMode = mode; }
     
-    FilterFcn _filterFcn = &BlockWorldFilter::DefaultFilterFcn;
+  protected:
+    std::set<ObjectID>      _ignoreIDs,      _allowedIDs;
+    std::set<ObjectType>    _ignoreTypes,    _allowedTypes;
+    std::set<ObjectFamily>  _ignoreFamilies, _allowedFamilies;
+    std::set<PoseOrigin>    _ignoreOrigins,  _allowedOrigins;
+    
+    std::list<FilterFcn>    _filterFcns = {&BlockWorldFilter::PoseStateNotUnknownFilter};
     
     bool _onlyConsiderLatestUpdate = false;
-      
-    // The default filter function should be overriden if the poseState will be unknown or other functionality is desired
-    static bool DefaultFilterFcn(ObservableObject* object) { assert(nullptr != object); return !object->IsPoseStateUnknown(); }
+    OriginMode _originMode = OriginMode::InRobotFrame;
+    
+    template<class T>
+    static bool ConsiderHelper(const std::set<T>& ignoreSet, const std::set<T>&allowSet, T x);
     
   }; // class BlockWorldFilter
-  
+
   
 # pragma mark - Inlined Implementations
+  
+  inline void BlockWorldFilter::SetIgnoreOrigins(std::set<PoseOrigin>&& origins) {
+    _ignoreOrigins = origins;
+  }
   
   inline void BlockWorldFilter::SetIgnoreFamilies(std::set<ObjectFamily> &&families) {
     _ignoreFamilies = families;
@@ -120,11 +146,23 @@ namespace Cozmo {
     _allowedFamilies = families;
   }
   
-  inline void BlockWorldFilter::SetFilterFcn(FilterFcn filterFcn) {
-    _filterFcn = filterFcn;
+  inline void BlockWorldFilter::SetAllowedOrigins(std::set<PoseOrigin>&& origins) {
+    _allowedOrigins = origins;
   }
   
-  inline void BlockWorldFilter::AddIgnoreID(ObjectID ID) {
+  inline void BlockWorldFilter::SetFilterFcn(const FilterFcn& filterFcn) {
+    _filterFcns.clear();
+    AddFilterFcn(filterFcn);
+  }
+  
+  inline void BlockWorldFilter::AddFilterFcn(const FilterFcn& filterFcn) {
+    if(filterFcn != nullptr) {
+      _filterFcns.push_back(filterFcn);
+    }
+  }
+  
+  inline void BlockWorldFilter::AddIgnoreID(const ObjectID& ID) {
+    assert(_allowedIDs.count(ID) == 0); // Should not be in both lists
     _ignoreIDs.insert(ID);
   }
   
@@ -133,14 +171,17 @@ namespace Cozmo {
   }
   
   inline void BlockWorldFilter::AddIgnoreType(ObjectType type) {
+    assert(_allowedTypes.count(type) == 0); // Should not be in both lists
     _ignoreTypes.insert(type);
   }
   
   inline void BlockWorldFilter::AddIgnoreFamily(ObjectFamily family) {
+    assert(_allowedFamilies.count(family) == 0); // Should not be in both lists
     _ignoreFamilies.insert(family);
   }
   
-  inline void BlockWorldFilter::AddAllowedID(ObjectID ID) {
+  inline void BlockWorldFilter::AddAllowedID(const ObjectID& ID) {
+    assert(_ignoreIDs.count(ID) == 0); // Should not be in both lists
     _allowedIDs.insert(ID);
   }
 
@@ -149,26 +190,99 @@ namespace Cozmo {
   }
   
   inline void BlockWorldFilter::AddAllowedType(ObjectType type) {
+    assert(_ignoreTypes.count(type) == 0); // Should not be in both lists
     _allowedTypes.insert(type);
   }
   
   inline void BlockWorldFilter::AddAllowedFamily(ObjectFamily family) {
+    assert(_ignoreFamilies.count(family) == 0); // Should not be in both lists
     _allowedFamilies.insert(family);
   }
+  
+  inline void BlockWorldFilter::AddAllowedOrigin(PoseOrigin origin) {
+    assert(_ignoreOrigins.count(origin) == 0); // Should not be in both lists
+    SetOriginMode(OriginMode::Custom);
+    _allowedOrigins.insert(origin);
+  }
+  
+  inline void BlockWorldFilter::AddIgnoreOrigin(PoseOrigin origin) {
+    assert(_allowedOrigins.count(origin) == 0); // Should not be in both lists
+    SetOriginMode(OriginMode::Custom);
+    _ignoreOrigins.insert(origin);
+  }
 
+  template<class T>
+  inline bool BlockWorldFilter::ConsiderHelper(const std::set<T>& ignoreSet, const std::set<T>&allowSet, T x)
+  {
+    const bool notInIgnoreSet = ignoreSet.count(x) == 0;
+    const bool isAllowed = (allowSet.empty() || allowSet.count(x) > 0);
+    const bool consider = (notInIgnoreSet && isAllowed);
+    return consider;
+  }
+  
+  inline bool BlockWorldFilter::ConsiderOrigin(PoseOrigin objectOrigin, PoseOrigin robotOrigin) const
+  {
+    switch(_originMode)
+    {
+      case BlockWorldFilter::OriginMode::Custom:
+        return ConsiderHelper(_ignoreOrigins, _allowedOrigins, objectOrigin);
+        
+      case BlockWorldFilter::OriginMode::InAnyFrame:
+        ASSERT_NAMED(_ignoreOrigins.empty() && _allowedOrigins.empty(),
+                     "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
+        return true;
+        
+      case BlockWorldFilter::OriginMode::InRobotFrame:
+        ASSERT_NAMED(_ignoreOrigins.empty() && _allowedOrigins.empty(),
+                     "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
+        return objectOrigin == robotOrigin;
+        
+      case BlockWorldFilter::OriginMode::NotInRobotFrame:
+        ASSERT_NAMED(_ignoreOrigins.empty() && _allowedOrigins.empty(),
+                     "BlockWorldFilter.ConsiderOrigin.IgnoringCustomOriginSets");
+        return objectOrigin != robotOrigin;
+    }
+  }
+  
   inline bool BlockWorldFilter::ConsiderFamily(ObjectFamily family) const {
-    return (_ignoreFamilies.count(family)==0 && (_allowedFamilies.empty() || _allowedFamilies.count(family)>0));
+    return ConsiderHelper(_ignoreFamilies, _allowedFamilies, family);
   }
   
   inline bool BlockWorldFilter::ConsiderType(ObjectType type) const {
-    return (_ignoreTypes.count(type)==0 && (_allowedTypes.empty() || _allowedTypes.count(type)>0));
+    return ConsiderHelper(_ignoreTypes, _allowedTypes, type);
   }
   
-  inline bool BlockWorldFilter::ConsiderObject(ObservableObject* object) const {
-    return (_ignoreIDs.count(object->GetID())==0 &&
-            (_allowedIDs.empty() || _allowedIDs.count(object->GetID())>0) &&
-            _filterFcn(object));
+  inline bool BlockWorldFilter::ConsiderObject(const ObservableObject* object) const
+  {
+    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.ConsiderObject.NullObject");
+    
+    const bool considerObj = ConsiderHelper(_ignoreIDs, _allowedIDs, object->GetID());
+    if(considerObj)
+    {
+      for(auto & filterFcn : _filterFcns)
+      {
+        if(!filterFcn(object)) {
+          // Fail as soon as any filter function returns false
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    return false;
   }
+  
+  inline bool BlockWorldFilter::PoseStateNotUnknownFilter(const ObservableObject* object) {
+    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.PoseStateNotUnknownFilter.NullObject");
+    return !object->IsPoseStateUnknown();
+  }
+  
+  inline bool BlockWorldFilter::ActiveObjectsFilter(const ObservableObject* object) {
+    ASSERT_NAMED(nullptr != object, "BlockWorldFilter.ActiveObjectsFilter.NullObject");
+    return object->IsActive();
+  }
+  
+  
 
 } // namespace Cozmo
 } // namespace Anki

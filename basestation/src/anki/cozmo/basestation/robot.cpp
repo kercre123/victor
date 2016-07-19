@@ -246,13 +246,18 @@ Robot::~Robot()
   Util::SafeDelete(_drivingAnimationHandler);
   Util::SafeDelete(_speedChooser);
 
+  for(Pose3d* origin : _poseOrigins) {
+    Util::SafeDelete( origin );
+  }
+  _poseOrigins.clear();
+  
   _selectedPathPlanner = nullptr;
       
 }
     
 void Robot::SetOnCharger(bool onCharger)
 {
-  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger));
   if (onCharger && !_isOnCharger) {
         
     // If we don't actually have a charger, add an unconnected one now
@@ -361,10 +366,13 @@ void Robot::Delocalize()
   // to profile
       
   // Add a new pose origin to use until the robot gets localized again
-  _poseOrigins.emplace_back();
-  _poseOrigins.back().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
-  _worldOrigin = &_poseOrigins.back();
-      
+  _poseOrigins.emplace_back(new Pose3d());
+  _poseOrigins.back()->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
+  
+  _worldOrigin = _poseOrigins.back();
+  
+  _poseOriginIndexLUT[_worldOrigin] = Util::numeric_cast<PoseOriginID_t>(_poseOrigins.size()) - 1;
+  
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
   _pose.SetParent(_worldOrigin);
@@ -372,10 +380,23 @@ void Robot::Delocalize()
   _driveCenterPose.SetRotation(0, Z_AXIS_3D());
   _driveCenterPose.SetTranslation({0.f, 0.f, 0.f});
   _driveCenterPose.SetParent(_worldOrigin);
-      
-  _poseHistory->Clear();
-  //++_frameId;
-     
+  
+  // Create a new pose frame so that we can't get pose history entries with the same pose
+  // frame that have different origins (Not 100% sure this is totally necessary but seems
+  // like the cleaner / safer thing to do.)
+  AddVisionOnlyPoseToHistory(GetLastMsgTimestamp(), _pose, GetHeadAngle(), GetLiftAngle());
+  
+  if(_timeSynced)
+  {
+    // Need to update the robot's pose history with our new origin and pose frame IDs
+    PRINT_NAMED_INFO("Robot.Delocalize.SendingNewOriginID",
+                     "Sending new localization update at t=%u, with pose frame %u and origin ID=%u",
+                     GetLastMsgTimestamp(),
+                     GetPoseFrameID(),
+                     _poseOriginIndexLUT[_worldOrigin]);
+    SendAbsLocalizationUpdate(_pose, GetLastMsgTimestamp(), GetPoseFrameID());
+  }
+  
   // Update VizText
   GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
@@ -383,6 +404,8 @@ void Robot::Delocalize()
                                          "WorldOrigin[%lu]: %s",
                                          (unsigned long)_poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
+  GetContext()->GetVizManager()->EraseAllVizObjects();
+  
       
   // create a new memory map for this origin
   _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
@@ -511,7 +534,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
         
     const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
         
-    Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, ObjectFamily::Ramp));
+    Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByID(_rampID, ObjectFamily::Ramp));
     if(ramp == nullptr) {
       PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
                         "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
@@ -580,30 +603,38 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
         
     // Need to put the odometry update in terms of the current robot origin
-    newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, _worldOrigin);
-        
+    if(msg.pose_origin_id >= _poseOrigins.size()) {
+      PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BadOriginID",
+                          "Received RobotState with originID=%u, only %zu pose origins available",
+                          msg.pose_origin_id, _poseOrigins.size());
+      return RESULT_FAIL;
+    }
+    
+    newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, _poseOrigins[msg.pose_origin_id]);
+    
+    // It's possible the pose origin to which this update refers has since been
+    // rejiggered and is now the child of another origin. To add to history below,
+    // we must first flatten it.
+    newPose = newPose.GetWithRespectToOrigin();
   } // if/else on ramp
-      
+  
   // Add to history
   lastResult = AddRawOdomPoseToHistory(msg.timestamp,
                                        msg.pose_frame_id,
-                                       newPose.GetTranslation().x(),
-                                       newPose.GetTranslation().y(),
-                                       newPose.GetTranslation().z(),
-                                       newPose.GetRotationAngle<'Z'>().ToFloat(),
+                                       newPose,
                                        msg.headAngle,
                                        msg.liftAngle);
-      
+  
   if(lastResult != RESULT_OK) {
     PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
                         "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
     return lastResult;
   }
-      
-  if(UpdateCurrPoseFromHistory(*_worldOrigin) == false) {
+  
+  if(UpdateCurrPoseFromHistory() == false) {
     lastResult = RESULT_FAIL;
   }
-      
+
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
     "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
@@ -1101,8 +1132,7 @@ Result Robot::Update(bool ignoreVisionModes)
   }
       
   // Update ChargerPlatform
-  ObservableObject* charger =
-    dynamic_cast<ObservableObject*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
   if( charger && charger->IsPoseStateKnown() && !IsPickedUp() )
   {
     // This state is useful for knowing not to play a cliff react when just driving off the charger.
@@ -1124,7 +1154,7 @@ Result Robot::Update(bool ignoreVisionModes)
     for( const auto& objByTypePair : GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube) ) {
       for( const auto& objByIdPair : objByTypePair.second ) {
         ObjectID objID = objByIdPair.first;
-        const ObservableObject* obj = objByIdPair.second;
+        const ObservableObject* obj = objByIdPair.second.get();
 
         const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
@@ -1573,7 +1603,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     headAngle = posePtr->GetHeadAngle();
   }
       
-  // Make the computed robot pose use the existing mat piece as its parent
+  // Make the computed robot pose use the existing object as its parent
   robotPoseWrtObject.SetParent(&existingObject->GetPose());
   //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
       
@@ -1631,11 +1661,8 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   if(nullptr != seenObject)
   {
     //
-    if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
-                                                robotPoseWrtOrigin.GetTranslation().x(),
-                                                robotPoseWrtOrigin.GetTranslation().y(),
-                                                robotPoseWrtOrigin.GetTranslation().z(),
-                                                robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
+    if((lastResult = AddVisionOnlyPoseToHistory(seenObject->GetLastObservedTime(),
+                                                robotPoseWrtOrigin,
                                                 headAngle, liftAngle)) != RESULT_OK)
     {
       PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedAddingVisionOnlyPoseToHistory", "");
@@ -1679,7 +1706,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     // by this origin switch and notify the outside world of the change.
     _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
 
-    // after updating all block world objects, no one should be pointing to the oldOrigin
+    // after updating all block world objects, flatten out origins to remove grandparents
     FlattenOutOrigins();
         
   } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
@@ -1689,8 +1716,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   {
     // Update the computed historical pose as well so that subsequent block
     // pose updates use obsMarkers whose camera's parent pose is correct.
-    // Note again that we store the pose w.r.t. the origin in history.
-    // TODO: Should SetPose() do the flattening w.r.t. origin?
     posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle);
   }
 
@@ -1699,7 +1724,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   // past vision-based "ground truth" pose we just computed.
   assert(&existingObject->GetPose().FindOrigin() == _worldOrigin);
   assert(_worldOrigin != nullptr);
-  if(UpdateCurrPoseFromHistory(*_worldOrigin) == false) {
+  if(UpdateCurrPoseFromHistory() == false) {
     PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedUpdateCurrPoseFromHistory", "");
     return RESULT_FAIL;
   }
@@ -1740,19 +1765,21 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Robot::FlattenOutOrigins()
 {
-  for(auto& originIter : _poseOrigins)
+  for(Pose3d* origin : _poseOrigins)
   {
+    assert(origin != nullptr); // Should REALLY never happen
+    
     // if this origin has a parent and it's not the current worldOrigin, we want to update
     // this origin to be a direct child of the current origin
-    if ( (originIter.GetParent() != nullptr) && (originIter.GetParent() != _worldOrigin) )
+    if ( (origin->GetParent() != nullptr) && (origin->GetParent() != _worldOrigin) )
     {
       // get WRT current origin, and if we can (because our parent's origin is the current worldOrigin), then assign
       Pose3d iterWRTCurrentOrigin;
-      if ( originIter.GetWithRespectTo(*_worldOrigin, iterWRTCurrentOrigin) )
+      if ( origin->GetWithRespectTo(*_worldOrigin, iterWRTCurrentOrigin) )
       {
-        const std::string& newName = originIter.GetName() + "_FLT";
-        originIter = iterWRTCurrentOrigin;
-        originIter.SetName( newName );
+        const std::string& newName = origin->GetName() + "_FLT";
+        *origin = iterWRTCurrentOrigin;
+        origin->SetName( newName );
       }
     }
   }
@@ -1921,10 +1948,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToOrigin();
       
   if((lastResult = AddVisionOnlyPoseToHistory(existingMatPiece->GetLastObservedTime(),
-                                              robotPoseWrtOrigin.GetTranslation().x(),
-                                              robotPoseWrtOrigin.GetTranslation().y(),
-                                              robotPoseWrtOrigin.GetTranslation().z(),
-                                              robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
+                                              robotPoseWrtOrigin,
                                               posePtr->GetHeadAngle(),
                                               posePtr->GetLiftAngle())) != RESULT_OK)
   {
@@ -1941,7 +1965,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
       
   // Compute the new "current" pose from history which uses the
   // past vision-based "ground truth" pose we just computed.
-  if(UpdateCurrPoseFromHistory(existingMatPiece->GetPose()) == false) {
+  if(UpdateCurrPoseFromHistory() == false) {
     PRINT_NAMED_ERROR("Robot.LocalizeToMat.FailedUpdateCurrPoseFromHistory", "");
     return RESULT_FAIL;
   }
@@ -2024,7 +2048,7 @@ Result Robot::SetOnRamp(bool t)
       
   // We are either transition onto or off of a ramp
       
-  Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, ObjectFamily::Ramp));
+  Ramp* ramp = dynamic_cast<Ramp*>(GetBlockWorld().GetObjectByID(_rampID, ObjectFamily::Ramp));
   if(ramp == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
                         "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world",
@@ -2102,7 +2126,7 @@ Result Robot::SetOnRamp(bool t)
     
 Result Robot::SetPoseOnCharger()
 {
-  Charger* charger = dynamic_cast<Charger*>(_blockWorld.GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger));
   if(charger == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.NoChargerWithID",
                         "Robot %d has docked to charger, but Charger object with ID=%d not found in the world.",
@@ -2630,7 +2654,7 @@ Result Robot::SendSyncTime() const
         
     // Reset pose on connect
     PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
-    Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
+    Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0}, _worldOrigin);
     return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
   } else {
     PRINT_NAMED_WARNING("Robot.SendSyncTime.FailedToSend","");
@@ -2653,13 +2677,34 @@ Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
                                         const TimeStamp_t&   t,
                                         const PoseFrameID_t& frameId) const
 {
+  // Send flattened poses to the robot, because when we get them back in odometry
+  // updates with origin IDs, we can only hook them back up directly to the
+  // corresponding pose origin (we can't know the chain that led there anymore)
+  Pose3d poseWrtOrigin = pose.GetWithRespectToOrigin();
+  
+  const Pose3d* origin = &poseWrtOrigin.FindOrigin();
+
+  auto indexIter = _poseOriginIndexLUT.find(origin);
+  if(indexIter == _poseOriginIndexLUT.end()) {
+    PRINT_NAMED_WARNING("Robot.SendAbsLocalizationUpdate.NoPoseOriginIndex",
+                        "Origin %s (%p)",
+                        origin->GetName().c_str(), origin);
+    return RESULT_FAIL;
+  }
+  
+  const PoseOriginID_t originID = indexIter->second;
+  
+  // Sanity check: if we grab the origin the index we just got, it should be the one we searched for
+  ASSERT_NAMED(_poseOrigins[originID] == origin,
+               "Robot.SendAbsLocalizationUpdate.OriginIndexLookupFailed");
   return SendMessage(RobotInterface::EngineToRobot(
                        RobotInterface::AbsoluteLocalizationUpdate(
                          t,
                          frameId,
-                         pose.GetTranslation().x(),
-                         pose.GetTranslation().y(),
-                         pose.GetRotation().GetAngleAroundZaxis().ToFloat()
+                         originID,
+                         poseWrtOrigin.GetTranslation().x(),
+                         poseWrtOrigin.GetTranslation().y(),
+                         poseWrtOrigin.GetRotation().GetAngleAroundZaxis().ToFloat()
                          )));
 }
     
@@ -2789,12 +2834,12 @@ Result Robot::RequestIMU(const u32 length_ms) const
     
 Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
                                       const PoseFrameID_t frameID,
-                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                      const f32 pose_angle,
+                                      const Pose3d& pose,
                                       const f32 head_angle,
                                       const f32 lift_angle)
 {
-  return _poseHistory->AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
+  RobotPoseStamp poseStamp(frameID, pose, head_angle, lift_angle);
+  return _poseHistory->AddRawOdomPose(t, poseStamp);
 }
     
     
@@ -2849,20 +2894,16 @@ Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
     
     
 Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                         const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                         const f32 pose_angle,
+                                         const Pose3d& pose,
                                          const f32 head_angle,
                                          const f32 lift_angle)
 {      
   // We have a new ("ground truth") key frame. Increment the pose frame!
   //IncrementPoseFrameID();
   ++_frameId;
-      
-  return _poseHistory->AddVisionOnlyPose(t, _frameId,
-                                         pose_x, pose_y, pose_z,
-                                         pose_angle,
-                                         head_angle,
-                                         lift_angle);
+  
+  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle);
+  return _poseHistory->AddVisionOnlyPose(t, poseStamp);
 }
 
 Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -2912,35 +2953,33 @@ bool Robot::IsValidPoseKey(const HistPoseKey key) const
   return _poseHistory->IsValidPoseKey(key);
 }
     
-bool Robot::UpdateCurrPoseFromHistory(const Pose3d& wrtParent)
+bool Robot::UpdateCurrPoseFromHistory()
 {
   bool poseUpdated = false;
       
   TimeStamp_t t;
   RobotPoseStamp p;
-  if (_poseHistory->ComputePoseAt(_poseHistory->GetNewestTimeStamp(), t, p) == RESULT_OK) {
-    if (p.GetFrameId() == GetPoseFrameID()) {
-          
-      // Grab a copy of the pose from history, which has been flattened (i.e.,
-      // made with respect to whatever its origin was when it was stored).
-      // We just assume for now that is the same as the _current_ world origin
-      // (bad assumption? or will differing frame IDs help us?), and make that
-      // chaining connection so that we can get the pose w.r.t. the requested
-      // parent.
-      Pose3d histPoseWrtCurrentWorld(p.GetPose());
-      histPoseWrtCurrentWorld.SetParent(&wrtParent.FindOrigin());
-          
-      Pose3d newPose;
-      if((histPoseWrtCurrentWorld.GetWithRespectTo(wrtParent, newPose))==false) {
-        PRINT_NAMED_ERROR("Robot.UpdateCurrPoseFromHistory.GetWrtParentFailed",
-                          "Could not update robot %d's current pose from history w.r.t. specified pose %s.",
-                          _ID, wrtParent.GetName().c_str());
-      } else {
-        SetPose(newPose);
-        poseUpdated = true;
-      }
-           
+  if (_poseHistory->ComputePoseAt(_poseHistory->GetNewestTimeStamp(), t, p) == RESULT_OK)
+  {
+
+    Pose3d newPose;
+    if((p.GetPose().GetWithRespectTo(*_worldOrigin, newPose))==false)
+    {
+      // This is not necessarily an error anymore: it's possible we've received an
+      // odometry update from the robot w.r.t. an old origin (before being delocalized),
+      // in which case we can't use it to update the current pose of the robot
+      // in its new frame.
+      PRINT_NAMED_INFO("Robot.UpdateCurrPoseFromHistory.GetWrtParentFailed",
+                        "Could not update robot %d's current pose using historical pose w.r.t. %s because we are now in frame %s.",
+                        _ID, p.GetPose().FindOrigin().GetName().c_str(),
+                       _worldOrigin->GetName().c_str());
     }
+    else
+    {
+      SetPose(newPose);
+      poseUpdated = true;
+    }
+
   }
       
   return poseUpdated;
@@ -2973,7 +3012,18 @@ void Robot::SetHeadlight(bool on)
 {
   SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
 }
-    
+
+ActiveObject* GetActiveObjectInAnyFrame(BlockWorld& blockWorld, const ObjectID& objectID)
+{
+  BlockWorldFilter filter;
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
+  filter.AddAllowedID(objectID);
+  ActiveObject* activeObject = dynamic_cast<ActiveObject*>(blockWorld.FindMatchingObject(filter));
+  
+  return activeObject;
+}
+  
 Result Robot::SetObjectLights(const ObjectID& objectID,
                               const WhichCubeLEDs whichLEDs,
                               const u32 onColor, const u32 offColor,
@@ -2983,7 +3033,8 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
                               const MakeRelativeMode makeRelative,
                               const Point2f& relativeToPoint)
 {
-  ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByID(objectID);
+  ActiveObject* activeObject = GetActiveObjectInAnyFrame(GetBlockWorld(), objectID);
+  
   if(activeObject == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
     return RESULT_FAIL_INVALID_OBJECT;
@@ -3046,7 +3097,8 @@ Result Robot::SetObjectLights(
   const MakeRelativeMode makeRelative,
   const Point2f& relativeToPoint)
 {
-  ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByID(objectID);
+  ActiveObject* activeObject = GetActiveObjectInAnyFrame(GetBlockWorld(), objectID);
+  
   if(activeObject == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
     return RESULT_FAIL_INVALID_OBJECT;

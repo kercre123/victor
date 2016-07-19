@@ -66,6 +66,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   RobotState stateMsg;
   stateMsg.timestamp = 0;
   stateMsg.pose_frame_id = 0;
+  stateMsg.pose_origin_id = 0;
   stateMsg.pose.x = 0.0f;
   stateMsg.pose.y = 0.0f;
   stateMsg.pose.z = 0.0f;
@@ -249,8 +250,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
     // Start the robot/world fresh for each pose
     robot.GetBlockWorld().ClearAllExistingObjects();
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), 0, 0, 0, 0, 0, 0), RESULT_OK);
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(currentTimeStamp, robot.GetPoseFrameID(), Pose3d(0, Z_AXIS_3D(), {0, 0, 0}), 0, 0), RESULT_OK);
     
     currentTimeStamp += 5;
     
@@ -287,12 +288,12 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.pose.angle = 0;
     }
 
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp, msg.pose_frame_id, msg.pose.x, msg.pose.y, msg.pose.z,
-      msg.pose.angle, msg.headAngle, msg.liftAngle)
+    Pose3d pose( msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.y} );
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp, msg.pose_frame_id, pose, msg.headAngle, msg.liftAngle)
       , RESULT_OK
       );
     
-    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
+    ASSERT_TRUE(robot.UpdateCurrPoseFromHistory());
     
 
     int NumMarkers;

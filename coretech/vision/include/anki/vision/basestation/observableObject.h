@@ -46,6 +46,15 @@ namespace Anki {
     class ObservableObject
     {
     public:
+      
+      enum class PoseState
+      {
+        Known,
+        Dirty,
+        Unknown
+      };
+      
+      
       // Do we want to be req'd to instantiate with all codes up front?
       ObservableObject();
       
@@ -148,9 +157,15 @@ namespace Anki {
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
       
+      // Auto-set ID to unique value
       void SetID();
+      
+      // For special situations where automatic unique ID is not desired, use this
+      // method to deliberately copy the ID from another object
+      void CopyID(const ObservableObject* fromOther);
+            
       void SetColor(const ColorRGBA& color);
-      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f, bool skipStateUpdate = false);
+      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f, PoseState newPoseState = PoseState::Known);
       void SetPoseParent(const Pose3d* newParent);
       
       // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.
@@ -165,6 +180,9 @@ namespace Anki {
       // time that num times _observed_ gets incremented).
       u32 GetNumTimesUnobserved() const;
       void IncrementNumTimesUnobserved();
+      
+      // Copy observation times from another object, keeping the max counts / latest times
+      void SetObservationTimes(const ObservableObject* otherObject);
       
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
@@ -223,13 +241,6 @@ namespace Anki {
       // X and Y axes.
       bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(10)) const;
 
-      enum class PoseState
-      {
-        Known,
-        Dirty,
-        Unknown
-      };
-      
       PoseState GetPoseState() const { return _poseState; }
       void SetPoseState(PoseState newState) { _poseState = newState; }
       bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
@@ -292,14 +303,15 @@ namespace Anki {
     inline void ObservableObject::SetID() { //const ObjectID newID) {
       _ID.Set();
     }
+    
+    inline void ObservableObject::CopyID(const ObservableObject* other) {
+      _ID = other->GetID();
+    }
   
-    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, bool skipStateUpdate) {
+    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState) {
       _pose = newPose;
       
-      if (!skipStateUpdate)
-      {
-        SetPoseState(PoseState::Known);
-      }
+      SetPoseState(newPoseState);
       
       std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());

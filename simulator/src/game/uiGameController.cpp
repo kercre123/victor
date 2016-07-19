@@ -195,8 +195,8 @@ namespace Anki {
           
         default:
         {
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d completed action with type=%d and tag=%d: %s.",
-                 msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d completed %s action with tag=%d: %s.",
+                 msg.robotID, EnumToString(msg.actionType), msg.idTag, ActionResultToString(msg.result));
         }
       }
       

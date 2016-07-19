@@ -533,16 +533,27 @@ public:
   RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
   const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
   
+//  Result AddRawOdomPoseToHistory(const TimeStamp_t t,
+//                                 const PoseFrameID_t frameID,
+//                                 const f32 pose_x, const f32 pose_y, const f32 pose_z,
+//                                 const f32 pose_angle,
+//                                 const f32 head_angle,
+//                                 const f32 lift_angle);
+  
   Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                  const PoseFrameID_t frameID,
-                                 const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                 const f32 pose_angle,
+                                 const Pose3d& pose,
                                  const f32 head_angle,
                                  const f32 lift_angle);
-    
+  
+//  Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
+//                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
+//                                    const f32 pose_angle,
+//                                    const f32 head_angle,
+//                                    const f32 lift_angle);
+  
   Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                    const f32 pose_angle,
+                                    const Pose3d& pose, 
                                     const f32 head_angle,
                                     const f32 lift_angle);
 
@@ -551,10 +562,9 @@ public:
   bool IsValidPoseKey(const HistPoseKey key) const;
     
   // Updates the current pose to the best estimate based on
-  // historical poses including vision-based poses. Will use the specified
-  // parent pose to store the pose.
+  // historical poses including vision-based poses. 
   // Returns true if the pose is successfully updated, false otherwise.
-  bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
+  bool UpdateCurrPoseFromHistory();
 
   Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
   
@@ -800,7 +810,9 @@ protected:
   */
   
   // Geometry / Pose
-  std::list<Pose3d> _poseOrigins; // placeholder origin poses while robot isn't localized
+  std::vector<Pose3d*> _poseOrigins; // placeholder origin poses while robot isn't localized
+  std::map<const Pose3d*, PoseOriginID_t> _poseOriginIndexLUT; // look up index in _poseOrigins by Pose3d*
+  
   Pose3d*           _worldOrigin;
   Pose3d            _pose;
   Pose3d            _driveCenterPose;

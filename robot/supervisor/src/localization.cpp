@@ -41,6 +41,7 @@ namespace Anki {
         f32 y;
         f32 angle;
         PoseFrameID_t frame;
+        PoseOriginID_t originID;
       };
 
       namespace {
@@ -72,7 +73,7 @@ namespace Anki {
         f32 gyroRotOffset_ = 0;
 
         PoseFrameID_t frameId_ = 0;
-        
+        PoseOriginID_t originId_ = 0;
         
         // Tread slip modelling
         // Value ranges from 0 to 1.
@@ -179,10 +180,35 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle)
+      void AddPoseToHist()
+      {
+        if (++hEnd_ == POSE_HISTORY_SIZE) {
+          hEnd_ = 0;
+        }
+        
+        if (hEnd_ == hStart_) {
+          if (++hStart_ == POSE_HISTORY_SIZE) {
+            hStart_ = 0;
+          }
+        } else {
+          ++hSize_;
+        }
+        
+        hist_[hEnd_].t = HAL::GetTimeStamp();
+        hist_[hEnd_].x = x_;
+        hist_[hEnd_].y = y_;
+        hist_[hEnd_].angle = orientation_.ToFloat();
+        hist_[hEnd_].frame = frameId_;
+        hist_[hEnd_].originID = originId_;
+      }
+      
+      
+      Result UpdatePoseWithKeyframe(PoseOriginID_t originID, PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle)
       {
         // Update frameID
         frameId_ = frameID;
+        originId_ = originID;
+        
         u16 i;
         if (t == 0) {
           // If t==0, this is considered to be a command to just update the current pose
@@ -200,7 +226,7 @@ namespace Anki {
         // pDiff by chaining pDiffs per frame all the way up to current frame.
         // The frame distance between the historical pose and current pose depends on the comms latency!
         // ... as well as how often the mat markers are sent, obviously.
-        if (lastKeyframeUpdate_ >= hist_[i].t) {
+        if (lastKeyframeUpdate_ > t) {
           // We last updated our pose at lastKeyFrameUpdate. Ignore any new information
           // timestamped older than lastKeyFrameUpdate.
           #if(DEBUG_POSE_HISTORY)
@@ -210,52 +236,41 @@ namespace Anki {
         }
 
 
-        // Compute new pose based on key frame pose and the diff between the historical
-        // pose at time t and the latest pose.
+        if ( hist_[i].originID == originID )
+        {
+          // Compute new pose based on key frame pose and the diff between the historical
+          // pose at time t and the latest pose.
 
-        // Historical pose
-        Embedded::Pose2d histPose( hist_[i].x, hist_[i].y, hist_[i].angle);
-        
-        // Current pose
-        Embedded::Pose2d currPose( x_, y_, orientation_.ToFloat() );
-        
-        // Compute the difference between the historical pose and the current pose
-        Embedded::Pose2d currPoseWrtHistPose = currPose.GetWithRespectTo(histPose);
-        
-        // Compute pose of the keyframe
-        Embedded::Pose2d keyPose(x, y, angle );
+          // Historical pose
+          Embedded::Pose2d histPose( hist_[i].x, hist_[i].y, hist_[i].angle);
+          
+          // Current pose
+          Embedded::Pose2d currPose( x_, y_, orientation_.ToFloat() );
+          
+          // Compute the difference between the historical pose and the current pose
+          Embedded::Pose2d currPoseWrtHistPose = currPose.GetWithRespectTo(histPose);
+          
+          // Compute pose of the keyframe
+          Embedded::Pose2d keyPose(x, y, angle );
 
-        // Apply the pose diff to the keyframe pose to get the new curr pose
-        Embedded::Pose2d newCurrPose = keyPose * currPoseWrtHistPose;
-        SetCurrentMatPose(newCurrPose.GetX(), newCurrPose.GetY(), newCurrPose.GetAngle());
-        
-        lastKeyframeUpdate_ = HAL::GetTimeStamp();
+          // Apply the pose diff to the keyframe pose to get the new curr pose
+          Embedded::Pose2d newCurrPose = currPoseWrtHistPose * keyPose;
+          SetCurrentMatPose(newCurrPose.GetX(), newCurrPose.GetY(), newCurrPose.GetAngle());
+        }
+        else
+        {
+          SetCurrentMatPose(x, y, angle);
+          AddPoseToHist(); // Make sure this origin ID gets put in history
+        }
+
+        // we need to rely on t because we can receive several messages for the same t with minor HAL timer
+        // differences. We want to process those messages as if they were of the same time (t)
+        lastKeyframeUpdate_ = t;
 
         return RESULT_OK;
       }
 
-      void AddPoseToHist()
-      {
-        if (++hEnd_ == POSE_HISTORY_SIZE) {
-          hEnd_ = 0;
-        }
-
-        if (hEnd_ == hStart_) {
-          if (++hStart_ == POSE_HISTORY_SIZE) {
-            hStart_ = 0;
-          }
-        } else {
-          ++hSize_;
-        }
-
-        hist_[hEnd_].t = HAL::GetTimeStamp();
-        hist_[hEnd_].x = x_;
-        hist_[hEnd_].y = y_;
-        hist_[hEnd_].angle = orientation_.ToFloat();
-        hist_[hEnd_].frame = frameId_;
-      }
-
-
+      
       Result GetHistPoseAtIndex(u16 idx, Anki::Embedded::Pose2d& p) {
         if (idx >= POSE_HISTORY_SIZE) {
           return RESULT_FAIL;
@@ -810,6 +825,11 @@ namespace Anki {
       PoseFrameID_t GetPoseFrameId()
       {
         return frameId_;
+      }
+      
+      PoseOriginID_t GetPoseOriginId()
+      {
+        return originId_;
       }
 
       void ResetPoseFrame()

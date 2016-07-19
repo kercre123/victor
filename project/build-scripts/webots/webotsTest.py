@@ -789,9 +789,6 @@ def main(scriptArgs):
                                             float(num_of_failed_tests)/num_of_total_tests*100)
   )
 
-  #fail in the event there are any webots errors
-  returnValue += totalErrorCount
-  
   return returnValue
 
 

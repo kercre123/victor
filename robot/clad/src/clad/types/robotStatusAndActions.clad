@@ -71,6 +71,7 @@ structure RobotState
 {
   uint_32 timestamp,
   uint_32 pose_frame_id,
+  uint_32 pose_origin_id,
   RobotPose pose,
   float_32 lwheel_speed_mmps,
   float_32 rwheel_speed_mmps,

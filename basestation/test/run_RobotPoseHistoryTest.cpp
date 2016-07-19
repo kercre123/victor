@@ -5,9 +5,7 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
 
 #define DIST_EQ_THRESH 0.00001
 #define ANGLE_EQ_THRESH 0.00001
@@ -16,8 +14,6 @@ TEST(RobotPoseHistory, AddGetPose)
 {
   using namespace Anki;
   using namespace Cozmo;
-  CozmoContext context{};
-  Robot robot(1, &context);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;
@@ -25,11 +21,13 @@ TEST(RobotPoseHistory, AddGetPose)
   
   PoseFrameID_t frameID = 0;
   
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
+  
   // Pose 1, 2, and 3
-  const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  const Pose3d p2(0.1, Z_AXIS_3D(), Vec3f(1,1,2) );
-  const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3) );
-  const Pose3d p1p2avg(0.05, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) );
+  const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0), &origin );
+  const Pose3d p2(0.1, Z_AXIS_3D(), Vec3f(1,1,2), &origin );
+  const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3), &origin );
+  const Pose3d p1p2avg(0.05, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) , &origin);
   const f32 h1 = 0;
   const f32 h2 = 0.2;
   const f32 h3 = -0.3;
@@ -51,11 +49,10 @@ TEST(RobotPoseHistory, AddGetPose)
 
   // Add and get one pose
   hist.AddRawOdomPose(t1,
-                      frameID,
-                      p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
-                      p1.GetRotationAngle().ToFloat(),
-                      h1,
-                      l1);
+                      RobotPoseStamp(frameID,
+                                     p1,
+                                     h1,
+                                     l1));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
   ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
@@ -66,11 +63,10 @@ TEST(RobotPoseHistory, AddGetPose)
   
   // Add another pose
   hist.AddRawOdomPose(t2,
-                      frameID,
-                      p2.GetTranslation().x(), p2.GetTranslation().y(), p2.GetTranslation().z(),
-                      p2.GetRotationAngle().ToFloat(),
-                      h2,
-                      l2);
+                      RobotPoseStamp(frameID,
+                                     p2,
+                                     h2,
+                                     l2));
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -92,11 +88,10 @@ TEST(RobotPoseHistory, AddGetPose)
   
   // Add new pose that should bump off oldest pose
   hist.AddRawOdomPose(t3,
-                      frameID,
-                      p3.GetTranslation().x(), p3.GetTranslation().y(), p3.GetTranslation().z(),
-                      p3.GetRotationAngle().ToFloat(),
-                      h3,
-                      l3);
+                      RobotPoseStamp(frameID,
+                                     p3,
+                                     h3,
+                                     l3));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   
@@ -110,11 +105,10 @@ TEST(RobotPoseHistory, AddGetPose)
   
   // Add old pose that is out of time window
   hist.AddRawOdomPose(t1,
-                      frameID,
-                      p1.GetTranslation().x(), p1.GetTranslation().y(), p1.GetTranslation().z(),
-                      p1.GetRotationAngle().ToFloat(),
-                      h1,
-                      l1);
+                      RobotPoseStamp(frameID,
+                                     p1,
+                                     h1,
+                                     l1));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);
@@ -133,20 +127,19 @@ TEST(RobotPoseHistory, GroundTruthPose)
   using namespace Anki;
   using namespace Cozmo;
   
-  CozmoContext context{};
-  Robot robot(1, &context);
-  
   RobotPoseHistory hist;
   RobotPoseStamp p;
   TimeStamp_t t;
   
   PoseFrameID_t frameID = 0;
   
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
+  
   // Pose 1, 2, and 3
-  const Pose3d p1(0.25*PI_F, Z_AXIS_3D(), Vec3f(1,0,0) );
-  const Pose3d p2(PIDIV2_F, Z_AXIS_3D(), Vec3f(1,2,0) );
-  const Pose3d p3(PIDIV2_F - 0.25*PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0) );
-  const Pose3d p1_by_p2Top3(0, Z_AXIS_3D(), Vec3f(0, 1, 0) );
+  const Pose3d p1(0.25*PI_F, Z_AXIS_3D(), Vec3f(1,0,0), &origin );
+  const Pose3d p2(PIDIV2_F, Z_AXIS_3D(), Vec3f(1,2,0), &origin );
+  const Pose3d p3(PIDIV2_F - 0.25*PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), &origin );
+  const Pose3d p1_by_p2Top3( p3 * p2.GetInverse() * p1 );
   const f32 h1 = 0;
   const f32 h2 = 0.2;
   const f32 h3 = -0.3;
