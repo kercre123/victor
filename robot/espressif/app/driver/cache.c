@@ -7,7 +7,6 @@
 #include "user_config.h"
 #include "flash_map.h"
 
-#if FACTORY_FIRMWARE == 0
 extern void Cache_Read_Enable(uint32, uint32, uint32);
 /// Overrides SDK Cache read enable
 void Cache_Read_Enable_New(void) {
@@ -40,4 +39,3 @@ void Cache_Read_Enable_New(void) {
   
   Cache_Read_Enable(odd_even, 0, 1);
 }
-#endif

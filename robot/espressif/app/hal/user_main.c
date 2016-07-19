@@ -38,11 +38,7 @@ static void ICACHE_FLASH_ATTR nv_init_done(const int8_t result)
   // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
   i2spiInit();
 
-  #if FACTORY_FIRMWARE
-    os_printf("Factory Firmware Init Complete\r\n");
-  #else
-    os_printf("Application Firmware Init Complete\r\n");
-  #endif
+  os_printf("Application Firmware Init Complete\r\n");
 }
 
 /** Callback after all the chip system initalization is done.
@@ -97,11 +93,11 @@ void user_init(void)
   if (getSerialNumber() == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
-    os_sprintf(ssid, "Proto_%03d%03d", macaddr[4], macaddr[5]);
+    os_sprintf(ssid, "Cozmo_%02x%02x%02x", macaddr[3], macaddr[4], macaddr[5]);
   }
   else
   {
-    os_sprintf(ssid, "Proto_%04d", getSerialNumber() % 1000);
+    os_sprintf(ssid, "Cozmo_%06X", getSSIDNumber());
   }
 
   struct softap_config ap_config;

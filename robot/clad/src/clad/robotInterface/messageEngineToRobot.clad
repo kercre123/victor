@@ -408,7 +408,8 @@ union EngineToRobot
   SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
-
+  IMUCalibrationData            setIMUCalibration           = 0x60,
+  
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,
   // Available for future use                               = 0x81,

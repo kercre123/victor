@@ -40,14 +40,12 @@ namespace Anki {
       /// Clears all content from the face
       void Clear();
 
-      extern const u64 SLEEPY_EYES[];
-
       namespace Draw {
         void Clear(u64* frame);
         void Copy(u64* frame, const u64* image);
         void Mask(u64* frame, const u64 mask);
         void Invert(u64* frame);
-        void Number(u64* frame, int digits, u32 value, int x, int y);
+        void Number(u64* frame, int digits, u32 value, int x, int y, const bool big=true);
         void Flip(u64* frame);
       }
 

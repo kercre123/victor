@@ -926,7 +926,7 @@ namespace Anki {
                                const u32 driveDuration_ms,
                                const f32 backupDist_mm)
       {
-        AnkiDebug( 187, "SetRollActionParams", 488, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
+        AnkiDebug( 198, "SetRollActionParams", 506, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
                   liftHeight_mm, driveSpeed_mmps, driveAccel_mmps2, driveDuration_ms, backupDist_mm);
         
         _rollLiftHeight_mm = liftHeight_mm;
