@@ -790,7 +790,11 @@ def main(scriptArgs):
   )
 
   #fail in the event there are any webots errors
-  returnValue += totalErrorCount
+  if(totalErrorCount > 0){
+    print "BUILD FAILURE - WEBOTS ERROR COUNT:%d" % (totalErrorCount)
+    returnValue += totalErrorCount
+  }
+
   
   return returnValue
 
