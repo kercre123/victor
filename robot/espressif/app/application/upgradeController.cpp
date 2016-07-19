@@ -124,39 +124,30 @@ namespace UpgradeController {
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
     
-    if (FACTORY_FIRMWARE)
+
+    uint32 selectedImage;
+    system_rtc_mem_read(RTC_IMAGE_SELECTION, &selectedImage, 4);
+    nextImageNumber = ourHeader->imageNumber + 1;
+    switch (selectedImage)
     {
-      // Factory firmware can read A segment header so it's still valid
-      fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
-      nextImageNumber = ourHeader->imageNumber + 2; // In case slot B was higher
-    }
-    else
-    {
-      uint32 selectedImage;
-      system_rtc_mem_read(RTC_IMAGE_SELECTION, &selectedImage, 4);
-      nextImageNumber = ourHeader->imageNumber + 1;
-      switch (selectedImage)
+      case FW_IMAGE_A:
       {
-        case FW_IMAGE_A:
-        {
-          os_printf("Am image A\r\n");
-          fwWriteAddress = APPLICATION_B_SECTOR * SECTOR_SIZE;
-          break;
-        }
-        case FW_IMAGE_B:
-        {
-          os_printf("Am image B\r\n");
-          fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
-          break;
-        }
-        default:
-        {
-          os_printf("UPC: Unexpected selectedImage key %08x. Not enabling OTA\r\n", selectedImage);
-          phase = OTAT_Uninitalized;
-          return false;
-        }
+        os_printf("Am image A\r\n");
+        fwWriteAddress = APPLICATION_B_SECTOR * SECTOR_SIZE;
+        break;
       }
-      
+      case FW_IMAGE_B:
+      {
+        os_printf("Am image B\r\n");
+        fwWriteAddress = APPLICATION_A_SECTOR * SECTOR_SIZE;
+        break;
+      }
+      default:
+      {
+        os_printf("UPC: Unexpected selectedImage key %08x. Not enabling OTA\r\n", selectedImage);
+        phase = OTAT_Uninitalized;
+        return false;
+      }
     }
     
     phase = OTAT_Ready;
@@ -1105,15 +1096,6 @@ namespace UpgradeController {
       }
     }
   }
-
-  #if FACTORY_FIRMWARE
-  extern "C" bool i2spiRecoveryCallback(uint32 param)
-  {
-    os_printf("I2SPI Recovery Synchronized\r\n");
-    phase = OTATR_Set_Evil_A;
-    return false;
-  }
-  #endif
 
   void OnDisconnect()
   {

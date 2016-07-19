@@ -83,10 +83,7 @@ void Exec(os_event_t *event)
     }
     case 2:
     {
-      if (FACTORY_FIRMWARE == 0)
-      {
-        ActiveObjectManager::Update();
-      }
+      ActiveObjectManager::Update();
       break;
     }
     case 3:
@@ -222,13 +219,11 @@ extern "C" int8_t backgroundTaskInit(void)
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   // Tell body / k02 to go into gameplay power mode
-  #if !FACTORY_FIRMWARE
   {
     Anki::Cozmo::RobotInterface::SetHeadDeviceLock hMsg;
     hMsg.enable = true;
     Anki::Cozmo::RobotInterface::SendMessage(hMsg);
   }
-  #endif
 
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   return false;
@@ -247,23 +242,9 @@ extern "C" void backgroundTaskOnConnect(void)
   if (crashHandlerHasReport()) foregroundTaskPost(BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
 
-  if (FACTORY_FIRMWARE && (Anki::Cozmo::Factory::GetMode() == RobotInterface::FTM_PlayPenTest))
-  {
-    RobotInterface::FactoryTestParameter ftp;
-    ftp.param = Anki::Cozmo::Factory::GetParam();
-    Anki::Cozmo::RobotInterface::SendMessage(ftp);
-  }
-  else
-  {
-    Factory::SetMode(RobotInterface::FTM_None);
-  }
+  Factory::SetMode(RobotInterface::FTM_None);
 
   sendWifiConnectionState(true);
-
-  if (FACTORY_FIRMWARE)
-  {
-    AnkiEvent( 186, "FactoryFirmware", 487, "Running factory firmware, EP3F", 0);
-  }
 
   // Send our version information to the engine
   {
@@ -294,11 +275,7 @@ extern "C" void backgroundTaskOnDisconnect(void)
   Anki::Cozmo::ActiveObjectManager::DisconnectAll();
   Anki::Cozmo::UpgradeController::OnDisconnect();
   sendWifiConnectionState(false);
-  if (FACTORY_FIRMWARE && (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_PlayPenTest))
-  {
-    i2spiSwitchMode(I2SPI_SHUTDOWN);
-  }
-  else if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
+  if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
   {
     Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
     Anki::Cozmo::Face::Clear();

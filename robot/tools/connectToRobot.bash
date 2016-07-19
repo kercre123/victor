@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SSID=cozmo_$1
+SSID=Cozmo_$1
 
 networksetup -setairportpower en0 on
 if test -z `system_profiler SPAirPortDataType | grep $SSID`; then

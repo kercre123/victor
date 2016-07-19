@@ -292,9 +292,6 @@ void i2spiTask(os_event_t *event)
           {
             outgoingPhase       = BOOTLOADER_XFER_PHASE;
             rtipBootloaderState = STATE_IDLE;
-            #if FACTORY_FIRMWARE
-              foregroundTaskPost(i2spiRecoveryCallback, rtipBootloaderState);
-            #endif
           }
           break;
         }

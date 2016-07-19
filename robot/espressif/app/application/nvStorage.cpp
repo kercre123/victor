@@ -500,7 +500,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     }
   }
   
-  if (gc && FACTORY_FIRMWARE==0)
+  if (gc)
   {
     const NVResult ret = GarbageCollect(finishedCallback);
     if (ret != NV_SCHEDULED)
@@ -804,17 +804,26 @@ Result Update()
       { // A valid entry  
         if ((nv.pendingWrite != NULL) && (header.tag == nv.pendingWrite->tag))
         { // This is something we need to invalidate to "overwrite"
-          if (nv.pendingOverwriteHeaderAddress != 0)
+          if (nv.segment & NV_SEGMENT_F)
           {
-            AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
+            AnkiWarn( 203, "NVstorage.WriteInvalid", 510, "Cannot overwrite factory partition data", 0);
+            if (nv.pendingWriteDoneCallback) nv.pendingWriteDoneCallback(nv.pendingWrite, NV_BAD_ARGS);
+            resetWrite();
           }
-          else 
+          else
           {
-            nv.pendingOverwriteHeaderAddress = nv.flashPointer;
-            db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
+            if (nv.pendingOverwriteHeaderAddress != 0)
+            {
+              AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
+            }
+            else 
+            {
+              nv.pendingOverwriteHeaderAddress = nv.flashPointer;
+              db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
+            }
+            nv.flashPointer += header.size;
+            nv.phase = 0;
           }
-          nv.flashPointer += header.size;
-          nv.phase = 0;
         } //  Done queing overwrite
         
         else if (nv.pendingEraseStart <= header.tag && header.tag <= nv.pendingEraseEnd)
@@ -946,7 +955,6 @@ NVResult Write(NVStorageBlob* entry, WriteDoneCB callback)
   if ((entry->tag & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT) return NV_BAD_ARGS; // Can't write fixture data through this interface
   else if (entry->tag & FACTORY_DATA_BIT) 
   {
-    if (FACTORY_FIRMWARE == 0) return NV_BAD_ARGS; // Can only write factory region in factory firmware
     nv.segment |= NV_SEGMENT_F;
   }
   nv.flashPointer = getStartOfSegment();
@@ -967,13 +975,7 @@ NVResult Erase(const u32 tag, EraseDoneCB callback)
 NVResult EraseRange(const u32 start, const u32 end, EraseDoneCB eachCallback, MultiOpDoneCB finishedCallback)
 {
   if (isBusy()) return NV_BUSY; // Already have something queued
-  if ((start & FIXTURE_DATA_BIT) == FIXTURE_DATA_BIT) return NV_BAD_ARGS; // Can't erase fixture data
-  else if (start & FACTORY_DATA_BIT)
-  {
-    if (FACTORY_FIRMWARE == 0) return NV_BAD_ARGS; // Only allow factory erase in factory firmware
-    if (!(end & FACTORY_DATA_BIT)) return NV_BAD_ARGS;
-    nv.segment |= NV_SEGMENT_F;
-  }
+  if (start & FACTORY_DATA_BIT) return NV_BAD_ARGS; // Can't erase factory data
   nv.flashPointer = getStartOfSegment();
   nv.pendingEraseStart = start;
   nv.pendingEraseEnd   = end;
@@ -1067,16 +1069,9 @@ bool WipeAllTask(uint32_t param)
     }
     case WAT_factory:
     {
-      if (state->includeFactory && (state->sectorCount >= 0))
-      {
-        const SpiFlashOpResult rslt = spi_flash_erase_sector(FACTORY_NV_STORAGE_SECTOR + state->sectorCount);
-        if (rslt == SPI_FLASH_RESULT_OK) state->sectorCount -= 1;
-      }
-      else
-      {
-        state->sectorCount = 0;
-        state->phase = WAT_resume;
-      }
+      AnkiDebug( 204, "NVStorage.WipeAllTask", 511, "Refusing to wipe factory", 0);
+      state->sectorCount = 0;
+      state->phase = WAT_resume;
       return true;
     }
     case WAT_resume:
@@ -1111,7 +1106,9 @@ bool WipeAllTask(uint32_t param)
 
 NVResult WipeAll(const u8 doSegments, const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)
 {
-  if (isBusy()) return NV_BUSY;
+  if (includeFactory) return NV_BAD_ARGS;
+  else if (doSegments > NV_STORAGE_NUM_AREAS) return NV_BAD_ARGS;
+  else if (isBusy()) return NV_BUSY;
   else
   {
     WipeAllTaskState* wats = reinterpret_cast<WipeAllTaskState*>(os_malloc(sizeof(WipeAllTaskState)));
@@ -1140,26 +1137,6 @@ NVResult WipeAll(const u8 doSegments, const bool includeFactory, EraseDoneCB cal
         return NV_OKAY;
       }
     }
-  }
-}
-
-bool IsFactoryNVClear()
-{
-  #define NUM_HEADER_WORDS (sizeof(NVEntryHeader)/sizeof(uint32_t))
-  uint32_t buff[NUM_HEADER_WORDS];
-  const SpiFlashOpResult rslt = spi_flash_read(FACTORY_NV_STORAGE_SECTOR*SECTOR_SIZE, buff, sizeof(NVEntryHeader));
-  if (rslt != SPI_FLASH_RESULT_OK)
-  {
-    AnkiError( 197, "NVStorage.IsFactoryNVClear.ReadFailure", 504, "Error reading from 0x%x: %d", 2, FACTORY_NV_STORAGE_SECTOR*SECTOR_SIZE, rslt);
-    return false;
-  }
-  else
-  {
-    for (unsigned int w=0; w<NUM_HEADER_WORDS; ++w)
-    {
-      if (buff[w] != 0xFFFFffff) return false;
-    }
-    return true;
   }
 }
 

@@ -26,11 +26,6 @@ namespace Anki {
       // Accept a message from the RTIP and relay or process it
       extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length);
 
-      // #ifdef FACTORY_FIRMWARE
-      typedef void (*WifiHookCalback)(const u8* buffer, int size);
-
-      void HookWifi(WifiHookCalback hook);
-      // #endif
     }
   }
 }
