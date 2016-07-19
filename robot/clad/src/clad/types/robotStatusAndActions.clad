@@ -80,6 +80,7 @@ structure RobotState
   float_32 rawAccelY,
   uint_16 status, // RobotStatusFlag packs as a uint_16
   uint_16 lastPathID,
+  uint_16 cliffDataRaw,
   int_8   currPathSegment, // -1 if not traversing a path
   uint_8  numFreeSegmentSlots,
   uint_8  battVolt10x,

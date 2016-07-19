@@ -424,6 +424,8 @@ namespace Anki
       // Check cliff sensor status
       bool IsCliffDetected();
 
+      u16 GetRawCliffData();
+      
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////
       // Face

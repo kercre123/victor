@@ -465,6 +465,8 @@ public:
     bool IsCliffDetected() const { return _isCliffDetected; }
     bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
+    u16  GetCliffDataRaw() const { return _cliffDataRaw; }
+  
     // sets distance detected by forward proximity sensor
     void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
     u16 GetForwardSensorValue() const { return _forwardSensorValue_mm; }
@@ -863,6 +865,7 @@ public:
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
     bool             _isCliffDetected    = false;
     bool             _isCliffSensorOn    = false;
+    u16              _cliffDataRaw       = u16_MAX;
     u16              _forwardSensorValue_mm = 0;
     bool             _isOnBack = false;
     TimeStamp_t      _robotFirstOnBack_ms = 0;
