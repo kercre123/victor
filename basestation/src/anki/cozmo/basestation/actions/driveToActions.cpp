@@ -925,6 +925,7 @@ namespace Anki {
                                                            const bool sayName)
     : CompoundActionSequential(robot)
     , _objectID(objectID)
+    , _preDockPoseDistOffsetX_mm(predockOffsetDistX_mm)
     {
       if(objectID == robot.GetCarryingObject())
       {
@@ -949,6 +950,12 @@ namespace Anki {
         AddAction(new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName), true);
         AddAction(new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad), true);
       }
+    }
+    
+    void IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction, bool ignoreFailure)
+    {
+      dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
+      AddAction(dockAction, ignoreFailure);
     }
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)
@@ -1029,13 +1036,13 @@ namespace Anki {
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      _alignAction = new AlignWithObjectAction(robot,
+      AlignWithObjectAction* action = new AlignWithObjectAction(robot,
                                                objectID,
                                                distanceFromMarker_mm,
                                                alignmentType,
                                                useManualSpeed);
-      AddAction(_alignAction);
-      SetProxyTag(_alignAction->GetTag());
+      AddDockAction(action);
+      SetProxyTag(action->GetTag());
     }
     
 #pragma mark ---- DriveToPickupObjectAction ----
@@ -1058,7 +1065,7 @@ namespace Anki {
                                  sayName)
     {
       _pickupAction = new PickupObjectAction(robot, objectID, useManualSpeed);
-      AddAction(_pickupAction);
+      AddDockAction(_pickupAction);
       SetProxyTag(_pickupAction->GetTag());
     }
     
@@ -1097,7 +1104,7 @@ namespace Anki {
                                                               false,
                                                               0,
                                                               useManualSpeed);
-      AddAction(action);
+      AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
     
@@ -1126,7 +1133,7 @@ namespace Anki {
                                                               true,
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
-      AddAction(action);
+      AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
     
@@ -1151,7 +1158,7 @@ namespace Anki {
     , _objectID(objectID)
     {
       _rollAction = new RollObjectAction(robot, objectID, useManualSpeed);
-      AddAction(_rollAction);
+      AddDockAction(_rollAction);
       SetProxyTag(_rollAction->GetTag());
     }
 
@@ -1245,7 +1252,7 @@ namespace Anki {
                                  sayName)
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
-      AddAction(action);
+      AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
     
@@ -1295,7 +1302,7 @@ namespace Anki {
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       SetProxyTag(action->GetTag());
-      AddAction(action);
+      AddDockAction(action);
     }
   }
 }

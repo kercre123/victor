@@ -376,10 +376,14 @@ namespace Cozmo {
       // Whether this is due to inaccurate timestamping of images or low-resolution pose reporting from
       // the robot, this additional info allows us to know if motion in the image was likely due to actual
       // robot motion.
-      const bool headSame =  NEAR(lastPoseStamp.GetHeadAngle(),
-                                  imagePoseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
+      // NOTE: if the two pose stamps are not in the same coordinate frame, just assume there
+      //       was motion to be conservative
+      const bool inSameFrame = &lastPoseStamp.GetPose().FindOrigin() == &imagePoseStamp.GetPose().FindOrigin();
+      const bool headSame = inSameFrame && NEAR(lastPoseStamp.GetHeadAngle(),
+                                                imagePoseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
       
-      const bool poseSame = (NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
+      const bool poseSame = (inSameFrame &&
+                             NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
                                   imagePoseStamp.GetPose().GetTranslation().x(), .5f) &&
                              NEAR(lastPoseStamp.GetPose().GetTranslation().y(),
                                   imagePoseStamp.GetPose().GetTranslation().y(), .5f) &&
@@ -663,11 +667,19 @@ namespace Cozmo {
 
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                          "Time: %d, hist: %d to %d\n",
+                          "Time: %d, hist: %d to %d",
                           markerOrig.GetTimeStamp(),
                           _robot.GetPoseHistory()->GetOldestTimeStamp(),
                           _robot.GetPoseHistory()->GetNewestTimeStamp());
       return lastResult;
+    }
+    
+    if(&p->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
+      PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.OldOrigin",
+                          "Ignoring observed marker from origin %s (robot origin is %s)",
+                          p->GetPose().FindOrigin().GetName().c_str(),
+                          _robot.GetWorldOrigin()->GetName().c_str());
+      return RESULT_OK;
     }
     
     // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded

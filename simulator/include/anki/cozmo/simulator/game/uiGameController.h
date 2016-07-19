@@ -281,6 +281,8 @@ protected:
   s32           GetCarryingObjectOnTopID() const;
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
+  const ExternalInterface::RobotState& GetRobotState() const { return _robotStateMsg; }
+  
   std::vector<s32> GetAllObjectIDs() const;
   std::vector<s32> GetAllObjectIDsByFamily(ObjectFamily family) const;
   std::vector<s32> GetAllObjectIDsByFamilyAndType(ObjectFamily family, ObjectType type) const;

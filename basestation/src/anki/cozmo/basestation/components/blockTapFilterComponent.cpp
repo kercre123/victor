@@ -88,22 +88,37 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ActiveObject* object = _robot.GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
-  if(nullptr == object )
+  // The message from the robot has the active object ID in it, so we need
+  // to find the objects in blockworld (which have their own bookkeeping ID) that
+  // have the matching active ID. We also need to consider all pose states and origin frames.
+  BlockWorldFilter filter;
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  filter.SetFilterFcn([&payload](const ObservableObject* object) {
+    return object->IsActive() && object->GetActiveID() == payload.objectID;
+  });
+  
+  std::vector<ObservableObject *> matchingObjects;
+  _robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+
+  if(matchingObjects.empty())
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectTapped.UnknownActiveID",
                         "Could not find match for active object ID %d", payload.objectID);
+    return;
   }
-  else if( object->IsActive() )
+  
+  for(ObservableObject* object : matchingObjects)
   {
     int16_t intensity = payload.tapPos - payload.tapNeg;
     Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    PRINT_CH_INFO("blocks","BlockTapFilterComponent.HandleEnableTapFilter.HandleActiveObjectTapped.MessageActiveObjectTapped",
-                      "Received message that %s %d (Active ID %d) was tapped %d times (robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
-                      EnumToString(object->GetType()),
-                      object->GetID().GetValue(), payload.objectID, payload.numTaps,
-                      payload.timestamp, payload.tapTime, intensity, engineTime);
+    PRINT_CH_INFO("blocks","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
+                  "Received message that %s %d (Active ID %d) was tapped %d times "
+                  "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
+                  EnumToString(object->GetType()),
+                  object->GetID().GetValue(), payload.objectID, payload.numTaps,
+                  payload.timestamp, payload.tapTime, intensity, engineTime);
+    
     if( intensity > kTapIntensityMin )
     {
       // Update the ID to be the blockworld ID before broadcasting
@@ -129,10 +144,12 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
     }
     else
     {
-      PRINT_CH_INFO("blocks", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored", "Tap ignored %d < %d",intensity,kTapIntensityMin);
+      PRINT_CH_INFO("blocks", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
+                    "Tap ignored %d < %d",intensity,kTapIntensityMin);
     }
   }
 }
+  
 
 }
 }

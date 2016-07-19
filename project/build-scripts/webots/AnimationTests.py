@@ -71,9 +71,6 @@ def main(cli_args):
   wbt_dir = os.path.join(project_root, webotsTest.WEBOTS_WORLD_SUBPATH, '')
   wbt_file = wbt_dir + wbt_file_name
 
-  with open(wbt_file, 'r') as webots_world_file:
-    template_data = webots_world_file.read()
-
   # Generate .wbt world files with each animation name subsituted into animationTestName
   generated_files = []
   for animation in available_animations:
@@ -81,8 +78,8 @@ def main(cli_args):
     generated_file_path = wbt_dir + generated_file_name
     generated_files.append(generated_file_name)
 
-    webotsTest.generate_file_with_replace_pass_data(
-      generated_file_path, template_data, animation_test_name_placeholder, animation)
+    webotsTest.generate_file_with_replace(
+      generated_file_path, wbt_file, animation_test_name_placeholder, animation)
 
   # Generate the config file with all the generated wbt worlds for each animation
   generated_cfg_file_data = (
@@ -101,7 +98,6 @@ def main(cli_args):
     "--numRuns", str(options.numRuns),
     "--password", options.password
     ]) == 0 # assert webotsTest.main(...) == 0 failed
-
 
 if __name__ == '__main__':
   args = sys.argv

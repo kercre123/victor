@@ -568,7 +568,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(false);
-    filter.SetFilterFcn( [&](ObservableObject* obj) {
+    filter.SetFilterFcn( [&](const ObservableObject* obj) {
         if( obj->GetPoseState() != ObservableObject::PoseState::Known ) {
           // ignore unknown obstacles
           return false;

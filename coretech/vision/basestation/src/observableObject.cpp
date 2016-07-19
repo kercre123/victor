@@ -397,6 +397,20 @@ namespace Vision {
     }
   }
 
+  void ObservableObject::SetObservationTimes(const ObservableObject* otherObject)
+  {
+    ASSERT_NAMED(nullptr != otherObject, "ObservableObject.SetObservationTimes.NullOtherObject");
+    
+#   define USE_MAX(_A_,_B_) _A_ = std::max(_A_,_B_)
+    
+    USE_MAX(_lastObservedTime,   otherObject->_lastObservedTime);
+    USE_MAX(_numTimesObserved,   otherObject->_numTimesObserved);
+    USE_MAX(_numTimesUnobserved, otherObject->_numTimesUnobserved);
+    
+#   undef USE_MAX
+    
+    UpdateMarkerObservationTimes(*otherObject);
+  }
 
 } // namespace Vision
 } // namespace Anki

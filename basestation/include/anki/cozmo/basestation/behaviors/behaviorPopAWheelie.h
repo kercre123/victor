@@ -66,7 +66,7 @@ namespace Anki {
       
       // This should return true if the block is valid for this action, false otherwise. Checks that the block is
       // a light cube with known position, not moving, resting flat, and not being carried
-      virtual bool FilterBlocks(ObservableObject* obj) const;
+      virtual bool FilterBlocks(const ObservableObject* obj) const;
       
       virtual void UpdateTargetBlock(const Robot& robot) const;
     };

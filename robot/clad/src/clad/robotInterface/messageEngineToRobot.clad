@@ -184,6 +184,7 @@ message AbsoluteLocalizationUpdate
 {
   uint_32 timestamp,
   uint_32 pose_frame_id,
+  uint_32 origin_id,
   float_32 xPosition,
   float_32 yPosition,
   float_32 headingAngle,

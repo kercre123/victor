@@ -59,19 +59,20 @@ namespace Cozmo {
     private:
       
       bool IsBodyInPosition(Radians& currentAngle) const;
+      Result SendSetBodyAngle() const;
       
       const f32 _kDefaultSpeed     = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       const f32 _kDefaultAccel     = 10.f;
       
       bool    _inPosition = false;
       bool    _turnStarted = false;
-      Radians _targetAngle;
+      Radians _targetAngle, _initialAngle, _halfAngle;
+      Pose3d  _targetPose, _initialPose;
       Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
       Radians _variability = 0;
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = _kDefaultSpeed;
       f32     _accel_radPerSec2 = _kDefaultAccel;
-      Radians _halfAngle = 0.f;
       
       bool    _wasKeepFaceAliveEnabled;
       bool    _moveEyes = true;

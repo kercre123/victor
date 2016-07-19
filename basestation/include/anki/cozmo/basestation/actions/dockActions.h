@@ -80,14 +80,18 @@ namespace Anki {
       
       void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
+      // The offset for the preDock pose as opposed to the offset for the actual docking manuever
+      // Is used when checking if we are close enough to the preDock pose
+      void SetPreDockPoseDistOffset(f32 offset) { _preDockPoseDistOffsetX_mm = offset; }
+      
       struct PreActionPoseInfo
       {
         // Inputs
         ObjectID objectID;
         PreActionPose::ActionType preActionPoseType;
         bool doNearPreDockPoseCheck;
-        f32 placementOffsetX_mm;
         f32 preActionPoseAngleTolerance;
+        f32 preDockPoseDistOffsetX_mm;
         
         // Outputs
         ActionResult actionResult;
@@ -99,13 +103,13 @@ namespace Anki {
         PreActionPoseInfo(ObjectID objectID,
                           PreActionPose::ActionType preActionPoseType,
                           bool doNearPreDockPoseCheck,
-                          f32 placementOffsetX_mm,
+                          f32 preDockPoseDistOffsetX_mm,
                           f32 preActionPoseAngleTolerance)
         : objectID(objectID)
         , preActionPoseType(preActionPoseType)
         , doNearPreDockPoseCheck(doNearPreDockPoseCheck)
-        , placementOffsetX_mm(placementOffsetX_mm)
         , preActionPoseAngleTolerance(preActionPoseAngleTolerance)
+        , preDockPoseDistOffsetX_mm(preDockPoseDistOffsetX_mm)
         {
           
         }
@@ -164,6 +168,7 @@ namespace Anki {
       bool                       _doNearPredockPoseCheck         = true;
       u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
+      f32                        _preDockPoseDistOffsetX_mm      = 0;
       
     private:
       

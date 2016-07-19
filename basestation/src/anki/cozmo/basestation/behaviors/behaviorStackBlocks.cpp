@@ -101,7 +101,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 
   if( ! _targetBlockTop.IsSet() ) {
   
-    ObservableObject* topObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+    const ObservableObject* topObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
                                                                             *_blockworldFilterForTop);
     if( nullptr != topObject ) {
       _targetBlockTop = topObject->GetID();
@@ -120,7 +120,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
     }
   }
 
-  ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+  const ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
                                                                              *_blockworldFilterForBottom);
   if( nullptr != bottomObject ) {
     _targetBlockBottom = bottomObject->GetID();

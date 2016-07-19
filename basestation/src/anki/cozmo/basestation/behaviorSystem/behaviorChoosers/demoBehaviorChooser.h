@@ -79,7 +79,7 @@ private:
 
   bool ShouldTransitionOutOfCubesState();
 
-  bool FilterBlocks(ObservableObject* obj) const;
+  bool FilterBlocks(const ObservableObject* obj) const;
   
   // This will be called from Update, and if it returns true, we will transition to the next state
   std::function<bool(void)> _checkTransition;

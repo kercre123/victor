@@ -20,17 +20,10 @@ namespace Anki {
     //////////////////////// RobotPoseStamp /////////////////////////
     
     RobotPoseStamp::RobotPoseStamp()
-    { }
-    
-    RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
-                                   const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                   const f32 pose_angle,
-                                   const f32 head_angle,
-                                   const f32 lift_angle,
-                                   const Pose3d* pose_origin)
     {
-      SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, pose_origin);
+    
     }
+    
 
     RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
                                    const Pose3d& pose,
@@ -38,24 +31,6 @@ namespace Anki {
                                    const f32 lift_angle)
     {
       SetPose(frameID, pose, head_angle, lift_angle);
-    }
-    
-
-    void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
-                                 const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                 const f32 pose_angle,
-                                 const f32 head_angle,
-                                 const f32 lift_angle,
-                                 const Pose3d* pose_origin)
-    {
-      frame_ = frameID;
-      
-      pose_.SetRotation(pose_angle, Z_AXIS_3D());
-      pose_.SetTranslation(Vec3f(pose_x, pose_y, pose_z));
-      pose_.SetParent(pose_origin);
-      
-      headAngle_ = head_angle;
-      liftAngle_ = lift_angle;
     }
     
     void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
@@ -82,7 +57,7 @@ namespace Anki {
     RobotPoseHistory::RobotPoseHistory()
     : windowSize_(3000)
     {
-      poseOrigin_.SetName("RobotPoseHistoryOrigin");
+
     }
 
     void RobotPoseHistory::Clear()
@@ -111,36 +86,6 @@ namespace Anki {
                           p.GetPose().GetNamedPathToOrigin(false).c_str());
         return RESULT_FAIL;
       }
-      return AddRawOdomPose(t,
-                            p.GetFrameId(),
-                            p.GetPose().GetTranslation().x(),
-                            p.GetPose().GetTranslation().y(),
-                            p.GetPose().GetTranslation().z(),
-                            p.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                            p.GetHeadAngle(),
-                            p.GetLiftAngle());
-    }
-
-
-    // Adds a pose to the history
-    Result RobotPoseHistory::AddRawOdomPose(const TimeStamp_t t,
-                                            const PoseFrameID_t frameID,
-                                            const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                            const f32 pose_angle,
-                                            const f32 head_angle,
-                                            const f32 lift_angle)
-    {
-      // Should the pose be added?
-      
-      /*
-      // Only add flattened poses
-      if(pose_origin != &poseOrigin_) { //!pose_origin->IsOrigin()) {
-        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.OriginProblem",
-                            "Pose history should store flattened poses, but pose_origin seems to have a parent (%s).\n",
-                            pose_origin->GetNamedPathToOrigin(false).c_str());
-        return RESULT_FAIL;
-      }
-       */
 
       TimeStamp_t newestTime = poses_.rbegin()->first;
       if (newestTime > windowSize_ && t < newestTime - windowSize_) {
@@ -149,10 +94,8 @@ namespace Anki {
       }
       
       std::pair<PoseMapIter_t, bool> res;
-      res = poses_.emplace(std::piecewise_construct,
-                           std::make_tuple(t),
-                           std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, &poseOrigin_));
-      
+      res = poses_.emplace(t, p);
+
       if (!res.second) {
         PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
         return RESULT_FAIL;
@@ -172,38 +115,7 @@ namespace Anki {
                           p.GetPose().GetNamedPathToOrigin(false).c_str());
         return RESULT_FAIL;
       }
-      return AddVisionOnlyPose(t,
-                               p.GetFrameId(),
-                               p.GetPose().GetTranslation().x(),
-                               p.GetPose().GetTranslation().y(),
-                               p.GetPose().GetTranslation().z(),
-                               p.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                               p.GetHeadAngle(),
-                               p.GetLiftAngle());
-    }
 
-    
-    Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
-                                               const PoseFrameID_t frameID,
-                                               const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                               const f32 pose_angle,
-                                               const f32 head_angle,
-                                               const f32 lift_angle)
-    {
-      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle, &poseOrigin_);
-      
-      // Should the pose be added?
-      
-      /*
-      // Only add flattened poses
-      if(p.GetPose().GetParent() != nullptr) { //!p.GetPose().GetParent()->IsOrigin()) {
-        PRINT_NAMED_WARNING("RobotPoseHistory.AddVisionOnlyPose.OriginProblem",
-                            "Pose history should store flattened poses, but poseStamp's pose's is not an origin. (%s).\n",
-                            p.GetPose().GetNamedPathToOrigin(false).c_str());
-        return RESULT_FAIL;
-      }
-      */
-      
       // Check if the pose's timestamp is too old.
       if (!poses_.empty()) {
         TimeStamp_t newestTime = poses_.rbegin()->first;
@@ -222,9 +134,7 @@ namespace Anki {
       } else {
       
         std::pair<PoseMapIter_t, bool> res;
-        res = visPoses_.emplace(std::piecewise_construct,
-                                std::make_tuple(t),
-                                std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle()));
+        res = visPoses_.emplace(t, p);
       
         if (!res.second) {
           PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.EmplaceFailed",
@@ -297,18 +207,27 @@ namespace Anki {
 
         // Get iterator to the pose just before t_request
         const_PoseMapIter_t prev_it = it;
-        prev_it--;
+        --prev_it;
         
-        if (withInterpolation) {
-          
+        Pose3d pTransform;
+        if(withInterpolation)
+        {
           // Get the pose transform between the two poses.
-          Pose3d pTransform;
-          if(it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform) == false) {
-            PRINT_NAMED_ERROR("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
-                              "Could not get the pose transform between the two poses because they don't share the same origin.\n");
-            return RESULT_FAIL;
-          }
+          const bool inSameOrigin = it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform);
           
+          if(!inSameOrigin) {
+            PRINT_NAMED_INFO("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
+                              "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
+                             t_request,
+                             prev_it->second.GetPose().FindOrigin().GetName().c_str(),
+                             it->second.GetPose().FindOrigin().GetName().c_str());
+            
+            withInterpolation = false;
+          }
+        }
+        
+        if (withInterpolation)
+        {
           // Compute scale factor between time to previous pose and time between previous pose and next pose.
           f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
           
@@ -327,7 +246,9 @@ namespace Anki {
           f32 interpLiftAngle = prev_it->second.GetLiftAngle() + timeScale * (it->second.GetLiftAngle() - prev_it->second.GetLiftAngle());
           
           t = t_request;
-          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().GetParent());
+//          p.SetPose(prev_it->second.GetFrameId(), interpTrans.x(), interpTrans.y(), interpTrans.z(), interpRotation.ToFloat(), interpHeadAngle, interpLiftAngle, prev_it->second.GetPose().GetParent());
+          Pose3d interpPose(interpRotation, Z_AXIS_3D(), interpTrans, prev_it->second.GetPose().GetParent());
+          p.SetPose(prev_it->second.GetFrameId(), interpPose, interpHeadAngle, interpLiftAngle);
           
         } else {
           
@@ -421,56 +342,68 @@ namespace Anki {
         p1.GetPose().Print();
       }
       #endif
-      
-      // Make sure the two poses we are about to work with share a common
-      // origin and then make p1 relative to p0_it's parent (so they then
-      // share the same parent and the math below holds as we compute the
-      // relative pose between them).
-      CORETECH_ASSERT(p1.GetPose().FindOrigin() == p0_it->second.GetPose().FindOrigin());
-      Pose3d newPose;
-      const bool GetWithRespectToResult = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), newPose);
-      if (!GetWithRespectToResult)
+     
+      // Compute the total transformation taking us from the vision-only pose at time
+      // corresponding to p0, forward to p1. We will be applying this transformation
+      // to whatever is stored in the vision-only pose below.
+      Pose3d pTransform;
+      if(p0_it->second.GetFrameId() == p1.GetFrameId())
       {
-        CORETECH_ASSERT(GetWithRespectToResult == true);
+        // Special case: no intermediate frames to chain through. The total transformation
+        // is just going from p0 to p1.
+        Pose3d p1_wrt_p0_parent;
+        const bool inSameOrigin = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), pTransform);
+        ASSERT_NAMED(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT1");
+        pTransform *= p0_it->second.GetPose().GetInverse();
       }
-      p1.SetPose(p1.GetFrameId(), newPose, p1.GetHeadAngle(), p1.GetLiftAngle());
-      CORETECH_ASSERT(p1.GetPose().GetParent() == p0_it->second.GetPose().GetParent());
-      
-      // Compute relative pose between p0_it and p1 and append to the vision-based pose.
-      // Need to account for intermediate frames between p0 and p1 if any.
-      // pMid0 and pMid1 are used to denote the start and end poses of
-      // every intermediate frame.
-      Pose3d pTransform = p0_it->second.GetPose().GetInverse();
-      const_PoseMapIter_t pMid0 = p0_it;
-      const_PoseMapIter_t pMid1 = p0_it;
-      for (pMid1 = p0_it; pMid1->first != t; ++pMid1) {
-        if (pMid1->second.GetFrameId() > pMid0->second.GetFrameId()) {
-          
-          #if(DEBUG_ROBOT_POSE_HISTORY)
-          if (printDbg) {
-            printf(" ComputePoseAt: frame %d (t=%d) to frame %d (t=%d)\n", pMid0->second.GetFrameId(), pMid0->first, pMid1->second.GetFrameId(), pMid1->first);
+      else
+      {
+        const_PoseMapIter_t pMid0 = p0_it;
+        const_PoseMapIter_t pMid1 = p0_it;
+        for (pMid1 = p0_it; pMid1 != poses_.end(); ++pMid1)
+        {
+          // Bump pMid1 forward until it hits the next frame ID
+          if (pMid1->second.GetFrameId() > pMid0->second.GetFrameId())
+          {
+            // pMid1 is now pointing to the first pose in the next frame after pMid0.
+            // Point pMid1 to the last pose of the same frame as pMid0. Compute
+            // the transform for this frame (from pMid0 to pMid1) and
+            // fold it into the running total stored in pTransform.
+            
+            // We expect the beginning (pMid0) and end (pMid1) of this part of history
+            // to have the same frame ID and origin.
+            --pMid1; // (temporarily) move back to last pose in same frame as pMid0
+            ASSERT_NAMED(pMid0->second.GetFrameId() == pMid1->second.GetFrameId(),
+                         "RobotPoseHistory.ComputePoseAt.MismatchedIntermediateFrameIDs");
+            ASSERT_NAMED(&pMid0->second.GetPose().FindOrigin() == &pMid1->second.GetPose().FindOrigin(),
+                         "RobotPoseHistory.ComputePoseAt.MismatchedIntermediateOrigins");
+
+            // Get pMid0 and pMid1 w.r.t. the same parent and store in the intermediate
+            // transformation pMidTransform, which is going to hold the transformation
+            // from pMid0 to pMid1
+            Pose3d pMidTransform;
+            const bool inSameOrigin = pMid1->second.GetPose().GetWithRespectTo(*pMid0->second.GetPose().GetParent(), pMidTransform);
+            ASSERT_NAMED(inSameOrigin, "RobotPoseHistory.ComputePoseAt.FailedGetWRT1");
+            
+            // pMidTransform = pMid1 * pMid0^(-1)
+            pMidTransform *= pMid0->second.GetPose().GetInverse();
+            
+            // Fold the transformation from pMid0 to pMid1 into the total transformation thus far
+            //  pTranform = pMidTransofrm * pTransform
+            pTransform.PreComposeWith(pMidTransform);
+            
+            // Move both pointers to start of next pose frame to begin process again
+            ++pMid1;
+            pMid0 = pMid1;
           }
-          #endif
-          
-          // Point pMid1 to the last pose of the same frame as pMid0
-          // and multiply with pTransform to get the transform for pMid0's frame.
-          --pMid1;
-          pTransform *= pMid1->second.GetPose();
-          
-          // Now point pMid0 and pMid1 to the first pose of the next frame
-          // and multiply the inverse with pTransform to get the first part of the transform
-          // for the next frame.
-          ++pMid1;
-          pTransform *= pMid1->second.GetPose().GetInverse();
-          
-          pMid0 = pMid1;
-        }
-        if (pMid1->second.GetFrameId() == p1.GetFrameId()) {
-          break;
+       
+          if (pMid1->second.GetFrameId() == p1.GetFrameId())
+          {
+            // Reached p1, so we're done
+            break;
+          }
         }
       }
-      pTransform *= p1.GetPose();
-      
 
       #if(DEBUG_ROBOT_POSE_HISTORY)
       if (printDbg) {
@@ -479,8 +412,10 @@ namespace Anki {
       }
       #endif
       
-      pTransform.PreComposeWith(git->second.GetPose());
-      pTransform.SetParent(p1.GetPose().GetParent());
+      // NOTE: We are about to return p, which is a transformed version of the vision-only
+      // pose in "git", so it should still be relative to whatever "git" was relative to.
+      pTransform *= git->second.GetPose(); // Apply pTransform to git and store in pTransform
+      pTransform.SetParent(git->second.GetPose().GetParent()); // Keep git's parent
       p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle(), p1.GetLiftAngle());
       
       return RESULT_OK;

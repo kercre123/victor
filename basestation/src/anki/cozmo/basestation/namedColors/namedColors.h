@@ -28,7 +28,9 @@ extern const ColorRGBA OBSERVED_QUAD;
 extern const ColorRGBA ROBOT_BOUNDING_QUAD;
 extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD;
 extern const ColorRGBA LOCALIZATION_OBJECT;
-
+extern const ColorRGBA DIRTY_OBJECT;
+extern const ColorRGBA UNKNOWN_OBJECT;
+  
 } // end namespace NamedColors
 } // end namespace Anki
 

@@ -56,10 +56,11 @@ LightCube {
   rotation 0 0 1 0.23
 }
 BlockWorldComms {
-  filterLogs TRUE
+  filterLogs FALSE
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
+  filterLogs FALSE
 }
 WebotsKeyboardController {
 }

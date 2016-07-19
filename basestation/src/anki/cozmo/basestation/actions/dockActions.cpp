@@ -164,11 +164,11 @@ namespace Anki {
       ObjectID objectID                           = preActionPoseInfo.objectID;
       PreActionPose::ActionType preActionPoseType = preActionPoseInfo.preActionPoseType;
       bool doNearPredockPoseCheck                 = preActionPoseInfo.doNearPreDockPoseCheck;
-      f32 placementOffsetX_mm                     = preActionPoseInfo.placementOffsetX_mm;
-      Radians preActionPoseAngleTolerance             = preActionPoseInfo.preActionPoseAngleTolerance;
+      Radians preActionPoseAngleTolerance         = preActionPoseInfo.preActionPoseAngleTolerance;
       std::vector<PreActionPose>& preActionPoses  = preActionPoseInfo.preActionPoses;
       size_t& closestIndex                        = preActionPoseInfo.closestIndex;
       Point2f& closestPoint                       = preActionPoseInfo.closestPoint;
+      f32 preDockPoseDistOffsetX_mm               = preActionPoseInfo.preDockPoseDistOffsetX_mm;
     
     
       // Make sure the object we were docking with still exists in the world
@@ -198,8 +198,12 @@ namespace Anki {
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
       robot.GetBlockWorld().GetObstacles(obstacles);
-      dockObject->GetCurrentPreActionPoses(preActionPoses, {preActionPoseType},
-                                           std::set<Vision::Marker::Code>(), obstacles, nullptr, placementOffsetX_mm);
+      dockObject->GetCurrentPreActionPoses(preActionPoses,
+                                           {preActionPoseType},
+                                           std::set<Vision::Marker::Code>(),
+                                           obstacles,
+                                           nullptr,
+                                           preDockPoseDistOffsetX_mm);
       
       if(preActionPoses.empty()) {
         PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.NoPreActionPoses",
@@ -275,7 +279,7 @@ namespace Anki {
       PreActionPoseInfo preActionPoseInfo(_dockObjectID,
                                           GetPreActionType(),
                                           _doNearPredockPoseCheck,
-                                          _placementOffsetX_mm,
+                                          _preDockPoseDistOffsetX_mm,
                                           _preActionPoseAngleTolerance.ToFloat());
       IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
       _interactionResult = preActionPoseInfo.interactionResult;
@@ -858,7 +862,7 @@ namespace Anki {
                                "AngleDiff=%.1fdeg",
                                object.first.GetValue(),
                                Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
-              objectInOriginalPose = object.second;
+              objectInOriginalPose = object.second.get();
               break;
             }
           }

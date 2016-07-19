@@ -66,7 +66,7 @@ void BehaviorPopAWheelie::StopInternal(Robot& robot)
 
 void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 {
-  ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
+  const ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
   if( nullptr != closestObj ) {
     _targetBlock = closestObj->GetID();
   }
@@ -75,7 +75,7 @@ void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
   }
 }
 
-bool BehaviorPopAWheelie::FilterBlocks(ObservableObject* obj) const
+bool BehaviorPopAWheelie::FilterBlocks(const ObservableObject* obj) const
 {
   return (!obj->IsPoseStateUnknown() &&
           _robot.CanPickUpObjectFromGround(*obj));

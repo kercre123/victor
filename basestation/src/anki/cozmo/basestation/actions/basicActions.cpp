@@ -99,39 +99,53 @@ namespace Anki {
       }
     }
     
+    Result TurnInPlaceAction::SendSetBodyAngle() const
+    {
+      RobotInterface::SetBodyAngle setBodyAngle;
+      setBodyAngle.angle_rad             = _targetAngle.ToFloat();
+      setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
+      setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
+      setBodyAngle.angle_tolerance       = _angleTolerance.ToFloat();
+      
+      Result result = _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle));
+      return result;
+    }
+    
     ActionResult TurnInPlaceAction::Init()
     {
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose, taking into account the current driveCenter offset
-      Radians heading = 0;
+      Radians currentHeading = 0;
       if (!_isAbsoluteAngle) {
-        heading = _robot.GetPose().GetRotationAngle<'Z'>();
+        currentHeading = _robot.GetPose().GetRotationAngle<'Z'>();
       }
       
-      Radians newAngle(heading);
+      Radians newAngle(currentHeading);
       newAngle += _targetAngle;
       if(_variability != 0) {
         newAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
                                             _variability.ToDouble());
       }
       
-      Pose3d rotatedPose;
       Pose3d dcPose = _robot.GetDriveCenterPose();
       dcPose.SetRotation(newAngle, Z_AXIS_3D());
-      _robot.ComputeOriginPose(dcPose, rotatedPose);
+      _robot.ComputeOriginPose(dcPose, _targetPose);
       
-      _targetAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
+      _targetPose.SetParent(_robot.GetWorldOrigin());
+      _initialPose = _robot.GetPose();
+      
+      ASSERT_NAMED(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(),
+                   "TurnInPlaceAction.Init.RobotOriginMismatch");
+      
+      _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
+      _targetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
       
       Radians currentAngle;
       _inPosition = IsBodyInPosition(currentAngle);
       
       if(!_inPosition) {
-        RobotInterface::SetBodyAngle setBodyAngle;
-        setBodyAngle.angle_rad             = _targetAngle.ToFloat();
-        setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
-        setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
-        setBodyAngle.angle_tolerance       = _angleTolerance.ToFloat();
-        if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+
+        if(RESULT_OK != SendSetBodyAngle()) {
           return ActionResult::FAILURE_RETRY;
         }
         
@@ -144,7 +158,7 @@ namespace Anki {
           }
           
           // Store half the total difference so we know when to remove eye shift
-          _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
+          _halfAngle = 0.5f*(_targetAngle - _initialAngle).getAbsoluteVal();
           
           // Move the eyes (only if not in position)
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
@@ -182,6 +196,44 @@ namespace Anki {
     ActionResult TurnInPlaceAction::CheckIfDone()
     {
       ActionResult result = ActionResult::RUNNING;
+      
+      // Make sure world origin didn't change mid-turn. If it did: update the initial/target/half
+      // poses and angles to be in the current coordinate frame
+      if(_targetPose.GetParent() != _robot.GetWorldOrigin())
+      {
+        if(!_targetPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _targetPose)) {
+          PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
+                           "Could not get target pose w.r.t. current world origin");
+          return ActionResult::FAILURE_RETRY;
+        }
+        
+        _targetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
+        
+        // Also need to update the angle being used by the steering controller
+        // on the robot:
+        if(RESULT_OK != SendSetBodyAngle()) {
+          return ActionResult::FAILURE_RETRY;
+        }
+        
+        if(_moveEyes)
+        {
+          if(!_initialPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _initialPose)) {
+            // If we got target pose w.r.t. world origin, we should be able to get initial pose too!
+            PRINT_NAMED_WARNING("TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
+                                "Could not get initial pose w.r.t. current world origin");
+          }
+          else
+          {
+            _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
+            
+            // Store half the total difference so we know when to remove eye shift
+            _halfAngle = 0.5f*(_targetAngle - _initialAngle).getAbsoluteVal();
+          }
+        }
+        
+        PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.WorldOriginChanged",
+                         "New target angle = %.1fdeg", _targetAngle.getDegrees());
+      }
       
       Radians currentAngle;
       
@@ -1316,6 +1368,7 @@ namespace Anki {
     void TurnTowardsFaceAction::SetAction(IActionRunner *action)
     {
       if(nullptr != _action) {
+        _action->PrepForCompletion();
         Util::SafeDelete(_action);
       }
       _action = action;

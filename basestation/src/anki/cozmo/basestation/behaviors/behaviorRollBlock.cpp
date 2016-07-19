@@ -79,7 +79,7 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
   if (!robot.IsCarryingObject())
   {
-    ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
+    const ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
     if( nullptr != closestObj ) {
       _targetBlock = closestObj->GetID();
     }
@@ -89,7 +89,7 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
   }
   else
   {
-    const ObservableObject* carriedObj = robot.GetBlockWorld().GetActiveObjectByID(robot.GetCarryingObject());
+    const ObservableObject* carriedObj = robot.GetBlockWorld().GetObjectByID(robot.GetCarryingObject());
     if (nullptr != carriedObj && carriedObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
     {
       _targetBlock = carriedObj->GetID();
@@ -101,7 +101,7 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
   }
 }
 
-bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
+bool BehaviorRollBlock::FilterBlocks(const ObservableObject* obj) const
 {
   return (!obj->IsPoseStateUnknown() &&
           _robot.CanPickUpObjectFromGround(*obj) &&
@@ -186,7 +186,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   rollAction->RollToUpright();
   
   WaitForLambdaAction* waitAction = new WaitForLambdaAction(robot, [this](Robot& robot) {
-    auto block = robot.GetBlockWorld().GetActiveObjectByID(_targetBlock);
+    auto block = robot.GetBlockWorld().GetObjectByID(_targetBlock);
     if(nullptr == block || !block->IsMoving()) {
       return true;
     } else {
