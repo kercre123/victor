@@ -49,6 +49,7 @@ namespace Anki {
     CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest", 10);
     CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest", true);
     CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
+    CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
     
     static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
     static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
@@ -255,6 +256,8 @@ namespace Anki {
                             
                             RollObjectAction* action = new RollObjectAction(robot, _blockObjectIDPickup);
                             action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+                            action->EnableDeepRoll(kDoDeepRoll);
+                            
                             StartActing(robot, action,
                                         [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
                                           if (result != ActionResult::SUCCESS) {
