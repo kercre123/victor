@@ -860,6 +860,11 @@ public class Robot : IRobot {
     }
   }
 
+  public void DriveHead(float speed_radps) {
+    RobotEngineManager.Instance.Message.MoveHead = Singleton<MoveHead>.Instance.Initialize(speed_radps);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     RobotEngineManager.Instance.Message.DriveWheels =
       Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps, 0, 0);

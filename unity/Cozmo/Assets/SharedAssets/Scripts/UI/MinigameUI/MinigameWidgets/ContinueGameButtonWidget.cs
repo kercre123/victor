@@ -31,11 +31,11 @@ namespace Cozmo {
       }
 
       public void Initialize(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
-                             string buttonText, string shelfText, Color shelfColor, string dasButtonName, string dasViewControllerName) {
+                             string buttonText, string shelfText, Color shelfTextColor, string dasButtonName, string dasViewControllerName) {
         _ContinueButton.Initialize(HandleContinueButtonClicked, dasButtonName, dasViewControllerName);
         _ContinueButton.Text = buttonText;
         _OnClickCallback = buttonClickHandler;
-        SetShelfText(shelfText, shelfColor);
+        SetShelfText(shelfText, shelfTextColor);
       }
 
       public void SetShelfText(string text, Color textColor) {

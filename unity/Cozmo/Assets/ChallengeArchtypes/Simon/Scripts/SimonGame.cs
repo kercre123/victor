@@ -59,7 +59,7 @@ namespace Simon {
       _sShowWrongCubeTap = !_sShowWrongCubeTap;
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfigData) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       _Config = (SimonGameConfig)minigameConfigData;
       BetweenRoundsMusic = _Config.BetweenRoundsMusic;
       InitializeMinigameObjects();
@@ -219,8 +219,7 @@ namespace Simon {
         _BannerAnimationDurationSeconds);
     }
 
-    protected override void RaiseMiniGameQuit() {
-      base.RaiseMiniGameQuit();
+    protected override void SendCustomEndGameDasEvents() {
       DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
     }
   }

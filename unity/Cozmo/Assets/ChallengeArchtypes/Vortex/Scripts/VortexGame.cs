@@ -43,7 +43,7 @@ namespace Vortex {
     private PlayerData[] _PlayerDataList;
     private int _RoundNumber;
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // TODO
       InitializeMinigameObjects(minigameConfig.NumCubesRequired());
     }

@@ -44,7 +44,7 @@ public class MinesweeperGame : GameBase {
   private MinesweeperPanel _Panel;
   public GameObject SetupHelpPrefab;
 
-  protected override void Initialize(MinigameConfigBase minigameConfigData) {
+  protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
     _FirstGuess = true;
     _Config = (MinesweeperConfig)minigameConfigData;
     _Grid = new int[_Config.Rows, _Config.Columns];

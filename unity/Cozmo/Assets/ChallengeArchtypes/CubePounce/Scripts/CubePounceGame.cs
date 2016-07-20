@@ -60,7 +60,7 @@ namespace Cozmo.Minigame.CubePounce {
       }
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
       TotalRounds = config.Rounds;
       _MinAttemptDelay_s = config.MinAttemptDelay;
@@ -163,9 +163,7 @@ namespace Cozmo.Minigame.CubePounce {
       }
     }
 
-    protected override void RaiseMiniGameQuit() {
-      base.RaiseMiniGameQuit();
-
+    protected override void SendCustomEndGameDasEvents() {
       Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
       Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
 

@@ -144,7 +144,7 @@ namespace SpeedTap {
       get { return _SpeedTapRoundEndSlidePrefab; }
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfigData) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       SpeedTapGameConfig speedTapConfig = minigameConfigData as SpeedTapGameConfig;
       // Set all Config based values
       TotalRounds = speedTapConfig.Rounds;
@@ -340,8 +340,7 @@ namespace SpeedTap {
       }
     }
 
-    protected override void RaiseMiniGameQuit() {
-      base.RaiseMiniGameQuit();
+    protected override void SendCustomEndGameDasEvents() {
       Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
       Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
 

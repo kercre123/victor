@@ -86,13 +86,13 @@ public static class VectorUtil {
 
   public static bool Approximately(this Vector2 a, Vector2 b) {
     return Mathf.Approximately(a.x, b.x) &&
-      Mathf.Approximately(a.y, b.y);   
+      Mathf.Approximately(a.y, b.y);
   }
 
   public static bool Approximately(this Vector3 a, Vector3 b) {
     return Mathf.Approximately(a.x, b.x) &&
       Mathf.Approximately(a.y, b.y) &&
-      Mathf.Approximately(a.z, b.z);   
+      Mathf.Approximately(a.z, b.z);
   }
   #endregion
 
@@ -141,6 +141,10 @@ public static class VectorUtil {
       }
     }
     return angleDiff;
+  }
+
+  public static bool IsNear(this float a, float b, float threshold = 0.0001f) {
+    return (Math.Abs(a - b) < threshold);
   }
 
   #endregion
