@@ -312,7 +312,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
 void BehaviorManager::SwitchToNextBehavior()
 {
   if( _behaviorToResume != nullptr ) {
-    if( _currentBehavior == nullptr || _currentBehavior->ShouldResumeLastBehavior() ) {
+    if( _shouldResumeBehaviorAfterReaction ) {
       PRINT_NAMED_INFO("BehaviorManager.ResumeBehavior",
                        "Behavior '%s' will be resumed",
                        _behaviorToResume->GetName().c_str());
@@ -342,7 +342,7 @@ void BehaviorManager::SwitchToNextBehavior()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
+void BehaviorManager::SwitchToReactionaryBehavior(IReactionaryBehavior* nextBehavior)
 {
   // a null here means "no reaction", not "switch to the null behavior"
   if( nullptr == nextBehavior ) {
@@ -356,6 +356,14 @@ void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
   }
 
   if( SwitchToBehavior(nextBehavior) ) {
+    if( !_runningReactionaryBehavior ) {
+      // by default, we do want to resume this behavior
+      _shouldResumeBehaviorAfterReaction = true;
+    }
+    
+    // if any reactionary behavior says that we shouldn't resume, then we won't
+    _shouldResumeBehaviorAfterReaction = _shouldResumeBehaviorAfterReaction && nextBehavior->ShouldResumeLastBehavior();
+
     _runningReactionaryBehavior = true;
   }
 }
