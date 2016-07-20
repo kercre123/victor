@@ -96,16 +96,22 @@
         }
       }
 //      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//      // FreeplayExploration : goal to explore Cozmo's surroundings
+//      // FreeplayHiking : goal to explore Cozmo's surroundings
 //      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //      {
-//        "name" : "freeplayExploration",
+//        "name" : "freeplayHiking",
 //        "behaviorChooser" :
 //        {
 //          "type" : "simple",
 //     
 //          // these are the behaviors that are allowed in this behavior chooser
-//          "behaviorGroups" : [ "FreeplayExplore" ]
+//          "behaviorGroups" : [ "FreeplayHiking" ],
+//
+//          "scoreBonusForCurrentBehavior" : {
+//            "nodes" : [
+//              { "x" :   0.0, "y" :  0.0 }
+//            ]
+//          }
 //        }
 //      }
     ]

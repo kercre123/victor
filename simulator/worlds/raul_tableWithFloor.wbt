@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.897096 -0.253114 -0.36215 1.32373
-  position -1.12294 -2.02208 0.886751
+  orientation 0.936375 -0.141518 -0.321207 0.879592
+  position -0.23719 -1.14621 1.28213
 }
 Can {
   translation -0.05473 0.136394 0.312
@@ -44,7 +44,7 @@ RectangleArena {
 }
 Laptop {
   translation 0.165 0.277999 0.249823
-  rotation -0.179672 -0.719782 -0.670546 3.52264
+  rotation -0.184984 -0.696207 -0.693597 -2.77384
 }
 LightCube {
   translation -0.081448 -0.141559 0.271993
@@ -60,7 +60,7 @@ BlockWorldComms {
   filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
-  translation 0 0 0.25
+  translation 0.13 0 0.25
   name "CozmoBot_1"
   filterLogs TRUE
 }
@@ -69,5 +69,6 @@ WebotsKeyboardController {
   filterLogs TRUE
 }
 CozmoVizDisplay {
+  behaviorSelectionViz TRUE
   filterLogs TRUE
 }

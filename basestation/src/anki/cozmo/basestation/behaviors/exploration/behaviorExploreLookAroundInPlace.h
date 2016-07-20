@@ -108,6 +108,7 @@ private:
     bool    behavior_ShouldResetTurnDirection;
     bool    behavior_ShouldLowerLift;
     float   behavior_AngleOfFocus_deg;
+    uint8_t behavior_NumberOfScansBeforeStop; // if 0 it will loop as long as it's not kicked out
     // turn speed
     float sx_BodyTurnSpeed_degPerSec;
     float sxt_HeadTurnSpeed_degPerSec; // for turn states
@@ -191,6 +192,9 @@ private:
   
   // amount of radians we have turned since we started at this location
   float _behaviorBodyFacingDone_rad;
+  
+  // number of times we have bounced off a cone side (requires cone of focus). 2 means an entire cone was done, 4 twice, ...
+  uint8_t _coneSidesReached;
 
   // the robot completes a turn in this direction, but in between angles, it moves back and forth and it moves the head
   // up and down

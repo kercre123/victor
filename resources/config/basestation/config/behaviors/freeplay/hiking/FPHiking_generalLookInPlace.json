@@ -1,10 +1,9 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
-  "name": "ExploreLookAroundInPlace",
-  "flatScore" : 10.0,
-  "requiredRecentDriveOffCharger_sec" : 1.0,
+  "name": "GeneralLookInPlace",
+  "flatScore" : 1.0,
   "behaviorGroups": [
-      "FreeplayExplore"
+      "FreeplayHiking"
   ],
   "params":
   {
@@ -13,6 +12,7 @@
     "behavior_ShouldLowerLift": true,
     "behavior_RecentLocationsMax": 5,
     "behavior_AngleOfFocus_deg": 0.0,
+    "behavior_NumberOfScansBeforeStop":1,
     "sx_BodyTurnSpeed_degPerSec": 90.0,
     "sxt_HeadTurnSpeed_degPerSec": 15.0,
     "sxh_HeadTurnSpeed_degPerSec": 60.0,
