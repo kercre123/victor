@@ -122,7 +122,7 @@ void DiffieHellman::Update(void) {
   {
     big_num_t temp;
     
-    mont_from(task->mont, temp, task->pow_state.result);
+    //mont_from(task->mont, temp, task->pow_state.result);
     
     DiffieHellmanResults msg;
     memcpy(msg.result, temp.digits, RANDOM_BYTES);

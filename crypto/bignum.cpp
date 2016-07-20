@@ -663,13 +663,13 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
 }
 
 void mont_power_async_init(const big_mont_t& mont, big_mont_pow_t& state, const big_num_t& base, const big_num_t& exp) {
-  state.exp = exp;
-  state.base = base;
-  state.result = mont.one;
+  memcpy(&state.exp, &exp, sizeof(big_num_t));
+  memcpy(&state.base, &base, sizeof(big_num_t));
+  memcpy(&state.result, &mont.one, sizeof(big_num_t));
 
   state.bit = 0;
-  state.msb = big_msb(exp);
-  state.negative = big_odd(base) ? base.negative : false;
+  state.msb = big_msb(state.exp);
+  state.negative = big_odd(state.base) ? state.base.negative : false;
 }
 
 bool mont_power_async(const big_mont_t& mont, big_mont_pow_t& state) {
