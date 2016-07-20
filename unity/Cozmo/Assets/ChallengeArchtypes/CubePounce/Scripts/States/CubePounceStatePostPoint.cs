@@ -19,14 +19,14 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
         _CubePounceGame.CozmoScore++;
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[]{Color.red}, CubePounceGame.kCubeLightFlashInterval_m, Color.black);
+        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[]{Color.red}, _CubePounceGame.CubeLightFlashInterval_s, Color.black);
       }
       else {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         _CubePounceGame.PlayerScore++;
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[]{Color.green}, CubePounceGame.kCubeLightFlashInterval_m, Color.black);
+        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[]{Color.green}, _CubePounceGame.CubeLightFlashInterval_s, Color.black);
       }
 
       bool roundIsOver = _CubePounceGame.CheckAndUpdateRoundScore();

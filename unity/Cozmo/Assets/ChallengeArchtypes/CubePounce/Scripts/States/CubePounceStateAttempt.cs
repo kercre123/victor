@@ -34,11 +34,11 @@ namespace Cozmo.Minigame.CubePounce {
       // If cozmos current pitch has differed enough from the beginning of the anim, the block was hit
       float currentPitch_deg = Mathf.Rad2Deg * _CurrentRobot.PitchAngle;
       float angleChange_deg = Mathf.Abs(Mathf.DeltaAngle(_InitialPitch_deg, currentPitch_deg));
-      if (angleChange_deg > CubePounceGame.kPouncePitchDiffSuccess_deg) {
+      if (angleChange_deg > _CubePounceGame.PouncePitchDiffSuccess_deg) {
         _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
       }
 
-      if (_AttemptTriggered && _PounceEndTimestamp > 0f && (Time.time - _PounceEndTimestamp) > CubePounceGame.kPounceLiftMeasureDelay_s) {
+      if (_AttemptTriggered && _PounceEndTimestamp > 0f && (Time.time - _PounceEndTimestamp) > _CubePounceGame.PounceSuccessMeasureDelay_s) {
         // If we got to the end of the post animation delay without triggering the angle diff, cozmo lost
         _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: false));
         _PounceEndTimestamp = -1f;

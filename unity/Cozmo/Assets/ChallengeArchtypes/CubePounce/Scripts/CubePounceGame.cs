@@ -12,19 +12,63 @@ namespace Cozmo.Minigame.CubePounce {
     public const string kCozmoWinEarly = "CozmoWinEarly";
     public const string kCozmoWinPounce = "CozmoWinPounce";
     public const string kPlayerWin = "PlayerWin";
+
     // Consts for determining the exact placement and forgiveness for cube location
-    // Must be consistent for animations to work
+    // Animators have been measuring distance from faceplate to cube; the below const is the distance
+    // between the faceplate and front weel center plane
     private const float _kWheelCenterToFacePlane_mm = 13.0f;
-    // Current animations expect to start from 55 mm back
-    public const float kCubePlaceDist_mm = 55.0f + _kWheelCenterToFacePlane_mm;
-    public const float kPositionDiffTolerance_mm = 8.0f;
-    public const float kAngleTolerance_deg = 15.0f;
-    public const float kPouncePitchDiffSuccess_deg = 5.0f;
-    public const float kPounceLiftMeasureDelay_s = 0.15f;
+    [SerializeField,Range(0f,500f)]
+    private float _CubeDistanceBetween_mm; // = 55f;
+    public float CubePlaceDist_mm {
+      get {
+        return _CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm;
+      }
+    }
 
-    public const float kCubeLightFlashInterval_m = 0.1f;
+    // How far +/- from the exact cube distance Cozmo needs to be to animate.
+    [SerializeField,Range(0f,500f)]
+    private float _PositionDiffTolerance_mm; // = 8.0f;
+    public float PositionDiffTolerance_mm {
+      get {
+        return _PositionDiffTolerance_mm;
+      }
+    }
 
-    private int _CloseRoundCount;
+    // How many degrees +/- Cozmo can be from looking directly at the cube, in order to animate.
+    [SerializeField,Range(0f,90f)]
+    private float _AngleTolerance_deg; // = 15.0f;
+    public float AngleTolerance_deg {
+      get {
+        return _AngleTolerance_deg;
+      }
+    }
+
+    // Number of degrees difference in Cozmos pitch to be considered a success when pouncing
+    [SerializeField,Range(0f,90f)]
+    private float _PouncePitchDiffSuccess_deg; // = 5.0f;
+    public float PouncePitchDiffSuccess_deg {
+      get {
+        return _PouncePitchDiffSuccess_deg;
+      }
+    }
+
+    // Amount of time to wait past end of animation to allow Cozmos angle to be reported as lifted to potentially give him a point
+    [SerializeField,Range(0f,1f)]
+    private float _PounceSuccessMeasureDelay_s; // = 0.15f;
+    public float PounceSuccessMeasureDelay_s {
+      get {
+        return _PounceSuccessMeasureDelay_s;
+      }
+    }
+
+    // Frequency with which to flash the cube lights
+    [SerializeField,Range(0f,1f)]
+    private float _CubeLightFlashInterval_s; // = 0.1f;
+    public float CubeLightFlashInterval_s {
+      get {
+        return _CubeLightFlashInterval_s;
+      }
+    }
 
     private float _MinAttemptDelay_s;
     private float _MaxAttemptDelay_s;
