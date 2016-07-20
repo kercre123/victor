@@ -412,12 +412,12 @@ union EngineToRobot
 
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,
-  // Available for future use                               = 0x81,
-  // Available for future use                               = 0x82,
+  SetDiffieLocal                setDiffieLocal              = 0x81,
+  SetDiffieRemote               setDiffieRemote             = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
   NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
-  CalculateDiffieHellman        calculateDiffieHellman      = 0x86,
+  // Available for future use                               = 0x86,
   RTIPVersionInfo               rtipVersion                 = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,

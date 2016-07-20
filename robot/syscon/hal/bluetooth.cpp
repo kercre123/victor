@@ -145,10 +145,13 @@ static void dh_setup(const void* state, int) {
   RobotInterface::SendMessage(dn);
 
   // Ask another processor to nicely calculate our heavy function
-  CalculateDiffieHellman cdh;
-  memcpy(cdh.remote, dh->remote_encoded, SECRET_LENGTH);
-  memcpy(cdh.local, dh->local_encoded, SECRET_LENGTH);
-  RobotInterface::SendMessage(cdh);
+  SetDiffieLocal sl;
+  memcpy(sl.local, dh->local_encoded, SECRET_LENGTH);
+  RobotInterface::SendMessage(sl);
+
+  SetDiffieRemote sr;
+  memcpy(sr.remote, dh->remote_encoded, SECRET_LENGTH);
+  RobotInterface::SendMessage(sr);
 }
 
 void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  

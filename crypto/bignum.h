@@ -34,15 +34,12 @@ struct big_mont_t {
 };
 
 struct big_mont_pow_t {
-  const big_mont_t* mont;
   big_num_t exp;
-  big_num_t working[3];
-
-  big_num_t *base;
-  big_num_t *result;
-  big_num_t *temp;
+  big_num_t base;
+  big_num_t result;
 
   int msb, bit;
+  bool negative;
 };
 
 // This is used for public decryption
@@ -101,7 +98,7 @@ bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, c
 bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp);
 
 // Async montgomery power
-void mont_power_async_init(big_mont_pow_t& state, const big_mont_t& mont, const big_num_t& base, const big_num_t& exp);
-bool mont_power_async(big_mont_pow_t& state, big_num_t& out);
+void mont_power_async_init(const big_mont_t& mont, big_mont_pow_t& state, const big_num_t& base, const big_num_t& exp);
+bool mont_power_async(const big_mont_t& mont, big_mont_pow_t& state);
 
 #endif

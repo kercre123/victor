@@ -662,50 +662,38 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
   return false;
 }
 
-void mont_power_async_init(big_mont_pow_t& state, const big_mont_t& mont, const big_num_t& base, const big_num_t& exp) {
-  state.mont = &mont;
-  state.base = &state.working[0];
-  state.temp = &state.working[1];
-  state.result = &state.working[2];
-
+void mont_power_async_init(const big_mont_t& mont, big_mont_pow_t& state, const big_num_t& base, const big_num_t& exp) {
   state.exp = exp;
-  *state.base = base;
-  *state.result = mont.one;
+  state.base = base;
+  state.result = mont.one;
 
   state.bit = 0;
   state.msb = big_msb(exp);
+  state.negative = big_odd(base) ? base.negative : false;
 }
 
-bool mont_power_async(big_mont_pow_t& state, big_num_t& out) {
+bool mont_power_async(const big_mont_t& mont, big_mont_pow_t& state) {
+  big_num_t temp;
+
   // Check if the power is complete
   while (state.bit <= state.msb) {
     if (big_bit_get(state.exp, state.bit++)) {
-      if (mont_multiply(*state.mont, *state.temp, *state.result, *state.base)) {
+      if (mont_multiply(mont, temp, state.result, state.base)) {
         return true;
       }
 
-      {
-        big_num_t *x = state.result;
-        state.result = state.temp;
-        state.temp = x;
-      }
+      memcpy(&state.result, &temp, sizeof(big_num_t));
     }
 
-    if (mont_multiply(*state.mont, *state.temp, *state.base, *state.base)) {
+    if (mont_multiply(mont, temp, state.base, state.base)) {
       return true;
     }
 
-    {
-      big_num_t *x = state.base;
-      state.base = state.temp;
-      state.temp = x;
-    }
+    memcpy(&state.base, &temp, sizeof(big_num_t));
 
     return false;
   }
-  
-  out = *state.result;
-  out.negative = big_odd(*state.base) ? state.base->negative : false;
+  state.result.negative = state.negative;
 
   return true;
 }

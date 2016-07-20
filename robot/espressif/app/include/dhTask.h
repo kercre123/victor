@@ -3,7 +3,8 @@
 
 namespace DiffieHellman {
 	bool Init();
-	void Start(const uint8_t* local, const uint8_t* remote);
+	void SetLocal(const uint8_t* local);
+	void SetRemote(const uint8_t* remote);
 	void Update();
 }
 

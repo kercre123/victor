@@ -102,7 +102,7 @@ static int get_depc() {
 }
 
 extern void crash_dump(int* sp) {
-  ex_regs *regs = (ex_regs*) sp;
+  ex_regs *regs = (ex_regs*) sp; ets_intr_lock();
   // stack pointer at exception place
   int* ex_sp = (sp + 256 / 4);
   int* p = ex_sp - 8;

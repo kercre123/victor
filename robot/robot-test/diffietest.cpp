@@ -95,13 +95,13 @@ int main(int argc, char** argv) {
   printf("---\r\n");
   big_mont_pow_t state;
 
-  mont_power_async_init(state, RSA_DIFFIE_MONT, RSA_DIFFIE_EXP_MONT, x);
-  while (!mont_power_async(state, t1)) ;
+  mont_power_async_init(RSA_DIFFIE_MONT, state, RSA_DIFFIE_EXP_MONT, x);
+  while (!mont_power_async(RSA_DIFFIE_MONT, state)) ;
 
-  mont_power_async_init(state, RSA_DIFFIE_MONT, t1, y);
-  while (!mont_power_async(state, t1)) ;
+  mont_power_async_init(RSA_DIFFIE_MONT, state, state.result, y);
+  while (!mont_power_async(RSA_DIFFIE_MONT, state)) ;
 
-  mont_from(RSA_DIFFIE_MONT, t2_c, t1);
+  mont_from(RSA_DIFFIE_MONT, t2_c, state.result);
 
   print_hex(t2_c);
 
