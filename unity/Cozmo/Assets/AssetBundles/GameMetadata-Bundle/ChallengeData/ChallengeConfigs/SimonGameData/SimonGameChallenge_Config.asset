@@ -19,12 +19,13 @@ MonoBehaviour:
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
-  MinSequenceLength: 3
+  MinSequenceLength: 2
   MaxSequenceLength: 30
   TimeBetweenBeats: 0.6
   TimeWaitFirstBeat: 1
   MinDistBetweenCubesMM: 60
   RotateSecScan: 2
+  ScanTimeoutSec: 30
   CozmoGuessCubeCorrectPercentage:
     serializedVersion: 2
     m_Curve:

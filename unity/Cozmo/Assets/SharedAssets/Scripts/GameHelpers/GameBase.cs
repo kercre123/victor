@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -53,6 +53,7 @@ public abstract class GameBase : MonoBehaviour {
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
   private bool _WonChallenge;
+  protected bool _ShowScoreboardOnComplete = true;
 
   private List<DifficultySelectOptionData> _DifficultyOptions;
 
@@ -530,32 +531,27 @@ public abstract class GameBase : MonoBehaviour {
     // Implement in subclasses if desired
   }
 
-  public void RaiseMiniGameWin(string subtitleText = null) {
+  public void RaiseMiniGameWin() {
     _StateMachine.Stop();
     _WonChallenge = true;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
-
-    UpdateScoreboard(didPlayerWin: _WonChallenge);
-
-    if (string.IsNullOrEmpty(subtitleText)) {
-      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    if (_ShowScoreboardOnComplete) {
+      UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
-    OpenChallengeEndedDialog(subtitleText);
+    ShowWinnerState();
   }
 
-  public void RaiseMiniGameLose(string subtitleText = null) {
+  public void RaiseMiniGameLose() {
     _StateMachine.Stop();
     _WonChallenge = false;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
-
-    UpdateScoreboard(didPlayerWin: _WonChallenge);
-
-    if (string.IsNullOrEmpty(subtitleText)) {
-      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    if (_ShowScoreboardOnComplete) {
+      UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
-    OpenChallengeEndedDialog(subtitleText);
+
+    ShowWinnerState();
   }
 
   private void UpdateScoreboard(bool didPlayerWin) {
@@ -567,11 +563,8 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  private void OpenChallengeEndedDialog(string subtitleText = null) {
+  protected virtual void ShowWinnerState() {
     _SharedMinigameViewInstance.CloseHowToPlayView();
-
-    // Open confirmation dialog instead
-    _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
 
     SoftEndGameRobotReset();
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
@@ -598,7 +591,8 @@ public abstract class GameBase : MonoBehaviour {
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),
         Color.gray,
         "game_results_continue_button");
-
+      string subtitleText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+      _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
       _ChallengeEndViewInstance.DisplayRewards();
     }
     else {

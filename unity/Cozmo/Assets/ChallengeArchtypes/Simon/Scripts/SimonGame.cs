@@ -18,6 +18,8 @@ namespace Simon {
     private Dictionary<int, SimonCube> _BlockIdToSound = new Dictionary<int, SimonCube>();
 
     private SimonGameConfig _Config;
+    private int _CurrLivesCozmo;
+    private int _CurrLivesHuman;
 
     public int MinSequenceLength { get { return _Config.MinSequenceLength; } }
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
@@ -30,6 +32,7 @@ namespace Simon {
     private int _CurrentSequenceLength;
 
     private PlayerType _FirstPlayer = PlayerType.Cozmo;
+    private int _FirstScore = 0;
 
     public AnimationCurve CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
 
@@ -48,45 +51,56 @@ namespace Simon {
       get { return _SimonTurnSlidePrefab; }
     }
 
+    public PlayerType FirstPlayer {
+      get { return _FirstPlayer; }
+    }
     [SerializeField]
     private Transform _SimonSetupErrorPrefab;
     public Transform SimonSetupErrorPrefab {
       get { return _SimonSetupErrorPrefab; }
     }
 
-    private static bool _sShowWrongCubeTap = false;
-    private void HandleDebugShowWrongTapColor(string str) {
-      _sShowWrongCubeTap = !_sShowWrongCubeTap;
-    }
+    public enum SimonMode : int {
+      VS = 0,
+      SOLO = 1
+    };
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       _Config = (SimonGameConfig)minigameConfigData;
       BetweenRoundsMusic = _Config.BetweenRoundsMusic;
-      InitializeMinigameObjects();
 
-      DebugConsoleData.Instance.AddConsoleFunction("Simon Toggle Debug Show Wrong", "Minigames", HandleDebugShowWrongTapColor);
+      InitializeMinigameObjects();
     }
 
     protected override void CleanUpOnDestroy() {
-      DebugConsoleData.Instance.RemoveConsoleData("Simon Toggle Debug Show Wrong", "Minigames");
     }
 
     // Use this for initialization
     protected void InitializeMinigameObjects() {
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
+      _CurrLivesCozmo = _Config.MaxLivesCozmo;
+      _CurrLivesHuman = _Config.MaxLivesHuman;
+      _ShowScoreboardOnComplete = false;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
-                                                  new WaitForNextRoundSimonState(_FirstPlayer)),
+                                                  new WaitForNextRoundSimonState()),
                                                   DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
-                                                                    _Config.MinDistBetweenCubesMM, _Config.RotateSecScan);
+                                                                    _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+    }
+
+    protected override void OnDifficultySet(int difficulty) {
+      if (difficulty == (int)SimonMode.SOLO) {
+        _FirstPlayer = PlayerType.Human;
+      }
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
@@ -123,10 +137,7 @@ namespace Simon {
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       foreach (int cubeId in CubeIdsForGame) {
-        if (_sShowWrongCubeTap && cubeId == wrongTapCubeID) {
-          CurrentRobot.LightCubes[wrongTapCubeID].SetFlashingLEDs(Color.magenta, 100, 100, 0);
-        }
-        else if (cubeId == correctCubeID) {
+        if (cubeId == correctCubeID) {
           CurrentRobot.LightCubes[correctCubeID].SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);
         }
         else {
@@ -144,20 +155,12 @@ namespace Simon {
     }
 
     public void GenerateNewSequence(int sequenceLength) {
-      // First time is special per design, always shuffle different 3 to make the start more unique.
-      if (sequenceLength <= _Config.MinSequenceLength) {
-        List<int> shuffledAllIDs = new List<int>(CubeIdsForGame);
-        sequenceLength = sequenceLength > CubeIdsForGame.Count ? CubeIdsForGame.Count : sequenceLength;
-        shuffledAllIDs.Shuffle();
-        for (int i = 0; i < sequenceLength; ++i) {
-          _CurrentIDSequence.Add(shuffledAllIDs[i]);
-        }
-      }
-      else {
+      // Fill in the min length or add one...
+      do {
         int pickIndex = Random.Range(0, CubeIdsForGame.Count);
         int pickedID = CubeIdsForGame[pickIndex];
         // Attempt to decrease chance of 3 in a row
-        if (_CurrentIDSequence.Count > 2) {
+        if (_CurrentIDSequence.Count >= 2) {
           if (pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 2] &&
               pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
             List<int> validIDs = new List<int>(CubeIdsForGame);
@@ -167,7 +170,7 @@ namespace Simon {
           }
         }
         _CurrentIDSequence.Add(pickedID);
-      }
+      } while (_CurrentIDSequence.Count < _Config.MinSequenceLength);
     }
 
     public IList<int> GetCurrentSequence() {
@@ -193,24 +196,92 @@ namespace Simon {
       return audioEvent;
     }
 
-    public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
+    public void ShowWinnerPicture(PlayerType player) {
+      SimonTurnSlide simonTurnScript = GetSimonSlide();
+      Sprite currentPortrait = SharedMinigameView.PlayerPortrait;
+      string status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, Mathf.Max(_CurrentIDSequence.Count, _FirstScore));
+      if (player == PlayerType.Cozmo) {
+        currentPortrait = SharedMinigameView.CozmoPortrait;
+      }
+      simonTurnScript.ShowEndGame(currentPortrait, status);
+    }
+
+    public void FinalLifeComplete(PlayerType player) {
+      // If in solo mode just quit out,
+      // If in vs mode, if cozmo turn just switch to human turns, if human turn game over based on highest score...
+
+      if (CurrentDifficulty == (int)SimonMode.SOLO) {
+        PlayerRoundsWon = 1;
+        CozmoRoundsWon = 0;
+        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
+        ShowWinnerPicture(PlayerType.Human);
+        ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
+        HandleGameEnd();
+      }
+      else if (CurrentDifficulty == (int)SimonMode.VS) {
+        if (player == _FirstPlayer) {
+          // Kick off next turn and save score to compare...
+          _FirstScore = _CurrentIDSequence.Count;
+          _CurrentIDSequence.Clear();
+          _StateMachine.SetNextState(new WaitForNextRoundSimonState(_FirstPlayer == PlayerType.Cozmo ? PlayerType.Human : PlayerType.Cozmo));
+        }
+        else {
+          // compare who wins...
+          if ((_FirstPlayer == PlayerType.Cozmo && _CurrentIDSequence.Count >= _FirstScore) ||
+              (_FirstPlayer == PlayerType.Human && _CurrentIDSequence.Count < _FirstScore)) {
+            GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
+            ShowWinnerPicture(PlayerType.Human);
+            ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
+            PlayerRoundsWon = 1;
+            CozmoRoundsWon = 0;
+          }
+          else {
+            GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
+            ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
+            ShowWinnerPicture(PlayerType.Cozmo);
+            PlayerRoundsWon = 0;
+            CozmoRoundsWon = 1;
+          }
+          HandleGameEnd();
+        }
+      }
+    }
+
+    private SimonTurnSlide GetSimonSlide() {
       if (_SimonTurnSlide == null) {
         _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
                                            _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
       }
-      SimonTurnSlide simonTurnScript = _SimonTurnSlide.GetComponent<SimonTurnSlide>();
-      Sprite currentPortrait = null;
-      string statusLocKey = null;
+      return _SimonTurnSlide.GetComponent<SimonTurnSlide>();
+    }
+    public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
+      SimonTurnSlide simonTurnScript = GetSimonSlide();
+      string statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelListen : LocalizationKeys.kSimonGameLabelRepeat;
       if (player == PlayerType.Cozmo) {
-        currentPortrait = SharedMinigameView.CozmoPortrait;
-        statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelCozmoTurnListen : LocalizationKeys.kSimonGameLabelCozmoTurnRepeat;
+        simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo, LocalizationKeys.kSimonGameLabelCozmoTurn, statusLocKey);
       }
       else {
-        currentPortrait = SharedMinigameView.PlayerPortrait;
-        statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelYourTurnListen : LocalizationKeys.kSimonGameLabelYourTurnRepeat;
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+        simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, LocalizationKeys.kSimonGameLabelYourTurn, statusLocKey);
       }
-      simonTurnScript.Initialize(currentPortrait, statusLocKey);
+
+    }
+
+    public void ShowCenterResult(bool enabled, bool correct = true) {
+      SimonTurnSlide simonTurnScript = GetSimonSlide();
+      simonTurnScript.ShowCenterImage(enabled, correct);
+    }
+    public int GetLivesRemaining(PlayerType player) {
+      return player == PlayerType.Human ? _CurrLivesHuman : _CurrLivesCozmo;
+    }
+    public void DecrementLivesRemaining(PlayerType player) {
+      if (player == PlayerType.Human) {
+        _CurrLivesHuman--;
+      }
+      else {
+        _CurrLivesCozmo--;
+      }
+      ShowCurrentPlayerTurnStage(player, false);
     }
 
     public void ShowBanner(string bannerKey) {
@@ -231,6 +302,7 @@ namespace Simon {
   }
 
   public enum PlayerType {
+    None,
     Human,
     Cozmo
   }

@@ -27,13 +27,16 @@ namespace Simon {
 
     private float _MinDistBetweenCubesMM = 60.0f;
     private float _RotateSecScan = 2.0f;
+    private float _ScanTimeoutSec = -1.0f;
+    private float _ScanTimeoutSecMax = 30.0f;
 
-    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan) : base(nextState, cubesRequired) {
+    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan, float ScanTimeoutSecMax) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
       _BlockPosComparer = new BlockToCozmoPositionComparerByID(_CurrentRobot);
       _MinDistBetweenCubesMM = MinDistBetweenCubesMM;
       _RotateSecScan = RotateSecScan;
+      _ScanTimeoutSecMax = ScanTimeoutSecMax;
     }
 
     public override void Enter() {
@@ -203,6 +206,7 @@ namespace Simon {
     protected override void HandleContinueButtonClicked() {
       if (_ScanPhase == ScanPhase.WaitForContinue) {
         SetScanPhase(ScanPhase.ScanLeft);
+        _ScanTimeoutSec = Time.time + _ScanTimeoutSecMax;
       }
       else if (_ScanPhase == ScanPhase.Error) {
         SetScanPhase(ScanPhase.NoCubesSeen);
@@ -259,7 +263,9 @@ namespace Simon {
           // Rotate towards center
           _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
           _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
-          _Game.SharedMinigameView.EnableContinueButton(true);
+          // Force an autocontinue now...
+          base.HandleContinueButtonClicked();
+          //_Game.SharedMinigameView.EnableContinueButton(true);
         }
         else if (nextState == ScanPhase.Error) {
           _ShowCozmoCubesSlide = null;
@@ -288,13 +294,23 @@ namespace Simon {
         SetScanPhase(ScanPhase.ScanCenter);
       }
       else if (_ScanPhase == ScanPhase.ScanCenter) {
-        SetScanPhase(ScanPhase.ScanLeft);
+        if (_ScanTimeoutSec > 0 && Time.time > _ScanTimeoutSec) {
+          _ScanTimeoutSec = -1.0f;
+          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
+          SetScanPhase(ScanPhase.NoCubesSeen);
+        }
+        else {
+          SetScanPhase(ScanPhase.ScanLeft);
+        }
       }
     }
 
     protected override string GetWaitingForCubesText(int numCubes) {
-      if (_ScanPhase == ScanPhase.NoCubesSeen || _ScanPhase == ScanPhase.WaitForContinue) {
+      if (_ScanPhase == ScanPhase.NoCubesSeen) {
         return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesPlaceCenter);
+      }
+      else if (_ScanPhase == ScanPhase.WaitForContinue) {
+        return Localization.Get(LocalizationKeys.kSimonGameLabelCubeReady);
       }
       else if (_ScanPhase == ScanPhase.Error) {
         return "";

@@ -90,11 +90,20 @@
   "simonGame.difficulty.hardDescription.locked": {
     "translation": "Unlock by winning Simon Easy."
   },
-  "simonGame.label.yourTurnListen": {
-    "translation": "Your turn to listen to the pattern..."
+  "simonGame.label.yourTurn": {
+    "translation": "Your turn:"
   },
-  "simonGame.label.yourTurnRepeat": {
-    "translation": "Your turn to repeat to the pattern!"
+  "simonGame.label.cozmoTurn": {
+    "translation": "Cozmo's turn:"
+  },
+  "simonGame.label.listen": {
+    "translation": "Listen..."
+  },
+  "simonGame.label.repeat": {
+    "translation": "Repeat!"
+  },
+  "simonGame.label.playPattern": {
+    "translation": "Play Pattern"
   },
   "simonGame.label.correct": {
     "translation": "You are CORRECT!"
@@ -108,25 +117,29 @@
   "simonGame.label.cozmoTurnListen": {
     "translation": "Cozmo's turn to listen to the pattern..."
   },
-  "simonGame.label.cozmoTurnRepeat": {
-    "translation": "Cozmo's turn to repeat to the pattern!"
-  },
   "simonGame.label.stepsLeft": {
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "simonGame.text.patternLength": {
-    "translation": "Round: {0}"
+    "translation": "PATTERN LENGTH: {0}"
+  },
+  "simonGame.mode.vs": {
+    "translation": "VS."
+  },
+  "simonGame.mode.solo": {
+    "translation": "solo"
   },
   "simonGame.text.howToPlay": {
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
-
-
   "simonGame.label.placeCenter": {
     "translation": "Put 1 cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
   },
   "simonGame.label.waitingForCubes.placeCenter": {
     "translation": "Waiting to see center cube..."
+  },
+  "simonGame.label.cubeReady": {
+    "translation": "Cube ready!"
   },
   "simonGame.label.tooCloseError": {
     "translation": "Move cubes further apart."

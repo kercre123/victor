@@ -36,7 +36,7 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      if (_StartLightBlinkTime == -1 && !_IsAnimating) {
+      if (_StartLightBlinkTime < 0 && !_IsAnimating) {
         if (_CurrentSequenceIndex == _SequenceList.Count) {
           PlayerWinGame();
         }
@@ -57,28 +57,32 @@ namespace Simon {
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+      _GameInstance.ShowCenterResult(false);
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
-      _GameInstance.RaiseMiniGameLose(Localization.GetWithArgs(
-        LocalizationKeys.kSimonGameTextPatternLength, (_SequenceList.Count - _GameInstance.MinSequenceLength + 1)));
+      _GameInstance.ShowCenterResult(false);
+      if (_GameInstance.GetLivesRemaining(PlayerType.Human) < 0) {
+        _GameInstance.FinalLifeComplete(PlayerType.Human);
+      }
+      else {
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+      }
     }
 
     private void PlayerLoseGame() {
       _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
-
+      _GameInstance.ShowCenterResult(true, false);
+      _GameInstance.DecrementLivesRemaining(PlayerType.Human);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonCozmoWin, HandleOnPlayerLoseAnimationDone);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
       _IsAnimating = true;
-
-      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
     }
 
     private void PlayerWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
-
+      _GameInstance.ShowCenterResult(true, true);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
 
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
@@ -90,7 +94,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
-      if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime != -1) {
+      if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime >= 0) {
         return;
       }
 
@@ -103,9 +107,8 @@ namespace Simon {
       _LastTappedTime = Time.time;
       _StartLightBlinkTime = Time.time;
 
-      SimonGame game = _StateMachine.GetGame() as SimonGame;
-      GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
-      game.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(id));
+      GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(id));
+      _GameInstance.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);

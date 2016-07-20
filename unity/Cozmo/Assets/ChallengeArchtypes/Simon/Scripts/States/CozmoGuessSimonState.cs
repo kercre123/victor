@@ -103,18 +103,16 @@ namespace Simon {
 
     private void CozmoLoseGame() {
       _GameInstance.SetCubeLightsGuessWrong(_LastTargetID);
+      _GameInstance.DecrementLivesRemaining(PlayerType.Cozmo);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonPlayerWin, HandleOnCozmoLoseAnimationDone);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
       _IsAnimating = true;
-
-      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
     }
 
     private void CozmoWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
-
+      _GameInstance.ShowCenterResult(true, true);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete);
@@ -123,12 +121,18 @@ namespace Simon {
     }
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+      _GameInstance.ShowCenterResult(false);
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
-      _GameInstance.RaiseMiniGameWin(Localization.GetWithArgs(
-        LocalizationKeys.kSimonGameTextPatternLength, (_CurrentSequence.Count - _GameInstance.MinSequenceLength + 1)));
+      _GameInstance.ShowCenterResult(false);
+      if (_GameInstance.GetLivesRemaining(PlayerType.Cozmo) < 0) {
+        _GameInstance.FinalLifeComplete(PlayerType.Cozmo);
+      }
+      else {
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+      }
     }
   }
 }
