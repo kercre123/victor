@@ -98,6 +98,13 @@ void Radio::advertise(void) {
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
 
+  LightState black[NUM_PROP_LIGHTS];
+  memset(&black, 0, sizeof(black));
+
+  for (int c = 0; c < MAX_ACCESSORIES; c++) {
+    Radio::setPropLights(c, black);
+  }
+  
   uesb_init(&uesb_config);
 
   // Timer scheduling

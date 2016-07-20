@@ -68,10 +68,9 @@ void Backpack::init()
 }
 
 // This is a temporary fix until I can make the comparisons not jam
-static const void unjam(void) {
+static void unjam(void) {
   static const uint32_t STALLED_PERIOD = 0x8000;
-  
-  bool stalled = true;
+
   for (int i = 0; i < 3; i++) {
     uint32_t count = (NRF_RTC1->CC[i] - NRF_RTC1->COUNTER) << 8;
     if (count < STALLED_PERIOD) return ;
@@ -118,6 +117,33 @@ void Backpack::manage() {
   }
 
   unjam();
+}
+
+void Backpack::blink(void) {
+  static const int pins[] = {
+    PIN_LED1,
+    PIN_LED2,
+    PIN_LED3,
+    PIN_LED4,
+  };
+  static const int pin_count = sizeof(pins) / sizeof(pins[0]);
+  
+  for (int k = 0; k < 4; k++)
+  for (int i = 0; i < pin_count; i++) {
+    for (int p = 0; p < pin_count; p++) {
+      if (i == p) continue ;
+
+      nrf_gpio_pin_set(pins[i]);
+      nrf_gpio_cfg_output(pins[i]);
+      nrf_gpio_pin_clear(pins[p]);
+      nrf_gpio_cfg_output(pins[p]);
+
+      MicroWait(10000);
+
+      nrf_gpio_cfg_input(pins[i], NRF_GPIO_PIN_NOPULL);
+      nrf_gpio_cfg_input(pins[p], NRF_GPIO_PIN_NOPULL);
+    }
+  }
 }
 
 void Backpack::setLights(const LightState* update) {
