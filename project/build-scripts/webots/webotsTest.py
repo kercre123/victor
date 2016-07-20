@@ -562,7 +562,8 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
           continue
 
         if output.test_return_code != 0:
-          UtilLog.error('Recieved non-zero return code from webots. Recieved {return_code}'.format(return_code=output.test_return_code))
+          UtilLog.error('Recieved non-zero return code from webots. Recieved {return_code}'.format(
+                          return_code=output.test_return_code))
           continue
 
         # if error_count > 0:
@@ -747,14 +748,14 @@ def main(args):
                       help="""Time limit for each webots test before marking it as failure and killing the webots instance.""")
 
   parser.add_argument('--numRetries',
-                    dest='num_retries',
-                    action='store',
-                    default=3,
-                    type=int,
-                    help="""When a test fails, the number of times to retry the test before
-                    declaring it as failed. Be aware of off-by-one gotcha here, if numRetries == 1,
-                    that means each test will be run for a maximum of two times, if the first run of
-                    each test fails.""")
+                      dest='num_retries',
+                      action='store',
+                      default=3,
+                      type=int,
+                      help="""When a test fails, the number of times to retry the test before
+                      declaring it as failed. Be aware of off-by-one gotcha here, if numRetries ==
+                      1, that means each test will be run for a maximum of two times, if the first
+                      run of each test fails.""")
 
   (options, _) = parser.parse_known_args(args)
 
@@ -800,11 +801,17 @@ def main(args):
 
     num_of_tests = sum(len(test_controller) for test_controller in test_results.values())
 
-    UtilLog.info('Test results: ')
-    for key, val in test_results.items():
-      # need to do list comprehension for the inner dict otherwise we get string repr of a
-      # ResultCode object instead of the name of the enum
-      UtilLog.info("{test}: {result}".format(test=key, result={k: v.name for k, v in val.items()}))
+    UtilLog.info('Passed tests: ')
+    for test_controller, results_of_each_world in test_results.items():
+      for world, result in results_of_each_world.items():
+        if result is ResultCode.succeeded:
+          UtilLog.info("{test_controller} in {world} passed.".format(test_controller=test_controller, world=world))
+
+    UtilLog.info('Failed tests: ')
+    for test_controller, results_of_each_world in test_results.items():
+      for world, result in results_of_each_world.items():
+        if result is ResultCode.failed:
+          UtilLog.info("{test_controller} in {world} failed.".format(test_controller=test_controller, world=world))
 
     if not options.show_graphics:
       # Only makes sense to print these when gui is not on because if the gui is on the webots logs

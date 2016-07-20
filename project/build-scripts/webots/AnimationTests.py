@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3
 
 import os
 import re
@@ -6,6 +6,10 @@ import json
 import argparse
 import sys
 import webotsTest
+
+WBT_FILE_NAME = "get_animations.wbt"
+GENERATED_CFG_NAME = "__GENERATED_ANIMATIONS_TEST__.cfg"
+ANIMATION_TEST_NAME_PLACEHOLDER = "%ANIMATION_TEST_NAME%"
 
 def main(cli_args):
   """Fetches available animations and generates all the needed files to run tests for all animations.
@@ -18,16 +22,9 @@ def main(cli_args):
   webotsTest can run through them.
 
   Args:
-    args -- command line arguments
+    cli_args -- command line arguments
   """
-
-  # build_type used to make sure to specify the webotsTest instead of relying on default; also used
-  # to make sure we're accessing the right log/build folder
   build_type = "Debug"
-  animation_test_name_placeholder = "%ANIMATION_TEST_NAME%"
-  test_controller_name = "CST_Animations"
-  wbt_file_name = "get_animations.wbt"
-  generated_cfg_name = "__GENERATED_ANIMATIONS_TEST__.cfg"
 
   parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -43,43 +40,41 @@ def main(cli_args):
   parser.add_argument('--password',
                       dest='password',
                       action='store',
-                      help="""Your password is needed to add the webots executables to the firewall exception list. Can
-                      be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
-                      easily and also for build server/steps reasons.""")
+                      help="""Your password is needed to add the webots executables to the firewall
+                      exception list. Can be omitted if your firewall is disabled. It is requested
+                      in plaintext so this script can be re-ran  easily and also for build
+                      server/steps reasons.""")
+
+  parser.add_argument('--animationList',
+                      dest='animationList',
+                      default="",
+                      action="store",
+                      help="""JSON file containing list of animations to run in this directory (ex.
+                      `["speedTapFakeOut1", "testSound"]`). Leave empty to run all available
+                      animations.""")
 
   (options, _) = parser.parse_known_args(cli_args)
 
-  # Run a test once to populate the logs and search for the available animations
-  assert webotsTest.main([
-    "--buildType", build_type,
-    "--configFile", "get_animations.cfg",
-    "--password", options.password
-    ]) == 0
-
-  project_root = webotsTest.find_project_root()
-  build_folder = os.path.join(project_root, webotsTest.BUILD_SUBPATH, build_type, '')
-  log_file_path = webotsTest.get_log_file_path(build_folder, test_controller_name, wbt_file_name)
-
-  available_animations = []
-  with open(log_file_path, 'r') as log_file:
-    regex = r"(?<=HandleAnimationAvailable Animation available: )(.*)(?=\n)"
-    available_animations = re.findall(regex, log_file.read())
-
+  if not options.animationList:
+    available_animations = fetch_all_available_animations(password=options.password)
+  else:
+    animation_list_file = webotsTest.get_subpath("project/build-scripts/webots", options.animationList)
+    available_animations = fetch_animations_from_list(animation_list_file)
 
   # Open an exisiting .wbt file so that it can be used to generate a wbt file with all the available
   # animations
-  wbt_dir = os.path.join(project_root, webotsTest.WEBOTS_WORLD_SUBPATH, '')
-  wbt_file = wbt_dir + wbt_file_name
+  wbt_dir = webotsTest.get_subpath("simulator/worlds")
+  wbt_file = os.path.join(wbt_dir, WBT_FILE_NAME)
 
   # Generate .wbt world files with each animation name subsituted into animationTestName
   generated_files = []
   for animation in available_animations:
     generated_file_name = "__GENERATED_FOR_{0}__.wbt".format(animation)
-    generated_file_path = wbt_dir + generated_file_name
+    generated_file_path = os.path.join(wbt_dir, generated_file_name)
     generated_files.append(generated_file_name)
 
-    webotsTest.generate_file_with_replace(
-      generated_file_path, wbt_file, animation_test_name_placeholder, animation)
+    webotsTest.generate_file_with_replace(generated_file_path, wbt_file,
+                                          ANIMATION_TEST_NAME_PLACEHOLDER, animation)
 
   # Generate the config file with all the generated wbt worlds for each animation
   generated_cfg_file_data = (
@@ -88,16 +83,51 @@ def main(cli_args):
     "[CST_Animations]\n" +
     "world_file : {0}".format(json.JSONEncoder().encode(generated_files))
   )
-  with open(os.path.join(os.getcwd(), '') + generated_cfg_name, 'w+') as generated_cfg_file:
+
+  with open(webotsTest.get_subpath("project/build-scripts/webots", GENERATED_CFG_NAME), 'w+') as generated_cfg_file:
     generated_cfg_file.write(generated_cfg_file_data)
 
   # Run all the webots animation tests with the newly generated cfg file.
   assert webotsTest.main([
     "--buildType", build_type,
-    "--configFile", generated_cfg_name,
+    "--configFile", GENERATED_CFG_NAME,
     "--numRuns", str(options.numRuns),
-    "--password", options.password
+    "--password", options.password,
+    "--numRetries", 0  # Don't retry any animations since the whole point of this is to catch intermittent aborts
     ]) == 0 # assert webotsTest.main(...) == 0 failed
+
+def fetch_all_available_animations(password = "", build_type = "Debug"):
+  """Fetch all the animations available to cozmo.
+
+  password --
+    User password that may be needed to pass into webotsTest and put webots executables to the
+    firewall exception list. Only needed if you want to keep firewall on.
+
+  build_type --
+    build_type used to make sure to specify the webotsTest instead of relying on default; also used
+    to make sure we're accessing the right log/build folder
+  """
+
+  # Run a test once to populate the logs and search for the available animations
+  assert webotsTest.main([
+    "--buildType", build_type,
+    "--configFile", "get_animations.cfg",
+    "--password", password
+    ]) == 0
+
+  build_folder = webotsTest.get_build_folder(webotsTest.BuildType.Debug)
+  log_file_path = webotsTest.get_log_file_path(build_folder, "CST_Animations", WBT_FILE_NAME)
+
+  available_animations = []
+  with open(log_file_path, 'r') as log_file:
+    regex = r"(?<=HandleAnimationAvailable Animation available: )(.*)(?=\n)"
+    available_animations = re.findall(regex, log_file.read())
+
+  return available_animations
+
+def fetch_animations_from_list(animation_list_file):
+  with open(animation_list_file, 'r') as f:
+    return json.loads(f.read())
 
 if __name__ == '__main__':
   args = sys.argv
