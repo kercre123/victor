@@ -588,11 +588,15 @@ bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 }
 
 bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
-  if (big_multiply(out, in, mont.rinv)) {
+  big_num_t mont_rinv = mont.rinv;
+  
+  if (big_multiply(out, in, mont_rinv)) {
     return true;
   }
 
-  big_modulo(out, out, mont.modulo);
+  big_num_t mont_modulo = mont.modulo;
+
+  big_modulo(out, out, mont_modulo);
 
   return false;
 }
@@ -601,20 +605,23 @@ bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
   big_num_t temp;
 
+  big_num_t mont_minv = mont.minv;
+  big_num_t mont_modulo = mont.modulo;
+
   big_multiply(out, a, b);
   temp = out;
   big_mask(temp, mont.shift);
-  big_multiply(temp, temp, mont.minv);
+  big_multiply(temp, temp, mont_minv);
   big_mask(temp, mont.shift);
-  big_multiply(temp, temp, mont.modulo);
+  big_multiply(temp, temp, mont_modulo);
 
   big_subtract(out, out, temp);
   big_shr(out, out, mont.shift);
 
-  if (big_compare(out, mont.modulo) >= 0) {
-    big_subtract(out, out, mont.modulo);
+  if (big_compare(out, mont_modulo) >= 0) {
+    big_subtract(out, out, mont_modulo);
   } else if (big_compare(out, BIG_ZERO) < 0) {
-    big_add(out, out, mont.modulo);
+    big_add(out, out, mont_modulo);
   }
 
   return false;
@@ -670,30 +677,41 @@ void mont_power_async_init(const big_mont_t& mont, big_mont_pow_t& state, const 
   state.bit = 0;
   state.msb = big_msb(state.exp);
   state.negative = big_odd(state.base) ? state.base.negative : false;
+  state.scale = false;
 }
 
 bool mont_power_async(const big_mont_t& mont, big_mont_pow_t& state) {
   big_num_t temp;
 
-  // Check if the power is complete
-  while (state.bit <= state.msb) {
-    if (big_bit_get(state.exp, state.bit++)) {
-      if (mont_multiply(mont, temp, state.result, state.base)) {
-        return true;
-      }
+  // Completion state
+  if (state.bit > state.msb) {
+    state.result.negative = state.negative;
+    return true;
+  }
 
-      memcpy(&state.result, &temp, sizeof(big_num_t));
-    }
-
+  // Do we need to double our base number
+  if (state.scale) {
     if (mont_multiply(mont, temp, state.base, state.base)) {
       return true;
     }
 
     memcpy(&state.base, &temp, sizeof(big_num_t));
+    state.scale = false;
 
     return false;
   }
-  state.result.negative = state.negative;
 
-  return true;
+  // Shift in value
+  if (big_bit_get(state.exp, state.bit++)) {
+    if (mont_multiply(mont, temp, state.result, state.base)) {
+      return true;
+    }
+
+    memcpy(&state.result, &temp, sizeof(big_num_t));
+  }
+
+  // We need to double our scale
+  state.scale = true;
+
+  return false;
 }

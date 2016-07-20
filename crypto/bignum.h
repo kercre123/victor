@@ -40,6 +40,7 @@ struct big_mont_pow_t {
 
   int msb, bit;
   bool negative;
+  bool scale;
 };
 
 // This is used for public decryption

@@ -28,7 +28,6 @@ struct DiffieTask {
   uint8_t remote_exp[RANDOM_BYTES];
   uint8_t local_exp[RANDOM_BYTES];
   
-  big_mont_t mont;
   big_mont_pow_t pow_state;
 };
 
@@ -43,8 +42,6 @@ bool DiffieHellman::Init()  {
 
 
 void DiffieHellman::SetLocal(const uint8_t* local) {
-  os_printf("DH Local\n\r");
-
   if (state != STATE_IDLE) {
     os_free(task);
     state = STATE_IDLE;
@@ -54,23 +51,21 @@ void DiffieHellman::SetLocal(const uint8_t* local) {
   task = reinterpret_cast<DiffieTask*>(os_zalloc(sizeof(DiffieTask)));
 
   if (task == NULL) {
-    os_printf("CANNOT ALLOCATE MEMORY FOR DH TASK");
+    os_printf("DH Allocation Failed");
     return ;
   }
 
   memcpy(task->local_exp, local, RANDOM_BYTES);
-  memcpy(&task->mont, &RSA_DIFFIE_EXP_MONT, sizeof(big_mont_t));
 }
 
 void DiffieHellman::SetRemote(const uint8_t* remote) {
-  os_printf("DH Remote\n\r");
-
   if (task == NULL) {
     return ;
   }
   
   memcpy(task->remote_exp, remote, RANDOM_BYTES);
   state = STATE_INIT_POWER_1;
+  os_printf("Starting DH");
 }
 
 static void bytes_to_num(big_num_t& num, const uint8_t* bytes) {
@@ -84,21 +79,19 @@ void DiffieHellman::Update(void) {
 
   if (state == STATE_IDLE) return ;
   
-  os_printf("%d", state);
-
   switch (state) {
   case STATE_INIT_POWER_1:
   {
     big_num_t temp;
 
     bytes_to_num(temp, task->local_exp);
-    mont_power_async_init(task->mont, task->pow_state, RSA_DIFFIE_EXP_MONT, temp);
+    mont_power_async_init(RSA_DIFFIE_MONT, task->pow_state, RSA_DIFFIE_EXP_MONT, temp);
     state = STATE_POWER_1;
     break ;
   }
   case STATE_POWER_1:
   {
-    if (!mont_power_async(task->mont, task->pow_state)) break ;
+    if (!mont_power_async(RSA_DIFFIE_MONT, task->pow_state)) break ;
     state = STATE_INIT_POWER_2;
     break ;
   }
@@ -107,13 +100,13 @@ void DiffieHellman::Update(void) {
     big_num_t temp;
 
     bytes_to_num(temp, task->local_exp);
-    mont_power_async_init(task->mont, task->pow_state, task->pow_state.result, temp);
+    mont_power_async_init(RSA_DIFFIE_MONT, task->pow_state, task->pow_state.result, temp);
     state = STATE_POWER_2;
     break ;
   }
   case STATE_POWER_2:
   {
-    if (!mont_power_async(task->mont, task->pow_state)) break ;
+    if (!mont_power_async(RSA_DIFFIE_MONT, task->pow_state)) break ;
     
     state = STATE_FINISH;
     break ;
@@ -122,7 +115,8 @@ void DiffieHellman::Update(void) {
   {
     big_num_t temp;
     
-    //mont_from(task->mont, temp, task->pow_state.result);
+    os_printf("finishing");
+    mont_from(RSA_DIFFIE_MONT, temp, task->pow_state.result);
     
     DiffieHellmanResults msg;
     memcpy(msg.result, temp.digits, RANDOM_BYTES);
