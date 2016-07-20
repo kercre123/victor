@@ -72,7 +72,7 @@ static void unjam(void) {
   static const uint32_t STALLED_PERIOD = 0x8000;
 
   for (int i = 0; i < 3; i++) {
-    uint32_t count = (NRF_RTC1->CC[i] - NRF_RTC1->COUNTER) << 8;
+    uint32_t count = (NRF_RTC1->CC[TIMER_CC_LIGHTS+i] - NRF_RTC1->COUNTER) << 8;
     if (count < STALLED_PERIOD) return ;
   }
   
@@ -81,7 +81,7 @@ static void unjam(void) {
     total_active = 0;
   }
 
-  NRF_RTC1->CC[0] = NRF_RTC1->COUNTER + 0x20;
+  NRF_RTC1->CC[TIMER_CC_LIGHTS] = NRF_RTC1->COUNTER + 0x20;
 }
 
 void Backpack::manage() {
@@ -161,7 +161,7 @@ void Backpack::update(int compare) {
     // We want to go dark
     if (--total_active == 0) {
       nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
-      NRF_RTC1->CC[0] = off_time;
+      NRF_RTC1->CC[TIMER_CC_LIGHTS] = off_time;
     }
     
     // We turned off an LED this cycle, wait a few more ticks before moving on
@@ -175,7 +175,7 @@ void Backpack::update(int compare) {
 
   currentChannel = &PinSet[active_channel];
   off_time = NRF_RTC1->COUNTER + MAX_DARK;
-  NRF_RTC1->CC[0] = off_time;
+  NRF_RTC1->CC[TIMER_CC_LIGHTS] = off_time;
 
   // Turn on our anode
   nrf_gpio_pin_set(currentChannel->anode);
@@ -190,7 +190,7 @@ void Backpack::update(int compare) {
       continue ;
     }
 
-    NRF_RTC1->CC[cath] = NRF_RTC1->COUNTER + delta;
+    NRF_RTC1->CC[TIMER_CC_LIGHTS+cath] = NRF_RTC1->COUNTER + delta;
 
     nrf_gpio_pin_clear(currentChannel->cathodes[cath]);
     nrf_gpio_cfg_output(currentChannel->cathodes[cath]);
