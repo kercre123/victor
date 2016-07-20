@@ -38,11 +38,11 @@
     },
     {
       "CladEvent": "CubePounceFake",
-      "AnimName": "cubePounce_Fake"
+      "AnimName": "ag_keepaway_fakeout"
     },
     {
       "CladEvent": "CubePounceLoseHand",
-      "AnimName": "cubePounce_LoseHand"
+      "AnimName": "ag_keepaway_losehand"
     },
     {
       "CladEvent": "CubePounceLoseRound",
@@ -50,15 +50,15 @@
     },
     {
       "CladEvent": "CubePounceLoseSession",
-      "AnimName": "cubePounce_LoseSession"
+      "AnimName": "ag_keepaway_losegame"
     },
     {
       "CladEvent": "CubePouncePounce",
-      "AnimName": "cubePounce_Pounce"
+      "AnimName": "ag_keepaway_pounce"
     },
     {
       "CladEvent": "CubePounceWinHand",
-      "AnimName": "cubePounce_WinHand"
+      "AnimName": "ag_keepaway_winhand"
     },
     {
       "CladEvent": "CubePounceWinRound",
@@ -66,7 +66,15 @@
     },
     {
       "CladEvent": "CubePounceWinSession",
-      "AnimName": "cubePounce_WinSession"
+      "AnimName": "ag_keepaway_wingame"
+    },
+    {
+      "CladEvent": "CubePounceGetIn",
+      "AnimName": "ag_keepaway_getin"
+    },
+    {
+      "CladEvent": "CubePounceGetOut",
+      "AnimName": "ag_keepaway_getout"
     },
     {
       "CladEvent": "DemoOnSawNewNamedFace",

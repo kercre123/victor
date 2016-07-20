@@ -3,7 +3,7 @@ using Anki.Cozmo.Audio;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace CubePounce {
+namespace Cozmo.Minigame.CubePounce {
   // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
   public class CubePounceGame : GameBase {
 
@@ -14,16 +14,25 @@ namespace CubePounce {
     public const string kPlayerWin = "PlayerWin";
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
-    public const float kCubePlaceDist = 65.0f;
+    private const float _kWheelCenterToFacePlane_mm = 13.0f;
+    // Current animations expect to start from 55 mm back
+    public const float kCubePlaceDist_mm = 55.0f + _kWheelCenterToFacePlane_mm;
+    public const float kPositionDiffTolerance_mm = 8.0f;
+    public const float kAngleTolerance_deg = 15.0f;
+    public const float kPouncePitchDiffSuccess_deg = 5.0f;
+    public const float kPounceLiftMeasureDelay_s = 0.15f;
+
+    public const float kCubeLightFlashInterval_m = 0.1f;
+
     private int _CloseRoundCount;
 
-    private float _MinAttemptDelay;
-    private float _MaxAttemptDelay;
+    private float _MinAttemptDelay_s;
+    private float _MaxAttemptDelay_s;
 
-    private bool _CliffFlagTrown = false;
     private float _CurrentPounceChance;
     private float _BasePounceChance;
     private int _MaxFakeouts;
+    private int _NumCubesRequired;
 
     private MusicStateWrapper _BetweenRoundsMusic;
 
@@ -31,20 +40,34 @@ namespace CubePounce {
 
     public bool AllRoundsCompleted {
       get {
-        int losingScore = Mathf.Min(PlayerRoundsWon, CozmoRoundsWon);
         int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
-        int roundsLeft = TotalRounds - losingScore - winningScore;
-        return (winningScore > losingScore + roundsLeft);
+        return (2 * winningScore > TotalRounds);
+      }
+    }
+
+    public int NumCubesRequired {
+      get {
+        return _NumCubesRequired;
+      }
+      private set {
+        _NumCubesRequired = value;
+      }
+    }
+
+    public MusicStateWrapper BetweenRoundsMusic {
+      get {
+        return _BetweenRoundsMusic;
       }
     }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
       TotalRounds = config.Rounds;
-      _MinAttemptDelay = config.MinAttemptDelay;
-      _MaxAttemptDelay = config.MaxAttemptDelay;
+      _MinAttemptDelay_s = config.MinAttemptDelay;
+      _MaxAttemptDelay_s = config.MaxAttemptDelay;
       _BasePounceChance = config.StartingPounceChance;
       _MaxFakeouts = config.MaxFakeouts;
+      NumCubesRequired = config.NumCubesRequired();
       MaxScorePerRound = config.MaxScorePerRound;
       CozmoScore = 0;
       PlayerScore = 0;
@@ -52,7 +75,7 @@ namespace CubePounce {
       CozmoRoundsWon = 0;
       _CurrentTarget = null;
       _BetweenRoundsMusic = config.BetweenRoundMusic;
-      InitializeMinigameObjects(config.NumCubesRequired());
+      InitializeMinigameObjects(NumCubesRequired);
     }
 
     protected void InitializeMinigameObjects(int numCubes) {
@@ -60,17 +83,13 @@ namespace CubePounce {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.CliffEvent>(HandleCliffEvent);
-
-      InitialCubesState initCubeState = new InitialCubesState(new SeekState(), numCubes);
-      _StateMachine.SetNextState(initCubeState);
+      _StateMachine.SetNextState(new InitialCubesState(new CubePounceStateInitGame(), numCubes));
     }
 
     protected override void CleanUpOnDestroy() {
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.CliffEvent>(HandleCliffEvent);
     }
 
-    public LightCube GetCurrentTarget() {
+    public LightCube GetCubeTarget() {
       if (_CurrentTarget == null) {
         if (this.CubeIdsForGame.Count > 0) {
           _CurrentTarget = CurrentRobot.LightCubes[this.CubeIdsForGame[0]];
@@ -79,134 +98,46 @@ namespace CubePounce {
       return _CurrentTarget;
     }
 
-    // Attempt the pounce
-    public bool AttemptPounce() {
-      bool didPounce = false;
-      float PounceRoll;
-      if (_MaxFakeouts <= 0) {
-        PounceRoll = 0.0f;
+    public bool ShouldAttemptPounce() {
+      DAS.Debug("CubePounceGame.ShouldAttemptPounce", "Pounce chance: " + _CurrentPounceChance);
+      if (Random.Range(0.0f, 1.0f) <= _CurrentPounceChance) {
+        return true;
       }
-      else {
-        PounceRoll = Random.Range(0.0f, 1.0f);
-      }
-      if (PounceRoll <= _CurrentPounceChance) {
-        // Enter Animation State to attempt a pounce.
-        _CliffFlagTrown = false;
-        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePouncePounce, HandlePounceEnd);
-        didPounce = true;
-      }
-      else {
-        // If you do a fakeout instead, increase the likelyhood of a slap
-        // attempt based on the max number of fakeouts.
-        _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
-        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceFake, HandleFakeoutEnd);
-      }
-      return didPounce;
+
+      return false;
     }
 
-    private void HandlePounceEnd(bool success) {
-      // If the animation completes and the cube is beneath Cozmo,
-      // Cozmo has won.
-      if (_CliffFlagTrown) {
-        SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
-        SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
-        OnCozmoWin();
+    public void IncreasePounceChance() {
+      if (_MaxFakeouts <= 0) {
         return;
       }
-      else {
-        // If the animation completes Cozmo is not on top of the Cube,
-        // The player has won this round 
-        SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
-        SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
-        OnPlayerWin();
+
+      // Increase the likelyhood of a pounce based on the max number of fakeouts.
+      _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
+    }
+
+    // Returns whether we just finished a round
+    public bool CheckAndUpdateRoundScore() {
+      // If we haven't yet hit our max score nothing to see here
+      if (Mathf.Max(CozmoScore, PlayerScore) < MaxScorePerRound) {
+        return false;
       }
-    }
 
-    public void HandleFakeoutEnd(bool success) {
-      _StateMachine.SetNextState(new PounceState());
-    }
-
-    // TODO: Replace HandleCliffEvent with a better way to identify if Cozmo has successfully pulled off a pounce.
-    // Currently, Cozmo will trigger the end of their pounce animation before the cliff event is registered, possibly
-    // can have a quick fix here by adding more to the end of the pounce animation, although much more likely we will
-    // have to replace this entirely.
-    private void HandleCliffEvent(Anki.Cozmo.CliffEvent messageObject) {
-      _CliffFlagTrown = true;
-    }
-
-    public void OnPlayerWin() {
-      PlayerScore++;
-      UpdateScoreboard();
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
-
-      _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceLoseHand, HandEndAnimationDone));
-    }
-
-    public void OnCozmoWin() {
-      CozmoScore++;
-      UpdateScoreboard();
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
-      CurrentRobot.CancelCallback(HandleFakeoutEnd);
-      _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceWinHand, HandEndAnimationDone));
-    }
-
-    public void HandEndAnimationDone(bool success) {
-      // Determines winner and loser at the end of Cozmo's animation, or returns
-      // to seek state for the next round
-      // Display the current round
-      if (Mathf.Max(CozmoScore, PlayerScore) > MaxScorePerRound) {
-        if (CozmoScore > PlayerScore) {
-          CozmoRoundsWon++;
-        }
-        else {
-          PlayerRoundsWon++;
-        }
-        UpdateScoreboard();
-        if (AllRoundsCompleted) {
-          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
-          if (CozmoRoundsWon > PlayerRoundsWon) {
-            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceWinSession, HandleLoseGameAnimationDone));
-          }
-          else {
-            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceLoseSession, HandleWinGameAnimationDone));
-          }
-        }
-        else {
-          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
-          GameAudioClient.SetMusicState(_BetweenRoundsMusic);
-          if (CozmoScore > PlayerScore) {
-            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceWinRound, RoundEndAnimationDone));
-          }
-          else {
-            _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.CubePounceLoseRound, RoundEndAnimationDone));
-          }
-        }
+      if (CozmoScore > PlayerScore) {
+        CozmoRoundsWon++;
       }
       else {
-        _StateMachine.SetNextState(new SeekState());
+        PlayerRoundsWon++;
       }
-    }
-
-    public void HandleWinGameAnimationDone(bool success) {
-      RaiseMiniGameWin();
-    }
-
-    public void HandleLoseGameAnimationDone(bool success) {
-      RaiseMiniGameLose();
-    }
-
-    public void RoundEndAnimationDone(bool success) {
-      if (Mathf.Abs(PlayerScore - CozmoScore) < 2) {
-        _CloseRoundCount++;
-      }
-      _StateMachine.SetNextState(new SeekState());
+      return true;
     }
 
     public float GetAttemptDelay() {
-      return Random.Range(_MinAttemptDelay, _MaxAttemptDelay);
+      return Random.Range(_MinAttemptDelay_s, _MaxAttemptDelay_s);
     }
 
     public void ResetPounceChance() {
+      DAS.Debug("CubePounceGame.ResetPounceChance", "");
       _CurrentPounceChance = _BasePounceChance;
     }
 
@@ -243,7 +174,8 @@ namespace CubePounce {
 
       DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), null, quitGameScoreKeyValues);
       DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
-    }
 
+      GetCubeTarget().SetLEDsOff();
+    }
   }
 }

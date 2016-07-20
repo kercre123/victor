@@ -22,8 +22,8 @@ MonoBehaviour:
   MinAttemptDelay: 0.25
   MaxAttemptDelay: 1.25
   Rounds: 1
-  MaxScorePerRound: 3
+  MaxScorePerRound: 5
   StartingPounceChance: 0
-  MaxFakeouts: 5
+  MaxFakeouts: 3
   _BetweenRoundMusic:
     _Music: -527946100

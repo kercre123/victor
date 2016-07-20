@@ -508,6 +508,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
       if(!actionObject->IsBeingCarried()) {
         // Update the ID to be the blockworld ID before broadcasting
         payload.objectID = object->GetID();
+        payload.robotID = GetID();
         Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
       }
     }
@@ -593,6 +594,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
       
       // Update the ID to be the blockworld ID before broadcasting
       payload.objectID = object->GetID();
+      payload.robotID = GetID();
       Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
     }
     
