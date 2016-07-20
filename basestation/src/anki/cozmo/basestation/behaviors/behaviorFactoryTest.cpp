@@ -83,7 +83,11 @@ namespace Cozmo {
   CONSOLE_VAR(bool,  kBFT_PlaySound,              "BehaviorFactoryTest",  true);
   
   // Turns off robot wifi at end of test
-  CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  true);
+  CONSOLE_VAR(bool,  kBFT_DisconnectAtEnd,        "BehaviorFactoryTest",  false);
+  
+  // Just connect normally and don't actually run test to allow things like viewing
+  // camera POV via Debug screen
+  CONSOLE_VAR(bool,  kBFT_ConnectToRobotOnly,     "BehaviorFactoryTest",  false);
   
   
   
@@ -607,6 +611,14 @@ namespace Cozmo {
         }
         
         robot.GetVisionComponent().ClearCalibrationImages();
+        
+        
+        // Is this a debug mode where we're only connecting to the robot?
+        if (kBFT_ConnectToRobotOnly) {
+          PRINT_NAMED_INFO("BehaviorFactorytest.Update.ConnectToRobotOnly", "");
+          return Status::Complete;
+        }
+        
         
         // Move lift to correct height and head to correct angle
         CompoundActionParallel* headAndLiftAction = new CompoundActionParallel(robot, {

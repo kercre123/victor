@@ -96,6 +96,8 @@ public class FactoryIntroManager : MonoBehaviour {
     RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", PlayerPrefs.GetInt("CheckPreviousResult", 0).ToString());
     RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", PlayerPrefs.GetInt("WipeNVStorageAtStart", 0).ToString());
     RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", PlayerPrefs.GetInt("SkipBlockPickup", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_ConnectToRobotOnly", PlayerPrefs.GetInt("ConnectToRobotOnly", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_DisconnectAtEnd", "1");
 
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
 

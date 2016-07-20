@@ -1057,6 +1057,8 @@ namespace Anki {
                   {
                     // Mute sound because annoying
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
+
                     
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));

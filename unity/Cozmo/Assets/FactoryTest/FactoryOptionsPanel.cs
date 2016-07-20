@@ -37,6 +37,9 @@ public class FactoryOptionsPanel : MonoBehaviour {
   private UnityEngine.UI.Toggle _EnableRobotSound;
 
   [SerializeField]
+  private UnityEngine.UI.Toggle _ConnectToRobotOnly;
+
+  [SerializeField]
   private FactoryOTAPanel _FactoryOTAPanelPrefab;
   private FactoryOTAPanel _FactoryOTAPanelInstance;
 
@@ -50,10 +53,11 @@ public class FactoryOptionsPanel : MonoBehaviour {
 
     _SimToggle.isOn = sim;
     _EnableNVStorageWrites.isOn = PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1) == 1;
-    _CheckPreviousResults.isOn = PlayerPrefs.GetInt("CheckPreviousResult", 1) == 1;
+    _CheckPreviousResults.isOn = PlayerPrefs.GetInt("CheckPreviousResult", 0) == 1;
     _WipeNVStorageAtStart.isOn = PlayerPrefs.GetInt("WipeNVStorageAtStart", 0) == 1;
     _SkipBlockPickup.isOn = PlayerPrefs.GetInt("SkipBlockPickup", 0) == 1;
     _EnableRobotSound.isOn = PlayerPrefs.GetInt("EnableRobotSound", 1) == 1;
+    _ConnectToRobotOnly.isOn = PlayerPrefs.GetInt("ConnectToRobotOnly", 0) == 1;
 
     _LogFilterInput.text = logFilter;
   }
@@ -71,6 +75,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
     _WipeNVStorageAtStart.onValueChanged.AddListener(HandleWipeNVStorageAtStart);
     _SkipBlockPickup.onValueChanged.AddListener(HandleSkipBlockPickup);
     _EnableRobotSound.onValueChanged.AddListener(HandleEnableRobotSound);
+    _ConnectToRobotOnly.onValueChanged.AddListener(HandleConnectToRobotOnly);
 
     // Disable the options that shouldn't be available in non-dev mode. Using a local variable
     // instead of the constant solves a compiler error about unreacheable code.
@@ -143,6 +148,18 @@ public class FactoryOptionsPanel : MonoBehaviour {
   void HandleEnableRobotSound(bool toggleValue) {
     PlayerPrefs.SetInt("EnableRobotSound", toggleValue ? 1 : 0);
     PlayerPrefs.Save();
+  }
+
+  void HandleConnectToRobotOnly(bool toggleValue) {
+    PlayerPrefs.SetInt("ConnectToRobotOnly", toggleValue ? 1 : 0);
+    PlayerPrefs.Save();
+
+    if (toggleValue) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_ConnectToRobotOnly", "1");
+    }
+    else {
+      RobotEngineManager.Instance.SetDebugConsoleVar("BFT_ConnectToRobotOnly", "0");
+    }
   }
 
   void HandleLogInputChange(string input) {
