@@ -11,8 +11,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorDistractedByObject_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorDistractedByObject_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
@@ -34,12 +34,12 @@ struct RobotObservedObject;
 }
   
   
-class BehaviorDistractedByObject : public IBehaviorDistracted
+class BehaviorAcknowledgeObject : public IBehaviorPoseBasedAcknowledgement
 {
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorDistractedByObject(Robot& robot, const Json::Value& config);
+  BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;
 
@@ -61,10 +61,10 @@ private:
   
   ObjectID _targetObject;
   
-}; // class BehaviorDistractedByObject
+}; // class BehaviorAcknowledgeObject
 
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorDistractedByObject_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeObject_H__

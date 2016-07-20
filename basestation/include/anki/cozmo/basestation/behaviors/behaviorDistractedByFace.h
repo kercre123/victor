@@ -11,8 +11,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorDistractedByFace_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorDistractedByFace_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
@@ -36,12 +36,12 @@ namespace ExternalInterface {
 }
   
   
-class BehaviorDistractedByFace : public IBehaviorDistracted
+class BehaviorAcknowledgeFace : public IBehaviorPoseBasedAcknowledgement
 {
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorDistractedByFace(Robot& robot, const Json::Value& config);
+  BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;
 
@@ -57,10 +57,10 @@ private:
   
   Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
   
-}; // class BehaviorDistractedByFace
+}; // class BehaviorAcknowledgeFace
 
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorDistractedByFace_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeFace_H__
