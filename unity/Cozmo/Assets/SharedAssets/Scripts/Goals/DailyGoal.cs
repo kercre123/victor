@@ -80,6 +80,8 @@ namespace Cozmo {
         }
         // Progress Goal
         Progress++;
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this.GoalEvent, this.Progress, this.Target));
+
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
         CheckIfComplete();
@@ -141,7 +143,7 @@ namespace Cozmo {
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }
-          GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnDailyGoalCompleted);
+          GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalCompleted, this.GoalEvent, this.PointsRewarded));
           _Completed = true;
           GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }

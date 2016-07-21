@@ -16,8 +16,7 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class TotalSessionsCondition : GoalCondition {
-      
+    public class CurrentTotalSessionsCondition : GoalCondition {
 
       public bool UseMinSession;
       public int MinSession;

@@ -38,7 +38,7 @@ namespace Simon {
       }
       if (_ShouldWinGame.HasValue) {
         if (_ShouldWinGame.GetValueOrDefault()) {
-          CozmoWinGame();
+          CozmoWinRound();
         }
         else {
           CozmoLoseGame();
@@ -110,12 +110,12 @@ namespace Simon {
       _IsAnimating = true;
     }
 
-    private void CozmoWinGame() {
+    private void CozmoWinRound() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoHandComplete);
+      _GameInstance.AddPoint(false);
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
       _IsAnimating = true;
     }

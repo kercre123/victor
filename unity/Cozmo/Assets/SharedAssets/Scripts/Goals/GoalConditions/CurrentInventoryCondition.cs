@@ -16,7 +16,7 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class InventoryCondition : GoalCondition {
+    public class CurrentInventoryCondition : GoalCondition {
       
       /// <summary>
       /// The Item type of the reward.

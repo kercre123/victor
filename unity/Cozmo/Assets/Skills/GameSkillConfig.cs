@@ -49,10 +49,8 @@ public class GameSkillConfig {
 
   [SerializeField, Tooltip("Event that evaluates win rate to determine if skill should raise/lower")]
   private List<SerializableGameEvents> _EvaluateLevelChangeEvent;
-  [SerializeField, Tooltip("Event that counts as a win for Cozmo")]
-  private List<SerializableGameEvents> _GainChallengePointEvent;
-  [SerializeField, Tooltip("Event that counts as a loss for Cozmo")]
-  private List<SerializableGameEvents> _LoseChallengePointEvent;
+  [SerializeField, Tooltip("Event that records points based on if Player or Cozmo won")]
+  private List<SerializableGameEvents> _ChallengePointEvent;
   [SerializeField, Tooltip("Event that clears recorded points, usually when you start game")]
   private List<SerializableGameEvents> _ResetPointsEvent;
 
@@ -60,12 +58,8 @@ public class GameSkillConfig {
     return _EvaluateLevelChangeEvent != null && _EvaluateLevelChangeEvent.Find(x => x.Value == gameEvent) != null;
   }
 
-  public bool IsGainChallengePointEvent(Anki.Cozmo.GameEvent gameEvent) {
-    return _GainChallengePointEvent != null && _GainChallengePointEvent.Find(x => x.Value == gameEvent) != null;
-  }
-
-  public bool IsLoseChallengePointEvent(Anki.Cozmo.GameEvent gameEvent) {
-    return _LoseChallengePointEvent != null && _LoseChallengePointEvent.Find(x => x.Value == gameEvent) != null;
+  public bool IsChallengePointEvent(Anki.Cozmo.GameEvent gameEvent) {
+    return _ChallengePointEvent != null && _ChallengePointEvent.Find(x => x.Value == gameEvent) != null;
   }
 
   public bool IsResetPointEvent(Anki.Cozmo.GameEvent gameEvent) {

@@ -39,7 +39,6 @@ namespace SpeedTap {
         _DidCozmoTap = true;
 
         // All the taps should have a "TAPPED_BLOCK" RobotAnimationEvent.
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapTap);
       }
       else if (((_SpeedTapGame.FirstTapper != FirstToTap.NoTaps) || (secondsElapsed > _LightsOnDuration_sec))

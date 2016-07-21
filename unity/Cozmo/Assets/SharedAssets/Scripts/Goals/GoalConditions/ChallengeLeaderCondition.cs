@@ -11,21 +11,24 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specified who won
+/// Goal condition that check if the player has a higher score
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndWinnerCondition : GoalCondition {
+    public class ChallengeLeaderCondition : GoalCondition {
      
-      public bool PlayerWon;
+      public bool IsPlayerWinning;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameCompletedGameEvent) {
-          MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
-          if (miniGameEvent.PlayerWon == PlayerWon) {
-            isMet = true;
+        if (cozEvent is MinigameGameEvent) {
+          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
+          if (miniGameEvent.PlayerScore > miniGameEvent.CozmoScore) {
+            isMet = IsPlayerWinning;
+          }
+          else {
+            isMet = !IsPlayerWinning;
           }
         }
         return isMet;
@@ -34,7 +37,7 @@ namespace Anki {
       #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        PlayerWon = EditorGUILayout.Toggle(new GUIContent("PlayerWon", "Condition is true if results match this flag"), PlayerWon);
+        IsPlayerWinning = EditorGUILayout.Toggle(new GUIContent("Player Winning", "True if the PlayerScore is greater than CozmoScore"), IsPlayerWinning);
         EditorGUILayout.EndHorizontal();
       }
       #endif

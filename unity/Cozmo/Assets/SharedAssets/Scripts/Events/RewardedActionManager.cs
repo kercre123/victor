@@ -14,10 +14,9 @@ using DataPersistence;
 /// </summary>
 public class RewardedActionManager : MonoBehaviour {
 
-  [ItemId]
-  public string ActionRewardID;
-
   public static RewardedActionManager Instance { get; private set; }
+
+  public static string sRewardedActionsDirectory { get { return PlatformUtil.GetResourcesFolder("RewardedActions"); } }
 
   private IRobot _CurrRobot = null;
 
@@ -44,11 +43,13 @@ public class RewardedActionManager : MonoBehaviour {
   [SerializeField]
   private GenericRewardsConfig _RewardConfig;
 
+  private RewardedActionListData _RewardData;
+
   // Map Animation Group Names to Event Enums using the tool
-  public Dictionary<GameEvent, RewardData> RewardEventMap = new Dictionary<GameEvent, RewardData>();
+  public Dictionary<GameEvent, List<RewardedActionData>> RewardEventMap = new Dictionary<GameEvent, List<RewardedActionData>>();
 
   // Rewards that have been earned but haven't been shown to the player.
-  public Dictionary<GameEvent, int> PendingActionRewards = new Dictionary<GameEvent, int>();
+  public Dictionary<RewardedActionData, int> PendingActionRewards = new Dictionary<RewardedActionData, int>();
 
   public bool RewardPending {
     get {
@@ -68,9 +69,9 @@ public class RewardedActionManager : MonoBehaviour {
   public int TotalPendingEnergy {
     get {
       int total = 0;
-      foreach (GameEvent eventID in RewardedActionManager.Instance.PendingActionRewards.Keys) {
+      foreach (RewardedActionData reward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
         int count = 0;
-        if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(eventID, out count)) {
+        if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(reward, out count)) {
           total += count;
         }
       }
@@ -81,18 +82,34 @@ public class RewardedActionManager : MonoBehaviour {
 
   void Start() {
     RegisterEvents();
-    GameEvent gEvent;
-    RewardData reward;
-    for (int i = 0; i < _RewardConfig.RewardedActions.Count; i++) {
-      gEvent = _RewardConfig.RewardedActions[i].GameEvent.Value;
-      reward = _RewardConfig.RewardedActions[i].Reward;
-      if (!RewardEventMap.ContainsKey(gEvent)) {
-        RewardEventMap.Add(gEvent, reward);
+    LoadData();
+  }
+
+  private void LoadData() {
+    // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
+    if (Directory.Exists(sRewardedActionsDirectory)) {
+      string[] _RewardedActionFiles = Directory.GetFiles(sRewardedActionsDirectory);
+      if (_RewardedActionFiles.Length > 0) {
+        bool didMatch = false;
+        for (int i = 0; i < _RewardedActionFiles.Length; i++) {
+          if (_RewardedActionFiles[i] == Path.Combine(sRewardedActionsDirectory, _RewardConfig.RewardConfigFilename)) {
+            LoadRewardedActions(_RewardedActionFiles[i]);
+            didMatch = true;
+            break;
+          }
+        }
+        if (!didMatch) {
+          DAS.Error(this, string.Format("No Reward Data to load in {0}", sRewardedActionsDirectory));
+        }
       }
       else {
-        DAS.Error(this, string.Format("{0} is a redundant event. Already have a reward for this.", gEvent));
+        DAS.Error(this, string.Format("No Reward Data to load in {0}", sRewardedActionsDirectory));
       }
     }
+    else {
+      DAS.Error(this, string.Format("No Reward Data to load in {0}", sRewardedActionsDirectory));
+    }
+      
   }
 
   void OnDestroy() {
@@ -100,21 +117,59 @@ public class RewardedActionManager : MonoBehaviour {
   }
 
   public void GameEventReceived(GameEventWrapper cozEvent) {
-    RewardData reward = null;
-    if (RewardEventMap.TryGetValue(cozEvent.GameEventEnum, out reward)) {
-      DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Amount, reward.ItemID));
-      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.ItemID, reward.Amount);
-      if (reward.ItemID == ActionRewardID) {
-        if (!PendingActionRewards.ContainsKey(cozEvent.GameEventEnum)) {
-          PendingActionRewards.Add(cozEvent.GameEventEnum, reward.Amount);
-        }
-        else {
-          PendingActionRewards[cozEvent.GameEventEnum] += reward.Amount;
+    List<RewardedActionData> rewardList = new List<RewardedActionData>();
+    if (RewardEventMap.TryGetValue(cozEvent.GameEventEnum, out rewardList)) {
+      for (int i = 0; i < rewardList.Count; i++) {
+        RewardedActionData reward = rewardList[i];
+        if (RewardConditionsMet(reward, cozEvent)) {
+          DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Reward.Amount, reward.Reward.ItemID));
+          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
+          if (!PendingActionRewards.ContainsKey(reward)) {
+            PendingActionRewards.Add(reward, reward.Reward.Amount);
+          }
+          else {
+            PendingActionRewards[reward] += reward.Reward.Amount;
+          }
         }
       }
     }
   }
 
+  public bool RewardConditionsMet(RewardedActionData reward, GameEventWrapper gEvent) {
+    if (reward.EventConditions == null) {
+      return true;
+    }
+    for (int i = 0; i < reward.EventConditions.Count; i++) {
+      if (reward.EventConditions[i].ConditionMet(gEvent) == false) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void LoadRewardedActions(string path) {
+    DAS.Event(this, string.Format("LoadRewardedActionData from {0}", Path.GetFileName(path)));
+    string json = File.ReadAllText(path);
+
+    GameEvent gEvent;
+    RewardedActionData reward;
+    List<RewardedActionData> rList;
+    _RewardData = JsonConvert.DeserializeObject<RewardedActionListData>(json, GlobalSerializerSettings.JsonSettings);
+    for (int i = 0; i < _RewardData.RewardedActions.Count; i++) {
+      gEvent = _RewardData.RewardedActions[i].RewardEvent.Value;
+      reward = _RewardData.RewardedActions[i];
+      // If there isn't a reward for this game event, create a new list
+      if (!RewardEventMap.ContainsKey(gEvent)) {
+        rList = new List<RewardedActionData>();
+        rList.Add(reward);
+        RewardEventMap.Add(gEvent, rList);
+      }
+      else {
+        // Otherwise add this RewardedAction to the end of the list
+        RewardEventMap[gEvent].Add(reward);
+      }
+    }
+  }
 
   private void RegisterEvents() {
     GameEventManager.Instance.OnGameEvent += GameEventReceived;

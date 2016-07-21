@@ -171,8 +171,8 @@ namespace FaceEnrollment {
         // TODO: Retry or notify failure or something?
       }
       else {
-
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnMeetNewPerson);
+        
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
         if (CurrentRobot.EnrolledFaces.ContainsKey(_FaceIDToEnroll)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
           CurrentRobot.EnrolledFaces[_FaceIDToEnroll] = _NameForFace;

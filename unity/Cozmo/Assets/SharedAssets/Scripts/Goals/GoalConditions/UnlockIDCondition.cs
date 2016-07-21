@@ -11,20 +11,20 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specifies Difficulty beat
+/// Goal condition that specifies the UnlockID of the desired unlock.
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndDifficultyCondition : GoalCondition {
+    public class UnlockIDCondition : GoalCondition {
      
-      public int Difficulty;
+      public UnlockId Unlocked;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameCompletedGameEvent) {
-          MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
-          if (miniGameEvent.Difficulty <= Difficulty) {
+        if (cozEvent is UnlockableUnlockedGameEvent) {
+          UnlockableUnlockedGameEvent unlockEvent = (UnlockableUnlockedGameEvent)cozEvent;
+          if (unlockEvent.Unlock == Unlocked) {
             isMet = true;          
           }
         }
@@ -34,7 +34,7 @@ namespace Anki {
       #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Current Difficulty level of the Game we just played"), Difficulty);
+        Unlocked = (UnlockId)EditorGUILayout.EnumPopup("Unlock", (Enum)Unlocked);
         EditorGUILayout.EndHorizontal();
       }
       #endif

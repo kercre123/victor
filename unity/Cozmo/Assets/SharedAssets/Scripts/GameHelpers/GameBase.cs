@@ -34,6 +34,7 @@ public abstract class GameBase : MonoBehaviour {
   public event EndGameDialogHandler OnShowEndGameDialog;
 
   public delegate void SharedMinigameViewHandler(SharedMinigameView newView);
+
   public event SharedMinigameViewHandler OnSharedMinigameViewInitialized;
 
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
@@ -138,9 +139,9 @@ public abstract class GameBase : MonoBehaviour {
     string minigameAssetBundleName = AssetBundleNames.minigame_ui_prefabs.ToString();
     AssetBundleManager.Instance.LoadAssetBundleAsync(
       minigameAssetBundleName, (bool success) => {
-        LoadSharedMinigameView(minigameAssetBundleName);
-        CubePalette.LoadCubePalette(minigameAssetBundleName);
-      });
+      LoadSharedMinigameView(minigameAssetBundleName);
+      CubePalette.LoadCubePalette(minigameAssetBundleName);
+    });
   }
 
   private void LoadSharedMinigameView(string minigameAssetBundleName) {
@@ -286,13 +287,14 @@ public abstract class GameBase : MonoBehaviour {
     UpdateUI();
   }
 
-  // TODO: Add any effects for Scoring Points here to propogate to all minigames for consistency
-  public void AddCozmoPoint() {
-    CozmoScore++;
-  }
-
-  public void AddPlayerPoint() {
-    PlayerScore++;
+  public virtual void AddPoint(bool playerScored) {
+    if (playerScored) {
+      PlayerScore++;
+    }
+    else {
+      CozmoScore++;
+    }
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengePointScored, _ChallengeData.ChallengeID, _CurrentDifficulty, playerScored, PlayerScore, CozmoScore, IsHighIntensityRound()));
   }
 
   // Number of Rounds Won this Game
@@ -338,7 +340,8 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // True if the Round is Close in terms of Points.
-  public bool IsHighIntensityRound() {
+  // can be overriden if you have special challenge specific logic for determining this
+  public virtual bool IsHighIntensityRound() {
     int oneThirdRoundsTotal = TotalRounds / 3;
     return (PlayerRoundsWon + CozmoRoundsWon) > oneThirdRoundsTotal;
   }
@@ -347,12 +350,17 @@ public abstract class GameBase : MonoBehaviour {
   /// Ends the current round, whoever has the higher current score wins.
   /// </summary>
   public void EndCurrentRound() {
+    bool playerWon = false;
     if (PlayerScore > CozmoScore) {
       PlayerRoundsWon++;
+      playerWon = true;
     }
     else {
       CozmoRoundsWon++;
     }
+
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeRoundEnd, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
+
     UpdateUI();
   }
 
@@ -371,13 +379,28 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
-  public void HandleGameEnd() {
+  public virtual void HandleRoundBasedGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
     bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
 
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-      GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(GameEvent.OnGameComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, IsHighIntensityGame()));
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
     }
+
+    if (playerWon) {
+      HandleUnlockRewards();
+      RaiseMiniGameWin();
+    }
+    else {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
+        HandleUnlockRewards();
+      }
+      RaiseMiniGameLose();
+    }
+  }
+
+  public virtual void HandlePointlessGameEnd(bool playerWon) {
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
 
     if (playerWon) {
       HandleUnlockRewards();
@@ -406,8 +429,7 @@ public abstract class GameBase : MonoBehaviour {
     if (higherLevelUnlocked && !highestOptionLevel) {
       playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
       DataPersistence.DataPersistenceManager.Instance.Save();
-      // If a new Difficulty was unlocked, set that in the UnlockablesManager so it will show
-      // in ChallengeEndedDialog
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeDifficultyUnlock, _ChallengeData.ChallengeID, newDifficultyUnlocked));
       RewardedActionManager.Instance.NewDifficultyUnlock = newDifficultyUnlocked;
     }
   }
@@ -496,6 +518,14 @@ public abstract class GameBase : MonoBehaviour {
   public void SoftEndGameRobotReset() {
     DeregisterInterruptionStartedEvents();
     DeregisterInterruptionEndedEvents();
+    // Increment the amount that this challenge has been played by 1, only count fully completed playthroughs of challenges
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.ContainsKey(_ChallengeData.ChallengeID)) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed[_ChallengeData.ChallengeID]++;
+    }
+    else {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.Add(_ChallengeData.ChallengeID, 1);
+    }
+    DataPersistence.DataPersistenceManager.Instance.Save();
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);

@@ -24,13 +24,6 @@ public class DailyGoalEditor : EditorWindow {
   private static string[] _FilteredCladNameOptions;
   private static GameEvent[] _FilteredCladList;
 
-
-  // Required to display the Condition Select Popup
-  private static string[] _ConditionTypeNames;
-  private static Type[] _ConditionTypes;
-  private static int[] _ConditionIndices;
-  private int _SelectedConditionIndex = 0;
-
   private static string[] _DailyGoalGenFiles;
 
   private static DailyGoalGenerationData _CurrentGenData;
@@ -88,19 +81,6 @@ public class DailyGoalEditor : EditorWindow {
 
   static DailyGoalEditor() {
     LoadData();
-    // get all conditions
-    var ctypes = Assembly.GetAssembly(typeof(GoalCondition))
-      .GetTypes()
-      .Where(t => typeof(GoalCondition).IsAssignableFrom(t) &&
-                 !t.IsAbstract);
-    _ConditionTypes = ctypes.ToArray();
-    _ConditionTypeNames = _ConditionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
-
-    _ConditionIndices = new int[_ConditionTypeNames.Length];
-    for (int i = 0; i < _ConditionIndices.Length; i++) {
-      _ConditionIndices[i] = i;
-    }
-
   }
 
   private static void LoadData() {
@@ -377,22 +357,22 @@ public class DailyGoalEditor : EditorWindow {
       GUI.contentColor = Color.green;
     }
     genCondOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), genCondOpen,
-      new GUIContent(string.Format("Generation Conditions{0}", (genData.GenConditions.Count > 0 ? string.Format(" - ({0})", genData.GenConditions.Count) : "")), 
+      new GUIContent(string.Format("Generation Conditions{0}", (genData.GenConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(genData.GenConditions) : "")), 
         "Conditions that must be met for the Goal to be selected for Generation"), EditorDrawingUtility.FoldoutStyle);
     GUI.contentColor = Color.white;
     if (genCondOpen) {
-      DrawConditionList(genData.GenConditions);
+      EditorDrawingUtility.DrawConditionList(genData.GenConditions);
     }
 
     if (proCondOpen) {
       GUI.contentColor = Color.green;
     }
     proCondOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), proCondOpen,
-      new GUIContent(string.Format("Progress Conditions{0}", (genData.ProgressConditions.Count > 0 ? string.Format(" - ({0})", genData.ProgressConditions.Count) : "")), 
+      new GUIContent(string.Format("Progress Conditions{0}", (genData.ProgressConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(genData.ProgressConditions) : "")), 
         "Conditions that must be met for the Goal to be progressed when its GameEvent fires"), EditorDrawingUtility.FoldoutStyle);
     GUI.contentColor = Color.white;
     if (proCondOpen) {
-      DrawConditionList(genData.ProgressConditions);
+      EditorDrawingUtility.DrawConditionList(genData.ProgressConditions);
     }
 
     _ConditionFoldouts[genData.Id] = new CondFoldouts(genCondOpen, proCondOpen);
@@ -435,62 +415,6 @@ public class DailyGoalEditor : EditorWindow {
       DailyGoalEditor._IdMapComplete = false;
     }
   }
-
-  #region GoalConditions and Helpers
-
-  // some things ignore indent. This is a work around
-  public Rect GetIndentedLabelRect() {
-    var rect = EditorGUILayout.GetControlRect();
-    rect.x += 15 * (EditorGUI.indentLevel);
-    rect.width -= 15 * (EditorGUI.indentLevel);
-    return rect;
-  }
-
-
-  // Draws a list of Conditions
-  public void DrawConditionList<T>(List<T> conditions) where T : GoalCondition {    
-    for (int i = 0; i < conditions.Count; i++) {
-      var cond = conditions[i];
-      // clear out any null conditions
-      if (cond == null) {
-        conditions.RemoveAt(i);
-        i--;
-        continue;
-      }
-
-      var name = (cond as T).GetType().Name.ToHumanFriendly();
-      (cond as T).OnGUI_DrawUniqueControls();
-      if (GUI.Button(EditorGUILayout.GetControlRect(), String.Format("^^Delete {0}^^", name), EditorDrawingUtility.RemoveButtonStyle)) {
-        conditions.RemoveAt(i);
-      }
-
-    }
-
-    var nextRect = EditorGUILayout.GetControlRect();
-
-    // show the add condition/action box at the bottom of the list
-    var newObject = DrawAddConditionPopup<T>(nextRect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
-
-    if (!EqualityComparer<T>.Default.Equals(newObject, default(T))) {
-      conditions.Add(newObject);
-    }
-
-  }
-
-  // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
-  private T DrawAddConditionPopup<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : GoalCondition {
-    var popupRect = new Rect(rect.x, rect.y, rect.width - 150, rect.height);
-    var plusRect = new Rect(rect.x + rect.width - 150, rect.y, 150, rect.height);
-    index = EditorGUI.IntPopup(popupRect, index, names, indices);
-
-    if (GUI.Button(plusRect, "New Condition", EditorDrawingUtility.AddButtonStyle)) {
-      var result = (T)(Activator.CreateInstance(types[index]));
-      return result;
-    }
-    return default(T);
-  }
-
-  #endregion
 
 
 }

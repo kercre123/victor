@@ -18,12 +18,15 @@ public class PlayerProfile {
 
   public Dictionary<string, int> GameDifficulty;
 
+  public Dictionary<string, int> TotalGamesPlayed;
+
   // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
   public int SaveVersion;
 
   public PlayerProfile() {
     CompletedScriptedSequences = new Dictionary<string, bool>();
     GameDifficulty = new Dictionary<string, int>();
+    TotalGamesPlayed = new Dictionary<string, int>();
     ConversationHistory = new Conversations.ConversationHistory();
     Sessions = new List<DataPersistence.TimelineEntryData>();
     VolumePreferences = new Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float>();

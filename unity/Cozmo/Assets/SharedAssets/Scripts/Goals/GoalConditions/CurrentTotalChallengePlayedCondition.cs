@@ -1,0 +1,61 @@
+﻿using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Cozmo;
+using DataPersistence;
+
+
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+/// <summary>
+/// Condition that is met if the specified number of sessions have been played
+/// </summary>
+namespace Anki {
+  namespace Cozmo {
+    [System.Serializable]
+    public class CurrentTotalChallengePlayedCondition : GoalCondition {
+
+      public string ChallengeID;
+      public bool UseMinGames;
+      public int MinGames;
+      public bool UseMaxGames;
+      public int MaxGames;
+
+      // Returns true if day of the week is the desired day of the week
+      public override bool ConditionMet(GameEventWrapper cozEvent = null) {
+        bool isMet = false;
+        int played = 0;
+        PlayerProfile pProf = DataPersistenceManager.Instance.Data.DefaultProfile;
+        if (pProf != null && pProf.TotalGamesPlayed.ContainsKey(ChallengeID)) {
+          played = pProf.TotalGamesPlayed[ChallengeID];
+        }
+        isMet = !UseMinGames || played >= MinGames;
+        if (isMet) {
+          isMet = !UseMaxGames || played <= MaxGames;
+        }
+        return isMet;
+      }
+
+      #if UNITY_EDITOR
+      public override void DrawControls() {
+        ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge desired"), ChallengeID);
+        EditorGUILayout.BeginHorizontal();
+        UseMinGames = EditorGUILayout.Toggle("Use Min", UseMinGames);
+        if (UseMinGames) {
+          MinGames = EditorGUILayout.IntField("Min Games", MinGames);
+        }
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        UseMaxGames = EditorGUILayout.Toggle("Use Max", UseMaxGames);
+        if (UseMaxGames) {
+          MaxGames = EditorGUILayout.IntField("Max Games", MaxGames);
+        }
+        EditorGUILayout.EndHorizontal();
+      }
+      #endif
+    }
+  }
+}
