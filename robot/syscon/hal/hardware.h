@@ -5,6 +5,15 @@
 
 static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
 
+#define BODY_VER (*((s32*) 0x1F010))  // Between -1 (unprogrammed) and BODY_VERS
+#define BODY_ESN (*((u32*) 0x1F014))
+
+enum BODY_VERS {
+  BODY_VER_EP = 0,
+  BODY_VER_PILOT = 1,
+  BODY_VER_PROD = 2
+};
+
 enum watchdog_channels {
   WDOG_RTOS,
   WDOG_UART,
