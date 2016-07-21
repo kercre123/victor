@@ -151,8 +151,8 @@ bool Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   imu_updated = false;
 
   // Accelerometer uses 12 most significant bits - gyro uses all 16
-  #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * raw)
-  #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
+  #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * (raw))
+  #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * (raw))
 
   imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2] - imu_offsets.acc[2]);
   imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[2] - imu_offsets.gyro[2]);
