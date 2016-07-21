@@ -120,15 +120,22 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
   
   IActionRunner* goPopAWheelie = new DriveToPopAWheelieAction(robot, _targetBlock);
-  
+
+  //Disable on the back reaction
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, false);
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPickup, false);
+
   StartActing(goPopAWheelie,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
+                if(msg.result != ActionResult::SUCCESS){
+                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
+                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
+                }
+                
                 switch(msg.result)
                 {
                   case ActionResult::SUCCESS:
-                    /**if( !_successAnimGroup.empty() ) {
-                      StartActing(new TriggerAnimationAction(robot, _successAnimGroup));
-                    }**/
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     break;
                     
                   case ActionResult::FAILURE_RETRY:
@@ -153,7 +160,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                                      "action failed with %s, behavior ending",
                                      EnumToString(msg.result));
                 } // switch(msg.result)
-                
+
               });
   
   IncreaseScoreWhileActing( kBPW_ScoreIncreaseForAction );
@@ -205,6 +212,9 @@ void BehaviorPopAWheelie::SetState_internal(State state, const std::string& stat
 
 void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
 {
+  
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
   _state = State::ReactingToBlock;
   _targetBlock.UnSet();
 }

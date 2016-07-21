@@ -32,6 +32,7 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/planning/shared/goalDefs.h"
 #include "anki/planning/shared/path.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
@@ -305,11 +306,11 @@ public:
                             bool useManualSpeed = false);
 
   // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
-  // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
+  // pose it wants to go to. The optional second argument is a pointer to a Planning::GoalID, which, if not null, will
   // be set to the pose which is selected once planning is complete
   Result StartDrivingToPose(const std::vector<Pose3d>& poses,
                             const PathMotionProfile motionProfile,                              
-                            size_t* selectedPoseIndex = nullptr,
+                            Planning::GoalID* selectedPoseIndex = nullptr,
                             bool useManualSpeed = false);
   
   // This function checks the planning / path following status of the robot. See the enum definition for
@@ -787,7 +788,7 @@ protected:
   IPathPlanner*            _longPathPlanner              = nullptr;
   IPathPlanner*            _shortPathPlanner             = nullptr;
   IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
-  size_t*                  _plannerSelectedPoseIndexPtr  = nullptr;
+  Planning::GoalID*        _plannerSelectedPoseIndexPtr  = nullptr;
   int                      _numPlansStarted              = 0;
   int                      _numPlansFinished             = 0;
   ERobotDriveToPoseStatus  _driveToPoseStatus            = ERobotDriveToPoseStatus::Waiting;

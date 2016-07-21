@@ -11,6 +11,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "animationController.h"
 #include "rtip.h"
 #include "face.h"
+#include "dhTask.h"
 #include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
@@ -230,6 +231,12 @@ namespace Anki {
                 i++;
               }
               break;
+            }
+            case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct              
+              DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
+              break ;
             }
             case RobotInterface::EngineToRobot::Tag_setRTTO:
             {

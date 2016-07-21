@@ -11,6 +11,7 @@ enum uint_32 ParameterType
   External_Name_Duration = 2145805753,
   Invalid = 0,
   Mood = 3128647864,
+  Music_Mood = 1579946944,
   Music_Volume = 1006694123,
   Mvt_Speed = 3464961452,
   Relationship = 3723222599,

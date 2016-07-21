@@ -13,6 +13,8 @@ namespace Cozmo.Minigame.CubePounce {
       _CheckPosition.CheckAndFixPosition();
       _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
       _CubePounceGame.GetCubeTarget().SetLEDs(Color.green);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);
     }
 
     private void CompleteAlignment() {

@@ -60,6 +60,18 @@
   "unlockable.CubeStackAction.Description": {
     "translation": "Get Cozmo to Stack two Cubes"
   },
+  "unlockable.PounceOnMotionAction.Title": {
+    "translation": "Pounce On Motion"
+  },
+  "unlockable.PounceOnMotionAction.Description": {
+    "translation": "Finger pounce go!!!!!!"
+  },
+  "unlockable.PopAWheelieAction.Title": {
+    "translation": "Pop A Wheelie"
+  },
+  "unlockable.PopAWheelieAction.Description": {
+    "translation": "Sometimes called Get on back"
+  },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon"
   },

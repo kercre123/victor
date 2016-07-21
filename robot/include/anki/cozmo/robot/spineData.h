@@ -11,11 +11,8 @@
 
 // A 16.16 fixed bit number
 typedef s32 Fixed;
-typedef s32 Fixed_8_24;
-typedef s64 Fixed64;
-#define TO_FIXED(x) ((x) * 65535.0 + 0.5)
-#define TO_FIXED_8_24(x) ((x) * 16777215.0 + 0.5)
-#define TO_FIXED_8_24_TO_16_16(x) ((x) >> 8)
+#define TO_FIXED(x) ((x) * 65536.0 + 0.5)
+#define TO_FIXED_0_32(x) ((x) * 4294967296.0 + 0.5)
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
@@ -30,7 +27,7 @@ enum SPISource
 
 // 32 bytes of payload plus tag
 #define SPINE_MAX_CLAD_MSG_SIZE_DOWN (40)
-#define SPINE_MAX_CLAD_MSG_SIZE_UP (28)
+#define SPINE_MAX_CLAD_MSG_SIZE_UP (32)
 
 struct CladBufferDown
 {
@@ -64,6 +61,6 @@ struct GlobalDataToBody
   CladBufferDown cladBuffer;
 };
 
-static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 128, "Spine transport payload too large");
+static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 132, "Spine transport payload too large");
 
 #endif

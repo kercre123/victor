@@ -16,14 +16,15 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndChallengeIDCondition : GoalCondition {
-     
+    public class ChallengeIDCondition : GoalCondition {
+      
+      [ChallengeId]
       public string ChallengeID;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameCompletedGameEvent) {
-          MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
+        if (cozEvent is MinigameGameEvent) {
+          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
           if (miniGameEvent.GameID == ChallengeID) {
             isMet = true;
           }
@@ -33,9 +34,7 @@ namespace Anki {
 
       #if UNITY_EDITOR
       public override void DrawControls() {
-        EditorGUILayout.BeginHorizontal();
-        ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge desired"), ChallengeID);
-        EditorGUILayout.EndHorizontal();
+        ChallengeID = EditorGUILayout.TextField("ChallengeID", ChallengeID);
       }
       #endif
     }

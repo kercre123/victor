@@ -106,6 +106,10 @@ private:
   void InitEventHandlers(IExternalInterface& interface);
   int GetFlagIndex(uint8_t flag) const;
   
+  // Checks if the speed is near zero and if it is sets flag to false and unlocks tracks
+  // otherwise it will set flag to true and lock the tracks if they are not locked
+  void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks);
+  
   Robot& _robot;
   
   bool _isMoving;
@@ -135,6 +139,11 @@ private:
   const u8  kMaxUnexpectedMovementCount    = 10;
   const f32 kMinWheelSpeed_mmps            = 20;
   const f32 kExpectedVsActualGyroTol_radps = 0.2;
+  
+  // Flags for whether or not we are currently directly driving the following motors
+  bool _drivingWheels = false;
+  bool _drivingHead   = false;
+  bool _drivingLift   = false;
   
 }; // class MovementComponent
   

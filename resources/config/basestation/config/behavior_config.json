@@ -76,6 +76,26 @@
           "behaviorGroups" : [ "SparksStackCube" ]
         }
       },
+     {
+       "name" : "sparksPounceOnMotion",
+       "requireSpark":"PounceOnMotionAction",
+       "behaviorChooser" :
+       {
+         "type" : "simple",
+         // this are the behaviors that are allowed in this behavior chooser
+         "behaviorGroups" : [ "SparksPounceOnMotion" ]
+       }
+     },
+     {
+       "name" : "sparksPopAWheelie",
+       "requireSpark":"PopAWheelieAction",
+       "behaviorChooser" :
+       {
+         "type" : "simple",
+         // this are the behaviors that are allowed in this behavior chooser
+         "behaviorGroups" : [ "SparksPopAWheelie" ]
+       }
+     },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // FreeplayOne : old freeplay with game requests
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

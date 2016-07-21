@@ -16,8 +16,11 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_CONTEXT_H_
 
 #include "anki/planning/basestation/xythetaEnvironment.h"
+#include "anki/planning/shared/goalDefs.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
+#include <vector>
+#include <utility>
 
 namespace Anki {
 
@@ -40,8 +43,10 @@ struct xythetaPlannerContext : private Util::noncopyable
 
   xythetaEnvironment env;
 
-  // Set start and goal in meters and radians
-  State_c goal;
+  // Goals in meters and radians. Elements remain sorted, but might not have consecutive GoalIDs
+  std::vector<std::pair<GoalID, State_c>> goals_c;
+
+  // Set start in meters and radians
   State_c start;
 
   // if true, turning in place at the goal has zero cost

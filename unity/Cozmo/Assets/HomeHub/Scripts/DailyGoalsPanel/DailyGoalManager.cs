@@ -38,7 +38,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   #region DailyGoal Generation
 
-
   // Config file for friendship progression and daily goal generation
   [SerializeField]
   private DailyGoalGenerationConfig _DailyGoalGenConfig;
@@ -150,7 +149,6 @@ public class DailyGoalManager : MonoBehaviour {
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
       string[] _DailyGoalFiles = Directory.GetFiles(sDailyGoalDirectory);
-      // TODO : Specify the event map file to use in a config
       if (_DailyGoalFiles.Length > 0) {
         bool didMatch = false;
         for (int i = 0; i < _DailyGoalFiles.Length; i++) {
@@ -181,7 +179,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LoadDailyGoalData(string path) {
     string json = File.ReadAllText(path);
-    DAS.Event(this, string.Format("LoadDailyGoalData {0}", Path.GetFileName(path)));
+    DAS.Event(this, string.Format("LoadDailyGoalData from {0}", Path.GetFileName(path)));
     _CurrentGenData = JsonConvert.DeserializeObject<DailyGoalGenerationData>(json, GlobalSerializerSettings.JsonSettings);
   }
 

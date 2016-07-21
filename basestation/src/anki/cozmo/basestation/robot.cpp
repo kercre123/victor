@@ -994,7 +994,7 @@ Result Robot::Update(bool ignoreVisionModes)
           _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
           _numPlansFinished = _numPlansStarted;
 
-          size_t selectedPoseIdx;
+          Planning::GoalID selectedPoseIdx;
           Planning::Path newPath;
 
           _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx, &_pathMotionProfile);
@@ -1342,7 +1342,7 @@ void Robot::SelectPlanner(const Pose3d& targetPose)
 void Robot::SelectPlanner(const std::vector<Pose3d>& targetPoses)
 {
   if( ! targetPoses.empty() ) {
-    size_t closest = IPathPlanner::ComputeClosestGoalPose(GetDriveCenterPose(), targetPoses);
+    Planning::GoalID closest = IPathPlanner::ComputeClosestGoalPose(GetDriveCenterPose(), targetPoses);
     SelectPlanner(targetPoses[closest]);
   }
 }
@@ -1390,7 +1390,7 @@ Result Robot::StartDrivingToPose(const Pose3d& targetPose,
 
 Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses,
                                  const PathMotionProfile motionProfile,
-                                 size_t* selectedPoseIndexPtr,
+                                 Planning::GoalID* selectedPoseIndexPtr,
                                  bool useManualSpeed)
 {
   _usingManualPathSpeed = useManualSpeed;

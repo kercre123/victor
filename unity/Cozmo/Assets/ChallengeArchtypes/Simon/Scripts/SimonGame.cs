@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Anki.Debug;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +22,9 @@ namespace Simon {
     private int _CurrLivesHuman;
 
     public int MinSequenceLength { get { return _Config.MinSequenceLength; } }
+
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
+
     public int GetCurrentTurnNumber { get { return _CurrentSequenceLength - MinSequenceLength; } }
 
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeats; } }
@@ -39,8 +41,6 @@ namespace Simon {
     [SerializeField]
     private SimonCube[] _CubeColorsAndSounds;
 
-    public MusicStateWrapper BetweenRoundsMusic;
-
     [SerializeField]
     private SimonTurnSlide _SimonTurnSlidePrefab;
     private GameObject _SimonTurnSlide;
@@ -54,20 +54,22 @@ namespace Simon {
     public PlayerType FirstPlayer {
       get { return _FirstPlayer; }
     }
+
     [SerializeField]
     private Transform _SimonSetupErrorPrefab;
+
     public Transform SimonSetupErrorPrefab {
       get { return _SimonSetupErrorPrefab; }
     }
 
     public enum SimonMode : int {
       VS = 0,
-      SOLO = 1
-    };
+      SOLO = 1}
+
+    ;
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       _Config = (SimonGameConfig)minigameConfigData;
-      BetweenRoundsMusic = _Config.BetweenRoundsMusic;
 
       InitializeMinigameObjects();
     }
@@ -83,18 +85,16 @@ namespace Simon {
       _ShowScoreboardOnComplete = false;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
-                                                  new WaitForNextRoundSimonState()),
-                                                  DifficultyOptions, HighestLevelCompleted());
+                          new WaitForNextRoundSimonState()),
+                          DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
-                                                                    _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec);
+                                          _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
     protected override void OnDifficultySet(int difficulty) {
@@ -213,10 +213,9 @@ namespace Simon {
       if (CurrentDifficulty == (int)SimonMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
         ShowWinnerPicture(PlayerType.Human);
         ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
-        HandleGameEnd();
+        HandlePointlessGameEnd(true);
       }
       else if (CurrentDifficulty == (int)SimonMode.VS) {
         if (player == _FirstPlayer) {
@@ -229,20 +228,19 @@ namespace Simon {
           // compare who wins...
           if ((_FirstPlayer == PlayerType.Cozmo && _CurrentIDSequence.Count >= _FirstScore) ||
               (_FirstPlayer == PlayerType.Human && _CurrentIDSequence.Count < _FirstScore)) {
-            GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerWin);
             ShowWinnerPicture(PlayerType.Human);
             ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
             PlayerRoundsWon = 1;
             CozmoRoundsWon = 0;
+            HandlePointlessGameEnd(true);
           }
           else {
-            GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonCozmoWin);
             ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
             ShowWinnerPicture(PlayerType.Cozmo);
             PlayerRoundsWon = 0;
             CozmoRoundsWon = 1;
+            HandlePointlessGameEnd(false);
           }
-          HandleGameEnd();
         }
       }
     }
@@ -250,10 +248,14 @@ namespace Simon {
     private SimonTurnSlide GetSimonSlide() {
       if (_SimonTurnSlide == null) {
         _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
-                                           _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
+          _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
       }
       return _SimonTurnSlide.GetComponent<SimonTurnSlide>();
     }
+    public void StartFirstRoundMusic() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Full_Life);
+    }
+
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
       string statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelListen : LocalizationKeys.kSimonGameLabelRepeat;
@@ -271,12 +273,17 @@ namespace Simon {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
       simonTurnScript.ShowCenterImage(enabled, correct);
     }
+
     public int GetLivesRemaining(PlayerType player) {
       return player == PlayerType.Human ? _CurrLivesHuman : _CurrLivesCozmo;
     }
+
     public void DecrementLivesRemaining(PlayerType player) {
       if (player == PlayerType.Human) {
         _CurrLivesHuman--;
+        if (_CurrLivesHuman <= 0) {
+          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_No_Lives);
+        }
       }
       else {
         _CurrLivesCozmo--;

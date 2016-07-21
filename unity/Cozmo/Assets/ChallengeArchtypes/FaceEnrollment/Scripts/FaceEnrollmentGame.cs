@@ -139,6 +139,7 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
 
       // TODO: manually trigger say new name?
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Meet_Cozmo_Say_Name);
 
       EditOrEnrollFaceComplete(true);
     }
@@ -171,8 +172,8 @@ namespace FaceEnrollment {
         // TODO: Retry or notify failure or something?
       }
       else {
-
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnMeetNewPerson);
+        
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
         if (CurrentRobot.EnrolledFaces.ContainsKey(_FaceIDToEnroll)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
           CurrentRobot.EnrolledFaces[_FaceIDToEnroll] = _NameForFace;

@@ -28,10 +28,10 @@ IPathPlanner::IPathPlanner()
 {
 }
 
-size_t IPathPlanner::ComputeClosestGoalPose(const Pose3d& startPose,
-                                            const std::vector<Pose3d>& targetPoses)
+Planning::GoalID IPathPlanner::ComputeClosestGoalPose(const Pose3d& startPose,
+                                                      const std::vector<Pose3d>& targetPoses)
 {
-  size_t selectedTargetIdx = 0;
+  Planning::GoalID selectedTargetIdx = 0;
   bool foundTarget = false;
   f32 shortestDistToPose = -1.f;
   for(size_t i=0; i<targetPoses.size(); ++i)
@@ -114,7 +114,7 @@ bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
   
 bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
                                    Planning::Path &path,
-                                   size_t& selectedTargetIndex,
+                                   Planning::GoalID& selectedTargetIndex,
                                    const PathMotionProfile* motionProfile)
 {
   if (GetCompletePath_Internal(currentRobotPose, path, selectedTargetIndex)) {
@@ -146,7 +146,7 @@ bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
 
 bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                             Planning::Path &path,
-                                            size_t& selectedTargetIndex)
+                                            Planning::GoalID& selectedTargetIndex)
 {
   if( ! _hasValidPath ) {
     return false;

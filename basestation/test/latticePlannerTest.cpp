@@ -131,7 +131,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
 
   ExpectPlanComplete(100, planner, 0);
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -156,7 +156,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
 
   ExpectPlanComplete(250, planner, 0);
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -211,7 +211,7 @@ TEST(LatticePlanner, DISABLED_PlanWhilePlanning)
 
   ExpectPlanComplete(1000, planner);
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -296,7 +296,7 @@ TEST(LatticePlanner, StopPlanning)
     
   ExpectPlanComplete(1000, planner, 6);
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
   ASSERT_TRUE(hasPath);

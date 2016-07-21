@@ -63,25 +63,17 @@ namespace SpeedTap {
     }
 
     private void PlayReactToRoundAnimationAndSendEvent() {
-      GameEvent gameEvent = GameEvent.Count;
       AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
       if (_CurrentWinner == PointWinner.Player) {
-        GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundPlayerWinAnyIntensity);
-        gameEvent = (highIntensity) ?
-          GameEvent.OnSpeedtapRoundPlayerWinHighIntensity : GameEvent.OnSpeedtapRoundPlayerWinLowIntensity;
         animEvent = (highIntensity) ?
                   AnimationTrigger.OnSpeedtapRoundPlayerWinHighIntensity : AnimationTrigger.OnSpeedtapRoundPlayerWinLowIntensity;
       }
       else {
-        GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundCozmoWinAnyIntensity);
-        gameEvent = (highIntensity) ?
-          GameEvent.OnSpeedtapRoundCozmoWinHighIntensity : GameEvent.OnSpeedtapRoundCozmoWinLowIntensity;
         animEvent = (highIntensity) ?
                   AnimationTrigger.OnSpeedtapRoundCozmoWinHighIntensity : AnimationTrigger.OnSpeedtapRoundCozmoWinLowIntensity;
       }
       _CurrentRobot.SendAnimationTrigger(animEvent, HandleRoundEndAnimDone);
-      GameEventManager.Instance.SendGameEventToEngine(gameEvent);
     }
 
     private void HandleRoundEndAnimDone(bool success) {

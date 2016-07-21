@@ -57,12 +57,12 @@ void StateTable::emplace(StateID sid,
   // this version of implace uses the argument constructor for
   // StateEntry, so only one state entry is ever created, no copying
   table_.emplace(std::piecewise_construct,
-                 std::make_tuple(sid),
-                 std::make_tuple(openIt,
-                                 backpointer,
-                                 backpointerAction,
-                                 penalty,
-                                 g));
+                 std::forward_as_tuple(sid),
+                 std::forward_as_tuple(openIt,
+                                       backpointer,
+                                       backpointerAction,
+                                       penalty,
+                                       g));
 }
 
 }

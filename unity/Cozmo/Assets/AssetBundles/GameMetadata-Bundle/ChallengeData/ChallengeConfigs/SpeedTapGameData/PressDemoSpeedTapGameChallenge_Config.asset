@@ -13,27 +13,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
-    - _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
-      _EnumValue: 15
-    - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
-      _EnumValue: 12
-    _GainChallengePointEvent:
-    - _EnumValueAsString: OnSpeedtapHandCozmoWin
-      _EnumValue: 4
-    - _EnumValueAsString: OnSpeedtapRoundCozmoWinAnyIntensity
-      _EnumValue: 6
-    - _EnumValueAsString: OnSpeedtapGameCozmoWinAnyIntensity
-      _EnumValue: 12
-    _LoseChallengePointEvent:
-    - _EnumValueAsString: OnSpeedtapHandPlayerWin
-      _EnumValue: 5
-    - _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
-      _EnumValue: 9
-    - _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
-      _EnumValue: 15
-    _ResetPointsEvent:
-    - _EnumValueAsString: OnSpeedtapStarted
+    - _EnumValueAsString: OnChallengeComplete
       _EnumValue: 3
+    _ChallengePointEvent:
+    - _EnumValueAsString: OnChallengePointScored
+      _EnumValue: 1
+    _ResetPointsEvent:
+    - _EnumValueAsString: OnChallengeStarted
+      _EnumValue: 0
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels:
@@ -64,7 +51,7 @@ MonoBehaviour:
   MatchChanceIncrease: 0.1
   CozmoFakeoutChance: 0.2
   _BetweenRoundMusic:
-    _Music: 2079381016
+    _Music: -1429479094
   DifficultySettings:
   - DifficultyID: 0
     Colors:

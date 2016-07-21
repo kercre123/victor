@@ -16,6 +16,7 @@
 
 #include "json/json-forwards.h"
 #include "pathPlanner.h"
+#include "anki/planning/shared/goalDefs.h"
 #include "util/helpers/noncopyable.h"
 #include <vector>
 
@@ -58,12 +59,13 @@ public:
 
 protected:
   EComputePathStatus ComputePathHelper(const Pose3d& startPose,
-                                       const Pose3d& targetPose);
+                                       const std::vector<Pose3d>& targetPoses,
+                                       Planning::GoalID& selectedGoalID);
 
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path) override;
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                         Planning::Path &path,
-                                        size_t& selectedTargetIndex) override;
+                                        Planning::GoalID& selectedTargetIndex) override;
   LatticePlannerImpl* _impl;
 };
 

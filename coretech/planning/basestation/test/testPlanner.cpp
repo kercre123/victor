@@ -20,6 +20,7 @@
 
 using namespace std;
 using namespace Anki::Planning;
+using GoalState_cPairs = std::vector<std::pair<GoalID,State_c>>;
 
 #ifndef TEST_DATA_PATH
 #error No TEST_DATA_PATH defined. You may need to re-run cmake.
@@ -44,12 +45,12 @@ GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
   xythetaPlanner planner(context);
 
   State_c start(0.0, 1.0, 0.57);
-  State_c goal(-10.0, 3.0, -1.5);
+  GoalState_cPairs goals{{0, {-10.0f,3.0f,-1.5f}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -71,12 +72,12 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
   xythetaPlanner planner(context);
 
   State_c start(0.0, 1.0, 0.57);
-  State_c goal(-10.0, 3.0, -1.5);
+  GoalState_cPairs goals{{0,{-10.0f, 3.0f, -1.5f}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -91,10 +92,10 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
   EXPECT_GT(firstPlanLength, 0);
 
   context.start = State_c{0.0, -2.0, -1.5};
-  context.goal = State_c{0.0, 3.0, 0.0};
+  context.goals_c = GoalState_cPairs{{0, {0.0, 3.0, 0.0}}};
   context.forceReplanFromScratch = true;
 
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -112,6 +113,118 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
   EXPECT_NE(firstPlanLength, secondPlanLength) << "plans should be different";
 }
 
+GTEST_TEST(TestPlanner, PlanOnceMultipleGoalsEmptyEnv)
+{
+  xythetaPlannerContext context;
+  // TEMP:  // TODO:(bn) read context params from new json, instead of loading a different file manually here
+  // TODO:(bn) open something saved in the test dir isntead, so we
+  // know not to change or remove it
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+
+  xythetaPlanner planner(context);
+
+  State_c start(0.0, 1.0, 0.57);
+  GoalState_cPairs goals;
+  const int expectedBest = 2;
+  goals.emplace_back(0, State_c{-100.0f, 3.0f, -1.5f}); // far
+  goals.emplace_back(6, State_c{ -50.0f, 1.0f, -1.5f}); // a movement of 50 mm from the start, but with turns
+  goals.emplace_back(expectedBest, State_c{42.1f,27.99f,0.57f}); // a movement of 50 mm straight from the start
+
+  context.start = start;
+  context.goals_c = goals;
+
+  for( const auto& goalPair : context.goals_c) {
+    ASSERT_TRUE(planner.GoalIsValid(goalPair.first));
+  }
+  ASSERT_TRUE(planner.GoalsAreValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  context.env.PrepareForPlanning();
+
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  
+  EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
+}
+
+GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
+{
+  xythetaPlannerContext context;
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) +
+                                                std::string(TEST_PRIM_FILE)).c_str()));
+  xythetaPlanner planner(context);
+
+  State_c start(0.0, 1.0, 0.57);
+  GoalState_cPairs goals;
+  int expectedBest = 2;
+  goals.emplace_back(0, State_c{-100.0f, 3.0f, -1.5f}); // far
+  goals.emplace_back(expectedBest, State_c{42.1f,27.99f,0.57f}); // a movement of 50 mm straight from the start
+  goals.emplace_back(6, State_c{ -50.0f, 1.0f, -1.5f}); // a movement of 50 mm from the start, but with turns
+  
+
+  context.start = start;
+  context.goals_c = goals;
+  
+  ASSERT_TRUE(planner.GoalsAreValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  context.env.PrepareForPlanning();
+
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  
+  EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
+
+  printf("first plan:\n");
+  context.env.PrintPlan(planner.GetPlan());
+
+  size_t firstPlanLength = planner.GetPlan().Size();
+  EXPECT_GT(firstPlanLength, 0);
+
+  // now the previous best (2, at index 1) is slightly farther away than GoalID 6, but still has fewer turns than 6
+  context.goals_c[1].second = {43.1f,28.99f,0.57f};
+  context.forceReplanFromScratch = true;
+  
+  ASSERT_TRUE(planner.GoalsAreValid());
+  ASSERT_TRUE(planner.StartIsValid());
+  
+  context.env.PrepareForPlanning();
+  
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  
+  printf("second plan:\n");
+  context.env.PrintPlan(planner.GetPlan());
+  
+  size_t secondPlanLength = planner.GetPlan().Size();
+  EXPECT_GT(secondPlanLength, 0);
+  EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
+  
+  // now the previous best (2, at index 1) is far away
+  context.goals_c[1].second = {420.95f,270.82f,0.57f};
+  expectedBest = 6;
+  context.forceReplanFromScratch = true;
+
+  ASSERT_TRUE(planner.GoalsAreValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  context.env.PrepareForPlanning();
+
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
+  printf("third plan:\n");
+  context.env.PrintPlan(planner.GetPlan());
+
+  size_t thirdPlanLength = planner.GetPlan().Size();
+  EXPECT_GT(thirdPlanLength, 0);
+  EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
+
+  // NOTE: this is a lazy way to see that the plans differ. If the motion primitives change, this could break
+  EXPECT_NE(firstPlanLength, thirdPlanLength) << "plans should be different";
+  EXPECT_NE(secondPlanLength, thirdPlanLength) << "plans should be different";
+}
+
 GTEST_TEST(TestPlanner, PlanWithMaxExps)
 {
   // Assuming this is running from root/build......
@@ -125,12 +238,12 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
   xythetaPlanner planner(context);
 
   State_c start(0.0, 1.0, 0.57);
-  State_c goal(-10.0, 3.0, -1.5);
+  GoalState_cPairs goals{{0,{-10.0, 3.0, -1.5}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -145,7 +258,7 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
 
   context.forceReplanFromScratch = true;
 
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   // now replan with enough expansions that the plan should still work
@@ -164,7 +277,7 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
 
   context.forceReplanFromScratch = true;
 
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   // now replan with enough expansions that the plan should still work
@@ -184,12 +297,12 @@ GTEST_TEST(TestPlanner, DontPlanVariable)
   xythetaPlanner planner(context);
 
   State_c start(0.0, 1.0, 0.57);
-  State_c goal(-10.0, 3.0, -1.5);
+  GoalState_cPairs goals{{0,{-10.0, 3.0, -1.5}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -212,12 +325,12 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   xythetaPlanner planner(context);
 
   State_c start(0, 0, 0);
-  State_c goal(200, 0, 0);
+  GoalState_cPairs goals{{0,{200, 0, 0}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -241,12 +354,12 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
   xythetaPlanner planner(context);
 
   State_c start(0, 0, 0);
-  State_c goal(200, 0, 0);
+  GoalState_cPairs goals{{0, {200, 0, 0}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -269,7 +382,7 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
 
   xythetaPlanner planner2(context2);
 
-  ASSERT_TRUE(planner2.GoalIsValid());
+  ASSERT_TRUE(planner2.GoalsAreValid());
   ASSERT_TRUE(planner2.StartIsValid());
 
   context2.env.PrepareForPlanning();
@@ -312,18 +425,19 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   xythetaPlanner planner(context);
 
   State_c start(0, 0, 0);
-  State_c goal(200, 0, 0);
+  GoalState_cPairs goals{{0, {200, 0, 0}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
 
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
 
   bool hasTurn = false;
   for(const auto& action : planner.GetPlan().actions_) {
@@ -399,6 +513,95 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 }
 
 
+GTEST_TEST(TestPlanner, MultipleGoalsWithSoftPenalty)
+{
+  xythetaPlannerContext context;
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+
+  GoalState_cPairs goals{{0, { 200, 0, 0}},   // closer, but with varying penalties (see below)
+                         {1, {1000, 0, 0}}}; // farther, no penalty
+  Anki::RotatedRectangle obstacleOnGoal0(150.0, -10.0, 250.0, -10.0, 20.0); // covers 0th goal
+  
+  xythetaPlanner planner(context);
+  State_c start(0, 0, 0);
+  context.start = start;
+  context.goals_c = goals;
+  
+  Cost goalPenalties[4] = {FATAL_OBSTACLE_COST,10.0, 0.01f, 0.0f};
+  GoalID expectedGoalIDs[4] = {1,1,0,0};
+  float planCosts[4] = {FLT_MAX};
+  
+  for(int i=0; i<4; ++i) {
+    stringstream ss;
+    ss << "Testing multigoal penalty " << i << " (" << goalPenalties[i] << ")";
+    SCOPED_TRACE(ss.str());
+    
+    context.env.AddObstacleAllThetas(obstacleOnGoal0, goalPenalties[i]);
+    
+    ASSERT_TRUE(planner.GoalsAreValid());
+    ASSERT_TRUE(planner.StartIsValid());
+    
+    context.forceReplanFromScratch = true;
+    context.env.PrepareForPlanning();
+    
+    ASSERT_TRUE(planner.Replan());
+    EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+    
+    EXPECT_EQ(planner.GetChosenGoalID(), expectedGoalIDs[i]);
+    planCosts[i] = planner.GetFinalCost();
+
+    context.env.ClearObstacles();
+  }
+  
+  EXPECT_FLOAT_EQ(planCosts[0],planCosts[1]) << "First two plans unaffected by goal 0's penalty";
+  EXPECT_LT(planCosts[2],planCosts[1]) << "Third plan should be cheaper";
+  EXPECT_LT(planCosts[3],planCosts[2]) << "Fourth should be cheapest";
+  
+  // do it again with only one goal
+  
+  goals = {{0, { 200, 0, 0}}}; // farther, no penalty
+  context.goals_c = goals;
+  
+  bool validGoals[4] = {false,true,true,true};
+  bool planFinished[4] = {false,false,true,true};
+  for(float& x : planCosts) {
+    x = FLT_MAX;
+  }
+  
+  for(int i=0; i<4; ++i) {
+    stringstream ss;
+    ss << "Testing single goal penalty " << i << " (" << goalPenalties[i] << ")";
+    SCOPED_TRACE(ss.str());
+    
+    context.env.AddObstacleAllThetas(obstacleOnGoal0, goalPenalties[i]);
+    
+    if(validGoals[i]) {
+      ASSERT_TRUE(planner.GoalsAreValid());
+    } else {
+      ASSERT_FALSE(planner.GoalsAreValid());
+    }
+    ASSERT_TRUE(planner.StartIsValid());
+    
+    context.forceReplanFromScratch = true;
+    context.env.PrepareForPlanning();
+    
+    if(validGoals[i]) {
+      EXPECT_TRUE(planFinished[i] == planner.Replan());
+      EXPECT_TRUE(planFinished[i] == context.env.PlanIsSafe(planner.GetPlan(), 0));
+      
+      EXPECT_EQ(planner.GetChosenGoalID(), 0);
+      planCosts[i] = planner.GetFinalCost();
+    }
+    
+    context.env.ClearObstacles();
+  }
+  
+  EXPECT_LT(planCosts[3],planCosts[2]) << "Fourth should be cheapest";
+
+  
+}
+
+
 GTEST_TEST(TestPlanner, ReplanEasy)
 {
   // Assuming this is running from root/build......
@@ -411,12 +614,12 @@ GTEST_TEST(TestPlanner, ReplanEasy)
   xythetaPlanner planner(context);
 
   State_c start(0, 0, 0);
-  State_c goal(200, 0, 0);
+  GoalState_cPairs goals{{0,{200, 0, 0}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -448,12 +651,12 @@ GTEST_TEST(TestPlanner, ReplanHard)
   xythetaPlanner planner(context);
 
   State_c start(0, 0, 0);
-  State_c goal(800, 0, 0);
+  GoalState_cPairs goals{{0,{800, 0, 0}}};
 
   context.start = start;
-  context.goal = goal;
+  context.goals_c = goals;
   
-  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.GoalsAreValid());
   ASSERT_TRUE(planner.StartIsValid());
 
   context.env.PrepareForPlanning();
@@ -500,7 +703,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
   context.start = lastSafeState;
 
   ASSERT_TRUE(planner.StartIsValid());
-  ASSERT_TRUE(planner.GoalIsValid()) << "goal should still be valid";
+  ASSERT_TRUE(planner.GoalsAreValid()) << "goal should still be valid";
 
   context.env.PrepareForPlanning();
 

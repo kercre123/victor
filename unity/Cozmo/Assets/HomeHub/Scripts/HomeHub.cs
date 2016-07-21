@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DataPersistence;
 using Cozmo.Util;
 using Anki.Assets;
+using Anki.Cozmo;
 
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
@@ -173,10 +174,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleStartChallengeRequest(string challengeRequested) {
-      PlayMinigame(challengeRequested);
+      PlayMinigame(challengeRequested, true);
     }
 
-    private void PlayMinigame(string challengeId) {
+    private void PlayMinigame(string challengeId, bool wasRequest = false) {
       // Keep track of the current challenge
       _CurrentChallengePlaying = new CompletedChallengeData() {
         ChallengeId = challengeId,
@@ -187,6 +188,8 @@ namespace Cozmo.HomeHub {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       }
+
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeStarted, challengeId, wasRequest));
 
       // Close dialog
       CloseHomeView();
@@ -268,13 +271,14 @@ namespace Cozmo.HomeHub {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
         CompleteChallenge(_CurrentChallengePlaying, didWin);
-        _CurrentChallengePlaying = null;
+        HandleMiniGameQuit();
       }
     }
 
     private void HandleMiniGameQuit() {
-      // Reset the current challenge
+      // Reset the current challenge and re-register the HandleStartChallengeRequest
       _CurrentChallengePlaying = null;
+      DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
     private void HandleMinigameFinishedClosing() {

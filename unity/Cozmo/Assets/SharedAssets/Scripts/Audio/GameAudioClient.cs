@@ -184,7 +184,7 @@ namespace Anki {
           }
           else {
             volumeParamList = Enum.GetValues(typeof(VolumeParameters.VolumeType)).Cast<VolumeParameters.VolumeType>().ToList();
-          } 
+          }
 
           // Get stored volume parameters
           System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
@@ -207,13 +207,12 @@ namespace Anki {
             value = 1.0f;
             break;
 
-          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot:
-            {
-              #if UNITY_EDITOR
+          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot: {
+#if UNITY_EDITOR
               value = 0.6f;
-              #else
+#else
               value = 1.0f;
-              #endif
+#endif
             }
             break;
 
@@ -233,9 +232,10 @@ namespace Anki {
         }
 
         // Set Music States
-        static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state, 
+        static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state,
                                          bool interrupt = false,
                                          uint minDurationInMilliSeconds = 0) {
+          DAS.Info("Audio.SetMusicState ", state.ToString());
           AudioClient client = AudioClient.Instance;
           client.PostMusicState((GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }

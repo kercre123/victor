@@ -31,25 +31,17 @@ public class GameEventManager {
       GameEventList.Add((GameEvent)i);
     }
     GameEventWrapperFactory.Init();
-    // Listen to whatever message is giving us the CozmoEvent message.
-    // TODO : Add RobotEngineManager Event Handling Here once engine work is done
+  }
+
+  public void FireGameEvent(GameEvent cozEvent) {
+    FireGameEvent(GameEventWrapperFactory.Create(cozEvent));
   }
 
   // Fire the Action without sending a message base to engine
   // Use this for when we receive a game event from engine
-  public void HandleGameEvent(GameEventWrapper cozEvent) {
+  public void FireGameEvent(GameEventWrapper cozEvent) {
     if (OnGameEvent != null) {
       OnGameEvent(cozEvent);
     }
-  }
-
-  // Potentially use this for cases where the event is expected to be sent from unity to engine
-  public void SendGameEventToEngine(GameEvent cozEvent) {
-    SendGameEventToEngine(GameEventWrapperFactory.Create(cozEvent));
-  }
-
-  public void SendGameEventToEngine(GameEventWrapper cozEvent) {
-    // TODO : Send Message down to engine before firing the game event
-    HandleGameEvent(cozEvent);
   }
 }

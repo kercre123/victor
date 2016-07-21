@@ -46,6 +46,10 @@
 // amount of padding to subtract for replan-checks. MUST be less than the above values
 #define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
 
+// whether this planner should consider multiple goals
+// todo: probably have this decided in the calling functions based on the world state/goal types/etc
+#define LATTICE_PLANNER_MULTIPLE_GOALS 1
+
 #define DEBUG_REPLAN_CHECKS 0
 
 // a global max so planning doesn't run forever
@@ -89,6 +93,8 @@ public:
     , _plannerRunning(false)
     , _internalComputeStatus(EPlannerStatus::Error)
     , _parent(parent)
+    , _multiGoalPlanning(LATTICE_PLANNER_MULTIPLE_GOALS)
+    , _selectedGoalID(0)
   {
     if( dataPlatform == nullptr ) {
       PRINT_NAMED_ERROR("LatticePlanner.InvalidDataPlatform",
@@ -153,7 +159,7 @@ public:
 
   EPlannerStatus CheckPlanningStatus() const;
 
-  bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex);
+  bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, Planning::GoalID& selectedTargetIndex);
 
   void StopPlanning();
 
@@ -163,7 +169,7 @@ public:
   xythetaPlannerContext _context;
   xythetaPlanner _planner;
   xythetaPlan _totalPlan;
-  Pose3d _targetPose_orig;
+  std::vector<Pose3d> _targetPoses_orig;
 
   std::string _pathToEnvCache;
 
@@ -188,6 +194,12 @@ public:
   EPlannerStatus _internalComputeStatus;
 
   const LatticePlanner* _parent;
+  
+  // whether to run multi-goal planner (true) or just plan with respect to the nearest fatal-penalty-free goal
+  bool _multiGoalPlanning;
+  
+  // the chosen best goal out of _targetPoses_orig
+  GoalID _selectedGoalID;
 };
 
 //////////////////////////////////////////////////////////////////////////////// 
@@ -217,7 +229,8 @@ void LatticePlanner::StopPlanning()
 }
 
 EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
-                                                     const Pose3d& targetPose)
+                                                     const std::vector<Pose3d>& targetPoses,
+                                                     Planning::GoalID& selectedGoalID)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
 
@@ -255,31 +268,48 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
    */
   
   // Save original target pose
-  _impl->_targetPose_orig = targetPose;
+  _impl->_targetPoses_orig = targetPoses;
   
-  State_c target(targetPose.GetTranslation().x(),
-                 targetPose.GetTranslation().y(),
-                 targetPose.GetRotationAngle<'Z'>().ToFloat());
-
   _impl->ImportBlockworldObstacles(false);
 
   // Clear plan whenever we attempt to set goal
   _impl->_totalPlan.Clear();
 
-  _impl->_context.goal = target;
+  _impl->_context.goals_c.clear();
+  _impl->_context.goals_c.reserve(targetPoses.size());
   
-  if( ! _impl->_planner.GoalIsValid() ) {
+  for(GoalID goalID = 0; goalID<targetPoses.size(); ++goalID) {
+    std::pair<GoalID, State_c> goal_cPair(std::piecewise_construct,
+                                          std::forward_as_tuple(goalID),
+                                          std::forward_as_tuple(targetPoses[goalID].GetTranslation().x(),
+                                                                targetPoses[goalID].GetTranslation().y(),
+                                                                targetPoses[goalID].GetRotationAngle<'Z'>().ToFloat()));
+    if (_impl->_planner.GoalIsValid(goal_cPair)) {
+      _impl->_context.goals_c.emplace_back(std::move(goal_cPair));
+    }
+  }
+  
+
+  if( _impl->_context.goals_c.empty() ) {
     return EComputePathStatus::Error;
   }
 
-  return ComputeNewPathIfNeeded(startPose, true);
+  EComputePathStatus res = ComputeNewPathIfNeeded(startPose, true);
+  selectedGoalID = _impl->_selectedGoalID;
+  return res;
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
                                                const Pose3d& targetPose)
 {
-  _selectedTargetIdx = 0;
-  return ComputePathHelper(startPose, targetPose);
+  const GoalID goalIDForSingleGoalPlanning = 0;
+  _selectedTargetIdx = goalIDForSingleGoalPlanning;
+  GoalID plannerSelectedGoal = goalIDForSingleGoalPlanning+1;
+  std::vector<Pose3d> targetPoses = {targetPose};
+  EComputePathStatus res = ComputePathHelper(startPose, targetPoses, plannerSelectedGoal);
+  ASSERT_NAMED((res == EComputePathStatus::Error) || (plannerSelectedGoal == goalIDForSingleGoalPlanning),
+               "There was only one goal, but it wasnt selected");
+  return res;
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
@@ -312,50 +342,58 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 
   _impl->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
-  // for now just select the closest non-colliding goal as the true
-  // goal. Eventually I'll implement a real multi-goal planner that
-  // decides on its own which goal it wants
+  // either search among all goals or just one
+  
+  if( _impl->_multiGoalPlanning ) {
+  
+    // ComputePathHelper will only copy a goal from targetPoses to the LatticePlannerImpl context
+    // if it's not in collision (wrt MAX_OBSTACLE_COST), so just pass all targetPoses to ComputePathHelper
+    EComputePathStatus res = ComputePathHelper(startPose, targetPoses, _selectedTargetIdx);
+    return res;
+    
+  } else {
+  
+    // Select the closest goal without a soft penalty. If that doesnt exist, select the closest non-colliding goal
 
-  bool found = false;
-  size_t numTargetPoses = targetPoses.size();
-  size_t bestTargetIdx = 0;
-  float closestDist2 = 0;
-
-  // first try to find a pose with no soft collisions, then try to find one with no fatal collisions
-  for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
-
-    bestTargetIdx = 0;
-    closestDist2 = 0;
-    for(size_t i=0; i<numTargetPoses; ++i) {
-      float dist2 = (targetPoses[i].GetTranslation() - startPose.GetTranslation()).LengthSq();
-
-      if(!found || dist2 < closestDist2) {
-        State_c target_c(targetPoses[i].GetTranslation().x(),
-                         targetPoses[i].GetTranslation().y(),
-                         targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
-        State target(_impl->_context.env.State_c2State(target_c));
+    size_t numTargetPoses = targetPoses.size();
+    GoalID bestTargetID = 0;
+    float closestDist2 = 0;
+    bool found = false;
+    
+    for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
+      
+      bestTargetID = 0;
+      closestDist2 = 0;
+      for(GoalID i=0; i<numTargetPoses; ++i) {
+        float dist2 = (targetPoses[i].GetTranslation() - startPose.GetTranslation()).LengthSq();
         
-        if(_impl->_context.env.GetCollisionPenalty(target) < maxPenalty) {
-          closestDist2 = dist2;
-          bestTargetIdx = i;
-          found = true;
+        if(!found || dist2 < closestDist2) {
+          State_c target_c(targetPoses[i].GetTranslation().x(),
+                           targetPoses[i].GetTranslation().y(),
+                           targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
+          State target(_impl->_context.env.State_c2State(target_c));
+          
+          if(_impl->_context.env.GetCollisionPenalty(target) < maxPenalty) {
+            closestDist2 = dist2;
+            bestTargetID = i;
+            found = true;
+          }
         }
       }
+      
+      if(found) {
+        // defer to the single-goal version of this method using the closest non-colliding goal
+        EComputePathStatus res = ComputePath(startPose, targetPoses[bestTargetID]);
+        _selectedTargetIdx = bestTargetID;
+        return res;
+      }
     }
-
-    if(found)
-      break;
-  }
-
-  if(found) {
-    _selectedTargetIdx = bestTargetIdx;
-    return ComputePathHelper(startPose, targetPoses[bestTargetIdx]);
-  }
-  else {
+    
     PRINT_NAMED_INFO("LatticePlanner.ComputePath.NoValidTarget",
                      "could not find valid target out of %lu possible targets\n",
                      (unsigned long)numTargetPoses);
     return EComputePathStatus::Error;
+    
   }
 }
 
@@ -409,11 +447,11 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path, 
 
 bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path)
 {
-  size_t waste;
+  GoalID waste;
   return _impl->GetCompletePath(currentRobotPose, path, waste);
 }
 
-bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
+bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path, Planning::GoalID& selectedTargetIndex)
 {
   return _impl->GetCompletePath(currentRobotPose, path, selectedTargetIndex);
 }
@@ -488,6 +526,9 @@ void LatticePlannerImpl::worker()
             _internalComputeStatus = EPlannerStatus::Error;
           }
         }
+        
+        // the selected goal
+        _selectedGoalID = _planner.GetChosenGoalID();
 
         PRINT_NAMED_DEBUG("LatticePlannerImpl", "old plan:\n");
         _context.env.PrintPlan(_totalPlan);
@@ -721,18 +762,24 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
       PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start\n");
       return EComputePathStatus::Error;
     }
-    else if(!_planner.GoalIsValid()) {
-      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidGoal", "Goal may have moved into collision.\n");
+    else if(!_planner.GoalsAreValid()) {
+      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidGoals", "Goals may have moved into collision.\n");
       return EComputePathStatus::Error;
     }
     else {
       // use real padding for re-plan
       ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
-      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.Replanning",
-                       "from (%f, %f, %f) to (%f %f %f)\n",
-                       lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
-                       _context.goal.x_mm, _context.goal.y_mm, _context.goal.theta);
+      std::stringstream ss;
+      ss <<  "from (" << lastSafeState.x_mm << ", " << lastSafeState.y_mm << ", " << lastSafeState.theta << ") to ";
+      for(const auto& goalPair : _context.goals_c) {
+        ss << goalPair.first
+           << ":(" << goalPair.second.x_mm
+           << ", " << goalPair.second.y_mm
+           << ", " << goalPair.second.theta
+           << ") ";
+      }
+      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.Replanning", "%s", ss.str().c_str());
 
       _context.env.PrepareForPlanning();
 
@@ -784,7 +831,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
 bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
                                          Planning::Path &path,
-                                         size_t& selectedTargetIndex)
+                                         Planning::GoalID& selectedTargetIndex)
 {
 
   if( _internalComputeStatus == EPlannerStatus::Error ||
@@ -828,7 +875,8 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   // Do final check on how close the plan's goal angle is to the originally requested goal angle
   // and either add a point turn at the end or modify the last point turn action.
   u8 numSegments = path.GetNumSegments();
-  Radians desiredGoalAngle = _targetPose_orig.GetRotationAngle<'Z'>();
+  assert(_selectedGoalID < _targetPoses_orig.size());
+  Radians desiredGoalAngle = _targetPoses_orig[_selectedGoalID].GetRotationAngle<'Z'>();
     
   if (numSegments > 0) {
 

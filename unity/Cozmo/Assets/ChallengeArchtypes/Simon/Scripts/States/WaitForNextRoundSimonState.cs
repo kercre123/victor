@@ -22,9 +22,8 @@ namespace Simon {
       // On first turn not known until entered...
       if (_NextPlayer == PlayerType.None) {
         _NextPlayer = _GameInstance.FirstPlayer;
+        _GameInstance.StartFirstRoundMusic();
       }
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.BetweenRoundsMusic);
-
       _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
         Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
 

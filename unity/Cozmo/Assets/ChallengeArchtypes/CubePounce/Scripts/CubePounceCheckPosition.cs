@@ -22,14 +22,14 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     public void CheckAndFixPosition() {
-      bool posInRange = CozmoUtil.ObjectEdgeWithinXYTolerance(_CurrentRobot.WorldPosition, _CubePounceGame.GetCubeTarget(), CubePounceGame.kCubePlaceDist_mm, CubePounceGame.kPositionDiffTolerance_mm);
+      bool posInRange = CozmoUtil.ObjectEdgeWithinXYTolerance(_CurrentRobot.WorldPosition, _CubePounceGame.GetCubeTarget(), _CubePounceGame.CubePlaceDist_mm, _CubePounceGame.PositionDiffTolerance_mm);
       if (!posInRange) {
         AlignToCube();
         return;
       }
 
       bool angleInRange = CozmoUtil.PointWithinXYAngleTolerance(
-        _CurrentRobot.WorldPosition, _CubePounceGame.GetCubeTarget().WorldPosition, _CurrentRobot.Rotation.eulerAngles.z, CubePounceGame.kAngleTolerance_deg);
+        _CurrentRobot.WorldPosition, _CubePounceGame.GetCubeTarget().WorldPosition, _CurrentRobot.Rotation.eulerAngles.z, _CubePounceGame.AngleTolerance_deg);
       if (!angleInRange) {
         TurnToCube();
         return;
@@ -41,7 +41,7 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void AlignToCube() {
-      _CurrentRobot.AlignWithObject(_CubePounceGame.GetCubeTarget(), CubePounceGame.kCubePlaceDist_mm, HandleDriveToCubeComplete, useApproachAngle: false, usePreDockPose: true);
+      _CurrentRobot.AlignWithObject(_CubePounceGame.GetCubeTarget(), _CubePounceGame.CubePlaceDist_mm, HandleDriveToCubeComplete, useApproachAngle: false, usePreDockPose: true);
     }
 
     private void TurnToCube() {

@@ -15,6 +15,16 @@ namespace Cozmo {
 		uint_8 encoded_key[16]
 	}
 
+	// This is the Diffie Hellman offloading calculation function
+	message CalculateDiffieHellman {
+		uint_8 local[16],
+		uint_8 remote[16]
+	}
+
+	message DiffieHellmanResults {
+		uint_8 result[16]
+	}
+
 	// Note: These two messages are swapped so the target cannot just mirror our message back
 	// at us
 	message HelloPhone {

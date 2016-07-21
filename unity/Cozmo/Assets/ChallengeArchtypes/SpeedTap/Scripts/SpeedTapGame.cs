@@ -162,8 +162,6 @@ namespace SpeedTap {
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
       MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
-
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapStarted);
       // End config based values
       InitializeMinigameObjects(1);
     }
@@ -230,8 +228,6 @@ namespace SpeedTap {
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
-
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
       CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnSpeedtapGetOut);
     }
 
@@ -373,6 +369,9 @@ namespace SpeedTap {
       else {
         GameAudioClient.SetMusicState(GetDefaultMusicState());
       }
+    }
+    public void StartEndMusic() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Quick_Tap_Win);
     }
 
     public void ClearWinningLightPatterns() {

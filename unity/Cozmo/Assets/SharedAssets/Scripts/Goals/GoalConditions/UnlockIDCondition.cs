@@ -11,21 +11,21 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specified who won
+/// Goal condition that specifies the UnlockID of the desired unlock.
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndWinnerCondition : GoalCondition {
+    public class UnlockIDCondition : GoalCondition {
      
-      public bool PlayerWon;
+      public UnlockId Unlocked;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameCompletedGameEvent) {
-          MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
-          if (miniGameEvent.PlayerWon == PlayerWon) {
-            isMet = true;
+        if (cozEvent is UnlockableUnlockedGameEvent) {
+          UnlockableUnlockedGameEvent unlockEvent = (UnlockableUnlockedGameEvent)cozEvent;
+          if (unlockEvent.Unlock == Unlocked) {
+            isMet = true;          
           }
         }
         return isMet;
@@ -34,7 +34,7 @@ namespace Anki {
       #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        PlayerWon = EditorGUILayout.Toggle(new GUIContent("PlayerWon", "Condition is true if results match this flag"), PlayerWon);
+        Unlocked = (UnlockId)EditorGUILayout.EnumPopup("Unlock", (Enum)Unlocked);
         EditorGUILayout.EndHorizontal();
       }
       #endif

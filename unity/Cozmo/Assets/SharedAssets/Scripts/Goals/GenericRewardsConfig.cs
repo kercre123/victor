@@ -27,21 +27,8 @@ namespace Cozmo {
       public float ExpParticleHold = 0.5f;
       public float ExpParticleLeave = 0.25f;
       public float ExpParticleStagger = 0.75f;
-      public List<RewardedAction> RewardedActions = new List<RewardedAction>();
+      public string RewardConfigFilename = "";
     }
 
-    [System.Serializable]
-    public class RewardedAction {
-      public SerializableGameEvents GameEvent;
-      public RewardData Reward;
-    }
-
-    [System.Serializable]
-    public class RewardData {
-      [ItemId]
-      public string ItemID;
-      public int Amount;
-      public LocalizedString Description;
-    }
   }
 }

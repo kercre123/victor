@@ -4,17 +4,19 @@
   "requiredGameFlags" : "SpeedTap",
   
   "zero_block_config": {
-    "request_animName" : "RequestGameGenericRequest0",
-    "deny_animName" : "RequestGameGenericDeny0",
+    "initial_animName" : "RequestGameSpeedTapInitial0",
+    "preDrive_animName" : "RequestGameSpeedTapPreDrive0",
+    "request_animName" : "RequestGameSpeedTapRequest0",
+    "deny_animName" : "RequestGameSpeedTapDeny0",
     "minRequestDelay_s" : 20.0,
     "score_factor": 0.5
   },
 
   "one_block_config": {
-    "initial_animName" : "RequestGameGenericInitial1",
-    "preDrive_animName" : "RequestGameGenericPreDrive1",
-    "request_animName" : "RequestGameGenericRequest1",
-    "deny_animName" : "RequestGameGenericDeny1",
+    "initial_animName" : "RequestGameSpeedTapInitial1",
+    "preDrive_animName" : "RequestGameSpeedTapPreDrive1",
+    "request_animName" : "RequestGameSpeedTapRequest1",
+    "deny_animName" : "RequestGameSpeedTapDeny1",
     "minRequestDelay_s" : 20.0
   },
 

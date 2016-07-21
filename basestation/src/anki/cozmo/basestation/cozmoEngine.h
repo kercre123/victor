@@ -118,6 +118,9 @@ protected:
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   
+  // Constants
+  f32 _kReadCameraCalibTimeout_sec = 3.f;
+  
   bool                                                      _isInitialized = false;
   Json::Value                                               _config;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
@@ -135,6 +138,7 @@ protected:
   void HandleFeatureRequests(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void SetEngineState(EngineState newState);
   
+  void ReadCameraCalibration(Robot* robot, f32 stopRetryingTime_sec);
   Result AddRobot(RobotID_t robotID);
   
   void SendLatencyInfo();

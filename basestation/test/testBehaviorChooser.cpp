@@ -39,7 +39,7 @@ static const char* kTestBehavior2Json =
 "   \"behaviorType\" : \"NoneBehavior\","
 "   \"name\" : \"Test2\","
 "   \"behaviorGroups\" : ["
-"     \"RequestSimon\","
+"     \"RequestMemoryMatch\","
 "     \"RequestSpeedTap\""
 "   ]"
 "}";
@@ -64,7 +64,7 @@ static const char* kTestChooser1Json =
 "   ],"
 "   \"enabledGroups\" : ["
 "     \"RequestCubePounce\","
-"     \"RequestSimon\""
+"     \"RequestMemoryMatch\""
 "   ],"
 "   \"disabledBehaviors\" : ["
 "     \"Test3\""

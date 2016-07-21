@@ -728,9 +728,9 @@ namespace Anki {
                                                      &_selectedGoalIndex,
                                                      _useManualSpeed);
           PRINT_NAMED_DEBUG("DriveToPoseAction.SelectedGoal",
-                            "[%d] Selected goal %zu W.R.T. robot (%f, %f, %f, %fdeg)",
+                            "[%d] Selected goal %d W.R.T. robot (%f, %f, %f, %fdeg)",
                             GetTag(),
-                            _selectedGoalIndex,
+                            (int) _selectedGoalIndex,
                             _goalPoses[_selectedGoalIndex].GetTranslation().x(),
                             _goalPoses[_selectedGoalIndex].GetTranslation().y(),
                             _goalPoses[_selectedGoalIndex].GetTranslation().z(),
@@ -881,10 +881,10 @@ namespace Anki {
           else if (_robot.GetLastSentPathID() == _robot.GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
-                             " goal %zu (%f, %f, %f, %fdeg)",
+                             " goal %d (%f, %f, %f, %fdeg)",
                              GetTag(),
                              Tdiff.Length(), _robot.GetLastRecvdPathID(),
-                             _selectedGoalIndex,
+                             (int) _selectedGoalIndex,
                              _goalPoses[_selectedGoalIndex].GetTranslation().x(),
                              _goalPoses[_selectedGoalIndex].GetTranslation().y(),
                              _goalPoses[_selectedGoalIndex].GetTranslation().z(),

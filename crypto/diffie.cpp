@@ -7,7 +7,7 @@
 #include "sha1.h"
 
 // Step to convert a pin + random to a hash
-static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) {
+static void dh_encode_random(uint8_t* output, int pin, const uint8_t* random) {
   ecb_data_t ecb;
 
   {
@@ -24,12 +24,9 @@ static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) 
     memcpy(ecb.key, sig, sizeof(ecb.key));
   }
 
-  result.negative = false;
-  result.used = AES_KEY_LENGTH / sizeof(big_num_cell_t);
-
   aes_ecb(&ecb);
 
-  memcpy(result.digits, ecb.ciphertext, AES_KEY_LENGTH);
+  memcpy(output, ecb.ciphertext, AES_KEY_LENGTH);
 }
 
 static void fix_pin(uint32_t& pin) {
@@ -46,24 +43,21 @@ void dh_start(DiffieHellman* dh) {
   gen_random(&dh->pin, sizeof(dh->pin));
   fix_pin(dh->pin);
   gen_random(dh->local_secret, SECRET_LENGTH);
+  dh_encode_random(dh->local_encoded, dh->pin, dh->local_secret);
+  dh_encode_random(dh->remote_encoded, dh->pin, dh->remote_secret);
+}
+
+static inline void dh_random_to_num(big_num_t& num, const uint8_t* digits) {
+  memcpy(num.digits, digits, SECRET_LENGTH);
+  num.used = SECRET_LENGTH / sizeof(big_num_cell_t);
+  num.negative = false;
 }
 
 void dh_finish(const void* key, DiffieHellman* dh) {
-  // Encode their secret for exponent
-  big_num_t temp;
-
-  dh_encode_random(temp, dh->pin, dh->local_secret);
-  mont_power(*dh->mont, dh->state, *dh->gen, temp);
-
-  dh_encode_random(temp, dh->pin, dh->remote_secret);
-  mont_power(*dh->mont, dh->state, dh->state, temp);
-
-  mont_from(*dh->mont, temp, dh->state);
-
-  // Override the secret with 
+  // Encode our AES key with the DH output
   ecb_data_t ecb;
   
-  memcpy(ecb.key, temp.digits, AES_KEY_LENGTH);
+  memcpy(ecb.key, dh->diffie_result, AES_KEY_LENGTH);
   memcpy(ecb.cleartext, key, AES_KEY_LENGTH);
   
   aes_ecb(&ecb);
@@ -77,10 +71,12 @@ void dh_reverse(DiffieHellman* dh, uint8_t* key) {
   big_num_t temp;
   big_num_t state;
 
-  dh_encode_random(temp, dh->pin, dh->local_secret);
+  dh_encode_random(dh->local_encoded, dh->pin, dh->local_secret);
+  dh_random_to_num(temp, dh->local_secret);
   mont_power(*dh->mont, state, *dh->gen, temp);
 
-  dh_encode_random(temp, dh->pin, dh->remote_secret);
+  dh_encode_random(dh->remote_encoded, dh->pin, dh->remote_secret);
+  dh_random_to_num(temp, dh->remote_secret);
   mont_power(*dh->mont, state, state, temp);
 
   mont_from(*dh->mont, temp, state);
