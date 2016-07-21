@@ -38,7 +38,7 @@ namespace Simon {
       base.Update();
       if (_StartLightBlinkTime < 0 && !_IsAnimating) {
         if (_CurrentSequenceIndex == _SequenceList.Count) {
-          PlayerWinGame();
+          PlayerWinRound();
         }
         if (_TargetCube != -1) {
           _CurrentRobot.DriveWheels(0f, 0f);
@@ -80,13 +80,13 @@ namespace Simon {
       _IsAnimating = true;
     }
 
-    private void PlayerWinGame() {
+    private void PlayerWinRound() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
 
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
-      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSimonPlayerHandComplete);
+      _GameInstance.AddPoint(true);
       _IsAnimating = true;
 
       _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);

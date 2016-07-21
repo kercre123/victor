@@ -66,6 +66,7 @@ public class ConnectionFlow : MonoBehaviour {
 
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
   }
 
   private void RestartConnectionFlow() {

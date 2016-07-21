@@ -152,12 +152,19 @@ public class SkillSystem {
   public void HandleGameEvent(GameEventWrapper cozEvent) {
     GameSkillData currSkillData = GetSkillDataForGame();
     if (currSkillData != null) {
-      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
-      if (skillConfig.IsGainChallengePointEvent(cozEvent.GameEventEnum)) {
-        currSkillData.WinPointsTotal++;
+      bool playerWin = false;
+      if (cozEvent is MinigameGameEvent) {
+        MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
+        playerWin = miniGameEvent.PlayerWin;
       }
-      if (skillConfig.IsLoseChallengePointEvent(cozEvent.GameEventEnum)) {
-        currSkillData.LossPointsTotal++;
+      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      if (skillConfig.IsChallengePointEvent(cozEvent.GameEventEnum)) {
+        if (playerWin) {
+          currSkillData.LossPointsTotal++;
+        }
+        else {
+          currSkillData.WinPointsTotal++;
+        }
       }
       // In the event we quit out early and didn't reach an evaluate event, force a clear
       if (skillConfig.IsResetPointEvent(cozEvent.GameEventEnum)) {

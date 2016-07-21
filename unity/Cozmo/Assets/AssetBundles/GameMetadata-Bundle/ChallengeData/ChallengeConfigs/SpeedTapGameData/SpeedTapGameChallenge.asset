@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: SpeedTapGame
     _EnumValue: 3
   _Music:
-    _Music: -340344697
+    _Music: 1317044071
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
   IsMinigame: 1
   DifficultyOptions:

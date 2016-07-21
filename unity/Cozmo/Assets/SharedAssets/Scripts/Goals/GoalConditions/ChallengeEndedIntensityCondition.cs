@@ -11,19 +11,19 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specified who won
+/// End of Challenge condition that check if the challenge was a high intensity match
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndIntensityCondition : GoalCondition {
+    public class ChallengeEndedIntensityCondition : GoalCondition {
      
       public bool IsHighIntensity;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameCompletedGameEvent) {
-          MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
+        if (cozEvent is MinigameGameEvent) {
+          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
           if (miniGameEvent.HighIntensity == IsHighIntensity) {
             isMet = true;
           }

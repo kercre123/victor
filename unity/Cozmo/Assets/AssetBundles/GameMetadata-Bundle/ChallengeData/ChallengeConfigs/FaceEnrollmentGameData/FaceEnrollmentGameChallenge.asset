@@ -9,13 +9,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
-  m_Name: FaceEnrollementGameChallenge
+  m_Name: FaceEnrollmentGameChallenge
   m_EditorClassIdentifier: 
   _ChallengePrefabData:
     _AssetBundle:
       _EnumValueAsString: minigame_data_prefabs
       _EnumValue: 1
-    _AssetDataName: FaceEnrollementGameChallenge_Prefabs
+    _AssetDataName: FaceEnrollmentGameChallenge_Prefabs
   _ChallengeID: FaceEnrollmentTest
   _ChallengeTitleLocKey: faceEnrollment.title
   _ChallengeDescriptionLocKey: faceEnrollment.description

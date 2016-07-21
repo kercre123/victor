@@ -61,7 +61,6 @@ namespace SpeedTap {
       // Mistake or fakeout or nothing?
       float randomPercent = UnityEngine.Random.Range(0f, 1f);
       if (randomPercent < _SpeedTapGame.CozmoMistakeChance) {
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSpeedtapTap);
       }
       else {

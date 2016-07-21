@@ -7,9 +7,6 @@ using Cozmo.UI;
 using Anki.UI;
 using Anki.Cozmo;
 
-// TODO : Kill Progression Stat based display, modify to show rewards after initial results state.
-// TODO : Reference experience properly, always use that energy icon for energy earnings.
-// TODO : Reference unlockables properly, always use the cozmoface icon for unlocks.
 public class ChallengeEndedDialog : MonoBehaviour {
 
   [SerializeField]
@@ -90,21 +87,22 @@ public class ChallengeEndedDialog : MonoBehaviour {
     }
 
 
-    foreach (GameEvent eventID in RewardedActionManager.Instance.PendingActionRewards.Keys) {
+    foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
+      
       int count = 0;
-      if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(eventID, out count)) {
-        AddEnergyReward(eventID, count);
+      if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(earnedReward, out count)) {
+        AddEnergyReward(earnedReward, count);
       }
     }
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;
     
   }
 
-  public void AddEnergyReward(GameEvent gEvent, int count) {
+  public void AddEnergyReward(RewardedActionData reward, int count) {
     if (_EnergyEarnedContainer != null) {
       _EnergyEarnedContainer.gameObject.SetActive(true);
     }
-    ItemData data = ItemDataConfig.GetData(RewardedActionManager.Instance.ActionRewardID);
+    ItemData data = ItemDataConfig.GetData(reward.Reward.ItemID);
     IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
                                     _EnergyEarnedContainer).GetComponent<IconTextLabel>();
     // TextLabel for amount earned
@@ -112,7 +110,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
 
     iconTextLabel.SetIcon(data.Icon);
 
-    iconTextLabel.SetDesc(Localization.Get(RewardedActionManager.Instance.RewardEventMap[gEvent].Description));
+    iconTextLabel.SetDesc(Localization.Get(reward.Reward.DescriptionKey));
   }
 
   public void AddDifficultyUnlock(int newLevel) {

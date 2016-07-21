@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class FaceEnrollementGameConfig : MinigameConfigBase {
+public class FaceEnrollmentGameConfig : MinigameConfigBase {
   public override int NumCubesRequired() {
     return 0;
   }

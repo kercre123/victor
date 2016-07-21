@@ -11,44 +11,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ce0dc538f0af4766a7ae65641170163, type: 3}
   m_Name: GenericRewardsConfig
   m_EditorClassIdentifier: 
-  ExpPerParticleEffect: 10
+  ExpPerParticleEffect: 5
   BurstPerParticleHit: 10
-  ExpParticleMinSpread: 0.25
-  ExpParticleMaxSpread: 4
-  ExpParticleBurst: 0.75
-  ExpParticleHold: 1
-  ExpParticleLeave: 1
-  ExpParticleStagger: 0.5
-  RewardedActions:
-  - GameEvent:
-      _EnumValueAsString: OnSimonPlayerWin
-      _EnumValue: 36
-    Reward:
-      ItemID: experience
-      Amount: 80
-      Description:
-        Key: reward.description.SimonOnPlayerWin
-  - GameEvent:
-      _EnumValueAsString: OnSpeedtapGamePlayerWinAnyIntensity
-      _EnumValue: 15
-    Reward:
-      ItemID: experience
-      Amount: 10
-      Description:
-        Key: reward.description.SpeedTapWinGame
-  - GameEvent:
-      _EnumValueAsString: OnGameComplete
-      _EnumValue: 39
-    Reward:
-      ItemID: experience
-      Amount: 50
-      Description:
-        Key: reward.description.PlayGame
-  - GameEvent:
-      _EnumValueAsString: OnSimonCozmoWin
-      _EnumValue: 35
-    Reward:
-      ItemID: experience
-      Amount: 50
-      Description:
-        Key: reward.description.PlayGame
+  ExpParticleMinSpread: 50
+  ExpParticleMaxSpread: 250
+  ExpParticleBurst: 0.25
+  ExpParticleHold: 0.5
+  ExpParticleLeave: 0.25
+  ExpParticleStagger: 0.75
+  RewardConfigFilename: RewardedActions.json

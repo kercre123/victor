@@ -2,40 +2,33 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Cozmo;
-using DataPersistence;
-
 
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that specifies the UnlockID of the desired unlock.
+/// Goal condition that checks to see if an UnlockID is unlocked or locked still
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class UnlockCondition : GoalCondition {
-     
-      public UnlockId Unlocked;
+    public class CurrentUnlockCondition : GoalCondition {
 
+      public UnlockId Unlocked;
+      public bool IsUnlocked;
+
+      // Returns true if the UnlockID's unlock status matches the isUnlocked flag
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is UnlockableUnlockedGameEvent) {
-          UnlockableUnlockedGameEvent unlockEvent = (UnlockableUnlockedGameEvent)cozEvent;
-          if (unlockEvent.Unlock == Unlocked) {
-            isMet = true;          
-          }
-        }
+        isMet = (UnlockablesManager.Instance.IsUnlocked(Unlocked) == IsUnlocked);
         return isMet;
       }
 
       #if UNITY_EDITOR
       public override void DrawControls() {
-        EditorGUILayout.BeginHorizontal();
         Unlocked = (UnlockId)EditorGUILayout.EnumPopup("Unlock", (Enum)Unlocked);
-        EditorGUILayout.EndHorizontal();
+        IsUnlocked = EditorGUILayout.Toggle(new GUIContent("IsUnlocked", "Condition is true if unlock ID state matches this flag"), IsUnlocked);
       }
       #endif
     }

@@ -16,15 +16,14 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class TotalSessionsCondition : GoalCondition {
-      
+    public class CurrentTotalSessionsCondition : GoalCondition {
 
       public bool UseMinSession;
       public int MinSession;
       public bool UseMaxSession;
       public int MaxSession;
 
-      // Returns true if day of the week is the desired day of the week
+      // Returns true if the desired number of sessions has been played
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         isMet = !UseMinSession || DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count >= MinSession;

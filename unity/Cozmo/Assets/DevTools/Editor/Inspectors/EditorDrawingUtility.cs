@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
+using Anki.Cozmo;
 
 public static class EditorDrawingUtility {
 
@@ -230,6 +232,57 @@ public static class EditorDrawingUtility {
     }
   }
 
+  public static string GetConditionListString(List<GoalCondition> condList) {
+    string newS = string.Format(" ({0})", condList.Count);
+    for (int i = 0; i < condList.Count; i++) {
+      newS += string.Format("-{0}", condList[i].GetType().Name.ToHumanFriendly());
+    }
+    return newS;
+  }
+
+  // Draws a list of Conditions
+  public static void DrawConditionList<T>(List<T> conditions) where T : GoalCondition {    
+    for (int i = 0; i < conditions.Count; i++) {
+      var cond = conditions[i];
+      // clear out any null conditions
+      if (cond == null) {
+        conditions.RemoveAt(i);
+        i--;
+        continue;
+      }
+
+      var name = (cond as T).GetType().Name.ToHumanFriendly();
+      (cond as T).OnGUI_DrawUniqueControls();
+      if (GUI.Button(EditorGUILayout.GetControlRect(), String.Format("^^Delete {0}^^", name), EditorDrawingUtility.RemoveButtonStyle)) {
+        conditions.RemoveAt(i);
+      }
+
+    }
+
+    var nextRect = EditorGUILayout.GetControlRect();
+
+    // show the add condition/action box at the bottom of the list
+    var newObject = DrawAddConditionPopup<T>(nextRect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
+
+    if (!EqualityComparer<T>.Default.Equals(newObject, default(T))) {
+      conditions.Add(newObject);
+    }
+
+  }
+
+  // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
+  private static T DrawAddConditionPopup<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : GoalCondition {
+    var popupRect = new Rect(rect.x, rect.y, rect.width - 150, rect.height);
+    var plusRect = new Rect(rect.x + rect.width - 150, rect.y, 150, rect.height);
+    index = EditorGUI.IntPopup(popupRect, index, names, indices);
+
+    if (GUI.Button(plusRect, "New Condition", EditorDrawingUtility.AddButtonStyle)) {
+      var result = (T)(Activator.CreateInstance(types[index]));
+      return result;
+    }
+    return default(T);
+  }
+
   public static EmotionScorer DrawEmotionScorer(EmotionScorer emotionScorer) {
     EditorGUILayout.BeginVertical();
 
@@ -401,6 +454,12 @@ public static class EditorDrawingUtility {
     _TypeDrawers[typeof(T)] = x => Convert.ChangeType(_TypeDrawers[typeof(U)](Convert.ChangeType(x, typeof(U))), typeof(T));
   }
 
+
+  private static string[] _ConditionTypeNames;
+  private static Type[] _ConditionTypes;
+  private static int[] _ConditionIndices;
+  private static int _SelectedConditionIndex;
+
   static EditorDrawingUtility() {
 
     _TypeDictionary.Add("null", null);
@@ -416,6 +475,19 @@ public static class EditorDrawingUtility {
     AddListTypeOption<int>("int");
     AddListTypeOption<float>("float");
     AddListTypeOption<string>("string");
+
+    // get all conditions
+    var ctypes = Assembly.GetAssembly(typeof(GoalCondition))
+      .GetTypes()
+      .Where(t => typeof(GoalCondition).IsAssignableFrom(t) &&
+                 !t.IsAbstract);
+    _ConditionTypes = ctypes.ToArray();
+    _ConditionTypeNames = _ConditionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
+
+    _ConditionIndices = new int[_ConditionTypeNames.Length];
+    for (int i = 0; i < _ConditionIndices.Length; i++) {
+      _ConditionIndices[i] = i;
+    }
 
     _TypeOptions = _TypeDictionary.Keys.ToArray();
   }

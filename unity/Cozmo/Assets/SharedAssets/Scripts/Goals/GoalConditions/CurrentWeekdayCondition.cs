@@ -13,7 +13,8 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class WeekdayCondition : GoalCondition {
+    public class CurrentWeekdayCondition : GoalCondition {
+      
       [SerializeField]
       private string _DayName;
       private DayOfWeek _Day;

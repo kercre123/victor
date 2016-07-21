@@ -16,14 +16,14 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class GameEndDifficultyCondition : GoalCondition {
+    public class ChallengeDifficultyCondition : GoalCondition {
      
       public int Difficulty;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameCompletedGameEvent) {
-          MinigameCompletedGameEvent miniGameEvent = (MinigameCompletedGameEvent)cozEvent;
+        if (cozEvent is MinigameGameEvent) {
+          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
           if (miniGameEvent.Difficulty <= Difficulty) {
             isMet = true;          
           }
@@ -34,7 +34,7 @@ namespace Anki {
       #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Current Difficulty level of the Game we just played"), Difficulty);
+        Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Current difficulty level of the challenge"), Difficulty);
         EditorGUILayout.EndHorizontal();
       }
       #endif

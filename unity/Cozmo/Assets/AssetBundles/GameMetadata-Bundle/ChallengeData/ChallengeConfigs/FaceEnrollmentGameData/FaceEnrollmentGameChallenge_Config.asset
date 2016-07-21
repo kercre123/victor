@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd28c0c3cc5e04a3095ebccb388d0bd4, type: 3}
-  m_Name: FaceEnrollementGameChallenge_Config
+  m_Name: FaceEnrollmentGameChallenge_Config
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent: []
