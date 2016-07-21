@@ -1,5 +1,6 @@
 const factory = require("./factory.js");
 const aes = require("./aes.js");
+const keys = require("./keys.js");
 
 var BRYON_COZMO = "db083e35f3031e1d";
 
