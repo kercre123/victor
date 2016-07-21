@@ -69,10 +69,10 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
 }
 
 bool NVStorageComponent::IsMultiBlobEntryTag(u32 tag) const {
-  return (tag & 0x7fff0000) > 0;
+  return (tag & 0x7fff0000) > 0 && !IsSpecialEntryTag(tag);
 }
 
-bool NVStorageComponent::IsValidEntryTag(u32 tag) {
+bool NVStorageComponent::IsValidEntryTag(u32 tag) const {
   // If multi-blob tag, lower 16-bits must be zero.
   // If single-blob tag, it can't be NVEntry_Invalid.
   if (IsMultiBlobEntryTag(tag)) {
@@ -82,18 +82,23 @@ bool NVStorageComponent::IsValidEntryTag(u32 tag) {
   }
 }
  
-bool NVStorageComponent::IsFactoryEntryTag(u32 tag)
+bool NVStorageComponent::IsFactoryEntryTag(u32 tag) const
 {
   return (tag & 0x80000000) > 0;
 }
   
+  
+bool NVStorageComponent::IsSpecialEntryTag(u32 tag) const
+{
+  return (tag & 0xffff0000) == 0xc0000000;
+}
   
 // Returns the base (i.e. lowest) tag of the multi-blob entry range
 // in which the given tag falls.
 // See NVEntryTag definition for more details.
 u32 NVStorageComponent::GetBaseEntryTag(u32 tag) const {
   u32 baseTag = tag & 0x7fff0000;
-  if (baseTag == 0) {
+  if (baseTag == 0 || IsSpecialEntryTag(tag)) {
     // For single blob message, the base tag is the same as tag
     return tag;
   }
@@ -288,18 +293,17 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
       _writeDataAckMap[t].numFailedWrites = 0;
       
       // Start constructing erase message
-      NVStorage::NVStorageWrite eraseMsg;
-      eraseMsg.reportTo = NVStorage::NVReportDest::ENGINE;
-      eraseMsg.writeNotErase = false;
-      eraseMsg.reportEach = !IsMultiBlobEntryTag(t);
-      eraseMsg.reportDone = true;
-      eraseMsg.entry.tag = static_cast<u32>(req.tag);
+      _writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
+      _writeMsg.writeNotErase = false;
+      _writeMsg.reportEach = !IsMultiBlobEntryTag(t);
+      _writeMsg.reportDone = true;
+      _writeMsg.entry.tag = static_cast<u32>(req.tag);
       
       // Set tag range
       PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingErase", "%s (Tag: 0x%x)", EnumToString(req.tag), t );
-      eraseMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(req.tag));
+      _writeMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(req.tag));
       
-      _robot.SendMessage(RobotInterface::EngineToRobot(std::move(eraseMsg)));
+      _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
       
       break;
     }
@@ -325,18 +329,17 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
     case NVStorage::NVOperation::NVOP_READ:
     {
       // Request message from tag to to endTag
-      NVStorage::NVStorageRead readMsg;
-      readMsg.tag = entryTag;
-      readMsg.tagRangeEnd = GetTagRangeEnd(entryTag);
-      readMsg.to = NVStorage::NVReportDest::ENGINE;
-      _robot.SendMessage(RobotInterface::EngineToRobot(std::move(readMsg)));
+      _readMsg.tag = entryTag;
+      _readMsg.tagRangeEnd = GetTagRangeEnd(entryTag);
+      _readMsg.to = NVStorage::NVReportDest::ENGINE;
+      _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageRead(_readMsg)));
       
       
       if (DEBUG_NVSTORAGE_COMPONENT) {
         PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingRead",
                           "StartTag: 0x%x, EndTag: 0x%x",
-                          readMsg.tag,
-                          readMsg.tagRangeEnd);
+                          _readMsg.tag,
+                          _readMsg.tagRangeEnd);
       }
       
       // Create RecvDataObject
@@ -358,6 +361,8 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
       break;
   }
   
+  // Retry send attempt counter
+  _numSendAttempts = 0;
   
 }
   
@@ -449,22 +454,38 @@ void NVStorageComponent::Update()
     }
     
     _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
-    _numWriteMsgAttempts = 0;
+    _numSendAttempts = 0;
   }
   
 }
   
 bool NVStorageComponent::ResendLastWrite()
 {
-  if (++_numWriteMsgAttempts > _kNumWriteRetryAttempts) {
+  if (++_numSendAttempts >= _kMaxNumSendAttempts) {
     PRINT_NAMED_WARNING("NVStorageComponent.ResendLastWrite.NumRetriesExceeded",
-                        "Tag: 0x%x, retryAttempts: %d", _writeMsg.entry.tag, _kNumWriteRetryAttempts );
+                        "Tag: 0x%x, writeNotErase: %d, Attempts: %d",
+                        _writeMsg.entry.tag, _writeMsg.writeNotErase, _kMaxNumSendAttempts );
     return false;
   }
   
   PRINT_NAMED_INFO("NVStorageComponent.ResendLastWrite.Retry",
-                   "Tag: 0x%x, retryNum: %d", _writeMsg.entry.tag, _numWriteMsgAttempts);
+                   "Tag: 0x%x, retryNum: %d", _writeMsg.entry.tag, _numSendAttempts);
   _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
+  return true;
+}
+  
+bool NVStorageComponent::ResendLastRead()
+{
+  if (++_numSendAttempts >= _kMaxNumSendAttempts) {
+    PRINT_NAMED_WARNING("NVStorageComponent.ResendLastRead.NumRetriesExceeded",
+                        "Tag: 0x%x, Attempts: %d",
+                        _readMsg.tag, _kMaxNumSendAttempts );
+    return false;
+  }
+  
+  PRINT_NAMED_INFO("NVStorageComponent.ResendLastRead.Retry",
+                   "Tag: 0x%x, retryNum: %d", _readMsg.tag, _numSendAttempts);
+  _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageRead(_readMsg)));
   return true;
 }
 
@@ -577,9 +598,9 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
       
       // Under these cases, attempt to resend the failed write message.
       // If the allowed number of retries fails
-      if (_writeDataAckMap[baseTag].writeNotErase &&
-          (payload.report.result == NVStorage::NVResult::NV_NO_MEM ||
-           payload.report.result == NVStorage::NVResult::NV_BUSY)) {
+      if (payload.report.result == NVStorage::NVResult::NV_NO_MEM ||
+          payload.report.result == NVStorage::NVResult::NV_BUSY   ||
+          payload.report.result == NVStorage::NVResult::NV_TIMEOUT) {
         if (ResendLastWrite()) {
           PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ResentFailedWrite",
                            "Tag 0x%x resent due to %s", tag, EnumToString(payload.report.result));
@@ -660,9 +681,21 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
                                  payload.report.result,
                                  NVStorage::NVOperation::NVOP_READ);
     }
-    
-    
-    if (payload.report.result != NVStorage::NVResult::NV_OKAY) {
+
+    // If read was not successful, possibly retry.
+    if (static_cast<s8>(payload.report.result) < 0) {
+      
+      // Under these cases, attempt to resend the failed read message
+      if (payload.report.result == NVStorage::NVResult::NV_NO_MEM ||
+          payload.report.result == NVStorage::NVResult::NV_BUSY   ||
+          payload.report.result == NVStorage::NVResult::NV_TIMEOUT) {
+        if (ResendLastRead()) {
+          PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ResentFailedRead",
+                           "Tag 0x%x resent due to %s", tag, EnumToString(payload.report.result));
+          return;
+        }
+      }
+
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadOpFailed",
                           "BaseTag: %s, Tag: 0x%x, write: %d, result: %s",
                           baseTagStr, tag, payload.report.write, EnumToString(payload.report.result));

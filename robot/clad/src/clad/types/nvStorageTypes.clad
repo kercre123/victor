@@ -48,6 +48,7 @@ namespace NVStorage {
     // Same rules as regarding single and multi-blob entries
     // except that the MSB is 1 for potential special treatment during
     // garbage collection in the future.
+    // The exception is tags that start with 0xC000. See below.
 
 
     // Single blob manufacturing entries start here
@@ -73,6 +74,8 @@ namespace NVStorage {
     NVEntry_ToolCodeImageRight = 0x80110000,
 
     // ==== Pre-playpen tags =====
+    // Tags that start with 0xC000 are special factory entires.
+    // They are uneraseable and they must be single blob entries.
     NVEntry_PrePlaypenResults   = 0xC0000000,
     NVEntry_PrePlaypenCentroids = 0xC0000001,
     NVEntry_IMUAverages         = 0xC0000004,
