@@ -1,22 +1,22 @@
 {
   "behaviorType" : "RequestGameSimple",
-  "name" : "RequestSpeedTap",
-  "requiredGameFlags" : "SpeedTap",
+  "name" : "RequestKeepAway",
+  "requiredGameFlags" : "KeepAway",
   
   "zero_block_config": {
-    "initial_animName" : "RequestGameSpeedTapInitial0",
-    "preDrive_animName" : "RequestGameSpeedTapPreDrive0",
-    "request_animName" : "RequestGameSpeedTapRequest0",
-    "deny_animName" : "RequestGameSpeedTapDeny0",
+    "initial_animName" : "RequestGameKeepAwayInitial0",
+    "preDrive_animName" : "RequestGameKeepAwayPreDrive0",
+    "request_animName" : "RequestGameKeepAwayRequest0",
+    "deny_animName" : "RequestGameKeepAwayDeny0",
     "minRequestDelay_s" : 20.0,
     "score_factor": 0.5
   },
 
   "one_block_config": {
-    "initial_animName" : "RequestGameSpeedTapInitial1",
-    "preDrive_animName" : "RequestGameSpeedTapPreDrive1",
-    "request_animName" : "RequestGameSpeedTapRequest1",
-    "deny_animName" : "RequestGameSpeedTapDeny1",
+    "initial_animName" : "RequestGameKeepAwayInitial1",
+    "preDrive_animName" : "RequestGameKeepAwayPreDrive1",
+    "request_animName" : "RequestGameKeepAwayRequest1",
+    "deny_animName" : "RequestGameKeepAwayDeny1",
     "minRequestDelay_s" : 20.0
   },
 
@@ -79,7 +79,7 @@
   [
     "AffectsBlocks",
     "MiniGame",
-    "RequestSpeedTap",
+    "RequestKeepAway",
     "FreeplayOne"
   ]
 }

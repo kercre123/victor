@@ -385,35 +385,100 @@
       "AnimName": "ag_RequestGameDriveFail"
     },
     {
-      "CladEvent": "RequestGameGenericDeny0",
+      "CladEvent": "RequestGameSpeedTapDeny0",
       "AnimName": "requestGame_speedTap_deny"
     },
     {
-      "CladEvent": "RequestGameGenericDeny1",
+      "CladEvent": "RequestGameSpeedTapDeny1",
       "AnimName": "requestGame_speedTap_deny"
     },
     {
-      "CladEvent": "RequestGameGenericInitial0",
+      "CladEvent": "RequestGameSpeedTapInitial0",
       "AnimName": "requestGame_speedTap_initial"
     },
     {
-      "CladEvent": "RequestGameGenericInitial1",
+      "CladEvent": "RequestGameSpeedTapInitial1",
       "AnimName": "requestGame_speedTap_initial"
     },
     {
-      "CladEvent": "RequestGameGenericPreDrive0",
+      "CladEvent": "RequestGameSpeedTapPreDrive0",
       "AnimName": "requestGame_speedTap_predrive"
     },
     {
-      "CladEvent": "RequestGameGenericPreDrive1",
+      "CladEvent": "RequestGameSpeedTapPreDrive1",
       "AnimName": "requestGame_speedTap_predrive"
     },
     {
-      "CladEvent": "RequestGameGenericRequest0",
+      "CladEvent": "RequestGameSpeedTapRequest0",
       "AnimName": "requestGame_speedTap_request"
     },
     {
-      "CladEvent": "RequestGameGenericRequest1",
+      "CladEvent": "RequestGameSpeedTapRequest1",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayDeny0",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayDeny1",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayInitial0",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayInitial1",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayPreDrive0",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayPreDrive1",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayRequest0",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayRequest1",
+      "AnimName": "requestGame_speedTap_request"
+    },
+
+    {
+      "CladEvent": "RequestGameMemoryMatchDeny0",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchDeny1",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchInitial0",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchInitial1",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchPreDrive0",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchPreDrive1",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchRequest0",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchRequest1",
       "AnimName": "requestGame_speedTap_request"
     },
     {

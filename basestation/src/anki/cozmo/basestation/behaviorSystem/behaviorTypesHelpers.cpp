@@ -45,14 +45,17 @@ BehaviorGameFlag BehaviorGameFlagFromString(const std::string& inString)
   {
     return BehaviorGameFlag::SpeedTap;
   }
-  else if ( inString == "Simon" ) {
-    return BehaviorGameFlag::Simon;
+  else if ( inString == "MemoryMatch" ) {
+    return BehaviorGameFlag::MemoryMatch;
   }
   else if ( inString == "CubePounce" ) {
     return BehaviorGameFlag::CubePounce;
   }
   else if ( inString == "All" ) {
     return BehaviorGameFlag::All;
+  }
+  else if ( inString == "KeepAway"){
+    return BehaviorGameFlag::KeepAway;
   }
 
   ASSERT_NAMED(false, "BehaviorGameFlagFromString.InvalidString");
