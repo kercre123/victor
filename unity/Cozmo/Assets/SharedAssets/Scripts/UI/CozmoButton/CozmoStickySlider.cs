@@ -42,11 +42,6 @@ namespace Cozmo {
         _IsTouching = true;
       }
 
-      public override void OnPointerExit(UnityEngine.EventSystems.PointerEventData eventData) {
-        base.OnPointerExit(eventData);
-        // _IsTouching = false;
-      }
-
       public override void OnPointerUp(UnityEngine.EventSystems.PointerEventData eventData) {
         base.OnPointerUp(eventData);
         _IsTouching = false;
