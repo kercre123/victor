@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 namespace Cozmo {
   namespace Minigame {
@@ -23,6 +22,8 @@ namespace Cozmo {
 
         private float _LastMessageSentTimestamp;
 
+        private DroneModeTransitionAnimator _RobotAnimator;
+
         public override void Enter() {
           _LastMessageSentTimestamp = Time.time;
 
@@ -41,6 +42,9 @@ namespace Cozmo {
           Anki.Cozmo.Viz.VizManager.Enabled = true;
 
           SetupRobotForDriveState();
+
+          _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
+          _RobotAnimator.OnTransitionAnimationsFinished += HandleTransitionAnimationEnded;
         }
 
         public override void Exit() {
@@ -50,6 +54,7 @@ namespace Cozmo {
           _DroneModeGame.DisableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
           Anki.Cozmo.Viz.VizManager.Enabled = true;
+          _RobotAnimator.CleanUp();
         }
 
         public override void Update() {
@@ -193,15 +198,20 @@ namespace Cozmo {
           }
         }
 
-        private void HandleDriveSpeedFamilyChanged(DroneModeView.SpeedSliderSegment newPosition, float newNormalizedValue) {
-          // TODO: Play some sounds / change driving animations
-        }
-
         private void HandleHeadTiltValueChanged(DroneModeView.HeadSliderSegment newPosition, float newNormalizedValue) {
           float newDriveHeadSpeed_radps = _DroneModeGame.CalculateDriveHeadSpeed(newPosition, newNormalizedValue);
           if (!newDriveHeadSpeed_radps.IsNear(_TargetDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)) {
             _TargetDriveHeadSpeed_radps = newDriveHeadSpeed_radps;
           }
+        }
+
+        private void HandleDriveSpeedFamilyChanged(DroneModeView.SpeedSliderSegment currentPosition, DroneModeView.SpeedSliderSegment newPosition) {
+          // DisableInput();
+          _RobotAnimator.PlayTransitionAnimation(newPosition);
+        }
+
+        private void HandleTransitionAnimationEnded() {
+          EnableInput();
         }
       }
     }

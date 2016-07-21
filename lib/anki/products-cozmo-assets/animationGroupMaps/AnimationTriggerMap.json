@@ -1,6 +1,10 @@
 {
   "Pairs": [
     {
+      "CladEvent": "AnimNone",
+      "AnimName": ""
+    },
+    {
       "CladEvent": "AdmireStackAttemptGrabThirdCube",
       "AnimName": "knockOverStack_grabAttempt"
     },
@@ -129,6 +133,38 @@
       "AnimName": "ag_driving01_startDriving"
     },
     {
+      "CladEvent": "DroneModeBackwardDrivingEnd",
+      "AnimName": "ag_explorer_endDriving"
+    },
+    {
+      "CladEvent": "DroneModeBackwardDrivingLoop",
+      "AnimName": "ag_explorer_drivingLoop"
+    },
+    {
+      "CladEvent": "DroneModeBackwardDrivingStart",
+      "AnimName": "ag_explorer_startDriving"
+    },
+    {
+      "CladEvent": "DroneModeForwardDrivingEnd",
+      "AnimName": "ag_explorer_endDriving"
+    },
+    {
+      "CladEvent": "DroneModeForwardDrivingLoop",
+      "AnimName": "ag_explorer_drivingLoop"
+    },
+    {
+      "CladEvent": "DroneModeForwardDrivingStart",
+      "AnimName": "ag_explorer_startDriving"
+    },
+    {
+      "CladEvent": "DroneModeIdle",
+      "AnimName": "ag_bored"
+    },
+    {
+      "CladEvent": "DroneModeTurboDrivingStart",
+      "AnimName": "ag_explorer_startDriving"
+    },
+    {
       "CladEvent": "FlipDownFromBack",
       "AnimName": "FlipDownFromBack"
     },
@@ -217,10 +253,6 @@
       "AnimName": "ag_speedTap_tap"
     },
     {
-      "CladEvent": "OnSpeedtapHandCozmoWin",
-      "AnimName": "ag_speedTap_winHand"
-    },
-    {
       "CladEvent": "OnSpeedtapFakeout",
       "AnimName": "ag_speedTap_fake"
     },
@@ -243,6 +275,10 @@
     {
       "CladEvent": "OnSpeedtapGetOut",
       "AnimName": "ag_speedTap_getOut"
+    },
+    {
+      "CladEvent": "OnSpeedtapHandCozmoWin",
+      "AnimName": "ag_speedTap_winHand"
     },
     {
       "CladEvent": "OnSpeedtapHandPlayerWin",
@@ -327,6 +363,10 @@
     {
       "CladEvent": "PounceSuccess",
       "AnimName": "ag_pounceOnMotionSuccess"
+    },
+    {
+      "CladEvent": "ProceduralLive",
+      "AnimName": ""
     },
     {
       "CladEvent": "PutDownBlockKeepAlive",
