@@ -75,7 +75,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _UnlockableTintBackground.color = UIColorPalette.GetUpgradeTintData(unlockInfo.CoreUpgradeTintColorName).TintColor;
       if (unlockInfo.UnlockableType == UnlockableType.Action) {
         // TODO: Once request tricks is working show the buttons
-        // _RequestTrickButtonContainer.gameObject.SetActive(true);
+        _RequestTrickButtonContainer.gameObject.SetActive(true);
         SetupButton(_RequestTrickButton, OnSparkClicked, "request_trick_button",
           unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel);
         RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(HandleSparkUnlockEnded);

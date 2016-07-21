@@ -94,6 +94,9 @@ Result SimpleBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& 
       _scoreBonusForCurrentBehavior.AddNode(0.0f, 0.0f); // no bonus for any X
     }
   }
+  else {
+    _scoreBonusForCurrentBehavior.AddNode(0.0f, 0.0f); // no bonus for any X
+  }
 
   return RESULT_OK;
 }
