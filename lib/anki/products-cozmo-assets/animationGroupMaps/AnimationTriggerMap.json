@@ -1,10 +1,6 @@
 {
   "Pairs": [
     {
-      "CladEvent": "AnimNone",
-      "AnimName": ""
-    },
-    {
       "CladEvent": "AdmireStackAttemptGrabThirdCube",
       "AnimName": "knockOverStack_grabAttempt"
     },
@@ -363,10 +359,6 @@
     {
       "CladEvent": "PounceSuccess",
       "AnimName": "ag_pounceOnMotionSuccess"
-    },
-    {
-      "CladEvent": "ProceduralLive",
-      "AnimName": ""
     },
     {
       "CladEvent": "PutDownBlockKeepAlive",
