@@ -17,7 +17,7 @@
 
 //#define DISABLE_TASK_CHECK
 //#define DISABLE_AUTHENTIFICATION
-//#define AES_DEBUG
+#define AES_DEBUG
 
 #define member_size(type, member) sizeof(((type *)0)->member)
   
