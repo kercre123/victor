@@ -6,6 +6,7 @@
 #include "tasks.h"
 #include "messages.h"
 #include "storage.h"
+#include "timer.h"
 
 #include "publickeys.h"
 
@@ -16,11 +17,13 @@
 
 //#define DISABLE_TASK_CHECK
 //#define DISABLE_AUTHENTIFICATION
+//#define AES_DEBUG
 
 #define member_size(type, member) sizeof(((type *)0)->member)
   
 // Softdevice settings
 static const nrf_clock_lfclksrc_t m_clock_source = NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM;
+static const uint32_t PIN_CODE_TIMEOUT = CYCLES_MS(10000); // 10 seconds
 static bool  m_sd_enabled;
 
 // Service settings
@@ -33,6 +36,8 @@ uint16_t                    Bluetooth::conn_handle;
 static uint8_t              m_nonce[member_size(Anki::Cozmo::HelloPhone, nonce)];
 static bool                 m_authenticated;
 static bool                 m_task_enabled;
+static uint32_t             dh_timeout;
+static bool                 dh_started;
 
 static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
 static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
@@ -111,14 +116,6 @@ static void dh_complete(const void* state, int) {
   memcpy(msg.secret, dh->local_secret, SECRET_LENGTH);
   memcpy(msg.encoded_key, dh->encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
-
-  // TEMPORARY CODE TO DISPLAY THE AES KEY
-  RobotInterface::DisplayNumber dn;
-  dn.value = *(const uint32_t*)Tasks::aes_key();
-  dn.digits = 8;
-  dn.x = 0;
-  dn.y = 16;
-  RobotInterface::SendMessage(dn);
 }
 
 void Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg) {
@@ -147,6 +144,9 @@ static void dh_setup(const void* state, int) {
   dn.x = 0;
   dn.y = 16;
   RobotInterface::SendMessage(dn);
+
+  dh_timeout = GetCounter() + PIN_CODE_TIMEOUT;
+  dh_started = true;
 
   // Ask another processor to nicely calculate our heavy function
   CalculateDiffieHellman cdh;
@@ -288,6 +288,26 @@ void Bluetooth::manage() {
 
   if (!m_task_enabled) {
     return ;
+  }
+
+  if (dh_started) {
+    int ticks = dh_timeout - GetCounter();
+    if (ticks < 0) {
+      using namespace Anki::Cozmo;
+      
+      RobotInterface::DisplayNumber dn;
+      #ifdef AES_DEBUG
+      dn.value = *(const uint32_t*)Tasks::aes_key();
+      dn.digits = 8;
+      #else
+      dn.digits = 0;
+      #endif
+      dn.x = 0;
+      dn.y = 16;
+      RobotInterface::SendMessage(dn);
+
+      dh_started = false;
+    }
   }
 
   // Manage outbound transmissions
