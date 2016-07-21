@@ -44,10 +44,12 @@ static const char* kRunningPenaltyKey          = "runningPenalty";
 static const char* kBehaviorGroupsKey          = "behaviorGroups";
 static const char* kRequiredUnlockKey          = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey = "requiredRecentDriveOffCharger_sec";
+static const char* kRequiredParentSwitchKey    = "requiredRecentSwitchToParent_sec";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredUnlockId( UnlockId::Count )
   , _requiredRecentDriveOffCharger_sec(-1.0f)
+  , _requiredRecentSwitchToParent_sec(-1.0f)
   , _moodScorer()
   , _flatScore(0.0f)
   , _robot(robot)
@@ -101,12 +103,19 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
 
   // - - - - - - - - - -
   // Got off charger timer
-  // - - - - - - - - - -
   const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
   if ( !requiredDriveOffChargerJson.isNull() )
   {
     ASSERT_NAMED_EVENT(requiredDriveOffChargerJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s", kRequiredDriveOffChargerKey);
     _requiredRecentDriveOffCharger_sec = requiredDriveOffChargerJson.asFloat();
+  }
+  
+  // - - - - - - - - - -
+  // Required recent parent switch
+  const Json::Value& requiredSwitchToParentJson = config[kRequiredParentSwitchKey];
+  if ( !requiredSwitchToParentJson.isNull() ) {
+    ASSERT_NAMED_EVENT(requiredSwitchToParentJson.isNumeric(), "IBehavior.ReadFromJson", "Not a float: %s", kRequiredParentSwitchKey);
+    _requiredRecentSwitchToParent_sec = requiredSwitchToParentJson.asFloat();
   }
 
   // - - - - - - - - - -
@@ -321,6 +330,16 @@ bool IBehavior::IsRunnable(const Robot& robot) const
       // driven off, but not recently enough
       return false;
     }
+  }
+  
+  // if there's a timer requiring a recent parent switch
+  const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
+  if ( requiresRecentParentSwitch ) {
+    const float lastTime = robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
+    const float curTime  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float changedAgoSecs = curTime - lastTime;
+    const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
+    return isSwitchRecent;
   }
 
   // no unlock or unlock passed, ask subclass

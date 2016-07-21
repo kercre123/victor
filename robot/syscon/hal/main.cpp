@@ -30,13 +30,14 @@ extern "C" {
 
 extern "C" void HardFault_Handler(void) {
   __disable_irq();
+  Backpack::blink();
   NVIC_SystemReset();
 }
 
 // This is our near-realtime loop
 void main_execution(void) {
-  Head::manage();
   Motors::manage();
+  Head::manage();
   Battery::manage();
   Bluetooth::manage();
 
@@ -64,8 +65,8 @@ int main(void)
   Radio::init();
   Head::init();
   Battery::init();
-  Timer::init();
   Backpack::init();
+  Timer::init();
 
   // Startup the system
   Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace CubePounce {
+namespace Cozmo.Minigame.CubePounce {
 
   public class CubePounceConfig : MinigameConfigBase {
     public override int NumCubesRequired() {

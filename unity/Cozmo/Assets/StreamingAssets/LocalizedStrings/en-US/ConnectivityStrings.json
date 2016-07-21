@@ -1,0 +1,36 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "connectivity.connectingToCozmoText": {
+    "translation": "Connecting to your Cozmo..."
+  },
+  "connectivity.searchForCozmoFailedText": {
+    "translation": "Cozmo needs your help connecting over wifi."
+  },
+  "connectivity.searchingForCozmo": {
+    "translation": "Searching for Cozmo..."
+  },
+  "connectivity.securingConnection": {
+    "translation": "Securing your connection..."
+  },
+  "connection.wakingUpCozmo": {
+    "translation": "Waking up Cozmo..."
+  }
+}

@@ -301,9 +301,14 @@ private:
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
   
-  // if a gotOffChargerLessThan_sec is greater than 0, this behavior is only runnable if last time the robot got off the charger by
+  // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only runnable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
   float _requiredRecentDriveOffCharger_sec;
+  // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only runnable if last time its parent behavior
+  // chooser was activated happened less than this time ago. Eg: a value of 1 means 'if the parent got activated less
+  // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for goals)
+  // TODO rsam: differentiate between (de)activation and interruption
+  float _requiredRecentSwitchToParent_sec;
   
   MoodScorer              _moodScorer;
   Util::GraphEvaluator2d  _repetitionPenalty;

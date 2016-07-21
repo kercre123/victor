@@ -8,7 +8,9 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
+#include "driver/crash.h"
 #include "driver/i2spi.h"
+#include "foregroundTask.h"
 }
 #include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
@@ -18,6 +20,15 @@ extern "C" {
 #include "anki/cozmo/robot/esp.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
+
+#include "wifi-cozmo-img.h"
+
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_hash.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/birthCertificate.h"
+#include "clad/types/imu.h"
 
 extern const unsigned int COZMO_VERSION_COMMIT;
 extern const char* DAS_USER;
@@ -40,86 +51,74 @@ static RobotInterface::FactoryTestMode mode;
 static u32 lastExecTime;
 static u32 modeTimeout;
 static int modeParam;
-static s8  menuIndex;
+static s32 minPositions[4];
+static s32 maxPositions[4];
+static BirthCertificate birthCert;
 
-#define MENU_TIMEOUT 100000000
+typedef enum {
+  PP_entry = 0,
+  PP_pause,
+  PP_wipe,
+  PP_postWipeDelay,
+  PP_setWifi,
+  PP_running,
+} PlayPenTestState;
 
-static const FTMenuItem rootMenuItems[] = {
-  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
-  {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
-  {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
-#if FACTORY_FIRMWARE
-  {"Playpen test",    RobotInterface::FTM_PlayPenTest,   0xFFFFffff },
-  {"Cube test",       RobotInterface::FTM_cubeTest,      0xFFFFffff },
-#if 0
-  {"BLE",             RobotInterface::FTM_BLE_Menu,      15000000 },
-#endif
-#endif
-};
-#define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
-
-static const FTMenuItem stateMenuItems[] = {
-  {"ADC info",        RobotInterface::FTM_ADCInfo,       30000000 },
-  {"IMU info",        RobotInterface::FTM_ImuInfo,       30000000 },
-  {"Encoder info",    RobotInterface::FTM_EncoderInfo,   30000000 },
-  {"<--",             RobotInterface::FTM_menus, MENU_TIMEOUT}
-};
-#define NUM_STATE_MENU_ITEMS (sizeof(stateMenuItems)/sizeof(FTMenuItem))
-
-static const FTMenuItem bleMenuItems[] = {
-  {"BLE On",  RobotInterface::FTM_BLE_On,  1000000},
-  {"BLE Off", RobotInterface::FTM_BLE_Off, 1000000},
-  {"<--",     RobotInterface::FTM_menus,   MENU_TIMEOUT}
-};
-#define NUM_BLE_MENU_ITEMS (sizeof(bleMenuItems)/sizeof(FTMenuItem))
-
+extern "C" bool hasBirthCertificate(void) { return birthCert.second != 0xFF; }
 
 bool Init()
 {
   mode = RobotInterface::FTM_None;
   modeTimeout = 0xFFFFffff;
-  menuIndex = 0;
+  birthCert.second = 0xFF; // Mark invalid
   return true;
 }
 
-static u8 getCurrentMenuItems(const FTMenuItem** items)
+static void IMUCalibrationReadCallback(NVStorage::NVStorageBlob* blob, const NVStorage::NVResult result)
 {
-  switch(mode)
+  if (result != NVStorage::NV_OKAY)
   {
-    case RobotInterface::FTM_menus:
-    {
-      *items = rootMenuItems;
-      return NUM_ROOT_MENU_ITEMS;
-    }
-    case RobotInterface::FTM_StateMenu:
-    {
-      *items = stateMenuItems;
-      return NUM_STATE_MENU_ITEMS;
-    }
-    case RobotInterface::FTM_BLE_Menu:
-    {
-      *items = bleMenuItems;
-      return NUM_BLE_MENU_ITEMS;
-    }
-    default:
-    {
-      *items = NULL;
-      return 0;
-    }
-  }
-}
-
-static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
-{
-  if (result == NVStorage::NV_NOT_FOUND && FACTORY_FIRMWARE)
-  {
-    SetMode(RobotInterface::FTM_FAC);
+    AnkiDebug( 200, "IMUCalibration.Read.NotFound", 501, "No IMU calibration data available", 0);
   }
   else
   {
-    SetMode(RobotInterface::FTM_Sleepy);
+    RobotInterface::IMUCalibrationData* calD = reinterpret_cast<RobotInterface::IMUCalibrationData*>(blob->blob);
+    for (int run = (1024/sizeof(RobotInterface::IMUCalibrationData)) - 1; run >= 0; --run)
+    {
+      uint8_t* bytes = reinterpret_cast<uint8_t*>(&calD[run]);
+      for(unsigned int b=0; b<sizeof(RobotInterface::IMUCalibrationData); ++b)
+      {
+        if (bytes[b] != 0xFF)
+        {
+          AnkiDebug( 201, "IMUCalibrationData.Read.Success", 502, "Got calibration data: gyro={%d, %d, %d}, acc={%d, %d, %d}", 6, calD[run].gyro[0], calD[run].gyro[1], calD[run].gyro[2],
+                        calD[run].acc[0], calD[run].acc[1], calD[run].acc[2]);
+          RobotInterface::SendMessage(calD[run]);
+          return;
+        }
+      }
+    }
+    AnkiDebug( 202, "IMUCalibrationData.Read.NotFound", 503, "No IMU calibration data written", 0);
   }
 }
+
+static bool requestIMUCal(uint32_t param)
+{
+  if (NVStorage::Read(NVStorage::NVEntry_IMUAverages, IMUCalibrationReadCallback) != NVStorage::NV_SCHEDULED)
+  {
+    os_printf("Failed to request imu calibration data\r\n");
+    return true;
+  }
+  return false;
+}
+
+static void BirthCertificateReadCallback(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
+{
+  if (result == NVStorage::NV_OKAY) memcpy(&birthCert, entry->blob, sizeof(BirthCertificate));
+  SetMode(RobotInterface::FTM_Sleepy);
+  
+  foregroundTaskPost(requestIMUCal, 0);
+}
+
 
 void Update()
 {
@@ -136,42 +135,12 @@ void Update()
     {
       case RobotInterface::FTM_entry:
       {
-        if (NVStorage::Read(NVStorage::NVEntry_BirthCertificate, NVReadDoneCB) == NVStorage::NV_SCHEDULED)
+        if (NVStorage::Read(NVStorage::NVEntry_BirthCertificate, BirthCertificateReadCallback) == NVStorage::NV_SCHEDULED)
         {
           SetMode(RobotInterface::FTM_WaitNV);
         }
         break;
       }
-      case RobotInterface::FTM_menus:
-      case RobotInterface::FTM_StateMenu:
-      case RobotInterface::FTM_BLE_Menu:
-      {
-        char menuBuf[256];
-        unsigned int bufIndex = 0;
-        const FTMenuItem* items;
-        u8 i, numItems;
-        numItems = getCurrentMenuItems(&items);
-        if (numItems == 0)
-        {
-          Face::FacePrintf("Invalid menu %d", mode);
-        }
-        else
-        {
-          for (i=0; i<numItems; ++i)
-          {
-            bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%s %s\n", i==menuIndex ? ">" : " ", items[i].name);
-            if (bufIndex >= sizeof(menuBuf))
-            {
-              bufIndex = sizeof(menuBuf-1);
-              break;
-            }
-          }
-          menuBuf[bufIndex] = 0;
-          Face::FacePrintf(menuBuf);
-        }
-        break;
-      }
-      case RobotInterface::FTM_PlayPenTest:
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
@@ -179,9 +148,6 @@ void Update()
                                                                           "Chan: %d  Stas: %d\n"
                                                                           "WiFi-V: %x\nWiFi-D: %s\n"
                                                                           "RTIP-V: %x\nRTIP-D: %s\n"
-                                                                          #if FACTORY_FIRMWARE
-                                                                          "FACTORY FIRMWARE"
-                                                                          #endif
                                                                           ;
         const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
         if (!clientConnected())
@@ -200,88 +166,34 @@ void Update()
         }
         break;
       }
-      #if FACTORY_FIRMWARE
-      case RobotInterface::FTM_cubeTest:
-      {
-        Face::FacePrintf("Auto cube");
-        break ;
-      }
-      #endif
-      case RobotInterface::FTM_motorLifeTest:
-      {
-        if ((now - lastExecTime) > 1000000)
-        {
-          const u32 phase = now >> 20;
-          const float wheelSpd = phase & 0x01 ? 200.0f : -200.0f;
-          const float liftSpd  = phase & 0x02 ? 1.5f   : -1.5f;
-          const float headSpd  = phase & 0x02 ? 2.5f   : -2.5f;
-          RobotInterface::EngineToRobot msg;
-          msg.tag = RobotInterface::EngineToRobot::Tag_drive;
-          msg.drive.lwheel_speed_mmps = wheelSpd;
-          msg.drive.rwheel_speed_mmps = wheelSpd;
-          msg.drive.lwheel_accel_mmps2 = 500.0f;
-          msg.drive.rwheel_accel_mmps2 = 500.0f;
-          RTIP::SendMessage(msg);
-          msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
-          msg.moveLift.speed_rad_per_sec = liftSpd;
-          RTIP::SendMessage(msg);
-          msg.tag = RobotInterface::EngineToRobot::Tag_moveHead;
-          msg.moveHead.speed_rad_per_sec = headSpd;
-          RTIP::SendMessage(msg);
-          Face::FacePrintf(phase & 0x01 ? "    --->" : "        <---");
-          lastExecTime = now;
-        }
-        break;
-      }
       case RobotInterface::FTM_Sleepy:
       {
-        using namespace Anki::Cozmo::Face;
-        // Display WiFi password, alternate rows about every 2 minutes
-        const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
-        u64 frame[COLS];
-        Draw::Copy(frame, Face::SLEEPY_EYES);
-        Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
-        Draw::Mask(frame, columnMask);
-        Draw::Flip(frame);
-        if (now > 300000000 && FACTORY_FIRMWARE)
-        {
-          SetMode(RobotInterface::FTM_Off);
-        }
-        break;
-      }
-      case RobotInterface::FTM_FAC:
-      {
+        if ((now - lastExecTime) < 300000000)
         {
           using namespace Anki::Cozmo::Face;
-          // Display DISPLAY FACTORY WARNING
-          const u64 columnMask = ((now/1000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
+          // Display WiFi password, alternate rows about every 2 minutes
+          const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
           u64 frame[COLS];
           Draw::Clear(frame);
-          Draw::Number(frame, 3, 0xFAC, 38, 8);
-          Draw::Invert(frame);
+          Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
           Draw::Mask(frame, columnMask);
           Draw::Flip(frame);
         }
-        if ((now - lastExecTime) > 2000000) {
-          RobotInterface::EngineToRobot msg;
-          os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
-          msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
-          for (int i=Anki::Cozmo::LED_BACKPACK_FRONT; i<=Anki::Cozmo::LED_BACKPACK_BACK; i++)
-          {
-            msg.setBackpackLights.lights[i].onColor = Anki::Cozmo::LED_ENC_RED;
-            msg.setBackpackLights.lights[i].offColor = Anki::Cozmo::LED_ENC_OFF;
-            msg.setBackpackLights.lights[i].onFrames = 30;
-            msg.setBackpackLights.lights[i].offFrames = 30;
-            msg.setBackpackLights.lights[i].transitionOnFrames = 0;
-            msg.setBackpackLights.lights[i].transitionOffFrames = 15;
-          }
-          RTIP::SendMessage(msg);
-          lastExecTime = now;
-        }
-        if (now > 300000000 && FACTORY_FIRMWARE)
+        else
         {
           SetMode(RobotInterface::FTM_Off);
         }
+        break;
+      }
+      case RobotInterface::FTM_SSID:
+      {
+        using namespace Anki::Cozmo::Face;
+        // Display WiFi password, alternate rows about every 2 minutes
+        u64 frame[COLS];
+        Draw::Copy(frame, SSID_IMG);
+        Draw::Number(frame, 6, getSSIDNumber(), 68, 34, false);
+        //Draw::Mask(frame, columnMask);
+        Draw::Flip(frame);
         break;
       }
       default:
@@ -295,72 +207,51 @@ void Update()
 void Process_TestState(const RobotInterface::TestState& state)
 {
   const u32 now = system_get_time();
+  
+  for (int m=0; m<4; ++m)
+  {
+    if (state.positionsFixed[m] < minPositions[m]) minPositions[m] = state.positionsFixed[m];
+    if (state.positionsFixed[m] > maxPositions[m]) maxPositions[m] = state.positionsFixed[m];
+  }
+  
   switch (mode)
   {
-    case RobotInterface::FTM_entry:
-    case RobotInterface::FTM_WaitNV:
     case RobotInterface::FTM_Sleepy:
-    case RobotInterface::FTM_FAC:
     case RobotInterface::FTM_Off:
     {
-      if ((now > 2000000) && (ABS(state.speedsFixed[0]) > 1000))
+      if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
       {
         lastExecTime = now;
-        SetMode(RobotInterface::FTM_menus);
-        modeTimeout = now + MENU_TIMEOUT;
+        SetMode(RobotInterface::FTM_SSID);
+        modeTimeout = now + 10000000;
+        for (int i=0; i<4; ++i)
+        {
+          minPositions[i] = state.positionsFixed[i];
+          maxPositions[i] = state.positionsFixed[i];
+        }
       }
       break;
     }
-    case RobotInterface::FTM_menus:
-    case RobotInterface::FTM_StateMenu:
-    case RobotInterface::FTM_BLE_Menu:
+    case RobotInterface::FTM_SSID:
     {
-      const FTMenuItem* items;
-      const u8 numItems = getCurrentMenuItems(&items);
-      if ((now - lastExecTime > 1000000) && numItems)
+      if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
       {
-        if (ABS(state.speedsFixed[0] > 1000))
+        lastExecTime = now;
+        SetMode(RobotInterface::FTM_Sleepy);
+        modeTimeout = 0xFFFFffff;
+        for (int i=0; i<4; ++i)
         {
-          lastExecTime = now;
-          modeTimeout  = now + MENU_TIMEOUT;
-          menuIndex = (menuIndex + 1) % numItems;
-        }
-        else if (ABS(state.speedsFixed[1] > 1000))
-        {
-          lastExecTime = now;
-          modeTimeout  = now + MENU_TIMEOUT;
-          menuIndex = (menuIndex - 1) % numItems;
-        }
-        else if (state.speedsFixed[2] < -10000)
-        {
-          lastExecTime = now;
-          modeTimeout  = now + MENU_TIMEOUT;
-          SetMode(items[menuIndex].mode);
-          modeTimeout = system_get_time() + items[menuIndex].timeout;
+          minPositions[i] = state.positionsFixed[i];
+          maxPositions[i] = state.positionsFixed[i];
         }
       }
-      break;
-    }
-    case RobotInterface::FTM_ADCInfo:
-    {
-      Face::FacePrintf("Cliff: %d\nBatV10x: %d\nExtV10x: %d\nChargeState: 0x%x",
-                       state.cliffLevel, state.battVolt10x, state.extVolt10x, state.chargeStat);
-      break;
-    }
-    case RobotInterface::FTM_ImuInfo:
-    {
-      Face::FacePrintf("Gyro:\n%d\n%d\n%d\nAcc:\n%d\n%d\n%d\n",
-                       state.gyro[0], state.gyro[1], state.gyro[2],
-                       state.acc[0],  state.acc[1],  state.acc[2]);
-      break;
-    }
-    case RobotInterface::FTM_EncoderInfo:
-    {
-      Face::FacePrintf("Speeds:\n%d %d\n%d %d\nPositions:\n%d %d\n%d %d\n",
-                       (state.speedsFixed[0]),    (state.speedsFixed[1]),
-                       (state.speedsFixed[2]),    (state.speedsFixed[3]),
-                       (state.positionsFixed[0]), (state.positionsFixed[1]),
-                       (state.positionsFixed[2]), (state.positionsFixed[3]));
+      else if ((state.positionsFixed[3] - minPositions[3]) > 70000)
+      {
+        lastExecTime = now;
+        SetMode(RobotInterface::FTM_WiFiInfo);
+        modeTimeout = now + 30000000;
+        minPositions[3] = state.positionsFixed[3];
+      }
       break;
     }
     default:
@@ -369,49 +260,6 @@ void Process_TestState(const RobotInterface::TestState& state)
     }
   }
 }
-
-#if FACTORY_FIRMWARE
-static void cubeMessageHook(const u8* buffer, int bufferSize) {
-  using namespace Anki::Cozmo;
-
-  if (buffer[0] != RobotInterface::RobotToEngine::Tag_activeObjectDiscovered) {
-    return ;
-  }
-  
-  RobotInterface::RobotToEngine msg;
-  memcpy(msg.GetBuffer(), buffer, bufferSize);
-
-  uint32_t id = msg.activeObjectDiscovered.factory_id;
-
-  static uint32_t slots[7];
-  static int slot = 0;
-
-  for (int i = 0; i < slot; i++) {
-    if (slots[i] == id) return ;
-  }
-
-  RobotInterface::EngineToRobot out;
-
-  out.tag = RobotInterface::EngineToRobot::Tag_setCubeLights; 
-  out.setCubeLights.objectID = slot;
-  for(int i = 0; i < 4; i++) {
-    out.setCubeLights.lights[i].onColor = 
-    out.setCubeLights.lights[i].offColor = 0x3DEF;
-  }
-
-  if (!RTIP::SendMessage(out)) return ;
-
-  out.tag = RobotInterface::EngineToRobot::Tag_setPropSlot;
-  out.setPropSlot.slot = slot;
-  out.setPropSlot.factory_id = id;
-
-  if (!RTIP::SendMessage(out)) return ;
-
-  slots[slot] = id;
-
-  if (++slot > 7) SetMode(RobotInterface::FTM_entry);
-}
-#endif
 
 RobotInterface::FactoryTestMode GetMode()
 {
@@ -427,48 +275,21 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
 {
   RobotInterface::EngineToRobot msg;
   Anki::Cozmo::Face::FaceUnPrintf();
-  menuIndex = 0;
   
   os_printf("SM %d -> %d\r\n", mode, newMode);
-  
-  if (mode == RobotInterface::FTM_None && newMode != RobotInterface::FTM_None)
-  {
-    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
-    msg.enableLiftPower.enable = true;
-    Anki::Cozmo::RTIP::SendMessage(msg);
-  }
-  else if (mode != RobotInterface::FTM_None && newMode == RobotInterface::FTM_None)
-  {
-    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
-    msg.enableLiftPower.enable = false;
-    Anki::Cozmo::RTIP::SendMessage(msg);
-  }
   
   // Do cleanup on current mode
   switch (mode)
   {
-    case RobotInterface::FTM_entry:
-    case RobotInterface::FTM_menus:
-    case RobotInterface::FTM_WiFiInfo:
-    case RobotInterface::FTM_StateMenu:
-    case RobotInterface::FTM_BLE_Menu:
+    case RobotInterface::FTM_None:
     {
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-      msg.enableLiftPower.enable = true;
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
+      msg.enableTestStateMessage.enable = true;
       Anki::Cozmo::RTIP::SendMessage(msg);
-      break;
-    }
-    // #if FACTORY_FIRMWARE
-    case RobotInterface::FTM_cubeTest:
-    {
-      RTIP::HookWifi(NULL);
-      break;
-    }
-    // #endif
-    case RobotInterface::FTM_motorLifeTest:
-    {
-      msg.tag = RobotInterface::EngineToRobot::Tag_stop;
-      RTIP::SendMessage(msg);
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
+      msg.enableLiftPower.enable = false;
+      bool rslt = Anki::Cozmo::RTIP::SendMessage(msg);
+      os_printf("Lift power %x %x\r\n", msg.enableLiftPower.enable, rslt);
       break;
     }
     default:
@@ -480,52 +301,16 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
   // Do entry to new mode
   switch (newMode)
   {
-    case RobotInterface::FTM_entry:
+    case RobotInterface::FTM_None:
     {
-      lastExecTime = system_get_time();
-      break;
-    }
-    case RobotInterface::FTM_menus:
-    case RobotInterface::FTM_WiFiInfo:
-    case RobotInterface::FTM_StateMenu:
-    case RobotInterface::FTM_BLE_Menu:
-    {
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
+      msg.enableTestStateMessage.enable = false;
+      Anki::Cozmo::RTIP::SendMessage(msg);
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-      msg.enableLiftPower.enable = false;
-      Anki::Cozmo::RTIP::SendMessage(msg);
+      msg.enableLiftPower.enable = true;
+      bool rslt = Anki::Cozmo::RTIP::SendMessage(msg);
+      os_printf("Lift power %x %x\r\n", msg.enableLiftPower.enable, rslt);
       break;
-    }
-    case RobotInterface::FTM_BLE_On:
-    {
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_BLUETOOTH_OPERATING_MODE;
-      Anki::Cozmo::RTIP::SendMessage(msg);
-      break;
-    }
-    case RobotInterface::FTM_BLE_Off:
-    {
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_ACCESSORY_OPERATING_MODE;
-      Anki::Cozmo::RTIP::SendMessage(msg);
-      break;
-    }
-    #if FACTORY_FIRMWARE
-    case RobotInterface::FTM_cubeTest:
-    {
-      RTIP::HookWifi(cubeMessageHook);
-      break;
-    }
-    case RobotInterface::FTM_PlayPenTest:
-    {
-      // Create config for test fixture open AP
-      struct softap_config ap_config;
-      wifi_softap_get_config(&ap_config);
-      os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-      os_sprintf((char*)ap_config.ssid, "Afix%02d", param);
-      ap_config.authmode = AUTH_OPEN;
-      ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-      ap_config.beacon_interval = 100;
-      wifi_softap_set_config_current(&ap_config);
     }
     case RobotInterface::FTM_Off:
     {
@@ -533,12 +318,10 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
       msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
       RTIP::SendMessage(msg);
-      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
-      msg.setBodyRadioMode.radioMode = RobotInterface::BODY_IDLE_OPERATING_MODE;
-      RTIP::SendMessage(msg);
-      WiFiConfiguration::Off(false);
+      // TODO Send power off message to body
+      // WiFiConfiguration::Off(false);
+      break;
     }
-    #endif
     default:
     {
       // Nothing to do
@@ -553,7 +336,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
 void Process_EnterFactoryTestMode(const RobotInterface::EnterFactoryTestMode& msg)
 {
   modeTimeout = 0xFFFFffff; // Disable timeout
-  SetMode(msg.mode);
+  SetMode(msg.mode, msg.param);
 }
 
 } // Factory

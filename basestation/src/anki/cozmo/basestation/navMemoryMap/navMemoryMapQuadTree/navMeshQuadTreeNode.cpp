@@ -81,12 +81,6 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::AddQuad(const Quad2f &quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
-  // we need to subdivide or fit within the given quad, since this implementation doesn't keep partial
-  // info within nodes, that's what subquads would be for.
-  ASSERT_NAMED( CanSubdivide() ||
-                ( FLT_LE(_sideLen,(quad.GetMaxX()-quad.GetMinX())) && (FLT_LE(_sideLen,quad.GetMaxY()-quad.GetMinY())) ),
-                "NavMeshQuadTreeNode.AddQuad.InputQuadTooSmall");
-
   // if we won't gain any new info, no need to process
   const bool isSameInfo = _content == detectedContent;
   if ( isSameInfo ) {

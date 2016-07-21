@@ -134,6 +134,8 @@ public interface IRobot : IDisposable {
 
   void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams);
 
+  void DriveHead(float speed_radps);
+
   void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps);
 
   void PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);

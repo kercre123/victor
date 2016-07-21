@@ -73,6 +73,7 @@ namespace Anki.Debug {
     private DebugConsolePane _ConsolePane;
 
     public DebugConsolePane ConsolePane { set { _ConsolePane = value; } }
+    public event Action<string> DebugConsoleVarUpdated;
 
     private void HandleInitDebugConsoleVar(Anki.Cozmo.ExternalInterface.InitDebugConsoleVarMessage message) {
       DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", " Recieved Debug Console Init");
@@ -101,6 +102,10 @@ namespace Anki.Debug {
       if (obj is System.Type) {
         useObj = null;
         info = ((System.Type)obj).GetField(varName, bindFlags);
+      }
+      if (info == null) {
+        DAS.Error("Unity.DebugConsole", "Attempted to add nonexistant var: " + varName);
+        return;
       }
 
       if (info.FieldType == typeof(int) || info.FieldType == typeof(uint)) {
@@ -135,6 +140,11 @@ namespace Anki.Debug {
             break;
           }
         }
+      }
+    }
+    public void UnityConsoleDataUpdated(string varName) {
+      if (DebugConsoleVarUpdated != null) {
+        DebugConsoleVarUpdated(varName);
       }
     }
 

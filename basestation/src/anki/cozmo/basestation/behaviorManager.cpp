@@ -44,8 +44,8 @@ static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
   : _robot(robot)
-  
-  , _behaviorFactory(new BehaviorFactory())  
+  , _behaviorFactory(new BehaviorFactory())
+  , _lastChooserSwitchTime(-1.0f)
   , _whiteboard( new AIWhiteboard(robot) )
 {
 }
@@ -408,6 +408,7 @@ Result BehaviorManager::Update()
 void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 {
   if( _currentChooserPtr == newChooser ) {
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.SetBehaviorChooser", "Null behavior chooser. Ignoring set (previous will continue)");
     return;
   }
   
@@ -423,6 +424,9 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 
   _currentChooserPtr = newChooser;
   _currentChooserPtr->OnSelected();
+  
+  // mark the time at which the change happened (this is checked by behaviors)
+  _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   SwitchToNextBehavior();

@@ -49,7 +49,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Waking up Cozmo...
+  m_Text: '#connection.wakingUpCozmo'
   _AllUppercase: 0
   GlowText: 0
 --- !u!222 &22266952

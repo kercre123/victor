@@ -34,7 +34,7 @@ enum TRANSMIT_MODE {
 static int txRxIndex;
 static TRANSMIT_MODE uart_mode;
 
-bool Head::spokenTo = false;
+bool Head::spokenTo;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -141,7 +141,8 @@ void Head::manage() {
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
-
+  Head::spokenTo = false;
+  
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
 }

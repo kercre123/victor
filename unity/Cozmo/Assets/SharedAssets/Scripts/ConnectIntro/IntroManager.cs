@@ -78,7 +78,6 @@ public class IntroManager : MonoBehaviour {
         _SimpleConnectDialogInstance.GetComponent<SimpleConnectDialog>().ConnectionFlowQuit += HandleConnectionFlowQuit;
       }
     });
-
   }
 
   private void HideConnectDialog() {

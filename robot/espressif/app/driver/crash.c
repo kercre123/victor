@@ -292,6 +292,13 @@ uint32_t ICACHE_FLASH_ATTR getSerialNumber(void)
   return factoryData[0];
 }
 
+uint32_t ICACHE_FLASH_ATTR getSSIDNumber(void)
+{
+  const uint32_t sn = getSerialNumber();
+  const uint32_t fix = sn >> 24;
+  return (((sn & 0x00FF0000) ^ (fix << 16)) & 0x77) | ((sn & 0x0000FF00) ^ (fix << 8)) | ((sn & 0x000000FF) ^ fix);
+}
+
 uint16_t ICACHE_FLASH_ATTR getModelNumber(void)
 {
   return factoryData[1] & 0xffff;

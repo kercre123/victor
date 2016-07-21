@@ -226,10 +226,13 @@ void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag face
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if(AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+  if(!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                      "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
+    DirectDriveCheckSpeedAndLockTracks(ABS(msg.lwheel_speed_mmps) + ABS(msg.rwheel_speed_mmps),
+                                       _drivingWheels,
+                                       (u8)AnimTrackFlag::BODY_TRACK);
     _robot.SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
                                                          msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
   }
@@ -238,25 +241,30 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpeed& msg)
 {
-  
-  f32 turnSpeed = msg.speed_rad_per_sec;
-  if (std::fabsf(turnSpeed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
-    PRINT_NAMED_WARNING("MovementComponent.EventHandler.TurnInPlaceAtSpeed.SpeedExceedsLimit",
-                        "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
-                        RAD_TO_DEG_F32(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-    turnSpeed = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, turnSpeed);
+  if(!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed.WheelsLocked",
+                     "Ignoring ExternalInterface::TurnInPlaceAtSpeed while wheels are locked.");
+  } else {
+    f32 turnSpeed = msg.speed_rad_per_sec;
+    if (std::fabsf(turnSpeed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+      PRINT_NAMED_WARNING("MovementComponent.EventHandler.TurnInPlaceAtSpeed.SpeedExceedsLimit",
+                          "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
+                          RAD_TO_DEG_F32(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+      turnSpeed = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, turnSpeed);
+    }
+    DirectDriveCheckSpeedAndLockTracks(turnSpeed, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK);
+    _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(turnSpeed, msg.accel_rad_per_sec2);
   }
-  
-  _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(turnSpeed, msg.accel_rad_per_sec2);
 }
 
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if(AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
+  if(!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                      "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
+    DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec, _drivingHead, (u8)AnimTrackFlag::HEAD_TRACK);
     _robot.SendRobotMessage<RobotInterface::MoveHead>(msg.speed_rad_per_sec);
   }
 }
@@ -264,10 +272,11 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if(AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
+  if(!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
+    DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec, _drivingLift, (u8)AnimTrackFlag::LIFT_TRACK);
     _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
   }
 }
@@ -276,6 +285,26 @@ template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
   StopAllMotors();
+}
+
+void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks)
+{
+  if(NEAR_ZERO(speed))
+  {
+    flag = false;
+    if(AreAllTracksLocked(tracks))
+    {
+      UnlockTracks(tracks);
+    }
+  }
+  else
+  {
+    flag = true;
+    if(!AreAllTracksLocked(tracks))
+    {
+      LockTracks(tracks);
+    }
+  }
 }
   
 // =========== Motor commands ============

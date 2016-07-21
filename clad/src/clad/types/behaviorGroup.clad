@@ -13,14 +13,15 @@ enum uint_8 BehaviorGroup {
     AffectsBlocks,
     MiniGame,
     RequestSpeedTap,
-    RequestSimon,
+    RequestMemoryMatch,
+    RequestKeepAway,
     RequestCubePounce,
     RequestFaceEnroll,
     Unlock_CubeRoll,
 
     // Freeplay
     FreeplayOne,      // this is a temp goal with the old behaviors from freeplay. Placeholder for games before turning into proper goals
-    FreeplayExplore,  // this will be the new exploration goal
+    FreeplayHiking,  // this will be the new exploration goal
 
     Demo,
     DemoFingerPounce,
@@ -30,6 +31,8 @@ enum uint_8 BehaviorGroup {
 
     SparksRollCube,
     SparksStackCube,
+    SparksPounceOnMotion,
+    SparksPopAWheelie,
     
     Count
 }

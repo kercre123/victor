@@ -30,7 +30,7 @@ MonoBehaviour:
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:
-      Key: minigame.difficulty.easy
+      Key: simonGame.mode.vs
     DifficultyDescription:
       Key: simonGame.howToPlay
     LockedDifficultyDescription:
@@ -42,7 +42,7 @@ MonoBehaviour:
       _AssetDataName: SimonHowToPlayAnimation
   - DifficultyId: 1
     DifficultyName:
-      Key: minigame.difficulty.hard
+      Key: simonGame.mode.solo
     DifficultyDescription:
       Key: simonGame.howToPlay
     LockedDifficultyDescription:

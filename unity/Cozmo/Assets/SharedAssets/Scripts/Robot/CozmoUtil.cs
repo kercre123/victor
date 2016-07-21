@@ -31,4 +31,31 @@ public static class CozmoUtil {
   public const float kIdealBlockViewHeadValue = -0.7f;
   public const float kIdealBlockViewHeadValueWithoutLift = -0.9f;
   public const float kIdealFaceViewHeadValue = 0.5f;
+
+  /// <summary>
+  /// Checks whether the edge of the observed object is at the desired distance to the input position, within specified tolerance 
+  /// </summary>
+  public static bool ObjectEdgeWithinXYTolerance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm, float distanceTolerance_mm) {
+    // Update the desired distance to include the half size of the object. Using the X axis size because for now our objects are symmetrical
+    float updatedDesiredDist_mm = desiredDistance_mm + (obsObject.Size.x * 0.5f);
+    float desiredMax_mm = (updatedDesiredDist_mm + distanceTolerance_mm);
+    float desiredMaxSqr_mm = desiredMax_mm * desiredMax_mm;
+    float desiredMin_mm = (updatedDesiredDist_mm - distanceTolerance_mm);
+    float desiredMinSqr_mm = desiredMin_mm * desiredMin_mm;
+
+    Vector3 posDifference = obsObject.WorldPosition - basePosition;
+    posDifference.z = 0.0f;
+    float actualSqr_mm = posDifference.sqrMagnitude;
+
+    return (actualSqr_mm > desiredMinSqr_mm && actualSqr_mm < desiredMaxSqr_mm);
+  }
+
+  /// <summary>
+  /// Checks whether the XY vector from base to target positions is aligned with the specified world base direction, within specified angle
+  /// </summary>
+  public static bool PointWithinXYAngleTolerance(Vector3 basePosition, Vector3 targetPosition, float baseDirection_deg, float angleTolerance_deg) {
+    float actualAngle_deg = Mathf.Rad2Deg * Mathf.Atan2(targetPosition.y - basePosition.y, targetPosition.x - basePosition.x);
+    float actualDiff_deg = Mathf.Abs(Mathf.DeltaAngle(baseDirection_deg, actualAngle_deg));
+    return (actualDiff_deg <= angleTolerance_deg);
+  }
 }

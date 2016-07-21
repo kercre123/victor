@@ -136,9 +136,6 @@ sint8 clientInit()
 
 bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
 {
-  #if FACTORY_FIRMWARE
-    if (hasFactoryLockout() && (msgID != 0xEF)) return true; // Only send OTA message if locked out
-  #endif
   if (likely(clientConnected()))
   {
     if (unlikely(reliable))
@@ -238,11 +235,5 @@ void ProcessMessage(u8* buffer, u16 bufferSize);
 
 void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* conn)
 {
-  #if FACTORY_FIRMWARE
-    if (hasFactoryLockout())
-    {
-      if (buffer[0] != 0xAF) return; // Only allow OTA messages
-    }
-  #endif
   ProcessMessage(buffer, bufferSize);
 }

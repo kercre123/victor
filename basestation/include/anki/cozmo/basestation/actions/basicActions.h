@@ -432,7 +432,6 @@ namespace Cozmo {
       bool                       _headTrackWhenDone;
       bool                       _doRefinedTurn = true;
       f32                        _refinedTurnAngleTol_rad = DEG_TO_RAD_F32(5);
-      const f32                  kRefinedTurnAccel_radPerSec2 = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
       
     }; // TurnTowardsObjectAction
     

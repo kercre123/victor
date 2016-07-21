@@ -189,7 +189,7 @@
 
 // TRUE if x - tolerance <= y
 #ifndef FLT_LE
-#define FLT_LE(x,y) ((x) >= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
+#define FLT_LE(x,y) ((x) <= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
 #endif
 
 // TRUE if val is within the range [minVal, maxVal], else FALSE

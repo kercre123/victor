@@ -38,11 +38,11 @@
     },
     {
       "CladEvent": "CubePounceFake",
-      "AnimName": "cubePounce_Fake"
+      "AnimName": "ag_keepaway_fakeout"
     },
     {
       "CladEvent": "CubePounceLoseHand",
-      "AnimName": "cubePounce_LoseHand"
+      "AnimName": "ag_keepaway_losehand"
     },
     {
       "CladEvent": "CubePounceLoseRound",
@@ -50,15 +50,15 @@
     },
     {
       "CladEvent": "CubePounceLoseSession",
-      "AnimName": "cubePounce_LoseSession"
+      "AnimName": "ag_keepaway_losegame"
     },
     {
       "CladEvent": "CubePouncePounce",
-      "AnimName": "cubePounce_Pounce"
+      "AnimName": "ag_keepaway_pounce"
     },
     {
       "CladEvent": "CubePounceWinHand",
-      "AnimName": "cubePounce_WinHand"
+      "AnimName": "ag_keepaway_winhand"
     },
     {
       "CladEvent": "CubePounceWinRound",
@@ -66,7 +66,15 @@
     },
     {
       "CladEvent": "CubePounceWinSession",
-      "AnimName": "cubePounce_WinSession"
+      "AnimName": "ag_keepaway_wingame"
+    },
+    {
+      "CladEvent": "CubePounceGetIn",
+      "AnimName": "ag_keepaway_getin"
+    },
+    {
+      "CladEvent": "CubePounceGetOut",
+      "AnimName": "ag_keepaway_getout"
     },
     {
       "CladEvent": "DemoOnSawNewNamedFace",
@@ -377,35 +385,100 @@
       "AnimName": "ag_RequestGameDriveFail"
     },
     {
-      "CladEvent": "RequestGameGenericDeny0",
+      "CladEvent": "RequestGameSpeedTapDeny0",
       "AnimName": "requestGame_speedTap_deny"
     },
     {
-      "CladEvent": "RequestGameGenericDeny1",
+      "CladEvent": "RequestGameSpeedTapDeny1",
       "AnimName": "requestGame_speedTap_deny"
     },
     {
-      "CladEvent": "RequestGameGenericInitial0",
+      "CladEvent": "RequestGameSpeedTapInitial0",
       "AnimName": "requestGame_speedTap_initial"
     },
     {
-      "CladEvent": "RequestGameGenericInitial1",
+      "CladEvent": "RequestGameSpeedTapInitial1",
       "AnimName": "requestGame_speedTap_initial"
     },
     {
-      "CladEvent": "RequestGameGenericPreDrive0",
+      "CladEvent": "RequestGameSpeedTapPreDrive0",
       "AnimName": "requestGame_speedTap_predrive"
     },
     {
-      "CladEvent": "RequestGameGenericPreDrive1",
+      "CladEvent": "RequestGameSpeedTapPreDrive1",
       "AnimName": "requestGame_speedTap_predrive"
     },
     {
-      "CladEvent": "RequestGameGenericRequest0",
+      "CladEvent": "RequestGameSpeedTapRequest0",
       "AnimName": "requestGame_speedTap_request"
     },
     {
-      "CladEvent": "RequestGameGenericRequest1",
+      "CladEvent": "RequestGameSpeedTapRequest1",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayDeny0",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayDeny1",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayInitial0",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayInitial1",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayPreDrive0",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayPreDrive1",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayRequest0",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayRequest1",
+      "AnimName": "requestGame_speedTap_request"
+    },
+
+    {
+      "CladEvent": "RequestGameMemoryMatchDeny0",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchDeny1",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchInitial0",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchInitial1",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchPreDrive0",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchPreDrive1",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchRequest0",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchRequest1",
       "AnimName": "requestGame_speedTap_request"
     },
     {
@@ -507,6 +580,10 @@
     {
       "CladEvent": "StartSleeping",
       "AnimName": "ag_startSleeping"
+    },
+    {
+      "CladEvent": "SuccessfulWheelie",
+      "AnimName": "ag_reacttocliff_wheelie_01"
     },
     {
       "CladEvent": "Surprise",

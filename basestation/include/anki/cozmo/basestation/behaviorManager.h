@@ -96,6 +96,9 @@ public:
   // Set the current IBehaviorChooser. Note this results in the destruction of the current IBehaviorChooser
   // (if there is one) and the IBehaviors it contains
   void SetBehaviorChooser(IBehaviorChooser* newChooser);
+  
+  // returns last time we changerd behavior chooser
+  float GetLastBehaviorChooserSwitchTime() const { return _lastChooserSwitchTime; }
     
   // Returns nullptr if there is no current behavior
   const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
@@ -201,6 +204,9 @@ private:
   // list of behaviors that fire automatically as reactions to events
   std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
   bool                               _reactionsEnabled = true;
+  
+  // time at which last chooser was selected
+  float _lastChooserSwitchTime;
 
   // - - - - - - - - - - - - - - -
   // others/shared

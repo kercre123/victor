@@ -10,8 +10,9 @@ namespace Cozmo {
 enum uint_8 BehaviorGameFlag {
   NoGame     = 0,   // flag for none of the following
   SpeedTap   = 0x01,
-  Simon      = 0x02,
+  MemoryMatch= 0x02,
   CubePounce = 0x04,
+  KeepAway   = 0x05,
 
   All = 0xff
 }

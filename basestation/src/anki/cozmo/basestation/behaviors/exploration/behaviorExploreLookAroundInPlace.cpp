@@ -37,6 +37,7 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
 , _configParams{}
 , _iterationStartingBodyFacing_rad(0.0f)
 , _behaviorBodyFacingDone_rad(0.0f)
+, _coneSidesReached(0)
 , _mainTurnDirection(EClockDirection::CW)
 , _s4HeadMovesRolled(0)
 , _s4HeadMovesLeft(0)
@@ -80,18 +81,17 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
   bool nearRecentLocation = false;
   for( const auto& recentLocation : _visitedLocations )
   {
-    // if this location is from a different origin simply ignore it
-    const bool sharesOrigin = (&recentLocation.FindOrigin()) == (&robot.GetPose().FindOrigin());
-    if ( !sharesOrigin ) {
-      continue;
-    }
-
-    // if close to any recent location, flag
-    const float distSQ = (robot.GetPose().GetTranslation() - recentLocation.GetTranslation()).LengthSq();
-    const float maxDistSq = _configParams.behavior_DistanceFromRecentLocationMin_mm*_configParams.behavior_DistanceFromRecentLocationMin_mm;
-    if ( distSQ < maxDistSq ) {
-      nearRecentLocation = true;
-      break;
+    // check distance to recent location (if can wrt robot)
+    Pose3d distancePose;
+    if( recentLocation.GetWithRespectTo(robot.GetPose(), distancePose) )
+    {
+      // if close to any recent location, flag
+      const float distSQ = distancePose.GetTranslation().LengthSq();
+      const float maxDistSq = _configParams.behavior_DistanceFromRecentLocationMin_mm*_configParams.behavior_DistanceFromRecentLocationMin_mm;
+      if ( distSQ < maxDistSq ) {
+        nearRecentLocation = true;
+        break;
+      }
     }
   }
 
@@ -104,13 +104,19 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
 void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = "BehaviorExploreLookAroundInPlace.LoadConfig";
+  const std::string& debugName = GetName() + ".BehaviorExploreLookAroundInPlace.LoadConfig";
 
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax", debugName);
   _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection", debugName);
   _configParams.behavior_ShouldLowerLift = ParseBool(config, "behavior_ShouldLowerLift", debugName);
   _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg", debugName);
+  // scans before stop (only if there's an angle of focus)
+  if ( !Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg) ) {
+    _configParams.behavior_NumberOfScansBeforeStop = ParseUint8(config, "behavior_NumberOfScansBeforeStop", debugName);
+  } else {
+    _configParams.behavior_NumberOfScansBeforeStop = 0;
+  }
   // turn speed
   _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
   _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec", debugName);
@@ -156,8 +162,11 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
 {
+  PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(), "Starting first iteration");
+  
   // grab run values
   _behaviorBodyFacingDone_rad = 0;
+  _coneSidesReached = 0;
   
   if( _configParams.behavior_ShouldResetTurnDirection ) {
     DecideTurnDirection();
@@ -219,21 +228,6 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 
   // cache iteration values
   _iterationStartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
-  
-  // If we have the parameter set for an angle to focus on
-  if (!Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg))
-  {
-    const float angleDiff_deg = (_iterationStartingBodyFacing_rad - _initialBodyDirection).getDegrees() * GetTurnSign(_mainTurnDirection);
-    
-    if (angleDiff_deg >= _configParams.behavior_AngleOfFocus_deg * 0.5f)
-    {
-      // We've hit (or gone past) the edge of the cone, so turn the other direction
-      _mainTurnDirection = GetOpposite(_mainTurnDirection);
-      
-      // When we have a cone we're staying inside of, we never finish a location, so reset our counter
-      _behaviorBodyFacingDone_rad = 0.f;
-    }
-  }
   
   // create turn action for this state
   const EClockDirection turnDir = GetOpposite(_mainTurnDirection);
@@ -415,15 +409,53 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
                         GetTurnSign(_mainTurnDirection));
   }
 
-  // while not completed a whole turn start another iteration
-  if ( fabsf(_behaviorBodyFacingDone_rad) < 2*PI )
+  // check if we are done
+  bool startAnotherIteration = true;
+  
+  // if we have a cone of focus
+  const bool hasConeOfFocus = !Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg);
+  if ( hasConeOfFocus )
   {
+    // check if we have reached one side of the cone
+    const Radians curBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+    const float angleDiff_deg = (curBodyDirection - _initialBodyDirection).getDegrees() * GetTurnSign(_mainTurnDirection);
+    const bool reachedConeSide = angleDiff_deg >= _configParams.behavior_AngleOfFocus_deg * 0.5f;
+    if ( reachedConeSide )
+    {
+      // we did reach a side, note it down
+      ++_coneSidesReached; // can overflow in infinite loops, but should not be an issue
+      PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Reached cone side %d", _coneSidesReached);
+      
+      // bounce if we are asked infinite scans or if we have not reached the desired number
+      const bool bounce = (_configParams.behavior_NumberOfScansBeforeStop == 0) ||
+                          ( (_coneSidesReached/2) < _configParams.behavior_NumberOfScansBeforeStop);
+      if ( bounce ) {
+        // change direction and flag to start another iteration
+        _mainTurnDirection = GetOpposite(_mainTurnDirection);
+      } else {
+        // we don't want to bounce anymore, do not start another iteration
+        startAnotherIteration = false;
+      }
+    }
+  }
+  else
+  {
+    // no cone of focus
+    // while not completed a whole turn start another iteration
+    const bool hasDone360 = fabsf(_behaviorBodyFacingDone_rad) >= 2*PI;
+    startAnotherIteration = !hasDone360;
+  }
+  
+  // act depending on whether we have to do another iteration or not
+  if ( startAnotherIteration )
+  {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Starting another iteration");
     TransitionToS1_OppositeTurn(robot);
   }
   else
   {
-    // we have finished a location by iterating more than 360 degrees, note down as recent location
-    // make room if necessary
+    PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Done (reached max iterations)");
+    // we have finished at this location, note down as recent location (make room if necessary)
     if ( _visitedLocations.size() >= _configParams.behavior_RecentLocationsMax ) {
       assert( !_visitedLocations.empty() ); // otherwise the limit of locations is 0, so the behavior would run forever
       _visitedLocations.pop_front();
@@ -432,6 +464,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
     // note down this location so that we don't do it again in the same place
     _visitedLocations.emplace_back( robot.GetPose() );
   }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

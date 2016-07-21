@@ -23,8 +23,4 @@ void backgroundTaskOnConnect(void);
 /// Callback for client disconnect events
 void backgroundTaskOnDisconnect(void);
 
-#if FACTORY_FIRMWARE
-void backgroundTaskNVInitDone(void);
-#endif
-
 #endif

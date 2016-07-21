@@ -1125,7 +1125,7 @@ namespace Anki {
             // If we need to refine the turn just reset this action, set appropriate variables, and re-init
             Reset(false);
             ShouldDoRefinedTurn(false);
-            SetMaxPanSpeed(kRefinedTurnAccel_radPerSec2);
+            SetMaxPanSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
             SetPanTolerance(_refinedTurnAngleTol_rad);
             
             ActionResult res = Init();

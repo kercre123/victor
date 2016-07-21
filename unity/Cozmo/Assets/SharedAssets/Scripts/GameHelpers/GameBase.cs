@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -53,6 +53,7 @@ public abstract class GameBase : MonoBehaviour {
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
   private bool _WonChallenge;
+  protected bool _ShowScoreboardOnComplete = true;
 
   private List<DifficultySelectOptionData> _DifficultyOptions;
 
@@ -147,7 +148,7 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
       _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
         newView.Initialize(_ChallengeData);
-        SetupView(newView, _ChallengeData);
+        InitializeMinigameView(newView, _ChallengeData);
 
         if (OnSharedMinigameViewInitialized != null) {
           OnSharedMinigameViewInitialized(newView);
@@ -158,7 +159,7 @@ public abstract class GameBase : MonoBehaviour {
     });
   }
 
-  private void SetupView(SharedMinigameView newView, ChallengeData data) {
+  private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
@@ -218,13 +219,23 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
 
-    Initialize(_ChallengeData.MinigameConfig);
-    InitializeView(_SharedMinigameViewInstance, _ChallengeData);
+    InitializeGame(_ChallengeData.MinigameConfig);
+    SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }
 
-  protected abstract void Initialize(MinigameConfigBase minigameConfigData);
+  /// <summary>
+  /// Called after Cozmo is "Ready". At this point the SharedMinigameView has already been instantiated.
+  /// Use this method to initialize the state machine.
+  /// </summary>
+  /// <param name="minigameConfigData">Minigame config data.</param>
+  protected abstract void InitializeGame(MinigameConfigBase minigameConfigData);
 
-  protected virtual void InitializeView(SharedMinigameView newView, ChallengeData data) {
+  /// <summary>
+  /// Called after Cozmo is "Ready". At this point the SharedMinigameView has already been instantiated.
+  /// Use this method to initialize the SharedMinigameView.
+  /// </summary>
+  /// <param name="minigameConfigData">Minigame config data.</param>
+  protected virtual void SetupViewAfterCozmoReady(SharedMinigameView newView, ChallengeData data) {
   }
 
   #endregion
@@ -259,9 +270,14 @@ public abstract class GameBase : MonoBehaviour {
   #region Scoring
 
   // Score in the Current Round
+  [HideInInspector]
   public int CozmoScore;
+
+  [HideInInspector]
   public int PlayerScore;
+
   // Points needed to win Round
+  [HideInInspector]
   public int MaxScorePerRound;
 
   public void ResetScore() {
@@ -271,20 +287,25 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Add any effects for Scoring Points here to propogate to all minigames for consistency
-  public virtual void AddCozmoPoint() {
+  public void AddCozmoPoint() {
     CozmoScore++;
   }
 
-  public virtual void AddPlayerPoint() {
+  public void AddPlayerPoint() {
     PlayerScore++;
   }
 
   // Number of Rounds Won this Game
+  [HideInInspector]
   public int PlayerRoundsWon;
+
+  [HideInInspector]
   public int CozmoRoundsWon;
 
   // Total number of Rounds in this Game
+  [HideInInspector]
   public int TotalRounds;
+
   // Number of Rounds Played this Game
   public int RoundsPlayed {
     get {
@@ -350,7 +371,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
-  public virtual void HandleGameEnd() {
+  public void HandleGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
     bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
 
@@ -497,40 +518,40 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Minigame Exit
 
-  protected virtual void RaiseMiniGameQuit() {
+  protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
     DAS.Event(DASConstants.Game.kQuit, null);
+    SendCustomEndGameDasEvents();
 
     QuitMinigame();
   }
 
-  public void RaiseMiniGameWin(string subtitleText = null) {
+  protected virtual void SendCustomEndGameDasEvents() {
+    // Implement in subclasses if desired
+  }
+
+  public void RaiseMiniGameWin() {
     _StateMachine.Stop();
     _WonChallenge = true;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
-
-    UpdateScoreboard(didPlayerWin: _WonChallenge);
-
-    if (string.IsNullOrEmpty(subtitleText)) {
-      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    if (_ShowScoreboardOnComplete) {
+      UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
-    OpenChallengeEndedDialog(subtitleText);
+    ShowWinnerState();
   }
 
-  public void RaiseMiniGameLose(string subtitleText = null) {
+  public void RaiseMiniGameLose() {
     _StateMachine.Stop();
     _WonChallenge = false;
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
-
-    UpdateScoreboard(didPlayerWin: _WonChallenge);
-
-    if (string.IsNullOrEmpty(subtitleText)) {
-      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    if (_ShowScoreboardOnComplete) {
+      UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
-    OpenChallengeEndedDialog(subtitleText);
+
+    ShowWinnerState();
   }
 
   private void UpdateScoreboard(bool didPlayerWin) {
@@ -542,11 +563,8 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  private void OpenChallengeEndedDialog(string subtitleText = null) {
+  protected virtual void ShowWinnerState() {
     _SharedMinigameViewInstance.CloseHowToPlayView();
-
-    // Open confirmation dialog instead
-    _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
 
     SoftEndGameRobotReset();
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
@@ -573,7 +591,8 @@ public abstract class GameBase : MonoBehaviour {
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),
         Color.gray,
         "game_results_continue_button");
-
+      string subtitleText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+      _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
       _ChallengeEndViewInstance.DisplayRewards();
     }
     else {
@@ -853,14 +872,14 @@ public abstract class GameBase : MonoBehaviour {
     HandleRobotInterruptionEventStarted();
   }
 
-  protected virtual void HandleRobotInterruptionEventStarted() {
+  protected void HandleRobotInterruptionEventStarted() {
     DeregisterInterruptionStartedEvents();
     RegisterInterruptionEndedEvents();
 
     PauseStateMachine();
   }
 
-  protected virtual void HandleRobotInterruptionEventEnded(object messageObject) {
+  protected void HandleRobotInterruptionEventEnded(object messageObject) {
     DeregisterInterruptionEndedEvents();
     RegisterInterruptionStartedEvents();
 

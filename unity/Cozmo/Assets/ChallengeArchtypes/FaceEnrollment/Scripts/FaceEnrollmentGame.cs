@@ -44,15 +44,15 @@ namespace FaceEnrollment {
       _UseFixedFaceID = true;
     }
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
     }
 
-    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
-      base.InitializeView(newView, data);
+    protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
+      base.SetupViewAfterCozmoReady(newView, data);
       ShowFaceListSlide(newView);
     }
 

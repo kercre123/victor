@@ -134,7 +134,10 @@ namespace Cozmo.HomeHub {
           ProceduralEyeParameters.MakeDefaultLeftEye(),
           ProceduralEyeParameters.MakeDefaultRightEye());
 
-        robot.SetEnableFreeplayBehaviorChooser(true);
+        if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
+          robot.SetEnableFreeplayBehaviorChooser(true);
+        }
+
         DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
       }
     }

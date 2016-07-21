@@ -101,7 +101,7 @@ And the mome raths outgrabe.""".encode()
         elif tag not in self.pendingOps or self.pendingOps[tag][1] != "read":
             sys.stderr.write("Received unexpected nvData: tag = {:x} ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), bytes(msg.blob.blob).decode(errors="ignore")[:100], linesep=os.linesep))
         else:
-            sys.stdout.write("Pending read of {:x} returned ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), bytes(msg.blob.blob).decode(errors="ignore"), linesep=os.linesep))
+            sys.stdout.write("Pending read of {:x} returned ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), ' '.join(('{:2x}'.format(w) for w in msg.blob.blob)), linesep=os.linesep))
             if self.pendingOps[tag][2]:
                 open("{:x}.nvstorage".format(tag), 'wb').write(bytes(msg.blob.blob))
             del self.pendingOps[tag]
@@ -253,7 +253,12 @@ And the mome raths outgrabe.""".encode()
         
     def test_wipeAll(self):
         to = Anki.Cozmo.NVStorage.NVReportDest.ENGINE
-        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, True, "Yes I really want to do this!")))
+        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, 2, True, True, "Yes I really want to do this!")))
+        time.sleep(30)
+    
+    def test_wipeFac(self):
+        to = Anki.Cozmo.NVStorage.NVReportDest.ENGINE
+        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, 0, True, False, "Yes I really want to do this!")))
         time.sleep(30)
         
     def test_readCameraCalib(self):
@@ -276,6 +281,18 @@ And the mome raths outgrabe.""".encode()
         
     def test_readAllFixture(self):
         self.read(0xC0000000, 0xC000000F)
+        self.waitForPending()
+        
+    def test_writeBirthCertificate(self):
+        dts = time.gmtime()
+        payload = struct.Struct("BBBBBBBBBB").pack(0, 0, 0, 1, dts.tm_year & 0xff, dts.tm_mon, dts.tm_mday, dts.tm_hour, dts.tm_min, dts.tm_sec)
+        self.write(NVS.NVEntryTag.NVEntry_BirthCertificate, payload)
+    
+    def test_eraseBirthCertificate(self):
+        self.erase(NVS.NVEntryTag.NVEntry_BirthCertificate)
+        
+    def test_readIMUCal(self):
+        self.read(0xC0000004)
         self.waitForPending()
 
 if __name__ == "__main__":

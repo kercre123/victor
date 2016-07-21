@@ -603,7 +603,6 @@ namespace Anki {
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition() ||
                 (transitionTime_ > 0 && transitionTime_ < HAL::GetTimeStamp())) {
-              LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
 
               // Send pickup or place message.  Assume success, let BaseStation
               // verify once we've backed out.
@@ -617,9 +616,11 @@ namespace Anki {
                   break;
                 } // PICKUP
 
-                case DA_ROLL_LOW:
                 case DA_DEEP_ROLL_LOW:
+                case DA_ROLL_LOW:
                 {
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                
                   #ifdef SIMULATOR
                   // Prevents lift from attaching to block right after a roll
                   HAL::DisengageGripper();
@@ -641,7 +642,8 @@ namespace Anki {
 
               // Switch to BACKOUT
               StartBackingOut();
-
+              
+              LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
 
             } // if (LiftController::IsInPosition())
             break;
@@ -926,7 +928,7 @@ namespace Anki {
                                const u32 driveDuration_ms,
                                const f32 backupDist_mm)
       {
-        AnkiDebug( 187, "SetRollActionParams", 488, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
+        AnkiDebug( 198, "SetRollActionParams", 506, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
                   liftHeight_mm, driveSpeed_mmps, driveAccel_mmps2, driveDuration_ms, backupDist_mm);
         
         _rollLiftHeight_mm = liftHeight_mm;

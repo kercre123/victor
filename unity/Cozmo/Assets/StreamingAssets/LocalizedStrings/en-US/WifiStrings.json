@@ -1,0 +1,36 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "wifiStrings.Instructions.Slide0": {
+    "translation": "Find and tap on your device's Settings icon"
+  },
+  "wifiStrings.Instructions.Slide1": {
+    "translation": "Select the WiFi section from your settings menu"
+  },
+  "wifiStrings.Instructions.Slide2": {
+    "translation": "Choose <name> from the network list"
+  },
+  "wifiStrings.Instructions.Slide3": {
+    "translation": "Enter the Wifi password if one is shown on your Cozmo"
+  },
+  "wifiStrings.Instructions.Slide4": {
+    "translation": "Exit Settings and tap on your Cozmo app"
+  }
+}

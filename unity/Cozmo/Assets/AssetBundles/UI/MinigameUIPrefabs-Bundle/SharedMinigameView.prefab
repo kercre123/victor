@@ -578,6 +578,7 @@ MonoBehaviour:
     type: 2}
   _DifficultySelectButtonPanelPrefab: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,
     type: 2}
+  _FullScreenGameSlideContainer: {fileID: 22483326}
   _WideGameSlideContainer: {fileID: 22458074}
   _NarrowGameSlideContainer: {fileID: 22421854}
   _InfoTitleLayoutElement: {fileID: 11459216}

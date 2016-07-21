@@ -8,7 +8,7 @@ namespace TreasureHunt {
 
     public Vector2 GoldPosition { get; set; }
 
-    protected override void Initialize(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // TODO
       InitializeMinigameObjects(minigameConfig.NumCubesRequired());
     }
