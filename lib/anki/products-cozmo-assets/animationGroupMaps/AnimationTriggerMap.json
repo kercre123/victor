@@ -134,15 +134,15 @@
     },
     {
       "CladEvent": "DroneModeBackwardDrivingEnd",
-      "AnimName": "ag_explorer_endDriving"
+      "AnimName": "ag_explorer_drvback_end"
     },
     {
       "CladEvent": "DroneModeBackwardDrivingLoop",
-      "AnimName": "ag_explorer_drivingLoop"
+      "AnimName": "ag_explorer_drvback_loop"
     },
     {
       "CladEvent": "DroneModeBackwardDrivingStart",
-      "AnimName": "ag_explorer_startDriving"
+      "AnimName": "ag_explorer_drvback_start"
     },
     {
       "CladEvent": "DroneModeForwardDrivingEnd",
@@ -162,7 +162,7 @@
     },
     {
       "CladEvent": "DroneModeTurboDrivingStart",
-      "AnimName": "ag_explorer_startDriving"
+      "AnimName": "ag_explorer_turbo"
     },
     {
       "CladEvent": "FlipDownFromBack",
@@ -488,7 +488,6 @@
       "CladEvent": "RequestGameKeepAwayRequest1",
       "AnimName": "requestGame_speedTap_request"
     },
-
     {
       "CladEvent": "RequestGameMemoryMatchDeny0",
       "AnimName": "requestGame_speedTap_deny"
