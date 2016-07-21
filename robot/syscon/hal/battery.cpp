@@ -45,6 +45,9 @@ static Fixed vExt;
 static bool isCharging = false;
 static bool disableCharge = true;
 
+static Anki::Cozmo::BodyRadioMode current_operating_mode = -1;
+static Anki::Cozmo::BodyRadioMode active_operating_mode = -1;
+
 // Which pin is currently being used in the ADC mux
 AnalogInput m_pinIndex;
 
@@ -82,6 +85,7 @@ static inline void sendPowerStateUpdate()
   using namespace Anki::Cozmo;
   
   PowerState msg;
+  msg.operatingMode = active_operating_mode;
   msg.VBatFixed = vBat;
   msg.VExtFixed = vExt;
   msg.BodyTemp = Temp::getTemp();
@@ -143,15 +147,12 @@ void Battery::setHeadlight(bool status) {
   }
 }
 
-static Anki::Cozmo::RobotInterface::BodyRadioMode current_operating_mode = -1;
-static Anki::Cozmo::RobotInterface::BodyRadioMode active_operating_mode = -1;
-
-void Battery::setOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
+void Battery::setOperatingMode(Anki::Cozmo::BodyRadioMode mode) {
   current_operating_mode = mode;
 }
 
 void Battery::updateOperatingMode() { 
-  using namespace Anki::Cozmo::RobotInterface;
+  using namespace Anki::Cozmo;
 
   if (active_operating_mode == current_operating_mode) {
     return ;
