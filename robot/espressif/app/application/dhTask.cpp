@@ -45,12 +45,11 @@ bool DiffieHellman::Init()  {
   return true;
 }
 
-
 void DiffieHellman::Start(const uint8_t* local, const uint8_t* remote) {
+  // Restart DH (pairing reset)
   if (state != STATE_IDLE) {
     os_free(task);
     state = STATE_IDLE;
-    return ;
   }
 
   task = reinterpret_cast<DiffieTask*>(os_zalloc(sizeof(DiffieTask)));

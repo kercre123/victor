@@ -761,13 +761,13 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
-      void Process_calculateDiffieHellman(const Anki::Cozmo::CalculateDiffieHellman& msg)
-      {
-        // Handled on the Espressif
-      }
-      void Process_diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg)
+      void Process_diffieHellmanResults(Anki::Cozmo::DiffieHellmanResults const&)
       {
         // Handled on the NRF
+      }
+      void Process_calculateDiffieHellman(Anki::Cozmo::CalculateDiffieHellman const&)
+      {
+        // Handled on the Espressif
       }
       void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
       {
