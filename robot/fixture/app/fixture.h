@@ -123,11 +123,13 @@ u32 GetSerial();
 #define ERROR_CUBE_CANNOT_WRITE     700   // MCU is locked
 #define ERROR_CUBE_NO_COMMUNICATION 701   // MCU is not working (bad crystal?)
 #define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
-#define ERROR_CUBE_TYPE_CHANGE      704   // Cube type (1,2,3) does not match fixture type (1,2,3)
 #define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 
-#define ERROR_CUBE_MISSING_LED      750   // Bad LED
-#define ERROR_CUBE_NO_BOOT          751   // Bad accelometer, MCU, or crystal
+// 710-713
+#define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1,2,3) does not match fixture type (1,2,3)
+
+#define ERROR_CUBE_NO_BOOT          750   // Bad regulator, IMU, or crystal
+#define ERROR_CUBE_MISSING_LED      751   // LED wiring problem
 #define ERROR_CUBE_UNDERPOWER       752   // Bad power regulator
 #define ERROR_CUBE_OVERPOWER        753   // Too much power in active mode
 #define ERROR_CUBE_STANDBY          754   // Too much power in standby mode

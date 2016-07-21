@@ -395,7 +395,7 @@ void ProgramCubeWithSerial()
     // Patch accessory type/model: 0=charger, 1=cube1, etc
     int type = (g_fixtureType - FIXTURE_CHARGER_TEST);
     if (id[4] != 0xff && type != id[4])
-      throw ERROR_CUBE_TYPE_CHANGE;
+      throw ERROR_CUBE_TYPE_CHANGE + (id[4]&7);
     cubeboot[0x3ff4] = type; 
     // Remember how many patches we've already had (to retest finished board)
     cubeboot[0x3ff7] = id[7];   

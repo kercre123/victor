@@ -103,7 +103,6 @@ void GenerateTestTone(void) {
   __disable_irq();
   GPIO_RESET(GPIO_POWEREN, PIN_POWEREN);
   MCG_C1 |= MCG_C1_IREFS_MASK;
-  MicroWait(20000);
   
   // THIS ALL NEEDS TO BE ADJUSTED
   static const int CPU_OLD_CLOCK = 100000000;
@@ -119,16 +118,16 @@ void GenerateTestTone(void) {
 
   DAC::EnableAudio(true);
   for (int g = 0; g < 8; g++) {   
+    // Silence
+    for (int i = 0; i < ticks_per_freq; i++) {
+      DAC_WRITE[next_write_index()] = (int)peak;
+    }
+
     // Tone
     float phase = 0;
     for (int i = 0; i < ticks_per_freq; i++) {
       DAC_WRITE[next_write_index()] = (int)(peak * sinf(phase) + peak);
       phase += freq;
-    }
-
-    // Silence
-    for (int i = 0; i < ticks_per_freq; i++) {
-      DAC_WRITE[next_write_index()] = (int)peak;
     }
 
     // Pitch shift

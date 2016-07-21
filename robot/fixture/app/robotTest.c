@@ -69,6 +69,7 @@ void PlaypenTest(void)
   static bool setRadio = false;
   if (!setRadio)
     SetRadioMode('A');
+  setRadio = true;
 }
 
 extern int g_stepNumber;
@@ -93,15 +94,7 @@ void PlaypenWaitTest(void)
     ConsolePrintf("%d..", current);
     if (current < 2000)
       offContact++;
-    else if (current < BOOTED_CURRENT)
-      restart = 20*4;   // Restart in 4 seconds
     else {
-      if (restart) {
-        g_stepNumber = -1;
-        restart--;      // Each count is about 50ms
-        if (!restart)
-          return;
-      }
       offContact = 0;
     }
     if (offContact > 10)
