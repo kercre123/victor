@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/planning/shared/path.h"
+#include "anki/planning/shared/goalDefs.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/pathMotionProfile.h"
@@ -63,7 +64,7 @@ public:
                                          const std::vector<Pose3d>& targetPoses);
 
   // Utility function to simply select the closest target pose from a vector
-  static size_t ComputeClosestGoalPose(const Pose3d& startPose, const std::vector<Pose3d>& targetPoses);
+  static Planning::GoalID ComputeClosestGoalPose(const Pose3d& startPose, const std::vector<Pose3d>& targetPoses);
 
   // While we are following a path, we can do a more efficient check to see if we need to update that path
   // based on new obstacles or other information. This function assumes that the robot is following the last
@@ -90,7 +91,7 @@ public:
                        const PathMotionProfile* motionProfile = nullptr);
   bool GetCompletePath(const Pose3d& currentRobotPose,
                        Planning::Path &path,
-                       size_t& selectedTargetIndex,
+                       Planning::GoalID& selectedTargetIndex,
                        const PathMotionProfile* motionProfile = nullptr);
 
   // return a test path
@@ -116,7 +117,7 @@ protected:
 
   bool _hasValidPath;
   bool _planningError;
-  size_t _selectedTargetIdx;
+  Planning::GoalID _selectedTargetIdx;
   Planning::Path _path;
   static const int finalPathSegmentSpeed_mmps = 20;
   static const int distToDecelSegLenTolerance_mm = 5;
@@ -126,7 +127,7 @@ protected:
                                         Planning::Path &path);
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                         Planning::Path &path,
-                                        size_t& selectedTargetIndex);
+                                        Planning::GoalID& selectedTargetIndex);
   
   // Modifies in path according to _pathMotionProfile to produce out path.
   // Takes deceleration into account in order to produce a path with smooth deceleration

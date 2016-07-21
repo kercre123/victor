@@ -51,7 +51,7 @@ TEST(MinAnglePlanner, Straight)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -80,7 +80,7 @@ TEST(MinAnglePlanner, Simple)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -111,7 +111,7 @@ TEST(MinAnglePlanner, NoFinalTurn)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -141,7 +141,7 @@ TEST(MinAnglePlanner, StraightAndTurn)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -170,7 +170,7 @@ TEST(MinAnglePlanner, NoBackup)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -200,7 +200,7 @@ TEST(MinAnglePlanner, TurnOnly)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
@@ -228,7 +228,7 @@ TEST(MinAnglePlanner, OldBug)
   EPlannerStatus status = planner->CheckPlanningStatus();
   EXPECT_EQ( status, EPlannerStatus::CompleteWithPlan );
 
-  size_t selectedTargetIdx = 100;
+  Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
   bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);

@@ -13,11 +13,13 @@
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "xythetaPlanner_internal.h"
 #include <assert.h>
 #include <iostream>
+#include <unordered_set>
 
 
 namespace Anki {
@@ -26,6 +28,9 @@ namespace Planning {
 // When doing the soft obstacle goal heuristic expansion, don't do more than this many (to avoid getting stuck
 // in a loop there)
 #define MAX_HEUR_EXPANSIONS 1000
+
+// When doing the soft obstacle goal heuristic expansion, prune goals if they exceed this cost
+#define MAX_COST_HEUR_EXPANSIONS 1000.0f
 
 // When doing the soft obstacle goal heuristic expansion, keep expanding until this many states "escape" the
 // penalty zone
@@ -41,9 +46,19 @@ xythetaPlanner::~xythetaPlanner()
   Util::SafeDelete( _impl );
 }
 
-bool xythetaPlanner::GoalIsValid() const
+bool xythetaPlanner::GoalIsValid(GoalID goalID) const
 {
-  return _impl->GoalIsValid();
+  return _impl->GoalIsValid(goalID);
+}
+
+bool xythetaPlanner::GoalIsValid(const std::pair<GoalID, State_c>& goal_cPair) const
+{
+  return _impl->GoalIsValid(goal_cPair);
+}
+
+bool xythetaPlanner::GoalsAreValid() const
+{
+  return _impl->GoalsAreValid();
 }
 
 bool xythetaPlanner::StartIsValid() const
@@ -88,6 +103,11 @@ Cost xythetaPlanner::GetFinalCost() const
   return _impl->_finalCost;
 }
 
+GoalID xythetaPlanner::GetChosenGoalID() const
+{
+  return _impl->_chosenGoalID;
+}
+
 float xythetaPlanner::GetLastPlanTime() const
 {
   return _impl->_lastPlanTime;
@@ -118,7 +138,7 @@ void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaPlannerContext& context)
   : _context(context)
   , _start(0,0,0)
-  , _goalChanged(false)
+  , _goalsChanged(false)
   , _searchNum(0)
   , _runPlan(nullptr)
   , _lastPlanTime(-1.0)
@@ -127,37 +147,115 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaPlannerContext& context)
   Reset();
 }
 
-bool xythetaPlannerImpl::CheckContextGoal(StateID& goalID, State_c& roundedGoal_c) const
+bool xythetaPlannerImpl::CheckContextGoal(const GoalID& goalID, StateID& goalStateID, State_c& roundedGoal_c) const
 {
-  if( _context.env.IsInCollision( _context.goal ) ) {
-    PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "goal is in collision");
+  for(const auto& goalPair : _context.goals_c) {
+    if(goalPair.first == goalID) {
+      return CheckGoal(goalPair, goalStateID, roundedGoal_c);
+    }
+  }
+  
+  PRINT_NAMED_ERROR("xythetaPlanner.GoalID.Invalid", "invalid goal id %d", (int)goalID);
+  return false;
+}
+
+bool xythetaPlannerImpl::CheckGoal(const std::pair<GoalID,State_c>& goal, StateID& goalStateID, State_c& roundedGoal_c) const
+{
+  const GoalID& goalID = goal.first;
+  const State_c& goal_c = goal.second;
+  
+  if( _context.env.IsInCollision( goal_c ) ) {
+    PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "goal %d is in collision", (int)goalID);
     return false;
   }
 
-  State goal = _context.env.State_c2State( _context.goal );
-  if( _context.env.IsInCollision( goal ) ){
-    if( ! _context.env.RoundSafe( _context.goal, goal ) ) {
-      PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "all possible discrete states of goal are in collision!");
+  State goalState = _context.env.State_c2State( goal_c );
+  if( _context.env.IsInCollision( goalState ) ){
+    if( ! _context.env.RoundSafe( goal_c, goalState ) ) {
+      PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "all possible discrete states of goal %d are in collision!", (int)goalID);
       return false;
     }
-
-    assert( ! _context.env.IsInCollision( goal ) );
+    assert( ! _context.env.IsInCollision( goalState ) );
   }
-
-  goalID = goal.GetStateID();
-
+  goalStateID = goalState.GetStateID();
   // convert back so this is still lined up perfectly with goalID_
-  roundedGoal_c = _context.env.State2State_c(goal);
+  roundedGoal_c = _context.env.State2State_c(goalState);
 
   return true;
 }
 
-bool xythetaPlannerImpl::GoalIsValid() const
+bool xythetaPlannerImpl::CheckContextGoals(GoalStateIDPairs& goalStateIDs,
+                                           GoalState_cPairs& roundedGoals_c) const
+{
+  GoalState_cPairs validGoals_c;
+  validGoals_c.reserve(_context.goals_c.size());
+  
+  for( const auto& goalPair : _context.goals_c ) {
+    if( _context.env.IsInCollision( goalPair.second ) ) {
+      PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "goal %d is in collision", (int)goalPair.first);
+    } else {
+      validGoals_c.push_back(goalPair);
+    }
+  }
+  
+  if (validGoals_c.empty()) {
+    PRINT_NAMED_INFO("xythetaPlanner.Goal.AllInvalid", "all goals were in collision");
+    return false;
+  }
+  
+  goalStateIDs.clear();
+  roundedGoals_c.clear();
+  goalStateIDs.reserve(validGoals_c.size());
+  roundedGoals_c.reserve(validGoals_c.size());
+
+  for( const auto& goalPair : validGoals_c) {
+    const GoalID& goalID = goalPair.first;
+    const State_c& goal_c = goalPair.second;
+    State goal = _context.env.State_c2State( goal_c );
+    if( _context.env.IsInCollision( goal ) ){
+      if( ! _context.env.RoundSafe( goal_c, goal ) ) {
+        PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid",
+                         "all possible discrete states of goal %d are in collision!",
+                         (int)goalID);
+      }
+      assert( ! _context.env.IsInCollision( goal ) );
+      continue;
+    }
+    goalStateIDs.emplace_back(goalID, goal.GetStateID());
+    // convert back so this is still lined up perfectly with goalID_
+    roundedGoals_c.emplace_back(goalID, _context.env.State2State_c(goal));
+  }
+  
+  if(goalStateIDs.empty()) {
+    PRINT_NAMED_INFO("xythetaPlanner.Goal.AllInvalid",
+                     "all possible discrete states of all goals are in collision!");
+    return false;
+  }
+  
+  return true;
+}
+
+bool xythetaPlannerImpl::GoalsAreValid() const
+{
+  GoalStateIDPairs waste1;
+  GoalState_cPairs waste2;
+
+  return CheckContextGoals(waste1, waste2);
+}
+
+bool xythetaPlannerImpl::GoalIsValid(GoalID goalID) const
 {
   StateID waste1;
   State_c waste2;
 
-  return CheckContextGoal(waste1, waste2);
+  return CheckContextGoal(goalID, waste1, waste2);
+}
+bool xythetaPlannerImpl::GoalIsValid(const std::pair<GoalID, State_c>& goal_cPair) const
+{
+  StateID waste1;
+  State_c waste2;
+  
+  return CheckGoal(goal_cPair, waste1, waste2);
 }
 
 bool xythetaPlannerImpl::StartIsValid() const
@@ -201,7 +299,7 @@ void xythetaPlannerImpl::Reset()
   _considerations = 0;
   _collisionChecks = 0;
 
-  _goalChanged = false;
+  _goalsChanged = false;
 
   _finalCost = 0.0f;
 }
@@ -216,35 +314,72 @@ bool xythetaPlannerImpl::NeedsReplan() const
 
 bool xythetaPlannerImpl::InitializeHeuristic()
 {
-  _costOutsideHeurMap = 0.0f;
+  _costOutsideHeurMapPerGoal.clear();
   _heurMap.clear();
+  
+  _costOutsideHeurMapPerGoal.resize(_goalStateIDs.size());
 
-  if( _context.env.IsInSoftCollision( _goalID ) ) {
-    _costOutsideHeurMap = ExpandCollisionStatesFromGoal();
-    PRINT_NAMED_INFO("xythetaPlanner.GoalInSoftCollision.ExpandHeur",
-                     "expanded penalty states near goal. Cost outside map = %f",
-                     _costOutsideHeurMap);
+  // this goes backwards because we want to remove some elements without copying the vector
+  for(int i = static_cast<int>(_goalStateIDs.size())-1; i>=0; --i)
+  {
+    ASSERT_NAMED(_goalStateIDs[i].first == _goals_c[i].first,
+                 "Goals are expected to have matching ids, although not necessariliy be sorted by them");
+    
+    const auto& goalIDPair = _goalStateIDs[i];
+    Cost costOutsideHeurMap = 0.0f;
+    if( _context.env.IsInSoftCollision( goalIDPair.second ) ) {
+      costOutsideHeurMap = ExpandCollisionStatesFromGoal( goalIDPair.second );
+      PRINT_NAMED_INFO("xythetaPlanner.GoalInSoftCollision.ExpandHeur",
+                       "expanded penalty states near goal %d. Cost outside map = %f",
+                       (int)goalIDPair.first,
+                       costOutsideHeurMap);
+    }
+    if( costOutsideHeurMap > MAX_COST_HEUR_EXPANSIONS ) {
+      PRINT_NAMED_WARNING("xythetaPlanner.HeurMap.Fail",
+                          "very high cost of _costOutsideHeurMap = %f, so removing goal %d",
+                          costOutsideHeurMap,
+                          (int)goalIDPair.first);
+      
+      // remove the i-th. we already checked back() (or this is back), so swap with back and pop the new back
+      // things will be out of order, but we don't care at this point
+      std::swap(_goalStateIDs[i], _goalStateIDs.back());
+      _goalStateIDs.pop_back();
+      // same thing for _goals_c
+      std::swap(_goals_c[i], _goals_c.back());
+      _goals_c.pop_back();
+      // same thing for _costOutsideHeurMapPerGoal
+      std::swap(_costOutsideHeurMapPerGoal[i], _costOutsideHeurMapPerGoal.back());
+      _costOutsideHeurMapPerGoal.pop_back();
+    } else {
+      _costOutsideHeurMapPerGoal[i].first = goalIDPair.first;
+      _costOutsideHeurMapPerGoal[i].second = costOutsideHeurMap;
+    }
   }
-
-  if( _costOutsideHeurMap > 1000.0f ) {
-    PRINT_NAMED_WARNING("xythetaPlanner.HuerMap.Fail",
-                        "very high cost of _costOutsideHeurMap = %f, so bailing",
-                        _costOutsideHeurMap);
-    return false;
+  
+  if( ANKI_DEVELOPER_CODE ) {
+    // _goals_c _costOutsideHeurPerGoal and _goalStateIDs should have GoalIDs in matching order
+    size_t len = _goals_c.size();
+    assert(_costOutsideHeurMapPerGoal.size() == len);
+    assert(_goalStateIDs.size() == len);
+    for(size_t i=0; i<len; ++i) {
+      assert(_goals_c[i].first == _costOutsideHeurMapPerGoal[i].first);
+      assert(_goals_c[i].first == _goalStateIDs[i].first);
+    }
   }
-
-  return true;
+  
+  const bool anyGoalsOK = !_goalStateIDs.empty();
+  return anyGoalsOK;
 }
 
-Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
+Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal(const StateID& goalStateID)
 {
-  StateID curr(_goalID);
+  _heurMap[goalStateID] = 0.0f;
   
-  _heurMap.insert(std::make_pair(curr, 0.0f));
+  std::unordered_set<u32> visited;
 
   // use a separate open list to track expansions
   OpenList q;
-  q.insert(curr, 0.0f);
+  q.insert(goalStateID, 0.0f);
 
   unsigned int heurExpansions = 0;
 
@@ -259,7 +394,7 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
     }
 
     Cost c = q.topF();
-    curr = q.pop();
+    StateID curr = q.pop();
 
     if(!_context.env.IsInSoftCollision(curr)) {
       if( numEscapes == 0 ) {
@@ -282,8 +417,12 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
       // actually works, and is helpful at all.
     }
     else {
-      if( _heurMap.find(curr) == _heurMap.end()) {
-        _heurMap.insert( std::make_pair( curr, c ) );
+      auto itHeur = _heurMap.find(curr);
+      if(itHeur == _heurMap.end()) {
+        _heurMap.emplace(curr, c);
+        visited.insert(curr);
+      } else if (c < itHeur->second) {
+        itHeur->second = c;
       }
     }
 
@@ -300,7 +439,7 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
 
       it.Next(_context.env);
 
-      if( _heurMap.find(nextID) != _heurMap.end() ) {
+      if( visited.find(nextID) != visited.end() ) {
         continue;
       }
 
@@ -340,20 +479,29 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
   bool fromScratch = _context.forceReplanFromScratch;
 
   // handle context
-  StateID newGoalID;
-  if( ! CheckContextGoal( newGoalID, _goal_c ) ) {
-    // invalid goal
+  GoalStateIDPairs newGoalIDs;
+  if( ! CheckContextGoals( newGoalIDs, _goals_c ) ) {
+    // all goals invalid
     return false;
   }
 
-  if( newGoalID != _goalID ) {
-    _goalChanged = true;
-    _goalID = newGoalID;
+  if( newGoalIDs != _goalStateIDs ) {
+    _goalsChanged = true;
+    _goalStateIDs = newGoalIDs;
+    
+    // invert the map for seeing if a popped state is a goal
+    _goalState2GoalID.clear();
+    _goalState2GoalID.reserve(newGoalIDs.size());
+    for(const auto& goalPair : newGoalIDs) {
+      _goalState2GoalID[goalPair.second] = goalPair.first;
+    }
 
-    // for now, replan if the goal changes, but this isn't necessary. Instead, we could just re-order the open
+    // for now, replan if any goals change, but this isn't necessary. Instead, we could just re-order the open
     // list and continue as usual
     fromScratch = true;
   }
+  assert(!_goalStateIDs.empty());
+  
 
   State newStart;
   if( ! CheckContextStart( newStart ) ) {
@@ -398,6 +546,8 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
                  0.0);
 
   bool foundGoal = false;
+  GoalID foundGoalID = 0;
+  StateID foundGoalStateID = 0;
   while( !_open.empty() ) {
 
     if( _runPlan && !*_runPlan ) {
@@ -405,11 +555,18 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
     }
 
     StateID sid = _open.pop();
-    if(sid == _goalID) {
+    
+    auto it = _goalState2GoalID.find(sid);
+    if( it != _goalState2GoalID.end() ) {
       foundGoal = true;
+      foundGoalID = it->second;
+      foundGoalStateID = it->first;
+
       _finalCost = _table[sid].g_;
-      PRINT_NAMED_INFO("xythetaPlanner.ExpandGoal", 
-                       "expanded goal! cost = %f",
+      PRINT_NAMED_INFO("xythetaPlanner.ExpandGoal",
+                       "expanded goal %d at state %u! cost = %f",
+                       (int)foundGoalID,
+                       (u32)foundGoalStateID,
                        _finalCost);
       break;
     }
@@ -455,6 +612,8 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
   }
 
   if(foundGoal) {
+    _chosenGoalID = foundGoalID;
+    _chosenGoalStateID = foundGoalStateID;
     BuildPlan();
   }
   else {
@@ -496,8 +655,13 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
     const StateID nextID = it.Front().stateID;
     float newG = it.Front().g;
 
-    if(_context.allowFreeTurnInPlaceAtGoal && currID.s.x == _goalID.s.x && currID.s.y == _goalID.s.y) {
-      newG = currG;
+    if(_context.allowFreeTurnInPlaceAtGoal) {
+      for(const auto& goalPair : _goalStateIDs) {
+        if ((currID.s.x == goalPair.second.s.x) && (currID.s.y == goalPair.second.s.y)) {
+          newG = currG;
+          break;
+        }
+      }
     }
 
     // hold iterator to next state entry
@@ -547,15 +711,28 @@ Cost xythetaPlannerImpl::heur(StateID sid)
   if(it != _heurMap.end()) {
     return it->second;
   }
-    
-  return heur_internal(sid) + _costOutsideHeurMap;
+  
+  // if not in _heurMap
+  return heur_internal(sid);
 }
 
 Cost xythetaPlannerImpl::heur_internal(StateID sid)
 {
-  State s(sid);  
-
-  return _context.env.GetDistanceBetween(_goal_c, s) * _context.env.GetOneOverMaxVelocity();
+  State s(sid);
+  size_t len = _goals_c.size();
+  
+  Cost minCost = FLT_MAX;
+  for(size_t i=0; i<len; ++i) {
+    const auto& goal = _goals_c[i].second;
+    // we checked i is in bounds when adding to the cost vector so dont here
+    Cost costOutsideHeurMap = _costOutsideHeurMapPerGoal[i].second;
+    Cost d = _context.env.GetDistanceBetween(goal, s) + costOutsideHeurMap;
+    if (d < minCost) {
+      minCost = d;
+    }
+  }
+  
+  return minCost * _context.env.GetOneOverMaxVelocity();
 }
 
 void xythetaPlannerImpl::BuildPlan()
@@ -563,7 +740,7 @@ void xythetaPlannerImpl::BuildPlan()
   // start at the goal and go backwards, pushing actions into the plan
   // until we get to the start id
 
-  StateID curr = _goalID;
+  StateID curr = _chosenGoalStateID;
   BOUNDED_WHILE(1000, !(curr == _startID)) {
     auto it = _table.find(curr);
     assert(it != _table.end());
