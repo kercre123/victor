@@ -20,6 +20,8 @@ namespace Anki {
      
       public bool PlayerWin;
 
+      // Returns true if the game event went in the favor of the specified player.
+      // Playerwin == true if the player just scored/won round/won game
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (cozEvent is MinigameGameEvent) {

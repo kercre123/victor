@@ -26,7 +26,7 @@ namespace Anki {
 
       public int ItemCount;
 
-      // Returns true if day of the week is the desired day of the week
+      // Returns true if we have enough of the specified item type
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         return (DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(ItemType) >= ItemCount);
       }

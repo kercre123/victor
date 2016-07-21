@@ -24,7 +24,7 @@ namespace Anki {
       [Range(0.0f, 1.0f)]
       public float MaxMood;
 
-      // Returns true if the UnlockID's unlock status matches the isUnlocked flag
+      // Returns true if the Mood is within the ideal range
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {

@@ -20,6 +20,7 @@ namespace Anki {
      
       public bool IsPlayerWinning;
 
+      // Returns true if the specified player has more points
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (cozEvent is MinigameGameEvent) {

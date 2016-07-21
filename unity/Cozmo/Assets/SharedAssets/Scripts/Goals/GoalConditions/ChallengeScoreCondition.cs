@@ -21,6 +21,7 @@ namespace Anki {
       public bool IsPlayer;
       public int TargetScore;
 
+      // Returns true if the specified player's score is equal to or greater than the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (cozEvent is MinigameGameEvent) {

@@ -11,7 +11,7 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Condition that is met if the specified number of sessions have been played
+/// Condition that is met if you have completed the specified Challenge the specified amount of times
 /// </summary>
 namespace Anki {
   namespace Cozmo {
@@ -24,7 +24,7 @@ namespace Anki {
       public bool UseMaxGames;
       public int MaxGames;
 
-      // Returns true if day of the week is the desired day of the week
+      // Returns true if you have played the requested challenge enough times
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         int played = 0;
