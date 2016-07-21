@@ -16,11 +16,8 @@ namespace Cozmo {
 	}
 
 	// This is the Diffie Hellman offloading calculation function
-	message SetDiffieLocal {
-		uint_8 local[16]
-	}
-
-	message SetDiffieRemote {
+	message CalculateDiffieHellman {
+		uint_8 local[16],
 		uint_8 remote[16]
 	}
 

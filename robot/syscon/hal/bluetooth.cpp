@@ -112,7 +112,7 @@ static void dh_complete(const void* state, int) {
   memcpy(msg.encoded_key, dh->encoded_key, AES_KEY_LENGTH);  
   RobotInterface::SendMessage(msg);
 
-  // Display the pin number
+  // TEMPORARY CODE TO DISPLAY THE AES KEY
   RobotInterface::DisplayNumber dn;
   dn.value = *(const uint32_t*)Tasks::aes_key();
   dn.digits = 8;
@@ -122,6 +122,10 @@ static void dh_complete(const void* state, int) {
 }
 
 void Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg) {
+  if (!m_sd_enabled) {
+    return ;
+  }
+
   memcpy(dh_state.diffie_result, msg.result, SECRET_LENGTH);
 
   Task t;
@@ -145,16 +149,17 @@ static void dh_setup(const void* state, int) {
   RobotInterface::SendMessage(dn);
 
   // Ask another processor to nicely calculate our heavy function
-  SetDiffieLocal sl;
-  memcpy(sl.local, dh->local_encoded, SECRET_LENGTH);
-  RobotInterface::SendMessage(sl);
-
-  SetDiffieRemote sr;
-  memcpy(sr.remote, dh->remote_encoded, SECRET_LENGTH);
-  RobotInterface::SendMessage(sr);
+  CalculateDiffieHellman cdh;
+  memcpy(cdh.local, dh->local_encoded, SECRET_LENGTH);
+  memcpy(cdh.remote, dh->remote_encoded, SECRET_LENGTH);
+  RobotInterface::SendMessage(cdh);
 }
 
 void Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing& msg) {  
+  if (!m_sd_enabled) {
+    return;
+  }
+
   // Copy in our secret code, and run
   memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
   

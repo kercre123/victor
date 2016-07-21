@@ -457,6 +457,30 @@ bool big_modulo(big_num_t& modulo, const big_num_t& a, const big_num_t& b) {
   return false;
 }
 
+void big_modulo_async_init(big_modulo_t& mod, const big_num_t& a, const big_num_t& b) {
+  mod.modulo = a;
+  mod.shift = big_msb(a) - big_msb(b);
+
+  if (mod.shift >= 0) {
+    big_shl(mod.divisor, b, mod.shift);
+  }
+}
+
+bool big_modulo_async(big_modulo_t& mod) {
+  if (mod.shift-- < 0) {
+    bit_reduce(mod.modulo);
+    return true;
+  }
+
+  if (big_unsigned_compare(mod.modulo, mod.divisor) >= 0) {
+    big_unsigned_subtract(mod.modulo, mod.modulo, mod.divisor);
+  }
+
+  big_shr(mod.divisor, mod.divisor, 1);
+
+  return false;
+}
+
 // Binary EEA
 bool big_invm(big_num_t& out, const big_num_t& a_, const big_num_t& b_) {
   big_num_t a;

@@ -81,30 +81,17 @@ void print_hex(const big_num_t& num) {
 
 
 int main(int argc, char** argv) {
-  big_num_t x, y;
+  big_num_t t1, t2_a, t2_b, t2_c, t2_d;
+  big_mont_pow_t pow_state;
+  big_modulo_t mod_state;
 
-  big_num_t t1, t2_a, t2_b, t2_c;
+  big_num_t x, y;
 
   srand(time(NULL));
   random_big(x, 128 / CELL_BITS);
   random_big(y, 128 / CELL_BITS);
   print_hex(x);
   print_hex(y);
-
-  // Attempt to do a async montgomery power (p ** x ** y)
-  printf("---\r\n");
-  big_mont_pow_t state;
-
-  mont_power_async_init(RSA_DIFFIE_MONT, state, RSA_DIFFIE_EXP_MONT, x);
-  while (!mont_power_async(RSA_DIFFIE_MONT, state)) ;
-
-  mont_power_async_init(RSA_DIFFIE_MONT, state, state.result, y);
-  while (!mont_power_async(RSA_DIFFIE_MONT, state)) ;
-
-  mont_from(RSA_DIFFIE_MONT, t2_c, state.result);
-
-  print_hex(t2_c);
-
 
   // Attempt to do a montgomery power (p ** x ** y)
   printf("---\r\n");
@@ -120,15 +107,46 @@ int main(int argc, char** argv) {
   mont_from(RSA_DIFFIE_MONT, t2_b, t1);
   print_hex(t2_b);
 
-  if (t2_a.used != t2_b.used) return 1;
-  if (t2_a.used != t2_c.used) return 1;
-  if (t2_a.negative != t2_b.negative) return 2;
-  if (t2_a.negative != t2_c.negative) return 2;
+  // Attempt to do a async montgomery power (p ** x ** y)
+  printf("---\r\n");
+
+  mont_power_async_init(RSA_DIFFIE_MONT, pow_state, RSA_DIFFIE_EXP_MONT, x);
+  while (!mont_power_async(RSA_DIFFIE_MONT, pow_state)) ;
+
+  mont_power_async_init(RSA_DIFFIE_MONT, pow_state, pow_state.result, y);
+  while (!mont_power_async(RSA_DIFFIE_MONT, pow_state)) ;
+
+  big_multiply(t1, pow_state.result, RSA_DIFFIE_MONT.rinv);
+
+  big_modulo_async_init(mod_state, t1, RSA_DIFFIE_MONT.modulo);
+  while (!big_modulo_async(mod_state));
+
+  t2_c = mod_state.modulo;
+
+  print_hex(t2_c);
   
-  for(int i = 0; i < t2_a.used; i++) {
-    if (t2_a.digits[i] != t2_b.digits[i]) return 3;
-    if (t2_a.digits[i] != t2_c.digits[i]) return 3;
-  }
-  
+  // Attempt to do a async montgomery power (p ** x ** y)
+  printf("---\r\n");
+
+  mont_power_async_init(RSA_DIFFIE_MONT, pow_state, RSA_DIFFIE_EXP_MONT, x);
+  while (!mont_power_async(RSA_DIFFIE_MONT, pow_state)) ;
+
+  mont_power_async_init(RSA_DIFFIE_MONT, pow_state, pow_state.result, y);
+  while (!mont_power_async(RSA_DIFFIE_MONT, pow_state)) ;
+
+  big_multiply(t1, pow_state.result, RSA_DIFFIE_MONT.rinv);
+
+  big_modulo_async_init(mod_state, t1, RSA_DIFFIE_MONT.modulo);
+  while (!big_modulo_async(mod_state));
+
+  t2_d = mod_state.modulo;
+
+  print_hex(t2_d);
+
+  // Throw an error if the values are not all the same
+  if (big_compare(t2_a, t2_b)) return 1;
+  if (big_compare(t2_a, t2_c)) return 2;
+  if (big_compare(t2_a, t2_d)) return 3;
+
   return 0;
 }

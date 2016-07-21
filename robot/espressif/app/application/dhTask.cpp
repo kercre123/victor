@@ -21,14 +21,19 @@ enum DiffieHellmanState {
   STATE_POWER_1,
   STATE_INIT_POWER_2,
   STATE_POWER_2,
-  STATE_FINISH
+  STATE_RINV,
+  STATE_MODULO
 };
 
 struct DiffieTask {
   uint8_t remote_exp[RANDOM_BYTES];
-  uint8_t local_exp[RANDOM_BYTES];
   
-  big_mont_pow_t pow_state;
+  // None of these values are used at the same time
+  union {
+    uint8_t local_exp[RANDOM_BYTES];
+    big_mont_pow_t pow_state;
+    big_modulo_t mod_state;
+  };
 };
 
 static DiffieHellmanState state;
@@ -41,7 +46,7 @@ bool DiffieHellman::Init()  {
 }
 
 
-void DiffieHellman::SetLocal(const uint8_t* local) {
+void DiffieHellman::Start(const uint8_t* local, const uint8_t* remote) {
   if (state != STATE_IDLE) {
     os_free(task);
     state = STATE_IDLE;
@@ -56,16 +61,9 @@ void DiffieHellman::SetLocal(const uint8_t* local) {
   }
 
   memcpy(task->local_exp, local, RANDOM_BYTES);
-}
-
-void DiffieHellman::SetRemote(const uint8_t* remote) {
-  if (task == NULL) {
-    return ;
-  }
-  
   memcpy(task->remote_exp, remote, RANDOM_BYTES);
+  
   state = STATE_INIT_POWER_1;
-  os_printf("Starting DH");
 }
 
 static void bytes_to_num(big_num_t& num, const uint8_t* bytes) {
@@ -108,18 +106,33 @@ void DiffieHellman::Update(void) {
   {
     if (!mont_power_async(RSA_DIFFIE_MONT, task->pow_state)) break ;
     
-    state = STATE_FINISH;
+    state = STATE_RINV;
     break ;
   }
-  case STATE_FINISH:
+  case STATE_RINV:
   {
     big_num_t temp;
-    
-    os_printf("finishing");
-    mont_from(RSA_DIFFIE_MONT, temp, task->pow_state.result);
-    
+        
+    // This is mont_from inlined
+    {
+      big_num_t mont_rinv = RSA_DIFFIE_MONT.rinv;    
+      big_multiply(temp, task->pow_state.result, mont_rinv);
+    }
+    // Setup modulo
+    {
+      big_num_t mont_modulo = RSA_DIFFIE_MONT.modulo;
+      big_modulo_async_init(task->mod_state, temp, mont_modulo);
+    }
+
+    state = STATE_MODULO;
+    break ;
+  }
+  case STATE_MODULO:
+  {
+    if (!big_modulo_async(task->mod_state)) break ;
+
     DiffieHellmanResults msg;
-    memcpy(msg.result, temp.digits, RANDOM_BYTES);
+    memcpy(msg.result, task->mod_state.modulo.digits, RANDOM_BYTES);
     RobotInterface::SendMessage(msg);
 
     os_free(task);
@@ -127,6 +140,7 @@ void DiffieHellman::Update(void) {
     state = STATE_IDLE;
     break ;
   }
+
   default:
     break ;
   }

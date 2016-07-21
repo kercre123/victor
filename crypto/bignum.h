@@ -43,6 +43,12 @@ struct big_mont_pow_t {
   bool scale;
 };
 
+struct big_modulo_t {
+  big_num_t modulo;
+  big_num_t divisor;
+  int shift;
+};
+
 // This is used for public decryption
 struct big_rsa_t {
   big_num_t modulo;
@@ -101,5 +107,7 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
 // Async montgomery power
 void mont_power_async_init(const big_mont_t& mont, big_mont_pow_t& state, const big_num_t& base, const big_num_t& exp);
 bool mont_power_async(const big_mont_t& mont, big_mont_pow_t& state);
+void big_modulo_async_init(big_modulo_t& mod, const big_num_t& a, const big_num_t& b);
+bool big_modulo_async(big_modulo_t& modulo);
 
 #endif

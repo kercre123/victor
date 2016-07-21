@@ -232,16 +232,10 @@ namespace Anki {
               }
               break;
             }
-            case RobotInterface::EngineToRobot::Tag_setDiffieLocal:
+            case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct              
-              DiffieHellman::SetLocal(msg.setDiffieLocal.local);
-              break ;
-            }
-            case RobotInterface::EngineToRobot::Tag_setDiffieRemote:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct              
-              DiffieHellman::SetRemote(msg.setDiffieRemote.remote);
+              DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
               break ;
             }
             case RobotInterface::EngineToRobot::Tag_setRTTO:
