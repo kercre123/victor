@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedInterface.h
+ * File: behaviorPoseBasedAcknowledgementInterface.h
  *
  * Author:  Andrew Stein / Brad Neuman
  * Created: 2016-06-16

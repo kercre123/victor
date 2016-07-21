@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedByObject.cpp
+ * File: behaviorAcknowledgeObject.cpp
  *
  * Author:  Andrew Stein
  * Created: 2016-06-14
@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedByObject.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
 
 #include "anki/common/basestation/utils/timer.h"
 

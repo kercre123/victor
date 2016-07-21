@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedInterface.cpp
+ * File: behaviorPoseBasedAcknowledgementInterface.cpp
  *
  * Author:  Andrew Stein
  * Created: 2016-06-16
@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedInterface.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPoseBasedAcknowledgementInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
@@ -77,7 +77,7 @@ void IBehaviorPoseBasedAcknowledgement::LoadConfig(const Json::Value& config)
   }
   
   if(GetValueOptional(config, kNumImagesToWaitForKey, _params.numImagesToWaitFor)) {
-    PRINT_NAMED_DEBUG("BehaviorDistractedByObject.LoadConfig.SetNumImagesToWaitFor",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetNumImagesToWaitFor",
                       "%d", _params.numImagesToWaitFor);
   }
 } // LoadConfig()

@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedByFace.cpp
+ * File: behaviorAcknowledgeFace.cpp
  *
  * Author:  Andrew Stein
  * Created: 2016-06-16
@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedByFace.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
 
 #include "anki/common/basestation/utils/timer.h"
 

@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedByFace.h
+ * File: behaviorAcknowledgeFace.h
  *
  * Author:  Andrew Stein
  * Created: 2016-06-16
@@ -18,7 +18,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedInterface.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPoseBasedAcknowledgementInterface.h"
 
 #include "anki/vision/basestation/faceIdTypes.h"
 

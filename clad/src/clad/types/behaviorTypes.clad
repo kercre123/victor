@@ -49,8 +49,8 @@ enum uint_8 BehaviorType {
   DockingTestSimple,
   DriveOffCharger,
   PopAWheelie,
-  DistractedByObject,
-  DistractedByFace,
+  AcknowledgeObject,
+  AcknowledgeFace,
   DrivePath,
   ReactToUnexpectedMovement,
 
