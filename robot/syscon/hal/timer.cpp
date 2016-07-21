@@ -76,6 +76,7 @@ extern "C" void RTC1_IRQHandler() {
 
     setup_next_main_exec();
     main_execution();
+    Backpack::nextChannel();
   }
 
   // Light management loop
