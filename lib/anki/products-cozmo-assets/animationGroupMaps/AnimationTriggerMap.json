@@ -517,6 +517,10 @@
       "AnimName": "ag_startSleeping"
     },
     {
+      "CladEvent": "SuccessfulWheelie",
+      "AnimName": "ag_reacttocliff_wheelie_01"
+    },
+    {
       "CladEvent": "Surprise",
       "AnimName": "ag_surprise"
     }

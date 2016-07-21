@@ -143,6 +143,7 @@ enum uint_16 AnimationTrigger
   StackBlocksRetry,
   StackBlocksSuccess,
   StartSleeping,
+  SuccessfulWheelie,
   Surprise,
 
   Count, // Keep count at end.
