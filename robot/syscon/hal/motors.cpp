@@ -39,8 +39,8 @@ struct MotorInfo
   u8 lastP;        // Last value of pPin
   
   Fixed unitsPerTick;
-  Fixed64 position;
-  Fixed64 lastPosition;
+  Fixed position;
+  Fixed lastPosition;
   u32 count;
   u32 lastCount;
   
@@ -58,7 +58,7 @@ const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
 // Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
 // Applying a slip factor correction of 94.8%
-const Fixed_8_24 METERS_PER_TICK = TO_FIXED_8_24((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43); // 1052
+const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
 
 // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
 // compute the radians per tick on the lift as:
@@ -67,6 +67,11 @@ const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
 // Given a gear ratio of 348.77:1 and 8 encoder ticks per revolution, we
 // compute the radians per tick on the head as:
 const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
+
+// Pre-production hardware had 8 ticks
+const Fixed RADIANS_PER_HEAD_TICK_PRE_PROD = TO_FIXED((0.125 * 3.14159265359) / 348.77);
+Fixed g_radiansPerHeadTick;   // XXX: Remove this once Pilot robots are obsolete
+
 // If no encoder activity for 200ms, we may as well be stopped
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
@@ -306,6 +311,11 @@ void Motors::init()
   NRF_TIMER1->TASKS_START = 1;
   NRF_TIMER2->TASKS_START = 1;
 
+  // Setup head encoder tick rate for production or pre-production hardware
+  g_radiansPerHeadTick = RADIANS_PER_HEAD_TICK;
+  if (BODY_VER < BODY_VER_PROD)
+    g_radiansPerHeadTick = RADIANS_PER_HEAD_TICK_PRE_PROD;
+
   // Enable PPI channels for timer PWM and reset
   sd_ppi_channel_enable_set(0xFF);
 
@@ -444,69 +454,17 @@ void Motors::manage()
   }
 
   // Update the SPI data structure to send data back to the head
-  // Wheel position and speed are recorded in encoder ticks, so we
-  // are applying conversions here for now, until code is refactored
-  Fixed64 tmp;
-  tmp = METERS_PER_TICK;
-  tmp *= Motors::getSpeed(0);
-  g_dataToHead.speeds[0] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
-  tmp = METERS_PER_TICK;
-  tmp *= Motors::getSpeed(1);
-  g_dataToHead.speeds[1] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
+  g_dataToHead.speeds[0] = ((s64)Motors::getSpeed(0) * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
+  g_dataToHead.speeds[1] = ((s64)Motors::getSpeed(1) * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
+
   g_dataToHead.speeds[2] = Motors::getSpeed(2);
   g_dataToHead.speeds[3] = Motors::getSpeed(3);
   
-  tmp = METERS_PER_TICK;
-  tmp *= m_motors[0].position;
-  g_dataToHead.positions[0] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
-  tmp = METERS_PER_TICK;
-  tmp *= m_motors[1].position;
-  g_dataToHead.positions[1] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
+  g_dataToHead.positions[0] = ((s64)m_motors[0].position * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
+  g_dataToHead.positions[1] = ((s64)m_motors[1].position * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
 }
-
-void Motors::getRawValues(uint32_t *positions)
-{
-  Fixed64 tmp1, tmp2;
-  tmp1 = METERS_PER_TICK;
-  tmp1 *= m_motors[0].position;
-
-  tmp2 = METERS_PER_TICK;
-  tmp2 *= m_motors[1].position;
-
-  positions[0] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp1);
-  positions[1] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp2);
-  positions[2] = (int)m_motors[2].position;
-  positions[3] = (int)m_motors[3].position;
-}
-
-void Motors::printEncodersRaw()
-{
-  Fixed64 tmp1, tmp2;
-  tmp1 = METERS_PER_TICK;
-  tmp1 *= m_motors[0].position;
-
-  tmp2 = METERS_PER_TICK;
-  tmp2 *= m_motors[1].position;
-
-  /*
-  UART::print("L%cR%cA%c%cH%c%c L%7iR%7iA%7iH%7i",
-      '0' + nrf_gpio_pin_read(PIN_ENCODER_LEFT),
-      '0' + nrf_gpio_pin_read(PIN_ENCODER_RIGHT),
-      '0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTA),
-      '0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTB),
-      '0' + nrf_gpio_pin_read(PIN_ENCODER_HEADA),
-      '0' + nrf_gpio_pin_read(PIN_ENCODER_HEADB),
-      (Fixed)TO_FIXED_8_24_TO_16_16(tmp1),
-      (Fixed)TO_FIXED_8_24_TO_16_16(tmp2),
-      (int)m_motors[2].position, (int)m_motors[3].position);
-  
-  // After printing, reset encoders (this is okay because it's used for encoder testing)
-  m_motors[0].position = m_motors[1].position = m_motors[2].position = m_motors[3].position = 0;
-  */
-}
-
 
 // Get wheel ticks
 s32 Motors::debugWheelsGetTicks(u8 motorID)
@@ -554,15 +512,15 @@ void GPIOTE_IRQHandler()
       {
         fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_HIGH);      
         if (state & (1 << PIN_ENCODER_HEADB))    // Forward vs backward
-          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;
+          m_motors[MOTOR_HEAD].position += g_radiansPerHeadTick;
         else
-          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;      
+          m_motors[MOTOR_HEAD].position -= g_radiansPerHeadTick;
       } else {
         fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_LOW);
         if (state & (1 << PIN_ENCODER_HEADB))   // Forward vs backward
-          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;
+          m_motors[MOTOR_HEAD].position -= g_radiansPerHeadTick;
         else
-          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;      
+          m_motors[MOTOR_HEAD].position += g_radiansPerHeadTick;      
       }    
     }           
     // Lift encoder (next fastest)
