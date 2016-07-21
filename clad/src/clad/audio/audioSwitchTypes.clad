@@ -14,6 +14,17 @@ enum uint_32 External
   Invalid = 0,
 }
 
+enum uint_32 Freeplay
+{
+  Freeplay__Busy = 4216199348,
+  Freeplay__Chill = 392489515,
+  Freeplay__Happy = 2777933599,
+  Freeplay__Neutral = 3469562548,
+  Freeplay__Sad = 2096125369,
+  Freeplay__Sleep = 2139901732,
+  Invalid = 0,
+}
+
 enum uint_32 GenericSwitch
 {
   Invalid = 0,
@@ -38,6 +49,7 @@ enum uint_32 Relationship
 enum uint_32 SwitchGroupType
 {
   External = 1442075084,
+  Freeplay = 150865113,
   Invalid = 0,
   Mood = 3128647864,
   Relationship = 3723222599,

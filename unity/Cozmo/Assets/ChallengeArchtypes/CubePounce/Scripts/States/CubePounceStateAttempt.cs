@@ -15,7 +15,6 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
 
-      GameAudioClient.SetMusicState(_CubePounceGame.GetDefaultMusicState());
       _AttemptDelay_s = _CubePounceGame.GetAttemptDelay();
       _FirstTimestamp = Time.time;
       _InitialPitch_deg = Mathf.Rad2Deg * _CurrentRobot.PitchAngle;

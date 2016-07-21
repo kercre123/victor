@@ -168,6 +168,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
       RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
       UpdateState();
     }
   }
@@ -183,6 +184,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   protected override void CleanUp() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(HandleSparkUnlockEnded);
+    if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+    }
     RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     if (_UpgradeTween != null) {
       _UpgradeTween.Kill();

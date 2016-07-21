@@ -370,6 +370,9 @@ namespace SpeedTap {
         GameAudioClient.SetMusicState(GetDefaultMusicState());
       }
     }
+    public void StartEndMusic() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Quick_Tap_Win);
+    }
 
     public void ClearWinningLightPatterns() {
       StopCycleCube(PlayerBlock);

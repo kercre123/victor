@@ -139,6 +139,7 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
 
       // TODO: manually trigger say new name?
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Meet_Cozmo_Say_Name);
 
       EditOrEnrollFaceComplete(true);
     }

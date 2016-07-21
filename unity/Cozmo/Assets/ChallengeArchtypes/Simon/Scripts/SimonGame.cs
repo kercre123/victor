@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Anki.Debug;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,8 +41,6 @@ namespace Simon {
     [SerializeField]
     private SimonCube[] _CubeColorsAndSounds;
 
-    public MusicStateWrapper BetweenRoundsMusic;
-
     [SerializeField]
     private SimonTurnSlide _SimonTurnSlidePrefab;
     private GameObject _SimonTurnSlide;
@@ -72,7 +70,6 @@ namespace Simon {
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       _Config = (SimonGameConfig)minigameConfigData;
-      BetweenRoundsMusic = _Config.BetweenRoundsMusic;
 
       InitializeMinigameObjects();
     }
@@ -98,8 +95,6 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
     protected override void OnDifficultySet(int difficulty) {
@@ -257,6 +252,9 @@ namespace Simon {
       }
       return _SimonTurnSlide.GetComponent<SimonTurnSlide>();
     }
+    public void StartFirstRoundMusic() {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Full_Life);
+    }
 
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
@@ -283,6 +281,9 @@ namespace Simon {
     public void DecrementLivesRemaining(PlayerType player) {
       if (player == PlayerType.Human) {
         _CurrLivesHuman--;
+        if (_CurrLivesHuman <= 0) {
+          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_No_Lives);
+        }
       }
       else {
         _CurrLivesCozmo--;

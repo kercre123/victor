@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: DroneModeGame
     _EnumValue: 6
   _Music:
-    _Music: 713847863
+    _Music: -1060883196
   MinigameConfig: {fileID: 11400000, guid: f01a1b66151be43caaaf3b14a0fe42b7, type: 2}
   IsMinigame: 0
   DifficultyOptions: []

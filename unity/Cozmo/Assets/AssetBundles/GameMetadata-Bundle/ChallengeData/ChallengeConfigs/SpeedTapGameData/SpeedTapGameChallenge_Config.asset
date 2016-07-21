@@ -79,15 +79,15 @@ MonoBehaviour:
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344697
       SecondsBetweenHands: 1.75
       SecondsHandDisplayed: 1.75
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344700
       SecondsBetweenHands: 1.55
       SecondsHandDisplayed: 1.55
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344699
       SecondsBetweenHands: 1.4
       SecondsHandDisplayed: 1.4
   - DifficultyID: 1
@@ -98,15 +98,15 @@ MonoBehaviour:
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344697
       SecondsBetweenHands: 1.75
       SecondsHandDisplayed: 1.75
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344700
       SecondsBetweenHands: 1.55
       SecondsHandDisplayed: 1.55
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344699
       SecondsBetweenHands: 1.4
       SecondsHandDisplayed: 1.4
   - DifficultyID: 2
@@ -117,15 +117,15 @@ MonoBehaviour:
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344697
       SecondsBetweenHands: 1.5
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344700
       SecondsBetweenHands: 1.4
       SecondsHandDisplayed: 1.4
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344699
       SecondsBetweenHands: 1.2
       SecondsHandDisplayed: 1.2
   - DifficultyID: 3
@@ -136,14 +136,14 @@ MonoBehaviour:
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344697
       SecondsBetweenHands: 1.25
       SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344700
       SecondsBetweenHands: 1.15
       SecondsHandDisplayed: 1.15
     - _MidRoundMusic:
-        _Music: 0
+        _Music: -340344699
       SecondsBetweenHands: 1
       SecondsHandDisplayed: 1
