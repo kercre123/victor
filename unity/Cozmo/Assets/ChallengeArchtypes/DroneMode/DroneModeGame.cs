@@ -7,6 +7,7 @@ namespace Cozmo {
     namespace DroneMode {
       public class DroneModeGame : GameBase {
         private const float _kCalculateSteeringInputInterval_ms = 100f;
+        private const float _kChangedTurnDirectionThreshold = 0.0001f;
 
         public delegate void TurnDirectionChangedHandler(float newNormalizedPitch);
         public event System.Action<float> OnTurnDirectionChanged;
@@ -88,7 +89,7 @@ namespace Cozmo {
             float newDevicePitch = (float)Mathf.Atan(Input.acceleration.x / Mathf.Sqrt(Mathf.Pow(Input.acceleration.y, 2) + Mathf.Pow(Input.acceleration.z, 2)));
             float normalizedTurnDirection = MapDevicePitchToTurnDirection(newDevicePitch);
 
-            if (!float.IsNaN(normalizedTurnDirection) && !normalizedTurnDirection.IsNear(_CurrentTurnDirection)) {
+            if (!float.IsNaN(normalizedTurnDirection) && !normalizedTurnDirection.IsNear(_CurrentTurnDirection, _kChangedTurnDirectionThreshold)) {
               _CurrentTurnDirection = normalizedTurnDirection;
               if (OnTurnDirectionChanged != null) {
                 OnTurnDirectionChanged(_CurrentTurnDirection);

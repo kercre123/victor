@@ -1308,7 +1308,7 @@ public class Robot : IRobot {
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "SetLiftHeight: " + heightFactor);
-    if (LiftHeightFactor == heightFactor && queueActionPosition == QueueActionPosition.NOW) {
+    if (LiftHeightFactor.IsNear(heightFactor, 0.05f) && queueActionPosition == QueueActionPosition.NOW) {
       if (callback != null) {
         callback(true);
       }

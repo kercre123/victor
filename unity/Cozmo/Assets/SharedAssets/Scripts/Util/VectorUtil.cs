@@ -143,7 +143,7 @@ public static class VectorUtil {
     return angleDiff;
   }
 
-  public static bool IsNear(this float a, float b, float threshold = 0.0001f) {
+  public static bool IsNear(this float a, float b, float threshold) {
     return (Math.Abs(a - b) < threshold);
   }
 

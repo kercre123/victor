@@ -9,6 +9,7 @@ namespace Cozmo {
         private const float _kDriveSpeedChangeThreshold_mmps = 5f;
         private const float _kTurnDirectionChangeThreshold = 0.05f;
         private const float _kHeadTiltChangeThreshold_radps = 0.05f;
+        private const float _kLiftFactorThreshold = 0.05f;
 
         private DroneModeGame _DroneModeGame;
         private DroneModeView _DroneModeView;
@@ -83,18 +84,17 @@ namespace Cozmo {
 
         private void DriveWheelsIfNeeded() {
           if (ShouldPointTurn(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
-            PointTurnRobotWheels(_TargetTurnDirection);
-            _CurrentDriveSpeed_mmps = _TargetDriveSpeed_mmps;
+            _CurrentDriveSpeed_mmps = PointTurnRobotWheels(_TargetTurnDirection);
             _CurrentTurnDirection = _TargetTurnDirection;
           }
           else if (ShouldDrive(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
-            DriveRobotWheels(_TargetDriveSpeed_mmps, _TargetTurnDirection);
-            _CurrentDriveSpeed_mmps = _TargetDriveSpeed_mmps;
+            _CurrentDriveSpeed_mmps = DriveRobotWheels(_TargetDriveSpeed_mmps, _TargetTurnDirection);
             _CurrentTurnDirection = _TargetTurnDirection;
           }
-          else {
-            _CurrentDriveSpeed_mmps = 0;
-            _CurrentTurnDirection = 0;
+          else if (ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
+            _TargetDriveSpeed_mmps = 0f;
+            _CurrentDriveSpeed_mmps = 0f;
+            _CurrentTurnDirection = 0f;
             _CurrentRobot.DriveWheels(0f, 0f);
           }
         }
@@ -104,15 +104,16 @@ namespace Cozmo {
             _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
             _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
           }
-          else {
+          else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
+            _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveHeadSpeed_radps = 0f;
-            _CurrentRobot.DriveHead(0f);
+            _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
           }
         }
 
         private void DriveLiftIfNeeded() {
           // Ideally we could do this check after every animation end, but this works for now.
-          if (!_CurrentRobot.LiftHeightFactor.IsNear(_DroneModeGame.StartingLiftHeight)) {
+          if (!_CurrentRobot.LiftHeightFactor.IsNear(_DroneModeGame.StartingLiftHeight, _kLiftFactorThreshold)) {
             _CurrentRobot.SetLiftHeight(_DroneModeGame.StartingLiftHeight);
           }
         }
@@ -129,11 +130,22 @@ namespace Cozmo {
                                       || !targetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold));
         }
 
+        private bool ShouldStopDriving(float targetDriveSpeed, float currentDriveSpeed, float targetTurnDirection) {
+          return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+                                 && !currentDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+                                 && targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
+        }
+
         private bool ShouldDriveHead(float targetHeadSpeed) {
           return !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
         }
 
-        private void DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
+        private bool ShouldStopDriveHead(float targetHeadSpeed) {
+          return targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps)
+                                 && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
+        }
+
+        private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
           float leftWheelSpeed_mmps = driveSpeed_mmps;
           float rightWheelSpeed_mmps = driveSpeed_mmps;
           float halfSpeed = driveSpeed_mmps * 0.5f;
@@ -145,9 +157,10 @@ namespace Cozmo {
           }
 
           _CurrentRobot.DriveWheels(leftWheelSpeed_mmps, rightWheelSpeed_mmps);
+          return driveSpeed_mmps;
         }
 
-        private void PointTurnRobotWheels(float turnDirection) {
+        private float PointTurnRobotWheels(float turnDirection) {
           float pointTurnSpeed = _DroneModeGame.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
           float leftWheelSpeed_mmps = pointTurnSpeed;
           float rightWheelSpeed_mmps = pointTurnSpeed;
@@ -161,6 +174,7 @@ namespace Cozmo {
           }
 
           _CurrentRobot.DriveWheels(leftWheelSpeed_mmps, rightWheelSpeed_mmps);
+          return pointTurnSpeed;
         }
 
         private void HandleDriveSpeedValueChanged(DroneModeView.SpeedSliderSegment newPosition, float newNormalizedValue) {
