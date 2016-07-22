@@ -27,45 +27,37 @@ factory.on('connected', function(interface) {
 
 	var encrypted_messages = [];
 
-	interface.on('data', (data, encrypted) => {
-		console.log(encrypted ? "ENC*:" : "RECV:", data);
+	interface.on('encrypted', (data) => {
+		console.log("ENC*:", data);
 
-		// Buffer encrypted messages
-		if (encrypted) {
-			encrypted_messages.push(data);
+		// Send our pairing message
+		var pairing_message = [ENTER_PAIRING_MESSAGE, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+		for (var i = 0; i < 16; i++) {
+			pairing_message[i+1] = local_secret[i];
+		}
 
-			if (interface.pair) {
-				return ;
-			}
+		interface.send(pairing_message);
+	});
 
-			interface.pair = true;
+	interface.on('data', (data) => {
+		console.log("RECV:", data);
 
-			// Send our pairing message
-			var pairing_message = [ENTER_PAIRING_MESSAGE, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-			for (var i = 0; i < 16; i++) {
-				pairing_message[i+1] = local_secret[i];
-			}
-
-			interface.send(pairing_message);
+		// This is the pairing received message
+		if (data[1] == 0x29) {
+			remote_secret = data.slice(2,18);
+			encoded_key = data.slice(18, 34);
 
 			// Prompt for pin
 			prompt.get(['pin'], function (err, result) {
 				if (err) { return ; }
 				
 				interface.key = diffie(parseInt(result.pin, 16), local_secret, remote_secret, encoded_key);
-				console.log(interface.key);
+				console.log("KEY*:", interface.key);
 
 				// Rebroadcast the encrypted messages
+				interface.setKey(interface.key);
 				encrypted_messages.map((data) => aes.decode(interface.key, data)).forEach((d) => interface.emit('data', d));
 			});
-		
-			return ;
-		}
-
-		// This 
-		if (data[1] == 0x29) {
-			remote_secret = data.slice(2,18);
-			encoded_key = data.slice(18, 34);
 		}
 	});
 
