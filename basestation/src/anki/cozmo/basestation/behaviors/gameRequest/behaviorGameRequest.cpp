@@ -140,7 +140,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
   // if we have the "cube roll" behavior unlocked, then only do a game request with an upright
   // cube. Otherwise, we don't care about the direction
 
-  const bool upAxisOk = ! robotPtr->GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
+  const bool upAxisOk = ! robotPtr->GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
   
   // TODO:(bn) lee suggested we use != UNKNOWN instead of == known, so that we will still attempt to interact

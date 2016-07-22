@@ -383,6 +383,8 @@ void NVStorageComponent::Update()
     if (_robot.GetLastMsgTimestamp() > _recvDataMap.begin()->second.timeoutTimeStamp) {
       PRINT_NAMED_WARNING("NVStorageComponent.Update.ReadTimeout",
                           "Tag: 0x%x", _recvDataMap.begin()->first);
+      
+      _recvDataMap.begin()->second.callback(nullptr, 0, NVStorage::NVResult::NV_TIMEOUT);
       _recvDataMap.erase(_recvDataMap.begin());
     }
     return;

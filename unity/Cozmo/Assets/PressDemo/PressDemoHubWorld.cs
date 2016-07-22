@@ -40,7 +40,7 @@ public class PressDemoHubWorld : HubWorldBase {
     SkillSystem.Instance.DebugEraseStorage();
     HackSkillSpeedTapSetup();
     // force unlock face enrollment
-    RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(Anki.Cozmo.UnlockId.FaceEnrollmentGame, true);
+    RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(Anki.Cozmo.UnlockId.MeetCozmoGame, true);
   }
 
   // HACK: demo hacked settings for skill level selection

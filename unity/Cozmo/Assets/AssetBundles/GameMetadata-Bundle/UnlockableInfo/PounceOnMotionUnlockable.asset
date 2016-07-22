@@ -9,22 +9,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
-  m_Name: CubeRollActionUnlockable
+  m_Name: PounceOnMotionUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: RollCube
-    _EnumValue: 8
+    _EnumValueAsString: PounceOnMotion
+    _EnumValue: 7
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
-  DescriptionKey: unlockable.CubeRollAction.Description
-  TitleKey: unlockable.CubeRollAction.Title
+  DescriptionKey: unlockable.PounceOnMotion.Description
+  TitleKey: unlockable.PounceOnMotion.Title
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
-  CoreUpgradeTintColorName: upgradeGreen
-  CoreUpgradeIcon: {fileID: 21300000, guid: 4800701f3e44b4de189f334976ab057f, type: 3}
-  CubesRequired: 1
+  CoreUpgradeTintColorName: upgradePurple
+  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  CubesRequired: 0

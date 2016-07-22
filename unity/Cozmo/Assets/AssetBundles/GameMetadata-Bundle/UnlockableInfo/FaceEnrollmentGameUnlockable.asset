@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: FaceEnrollmentGameUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: FaceEnrollmentGame
-    _EnumValue: 5
+    _EnumValueAsString: MeetCozmoGame
+    _EnumValue: 14
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

@@ -1776,7 +1776,7 @@ namespace Cozmo {
     this->Unlock();
 
     // Callback to display result when NVStorage.Write finishes
-    NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [](NVStorage::NVResult result) {
+    NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [this](NVStorage::NVResult result) {
       if(result == NVStorage::NVResult::NV_OKAY) {
         PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.AlbumSuccess",
                          "Successfully completed saving album data to robot");
@@ -1784,10 +1784,11 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.AlbumFailure",
                             "Failed saving album data to robot: %s",
                             EnumToString(result));
+        _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
       }
     };
     // Callback to display result when NVStorage.Write finishes
-    NVStorageComponent::NVStorageWriteEraseCallback saveEnrollCallback = [](NVStorage::NVResult result) {
+    NVStorageComponent::NVStorageWriteEraseCallback saveEnrollCallback = [this](NVStorage::NVResult result) {
       if(result == NVStorage::NVResult::NV_OKAY) {
         PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EnrollSuccess",
                          "Successfully completed saving enroll data to robot");
@@ -1795,6 +1796,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.EnrollFailure",
                             "Failed saving enroll data to robot: %s",
                             EnumToString(result));
+        _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
       }
     };
 

@@ -28,6 +28,7 @@
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/audio/audioCallbackMessage.clad"
+#include "clad/types/engineErrorCodes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -484,6 +485,10 @@ message DeviceDataMessage {
 message UpdateEngineState {
   EngineState oldState,
   EngineState newState
+}
+
+message EngineErrorCodeMessage {
+  EngineErrorCode errorCode
 }
 
 ///////////////////////////////////////////////////////////////////////////////

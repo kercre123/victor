@@ -213,7 +213,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     }
         
     _progressionUnlockComponent->Init(progressionUnlockConfig);
-    _progressionUnlockComponent->SendUnlockStatus();
   }
   else {
     Json::Value empty;
@@ -3523,6 +3522,15 @@ bool Robot::Broadcast(ExternalInterface::MessageEngineToGame&& event)
   } else {
     return false;
   }
+}
+
+void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
+{
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineErrorCodeMessage(error)));
+  PRINT_NAMED_ERROR("Robot.BroadcastEngineErrorCode",
+                    "Engine failing with error code %s[%hhu]",
+                    EnumToString(error),
+                    error);
 }
     
 ExternalInterface::RobotState Robot::GetRobotState()

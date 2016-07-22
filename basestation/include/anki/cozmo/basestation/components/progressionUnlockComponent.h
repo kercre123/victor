@@ -50,14 +50,18 @@ public:
 
 private:
 
+  void WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked, u8 attemptNumIn);
+  
+  void ReadCurrentUnlocksFromRobot(u8 attemptNumIn);
+  
+  bool IsUnlockIdValid(UnlockId id);
+
   Robot& _robot;
+
+  std::set<UnlockId> _defaultUnlocks;
 
   // eventually this will be stored on the robot
   std::set<UnlockId> _currentUnlocks;
-
-  // for now, to simulate the robot "taking some time" to confirm values, delay a few ticks before
-  // broadcasting confirmations
-  std::multimap<float, UnlockId> _confirmationsToSend;
 
   std::vector<Signal::SmartHandle> _signalHandles;
 

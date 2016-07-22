@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: CubeStackActionUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: CubeStackAction
-    _EnumValue: 1
+    _EnumValueAsString: StackTwoCubes
+    _EnumValue: 9
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0

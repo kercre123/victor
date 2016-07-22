@@ -726,6 +726,8 @@ public:
   // if there was no external interface).
   bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
+  void BroadcastEngineErrorCode(EngineErrorCode error);
+  
   Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
   const CozmoContext* GetContext() const { return _context; }
   

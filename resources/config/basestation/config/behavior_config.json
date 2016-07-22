@@ -58,7 +58,7 @@
       // Sparks only
       {
         "name" : "sparksRollCube",
-        "requireSpark":"CubeRollAction",
+        "requireSpark":"RollCube",
         "behaviorChooser" :
         {
           "type" : "simple",
@@ -68,7 +68,7 @@
       },
       {
         "name" : "sparksStackCube",
-        "requireSpark":"CubeStackAction",
+        "requireSpark":"StackTwoCubes",
         "behaviorChooser" :
         {
           "type" : "simple",

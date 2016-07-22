@@ -29,7 +29,7 @@ namespace NVStorage {
 
     NVEntry_GameSkillLevels = 2,
 
-
+    NVEntry_GameUnlocks = 0x3,
 
 
     NVEntry_Junk = 0xFFFF,
