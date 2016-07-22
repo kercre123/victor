@@ -154,7 +154,7 @@
     },
     {
       "CladEvent": "DroneModeIdle",
-      "AnimName": "ag_bored"
+      "AnimName": "ag_lookInPlaceForFaces_headMovePauses"
     },
     {
       "CladEvent": "DroneModeTurboDrivingStart",

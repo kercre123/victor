@@ -233,6 +233,14 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void PushIdleAnimation(AnimationTrigger default_anim) {
+    // Do nothing
+  }
+
+  public void PopIdleAnimation() {
+    // Do nothing
+  }
+
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
     // Do nothing
   }

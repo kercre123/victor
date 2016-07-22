@@ -951,9 +951,21 @@ public class Robot : IRobot {
 
   public void SetIdleAnimation(AnimationTrigger default_anim) {
 
-    DAS.Debug(this, "Setting idle animation to " + default_anim);
+    DAS.Debug("Robot.SetIdleAnimation", "Setting idle animation to " + default_anim);
 
     RobotEngineManager.Instance.Message.SetIdleAnimation = Singleton<SetIdleAnimation>.Instance.Initialize(ID, default_anim);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void PushIdleAnimation(AnimationTrigger default_anim) {
+    DAS.Debug("Robot.PushIdleAnimation", "Pushing idle animation to " + default_anim);
+    RobotEngineManager.Instance.Message.PushIdleAnimation = Singleton<PushIdleAnimation>.Instance.Initialize(default_anim);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void PopIdleAnimation() {
+    DAS.Debug("Robot.PopIdleAnimation", "Popping idle animation");
+    RobotEngineManager.Instance.Message.PopIdleAnimation = Singleton<PopIdleAnimation>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
 
