@@ -14,29 +14,31 @@ NamespaceElement
 		{ return { type: 'Namespace', name: name, members: members }; }
 
 EnumElement
-	= "enum" __ name:Identifier "{" _ members:EnumMemberList? "}" _ 
+	= "enum" __ name:Identifier "{" _ members:EnumMemberList "}" _ 
 		{ return { type: 'Enum', name: name, members: members }; }
-	/ "enum" __ type:TypeDefinition name:Identifier "{" _ members:EnumMemberList? "}" _ 
+	/ "enum" __ type:TypeDefinition name:Identifier "{" _ members:EnumMemberList "}" _ 
 		{ return { type: 'Enum', base: type, name: name, members: members }; }
 
 MessageElement
-	= ("message" / "structure") __ name:Identifier "{" _  members:StrucureMemberList? "}" _ 
+	= ("message" / "structure") __ name:Identifier "{" _  members:StructureMemberList "}" _ 
 		{ return { type: 'Structure', name: name, members: members }; }
 
 UnionElement
-	= "union" __ name:Identifier "{" _ members:StrucureMemberList? "}" _
+	= "union" __ name:Identifier "{" _ members:StructureMemberList "}" _
 		{ return { type: 'Union', name: name, members: members }; }
-	/ "union" __ type:TypeDefinition name:Identifier "{" _ members:StrucureMemberList? "}" _
+	/ "union" __ type:TypeDefinition name:Identifier "{" _ members:StructureMemberList "}" _
 		{ return { type: 'Union', base: type, name: name, members: members }; }
 
 // Array types
 EnumMemberList
 	= a:EnumMember b:("," _ b:EnumMember { return b; })* ","? _
 		{ return [a].concat(b) }
+	/ _ { return [] }
 
-StrucureMemberList
+StructureMemberList
 	= a:StructureMember b:("," _ b:StructureMember { return b; })* ","? _
 		{ return [a].concat(b) }
+	/ _ { return [] }
 
 // Member Elements
 EnumMember
@@ -46,15 +48,8 @@ EnumMember
 		{ return { type: "EnumMember", name: name } }
 
 StructureMember
-	= member:ValueElement "=" _ literal:Literal
-		{ return { type: "StructureMember", member: member, value: literal } }
-	/ member:ValueElement
-		{ return { type: "StructureMember", member: member } }
-
-// Value definitions
-ValueElement
-	= type:TypeDefinition name:Identifier array:ArrayQualifier?
-		{ return { type: "ValueType", name: name, array: array } }
+	= type:TypeDefinition name:Identifier array:ArrayQualifier? literal:("=" _ literal:Literal { return literal })?
+		{ return { type: "StructureMember", base: type, name: name, array: array, value: literal } }
 
 TypeDefinition
 	= "void" _
@@ -69,10 +64,11 @@ TypeDefinition
 		{ return { type: "SignedType", size: parseInt(bits, 10) } }
 	/ "uint_" bits:("8" / "16" / "32" / "64") _
 		{ return { type: "UnsignedType", size: parseInt(bits, 10) } }
-	/ ElementName
+	/ ElementType
 
-ElementName
-	= Identifier ("::" _ Identifier)*
+ElementType
+	= a:Identifier b:("::" _ b:Identifier { return b; })*
+		{ return { type: "ElementType", name: [a].concat(b) }; }
 
 ArrayQualifier
 	= "[" _ index:TypeDefinition ":" _ size:NumberLiteral "]" _
@@ -111,7 +107,7 @@ StringLiteral
 
 Identifier
 	= !(ReservedWord [^a-z0-9_]i) word:$([a-z_]i[a-z0-9_]i*) _
-		{ return { type: 'Identifier', name: word } }
+		{ return word }
 
 Whitespace
 	= [ \n\r\t]

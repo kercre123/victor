@@ -9,9 +9,8 @@ const messages = {
 	toEngine: clad("clad/robotInterface/messageRobotToEngine.clad")
 };
 
-//console.log(
-	JSON.stringify(messages, null, 4)
-//);
+//console.log
+(JSON.stringify(messages, null, 4));
 
 /*
 const factory = require("./factory.js");
