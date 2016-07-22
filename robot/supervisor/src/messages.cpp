@@ -935,7 +935,7 @@ namespace Anki {
         // nothing to do here
       }
        */
-      void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode&)
+      void Process_setBodyRadioMode(const SetBodyRadioMode&)
       {
         // nothing to do here
       }

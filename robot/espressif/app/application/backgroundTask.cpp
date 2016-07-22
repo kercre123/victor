@@ -109,18 +109,18 @@ void Exec(os_event_t *event)
     }
     case 6:
     {
-      using namespace RobotInterface;
       const u8 currentStaCount = wifi_softap_get_station_num();
       SetBodyRadioMode bMsg;
+
       if (currentStaCount > 0 && lastStaCount == 0)
       {
         bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
-        SendMessage(bMsg);
+        RobotInterface::SendMessage(bMsg);
       }
       else if (currentStaCount == 0 && lastStaCount > 0)
       {
         bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-        SendMessage(bMsg);
+        RobotInterface::SendMessage(bMsg);
       }
       lastStaCount = currentStaCount;
       break;

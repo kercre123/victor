@@ -14,7 +14,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-extern void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
+extern void enterOperatingMode(Anki::Cozmo::BodyRadioMode mode);
 
 extern GlobalDataToBody g_dataToBody;
 
@@ -61,7 +61,7 @@ static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
   NVIC_SystemReset();
 }
 
-static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {
+static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
   Battery::setOperatingMode(msg.radioMode);
 }
 
