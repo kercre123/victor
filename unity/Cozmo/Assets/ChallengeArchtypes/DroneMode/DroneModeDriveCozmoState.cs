@@ -32,33 +32,24 @@ namespace Cozmo {
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
             _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
           _DroneModeView = slide.GetComponent<DroneModeView>();
-          _DroneModeView.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
-          _DroneModeView.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
-          _DroneModeView.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
-
-          _DroneModeGame.EnableTiltInput();
-          _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
+          EnableInput();
 
           Anki.Cozmo.Viz.VizManager.Enabled = true;
 
           SetupRobotForDriveState();
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
-          _RobotAnimator.OnTransitionAnimationsFinished += HandleTransitionAnimationEnded;
         }
 
         public override void Exit() {
-          _DroneModeView.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
-          _DroneModeView.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
-          _DroneModeView.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
-          _DroneModeGame.DisableTiltInput();
-          _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
+          DisableInput();
           Anki.Cozmo.Viz.VizManager.Enabled = true;
           _RobotAnimator.CleanUp();
         }
 
         public override void Update() {
-          // TODO Check for visible objects and follow if there is no input
+          // TODO Check for visible objects and follow if there is no input? 
+          // Potentially this will already be handled by reactionary behaviors
 
           // Send drive wheels / drive head messages if needed
           SendDriveRobotMessages();
@@ -72,9 +63,24 @@ namespace Cozmo {
           SetupRobotForDriveState();
         }
 
+        private void EnableInput() {
+          _DroneModeView.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
+          _DroneModeView.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
+          _DroneModeView.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
+
+          _DroneModeGame.EnableTiltInput();
+          _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
+        }
+
+        private void DisableInput() {
+          _DroneModeView.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
+          _DroneModeView.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
+          _DroneModeView.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
+          _DroneModeGame.DisableTiltInput();
+          _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
+        }
+
         private void SetupRobotForDriveState() {
-          // TODO: Set robot idle animation (head/face only)
-          // TODO: Set driving animations (or play them)
           _CurrentRobot.SetLiftHeight(_DroneModeGame.StartingLiftHeight);
         }
 
@@ -206,12 +212,7 @@ namespace Cozmo {
         }
 
         private void HandleDriveSpeedFamilyChanged(DroneModeView.SpeedSliderSegment currentPosition, DroneModeView.SpeedSliderSegment newPosition) {
-          // DisableInput();
           _RobotAnimator.PlayTransitionAnimation(newPosition);
-        }
-
-        private void HandleTransitionAnimationEnded() {
-          EnableInput();
         }
       }
     }
