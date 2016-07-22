@@ -17,6 +17,7 @@ namespace Cozmo {
           // TODO: Set idle animation? (body allowed)
 
           // TODO: Show instructions slide
+          game.SharedMinigameView.HideGameStateSlide();
         }
 
         private void HandleContinueButtonClicked() {
