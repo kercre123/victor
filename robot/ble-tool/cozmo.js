@@ -10,6 +10,7 @@ function Cozmo(device, service, send, read) {
   this._send_char = send;
   this._read_char = read;
   this._packets = [];
+  this._encoded = [];
 
   this._device.on('disconnect', () => {
     clearInterval(this._interval);
@@ -37,14 +38,21 @@ function Cozmo(device, service, send, read) {
 
     buffer.push(data.slice(0,16));
 
-    // Auto decrypt
-    if (this.key && encrypted) {
-      buffer = aes.decode(this.key, buffer);
-      encrypted = false;
-    }
-
     if (end) {
-      this.emit('data', Buffer.concat(buffer), encrypted);
+      var packet = Buffer.concat(buffer);
+
+      if (encrypted) {
+        if (!this.key) {
+          this._encoded.push(packet);
+          this.emit('encrypted', packet);
+          return ;
+        }
+
+        packet = aes.decode(this.key, packet);
+      }
+
+      this.emit('data', packet);      
+
       buffer = [];
     }
   });
@@ -57,6 +65,13 @@ util.inherits(Cozmo, EventEmitter);
 Cozmo.prototype._disconnect = function () {
 
 };
+
+Cozmo.prototype.setKey = function (key) {
+  this.key = key;
+
+  this._encoded.forEach((d) => this.emit('data', aes.decode(this.key, d)));
+  this._encoded = [];
+}
 
 Cozmo.prototype.send = function (message) {
   message = message.concat();
