@@ -566,7 +566,7 @@ namespace Anki {
             if (_robot.GetPitchAngle() < 1.f) {
               PRINT_NAMED_INFO("PopAWheelieAction.Verify.PitchAngleTooSmall",
                                "Robot pitch angle expected to be higher (measured %f rad)",
-                               _robot.GetPitchAngle());
+                               _robot.GetPitchAngle().ToDouble());
               result = ActionResult::FAILURE_RETRY;
             } else {
               result = ActionResult::SUCCESS;

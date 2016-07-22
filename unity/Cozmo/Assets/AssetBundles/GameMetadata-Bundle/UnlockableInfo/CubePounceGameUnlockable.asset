@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: CubePounceGameUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: CubePounceGame
-    _EnumValue: 4
+    _EnumValueAsString: KeepawayGame
+    _EnumValue: 17
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

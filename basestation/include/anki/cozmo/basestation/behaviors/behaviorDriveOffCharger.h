@@ -30,7 +30,7 @@ protected:
 public:
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-
+  
 protected:
 
   virtual Result InitInternal(Robot& robot) override;
@@ -38,6 +38,11 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual float EvaluateScoreInternal(const Robot& robot) const override;
+
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -66,6 +71,7 @@ private:
   int   _timesResumed = 0;
 
   float _distToDrive_mm = 0.0f;
+  float _internalScore;
 
 };
 

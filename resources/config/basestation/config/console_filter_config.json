@@ -21,6 +21,7 @@
       { "channel": "Unity"   ,        "enabled": false },
       { "channel": "VisionComponent", "enabled": false },
       { "channel": "VisionSystem",    "enabled": false },
+      { "channel": "UnlockComponent", "enabled": true },
       { "channel": "Behaviors",       "enabled": false }
     ],
     "levels":

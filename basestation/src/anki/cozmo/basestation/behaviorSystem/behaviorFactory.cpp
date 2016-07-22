@@ -40,6 +40,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnFace.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnSide.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
@@ -180,6 +182,16 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     {
       newBehavior = new BehaviorReactToRobotOnBack(robot, config);
       break;     
+    }
+    case BehaviorType::ReactToRobotOnFace:
+    {
+      newBehavior = new BehaviorReactToRobotOnFace(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToRobotOnSide:
+    {
+      newBehavior = new BehaviorReactToRobotOnSide(robot, config);
+      break;
     }
     case BehaviorType::DockingTestSimple:
     {

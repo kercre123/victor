@@ -1,8 +1,8 @@
 {
   "defaultUnlocks": [
-    "CubeRollAction",
-    "CubeStackAction",
-    "SimonGame",
-    "SpeedTapGame"
+    "RollCube",
+    "StackTwoCubes",
+    "MemoryMatchGame",
+    "QuickTapGame"
   ]
 }

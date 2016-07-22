@@ -61,6 +61,10 @@ public:
   void LockTracks(u8 tracks);
   void UnlockTracks(u8 tracks);
   
+  // Completely unlocks all tracks to have an lock count of 0 as opposed to UnlockTracks(ALL_TRACKS)
+  // which will only decrement each track lock count by 1
+  void CompletelyUnlockAllTracks();
+  
   // Enables lift power on the robot.
   // If disabled, lift goes limp.
   Result EnableLiftPower(bool enable);
@@ -101,10 +105,15 @@ public:
   
   void PrintLockState() const;
   
+  void IgnoreDirectDriveMessages(bool ignore) { _ignoreDirectDrive = ignore; }
+  
+  bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift) && !_ignoreDirectDrive); }
+  
 private:
   
   void InitEventHandlers(IExternalInterface& interface);
   int GetFlagIndex(uint8_t flag) const;
+  AnimTrackFlag GetFlagFromIndex(int index);
   
   // Checks if the speed is near zero and if it is sets flag to false and unlocks tracks
   // otherwise it will set flag to true and lock the tracks if they are not locked
@@ -141,9 +150,10 @@ private:
   const f32 kExpectedVsActualGyroTol_radps = 0.2;
   
   // Flags for whether or not we are currently directly driving the following motors
-  bool _drivingWheels = false;
-  bool _drivingHead   = false;
-  bool _drivingLift   = false;
+  bool _drivingWheels     = false;
+  bool _drivingHead       = false;
+  bool _drivingLift       = false;
+  bool _ignoreDirectDrive = false;
   
 }; // class MovementComponent
   

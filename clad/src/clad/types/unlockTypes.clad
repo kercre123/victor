@@ -7,16 +7,39 @@ namespace Cozmo {
 
 enum uint_8 UnlockId
 {
-  CubeRollAction,
-  CubeStackAction,
-  SimonGame,
-  SpeedTapGame,
-  CubePounceGame,
-  FaceEnrollmentGame,
-  DroneModeGame,
+  Invalid = 0,
+
+  All,
+  Defaults,
+
+  // Engine-side unlocks
+  BuildPyramid,
+  FlipOntoBack,
+  KnockOverThreeCubeStack,
+  PickupCube,
+  PounceOnMotion,
+  ReactToSmiles,
+  RecognizePets,
+  RollCube,
+  StackTwoCubes,
+  TakeCubeFromHand,
   PounceOnMotionAction,
   PopAWheelieAction,
+
+  // App-side unlocks
+  DroneModeGame,
+  ExplorerMode,
+  KeepawayGame,
+  MeetCozmoGame,
+  MemoryMatchGame,
+  QuickTapGame,
+
   Count
+}
+
+// List of the unlockIds that are unlocked
+structure UnlockedIdsList {
+  UnlockId unlockedIds[128]
 }
 
 } // namespace Cozmo

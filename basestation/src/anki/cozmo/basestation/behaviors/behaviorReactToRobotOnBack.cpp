@@ -36,12 +36,12 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json:
   });
 }
 
-bool BehaviorReactToRobotOnBack::IsRunnableInternal(const Robot& robot) const
+bool BehaviorReactToRobotOnBack::IsRunnableReactionaryInternal(const Robot& robot) const
 {
-  return _disableIDs.size() == 0;
+  return true;
 }
 
-Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)
+Result BehaviorReactToRobotOnBack::InitInternalReactionary(Robot& robot)
 {
   FlipDownIfNeeded(robot);
   return Result::RESULT_OK;
@@ -85,7 +85,7 @@ bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::Mess
   return event.Get_RobotOnBack().onBack;
 }
 
-void BehaviorReactToRobotOnBack::StopInternal(Robot& robot)
+void BehaviorReactToRobotOnBack::StopInternalReactionary(Robot& robot)
 {
 }
 

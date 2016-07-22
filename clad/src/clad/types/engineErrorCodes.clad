@@ -1,0 +1,40 @@
+/** Clad message definitions for engine error codes
+*/
+
+
+namespace Anki {
+namespace Cozmo {
+
+// Error codes from things in engine going wrong that game should know about
+// Each error code should have a cause, and solution if one exists
+enum uint_8 EngineErrorCode
+{
+  // Description
+  // Storage on robot is full
+  // Solution
+  // Erase some things in storage or do a factory reset to wipe everything
+  RobotNVStorageFull,
+
+  // Description
+  // Failed to write unlock data to robot
+  // Solution
+  // -
+  WriteUnlocksToRobot,
+
+  // Description
+  // Failed to read unlock data from robot
+  // Solution
+  // -
+  ReadUnlocksFromRobot,
+
+  // Description
+  // Failed to write face data to robot
+  // Solution
+  // -
+  WriteFacesToRobot,
+
+  Count
+}
+
+} // namespace Cozmo
+} // namespace Anki

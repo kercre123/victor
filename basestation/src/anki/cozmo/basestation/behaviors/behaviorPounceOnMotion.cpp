@@ -323,7 +323,7 @@ void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
 {
   SET_STATE(Pouncing);
   
-  _prePouncePitch = robot.GetPitchAngle();
+  _prePouncePitch = robot.GetPitchAngle().ToFloat();
   if( _backUpDistance <= 0.f )
   {
     _backUpDistance = GetDriveDistance();
@@ -352,7 +352,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
 
-  float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
+  float robotBodyAngleDelta = robot.GetPitchAngle().ToFloat() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
   PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
@@ -360,7 +360,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
                     RAD_TO_DEG(robotBodyAngleDelta),
                     robotBodyAngleDelta,
                     RAD_TO_DEG(_prePouncePitch),
-                    RAD_TO_DEG(robot.GetPitchAngle()));
+                    RAD_TO_DEG(robot.GetPitchAngle().ToFloat()));
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 

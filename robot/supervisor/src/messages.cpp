@@ -610,6 +610,12 @@ namespace Anki {
         }
       }
 
+      void Process_enterSleepMode(const EnterSleepMode& msg) {
+        #ifdef TARGET_K02
+        Anki::Cozmo::HAL::Power::enterSleepMode();
+        #endif
+      }
+      
       void Process_setMotionModelParams(const RobotInterface::SetMotionModelParams& msg)
       {
         Localization::SetMotionModelParams(msg.slipFactor);

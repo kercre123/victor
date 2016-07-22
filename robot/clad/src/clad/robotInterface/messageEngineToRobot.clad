@@ -24,6 +24,10 @@
 
 namespace Anki {
 namespace Cozmo {
+  message EnterSleepMode
+  {
+    // This doesn't do much
+  }
 
   message CubeSlots
   {
@@ -391,6 +395,7 @@ union EngineToRobot
   EnablePickupParalysis         enablePickupParalysis       = 0x4F,
   EnableLiftPower               enableLiftPower             = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
+  EnterSleepMode                enterSleepMode              = 0x52,
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,

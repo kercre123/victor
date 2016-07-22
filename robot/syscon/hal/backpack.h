@@ -6,6 +6,11 @@
 
 using namespace Anki::Cozmo;
 
+enum DefaultBackpackPattern {
+  LIGHTS_BOOTING,
+  LIGHTS_LOW_POWER
+};
+
 namespace Backpack {
   void init();
   void manage();
@@ -13,6 +18,7 @@ namespace Backpack {
   void update(int channel);
   void blink(void);
 
+  void defaultPattern(DefaultBackpackPattern pattern);
   void setLights(const LightState* lights);
 }
 

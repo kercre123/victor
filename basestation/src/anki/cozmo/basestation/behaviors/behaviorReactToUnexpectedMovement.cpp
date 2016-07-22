@@ -28,12 +28,12 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(Robot& robo
   });
 }
 
-bool BehaviorReactToUnexpectedMovement::IsRunnableInternal(const Robot& robot) const
+bool BehaviorReactToUnexpectedMovement::IsRunnableReactionaryInternal(const Robot& robot) const
 {
-  return _disableIDs.size() == 0;
+  return true;
 }
 
-Result BehaviorReactToUnexpectedMovement::InitInternal(Robot& robot)
+Result BehaviorReactToUnexpectedMovement::InitInternalReactionary(Robot& robot)
 {
   robot.AbortDrivingToPose();
   robot.GetMoveComponent().StopAllMotors();

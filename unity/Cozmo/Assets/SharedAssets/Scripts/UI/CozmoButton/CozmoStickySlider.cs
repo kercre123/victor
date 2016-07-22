@@ -10,6 +10,9 @@ namespace Cozmo {
       [SerializeField, Range(0f, 1f)]
       private float _SliderValueDecayRate = 0.9f;
 
+      [SerializeField]
+      private bool _SnapBackInstantly = true;
+
       private bool _IsTouching;
 
       // Use this for initialization
@@ -20,7 +23,12 @@ namespace Cozmo {
 
       protected void Update() {
         if (!_IsTouching && !IsNearRestingState()) {
-          this.value = ((this.value - _RestingSliderValue) * _SliderValueDecayRate) + _RestingSliderValue;
+          if (_SnapBackInstantly) {
+            this.value = _RestingSliderValue;
+          }
+          else {
+            this.value = ((this.value - _RestingSliderValue) * _SliderValueDecayRate) + _RestingSliderValue;
+          }
         }
       }
 
@@ -32,11 +40,6 @@ namespace Cozmo {
       public override void OnPointerDown(UnityEngine.EventSystems.PointerEventData eventData) {
         base.OnPointerDown(eventData);
         _IsTouching = true;
-      }
-
-      public override void OnPointerExit(UnityEngine.EventSystems.PointerEventData eventData) {
-        base.OnPointerExit(eventData);
-        _IsTouching = false;
       }
 
       public override void OnPointerUp(UnityEngine.EventSystems.PointerEventData eventData) {

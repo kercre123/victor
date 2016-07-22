@@ -80,6 +80,7 @@
     "AffectsBlocks",
     "MiniGame",
     "RequestMemoryMatch",
-    "FreeplayOne"
+    "FreeplayOne",
+    "Playful"
   ]
 }

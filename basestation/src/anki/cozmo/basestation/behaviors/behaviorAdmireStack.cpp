@@ -523,7 +523,7 @@ void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Rob
   {
     _topBlockLastSeentime = msg.timestamp;
 
-    const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
+    const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
       obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
     if( ! upAxisOk ) {

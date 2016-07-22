@@ -22,7 +22,7 @@ addpath(genpath(fullfile(cozmoDir, 'matlab')));
 % assumed to be in ../coretech-external
 %run(fullfile(cozmoDir, '..', 'coretech-external', 'matlab', 'initExternalPath.m'));
 
-run(fullfile(cozmoDir, 'lib', 'anki', 'cozmo-engine', 'matlab', 'initCozmoPath.m'));
+run(fullfile(cozmoDir, 'matlab', 'initCozmoPath.m'));
 
 % Figure out the nonsensical build products directory :-/
 buildProductRoot = getdirnames(fullfile(cozmoDir, 'build', 'mac', 'derived-data'), 'CozmoWorkspace_MAC-*', true);

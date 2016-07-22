@@ -90,7 +90,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
     const ObservableObject* carriedObject = robot.GetBlockWorld().GetObjectByID( robot.GetCarryingObject() );
 
     if( nullptr != carriedObject ) {
-      const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
+      const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
         carriedObject->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
       if( upAxisOk ) {
@@ -143,7 +143,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 
 bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
 {
-  const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
+  const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
   return obj->GetFamily() == ObjectFamily::LightCube && !obj->IsPoseStateUnknown() && upAxisOk;

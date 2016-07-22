@@ -22,10 +22,10 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorTypes.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/math/numericCast.h"
@@ -555,6 +555,42 @@ IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& conf
     GameToEngineTag::RequestEnableReactionaryBehavior
   });
 }
+
+Result IReactionaryBehavior::InitInternal(Robot& robot)
+{
+  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), true);
+  robot.GetActionList().Cancel();
+  robot.AbortAll();
+  
+  if(robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
+     !robot.GetMoveComponent().IsDirectDriving())
+  {
+    PRINT_NAMED_WARNING("IReactionaryBehavior.InitInternal",
+                        "Some tracks are locked, unlocking them");
+    robot.GetMoveComponent().CompletelyUnlockAllTracks();
+  }
+  
+  // Reactionary behaviors will prevent DirectDrive messages and external action queueing messages
+  // from doing anything
+  robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
+  robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(true);
+  
+  return InitInternalReactionary(robot);
+}
+  
+Result IReactionaryBehavior::ResumeInternal(Robot& robot)
+{
+  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), true);
+  return ResumeInternalReactionary(robot);
+}
+
+void IReactionaryBehavior::StopInternal(Robot& robot)
+{
+  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), false);
+  robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
+  robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(false);
+  StopInternalReactionary(robot);
+}
   
 void IReactionaryBehavior::SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags)
 {
@@ -582,19 +618,14 @@ void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Ro
   
   if (tag == GameToEngineTag::RequestEnableReactionaryBehavior){
     std::string requesterID = event.GetData().Get_RequestEnableReactionaryBehavior().requesterID;
-    BehaviorType behavior = event.GetData().Get_RequestEnableReactionaryBehavior().behavior;
+    BehaviorType behaviorRequest = event.GetData().Get_RequestEnableReactionaryBehavior().behavior;
     bool enable = event.GetData().Get_RequestEnableReactionaryBehavior().enable;
     
     std::string behaviorName = GetName();
+    BehaviorType behaviorType = GetType();
 
-    if(behavior == BehaviorType::ReactToCliff
-       && behaviorName ==  BehaviorTypeToString(BehaviorType::ReactToCliff)){
-      UpdateDisableIDs(requesterID, enable);
-    }else if(behavior == BehaviorType::ReactToRobotOnBack
-             && behaviorName == BehaviorTypeToString(BehaviorType::ReactToRobotOnBack)){
-      UpdateDisableIDs(requesterID, enable);
-    }else if(behavior == BehaviorType::ReactToPickup
-             && behaviorName == BehaviorTypeToString(BehaviorType::ReactToPickup)){
+    if(behaviorType == behaviorRequest
+       && behaviorName == BehaviorTypeToString(behaviorRequest)){
       UpdateDisableIDs(requesterID, enable);
     }
     
@@ -623,6 +654,15 @@ void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
 
   }
   
+}
+  
+bool IReactionaryBehavior::IsRunnableInternal(const Robot& robot) const
+{
+  bool isRunnable = _disableIDs.size() == 0;
+  if(isRunnable) {
+    isRunnable = IsRunnableReactionaryInternal(robot);
+  }
+  return isRunnable;
 }
 
   

@@ -792,10 +792,12 @@ namespace Anki {
         case(Anki::Cozmo::Status::STATUS_BACKING_UP):
         {
           _numDockingRetries++;
+          break;
         }
         case(Anki::Cozmo::Status::STATUS_DOING_HANNS_MANEUVER):
         {
           _didHM = true;
+          break;
         }
       }
     }

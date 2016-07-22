@@ -440,9 +440,9 @@ Result CozmoEngine::InitInternal()
 }
   
   
-void CozmoEngine::ReadCameraCalibration(Robot* robot, f32 stopRetryingTime_sec)
+void CozmoEngine::ReadCameraCalibration(Robot* robot)
 {
-  NVStorageComponent::NVStorageReadCallback readCamCalibCallback = [this,robot,stopRetryingTime_sec](u8* data, size_t size, NVStorage::NVResult res) {
+  NVStorageComponent::NVStorageReadCallback readCamCalibCallback = [this,robot](u8* data, size_t size, NVStorage::NVResult res) {
     
     if (res == NVStorage::NVResult::NV_OKAY) {
       CameraCalibration payload;
@@ -474,11 +474,6 @@ void CozmoEngine::ReadCameraCalibration(Robot* robot, f32 stopRetryingTime_sec)
         
         robot->GetVisionComponent().SetCameraCalibration(calib);
       }
-    } else if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < stopRetryingTime_sec) {
-      PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Retrying",
-                       "Retrying. (currTime: %fs, stopRetryTime: %fs)",
-                       BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), stopRetryingTime_sec);
-      ReadCameraCalibration(robot, stopRetryingTime_sec);
     } else {
       PRINT_NAMED_WARNING("CozmoEngine.ReadCameraCalibration.Failed", "");
     }
@@ -503,7 +498,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
     
     // Requesting camera calibration
-    ReadCameraCalibration(robot, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _kReadCameraCalibTimeout_sec);
+    ReadCameraCalibration(robot);
     
     // Setup Audio Server with Robot Audio Connection & Client
     using namespace Audio;

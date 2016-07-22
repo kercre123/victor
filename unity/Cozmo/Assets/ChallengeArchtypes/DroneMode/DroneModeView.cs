@@ -46,7 +46,9 @@ namespace Cozmo {
 
         public delegate void SpeedSliderEventHandler(SpeedSliderSegment currentSegment, float newNormalizedSegmentValue);
         public event SpeedSliderEventHandler OnDriveSpeedSegmentValueChanged;
-        public event SpeedSliderEventHandler OnDriveSpeedSegmentChanged;
+
+        public delegate void SpeedSliderSegmentEventHandler(SpeedSliderSegment currentSegment, SpeedSliderSegment newSegment);
+        public event SpeedSliderSegmentEventHandler OnDriveSpeedSegmentChanged;
 
         public delegate void HeadSliderEventHandler(HeadSliderSegment currentSegment, float newNormalizedSegmentValue);
         public event HeadSliderEventHandler OnHeadTiltSegmentValueChanged;
@@ -85,10 +87,10 @@ namespace Cozmo {
             }
 
             if (newSegment != _CurrentDriveSpeedSliderSegment) {
-              _CurrentDriveSpeedSliderSegment = newSegment;
               if (OnDriveSpeedSegmentChanged != null) {
-                OnDriveSpeedSegmentChanged(newSegment, newSegmentValue);
+                OnDriveSpeedSegmentChanged(_CurrentDriveSpeedSliderSegment, newSegment);
               }
+              _CurrentDriveSpeedSliderSegment = newSegment;
             }
           }
         }

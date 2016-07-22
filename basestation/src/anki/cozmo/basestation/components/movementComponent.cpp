@@ -226,6 +226,13 @@ void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag face
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
+  if(_ignoreDirectDrive)
+  {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels",
+                     "Ignoring DriveWheels message while direct drive is disabled");
+    return;
+  }
+  
   if(!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                      "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
@@ -241,6 +248,13 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpeed& msg)
 {
+  if(_ignoreDirectDrive)
+  {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed",
+                     "Ignoring TurnInPlaceAtSpeed message while direct drive is disabled");
+    return;
+  }
+  
   if(!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.TurnInPlaceAtSpeed.WheelsLocked",
                      "Ignoring ExternalInterface::TurnInPlaceAtSpeed while wheels are locked.");
@@ -260,6 +274,13 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
+  if(_ignoreDirectDrive)
+  {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead",
+                     "Ignoring MoveHead message while direct drive is disabled");
+    return;
+  }
+  
   if(!_drivingHead && AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                      "Ignoring ExternalInterface::MoveHead while head is locked.");
@@ -272,6 +293,13 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
+  if(_ignoreDirectDrive)
+  {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift",
+                     "Ignoring MoveLift message while direct drive is disabled");
+    return;
+  }
+  
   if(!_drivingLift && AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
@@ -354,6 +382,11 @@ int MovementComponent::GetFlagIndex(uint8_t flag) const
   }
   return i;
 }
+
+AnimTrackFlag MovementComponent::GetFlagFromIndex(int index)
+{
+  return (AnimTrackFlag)((u32)1 << index);
+}
   
 bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
@@ -384,6 +417,21 @@ bool MovementComponent::AreAllTracksLocked(u8 tracks) const
     tracks = tracks >> 1;
   }
   return true;
+}
+
+void MovementComponent::CompletelyUnlockAllTracks()
+{
+  for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    // Repeatedly unlock the track until its lock count is zero 
+    while(_trackLockCount[i] > 0)
+    {
+      PRINT_NAMED_INFO("MovementComponent.UnlockAllTracks",
+                       "Unlocking track %s",
+                       EnumToString(GetFlagFromIndex(i)));
+      UnlockTracks((u8)GetFlagFromIndex(i));
+    }
+  }
 }
 
 void MovementComponent::LockTracks(uint8_t tracks)

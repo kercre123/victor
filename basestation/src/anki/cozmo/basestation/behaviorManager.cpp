@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -99,6 +100,12 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnBack,  _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToOnCharger,  _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnFace, _robot, config)->AsReactionaryBehavior());
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnSide, _robot, config)->AsReactionaryBehavior());
     //AddReactionaryBehavior(
     //  behaviorFactory.CreateBehavior(BehaviorType::ReactToOnCharger,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior(
@@ -243,6 +250,10 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
 {
   const std::string& oldBehaviorName = nullptr != oldBehavior ? oldBehavior->GetName() : "NULL";
   const std::string& newBehaviorName = nullptr != newBehavior ? newBehavior->GetName() : "NULL";
+  BehaviorType oldBehaviorType = oldBehaviorName != "NULL" ? BehaviorTypeFromString(oldBehaviorName) : BehaviorType::NoneBehavior;
+  BehaviorType newBehaviorType = newBehaviorName != "NULL" ? BehaviorTypeFromString(newBehaviorName) : BehaviorType::NoneBehavior;
+  bool oldBehaviorIsReactionary = nullptr != oldBehavior ? oldBehavior->IsReactionary() : false;
+  bool newBehaviorIsReactionary = nullptr != newBehavior ? newBehavior->IsReactionary() : false;
 
   Anki::Util::sEvent("robot.behavior_transition",
                      {{DDATA, oldBehaviorName.c_str()}},
@@ -251,6 +262,10 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
   ExternalInterface::BehaviorTransition msg;
   msg.oldBehavior = oldBehaviorName;
   msg.newBehavior = newBehaviorName;
+  msg.oldBehaviorType = oldBehaviorType;
+  msg.newBehaviorType = newBehaviorType;
+  msg.isOldReactionary = oldBehaviorIsReactionary;
+  msg.isNewReactionary = newBehaviorIsReactionary;
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }
 

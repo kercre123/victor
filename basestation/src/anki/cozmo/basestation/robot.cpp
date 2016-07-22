@@ -90,12 +90,35 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
 });
 */
 
+CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
+  
+//Constants for on back
 static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
 static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
 
 CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
 CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
-CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
+  
+//Constants for on side
+static const float kOnLeftSide_rawYAccel = -9000.0;
+static const float kOnRightSide_rawYAccel = 10500.0;
+CONSOLE_VAR(f32, kOnSideTolerance_rawYAccel, "Robot", 1000.0f);
+CONSOLE_VAR(u32, kRobotTimeToConsiderOnSide_ms, "Robot", 300);
+  
+
+//Constants for on face - Note these values are duplicated in behaviorReactToRobotOnFace.cpp
+static const float kPitchAngleOnFacePlant_rads = DEG_TO_RAD(-90.f);
+static const float kPitchAngleOnFacePlantTolerenece_rads = DEG_TO_RAD(20.f);
+static const float kPitchAngleOnFaceTurtleMin_rads = DEG_TO_RAD(90.f);
+static const float kPitchAngleOnFaceTurtleMax_rads = DEG_TO_RAD(-110.f);
+  
+static const float kPitchAngleOnFacePlant_sim_rads = DEG_TO_RAD(-90.f); //This has not been tested
+static const float kPitchAngleOnFacePlantTolerence_sim_rads = DEG_TO_RAD(20.f); //This has not been tested
+static const float kPitchAngleOnFaceTurtleMin_sim_rads = DEG_TO_RAD(90.f); //This has not been tested
+static const float kPitchAngleOnFaceTurtleMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
+  
+CONSOLE_VAR(u32, kRobotTimeToConsiderOnFace_ms, "Robot", 300);
+
   
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
@@ -190,7 +213,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     }
         
     _progressionUnlockComponent->Init(progressionUnlockConfig);
-    _progressionUnlockComponent->SendUnlockStatus();
   }
   else {
     Json::Value empty;
@@ -257,7 +279,8 @@ Robot::~Robot()
     
 void Robot::SetOnCharger(bool onCharger)
 {
-  Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger));
+  ObservableObject* object = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+  Charger* charger = dynamic_cast<Charger*>(object);
   if (onCharger && !_isOnCharger) {
         
     // If we don't actually have a charger, add an unconnected one now
@@ -491,7 +514,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetLiftAngle(msg.liftAngle);
       
   // Update robot pitch angle
-  _pitchAngle = msg.pose.pitch_angle;
+  _pitchAngle = Radians(msg.pose.pitch_angle);
       
   // Get ID of last/current path that the robot executed
   SetLastRecvdPathID(msg.lastPathID);
@@ -644,35 +667,94 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     msg.timestamp, msg.pose_frame_id,
     msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
   */
-      
+  
+  ////////
+  /// Checking to see if Cozmo is not in normal driving position
+  ////////
+  
   // check if the robot is stuck on it's back. We track internally if it's on it's back, but don't send
   // the message out until some time.  // TODO:(bn) probably want to check that the robot isn't moving
   // around based on accelerometer here
+  
+  //// COZMO_ON_BACK
   const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
-  const bool currOnBack = std::abs( GetPitchAngle() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
-  bool sendOnBackValue = _lastSendOnBackValue;
-      
-  if( currOnBack && _isOnBack ) {
-    // check if it has been long enough
-    if( msg.timestamp > _robotFirstOnBack_ms + kRobotTimeToConsiderOnBack_ms ) {
-      sendOnBackValue = true;
-    }
-  }
-  else if( currOnBack && !_isOnBack ) {
-    _robotFirstOnBack_ms = msg.timestamp;
-  }
-  else if ( ! currOnBack ) {
-    sendOnBackValue = false;
-  }
-
-  _isOnBack = currOnBack;
-
-      
-  if( sendOnBackValue != _lastSendOnBackValue ) {
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBack( sendOnBackValue )));
-    _lastSendOnBackValue = sendOnBackValue;
-  }
-
+  const bool currOnBack = std::abs( GetPitchAngle().ToDouble() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
+  //// COZMO_ON_SIDE
+  const float rawY = msg.rawAccelY;
+  const bool onRightSide =  (std::abs(rawY - kOnRightSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
+  const bool currOnSide = onRightSide || (std::abs(rawY - kOnLeftSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
+  //// COZMO_ON_FACE
+  const float facePlantAngle = IsPhysical() ? kPitchAngleOnFacePlant_rads : kPitchAngleOnFacePlant_sim_rads;
+  const float turtleRollMinAngle = IsPhysical() ? kPitchAngleOnFaceTurtleMin_rads : kPitchAngleOnFaceTurtleMin_sim_rads;
+  const float turtleRollMaxAngle = IsPhysical() ? kPitchAngleOnFaceTurtleMax_rads : kPitchAngleOnFaceTurtleMax_sim_rads;
+  const float pitchAngleTolerence = IsPhysical() ? kPitchAngleOnFacePlantTolerenece_rads : kPitchAngleOnFacePlantTolerence_sim_rads;
+  
+  const bool currFacePlant = std::abs( GetPitchAngle().ToDouble() - facePlantAngle ) <= pitchAngleTolerence;
+  const bool currTurtleRoll = GetPitchAngle() > turtleRollMinAngle || GetPitchAngle() < turtleRollMaxAngle;
+  
+  bool sendOffTredsValue = _lastSendOffTredsValue;
+  switch(_offTredsState){
+    case OffTredsState::OnFace:
+      {
+        if(msg.timestamp > _robotFirstOffTreds_ms + kRobotTimeToConsiderOnFace_ms){
+          sendOffTredsValue = true;
+        }
+        if(!(currFacePlant || currTurtleRoll)){
+          _offTredsState = OffTredsState::OnTreds;
+          sendOffTredsValue = false;
+        }
+        if( sendOffTredsValue != _lastSendOffTredsValue ) {
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnFace( sendOffTredsValue )));
+          _lastSendOffTredsValue = sendOffTredsValue;
+        }
+        break;
+      }
+    case OffTredsState::OnSide:
+      {
+        if(msg.timestamp > _robotFirstOffTreds_ms + kRobotTimeToConsiderOnSide_ms){
+          sendOffTredsValue = true;
+        }
+        if(!currOnSide){
+          _offTredsState = OffTredsState::OnTreds;
+          sendOffTredsValue = false;
+        }
+        if( sendOffTredsValue != _lastSendOffTredsValue ) {
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnSide( sendOffTredsValue, onRightSide )));
+          _lastSendOffTredsValue = sendOffTredsValue;
+        }
+        break;
+      }
+    case OffTredsState::OnBack:
+      {
+        if(msg.timestamp > _robotFirstOffTreds_ms + kRobotTimeToConsiderOnBack_ms){
+          sendOffTredsValue = true;
+        }
+        if(!currOnBack){
+          _offTredsState = OffTredsState::OnTreds;
+          sendOffTredsValue = false;
+        }
+        if( sendOffTredsValue != _lastSendOffTredsValue ) {
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBack( sendOffTredsValue )));
+          _lastSendOffTredsValue = sendOffTredsValue;
+        }
+        break;
+      }
+    case OffTredsState::OnTreds:
+      {
+        if(currOnBack){
+          _offTredsState = OffTredsState::OnBack;
+        }else if(currFacePlant || currTurtleRoll){
+          _offTredsState = OffTredsState::OnFace;
+        }else if(currOnSide){
+          _offTredsState = OffTredsState::OnSide;
+        }else{
+          _robotFirstOffTreds_ms = msg.timestamp;
+        }
+        break;
+      }
+  } //end switch(_offTredsState)
+  
+  
   // Engine modifications to state message.
   // TODO: Should this just be a different message? Or one that includes the state message from the robot?
   RobotState stateMsg(msg);
@@ -1287,7 +1369,7 @@ void Robot::SetLiftAngle(const f32& angle)
   CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
 }
     
-f32 Robot::GetPitchAngle() const
+Radians Robot::GetPitchAngle() const
 {
   return _pitchAngle;
 }
@@ -3441,6 +3523,15 @@ bool Robot::Broadcast(ExternalInterface::MessageEngineToGame&& event)
     return false;
   }
 }
+
+void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
+{
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineErrorCodeMessage(error)));
+  PRINT_NAMED_ERROR("Robot.BroadcastEngineErrorCode",
+                    "Engine failing with error code %s[%hhu]",
+                    EnumToString(error),
+                    error);
+}
     
 ExternalInterface::RobotState Robot::GetRobotState()
 {
@@ -3451,7 +3542,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.pose = PoseStruct3d(GetPose());
       
   msg.poseAngle_rad = GetPose().GetRotationAngle<'Z'>().ToFloat();
-  msg.posePitch_rad = GetPitchAngle();
+  msg.posePitch_rad = GetPitchAngle().ToFloat();
       
   msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
   msg.rightWheelSpeed_mmps = GetRightWheelSpeed();

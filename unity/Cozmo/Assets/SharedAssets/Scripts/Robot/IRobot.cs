@@ -155,6 +155,8 @@ public interface IRobot : IDisposable {
   void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SetIdleAnimation(AnimationTrigger default_anim);
+  void PushIdleAnimation(AnimationTrigger default_anim);
+  void PopIdleAnimation();
 
   void PopDrivingAnimations();
 

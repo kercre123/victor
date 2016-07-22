@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: SimonGameUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: SimonGame
-    _EnumValue: 2
+    _EnumValueAsString: MemoryMatchGame
+    _EnumValue: 15
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

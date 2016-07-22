@@ -5,7 +5,7 @@ classdef VisionMarkerTrained
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/rotated';
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated';
         
-        RootImageDir = fullfile(fileparts(mfilename('fullpath')), '../../../../../products-cozmo-large-files/VisionMarkers');
+        RootImageDir = '~/Dropbox (Anki, Inc)/VisionMarkers - Final/MassProduction/trainingImages';
         
         TrainingImageDir = { ...
             %fullfile(VisionMarkerTrained.RootImageDir, 'letters/withFiducials/rotated'), ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...

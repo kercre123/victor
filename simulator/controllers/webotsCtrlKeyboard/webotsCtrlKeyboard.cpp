@@ -12,6 +12,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -2533,6 +2534,13 @@ namespace Anki {
               } else {
                 printf("%s open failed\n", outFile);
               }
+              
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_IMUAverages:
+            {
+              PRINT_NAMED_INFO("IMUAveragesData", "size: %lu", recvdData->size());
+              PrintBytesHex((char*)(recvdData->data()), (int)recvdData->size());
               
               break;
             }

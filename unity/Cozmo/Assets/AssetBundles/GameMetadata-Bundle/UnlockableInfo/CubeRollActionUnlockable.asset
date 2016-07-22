@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: CubeRollActionUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: CubeRollAction
-    _EnumValue: 0
+    _EnumValueAsString: RollCube
+    _EnumValue: 8
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0

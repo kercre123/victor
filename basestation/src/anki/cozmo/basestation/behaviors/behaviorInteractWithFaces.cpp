@@ -649,7 +649,7 @@ float BehaviorInteractWithFaces::EvaluateScoreInternal(const Robot& robot) const
       return false;
     }
     
-    if ( !robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::FaceEnrollmentGame) ) {
+    if ( !robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::MeetCozmoGame) ) {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
                              "BehaviorInteractWithFaces.ShouldEnrollCurrentFace.NotUnlocked", "");
       return false;

@@ -44,12 +44,12 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
   }});
 }
 
-bool BehaviorReactToCliff::IsRunnableInternal(const Robot& robot) const
+bool BehaviorReactToCliff::IsRunnableReactionaryInternal(const Robot& robot) const
 {
-  return _disableIDs.size() == 0;
+  return true;
 }
 
-Result BehaviorReactToCliff::InitInternal(Robot& robot)
+Result BehaviorReactToCliff::InitInternalReactionary(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
 
@@ -121,7 +121,7 @@ void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
   robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
 
-void BehaviorReactToCliff::StopInternal(Robot& robot)
+void BehaviorReactToCliff::StopInternalReactionary(Robot& robot)
 {
   _state = State::PlayingStopReaction;
 }

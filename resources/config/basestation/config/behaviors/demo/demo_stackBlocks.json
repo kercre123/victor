@@ -1,7 +1,7 @@
 {
   "behaviorType": "StackBlocks",
   "name": "demo_StackBlocks",
-  "requiredUnlockId": "CubeStackAction",
+  "requiredUnlockId": "StackTwoCubes",
   "flatScore": 0.8,
   "behaviorGroups": [
     "AffectsBlocks",

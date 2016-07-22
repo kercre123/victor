@@ -81,7 +81,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       //TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
-      UnlockId unlock = UnlockIdsFromString("CubeStackAction");
+      UnlockId unlock = UnlockIdsFromString("StackTwoCubes");
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
                      ExternalInterface::RequestSetUnlock(unlock, true)));

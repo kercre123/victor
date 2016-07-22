@@ -23,10 +23,12 @@
 #include "clad/types/motorTypes.clad"
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/poseStructs.clad"
+#include "clad/types/behaviorTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/audio/audioCallbackMessage.clad"
+#include "clad/types/engineErrorCodes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -141,6 +143,15 @@ message RobotOnBack {
 }
 
 message RobotOnBackFinished {
+}
+
+message RobotOnSide {
+    bool onSide,
+    bool onRightSide
+}
+
+message RobotOnFace{
+    bool onFace
 }
 
 message RobotCliffEventFinished {
@@ -476,6 +487,10 @@ message UpdateEngineState {
   EngineState newState
 }
 
+message EngineErrorCodeMessage {
+  EngineErrorCode errorCode
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // BlockPool
 ///////////////////////////////////////////////////////////////////////////////
@@ -565,12 +580,21 @@ message SparkUnlockEnded {
 //notify the game that behavior has transitioned
 message BehaviorTransition{
   string oldBehavior,
-  string newBehavior
+  string newBehavior,
+  BehaviorType oldBehaviorType,
+  BehaviorType newBehaviorType,
+  bool isOldReactionary,
+  bool isNewReactionary
 }
 
 //respond with the list of freeplay behavior
 message RespondEnabledBehaviorList{
   string behaviors[uint_8]
+}
+
+message ReactionaryBehaviorTransition{
+  BehaviorType reactionaryBehaviorType,
+  bool behaviorStarted
 }
 
 ///////////////////////////////////////////////////////////////////////////////

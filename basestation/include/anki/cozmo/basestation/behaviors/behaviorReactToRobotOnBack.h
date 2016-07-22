@@ -28,7 +28,7 @@ private:
   
 public:
   
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool IsRunnableReactionaryInternal(const Robot& robot) const override;
   // don't know where the robot will land, so don't resume
   // TODO:(bn) should this depend on how long the robot was "in the air"?
   virtual bool ShouldResumeLastBehavior() const override { return false; }
@@ -36,9 +36,9 @@ public:
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   
 protected:
-    
-  virtual Result InitInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
+  
+  virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual void   StopInternalReactionary(Robot& robot) override;
 
 private:
 
