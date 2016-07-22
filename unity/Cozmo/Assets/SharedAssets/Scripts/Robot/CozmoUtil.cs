@@ -50,6 +50,17 @@ public static class CozmoUtil {
     return (actualSqr_mm > desiredMinSqr_mm && actualSqr_mm < desiredMaxSqr_mm);
   }
 
+  public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm) {
+    float distanceThreshold_mm = desiredDistance_mm + (obsObject.Size.x * 0.5f);
+    float distanceThresholdSqr_mm = distanceThreshold_mm * distanceThreshold_mm;
+
+    Vector3 positionDifference = obsObject.WorldPosition - basePosition;
+    positionDifference.z = 0f;
+    float distanceSqr_mm = positionDifference.sqrMagnitude;
+
+    return distanceSqr_mm < distanceThresholdSqr_mm;
+  }
+
   /// <summary>
   /// Checks whether the XY vector from base to target positions is aligned with the specified world base direction, within specified angle
   /// </summary>

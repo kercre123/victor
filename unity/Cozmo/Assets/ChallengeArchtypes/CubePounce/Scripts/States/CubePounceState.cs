@@ -9,11 +9,19 @@ namespace Cozmo.Minigame.CubePounce {
       base.Enter();
       _CubePounceGame = (_StateMachine.GetGame() as CubePounceGame);
       LightCube.OnMovedAction += HandleCubeMoved;
+
+      _CubePounceGame.UpdateCubeVisibility();
     }
 
     public override void Exit() {
       base.Exit();
       LightCube.OnMovedAction -= HandleCubeMoved;
+    }
+
+    public override void Update() {
+      base.Update();
+
+      _CubePounceGame.UpdateCubeVisibility();
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {

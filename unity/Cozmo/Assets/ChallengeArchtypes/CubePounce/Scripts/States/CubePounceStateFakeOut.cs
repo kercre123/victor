@@ -7,12 +7,10 @@ namespace Cozmo.Minigame.CubePounce {
     
     private float _FakeOutDelay_s;
     private float _FirstTimestamp = -1;
-    private CubePounceCheckPosition _CheckPosition = null;
     public bool _FakeOutTriggered = false;
 
     public override void Enter() {
       base.Enter();
-      _CheckPosition = new CubePounceCheckPosition(_CurrentRobot, _CubePounceGame, TransitionToNext);
 
       GameAudioClient.SetMusicState(_CubePounceGame.GetDefaultMusicState());
       _FakeOutDelay_s = _CubePounceGame.GetAttemptDelay();
@@ -24,6 +22,12 @@ namespace Cozmo.Minigame.CubePounce {
 
     public override void Update() {
       base.Update();
+
+      if (!_CubePounceGame.CubeSeenRecently || !_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
+        _StateMachine.SetNextState(new CubePounceStateResetPoint());
+        return;
+      }
+
       if (!_FakeOutTriggered && (Time.time - _FirstTimestamp) > _FakeOutDelay_s) {
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceFake, HandleFakeoutEnd);
         _CubePounceGame.IncreasePounceChance();
@@ -32,26 +36,12 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleFakeoutEnd(bool success) {
-      _CheckPosition.CheckAndFixPosition();
-    }
-
-    private void TransitionToNext() {
-      if (_CubePounceGame.ShouldAttemptPounce()) {
-        _StateMachine.SetNextState(new CubePounceStateAttempt());
-      }
-      else {
-        _StateMachine.SetNextState(new CubePounceStateFakeOut());
-      }
+      _StateMachine.SetNextState(_CubePounceGame.GetNextFakeoutOrAttemptState());
     }
 
     public override void Exit() {
       base.Exit();
       _CurrentRobot.CancelCallback(HandleFakeoutEnd);
-      _CheckPosition.ClearCallbacks();
-    }
-
-    protected override void HandleOurCubeMoved(float accX, float accY, float aaZ) {
-      _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
     }
   }
 }

@@ -47,12 +47,6 @@ MonoBehaviour:
   PlayerRoundsWon: 0
   CozmoRoundsWon: 0
   TotalRounds: 0
-  _CubeDistanceBetween_mm: 55
-  _PositionDiffTolerance_mm: 8
-  _AngleTolerance_deg: 15
-  _PouncePitchDiffSuccess_deg: 5
-  _PounceSuccessMeasureDelay_s: 0.15
-  _CubeLightFlashInterval_s: 0.1
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

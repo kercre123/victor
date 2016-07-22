@@ -7,79 +7,25 @@ namespace Cozmo.Minigame.CubePounce {
   // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
   public class CubePounceGame : GameBase {
 
-    public const string kSetUp = "SetUp";
-    public const string kWaitForPounce = "WaitForPounce";
-    public const string kCozmoWinEarly = "CozmoWinEarly";
-    public const string kCozmoWinPounce = "CozmoWinPounce";
-    public const string kPlayerWin = "PlayerWin";
-
     // Consts for determining the exact placement and forgiveness for cube location
     // Animators have been measuring distance from faceplate to cube; the below const is the distance
     // between the faceplate and front weel center plane
     private const float _kWheelCenterToFacePlane_mm = 13.0f;
-    [SerializeField,Range(0f,500f)]
-    private float _CubeDistanceBetween_mm; // = 55f;
-    public float CubePlaceDist_mm {
-      get {
-        return _CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm;
-      }
-    }
 
-    // How far +/- from the exact cube distance Cozmo needs to be to animate.
-    [SerializeField,Range(0f,500f)]
-    private float _PositionDiffTolerance_mm; // = 8.0f;
-    public float PositionDiffTolerance_mm {
-      get {
-        return _PositionDiffTolerance_mm;
-      }
-    }
+    // The distance away from the cube pounce activation line that causes cozmo to stop being able to pounce
+    private const float _kCubePlaceDistSlush_mm = 5.0f;
 
-    // How many degrees +/- Cozmo can be from looking directly at the cube, in order to animate.
-    [SerializeField,Range(0f,90f)]
-    private float _AngleTolerance_deg; // = 15.0f;
-    public float AngleTolerance_deg {
-      get {
-        return _AngleTolerance_deg;
-      }
-    }
+    public float CubePlaceDistTight_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm; } }
+    public float CubePlaceDistLoose_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm + _kCubePlaceDistSlush_mm; } }
 
-    // Number of degrees difference in Cozmos pitch to be considered a success when pouncing
-    [SerializeField,Range(0f,90f)]
-    private float _PouncePitchDiffSuccess_deg; // = 5.0f;
-    public float PouncePitchDiffSuccess_deg {
-      get {
-        return _PouncePitchDiffSuccess_deg;
-      }
-    }
+    private float _CubeTargetSeenTime_s = -1;
 
-    // Amount of time to wait past end of animation to allow Cozmos angle to be reported as lifted to potentially give him a point
-    [SerializeField,Range(0f,1f)]
-    private float _PounceSuccessMeasureDelay_s; // = 0.15f;
-    public float PounceSuccessMeasureDelay_s {
-      get {
-        return _PounceSuccessMeasureDelay_s;
-      }
-    }
+    private bool _CubeSeenRecently = false;
+    public bool CubeSeenRecently { get { return _CubeSeenRecently; } }
 
-    // Frequency with which to flash the cube lights
-    [SerializeField,Range(0f,1f)]
-    private float _CubeLightFlashInterval_s; // = 0.1f;
-    public float CubeLightFlashInterval_s {
-      get {
-        return _CubeLightFlashInterval_s;
-      }
-    }
-
-    private float _MinAttemptDelay_s;
-    private float _MaxAttemptDelay_s;
+    public CubePounceConfig GameConfig;
 
     private float _CurrentPounceChance;
-    private float _BasePounceChance;
-    private int _MaxFakeouts;
-    private int _NumCubesRequired;
-
-    private MusicStateWrapper _BetweenRoundsMusic;
-
     private LightCube _CurrentTarget = null;
 
     public bool AllRoundsCompleted {
@@ -89,37 +35,16 @@ namespace Cozmo.Minigame.CubePounce {
       }
     }
 
-    public int NumCubesRequired {
-      get {
-        return _NumCubesRequired;
-      }
-      private set {
-        _NumCubesRequired = value;
-      }
-    }
-
-    public MusicStateWrapper BetweenRoundsMusic {
-      get {
-        return _BetweenRoundsMusic;
-      }
-    }
-
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
-      CubePounceConfig config = minigameConfig as CubePounceConfig;
-      TotalRounds = config.Rounds;
-      _MinAttemptDelay_s = config.MinAttemptDelay;
-      _MaxAttemptDelay_s = config.MaxAttemptDelay;
-      _BasePounceChance = config.StartingPounceChance;
-      _MaxFakeouts = config.MaxFakeouts;
-      NumCubesRequired = config.NumCubesRequired();
-      MaxScorePerRound = config.MaxScorePerRound;
+      GameConfig = minigameConfig as CubePounceConfig;
+      TotalRounds = GameConfig.Rounds;
+      MaxScorePerRound = GameConfig.MaxScorePerRound;
       CozmoScore = 0;
       PlayerScore = 0;
       PlayerRoundsWon = 0;
       CozmoRoundsWon = 0;
       _CurrentTarget = null;
-      _BetweenRoundsMusic = config.BetweenRoundMusic;
-      InitializeMinigameObjects(NumCubesRequired);
+      InitializeMinigameObjects(GameConfig.NumCubesRequired());
     }
 
     protected void InitializeMinigameObjects(int numCubes) {
@@ -142,28 +67,38 @@ namespace Cozmo.Minigame.CubePounce {
       return _CurrentTarget;
     }
 
-    public bool ShouldAttemptPounce() {
-      DAS.Debug("CubePounceGame.ShouldAttemptPounce", "Pounce chance: " + _CurrentPounceChance);
-      if (Random.Range(0.0f, 1.0f) <= _CurrentPounceChance) {
-        return true;
-      }
-
-      return false;
+    public void ResetPounceChance() {
+      DAS.Debug("CubePounceGame.ResetPounceChance", "");
+      _CurrentPounceChance = GameConfig.BasePounceChance;
     }
 
     public void IncreasePounceChance() {
-      if (_MaxFakeouts <= 0) {
-        return;
+      if (_CurrentPounceChance < 1.0f) {
+        _CurrentPounceChance += GameConfig.PounceChanceIncrement;
+        _CurrentPounceChance = Mathf.Clamp(_CurrentPounceChance, 0.0f, 1.0f);
       }
+    }
 
-      // Increase the likelyhood of a pounce based on the max number of fakeouts.
-      _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
+    public State GetNextFakeoutOrAttemptState() {
+      DAS.Debug("CubePounceGame.SetNextFakeoutOrAttemptState", "Pounce chance: " + _CurrentPounceChance);
+      bool shouldPounce = (Random.Range(0.0f, 1.0f) <= _CurrentPounceChance);
+
+      if (shouldPounce) {
+        return new CubePounceStateAttempt();
+      }
+      else {
+        return new CubePounceStateFakeOut();
+      }
+    }
+
+    public bool WithinPounceDistance(float distanceThreshold_mm) {
+      return CozmoUtil.ObjectEdgeWithinXYDistance(CurrentRobot.WorldPosition, GetCubeTarget(), distanceThreshold_mm);
     }
 
     // Returns whether we just finished a round
     public bool CheckAndUpdateRoundScore() {
       // If we haven't yet hit our max score nothing to see here
-      if (Mathf.Max(CozmoScore, PlayerScore) < MaxScorePerRound) {
+      if (Mathf.Max(CozmoScore, PlayerScore) < GameConfig.MaxScorePerRound) {
         return false;
       }
 
@@ -177,12 +112,20 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     public float GetAttemptDelay() {
-      return Random.Range(_MinAttemptDelay_s, _MaxAttemptDelay_s);
+      return Random.Range(GameConfig.MinAttemptDelay_s, GameConfig.MaxAttemptDelay_s);
     }
 
-    public void ResetPounceChance() {
-      DAS.Debug("CubePounceGame.ResetPounceChance", "");
-      _CurrentPounceChance = _BasePounceChance;
+    public void UpdateCubeVisibility() {
+      float currentTime_s = Time.time;
+      LightCube targetCube = GetCubeTarget();
+      if (null != targetCube && targetCube.IsInFieldOfView) {
+        _CubeTargetSeenTime_s = currentTime_s;
+        _CubeSeenRecently = true;
+      }
+      // If it's been too long our cube isn't visible anymore
+      else if ((currentTime_s - _CubeTargetSeenTime_s) > GameConfig.CubeVisibleBufferTime_s) {
+        _CubeSeenRecently = false;
+      }
     }
 
     public void UpdateScoreboard() {

@@ -12,21 +12,35 @@ namespace Cozmo.Minigame.CubePounce {
       return 1;
     }
 
-    public float MinAttemptDelay;
-    public float MaxAttemptDelay;
+    public float MinAttemptDelay_s;
+    public float MaxAttemptDelay_s;
     public int Rounds;
     public int MaxScorePerRound;
-    [Range(0f, 1f)]
-    public float StartingPounceChance;
-    public int MaxFakeouts;
 
+    [Range(0f, 1f)]
+    public float BasePounceChance;
+    // Amount to increase chance of pounce after each fakeout
+    [Range(0f,1f)]
+    public float PounceChanceIncrement; // = 0.15f
 
     [SerializeField]
     protected MusicStateWrapper _BetweenRoundMusic;
+    public Anki.Cozmo.Audio.GameState.Music BetweenRoundMusic { get { return _BetweenRoundMusic.Music; } }
 
-    public Anki.Cozmo.Audio.GameState.Music BetweenRoundMusic {
-      get { return _BetweenRoundMusic.Music; }
-    }
+    // Distance that defines how close a block can be to be pounced on
+    [Range(0f,100f)]
+    public float CubeDistanceBetween_mm; // = 55f;
 
+    // Number of degrees difference in Cozmos pitch to be considered a success when pouncing
+    [Range(0f,90f)]
+    public float PouncePitchDiffSuccess_deg; // = 5.0f;
+
+    // Frequency with which to flash the cube lights
+    [Range(0f,1f)]
+    public float CubeLightFlashInterval_s; // = 0.1f;
+
+    // Time that can elapse without having seen the cube before it's officially gone
+    [Range(0f,10f)]
+    public float CubeVisibleBufferTime_s; // = 1f
   }
 }

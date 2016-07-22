@@ -19,7 +19,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
         _CubePounceGame.CozmoScore++;
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.red }, _CubePounceGame.CubeLightFlashInterval_s, Color.black);
+        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.red }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
 
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Pounce);
       }
@@ -28,7 +28,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         _CubePounceGame.PlayerScore++;
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.CubeLightFlashInterval_s, Color.black);
+        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
 
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Player_Fail);
       }
@@ -61,7 +61,7 @@ namespace Cozmo.Minigame.CubePounce {
       }
       else {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
-        GameAudioClient.SetMusicState(_CubePounceGame.BetweenRoundsMusic);
+        GameAudioClient.SetMusicState(_CubePounceGame.GameConfig.BetweenRoundMusic);
         if (_CubePounceGame.CozmoScore > _CubePounceGame.PlayerScore) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinRound, HandleEndRoundAnimFinish);
         }

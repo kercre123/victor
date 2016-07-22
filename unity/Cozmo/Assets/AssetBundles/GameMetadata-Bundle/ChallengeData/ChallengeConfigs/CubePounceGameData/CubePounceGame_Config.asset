@@ -19,11 +19,15 @@ MonoBehaviour:
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
-  MinAttemptDelay: 0.25
-  MaxAttemptDelay: 1.25
+  MinAttemptDelay_s: 0.5
+  MaxAttemptDelay_s: 2
   Rounds: 1
   MaxScorePerRound: 5
-  StartingPounceChance: 0
-  MaxFakeouts: 3
+  BasePounceChance: 0.33
+  PounceChanceIncrement: 0.15
   _BetweenRoundMusic:
     _Music: 274928299
+  CubeDistanceBetween_mm: 55
+  PouncePitchDiffSuccess_deg: 5
+  CubeLightFlashInterval_s: 0.1
+  CubeVisibleBufferTime_s: 1
