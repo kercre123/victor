@@ -75,11 +75,20 @@ void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
     }
     case LIGHTS_LOW_POWER:
     {
+      /*
       static const LightState lights[] = {
         { 0x0000, 0x0000, 34, 67, 17, 17 },
         { 0x0007, 0x0000, 34, 67, 17, 17 },
         { 0x0007, 0x0000, 34, 67, 17, 17 },
         { 0x0007, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 }
+      };
+      */
+      static const LightState lights[] = {
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
         { 0x0000, 0x0000, 34, 67, 17, 17 }
       };
 
