@@ -111,6 +111,7 @@ namespace Cozmo {
           else if (ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveSpeed_mmps = 0f;
+            _TargetTurnDirection = 0f;
             _CurrentTurnDirection = 0f;
             _CurrentRobot.DriveWheels(0f, 0f);
           }
