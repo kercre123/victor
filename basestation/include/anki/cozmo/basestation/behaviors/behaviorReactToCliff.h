@@ -36,7 +36,7 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   
 protected:
-    
+  
   virtual Result InitInternalReactionary(Robot& robot) override;
   virtual void   StopInternalReactionary(Robot& robot) override;
 

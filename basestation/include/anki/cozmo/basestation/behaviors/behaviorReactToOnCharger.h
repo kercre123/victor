@@ -36,7 +36,7 @@ public:
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
   
 protected:
-    
+  
   virtual Result InitInternalReactionary(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   

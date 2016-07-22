@@ -97,6 +97,8 @@ public:
   CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
   AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
   
+  RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }
+  
   bool HasCannedAnimation(const std::string& animName);
   bool HasAnimationGroup(const std::string& groupName);
   bool HasAnimationForTrigger( AnimationTrigger ev );

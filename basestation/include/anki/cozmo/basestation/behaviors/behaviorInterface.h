@@ -422,13 +422,14 @@ public:
   
     
 protected:
+
   virtual Result InitInternal(Robot& robot) override final;
   virtual Result ResumeInternal(Robot& robot) override final;
-  virtual void StopInternal(Robot& robot) override final;
+  virtual void   StopInternal(Robot& robot) override final;
   
   virtual Result InitInternalReactionary(Robot& robot) = 0;
   virtual Result ResumeInternalReactionary(Robot& robot){return InitInternalReactionary(robot);};
-  virtual void StopInternalReactionary(Robot& robot){};
+  virtual void   StopInternalReactionary(Robot& robot){};
   
   //Handle tracking enable/disable requests
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);

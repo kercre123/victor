@@ -761,6 +761,13 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     return;
   }
   
+  if(_ignoreExternalActions)
+  {
+    PRINT_NAMED_INFO("RobotEventHandler.QueueSingleAction",
+                     "Ignoring QueueSingleAction message while external actions are disabled");
+    return;
+  }
+  
   // We'll pass around a reference to the Robot for convenience sake
   Robot& robot = *robotPointer;
   
@@ -988,6 +995,13 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
     return;
   }
   
+  if(_ignoreExternalActions)
+  {
+    PRINT_NAMED_INFO("RobotEventHandler.QueueSingleAction",
+                     "Ignoring QueueSingleAction message while external actions are disabled");
+    return;
+  }
+  
   IActionRunner* action = CreateNewActionByType(*robot, msg.action);
   
   // If setting the tag failed then delete the action which will emit a completion signal indicating failure
@@ -1010,6 +1024,13 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   if (nullptr == robot)
   {
+    return;
+  }
+  
+  if(_ignoreExternalActions)
+  {
+    PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
+                     "Ignoring QueueCompoundAction message while external actions are disabled");
     return;
   }
   

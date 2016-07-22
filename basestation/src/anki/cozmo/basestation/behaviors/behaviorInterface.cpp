@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -554,10 +555,26 @@ IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& conf
     GameToEngineTag::RequestEnableReactionaryBehavior
   });
 }
-  
+
 Result IReactionaryBehavior::InitInternal(Robot& robot)
 {
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), true);
+  robot.GetActionList().Cancel();
+  robot.AbortAll();
+  
+  if(robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
+     !robot.GetMoveComponent().IsDirectDriving())
+  {
+    PRINT_NAMED_WARNING("IReactionaryBehavior.InitInternal",
+                        "Some tracks are locked, unlocking them");
+    robot.GetMoveComponent().CompletelyUnlockAllTracks();
+  }
+  
+  // Reactionary behaviors will prevent DirectDrive messages and external action queueing messages
+  // from doing anything
+  robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
+  robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(true);
+  
   return InitInternalReactionary(robot);
 }
   
@@ -570,6 +587,8 @@ Result IReactionaryBehavior::ResumeInternal(Robot& robot)
 void IReactionaryBehavior::StopInternal(Robot& robot)
 {
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), false);
+  robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
+  robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(false);
   StopInternalReactionary(robot);
 }
   

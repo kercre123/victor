@@ -121,8 +121,8 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
   }
   
   return Status::Running;
-} 
-  
+}
+
 void BehaviorReactToPoke::StopInternalReactionary(Robot& robot)
 {
 }

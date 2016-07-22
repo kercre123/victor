@@ -36,7 +36,7 @@ public:
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   
 protected:
-    
+  
   virtual Result InitInternalReactionary(Robot& robot) override;
   virtual void   StopInternalReactionary(Robot& robot) override;
 
