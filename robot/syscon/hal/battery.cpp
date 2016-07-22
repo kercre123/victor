@@ -170,6 +170,7 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_IDLE_OPERATING_MODE:
+      nrf_gpio_pin_clear(PIN_VDDs_EN);
       break ;
     
     default:
@@ -180,7 +181,9 @@ void Battery::updateOperatingMode() {
   // Setup new mode
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
-      Motors::disable(true);  
+      // Turn off encoders
+      nrf_gpio_pin_set(PIN_VDDs_EN);
+      Motors::disable(true);
       Head::enterLowPowerMode();
       Battery::powerOff();
       break ;
