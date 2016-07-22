@@ -36,7 +36,7 @@ public class ConsoleLogPane : MonoBehaviour {
     }
   }
 
-  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind,bool newIsOnValue);
+  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind, bool newIsOnValue);
 
   public event ConsoleLogToggleChangedHandler ConsoleLogToggleChanged;
 
@@ -51,7 +51,7 @@ public class ConsoleLogPane : MonoBehaviour {
 
   [SerializeField]
   private RectTransform _ScrollRectLayoutTextContainer;
-  
+
   [SerializeField]
   private ConsoleLogToggle[] _LogToggles;
 
@@ -108,15 +108,16 @@ public class ConsoleLogPane : MonoBehaviour {
     }
   }
 
+  // TODO add react behavior dropdown
   public void HandleTogglePause(bool enable) {
     if (HomeHub.Instance != null) {
       var game = HomeHub.Instance.MiniGameInstance;
       if (game != null) {
         if (game.Paused == false && enable) {
-          game.PauseStateMachine();
+          game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
         }
         else if (game.Paused && !enable) {
-          game.ResumeStateMachine();
+          game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
         }
       }
     }

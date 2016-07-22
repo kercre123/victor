@@ -130,7 +130,7 @@ public abstract class GameBase : MonoBehaviour {
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
-    RegisterInterruptionStartedEvents();
+    RegisterRobotReactionaryBehaviorEvents();
 
     LoadMinigameUIAssetBundle();
   }
@@ -139,9 +139,9 @@ public abstract class GameBase : MonoBehaviour {
     string minigameAssetBundleName = AssetBundleNames.minigame_ui_prefabs.ToString();
     AssetBundleManager.Instance.LoadAssetBundleAsync(
       minigameAssetBundleName, (bool success) => {
-      LoadSharedMinigameView(minigameAssetBundleName);
-      CubePalette.LoadCubePalette(minigameAssetBundleName);
-    });
+        LoadSharedMinigameView(minigameAssetBundleName);
+        CubePalette.LoadCubePalette(minigameAssetBundleName);
+      });
   }
 
   private void LoadSharedMinigameView(string minigameAssetBundleName) {
@@ -256,12 +256,12 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.UpdateStateMachine();
   }
 
-  public void PauseStateMachine() {
-    _StateMachine.Pause();
+  public void PauseStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
+    _StateMachine.Pause(reason, reactionaryBehavior);
   }
 
-  public void ResumeStateMachine() {
-    _StateMachine.Resume();
+  public void ResumeStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
+    _StateMachine.Resume(reason, reactionaryBehavior);
   }
 
   #endregion
@@ -473,8 +473,7 @@ public abstract class GameBase : MonoBehaviour {
     SkillSystem.Instance.EndGame();
     //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
 
-    DeregisterInterruptionStartedEvents();
-    DeregisterInterruptionEndedEvents();
+    DeregisterRobotReactionaryBehaviorEvents();
 
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
@@ -516,8 +515,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void SoftEndGameRobotReset() {
-    DeregisterInterruptionStartedEvents();
-    DeregisterInterruptionEndedEvents();
+    DeregisterRobotReactionaryBehaviorEvents();
     // Increment the amount that this challenge has been played by 1, only count fully completed playthroughs of challenges
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.ContainsKey(_ChallengeData.ChallengeID)) {
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed[_ChallengeData.ChallengeID]++;
@@ -864,56 +862,23 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Cliff or Pickup handling
 
-  protected void RegisterInterruptionStartedEvents() {
-    DeregisterInterruptionStartedEvents();
-    RobotEngineManager.Instance.AddCallback<CliffEvent>(HandleRobotCliffEventStarted);
-    RobotEngineManager.Instance.AddCallback<RobotPickedUp>(HandleRobotPickedUpStarted);
-    RobotEngineManager.Instance.AddCallback<RobotOnBack>(HandleRobotOnBackEventStarted);
+  protected void RegisterRobotReactionaryBehaviorEvents() {
+    DeregisterRobotReactionaryBehaviorEvents();
+    RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
   }
 
-  protected void DeregisterInterruptionStartedEvents() {
-    RobotEngineManager.Instance.RemoveCallback<CliffEvent>(HandleRobotCliffEventStarted);
-    RobotEngineManager.Instance.RemoveCallback<RobotPickedUp>(HandleRobotPickedUpStarted);
-    RobotEngineManager.Instance.RemoveCallback<RobotOnBack>(HandleRobotOnBackEventStarted);
+  protected void DeregisterRobotReactionaryBehaviorEvents() {
+    RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
   }
 
-  protected void RegisterInterruptionEndedEvents() {
-    DeregisterInterruptionEndedEvents();
-    RobotEngineManager.Instance.AddCallback<RobotCliffEventFinished>(HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.AddCallback<RobotPutDown>(HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.AddCallback<RobotOnBackFinished>(HandleRobotInterruptionEventEnded);
-  }
-
-  protected void DeregisterInterruptionEndedEvents() {
-    RobotEngineManager.Instance.RemoveCallback<RobotCliffEventFinished>(HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.RemoveCallback<RobotPutDown>(HandleRobotInterruptionEventEnded);
-    RobotEngineManager.Instance.RemoveCallback<RobotOnBackFinished>(HandleRobotInterruptionEventEnded);
-  }
-
-  private void HandleRobotPickedUpStarted(object messageObject) {
-    HandleRobotInterruptionEventStarted();
-  }
-
-  private void HandleRobotCliffEventStarted(object messageObject) {
-    HandleRobotInterruptionEventStarted();
-  }
-
-  private void HandleRobotOnBackEventStarted(object messageObject) {
-    HandleRobotInterruptionEventStarted();
-  }
-
-  protected void HandleRobotInterruptionEventStarted() {
-    DeregisterInterruptionStartedEvents();
-    RegisterInterruptionEndedEvents();
-
-    PauseStateMachine();
-  }
-
-  protected void HandleRobotInterruptionEventEnded(object messageObject) {
-    DeregisterInterruptionEndedEvents();
-    RegisterInterruptionStartedEvents();
-
-    ResumeStateMachine();
+  protected void HandleRobotReactionaryBehavior(object messageObject) {
+    ReactionaryBehaviorTransition behaviorTransition = messageObject as ReactionaryBehaviorTransition;
+    if (behaviorTransition.behaviorStarted) {
+      PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
+    }
+    else {
+      ResumeStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
+    }
   }
 
   public void ShowDontMoveCozmoAlertView() {

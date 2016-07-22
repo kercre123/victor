@@ -55,13 +55,13 @@ namespace Cozmo {
           SendDriveRobotMessages();
         }
 
-        public override void Pause() {
+        public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           // Don't show the "don't move cozmo" ui
 
           // DisableInput();
         }
 
-        public override void Resume() {
+        public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           SetupRobotForDriveState();
 
           // EnableInput();

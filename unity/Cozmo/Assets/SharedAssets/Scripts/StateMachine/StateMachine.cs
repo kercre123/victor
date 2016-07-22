@@ -54,7 +54,7 @@ public class StateMachine {
     _StateStack.RemoveAt(_StateStack.Count - 1);
     _NextState = null;
 
-    if (oldState != null) {      
+    if (oldState != null) {
       oldState.Exit();
     }
   }
@@ -89,22 +89,21 @@ public class StateMachine {
     _NextState = null;
   }
 
-  public void Pause() {
+  public void Pause(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     if (!_IsPaused) {
       _IsPaused = true;
       if (_CurrState != null) {
-        _CurrState.Pause();
+        _CurrState.Pause(reason, reactionaryBehavior);
       }
     }
   }
 
-  public void Resume() {
+  public void Resume(State.PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     if (_IsPaused) {
       _IsPaused = false;
       if (_CurrState != null) {
-        _CurrState.Resume();
+        _CurrState.Resume(reason, reactionaryBehavior);
       }
     }
   }
 }
-  

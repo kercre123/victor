@@ -3,6 +3,11 @@ using System.Collections;
 
 public class State {
 
+  public enum PauseReason {
+    ENGINE_MESSAGE,
+    DEBUG_INPUT,
+    PLAYER_INPUT
+  }
   protected StateMachine _StateMachine;
 
   protected IRobot _CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
@@ -23,14 +28,18 @@ public class State {
     DAS.Info("State.Exit", this.GetType().ToString());
   }
 
-  public virtual void Pause() {
+  public virtual void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    ShowDontMoveCozmoView();
+  }
+
+  public virtual void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+    // Do nothing
+  }
+
+  protected void ShowDontMoveCozmoView() {
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
       // Show an alert view that quits the game
       _StateMachine.GetGame().ShowDontMoveCozmoAlertView();
     }
-  }
-
-  public virtual void Resume() {
-    // Do nothing
   }
 }
