@@ -41,7 +41,7 @@ bool BehaviorReactToRobotOnBack::IsRunnableReactionaryInternal(const Robot& robo
   return true;
 }
 
-Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)
+Result BehaviorReactToRobotOnBack::InitInternalReactionary(Robot& robot)
 {
   FlipDownIfNeeded(robot);
   return Result::RESULT_OK;
@@ -85,7 +85,7 @@ bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::Mess
   return event.Get_RobotOnBack().onBack;
 }
 
-void BehaviorReactToRobotOnBack::StopInternal(Robot& robot)
+void BehaviorReactToRobotOnBack::StopInternalReactionary(Robot& robot)
 {
 }
 

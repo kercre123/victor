@@ -33,7 +33,7 @@ bool BehaviorReactToUnexpectedMovement::IsRunnableReactionaryInternal(const Robo
   return true;
 }
 
-Result BehaviorReactToUnexpectedMovement::InitInternal(Robot& robot)
+Result BehaviorReactToUnexpectedMovement::InitInternalReactionary(Robot& robot)
 {
   robot.AbortDrivingToPose();
   robot.GetMoveComponent().StopAllMotors();

@@ -48,7 +48,7 @@ bool BehaviorReactToOnCharger::IsRunnableReactionaryInternal(const Robot& robot)
   return _isOnCharger && _isReactionEnabled;
 }
 
-Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
+Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
 {
   _shouldStopBehavior = false;
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnChargerStartSleeping),&BehaviorReactToOnCharger::TransitionToSleepLoop);

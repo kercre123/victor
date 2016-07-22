@@ -37,7 +37,7 @@ public:
   
 protected:
     
-  virtual Result InitInternal(Robot& robot) override;
+  virtual Result InitInternalReactionary(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   
   void TransitionToSleepLoop(Robot& robot);

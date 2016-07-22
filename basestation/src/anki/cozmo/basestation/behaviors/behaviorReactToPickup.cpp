@@ -62,7 +62,7 @@ bool BehaviorReactToPickup::IsRunnableReactionaryInternal(const Robot& robot) co
   return true;
 }
 
-Result BehaviorReactToPickup::InitInternal(Robot& robot)
+Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
 {
   _repeatAnimatingMultiplier = 1;
   StartAnim(robot);
@@ -105,7 +105,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   return Status::Running;
 }
   
-void BehaviorReactToPickup::StopInternal(Robot& robot)
+void BehaviorReactToPickup::StopInternalReactionary(Robot& robot)
 {
 }
 

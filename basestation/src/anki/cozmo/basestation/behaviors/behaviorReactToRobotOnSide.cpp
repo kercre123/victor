@@ -41,7 +41,7 @@ bool BehaviorReactToRobotOnSide::IsRunnableReactionaryInternal(const Robot& robo
   return true;
 }
 
-Result BehaviorReactToRobotOnSide::InitInternal(Robot& robot)
+Result BehaviorReactToRobotOnSide::InitInternalReactionary(Robot& robot)
 {
   ReactToBeingOnSide(robot);
   return Result::RESULT_OK;
@@ -98,7 +98,7 @@ bool BehaviorReactToRobotOnSide::ShouldRunForEvent(const ExternalInterface::Mess
   return true;
 }
 
-void BehaviorReactToRobotOnSide::StopInternal(Robot& robot)
+void BehaviorReactToRobotOnSide::StopInternalReactionary(Robot& robot)
 {
 }
 

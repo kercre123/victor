@@ -49,7 +49,7 @@ bool BehaviorReactToPoke::IsRunnableReactionaryInternal(const Robot& robot) cons
   return true;
 }
 
-Result BehaviorReactToPoke::InitInternal(Robot& robot)
+Result BehaviorReactToPoke::InitInternalReactionary(Robot& robot)
 {
   robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
   robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
@@ -123,7 +123,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
   return Status::Running;
 } 
   
-void BehaviorReactToPoke::StopInternal(Robot& robot)
+void BehaviorReactToPoke::StopInternalReactionary(Robot& robot)
 {
 }
 

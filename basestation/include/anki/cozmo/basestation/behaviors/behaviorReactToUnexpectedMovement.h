@@ -38,8 +38,8 @@ public:
   
 protected:
   
-  virtual Result InitInternal(Robot& robot) override;
-  virtual void StopInternal(Robot& robot) override { };
+  virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual void StopInternalReactionary(Robot& robot) override { };
 
 };
   

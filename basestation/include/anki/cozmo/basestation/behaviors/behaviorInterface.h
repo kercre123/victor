@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "json/json-forwards.h"
@@ -23,6 +24,7 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/types/behaviorGroup.h"
+#include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 #include "util/bitFlags/bitFlags.h"
 #include "util/logging/logging.h"
@@ -44,6 +46,7 @@ class IReactionaryBehavior;
 class MoodManager;
 class Robot;
 class Reward;
+
 namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
@@ -112,7 +115,9 @@ public:
   bool IsRunnable(const Robot& robot) const;
   
   const std::string& GetName() const { return _name; }
+  const BehaviorType GetType() const { return _name != "NULL" ? BehaviorTypeFromString(_name) : BehaviorType::NoneBehavior; }
   const std::string& GetStateName() const { return _stateName; }
+  virtual bool IsReactionary() const { return false;}
 
   double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
 
@@ -413,8 +418,18 @@ public:
   // if true, the previously running behavior will be resumed (if possible) after this behavior is
   // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
   virtual bool ShouldResumeLastBehavior() const override = 0;
+  virtual bool IsReactionary() const override { return true;}
+  
     
 protected:
+  virtual Result InitInternal(Robot& robot) override final;
+  virtual Result ResumeInternal(Robot& robot) override final;
+  virtual void StopInternal(Robot& robot) override final;
+  
+  virtual Result InitInternalReactionary(Robot& robot) = 0;
+  virtual Result ResumeInternalReactionary(Robot& robot){return InitInternalReactionary(robot);};
+  virtual void StopInternalReactionary(Robot& robot){};
+  
   //Handle tracking enable/disable requests
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
   std::multiset<std::string> _disableIDs;
