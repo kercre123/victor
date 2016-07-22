@@ -17,7 +17,6 @@
 
 //#define DISABLE_TASK_CHECK
 //#define DISABLE_AUTHENTIFICATION
-#define AES_DEBUG
 
 #define member_size(type, member) sizeof(((type *)0)->member)
   
@@ -296,14 +295,7 @@ void Bluetooth::manage() {
       using namespace Anki::Cozmo;
       
       RobotInterface::DisplayNumber dn;
-      #ifdef AES_DEBUG
-      dn.value = *(const uint32_t*)Tasks::aes_key();
-      dn.digits = 8;
-      #else
       dn.digits = 0;
-      #endif
-      dn.x = 0;
-      dn.y = 16;
       RobotInterface::SendMessage(dn);
 
       dh_started = false;
