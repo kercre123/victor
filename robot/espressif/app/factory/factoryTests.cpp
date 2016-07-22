@@ -143,11 +143,11 @@ void Update()
       }
       case RobotInterface::FTM_Sleepy:
       {
-        if ((now - lastExecTime) < 300000000)
+        if ((now - lastExecTime) < (30*60*1000000)) // 30 minutes
         {
           using namespace Anki::Cozmo::Face;
-          // Display WiFi password, alternate rows about every 2 minutes
-          const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
+          // Display WiFi password, alternate rows about every 20 seconds
+          const u64 columnMask = ((now/20 * 1000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
           u64 frame[COLS];
           Draw::Clear(frame);
           Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
@@ -324,9 +324,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
       msg.setBodyRadioMode.radioMode = BODY_IDLE_OPERATING_MODE;
       RTIP::SendMessage(msg);
-
-      // TODO Send power off message to body
-      // WiFiConfiguration::Off(false);
       break;
     }
     default:
