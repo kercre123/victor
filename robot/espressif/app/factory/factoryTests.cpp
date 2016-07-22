@@ -141,31 +141,6 @@ void Update()
         }
         break;
       }
-      case RobotInterface::FTM_WiFiInfo:
-      {
-        static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
-                                                                          "PSK:  %s\n"
-                                                                          "Chan: %d  Stas: %d\n"
-                                                                          "WiFi-V: %x\nWiFi-D: %s\n"
-                                                                          "RTIP-V: %x\nRTIP-D: %s\n"
-                                                                          ;
-        const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
-        if (!clientConnected())
-        {
-          struct softap_config ap_config;
-          if (wifi_softap_get_config(&ap_config) == false)
-          {
-            os_printf("WiFiFace couldn't read back config\r\n");
-          }
-          char fmtBuf[wifiFaceFmtSz];
-          memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
-          Face::FacePrintf(fmtBuf,
-                           ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                           COZMO_VERSION_COMMIT, BUILD_DATE + 5,
-                           RTIP::Version, RTIP::VersionDescription);
-        }
-        break;
-      }
       case RobotInterface::FTM_Sleepy:
       {
         if ((now - lastExecTime) < 300000000)
@@ -251,6 +226,32 @@ void Process_TestState(const RobotInterface::TestState& state)
         SetMode(RobotInterface::FTM_WiFiInfo);
         modeTimeout = now + 30000000;
         minPositions[3] = state.positionsFixed[3];
+      }
+      break;
+    }
+    case RobotInterface::FTM_WiFiInfo:
+    {
+      static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
+                                                                        "PSK:  %s\n"
+                                                                        "Chan: %d  Stas: %d\n"
+                                                                        "WiFi-V: %x\nWiFi-D: %s\n"
+                                                                        "RTIP-V: %x\nRTIP-D: %s\n"
+                                                                        "Battery V x10: %d";
+      const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
+      if (!clientConnected())
+      {
+        struct softap_config ap_config;
+        if (wifi_softap_get_config(&ap_config) == false)
+        {
+          os_printf("WiFiFace couldn't read back config\r\n");
+        }
+        char fmtBuf[wifiFaceFmtSz];
+        memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
+        Face::FacePrintf(fmtBuf,
+                         ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
+                         COZMO_VERSION_COMMIT, BUILD_DATE + 5,
+                         RTIP::Version, RTIP::VersionDescription,
+                         state.battVolt10x);
       }
       break;
     }
