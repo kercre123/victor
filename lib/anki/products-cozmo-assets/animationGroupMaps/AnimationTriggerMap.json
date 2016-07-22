@@ -137,6 +137,38 @@
       "AnimName": "ag_driving01_startDriving"
     },
     {
+      "CladEvent": "DroneModeBackwardDrivingEnd",
+      "AnimName": "ag_explorer_drvback_end"
+    },
+    {
+      "CladEvent": "DroneModeBackwardDrivingLoop",
+      "AnimName": "ag_explorer_drvback_loop"
+    },
+    {
+      "CladEvent": "DroneModeBackwardDrivingStart",
+      "AnimName": "ag_explorer_drvback_start"
+    },
+    {
+      "CladEvent": "DroneModeForwardDrivingEnd",
+      "AnimName": "ag_explorer_endDriving"
+    },
+    {
+      "CladEvent": "DroneModeForwardDrivingLoop",
+      "AnimName": "ag_explorer_drivingLoop"
+    },
+    {
+      "CladEvent": "DroneModeForwardDrivingStart",
+      "AnimName": "ag_explorer_startDriving"
+    },
+    {
+      "CladEvent": "DroneModeIdle",
+      "AnimName": "ag_lookInPlaceForFaces_headMovePauses"
+    },
+    {
+      "CladEvent": "DroneModeTurboDrivingStart",
+      "AnimName": "ag_explorer_turbo"
+    },
+    {
       "CladEvent": "FacePlantRoll",
       "AnimName": "ag_reacttocliff_faceplantroll_01"
     },
@@ -233,10 +265,6 @@
       "AnimName": "ag_speedTap_tap"
     },
     {
-      "CladEvent": "OnSpeedtapHandCozmoWin",
-      "AnimName": "ag_speedTap_winHand"
-    },
-    {
       "CladEvent": "OnSpeedtapFakeout",
       "AnimName": "ag_speedTap_fake"
     },
@@ -259,6 +287,10 @@
     {
       "CladEvent": "OnSpeedtapGetOut",
       "AnimName": "ag_speedTap_getOut"
+    },
+    {
+      "CladEvent": "OnSpeedtapHandCozmoWin",
+      "AnimName": "ag_speedTap_winHand"
     },
     {
       "CladEvent": "OnSpeedtapHandPlayerWin",
@@ -472,7 +504,6 @@
       "CladEvent": "RequestGameKeepAwayRequest1",
       "AnimName": "requestGame_speedTap_request"
     },
-
     {
       "CladEvent": "RequestGameMemoryMatchDeny0",
       "AnimName": "requestGame_speedTap_deny"

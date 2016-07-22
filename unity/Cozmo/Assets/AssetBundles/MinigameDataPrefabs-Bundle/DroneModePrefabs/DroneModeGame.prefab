@@ -53,9 +53,9 @@ MonoBehaviour:
   _MaxForwardSpeed_mmps: 120
   _PointTurnSpeed_mmps: 90
   _TurboSpeed_mmps: 160
-  _HeadMovementSpeed_radps: 1
-  _NeutralTiltSize: 0.1
-  _StartingLiftHeight: 0.15
+  _HeadMovementSpeed_radps: 0.5
+  _NeutralTiltSize: 0.15
+  _StartingLiftHeight: 0.25
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
