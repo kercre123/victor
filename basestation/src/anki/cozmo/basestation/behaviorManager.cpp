@@ -214,6 +214,7 @@ void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename EventType>
 void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event)
 {
@@ -237,6 +238,7 @@ void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventT
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior)
 {
   const std::string& oldBehaviorName = nullptr != oldBehavior ? oldBehavior->GetName() : "NULL";
@@ -252,6 +254,7 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
 {
   if( _currentBehavior == nextBehavior ) {
@@ -284,6 +287,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
   return restartSuccess;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SwitchToNextBehavior()
 {
   if( _behaviorToResume != nullptr ) {
@@ -316,6 +320,7 @@ void BehaviorManager::SwitchToNextBehavior()
   SwitchToBehavior( _currentChooserPtr->ChooseNextBehavior(_robot) );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
 {
   // a null here means "no reaction", not "switch to the null behavior"
@@ -334,11 +339,15 @@ void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestEnableReactionaryBehavior(std::string requesterID, BehaviorType behavior, bool enable)
 {
-  _robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::RequestEnableReactionaryBehavior>(requesterID, behavior, enable);
+  _robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::RequestEnableReactionaryBehavior>(requesterID,
+                                                                                                        behavior,
+                                                                                                        enable);
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::Update()
 {
   Result lastResult = RESULT_OK;
@@ -405,6 +414,7 @@ Result BehaviorManager::Update()
   return lastResult;
 } // Update()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 {
   if( _currentChooserPtr == newChooser ) {
@@ -432,6 +442,17 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   SwitchToNextBehavior();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::ForceStopCurrentBehavior(const std::string& stoppedByWhom)
+{
+  PRINT_CH_INFO("Behaviors",
+                "BehaviorManager.ForceStopCurrentBehavior",
+                "Forcing current behavior to stop: %s",
+                stoppedByWhom.c_str());
+  SwitchToBehavior(nullptr);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopCurrentBehavior()
 {
   if ( nullptr != _currentBehavior && _currentBehavior->IsRunning() ) {

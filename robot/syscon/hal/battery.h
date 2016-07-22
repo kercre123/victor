@@ -10,7 +10,7 @@ namespace Battery {
   // Initialize the charge pins and sensing
   void init();
 
-  void setOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
+  void setOperatingMode(Anki::Cozmo::BodyRadioMode mode);
   void updateOperatingMode();
 
   // Update the state of the battery

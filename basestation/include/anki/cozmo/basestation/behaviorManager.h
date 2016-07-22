@@ -89,17 +89,18 @@ public:
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
   Result Update();
         
-  // Forcefully select the next behavior by name (versus by letting the selection mechanism choose based on
-  // current state). Fails if that behavior does not exist or the selected behavior is not runnable.
-  Result SelectBehavior(const std::string& name);
-  
   // Set the current IBehaviorChooser. Note this results in the destruction of the current IBehaviorChooser
   // (if there is one) and the IBehaviors it contains
   void SetBehaviorChooser(IBehaviorChooser* newChooser);
   
   // returns last time we changerd behavior chooser
   float GetLastBehaviorChooserSwitchTime() const { return _lastChooserSwitchTime; }
-    
+
+  // Stops the current behavior and switches to null. The next time Update is called, the behavior chooser
+  // will have a chance to select a new behavior. This is mostly useful as a hack to force a behavior switch
+  // when it is needed (e.g. demo). `stoppedByWhom` is a string for debugging so we know why this was stopped
+  void ForceStopCurrentBehavior(const std::string& stoppedByWhom);
+  
   // Returns nullptr if there is no current behavior
   const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
 

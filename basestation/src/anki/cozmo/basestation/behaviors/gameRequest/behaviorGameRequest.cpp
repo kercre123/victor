@@ -42,6 +42,10 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
       const Json::Value& val = config[kMaxFaceAgeKey];
       if( val.isUInt() ) {
         _maxFaceAge_ms = val.asUInt();
+
+        PRINT_NAMED_DEBUG("IBehaviorRequestGame.MaxFaceAgeOverride",
+                          "custom max face age value %dms",
+                          _maxFaceAge_ms);
       }
     }
   }

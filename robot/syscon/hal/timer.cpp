@@ -28,11 +28,18 @@ void Timer::init()
   // resolution. This should still provide enough for this chip/board.
   NRF_RTC1->PRESCALER = 0;
 
-  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE0_Msk
+  #ifdef TICK_TIMER
+  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk
+                     | RTC_INTENSET_COMPARE0_Msk
                      | RTC_INTENSET_COMPARE1_Msk
-                     | RTC_INTENSET_COMPARE2_Msk
-                     | RTC_INTENSET_COMPARE3_Msk;
+                     | RTC_INTENSET_COMPARE2_Msk;
+  #else
+  NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE3_Msk
+                     | RTC_INTENSET_COMPARE0_Msk
+                     | RTC_INTENSET_COMPARE1_Msk
+                     | RTC_INTENSET_COMPARE2_Msk;
   setup_next_main_exec();
+  #endif
 
   // Configure lower-priority realtime trigger
   NVIC_SetPriority(RTC1_IRQn, TIMER_PRIORITY);
@@ -65,24 +72,44 @@ static void setup_next_main_exec() {
   static const int PERIOD = CYCLES_MS(5.0f);
   static int target = 0;
 
-  target += PERIOD;
+  // Guard against dropped ticks
+  unsigned int ticks;
+  do {
+    target += PERIOD;
+    ticks = target - GetCounter();
+  } while (ticks > PERIOD);
+
   NRF_RTC1->CC[TIMER_CC_MAIN] = target >> 8;
 }
 
 extern "C" void RTC1_IRQHandler() {
+  #ifdef TICK_TIMER
+  if (NRF_RTC1->EVENTS_TICK) {
+    NRF_RTC1->EVENTS_TICK = 0;
+
+    static const int PERIOD = CYCLES_MS(5.0f);
+    static int target = 0;
+
+    int ticks = target - GetCounter();
+    if (ticks <= 0) {
+      target += PERIOD;
+      main_execution();
+    }
+  }
+  #else
   // Main execution will fire
   if (NRF_RTC1->EVENTS_COMPARE[TIMER_CC_MAIN]) {
     NRF_RTC1->EVENTS_COMPARE[TIMER_CC_MAIN] = 0;
 
     setup_next_main_exec();
     main_execution();
-    Backpack::nextChannel();
   }
+  #endif
 
   // Light management loop
   for (int i = 0; i <= 3; i++) {
-    if (NRF_RTC1->EVENTS_COMPARE[i+TIMER_CC_LIGHTS]) {
-      NRF_RTC1->EVENTS_COMPARE[i+TIMER_CC_LIGHTS] = 0;
+    if (NRF_RTC1->EVENTS_COMPARE[i]) {
+      NRF_RTC1->EVENTS_COMPARE[i] = 0;
 
       Backpack::update(i);
     }

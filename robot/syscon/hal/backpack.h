@@ -13,7 +13,6 @@ namespace Backpack {
   void update(int channel);
   void blink(void);
 
-  void nextChannel();
   void setLights(const LightState* lights);
 }
 

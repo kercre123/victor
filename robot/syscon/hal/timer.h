@@ -10,8 +10,7 @@
 #define COUNT_PER_MS (8389)
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
-static const int TIMER_CC_LIGHTS = 1;
-static const int TIMER_CC_MAIN = 0;
+static const int TIMER_CC_MAIN = 3;
 
 // Initialize the RTC peripheral
 #ifdef __cplusplus
