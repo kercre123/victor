@@ -18,7 +18,16 @@ for i = 1:length(coretechLibs)
 end
 
 % For now, coretech-external is special and lives outside this repo, 
-% assumed to be in ../coretech-external
-run(fullfile(cozmoDir, '..', '..', '..', '..', 'coretech-external-local', 'matlab', 'initExternalPath.m'));
+% assumed to be in ../coretech-external[-local]
+cteDir = fullfile(cozmoDir, '..', 'coretech-external', 'matlab');
+if ~isdir(cteDir)
+  cteDir = fullfile(cozmoDir, '..', 'coretech-external-local', 'matlab');
+end
+
+if ~isdir(cteDir)
+  warning('Did not find coretech-external[-local]/matlab dir');
+else
+  run(fullfile(cteDir, 'initExternalPath.m'));
+end
 
 end % initCozmoPath()
