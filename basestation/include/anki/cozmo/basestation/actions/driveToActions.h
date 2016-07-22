@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/planning/shared/goalDefs.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
@@ -82,7 +83,7 @@ namespace Anki {
       bool     _driveWithHeadDown;
       
       std::vector<Pose3d> _goalPoses;
-      size_t              _selectedGoalIndex;
+      Planning::GoalID    _selectedGoalIndex;
       
       PathMotionProfile _pathMotionProfile;
       bool _hasMotionProfile = false;

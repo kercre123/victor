@@ -255,17 +255,6 @@ message EnableLiftPower
   bool enable
 }
 
-enum int_8 BodyRadioMode {
-  BODY_BLUETOOTH_OPERATING_MODE = 0,
-  BODY_ACCESSORY_OPERATING_MODE,
-  BODY_IDLE_OPERATING_MODE
-}
-
-message SetBodyRadioMode
-{
-  BodyRadioMode radioMode
-}
-
 message SetHeadDeviceLock
 {
   bool enable
@@ -357,6 +346,7 @@ union EngineToRobot
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyRestart              bodyRestart                 = 0x0D,
 
+  DiffieHellmanResults          diffieHellmanResults        = 0x25,
   HelloRobot                    helloRobotMessage           = 0x26,
   EnterPairing                  enterPairing                = 0x27,
 
@@ -413,7 +403,7 @@ union EngineToRobot
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,
   // Available for future use                               = 0x81,
-  // Available for future use                               = 0x82,
+  CalculateDiffieHellman        calculateDiffieHellman      = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
   NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
@@ -440,13 +430,14 @@ union EngineToRobot
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
+
   OTA::Write                    otaWrite                    = 0xAF,
 
   AppConnectConfigString        appConCfgString             = 0xAA,
   AppConnectConfigFlags         appConCfgFlags              = 0xAB,
   AppConnectConfigIPInfo        appConCfgIPInfo             = 0xAC,
   AppConnectGetRobotIP          appConGetRobotIP            = 0xAD,
-  WiFiOff                       wifiOff                     = 0xAE,
+  WiFiOff                       wifiOff                     = 0xAE
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

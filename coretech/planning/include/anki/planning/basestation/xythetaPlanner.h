@@ -14,7 +14,9 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_H_
 
 #include <stddef.h>
+#include "anki/planning/shared/goalDefs.h"
 #include "xythetaPlanner_definitions.h"
+#include <utility>
 
 #define DEFUALT_MAX_EXPANSIONS 5000000
 
@@ -39,7 +41,11 @@ public:
   ~xythetaPlanner();
 
   // Check if the goal (from context) is valid
-  bool GoalIsValid() const;
+  bool GoalIsValid(GoalID goalID) const;
+  bool GoalsAreValid() const;
+  
+  // Check if a goal is valid. Compares against context obstacles, but not using its goals.
+  bool GoalIsValid(const std::pair<GoalID, State_c>& goal_cPair) const;
 
   // Check if the start (from context) is valid
   bool StartIsValid() const;
@@ -59,6 +65,8 @@ public:
   void GetTestPlan(xythetaPlan& plan);
 
   Cost GetFinalCost() const;
+  
+  GoalID GetChosenGoalID() const;
 
   float GetLastPlanTime() const;
   int GetLastNumEpansions() const;

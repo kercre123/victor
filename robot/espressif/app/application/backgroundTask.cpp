@@ -16,6 +16,7 @@ extern "C" {
 #include "rtip.h"
 #include "activeObjectManager.h"
 #include "face.h"
+#include "dhTask.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
@@ -108,21 +109,26 @@ void Exec(os_event_t *event)
     }
     case 6:
     {
-      using namespace RobotInterface;
       const u8 currentStaCount = wifi_softap_get_station_num();
       SetBodyRadioMode bMsg;
+
       if (currentStaCount > 0 && lastStaCount == 0)
       {
         bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
-        SendMessage(bMsg);
+        RobotInterface::SendMessage(bMsg);
       }
       else if (currentStaCount == 0 && lastStaCount > 0)
       {
         bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-        SendMessage(bMsg);
+        RobotInterface::SendMessage(bMsg);
       }
       lastStaCount = currentStaCount;
       break;
+    }
+    case 7:
+    {
+      DiffieHellman::Update();
+      break ;
     }
     // Add new "long execution" tasks as switch cases here.
     default:
@@ -168,6 +174,11 @@ extern "C" int8_t backgroundTaskInit(void)
   {
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;
+  }
+  else if (DiffieHellman::Init() != true)
+  {
+    os_printf("\tCouldn't initalize Diffie Hellman module\r\n");
+    return -2;
   }
   else if (Anki::Cozmo::RTIP::Init() != true)
   {

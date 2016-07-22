@@ -21,6 +21,14 @@
       "AnimName": "knockOverStack_react"
     },
     {
+      "CladEvent": "AskToBeRightedLeft",
+      "AnimName": "ag_reacttocliff_stuckleftside_01"
+    },
+    {
+      "CladEvent": "AskToBeRightedRight",
+      "AnimName": "ag_reacttocliff_stuckrightside_01"
+    },
+    {
       "CladEvent": "BlockReact",
       "AnimName": "blockReact"
     },
@@ -161,6 +169,14 @@
       "AnimName": "ag_explorer_turbo"
     },
     {
+      "CladEvent": "FacePlantRoll",
+      "AnimName": "ag_reacttocliff_faceplantroll_01"
+    },
+    {
+      "CladEvent": "FailedToRightFromFace",
+      "AnimName": "ag_reacttocliff_turtlerollfail_01"
+    },
+    {
       "CladEvent": "FlipDownFromBack",
       "AnimName": "FlipDownFromBack"
     },
@@ -198,7 +214,7 @@
     },
     {
       "CladEvent": "OnChargerStartSleeping",
-      "AnimName": "ag_reactToCharger"
+      "AnimName": "ag_reactToChargerOld"
     },
     {
       "CladEvent": "OnLearnedPlayerName",
@@ -391,6 +407,14 @@
     {
       "CladEvent": "ReactToNewBlockSmall",
       "AnimName": "ag_reactToNewBlockOnGround"
+    },
+    {
+      "CladEvent": "ReactToOnLeftSide",
+      "AnimName": "ag_reacttocliff_stuckleftside_01"
+    },
+    {
+      "CladEvent": "ReactToOnRightSide",
+      "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
       "CladEvent": "ReactToPickup",
@@ -619,6 +643,10 @@
     {
       "CladEvent": "Surprise",
       "AnimName": "ag_surprise"
+    },
+    {
+      "CladEvent": "TurtleRoll",
+      "AnimName": "ag_reacttocliff_turtleroll_01"
     }
   ]
 }

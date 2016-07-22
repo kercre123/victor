@@ -457,6 +457,30 @@ bool big_modulo(big_num_t& modulo, const big_num_t& a, const big_num_t& b) {
   return false;
 }
 
+void big_modulo_async_init(big_modulo_t& mod, const big_num_t& a, const big_num_t& b) {
+  mod.modulo = a;
+  mod.shift = big_msb(a) - big_msb(b);
+
+  if (mod.shift >= 0) {
+    big_shl(mod.divisor, b, mod.shift);
+  }
+}
+
+bool big_modulo_async(big_modulo_t& mod) {
+  if (mod.shift-- < 0) {
+    bit_reduce(mod.modulo);
+    return true;
+  }
+
+  if (big_unsigned_compare(mod.modulo, mod.divisor) >= 0) {
+    big_unsigned_subtract(mod.modulo, mod.modulo, mod.divisor);
+  }
+
+  big_shr(mod.divisor, mod.divisor, 1);
+
+  return false;
+}
+
 // Binary EEA
 bool big_invm(big_num_t& out, const big_num_t& a_, const big_num_t& b_) {
   big_num_t a;
@@ -588,11 +612,15 @@ bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 }
 
 bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
-  if (big_multiply(out, in, mont.rinv)) {
+  big_num_t mont_rinv = mont.rinv;
+  
+  if (big_multiply(out, in, mont_rinv)) {
     return true;
   }
 
-  big_modulo(out, out, mont.modulo);
+  big_num_t mont_modulo = mont.modulo;
+
+  big_modulo(out, out, mont_modulo);
 
   return false;
 }
@@ -601,20 +629,23 @@ bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
   big_num_t temp;
 
+  big_num_t mont_minv = mont.minv;
+  big_num_t mont_modulo = mont.modulo;
+
   big_multiply(out, a, b);
   temp = out;
   big_mask(temp, mont.shift);
-  big_multiply(temp, temp, mont.minv);
+  big_multiply(temp, temp, mont_minv);
   big_mask(temp, mont.shift);
-  big_multiply(temp, temp, mont.modulo);
+  big_multiply(temp, temp, mont_modulo);
 
   big_subtract(out, out, temp);
   big_shr(out, out, mont.shift);
 
-  if (big_compare(out, mont.modulo) >= 0) {
-    big_subtract(out, out, mont.modulo);
+  if (big_compare(out, mont_modulo) >= 0) {
+    big_subtract(out, out, mont_modulo);
   } else if (big_compare(out, BIG_ZERO) < 0) {
-    big_add(out, out, mont.modulo);
+    big_add(out, out, mont_modulo);
   }
 
   return false;
@@ -628,8 +659,8 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
 
   int msb = big_msb(exp);
   
-  memcpy(base, &base_in, sizeof(big_num_t));
-  memcpy(result, &mont.one, sizeof(big_num_t));
+  *base = base_in;
+  *result = mont.one;
 
   for (int bit = 0; bit <= msb; bit++) {
     if (big_bit_get(exp, bit)) {
@@ -645,7 +676,7 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
     }
 
 
-		if (mont_multiply(mont, *temp, *base, *base)) {
+    if (mont_multiply(mont, *temp, *base, *base)) {
       return true;
     }
 
@@ -658,6 +689,53 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
 
   memcpy(&out, result, sizeof(big_num_t));
   out.negative = big_odd(base_in) ? base_in.negative : false;
+
+  return false;
+}
+
+void mont_power_async_init(const big_mont_t& mont, big_mont_pow_t& state, const big_num_t& base, const big_num_t& exp) {
+  memcpy(&state.exp, &exp, sizeof(big_num_t));
+  memcpy(&state.base, &base, sizeof(big_num_t));
+  memcpy(&state.result, &mont.one, sizeof(big_num_t));
+
+  state.bit = 0;
+  state.msb = big_msb(state.exp);
+  state.negative = big_odd(state.base) ? state.base.negative : false;
+  state.scale = false;
+}
+
+bool mont_power_async(const big_mont_t& mont, big_mont_pow_t& state) {
+  big_num_t temp;
+
+  // Completion state
+  if (state.bit > state.msb) {
+    state.result.negative = state.negative;
+    return true;
+  }
+
+  // Do we need to double our base number
+  if (state.scale) {
+    if (mont_multiply(mont, temp, state.base, state.base)) {
+      return true;
+    }
+
+    memcpy(&state.base, &temp, sizeof(big_num_t));
+    state.scale = false;
+
+    return false;
+  }
+
+  // Shift in value
+  if (big_bit_get(state.exp, state.bit++)) {
+    if (mont_multiply(mont, temp, state.result, state.base)) {
+      return true;
+    }
+
+    memcpy(&state.result, &temp, sizeof(big_num_t));
+  }
+
+  // We need to double our scale
+  state.scale = true;
 
   return false;
 }

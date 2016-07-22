@@ -10,6 +10,7 @@ function Cozmo(device, service, send, read) {
   this._send_char = send;
   this._read_char = read;
   this._packets = [];
+  this._encoded = [];
 
   this._device.on('disconnect', () => {
     clearInterval(this._interval);
@@ -38,7 +39,20 @@ function Cozmo(device, service, send, read) {
     buffer.push(data.slice(0,16));
 
     if (end) {
-      this.emit('data', Buffer.concat(buffer), encrypted);
+      var packet = Buffer.concat(buffer);
+
+      if (encrypted) {
+        if (!this.key) {
+          this._encoded.push(packet);
+          this.emit('encrypted', packet);
+          return ;
+        }
+
+        packet = aes.decode(this.key, packet);
+      }
+
+      this.emit('data', packet);      
+
       buffer = [];
     }
   });
@@ -52,7 +66,14 @@ Cozmo.prototype._disconnect = function () {
 
 };
 
-Cozmo.prototype.send = function (message, key) {
+Cozmo.prototype.setKey = function (key) {
+  this.key = key;
+
+  this._encoded.forEach((d) => this.emit('data', aes.decode(this.key, d)));
+  this._encoded = [];
+}
+
+Cozmo.prototype.send = function (message) {
   message = message.concat();
   message.unshift(message.length);
 
@@ -60,7 +81,10 @@ Cozmo.prototype.send = function (message, key) {
   while (message.length % 16) { message.push(Math.random()*0x100 | 0) }
   
   // Encrypt if nessessary
-  if (key) { message = aes.encode(key, message); }
+  if (this.key) { 
+    message = aes.encode(this.key, message);
+  }
+  
   this._packets = [];
 
   var packet = null;
@@ -76,7 +100,7 @@ Cozmo.prototype.send = function (message, key) {
   // Last packet flag
   packet[16] |= 2;
 
-  if (key) { packet[16] |= 4; } // This flag is only used on the last packet
+  if (this.key) { packet[16] |= 4; } // This flag is only used on the last packet
 }
 
 

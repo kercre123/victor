@@ -245,18 +245,20 @@ private:
   Robot&       _robot;
   
   // ====== Message retry ========
-  // Last write message sent
+  // Last write and read message sent
   NVStorage::NVStorageWrite _writeMsg;
+  NVStorage::NVStorageRead  _readMsg;
   
-  // Number of retries attempted for last write message
-  u8 _numWriteMsgAttempts;
+  // Number of attempted sends of the last write or read message
+  u8 _numSendAttempts;
   
-  // Max num of retry attempts allowed for a write message
-  const u8 _kNumWriteRetryAttempts = 2;
+  // Max num of attempts allowed for sending a write or read message
+  const u8 _kMaxNumSendAttempts = 8;
 
   // Returns false if number of allowable retries exceeded
   bool ResendLastWrite();
-  
+  bool ResendLastRead();
+
   
   // ======= Robot event handlers ======
   void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -279,10 +281,13 @@ private:
   bool IsMultiBlobEntryTag(u32 tag) const;
   
   // Whether or not this is a legal entry tag
-  bool IsValidEntryTag(u32 tag);
+  bool IsValidEntryTag(u32 tag) const;
   
   // Whether or not this is a factory entry tag
-  bool IsFactoryEntryTag(u32 tag);
+  bool IsFactoryEntryTag(u32 tag) const;
+  
+  // Whether or not this tag is in the special 0xc000xxxx partition
+  bool IsSpecialEntryTag(u32 tag) const;
   
   // Given any tag, returns the assumed base tag
   u32 GetBaseEntryTag(u32 tag) const;

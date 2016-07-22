@@ -57,12 +57,12 @@ bool BehaviorReactToPickup::ShouldRunForEvent(const ExternalInterface::MessageEn
   return ! robot.IsOnCharger();
 }
 
-bool BehaviorReactToPickup::IsRunnableInternal(const Robot& robot) const
+bool BehaviorReactToPickup::IsRunnableReactionaryInternal(const Robot& robot) const
 {
-  return _disableIDs.size() == 0;
+  return true;
 }
 
-Result BehaviorReactToPickup::InitInternal(Robot& robot)
+Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
 {
   _repeatAnimatingMultiplier = 1;
   StartAnim(robot);
@@ -105,7 +105,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   return Status::Running;
 }
   
-void BehaviorReactToPickup::StopInternal(Robot& robot)
+void BehaviorReactToPickup::StopInternalReactionary(Robot& robot)
 {
 }
 

@@ -32,6 +32,7 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/planning/shared/goalDefs.h"
 #include "anki/planning/shared/path.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
@@ -269,7 +270,7 @@ public:
   static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
   
   // Get pitch angle of robot
-  f32 GetPitchAngle() const;
+  Radians GetPitchAngle() const;
   
   // Return current bounding height of the robot, taking into account whether lift
   // is raised
@@ -305,11 +306,11 @@ public:
                             bool useManualSpeed = false);
 
   // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
-  // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
+  // pose it wants to go to. The optional second argument is a pointer to a Planning::GoalID, which, if not null, will
   // be set to the pose which is selected once planning is complete
   Result StartDrivingToPose(const std::vector<Pose3d>& poses,
                             const PathMotionProfile motionProfile,                              
-                            size_t* selectedPoseIndex = nullptr,
+                            Planning::GoalID* selectedPoseIndex = nullptr,
                             bool useManualSpeed = false);
   
   // This function checks the planning / path following status of the robot. See the enum definition for
@@ -343,7 +344,9 @@ public:
 
   // returns true if the robot is on it's back. Note that this does not correspond 1 to 1 with the
   // RobotOnBack message, because there is some throttling / delay on the mesage
-  bool IsOnBack() const {return _isOnBack;}
+  bool IsOnBack() const {return _offTredsState == OffTredsState::OnBack;}
+  bool IsOnSide() const {return _offTredsState == OffTredsState::OnSide;}
+  bool IsOnFace() const {return _offTredsState == OffTredsState::OnFace;}
     
   void SetCarryingObject(ObjectID carryObjectID);
   void UnSetCarryingObjects(bool topOnly = false);
@@ -787,7 +790,7 @@ protected:
   IPathPlanner*            _longPathPlanner              = nullptr;
   IPathPlanner*            _shortPathPlanner             = nullptr;
   IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
-  size_t*                  _plannerSelectedPoseIndexPtr  = nullptr;
+  Planning::GoalID*        _plannerSelectedPoseIndexPtr  = nullptr;
   int                      _numPlansStarted              = 0;
   int                      _numPlansFinished             = 0;
   ERobotDriveToPoseStatus  _driveToPoseStatus            = ERobotDriveToPoseStatus::Waiting;
@@ -839,7 +842,7 @@ protected:
   f32              _currentHeadAngle;
   
   f32              _currentLiftAngle = 0;
-  f32              _pitchAngle;
+  Radians          _pitchAngle;
   
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
@@ -866,11 +869,18 @@ protected:
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
   u16              _forwardSensorValue_mm = 0;
-  bool             _isOnBack              = false;
-  TimeStamp_t      _robotFirstOnBack_ms   = 0;
-  bool             _lastSendOnBackValue   = false;
   bool             _isOnChargerPlatform   = false;
 
+  enum class OffTredsState{
+    OnTreds
+    , OnBack
+    , OnSide
+    , OnFace
+  };
+  
+  OffTredsState    _offTredsState         = OffTredsState::OnTreds;
+  TimeStamp_t      _robotFirstOffTreds_ms = 0;
+  bool             _lastSendOffTredsValue = false;
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use

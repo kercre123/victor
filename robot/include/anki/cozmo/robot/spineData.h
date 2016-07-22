@@ -27,7 +27,7 @@ enum SPISource
 
 // 32 bytes of payload plus tag
 #define SPINE_MAX_CLAD_MSG_SIZE_DOWN (40)
-#define SPINE_MAX_CLAD_MSG_SIZE_UP (28)
+#define SPINE_MAX_CLAD_MSG_SIZE_UP (32)
 
 struct CladBufferDown
 {
@@ -61,6 +61,6 @@ struct GlobalDataToBody
   CladBufferDown cladBuffer;
 };
 
-static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 128, "Spine transport payload too large");
+static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 132, "Spine transport payload too large");
 
 #endif

@@ -16,6 +16,8 @@
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
 #include "xythetaPlannerContext.h"
+#include <vector>
+#include <utility>
 
 namespace Anki {
 namespace Planning {
@@ -27,7 +29,7 @@ xythetaPlannerContext::xythetaPlannerContext()
 
 void xythetaPlannerContext::Reset()
 {
-  goal = State_c{ 0.0f, 0.0f, 0.0f };
+  goals_c = std::vector<std::pair<GoalID,State_c>>{ { 0, {0.0f, 0.0f, 0.0f} } };
   start = State_c{ 0.0f, 0.0f, 0.0f };
   allowFreeTurnInPlaceAtGoal = false;
   forceReplanFromScratch = false;
@@ -41,8 +43,13 @@ bool xythetaPlannerContext::Import(const Json::Value& config)
       return false;
     }
 
-    if( ! goal.Import( config["goal"] ) ) {
-      return false;
+    goals_c.clear();
+    for (const auto& goalConfig : config["goals"]) {
+      State_c goalState_c;
+      if( ! goalState_c.Import( goalConfig ) ) {
+        return false;
+      }
+      goals_c.emplace_back(goalConfig["goalID"].asUInt(), goalState_c);
     }
 
     if( ! start.Import( config["start"] ) ) {
@@ -68,9 +75,13 @@ void xythetaPlannerContext::Dump(Util::JsonWriter& writer) const
   env.Dump(writer);
   writer.EndGroup();
 
-  writer.StartGroup("goal");
-  goal.Dump(writer);
-  writer.EndGroup();
+  writer.StartList("goals");
+  for (const auto& goal : goals_c) {
+    writer.NextListItem();
+    writer.AddEntry("goalID", (int)goal.first);
+    goal.second.Dump(writer);
+  }
+  writer.EndList();
 
   writer.StartGroup("start");
   start.Dump(writer);

@@ -1850,11 +1850,14 @@
      ,"maxReverseVelocity_mmps": 25
     }
   }
- ,"goal": {
-    "x_mm": 126.543
-   ,"y_mm": -78.7144
-   ,"theta_rads": 0.261799
-  }
+ ,"goals": [
+    {
+      "goalID": 0,
+      "x_mm": 126.543
+     ,"y_mm": -78.7144
+     ,"theta_rads": 0.261799
+    }
+  ]
  ,"start": {
     "x_mm": -128.525
    ,"y_mm": -68.61

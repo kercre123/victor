@@ -101,10 +101,12 @@ private:
   bool _hasSeenBlock = false;
 
   IBehavior* _faceSearchBehavior = nullptr;
+  IBehavior* _gameRequestBehavior = nullptr;
   BehaviorDemoFearEdge* _fearEdgeBehavior = nullptr;
   BehaviorAdmireStack* _admireStackBehavior = nullptr;
 
-  bool _encourageFaceBehavior = false;
+  // behaviors to "encourage" by boosting their score
+  std::map< const IBehavior*, float > _modifiedBehaviorScores;
   
   // tracking for the cubes to determine when there are three that are upright (and have been for some time)
   float _cubesUprightTime_s = -1.0f;

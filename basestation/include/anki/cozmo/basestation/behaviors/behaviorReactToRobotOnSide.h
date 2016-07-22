@@ -1,8 +1,8 @@
 /**
- * File: behaviorReactToRobotOnBack.h
+ * File: behaviorReactToRobotOnSide.h
  *
- * Author: Brad Neuman
- * Created: 2016-05-06
+ * Author: Kevin M. Karol
+ * Created: 2016-07-18
  *
  * Description: 
  *
@@ -10,29 +10,26 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnBack_H__
-#define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnBack_H__
+#ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnSide_H__
+#define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnSide_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToRobotOnBack : public IReactionaryBehavior
+class BehaviorReactToRobotOnSide : public IReactionaryBehavior
 {
 private:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config);
+  BehaviorReactToRobotOnSide(Robot& robot, const Json::Value& config);
   
 public:
   
   virtual bool IsRunnableReactionaryInternal(const Robot& robot) const override;
-  // don't know where the robot will land, so don't resume
-  // TODO:(bn) should this depend on how long the robot was "in the air"?
   virtual bool ShouldResumeLastBehavior() const override { return false; }
-
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   
 protected:
@@ -42,10 +39,13 @@ protected:
 
 private:
 
-  void FlipDownIfNeeded(Robot& robot);
-  void DelayThenFlipDown(Robot& robot);
-  void SendFinishedFlipDownMessage (Robot& robot);
+  void ReactToBeingOnSide(Robot& robot);
+  void AskToBeRighted(Robot& robot);
+  //Ensures no other behaviors run while Cozmo is still on his side
+  void HoldingLoop(Robot& robot);
   
+  bool _onRightSide;
+
 };
 
 }
