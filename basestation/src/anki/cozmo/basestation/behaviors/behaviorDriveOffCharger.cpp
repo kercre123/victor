@@ -36,11 +36,17 @@ static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _internalScore(0.0f)
 {
   SetDefaultName("DriveOffCharger");
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
   _distToDrive_mm = Charger::GetLength() + extraDist_mm;
 
+  SubscribeToTags({{
+    EngineToGameTag::RobotPickedUp,
+    EngineToGameTag::ChargerEvent,
+  }});
+  
   PRINT_NAMED_DEBUG("BehaviorDriveOffCharger.DriveDist",
                     "Driving %fmm off the charger (%f length + %f extra)",
                     _distToDrive_mm,
@@ -64,7 +70,6 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   
   //Disable Cliff Reaction
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
-  
   return Result::RESULT_OK;
 }
   
@@ -82,6 +87,41 @@ Result BehaviorDriveOffCharger::ResumeInternal(Robot& robot)
   // We hit the end of the charger, just keep driving.
   TransitionToDrivingForward(robot);
   return Result::RESULT_OK;
+}
+ 
+  
+void BehaviorDriveOffCharger::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag()){
+    case EngineToGameTag::RobotPickedUp:
+      _internalScore = 0.0f;
+      break;
+    default:
+      break;
+  }
+  
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveOffCharger::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
+{
+  bool onCharger;
+  
+  switch(event.GetData().GetTag()){
+    case EngineToGameTag::ChargerEvent:
+      onCharger = event.GetData().Get_ChargerEvent().onCharger;
+      if(onCharger){
+        _internalScore = 1000.0f;
+      }
+    default:
+      break;
+  }
+}
+  
+float BehaviorDriveOffCharger::EvaluateScoreInternal(const Robot& robot) const
+{
+  return _internalScore;
 }
 
 
@@ -109,7 +149,8 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
     // store in whiteboard our success
     const float curTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
     robot.GetBehaviorManager().GetWhiteboard().GotOffChargerAtTime( curTime );
-  
+    _internalScore = 0.0f;
+
     return Status::Complete;
   }
 }

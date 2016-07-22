@@ -181,6 +181,10 @@
       "AnimName": "FlipDownFromBack"
     },
     {
+      "CladEvent": "IdleOnCharger",
+      "AnimName": "ag_SleepLoop"
+    },
+    {
       "CladEvent": "InteractWithFacesInitial",
       "AnimName": "interactWithFaces_initial"
     },
@@ -207,14 +211,6 @@
     {
       "CladEvent": "MajorWin",
       "AnimName": "ag_majorWin"
-    },
-    {
-      "CladEvent": "OnChargerLoopSleeping",
-      "AnimName": "ag_SleepLoop"
-    },
-    {
-      "CladEvent": "OnChargerStartSleeping",
-      "AnimName": "ag_reactToChargerOld"
     },
     {
       "CladEvent": "OnLearnedPlayerName",
@@ -327,6 +323,10 @@
     {
       "CladEvent": "OnWiggle",
       "AnimName": "ag_faceEnrollment_Wiggle"
+    },
+    {
+      "CladEvent": "PlacedOnCharger",
+      "AnimName": "ag_reactToCharger"
     },
     {
       "CladEvent": "PopAWheelieInitial",
