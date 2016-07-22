@@ -14,6 +14,7 @@
 #include "backpack.h"
 #include "motors.h"
 #include "temp.h"
+#include "head.h"
 #include "tasks.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
@@ -169,6 +170,7 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_IDLE_OPERATING_MODE:
+      nrf_gpio_pin_clear(PIN_VDDs_EN);
       break ;
     
     default:
@@ -179,7 +181,11 @@ void Battery::updateOperatingMode() {
   // Setup new mode
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
-      Motors::disable(true);  
+      // Turn off encoders
+      nrf_gpio_pin_set(PIN_VDDs_EN);
+      Backpack::defaultPattern(LIGHTS_LOW_POWER);
+      Motors::disable(true);
+      Head::enterLowPowerMode();
       Battery::powerOff();
       break ;
     

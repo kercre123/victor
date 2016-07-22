@@ -35,6 +35,7 @@ static int txRxIndex;
 static TRANSMIT_MODE uart_mode;
 
 bool Head::spokenTo;
+bool lowPowerMode;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -48,6 +49,7 @@ void Head::init()
   g_dataToHead.source = SPI_SOURCE_BODY;
   Head::spokenTo = false;
   txRxIndex = 0;
+  lowPowerMode = false;
 
   // Power on the peripheral
   NRF_UART0->POWER = 1;
@@ -64,6 +66,19 @@ void Head::init()
   NVIC_EnableIRQ(UART0_IRQn);
 
   nrf_gpio_pin_set(PIN_TX_HEAD);
+}
+
+void Head::enterLowPowerMode(void) {
+  using namespace Anki::Cozmo;
+  
+  EnterSleepMode msg;
+  RobotInterface::SendMessage(msg);
+  
+  lowPowerMode = true;
+}
+
+void Head::leaveLowPowerMode(void) {
+  // TODO: THIS IS INCOMPLETE
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -136,12 +151,18 @@ void Head::manage() {
     return ;
   }
 
+  // Head has powered off: Ignore lack of comms
+  if (lowPowerMode && !Head::spokenTo) {
+    Watchdog::kick(WDOG_UART);
+  }
+
+  Head::spokenTo = false;
+
   // Head body sync is disabled, so just kick the watchdog
   Spine::dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
-  Head::spokenTo = false;
   
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
