@@ -96,7 +96,7 @@ void DiffieHellman::Update(void) {
   {
     big_num_t temp;
 
-    bytes_to_num(temp, task->local_exp);
+    bytes_to_num(temp, task->remote_exp);
     mont_power_async_init(RSA_DIFFIE_MONT, task->pow_state, task->pow_state.result, temp);
     state = STATE_POWER_2;
     break ;

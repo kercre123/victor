@@ -2,4 +2,5 @@ RTE
 dist
 staging
 generated
+node_modules
 crypto/*/*manifest*
