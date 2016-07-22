@@ -21,6 +21,14 @@
       "AnimName": "knockOverStack_react"
     },
     {
+      "CladEvent": "AskToBeRightedLeft",
+      "AnimName": "ag_reacttocliff_stuckleftside_01"
+    },
+    {
+      "CladEvent": "AskToBeRightedRight",
+      "AnimName": "ag_reacttocliff_stuckrightside_01"
+    },
+    {
       "CladEvent": "BlockReact",
       "AnimName": "blockReact"
     },
@@ -127,6 +135,14 @@
     {
       "CladEvent": "DriveStartLaunch",
       "AnimName": "ag_driving01_startDriving"
+    },
+    {
+      "CladEvent": "FacePlantRoll",
+      "AnimName": "ag_reacttocliff_faceplantroll_01"
+    },
+    {
+      "CladEvent": "FailedToRightFromFace",
+      "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
       "CladEvent": "FlipDownFromBack",
@@ -361,6 +377,14 @@
       "AnimName": "ag_reactToNewBlockOnGround"
     },
     {
+      "CladEvent": "ReactToOnLeftSide",
+      "AnimName": "ag_reacttocliff_stuckleftside_01"
+    },
+    {
+      "CladEvent": "ReactToOnRightSide",
+      "AnimName": "ag_reacttocliff_stuckrightside_01"
+    },
+    {
       "CladEvent": "ReactToPickup",
       "AnimName": "reactToPickup"
     },
@@ -588,6 +612,10 @@
     {
       "CladEvent": "Surprise",
       "AnimName": "ag_surprise"
+    },
+    {
+      "CladEvent": "TurtleRoll",
+      "AnimName": "ag_reacttocliff_turtleroll_01"
     }
   ]
 }

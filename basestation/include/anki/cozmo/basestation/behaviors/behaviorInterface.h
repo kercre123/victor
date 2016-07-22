@@ -402,7 +402,7 @@ public:
   virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) final override;
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot){};
   virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot){};
-
+  
   // if a trigger tag is received, this function will be called. If it returns true, this behavior will run
   // immediately
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) { return true; }
@@ -418,6 +418,8 @@ protected:
   //Handle tracking enable/disable requests
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
   std::multiset<std::string> _disableIDs;
+  virtual bool IsRunnableInternal(const Robot& robot) const override final;
+  virtual bool IsRunnableReactionaryInternal(const Robot& robot) const = 0;
   
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;

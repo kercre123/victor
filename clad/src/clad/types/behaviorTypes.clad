@@ -26,6 +26,8 @@ enum uint_8 BehaviorType {
   ReactToPickup,
   ReactToPoke,
   ReactToRobotOnBack,
+  ReactToRobotOnSide,
+  ReactToRobotOnFace,
   ReactToOnCharger,
   ReactToNewBlock,
   PlayAnim,

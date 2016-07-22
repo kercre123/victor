@@ -593,6 +593,12 @@ void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Ro
     }else if(behavior == BehaviorType::ReactToRobotOnBack
              && behaviorName == BehaviorTypeToString(BehaviorType::ReactToRobotOnBack)){
       UpdateDisableIDs(requesterID, enable);
+    }else if(behavior == BehaviorType::ReactToRobotOnFace
+             && behaviorName == BehaviorTypeToString(BehaviorType::ReactToRobotOnFace)){
+      UpdateDisableIDs(requesterID, enable);
+    }else if(behavior == BehaviorType::ReactToRobotOnSide
+             && behaviorName == BehaviorTypeToString(BehaviorType::ReactToRobotOnFace)){
+      UpdateDisableIDs(requesterID, enable);
     }else if(behavior == BehaviorType::ReactToPickup
              && behaviorName == BehaviorTypeToString(BehaviorType::ReactToPickup)){
       UpdateDisableIDs(requesterID, enable);
@@ -623,6 +629,15 @@ void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
 
   }
   
+}
+  
+bool IReactionaryBehavior::IsRunnableInternal(const Robot& robot) const
+{
+  bool isRunnable = _disableIDs.size() == 0;
+  if(isRunnable) {
+    isRunnable = IsRunnableReactionaryInternal(robot);
+  }
+  return isRunnable;
 }
 
   

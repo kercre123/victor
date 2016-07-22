@@ -43,7 +43,7 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   
 }
 // It's pretty easy for him to get nudged off and back on the charger, so make sure he has left the platform at least once
-bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
+bool BehaviorReactToOnCharger::IsRunnableReactionaryInternal(const Robot& robot) const
 {
   return _isOnCharger && _isReactionEnabled;
 }

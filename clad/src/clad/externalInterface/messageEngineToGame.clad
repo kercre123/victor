@@ -143,6 +143,15 @@ message RobotOnBack {
 message RobotOnBackFinished {
 }
 
+message RobotOnSide {
+    bool onSide,
+    bool onRightSide
+}
+
+message RobotOnFace{
+    bool onFace
+}
+
 message RobotCliffEventFinished {
 }
 

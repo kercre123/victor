@@ -270,7 +270,7 @@ public:
   static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
   
   // Get pitch angle of robot
-  f32 GetPitchAngle() const;
+  Radians GetPitchAngle() const;
   
   // Return current bounding height of the robot, taking into account whether lift
   // is raised
@@ -344,7 +344,9 @@ public:
 
   // returns true if the robot is on it's back. Note that this does not correspond 1 to 1 with the
   // RobotOnBack message, because there is some throttling / delay on the mesage
-  bool IsOnBack() const {return _isOnBack;}
+  bool IsOnBack() const {return _offTredsState == OffTredsState::OnBack;}
+  bool IsOnSide() const {return _offTredsState == OffTredsState::OnSide;}
+  bool IsOnFace() const {return _offTredsState == OffTredsState::OnFace;}
     
   void SetCarryingObject(ObjectID carryObjectID);
   void UnSetCarryingObjects(bool topOnly = false);
@@ -840,7 +842,7 @@ protected:
   f32              _currentHeadAngle;
   
   f32              _currentLiftAngle = 0;
-  f32              _pitchAngle;
+  Radians          _pitchAngle;
   
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
@@ -867,11 +869,18 @@ protected:
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
   u16              _forwardSensorValue_mm = 0;
-  bool             _isOnBack              = false;
-  TimeStamp_t      _robotFirstOnBack_ms   = 0;
-  bool             _lastSendOnBackValue   = false;
   bool             _isOnChargerPlatform   = false;
 
+  enum class OffTredsState{
+    OnTreds
+    , OnBack
+    , OnSide
+    , OnFace
+  };
+  
+  OffTredsState    _offTredsState         = OffTredsState::OnTreds;
+  TimeStamp_t      _robotFirstOffTreds_ms = 0;
+  bool             _lastSendOffTredsValue = false;
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use

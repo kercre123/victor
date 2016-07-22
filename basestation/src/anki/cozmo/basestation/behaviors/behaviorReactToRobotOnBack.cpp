@@ -36,9 +36,9 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json:
   });
 }
 
-bool BehaviorReactToRobotOnBack::IsRunnableInternal(const Robot& robot) const
+bool BehaviorReactToRobotOnBack::IsRunnableReactionaryInternal(const Robot& robot) const
 {
-  return _disableIDs.size() == 0;
+  return true;
 }
 
 Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)

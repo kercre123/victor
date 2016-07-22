@@ -18,6 +18,8 @@ enum uint_16 AnimationTrigger
   AdmireStackKnockOverPreDrivingFailure,
   AdmireStackKnockOverSuccess,
   AdmireStackReactToThirdCube,
+  AskToBeRightedLeft,
+  AskToBeRightedRight,
   BlockReact,
   CodeBreakerNewIdea,
   CodeBreakerThinking,
@@ -45,6 +47,8 @@ enum uint_16 AnimationTrigger
   DriveStartAngry,
   DriveStartDefault,
   DriveStartLaunch,
+  FacePlantRoll,
+  FailedToRightFromFace,
   FlipDownFromBack,
   InteractWithFacesInitial,
   InteractWithFacesSquint,
@@ -104,6 +108,8 @@ enum uint_16 AnimationTrigger
   ReactToNewBlockAsk,
   ReactToNewBlockBig,
   ReactToNewBlockSmall,
+  ReactToOnLeftSide,
+  ReactToOnRightSide,
   ReactToPickup,
   ReactToPokeReaction,
   ReactToPokeStartled,
@@ -161,6 +167,7 @@ enum uint_16 AnimationTrigger
   StartSleeping,
   SuccessfulWheelie,
   Surprise,
+  TurtleRoll,
 
   Count, // Keep count at end.
 }
