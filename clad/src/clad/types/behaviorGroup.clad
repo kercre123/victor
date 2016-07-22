@@ -33,6 +33,9 @@ enum uint_8 BehaviorGroup {
     SparksStackCube,
     SparksPounceOnMotion,
     SparksPopAWheelie,
+
+    ShowOff,
+    Playful,
     
     Count
 }

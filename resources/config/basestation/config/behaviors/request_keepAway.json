@@ -80,6 +80,7 @@
     "AffectsBlocks",
     "MiniGame",
     "RequestKeepAway",
-    "FreeplayOne"
+    "FreeplayOne",
+    "Playful"
   ]
 }
