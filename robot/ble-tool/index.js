@@ -4,8 +4,14 @@ const aes = require("./aes.js");
 const diffie = require("./diffie.js");
 const prompt = require('prompt');
 
+const messages = {
+	toRobot: clad("clad/robotInterface/messageEngineToRobot.clad"),
+	toEngine: clad("clad/robotInterface/messageRobotToEngine.clad")
+};
 
-clad("clad/robotInterface/messageEngineToRobot.clad")
+//console.log(
+	JSON.stringify(messages, null, 4)
+//);
 
 /*
 const factory = require("./factory.js");

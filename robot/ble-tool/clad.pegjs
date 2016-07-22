@@ -1,6 +1,6 @@
 CladDefinition
 	= _ list:CladStatement*
-		{ return list; }
+		{ return { type: 'Namespace', name: null, members: list }; }
 
 CladStatement
 	= EnumElement
@@ -17,7 +17,7 @@ EnumElement
 	= "enum" __ name:Identifier "{" _ members:EnumMemberList? "}" _ 
 		{ return { type: 'Enum', name: name, members: members }; }
 	/ "enum" __ type:TypeDefinition name:Identifier "{" _ members:EnumMemberList? "}" _ 
-		{ return { type: 'Enum', type: type, name: name, members: members }; }
+		{ return { type: 'Enum', base: type, name: name, members: members }; }
 
 MessageElement
 	= ("message" / "structure") __ name:Identifier "{" _  members:StrucureMemberList? "}" _ 
@@ -27,7 +27,7 @@ UnionElement
 	= "union" __ name:Identifier "{" _ members:StrucureMemberList? "}" _
 		{ return { type: 'Union', name: name, members: members }; }
 	/ "union" __ type:TypeDefinition name:Identifier "{" _ members:StrucureMemberList? "}" _
-		{ return { type: 'Union', type: type, name: name, members: members }; }
+		{ return { type: 'Union', base: type, name: name, members: members }; }
 
 // Array types
 EnumMemberList
@@ -35,7 +35,7 @@ EnumMemberList
 		{ return [a].concat(b) }
 
 StrucureMemberList
-	= a:StrucureMember b:("," _ b:StrucureMember { return b; })* ","? _
+	= a:StructureMember b:("," _ b:StructureMember { return b; })* ","? _
 		{ return [a].concat(b) }
 
 // Member Elements
@@ -45,11 +45,11 @@ EnumMember
 	/ name:Identifier
 		{ return { type: "EnumMember", name: name } }
 
-StrucureMember
+StructureMember
 	= member:ValueElement "=" _ literal:Literal
-		{ return { type: "EnumMember", member: member, value: literal } }
+		{ return { type: "StructureMember", member: member, value: literal } }
 	/ member:ValueElement
-		{ return { type: "EnumMember", member: member } }
+		{ return { type: "StructureMember", member: member } }
 
 // Value definitions
 ValueElement
