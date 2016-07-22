@@ -52,19 +52,41 @@ static int off_time = 0;
 // Start all pins as input
 void Backpack::init()
 {
-  // This prevents timers from deadlocking system
-  static const LightState lights[] = {
-    { 0x0000, 0x0000, 34, 67, 17, 17 },
-    { COZMO_VERSION_COMMIT & 0xFFFF, 0x0000, 34, 67, 17, 17 },
-    { 0x7FFF, 0x0000, 34, 67, 17, 17 },
-    { COZMO_VERSION_COMMIT >> 16, 0x0000, 34, 67, 17, 17 },
-    { 0x0000, 0x0000, 34, 67, 17, 17 }
-  };
-
-  setLights(lights);
-
+  defaultPattern(LIGHTS_BOOTING);
+  
   // Prime our counter
   Backpack::update(0);
+}
+
+void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
+  switch (pattern) {
+    case LIGHTS_BOOTING:
+    {
+      static const LightState lights[] = {
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
+        { COZMO_VERSION_COMMIT & 0xFFFF, 0x0000, 34, 67, 17, 17 },
+        { 0x7FFF, 0x0000, 34, 67, 17, 17 },
+        { COZMO_VERSION_COMMIT >> 16, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 }
+      };
+      setLights(lights);
+      
+      break ;
+    }
+    case LIGHTS_LOW_POWER:
+    {
+      static const LightState lights[] = {
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
+        { 0x0007, 0x0000, 34, 67, 17, 17 },
+        { 0x0007, 0x0000, 34, 67, 17, 17 },
+        { 0x0007, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 }
+      };
+
+      setLights(lights);
+      break ;
+    }
+  };
 }
 
 // This is a temporary fix until I can make the comparisons not jam

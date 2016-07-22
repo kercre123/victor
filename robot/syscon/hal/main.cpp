@@ -36,11 +36,6 @@ extern "C" void HardFault_Handler(void) {
 
 // This is our near-realtime loop
 void main_execution(void) {
-  static int COUNTDOWN = 200 * 32; // 30 Seconds
-  if (Head::spokenTo && COUNTDOWN && --COUNTDOWN) {
-    Battery::setOperatingMode(BODY_IDLE_OPERATING_MODE);
-  }
-  
   Motors::manage();
   Head::manage();
   Battery::manage();

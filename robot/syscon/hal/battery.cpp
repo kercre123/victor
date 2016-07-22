@@ -183,6 +183,7 @@ void Battery::updateOperatingMode() {
     case BODY_IDLE_OPERATING_MODE:
       // Turn off encoders
       nrf_gpio_pin_set(PIN_VDDs_EN);
+      Backpack::defaultPattern(LIGHTS_LOW_POWER);
       Motors::disable(true);
       Head::enterLowPowerMode();
       Battery::powerOff();
