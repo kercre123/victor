@@ -1,5 +1,5 @@
-#ifndef SPI_H
-#define SPI_H
+#ifndef HEAD_H
+#define HEAD_H
 
 namespace Head {
   // Whether we have received any data from the head yet
@@ -8,6 +8,8 @@ namespace Head {
   // Initialize the SPI peripheral on the designated pins in the source file.
   void init();
   void manage();
+  void enterLowPowerMode();
+  void leaveLowPowerMode();
 }
 
 #endif

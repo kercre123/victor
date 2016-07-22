@@ -319,6 +319,12 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
       msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
       RTIP::SendMessage(msg);
+
+      os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = BODY_IDLE_OPERATING_MODE;
+      RTIP::SendMessage(msg);
+
       // TODO Send power off message to body
       // WiFiConfiguration::Off(false);
       break;

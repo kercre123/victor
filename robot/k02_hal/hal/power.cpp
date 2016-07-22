@@ -64,6 +64,11 @@ namespace Anki
           SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
         }
         
+        void enterSleepMode(void)
+        {
+          NVIC_SystemReset();
+        }
+        
         void disableEspressif(void)
         {
           // TODO: CHANGE CLOCK TO INTERNAL OSCILLATOR

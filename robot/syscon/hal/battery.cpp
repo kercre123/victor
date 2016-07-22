@@ -14,6 +14,7 @@
 #include "backpack.h"
 #include "motors.h"
 #include "temp.h"
+#include "head.h"
 #include "tasks.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
@@ -180,6 +181,7 @@ void Battery::updateOperatingMode() {
   switch(current_operating_mode) {
     case BODY_IDLE_OPERATING_MODE:
       Motors::disable(true);  
+      Head::enterLowPowerMode();
       Battery::powerOff();
       break ;
     
