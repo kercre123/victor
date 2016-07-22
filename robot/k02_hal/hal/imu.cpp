@@ -114,9 +114,9 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
 }
 
 void Anki::Cozmo::HAL::IMUSetCalibrationOffsets(const int16_t* accel, const int16_t* gyro) {
-  imu_offsets.acc[0] = accel[0];  
-  imu_offsets.acc[1] = accel[1];  
-  imu_offsets.acc[2] = accel[2];  
+  imu_offsets.acc[0] = 0; //accel[0];
+  imu_offsets.acc[1] = 0; //accel[1];
+  imu_offsets.acc[2] = 0; //accel[2];
   imu_offsets.gyro[0] = gyro[0];
   imu_offsets.gyro[1] = gyro[1];
   imu_offsets.gyro[2] = gyro[2];  
