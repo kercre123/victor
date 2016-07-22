@@ -14,38 +14,29 @@ namespace Cozmo {
 
         [SerializeField]
         private DroneModeView _DroneModeViewPrefab;
+        public DroneModeView DroneModeViewPrefab { get { return _DroneModeViewPrefab; } }
 
-        [SerializeField, Range(0f, 160f)]
-        private float _MaxReverseSpeed_mmps = 80f;
+        private DroneModeConfig _DroneModeConfig;
 
-        [SerializeField, Range(0f, 160f)]
-        private float _MaxForwardSpeed_mmps = 120f;
+        public float MaxReverseSpeed_mmps { get { return _DroneModeConfig.MaxReverseSpeed_mmps; } }
 
-        [SerializeField, Range(0f, 160f)]
-        private float _PointTurnSpeed_mmps = 60f;
-        public float PointTurnSpeed_mmps { get { return _PointTurnSpeed_mmps; } }
+        public float MaxForwardSpeed_mmps { get { return _DroneModeConfig.MaxForwardSpeed_mmps; } }
 
-        [SerializeField, Range(0f, 160f)]
-        private float _TurboSpeed_mmps = 160f;
+        public float PointTurnSpeed_mmps { get { return _DroneModeConfig.PointTurnSpeed_mmps; } }
 
-        [SerializeField, Range(0f, 3.14f)]
-        private float _HeadMovementSpeed_radps = 0.5f;
+        public float TurboSpeed_mmps { get { return _DroneModeConfig.TurboSpeed_mmps; } }
 
-        [SerializeField, Range(0f, 1f)]
-        private float _NeutralTiltSize = 0.15f;
+        public float HeadMovementSpeed_radps { get { return _DroneModeConfig.HeadMovementSpeed_radps; } }
 
-        [SerializeField, Range(0f, 1f)]
-        private float _StartingLiftHeight = 0.15f;
-        public float StartingLiftHeight { get { return _StartingLiftHeight; } }
+        public float NeutralTiltSize { get { return _DroneModeConfig.NeutralTiltSize; } }
 
-        public DroneModeView DroneModeViewPrefab {
-          get { return _DroneModeViewPrefab; }
-        }
+        public float StartingLiftHeight { get { return _DroneModeConfig.StartingLiftHeight; } }
 
         private float _CurrentTurnDirection;
         private IEnumerator _SteeringInputCoroutine;
 
         protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
+          _DroneModeConfig = minigameConfigData as DroneModeConfig;
           InitializeRobot();
           InitializeStateMachine();
         }
@@ -102,14 +93,14 @@ namespace Cozmo {
         private float MapDevicePitchToTurnDirection(float newDevicePitch) {
           float normalizedPitch = 0f;
           newDevicePitch = Mathf.Clamp(newDevicePitch, -1f, 1f);
-          float negativeThreshold = -_NeutralTiltSize;
+          float negativeThreshold = -NeutralTiltSize;
           if (newDevicePitch < negativeThreshold) {
             float difference = newDevicePitch - negativeThreshold;
             normalizedPitch = difference / Mathf.Abs(-1 - negativeThreshold);
           }
-          else if (newDevicePitch > _NeutralTiltSize) {
-            float difference = newDevicePitch - _NeutralTiltSize;
-            normalizedPitch = difference / (1 - _NeutralTiltSize);
+          else if (newDevicePitch > NeutralTiltSize) {
+            float difference = newDevicePitch - NeutralTiltSize;
+            normalizedPitch = difference / (1 - NeutralTiltSize);
           }
           return normalizedPitch;
         }
@@ -118,13 +109,13 @@ namespace Cozmo {
           float driveWheelSpeed_mmps = 0f;
           switch (sliderSegment) {
           case DroneModeView.SpeedSliderSegment.Turbo:
-            driveWheelSpeed_mmps = _TurboSpeed_mmps;
+            driveWheelSpeed_mmps = TurboSpeed_mmps;
             break;
           case DroneModeView.SpeedSliderSegment.Forward:
-            driveWheelSpeed_mmps = _MaxForwardSpeed_mmps * sliderSegmentValue;
+            driveWheelSpeed_mmps = MaxForwardSpeed_mmps * sliderSegmentValue;
             break;
           case DroneModeView.SpeedSliderSegment.Reverse:
-            driveWheelSpeed_mmps = _MaxReverseSpeed_mmps * sliderSegmentValue * -1;
+            driveWheelSpeed_mmps = MaxReverseSpeed_mmps * sliderSegmentValue * -1;
             break;
           default:
             driveWheelSpeed_mmps = 0f;
@@ -137,10 +128,10 @@ namespace Cozmo {
           float driveHeadSpeed_radps = 0f;
           switch (sliderSegment) {
           case DroneModeView.HeadSliderSegment.Forward:
-            driveHeadSpeed_radps = _HeadMovementSpeed_radps * sliderSegmentValue;
+            driveHeadSpeed_radps = HeadMovementSpeed_radps * sliderSegmentValue;
             break;
           case DroneModeView.HeadSliderSegment.Reverse:
-            driveHeadSpeed_radps = _HeadMovementSpeed_radps * sliderSegmentValue * -1;
+            driveHeadSpeed_radps = HeadMovementSpeed_radps * sliderSegmentValue * -1;
             break;
           default:
             driveHeadSpeed_radps = 0f;
