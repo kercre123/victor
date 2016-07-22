@@ -1,8 +1,14 @@
+const clad = require('./clad');
 const crypto = require('crypto');
-const factory = require("./factory.js");
 const aes = require("./aes.js");
 const diffie = require("./diffie.js");
 const prompt = require('prompt');
+
+
+clad("clad/robotInterface/messageEngineToRobot.clad")
+
+/*
+const factory = require("./factory.js");
 
 var BRYON_COZMO = "db083e35f3031e1d";
 
@@ -67,3 +73,4 @@ factory.on('connected', function(interface) {
 });
 
 prompt.start();
+*/

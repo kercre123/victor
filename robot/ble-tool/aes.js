@@ -1,19 +1,9 @@
 const aesjs = require('aes-js');
-
-// This is not crypto safe, but who cares!
-function iv() {
-	var iv = new Buffer(16);
-
-	for (var i = 0; i < 16; i++) {
-		iv[i] = Math.random()*0x100 | 0;
-	}
-	
-	return iv;
-}
+const crypto = require('crypto');
 
 function encode(key, data) {	
 	// Setup IV
-	var fb = iv();
+	var fb = crypto.randomBytes(16);
 	var cipher = new aesjs.ModeOfOperation.cfb(key, fb, 16);
 
 	return Buffer.concat([fb, cipher.encrypt(data)]);
