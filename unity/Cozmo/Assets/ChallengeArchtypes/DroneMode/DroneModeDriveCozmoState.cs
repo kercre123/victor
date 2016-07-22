@@ -57,10 +57,16 @@ namespace Cozmo {
 
         public override void Pause() {
           // Don't show the "don't move cozmo" ui
+
+          // DisableInput();
         }
 
         public override void Resume() {
           SetupRobotForDriveState();
+
+          // EnableInput();
+
+          // Does this get called?
         }
 
         private void EnableInput() {
