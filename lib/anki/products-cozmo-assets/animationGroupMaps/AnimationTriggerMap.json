@@ -166,7 +166,7 @@
     },
     {
       "CladEvent": "OnChargerStartSleeping",
-      "AnimName": "ag_reactToCharger"
+      "AnimName": "ag_reactToChargerOld"
     },
     {
       "CladEvent": "OnLearnedPlayerName",
