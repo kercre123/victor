@@ -29,7 +29,7 @@ public class ImageReceiver : IDisposable {
   }
 
   public void CaptureStream() {
-    Initialize(ImageSendMode.SingleShot);
+    Initialize(ImageSendMode.Stream);
   }
 
   private void Initialize(ImageSendMode sendMode) {
@@ -88,6 +88,7 @@ public class ImageReceiver : IDisposable {
     if (imageChunk.chunkId == imageChunk.imageChunkCount - 1) {
 
       if (_ReceivedImage == null) {
+        Debug.LogError("Viz size: " + dims.Width + "x" + dims.Height);
         _ReceivedImage = new Texture2D(dims.Width, dims.Height);
         _ReceivedImage.name = Name;
       }

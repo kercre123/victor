@@ -13,8 +13,8 @@ namespace Cozmo {
         public event System.Action<float> OnTurnDirectionChanged;
 
         [SerializeField]
-        private DroneModeView _DroneModeViewPrefab;
-        public DroneModeView DroneModeViewPrefab { get { return _DroneModeViewPrefab; } }
+        private DroneModeControlsSlide _DroneModeViewPrefab;
+        public DroneModeControlsSlide DroneModeViewPrefab { get { return _DroneModeViewPrefab; } }
 
         private DroneModeConfig _DroneModeConfig;
 
@@ -105,16 +105,16 @@ namespace Cozmo {
           return normalizedPitch;
         }
 
-        public float CalculateDriveWheelSpeed(DroneModeView.SpeedSliderSegment sliderSegment, float sliderSegmentValue) {
+        public float CalculateDriveWheelSpeed(DroneModeControlsSlide.SpeedSliderSegment sliderSegment, float sliderSegmentValue) {
           float driveWheelSpeed_mmps = 0f;
           switch (sliderSegment) {
-          case DroneModeView.SpeedSliderSegment.Turbo:
+          case DroneModeControlsSlide.SpeedSliderSegment.Turbo:
             driveWheelSpeed_mmps = TurboSpeed_mmps;
             break;
-          case DroneModeView.SpeedSliderSegment.Forward:
+          case DroneModeControlsSlide.SpeedSliderSegment.Forward:
             driveWheelSpeed_mmps = MaxForwardSpeed_mmps * sliderSegmentValue;
             break;
-          case DroneModeView.SpeedSliderSegment.Reverse:
+          case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
             driveWheelSpeed_mmps = MaxReverseSpeed_mmps * sliderSegmentValue * -1;
             break;
           default:
@@ -124,13 +124,13 @@ namespace Cozmo {
           return driveWheelSpeed_mmps;
         }
 
-        public float CalculateDriveHeadSpeed(DroneModeView.HeadSliderSegment sliderSegment, float sliderSegmentValue) {
+        public float CalculateDriveHeadSpeed(DroneModeControlsSlide.HeadSliderSegment sliderSegment, float sliderSegmentValue) {
           float driveHeadSpeed_radps = 0f;
           switch (sliderSegment) {
-          case DroneModeView.HeadSliderSegment.Forward:
+          case DroneModeControlsSlide.HeadSliderSegment.Forward:
             driveHeadSpeed_radps = HeadMovementSpeed_radps * sliderSegmentValue;
             break;
-          case DroneModeView.HeadSliderSegment.Reverse:
+          case DroneModeControlsSlide.HeadSliderSegment.Reverse:
             driveHeadSpeed_radps = HeadMovementSpeed_radps * sliderSegmentValue * -1;
             break;
           default:

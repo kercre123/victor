@@ -112,7 +112,7 @@ GameObject:
   - 224: {fileID: 22452856}
   - 114: {fileID: 11410830}
   m_Layer: 5
-  m_Name: DroneModeView
+  m_Name: DroneModeControlsSlide
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -462,6 +462,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _RestingSliderValue: 0.32
   _SliderValueDecayRate: 0.9
+  _SnapBackInstantly: 1
 --- !u!114 &11410830
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -473,6 +474,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 621515eed51054735aec3188f904c529, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _CameraFeedImage: {fileID: 0}
   _SpeedThrottle: {fileID: 11410692}
   _ReverseThreshold: 0.3
   _ForwardThreshold: 0.35
@@ -651,6 +653,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _RestingSliderValue: 0.5
   _SliderValueDecayRate: 0.9
+  _SnapBackInstantly: 1
 --- !u!114 &11451100
 MonoBehaviour:
   m_ObjectHideFlags: 1
