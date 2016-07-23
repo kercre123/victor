@@ -696,6 +696,7 @@ namespace UpgradeController {
               ack.result = ERR_I2SPI;
               RobotInterface::SendMessage(ack);
               Reset();
+              break;
             }
             #if DEBUG_OTA > 1
             AnkiDebug( 172, "UpgradeController.state", 498, "Flash Write", 0);
@@ -795,7 +796,7 @@ namespace UpgradeController {
             } else {
               haveValidCert = true;
             }
-            retries = MAX_RETRIES;
+            retries = MAX_RETRIES*MAX_RETRIES; // More retries just after sig check
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
             bytesProcessed += sizeof(FirmwareBlock);

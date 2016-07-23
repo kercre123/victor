@@ -30,12 +30,14 @@ class OTAStreamer:
     
     def Write(self):
         "Sends a write to the robot"
-        while (self.bytesSent - self.bytesProcessed) < (self.ROBOT_BUFFER_SIZE - self.MESSAGE_PAYLOAD_SIZE):
+        while ((self.bytesSent - self.bytesProcessed) < (self.ROBOT_BUFFER_SIZE - self.MESSAGE_PAYLOAD_SIZE)) and (self.ackCount > 1 or self.bytesSent < 5000):
             robotInterface.Step()
             payload = self.fw.read(self.MESSAGE_PAYLOAD_SIZE)
             eof = len(payload) < self.MESSAGE_PAYLOAD_SIZE
             if eof:
                 payload += b"\xFF" * (self.MESSAGE_PAYLOAD_SIZE - len(payload))
+            if str == bytes:
+                payload = [ord(b) for b in payload]
             robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(self.packetNumber, payload)))
             self.bytesSent += self.MESSAGE_PAYLOAD_SIZE
             #sys.stdout.write("Sending packet {0:d} {1:x}{linesep}".format(self.packetNumber, payload[0], linesep=os.linesep))
@@ -44,7 +46,7 @@ class OTAStreamer:
             self.packetNumber += 1
             if eof:
                 # Send EOF marker to robot
-                robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(-1, b"\xFF" * self.MESSAGE_PAYLOAD_SIZE)))
+                robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(-1, [0xff] * self.MESSAGE_PAYLOAD_SIZE)))
                 self.doneSending = True
                 sys.stdout.write("Finished sending firmware image to robot")
                 sys.stdout.write(os.linesep)
@@ -58,6 +60,7 @@ class OTAStreamer:
         
     def OnAck(self, ack):
         "Handles OTA.Ack messages and continues streaming"
+        self.ackCount += 1
         self.bytesProcessed = ack.bytesProcessed
         if ack.result == RI.OTA.Result.OKAY:
             #sys.stdout.write("ACK p#={:d}\tbp={:d}{linesep}".format(ack.packetNumber, ack.bytesProcessed, linesep=os.linesep))
@@ -78,6 +81,7 @@ class OTAStreamer:
         self.bytesSent    = 0
         self.bytesProcessed = 0;
         self.packetNumber = 0
+        self.ackCount = 0
         self.writing = False
         self.doneSending = False
         self.receivedSuccess = False
