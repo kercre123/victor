@@ -162,7 +162,7 @@
     },
     {
       "CladEvent": "DroneModeIdle",
-      "AnimName": "ag_lookInPlaceForFaces_headMovePauses"
+      "AnimName": "ag_explorer_idle"
     },
     {
       "CladEvent": "DroneModeTurboDrivingStart",
