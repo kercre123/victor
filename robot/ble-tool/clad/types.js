@@ -1,62 +1,62 @@
 class Signed8 {
 	static Name() { return "int_8" }
 	static getSize(data) { return 1; }
-	static serialize(data, buffer, offset) { buffer.writeInt8(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeInt8(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readInt8(offset); }
 }
 
 class Signed16 {
 	static Name() { return "int_16" }
 	static getSize(data) { return 2; }
-	static serialize(data, buffer, offset) { buffer.writeInt16LE(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeInt16LE(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readInt16LE(offset); }
 }
 
 class Signed32 {
 	static Name() { return "int_32" }
 	static getSize(data) { return 4; }
-	static serialize(data, buffer, offset) { buffer.writeInt32LE(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeInt32LE(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readInt32LE(offset); }
 }
 
 class Unsigned8 {
 	static Name() { return "uint_8" }
 	static getSize(data) { return 1; }
-	static serialize(data, buffer, offset) { buffer.writeUInt8(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeUInt8(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readUInt8(offset); }
 }
 
 class Unsigned16 {
 	static Name() { return "uint_16" }
 	static getSize(data) { return 2; }
-	static serialize(data, buffer, offset) { buffer.writeUInt16LE(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeUInt16LE(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readUInt16LE(offset); }
 }
 
 class Unsigned32 {
 	static Name() { return "uint_32" }
 	static getSize(data) { return 4; }
-	static serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeUInt32LE(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
 }
 
 class Float32 {
 	static Name() { return "float_32" }
 	static getSize(data) { return 4; }
-	static serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeUInt32LE(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
 }
 class Float64 {
 	static Name() { return "float_64" }
 	static getSize(data) { return 8; }
-	static serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeUInt32LE(data || 0, offset) }
 	static deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
 }
 
 class Bool {
 	static Name() { return "bool" }
 	static getSize(data) { return 1; }
-	static serialize(data, buffer, offset) { buffer.writeUInt8(value ? 1 : 0, offset) }
+	static serialize(data, buffer, offset) { buffer.writeUInt8(data ? 1 : 0, offset) }
 	static deserialize(buffer, offset) { return !!buffer.readUInt8(offset); }
 }
 
@@ -142,7 +142,7 @@ class ArrayType {
 		}
 
 		data.forEach((value) => {
-			this.index.serialize(value, buffer, offset);
+			this.base.serialize(value, buffer, offset);
 			offset += this.base.getSize(value);
 		});
 	}

@@ -20,6 +20,8 @@ function lookup(name, space) {
 }
 
 function structure(ast, space) {
+	var name = ast.name;
+
 	var struct = ast.members.reduce((acc, member) => {
 		var type;
 		
@@ -54,14 +56,16 @@ function structure(ast, space) {
 			}, 0);
 		}
 
+		Name() {
+			return StructType.Name();
+		}
+		
 		static Name() {
-			return ast.name;
+			return name;
 		}
 
 		static deserialize(buffer, offset) {
 			offset || (offset = 0);
-
-			//console.log(JSON.stringify(ast, null, 4), struct)
 
 			return struct.reduce((output, member) => {
 				var val = member.type.deserialize(buffer, offset);
@@ -79,9 +83,10 @@ function structure(ast, space) {
 
 			offset || (offset = 0);
 
-			struct.forEach((output, member) => {
+			struct.forEach((member) => {
 				var val = data[member.field];
 
+				console.log(member);
 				member.type.serialize(val, buffer, offset);
 				offset += member.type.getSize(val);
 			});
