@@ -2,9 +2,10 @@ const crypto = require('crypto');
 const aesjs = require('aes-js');
 const BN = require('bn.js');
 const pem = require('pem');
+const path = require('path');
 
 var fs = require('fs');
-var key = fs.readFileSync("../certs/diffie.pem");
+var key = fs.readFileSync(path.join(__dirname, "../certs/diffie.pem"));
 
 var generator = new BN(5);
 var prime;

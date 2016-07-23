@@ -1,8 +1,24 @@
+const clad = require('./clad');
 const crypto = require('crypto');
-const factory = require("./factory.js");
 const aes = require("./aes.js");
 const diffie = require("./diffie.js");
 const prompt = require('prompt');
+
+const Anki = clad("clad/robotInterface/messageEngineToRobot.clad").Anki;
+clad("clad/robotInterface/messageRobotToEngine.clad", Anki);
+
+
+function ProcessMessage(message) {
+	var length = message[0];
+	var tag = message[1];
+	var payload = message.slice(2, 2 + length);
+
+	var struct = Anki.Cozmo.RobotInterface.EngineToRobot[tag];
+	
+	return struct.deserialize(payload);
+}
+
+const factory = require("./factory.js");
 
 var BRYON_COZMO = "db083e35f3031e1d";
 
@@ -22,30 +38,38 @@ factory.on('connected', function(interface) {
 	var hello = false;
 	var last_msg = +new Date();
 
-	var local_secret = crypto.randomBytes(16);
+	var local_secret;
 	var remote_secret, encoded_key;
 
 	var encrypted_messages = [];
+
+	function send(tag, payload) {
+		var struct = Anki.Cozmo.RobotInterface.EngineToRobot[tag];
+		var buffer = struct.serialize(payload);
+	
+		var data = Buffer.concat([new Buffer([tag]), buffer]);
+
+		console.log(`SEND ${struct.Name()}: ${JSON.stringify(payload)}`);
+
+		interface.send(data);
+	}
 
 	interface.on('encrypted', (data) => {
 		console.log("ENC*:", data);
 
 		// Send our pairing message
-		var pairing_message = [ENTER_PAIRING_MESSAGE, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-		for (var i = 0; i < 16; i++) {
-			pairing_message[i+1] = local_secret[i];
-		}
-
-		interface.send(pairing_message);
+		local_secret = crypto.randomBytes(16);
+		send(Anki.Cozmo.RobotInterface.EngineToRobot.Tag_enterPairing, { secret: local_secret });
 	});
 
 	interface.on('data', (data) => {
+		var decoded = ProcessMessage(data);
 		console.log("RECV:", data);
+		console.log(`RECV ${decoded.Name()}: ${JSON.stringify(decoded)}`);
 
-		// This is the pairing received message
-		if (data[1] == 0x29) {
-			remote_secret = data.slice(2,18);
-			encoded_key = data.slice(18, 34);
+		if (decoded instanceof Anki.Cozmo.EncodedAESKey) {
+			remote_secret = decoded.secret;
+			encoded_key = decoded.encoded_key;
 
 			// Prompt for pin
 			prompt.get(['pin'], function (err, result) {
@@ -58,6 +82,8 @@ factory.on('connected', function(interface) {
 				interface.setKey(interface.key);
 				encrypted_messages.map((data) => aes.decode(interface.key, data)).forEach((d) => interface.emit('data', d));
 			});
+		} else if (decoded instanceof Anki.Cozmo.HelloPhone) {
+			send(Anki.Cozmo.RobotInterface.EngineToRobot.Tag_helloRobotMessage, decoded)
 		}
 	});
 
