@@ -35,6 +35,7 @@ function structure(ast, space) {
 		}
 
 		if (member.array) {
+			var index = null;
 			if (member.array.index) {
 				index = new types[member.array.index.type](member.array.index);
 			}
@@ -46,32 +47,50 @@ function structure(ast, space) {
 		return acc;
 	}, []);
 
-	//console.log(struct);
-
-	function structType(initializer, offset) {
-		if (Buffer.isBuffer(initializer)) {
-			return structType.fromBuffer(initalizer);
+	class StructType {
+		static getSize(data) {
+			return struct.reduce((acc, member) => {
+				return acc + member.type.getSize(data[member.field]);
+			}, 0);
 		}
 
-		if (!initializer) {
-			return null;
+		static Name() {
+			return ast.name;
 		}
 
-		// TOOD: INITALIZE FROM STRUCTURE
+		static deserialize(buffer, offset) {
+			offset || (offset = 0);
+
+			//console.log(JSON.stringify(ast, null, 4), struct)
+
+			return struct.reduce((output, member) => {
+				var val = member.type.deserialize(buffer, offset);
+				offset += member.type.getSize(val);
+				output[member.field] = val;
+
+				return output;
+			}, new StructType());
+		}
+
+		static serialize(data, buffer, offset) {
+			if (buffer === undefined) {
+				buffer = new Buffer(StructType.getSize(data));
+			}
+
+			offset || (offset = 0);
+
+			struct.forEach((output, member) => {
+				var val = data[member.field];
+
+				member.type.serialize(val, buffer, offset);
+				offset += member.type.getSize(val);
+			});
+
+			return buffer;
+		}
 	}
 
-	structType.prototype.getSize = function() {
-
-	}
-
-	structType.prototype.serialize = function() {
-
-	}
-
-	structType.fromBuffer = function() {
-	}
-
-	return structType;
+	return StructType;
 }
 
 function union(ast, space) {
@@ -139,12 +158,12 @@ preprocessor.load = function (fn) {
 	return this.parse(def);
 }
 
-function process(fn) {
+function process(fn, scope) {
 	var def = preprocessor.load(fn)
 	var ast = parser.parse(def)
 
 	// Generate a global namespace based on our AST
-	return namespace(ast);
+	return namespace(ast, scope || {});
 }
 
 module.exports = process;

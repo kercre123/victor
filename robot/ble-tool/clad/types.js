@@ -1,60 +1,70 @@
 class Signed8 {
+	static Name() { return "int_8" }
 	static getSize(data) { return 1; }
-	static _serialize(data, buffer, offset) { buffer.writeInt8(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readInt8(offset); }
+	static serialize(data, buffer, offset) { buffer.writeInt8(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readInt8(offset); }
 }
 
 class Signed16 {
+	static Name() { return "int_16" }
 	static getSize(data) { return 2; }
-	static _serialize(data, buffer, offset) { buffer.writeInt16LE(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readInt16LE(offset); }
+	static serialize(data, buffer, offset) { buffer.writeInt16LE(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readInt16LE(offset); }
 }
 
 class Signed32 {
+	static Name() { return "int_32" }
 	static getSize(data) { return 4; }
-	static _serialize(data, buffer, offset) { buffer.writeInt32LE(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readInt32LE(offset); }
+	static serialize(data, buffer, offset) { buffer.writeInt32LE(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readInt32LE(offset); }
 }
 
 class Unsigned8 {
+	static Name() { return "uint_8" }
 	static getSize(data) { return 1; }
-	static _serialize(data, buffer, offset) { buffer.writeUInt8(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readUInt8(offset); }
+	static serialize(data, buffer, offset) { buffer.writeUInt8(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readUInt8(offset); }
 }
 
 class Unsigned16 {
+	static Name() { return "uint_16" }
 	static getSize(data) { return 2; }
-	static _serialize(data, buffer, offset) { buffer.writeUInt16LE(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readUInt16LE(offset); }
+	static serialize(data, buffer, offset) { buffer.writeUInt16LE(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readUInt16LE(offset); }
 }
 
 class Unsigned32 {
+	static Name() { return "uint_32" }
 	static getSize(data) { return 4; }
-	static _serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
+	static serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
 }
 
 class Float32 {
+	static Name() { return "float_32" }
 	static getSize(data) { return 4; }
-	static _serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
+	static serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
 }
 class Float64 {
+	static Name() { return "float_64" }
 	static getSize(data) { return 8; }
-	static _serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
-	static _deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
+	static serialize(data, buffer, offset) { buffer.writeUInt32LE(value || 0, offset) }
+	static deserialize(buffer, offset) { return buffer.readUInt32LE(offset); }
 }
 
 class Bool {
+	static Name() { return "bool" }
 	static getSize(data) { return 1; }
-	static _serialize(data, buffer, offset) { buffer.writeUInt8(value ? 1 : 0, offset) }
-	static _deserialize(buffer, offset) { return !!buffer.readUInt8(offset); }
+	static serialize(data, buffer, offset) { buffer.writeUInt8(value ? 1 : 0, offset) }
+	static deserialize(buffer, offset) { return !!buffer.readUInt8(offset); }
 }
 
 class Void {
+	static Name() { return "void" }
 	static getSize(data) { return 0; }
-	static _serialize(data, buffer, offset) { }
-	static _deserialize(buffer, offset) { return null; }
+	static serialize(data, buffer, offset) { }
+	static deserialize(buffer, offset) { return null; }
 }
 
 class StringType {
@@ -64,25 +74,27 @@ class StringType {
 		// NOTE: I DO NOT ENFORCE MAX STRING LENGTH, IS THAT BEHAVIOR SUPPORTED?!
 	}
 
+	static Name() { return `string[${this.index.Name()}]` }
+
 	getSize (data) {
 		var len = this.index.getSize();
 		return len + Buffer.from(data, "utf-8").length;
 	}
 
-	_serialize (data, buffer, offset) {
+	serialize (data, buffer, offset) {
 		var string = Buffer.from(data, "utf-8");
 
-		this.index._serialize(string.length, buffer, offset);
+		this.index.serialize(string.length, buffer, offset);
 		offset += this.index.getSize(string.length);
 
 		string.copy(buffer, offset);
 		offset += string.length;
 	}
 
-	_deserialize (buffer, offset) {
+	deserialize (buffer, offset) {
 		var size;
 
-		size = this.index._deserialize(buffer, offset);
+		size = this.index.deserialize(buffer, offset);
 		offset += this.index.getSize(data.length);
 
 		return buffer.toString('utf-8', offset, offset+size);
@@ -94,6 +106,16 @@ class ArrayType {
 		this.base = base;
 		this.size = size;
 		this.index = index;
+	}
+
+	static Name() { 
+		var name = this.base.Name();
+		
+		var index = this.index && this.index.Name() || "";
+		var size = this.size && this.size.toString() || "";
+		var comb = index + (index && size ? ":" : "") + size;
+
+		return `${name}[${comb}]`;
 	}
 
 	getSize(data) {
@@ -112,37 +134,36 @@ class ArrayType {
 		}
 	}
 
-	static _serialize(data, buffer, offset) {
+	serialize(data, buffer, offset) {
 		// Size / range checking done by getSize
-
 		if (this.index) {
-			this.index._serialize(data.length, buffer, offset);
+			this.index.serialize(data.length, buffer, offset);
 			offset += this.index.getSize(data.length);
 		}
 
-
 		data.forEach((value) => {
-			this.index._serialize(value, buffer, offset);
+			this.index.serialize(value, buffer, offset);
 			offset += this.base.getSize(value);
 		});
 	}
 
-	static _deserialize(buffer, offset) {
+	deserialize(buffer, offset) {
 		var size;
 
 		if (this.index) {
-			size = this.index._deserialize(buffer, offset);
-			offset += this.index.getSize(data.length);
+			size = this.index.deserialize(buffer, offset);
+			offset += this.index.getSize(size);
 		} else {
 			size = this.size;
 		}
 
 		var output = [];
-		while (--size > 0) {
-			var val = this.base._deserialize(buffer, offset);
-			offset += this.index.getSize(val);
+		while (size-- > 0) {
+			var val = this.base.deserialize(buffer, offset);
+			offset += this.base.getSize(val);
 			output.push(val);
 		}
+		return output;
 	}
 };
 

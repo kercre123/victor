@@ -4,13 +4,24 @@ const aes = require("./aes.js");
 const diffie = require("./diffie.js");
 const prompt = require('prompt');
 
-const messages = {
-	toRobot: clad("clad/robotInterface/messageEngineToRobot.clad"),
-	toEngine: clad("clad/robotInterface/messageRobotToEngine.clad")
-};
+const Anki = clad("clad/robotInterface/messageEngineToRobot.clad").Anki;
+clad("clad/robotInterface/messageRobotToEngine.clad", Anki);
 
-//console.log
-(JSON.stringify(messages, null, 4));
+
+function ProcessMessage(message) {
+	var length = message[0];
+	var tag = message[1];
+	var payload = message.slice(2, 2 + length);
+
+	var struct = Anki.Cozmo.RobotInterface.EngineToRobot[tag];
+	
+	return struct.deserialize(payload);
+}
+
+var decoded = ProcessMessage(new Buffer([0x0e, 0x28, 0x43, 0x5a, 0x4d, 0x30, 0x9e, 0x93, 0x9b, 0x36, 0x4b, 0xa0, 0x14, 0xd8, 0x52, 0x7b]));
+console.log(JSON.stringify(decoded))
+console.log(decoded instanceof Anki.Cozmo.HelloPhone)
+
 
 /*
 const factory = require("./factory.js");
@@ -52,6 +63,8 @@ factory.on('connected', function(interface) {
 
 	interface.on('data', (data) => {
 		console.log("RECV:", data);
+
+		// TODO: USE CLAD HERE
 
 		// This is the pairing received message
 		if (data[1] == 0x29) {

@@ -103,5 +103,4 @@ Cozmo.prototype.send = function (message) {
   if (this.key) { packet[16] |= 4; } // This flag is only used on the last packet
 }
 
-
 module.exports = Cozmo;
