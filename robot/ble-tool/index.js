@@ -21,6 +21,7 @@ function ProcessMessage(message) {
 var decoded = ProcessMessage(new Buffer([0x0e, 0x28, 0x43, 0x5a, 0x4d, 0x30, 0x9e, 0x93, 0x9b, 0x36, 0x4b, 0xa0, 0x14, 0xd8, 0x52, 0x7b]));
 console.log(JSON.stringify(decoded))
 console.log(decoded instanceof Anki.Cozmo.HelloPhone)
+console.log(decoded.Name())
 
 
 /*
