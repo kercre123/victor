@@ -50,6 +50,7 @@ factory.on('connected', function(interface) {
 		var data = Buffer.concat([new Buffer([tag]), buffer]);
 
 		console.log(`SEND ${struct.Name()}: ${JSON.stringify(payload)}`);
+		console.log("S_BF:", data)
 
 		interface.send(data);
 	}
@@ -64,7 +65,7 @@ factory.on('connected', function(interface) {
 
 	interface.on('data', (data) => {
 		var decoded = ProcessMessage(data);
-		console.log("RECV:", data);
+		console.log("R_BF:", data);
 		console.log(`RECV ${decoded.Name()}: ${JSON.stringify(decoded)}`);
 
 		if (decoded instanceof Anki.Cozmo.EncodedAESKey) {
