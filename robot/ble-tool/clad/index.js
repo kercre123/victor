@@ -86,7 +86,6 @@ function structure(ast, space) {
 			struct.forEach((member) => {
 				var val = data[member.field];
 
-				console.log(member);
 				member.type.serialize(val, buffer, offset);
 				offset += member.type.getSize(val);
 			});

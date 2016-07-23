@@ -73,9 +73,14 @@ Cozmo.prototype.setKey = function (key) {
   this._encoded = [];
 }
 
-Cozmo.prototype.send = function (message) {
-  message = message.concat();
+Cozmo.prototype.send = function (buffer) {
+  message = [];
+
+  for (var i = 0; i < buffer.length; i++) message.push(buffer[i]);
+
   message.unshift(message.length);
+
+
 
   // Pad out the message
   while (message.length % 16) { message.push(Math.random()*0x100 | 0) }
