@@ -64,7 +64,8 @@ factory.on('connected', function(interface) {
 
 	interface.on('data', (data) => {
 		var decoded = ProcessMessage(data);
-		console.log(`RECV ${decoded.Name()}: ${JSON.stringify(decoded)}`, data);
+		console.log("RECV:", data);
+		console.log(`RECV ${decoded.Name()}: ${JSON.stringify(decoded)}`);
 
 		if (decoded instanceof Anki.Cozmo.EncodedAESKey) {
 			remote_secret = decoded.secret;
