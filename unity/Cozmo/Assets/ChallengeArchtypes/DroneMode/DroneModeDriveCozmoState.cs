@@ -11,7 +11,7 @@ namespace Cozmo {
         private const float _kLiftFactorThreshold = 0.05f;
 
         private DroneModeGame _DroneModeGame;
-        private DroneModeControlsSlide _DroneModeView;
+        private DroneModeControlsSlide _DroneModeControlsSlide;
 
         private float _CurrentDriveSpeed_mmps;
         private float _TargetDriveSpeed_mmps;
@@ -31,7 +31,7 @@ namespace Cozmo {
 
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
             _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
-          _DroneModeView = slide.GetComponent<DroneModeControlsSlide>();
+          _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           EnableInput();
 
           Anki.Cozmo.Viz.VizManager.Enabled = true;
@@ -70,18 +70,18 @@ namespace Cozmo {
         }
 
         private void EnableInput() {
-          _DroneModeView.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
-          _DroneModeView.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
-          _DroneModeView.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
+          _DroneModeControlsSlide.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
 
           _DroneModeGame.EnableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
         }
 
         private void DisableInput() {
-          _DroneModeView.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
-          _DroneModeView.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
-          _DroneModeView.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
+          _DroneModeControlsSlide.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
           _DroneModeGame.DisableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
         }
@@ -207,7 +207,7 @@ namespace Cozmo {
             _TargetTurnDirection = newTurnDirection;
 
             // TODO Remove debug text field
-            _DroneModeView.TiltText.text = "Tilt: " + _TargetTurnDirection;
+            _DroneModeControlsSlide.TiltText.text = "Tilt: " + _TargetTurnDirection;
           }
         }
 
