@@ -28,7 +28,6 @@ enum uint_8 UnlockId
 
   // App-side unlocks
   DroneModeGame,
-  ExplorerMode,
   KeepawayGame,
   MeetCozmoGame,
   MemoryMatchGame,
