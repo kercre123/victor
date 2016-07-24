@@ -32,6 +32,7 @@ namespace Cozmo {
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
             _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
+          _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           EnableInput();
 
           Anki.Cozmo.Viz.VizManager.Enabled = true;

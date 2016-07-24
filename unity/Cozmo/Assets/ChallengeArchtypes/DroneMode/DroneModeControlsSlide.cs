@@ -6,9 +6,36 @@ namespace Cozmo.Minigame.DroneMode {
   public class DroneModeControlsSlide : MonoBehaviour {
     private const float _kSliderChangeThreshold = 0.01f;
 
+    public delegate void SpeedSliderEventHandler(SpeedSliderSegment currentSegment, float newNormalizedSegmentValue);
+    public event SpeedSliderEventHandler OnDriveSpeedSegmentValueChanged;
+
+    public delegate void SpeedSliderSegmentEventHandler(SpeedSliderSegment currentSegment, SpeedSliderSegment newSegment);
+    public event SpeedSliderSegmentEventHandler OnDriveSpeedSegmentChanged;
+
+    public delegate void HeadSliderEventHandler(HeadSliderSegment currentSegment, float newNormalizedSegmentValue);
+    public event HeadSliderEventHandler OnHeadTiltSegmentValueChanged;
+    public event HeadSliderEventHandler OnHeadTiltSegmentChanged;
+
+    public enum SpeedSliderSegment {
+      Turbo,
+      Forward,
+      Neutral,
+      Reverse
+    }
+
+    public enum HeadSliderSegment {
+      Forward,
+      Neutral,
+      Reverse
+    }
+
     [SerializeField]
-    private Image _CameraFeedImage;
+    private RawImage _CameraFeedImage;
     private ImageReceiver _ImageProcessor;
+
+    [SerializeField]
+    private RectTransform _CameraFeedImageContainer;
+    private bool _IsCameraSized;
 
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
@@ -34,34 +61,12 @@ namespace Cozmo.Minigame.DroneMode {
     // TODO remove
     public Anki.UI.AnkiTextLabel TiltText;
 
-    public enum SpeedSliderSegment {
-      Turbo,
-      Forward,
-      Neutral,
-      Reverse
-    }
-
-    public enum HeadSliderSegment {
-      Forward,
-      Neutral,
-      Reverse
-    }
-
-    public delegate void SpeedSliderEventHandler(SpeedSliderSegment currentSegment, float newNormalizedSegmentValue);
-    public event SpeedSliderEventHandler OnDriveSpeedSegmentValueChanged;
-
-    public delegate void SpeedSliderSegmentEventHandler(SpeedSliderSegment currentSegment, SpeedSliderSegment newSegment);
-    public event SpeedSliderSegmentEventHandler OnDriveSpeedSegmentChanged;
-
-    public delegate void HeadSliderEventHandler(HeadSliderSegment currentSegment, float newNormalizedSegmentValue);
-    public event HeadSliderEventHandler OnHeadTiltSegmentValueChanged;
-    public event HeadSliderEventHandler OnHeadTiltSegmentChanged;
-
     private SpeedSliderSegment _CurrentDriveSpeedSliderSegment;
     private float _CurrentDriveSpeedSliderSegmentValue;
 
     private HeadSliderSegment _CurrentHeadTiltSliderSegment;
     private float _CurrentHeadSliderSegmentValue;
+    private IRobot _CurrentRobot;
 
     private void Start() {
       _CurrentDriveSpeedSliderSegment = SpeedSliderSegment.Neutral;
@@ -72,9 +77,27 @@ namespace Cozmo.Minigame.DroneMode {
       _HeadTiltThrottle.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
     }
 
+    public void InitializeCameraFeed(IRobot currentRobot) {
+      _ImageProcessor = new ImageReceiver("DroneModeCameraFeed");
+      _ImageProcessor.OnImageSizeChanged += HandleImageSizeChanged;
+      _ImageProcessor.Initialize(Anki.Cozmo.ImageSendMode.Off);
+      _CameraFeedImage.texture = _ImageProcessor.Image;
+      _CurrentRobot = currentRobot;
+    }
+
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
       _HeadTiltThrottle.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
+
+      _ImageProcessor.OnImageSizeChanged -= HandleImageSizeChanged;
+      _ImageProcessor.Dispose();
+      _ImageProcessor.DestroyTexture();
+    }
+
+    private void HandleImageSizeChanged(float width, float height) {
+      _CameraFeedImage.rectTransform.sizeDelta = new Vector2(width, height);
+      float imageScale = (_CameraFeedImageContainer.sizeDelta.x / width);
+      _CameraFeedImage.rectTransform.localScale = new Vector3(imageScale, imageScale, imageScale);
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {

@@ -7,6 +7,7 @@ using Anki.Cozmo.ExternalInterface;
 public class ImageReceiver : IDisposable {
 
   public event Action<Texture2D> OnImageReceived;
+  public event Action<float, float> OnImageSizeChanged;
 
   private MemoryStream _MemStream = new MemoryStream();
   // required for Minimized Jpeg
@@ -32,7 +33,7 @@ public class ImageReceiver : IDisposable {
     Initialize(ImageSendMode.Stream);
   }
 
-  private void Initialize(ImageSendMode sendMode) {
+  public void Initialize(ImageSendMode sendMode) {
     if (_SendMode == ImageSendMode.Off) {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ImageChunk>(ProcessImageChunk);
     }
@@ -88,9 +89,11 @@ public class ImageReceiver : IDisposable {
     if (imageChunk.chunkId == imageChunk.imageChunkCount - 1) {
 
       if (_ReceivedImage == null) {
-        Debug.LogError("Viz size: " + dims.Width + "x" + dims.Height);
         _ReceivedImage = new Texture2D(dims.Width, dims.Height);
         _ReceivedImage.name = Name;
+        if (OnImageSizeChanged != null) {
+          OnImageSizeChanged(dims.Width, dims.Height);
+        }
       }
 
       switch (imageChunk.imageEncoding) {

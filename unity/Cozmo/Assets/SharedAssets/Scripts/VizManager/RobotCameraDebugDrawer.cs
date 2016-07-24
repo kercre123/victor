@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
-using Anki.Cozmo;
 using UnityEngine.UI;
 
 namespace Anki.Cozmo.Viz {
@@ -15,7 +13,7 @@ namespace Anki.Cozmo.Viz {
     private bool _Initialized = false;
 
     // Update is called once per frame
-    void Update () {
+    void Update() {
       if (_Initialized) {
         return;
       }
