@@ -92,6 +92,9 @@ enum uint_8 FactoryTestResultCode {
   CAM_POSE_OOR,
   PLAY_SOUND_FAILED,
   PREV_TEST_RESULTS_READ_FAILED,
+  WRONG_FIRMWARE_VERSION,
+  CLIFF_VALUE_TOO_HIGH,
+  CLIFF_VALUE_TOO_LOW,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===

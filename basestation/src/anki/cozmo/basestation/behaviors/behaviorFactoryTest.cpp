@@ -40,8 +40,6 @@
 
 #include "util/console/consoleInterface.h"
 
-#define TEST_CHARGER_CONNECT 0
-
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
 #define END_TEST_IN_HANDLER(ERRCODE) EndTest(robot, ERRCODE); return RESULT_OK;
@@ -89,6 +87,8 @@ namespace Cozmo {
   // camera POV via Debug screen
   CONSOLE_VAR(bool,  kBFT_ConnectToRobotOnly,     "BehaviorFactoryTest",  false);
   
+  // Whether or not to check for expected robot FW version
+  CONSOLE_VAR(bool,  kBFT_CheckFWVersion,         "BehaviorFactoryTest",  false);
   
   
   ////////////////////////////
@@ -112,7 +112,7 @@ namespace Cozmo {
 
   static constexpr f32 _kWaitForPrevTestResultsTimeout_sec = 2;
   static constexpr f32 _kMotorCalibrationTimeout_sec = 4.f;
-  static constexpr f32 _kCalibrationTimeout_sec = 5.f;
+  static constexpr f32 _kCalibrationTimeout_sec = 4.f;
   static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 15;
   static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
   static constexpr f32 _kExpectedCubePoseDistThresh_mm = 40;
@@ -121,7 +121,14 @@ namespace Cozmo {
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
   static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
-  static constexpr FactoryID _kChargerFactoryID = 0x80000001;
+  
+  static constexpr u16 _kMaxCliffValueOverDrop = 300;
+  static constexpr u16 _kMinCliffValueOnGround = 800;
+  
+  // Checks for these firmware versions if non-zero
+  static constexpr u32 _kExpectedWifiVersion = 0;
+  static constexpr u32 _kExpectedRtipVersion = 0;
+  static constexpr u32 _kExpectedBodyVersion = 0;
   
   // If no change in behavior state for this long then trigger failure
   static constexpr f32 _kWatchdogTimeout = 20;
@@ -172,9 +179,7 @@ namespace Cozmo {
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
       EngineToGameTag::RobotPickedUp,
-      EngineToGameTag::MotorCalibration,
-      EngineToGameTag::ObjectAvailable,
-      EngineToGameTag::ObjectConnectionState
+      EngineToGameTag::MotorCalibration
     }});
 
     
@@ -537,6 +542,16 @@ namespace Cozmo {
           break;
         }
         
+        // Check robot fw version
+        if (kBFT_CheckFWVersion && robot.IsPhysical()) {
+          const RobotInterface::FWVersionInfo& fwInfo = robot.GetFWVersionInfo();
+          if (((_kExpectedWifiVersion != 0) && (_kExpectedWifiVersion != fwInfo.wifiVersion)) ||
+              ((_kExpectedRtipVersion != 0) && (_kExpectedRtipVersion != fwInfo.rtipVersion)) ||
+              ((_kExpectedBodyVersion != 0) && (_kExpectedBodyVersion != fwInfo.bodyVersion))) {
+            END_TEST(FactoryTestResultCode::WRONG_FIRMWARE_VERSION);
+          }
+        }
+        
         
         // Too much stuff is changing now.
         // Maybe put this back later.
@@ -575,12 +590,6 @@ namespace Cozmo {
                                              });
           
         }
-        
-        if (TEST_CHARGER_CONNECT) {
-          // Check if charger is discovered
-          robot.BroadcastAvailableObjects(true);
-        }
-        
         
         // Start motor calibration
         robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
@@ -697,19 +706,6 @@ namespace Cozmo {
             END_TEST(FactoryTestResultCode::FIRST_CALIB_IMAGE_NOT_TAKEN);
           }
           
-          if (TEST_CHARGER_CONNECT) {
-            // Verify that charger was discovered
-            if (!_chargerAvailable) {
-              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
-              END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
-            }
-            
-            // Connect to charger
-            std::array<FactoryID, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> connectToIDs;
-            connectToIDs[0] = _kChargerFactoryID;
-            robot.ConnectToObjects(connectToIDs);
-          }
-          
           // Make sure cliff (and pickup) detection is enabled
           robot.SetEnableCliffSensor(true);
         
@@ -725,7 +721,7 @@ namespace Cozmo {
           
           StartActing(robot, compoundAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.3;
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.f;
                         return true;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);
@@ -736,7 +732,7 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - DRIVE TO SLOT - - - - - - - - - - - - - - -
       case FactoryTestState::DriveToSlot:
       {
-        if (!robot.IsCliffSensorOn()) {
+        if (!robot.IsCliffSensorOn() || robot.GetMoveComponent().IsMoving() ) {
           if (currentTime_sec > _holdUntilTime) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
             END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
@@ -744,18 +740,17 @@ namespace Cozmo {
           break;
         }
         
+        // Check cliff sensor value
+        if (robot.GetCliffDataRaw() > _kMaxCliffValueOverDrop) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOverDropTooHigh", "Val: %d", robot.GetCliffDataRaw());
+          END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_HIGH);
+        }
+        
         // Verify robot is not still on charger
         if (robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOffCharger", "");
           END_TEST(FactoryTestResultCode::STILL_ON_CHARGER);
         }
-        
-        // Verify robot is connected to charger
-        if (TEST_CHARGER_CONNECT && !_chargerConnected) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerConnected","");
-          END_TEST(FactoryTestResultCode::CHARGER_UNCONNECTED);
-        }
-        
         
         // Set pose to expected
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
@@ -783,15 +778,23 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - GOTO CALIBRATION POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoCalibrationPose:
       {
+        // Check cliff sensor value
+        if (robot.GetCliffDataRaw() < _kMinCliffValueOnGround) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOnGroundTooLow", "Val: %d", robot.GetCliffDataRaw());
+          END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_LOW);
+        }
+        
         // Check that robot is in correct pose
         if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInCalibPose",
-                              "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
+                              "actual: (x,y,z,deg) = %f, %f, %f, %fdeg; expected: %f, %f, %f, %fdeg",
                               robot.GetPose().GetTranslation().x(),
                               robot.GetPose().GetTranslation().y(),
+                              robot.GetPose().GetTranslation().z(),
                               robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                               _camCalibPose.GetTranslation().x(),
                               _camCalibPose.GetTranslation().y(),
+                              _camCalibPose.GetTranslation().z(),
                               _camCalibPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
           END_TEST(FactoryTestResultCode::NOT_IN_CALIBRATION_POSE);
         }
@@ -1087,6 +1090,14 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindCubeObject", "");
         }
         
+        // Zero predock pose height
+        _closestPredockPose.SetTranslation(Vec3f(_closestPredockPose.GetTranslation().x(),
+                                                 _closestPredockPose.GetTranslation().y(),
+                                                 0));
+        
+        // Zero predock pose xy-rotation
+        _closestPredockPose.SetRotation(_closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>(), Z_AXIS_3D());
+      
         
         
         // Goto predock pose and then turn towards the block again for good alignment
@@ -1101,12 +1112,14 @@ namespace Cozmo {
                       // When robot path following is improved (particularly in sim) this physical check can be removed.
                       if (result != ActionResult::SUCCESS && robot.IsPhysical()) {
                         PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.GotoPrePickupPoseFailed",
-                                            "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
+                                            "actual: (x,y,deg) = %f, %f, %f, %fdeg; expected: %f, %f, %f, %fdeg",
                                             robot.GetPose().GetTranslation().x(),
                                             robot.GetPose().GetTranslation().y(),
+                                            robot.GetPose().GetTranslation().z(),
                                             robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                                             _closestPredockPose.GetTranslation().x(),
                                             _closestPredockPose.GetTranslation().y(),
+                                            _closestPredockPose.GetTranslation().z(),
                                             _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
                         EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
                       } else {
@@ -1122,7 +1135,7 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - GOTO PICKUP POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoPickupPose:
       {
-        // Verify that robot is where expected
+
         if (!robot.GetPose().IsSameAs(_closestPredockPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInPrePickupPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
@@ -1132,6 +1145,8 @@ namespace Cozmo {
                               _closestPredockPose.GetTranslation().x(),
                               _closestPredockPose.GetTranslation().y(),
                               _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
+          _closestPredockPose.Print();
+          robot.GetPose().Print();
           END_TEST(FactoryTestResultCode::NOT_IN_PRE_PICKUP_POSE);
         }
 
@@ -1410,14 +1425,6 @@ namespace Cozmo {
         
       case EngineToGameTag::MotorCalibration:
         _lastHandlerResult = HandleMotorCalibration(robot, event.GetData().Get_MotorCalibration());
-        break;
-        
-      case EngineToGameTag::ObjectAvailable:
-        _lastHandlerResult = HandleObjectAvailable(robot, event.GetData().Get_ObjectAvailable());
-        break;
-        
-      case EngineToGameTag::ObjectConnectionState:
-        _lastHandlerResult = HandleObjectConnectionState(robot, event.GetData().Get_ObjectConnectionState());
         break;
         
       default:
@@ -1719,21 +1726,6 @@ namespace Cozmo {
       }
     }
 
-    return RESULT_OK;
-  }
-  
-  Result BehaviorFactoryTest::HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg) {
-    if (msg.factory_id == _kChargerFactoryID) {
-      _chargerAvailable = true;
-    }
-    return RESULT_OK;
-  }
-  
-  Result BehaviorFactoryTest::HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg)
-  {
-    if (msg.factoryID == _kChargerFactoryID && msg.connected) {
-      _chargerConnected = true;
-    }
     return RESULT_OK;
   }
   

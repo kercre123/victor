@@ -74,8 +74,6 @@ namespace Cozmo {
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
     Result HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg);
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
-    Result HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg);
-    Result HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     
@@ -134,8 +132,6 @@ namespace Cozmo {
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
-    bool _chargerAvailable = false;
-    bool _chargerConnected = false;
     FactoryTestResultCode _testResult;
     FactoryTestResultEntry _testResultEntry;
     std::vector<u32> _stateTransitionTimestamps;
