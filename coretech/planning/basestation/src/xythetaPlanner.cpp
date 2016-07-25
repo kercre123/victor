@@ -726,13 +726,13 @@ Cost xythetaPlannerImpl::heur_internal(StateID sid)
     const auto& goal = _goals_c[i].second;
     // we checked i is in bounds when adding to the cost vector so dont here
     Cost costOutsideHeurMap = _costOutsideHeurMapPerGoal[i].second;
-    Cost d = _context.env.GetDistanceBetween(goal, s) + costOutsideHeurMap;
+    Cost d = _context.env.GetDistanceBetween(goal, s) * _context.env.GetOneOverMaxVelocity() + costOutsideHeurMap;
     if (d < minCost) {
       minCost = d;
     }
   }
   
-  return minCost * _context.env.GetOneOverMaxVelocity();
+  return minCost;
 }
 
 void xythetaPlannerImpl::BuildPlan()
