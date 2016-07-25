@@ -30,14 +30,16 @@
 #define FIXTURE_FINISH1_TEST   17    
 #define FIXTURE_FINISH2_TEST   18    
 #define FIXTURE_FINISH3_TEST   19    
-#define FIXTURE_FINISH_TEST    20
+#define FIXTURE_FINISH_TEST    20   // Will connect to any type of accessory
 
-#define FIXTURE_DEBUG          21    // Should be last ID
+#define FIXTURE_CUBEX_TEST     21   // Will verify (but not program-from-scratch) any cube type
+
+#define FIXTURE_DEBUG          22   // Should be last ID
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES { "NO ID",  "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
                         "ROBOT",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
-                        "FINISHC","FINISH1","FINISH2","FINISH3","FINISH",  \
+                        "FINISHC","FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX", \
                         "DEBUG" }
 
 extern FixtureType g_fixtureType;
@@ -124,8 +126,9 @@ u32 GetSerial();
 #define ERROR_CUBE_NO_COMMUNICATION 701   // MCU is not working (bad crystal?)
 #define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
 #define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
+#define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
 
-// 710-713
+// 710-713 for cube/charger types 0-3
 #define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1,2,3) does not match fixture type (1,2,3)
 
 #define ERROR_CUBE_NO_BOOT          750   // Bad regulator, IMU, or crystal

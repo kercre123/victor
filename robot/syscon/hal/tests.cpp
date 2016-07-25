@@ -26,6 +26,17 @@ extern bool motorOverride;
 extern int resultLedOn;
 extern int resultLedOff;
 extern int g_powerOffTime;
+extern bool g_turnPowerOff;
+
+static void TestMotors(void* discard) {
+  static int direction = 1;
+  
+  for (int i = 0; i < 2; i++)
+    Motors::setPower(i, 0x7800 * direction);
+  for (int i = 2; i < 4; i++)
+    Motors::setPower(i, 0x5000 * direction);
+  direction *= -1;
+}
 
 // Do a blocking send of a single byte out the testport, with all the horror that implies
 static void SendByte(int c)
@@ -88,10 +99,13 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
   // Tests from 128..255 are handled in body
   switch (test)
   {
-    // This hack keeps the battery on for 4 more seconds (see main.cpp)
+    // This hack keeps the battery on for N more seconds (see main.cpp)
     // It operates as a kind of watchdog - if you stop calling it the robot will turn off
     case TEST_POWERON:
-      g_powerOffTime = GetCounter() + (1<<23);  // Last 1 second longer
+      if (param == 0xA5)
+        g_turnPowerOff = false;   // Last until battery dies
+      else
+        g_powerOffTime = GetCounter() + ((param+1)<<23);  // Last N+1 seconds longer
       break;    // Reply "OK"
     
     case TEST_RADIOTX:
@@ -103,6 +117,13 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       RobotInterface::OTA::EnterRecoveryMode msg;
       msg.mode = RobotInterface::OTA::Recovery_Mode;
       RobotInterface::SendMessage(msg);
+      break;    // Reply "OK"
+    }
+    
+    case TEST_MOTORSLAM:
+    {
+      motorOverride = true;
+      RTOS::schedule(TestMotors, CYCLES_MS(500.0f));
       break;    // Reply "OK"
     }
     
@@ -153,18 +174,6 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
   // By default, send down an "OK" message
   SendDown(0, NULL);
 }
-
-#if defined(DO_MOTOR_TESTING)
-static void TestMotors(void* discard) {
-  static int direction = 1;
-  
-  for (int i = 0; i < 2; i++)
-    Motors::setPower(i, 0x4000 * direction);
-  for (int i = 2; i < 4; i++)
-    Motors::setPower(i, 0x2800 * direction);
-  direction *= -1;
-}
-#endif
 
 #if defined(DO_LIGHTS_TESTING)
 static void TestLights(void* data) {	

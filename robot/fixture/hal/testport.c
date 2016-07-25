@@ -117,78 +117,66 @@ u8* GetGlobalBuffer(void)
 
 void SendTestChar(int val)
 {
-  int retries = 20;
+  int c = val;
+  u32 start = getMicroCounter();
   
-  while (retries)
-    try {
-      int c = val;
-      u32 start = getMicroCounter();
-      
-      // Listen for pulse
-      PIN_PULL_NONE(GPIOC, PINC_TRX);
-      PIN_IN(GPIOC, PINC_TRX);
-      PIN_RESET(GPIOC, PINC_CHGTX);     // Floating power
-      PIN_OUT(GPIOC, PINC_CHGTX);
-      PIN_PULL_UP(GPIOC, PINC_CHGRX);
-      PIN_IN(GPIOC, PINC_CHGRX);
+  // Listen for pulse
+  PIN_PULL_NONE(GPIOC, PINC_TRX);
+  PIN_IN(GPIOC, PINC_TRX);
+  PIN_RESET(GPIOC, PINC_CHGTX);     // Floating power
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_UP(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
 
-      // Wait for RX to go low/be low
-      while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
-        if (getMicroCounter()-start > 25000)
-          throw ERROR_NO_PULSE;
-        
-      // Now wait for it to go high
-      MicroWait(1000);    // Avoid false detects due to slow discharge
-      while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
-        if (getMicroCounter()-start > 25000)
-          throw ERROR_NO_PULSE;
-      
-      // If nothing to send, just return
-      if (c < 0)
-        return;
-        
-      // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
-      PIN_SET(GPIOC, PINC_CHGTX);
-      PIN_AF(GPIOC, PINC_CHGTX);
-      
-      PIN_PULL_NONE(GPIOC, PINC_CHGRX);
-      PIN_RESET(GPIOC, PINC_CHGRX);
-      PIN_OUT(GPIOC, PINC_CHGRX);
-      
-      MicroWait(30);  // Enough time for robot to turn around
-      
-      TestPutChar(c);
-      MicroWait(10);  // Some extra stop bit time
-      
-      // Back to listening for confirmation pulse
-      start = getMicroCounter();
-      PIN_RESET(GPIOC, PINC_CHGTX);     // Floating power
-      PIN_OUT(GPIOC, PINC_CHGTX);
-      PIN_PULL_NONE(GPIOC, PINC_CHGRX);
-      PIN_IN(GPIOC, PINC_CHGRX);
+  // Wait for RX to go low/be low
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
+    if (getMicroCounter()-start > 500000)
+      throw ERROR_NO_PULSE;
+    
+  // Now wait for it to go high
+  MicroWait(1000);    // Avoid false detects due to slow discharge
+  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
+    if (getMicroCounter()-start > 500000)
+      throw ERROR_NO_PULSE;
+  
+  // If nothing to send, just return
+  if (c < 0)
+    return;
+    
+  // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_AF(GPIOC, PINC_CHGTX);
+  
+  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
+  PIN_RESET(GPIOC, PINC_CHGRX);
+  PIN_OUT(GPIOC, PINC_CHGRX);
+  
+  MicroWait(30);  // Enough time for robot to turn around
+  
+  TestPutChar(c);
+  MicroWait(10);  // Some extra stop bit time
+  
+  // Back to listening for confirmation pulse
+  start = getMicroCounter();
+  PIN_RESET(GPIOC, PINC_CHGTX);     // Floating power
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  PIN_PULL_NONE(GPIOC, PINC_CHGRX);
+  PIN_IN(GPIOC, PINC_CHGRX);
 
-      // Wait for acknowledge (RX to go low/pulse high/go low)
-      while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
-        if (getMicroCounter()-start > 200)
-          throw ERROR_NO_PULSE_ACK;
-      while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
-        if (getMicroCounter()-start > 200)
-          throw ERROR_NO_PULSE_ACK;
-      while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
-        if (getMicroCounter()-start > 200)
-          throw ERROR_NO_PULSE_ACK;
-      
-      // Success!
+  // Wait for acknowledge (RX to go low/pulse high/go low)
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
+    if (getMicroCounter()-start > 200)
+      throw ERROR_NO_PULSE_ACK;
+  while (!(GPIO_READ(GPIOC) & GPIOC_CHGRX))
+    if (getMicroCounter()-start > 200)
+      throw ERROR_NO_PULSE_ACK;
+  while (GPIO_READ(GPIOC) & GPIOC_CHGRX)
+    if (getMicroCounter()-start > 200)
+      throw ERROR_NO_PULSE_ACK;
+    
 #ifdef DEBUG_TESTPORT
-    SlowPrintf("<%02x ", val);
+SlowPrintf("<%02x ", val);
 #endif  
-      return;
-        
-    } catch (int err) {
-      retries--;
-      if (!retries)
-        throw err;
-    }
 }
 
 int SendCommand(u8 test, s8 param, u8 buflen, u8* buf)

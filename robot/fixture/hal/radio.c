@@ -129,7 +129,7 @@ void RadioProcess()
   } else {
     // Grab arguments
     argbytes--;
-    arg |= (c << (8*argbytes));
+    arg |= (c << (8*argbytes)); // XXX: This byteswaps because I'm used to IDs being byteswapped
     
     // If we have a whole argument, print it out
     if (!argbytes)

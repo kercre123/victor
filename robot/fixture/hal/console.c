@@ -382,14 +382,13 @@ static void Charge(void)
 #endif
 
 void CubeBurn(void);
-void SendTestMode(int i);
 
 void SendTestMessage(void)
 {
   int test = 0;
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &test);
-  SendTestMode(test);
+  SendCommand(test, 0, 0, 0);
 }
 
 void SetRadio(void)

@@ -8,6 +8,7 @@
 #include "hal/swd.h"
 #include "hal/monitor.h"
 #include "hal/radio.h"
+#include "hal/flash.h"
 
 #include "app/fixture.h"
 #include "app/binaries.h"
@@ -32,21 +33,6 @@ bool RobotDetect(void)
 
 void SendTestChar(int c);
 
-void SendTestMode(int test)
-{
-  // Pump the comm-link 4 times before trying to send
-  for (int i = 0; i < 4; i++)
-    try {
-      SendTestChar(-1);
-    } catch (int e) { }
-    
-  // Send the message
-  SendTestChar('W');
-  SendTestChar('t');
-  SendTestChar('f');
-  SendTestChar(test);
-}
-
 void InfoTest(void)
 {
   unsigned int version[2];
@@ -62,8 +48,16 @@ void InfoTest(void)
 
 void PlaypenTest(void)
 {
+  // Pump the comm-link 4 times before trying to send
+  for (int i = 0; i < 4; i++)
+    try {
+      SendTestChar(-1);
+    } catch (int e) { }
+  // Let Espressif finish booting
+  MicroWait(300000); 
+    
   // Try to put robot into playpen mode
-  SendTestMode(FTM_PlayPenTest);    
+  SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);    
   
   // Do this last:  Try to put fixture radio in advertising mode
   static bool setRadio = false;

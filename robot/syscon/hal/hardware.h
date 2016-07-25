@@ -10,8 +10,9 @@ static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
 
 enum BODY_VERS {
   BODY_VER_EP = 0,
-  BODY_VER_PILOT = 1,
-  BODY_VER_PROD = 2
+  BODY_VER_PILOT = 1,   // 8T head encoder
+  BODY_VER_PROD = 2,    // Final hardware version, 4T head encoder
+  BODY_VER_SHIP = 3,    // First shipping firmware version
 };
 
 enum watchdog_channels {

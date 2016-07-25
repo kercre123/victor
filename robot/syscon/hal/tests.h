@@ -18,6 +18,7 @@ enum {
   TEST_DROP          = 0x86,
   TEST_RUNMOTOR      = 0x87,
   TEST_LIGHT         = 0x88,
+  TEST_MOTORSLAM     = 0x89,
 };
 
 #if defined(DO_ENCODER_TESTING) || defined(DO_MOTOR_TESTING) || defined(DO_LIGHTS_TESTING)

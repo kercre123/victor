@@ -74,23 +74,23 @@ void enterOperatingMode(BodyRadioMode mode) {
 }
 
 int g_powerOffTime = (4<<23);   // 4 seconds from power-on
+bool g_turnPowerOff = false;
 static void setupOperatingMode() {
   static BodyRadioMode active_operating_mode = -1;
   BodyRadioMode new_mode = current_operating_mode;
 
   // XXX: Factory only - to support test modes:  Dirty hack to run battery for 4 seconds after power-up regardless of mode
-  static bool turnPowerOff = false;
-  if (turnPowerOff && GetCounter() > g_powerOffTime)
+  if (g_turnPowerOff && GetCounter() > g_powerOffTime)
   {
     Battery::powerOff();
-    turnPowerOff = false;
+    g_turnPowerOff = false;
   }
   
   if (active_operating_mode == new_mode) {
     return ;
   }
 
-  turnPowerOff = false;
+  g_turnPowerOff = false;
 
   // Tear down existing mode
   switch (active_operating_mode) {
@@ -133,7 +133,7 @@ static void setupOperatingMode() {
 
     case BODY_IDLE_OPERATING_MODE:
       Motors::disable(true);  
-      turnPowerOff = true;
+      g_turnPowerOff = true;
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
       break ;

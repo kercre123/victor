@@ -18,7 +18,6 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 48;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
@@ -174,6 +173,7 @@ bool DetectDevice(void)
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
+    case FIXTURE_CUBEX_TEST:
       return CubeDetect();
     case FIXTURE_HEAD1_TEST:
       return HeadDetect();
@@ -336,6 +336,7 @@ static void MainExecution()
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
+    case FIXTURE_CUBEX_TEST:
       m_functions = GetCubeTestFunctions();
       break;
     case FIXTURE_HEAD1_TEST:
