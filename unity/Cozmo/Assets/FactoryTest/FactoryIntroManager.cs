@@ -149,8 +149,13 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleDisconnectedFromClient(DisconnectionReason obj) {
-    SetStatusText("Disconnected: " + obj.ToString());
-    TestFailed();
+    // Don't override result code with disconnect text since the disconnect
+    // is expected when the test completes
+    DAS.Debug(this, "Disconnected: " + obj.ToString());
+    if (!_StatusText.text.Contains("Result Code:")) {
+      SetStatusText("Disconnected: " + obj.ToString());
+      TestFailed();
+    }
   }
 
   private void TestFailed() {

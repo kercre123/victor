@@ -24,7 +24,7 @@ public class RemoteControlPane : MonoBehaviour {
   [SerializeField]
   private Slider _LiftHeight;
 
-  private float _Speed = 40.0f;
+  private float _Speed = 100.0f;
 
   // Use this for initialization
   void Start() {
