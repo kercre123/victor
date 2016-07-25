@@ -553,12 +553,12 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
 
         # Check for crashes
         if crash_count > 0:
-          UtilLog.error('{test_controller} had a crashed controller.'.format(test_controller))
+          UtilLog.error('{test_controller} had a crashed controller.'.format(test_controller=test_controller))
           continue
 
         # Get return code from test
         if output.test_return_code is None:
-          UtilLog.error('No result code received from {test_controller}'.format(test_controller))
+          UtilLog.error('No result code received from {test_controller}'.format(test_controller=test_controller))
           continue
 
         if output.test_return_code != 0:
@@ -852,7 +852,8 @@ def main(args):
     UtilLog.info("##teamcity[buildStatisticValue key='WebotsFailedTests' value='{num_of_failed_tests_in_one_run}']".format(
                  num_of_failed_tests_in_one_run=num_of_failed_tests_in_one_run))
 
-  UtilLog.info("{failed}/{total} ({percentage:.1f}%) runs failed".format(
+  if options.num_runs > 1:
+    UtilLog.info("{failed}/{total} ({percentage:.1f}%) runs failed".format(
                   failed=num_of_failed_runs, total=num_of_total_runs, 
                   percentage=float(num_of_failed_runs)/num_of_total_runs*100))
 
