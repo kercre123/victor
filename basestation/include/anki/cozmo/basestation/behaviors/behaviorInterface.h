@@ -115,7 +115,7 @@ public:
   bool IsRunnable(const Robot& robot) const;
   
   const std::string& GetName() const { return _name; }
-  const BehaviorType GetType() const { return _name != "NULL" ? BehaviorTypeFromString(_name) : BehaviorType::NoneBehavior; }
+  const BehaviorType GetType() const { return _behaviorType; }
   const std::string& GetStateName() const { return _stateName; }
   virtual bool IsReactionary() const { return false;}
 
@@ -169,6 +169,7 @@ protected:
   // Only sets the name if it's currenty the base default name
   void SetDefaultName(const char* inName);
   inline void SetStateName(const std::string& inName) { _stateName = inName; }
+  inline void SetBehaviorType(BehaviorType type) {if(_behaviorType == BehaviorType::NoneBehavior){ _behaviorType = type;}};
     
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot) { return InitInternal(robot); }
@@ -302,6 +303,7 @@ private:
     
   std::string _name;
   std::string _stateName = "";
+  BehaviorType _behaviorType;
   
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;

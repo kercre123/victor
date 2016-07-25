@@ -260,11 +260,13 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     }
   }
   
+  
   if (newBehavior)
   {
+    newBehavior->SetBehaviorType(behaviorType);
     newBehavior = AddToFactory(newBehavior, nameCollisionRule);
   }
-  
+    
   if (newBehavior == nullptr)
   {
     PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.Failed",

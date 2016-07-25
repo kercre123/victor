@@ -47,7 +47,8 @@ static const char* kRequiredDriveOffChargerKey = "requiredRecentDriveOffCharger_
 static const char* kRequiredParentSwitchKey    = "requiredRecentSwitchToParent_sec";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _requiredUnlockId( UnlockId::Count )
+  : _behaviorType(BehaviorType::NoneBehavior)
+  , _requiredUnlockId( UnlockId::Count )
   , _requiredRecentDriveOffCharger_sec(-1.0f)
   , _requiredRecentSwitchToParent_sec(-1.0f)
   , _moodScorer()

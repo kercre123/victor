@@ -250,8 +250,8 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
 {
   const std::string& oldBehaviorName = nullptr != oldBehavior ? oldBehavior->GetName() : "NULL";
   const std::string& newBehaviorName = nullptr != newBehavior ? newBehavior->GetName() : "NULL";
-  BehaviorType oldBehaviorType = oldBehaviorName != "NULL" ? BehaviorTypeFromString(oldBehaviorName) : BehaviorType::NoneBehavior;
-  BehaviorType newBehaviorType = newBehaviorName != "NULL" ? BehaviorTypeFromString(newBehaviorName) : BehaviorType::NoneBehavior;
+  BehaviorType oldBehaviorType = nullptr != oldBehavior ? oldBehavior->GetType() : BehaviorType::NoneBehavior;
+  BehaviorType newBehaviorType = nullptr != newBehavior ? newBehavior->GetType() : BehaviorType::NoneBehavior;
   bool oldBehaviorIsReactionary = nullptr != oldBehavior ? oldBehavior->IsReactionary() : false;
   bool newBehaviorIsReactionary = nullptr != newBehavior ? newBehavior->IsReactionary() : false;
 
