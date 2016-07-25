@@ -831,4 +831,12 @@ public class MockRobot : IRobot {
   public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
 
   }
+
+  public void EnableReactionaryBehaviors(bool enable) {
+
+  }
+
+  public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
+
+  }
 }

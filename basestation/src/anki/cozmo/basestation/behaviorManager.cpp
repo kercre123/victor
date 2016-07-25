@@ -112,6 +112,12 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToUnexpectedMovement, _robot, config)->AsReactionaryBehavior() );
+    
+    //there are special wakeup animaitons that reactToCharger messes with
+    //Unity side is handling special animations and will then re-enable this reactionary behavior
+    //this id is hard coded in on teh unity side as well to re-enable after wakeup
+    std::string id = "on_start_wakeup";
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(id, BehaviorType::ReactToOnCharger, false);
   }
   
   // initialize whiteboard

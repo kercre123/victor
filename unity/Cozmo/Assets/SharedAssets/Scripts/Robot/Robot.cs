@@ -1660,6 +1660,17 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+
+  public void EnableReactionaryBehaviors(bool enable) {
+    RobotEngineManager.Instance.Message.EnableReactionaryBehaviors = Singleton<EnableReactionaryBehaviors>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
+    RobotEngineManager.Instance.Message.RequestEnableReactionaryBehavior = Singleton<RequestEnableReactionaryBehavior>.Instance.Initialize(id, behaviorType, enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   private void HandleInFieldOfViewStateChanged(ObservedObject objectChanged,
                                                ObservedObject.InFieldOfViewState oldState,
                                                ObservedObject.InFieldOfViewState newState) {
@@ -1670,4 +1681,5 @@ public class Robot : IRobot {
       }
     }
   }
+
 }

@@ -279,4 +279,8 @@ public interface IRobot : IDisposable {
 
   void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
+  void EnableReactionaryBehaviors(bool enable);
+
+  void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable);
+
 }
