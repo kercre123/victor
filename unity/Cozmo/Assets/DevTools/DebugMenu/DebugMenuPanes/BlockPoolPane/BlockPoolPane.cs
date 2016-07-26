@@ -30,6 +30,9 @@ public class BlockPoolPane : MonoBehaviour {
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
+  private const float kUpdateDelay_Secs = 1;
+  private float _LastUpdateTime;
+
   private class BlockData {
     public BlockData(Anki.Cozmo.ObjectType type, uint factoryID, bool is_enabled, sbyte rssi, Button button) {
       this.ObjectType = type;
@@ -71,6 +74,31 @@ public class BlockPoolPane : MonoBehaviour {
     // Gets back the InitBlockPool message to fill.
     RobotEngineManager.Instance.Message.GetBlockPoolMessage = new G2U.GetBlockPoolMessage();
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  void Update() {
+    if (Time.time - _LastUpdateTime > kUpdateDelay_Secs) {
+      // Check if there is any button that should be updated. This solves issues when blockpool is opened and
+      // the robot class doesn't have the information about all the cubes yet.
+      foreach (var blockState in _BlockStates) {
+        if ((blockState.ObjectType == ObjectType.Invalid) || (blockState.ObjectType == ObjectType.Unknown)) {
+          LightCube lc = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(blockState.FactoryID);
+          if (lc != null) {
+            blockState.ObjectType = lc.ObjectType;
+            UpdateButton(blockState);
+          }
+          else {
+            ObservedObject oo = RobotEngineManager.Instance.CurrentRobot.GetObservedObjectWithFactoryID(blockState.FactoryID);
+            if (oo != null) {
+              blockState.ObjectType = oo.ObjectType;
+              UpdateButton(blockState);
+            }
+          }
+        }
+      }
+
+      _LastUpdateTime = Time.time;
+    }
   }
 
   private void HandleFilterUpdate(string filter) {
@@ -183,11 +211,8 @@ public class BlockPoolPane : MonoBehaviour {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(message.factoryID, out data)) {
       UpdateButton(data);
-      if (message.connected) {
-        EnableButton(data.BlockButton, (data.IsEnabled ? Color.cyan : Color.grey));
-      } else {
-        DisableButton(data.BlockButton, Color.grey);
-      }
+      Color color = (message.connected && data.IsEnabled) ? Color.cyan : Color.grey;
+      EnableButton(data.BlockButton, color);
     }
   }
 
@@ -199,18 +224,17 @@ public class BlockPoolPane : MonoBehaviour {
     case Anki.Cozmo.ObjectType.Charger_Basic:
       BlockData data = AddButton(objAvailableMsg.factory_id, objAvailableMsg.objectType, false, objAvailableMsg.rssi);
       EnableButton(data.BlockButton, (data.IsEnabled ? Color.cyan : Color.white));
-
       break;
+
     default:
       break;
     }
   }
 
-  // haven't heard from this block in 10 seconds, remove it.
   private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
-      DisableButton(data.BlockButton, Color.grey);
+      EnableButton(data.BlockButton, Color.grey);
     }
   }
 
@@ -221,6 +245,14 @@ public class BlockPoolPane : MonoBehaviour {
 
       // Turn the button to a different color to signal we are trying to connect/disconnect from/to the object
       DisableButton(data.BlockButton, Color.yellow);
+
+      // Move the button to the correct list depending on whether it is enabled or not
+      if (data.IsEnabled && (data.BlockButton.transform.parent != _EnabledScrollView)) {
+        data.BlockButton.transform.SetParent(_EnabledScrollView);
+      }
+      else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
+        data.BlockButton.transform.SetParent(_AvailableScrollView);
+      }
 
       // Send the message to engine
       _BlockSelectedMessage.factoryId = factoryID;
@@ -284,14 +316,6 @@ public class BlockPoolPane : MonoBehaviour {
       txt.text = data.ObjectType + "\n" +
       "ID: " + data.FactoryID.ToString("X") + " \n " +
       "RSSI: " + data.RSSI;
-    }
-
-    // Move the button to the correct list depending on whether it is enabled or not
-    if (data.IsEnabled && (data.BlockButton.transform.parent != _EnabledScrollView)) {
-      data.BlockButton.transform.SetParent(_EnabledScrollView);
-    }
-    else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
-      data.BlockButton.transform.SetParent(_AvailableScrollView);
     }
   }
 
