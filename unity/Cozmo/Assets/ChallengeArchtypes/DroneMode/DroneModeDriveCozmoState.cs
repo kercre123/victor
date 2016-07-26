@@ -38,11 +38,13 @@ namespace Cozmo {
           SetupRobotForDriveState();
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
+          _CurrentRobot.EnableDroneMode(true);
         }
 
         public override void Exit() {
           DisableInput();
           _RobotAnimator.CleanUp();
+          _CurrentRobot.EnableDroneMode(false);
         }
 
         public override void Update() {

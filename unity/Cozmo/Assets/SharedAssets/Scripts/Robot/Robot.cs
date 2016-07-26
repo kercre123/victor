@@ -1683,4 +1683,8 @@ public class Robot : IRobot {
     }
   }
 
+  public void EnableDroneMode(bool enable) {
+    RobotEngineManager.Instance.Message.EnableDroneMode = Singleton<EnableDroneMode>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
 }

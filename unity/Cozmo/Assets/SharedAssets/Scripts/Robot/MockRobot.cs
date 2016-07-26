@@ -839,4 +839,7 @@ public class MockRobot : IRobot {
   public void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable) {
 
   }
+
+  public void EnableDroneMode(bool enable) {
+  }
 }

@@ -283,4 +283,6 @@ public interface IRobot : IDisposable {
 
   void RequestEnableReactionaryBehavior(string id, Anki.Cozmo.BehaviorType behaviorType, bool enable);
 
+  void EnableDroneMode(bool enable);
+
 }
