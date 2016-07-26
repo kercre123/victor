@@ -151,7 +151,11 @@ void SendTestChar(int val)
   PIN_RESET(GPIOC, PINC_CHGRX);
   PIN_OUT(GPIOC, PINC_CHGRX);
   
-  MicroWait(30);  // Enough time for robot to turn around
+  // XXX: This is a fairly critical parameter - has to be timed to the RTOS delays in factory firmware
+  // Too short is real bad, since you get a mangled byte - corrupting the command
+  // Too long will miss end-of-byte - which requires a retransmit (not quite as bad)
+  // There are no electrical consequences of running it too long, since it keeps the robot (externally) powered
+  MicroWait(70);  // Enough time for robot to turn around - usually 30uS does it, worst I saw was 55uS
   
   TestPutChar(c);
   MicroWait(10);  // Some extra stop bit time

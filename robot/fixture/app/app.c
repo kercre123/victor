@@ -18,6 +18,7 @@
 
 #include "app/tests.h"
 
+u8 g_fixtureReleaseVersion = 51;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
@@ -343,8 +344,10 @@ static void MainExecution()
       m_functions = GetHeadTestFunctions();
       break;    
     case FIXTURE_BODY1_TEST:
-    case FIXTURE_BODY2_TEST:
       m_functions = GetBody1TestFunctions();
+      break;
+    case FIXTURE_BODY2_TEST:
+      m_functions = GetBody2TestFunctions();
       break;
     case FIXTURE_BODY3_TEST:
       m_functions = GetBody3TestFunctions();

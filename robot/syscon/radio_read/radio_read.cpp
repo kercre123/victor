@@ -39,7 +39,9 @@ static const int PIN_RX = 18;
 // Test thresholds
 static const int ONEG = 64;                 // Cube default settings define ONE G as "64"
 static const int ACCEL_THRESH = ONEG*0.18;  // Rejected if beyond 0.18G
-static const int MAX_RSSI = 60;
+
+// This value is set based on a fixture the factory built that averages around RSSI=59
+static const int MAX_RSSI = 59+3;           // Smaller is closer, higher is further - add 3dB margin
 static const int FAR_THRESHOLD = 5;
 static unsigned int rssi[MAX_ACCESSORIES];
 
@@ -120,7 +122,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
           return true;
       }
       
-      if (abs(discovered->rssi) > MAX_RSSI) {
+      if (abs(discovered->rssi) >= MAX_RSSI) {
         break ;
       }
       

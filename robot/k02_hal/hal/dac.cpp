@@ -134,14 +134,6 @@ void GenerateTestTone(void) {
     freq /= 2;
   }
   
-  // 2 second tone A440, or until watchdog gets us
-  freq = M_PI_2 * 440.0f / SAMPLE_RATE * FREQ_DILATION;
-  float phase = 0;
-  for (int i = 0; i < ticks_per_freq*50; i++) {
-    DAC_WRITE[next_write_index()] = (int)(peak * sinf(phase) + peak);
-    phase += freq;
-  }
-  
   NVIC_SystemReset();
 }
 

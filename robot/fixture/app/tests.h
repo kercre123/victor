@@ -5,6 +5,7 @@
 
 bool BodyDetect(void);
 TestFunction* GetBody1TestFunctions(void);
+TestFunction* GetBody2TestFunctions(void);
 TestFunction* GetBody3TestFunctions(void);
 
 bool CubeDetect(void);

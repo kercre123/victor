@@ -113,6 +113,12 @@ u32 GetSerial();
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
 
+// Drop sensor errors
+#define ERROR_DROP_LEAKAGE          610   // Drop leakage detected
+
+// Power system errors
+#define ERROR_BAT_LEAKAGE           620   // Too much leakage through battery when off
+
 // Motor harness errors
 #define ERROR_BACKPACK_LED          650   // Backpack LED miswired
 #define ERROR_ENCODER_FAULT         651   // Encoder broken

@@ -104,6 +104,8 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     case TEST_POWERON:
       if (param == 0xA5)
         g_turnPowerOff = false;   // Last until battery dies
+      else if (param == 0x5A)
+        Battery::powerOff();      // Kill battery immediately
       else
         g_powerOffTime = GetCounter() + ((param+1)<<23);  // Last N+1 seconds longer
       break;    // Reply "OK"

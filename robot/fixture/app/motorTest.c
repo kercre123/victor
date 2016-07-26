@@ -121,7 +121,7 @@ void TestEncoders(void)
 }
 
 // Count encoder ticks, check direction, and collect min/max a/b values
-const int OVERSAMPLE = 13;    // 8192 samples
+const int OVERSAMPLE = 18;    // 2^N samples
 const int ENC_LOW = 1000, ENC_HIGH = 2300;   // Low/high threshold
 int MeasureMotor(int speed)
 {
@@ -133,7 +133,7 @@ int MeasureMotor(int speed)
   MicroWait(250000);  // Spin up time
 
   // Collect samples at full speed
-  int start = getMicroCounter();
+  u32 start = getMicroCounter();
   for (int i = 0; i < (1 << OVERSAMPLE); i++)
   {
     int a, b;
@@ -162,9 +162,11 @@ int MeasureMotor(int speed)
       maxb = b;
     if (b < minb)
       minb = b;
+    getMicroCounter();  // Required to measure long intervals
   }
-  int hz = (aticks*1000000)/(getMicroCounter()-start);  // Rising edges per second
-  ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, hz, aticks, mina, maxa, bticks, minb, maxb);
+  int hz = (aticks*15625)/((getMicroCounter()-start)>>6);  // Rising edges per second
+  int normalized = aticks >> (OVERSAMPLE-13);   // Original calibration was at OVERSAMPLE=13
+  ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
   MotorMV(0);
   
   int diff = aticks-bticks;
@@ -173,7 +175,7 @@ int MeasureMotor(int speed)
   if (aticks < 0)
     throw ERROR_MOTOR_BACKWARD;
   
-  return aticks;
+  return normalized;
 }
 
 // Motor A: Lift motor with encoders

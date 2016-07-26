@@ -6,6 +6,7 @@
 #include "hal/console.h"
 #include "hal/uart.h"
 #include "hal/swd.h"
+#include "hal/monitor.h"
 
 #include "app/fixture.h"
 #include "app/binaries.h"
@@ -116,15 +117,59 @@ void DropSensor(void)
   int onoff[2];
   SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
   ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
+  //if (onoff[0] < 
 }
 
-// List of all functions invoked by the test, in order
+void DropLeakage(void)
+{
+  int onoff[2];
+  SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
+  ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
+  if (onoff[0] > 200 || onoff[1] > 200)
+    throw ERROR_DROP_LEAKAGE;
+}
+
+static void SleepCurrent(void)
+{
+  try {
+    SendCommand(TEST_POWERON, 0x5A, 0, 0);  // Force power off
+  } catch (int e) {
+    // Duh, can't reply!
+  }
+  
+  EnableBAT();
+  DisableVEXT();
+  EnableBAT();
+  MicroWait(100000);
+  int total = 0;
+  // Compute microamps by summing milliamps
+  for (int i = 0; i < 1000; i++)
+    total += BatGetCurrent();
+  ConsolePrintf("sleep-current,%d\r\n", total);
+  if (total > 200)
+    throw ERROR_BAT_LEAKAGE;
+  DisableBAT();
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
   static TestFunction functions[] =
   {
     BodyNRF51,
+    NULL
+  };
+  
+  return functions;
+};
+TestFunction* GetBody2TestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    BodyNRF51,
+    HeadlessBoot,
+    DropLeakage,
+    SleepCurrent,
     NULL
   };
   
