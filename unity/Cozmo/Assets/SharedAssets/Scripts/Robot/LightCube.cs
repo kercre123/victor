@@ -38,7 +38,7 @@ public class LightCube : ObservedObject {
       success = true;
     }
     else {
-      DAS.Error("CozmoUtil", string.Format("GetCubesFurthestApart: cubesToCompare has less than 2 cubes! cubesToCompare.Count: {0}", 
+      DAS.Error("CozmoUtil", string.Format("GetCubesFurthestApart: cubesToCompare has less than 2 cubes! cubesToCompare.Count: {0}",
         cubesToCompare.Count));
       if (cubesToCompare.Count == 1) {
         cubeA = cubesToCompare[0];
@@ -58,6 +58,9 @@ public class LightCube : ObservedObject {
   public float ZAccel { get; private set; }
 
   public event Action<LightCube> OnAxisChange;
+
+  public override string ReticleLabelLocKey { get { return LocalizationKeys.kDroneModeCubeReticleLabel; } }
+  public override string ReticleLabelStringArg { get { return ID.ToString(); } }
 
   /// <summary>
   /// TappedAction<ID, Tap Count, Timestamp>.

@@ -4,7 +4,13 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
-public class Face { // TODO Implement IHaveCameraPosition
+public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
+  private const uint _kFindFaceTimeoutFrames = 1;
+  private int _ConsecutiveVisionFramesNotSeen = 0;
+  public delegate void InFieldOfViewStateChangedHandler(Face faceChanged, bool newState);
+
+  public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
+
   public long ID { get; private set; }
 
   public uint RobotID { get; private set; }
@@ -19,9 +25,53 @@ public class Face { // TODO Implement IHaveCameraPosition
 
   public Vector3 Up { get { return Rotation * Vector3.forward; } }
 
+  public uint LastSeenEngineTimestamp { get; private set; }
+
+  // Faces are created when they are seen and destroyed when not seen for a while
+  private bool _IsInFieldOfView = true;
+  public bool IsInFieldOfView {
+    get { return _IsInFieldOfView; }
+    private set {
+      _IsInFieldOfView = value;
+      if (InFieldOfViewStateChanged != null) {
+        InFieldOfViewStateChanged(this, _IsInFieldOfView);
+      }
+    }
+  }
+
+  public event VizRectChangedHandler OnVizRectChanged;
+  private Rect _VizRect;
+  public Rect VizRect {
+    get { return _VizRect; }
+    private set {
+      _VizRect = value;
+      if (OnVizRectChanged != null) {
+        OnVizRectChanged(this, _VizRect);
+      }
+    }
+  }
+
+  public string ReticleLabelLocKey {
+    get {
+      string key = LocalizationKeys.kDroneModeUnknownFaceReticleLabel;
+      if (!string.IsNullOrEmpty(this.Name)) {
+        key = LocalizationKeys.kLabelEmptyWithArg;
+      }
+      return key;
+    }
+  }
+  public string ReticleLabelStringArg {
+    get {
+      return this.Name ?? this.ID.ToString();
+    }
+  }
+
+  public string Name { get; private set; }
+
   public Face(long faceId, float world_x, float world_y, float world_z) {
     ID = faceId;
     WorldPosition = new Vector3(world_x, world_y, world_z);
+    LastSeenEngineTimestamp = 0;
   }
 
   public Face(G2U.RobotObservedFace message) {
@@ -48,8 +98,12 @@ public class Face { // TODO Implement IHaveCameraPosition
 
     // TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 
-    //if (message.markersVisible > 0)
-    //  TimeLastSeen = Time.time;
+    LastSeenEngineTimestamp = message.timestamp;
+
+    VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
+
+    _ConsecutiveVisionFramesNotSeen = 0;
+    IsInFieldOfView = true;
   }
 
 
@@ -58,4 +112,11 @@ public class Face { // TODO Implement IHaveCameraPosition
     ID = id;
   }
 
+  public void MarkNotVisibleThisFrame() {
+    // If not seen frame count of cube is greater than limit, mark object NotVisible
+    _ConsecutiveVisionFramesNotSeen++;
+    if (_ConsecutiveVisionFramesNotSeen > _kFindFaceTimeoutFrames) {
+      IsInFieldOfView = false;
+    }
+  }
 }

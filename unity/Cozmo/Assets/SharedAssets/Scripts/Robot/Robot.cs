@@ -158,6 +158,9 @@ public class Robot : IRobot {
 
   public Dictionary<int, LightCube> LightCubes { get; private set; }
 
+  public event LightCubeStateEventHandler OnLightCubeAdded;
+  public event LightCubeStateEventHandler OnLightCubeRemoved;
+
   private List<LightCube> _VisibleLightCubes = new List<LightCube>();
 
   public List<LightCube> VisibleLightCubes {
@@ -166,9 +169,31 @@ public class Robot : IRobot {
     }
   }
 
-  public ObservedObject Charger { get; private set; }
+  public event ChargerStateEventHandler OnChargerAdded;
+  public event ChargerStateEventHandler OnChargerRemoved;
+
+  private ObservedObject _Charger = null;
+  public ObservedObject Charger {
+    get { return _Charger; }
+    private set {
+      if (value != null) {
+        if (OnChargerAdded != null) {
+          OnChargerAdded(_Charger);
+        }
+      }
+      else {
+        if (OnChargerRemoved != null) {
+          OnChargerRemoved(_Charger);
+        }
+      }
+      _Charger = value;
+    }
+  }
 
   public List<Face> Faces { get; private set; }
+
+  public event FaceStateEventHandler OnFaceAdded;
+  public event FaceStateEventHandler OnFaceRemoved;
 
   public Dictionary<int, string> EnrolledFaces { get; set; }
 
@@ -321,7 +346,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
 
-    ObservedObject.InFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
+    ObservedObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace>(HandleRobotLoadedKnownFace);
   }
 
@@ -345,7 +370,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
 
-    ObservedObject.InFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
+    ObservedObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
 
   public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
@@ -585,7 +610,12 @@ public class Robot : IRobot {
       Charger = null;
     }
     else {
+      LightCube removedLightCube;
+      LightCubes.TryGetValue(id, out removedLightCube);
       removedObject = LightCubes.Remove(id);
+      if (OnLightCubeRemoved != null) {
+        OnLightCubeRemoved(removedLightCube);
+      }
     }
 
     if (removedObject) {
@@ -617,6 +647,11 @@ public class Robot : IRobot {
       foreach (var kvp in LightCubes) {
         if (kvp.Value.LastSeenEngineTimestamp < engineTimestamp) {
           kvp.Value.MarkNotVisibleThisFrame();
+        }
+      }
+      foreach (var face in Faces) {
+        if (face.LastSeenEngineTimestamp < engineTimestamp) {
+          face.MarkNotVisibleThisFrame();
         }
       }
     }
@@ -668,7 +703,11 @@ public class Robot : IRobot {
       }
 
       if (index != -1) {
+        Face removedFace = Faces[index];
         Faces.RemoveAt(index);
+        if (OnFaceRemoved != null) {
+          OnFaceRemoved(removedFace);
+        }
       }
     }
   }
@@ -801,6 +840,9 @@ public class Robot : IRobot {
         DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
         lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
         LightCubes.Add(id, lightCube);
+        if (OnLightCubeAdded != null) {
+          OnLightCubeAdded(lightCube);
+        }
       }
       else {
         if ((lightCube.FactoryID == 0) && (factoryId != 0)) {
@@ -855,6 +897,9 @@ public class Robot : IRobot {
     if (faceObject == null) {
       faceObject = new Face(message);
       Faces.Add(faceObject);
+      if (OnFaceAdded != null) {
+        OnFaceAdded(faceObject);
+      }
     }
     else {
       faceObject.UpdateInfo(message);

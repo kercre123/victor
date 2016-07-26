@@ -81,6 +81,18 @@
   "askCozmo.button": {
     "translation": "GIVE ME ANSWER"
   },
+  "droneMode.unknownFaceReticleLabel": {
+    "translation": "Unknown Face"
+  },
+  "droneMode.chargerReticleLabel": {
+    "translation": "Charger"
+  },
+  "droneMode.cubeReticleLabel":{
+    "translation": "Power Cube"
+  },
+  "droneMode.unknownObjectReticleLabel":{
+    "translation": "UNKNOWN"
+  },
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
   },

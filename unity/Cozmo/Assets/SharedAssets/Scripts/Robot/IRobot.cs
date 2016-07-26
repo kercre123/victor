@@ -30,6 +30,10 @@ public interface ILight {
   void ClearData();
 }
 
+public delegate void LightCubeStateEventHandler(LightCube cube);
+public delegate void ChargerStateEventHandler(ObservedObject charger);
+public delegate void FaceStateEventHandler(Face face);
+
 // Interface for Robot so we can mock it in unit tests
 public interface IRobot : IDisposable {
 
@@ -65,9 +69,20 @@ public interface IRobot : IDisposable {
 
   Dictionary<int, LightCube> LightCubes { get; }
 
+  event LightCubeStateEventHandler OnLightCubeAdded;
+  event LightCubeStateEventHandler OnLightCubeRemoved;
+
   List<LightCube> VisibleLightCubes { get; }
 
+  ObservedObject Charger { get; }
+
+  event ChargerStateEventHandler OnChargerAdded;
+  event ChargerStateEventHandler OnChargerRemoved;
+
   List<Face> Faces { get; }
+
+  event FaceStateEventHandler OnFaceAdded;
+  event FaceStateEventHandler OnFaceRemoved;
 
   Dictionary<int, string> EnrolledFaces { get; set; }
 

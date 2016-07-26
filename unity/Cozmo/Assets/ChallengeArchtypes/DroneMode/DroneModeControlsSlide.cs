@@ -29,17 +29,6 @@ namespace Cozmo.Minigame.DroneMode {
       Reverse
     }
 
-    // TODO Move to DroneModeCameraFeed
-    [SerializeField]
-    private RawImage _CameraFeedImage;
-    private ImageReceiver _ImageProcessor;
-
-    [SerializeField]
-    private RectTransform _CameraFeedImageContainer;
-    private bool _IsCameraSized;
-
-    // TODO: Serialize prefabs for a FaceReticle and a Cube or ChargerReticle
-
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
 
@@ -61,15 +50,17 @@ namespace Cozmo.Minigame.DroneMode {
     [SerializeField, Range(0f, 1f)]
     private float _HeadUpThreshold;
 
-    // TODO remove
+    // TODO Remove debug text field
     public Anki.UI.AnkiTextLabel TiltText;
+
+    [SerializeField]
+    private DroneModeCameraFeed _CameraFeed;
 
     private SpeedSliderSegment _CurrentDriveSpeedSliderSegment;
     private float _CurrentDriveSpeedSliderSegmentValue;
 
     private HeadSliderSegment _CurrentHeadTiltSliderSegment;
     private float _CurrentHeadSliderSegmentValue;
-    //private IRobot _CurrentRobot;
 
     private void Start() {
       _CurrentDriveSpeedSliderSegment = SpeedSliderSegment.Neutral;
@@ -81,48 +72,12 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void InitializeCameraFeed(IRobot currentRobot) {
-      _ImageProcessor = new ImageReceiver("DroneModeCameraFeed");
-      _ImageProcessor.CaptureStream();
-      _ImageProcessor.OnImageSizeChanged += HandleImageSizeChanged;
-      //_CurrentRobot = currentRobot;
+      _CameraFeed.Initialize(currentRobot);
     }
-
-    private void Update() {
-      //if (_CurrentRobot != null) {
-      // Check for new LightCubes / new Faces / new Charger
-      // For each new LightCube, add a listener for visual state change
-      // Also add listener for when state changes in VizRect
-      // If visible (or partially visible?), immediately spawn a reticle for them
-      // Track by ObservedObject/Face to Reticle in dictionary
-      //}
-    }
-
-    // When invisible, return reticle to pool and remove from dictionary
-
-    // When visible, spawn reticle to pool and add to dictionary
-
-    // When VizRect changes, adjust position of reticle
 
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
       _HeadTiltThrottle.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
-
-      _ImageProcessor.OnImageSizeChanged -= HandleImageSizeChanged;
-      _ImageProcessor.Dispose();
-      _ImageProcessor.DestroyTexture();
-    }
-
-    private void HandleImageSizeChanged(float width, float height) {
-      _CameraFeedImage.rectTransform.sizeDelta = new Vector2(width, height);
-      float imageScale = (_CameraFeedImageContainer.sizeDelta.x / width);
-      _CameraFeedImage.rectTransform.localScale = new Vector3(imageScale, imageScale, imageScale);
-      _CameraFeedImage.texture = _ImageProcessor.Image;
-      if (_CameraFeedImage.texture != null) {
-        DAS.Info("DroneMode.HandleImageSizeChanged", "_CameraFeedImage.texture.name=" + _CameraFeedImage.texture.name);
-      }
-      else {
-        DAS.Info("DroneMode.HandleImageSizeChanged", "Texture is null!!");
-      }
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {
