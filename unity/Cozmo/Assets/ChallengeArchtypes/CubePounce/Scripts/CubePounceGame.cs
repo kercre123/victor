@@ -16,11 +16,13 @@ namespace Cozmo.Minigame.CubePounce {
     private const float _kCubePlaceDistSlush_mm = 5.0f;
 
     public float CubePlaceDistTight_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm; } }
+
     public float CubePlaceDistLoose_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm + _kCubePlaceDistSlush_mm; } }
 
     private float _CubeTargetSeenTime_s = -1;
 
     private bool _CubeSeenRecently = false;
+
     public bool CubeSeenRecently { get { return _CubeSeenRecently; } }
 
     public CubePounceConfig GameConfig;
@@ -101,13 +103,7 @@ namespace Cozmo.Minigame.CubePounce {
       if (Mathf.Max(CozmoScore, PlayerScore) < GameConfig.MaxScorePerRound) {
         return false;
       }
-
-      if (CozmoScore > PlayerScore) {
-        CozmoRoundsWon++;
-      }
-      else {
-        PlayerRoundsWon++;
-      }
+      EndCurrentRound();
       return true;
     }
 
@@ -159,8 +155,6 @@ namespace Cozmo.Minigame.CubePounce {
 
       DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), null, quitGameScoreKeyValues);
       DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
-
-      GetCubeTarget().SetLEDsOff();
     }
   }
 }

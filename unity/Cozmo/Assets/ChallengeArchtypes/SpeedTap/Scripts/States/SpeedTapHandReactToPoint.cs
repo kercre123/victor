@@ -196,7 +196,7 @@ namespace SpeedTap {
     private void HandleEndGameAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
       _SpeedTapGame.ClearWinningLightPatterns();
-      _SpeedTapGame.HandleRoundBasedGameEnd();
+      _SpeedTapGame.StartRoundBasedGameEnd();
       _SpeedTapGame.StartEndMusic();
     }
   }

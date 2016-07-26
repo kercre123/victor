@@ -17,7 +17,7 @@ namespace Cozmo.Minigame.CubePounce {
       if (_CozmoWon) {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
-        _CubePounceGame.CozmoScore++;
+        _CubePounceGame.AddPoint(false);
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
         _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.red }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
 
@@ -26,7 +26,7 @@ namespace Cozmo.Minigame.CubePounce {
       else {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
-        _CubePounceGame.PlayerScore++;
+        _CubePounceGame.AddPoint(true);
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
         _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
 
@@ -81,12 +81,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     private void HandleEndGameAnimFinish(bool success) {
       _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
-      if (_CozmoWon) {
-        _CubePounceGame.RaiseMiniGameLose();
-      }
-      else {
-        _CubePounceGame.RaiseMiniGameWin();
-      }
+      _CubePounceGame.StartRoundBasedGameEnd();
     }
   }
 }

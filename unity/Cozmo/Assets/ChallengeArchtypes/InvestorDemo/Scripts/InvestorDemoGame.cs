@@ -74,7 +74,7 @@ namespace InvestorDemo {
     }
 
     private void HandleSequenceComplete(ScriptedSequences.ISimpleAsyncToken token) {
-      RaiseMiniGameWin();
+      StartPointlessGameEnd(true);
     }
 
     protected override void CleanUpOnDestroy() {

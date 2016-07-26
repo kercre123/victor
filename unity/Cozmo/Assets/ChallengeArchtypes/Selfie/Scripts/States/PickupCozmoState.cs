@@ -40,7 +40,7 @@ namespace Selfie {
     }
 
     private void HandleAnimationDone(bool success) {
-      _SelfieGame.RaiseMiniGameWin();
+      _SelfieGame.StartPointlessGameEnd(true);
     }
 
   }

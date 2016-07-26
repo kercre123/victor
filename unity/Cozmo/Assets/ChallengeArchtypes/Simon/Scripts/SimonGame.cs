@@ -215,7 +215,7 @@ namespace Simon {
         CozmoRoundsWon = 0;
         ShowWinnerPicture(PlayerType.Human);
         ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
-        HandlePointlessGameEnd(true);
+        StartPointlessGameEnd(true);
       }
       else if (CurrentDifficulty == (int)SimonMode.VS) {
         if (player == _FirstPlayer) {
@@ -232,14 +232,14 @@ namespace Simon {
             ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
             PlayerRoundsWon = 1;
             CozmoRoundsWon = 0;
-            HandlePointlessGameEnd(true);
+            StartPointlessGameEnd(true);
           }
           else {
             ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
             ShowWinnerPicture(PlayerType.Cozmo);
             PlayerRoundsWon = 0;
             CozmoRoundsWon = 1;
-            HandlePointlessGameEnd(false);
+            StartPointlessGameEnd(false);
           }
         }
       }

@@ -379,27 +379,13 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
-  public virtual void HandleRoundBasedGameEnd() {
+  public virtual void StartRoundBasedGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
     bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
-
-    if (!DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
-    }
-
-    if (playerWon) {
-      HandleUnlockRewards();
-      RaiseMiniGameWin();
-    }
-    else {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-        HandleUnlockRewards();
-      }
-      RaiseMiniGameLose();
-    }
+    StartPointlessGameEnd(playerWon);
   }
 
-  public virtual void HandlePointlessGameEnd(bool playerWon) {
+  public virtual void StartPointlessGameEnd(bool playerWon) {
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
 
     if (playerWon) {
@@ -561,7 +547,7 @@ public abstract class GameBase : MonoBehaviour {
     // Implement in subclasses if desired
   }
 
-  public void RaiseMiniGameWin() {
+  private void RaiseMiniGameWin() {
     _StateMachine.Stop();
     _WonChallenge = true;
 
@@ -572,7 +558,7 @@ public abstract class GameBase : MonoBehaviour {
     ShowWinnerState();
   }
 
-  public void RaiseMiniGameLose() {
+  private void RaiseMiniGameLose() {
     _StateMachine.Stop();
     _WonChallenge = false;
 
