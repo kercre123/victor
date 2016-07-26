@@ -88,7 +88,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool,  kBFT_ConnectToRobotOnly,     "BehaviorFactoryTest",  false);
   
   // Whether or not to check for expected robot FW version
-  CONSOLE_VAR(bool,  kBFT_CheckFWVersion,         "BehaviorFactoryTest",  false);
+  CONSOLE_VAR(bool,  kBFT_CheckFWVersion,         "BehaviorFactoryTest",  true);
   
   
   ////////////////////////////
@@ -126,8 +126,8 @@ namespace Cozmo {
   static constexpr u16 _kMinCliffValueOnGround = 800;
   
   // Checks for these firmware versions if non-zero
-  static constexpr u32 _kExpectedWifiVersion = 0;
-  static constexpr u32 _kExpectedRtipVersion = 0;
+  static constexpr u32 _kExpectedWifiVersion = 0x857b162;
+  static constexpr u32 _kExpectedRtipVersion = 0x857b162;
   static constexpr u32 _kExpectedBodyVersion = 0;
   
   // If no change in behavior state for this long then trigger failure
@@ -545,6 +545,11 @@ namespace Cozmo {
         // Check robot fw version
         if (kBFT_CheckFWVersion && robot.IsPhysical()) {
           const RobotInterface::FWVersionInfo& fwInfo = robot.GetFWVersionInfo();
+          
+          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.RobotFW",
+                           "Wifi: 0x%x, RTIP: 0x%x, Body: 0x%x",
+                           fwInfo.wifiVersion, fwInfo.rtipVersion, fwInfo.bodyVersion);
+          
           if (((_kExpectedWifiVersion != 0) && (_kExpectedWifiVersion != fwInfo.wifiVersion)) ||
               ((_kExpectedRtipVersion != 0) && (_kExpectedRtipVersion != fwInfo.rtipVersion)) ||
               ((_kExpectedBodyVersion != 0) && (_kExpectedBodyVersion != fwInfo.bodyVersion))) {
