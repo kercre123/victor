@@ -59,8 +59,7 @@ public:
 
 protected:
   EComputePathStatus ComputePathHelper(const Pose3d& startPose,
-                                       const std::vector<Pose3d>& targetPoses,
-                                       Planning::GoalID& selectedGoalID);
+                                       const std::vector<Pose3d>& targetPoses);
 
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path) override;
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,

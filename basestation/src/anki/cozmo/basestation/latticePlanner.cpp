@@ -229,8 +229,7 @@ void LatticePlanner::StopPlanning()
 }
 
 EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
-                                                     const std::vector<Pose3d>& targetPoses,
-                                                     Planning::GoalID& selectedGoalID)
+                                                     const std::vector<Pose3d>& targetPoses)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
 
@@ -295,20 +294,14 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
   }
 
   EComputePathStatus res = ComputeNewPathIfNeeded(startPose, true);
-  selectedGoalID = _impl->_selectedGoalID;
   return res;
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
                                                const Pose3d& targetPose)
 {
-  const GoalID goalIDForSingleGoalPlanning = 0;
-  _selectedTargetIdx = goalIDForSingleGoalPlanning;
-  GoalID plannerSelectedGoal = goalIDForSingleGoalPlanning+1;
   std::vector<Pose3d> targetPoses = {targetPose};
-  EComputePathStatus res = ComputePathHelper(startPose, targetPoses, plannerSelectedGoal);
-  ASSERT_NAMED((res == EComputePathStatus::Error) || (plannerSelectedGoal == goalIDForSingleGoalPlanning),
-               "There was only one goal, but it wasnt selected");
+  EComputePathStatus res = ComputePathHelper(startPose, targetPoses);
   return res;
 }
 
@@ -348,7 +341,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
   
     // ComputePathHelper will only copy a goal from targetPoses to the LatticePlannerImpl context
     // if it's not in collision (wrt MAX_OBSTACLE_COST), so just pass all targetPoses to ComputePathHelper
-    EComputePathStatus res = ComputePathHelper(startPose, targetPoses, _selectedTargetIdx);
+    EComputePathStatus res = ComputePathHelper(startPose, targetPoses);
     return res;
     
   } else {
@@ -451,9 +444,13 @@ bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Pl
   return _impl->GetCompletePath(currentRobotPose, path, waste);
 }
 
-bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path, Planning::GoalID& selectedTargetIndex)
+bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                              Planning::Path &path,
+                                              Planning::GoalID& selectedTargetIndex)
 {
-  return _impl->GetCompletePath(currentRobotPose, path, selectedTargetIndex);
+  auto ret = _impl->GetCompletePath(currentRobotPose, path, selectedTargetIndex);
+  _selectedTargetIdx = selectedTargetIndex;
+  return ret;
 }
 
 //////////////////////////////////////////////////////////////////////////////// 
@@ -839,7 +836,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
     return false;
   }
 
-  selectedTargetIndex = _parent->_selectedTargetIdx;
+  selectedTargetIndex = _selectedGoalID;
 
 
   // consider trimming actions if the robot has moved past the beginning of the path
