@@ -94,6 +94,8 @@ namespace Anki {
     // follow line index so that it doesn't compare it to the previous follow line index.
     void ReInit(void);
     
+    void ExecuteDriveCurvature(f32 speed_mmps, f32 curvatureRadius_mm);
+
   } // namespace SteeringController
   } // namespace Cozmo
 } // namespace Anki

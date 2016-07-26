@@ -741,33 +741,8 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
               RTIP::SendMessage(msg);
               #else
-              f32 leftSpeed=0, rightSpeed=0;
-              if(msg.animBodyMotion.speed == 0) {
-                // Stop
-                leftSpeed = 0.f;
-                rightSpeed = 0.f;
-              } else if(msg.animBodyMotion.curvatureRadius_mm == s16_MAX ||
-                        msg.animBodyMotion.curvatureRadius_mm == s16_MIN) {
-                // Drive straight
-                leftSpeed  = static_cast<f32>(msg.animBodyMotion.speed);
-                rightSpeed = static_cast<f32>(msg.animBodyMotion.speed);
-              } else if(msg.animBodyMotion.curvatureRadius_mm == 0) {
-                SteeringController::ExecutePointTurn(DEG_TO_RAD_F32(msg.animBodyMotion.speed), 50);
-                break;
-
-              } else {
-                // Drive an arc
-
-                //if speed is positive, the left wheel should turn slower, so
-                // it becomes the INNER wheel
-                leftSpeed = static_cast<f32>(msg.animBodyMotion.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.animBodyMotion.curvatureRadius_mm));
-
-                //if speed is positive, the right wheel should turn faster, so
-                // it becomes the OUTER wheel
-                rightSpeed = static_cast<f32>(msg.animBodyMotion.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.animBodyMotion.curvatureRadius_mm));
-              }
-
-              SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+              SteeringController::ExecuteDriveCurvature(msg.animBodyMotion.speed,
+                                                        msg.animBodyMotion.curvatureRadius_mm);
               #endif
             }
             break;

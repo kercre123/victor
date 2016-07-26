@@ -101,6 +101,11 @@ message DriveWheels {
     float_32 rwheel_accel_mmps2 = 0.0
 }
 
+message DriveArc {
+  float_32 speed_mmps,
+  float_32 curvatureRadius_mm
+}
+
 // MoveHead
 message MoveHead {
     float_32 speed_rad_per_sec

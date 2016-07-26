@@ -437,13 +437,8 @@ namespace Anki {
       }
 
       void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {
-        /*
-        PathFollower::ClearPath();
-
-        SpeedController::SetUserCommandedDesiredVehicleSpeed(msg.speed_mmPerSec);
-        SpeedController::SetUserCommandedAcceleration(msg.accel_mmPerSec2);
-        SpeedController::SetUserCommandedDeceleration(msg.decel_mmPerSec2);
-        */
+        SteeringController::ExecuteDriveCurvature(msg.speed_mmPerSec,
+                                                  msg.curvatureRadius_mm);
       }
 
       void Process_moveLift(const RobotInterface::MoveLift& msg) {
@@ -721,33 +716,7 @@ namespace Anki {
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
       {
-        f32 leftSpeed=0, rightSpeed=0;
-        if(msg.speed == 0) {
-          // Stop
-          leftSpeed = 0.f;
-          rightSpeed = 0.f;
-        } else if(msg.curvatureRadius_mm == s16_MAX ||
-                  msg.curvatureRadius_mm == s16_MIN) {
-          // Drive straight
-          leftSpeed  = static_cast<f32>(msg.speed);
-          rightSpeed = static_cast<f32>(msg.speed);
-        } else if(msg.curvatureRadius_mm == 0) {
-          SteeringController::ExecutePointTurn(DEG_TO_RAD_F32(msg.speed), 50);
-          return;
-
-        } else {
-          // Drive an arc
-
-          //if speed is positive, the left wheel should turn slower, so
-          // it becomes the INNER wheel
-          leftSpeed = static_cast<f32>(msg.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
-
-          //if speed is positive, the right wheel should turn faster, so
-          // it becomes the OUTER wheel
-          rightSpeed = static_cast<f32>(msg.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
-        }
-
-        SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+        SteeringController::ExecuteDriveCurvature(msg.speed, msg.curvatureRadius_mm);
       }
       void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
       {

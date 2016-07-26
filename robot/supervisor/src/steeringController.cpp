@@ -726,7 +726,35 @@ namespace Anki {
         }
       }
     }
-
+    
+    void ExecuteDriveCurvature(f32 speed_mmps, f32 curvatureRadius_mm)
+    {
+      f32 leftSpeed = 0, rightSpeed = 0;
+      if(speed_mmps == 0) {
+        // Stop
+        leftSpeed = 0.f;
+        rightSpeed = 0.f;
+      } else if(curvatureRadius_mm == s16_MAX ||
+                curvatureRadius_mm == s16_MIN) {
+        // Drive straight
+        leftSpeed  = speed_mmps;
+        rightSpeed = speed_mmps;
+      } else if(curvatureRadius_mm == 0) {
+        ExecutePointTurn(DEG_TO_RAD_F32(speed_mmps), 50);
+      } else {
+        // Drive an arc
+        
+        //if speed is positive, the left wheel should turn slower, so
+        // it becomes the INNER wheel
+        leftSpeed = speed_mmps * (1.0f - WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+        
+        //if speed is positive, the right wheel should turn faster, so
+        // it becomes the OUTER wheel
+        rightSpeed = speed_mmps * (1.0f + WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+      }
+      ExecuteDirectDrive(leftSpeed, rightSpeed);
+    }
+    
   } // namespace SteeringController
   } // namespace Cozmo
 } // namespace Anki

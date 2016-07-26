@@ -267,7 +267,7 @@ namespace Anki {
     vel_max = fabsf(vel_max);
 
     // Check that the acceleration durations are valid given the total duration
-    AnkiConditionalErrorAndReturnValue((acc_start_duration + acc_end_duration <= duration), false, 31, "VPG", 204, "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)", 3, acc_start_duration, acc_end_duration, duration);
+    AnkiConditionalWarnAndReturnValue((acc_start_duration + acc_end_duration <= duration), false, 31, "VPG", 204, "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)", 3, acc_start_duration, acc_end_duration, duration);
 
     float ts = acc_start_duration;
     float te = acc_end_duration;
@@ -282,7 +282,7 @@ namespace Anki {
 
     // If accelerating to a vel_mid of 0 for the acc_start phase actually passes the end_pos,
     // then return false as this is probably not an intended profile.
-    AnkiConditionalErrorAndReturnValue(!(((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))), false, 31, "VPG", 205, "end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.", 0);
+    AnkiConditionalWarnAndReturnValue(!(((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))), false, 31, "VPG", 205, "end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.", 0);
 
     float distWhenVelMidIsVelStart = vel_start * (duration - acc_end_duration) + 0.5f*(vel_start * acc_end_duration);
     bool isVelMidGTVelStart = (dist >= distWhenVelMidIsVelStart);

@@ -50,6 +50,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StopAllMotors>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
 }
   
 void MovementComponent::Update(const Cozmo::RobotState& robotState)
@@ -306,6 +307,30 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
   } else {
     DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec, _drivingLift, (u8)AnimTrackFlag::LIFT_TRACK);
     _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
+  }
+}
+
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
+{
+  if(_ignoreDirectDrive)
+  {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveArc",
+                     "Ignoring DriveArc message while direct drive is disabled");
+    return;
+  }
+  
+  if(!_drivingWheels && AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveArc.WheelsLocked",
+                     "Ignoring ExternalInterface::DriveArc while wheels are locked.");
+  } else {
+    DirectDriveCheckSpeedAndLockTracks(msg.speed_mmps,
+                                       _drivingWheels,
+                                       (u8)AnimTrackFlag::BODY_TRACK);
+    _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(msg.speed_mmps,
+                                                                  DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
+                                                                  DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
+                                                                  msg.curvatureRadius_mm);
   }
 }
 
