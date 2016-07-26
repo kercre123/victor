@@ -17,7 +17,6 @@ enum uint_8 UnlockId
   FlipOntoBack,
   KnockOverThreeCubeStack,
   PickupCube,
-  PounceOnMotion,
   ReactToSmiles,
   RecognizePets,
   RollCube,

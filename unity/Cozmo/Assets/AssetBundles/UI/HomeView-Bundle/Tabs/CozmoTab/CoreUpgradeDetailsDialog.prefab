@@ -125,7 +125,7 @@ GameObject:
   - 224: {fileID: 22487638}
   - 114: {fileID: 11409914}
   m_Layer: 5
-  m_Name: UnlockableDescription
+  m_Name: SparksInstructions
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -189,7 +189,7 @@ GameObject:
   - 224: {fileID: 22473516}
   - 114: {fileID: 11492410}
   m_Layer: 5
-  m_Name: UnlockableTitle
+  m_Name: SparksTimer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -228,6 +228,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &133942
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22432298}
+  - 114: {fileID: 11482854}
+  m_Layer: 5
+  m_Name: UnlockableTitle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &134462
 GameObject:
   m_ObjectHideFlags: 1
@@ -255,7 +271,7 @@ GameObject:
   - 224: {fileID: 22462144}
   - 114: {fileID: 11431258}
   m_Layer: 5
-  m_Name: CubesNeededLabelContainer (1)
+  m_Name: CubesNeededLabelContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -387,6 +403,22 @@ GameObject:
   - 114: {fileID: 11472824}
   m_Layer: 5
   m_Name: UnlockableName
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &154750
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22493264}
+  - 114: {fileID: 11433746}
+  m_Layer: 5
+  m_Name: UnlockableDescription
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -676,14 +708,20 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 6
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
     JsonValue: 100
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 64
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#sparks.PressAndHold"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: CoreUpgradeDetailsDialog:_UnlockableDescriptionLabel
+    FieldName: CoreUpgradeDetailsDialog:_SparksButtonDescriptionLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11410914
@@ -868,6 +906,30 @@ MonoBehaviour:
   m_Spacing: 0
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
+--- !u!114 &11433746
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    JsonValue: 100
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: CoreUpgradeDetailsDialog:_UnlockableDescriptionLabel
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11434118
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1075,6 +1137,12 @@ MonoBehaviour:
   _RequestTrickButton: {fileID: 0}
   _SparksInventoryLabel: {fileID: 11470876}
   _UpgradeTween_sec: 0.6
+  _SparkImagePrefab: {fileID: 125416, guid: 47ed3a7685be94660ba7911964778bfa, type: 2}
+  _DimmerPrefab: {fileID: 177414, guid: 624443755833e44aa9939d4b069a9f3c, type: 2}
+  _SparksTimerLabel: {fileID: 0}
+  _SparksButtonDescriptionLabel: {fileID: 0}
+  _SparkTargetCenter: {x: 4.7, y: 4.5}
+  _SparkTargetRandOffset: 1.5
 --- !u!114 &11455274
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1331,6 +1399,27 @@ MonoBehaviour:
     FieldName: CoreUpgradeDetailsDialog:_UnlockUpgradeButton
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!114 &11482854
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 5
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#coreUpgradeDetailsDialog.titleLabel"'
+  ModifiedLocalReferences: []
+  ModifiedGlobalReferences: []
 --- !u!114 &11485172
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1390,12 +1479,12 @@ MonoBehaviour:
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 5
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#coreUpgradeDetailsDialog.titleLabel"'
-  ModifiedLocalReferences: []
+    JsonValue: '"#sparks.Sparked"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: CoreUpgradeDetailsDialog:_SparksTimerLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11492546
 MonoBehaviour:
@@ -1758,6 +1847,24 @@ RectTransform:
   m_AnchoredPosition: {x: -599.0066, y: 81.00096}
   m_SizeDelta: {x: 2732, y: 328}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22432298
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133942}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22499570}
+  m_RootOrder: 3
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 640, y: -110}
+  m_SizeDelta: {x: 1290, y: 150}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22433686
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1850,7 +1957,7 @@ RectTransform:
   m_RootOrder: 5
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 568, y: 355}
+  m_AnchoredPosition: {x: 568, y: 299}
   m_SizeDelta: {x: 1136, y: 710}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22447400
@@ -1861,19 +1968,18 @@ RectTransform:
   m_GameObject: {fileID: 143034}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22491664}
   - {fileID: 22412412}
   - {fileID: 22473094}
   - {fileID: 22489820}
-  - {fileID: 22462144}
   m_Father: {fileID: 22499570}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -630, y: -65}
+  m_AnchoredPosition: {x: -630, y: 116}
   m_SizeDelta: {x: 968, y: 979}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22448072
@@ -1961,11 +2067,11 @@ RectTransform:
   m_Children:
   - {fileID: 22476800}
   - {fileID: 22448072}
-  m_Father: {fileID: 22447400}
-  m_RootOrder: 4
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -31, y: -567.37463}
+  m_Father: {fileID: 22499570}
+  m_RootOrder: 6
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: -661, y: 86}
   m_SizeDelta: {x: 906, y: 206}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22464954
@@ -2053,10 +2159,10 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22499570}
-  m_RootOrder: 3
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 640, y: -110}
+  m_RootOrder: 8
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: -637.5, y: 291}
   m_SizeDelta: {x: 1290, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22474250
@@ -2146,11 +2252,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22499570}
-  m_RootOrder: 2
+  m_RootOrder: 9
   m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 641.25, y: 188}
-  m_SizeDelta: {x: 1282, y: -1044}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: -607.8, y: 216.5}
+  m_SizeDelta: {x: 1283.07, y: 322}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22489438
 RectTransform:
@@ -2206,6 +2312,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: -1}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22493264
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154750}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22499570}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 641.25, y: 188}
+  m_SizeDelta: {x: 1282, y: -1044}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22494378
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2256,11 +2380,14 @@ RectTransform:
   m_Children:
   - {fileID: 22418656}
   - {fileID: 22479714}
-  - {fileID: 22487638}
-  - {fileID: 22473516}
+  - {fileID: 22493264}
+  - {fileID: 22432298}
   - {fileID: 22465916}
   - {fileID: 22440950}
+  - {fileID: 22462144}
   - {fileID: 22447400}
+  - {fileID: 22473516}
+  - {fileID: 22487638}
   m_Father: {fileID: 22434626}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}

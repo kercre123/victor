@@ -111,11 +111,12 @@ public class MockRobot : IRobot {
   }
 
   public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
-
+    IsSparked = (id != UnlockId.Count);
+    SparkUnlockId = id;
   }
 
   public void StopSparkUnlock() {
-
+    EnableSparkUnlock(UnlockId.Count);
   }
 
   // enable/disable games available for Cozmo to request

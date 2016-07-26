@@ -7,47 +7,51 @@ public static class LocalizationKeys {
   public const string kChallengeDetailsLabelPlayerAndCubesNeeded = "challengeDetails.label.playerAndCubesNeeded";
   public const string kChallengeDetailsLabelPlayersAndCubeNeeded = "challengeDetails.label.playersAndCubeNeeded";
   public const string kChallengeDetailsLabelPlayerAndCubeNeeded = "challengeDetails.label.playerAndCubeNeeded";
+  public const string kChallengeEndedLabelReward = "challengeEnded.label.reward";
+  public const string kArtistCozmoTitle = "artistCozmo.title";
+  public const string kArtistCozmoDescription = "artistCozmo.description";
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Description = "askCozmo01.description";
-  public const string kInvestorDemoInvestorDemoScene1 = "investorDemo.investorDemoScene1";
-  public const string kInvestorDemoInvestorDemoScene2 = "investorDemo.investorDemoScene2";
-  public const string kInvestorDemoInvestorDemoScene3 = "investorDemo.investorDemoScene3";
-  public const string kInvestorDemoInvestorDemoScene4 = "investorDemo.investorDemoScene4";
-  public const string kSimonGameTitle = "simonGame.title";
-  public const string kSimonGameDescription = "simonGame.description";
-  public const string kTreasureHuntGame01Title = "treasureHuntGame01.title";
-  public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
-  public const string kSelfieGame01Title = "selfieGame01.title";
-  public const string kSelfieGame01Description = "selfieGame01.description";
-  public const string kMinesweeper01Title = "minesweeper01.title";
-  public const string kMinesweeper01Description = "minesweeper01.description";
-  public const string kInvestorDemoInvestorDemoFull = "investorDemo.investorDemoFull";
-  public const string kInvestorDemoInvestorDemoCubes = "investorDemo.investorDemoCubes";
-  public const string kInvestorDemoInvestorDemoFaces = "investorDemo.investorDemoFaces";
-  public const string kInvestorDemoInvestorDemoMotion = "investorDemo.investorDemoMotion";
   public const string kCodeBreaker01Title = "codeBreaker01.title";
   public const string kCodeBreaker01Description = "codeBreaker01.description";
   public const string kCubeSlapTitle = "cubeSlap.title";
   public const string kCubeSlapDescription = "cubeSlap.description";
-  public const string kPlayhouseGame01Title = "playhouseGame01.title";
-  public const string kPlayhouseGame01Description = "playhouseGame01.description";
-  public const string kSpeedTapTitle = "speedTap.title";
-  public const string kSpeedTapDescription = "speedTap.description";
-  public const string kSpeedTapLightCountTitle = "speedTapLightCount.title";
-  public const string kSpeedTapLightCountDescription = "speedTapLightCount.description";
-  public const string kSpeedTapLightCountSameColorNoTapTitle = "speedTapLightCountSameColorNoTap.title";
-  public const string kSpeedTapLightCountSameColorNoTapDescription = "speedTapLightCountSameColorNoTap.description";
-  public const string kSpeedTapHardTitle = "speedTapHard.title";
-  public const string kSpeedTapHardDescription = "speedTapHard.description";
-  public const string kSpeedTapNoRedTitle = "speedTapNoRed.title";
-  public const string kSpeedTapNoRedDescription = "speedTapNoRed.description";
-  public const string kWhackAMoleTitle = "whackAMole.title";
-  public const string kWhackAMoleDescription = "whackAMole.description";
-  public const string kChallengeEndedLabelReward = "challengeEnded.label.reward";
-  public const string kArtistCozmoTitle = "artistCozmo.title";
-  public const string kArtistCozmoDescription = "artistCozmo.description";
+  public const string kDroneModeTitle = "droneMode.title";
+  public const string kDroneModeDescription = "droneMode.description";
   public const string kFaceEnrollmentTitle = "faceEnrollment.title";
   public const string kFaceEnrollmentDescription = "faceEnrollment.description";
+  public const string kInvestorDemoInvestorDemoScene1 = "investorDemo.investorDemoScene1";
+  public const string kInvestorDemoInvestorDemoScene2 = "investorDemo.investorDemoScene2";
+  public const string kInvestorDemoInvestorDemoScene3 = "investorDemo.investorDemoScene3";
+  public const string kInvestorDemoInvestorDemoScene4 = "investorDemo.investorDemoScene4";
+  public const string kInvestorDemoInvestorDemoFull = "investorDemo.investorDemoFull";
+  public const string kInvestorDemoInvestorDemoCubes = "investorDemo.investorDemoCubes";
+  public const string kInvestorDemoInvestorDemoFaces = "investorDemo.investorDemoFaces";
+  public const string kInvestorDemoInvestorDemoMotion = "investorDemo.investorDemoMotion";
+  public const string kMinesweeper01Title = "minesweeper01.title";
+  public const string kMinesweeper01Description = "minesweeper01.description";
+  public const string kPlayhouseGame01Title = "playhouseGame01.title";
+  public const string kPlayhouseGame01Description = "playhouseGame01.description";
+  public const string kSelfieGame01Title = "selfieGame01.title";
+  public const string kSelfieGame01Description = "selfieGame01.description";
+  public const string kSimonGameTitle = "simonGame.title";
+  public const string kSimonGameDescription = "simonGame.description";
+  public const string kSpeedTapTitle = "speedTap.title";
+  public const string kSpeedTapDescription = "speedTap.description";
+  public const string kTreasureHuntGame01Title = "treasureHuntGame01.title";
+  public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
+  public const string kWhackAMoleTitle = "whackAMole.title";
+  public const string kWhackAMoleDescription = "whackAMole.description";
+
+  #endregion
+
+  #region ConnectivityStrings
+
+  public const string kConnectivityConnectingToCozmoText = "connectivity.connectingToCozmoText";
+  public const string kConnectivitySearchForCozmoFailedText = "connectivity.searchForCozmoFailedText";
+  public const string kConnectivitySearchingForCozmo = "connectivity.searchingForCozmo";
+  public const string kConnectivitySecuringConnection = "connectivity.securingConnection";
+  public const string kConnectionWakingUpCozmo = "connection.wakingUpCozmo";
 
   #endregion
 
@@ -325,12 +329,27 @@ public static class LocalizationKeys {
   public const string kUnlockableDroneModeDescription = "unlockable.DroneMode.Description";
   public const string kUnlockableCubeStackActionTitle = "unlockable.CubeStackAction.Title";
   public const string kUnlockableCubeStackActionDescription = "unlockable.CubeStackAction.Description";
+  public const string kUnlockablePounceOnMotionActionTitle = "unlockable.PounceOnMotionAction.Title";
+  public const string kUnlockablePounceOnMotionActionDescription = "unlockable.PounceOnMotionAction.Description";
+  public const string kUnlockablePopAWheelieActionTitle = "unlockable.PopAWheelieAction.Title";
+  public const string kUnlockablePopAWheelieActionDescription = "unlockable.PopAWheelieAction.Description";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";
   public const string kUnlockableDefaultDescription = "unlockable.Default.Description";
   public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";
   public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
+  public const string kSparksSparked = "sparks.Sparked";
+
+  #endregion
+
+  #region WifiStrings
+
+  public const string kWifiStringsInstructionsSlide0 = "wifiStrings.Instructions.Slide0";
+  public const string kWifiStringsInstructionsSlide1 = "wifiStrings.Instructions.Slide1";
+  public const string kWifiStringsInstructionsSlide2 = "wifiStrings.Instructions.Slide2";
+  public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
+  public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
 
   #endregion
 }

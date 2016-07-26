@@ -89,5 +89,11 @@
   },
   "skills.LevelUp.Title": {
     "translation": "Level Up"
+  },
+  "sparks.Sparked": {
+    "translation": "COZMO IS SPARKED: {0}"
+  },
+  "sparks.PressAndHold": {
+    "translation": "Press and hold to ask Cozmo to do this."
   }
 }
