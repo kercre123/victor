@@ -84,7 +84,6 @@ namespace Cozmo.Minigame.DroneMode {
       _ImageProcessor = new ImageReceiver("DroneModeCameraFeed");
       _ImageProcessor.CaptureStream();
       _ImageProcessor.OnImageSizeChanged += HandleImageSizeChanged;
-      _CameraFeedImage.texture = _ImageProcessor.Image;
       //_CurrentRobot = currentRobot;
     }
 
@@ -96,12 +95,6 @@ namespace Cozmo.Minigame.DroneMode {
       // If visible (or partially visible?), immediately spawn a reticle for them
       // Track by ObservedObject/Face to Reticle in dictionary
       //}
-      if (_CameraFeedImage.texture != null) {
-        DAS.Info("IVYNGO DRONEMODE.Update", _CameraFeedImage.texture.name);
-      }
-      else {
-        DAS.Info("IVYNGO DRONEMODE.Update", "Texture is null!!");
-      }
     }
 
     // When invisible, return reticle to pool and remove from dictionary
@@ -123,6 +116,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CameraFeedImage.rectTransform.sizeDelta = new Vector2(width, height);
       float imageScale = (_CameraFeedImageContainer.sizeDelta.x / width);
       _CameraFeedImage.rectTransform.localScale = new Vector3(imageScale, imageScale, imageScale);
+      _CameraFeedImage.texture = _ImageProcessor.Image;
       if (_CameraFeedImage.texture != null) {
         DAS.Info("IVYNGO DRONEMODE.HandleImageSizeChanged", _CameraFeedImage.texture.name);
       }
