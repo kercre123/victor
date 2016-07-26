@@ -118,10 +118,10 @@ namespace Cozmo.Minigame.DroneMode {
       _CameraFeedImage.rectTransform.localScale = new Vector3(imageScale, imageScale, imageScale);
       _CameraFeedImage.texture = _ImageProcessor.Image;
       if (_CameraFeedImage.texture != null) {
-        DAS.Info("IVYNGO DRONEMODE.HandleImageSizeChanged", _CameraFeedImage.texture.name);
+        DAS.Info("DroneMode.HandleImageSizeChanged", "_CameraFeedImage.texture.name=" + _CameraFeedImage.texture.name);
       }
       else {
-        DAS.Info("IVYNGO DRONEMODE.HandleImageSizeChanged", "Texture is null!!");
+        DAS.Info("DroneMode.HandleImageSizeChanged", "Texture is null!!");
       }
     }
 
