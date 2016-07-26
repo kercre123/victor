@@ -4,7 +4,7 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
-public class Face {
+public class Face { // TODO Implement IHaveCameraPosition
   public long ID { get; private set; }
 
   public uint RobotID { get; private set; }

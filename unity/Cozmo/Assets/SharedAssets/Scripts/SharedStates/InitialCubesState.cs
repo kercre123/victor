@@ -45,11 +45,11 @@ public class InitialCubesState : State {
     CheckForNewlySeenCubes();
   }
 
-  public override void Pause() {
+  public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     // Do nothing
   }
 
-  public override void Resume() {
+  public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     // Reset cozmo's head
     SetupRobot();
   }

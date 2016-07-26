@@ -10,7 +10,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
 ///   so far, we only both handling three types of cubes and a charger
 /// </summary>
-public class ObservedObject {
+public class ObservedObject { // TODO Implement IHaveCameraPosition
 
   public class Light : Robot.Light {
     public static new float MessageDelay = 0f;
@@ -65,6 +65,7 @@ public class ObservedObject {
 
   public bool IsLooselyInFieldOfView { get { return CurrentInFieldOfViewState != InFieldOfViewState.NotVisible; } }
 
+  // TODO use VizRect to place reticles
   public Rect VizRect { get; private set; }
 
   public Vector3 WorldPosition { get; private set; }

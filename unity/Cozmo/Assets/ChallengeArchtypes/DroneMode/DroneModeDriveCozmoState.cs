@@ -11,7 +11,7 @@ namespace Cozmo {
         private const float _kLiftFactorThreshold = 0.05f;
 
         private DroneModeGame _DroneModeGame;
-        private DroneModeView _DroneModeView;
+        private DroneModeControlsSlide _DroneModeControlsSlide;
 
         private float _CurrentDriveSpeed_mmps;
         private float _TargetDriveSpeed_mmps;
@@ -31,20 +31,20 @@ namespace Cozmo {
 
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
             _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
-          _DroneModeView = slide.GetComponent<DroneModeView>();
+          _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
+          _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           EnableInput();
-
-          Anki.Cozmo.Viz.VizManager.Enabled = true;
 
           SetupRobotForDriveState();
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
+          _CurrentRobot.EnableDroneMode(true);
         }
 
         public override void Exit() {
           DisableInput();
-          Anki.Cozmo.Viz.VizManager.Enabled = true;
           _RobotAnimator.CleanUp();
+          _CurrentRobot.EnableDroneMode(false);
         }
 
         public override void Update() {
@@ -55,13 +55,13 @@ namespace Cozmo {
           SendDriveRobotMessages();
         }
 
-        public override void Pause() {
+        public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           // Don't show the "don't move cozmo" ui
 
           // DisableInput();
         }
 
-        public override void Resume() {
+        public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           SetupRobotForDriveState();
 
           // EnableInput();
@@ -70,18 +70,18 @@ namespace Cozmo {
         }
 
         private void EnableInput() {
-          _DroneModeView.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
-          _DroneModeView.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
-          _DroneModeView.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
+          _DroneModeControlsSlide.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
 
           _DroneModeGame.EnableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
         }
 
         private void DisableInput() {
-          _DroneModeView.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
-          _DroneModeView.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
-          _DroneModeView.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
+          _DroneModeControlsSlide.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
           _DroneModeGame.DisableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
         }
@@ -111,6 +111,7 @@ namespace Cozmo {
           else if (ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveSpeed_mmps = 0f;
+            _TargetTurnDirection = 0f;
             _CurrentTurnDirection = 0f;
             _CurrentRobot.DriveWheels(0f, 0f);
           }
@@ -194,7 +195,7 @@ namespace Cozmo {
           return pointTurnSpeed;
         }
 
-        private void HandleDriveSpeedValueChanged(DroneModeView.SpeedSliderSegment newPosition, float newNormalizedValue) {
+        private void HandleDriveSpeedValueChanged(DroneModeControlsSlide.SpeedSliderSegment newPosition, float newNormalizedValue) {
           float newDriveSpeed_mmps = _DroneModeGame.CalculateDriveWheelSpeed(newPosition, newNormalizedValue);
           if (!newDriveSpeed_mmps.IsNear(_TargetDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)) {
             _TargetDriveSpeed_mmps = newDriveSpeed_mmps;
@@ -206,18 +207,18 @@ namespace Cozmo {
             _TargetTurnDirection = newTurnDirection;
 
             // TODO Remove debug text field
-            _DroneModeView.TiltText.text = "Tilt: " + _TargetTurnDirection;
+            _DroneModeControlsSlide.TiltText.text = "Tilt: " + _TargetTurnDirection;
           }
         }
 
-        private void HandleHeadTiltValueChanged(DroneModeView.HeadSliderSegment newPosition, float newNormalizedValue) {
+        private void HandleHeadTiltValueChanged(DroneModeControlsSlide.HeadSliderSegment newPosition, float newNormalizedValue) {
           float newDriveHeadSpeed_radps = _DroneModeGame.CalculateDriveHeadSpeed(newPosition, newNormalizedValue);
           if (!newDriveHeadSpeed_radps.IsNear(_TargetDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)) {
             _TargetDriveHeadSpeed_radps = newDriveHeadSpeed_radps;
           }
         }
 
-        private void HandleDriveSpeedFamilyChanged(DroneModeView.SpeedSliderSegment currentPosition, DroneModeView.SpeedSliderSegment newPosition) {
+        private void HandleDriveSpeedFamilyChanged(DroneModeControlsSlide.SpeedSliderSegment currentPosition, DroneModeControlsSlide.SpeedSliderSegment newPosition) {
           _RobotAnimator.PlayTransitionAnimation(newPosition);
         }
       }

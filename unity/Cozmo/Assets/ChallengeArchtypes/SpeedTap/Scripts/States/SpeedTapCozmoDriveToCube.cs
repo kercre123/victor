@@ -44,13 +44,13 @@ namespace SpeedTap {
       _CurrentRobot.CancelAllCallbacks();
     }
 
-    public override void Pause() {
+    public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
       // Cancel all callbacks
       _CurrentRobot.PopDrivingAnimations();
       _CurrentRobot.CancelAllCallbacks();
     }
 
-    public override void Resume() {
+    public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
       // Try driving up to the cube again
       TryDrivingToCube(forceRaiseLift: true);
     }

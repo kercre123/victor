@@ -830,6 +830,7 @@ public class Robot : IRobot {
 
   private void UpdateObservedFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
     Face face = Faces.Find(x => x.ID == message.faceID);
+    // TODO add image face info
     AddObservedFace(face != null ? face : null, message);
   }
 
@@ -1682,4 +1683,8 @@ public class Robot : IRobot {
     }
   }
 
+  public void EnableDroneMode(bool enable) {
+    RobotEngineManager.Instance.Message.EnableDroneMode = Singleton<EnableDroneMode>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
 }

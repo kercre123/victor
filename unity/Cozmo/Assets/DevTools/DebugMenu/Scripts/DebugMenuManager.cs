@@ -44,11 +44,11 @@ public class DebugMenuManager : MonoBehaviour {
 
   // TODO: Pragma out this code for production
   public void OnDebugMenuButtonTap() {
-    #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
     if (FakeTouchManager.Instance.IsPlayingTouches == false && FakeTouchManager.Instance.IsSoakingTouches == false) {
       CreateDebugDialog();
     }
-    #endif
+#endif
   }
 
   public GameBase GetCurrMinigame() {
@@ -72,7 +72,7 @@ public class DebugMenuManager : MonoBehaviour {
       GameBase game = GetCurrMinigame();
       if (game != null) {
         if (game.Paused == false) {
-          game.PauseStateMachine();
+          game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
           _DebugPause = true;
         }
       }
@@ -91,7 +91,7 @@ public class DebugMenuManager : MonoBehaviour {
       GameBase game = GetCurrMinigame();
       if (game != null) {
         if (game.Paused) {
-          game.ResumeStateMachine();
+          game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.BehaviorType.NoneBehavior);
         }
       }
     }

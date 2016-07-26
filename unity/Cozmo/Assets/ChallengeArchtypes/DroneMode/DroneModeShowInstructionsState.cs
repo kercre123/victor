@@ -17,11 +17,18 @@ namespace Cozmo {
           // TODO: Set idle animation? (body allowed)
 
           // TODO: Show instructions slide
+          game.SharedMinigameView.HideGameStateSlide();
         }
 
         private void HandleContinueButtonClicked() {
           DroneModeDriveCozmoState driveState = new DroneModeDriveCozmoState();
           _StateMachine.SetNextState(driveState);
+        }
+
+        public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+          // Don't show the "don't move cozmo" ui
+
+          // DisableInput();
         }
       }
     }

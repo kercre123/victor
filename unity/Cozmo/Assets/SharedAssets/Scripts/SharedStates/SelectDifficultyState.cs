@@ -29,11 +29,11 @@ public class SelectDifficultyState : State {
       _HighestLevelCompleted, HandleInitialDifficultySelected);
   }
 
-  public override void Pause() {
+  public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     // Do nothing
   }
 
-  public override void Resume() {
+  public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     // Do nothing
   }
 

@@ -13,9 +13,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent: []
-    _GainChallengePointEvent: []
-    _LoseChallengePointEvent: []
+    _ChallengePointEvent: []
     _ResetPointsEvent: []
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
+  _MaxReverseSpeed_mmps: 90
+  _MaxForwardSpeed_mmps: 120
+  _PointTurnSpeed_mmps: 90
+  _TurboSpeed_mmps: 160
+  _HeadMovementSpeed_radps: 0.5
+  _NeutralTiltSize: 0.15
+  _StartingLiftHeight: 0.25

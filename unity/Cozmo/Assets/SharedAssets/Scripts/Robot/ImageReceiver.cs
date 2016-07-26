@@ -7,6 +7,7 @@ using Anki.Cozmo.ExternalInterface;
 public class ImageReceiver : IDisposable {
 
   public event Action<Texture2D> OnImageReceived;
+  public event Action<float, float> OnImageSizeChanged;
 
   private MemoryStream _MemStream = new MemoryStream();
   // required for Minimized Jpeg
@@ -29,10 +30,10 @@ public class ImageReceiver : IDisposable {
   }
 
   public void CaptureStream() {
-    Initialize(ImageSendMode.SingleShot);
+    Initialize(ImageSendMode.Stream);
   }
 
-  private void Initialize(ImageSendMode sendMode) {
+  public void Initialize(ImageSendMode sendMode) {
     if (_SendMode == ImageSendMode.Off) {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ImageChunk>(ProcessImageChunk);
     }
@@ -90,6 +91,9 @@ public class ImageReceiver : IDisposable {
       if (_ReceivedImage == null) {
         _ReceivedImage = new Texture2D(dims.Width, dims.Height);
         _ReceivedImage.name = Name;
+        if (OnImageSizeChanged != null) {
+          OnImageSizeChanged(dims.Width, dims.Height);
+        }
       }
 
       switch (imageChunk.imageEncoding) {
@@ -98,7 +102,7 @@ public class ImageReceiver : IDisposable {
       case ImageEncoding.JPEGGray:
         _ReceivedImage.LoadImage(_MemStream.GetBuffer());
         break;
-      case ImageEncoding.JPEGMinimizedGray:
+      case ImageEncoding.JPEGMinimizedGray: // This is what the robot is sending
         ImageUtil.MinimizedGreyToJpeg(_MemStream, _MemStream2, dims.Height, dims.Width);
         _ReceivedImage.LoadImage(_MemStream2.GetBuffer());
         break;
