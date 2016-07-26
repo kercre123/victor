@@ -16,90 +16,69 @@
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
 #include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
-#include "anki/cozmo/basestation/util/transferQueue/iTransferable.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
-
+#include "util/logging/logging.h"
 #include <string>
 
 namespace Anki {
-  
+
   namespace Util {
-    
-    TransferQueueMgr::TransferQueueMgr():
-    _canConnect(false),
-    _numRequests(0)
+
+    TransferQueueMgr::TransferQueueMgr()
+    : _queue(Dispatch::Create("TrnsQueueMgr"))
+    , _numRequests(0)
     {
-      _httpAdapter = nullptr;
-#ifdef ANDROID
-#elif defined(LINUX)
-#else
-      _httpAdapter = CreateHttpAdapter();
-#endif
     }
-    
+
     TransferQueueMgr::~TransferQueueMgr()
     {
-      SafeDelete(_httpAdapter);
+      Dispatch::Stop(_queue);
+      Dispatch::Release(_queue);
     }
-    
-    // Prevents any new requests from going out.
-    void TransferQueueMgr::SetCanConnect(bool can_connect)
+
+    void TransferQueueMgr::ExecuteTransfers()
     {
-      _canConnect = can_connect;
-      if( _canConnect )
-      {
-        StartDataTransfer();
-      }
+      StartDataTransfer();
     }
-    bool TransferQueueMgr::GetCanConnect()
+
+    Signal::SmartHandle TransferQueueMgr::RegisterTask(const OnTransferReadyFunc& userFunc)
     {
-      return _canConnect;
-    }
-    
-    int  TransferQueueMgr::GetNumActiveRequests()
-    {
-      return _numRequests;
-    }
-    
-    Signal::SmartHandle TransferQueueMgr::RegisterHttpTransferReadyCallback( OnTransferReadyFunc func )
-    {
-      Signal::SmartHandle handle = _signal.ScopedSubscribe(func);
-      // We're already open, let the caller transfer now but don't call everyone
-      if( _canConnect )
-      {
-        StartRequestFunc mgr_callback_func = std::bind(&TransferQueueMgr::StartRequest, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
-        func(mgr_callback_func);
-      }
+      std::lock_guard<std::mutex> lock{_mutex};
+      auto funcWrapper = [this, userFunc] (Dispatch::Queue* queue, const TaskCompleteFunc& completionFunc) {
+        this->_numRequests++;
+        userFunc(queue, completionFunc);
+      };
+      Signal::SmartHandle handle = _signal.ScopedSubscribe(funcWrapper);
       return handle;
     }
-    
-    // Called from OS background threads when we have internet again....
+
     void TransferQueueMgr::StartDataTransfer()
     {
-      StartRequestFunc mgr_callback_func = std::bind(&TransferQueueMgr::StartRequest, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
-      _signal.emit(mgr_callback_func);
+      ASSERT_NAMED(_numRequests == 0, "TransferQueueMgr.StartDataTransfer.InvalidRequestCount");
+      std::unique_lock<std::mutex> lock{_mutex};
+      std::condition_variable waitVar;
+      _numRequests = 0;
+
+      // set up completion func to notify this thread every time a task finishes
+      auto completionFunc = [this, &waitVar] {
+        Dispatch::Async(_queue, [this, &waitVar] {
+          {
+            // synchronously decrease the number of requests...
+            std::lock_guard<std::mutex> lg{_mutex};
+            _numRequests--;
+          }
+          // ...and notify the main thread that a task finished
+          waitVar.notify_one();
+        });
+      };
+      // synchronously notify all tasks to begin on the queue
+      Dispatch::Sync(_queue, [this, &completionFunc] {
+        _signal.emit(_queue, completionFunc);
+      });
+      // ...and then wait for them all to finish (if no tasks are started this will just instantly continue)
+      waitVar.wait(lock, [this] { return _numRequests == 0; });
     }
-    
-    void TransferQueueMgr::StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback user_callback)
-    {
-      if( _httpAdapter )
-      {
-        _numRequests++;
-        
-        HttpRequestCallback callback_wrapper =
-        [this, user_callback] (const HttpRequest& request,
-                const int responseCode,
-                const std::map<std::string, std::string>& responseHeaders,
-                const std::vector<uint8_t>& responseBody)
-        {
-          this->_numRequests--;
-          // Tell the user about it.
-          user_callback(request,responseCode,responseHeaders,responseBody);
-        };
-        
-        _httpAdapter->StartRequest(request, queue, callback_wrapper);
-      }
-    }
-    
+
   } // namespace Util
 } // namespace Anki

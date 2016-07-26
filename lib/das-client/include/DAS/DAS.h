@@ -10,8 +10,9 @@
 #define __DAS_H__
 
 #ifdef __cplusplus
-#include <vector>
+#include <functional>
 #include <memory>
+#include <vector>
 
 namespace DAS {
 class IDASPlatform;
@@ -180,6 +181,7 @@ void DASForceFlushNow() __attribute__((visibility("default")));
 #ifdef __cplusplus
 void DASNativeInit(std::unique_ptr<const DAS::IDASPlatform> platform, const char* product) __attribute__((visibility("default")));
 const DAS::IDASPlatform* DASGetPlatform() __attribute__((visibility("default")));
+void DASForceFlushWithCallback(const std::function<void()>& callback) __attribute((visibility("default")));
 #endif
   
 #ifdef __cplusplus

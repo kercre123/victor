@@ -1149,7 +1149,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../lib/das-client/include",
+					"$(SRCROOT)/../../cozmoAPI/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
@@ -1210,7 +1210,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../lib/das-client/include",
+					"$(SRCROOT)/../../cozmoAPI/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;

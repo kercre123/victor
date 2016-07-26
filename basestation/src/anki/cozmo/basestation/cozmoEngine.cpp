@@ -33,6 +33,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/console/consoleInterface.h"
@@ -630,6 +631,11 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
                          << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
     }
   }
+}
+
+void CozmoEngine::ExecuteBackgroundTransfers()
+{
+  _context->GetTransferQueue()->ExecuteTransfers();
 }
 
 } // namespace Cozmo

@@ -27,6 +27,9 @@ extern "C" {
 
   // Called from C# to push messages to the engine
   void cozmo_transmit_game_to_engine(const uint8_t* buffer, size_t size);
+
+  // Invoked by background OS notifications when we have internet
+  void cozmo_execute_background_transfers();
   
   // Hook for triggering setup of the desired wifi details
   int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey);

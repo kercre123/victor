@@ -24,9 +24,10 @@
 #ifndef __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__
 #define __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__
 
-#include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal.hpp"
 #include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
+#include <mutex>
 
 
 namespace Anki {
@@ -36,35 +37,25 @@ namespace Anki {
     class TransferQueueMgr : public Util::noncopyable
     {
     public:
-      using StartRequestFunc = std::function<void(const HttpRequest&,Util::Dispatch::Queue*,HttpRequestCallback )>;
-      using OnTransferReadyFunc = std::function<void (StartRequestFunc)>;
+      using TaskCompleteFunc = std::function<void()>;
+      using OnTransferReadyFunc = std::function<void(Dispatch::Queue*, const TaskCompleteFunc&)>;
       
       // ----------
       TransferQueueMgr();
       virtual ~TransferQueueMgr();
       
-      // Interface for native background thread
-      void SetCanConnect(bool can_connect);
-      bool GetCanConnect();
-      int  GetNumActiveRequests();
+      void ExecuteTransfers();
       
-      // Interface for services base class, ITransferable
-      Signal::SmartHandle RegisterHttpTransferReadyCallback( OnTransferReadyFunc func );
+      Signal::SmartHandle RegisterTask(const OnTransferReadyFunc& func);
       
     protected:
-      IHttpAdapter* _httpAdapter;
-      // State that says if we should be sending out requests or not.
-      bool          _canConnect;
-      int           _numRequests;
+      Dispatch::Queue* _queue;
+      int _numRequests;
+
+      Signal::Signal<void(Dispatch::Queue*, const TaskCompleteFunc&)> _signal;
+      std::mutex _mutex;
       
-      // Sender for us, OnTransferReadyFunc
-      using TransferQueueSignal = Signal::Signal< void (StartRequestFunc) >;
-      TransferQueueSignal _signal;
-      
-      virtual void StartDataTransfer();
-      
-      // Binded callback of StartRequestFunc
-      virtual void StartRequest(const HttpRequest& request, Util::Dispatch::Queue* queue, HttpRequestCallback callback);
+      void StartDataTransfer();
       
     }; // class
     

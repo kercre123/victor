@@ -114,6 +114,8 @@ public:
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
+  void ExecuteBackgroundTransfers();
+
 protected:
   
   std::vector<::Signal::SmartHandle> _signalHandles;

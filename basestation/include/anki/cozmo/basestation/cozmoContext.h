@@ -22,6 +22,7 @@
 // ---------- BEGIN FORWARD DECLARATIONS ----------
 namespace Anki {
 namespace Util {
+  class DasTransferTask;
   class RandomGenerator;
   class TransferQueueMgr;
   namespace Data {
@@ -97,6 +98,7 @@ private:
   std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<VizManager>                     _vizManager;
   std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
+  std::unique_ptr<Util::DasTransferTask>          _dasTransferTask;
 };
   
 

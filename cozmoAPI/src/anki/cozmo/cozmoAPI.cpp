@@ -107,6 +107,15 @@ void CozmoAPI::ReceiveMessages(const uint8_t* buffer, size_t size)
 
   messagePipe->PushFromGameMessages(buffer, size);
 }
+
+void CozmoAPI::ExecuteBackgroundTransfers()
+{
+  CozmoEngine* engine = (_cozmoRunner != nullptr) ? _cozmoRunner->GetEngine() : nullptr;
+  if (engine == nullptr) {
+    return;
+  }
+  engine->ExecuteBackgroundTransfers();
+}
   
 CozmoAPI::~CozmoAPI()
 {

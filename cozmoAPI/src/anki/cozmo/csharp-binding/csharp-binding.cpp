@@ -299,3 +299,11 @@ void cozmo_transmit_game_to_engine(const uint8_t* buffer, const size_t size)
   }
   engineAPI->ReceiveMessages(buffer, size);
 }
+
+void cozmo_execute_background_transfers()
+{
+  if (engineAPI == nullptr) {
+    return;
+  }
+  engineAPI->ExecuteBackgroundTransfers();
+}

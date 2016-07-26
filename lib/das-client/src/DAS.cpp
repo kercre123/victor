@@ -283,6 +283,15 @@ void DASForceFlushNow() {
   }
 }
 
+void DASForceFlushWithCallback(const std::function<void()>& callback) {
+  if (nullptr != sRemoteAppender) {
+    sRemoteAppender->ForceFlushWithCallback(callback);
+  }
+  else if (callback) {
+    callback();
+  }
+}
+
 int _DAS_IsEventEnabledForLevel(const char* eventName, DASLogLevel level) {
   if (DASNeedsInit) {
     DASConfigure(nullptr, nullptr, nullptr);

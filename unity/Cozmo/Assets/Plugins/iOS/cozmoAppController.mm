@@ -11,11 +11,10 @@
  *
  **/
 
+#import "UnityAppController.h"
+#include "anki/cozmo/csharp-binding/csharp-binding.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "UnityAppController.h"
-#import "DAS/DAS.h"
-
 
 // This App Controller is a subclass of the Unity generated AppController, registered with the #define at the bottom of this file
 @interface CozmoAppController : UnityAppController
@@ -35,6 +34,30 @@ bool unityLogHandler(LogType logType, const char* log, va_list list)
     // Will log to stderr including system.log as a warning
     NSLogv([NSString stringWithUTF8String:log], list);
     return true;
+}
+
+bool checkInternetAvailable()
+{
+  NSURL* nsUrl = [[NSURL alloc] initWithString:@"https://www.google.com"];
+  NSMutableURLRequest* request = [[NSMutableURLRequest alloc] initWithURL:nsUrl];
+  [request setAllowsCellularAccess:false];
+  request.HTTPMethod = @"GET";
+
+  __block NSError* error = nil;
+  __block NSData* responseData = nil;
+
+  dispatch_semaphore_t completionSignal = dispatch_semaphore_create(0);
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    NSURLSessionTask* task = [[NSURLSession sharedSession] dataTaskWithRequest:request
+                                completionHandler:^(NSData *data, NSURLResponse *blockResponse, NSError *blockError) {
+                                  error = blockError;
+                                  responseData = data;
+                                  dispatch_semaphore_signal(completionSignal);
+    }];
+    [task resume];
+  });
+  dispatch_semaphore_wait(completionSignal, dispatch_time(DISPATCH_TIME_NOW, 10.0 * NSEC_PER_SEC));
+  return (responseData && !error);
 }
 
 @implementation CozmoAppController
@@ -63,7 +86,17 @@ bool unityLogHandler(LogType logType, const char* log, va_list list)
 
 // This handles the fetch when the OS says we should do one. Needs to call the passed in completionHandler with the appropriate result
 -(void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler{
-  DASForceFlushNow();
+
+  // check for internet connectivity
+  // the internet has all kinds of terrible looking advice for how to do this, I chose to refer to apple's documentation here:
+  // https://developer.apple.com/library/ios/documentation/NetworkingInternetWeb/Conceptual/NetworkingOverview/WhyNetworkingIsHard/WhyNetworkingIsHard.html#//apple_ref/doc/uid/TP40010220-CH13-SW3
+  if (checkInternetAvailable()) {
+    NSLog(@"CozmoAppController.BackgroundFetch: executing transfers");
+    cozmo_execute_background_transfers();
+  }
+  else {
+    NSLog(@"CozmoAppController.BackgroundFetch: no internet");
+  }
   
   // We always report that there's new data so that the OS will allow us to run as often as possible
   completionHandler(UIBackgroundFetchResultNewData);

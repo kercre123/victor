@@ -115,7 +115,17 @@ void DasAppender::SetTimedFlush()
   
 void DasAppender::ForceFlush()
 {
-  _syncQueue.Wake([this]() {Flush();});
+  ForceFlushWithCallback({});
+}
+
+void DasAppender::ForceFlushWithCallback(const std::function<void()>& callback)
+{
+  _syncQueue.Wake([this, callback] {
+    Flush();
+    if (callback) {
+      callback();
+    }
+  });
 }
 
 void DasAppender::Flush()

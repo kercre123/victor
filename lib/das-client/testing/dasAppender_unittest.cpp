@@ -56,3 +56,29 @@ TEST(DasAppenderTest, DasAppenderCleanupOldNonEmptyInProgress) {
   EXPECT_EQ(-1, access(inProg3.c_str(), F_OK)) << inProg3 << " should have been rolled over";
   (void) rmrf(testDASDir.c_str());
 }
+
+TEST(DasAppenderTest, DasAppenderFlushWithCallback) {
+  (void) rmrf(testDASDir.c_str());
+  Anki::Das::DasAppender* testAppender = new Anki::Das::DasAppender(testDASDir, testDASURL);
+  std::map<std::string, std::string> tempMap;
+  testAppender->append(DASLogLevel_Info, "asdf", "asdf", 0, "asdf", "asdf", 0, &tempMap, tempMap);
+
+  bool finished = false;
+  std::mutex mutex;
+  std::unique_lock<std::mutex> lock{mutex};
+  std::condition_variable cv;
+  auto completionFunc = [&finished, &cv, &mutex] {
+    {
+      std::lock_guard<std::mutex> lg{mutex};
+      finished = true;
+    }
+    cv.notify_one();
+  };
+
+  testAppender->ForceFlushWithCallback(completionFunc);
+  cv.wait(lock, [&finished] { return finished; });
+
+  delete testAppender; testAppender = nullptr;
+
+  (void) rmrf(testDASDir.c_str());
+}
