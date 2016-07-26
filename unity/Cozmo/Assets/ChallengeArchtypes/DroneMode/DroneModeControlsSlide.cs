@@ -79,10 +79,19 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void InitializeCameraFeed(IRobot currentRobot) {
       _ImageProcessor = new ImageReceiver("DroneModeCameraFeed");
+      _ImageProcessor.CaptureStream();
       _ImageProcessor.OnImageSizeChanged += HandleImageSizeChanged;
-      _ImageProcessor.Initialize(Anki.Cozmo.ImageSendMode.Off);
       _CameraFeedImage.texture = _ImageProcessor.Image;
       _CurrentRobot = currentRobot;
+    }
+
+    private void Update() {
+      if (_CameraFeedImage.texture != null) {
+        DAS.Info("IVYNGO DRONEMODE.Update", _CameraFeedImage.texture.name);
+      }
+      else {
+        DAS.Info("IVYNGO DRONEMODE.Update", "Texture is null!!");
+      }
     }
 
     private void OnDestroy() {
@@ -98,6 +107,12 @@ namespace Cozmo.Minigame.DroneMode {
       _CameraFeedImage.rectTransform.sizeDelta = new Vector2(width, height);
       float imageScale = (_CameraFeedImageContainer.sizeDelta.x / width);
       _CameraFeedImage.rectTransform.localScale = new Vector3(imageScale, imageScale, imageScale);
+      if (_CameraFeedImage.texture != null) {
+        DAS.Info("IVYNGO DRONEMODE.HandleImageSizeChanged", _CameraFeedImage.texture.name);
+      }
+      else {
+        DAS.Info("IVYNGO DRONEMODE.HandleImageSizeChanged", "Texture is null!!");
+      }
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {

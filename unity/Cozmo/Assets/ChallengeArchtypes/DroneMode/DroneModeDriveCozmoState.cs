@@ -35,8 +35,6 @@ namespace Cozmo {
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           EnableInput();
 
-          Anki.Cozmo.Viz.VizManager.Enabled = true;
-
           SetupRobotForDriveState();
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
@@ -44,7 +42,6 @@ namespace Cozmo {
 
         public override void Exit() {
           DisableInput();
-          Anki.Cozmo.Viz.VizManager.Enabled = true;
           _RobotAnimator.CleanUp();
         }
 

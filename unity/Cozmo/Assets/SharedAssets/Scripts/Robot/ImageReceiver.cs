@@ -102,7 +102,7 @@ public class ImageReceiver : IDisposable {
       case ImageEncoding.JPEGGray:
         _ReceivedImage.LoadImage(_MemStream.GetBuffer());
         break;
-      case ImageEncoding.JPEGMinimizedGray:
+      case ImageEncoding.JPEGMinimizedGray: // This is what the robot is sending
         ImageUtil.MinimizedGreyToJpeg(_MemStream, _MemStream2, dims.Height, dims.Width);
         _ReceivedImage.LoadImage(_MemStream2.GetBuffer());
         break;
