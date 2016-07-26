@@ -2395,7 +2395,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     */
 
   
-    ObjectID BlockWorld::AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
+    ObjectID BlockWorld::AddActiveObject(ActiveID activeID,
+                                         FactoryID factoryID,
+                                         ActiveObjectType activeObjectType,
+                                         const ObservableObject* objToCopyId)
     {
       if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
         PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
@@ -2491,10 +2494,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedNewObject",
                        "objectID %d, type %s, activeID %d, factoryID 0x%x",
                        newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
-      return newObject->GetID();
       
-
-
+      if(objToCopyId != nullptr)
+      {
+        newObject->CopyID(objToCopyId);
+      }
+      return newObject->GetID();
     }
   
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

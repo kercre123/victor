@@ -309,9 +309,36 @@ void Robot::SetOnCharger(bool onCharger)
     
 ObjectID Robot::AddUnconnectedCharger()
 {
-  ASSERT_NAMED(_chargerID.IsUnknown(), "AddUnconnectedCharger.ChargerAlreadyExists");
-  ObjectID objID = GetBlockWorld().AddActiveObject(-1, 0, ActiveObjectType::OBJECT_CHARGER);
+  // ChargerId is unknown because it exists in a previous frame but not this one
+
+  BlockWorldFilter filter;
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  filter.SetFilterFcn(nullptr);
+  filter.AddAllowedType(ObjectType::Charger_Basic);
+  
+  std::vector<ObservableObject *> matchingObjects;
+  GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  
+  ObservableObject* obj = nullptr;
+  for(auto object : matchingObjects)
+  {
+    if(obj != nullptr)
+    {
+      ASSERT_NAMED(object->GetID() == obj->GetID(), "Matching charger ids not equal");
+    }
+    obj = object;
+  }
+  ObjectID objID;
+  s32 activeId = -1;
+  if(obj != nullptr)
+  {
+    activeId = obj->GetActiveID();
+  }
+  // Copying existing object's activeId and objectId if an existing object was found
+  objID = GetBlockWorld().AddActiveObject(activeId, 0, ActiveObjectType::OBJECT_CHARGER, obj);
+  
   SetCharger(objID);
+  
   return _chargerID;
 }
 

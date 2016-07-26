@@ -78,9 +78,11 @@ namespace Anki
       // Adds an active object of the appropriate type based on factoryID at
       // an unknown pose. To be used when the active object first comes into radio contact.
       // This function does nothing if an active object of the same type with the active ID already exists.
-      ObjectID AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
-      
-      //
+      // If objToCopyID is not null then the new object will have the same id as objToCopyID
+      ObjectID AddActiveObject(ActiveID activeID,
+                               FactoryID factoryID,
+                               ActiveObjectType activeObjectType,
+                               const ObservableObject* objToCopyId = nullptr);
       
       // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
       // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
