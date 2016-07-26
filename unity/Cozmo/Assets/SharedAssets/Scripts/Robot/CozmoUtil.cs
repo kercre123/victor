@@ -9,7 +9,7 @@ using System.Reflection;
 /// </summary>
 public static class CozmoUtil {
   public const float kSmallScreenMaxHeight = 3f;
-  public const float kMaxWheelSpeedMM = 160f;
+  public const float kMaxWheelSpeedMM = 220f;
   public const float kMinWheelSpeedMM = 10f;
   public const float kBlockLengthMM = 44f;
   public const float kLocalBusyTime = 1f;

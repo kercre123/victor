@@ -10,19 +10,19 @@ namespace Cozmo {
         return 1;
       }
 
-      [SerializeField, Range(0f, 160f)]
+      [SerializeField, Range(0f, CozmoUtil.kMaxWheelSpeedMM)]
       private float _MaxReverseSpeed_mmps = 90f;
       public float MaxReverseSpeed_mmps { get { return _MaxReverseSpeed_mmps; } }
 
-      [SerializeField, Range(0f, 160f)]
+      [SerializeField, Range(0f, CozmoUtil.kMaxWheelSpeedMM)]
       private float _MaxForwardSpeed_mmps = 120f;
       public float MaxForwardSpeed_mmps { get { return _MaxForwardSpeed_mmps; } }
 
-      [SerializeField, Range(0f, 160f)]
+      [SerializeField, Range(0f, CozmoUtil.kMaxWheelSpeedMM)]
       private float _PointTurnSpeed_mmps = 90f;
       public float PointTurnSpeed_mmps { get { return _PointTurnSpeed_mmps; } }
 
-      [SerializeField, Range(0f, 160f)]
+      [SerializeField, Range(0f, CozmoUtil.kMaxWheelSpeedMM)]
       private float _TurboSpeed_mmps = 160f;
       public float TurboSpeed_mmps { get { return _TurboSpeed_mmps; } }
 
