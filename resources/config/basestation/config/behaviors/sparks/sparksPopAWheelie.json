@@ -1,7 +1,7 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "sparksPopAWheelie",
-  "flatScore": 0.3,
+  "flatScore": 10,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,
   "repetitionPenalty": {
