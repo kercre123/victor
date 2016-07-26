@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -241,7 +242,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   return ret;
 }
 
-void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot, bool isRetry, bool forceDifferentPreActionPose)
+void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
 {
   SET_STATE(PickingUpBlock);
   
@@ -267,125 +268,74 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot, bool isRetry,
                       "Already holding top block, so no need to pick it up");
     TransitionToStackingBlock(robot);
   }
-  else {
+
+  const bool sayName = true;
+  DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _targetBlockTop,
+                                                                    false, 0, false,
+                                                                    kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg,
+                                                                    sayName);
+  
+  RetryWrapperAction::RetryCallback retryCallback = [this, action](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
+  {
+    animTrigger = AnimationTrigger::Count;
     
-    if(isRetry) {
-      ++_numPickupRetries;
-      PRINT_NAMED_INFO("BehaviorStackBlocks.TransitionToPickingUpBlock.Retrying",
-                       "Retry %d of %d", _numPickupRetries, kBSB_MaxNumPickupRetries);
-    } else {
-      _numPickupRetries = 0;
-    }
-    
-    // Don't turn towards face if this is a retry
-    const Radians maxTurnTowardsFaceAngle( (isRetry ? 0 : DEG_TO_RAD(kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg)) );
-    const bool sayName = true;
-    
-    DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _targetBlockTop,
-                                                                      false, 0, false,
-                                                                      maxTurnTowardsFaceAngle, sayName);
-    
-    if(forceDifferentPreActionPose)
+    // Don't turn towards face if retrying however this does still cause the head to move up
+    action->SetMaxTurnTowardsFaceAngle(0);
+    action->SetTiltTolerance(DEG_TO_RAD(180));
+
+    if(completion.result == ActionResult::FAILURE_ABORT ||
+       completion.result == ActionResult::FAILURE_RETRY)
     {
-      // Since visual verification failed last time, get the regular preaction poses and
-      // remove the one that's too close to where we are, to force us to try a different one.
-      DriveToObjectAction* driveToAction = action->GetDriveToObjectAction();
-      driveToAction->SetGetPossiblePosesFunc([&robot,driveToAction](ActionableObject* object,
-                                                                    std::vector<Pose3d>& possiblePoses,
-                                                                    bool& alreadyInPosition)
-                                             {
-                                               
-                                               driveToAction->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
-                                               
-                                               for(auto iter = possiblePoses.begin(); iter != possiblePoses.end(); )
-                                               {
-                                                 if(iter->IsSameAs(robot.GetPose(), kBSB_SamePreactionPoseDistThresh_mm,
-                                                                   DEG_TO_RAD(kBSB_SamePreactionPoseAngleThresh_deg)))
-                                                 {
-                                                   iter = possiblePoses.erase(iter);
-                                                   alreadyInPosition = false;
-                                                 } else {
-                                                   ++iter;
-                                                 }
-                                               }
-                                               return ActionResult::SUCCESS;
-                                             });
+      switch(completion.completionInfo.Get_objectInteractionCompleted().result)
+      {
+        case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+        {
+          animTrigger = AnimationTrigger::StackBlocksRetry;
+          
+          // Use a different preAction pose if we failed because we couldn't see the block
+          action->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, action](ActionableObject* object,
+                                                                                   std::vector<Pose3d>& possiblePoses,
+                                                                                   bool& alreadyInPosition)
+                                                                    {
+                                                                      return IBehavior::UseSecondClosestPreActionPose(action->GetDriveToObjectAction(), object, possiblePoses, alreadyInPosition);
+                                                                    });
+          break;
+        }
+          
+        case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+        case ObjectInteractionResult::INCOMPLETE:
+        {
+          // Smaller reaction if we just didn't get to the pre-action pose
+          animTrigger = AnimationTrigger::RollBlockRealign;
+          break;
+        }
+          
+        default:
+          animTrigger = AnimationTrigger::StackBlocksRetry;
+          break;
+      } // switch(objectInteractionResult)
+      return true;
     }
-    
-    StartActing(action,
-                [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
+
+    return false;
+  };
+  
+  RetryWrapperAction* retryWrapperAction = new RetryWrapperAction(robot, action, retryCallback, kBSB_MaxNumPickupRetries);
+  
+  StartActing(retryWrapperAction,
+              [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
+              {
+                if(msg.result == ActionResult::SUCCESS)
                 {
-                  ActionResult res = msg.result;
-                  switch(res)
-                  {
-                    case ActionResult::SUCCESS:
-                    {
-                      TransitionToStackingBlock(robot);
-                      break;
-                    }
-              
-                    case ActionResult::FAILURE_ABORT:
-                    case ActionResult::FAILURE_RETRY:
-                    {
-                      if(_numPickupRetries < kBSB_MaxNumPickupRetries)
-                      {
-                        bool forceDifferentPreactionPose = false;
-                        AnimationTrigger animTrigger = AnimationTrigger::Count;
-                        switch(msg.completionInfo.Get_objectInteractionCompleted().result)
-                        {
-                          case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
-                          {
-                            animTrigger = AnimationTrigger::StackBlocksRetry;
-                            forceDifferentPreactionPose = true;
-                            break;
-                          }
-                            
-                          case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
-                          case ObjectInteractionResult::INCOMPLETE:
-                          {
-                            // Smaller reaction if we just didn't get to the pre-action pose
-                            animTrigger = AnimationTrigger::RollBlockRealign;
-                            break;
-                          }
-                            
-                          default:
-                            animTrigger = AnimationTrigger::StackBlocksRetry;
-                            break;
-                        } // switch(objectInteractionResult)
-                        
-                        // Transition to picking up a block as a retry, with options
-                        // chosen in switch above.
-                        const bool isRetry = true;
-                        if( animTrigger != AnimationTrigger::Count )
-                        {
-                          // Play any animation selected in switch above and then go back to pickup state
-                          StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
-                                      [this,forceDifferentPreactionPose,&robot] () {
-                                        this->TransitionToPickingUpBlock(robot, isRetry, forceDifferentPreactionPose);
-                                      });
-                        }
-                        else
-                        {
-                          TransitionToPickingUpBlock(robot, isRetry, forceDifferentPreactionPose);
-                        }
-                        
-                        break;
-                      }
-                      else
-                      {
-                        TransitionToWaitForBlocksToBeValid(robot);
-                      }
-                    }
-                      
-                    default:
-                      PRINT_NAMED_INFO("BehaviorStackBlock.TransitionToPickingUpBlock.UnhandledFailure",
-                                       "Pickup failed with '%s'",
-                                       EnumToString(res));
-                  }
-                });
+                  TransitionToStackingBlock(robot);
+                }
+                else
+                {
+                  TransitionToWaitForBlocksToBeValid(robot);
+                }
+              });
     
-    IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
-  }
+  IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
 }
 
 void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)

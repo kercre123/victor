@@ -41,6 +41,10 @@ namespace Anki {
       // The proxy action, if set, is the one whose type and completion info are used.
       // Specify it by the constituent action's tag.
       void SetProxyTag(u32 tag);
+      
+      // Sets whether or not to delete actions from the compound action when they complete
+      // By default actions will be destroyed on completion
+      void SetDeleteActionOnCompletion(bool deleteOnCompletion) { _deleteActionOnCompletion = deleteOnCompletion; }
 
     protected:
       
@@ -69,6 +73,8 @@ namespace Anki {
       std::set<IActionRunner*> _ignoreFailure;
       u32  _proxyTag;
       bool _proxySet = false;
+      
+      bool _deleteActionOnCompletion = true;
       
       void DeleteActions();
     };

@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
-
+#include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
@@ -46,6 +46,8 @@ class IReactionaryBehavior;
 class MoodManager;
 class Robot;
 class Reward;
+class ActionableObject;
+class DriveToObjectAction;
 
 namespace ExternalInterface {
 class MessageEngineToGame;
@@ -157,6 +159,13 @@ public:
   // complete. Otherwise, a new behavior will be selected by the chooser after this one runs. This should
   // generally only be true for reactionary behaviors
   virtual bool ShouldResumeLastBehavior() const { return false; }
+  
+  // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
+  // is being retried or the action failed due to visualVerification
+  ActionResult UseSecondClosestPreActionPose(DriveToObjectAction* action,
+                                             ActionableObject* object,
+                                             std::vector<Pose3d>& possiblePoses,
+                                             bool& alreadyInPosition);
 
     
 protected:
@@ -342,6 +351,9 @@ private:
     
   bool _enableRepetitionPenalty;
   bool _enableRunningPenalty;
+  
+  const f32 kSamePreactionPoseDistThresh_mm = 30.f;
+  const f32 kSamePreactionPoseAngleThresh_deg = 45.f;
     
 }; // class IBehavior
   

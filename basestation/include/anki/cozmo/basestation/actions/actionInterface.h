@@ -128,6 +128,8 @@ namespace Anki {
       void PrepForCompletion();
       
       void UnlockTracks();
+      
+      const ActionResult GetState() const { return _state; }
 
     protected:
       
@@ -144,8 +146,6 @@ namespace Anki {
       void SetStatus(const std::string& msg);
       
       void ResetState() { _state = ActionResult::FAILURE_NOT_STARTED; }
-
-      ActionResult GetState() const { return _state; }
 
       bool IsRunning() const { return _state == ActionResult::RUNNING; }
       

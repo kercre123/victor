@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "util/helpers/templateHelpers.h"
@@ -90,6 +91,17 @@ namespace Anki {
     {
       for(auto iter = _actions.begin(); iter != _actions.end();)
       {
+        // Because we need to unlock tracks when we would have normally deleted the action
+        // (which unlocks the tracks) we now need to relock the tracks so that they can be unlocked
+        // normally by the action destructor
+        if(!_deleteActionOnCompletion)
+        {
+          if((*iter)->GetState() != ActionResult::FAILURE_NOT_STARTED &&
+             !(*iter)->IsSuppressingTrackLocking())
+          {
+            _robot.GetMoveComponent().LockTracks((*iter)->GetTracksToLock());
+          }
+        }
         assert((*iter) != nullptr);
         // TODO: issue a warning when a group is deleted without all its actions completed?
         (*iter)->PrepForCompletion();
@@ -110,8 +122,19 @@ namespace Anki {
       
       // Delete completed action
       (*currentAction)->PrepForCompletion(); // Possible overkill
-      Util::SafeDelete(*currentAction);
-      currentAction = _actions.erase(currentAction);
+      
+      if(_deleteActionOnCompletion)
+      {
+        Util::SafeDelete(*currentAction);
+        currentAction = _actions.erase(currentAction);
+      }
+      else
+      {
+        // If we aren't deleting actions when they complete we need to unlock their tracks so
+        // subsequent actions can run
+        _robot.GetMoveComponent().UnlockTracks((*currentAction)->GetTracksToLock());
+        ++currentAction;
+      }
     }
 
     
@@ -219,18 +242,18 @@ namespace Anki {
         
         // In the special case that the sub-action sucessfully completed
         // immediately, don't return SUCCESS if there are more actions left!
-        if(ActionResult::SUCCESS == subResult) {
+        if(ActionResult::RUNNING != subResult) {
           
           StoreUnionAndDelete(_currentAction);
           
           if(_currentAction == _actions.end()) {
             // no more actions, safe to return success for the compound action
             if(USE_ACTION_CALLBACKS) {
-              RunCallbacks(ActionResult::SUCCESS);
+              RunCallbacks(subResult);
             }
-            return ActionResult::SUCCESS;
-          } else {
-            // more actions, just say we're still running
+            return subResult;
+          // more actions, just say we're still running
+          } else if(subResult == ActionResult::SUCCESS) {
             subResult = ActionResult::RUNNING;
           }
         }
@@ -310,8 +333,18 @@ namespace Anki {
               }
               if(ShouldIgnoreFailure(*_currentAction)) {
                 // We are ignoring this action's failures, so just move to next action
+                PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal",
+                                 "Ignoring failure for %s[%d] moving to next action",
+                                 (*_currentAction)->GetName().c_str(),
+                                 (*_currentAction)->GetTag());
                 return MoveToNextAction(currentTime);
               } else {
+                PRINT_NAMED_DEBUG("CompoundActionSequential.UpdateInternal",
+                                  "Current action %s[%d] failed with %s deleting",
+                                  (*_currentAction)->GetName().c_str(),
+                                  (*_currentAction)->GetTag(),
+                                  EnumToString(subResult));
+                StoreUnionAndDelete(_currentAction);
                 return subResult;
               }
               

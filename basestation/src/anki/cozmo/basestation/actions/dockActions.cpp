@@ -198,6 +198,11 @@ namespace Anki {
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
       robot.GetBlockWorld().GetObstacles(obstacles);
+      
+      PRINT_NAMED_DEBUG("IsCloseEnoughToPreActionPose.GetCurrentPreActionPoses",
+                        "Using preDockPoseOffset_mm %f and %s",
+                        preDockPoseDistOffsetX_mm,
+                        (doNearPredockPoseCheck ? "checking if near pose" : "NOT checking if near pose"));
       dockObject->GetCurrentPreActionPoses(preActionPoses,
                                            {preActionPoseType},
                                            std::set<Vision::Marker::Code>(),
@@ -260,7 +265,11 @@ namespace Anki {
                                                                     preActionPoseAngleTolerance);
       }
       
-      if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
+      // The overloaded operators of the Point class check that all of the elements of the point
+      // cause the expression to evaluate to true. In this case we care if either of the elements in
+      // closestPoint are greater than the threshold so we need to do !<
+      const bool closestPointExceedsThresh = !(closestPoint < preActionPoseDistThresh);
+      if(preActionPoseDistThresh > 0.f && closestPointExceedsThresh) {
         PRINT_NAMED_INFO("IsCloseEnoughToPreActionPose.TooFarFromGoal",
                          "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
                          closestPoint.x(), closestPoint.y());

@@ -549,8 +549,7 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition() const
     {
-      const bool inPosition = NEAR(Radians(_robot.GetHeadAngle()) - _headAngle, 0.f, _angleTolerance);
-      
+      const bool inPosition = NEAR((Radians(_robot.GetHeadAngle()) - _headAngle).ToFloat(), 0.f, _angleTolerance.ToFloat());
       return inPosition;
     }
     
@@ -1679,7 +1678,7 @@ namespace Anki {
     
     ActionResult WaitForImagesAction::Init()
     {
-      _numModeFramesSeen = {};
+      _numModeFramesSeen = 0;
       
       auto imageProcLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
       {

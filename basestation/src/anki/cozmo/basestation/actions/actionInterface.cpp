@@ -287,10 +287,11 @@ namespace Anki {
         {
           if(_displayMessages) {
             PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                             "%s [%d] %s.", GetName().c_str(),
+                             "%s [%d] %s with state %s.", GetName().c_str(),
                              GetTag(),
                              (_state==ActionResult::SUCCESS ? "succeeded" :
-                              _state==ActionResult::CANCELLED ? "was cancelled" : "failed"));
+                              _state==ActionResult::CANCELLED ? "was cancelled" : "failed"),
+                              EnumToString(_state));
           }
           
           PrepForCompletion();

@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
@@ -542,6 +543,28 @@ bool IBehavior::StopActing(bool allowCallback)
   }
 
   return false;
+}
+
+ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,
+                                                      ActionableObject* object,
+                                                      std::vector<Pose3d>& possiblePoses,
+                                                      bool& alreadyInPosition)
+{
+  action->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+  
+  for(auto iter = possiblePoses.begin(); iter != possiblePoses.end(); )
+  {
+    if(iter->IsSameAs(_robot.GetPose(), kSamePreactionPoseDistThresh_mm,
+                      DEG_TO_RAD(kSamePreactionPoseAngleThresh_deg)))
+    {
+      iter = possiblePoses.erase(iter);
+      alreadyInPosition = false;
+    } else {
+      ++iter;
+    }
+  }
+  
+  return ActionResult::SUCCESS;
 }
 
 #pragma mark --- IReactionaryBehavior ----

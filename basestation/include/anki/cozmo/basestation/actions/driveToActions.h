@@ -30,6 +30,8 @@ namespace Anki {
     
     class PickupObjectAction;
     class IDockAction;
+    class TurnTowardsLastFacePoseAction;
+    class TurnTowardsObjectAction;
 
     class DriveToPoseAction : public IAction
     {
@@ -232,6 +234,9 @@ namespace Anki {
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
+      void SetMaxTurnTowardsFaceAngle(const Radians angle);
+      void SetTiltTolerance(const Radians tol);
+      
       DriveToObjectAction* GetDriveToObjectAction() {
         return _driveToObjectAction;
       }
@@ -250,7 +255,9 @@ namespace Anki {
       void SetApproachAngle(const f32 angle_rad);
       
     private:
-      DriveToObjectAction* _driveToObjectAction = nullptr;
+      DriveToObjectAction*           _driveToObjectAction           = nullptr;
+      TurnTowardsLastFacePoseAction* _turnTowardsLastFacePoseAction = nullptr;
+      TurnTowardsObjectAction*       _turnTowardsObjectAction       = nullptr;
       ObjectID _objectID;
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;

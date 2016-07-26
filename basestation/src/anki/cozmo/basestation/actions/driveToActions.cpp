@@ -947,8 +947,11 @@ namespace Anki {
       
       if(maxTurnTowardsFaceAngle_rad > 0.f)
       {
-        AddAction(new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName), true);
-        AddAction(new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad), true);
+        _turnTowardsLastFacePoseAction = new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName);
+        _turnTowardsObjectAction = new TurnTowardsObjectAction(robot, objectID, maxTurnTowardsFaceAngle_rad);
+      
+        AddAction(_turnTowardsLastFacePoseAction, true);
+        AddAction(_turnTowardsObjectAction, true);
       }
     }
     
@@ -956,6 +959,36 @@ namespace Anki {
     {
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
       AddAction(dockAction, ignoreFailure);
+    }
+    
+    void IDriveToInteractWithObject::SetMaxTurnTowardsFaceAngle(const Radians angle)
+    {
+      if(_turnTowardsObjectAction == nullptr ||
+         _turnTowardsLastFacePoseAction == nullptr)
+      {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetMaxTurnTowardsFaceAngle",
+                            "Can not set angle of null actions (the action were originally constructed with an angle of zero)");
+        return;
+      }
+      PRINT_NAMED_DEBUG("IDriveToInteractWithObject.SetMaxTurnTowardsFaceAngle",
+                        "Setting maxTurnTowardsFaceAngle to %f degrees", angle.getDegrees());
+      _turnTowardsLastFacePoseAction->SetMaxTurnAngle(angle);
+      _turnTowardsObjectAction->SetMaxTurnAngle(angle);
+    }
+    
+    void IDriveToInteractWithObject::SetTiltTolerance(const Radians tol)
+    {
+      if(_turnTowardsObjectAction == nullptr ||
+         _turnTowardsLastFacePoseAction == nullptr)
+      {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetTiltTolerance",
+                            "Can not set angle of null actions (the action were originally constructed with an angle of zero)");
+        return;
+      }
+      PRINT_NAMED_DEBUG("IDriveToInteractWithObject.SetTiltTolerance",
+                        "Setting tilt tolerance to %f degrees", tol.getDegrees());
+      _turnTowardsLastFacePoseAction->SetTiltTolerance(tol);
+      _turnTowardsObjectAction->SetTiltTolerance(tol);
     }
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)

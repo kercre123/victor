@@ -507,7 +507,7 @@ void MovementComponent::UnlockTracks(uint8_t tracks)
     }
   }
   if(DEBUG_ANIMATION_LOCKING) {
-    PRINT_NAMED_INFO("MovementComponent.LockTracks", "unlocked: (0x%x) %s, result:",
+    PRINT_NAMED_INFO("MovementComponent.UnlockTracks", "unlocked: (0x%x) %s, result:",
                      tracks,
                      AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str());
     PrintLockState();
