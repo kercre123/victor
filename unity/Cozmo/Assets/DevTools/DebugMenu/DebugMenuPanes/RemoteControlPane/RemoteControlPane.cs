@@ -51,11 +51,13 @@ public class RemoteControlPane : MonoBehaviour {
   }
 
   private void OnHeadValueChanged(float value) {
-    RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(value * Mathf.Deg2Rad, useExactAngle: true);
+    RobotEngineManager.Instance.CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.MOVE_HEAD_TO_ANGLE);
+    RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(value * Mathf.Deg2Rad, queueActionPosition: Anki.Cozmo.QueueActionPosition.AT_END, useExactAngle: true);
   }
 
   private void OnLiftHeightChanged(float value) {
-    RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(value);
+    RobotEngineManager.Instance.CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.MOVE_LIFT_TO_HEIGHT);
+    RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(value, null, Anki.Cozmo.QueueActionPosition.AT_END);
   }
 
   private void OnForward() {
@@ -77,5 +79,5 @@ public class RemoteControlPane : MonoBehaviour {
   private void OnStop() {
     RobotEngineManager.Instance.CurrentRobot.DriveWheels(0.0f, 0.0f);
   }
- 
+
 }
