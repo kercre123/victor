@@ -22,7 +22,7 @@ static const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
 static const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
 static const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
-static const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
+static const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.45); // V
 
 static const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 static const Fixed VEXT_CHARGE_THRESHOLD  = TO_FIXED(4.00); // V

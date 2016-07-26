@@ -31,6 +31,14 @@ message FWVersionInfo
   uint_8  toEngineCLADHash[16]
 }
 
+message BodyVersion
+{
+  uint_32  app_version,
+  uint_32  esn_number,
+  uint_16  hw_version,
+  uint_16  fix_status
+}
+
 message SyncTimeAck
 {
   bool isPhysical
@@ -144,6 +152,7 @@ union RobotToEngine {
   AnimationEvent             animEvent              = 0xD5,
   FactoryTestParameter       factoryTestParam       = 0xD6,
   
+  BodyVersion                bodyVersion            = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
