@@ -29,6 +29,7 @@ namespace Cozmo.Minigame.DroneMode {
       Reverse
     }
 
+    // TODO Move to DroneModeCameraFeed
     [SerializeField]
     private RawImage _CameraFeedImage;
     private ImageReceiver _ImageProcessor;
@@ -36,6 +37,8 @@ namespace Cozmo.Minigame.DroneMode {
     [SerializeField]
     private RectTransform _CameraFeedImageContainer;
     private bool _IsCameraSized;
+
+    // TODO: Serialize prefabs for a FaceReticle and a Cube or ChargerReticle
 
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
@@ -66,7 +69,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     private HeadSliderSegment _CurrentHeadTiltSliderSegment;
     private float _CurrentHeadSliderSegmentValue;
-    private IRobot _CurrentRobot;
+    //private IRobot _CurrentRobot;
 
     private void Start() {
       _CurrentDriveSpeedSliderSegment = SpeedSliderSegment.Neutral;
@@ -82,10 +85,17 @@ namespace Cozmo.Minigame.DroneMode {
       _ImageProcessor.CaptureStream();
       _ImageProcessor.OnImageSizeChanged += HandleImageSizeChanged;
       _CameraFeedImage.texture = _ImageProcessor.Image;
-      _CurrentRobot = currentRobot;
+      //_CurrentRobot = currentRobot;
     }
 
     private void Update() {
+      //if (_CurrentRobot != null) {
+      // Check for new LightCubes / new Faces / new Charger
+      // For each new LightCube, add a listener for visual state change
+      // Also add listener for when state changes in VizRect
+      // If visible (or partially visible?), immediately spawn a reticle for them
+      // Track by ObservedObject/Face to Reticle in dictionary
+      //}
       if (_CameraFeedImage.texture != null) {
         DAS.Info("IVYNGO DRONEMODE.Update", _CameraFeedImage.texture.name);
       }
@@ -93,6 +103,12 @@ namespace Cozmo.Minigame.DroneMode {
         DAS.Info("IVYNGO DRONEMODE.Update", "Texture is null!!");
       }
     }
+
+    // When invisible, return reticle to pool and remove from dictionary
+
+    // When visible, spawn reticle to pool and add to dictionary
+
+    // When VizRect changes, adjust position of reticle
 
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
