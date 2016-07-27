@@ -17,6 +17,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   private const string _kPackSpriteFolderName = "Packed";
   private const string _kUnpackSpriteFolderName = "Unpacked";
   private const string _kTexturesFolderName = "Textures";
+  private const string _kRepeatTexturesFolderName = "RepeatTextures";
 
   private const string _kUHDBundleTag = "UHD";
   private const string _kHDBundleTag = "HD";
@@ -38,7 +39,10 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
       PostprocessUISprite();
     }
     else if (IsTexture()) {
-      PostprocessTexture();
+      PostprocessTexture(useRepeatSetting: false);
+    }
+    else if (IsRepeatTexture()) {
+      PostprocessTexture(useRepeatSetting: true);
     }
     else {
       Debug.Log("Detected texture import at " + assetPath + " but was not part of 'Packed', 'Unpacked', or 'Textures' folder in"
@@ -116,14 +120,14 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     return border;
   }
 
-  private void PostprocessTexture() {
+  private void PostprocessTexture(bool useRepeatSetting) {
     Debug.Log("Detected texture import at " + assetPath + ". Setting default values.");
 
     TextureImporter textureImporter = (TextureImporter)assetImporter;
     textureImporter.textureType = TextureImporterType.Image;
     textureImporter.grayscaleToAlpha = false;
     textureImporter.alphaIsTransparency = true;
-    textureImporter.wrapMode = TextureWrapMode.Clamp;
+    textureImporter.wrapMode = (useRepeatSetting) ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
     textureImporter.filterMode = FilterMode.Bilinear;
     textureImporter.anisoLevel = _kAnisoLevel;
     textureImporter.maxTextureSize = _kMaxTextureSize;
@@ -131,7 +135,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   }
 
   private void OnPostprocessTexture(Texture2D texture) {
-    if (IsUISprite() || IsTexture()) {
+    if (IsUISprite() || IsTexture() || IsRepeatTexture()) {
       if (IsUHDAsset()) {
         Debug.Log("Detected UHD texture import at " + assetPath + ". Creating smaller versions in HD and SD folders.");
         CreateCopyOfTexture(texture, 0.5f, _kHDBundleTag);
@@ -207,6 +211,10 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
 
   private bool IsTexture() {
     return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kTexturesFolderName)
-            && assetPath.EndsWith(_kGraphicSuffix);
+                    && assetPath.EndsWith(_kGraphicSuffix) && !assetPath.Contains(_kRepeatTexturesFolderName);
+  }
+  private bool IsRepeatTexture() {
+    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kRepeatTexturesFolderName)
+                    && assetPath.EndsWith(_kGraphicSuffix);
   }
 }
