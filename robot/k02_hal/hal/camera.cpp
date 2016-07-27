@@ -383,7 +383,7 @@ void FTM2_IRQHandler(void)
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
 #if defined(ENABLE_JPEG)
-  if (line < 498 && UnlockDevices)   // XXX: This is apparently compensating for a JPEGCompress bug
+  if (line < 498 && IsVideoEnabled())   // XXX: This is apparently compensating for a JPEGCompress bug
     JPEGCompress(line, TOTAL_ROWS);
   else
     Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0, 0);

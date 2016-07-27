@@ -87,7 +87,8 @@ structure RobotState
   uint_8  numFreeSegmentSlots,
 }
 
-enum int_8 BodyRadioMode {
+enum int_8 BodyRadioMode
+{
   BODY_BLUETOOTH_OPERATING_MODE = 0,
   BODY_ACCESSORY_OPERATING_MODE,
   BODY_IDLE_OPERATING_MODE
@@ -98,7 +99,8 @@ message SetBodyRadioMode
   BodyRadioMode radioMode
 }
 
-structure PowerState {
+structure PowerState
+{
   int_32        VBatFixed,
   int_32        VExtFixed,
   int_32        BodyTemp,
@@ -106,6 +108,13 @@ structure PowerState {
   bool          onCharger,
   bool          isCharging,
   BodyRadioMode operatingMode
+}
+
+structure WiFiState
+{
+  bool  enabled,
+  int_8 staCount,
+  int_8 rtCount
 }
 
 namespace RobotInterface {

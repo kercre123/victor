@@ -163,7 +163,6 @@ namespace Anki
       // Parameters / Constants
       //
       const f32 MOTOR_MAX_POWER = 1.0f;
-      extern bool UnlockDevices;
       
       //
       // Simulator-only functions - not needed by real hardware
@@ -354,8 +353,10 @@ namespace Anki
 
 #     ifdef SIMULATOR
       u32 GetCameraStartTime();
-      bool IsVideoEnabled();
 #     endif
+
+      bool IsVideoEnabled();
+
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
 

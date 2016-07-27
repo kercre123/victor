@@ -278,11 +278,6 @@ message RTIPVersionInfo
   string  description
 }
 
-message RadioState
-{
-  bool wifiConnected
-}
-
 // Set ReliableTransport timeout time
 message DebugSetRTTO
 {
@@ -362,7 +357,7 @@ union EngineToRobot
 
   // 0x30 to 0x7f: To RTIP
   OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
-  RadioState                    radioConnected              = 0x31,
+  WiFiState                     wifiState                   = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
   MoveLift                      moveLift                    = 0x34,
@@ -400,10 +395,9 @@ union EngineToRobot
   PropState                     getPropState                = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
-  SetHeadDeviceLock             setHeadDeviceLock           = 0x57,
+  IMUCalibrationData            setIMUCalibration           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
-  IMUCalibrationData            setIMUCalibration           = 0x60,
   
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,

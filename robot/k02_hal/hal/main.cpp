@@ -33,7 +33,7 @@ namespace Anki
   {
     namespace HAL
     {
-      bool UnlockDevices = false;
+      bool videoEnabled_ = false;
 
       // Import init functions from all HAL components
       void CameraInit(void);
@@ -43,6 +43,8 @@ namespace Anki
       TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
       u32 GetID() { return *(uint32_t*) 0xFFC; }
+      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res) { videoEnabled_ = (mode != Off); }
+      bool IsVideoEnabled() { return videoEnabled_; }
 
       void HALInit(void) {
         UART::Init();

@@ -33,7 +33,7 @@ namespace Anki {
     
     void sendImgChunk(ImageChunk& msg, bool eof)
     {
-      static bool skipFrame = false;
+      static bool skipFrame = true; // Want to wait for the first whole frame before sending anything
       msg.imageEncoding = JPEGMinimizedGray;
       msg.resolution    = QVGA;
       

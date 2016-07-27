@@ -12,7 +12,7 @@ namespace Anki {
 namespace Cozmo {
 namespace ActiveObjectManager {
 
-#define SLOT_UPDATE_SPACING_us (300000)
+#define SLOT_UPDATE_SPACING_us (15*1000)
 
 static u32 assignments[MAX_NUM_ACTIVE_OBJECTS];
 static u32 needUpdate; ///< Bit flag, works as long as MAX_NUM_ACTIVE_OBJECTS < 32

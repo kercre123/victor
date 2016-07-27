@@ -21,11 +21,17 @@
 static struct espconn* socket;
 static ReliableConnection* clientConnection;
 static uint32_t clientConnectionId;
+static bool accept;
 static bool sendHoldoff;
 
 bool clientConnected(void)
 {
   return clientConnectionId != 0;
+}
+
+void clientAccept(const bool enabled)
+{
+  accept = enabled;
 }
 
 sint16 clientQueueAvailable(void)
@@ -104,6 +110,7 @@ sint8 clientInit()
 
   clientConnection = NULL;
   clientConnectionId = 0;
+  accept = false;
   sendHoldoff = false;
 
 
@@ -196,18 +203,21 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 
 void Receiver_OnConnectionRequest(ReliableConnection* conn)
 {
-  printf("New Reliable transport connection request\r\n");
-  if (clientConnectionId == 0) // Not connected yet
+  if (accept)
   {
-    ReliableTransport_FinishConnection(conn); // Accept the connection
-    clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
-    backgroundTaskOnConnect();
+    printf("New Reliable transport connection request\r\n");
+    if (clientConnectionId == 0) // Not connected yet
+    {
+      ReliableTransport_FinishConnection(conn); // Accept the connection
+      clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
+    }
+    else // The engine is trying to reconnect
+    {
+      printf("\tlooks like a new engine, clearing current connection\r\n");
+      Receiver_OnDisconnect(conn); // Kill our connection instance so we can make a new one with the new engine instance
+    }
   }
-  else // The engine is trying to reconnect
-  {
-    printf("\tlooks like a new engine, clearing current connection\r\n");
-    Receiver_OnDisconnect(conn); // Kill our connection instance so we can make a new one with the new engine instance
-  }
+  else printf("Not accepting reliable transport connection\r\n");
 }
 
 void Receiver_OnConnected(ReliableConnection* conn)
@@ -224,7 +234,6 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
-    backgroundTaskOnDisconnect();
     clientConnection = NULL;
     clientConnectionId = 0;
   }

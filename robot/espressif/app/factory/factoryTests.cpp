@@ -115,7 +115,7 @@ static void BirthCertificateReadCallback(NVStorage::NVStorageBlob* entry, const 
 {
   if (result == NVStorage::NV_OKAY) memcpy(&birthCert, entry->blob, sizeof(BirthCertificate));
   SetMode(RobotInterface::FTM_Sleepy);
-  
+  clientAccept(true);
   foregroundTaskPost(requestIMUCal, 0);
 }
 
@@ -287,10 +287,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
       msg.enableTestStateMessage.enable = true;
       Anki::Cozmo::RTIP::SendMessage(msg);
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-      msg.enableLiftPower.enable = false;
-      bool rslt = Anki::Cozmo::RTIP::SendMessage(msg);
-      os_printf("Lift power %x %x\r\n", msg.enableLiftPower.enable, rslt);
       break;
     }
     default:
@@ -302,15 +298,17 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
   // Do entry to new mode
   switch (newMode)
   {
+    case RobotInterface::FTM_entry:
+    {
+      os_memset(minPositions, 0, sizeof(minPositions));
+      os_memset(maxPositions, 0, sizeof(maxPositions));
+      break;
+    }
     case RobotInterface::FTM_None:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
       msg.enableTestStateMessage.enable = false;
       Anki::Cozmo::RTIP::SendMessage(msg);
-      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
-      msg.enableLiftPower.enable = true;
-      bool rslt = Anki::Cozmo::RTIP::SendMessage(msg);
-      os_printf("Lift power %x %x\r\n", msg.enableLiftPower.enable, rslt);
       break;
     }
     case RobotInterface::FTM_Off:

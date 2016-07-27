@@ -36,6 +36,9 @@ void clientRecvCallback(const void* dest, u8* payload, const u16 len);
  */
 void clientUpdate(void);
 
+/// Set whether the client should accept new connections
+void clientAccept(const bool enabled);
+
 /// Check if client is connected.
 bool clientConnected(void);
 
