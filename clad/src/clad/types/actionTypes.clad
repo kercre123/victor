@@ -133,6 +133,11 @@ structure FaceEnrollmentCompleted {
   bool   saidName // Indicates whether the action played the say name animation at end (iff action completed successfully)
 }
 
+// Used by actions that don't have extra info on completion
+structure DefaultCompleted {
+
+}
+
 // Use tag to determine what struct to use
 union ActionCompletedUnion {
   ObjectInteractionCompleted  objectInteractionCompleted,
@@ -141,6 +146,7 @@ union ActionCompletedUnion {
   TrackFaceCompleted          trackFaceCompleted,
   ReadToolCodeCompleted       readToolCodeCompleted,
   FaceEnrollmentCompleted     faceEnrollmentCompleted,
+  DefaultCompleted            defaultCompleted,
 }
 
 

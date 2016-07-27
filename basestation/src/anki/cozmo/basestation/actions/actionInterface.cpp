@@ -133,6 +133,7 @@ namespace Anki {
         case RobotActionType::WAIT_FOR_LAMBDA:
         case RobotActionType::DRIVE_PATH:
         {
+          _completionUnion.Set_defaultCompleted(DefaultCompleted());
           break;
         }
       }
