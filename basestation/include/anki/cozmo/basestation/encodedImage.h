@@ -52,6 +52,9 @@ namespace Cozmo {
     
     Result Save(const std::string& filename) const;
     
+    const TimeStamp_t GetPrevTimestamp() const { return _prevTimestamp; }
+    void SetPrevTimestamp(const TimeStamp_t timestamp) { _prevTimestamp = timestamp; }
+    
   private:
 
     std::vector<u8>        _buffer;

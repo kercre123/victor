@@ -490,6 +490,10 @@ namespace Cozmo {
             // Make encoded image the new "next" image
             std::swap(_nextImg, encodedImage);
             
+            // Because encodedImage mantains state in the form of _prevTimestamp and _nextImg has garbage data
+            // so after the swap encodedImage now has garbage data so we need to reassign prevTimestamp
+            encodedImage.SetPrevTimestamp(_nextImg.GetPrevTimestamp());
+            
             Unlock();
           }
           break;
