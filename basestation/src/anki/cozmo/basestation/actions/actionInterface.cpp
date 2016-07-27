@@ -377,6 +377,17 @@ namespace Anki {
       }
     }
     
+    void IActionRunner::Cancel()
+    {
+      if(_state != ActionResult::FAILURE_NOT_STARTED)
+      {
+        PRINT_NAMED_INFO("IActionRunner.Cancel",
+                         "Cancelling action %s[%d]",
+                         _name.c_str(), _idTag);
+        _state = ActionResult::CANCELLED;
+      }
+    }
+    
 #pragma mark ---- IAction ----
     
     IAction::IAction(Robot& robot,

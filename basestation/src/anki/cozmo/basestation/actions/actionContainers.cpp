@@ -312,6 +312,10 @@ namespace Anki {
     
     void ActionQueue::Clear()
     {
+      if(_currentAction != nullptr)
+      {
+        _currentAction->Cancel();
+      }
       DeleteCurrentAction();
       
       for (auto listIter = _queue.begin(); listIter != _queue.end(); ) {
@@ -330,6 +334,7 @@ namespace Anki {
       {
         if(withType == RobotActionType::UNKNOWN || _currentAction->GetType() == withType)
         {
+          _currentAction->Cancel();
           DeleteCurrentAction();
           found = true;
         }
@@ -359,6 +364,7 @@ namespace Anki {
       {
         if(_currentAction->GetTag() == idTag)
         {
+          _currentAction->Cancel();
           DeleteCurrentAction();
           found = true;
         }
@@ -395,6 +401,10 @@ namespace Anki {
       }
       
       if(_queue.empty()) {
+        if(_currentAction != nullptr)
+        {
+          _currentAction->Cancel();
+        }
         DeleteCurrentAction();
         return QueueAtEnd(action, numRetries);
       } else {

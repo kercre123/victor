@@ -130,6 +130,9 @@ namespace Anki {
       void UnlockTracks();
       
       const ActionResult GetState() const { return _state; }
+      
+      // Marks the state as cancelled only if the action has been started
+      void Cancel();
 
     protected:
       
