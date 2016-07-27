@@ -211,8 +211,18 @@ public class BlockPoolPane : MonoBehaviour {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(message.factoryID, out data)) {
       UpdateButton(data);
-      Color color = (message.connected && data.IsEnabled) ? Color.cyan : Color.grey;
-      EnableButton(data.BlockButton, color);
+
+      if (message.connected) {
+        EnableButton(data.BlockButton, Color.cyan);
+      } 
+      else {
+        if (data.IsEnabled) {
+          EnableButton(data.BlockButton, Color.grey);
+        }
+        else {
+          DisableButton(data.BlockButton, Color.grey);
+        }
+      }
     }
   }
 
@@ -234,7 +244,12 @@ public class BlockPoolPane : MonoBehaviour {
   private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
-      EnableButton(data.BlockButton, Color.grey);
+      if (data.IsEnabled) {
+        EnableButton(data.BlockButton, Color.grey);
+      }
+      else {
+        DisableButton(data.BlockButton, Color.grey);
+      }
     }
   }
 
