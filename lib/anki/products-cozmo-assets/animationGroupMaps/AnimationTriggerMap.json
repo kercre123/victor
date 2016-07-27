@@ -173,6 +173,10 @@
       "AnimName": "ag_reacttocliff_faceplantroll_01"
     },
     {
+      "CladEvent": "FacePlantRollArmUp",
+      "AnimName": "ag_reacttocliff_faceplantroll_armup_01"
+    },
+    {
       "CladEvent": "FailedToRightFromFace",
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
@@ -394,7 +398,7 @@
     },
     {
       "CladEvent": "ReactToCliff",
-      "AnimName": "reactToCliff"
+      "AnimName": "ag_reacttocliff_edge"
     },
     {
       "CladEvent": "ReactToNewBlockAsk",
@@ -418,7 +422,7 @@
     },
     {
       "CladEvent": "ReactToPickup",
-      "AnimName": "reactToPickup"
+      "AnimName": "ag_reacttocliff_pickup"
     },
     {
       "CladEvent": "ReactToPokeReaction",
@@ -429,8 +433,8 @@
       "AnimName": "pokeStartled"
     },
     {
-      "CladEvent": "ReactToStop",
-      "AnimName": "ag_reactToStop"
+      "CladEvent": "ReactToCliffDetectorStop",
+      "AnimName": "ag_reacttocliff_huh_01"
     },
     {
       "CladEvent": "ReactToUnexpectedMovement",

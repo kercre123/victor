@@ -85,7 +85,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
   // play the stop animation, but also wait at least the minimum time so we keep running 
   _gotCliff = false;
   StartActing(new CompoundActionParallel(robot, {
-    new TriggerAnimationAction(robot, AnimationTrigger::ReactToStop),
+    new TriggerAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop),
         new WaitAction(robot, minWaitTime_s) }),
     &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }

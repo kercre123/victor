@@ -59,9 +59,9 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded(Robot& robot)
     const float turtleRollMinAngle = robot.IsPhysical() ? kPitchAngleOnFaceTurtleMin_rads : kPitchAngleOnFaceTurtleMin_sim_rads;
     const float turtleRollMaxAngle = robot.IsPhysical() ? kPitchAngleOnFaceTurtleMax_rads : kPitchAngleOnFaceTurtleMax_sim_rads;
     if(robot.GetPitchAngle() > turtleRollMinAngle || robot.GetPitchAngle() < turtleRollMaxAngle){
-      anim = AnimationTrigger::TurtleRoll;
-    }else{
       anim = AnimationTrigger::FacePlantRoll;
+    }else{
+      anim = AnimationTrigger::FacePlantRollArmUp;
     }
     
     StartActing(new TriggerAnimationAction(robot, anim),
