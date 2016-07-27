@@ -41,8 +41,6 @@ factory.on('connected', function(interface) {
 	var local_secret;
 	var remote_secret, encoded_key;
 
-	var encrypted_messages = [];
-
 	function send(tag, payload) {
 		var struct = Anki.Cozmo.RobotInterface.EngineToRobot[tag];
 		var buffer = struct.serialize(payload);
@@ -81,7 +79,6 @@ factory.on('connected', function(interface) {
 
 				// Rebroadcast the encrypted messages
 				interface.setKey(interface.key);
-				encrypted_messages.map((data) => aes.decode(interface.key, data)).forEach((d) => interface.emit('data', d));
 			});
 		} else if (decoded instanceof Anki.Cozmo.HelloPhone) {
 			send(Anki.Cozmo.RobotInterface.EngineToRobot.Tag_helloRobotMessage, decoded)
