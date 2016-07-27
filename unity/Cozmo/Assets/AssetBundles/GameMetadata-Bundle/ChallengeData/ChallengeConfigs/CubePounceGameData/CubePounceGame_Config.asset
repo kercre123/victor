@@ -13,14 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent: []
-    _GainChallengePointEvent: []
-    _LoseChallengePointEvent: []
+    _ChallengePointEvent: []
     _ResetPointsEvent: []
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
   MinAttemptDelay_s: 0.5
-  MaxAttemptDelay_s: 2
+  MaxAttemptDelay_s: 1.5
   Rounds: 1
   MaxScorePerRound: 5
   BasePounceChance: 0.33
@@ -31,3 +30,6 @@ MonoBehaviour:
   PouncePitchDiffSuccess_deg: 5
   CubeLightFlashInterval_s: 0.1
   CubeVisibleBufferTime_s: 1
+  CubeFacingAngleTolerance_deg: 8
+  TurnSpeed_rps: 10
+  TurnAcceleration_rps2: 100

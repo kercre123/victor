@@ -83,5 +83,12 @@ namespace Cozmo.Minigame.CubePounce {
       _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
       _CubePounceGame.StartRoundBasedGameEnd();
     }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
+      _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
+      _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
+    }
   }
 }

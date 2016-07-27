@@ -42,5 +42,15 @@ namespace Cozmo.Minigame.CubePounce {
     // Time that can elapse without having seen the cube before it's officially gone
     [Range(0f,10f)]
     public float CubeVisibleBufferTime_s; // = 1f
+
+    // Number of degrees tolerance for Cozmo to be facing toward the cube
+    [Range(0f,90f)]
+    public float CubeFacingAngleTolerance_deg; // = 5.0f;
+
+    [Range(0.000001f,10f)]
+    public float TurnSpeed_rps; // = 100f;
+
+    [Range(0.000001f,100f)]
+    public float TurnAcceleration_rps2; // = 100f;
   }
 }

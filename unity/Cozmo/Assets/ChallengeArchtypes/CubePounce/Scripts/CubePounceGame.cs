@@ -47,6 +47,7 @@ namespace Cozmo.Minigame.CubePounce {
       CozmoRoundsWon = 0;
       _CurrentTarget = null;
       InitializeMinigameObjects(GameConfig.NumCubesRequired());
+      CurrentRobot.SetEnableCliffSensor(false);
     }
 
     protected void InitializeMinigameObjects(int numCubes) {
@@ -58,6 +59,7 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     protected override void CleanUpOnDestroy() {
+      CurrentRobot.SetEnableCliffSensor(true);
     }
 
     public LightCube GetCubeTarget() {
@@ -95,6 +97,10 @@ namespace Cozmo.Minigame.CubePounce {
 
     public bool WithinPounceDistance(float distanceThreshold_mm) {
       return CozmoUtil.ObjectEdgeWithinXYDistance(CurrentRobot.WorldPosition, GetCubeTarget(), distanceThreshold_mm);
+    }
+
+    public bool WithinAngleTolerance() {
+      return CozmoUtil.PointWithinXYAngleTolerance(CurrentRobot.WorldPosition, GetCubeTarget().WorldPosition, CurrentRobot.Rotation.eulerAngles.z, GameConfig.CubeFacingAngleTolerance_deg);
     }
 
     // Returns whether we just finished a round
