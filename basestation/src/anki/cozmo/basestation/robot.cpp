@@ -563,7 +563,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
   GetMoveComponent().Update(msg);
       
-  _battVoltage = (f32)msg.battVolt10x * 0.1f;
+  _battVoltage = msg.batteryVoltage;
       
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;

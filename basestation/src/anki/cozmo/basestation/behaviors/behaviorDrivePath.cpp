@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/BehaviorDrivePath.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/actions/drivePathAction.h"

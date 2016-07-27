@@ -70,7 +70,6 @@ namespace Anki {
         // Flag for receipt of Init message
         bool initReceived_ = false;
         // Cache for power state information
-        float vBat;
         float vExt;
         bool onCharger;
         bool isCharging;
@@ -210,8 +209,6 @@ namespace Anki {
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
-
-        robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?
@@ -770,7 +767,7 @@ namespace Anki {
       
       void Process_powerState(const PowerState& msg)
       {
-        vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
+        robotState_.batteryVoltage = static_cast<float>(msg.VBatFixed)/65536.0f;
         vExt = static_cast<float>(msg.VExtFixed)/65536.0f;
         onCharger  = msg.onCharger;
         isCharging = msg.isCharging;
@@ -943,7 +940,7 @@ namespace Anki {
           memcpy((void*)tsm.gyro, (void*)HAL::IMU::IMUState.gyro, sizeof(tsm.gyro));
           memcpy((void*)tsm.acc,  (void*)HAL::IMU::IMUState.acc,  sizeof(tsm.acc));
           tsm.cliffLevel = g_dataToHead.cliffLevel,
-          tsm.battVolt10x = static_cast<uint8_t>(vBat * 10.0f);
+          tsm.battVolt10x = static_cast<uint8_t>(robotState_.batteryVoltage * 10.0f);
           tsm.extVolt10x  = static_cast<uint8_t>(vExt * 10.0f);
           tsm.chargeStat  = (onCharger << 0) | (isCharging << 1);
           RobotInterface::SendMessage(tsm);
@@ -1091,10 +1088,6 @@ namespace Anki {
 
     namespace HAL {
 #ifdef TARGET_K02
-      u8 BatteryGetVoltage10x()
-      {
-        return static_cast<u8>(Messages::vBat * 10.0f);
-      }
       bool BatteryIsCharging()
       {
         return Messages::isCharging;

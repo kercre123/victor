@@ -17,16 +17,24 @@ class TopicPrinter:
     def printMsg(self, msg):
         sys.stdout.write(repr(msg))
         sys.stdout.write(os.linesep)
+        
+    def parseState(self, msg):
+        sys.stdout.write("\t".join(["{}: {}".format(key, getattr(msg, key)) for key in self.stateParse if hasattr(msg, key)]))
+        sys.stdout.write(os.linesep)
     
-    def __init__(self, topics=[], periodic_topics={}):
-        for t in topics:
-            if type(t) is int:
-                topic = t
-            elif t in robotInterface.RI.RobotToEngine._tags_by_name:
-                topic = robotInterface.RI.RobotToEngine._tags_by_name[t]
-            else:
-                sys.exit("Unkown tag \"{}\"".format(t))
-            robotInterface.SubscribeToTag(topic, self.printMsg)
+    def __init__(self, args):
+        if args.state_parse:
+            self.stateParse = args.state_parse
+            robotInterface.SubscribeToTag(robotInterface.RI.RobotToEngine.Tag.state, self.parseState)
+        else:
+            for t in args.tags:
+                if type(t) is int:
+                    topic = t
+                elif t in robotInterface.RI.RobotToEngine._tags_by_name:
+                    topic = robotInterface.RI.RobotToEngine._tags_by_name[t]
+                else:
+                    sys.exit("Unkown tag \"{}\"".format(t))
+                robotInterface.SubscribeToTag(topic, self.printMsg)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="topic",
@@ -37,6 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--sync-time', default=0, type=int, help="Manually specify sync time offset")
     parser.add_argument('-i', '--ip_address', default="172.31.1.1", help="Specify robot's ip address")
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
+    parser.add_argument('--state_parse', nargs='*', help="Print just the specified fields from the robot state message")
     parser.add_argument('tags', nargs='*', help="The tags to subscribe to")
     args = parser.parse_args()
 
@@ -56,7 +65,7 @@ if __name__ == '__main__':
     if args.all:
         args.tags = robotInterface.RI.RobotToEngine._tags_by_name.values()
     
-    TopicPrinter(args.tags)
+    TopicPrinter(args)
     try:
         while True:
             sys.stdout.flush()

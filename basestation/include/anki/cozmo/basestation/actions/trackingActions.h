@@ -21,7 +21,7 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/AnimationTrigger.h"
+#include "clad/types/animationTrigger.h"
 
 #include <vector>
 

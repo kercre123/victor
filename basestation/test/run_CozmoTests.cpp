@@ -84,7 +84,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   stateMsg.lastPathID = 0;
   stateMsg.currPathSegment = 0;
   stateMsg.numFreeSegmentSlots = 0;
-  stateMsg.battVolt10x = 0;
+  stateMsg.batteryVoltage = 0.0f;
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
 

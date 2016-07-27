@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/events/AnimationTriggerResponsesContainer.h"
+#include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "json/json.h"
