@@ -742,6 +742,9 @@ namespace Anki {
                                          static_cast<f32>(msg.time_ms)*.001f);
 
       }
+      void Process_getBodyVersion(const Anki::Cozmo::GetBodyVersion&) {
+        // Handled in the Body
+      }
       void Process_animAudioSample(const Anki::Cozmo::AnimKeyFrame::AudioSample&)
       {
         // Handled on the Espressif

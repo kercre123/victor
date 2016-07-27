@@ -25,6 +25,11 @@
 namespace Anki {
 namespace Cozmo {
 
+  message GetBodyVersion
+  {
+
+  }
+
   message CubeSlots
   {
     uint_32 factory_id[uint_32:7] // Don't send more than MAX_NUM_ACTIVE_OBJECTS above
@@ -360,6 +365,8 @@ union EngineToRobot
   SetHeadlight                  setHeadlight                = 0x0B,
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyRestart              bodyRestart                 = 0x0D,
+
+  GetBodyVersion                getBodyVersion              = 0x25,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,

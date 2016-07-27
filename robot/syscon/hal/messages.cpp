@@ -14,6 +14,8 @@
 #include "battery.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 //#define NATHAN_CUBE_JUNK
 
@@ -27,6 +29,19 @@ static const int QUEUE_DEPTH = 4;
 static CladBufferUp spinebuffer[QUEUE_DEPTH];
 static volatile int spine_enter = 0;
 static volatile int spine_exit  = 0;
+
+extern const unsigned int COZMO_BUILD_DATE;
+
+static void Process_getBodyVersion(const GetBodyVersion&) {
+  RobotInterface::BodyVersion msg;
+
+  msg.app_version = COZMO_BUILD_DATE;
+  msg.esn_number = BODY_ESN;
+  msg.hw_version = BODY_VER;
+  // msg.fix_status ???
+  
+  RobotInterface::SendMessage(msg);
+}
 
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
