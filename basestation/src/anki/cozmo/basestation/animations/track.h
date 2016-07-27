@@ -209,9 +209,9 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame,
   prevKeyFrame = nullptr;
   
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
-    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
-      "There are already %zu frames in %s track. Refusing to add more.",
-      _frames.size(), keyFrame.GetClassName().c_str());
+    PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.TooManyFrames",
+                        "There are already %zu frames in %s track. Refusing to add more.",
+                        _frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
   }
   
@@ -251,9 +251,9 @@ Result Track<FRAME_TYPE>::AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame,
 {
   prevKeyFrame = nullptr;
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
-    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameByTime.TooManyFrames",
-      "There are already %zu frames in %s track. Refusing to add more.",
-      _frames.size(), keyFrame.GetClassName().c_str());
+    PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameByTime.TooManyFrames",
+                        "There are already %zu frames in %s track. Refusing to add more.",
+                        _frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
   }
 

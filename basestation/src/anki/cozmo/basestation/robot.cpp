@@ -2743,7 +2743,8 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 {
   Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(_ID, msg, reliable, hot);
   if(sendResult != RESULT_OK) {
-    PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
+    const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
+    Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
   }
   return sendResult;
 }

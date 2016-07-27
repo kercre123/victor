@@ -1023,7 +1023,6 @@ namespace Cozmo {
     // Send anything still left in the buffer after last Update()
     lastResult = SendBufferedMessages(robot);
     if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed", "");
       return lastResult;
     }
     
@@ -1048,7 +1047,6 @@ namespace Cozmo {
       // Send as much as we can of what we just buffered
       lastResult = SendBufferedMessages(robot);
       if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed", "");
         break;
       }
       
@@ -1107,7 +1105,6 @@ namespace Cozmo {
     // Send anything still left in the buffer after last Update()
     lastResult = SendBufferedMessages(robot);
     if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
       return lastResult;
     }
     
@@ -1192,7 +1189,6 @@ namespace Cozmo {
       // getting reassigned before they get sent out!)
       lastResult = SendBufferedMessages(robot);
       if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
         return lastResult;
       }
       
@@ -1452,9 +1448,9 @@ namespace Cozmo {
         UpdateAmountToSend(robot);
         lastResult = SendBufferedMessages(robot);
         if(RESULT_OK != lastResult) {
-          PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed",
-                            "Could not send %zu remaining messages in send buffer",
-                            _sendBuffer.size());
+          PRINT_NAMED_WARNING("AnimationStreamer.Update.SendBufferedMessagesFailed",
+                              "Could not send %zu remaining messages in send buffer",
+                              _sendBuffer.size());
         }
         
         // If we've finished sending whatever messages
