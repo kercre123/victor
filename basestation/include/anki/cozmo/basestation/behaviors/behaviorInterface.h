@@ -454,15 +454,18 @@ protected:
   virtual Result InitInternalReactionary(Robot& robot) = 0;
   virtual Result ResumeInternalReactionary(Robot& robot){return InitInternalReactionary(robot);};
   virtual void   StopInternalReactionary(Robot& robot){};
+
+  bool IsReactionEnabled() const { return _disableIDs.empty(); }
   
   void LoadConfig(Robot& robot, const Json::Value& config);
   
   //Handle tracking enable/disable requests
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
-  std::multiset<std::string> _disableIDs;
+
   virtual bool IsRunnableInternal(const Robot& robot) const override final;
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const = 0;
-  
+
+  std::multiset<std::string> _disableIDs;
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;

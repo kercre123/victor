@@ -10,20 +10,21 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/actions/dockActions.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "util/helpers/templateHelpers.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/charger.h"
-#include "util/console/consoleInterface.h"
-#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
+#include "util/console/consoleInterface.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   
@@ -88,7 +89,7 @@ namespace Anki {
     }
     
     IDockAction::~IDockAction()
-    {
+    {      
       // the action automatically selects the block, deselect now to remove Viz
       _robot.GetBlockWorld().DeselectCurrentObject();
     
@@ -115,6 +116,13 @@ namespace Anki {
       {
         _faceAndVerifyAction->PrepForCompletion();
       }
+
+      if(GetState() != ActionResult::FAILURE_NOT_STARTED) {
+        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("dockAction",
+                                                                     BehaviorType::AcknowledgeObject,
+                                                                     true);
+      }
+
       
       Util::SafeDelete(_faceAndVerifyAction);
     }
@@ -377,6 +385,13 @@ namespace Anki {
       if(ActionResult::SUCCESS == faceObjectResult ||
          ActionResult::RUNNING == faceObjectResult)
       {
+
+        // disable the reactionary behavior for objects, since we are about to interact with one
+        // TODO:(bn) should some dock actions not do this? E.g. align with offset that doesn't touch the cube?
+        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("dockAction",
+                                                                     BehaviorType::AcknowledgeObject,
+                                                                     false);
+        
         return ActionResult::SUCCESS;
       } else {
         return faceObjectResult;

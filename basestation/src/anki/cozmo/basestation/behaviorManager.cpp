@@ -14,7 +14,6 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -22,22 +21,36 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/behaviorChooserType.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-
 #define DEBUG_BEHAVIOR_MGR 0
+
+#if ANKI_DEV_CHEATS
+  #define VIZ_BEHAVIOR_SELECTION  1
+#else
+  #define VIZ_BEHAVIOR_SELECTION  0
+#endif // ANKI_DEV_CHEATS
+
+#if VIZ_BEHAVIOR_SELECTION
+  #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)  exp
+#else
+  #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)
+#endif // VIZ_BEHAVIOR_SELECTION
 
 namespace Anki {
 namespace Cozmo {
@@ -319,6 +332,12 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
     else {
       _currentBehavior = nextBehavior;
     }
+  }
+
+  if( nullptr != nextBehavior ) {
+    VIZ_BEHAVIOR_SELECTION_ONLY(
+      _robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(
+        VizInterface::NewBehaviorSelected( nextBehavior->GetName() )));
   }
   
   // a null argument to this function means "switch to no behavior"

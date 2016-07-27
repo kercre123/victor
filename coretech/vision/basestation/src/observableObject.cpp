@@ -51,7 +51,7 @@ namespace Vision {
     // Return true if any of this object's markers are visible from the
     // given camera
     for(auto const& marker : _markers) {
-      KnownMarker::NotVisibleReason reason;
+      KnownMarker::NotVisibleReason reason = KnownMarker::NotVisibleReason::IS_VISIBLE;
       if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize,
                               requireSomethingBehind, xBorderPad, yBorderPad, reason)) {
         if( DEBUG_PRINT_NOT_VISIBLE_REASONS ) {
@@ -80,7 +80,7 @@ namespace Vision {
                                        const u16     yBorderPad,
                                        bool& hasNothingBehind) const
   {
-    KnownMarker::NotVisibleReason reason;
+    KnownMarker::NotVisibleReason reason = KnownMarker::NotVisibleReason::IS_VISIBLE;
     hasNothingBehind = false;
     for(auto const& marker : _markers) {
       
@@ -122,7 +122,7 @@ namespace Vision {
   {
     KnownMarker::NotVisibleReason latestReason = KnownMarker::NotVisibleReason::IS_VISIBLE;
     for(auto const& marker : _markers) {
-      KnownMarker::NotVisibleReason reason;
+      KnownMarker::NotVisibleReason reason = KnownMarker::NotVisibleReason::IS_VISIBLE;
       if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize,
                               requireSomethingBehind, xBorderPad, yBorderPad, reason))
       {

@@ -1,10 +1,12 @@
 {
   "behaviorType": "AcknowledgeObject",
   "name": "AcknowledgeObject",
-  "flatScore": 0.3,
   "behaviorGroups": [
+    // "Reactionary"
   ],
-  "ReactionAnimGroup": "ReactToNewBlockSmall",
+  "ReactionAnimGroup": "AcknowledgeObject",
   "disableByDefault": false,
-  "SamePoseDistThresh_mm": 80
+  "SamePoseDistThresh_mm": 80, 
+  "CoolDownDuration_ms": 600000,
+  "NumImagesToWaitFor": 2
 }

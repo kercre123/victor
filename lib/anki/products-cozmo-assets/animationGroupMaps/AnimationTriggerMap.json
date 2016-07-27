@@ -1,6 +1,10 @@
 {
   "Pairs": [
     {
+      "CladEvent": "AcknowledgeObject",
+      "AnimName": "ag_reactToNewBlock"
+    },
+    {
       "CladEvent": "AdmireStackAttemptGrabThirdCube",
       "AnimName": "knockOverStack_grabAttempt"
     },

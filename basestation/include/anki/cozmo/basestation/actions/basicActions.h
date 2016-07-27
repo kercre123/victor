@@ -338,6 +338,11 @@ namespace Cozmo {
       TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle);
       
       void SetMaxTurnAngle(Radians angle) { _maxTurnAngle = angle; }
+
+      // compute the turn angles. Can be useful to check what will happen before this action
+      // executes. Arguments are translations with respect to the robot
+      static Radians GetAbsoluteHeadAngleToLookAtPose(const Point3f& translationWrtRobot);
+      static Radians GetRelativeBodyAngleToLookAtPose(const Point3f& translationWrtRobot);
       
     protected:
       virtual ActionResult Init() override;
@@ -346,7 +351,6 @@ namespace Cozmo {
       TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle);
       
       void SetPose(const Pose3d& pose);
-      virtual Radians GetHeadAngle();
       
       Pose3d    _poseWrtRobot;
       
@@ -355,9 +359,8 @@ namespace Cozmo {
       bool      _isPoseSet   = false;
       bool      _nothingToDo = false;
       
-      const f32 kHeadAngleDistBias_rad = DEG_TO_RAD_F32(5);
-      const f32 kHeadAngleHeightBias_rad = DEG_TO_RAD_F32(7.5);
-      
+      static constexpr f32 kHeadAngleDistBias_rad = DEG_TO_RAD_F32(5);
+      static constexpr f32 kHeadAngleHeightBias_rad = DEG_TO_RAD_F32(7.5);      
       
     }; // class TurnTowardsPoseAction
   
@@ -415,6 +418,10 @@ namespace Cozmo {
                               bool headTrackWhenDone = false);
       
       virtual ~TurnTowardsObjectAction();
+
+      // usually, an object ID should be passed in in the constructor, but this function can be called to
+      // specify an object pointer which may live outside of blockworld
+      void UseCustomObject(ObservableObject* objectPtr);
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -425,13 +432,14 @@ namespace Cozmo {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      
+
       bool                       _facePoseCompoundActionDone = false;
       
       VisuallyVerifyObjectAction*_visuallyVerifyAction = nullptr;
       bool                       _refinedTurnTowardsDone = false;
       
       ObjectID                   _objectID;
+      ObservableObject*          _objectPtr = nullptr;
       Vision::Marker::Code       _whichCode;
       bool                       _headTrackWhenDone;
       bool                       _doRefinedTurn = true;

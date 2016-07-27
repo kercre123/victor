@@ -34,59 +34,56 @@ BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value
 {
   SetDefaultName("AcknowledgeFace");
 
-  SubscribeToTags({{
-    EngineToGameTag::RobotObservedFace,
+  SubscribeToTags({
     EngineToGameTag::RobotDeletedFace,
-  }});
+  });
 
+  SubscribeToTriggerTags({
+    EngineToGameTag::RobotObservedFace,
+  });  
 }
   
   
-Result BehaviorAcknowledgeFace::InitInternal(Robot& robot)
+Result BehaviorAcknowledgeFace::InitInternalReactionary(Robot& robot)
 {
   TurnTowardsPoseAction* turnAction = new TurnTowardsFaceAction(robot, _targetFace, _params.maxTurnAngle_rad);
   turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
   turnAction->SetPanTolerance(_params.panTolerance_rad);
 
-  // Will fail the action if we don't see the face, so we don't play the reaction
-  // not looking at a face
-  VisuallyVerifyFaceAction* verifyAction = new VisuallyVerifyFaceAction(robot, _targetFace);
-  verifyAction->SetNumImagesToWaitFor(_params.numImagesToWaitFor);
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  action->AddAction(turnAction);
+
+  if( _params.numImagesToWaitFor > 0 ) {
+    // Will fail the action if we don't see the face, so we don't play the reaction
+    // not looking at a face
+    VisuallyVerifyFaceAction* verifyAction = new VisuallyVerifyFaceAction(robot, _targetFace);
+    verifyAction->SetNumImagesToWaitFor(_params.numImagesToWaitFor);
+    action->AddAction(verifyAction);
+  }
+
+  action->AddAction(new TriggerAnimationAction(robot, _params.reactionAnimTrigger));
   
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {
-    turnAction,
-    verifyAction,
-    new TriggerAnimationAction(robot, _params.reactionAnimTrigger),
-  });
-  
-  StartActing(action, _params.scoreIncreaseWhileReacting,
-              [this](ActionResult res) {
-                // Whether or not we succeeded, unset the target face
-                // (We've already added it to the reacted set)
+  StartActing(action,
+              [this, &robot](ActionResult res) {
+                // Whether or not we succeeded, unset the target face (We've already added it to the reacted
+                // set). Note that if we get interrupted by another reactionary behavior, this will not run
+                RobotReactedToId(robot, _targetFace);
                 _targetFace = Vision::UnknownFaceID;
               });
 
   
   return Result::RESULT_OK;
   
-} // InitInternal()
-  
+} // InitInternalReactionary()
 
-float BehaviorAcknowledgeFace::EvaluateScoreInternal(const Robot& robot) const
+  
+bool BehaviorAcknowledgeFace::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  // TODO: compute a score based on how much we want to get distracted by the current target object
-  
-  return 1.0f;
-}
-  
-  
-bool BehaviorAcknowledgeFace::IsRunnableInternal(const Robot& robot) const
-{
-  return _targetFace != Vision::UnknownFaceID;
+  return true; // TODO: consider !carrying object
 }
   
 
-void BehaviorAcknowledgeFace::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorAcknowledgeFace::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -104,60 +101,56 @@ void BehaviorAcknowledgeFace::HandleWhileNotRunning(const EngineToGameEvent& eve
                         event.GetData().GetTag());
       break;
   }
-} // HandleWhileNotRunning()
-  
-  
+} // AlwaysHandle()
+
+
 void BehaviorAcknowledgeFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
 {
-  Pose3d facePose( msg.pose, robot.GetPoseOriginList() );
-  
-  ReactionData* data = nullptr;
-  const bool alreadyReacted  = GetReactionData(msg.faceID, data);
-  if(alreadyReacted)
-  {
-    assert(nullptr != data);
-    
-    // We've already reacted to this object ID, but check if it's in a new location or cooldown has passed
-    const bool isCoolDownOver = msg.timestamp - data->lastSeenTime_ms > _params.coolDownDuration_ms;
-    const bool isPoseDifferent = !facePose.IsSameAs(data->lastPose,
-                                                    _params.samePoseDistThreshold_mm,
-                                                    _params.samePoseAngleThreshold_rad);
-    
-    if(isCoolDownOver || isPoseDifferent)
-    {
-      // React again
-      _targetFace = msg.faceID;
-    }
-    
-    // Always keep the last observed pose updated, so we react when there's a quick big change,
-    // not a slow incremental one. Also keep last observed time updated.
-    data->lastPose = std::move(facePose);
-    data->lastSeenTime_ms = msg.timestamp;
+  if( msg.faceID < 0 ) {
+    // ignore temporary tracking-only ids
+    return;
   }
-  else
-  {
-    // New object altogether, always react
-    _targetFace = msg.faceID;
-    
-    ReactionData reactedFace{
-      .lastPose        = std::move(facePose),
-      .lastSeenTime_ms = msg.timestamp,
-    };
-    
-    AddReactionData(_targetFace, std::move(reactedFace));
-  }
-} // HandleObjectObserved()
 
+  Pose3d facePose( msg.pose, robot.GetPoseOriginList() );
+  HandleNewObservation(msg.faceID, facePose, msg.timestamp);
+}
+
+bool BehaviorAcknowledgeFace::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
+{
+  if( event.GetTag() != EngineToGameTag::RobotObservedFace ) {
+    PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.ShouldRunForEvent.InvalidTag",
+                      "Received trigger event with unhandled tag %hhu",
+                      event.GetTag());
+    return false;
+  }
+  
+  std::set<s32> facesToReactTo;
+  GetDesiredReactionTargets(robot, facesToReactTo);
+
+  if( facesToReactTo.empty() ) {
+    return false;
+  }
+  else {
+    // for now, just react to one arbitrary face in the bunch.
+    // TODO:(bn) properly handle multiple faces, like we are doing for objects
+    _targetFace = *facesToReactTo.begin();
+    return true;
+  }
+}
   
 void BehaviorAcknowledgeFace::HandleFaceDeleted(const Robot& robot, Vision::FaceID_t faceID)
 {
+  if( faceID == _targetFace ) {
+    _targetFace = Vision::UnknownFaceID;
+  }
+  
   const bool faceRemoved = RemoveReactionData(faceID);
   if(faceRemoved) {
     PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.HandleFaceDeleted",
                       "Removing Face %d from reacted set because it was deleted",
                       faceID);
   }
-} // HandleObjectMarkedUnknown()
+}
 
 
 } // namespace Cozmo

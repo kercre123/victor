@@ -730,11 +730,7 @@ void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
   
 bool IReactionaryBehavior::IsRunnableInternal(const Robot& robot) const
 {
-  bool isRunnable = _disableIDs.size() == 0;
-  if(isRunnable) {
-    isRunnable = IsRunnableInternalReactionary(robot);
-  }
-  return isRunnable;
+  return IsReactionEnabled() && IsRunnableInternalReactionary(robot);
 }
 
   
