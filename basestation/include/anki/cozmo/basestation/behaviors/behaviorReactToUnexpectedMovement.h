@@ -32,7 +32,7 @@ private:
   
 public:
   
-  virtual bool IsRunnableReactionaryInternal(const Robot& robot) const override;
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   

@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedByObject.cpp
+ * File: behaviorAcknowledgeObject.cpp
  *
  * Author:  Andrew Stein
  * Created: 2016-06-14
@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedByObject.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -30,10 +30,10 @@ namespace Anki {
 namespace Cozmo {
 
   
-BehaviorDistractedByObject::BehaviorDistractedByObject(Robot& robot, const Json::Value& config)
-: IBehaviorDistracted(robot, config)
+BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config)
+: IBehaviorPoseBasedAcknowledgement(robot, config)
 {
-  SetDefaultName("DistractedByObject");
+  SetDefaultName("AcknowledgeObject");
 
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
@@ -42,7 +42,7 @@ BehaviorDistractedByObject::BehaviorDistractedByObject(Robot& robot, const Json:
 }
 
   
-Result BehaviorDistractedByObject::InitInternal(Robot& robot)
+Result BehaviorAcknowledgeObject::InitInternal(Robot& robot)
 {
   TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _targetObject,
                                                                     _params.maxTurnAngle_rad);
@@ -75,7 +75,7 @@ Result BehaviorDistractedByObject::InitInternal(Robot& robot)
 } // InitInternal()
   
 
-float BehaviorDistractedByObject::EvaluateScoreInternal(const Robot& robot) const
+float BehaviorAcknowledgeObject::EvaluateScoreInternal(const Robot& robot) const
 {
   // TODO: compute a score based on how much we want to get distracted by the current target object
   
@@ -83,13 +83,13 @@ float BehaviorDistractedByObject::EvaluateScoreInternal(const Robot& robot) cons
 }
   
 
-bool BehaviorDistractedByObject::IsRunnableInternal(const Robot& robot) const
+bool BehaviorAcknowledgeObject::IsRunnableInternal(const Robot& robot) const
 {
   return _targetObject.IsSet(); // TODO: Consider adding "&& !robot.IsCarryingObject();" ? 
 }
   
 
-void BehaviorDistractedByObject::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorAcknowledgeObject::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -102,7 +102,7 @@ void BehaviorDistractedByObject::HandleWhileNotRunning(const EngineToGameEvent& 
       break;
 
     default:
-      PRINT_NAMED_ERROR("BehaviorDistractedByObject.HandleWhileNotRunning.InvalidTag",
+      PRINT_NAMED_ERROR("BehaviorAcknowledgeObject.HandleWhileNotRunning.InvalidTag",
                         "Received event with unhandled tag %hhu.",
                         event.GetData().GetTag());
       break;
@@ -110,7 +110,7 @@ void BehaviorDistractedByObject::HandleWhileNotRunning(const EngineToGameEvent& 
 } // HandleWhileNotRunning()
   
   
-void BehaviorDistractedByObject::HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
+void BehaviorAcknowledgeObject::HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
   // Only objects whose marker we actually see are valid
   if( ! msg.markersVisible ) {
@@ -170,12 +170,12 @@ void BehaviorDistractedByObject::HandleObjectObserved(const Robot& robot, const 
 } // HandleObjectObserved()
 
   
-void BehaviorDistractedByObject::HandleObjectMarkedUnknown(const Robot& robot, ObjectID objectID)
+void BehaviorAcknowledgeObject::HandleObjectMarkedUnknown(const Robot& robot, ObjectID objectID)
 {
   const bool objectRemoved = RemoveReactionData(objectID);
   if(objectRemoved)
   {
-    PRINT_NAMED_DEBUG("BehaviorDistractedByObject.HandleObjectMarkedUnknown",
+    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.HandleObjectMarkedUnknown",
                       "Removing Object %d from reacted set because it was marked unknown",
                       objectID.GetValue());
   }

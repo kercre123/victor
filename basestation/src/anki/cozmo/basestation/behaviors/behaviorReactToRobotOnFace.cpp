@@ -41,7 +41,7 @@ BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(Robot& robot, const Json:
   });
 }
 
-bool BehaviorReactToRobotOnFace::IsRunnableReactionaryInternal(const Robot& robot) const
+bool BehaviorReactToRobotOnFace::IsRunnableInternalReactionary(const Robot& robot) const
 {
   return true;
 }

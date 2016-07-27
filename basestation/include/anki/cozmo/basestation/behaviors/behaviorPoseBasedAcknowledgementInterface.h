@@ -1,17 +1,17 @@
 /**
- * File: behaviorDistractedInterface.h
+ * File: behaviorPoseBasedAcknowledgementInterface.h
  *
- * Author:  Andrew Stein
+ * Author:  Andrew Stein / Brad Neuman
  * Created: 2016-06-16
  *
- * Description:  Base class for distraction behaviors
+ * Description: Base class for behaviors which sotp to acknowledge something at a given pose
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_IBehaviorDistracted_H__
-#define __Cozmo_Basestation_Behaviors_IBehaviorDistracted_H__
+#ifndef __Cozmo_Basestation_Behaviors_IBehaviorPoseBasedAcknowledgement_H__
+#define __Cozmo_Basestation_Behaviors_IBehaviorPoseBasedAcknowledgement_H__
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
@@ -24,11 +24,11 @@
 namespace Anki {
 namespace Cozmo {
   
-class IBehaviorDistracted : public IBehavior
+class IBehaviorPoseBasedAcknowledgement : public IBehavior
 {
 protected:
   // Note: no public constructor, not directly instantiable, including by BehaviorFactory
-  IBehaviorDistracted(Robot& robot, const Json::Value& config);
+  IBehaviorPoseBasedAcknowledgement(Robot& robot, const Json::Value& config);
   
   // Default configuration parameters which can be overriden by JSON config
   struct ConfigParams {
@@ -59,10 +59,10 @@ private:
   
   std::map<s32, ReactionData > _reactionData;
  
-}; // class IBehaviorDistracted
+}; // class IBehaviorPoseBasedAcknowledgement
 
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_IBehaviorDistracted_H__
+#endif // __Cozmo_Basestation_Behaviors_IBehaviorPoseBasedAcknowledgement_H__

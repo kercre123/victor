@@ -24,8 +24,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedByFace.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedByObject.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
@@ -239,14 +239,14 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorPopAWheelie(robot, config);
       break;
     }
-    case BehaviorType::DistractedByObject:
+    case BehaviorType::AcknowledgeObject:
     {
-      newBehavior = new BehaviorDistractedByObject(robot, config);
+      newBehavior = new BehaviorAcknowledgeObject(robot, config);
       break;
     }
-    case BehaviorType::DistractedByFace:
+    case BehaviorType::AcknowledgeFace:
     {
-      newBehavior = new BehaviorDistractedByFace(robot, config);
+      newBehavior = new BehaviorAcknowledgeFace(robot, config);
       break;
     }
     case BehaviorType::DrivePath:

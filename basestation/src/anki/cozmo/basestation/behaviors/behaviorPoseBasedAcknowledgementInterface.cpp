@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedInterface.cpp
+ * File: behaviorPoseBasedAcknowledgementInterface.cpp
  *
  * Author:  Andrew Stein
  * Created: 2016-06-16
@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedInterface.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPoseBasedAcknowledgementInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
@@ -29,61 +29,61 @@ static const char * const kTiltToleranceKey     = "TiltTolerance_deg";
 static const char * const kScoreIncreaseKey     = "ScoreIncreaseWhileReacting";
 static const char * const kNumImagesToWaitForKey= "NumImagesToWaitFor";
   
-IBehaviorDistracted::IBehaviorDistracted(Robot& robot, const Json::Value& config)
+IBehaviorPoseBasedAcknowledgement::IBehaviorPoseBasedAcknowledgement(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
   LoadConfig(config);
 }
 
-void IBehaviorDistracted::LoadConfig(const Json::Value& config)
+void IBehaviorPoseBasedAcknowledgement::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
   
   JsonTools::GetValueOptional(config,kReactionAnimGroupKey,_params.reactionAnimTrigger);
   
   if(GetAngleOptional(config, kMaxTurnAngleKey, _params.maxTurnAngle_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetMaxTurnAngle",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetMaxTurnAngle",
                       "%.1fdeg", _params.maxTurnAngle_rad.getDegrees());
   }
   
   if(GetValueOptional(config, kCoolDownDurationKey , _params.coolDownDuration_ms)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetCoolDownDuration",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetCoolDownDuration",
                       "%ums", _params.coolDownDuration_ms);
   }
   
   if(GetValueOptional(config, kSamePoseDistKey , _params.samePoseDistThreshold_mm)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetPoseDistThresh",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThresh",
                       "%.1f", _params.samePoseDistThreshold_mm);
   }
   
   if(GetAngleOptional(config, kSamePoseAngleKey, _params.samePoseAngleThreshold_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetPoseAngleThresh",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseAngleThresh",
                       "%.1fdeg", _params.samePoseAngleThreshold_rad.getDegrees());
   }
   
   if(GetAngleOptional(config, kPanToleranceKey, _params.panTolerance_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetPanTolerance",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPanTolerance",
                       "%.1fdeg", _params.panTolerance_rad.getDegrees());
   }
   
   if(GetAngleOptional(config, kTiltToleranceKey, _params.tiltTolerance_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetTiltTolerance",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetTiltTolerance",
                       "%.1fdeg", _params.tiltTolerance_rad.getDegrees());
   }
 
   if(GetValueOptional(config, kScoreIncreaseKey, _params.scoreIncreaseWhileReacting)) {
-    PRINT_NAMED_DEBUG("IBehaviorDistracted.LoadConfig.SetScoreIncreaseWhileReacting",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetScoreIncreaseWhileReacting",
                       "%.3f", _params.scoreIncreaseWhileReacting);
   }
   
   if(GetValueOptional(config, kNumImagesToWaitForKey, _params.numImagesToWaitFor)) {
-    PRINT_NAMED_DEBUG("BehaviorDistractedByObject.LoadConfig.SetNumImagesToWaitFor",
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetNumImagesToWaitFor",
                       "%d", _params.numImagesToWaitFor);
   }
 } // LoadConfig()
   
 
-bool IBehaviorDistracted::GetReactionData(s32 idToFind, ReactionData* &data)
+bool IBehaviorPoseBasedAcknowledgement::GetReactionData(s32 idToFind, ReactionData* &data)
 {
   auto iter = _reactionData.find(idToFind);
   if(iter == _reactionData.end())
@@ -98,12 +98,12 @@ bool IBehaviorDistracted::GetReactionData(s32 idToFind, ReactionData* &data)
   }
 }
   
-void IBehaviorDistracted::AddReactionData(s32 idToAdd, ReactionData &&data)
+void IBehaviorPoseBasedAcknowledgement::AddReactionData(s32 idToAdd, ReactionData &&data)
 {
   _reactionData[idToAdd] = std::move(data);
 }
   
-bool IBehaviorDistracted::RemoveReactionData(s32 idToRemove)
+bool IBehaviorPoseBasedAcknowledgement ::RemoveReactionData(s32 idToRemove)
 {
   const size_t N = _reactionData.erase(idToRemove);
   const bool idRemoved = (N > 0);

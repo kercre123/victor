@@ -576,8 +576,6 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
 IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
-  SetBehaviorGroup(BehaviorGroup::Reactionary, true);
-  
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTags({
     GameToEngineTag::RequestEnableReactionaryBehavior
@@ -688,7 +686,7 @@ bool IReactionaryBehavior::IsRunnableInternal(const Robot& robot) const
 {
   bool isRunnable = _disableIDs.size() == 0;
   if(isRunnable) {
-    isRunnable = IsRunnableReactionaryInternal(robot);
+    isRunnable = IsRunnableInternalReactionary(robot);
   }
   return isRunnable;
 }

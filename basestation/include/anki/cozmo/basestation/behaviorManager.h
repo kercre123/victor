@@ -132,15 +132,12 @@ private:
   bool SwitchToBehavior(IBehavior* nextBehavior);
 
   // same as SwitchToBehavior but also handles special reactionary logic
-  void SwitchToReactionaryBehavior(IBehavior* nextBehavior);
+  void SwitchToReactionaryBehavior(IReactionaryBehavior* nextBehavior);
   
 
   
   // checks the chooser and switches to a new behavior if neccesary
   void SwitchToNextBehavior();
-
-  // If there is a behavior to resume, switch to it and return true. Otherwise return false
-  bool ResumeBehaviorIfNeeded();
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopCurrentBehavior();
@@ -180,6 +177,10 @@ private:
   
   // this is the behavior to go back to after a reactionary behavior is completed
   IBehavior* _behaviorToResume = nullptr;
+
+  // Once we are done with reactionary behaviors, should we try to go back to _behaviorToResume? If any
+  // reactionary behavior we run says "no", this will get set to false, otherwise it will stay true
+  bool _shouldResumeBehaviorAfterReaction = true;
   
   // current behavior chooser (weak_ptr pointing to one of the others)
   IBehaviorChooser* _currentChooserPtr = nullptr;

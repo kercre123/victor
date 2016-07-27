@@ -1,6 +1,6 @@
 {
-  "behaviorType": "DistractedByObject",
-  "name": "DistractedByObject",
+  "behaviorType": "AcknowledgeObject",
+  "name": "AcknowledgeObject",
   "flatScore": 0.3,
   "behaviorGroups": [
   ],

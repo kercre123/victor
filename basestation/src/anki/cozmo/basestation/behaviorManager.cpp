@@ -92,32 +92,27 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     // start with selection that defaults to NoneBehavior
     SetBehaviorChooser( _selectionChooser );
 
-    // TODO:(bn) load these from json? A special reactionary behaviors list?
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnBack,  _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToOnCharger,  _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnFace, _robot, config)->AsReactionaryBehavior());
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnSide, _robot, config)->AsReactionaryBehavior());
-    //AddReactionaryBehavior(
-    //  behaviorFactory.CreateBehavior(BehaviorType::ReactToOnCharger,  _robot, config)->AsReactionaryBehavior() );
-    // AddReactionaryBehavior(
-    //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToUnexpectedMovement, _robot, config)->AsReactionaryBehavior() );
-    
-    //there are special wakeup animaitons that reactToCharger messes with
-    //Unity side is handling special animations and will then re-enable this reactionary behavior
-    //this id is hard coded in on teh unity side as well to re-enable after wakeup
-    std::string id = "on_start_wakeup";
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(id, BehaviorType::ReactToOnCharger, false);
+
+    for( const auto& it : behaviorFactory.GetBehaviorMap() ) {
+      const auto& behaviorName = it.first;
+      const auto& behaviorPtr = it.second;
+      
+      if( behaviorPtr->IsBehaviorGroup( BehaviorGroup::Reactionary ) ) {
+        PRINT_NAMED_DEBUG("BehaviorManager.EnableReactionaryBehavior",
+                          "Adding behavior '%s' as reactionary",
+                          behaviorName.c_str());
+        IReactionaryBehavior*  reactionaryBehavior = behaviorPtr->AsReactionaryBehavior();
+        if( nullptr == reactionaryBehavior ) {
+          PRINT_NAMED_ERROR("BehaviorManager.ReactionaryBehaviorNotReactionary",
+                            "behavior %s is in the factory (ptr %p), but isn't reactionry",
+                            behaviorName.c_str(),
+                            behaviorPtr);
+          continue;
+        }
+        AddReactionaryBehavior(reactionaryBehavior);
+      }
+    }
   }
   
   // initialize whiteboard
@@ -318,7 +313,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
 void BehaviorManager::SwitchToNextBehavior()
 {
   if( _behaviorToResume != nullptr ) {
-    if( _currentBehavior == nullptr || _currentBehavior->ShouldResumeLastBehavior() ) {
+    if( _shouldResumeBehaviorAfterReaction ) {
       PRINT_NAMED_INFO("BehaviorManager.ResumeBehavior",
                        "Behavior '%s' will be resumed",
                        _behaviorToResume->GetName().c_str());
@@ -348,7 +343,7 @@ void BehaviorManager::SwitchToNextBehavior()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
+void BehaviorManager::SwitchToReactionaryBehavior(IReactionaryBehavior* nextBehavior)
 {
   // a null here means "no reaction", not "switch to the null behavior"
   if( nullptr == nextBehavior ) {
@@ -362,6 +357,14 @@ void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
   }
 
   if( SwitchToBehavior(nextBehavior) ) {
+    if( !_runningReactionaryBehavior ) {
+      // by default, we do want to resume this behavior
+      _shouldResumeBehaviorAfterReaction = true;
+    }
+    
+    // if any reactionary behavior says that we shouldn't resume, then we won't
+    _shouldResumeBehaviorAfterReaction = _shouldResumeBehaviorAfterReaction && nextBehavior->ShouldResumeLastBehavior();
+
     _runningReactionaryBehavior = true;
   }
 }

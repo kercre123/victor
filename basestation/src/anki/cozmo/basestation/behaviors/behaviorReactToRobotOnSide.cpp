@@ -36,7 +36,7 @@ BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(Robot& robot, const Json:
   });
 }
 
-bool BehaviorReactToRobotOnSide::IsRunnableReactionaryInternal(const Robot& robot) const
+bool BehaviorReactToRobotOnSide::IsRunnableInternalReactionary(const Robot& robot) const
 {
   return true;
 }

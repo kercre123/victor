@@ -155,11 +155,6 @@ public:
     return MatchesAnyBehaviorGroups(groupFlags.GetFlags());
   }
 
-  // if true, the previously running behavior will be resumed (if possible) after this behavior is
-  // complete. Otherwise, a new behavior will be selected by the chooser after this one runs. This should
-  // generally only be true for reactionary behaviors
-  virtual bool ShouldResumeLastBehavior() const { return false; }
-  
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
   // is being retried or the action failed due to visualVerification
   ActionResult UseSecondClosestPreActionPose(DriveToObjectAction* action,
@@ -429,12 +424,12 @@ public:
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 
-  // if true, the previously running behavior will be resumed (if possible) after this behavior is
-  // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
-  virtual bool ShouldResumeLastBehavior() const override = 0;
   virtual bool IsReactionary() const override { return true;}
   
-    
+  // if true, the previously running behavior will be resumed (if possible) after this behavior is
+  // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
+  virtual bool ShouldResumeLastBehavior() const = 0;
+      
 protected:
 
   virtual Result InitInternal(Robot& robot) override final;
@@ -449,7 +444,7 @@ protected:
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
   std::multiset<std::string> _disableIDs;
   virtual bool IsRunnableInternal(const Robot& robot) const override final;
-  virtual bool IsRunnableReactionaryInternal(const Robot& robot) const = 0;
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const = 0;
   
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;

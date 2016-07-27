@@ -1,5 +1,5 @@
 /**
- * File: behaviorDistractedByFace.cpp
+ * File: behaviorAcknowledgeFace.cpp
  *
  * Author:  Andrew Stein
  * Created: 2016-06-16
@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorDistractedByFace.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -29,10 +29,10 @@
 namespace Anki {
 namespace Cozmo {
   
-BehaviorDistractedByFace::BehaviorDistractedByFace(Robot& robot, const Json::Value& config)
-: IBehaviorDistracted(robot, config)
+BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config)
+: IBehaviorPoseBasedAcknowledgement(robot, config)
 {
-  SetDefaultName("DistractedByFace");
+  SetDefaultName("AcknowledgeFace");
 
   SubscribeToTags({{
     EngineToGameTag::RobotObservedFace,
@@ -42,7 +42,7 @@ BehaviorDistractedByFace::BehaviorDistractedByFace(Robot& robot, const Json::Val
 }
   
   
-Result BehaviorDistractedByFace::InitInternal(Robot& robot)
+Result BehaviorAcknowledgeFace::InitInternal(Robot& robot)
 {
   TurnTowardsPoseAction* turnAction = new TurnTowardsFaceAction(robot, _targetFace, _params.maxTurnAngle_rad);
   turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
@@ -72,7 +72,7 @@ Result BehaviorDistractedByFace::InitInternal(Robot& robot)
 } // InitInternal()
   
 
-float BehaviorDistractedByFace::EvaluateScoreInternal(const Robot& robot) const
+float BehaviorAcknowledgeFace::EvaluateScoreInternal(const Robot& robot) const
 {
   // TODO: compute a score based on how much we want to get distracted by the current target object
   
@@ -80,13 +80,13 @@ float BehaviorDistractedByFace::EvaluateScoreInternal(const Robot& robot) const
 }
   
   
-bool BehaviorDistractedByFace::IsRunnableInternal(const Robot& robot) const
+bool BehaviorAcknowledgeFace::IsRunnableInternal(const Robot& robot) const
 {
   return _targetFace != Vision::UnknownFaceID;
 }
   
 
-void BehaviorDistractedByFace::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorAcknowledgeFace::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -99,7 +99,7 @@ void BehaviorDistractedByFace::HandleWhileNotRunning(const EngineToGameEvent& ev
       break;
 
     default:
-      PRINT_NAMED_ERROR("BehaviorDistractedByFace.HandleWhileNotRunning.InvalidTag",
+      PRINT_NAMED_ERROR("BehaviorAcknowledgeFace.HandleWhileNotRunning.InvalidTag",
                         "Received event with unhandled tag %hhu.",
                         event.GetData().GetTag());
       break;
@@ -107,7 +107,7 @@ void BehaviorDistractedByFace::HandleWhileNotRunning(const EngineToGameEvent& ev
 } // HandleWhileNotRunning()
   
   
-void BehaviorDistractedByFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
+void BehaviorAcknowledgeFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
 {
   Pose3d facePose( msg.pose );
   
@@ -149,11 +149,11 @@ void BehaviorDistractedByFace::HandleFaceObserved(const Robot& robot, const Exte
 } // HandleObjectObserved()
 
   
-void BehaviorDistractedByFace::HandleFaceDeleted(const Robot& robot, Vision::FaceID_t faceID)
+void BehaviorAcknowledgeFace::HandleFaceDeleted(const Robot& robot, Vision::FaceID_t faceID)
 {
   const bool faceRemoved = RemoveReactionData(faceID);
   if(faceRemoved) {
-    PRINT_NAMED_DEBUG("BehaviorDistractedByFace.HandleFaceDeleted",
+    PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.HandleFaceDeleted",
                       "Removing Face %d from reacted set because it was deleted",
                       faceID);
   }
