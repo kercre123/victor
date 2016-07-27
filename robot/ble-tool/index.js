@@ -85,6 +85,16 @@ factory.on('connected', function(interface) {
 			});
 		} else if (decoded instanceof Anki.Cozmo.HelloPhone) {
 			send(Anki.Cozmo.RobotInterface.EngineToRobot.Tag_helloRobotMessage, decoded)
+			
+			send(Anki.Cozmo.RobotInterface.EngineToRobot.Tag_setBackpackLights, {
+				lights: [
+					{ onColor: 0, offColor: 0 },
+					{ onColor: 0, offColor: 0x001F, onFrames: 10, offFrames: 10 },
+					{ onColor: 0, offColor: 0x001F << 5, onFrames: 10, offFrames: 10 },
+					{ onColor: 0, offColor: 0x001F << 10, onFrames: 10, offFrames: 10 },
+					{ onColor: 0, offColor: 0 }
+				]
+			});
 		}
 	});
 

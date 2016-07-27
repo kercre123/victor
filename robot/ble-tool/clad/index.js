@@ -45,7 +45,7 @@ function structure(ast, space) {
 			type = new types.ArrayType(type, member.array.size, index);
 		}
 
-		acc.push( { type: type, field: member.name } );
+		acc.push( { type: type, field: member.name, default: member.value } );
 		return acc;
 	}, []);
 
@@ -86,7 +86,7 @@ function structure(ast, space) {
 			struct.forEach((member) => {
 				var val = data[member.field];
 
-				member.type.serialize(val, buffer, offset);
+				member.type.serialize(val === undefined ? member['default'] : val, buffer, offset);
 				offset += member.type.getSize(val);
 			});
 

@@ -74,13 +74,10 @@ Cozmo.prototype.setKey = function (key) {
 }
 
 Cozmo.prototype.send = function (buffer) {
-  message = [];
-
+  // Frame our message
+  var message = [];
   for (var i = 0; i < buffer.length; i++) message.push(buffer[i]);
-
   message.unshift(message.length);
-
-
 
   // Pad out the message
   while (message.length % 16) { message.push(Math.random()*0x100 | 0) }
@@ -90,8 +87,6 @@ Cozmo.prototype.send = function (buffer) {
     message = aes.encode(this.key, message);
   }
   
-  this._packets = [];
-
   var packet = null;
   for (var i = 0; i < message.length; i += 16) {
     packet = Buffer.concat([
