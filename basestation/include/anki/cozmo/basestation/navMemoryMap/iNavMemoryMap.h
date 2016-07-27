@@ -68,6 +68,15 @@ public:
   // expected to provide support for merging other subclasses, but only other instances from the same
   // subclass
   virtual void Merge(const INavMemoryMap* other, const Pose3d& transform) = 0;
+
+  // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
+  // bounds keeps growing as Cozmo explores). Profiling+Performance required
+  // fills content regions of filledType that have borders with fillingType(s), converting the filledType region
+  // into withThisType content
+  void FillBorder(EContentType typeToReplace, const NavMemoryMapTypes::FullContentArray& neighborsToFillFrom, EContentType newTypeSet) {
+    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.FillBorder.CantFillExtraInfo");
+    FillBorderInternal(typeToReplace, neighborsToFillFrom, newTypeSet);
+  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -76,14 +85,15 @@ public:
   // check whether the given content types would have any borders at the moment. This method is expected to
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
   // whether a border exists, without requiring calculating all of them
-  virtual bool HasBorders(EContentType innerType, EContentType outerType) const = 0;
-  virtual bool HasBorders(EContentType innerType, const std::set<EContentType>& outerTypes) const = 0;
+  virtual bool HasBorders(EContentType innerType, const NavMemoryMapTypes::FullContentArray& outerTypes) const = 0;
   
   // retrieve the borders currently found in the map between the given types. This query is not const
   // so that the memory map can calculate and cache values upon being requested, rather than when
   // the map is modified. Function is expected to clear the vector before returning the new borders
-  virtual void CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders) = 0;
-  virtual void CalculateBorders(EContentType innerType, const std::set<EContentType>& outerTypes, BorderVector& outBorders) = 0;
+  virtual void CalculateBorders(EContentType innerType, const NavMemoryMapTypes::FullContentArray& outerTypes, BorderVector& outBorders) = 0;
+  
+  // checks if the given ray collides with the given types (any quad with that types)
+  virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const NavMemoryMapTypes::FullContentArray& types) const = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
@@ -100,8 +110,11 @@ protected:
   // add a quad with the specified additional content. Such content specifies the associated EContentType
   virtual void AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content) = 0;
   
-}; // class
+  // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
+  virtual void FillBorderInternal(EContentType typeToReplace, const NavMemoryMapTypes::FullContentArray& neighborsToFillFrom, EContentType newTypeSet) = 0;
   
+}; // class
+
 } // namespace
 } // namespace
 

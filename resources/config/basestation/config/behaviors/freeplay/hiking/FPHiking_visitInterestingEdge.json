@@ -1,0 +1,8 @@
+{
+  "behaviorType": "VisitInterestingEdge",
+  "name": "Hiking_VisitInterestingEdge",
+  "flatScore": 2.0,
+  "behaviorGroups": [
+    "FreeplayHiking"
+  ]
+}

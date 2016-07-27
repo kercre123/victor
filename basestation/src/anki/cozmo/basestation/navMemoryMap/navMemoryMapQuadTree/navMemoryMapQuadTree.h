@@ -26,6 +26,7 @@ class NavMemoryMapQuadTree : public INavMemoryMap
 public:
 
   using EContentType = NavMemoryMapTypes::EContentType;
+  using FullContentArray = NavMemoryMapTypes::FullContentArray;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
@@ -43,17 +44,21 @@ public:
   // subclass
   virtual void Merge(const INavMemoryMap* other, const Pose3d& transform) override;
   
+  // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
+  virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet) override;
+  
   // check whether the given content types would have any borders at the moment. This method is expected to
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
   // whether a border exists, without requiring calculating all of them
-  virtual bool HasBorders(EContentType innerType, EContentType outerType) const override;
-  virtual bool HasBorders(EContentType innerType, const std::set<EContentType>& outerTypes) const override;
+  virtual bool HasBorders(EContentType innerType, const FullContentArray& outerTypes) const override;
   
   // retrieve the borders currently found in the map between the given types. This query is not const
   // so that the memory map can calculate and cache values upon being requested, rather than when
   // the map is modified. Function is expected to clear the vector before returning the new borders
-  virtual void CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders) override;
-  virtual void CalculateBorders(EContentType innerType, const std::set<EContentType>& outerTypes, BorderVector& outBorders) override;
+  virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderVector& outBorders) override;
+  
+  // checks if the given ray collides with the given type (any quad with that type)
+  virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const override;
   
   // Draw/stop drawing the memory map
   virtual void Draw(size_t mapIdxHint) const override;

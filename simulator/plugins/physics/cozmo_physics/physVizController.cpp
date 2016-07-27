@@ -443,10 +443,37 @@ void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInt
   //      std::make_move_iterator(payload.quads.begin()),
   //      std::make_move_iterator(payload.quads.end())
   //    );
+  const size_t quadLimitPerId = 8192;
   const size_t newSize = dest.size() + payload.quads.size();
-  CORETECH_ASSERT( newSize <= 4096 ); // Debug set to a limit, no rationale on actual number.
-  dest.reserve( newSize );
-  dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
+  if( newSize <= quadLimitPerId ) {
+    dest.reserve( newSize );
+    dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
+  }
+  else
+  {
+    static int warningTimesLeft = 30;
+    if ( warningTimesLeft > 0 )
+    {
+      const size_t available = quadLimitPerId - dest.size();
+      const size_t asked     = payload.quads.size();
+      const size_t discarded = asked - available;
+      --warningTimesLeft;
+      dWebotsConsolePrintf("[PhysVizController] [WARNING] Too many quads for '%s'. Discarding %zu from %zu received in this message. (%d warnings left)\n",
+        payload.identifier.c_str(),
+        discarded,
+        asked,
+        warningTimesLeft );
+      if ( warningTimesLeft == 0 ) {
+        dWebotsConsolePrintf("[PhysVizController] [WARNING] Suppressing future warnings from quad excess\n");
+      }
+    }
+    dest.reserve( quadLimitPerId );
+    std::vector<VizInterface::SimpleQuad>::const_iterator payloadIt = payload.quads.begin();
+    while( (dest.size() < quadLimitPerId) && payloadIt != payload.quads.end() ) {
+      dest.emplace_back( *payloadIt );
+      ++payloadIt;
+    }
+  }
 }
 
 void PhysVizController::ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)

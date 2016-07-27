@@ -358,7 +358,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
           Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(objID, ObjectFamily::Charger));
           if( charger )
           {
-            charger->SetPoseToRobot(GetPose());
+            charger->SetPoseToRobot(GetPose(), GetBlockWorld());
           }
         }
       }

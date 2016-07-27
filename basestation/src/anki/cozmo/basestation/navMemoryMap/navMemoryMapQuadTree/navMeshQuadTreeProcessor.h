@@ -47,7 +47,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // set root
-  void SetRoot(const NavMeshQuadTreeNode* node) { _root = node; }
+  void SetRoot(NavMeshQuadTreeNode* node) { _root = node; }
 
   // notification when the content type changes for the given node
   void OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent);
@@ -66,6 +66,13 @@ public:
   // retrieve the borders for the given combination of content types
   void GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderVector& outBorders);
   
+  // returns true if the given ray collides with the given type (any quads of the given type)
+  bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const;
+  
+  // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
+  // region to the content type given (newContent)
+  void FillBorder(ENodeContentType filledType, ENodeContentTypePackedType fillingTypeFlags, const NodeContent& newContent);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -81,6 +88,7 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // each of the quad to quad waypoints of a border we find between node types
   struct BorderWaypoint {
     BorderWaypoint()
       : from(nullptr), to(nullptr), direction(EDirection::Invalid), isEnd(false), isSeed(false) {}
@@ -93,6 +101,7 @@ private:
     bool isSeed; // just a flag fore debugging. True if this waypoint was the first in a border
   };
   
+  // vector of waypoints that matched a specific combination of node types
   struct BorderCombination {
     using BorderWaypointVector = std::vector<BorderWaypoint>;
     BorderCombination() : dirty(true) {}
@@ -151,6 +160,17 @@ private:
   // checks if currently we have a node of innerType that would become a seed if we computed borders
   bool HasBorderSeed(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const;
   
+  // recalculate (if dirty) the borders for the given combination of content types
+  BorderCombination& RefreshBorderCombination(ENodeContentType innerType, ENodeContentTypePackedType outerTypes);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Collision checks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // checks if the given node or any of its children collides with the given ray and matches the type
+  bool HasCollisionRayWithTypes(const NavMeshQuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo,
+    ENodeContentTypePackedType types) const;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -171,13 +191,14 @@ private:
   NodeSetPerType _nodeSets;
   
   // borders detected in the last search for each combination of content types (inner + outer)
+  // the key is the combination of inner and outer types. See GetBorderTypeKey(...)
   BorderMap _bordersPerContentCombination;
   
   // used during process for easier/faster access to the proper combination
   BorderCombination* _currentBorderCombination;
   
   // pointer to the root of the tree
-  const NavMeshQuadTreeNode* _root;
+  NavMeshQuadTreeNode* _root;
   
   // true if there have been changes since last drawn
   mutable bool _contentGfxDirty;

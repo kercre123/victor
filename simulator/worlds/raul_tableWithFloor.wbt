@@ -3,7 +3,7 @@ CozmoWorldInfo {
 }
 Viewpoint {
   orientation 0.936375 -0.141518 -0.321207 0.879592
-  position -0.23719 -1.14621 1.28213
+  position -0.295211 -1.40146 1.73763
 }
 Can {
   translation -0.05473 0.136394 0.312
@@ -60,12 +60,12 @@ BlockWorldComms {
   filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
-  translation 0.13 0 0.25
+  translation 0.0533113 -0.0680171 0.25
   name "CozmoBot_1"
   filterLogs TRUE
 }
 WebotsKeyboardController {
-  behaviorName "ExploreLookAroundInPlace"
+  behaviorName "NoneBehavior"
   filterLogs TRUE
 }
 CozmoVizDisplay {

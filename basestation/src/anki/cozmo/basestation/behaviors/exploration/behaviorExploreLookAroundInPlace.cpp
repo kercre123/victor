@@ -44,10 +44,9 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
 {
   SetDefaultName("BehaviorExploreLookAroundInPlace");
 
-  SubscribeToTags({{
-    EngineToGameTag::RobotCompletedAction,
+  SubscribeToTags({
     EngineToGameTag::RobotPutDown
-  }});
+  });
   
   // parse all parameters now
   LoadConfig(config[kConfigParamsKey]);
@@ -109,6 +108,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax", debugName);
   _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection", debugName);
+  _configParams.behavior_ResetBodyFacingOnStart = ParseBool(config, "behavior_ResetBodyFacingOnStart", debugName);
   _configParams.behavior_ShouldLowerLift = ParseBool(config, "behavior_ShouldLowerLift", debugName);
   _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg", debugName);
   // scans before stop (only if there's an angle of focus)
@@ -168,6 +168,13 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   _behaviorBodyFacingDone_rad = 0;
   _coneSidesReached = 0;
   
+  // initial body direction is used to compare against the cone of focus. Demo behaviors always have a fixed cone
+  // in front of where the robot is putdown, but freeplay behaviors need to restart the cone with the current facing
+  if ( _configParams.behavior_ResetBodyFacingOnStart ) {
+    _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+  }
+  
+  // decide rotation direction at the beginning of the behavior if needed
   if( _configParams.behavior_ShouldResetTurnDirection ) {
     DecideTurnDirection();
   }
@@ -182,12 +189,6 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   }
 
   return Result::RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreLookAroundInPlace::StopInternal(Robot& robot)
-{
-  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -205,20 +206,6 @@ void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& eve
       break;
     }
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorExploreLookAroundInPlace::UpdateInternal(Robot& robot)
-{
-  // while we are acting
-  if ( IsActing() )
-  {
-    return Status::Running;
-  }
-  
-  // done
-  Status retval = Status::Complete;
-  return retval;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -440,6 +427,10 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   }
   else
   {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(),
+      "Done %.2f deg so far",
+      fabsf((float)RAD_TO_DEG(_behaviorBodyFacingDone_rad)));
+    
     // no cone of focus
     // while not completed a whole turn start another iteration
     const bool hasDone360 = fabsf(_behaviorBodyFacingDone_rad) >= 2*PI;

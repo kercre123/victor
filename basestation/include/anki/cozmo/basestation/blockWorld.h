@@ -84,6 +84,9 @@ namespace Anki
                                ActiveObjectType activeObjectType,
                                const ObservableObject* objToCopyId = nullptr);
       
+      // notify the blockWorld that someone has changed the pose of an object
+      void OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family, const Pose3d& pose, ActionableObject::PoseState newPoseState);
+	  
       // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
       // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
       // is not a zombie even if it doesn't have any cubes yet.
@@ -305,7 +308,10 @@ namespace Anki
       INavMemoryMap* GetNavMemoryMap();
       
       // update memory map
-      void UpdateNavMemoryMap();      
+      void UpdateNavMemoryMap();
+      
+      // flags any interesting edges in the given quad as not interesting anymore. Quad should be passed wrt current origin
+      void FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin);
 
       // create a new memory map from current robot frame of reference. The pointer is used as an identifier
       void CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr);
@@ -460,6 +466,9 @@ namespace Anki
       
       // adds edges from the given frame to the world info
       Result AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
+      
+      // review interesting edges within the given quad and decide whether they are still interesting
+      void ReviewInterestingEdges(const Quad2f& withinQuad);
       
       //
       // Member Variables

@@ -32,6 +32,28 @@ CONSOLE_VAR(float, kEcDistanceMaxWidthFactor, "BehaviorExploreCliff", 0.35f); //
 CONSOLE_VAR(bool, kEcDrawDebugInfo, "BehaviorExploreCliff", true); // if set to true the behavior renders debug privimitives
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
+// This is the configuration of memory map types that this behavior checks against. If a type
+// is set to true, it means that if they are a border to a cliff, we will explore that cliff
+constexpr NavMemoryMapTypes::FullContentArray typesToExploreFrom =
+{
+  {NavMemoryMapTypes::EContentType::Unknown             , true },
+  {NavMemoryMapTypes::EContentType::ClearOfObstacle     , true },
+  {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCube        , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCharger     , false},
+  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, false},
+  {NavMemoryMapTypes::EContentType::Cliff               , false},
+  {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
+  {NavMemoryMapTypes::EContentType::NotInterestingEdge  , false}
+};
+static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToExploreFrom),
+  "This array does not define all types once and only once.");
+  
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreCliff::BehaviorExploreCliff(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _currentActionTag(ActionConstants::INVALID_TAG)
@@ -54,15 +76,10 @@ bool BehaviorExploreCliff::IsRunnableInternal(const Robot& robot) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
-    // should not happen in prod, but at the moment it's null in master
     return false;
   }
   
-  std::set<NavMemoryMapTypes::EContentType> validBoderEdges;
-  validBoderEdges.insert( NavMemoryMapTypes::EContentType::Unknown );
-  validBoderEdges.insert( NavMemoryMapTypes::EContentType::ClearOfObstacle );
-  
-  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::Cliff, validBoderEdges);
+  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::Cliff, typesToExploreFrom);
   return hasBorders;
 }
   
@@ -176,14 +193,10 @@ void BehaviorExploreCliff::PickGoals(Robot& robot, BorderScoreVector& outGoals) 
   
   outGoals.clear();
 
-  std::set<NavMemoryMapTypes::EContentType> validBoderEdges;
-  validBoderEdges.insert( NavMemoryMapTypes::EContentType::Unknown );
-  validBoderEdges.insert( NavMemoryMapTypes::EContentType::ClearOfObstacle );
-
   // grab borders
   INavMemoryMap::BorderVector borders;
   INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::Cliff, validBoderEdges, borders);
+  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::Cliff, typesToExploreFrom, borders);
   if ( !borders.empty() )
   {
     outGoals.reserve(kEcMaxBorderGoals);

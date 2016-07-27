@@ -3,8 +3,8 @@ CozmoWorldInfo {
 }
 Viewpoint {
   fieldOfView 0.8
-  orientation 1 0 0 0.56
-  position 0 -0.55 0.84
+  orientation 0.992672 0.0397281 0.114121 0.67458
+  position 0.148978 -1.11845 1.50382
 }
 Background {
   skyColor [
@@ -16,9 +16,11 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+  xSize 0.1
+  ySize 0.1
 }
 DEF CozmoViz_1 CozmoBot {
-  translation 0 1 0
+  translation 0 0.2 0
   name "CozmoBot_1"
   filterLogs TRUE
   vizMode TRUE
@@ -27,7 +29,6 @@ DEF WorldComms BlockWorldComms {
   filterLogs TRUE
 }
 CozmoVizDisplay {
-  moodViz TRUE
   behaviorSelectionViz TRUE
   filterLogs TRUE
 }

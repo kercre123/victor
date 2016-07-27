@@ -9,13 +9,17 @@
  * Copyright: Anki, Inc. 2015
  **/
 #include "navMemoryMapTypes.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
 namespace NavMemoryMapTypes {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ExpectsAdditionalData(EContentType type)
 {
+  ASSERT_NAMED(type != EContentType::_Count, "NavMemoryMapTypes.ExpectsAdditionalData.UsingControlTypeIsNotAllowed");
+  
   // using switch to force at compilation type to decide on new types
   switch(type)
   {
@@ -23,8 +27,10 @@ bool ExpectsAdditionalData(EContentType type)
     case EContentType::ClearOfObstacle:
     case EContentType::ClearOfCliff:
     case EContentType::ObstacleCube:
+    case EContentType::ObstacleCharger:
     case EContentType::ObstacleUnrecognized:
     case EContentType::InterestingEdge:
+    case EContentType::NotInterestingEdge:
     {
       return false;
     }
@@ -32,6 +38,11 @@ bool ExpectsAdditionalData(EContentType type)
     case EContentType::Cliff:
     {
       return true;
+    }
+    
+    case EContentType::_Count:
+    {
+      return false;
     }
   }
 }

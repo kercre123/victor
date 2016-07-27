@@ -36,9 +36,11 @@ enum class ENodeContentType : uint8_t {
   ClearOfObstacle,      // what we know about the node is clear (could be partial info)
   ClearOfCliff,         // what we know about the node is clear (could be partial info)
   ObstacleCube,         // we have seen an obstacle in part of the node and we know the obstacle was a cube
+  ObstacleCharger,      // we have seen a charger in part of the node
   ObstacleUnrecognized, // we have seen an obstacle in part of the node but we don't know what it is
   Cliff,                // we have seen a cliff in part of the node
-  InterestingEdge,           // we have seen a vision edge
+  InterestingEdge,      // we have seen a vision edge and it's interesting
+  NotInterestingEdge,   // we have visited an interesting edge, so it's not interesting anymore
 };
 
 // variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag

@@ -150,7 +150,7 @@
 //
 //          "scoreBonusForCurrentBehavior" : {
 //            "nodes" : [
-//              { "x" :   0.0, "y" :  0.0 }
+//              { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
 //            ]
 //          }
 //        }

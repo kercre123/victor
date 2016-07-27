@@ -65,9 +65,9 @@ Quad3f NavMeshQuadTreeNode::MakeQuad() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
+Quad2f NavMeshQuadTreeNode::MakeQuadXY(const float padding_mm) const
 {
-  const float halfLen = _sideLen * 0.5f;
+  const float halfLen = (_sideLen * 0.5f) + padding_mm;
   Quad2f ret
   {
     {_center.x()+halfLen, _center.y()+halfLen}, // up L
@@ -76,6 +76,22 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
     {_center.x()-halfLen, _center.y()-halfLen}  // lo R
   };
   return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::unique_ptr<NavMeshQuadTreeNode>& NavMeshQuadTreeNode::GetChildAt(size_t index) const
+{
+  if ( index < _childrenPtr.size() ) {
+    return _childrenPtr[index];
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("NavMeshQuadTreeNode.GetChildAt.InvalidIndex",
+      "Index %zu is greater than number of children %zu. Returning null",
+      index, _childrenPtr.size());
+    static std::unique_ptr<NavMeshQuadTreeNode> nullPtr;
+    return nullPtr;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -229,9 +245,11 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case ENodeContentType::ClearOfObstacle     : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
       case ENodeContentType::ClearOfCliff        : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentType::ObstacleCube        : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
+      case ENodeContentType::ObstacleCharger     : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
       case ENodeContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
       case ENodeContentType::Cliff               : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentType::InterestingEdge          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
+      case ENodeContentType::InterestingEdge     : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
+      case ENodeContentType::NotInterestingEdge  : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
     }
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
@@ -318,8 +336,30 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
   // we don't want to override a recognized marked cube or a cliff with their own border
   if ( newContentType == ENodeContentType::InterestingEdge ) {
     if ( ( _content.type == ENodeContentType::ObstacleCube         ) ||
+         ( _content.type == ENodeContentType::ObstacleCharger      ) ||
          ( _content.type == ENodeContentType::ObstacleUnrecognized ) ||
-         ( _content.type == ENodeContentType::Cliff                ) )
+         ( _content.type == ENodeContentType::Cliff                ) ||
+         ( _content.type == ENodeContentType::NotInterestingEdge   ) )
+    {
+      return false;
+    }
+  }
+  
+  // NotInterestingEdge can only override interesting edges
+  if ( newContentType == ENodeContentType::NotInterestingEdge ) {
+    if ( _content.type != ENodeContentType::InterestingEdge ) {
+      return false;
+    }
+  }
+  
+  // NotInterestingEdge should not be overriden by clearOfObstacle or interesting edge. This is probably conservative,
+  // but the way interesting edges are currently added to the map would totally destroy non-interesting ones
+  // rsam: an improved versino could be to chek that it's a total overlap for ClearOfObstacle. Behaviors could
+  // also check that one interesting border very close to not interesting ones should probably be considered not
+  // interesting. This is probably necessary anyway due to the errors in visualization/localization
+  if ( _content.type == ENodeContentType::NotInterestingEdge ) {
+    if ( (newContentType == ENodeContentType::InterestingEdge) ||
+         (newContentType == ENodeContentType::ClearOfObstacle) )
     {
       return false;
     }

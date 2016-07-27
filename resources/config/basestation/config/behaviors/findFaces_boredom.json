@@ -70,6 +70,7 @@
   "params":
   {
     "behavior_ShouldResetTurnDirection": true,
+    "behavior_ResetBodyFacingOnStart": true,
     "behavior_ShouldLowerLift": true,
     "behavior_DistanceFromRecentLocationMin_mm": 100.0,
     "behavior_RecentLocationsMax": 1,

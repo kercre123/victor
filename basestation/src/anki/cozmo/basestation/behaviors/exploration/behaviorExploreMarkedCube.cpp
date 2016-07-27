@@ -29,6 +29,28 @@ CONSOLE_VAR(float, kEmcDistanceMaxFactor, "BehaviorExploreMarkedCube", 4.0f); //
 CONSOLE_VAR(bool, kEmcDrawDebugInfo, "BehaviorExploreMarkedCube", false); // if set to true the behavior renders debug privimitives
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
+// This is the configuration of memory map types that this behavior checks against. If a type
+// is set to true, it means that if they are a border to a marked cube, we will explore that marked cube
+constexpr NavMemoryMapTypes::FullContentArray typesToExploreFrom =
+{
+  {NavMemoryMapTypes::EContentType::Unknown             , true },
+  {NavMemoryMapTypes::EContentType::ClearOfObstacle     , false},
+  {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCube        , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCharger     , false},
+  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, false},
+  {NavMemoryMapTypes::EContentType::Cliff               , false},
+  {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
+  {NavMemoryMapTypes::EContentType::NotInterestingEdge  , false}
+};
+static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToExploreFrom),
+  "This array does not define all types once and only once.");
+  
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _currentActionTag(ActionConstants::INVALID_TAG)
@@ -51,10 +73,9 @@ bool BehaviorExploreMarkedCube::IsRunnableInternal(const Robot& robot) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
-    // should not happen in prod, but at the moment it's null in master
     return false;
   }
-  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown);
+  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::ObstacleCube, typesToExploreFrom);
   return hasBorders;
 }
   
@@ -171,7 +192,7 @@ void BehaviorExploreMarkedCube::PickGoals(Robot& robot, BorderScoreVector& outGo
   // grab borders
   INavMemoryMap::BorderVector borders;
   INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, NavMemoryMapTypes::EContentType::Unknown, borders);
+  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, typesToExploreFrom, borders);
   if ( !borders.empty() )
   {
     outGoals.reserve(kEmcMaxBorderGoals);

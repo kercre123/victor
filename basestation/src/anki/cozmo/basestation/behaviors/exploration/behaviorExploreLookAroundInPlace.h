@@ -75,8 +75,6 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result InitInternal(Robot& robot) override;
-  virtual IBehavior::Status UpdateInternal(Robot& robot) override;
-  virtual void StopInternal(Robot& robot) override;
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,7 +103,8 @@ private:
   {
     float   behavior_DistanceFromRecentLocationMin_mm;
     uint8_t behavior_RecentLocationsMax;
-    bool    behavior_ShouldResetTurnDirection;
+    bool    behavior_ShouldResetTurnDirection; // if true, a new clock direction is picked every run, otherwise picked once and locked
+    bool    behavior_ResetBodyFacingOnStart; // this is required for general usage, but demo behaviors do it only on putDown
     bool    behavior_ShouldLowerLift;
     float   behavior_AngleOfFocus_deg;
     uint8_t behavior_NumberOfScansBeforeStop; // if 0 it will loop as long as it's not kicked out

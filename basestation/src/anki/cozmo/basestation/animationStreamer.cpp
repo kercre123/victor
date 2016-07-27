@@ -971,7 +971,7 @@ namespace Cozmo {
     
     RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
     size_t endMsgSize = endMsg.Size();
-    lastResult = robot.SendMessage(std::move(endMsg));
+    lastResult = robot.SendMessage(endMsg);
     if(lastResult != RESULT_OK) { return lastResult; }
     _endOfAnimationSent = true;
     _startOfAnimationSent = false;

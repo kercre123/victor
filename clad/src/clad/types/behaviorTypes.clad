@@ -39,6 +39,7 @@ enum uint_8 BehaviorType {
   ExploreBringCubeToBeacon,
   ExploreLookAroundInPlace,
   ExploreVisitPossibleMarker,
+  VisitInterestingEdge,
   RequestGameSimple,
   RollBlock,
   StackBlocks,

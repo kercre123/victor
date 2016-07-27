@@ -17,6 +17,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -223,7 +224,9 @@ void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::
       // Print 'no more vizBots' message. Just once.
       static bool printedNoMoreVizBots = false;
       if (!printedNoMoreVizBots) {
-        printf("WARNING: RobotID %d not registered. No more available Viz bots. Add more to world file!\n", robotID);
+        PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizSetRobotMessage",
+          "RobotID %d not registered. No more available Viz bots. Add more to world file!",
+          robotID);
         printedNoMoreVizBots = true;
       }
       return;

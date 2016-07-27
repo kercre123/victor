@@ -68,9 +68,51 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", true); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
-CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // kDebugRenderOverheadEdges: enables/disables debug render
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper namespace
+namespace {
 
+// return the content type we would set in the memory type for each object family
+NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family)
+{
+  using ContentType = NavMemoryMapTypes::EContentType;
+  ContentType retType = ContentType::Unknown;
+  switch(family)
+  {
+    case ObjectFamily::Block:
+    case ObjectFamily::LightCube:
+      retType = ContentType::ObstacleCube;
+      break;
+    case ObjectFamily::Charger:
+      retType = ContentType::ObstacleCharger;
+      break;
+    case ObjectFamily::Invalid:
+    case ObjectFamily::Unknown:
+    case ObjectFamily::Ramp:
+    case ObjectFamily::Mat:
+    case ObjectFamily::MarkerlessObject:
+    case ObjectFamily::CustomObject:
+    break;
+  };
+
+  return retType;
+}
+
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// CONSOLE VARS
+
+CONSOLE_VAR(bool, kEnableMemoryMap, "BlockWorld.MemoryMap", true); // kEnableMemoryMap: if set to true Cozmo creates/uses memory maps
+CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MemoryMap", false); // kDebugRenderOverheadEdges: enables/disables debug render
+
+// how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
+CONSOLE_VAR(float, kMemoryMapRenderRate_sec, "BlockWorld.MemoryMap", 0.25f);
+
+// if set to true, interesting edges are reviewed after adding new ones to see whether they are still interesting
+CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges", true);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
@@ -637,7 +679,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     }
     
     // if memory maps are enabled, we can merge old into new
-    if ( kEnableMapMemory )
+    if ( kEnableMemoryMap )
     {
       // oldOrigin is the pointer/id of the current map
       // worldOrigin is the pointer/id of the map we can merge into/from
@@ -666,6 +708,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
   {
+    // current map (if any) must match current robot origin
+    ASSERT_NAMED( (_currentNavMemoryMapOrigin == nullptr) || (_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin),
+      "BlockWorld.GetNavMemoryMap.BadOrigin");
+    
     const INavMemoryMap* curMap = nullptr;
     if ( nullptr != _currentNavMemoryMapOrigin ) {
       auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
@@ -838,10 +884,20 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
+  {
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    if( currentNavMemoryMap )
+    {
+      currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMemoryMap::EContentType::NotInterestingEdge);
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr)
   {
     // can disable the feature completely
-    if ( !kEnableMapMemory ) {
+    if ( !kEnableMemoryMap ) {
       return;
     }
 
@@ -882,7 +938,17 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
   {
     if(ANKI_DEV_CHEATS)
     {
-      if ( _isNavMemoryMapRenderEnabled ) {
+      if ( _isNavMemoryMapRenderEnabled )
+      {
+        // check refresh rate
+        static f32 nextDrawTimeStamp = 0;
+        const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        if ( nextDrawTimeStamp > currentTimeInSeconds ) {
+          return;
+        }
+        // we are rendering reset refresh time
+        nextDrawTimeStamp = currentTimeInSeconds + kMemoryMapRenderRate_sec;
+     
         size_t lastIndexNonCurrent = 0;
       
         // rendering all current maps with indexHint
@@ -1232,8 +1298,15 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       // is in the current world frame.
       INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
       if ( nullptr != currentNavMemoryMap ) {
-        currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(observedObject->GetPose().GetWithRespectToOrigin()),
-                                     INavMemoryMap::EContentType::ObstacleCube);
+        // add bounding quad with type from family
+        NavMemoryMapTypes::EContentType contentType = ObjectFamilyToMemoryMapContentType(inFamily);
+        if ( contentType != NavMemoryMapTypes::EContentType::Unknown ) {
+          currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(observedObject->GetPose().GetWithRespectToOrigin()),
+                                      contentType);
+        } else {
+          PRINT_NAMED_WARNING("BlockWorld.UnsuportedFamilyInMemoryMap",
+            "Family %s is not known in the memory map. Is this expected?", EnumToString(inFamily));
+        }
       }
       
       _didObjectsChange = true;
@@ -2503,6 +2576,54 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     }
   
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family, const Pose3d& pose, ActionableObject::PoseState newPoseState)
+    {
+      ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
+      
+
+      INavMemoryMap* const currentNavMemoryMap = GetNavMemoryMap();
+      if( nullptr == currentNavMemoryMap ) {
+        return;
+      }
+      
+      // if this family is not stored in the memory map, inform about it (probably not a warning)
+      NavMemoryMapTypes::EContentType contentType = ObjectFamilyToMemoryMapContentType(family);
+      if ( contentType == NavMemoryMapTypes::EContentType::Unknown ) {
+        PRINT_CH_INFO("BlockWorld",
+          "BlockWorld.OnObjectPoseChanged.NonMapFamily",
+          "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
+        return;
+      }
+      
+      // if the pose is switching to known
+      if ( newPoseState == ActionableObject::PoseState::Known )
+      {
+        // find the object
+        const ObservableObject* object = GetObjectByID(objectID, family);
+        if ( object )
+        {
+          ASSERT_NAMED(object->IsPoseStateKnown(), "BlockWorld.OnObjectPoseChanged.PoseStateMismatch");
+          
+          // get bounding quad wrt current origin
+          Pose3d poseWRTWorld;
+          if ( object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), poseWRTWorld) )
+          {
+            const Quad2f& bquad = object->GetBoundingQuadXY(poseWRTWorld);
+            currentNavMemoryMap->AddQuad(bquad, contentType);
+          }
+          else
+          {
+            PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.InvalidPose", "Could not get %d's pose WRT current world!", objectID.GetValue());
+          }
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.NotFound", "Object ID %d not found in blockworld", objectID.GetValue());
+        }
+      }
+    }
+  
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
     {
       // really, pass in an origin
@@ -2563,6 +2684,46 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
       
     } // anonymous namespace
+  
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BlockWorld::ReviewInterestingEdges(const Quad2f& withinQuad)
+    {
+      // Note: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
+      // modifications. Leave here for legacy purposes. We surely enable it soon, because performance needs
+      // improvement
+
+      // check if merge is enabled
+      if ( !kReviewInterestingEdges ) {
+        return;
+      }
+      
+      // ask the memory map to do the merge
+      // some implementations make require parameters like max distance to merge, but for now trust continuity
+      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      if( currentNavMemoryMap )
+      {
+        using ContentType = INavMemoryMap::EContentType;
+        
+        // interesting edges adjacent to any of these types will be deemed not interesting
+        constexpr NavMemoryMapTypes::FullContentArray typesWhoseEdgesAreNotInteresting =
+        {
+          {NavMemoryMapTypes::EContentType::Unknown             , false},
+          {NavMemoryMapTypes::EContentType::ClearOfObstacle     , false},
+          {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
+          {NavMemoryMapTypes::EContentType::ObstacleCube        , true },
+          {NavMemoryMapTypes::EContentType::ObstacleCharger     , true },
+          {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, true },
+          {NavMemoryMapTypes::EContentType::Cliff               , false},
+          {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
+          {NavMemoryMapTypes::EContentType::NotInterestingEdge  , true }
+        };
+        static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesWhoseEdgesAreNotInteresting),
+          "This array does not define all types once and only once.");
+
+        // fill border in memory map
+        currentNavMemoryMap->FillBorder(ContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, ContentType::NotInterestingEdge);
+      }
+    }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
@@ -2579,6 +2740,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       {
         return RESULT_OK;
       }
+      const float kDebugRenderOverheadEdgesZ_mm = 31.0f;
 
       // grab the robot pose at the timestamp of this frame
       TimeStamp_t t;
@@ -2591,8 +2753,16 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         return RESULT_FAIL;
       }
       
-      ASSERT_NAMED(false, "Needs COZMO-2892");
-      const Pose3d& observedPose = p->GetPose();
+      // If we can't transfor the observedPose to the current origin, it's ok, that means that the timestamp
+      // for the edges we just received is from before delocalizing, so we should discard it.
+      Pose3d observedPose;
+      if ( !p->GetPose().GetWithRespectTo( *_robot->GetWorldOrigin(), observedPose) ) {
+        PRINT_CH_INFO("BlockWorld",
+          "BlockWorld.AddVisionOverheadEdges.NotInThisWorld",
+          "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
+        return RESULT_OK;
+      }
+      
       const Point3f& cameraOrigin = observedPose.GetTranslation();
       
       // Ideally we would do clamping with quad in robot coordinates, but this is an optimization to prevent
@@ -2613,7 +2783,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       
       // TODO reserve some quads in each vector (what makes sense?)
       std::vector<Quad2f> visionQuadsClear;
-      std::vector<Quad2f> visionQuadsWithBorders;
+      std::vector<Quad2f> visionQuadsWithInterestingBorders;
       for( const auto& chain : frameInfo.chains )
       {
 
@@ -2621,14 +2791,13 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         if ( kDebugRenderOverheadEdges )
         {
 //          VizManager* vizManager = _robot->GetContext()->GetVizManager();
-//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, 3.0f, NamedColors::CYAN, false);
+//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, kDebugRenderOverheadEdgesZ_mm, NamedColors::CYAN, false);
           
           // renders every segment reported by vision
           for (size_t i=0; i<chain.points.size()-1; ++i)
           {
-            const float z = 4.0f;
-            Point3f start = EdgePointToPoint3f(chain.points[i], observedPose, z);
-            Point3f end   = EdgePointToPoint3f(chain.points[i+1], observedPose, z);
+            Point3f start = EdgePointToPoint3f(chain.points[i], observedPose, kDebugRenderOverheadEdgesZ_mm);
+            Point3f end   = EdgePointToPoint3f(chain.points[i+1], observedPose, kDebugRenderOverheadEdgesZ_mm);
             ColorRGBA color = ((i%2) == 0) ? NamedColors::YELLOW : NamedColors::ORANGE;
             VizManager* vizManager = _robot->GetContext()->GetVizManager();
             vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false);
@@ -2637,93 +2806,184 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
 
         ASSERT_NAMED(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
         
-        // iterate the chain merging points together
-        Point3f segmentStart = EdgePointToPoint3f(chain.points[0], observedPose);
-        Point3f segmentEnd   = EdgePointToPoint3f(chain.points[1], observedPose);
-        Vec3f segmentNormal  = (segmentEnd-segmentStart);
-        segmentNormal.MakeUnitLength();
-        size_t curIdx = 2;
-        bool doneWithChain = false;
+        // when we are processing a non-edge chain, points can be discarded. Variables to track segments
+        bool hasValidSegmentStart = false;
+        Point3f segmentStart;
+        bool hasValidSegmentEnd   = false;
+        Point3f segmentEnd;
+        Vec3f segmentNormal;
+        size_t curPointInChainIdx = 0;
         do
         {
-          // epsilon to merge points into the same edge segment. If adding a point to a segment creates
-          // a deviation with respect to the first direction of the segment bigger than this epsilon,
-          // then the point will not be added to that segment
-          // cos(10deg) = 0.984807...
-          // cos(20deg) = 0.939692...
-          // cos(30deg) = 0.866025...
-          // cos(40deg) = 0.766044...
-          const float kDotBorderEpsilon = 0.7660f;
-        
           // get candidate point to merge into previous segment
-          Point3f candidateEnd = EdgePointToPoint3f(chain.points[curIdx], observedPose);
-          Vec3f candidateNormal = candidateEnd - segmentEnd;
-          candidateNormal.MakeUnitLength();
+          Point3f candidate3D = EdgePointToPoint3f(chain.points[curPointInChainIdx], observedPose);
           
-          // check if can be merged
-          const float dotProduct = DotProduct(segmentNormal, candidateNormal);
-          bool canMergePoint = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
-          if ( canMergePoint )
+          // this is to prevent vision clear quads that cross an object from clearing that object. This could be
+          // optimized by passing in a flag to AddQuad that tells the QuadTree that it should not override
+          // these types. However, if we have not seen an edge, and we crossed an object, it can potentially clear
+          // behind that object, which is equaly wrong. Ideally, HasCollisionWithRay would provide the closest
+          // collision point to "from", so that we can clear up to that point, and discard any information after.
+          // Consider that in the future if performance-wise it's ok top have these checks here, and the memory
+          // map can efficiently figure out the order in which to check for collision (there's a fast check
+          // I can think of that involves simply knowing from which quadrant the ray starts)
+          
+          // check line towards candidate point
+          const Vec2f& rayFrom  = cameraOrigin;
+          const Vec2f& rayTo    = candidate3D;
+      
+          // these are types that if the ray crosses them, we should have seen a border. The fact that
+          // we didn't see the border is not proof that the object is not there. Ideally that's exactly
+          // what we would want to deduct, but we can't trust failure to detect edges so reliably
+          constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfo =
           {
-            // it can, advance to next
-            segmentEnd = candidateEnd;
-            segmentNormal = candidateNormal;
-          }
-          else
-          {
-            // can't merge the point, add current segment and restart
-            Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
-            ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
-            if ( success ) {
-              visionQuadsClear.emplace_back(clearQuad);
-            }
-            if ( chain.isBorder ) {
-              Vec3f segStartDepthDir = (segmentStart - cameraOrigin);
-              segStartDepthDir.MakeUnitLength();
-              Vec3f segEndDepthDir = (segmentEnd - cameraOrigin);
-              segEndDepthDir.MakeUnitLength();
-              // TL, BL, TR, BR
-              Quad2f borderQuad = { segmentStart + segStartDepthDir*kBorderDepth, segmentStart,
-                                    segmentEnd   + segEndDepthDir*kBorderDepth,   segmentEnd };
-              visionQuadsWithBorders.emplace_back(borderQuad);
-            }
+            {NavMemoryMapTypes::EContentType::Unknown             , false},
+            {NavMemoryMapTypes::EContentType::ClearOfObstacle     , false},
+            {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
+            {NavMemoryMapTypes::EContentType::ObstacleCube        , true },
+            {NavMemoryMapTypes::EContentType::ObstacleCharger     , true },
+            {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, true },
+            {NavMemoryMapTypes::EContentType::Cliff               , false},
+            {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
+            {NavMemoryMapTypes::EContentType::NotInterestingEdge  , false}
+          };
+          static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfo),
+            "This array does not define all types once and only once.");
             
-            // restart
-            segmentStart = segmentEnd; // segmentEnd becomes the new start
-            segmentEnd = candidateEnd; // candidateEnd becomes the new end
-            segmentNormal = segmentEnd-segmentStart;
-            segmentNormal.MakeUnitLength();
-          }
+          const bool crossesObject = currentNavMemoryMap->HasCollisionRayWithTypes(rayFrom , rayTo, typesThatOccludeValidInfo);
           
-          // we are done if this point is the last one
-          doneWithChain = (curIdx == chain.points.size()-1);
-          if ( doneWithChain )
-          {
-            Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
-            ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
-            if ( success ) {
-              visionQuadsClear.emplace_back(clearQuad);
-            }
-            if ( chain.isBorder ) {
-              Vec3f segStartDepthDir = (segmentStart - cameraOrigin);
-              segStartDepthDir.MakeUnitLength();
-              Vec3f segEndDepthDir = (segmentEnd - cameraOrigin);
-              segEndDepthDir.MakeUnitLength();
-              // TL, BL, TR, BR
-              Quad2f borderQuad = { segmentStart + segStartDepthDir*kBorderDepth, segmentStart,
-                                    segmentEnd   + segEndDepthDir*kBorderDepth,   segmentEnd };
-              visionQuadsWithBorders.emplace_back(borderQuad);
-            }
-          }
-          else
-          {
-            // not done, move to next point
-            ++curIdx;
-          }
+          // if we cross an object, ignore this point, regardless of whether we saw a border or not
+          // this is because if we are crossing an object, chances are we are seeing its border, of we should have,
+          // so the info is more often disrupting than helpful
+          bool isValidPoint = !crossesObject;
           
-        } while (!doneWithChain);
+          // this flag is set by a point that can't merge into the previous segment and wants to start one
+          // on its own
+          bool shouldCreateNewSegment = false;
+
+          // valid points have to be checked to see what to do with them
+          if ( isValidPoint )
+          {
+            // this point is valid, check whether:
+            // a) it's the first of a segment
+            // b) it's the second of a segment, which defines the normal of the running segment
+            // c) it can be merged into a running segment
+            // d) it can't be merged into a running segment
+            if ( !hasValidSegmentStart )
+            {
+              // it's the first of a segment
+              segmentStart = candidate3D;
+              hasValidSegmentStart = true;
+            }
+            else if ( !hasValidSegmentEnd )
+            {
+              // it's the second of a segment (defines normal)
+              segmentEnd = candidate3D;
+              hasValidSegmentEnd = true;
+              // calculate normal now
+              segmentNormal = (segmentEnd-segmentStart);
+              segmentNormal.MakeUnitLength();
+            }
+            else
+            {
+              // there's a running segment already, check if we can merge into it
+        
+              // epsilon to merge points into the same edge segment. If adding a point to a segment creates
+              // a deviation with respect to the first direction of the segment bigger than this epsilon,
+              // then the point will not be added to that segment
+              // cos(10deg) = 0.984807...
+              // cos(20deg) = 0.939692...
+              // cos(30deg) = 0.866025...
+              // cos(40deg) = 0.766044...
+              const float kDotBorderEpsilon = 0.7660f;
+        
+              // calculate the normal that this candidate would have with respect to the previous point
+              Vec3f candidateNormal = candidate3D - segmentEnd;
+              candidateNormal.MakeUnitLength();
+          
+              // check the dot product of that normal with respect to the running segment's normal
+              const float dotProduct = DotProduct(segmentNormal, candidateNormal);
+              bool canMerge = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
+              if ( canMerge )
+              {
+                // it can merge into the previous point because the angle between the running normal and the new one
+                // is within the threshold. Make this point the new end and update the running normal
+                segmentEnd = candidate3D;
+                segmentNormal = candidateNormal;
+              }
+              else
+              {
+                // it can't merge into the previous segment, set the flag that we want a new segment
+                shouldCreateNewSegment = true;
+              }
+            }
+          }
+
+          // should we send the segment we have so far as a quad to the memory map?
+          const bool isLastPoint = (curPointInChainIdx == (chain.points.size()-1));
+          const bool sendSegmentToMap = shouldCreateNewSegment || isLastPoint || !isValidPoint;
+          if ( sendSegmentToMap )
+          {
+            // check if we have a valid segment so far
+            const bool isValidSegment = hasValidSegmentStart && hasValidSegmentEnd;
+            if ( isValidSegment )
+            {
+              // we have a valid segment add clear from camera to segment
+              Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
+              bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+              ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
+              if ( success ) {
+                visionQuadsClear.emplace_back(clearQuad);
+              }
+              // if it's a detected border, add from segment on with kBorderDepth
+              if ( chain.isBorder ) {
+                Vec3f segStartDepthDir = (segmentStart - cameraOrigin);
+                segStartDepthDir.MakeUnitLength();
+                Vec3f segEndDepthDir = (segmentEnd - cameraOrigin);
+                segEndDepthDir.MakeUnitLength();
+                // TL, BL, TR, BR
+                Quad2f borderQuad = { segmentStart + segStartDepthDir*kBorderDepth, segmentStart,
+                                      segmentEnd   + segEndDepthDir*kBorderDepth  ,   segmentEnd };
+                visionQuadsWithInterestingBorders.emplace_back(borderQuad);
+              }
+            }
+            // else { not enough points in the segment to send. That's ok, just do not send }
+            
+            // if it was a valid point but could not merge, it wanted to start a new segment
+            if ( shouldCreateNewSegment )
+            {
+              // if we can reuse the last point from the previous segment
+              if ( hasValidSegmentEnd )
+              {
+                // then that one becomes the start
+                // and we become the end of the new segment
+                segmentStart = segmentEnd;
+                hasValidSegmentStart = true;
+                segmentEnd = candidate3D;
+                hasValidSegmentEnd = true;
+                // and update normal for this new segment
+                segmentNormal = (segmentEnd-segmentStart);
+                segmentNormal.MakeUnitLength();
+              }
+              else
+              {
+                // need to create a new segment, and there was not a valid one previously
+                // this should be impossible, since we would have become either start or end
+                // of a segment, and shouldCreateNewSegment would have been false
+                ASSERT_NAMED(false, "AddVisionOverheadEdges.NewSegmentCouldNotFindPreviousEnd");
+              }
+            }
+            else
+            {
+              // we don't want to start a new segment, either we are the last point or we are not a valid point
+              ASSERT_NAMED(!isValidPoint || isLastPoint, "AddVisionOverheadEdges.ValidPointNotStartingSegment");
+              hasValidSegmentStart = false;
+              hasValidSegmentEnd   = false;
+            }
+          } // sendSegmentToMap?
+            
+          // move to next point
+          ++curPointInChainIdx;
+        } while (curPointInChainIdx < chain.points.size()); // while we still have points
       }
       
       // send quads to memory map
@@ -2732,9 +2992,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         if ( kDebugRenderOverheadEdges )
         {
           ColorRGBA color = Anki::NamedColors::GREEN;
-          const float z = 2.0f;
           VizManager* vizManager = _robot->GetContext()->GetVizManager();
-          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", clearQuad2D, z, color, false);
+          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", clearQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
         }
 
         // add clear info to map
@@ -2750,14 +3009,13 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
       
       // send quads to memory map
-      for ( const auto& borderQuad2D : visionQuadsWithBorders )
+      for ( const auto& borderQuad2D : visionQuadsWithInterestingBorders )
       {
         if ( kDebugRenderOverheadEdges )
         {
           ColorRGBA color = Anki::NamedColors::BLUE;
-          const float z = 2.0f;
           VizManager* vizManager = _robot->GetContext()->GetVizManager();
-          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", borderQuad2D, z, color, false);
+          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", borderQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
         }
       
         // add interesting edge
@@ -2766,9 +3024,31 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         }
       }
       
+      // now merge interesting edges into non-interesting
+      const bool addedEdges = !visionQuadsWithInterestingBorders.empty();
+      if ( addedEdges )
+      {
+        Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
+                                                       frameInfo.groundplane[Quad::TopLeft].y(),
+                                                       0.0f);
+        Point2f wrtOrigin2DBL = observedPose * Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
+                                                       frameInfo.groundplane[Quad::BottomLeft].y(),
+                                                       0.0f);
+        Point2f wrtOrigin2DTR = observedPose * Point3f(frameInfo.groundplane[Quad::TopRight].x(),
+                                                       frameInfo.groundplane[Quad::TopRight].y(),
+                                                       0.0f);
+        Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
+                                                       frameInfo.groundplane[Quad::BottomRight].y(),
+                                                       0.0f);
+        
+        Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
+        ReviewInterestingEdges(groundPlaneWRTOrigin);
+      }
+      
       return RESULT_OK;
     }
-  
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     void BlockWorld::RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers)
     {
       for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)

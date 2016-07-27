@@ -9,16 +9,16 @@
  *
  * Copyright: Anki, Inc. 2015
  **/
-
 #include "anki/cozmo/basestation/charger.h"
+
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
+
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "util/logging/logging.h"
-
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-
 
 namespace Anki {
   
@@ -96,7 +96,7 @@ namespace Anki {
       return pose;
     }
     
-    void Charger::SetPoseToRobot(Pose3d robotPose)
+    void Charger::SetPoseToRobot(const Pose3d& robotPose, BlockWorld& blockWorld)
     {
       Pose3d pose(-M_PI, Z_AXIS_3D(),
                   Point3f{RobotToChargerDistWhenDocked, 0, 0},
@@ -104,6 +104,9 @@ namespace Anki {
                   "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
       
       SetPose(pose.GetWithRespectToOrigin());
+      
+      // notify blockworld of the change to the pose, since it's an external change
+      blockWorld.OnObjectPoseChanged(GetID(), GetFamily(), GetPose(), GetPoseState());      
     }
     
     

@@ -36,6 +36,7 @@ using namespace NavMeshQuadTreeTypes;
 class NavMeshQuadTreeNode : private Util::noncopyable
 {
 public:
+  friend class NavMeshQuadTreeProcessor;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
@@ -82,7 +83,14 @@ public:
 
   // Builds a quad from our coordinates
   Quad3f MakeQuad() const;
-  Quad2f MakeQuadXY() const;
+  Quad2f MakeQuadXY(const float padding_mm=0.0f) const;
+  
+  // return the unique_ptr for our child at the given index. If no child is present at the given index, it returns
+  // a null pointer
+  const std::unique_ptr<NavMeshQuadTreeNode>& GetChildAt(size_t index) const;
+  
+  // return number of current children
+  size_t GetNumChildren() const { return _childrenPtr.size(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification

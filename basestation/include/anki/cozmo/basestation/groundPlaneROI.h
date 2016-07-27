@@ -38,10 +38,10 @@ public:
   //           dist         length
   //
   
-  f32 GetDist()       const { return _dist; }
-  f32 GetWidthFar()   const { return _widthFar; }
-  f32 GetWidthClose() const { return _widthClose; }
-  f32 GetLength()     const { return _length; }
+  static f32 GetDist()       { return _dist; }
+  static f32 GetWidthFar()   { return _widthFar; }
+  static f32 GetWidthClose() { return _widthClose; }
+  static f32 GetLength()     { return _length; }
   
   // Full, fixed ground quad, as illustrated above, at the specified z height
   Quad3f GetGroundQuad(f32 z=0.f) const;
@@ -80,10 +80,10 @@ public:
   
 private:
   // In mm
-  f32 _dist = 50.f;
-  f32 _length = 150.f;
-  f32 _widthFar = 100.f;
-  f32 _widthClose = 30.f;
+  static const f32 _dist;
+  static const f32 _length;
+  static const f32 _widthFar;
+  static const f32 _widthClose;
   
   mutable Vision::Image _overheadMask;
   

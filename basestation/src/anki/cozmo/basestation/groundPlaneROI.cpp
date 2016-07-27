@@ -23,6 +23,11 @@
 namespace Anki {
 namespace Cozmo {
 
+const f32 GroundPlaneROI::_dist = 50.f;
+const f32 GroundPlaneROI::_length = 150.f;
+const f32 GroundPlaneROI::_widthFar = 100.f;
+const f32 GroundPlaneROI::_widthClose = 30.f;
+
  
 const Vision::Image& GroundPlaneROI::GetOverheadMask() const
 {

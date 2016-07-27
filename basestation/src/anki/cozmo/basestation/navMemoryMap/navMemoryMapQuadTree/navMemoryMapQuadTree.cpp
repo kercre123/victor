@@ -32,19 +32,42 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
   using namespace NavMemoryMapTypes;
   using namespace NavMeshQuadTreeTypes;
 
-  NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ENodeContentType::Invalid;
+  ENodeContentType nodeContentType = ENodeContentType::Invalid;
   switch (contentType) {
-    case EContentType::Unknown: { nodeContentType = ENodeContentType::Unknown; break; }
-    case EContentType::ClearOfObstacle: { nodeContentType = ENodeContentType::ClearOfObstacle; break; }
-    case EContentType::ClearOfCliff: { nodeContentType = ENodeContentType::ClearOfCliff; break; }
-    case EContentType::ObstacleCube: { nodeContentType = ENodeContentType::ObstacleCube; break; }
+    case EContentType::Unknown:              { nodeContentType = ENodeContentType::Unknown;              break; }
+    case EContentType::ClearOfObstacle:      { nodeContentType = ENodeContentType::ClearOfObstacle;      break; }
+    case EContentType::ClearOfCliff:         { nodeContentType = ENodeContentType::ClearOfCliff;         break; }
+    case EContentType::ObstacleCube:         { nodeContentType = ENodeContentType::ObstacleCube;         break; }
+    case EContentType::ObstacleCharger:      { nodeContentType = ENodeContentType::ObstacleCharger;      break; }
     case EContentType::ObstacleUnrecognized: { nodeContentType = ENodeContentType::ObstacleUnrecognized; break; }
-    case EContentType::Cliff: { nodeContentType = ENodeContentType::Cliff; break; }
-    case EContentType::InterestingEdge: { nodeContentType = ENodeContentType::InterestingEdge; break; }
+    case EContentType::Cliff:                { nodeContentType = ENodeContentType::Cliff;                break; }
+    case EContentType::InterestingEdge:      { nodeContentType = ENodeContentType::InterestingEdge;      break; }
+    case EContentType::NotInterestingEdge:   { nodeContentType = ENodeContentType::NotInterestingEdge;   break; }
+    case EContentType::_Count:               { ASSERT_NAMED(false, "NavMeshQuadTreeTypes.ConvertContentType.InvalidType._Count"); break; }
   }
   
   CORETECH_ASSERT(nodeContentType != ENodeContentType::Invalid);
   return nodeContentType;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NavMeshQuadTreeTypes::ENodeContentTypePackedType ConvertContentArrayToFlags(const NavMemoryMapTypes::FullContentArray& array)
+{
+  using namespace NavMemoryMapTypes;
+  using namespace NavMeshQuadTreeTypes;
+  ASSERT_NAMED( ContentValueEntry::IsValidArray(array), "ConvertContentTypeToFlags.InvalidArray");
+
+  ENodeContentTypePackedType contentTypeFlags = 0;
+  for( const auto& entry : array )
+  {
+    if ( entry.Value() ) {
+      const ENodeContentType contentType = ConvertContentType(entry.Content());
+      const ENodeContentTypePackedType contentTypeFlag = ENodeContentTypeToFlag(contentType);
+      contentTypeFlags = contentTypeFlags | contentTypeFlag;
+    }
+  }
+
+  return contentTypeFlags;
 }
 
 }; // namespace
@@ -67,61 +90,51 @@ void NavMemoryMapQuadTree::Merge(const INavMemoryMap* other, const Pose3d& trans
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMemoryMapQuadTree::HasBorders(EContentType innerType, EContentType outerType) const
+void NavMemoryMapQuadTree::FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet)
+{
+  // convert into node types and emtpy (no extra info) node content
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType nodeTypeToReplace  = ConvertContentType(typeToReplace);
+  const ENodeContentTypePackedType nodeNeighborsToFillFrom = ConvertContentArrayToFlags(neighborsToFillFrom);
+  const ENodeContentType newNodeTypeSet = ConvertContentType(newTypeSet);
+  NodeContent emptyNewNodeContent(newNodeTypeSet);
+
+  // ask the processor to do it
+  _navMesh.GetProcessor().FillBorder(nodeTypeToReplace, nodeNeighborsToFillFrom, emptyNewNodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMemoryMapQuadTree::HasBorders(EContentType innerType, const FullContentArray& outerTypes) const
 {
   using namespace NavMeshQuadTreeTypes;
   const ENodeContentType innerNodeType = ConvertContentType(innerType);
-  const ENodeContentType outerNodeType = ConvertContentType(outerType);
-  const ENodeContentTypePackedType outerNodeTypes = ENodeContentTypeToFlag( outerNodeType );
+  const ENodeContentTypePackedType outerNodeTypes = ConvertContentArrayToFlags(outerTypes);
   
+  // ask processor
   const bool hasBorders = _navMesh.GetProcessor().HasBorders(innerNodeType, outerNodeTypes);
   return hasBorders;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMemoryMapQuadTree::HasBorders(EContentType innerType, const std::set<EContentType>& outerTypes) const
+void NavMemoryMapQuadTree::CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderVector& outBorders)
 {
   using namespace NavMeshQuadTreeTypes;
   const ENodeContentType innerNodeType = ConvertContentType(innerType);
-  ENodeContentTypePackedType outerNodeTypes = 0;
+  const ENodeContentTypePackedType outerNodeTypes = ConvertContentArrayToFlags(outerTypes);
   
-  for( const auto& outerTypeIt : outerTypes ) {
-    const ENodeContentType outerNodeType = ConvertContentType(outerTypeIt);
-    const ENodeContentTypePackedType outerNodeTypeFlag = ENodeContentTypeToFlag( outerNodeType );
-    outerNodeTypes |= outerNodeTypeFlag;
-  }
-  
-  const bool hasBorders = _navMesh.GetProcessor().HasBorders(innerNodeType, outerNodeTypes);
-  return hasBorders;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMapQuadTree::CalculateBorders(EContentType innerType, EContentType outerType, BorderVector& outBorders)
-{
-  using namespace NavMeshQuadTreeTypes;
-  const ENodeContentType innerNodeType = ConvertContentType(innerType);
-  const ENodeContentType outerNodeType = ConvertContentType(outerType);
-  const ENodeContentTypePackedType outerNodeTypes = ENodeContentTypeToFlag( outerNodeType );
-  
+  // delegate on processor
   _navMesh.GetProcessor().GetBorders(innerNodeType, outerNodeTypes, outBorders);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMapQuadTree::CalculateBorders(EContentType innerType, const std::set<EContentType>& outerTypes, BorderVector& outBorders)
+bool NavMemoryMapQuadTree::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const
 {
-  ASSERT_NAMED(!outerTypes.empty(), "No outerTypes provided");
+  // convert type to quadtree node content and to flag (since processor takes in flags)
+  const ENodeContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
   
-  using namespace NavMeshQuadTreeTypes;
-  const ENodeContentType innerNodeType = ConvertContentType(innerType);
-  ENodeContentTypePackedType outerNodeTypes = 0;
-  
-  for( const auto& outerTypeIt : outerTypes ) {
-    const ENodeContentType outerNodeType = ConvertContentType(outerTypeIt);
-    const ENodeContentTypePackedType outerNodeTypeFlag = ENodeContentTypeToFlag( outerNodeType );
-    outerNodeTypes |= outerNodeTypeFlag;
-  }
-  
-  _navMesh.GetProcessor().GetBorders(innerNodeType, outerNodeTypes, outBorders);
+  // ask the processor about the collision with the converted type
+  const bool hasCollision = _navMesh.GetProcessor().HasCollisionRayWithTypes(rayFrom, rayTo, nodeTypeFlags);
+  return hasCollision;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

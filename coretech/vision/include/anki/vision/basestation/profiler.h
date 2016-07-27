@@ -41,6 +41,8 @@ namespace Vision {
     
     // For setting name after construction
     void SetProfileGroupName(const char* name);
+    // name of the channel to print the info to
+    inline void SetPrintChannelName(const char* name) { _printChannelName = name; }
     
     // Start named timer (create if first call, un-pause otherwise)
     void Tic(const char* timerName);
@@ -96,6 +98,7 @@ namespace Vision {
     TimerContainer _timers;
     
     std::string _eventName;
+    std::string _printChannelName = "Profiler";
     
     int64_t _timeBetweenPrints_ms = -1;
     

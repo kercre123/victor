@@ -131,7 +131,7 @@ namespace Vision {
     const double avgOverAllTime = (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0);
     const double avgSinceLastPrint = (countSinceLastPrint > 0 ? (double)timeSinceLastPrint / (double)countSinceLastPrint : 0);
     
-    PRINT_CH_INFO("Profiler", _eventName.c_str(), "%s averaged %.4f%s over %d calls (%.4f%s over %d calls since last print)",
+    PRINT_CH_INFO(_printChannelName.c_str(), _eventName.c_str(), "%s averaged %.4f%s over %d calls (%.4f%s over %d calls since last print)",
                   name,
                   avgOverAllTime,
                   GetAbbreviation<Resolution>(),

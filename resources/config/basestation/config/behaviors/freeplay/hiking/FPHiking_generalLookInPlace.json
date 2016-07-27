@@ -1,13 +1,14 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
-  "name": "GeneralLookInPlace",
+  "name": "Hiking_GeneralLookInPlace",
   "flatScore" : 1.0,
   "behaviorGroups": [
-      "FreeplayHiking"
+    "FreeplayHiking"
   ],
   "params":
   {
     "behavior_ShouldResetTurnDirection": true,
+    "behavior_ResetBodyFacingOnStart": true,
     "behavior_DistanceFromRecentLocationMin_mm": 300.0,
     "behavior_ShouldLowerLift": true,
     "behavior_RecentLocationsMax": 5,

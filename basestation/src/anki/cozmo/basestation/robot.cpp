@@ -301,7 +301,7 @@ void Robot::SetOnCharger(bool onCharger)
       
   if( onCharger && nullptr != charger )
   {
-    charger->SetPoseToRobot(GetPose());
+    charger->SetPoseToRobot(GetPose(), GetBlockWorld());
   }
       
   _isOnCharger = onCharger;
