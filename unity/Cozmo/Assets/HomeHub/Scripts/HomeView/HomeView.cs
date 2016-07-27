@@ -175,6 +175,9 @@ namespace Cozmo.HomeHub {
         StartCoroutine(BurstAfterInit());
       }
       else {
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          DailyGoalManager.Instance.SetMinigameNeed();
+        }
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
 
@@ -285,6 +288,12 @@ namespace Cozmo.HomeHub {
       if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
           && RewardedActionManager.Instance.RewardPending == false) {
         OpenLootView();
+      }
+      else {
+        // Update Minigame need now that daily goal progress has changed
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          DailyGoalManager.Instance.SetMinigameNeed();
+        }
       }
     }
 
@@ -407,21 +416,21 @@ namespace Cozmo.HomeHub {
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
       UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
       openAnimation.Append(defaultSettings.CreateOpenMoveTween(_TabButtonContainer,
-                                                               _TabButtonAnimationXOriginOffset,
-                                                               0));
+        _TabButtonAnimationXOriginOffset,
+        0));
 
       openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TopBarContainer,
-                                                             0,
-                                                             _TopBarAnimationYOriginOffset,
-                                                             _TopBarOpenEase)
+        0,
+        _TopBarAnimationYOriginOffset,
+        _TopBarOpenEase)
                          .SetDelay(defaultSettings.CascadeDelay));
 
       float contentContainerAnimDuration = defaultSettings.MoveOpenDurationSeconds;
       openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TabContentContainer.transform,
-                                                             _TabContentAnimationXOriginOffset,
-                                                             0,
-                                                             _TabContentOpenEase,
-                                                             contentContainerAnimDuration)
+        _TabContentAnimationXOriginOffset,
+        0,
+        _TabContentOpenEase,
+        contentContainerAnimDuration)
                          .SetDelay(defaultSettings.CascadeDelay));
 
       _TabContentContainer.alpha = 0f;
@@ -433,21 +442,21 @@ namespace Cozmo.HomeHub {
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {
       UIDefaultTransitionSettings defaultSettings = UIDefaultTransitionSettings.Instance;
       closeAnimation.Append(defaultSettings.CreateCloseMoveTween(_TabContentContainer.transform,
-                                                                 _TabContentAnimationXOriginOffset,
-                                                                 0));
+        _TabContentAnimationXOriginOffset,
+        0));
       closeAnimation.Join(defaultSettings.CreateFadeOutTween(_TabContentContainer,
-                                                             Ease.Unset,
-                                                             UIDefaultTransitionSettings.Instance.MoveCloseDurationSeconds));
+        Ease.Unset,
+        UIDefaultTransitionSettings.Instance.MoveCloseDurationSeconds));
 
       closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TopBarContainer,
-                                                               0,
-                                                               _TopBarAnimationYOriginOffset,
-                                                               _TopBarCloseEase)
+        0,
+        _TopBarAnimationYOriginOffset,
+        _TopBarCloseEase)
                           .SetDelay(defaultSettings.CascadeDelay));
 
       closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TabButtonContainer,
-                                                               _TabButtonAnimationXOriginOffset,
-                                                               0)
+        _TabButtonAnimationXOriginOffset,
+        0)
                           .SetDelay(defaultSettings.CascadeDelay));
     }
   }

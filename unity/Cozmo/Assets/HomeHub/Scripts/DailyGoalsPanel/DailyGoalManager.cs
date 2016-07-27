@@ -102,7 +102,9 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   public void DisableRequestGameBehaviorGroups() {
-    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
+    }
   }
 
   /// <summary>

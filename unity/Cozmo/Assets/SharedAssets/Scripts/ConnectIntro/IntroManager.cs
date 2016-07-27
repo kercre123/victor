@@ -9,6 +9,11 @@ public class IntroManager : MonoBehaviour {
   private GameObject _SimpleConnectDialogInstance;
 
   [SerializeField]
+  private GameObjectDataLink _CheckInDialogPrefabData;
+
+  private GameObject _CheckInDialogInstance;
+
+  [SerializeField]
   private HubWorldBase _HubWorldPrefab;
   private HubWorldBase _HubWorldInstance;
 
@@ -25,7 +30,13 @@ public class IntroManager : MonoBehaviour {
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
 
-    ShowConnectDialog();
+    if (DataPersistence.DataPersistenceManager.Instance.IsFirstSession) {
+      ShowConnectDialog(); // TODO : Replace with FirstTimeConnectFlow
+    }
+    else {
+      ShowCheckInFlow();
+    }
+
 #if !UNITY_EDITOR
     SetupEngine();
 #endif
@@ -38,8 +49,12 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void HandleConnectionFlowComplete() {
-
-    HideConnectDialog();
+    if (_CheckInDialogInstance != null) {
+      HideCheckInFlow();
+    }
+    if (_SimpleConnectDialogInstance != null) {
+      HideConnectDialog();
+    }
 
     if (string.IsNullOrEmpty(_IntroScriptedSequenceName)) {
       HandleIntroSequenceDone(_IntroSequenceDoneToken);
@@ -55,6 +70,13 @@ public class IntroManager : MonoBehaviour {
     DAS.Info("IntroManager.HandleConnectionFlowQuit", "Restarting Connection Dialog Flow");
     HideConnectDialog();
     ShowConnectDialog();
+  }
+
+  private void HandleCheckInFlowQuit() {
+    // destroy and re-create the connect dialog to restart the flow
+    DAS.Info("IntroManager.HandleCheckInFlowQuit", "Restarting CheckIn Dialog Flow");
+    HideCheckInFlow();
+    ShowCheckInFlow();
   }
 
   private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
@@ -89,4 +111,29 @@ public class IntroManager : MonoBehaviour {
       _SimpleConnectDialogInstance = null;
     }
   }
+
+  private void ShowCheckInFlow() {
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_CheckInDialogPrefabData.AssetBundle, LoadCheckInView);
+  }
+
+  private void LoadCheckInView(bool assetBundleSuccess) {
+    _CheckInDialogPrefabData.LoadAssetData((GameObject checkInViewPrefab) => {
+      if (_CheckInDialogInstance == null && checkInViewPrefab != null) {
+        _CheckInDialogInstance = UIManager.CreateUIElement(checkInViewPrefab.gameObject);
+        _CheckInDialogInstance.GetComponent<CheckInFlow>().ConnectionFlowComplete += HandleConnectionFlowComplete;
+        _CheckInDialogInstance.GetComponent<CheckInFlow>().CheckInFlowQuit += HandleCheckInFlowQuit;
+      }
+    });
+  }
+
+  private void HideCheckInFlow() {
+    AssetBundleManager.Instance.UnloadAssetBundle(_CheckInDialogPrefabData.AssetBundle);
+    if (_CheckInDialogInstance != null) {
+      _CheckInDialogInstance.GetComponent<CheckInFlow>().ConnectionFlowComplete -= HandleConnectionFlowComplete;
+      _CheckInDialogInstance.GetComponent<CheckInFlow>().CheckInFlowQuit -= HandleCheckInFlowQuit;
+      GameObject.Destroy(_CheckInDialogInstance);
+      _CheckInDialogInstance = null;
+    }
+  }
+
 }

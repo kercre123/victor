@@ -10,6 +10,8 @@ public class PlayerProfile {
 
   public List<DataPersistence.TimelineEntryData> Sessions;
 
+  public int CurrentStreak;
+
   public Cozmo.Inventory Inventory;
 
   public Dictionary<string, DataPersistence.GameSkillData> CozmoSkillLevels;
@@ -33,5 +35,6 @@ public class PlayerProfile {
     CozmoSkillLevels = new Dictionary<string, DataPersistence.GameSkillData>();
     Inventory = new Cozmo.Inventory();
     SaveVersion = 0;
+    CurrentStreak = 0;
   }
 }

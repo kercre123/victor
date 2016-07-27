@@ -58,8 +58,9 @@ public class InventoryPane : MonoBehaviour {
     _QuickRemoveTreatButton.onClick.AddListener(HandleQuickRemoveTreatsClicked);
     _QuickAddExperienceButton.onClick.AddListener(HandleQuickAddExperienceClicked);
     _QuickRemoveExperienceButton.onClick.AddListener(HandleQuickRemoveExperienceClicked);
-
-    _ChestLevelInputField.text = DataPersistenceManager.Instance.CurrentSession.ChestsGained.ToString();
+    if (DataPersistenceManager.Instance.CurrentSession != null) {
+      _ChestLevelInputField.text = DataPersistenceManager.Instance.CurrentSession.ChestsGained.ToString();
+    }
     _ChestLevelInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
     _SetChestLevelButton.onClick.AddListener(HandleSetChestLevelButtonClicked);
 
@@ -97,12 +98,14 @@ public class InventoryPane : MonoBehaviour {
   }
 
   private void HandleSetChestLevelButtonClicked() {
-    DataPersistenceManager.Instance.CurrentSession.ChestsGained = GetValidInt(_ChestLevelInputField);
+    if (DataPersistenceManager.Instance.CurrentSession != null) {
+      DataPersistenceManager.Instance.CurrentSession.ChestsGained = GetValidInt(_ChestLevelInputField);
 
-    // Trigger UI to update
-    DebugAddItem(_kExperienceItemId, 0);
+      // Trigger UI to update
+      DebugAddItem(_kExperienceItemId, 0);
 
-    DataPersistenceManager.Instance.Save();
+      DataPersistenceManager.Instance.Save();
+    }
   }
 
   private void HandleAddItemClicked() {

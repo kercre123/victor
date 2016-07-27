@@ -67,7 +67,6 @@ namespace Anki {
 
       public void AddActiveVariant(string variant) {
         if (!_ActiveVariants.Exists((string s) => s == variant)) {
-          _ActiveVariants.Add(variant);
         }
         PrintActiveVariants();
       }
@@ -588,7 +587,9 @@ namespace Anki {
       loot_view_ui_sprites,
       start_view_prefabs,
       start_view_ui_sprites,
-      main_assets
+      main_assets,
+      checkin_ui_sprites,
+      checkin_ui_prefabs
     }
 
     [Serializable]
@@ -618,6 +619,8 @@ namespace Anki {
     }
 
     [Serializable]
-    public class GameObjectDataLink : AssetBundleAssetLink<GameObject> { }
+    public class GameObjectDataLink : AssetBundleAssetLink<GameObject> {
+
+    }
   }
 }

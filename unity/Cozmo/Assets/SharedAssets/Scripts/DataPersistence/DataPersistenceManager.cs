@@ -67,25 +67,55 @@ namespace DataPersistence {
 
     public readonly SaveData Data;
 
+    public bool IsFirstSession {
+      get {
+        return (Data.DefaultProfile.Sessions.LastOrDefault() == null);
+      }
+    }
+
+    public bool IsNewSessionNeeded {
+      get {
+        var lastSession = Data.DefaultProfile.Sessions.LastOrDefault();
+        return (lastSession == null || lastSession.Date != DataPersistenceManager.Today);
+      }
+    }
+
     public TimelineEntryData CurrentSession {
       get {
         var lastSession = Data.DefaultProfile.Sessions.LastOrDefault();
         if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {
           return lastSession;
         }
-
-        // create a new session
-        TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
-        newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-        // Sort by priority, placing higher priority at the front of the list
-        newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
-          return y.Priority.CompareTo(x.Priority);
-        });
-        DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
-        DataPersistenceManager.Instance.Save();
-
-        return newSession;
+        return null;
       }
+    }
+
+    public TimelineEntryData StartNewSession() {
+      // create a new session
+      // If we have a previous session, check to see if we have a streak going,
+      // reward appropriate rewards for the streak otherwise reset the streak
+      if (Data.DefaultProfile.Sessions.LastOrDefault() != null) {
+        Date Yesterday = DataPersistenceManager.Today.AddDays(-1);
+        if (Data.DefaultProfile.Sessions.LastOrDefault().Date.Equals(Yesterday)) {
+          DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak++;
+          // Reward Daily Check In Streak rewards to inventory, keep track of them
+          // for the CheckInFlow to display
+          // TODO : Create Equivalent of ChestRewardManager for StreakRewards
+        }
+      }
+      else {
+        DataPersistenceManager.Instance.Data.DefaultProfile.CurrentStreak = 0;
+      }
+      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
+      newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
+      // Sort by priority, placing higher priority at the front of the list
+      newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
+        return y.Priority.CompareTo(x.Priority);
+      });
+      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
+      DataPersistenceManager.Instance.Save();
+
+      return newSession;
     }
 
 

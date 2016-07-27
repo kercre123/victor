@@ -25,7 +25,7 @@ namespace Anki {
         if (cozEvent is UnlockableUnlockedGameEvent) {
           UnlockableUnlockedGameEvent unlockEvent = (UnlockableUnlockedGameEvent)cozEvent;
           if (unlockEvent.Unlock == Unlocked) {
-            isMet = true;          
+            isMet = true;
           }
         }
         return isMet;
@@ -34,7 +34,7 @@ namespace Anki {
       #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        Unlocked = (UnlockId)EditorGUILayout.EnumPopup("Unlock", (Enum)Unlocked);
+        Unlocked = (UnlockId)EditorGUILayout.EnumPopup(new GUIContent("Unlock", "The ID of the Unlock being unlocked as part of thise UnlockableUnlocked Game Event"), (Enum)Unlocked);
         EditorGUILayout.EndHorizontal();
       }
       #endif

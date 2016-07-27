@@ -39,10 +39,6 @@ public class DailyGoalPanel : MonoBehaviour {
   private AnimationCurve _TitleScaleCurve;
 
   [SerializeField]
-  private DailySummaryPanel _DailySummaryPrefab;
-  private DailySummaryPanel _DailySummaryInstance;
-
-  [SerializeField]
   private Anki.UI.AnkiTextLabel _CompletedText;
 
   void Start() {
@@ -68,6 +64,9 @@ public class DailyGoalPanel : MonoBehaviour {
 
   public void UpdateDailySession() {
     var currentSession = DataPersistenceManager.Instance.CurrentSession;
+    if (currentSession == null) {
+      currentSession = DataPersistenceManager.Instance.StartNewSession();
+    }
 
     SetDailyGoals(currentSession.DailyGoals);
 
@@ -108,33 +107,13 @@ public class DailyGoalPanel : MonoBehaviour {
     }
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
-
-    ShowDailySessionPanel(timelineEntry);
   }
 
-  private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
-    if (_DailySummaryInstance != null) {
-      return;
-    }
-    DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
-    _DailySummaryInstance = UIManager.OpenView(_DailySummaryPrefab,
-      newView => {
-        newView.Initialize(session);
-      });
-    if (onComplete != null) {
-      _DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
-    }
-    _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
-  }
-
-  private void HandleDailySummaryClosed() {
-    DailyGoalManager.Instance.SetMinigameNeed();
-  }
 
   public void SetDailyGoals(List<DailyGoal> dailyGoals) {
     for (int i = 0; i < dailyGoals.Count; i++) {
       GoalCell cell = CreateGoalCell(dailyGoals[i]);
-      if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1) {
+      if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1 && cell.GetComponent<GoalCellHorizontalBar>() != null) {
         cell.GetComponent<GoalCellHorizontalBar>().SetHorizontalMarker(false);
       }
     }
@@ -142,13 +121,12 @@ public class DailyGoalPanel : MonoBehaviour {
     // putting in empty slots for empty goals.
     for (int i = dailyGoals.Count; i < DailyGoalManager.Instance.GetConfigMaxGoalCount(); ++i) {
       GameObject cell = CreateEmptyGoalCell();
-      if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1) {
+      if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1 && cell.GetComponent<GoalCellHorizontalBar>() != null) {
         cell.GetComponent<GoalCellHorizontalBar>().SetHorizontalMarker(false);
       }
     }
 
     UpdateCompletedText();
-    DailyGoalManager.Instance.SetMinigameNeed();
   }
 
 

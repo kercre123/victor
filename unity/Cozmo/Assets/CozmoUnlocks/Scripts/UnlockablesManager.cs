@@ -171,9 +171,9 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void HandleOnUnlockRequestSuccess(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMessage) {
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
       _NewUnlocks.Add(resultMessage.unlockID);
     }
   }
