@@ -32,9 +32,10 @@ extern Anki::Embedded::Matlab matlab;
 #include "gtest/gtest.h"
 #endif
 
-#define OFFCHIP_BUFFER_SIZE 2000000
-#define ONCHIP_BUFFER_SIZE 170000 // The max here is somewhere between 175000 and 180000 bytes
-#define CCM_BUFFER_SIZE 50000 // The max here is probably 65536 (0x10000) bytes
+// None of this runs on robot anymore, so we can have more memory...
+static const uint32_t OFFCHIP_BUFFER_SIZE = 4000000;
+static const uint32_t ONCHIP_BUFFER_SIZE  = 600000;
+static const uint32_t CCM_BUFFER_SIZE     = 200000;
 
 extern char offchipBuffer[OFFCHIP_BUFFER_SIZE];
 extern char onchipBuffer[ONCHIP_BUFFER_SIZE];

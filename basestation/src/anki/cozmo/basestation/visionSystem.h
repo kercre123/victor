@@ -312,6 +312,9 @@ namespace Cozmo {
     void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
+    Result DetectMarkers(const Vision::Image& inputImage,
+                         std::vector<Quad2f>& markerQuads);
+
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;
@@ -371,7 +374,7 @@ namespace Cozmo {
     const f32 _vignettingCorrectionParameters[5] = {0,0,0,0,0};
     
     s32 _frameNumber = 0;
-    bool _autoExposure_enabled = true;
+    bool _autoExposure_enabled = false;
     s32 _trackingIteration; // Simply for display at this point
     
     // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
@@ -498,6 +501,20 @@ namespace Cozmo {
     //void DownsampleAndSendImage(const Embedded::Array<u8> &img);
     Result PreprocessImage(Embedded::Array<u8>& grayscaleImage);
     
+    Result ApplyCLAHE(const Vision::Image& inputImageGray, Vision::Image& claheImage);
+    
+    enum class MarkerDetectionCLAHE : u8 {
+      Off         = 0, // Do detection in original image only
+      On          = 1, // Do detection in CLAHE image only
+      Both        = 2, // Run detection twice: using original image and CLAHE image
+      Alternating = 3, // Alternate using CLAHE vs. original in each successive frame
+    };
+    
+    Result DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
+                                  Vision::Image& claheImage,
+                                  std::vector<Quad2f>& markerQuads,
+                                  MarkerDetectionCLAHE useCLAHE);
+    
     static Result BrightnessNormalizeImage(Embedded::Array<u8>& image,
                                            const Embedded::Quadrilateral<f32>& quad);
 
@@ -506,10 +523,6 @@ namespace Cozmo {
                                            const f32 filterWidthFraction,
                                            Embedded::MemoryStack scratch);
     
-    
-    Result DetectMarkers(const Vision::Image& inputImage,
-                          std::vector<Quad2f>& markerQuads);
-
     Result InitTemplate(Embedded::Array<u8> &grayscaleImage,
                         const Embedded::Quadrilateral<f32> &trackingQuad);
     
@@ -539,6 +552,9 @@ namespace Cozmo {
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
+    s32 _lastClaheTileSize;
+    s32 _lastClaheClipLimit;
+    bool _currentUseCLAHE = true;
 
     // "Mailbox" for passing things out to main thread
     std::mutex _mutex;

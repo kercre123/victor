@@ -18,6 +18,12 @@
 namespace Anki {
 namespace Vision {
   
+  Profiler::Profiler(const char* name)
+  : _eventName(name)
+  {
+    
+  }
+                    
   Profiler::~Profiler()
   {
     PrintAverageTiming();
@@ -40,13 +46,12 @@ namespace Vision {
   void Profiler::Tic(const char* timerName)
   {
     // Note will construct timer if matching name doesn't already exist
-    _timers[timerName].startTime = std::chrono::system_clock::now();
+    _timers[timerName].startTime = ClockType::now();
   }
   
   void Profiler::Timer::Update()
   {
-    using namespace std::chrono;
-    currentTime = duration_cast<milliseconds>(system_clock::now() - startTime);
+    currentTime = std::chrono::duration_cast<Resolution>(ClockType::now() - startTime);
     totalTime += currentTime;
     ++count;
   }
@@ -57,8 +62,8 @@ namespace Vision {
     if(timerIter != _timers.end()) {
       Timer& timer = timerIter->second;
       timer.Update();
-      const auto currentTime = std::chrono::system_clock::now();
-      const auto timeDiff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - timer.lastPrintTime);
+      const auto currentTime = ClockType::now();
+      const auto timeDiff_ms = std::chrono::duration_cast<Resolution>(currentTime - timer.lastPrintTime);
       if (_timeBetweenPrints_ms >= 0 &&
           timeDiff_ms.count() > _timeBetweenPrints_ms)
       {
@@ -100,6 +105,24 @@ namespace Vision {
     }
   }
   
+  template<class Resolution>
+  const char * GetAbbreviation();
+  
+  template<>
+  inline const char* GetAbbreviation<std::chrono::milliseconds>() {
+    return "ms";
+  }
+  
+  template<>
+  inline const char* GetAbbreviation<std::chrono::microseconds>() {
+    return "µs";
+  }
+  
+  template<>
+  inline const char* GetAbbreviation<std::chrono::nanoseconds>() {
+    return "ns";
+  }
+  
   void Profiler::PrintTimerData(const char* name, Timer& timer)
   {
     const auto timeSinceLastPrint = timer.totalTime.count() - timer.totalTimeAtLastPrint.count();
@@ -108,17 +131,31 @@ namespace Vision {
     const double avgOverAllTime = (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0);
     const double avgSinceLastPrint = (countSinceLastPrint > 0 ? (double)timeSinceLastPrint / (double)countSinceLastPrint : 0);
     
-    PRINT_CH_INFO("Profiler", _eventName.c_str(), "%s averaged %.2fms over %d calls (%.2fms over %d calls since last print)",
-                     name,
-                     avgOverAllTime,
-                     timer.count,
-                     avgSinceLastPrint,
-                     countSinceLastPrint);
+    PRINT_CH_INFO("Profiler", _eventName.c_str(), "%s averaged %.4f%s over %d calls (%.4f%s over %d calls since last print)",
+                  name,
+                  avgOverAllTime,
+                  GetAbbreviation<Resolution>(),
+                  timer.count,
+                  avgSinceLastPrint,
+                  GetAbbreviation<Resolution>(),
+                  countSinceLastPrint);
     
     timer.totalTimeAtLastPrint = timer.totalTime;
     timer.countAtLastPrint = timer.count;
   }
   
+  Profiler::TicTocObject::TicTocObject(Profiler& profiler, const char* timerName)
+  : _profiler(profiler)
+  , _timerName(timerName)
+  {
+    _profiler.Tic(timerName);
+  }
+  
+  Profiler::TicTocObject::~TicTocObject()
+  {
+    _profiler.Toc(_timerName);
+  }
+
 # endif // SHOW_TIMING
   
 } // namespace Vision

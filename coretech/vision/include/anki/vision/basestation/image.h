@@ -45,6 +45,9 @@ namespace Vision {
     // Read from file
     Result Load(const std::string& filename);
     
+    // Write to a file, format determined by extension (quality is only used for JPEG)
+    Result Save(const std::string& filename, s32 quality = 90);
+    
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<T>
     ImageBase(cv::Mat_<T>& cvMat) : Array2d<T>(cvMat) { }
@@ -81,7 +84,7 @@ namespace Vision {
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness);
     
     // TODO: Expose font?
-    void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f);
+    void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f, bool dropShadow = false);
     
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;

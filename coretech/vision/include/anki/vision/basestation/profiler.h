@@ -25,12 +25,21 @@ namespace Vision {
   {
   public:
     
+    // TODO: Create templated Profiler_ class, with Resolution as template argument. COZMO-3246
+    // Then alias Profiler = Profiler_<milliseconds> and HighResProfiler = Profiler_<microseconds>.
+    using Resolution = std::chrono::milliseconds;
+    using ClockType  = std::chrono::high_resolution_clock;
+    
+    static_assert(ClockType::is_steady, "ClockType should be steady");
+    
+    // Name is purely used for creating a more specific event name for printing timing
+    // messages: "Profiler.<name>".
+    Profiler(const char* name = "Profiler");
+    
     // Calls Print() on destruction
     ~Profiler();
     
-    // Purely used for creating a more specific event name for printing timing
-    // messages: "Profiler.<name>". If you don't set this, the generic event name
-    // "Profiler" will be used.
+    // For setting name after construction
     void SetProfileGroupName(const char* name);
     
     // Start named timer (create if first call, un-pause otherwise)
@@ -49,14 +58,33 @@ namespace Vision {
     // Set the minimum time between automatic average timing prints in milliseconds
     void SetPrintFrequency(int64_t printFrequency_ms) { _timeBetweenPrints_ms = printFrequency_ms; }
     
+    // For scoped Tic/Toc pair. Use TicToc() method below. This is just defining the object.
+    class TicTocObject
+    {
+    public:
+      TicTocObject(Profiler& profiler, const char* timerName);
+      ~TicTocObject();
+    private:
+      Profiler&   _profiler;
+      const char* _timerName = nullptr;
+    };
+    
+    // Create a TicToc object to do Tic on instantiation and Toc when going out of scope
+    //  For example:
+    //   {
+    //     auto ticToc = profiler.TicToc("Foo");
+    //     // Do stuff
+    //   }
+    TicTocObject TicToc(const char* timerName);
+    
   private:
     
     struct Timer {
-      std::chrono::time_point<std::chrono::system_clock> startTime;
-      std::chrono::time_point<std::chrono::system_clock> lastPrintTime = std::chrono::system_clock::now();
-      std::chrono::milliseconds currentTime;
-      std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
-      std::chrono::milliseconds totalTimeAtLastPrint = std::chrono::milliseconds(0);
+      std::chrono::time_point<ClockType> startTime;
+      std::chrono::time_point<ClockType> lastPrintTime = ClockType::now();
+      Resolution currentTime;
+      Resolution totalTime = Resolution(0);
+      Resolution totalTimeAtLastPrint = Resolution(0);
       int count = 0;
       int countAtLastPrint = 0;
       
@@ -67,7 +95,7 @@ namespace Vision {
     
     TimerContainer _timers;
     
-    std::string _eventName = "Profiler";
+    std::string _eventName;
     
     int64_t _timeBetweenPrints_ms = -1;
     
@@ -75,6 +103,10 @@ namespace Vision {
     
   }; // class Profiler
   
+  inline Profiler::TicTocObject Profiler::TicToc(const char* timerName) {
+    return TicTocObject(*this, timerName);
+  }
+
 } // namespace Vision
 } // namespace Anki
 

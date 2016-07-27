@@ -48,6 +48,7 @@ namespace Anki
     //NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
 
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
     NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
     NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
 
@@ -81,6 +82,53 @@ namespace Anki
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
+    {
+      AnkiAssert(filteredRows.get_size() == 3);
+      
+      const s32 thresholdMultiplier_numFractionalBits = 16;
+      
+      const u8 * restrict pImage = image[imageY];
+      
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      
+      const s32 imageWidth = image.get_size(1);
+      
+      const s32 numFilteredRows = filteredRows.get_size();
+      
+      AnkiAssert(filteredRows.get_size() <= MAX_FILTER_HALF_WIDTH);
+      
+      const u8 * restrict pFilteredRows[MAX_FILTER_HALF_WIDTH+1];
+      for(s32 i=0; i<numFilteredRows; i++) {
+        pFilteredRows[i] = filteredRows[i][0];
+      }
+      
+      for(s32 x=0; x<imageWidth; x++) {
+        //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
+        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
+        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
+        
+        s32 scaleValue;
+        
+        if(dog0 > dog1) {
+          scaleValue = pFilteredRows1[x];
+        } else  {
+          scaleValue = pFilteredRows2[x];
+        }
+        
+        //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+        
+        const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+        if(pImage[x] < thresholdValue) {
+          pBinaryImageRow[x] = 1;
+        } else {
+          pBinaryImageRow[x] = 0;
+        }
+      } // for(s32 x=0; x<imageWidth; x++)
+    } // staticInline void ecvcs_computeBinaryImage_numFilters5()
+    
     NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
     {
       AnkiAssert(filteredRows.get_size() == 5);
@@ -307,22 +355,26 @@ namespace Anki
 
       // Integral image constants
       s32 numBorderPixels = -1;
-      s32 integralImageHeight;
-
       for(s32 i=0; i<numFilterHalfWidths; i++) {
         AnkiAssert(pFilterHalfWidths[i] >= 0);
         AnkiAssert(pFilterHalfWidths[i] <= MAX_FILTER_HALF_WIDTH);
         numBorderPixels = MAX(numBorderPixels, pFilterHalfWidths[i] + 1);
       }
 
-      // TODO: choose based on amount of free memory
-      if(imageWidth <= 320) {
-        integralImageHeight = MAX(2*numBorderPixels + 16, 64); // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
-      } else {
-        // Note: These numbers are liable to be too big to fit on the M4 efficiently
-        const s32 scaleFactor = static_cast<s32>(ceilf(static_cast<f32>(imageWidth) / 320.0f));
-        integralImageHeight = MAX(2*numBorderPixels + 16*scaleFactor, 64*scaleFactor);
-      }
+      // NOTE: This is old embedded code from a time when memory was limited and the
+      // entire integral image could not be held in memory. So it had to be
+      // computed in a scrolling fashion. On a phone/device, this is not an issue
+      // so we just set the integralImageHeight to be the imageHeight and call it a
+      //
+      //      // TODO: choose based on amount of free memory
+      //      if(imageWidth <= 320) {
+      //        integralImageHeight = MAX(2*numBorderPixels + 16, 64); // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+      //      } else {
+      //        // Note: These numbers are liable to be too big to fit on the M4 efficiently
+      //        const s32 scaleFactor = static_cast<s32>(ceilf(static_cast<f32>(imageWidth) / 320.0f));
+      //        integralImageHeight = MAX(2*numBorderPixels + 16*scaleFactor, 64*scaleFactor);
+      //      }
+      const s32 integralImageHeight = imageHeight;
 
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
 
@@ -332,7 +384,15 @@ namespace Anki
       ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowerScratch);
       if((lastResult = integralImage.ScrollDown(image, integralImageHeight, fastScratch)) != RESULT_OK)
         return lastResult;
-
+      
+      //      // Trying to use OpenCV's integral image
+      //      cv::Mat_<u8> cvImg;
+      //      ArrayToCvMat(image, &cvImg);
+      //      static cv::Mat_<s32> cvCompute, cvIntImg;
+      //      ArrayToCvMat(integralImage, &cvIntImg);
+      //      cv::integral(cvImg, cvCompute, CV_32S);
+      //      cv::copyMakeBorder(cvCompute(cv::Rect(1,1,imageWidth,integralImageHeight)), cvIntImg, 0, 0, numBorderPixels, numBorderPixels, cv::BORDER_REPLICATE);
+      
       // Prepare the memory for the filtered rows for each level of the pyramid
       FixedLengthList<Array<u8> > filteredRows(numFilterHalfWidths, fastScratch, Flags::Buffer(false,false,true));
 
@@ -368,6 +428,27 @@ namespace Anki
       }
 #endif
 
+      std::function<void(const Array<u8>&, FixedLengthList<Array<u8>>&, const s32, const s32, u8 * restrict)> binarizationFcn = nullptr;
+      
+      switch(numFilterHalfWidths)
+      {
+        case 3:
+          binarizationFcn = &ecvcs_computeBinaryImage_numFilters3;
+          break;
+          
+        case 5:
+          if(scaleImage_thresholdMultiplier == 65536) {
+            binarizationFcn = &ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1;
+          } else {
+            binarizationFcn = &ecvcs_computeBinaryImage_numFilters5;
+          }
+          break;
+          
+        default:
+          binarizationFcn = &ecvcs_computeBinaryImage;
+          break;
+      }
+      
       BeginBenchmark("ecvcs_mainLoop");
       while(imageY < imageHeight) {
         BeginBenchmark("ecvcs_filterRows");
@@ -376,15 +457,7 @@ namespace Anki
 
         BeginBenchmark("ecvcs_computeBinaryImage");
 
-        if(numFilterHalfWidths != 5) {
-          ecvcs_computeBinaryImage(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
-        } else {
-          if(scaleImage_thresholdMultiplier == 65536) {
-            ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
-          } else {
-            ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
-          }
-        }
+        binarizationFcn(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
         
 #if STORE_BINARY_IMAGE
         memcpy(g_binaryImage.Pointer(imageY, 0), pBinaryImageRow, imageWidth);

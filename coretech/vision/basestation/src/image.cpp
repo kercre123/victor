@@ -13,6 +13,8 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 
+#include "util/fileUtils/fileUtils.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
@@ -27,7 +29,6 @@ namespace Vision {
   template<typename T>
   Result ImageBase<T>::Load(const std::string& filename)
   {
-    
     this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
                                                CV_LOAD_IMAGE_GRAYSCALE :
                                                CV_LOAD_IMAGE_COLOR));
@@ -37,6 +38,57 @@ namespace Vision {
     } else {
       return RESULT_OK;
     }
+  }
+  
+  template<typename T>
+  Result ImageBase<T>::Save(const std::string &filename, s32 quality)
+  {
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(quality);
+    
+    // Convert color images to BGR(A) for saving (as assumed by imwrite)
+    cv::Mat saveImg;
+    switch(GetNumChannels())
+    {
+      case 1:
+        saveImg = this->get_CvMat_();
+        break;
+        
+      case 3:
+        cv::cvtColor(this->get_CvMat_(), saveImg, cv::COLOR_RGB2BGR);
+        break;
+        
+      case 4:
+        cv::cvtColor(this->get_CvMat_(), saveImg, cv::COLOR_RGBA2BGRA);
+        break;
+        
+      default:
+        PRINT_NAMED_WARNING("ImageBase.Save.UnexpectedNumChannels",
+                            "Don't know how to save %d-channel image",
+                            GetNumChannels());
+        return RESULT_FAIL;
+    }
+    
+    Util::FileUtils::CreateDirectory(filename, true, true);
+    
+    try {
+      const bool success = imwrite(filename, saveImg, compression_params);
+      if(!success) {
+        PRINT_NAMED_WARNING("ImageBase.Save.ImwriteFailed",
+                            "Failed writing %dx%d image to %s",
+                            GetNumCols(), GetNumRows(), filename.c_str());
+        return RESULT_FAIL;
+      }
+    }
+    catch (cv::Exception& ex) {
+      PRINT_NAMED_WARNING("ImageBase.Save.ImwriteException",
+                          "Failed writing to %s: %s",
+                          filename.c_str(), ex.what());
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
   }
   
   template<typename T>
@@ -152,9 +204,15 @@ namespace Vision {
   
   template<typename T>
   void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
-                              const ColorRGBA& color, f32 scale)
+                              const ColorRGBA& color, f32 scale, bool dropShadow)
   {
-    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor((color)));
+    if(dropShadow) {
+      cv::Point shadowPos(position.get_CvPoint_());
+      shadowPos.x += 1;
+      shadowPos.y += 1;
+      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK));
+    }
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color));
   }
   
   template<typename T>

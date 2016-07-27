@@ -254,6 +254,11 @@ void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventT
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior)
 {
+  // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
+  if (!_robot.HasExternalInterface()) {
+    return;
+  }
+  
   const std::string& oldBehaviorName = nullptr != oldBehavior ? oldBehavior->GetName() : "NULL";
   const std::string& newBehaviorName = nullptr != newBehavior ? newBehavior->GetName() : "NULL";
   BehaviorType oldBehaviorType = nullptr != oldBehavior ? oldBehavior->GetType() : BehaviorType::NoneBehavior;
@@ -272,6 +277,7 @@ void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior
   msg.newBehaviorType = newBehaviorType;
   msg.isOldReactionary = oldBehaviorIsReactionary;
   msg.isNewReactionary = newBehaviorIsReactionary;
+  
   _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
 }
 
@@ -363,6 +369,11 @@ void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestEnableReactionaryBehavior(std::string requesterID, BehaviorType behavior, bool enable)
 {
+  // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
+  if (!_robot.HasExternalInterface()) {
+    return;
+  }
+  
   _robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::RequestEnableReactionaryBehavior>(requesterID,
                                                                                                         behavior,
                                                                                                         enable);

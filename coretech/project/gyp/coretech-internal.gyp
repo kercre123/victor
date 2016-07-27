@@ -345,6 +345,7 @@
             },
             'libraries': [
               '<(cti-gtest_path)/gtest.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for ctiUnitTest?
               '<@(opencv_libs)',
             ],
             'actions' : [
@@ -684,6 +685,9 @@
       ],
       'type': '<(common_library_type)',
       'conditions': [
+        # Add common generated source to prevent linker errors for mex (and other?) builds,
+        # but this causes "duplicate symbol" errors when linking for Android. So only do it for Mac.
+        ['OS=="mac"',     {'sources': ['<!@(cat <(common_generated_source))'],}],
         ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
         ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
         ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
@@ -722,6 +726,8 @@
       'target_name': 'ctiMessaging',
       'sources': [ 
         '<!@(cat <(messaging_source))',
+        # Why can we include these here and be fine with Android link step, but not for ctiVision/ctiCommon??
+        # Maybe it's ok as long as we only do this on _one_ of the three?
         '<!@(cat <(vision_generated_source))',
         '<!@(cat <(common_generated_source))',
       ],
@@ -825,6 +831,16 @@
       'sources': [
         '<!@(cat <(vision_source))',
         '<!@(cat <(vision_clad))',
+      ],
+      'conditions': [
+        ['OS=="mac"', {
+          # Add common/vision generated source to prevent linker errors for mex (and other?) builds,
+          # but this causes "duplicate symbol" errors when linking for Android. So only do it for Mac.
+          'sources': [
+            '<!@(cat <(common_generated_source))',
+            '<!@(cat <(vision_generated_source))',
+          ],
+        }],
       ],
       'include_dirs': [
         '../../vision/basestation/src',

@@ -98,6 +98,11 @@ namespace Anki {
     T GetMaxX(void) const;
     T GetMaxY(void) const;
     
+    const Point<N,T>& GetTopLeft() const;
+    const Point<N,T>& GetBottomLeft() const;
+    const Point<N,T>& GetTopRight() const;
+    const Point<N,T>& GetBottomRight() const;
+    
     // Force access by enumerated CornerNames:
     const Point<N,T>& operator[] (const Quad::CornerName whichCorner) const;
     Point<N,T>&       operator[] (const Quad::CornerName whichCorner);    

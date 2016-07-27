@@ -268,6 +268,26 @@ namespace Anki {
   }
   
   template<QuadDimType N, typename T>
+  inline const Point<N,T>& Quadrilateral<N,T>::GetTopLeft() const {
+    return this->operator[](Quad::TopLeft);
+  }
+  
+  template<QuadDimType N, typename T>
+  inline const Point<N,T>& Quadrilateral<N,T>::GetBottomLeft() const {
+    return this->operator[](Quad::BottomLeft);
+  }
+  
+  template<QuadDimType N, typename T>
+  inline const Point<N,T>& Quadrilateral<N,T>::GetTopRight() const {
+    return this->operator[](Quad::TopRight);
+  }
+  
+  template<QuadDimType N, typename T>
+  inline const Point<N,T>& Quadrilateral<N,T>::GetBottomRight() const {
+    return this->operator[](Quad::BottomRight);
+  }
+  
+  template<QuadDimType N, typename T>
   Quadrilateral<2,T> Quadrilateral<N,T>::SortCornersClockwise() const
   {
     // Catch invalid usage of this method with a non-2D quad at compile time.

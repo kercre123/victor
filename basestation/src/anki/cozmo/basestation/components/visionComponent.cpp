@@ -133,6 +133,8 @@ namespace Cozmo {
       }
     }
     
+    _dropStats.SetChannelName("VisionComponent");
+    
     _isInitialized = true;
     return RESULT_OK;
     
@@ -308,12 +310,14 @@ namespace Cozmo {
   Result VisionComponent::SetNextImage(EncodedImage& encodedImage)
   {
     if(!_isInitialized) {
-      PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "");
+      PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "t=%u(%d)",
+                          encodedImage.GetTimeStamp(), encodedImage.GetTimeStamp());
       return RESULT_FAIL;
     }
     
     if (!_enabled) {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.SetNextImage", "Set next image but not enabled");
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.SetNextImage", "Set next image but not enabled, t=%u(%d)",
+                    encodedImage.GetTimeStamp(), encodedImage.GetTimeStamp());
       return RESULT_OK;
     }
   
@@ -470,14 +474,18 @@ namespace Cozmo {
         {
           if(!_paused) {
             Lock();
-            
-            if(!_nextImg.IsEmpty()) {
+
+            const bool isDroppingFrame = !_nextImg.IsEmpty();
+            if(isDroppingFrame)
+            {
               PRINT_CH_INFO("VisionComponent", "SetNextImage.DroppedFrame",
-                               "Setting next image with t=%d, but existing next image from t=%d not yet processed (currently on t=%d).",
-                               encodedImage.GetTimeStamp(),
-                               _nextImg.GetTimeStamp(),
-                               _currentImg.GetTimeStamp());
+                            "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
+                            encodedImage.GetTimeStamp(),
+                            _nextImg.GetTimeStamp(),
+                            _currentImg.GetTimeStamp());
+              
             }
+            _dropStats.Update(isDroppingFrame);
             
             // Make encoded image the new "next" image
             std::swap(_nextImg, encodedImage);
@@ -667,7 +675,7 @@ namespace Cozmo {
 
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                          "Time: %d, hist: %d to %d",
+                          "Time: %u, hist: %u to %u",
                           markerOrig.GetTimeStamp(),
                           _robot.GetPoseHistory()->GetOldestTimeStamp(),
                           _robot.GetPoseHistory()->GetNewestTimeStamp());

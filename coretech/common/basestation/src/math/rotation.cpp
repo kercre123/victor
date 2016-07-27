@@ -540,6 +540,13 @@ namespace Anki {
   {
     const double qmagsq = Point<4,T>::LengthSq();
     
+    if(qmagsq == 0.f) {
+      PRINT_NAMED_WARNING("UnitQuaternion.Normalize.AllZero",
+                          "Tried to normalize an all-zero UnitQuaternion");
+      *this = UnitQuaternion();
+      return *this;
+    }
+    
     ASSERT_NAMED(qmagsq != 0, "Tried to normalize an all-zero UnitQuaternion.\n");
     
     if (std::abs(1.0 - qmagsq) < 2.107342e-08) {

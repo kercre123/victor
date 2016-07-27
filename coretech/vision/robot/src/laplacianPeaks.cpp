@@ -396,12 +396,12 @@ namespace Anki
       
 #     elif LINE_FIT_METHOD == LINE_FIT_METHOD_KMEANS
 
-      const s32 numTries = 2;
-      cv::TermCriteria criteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 10, .1);
+      const s32 numTries = 1;
+      cv::TermCriteria criteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 15, .1);
       cv::Mat labels(boundaryLength,1,CV_32SC1);
       s32* restrict pLabels = labels.ptr<s32>(0,0);
       s32 i;
-      for(i=0; i<boundaryLength/2; ++i) {
+      for(i=0; i<boundaryLength/4; ++i) {
         pLabels[i] = 0;
       }
       for( ; i<boundaryLength/2; ++i) {
@@ -416,7 +416,7 @@ namespace Anki
       cv::Mat_<f32> centers;
       dB = dB.t();
       cv::kmeans(dB, 4, labels, criteria, numTries,
-                 cv::KMEANS_USE_INITIAL_LABELS | cv::KMEANS_PP_CENTERS,
+                 cv::KMEANS_USE_INITIAL_LABELS, // | cv::KMEANS_PP_CENTERS,
                  centers);
 
       const f32 dotProdThresh = std::cos(DEG_TO_RAD(25));

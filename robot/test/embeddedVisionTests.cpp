@@ -3268,6 +3268,8 @@ static void GetDefaultFiducialDetectionParams(Anki::Embedded::FiducialDetectionP
                                                  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
   params.scaleImage_numPyramidLevels = 3;
   
+  params.imagePyramid_baseScale = 4;
+  
   params.component1d_minComponentWidth = 0;
   params.component1d_maxSkipDistance = 0;
   

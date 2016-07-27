@@ -15,6 +15,7 @@
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
 #include "anki/vision/basestation/cameraCalibration.h"
+#include "anki/vision/basestation/droppedFrameStats.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
@@ -263,6 +264,8 @@ struct DockingErrorSignal;
     
     EncodedImage _currentImg;
     EncodedImage _nextImg;
+    
+    Vision::DroppedFrameStats _dropStats;
     
     ImuDataHistory _imuHistory;
 

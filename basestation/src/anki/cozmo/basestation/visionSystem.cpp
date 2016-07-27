@@ -60,6 +60,7 @@
 
 #define DEBUG_MOTION_DETECTION 0
 #define DEBUG_FACE_DETECTION   0
+#define DEBUG_DISPLAY_CLAHE_IMAGE 0
 
 #define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
 #define USE_THREE_FRAME_MOTION_DETECTION 0
@@ -74,9 +75,15 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(bool, kUseCLAHE,      "Vision.PreProcessing", false);
-  CONSOLE_VAR(s32, kClaheClipLimit, "Vision.PreProcessing", 2); // Change requires re-Init()
-  CONSOLE_VAR(s32, kClaheTileSize,  "Vision.PreProcessing", 8);  // Change requires re-Init()
+  CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 1, 0, 3);  // One of MarkerDetectionCLAHE enum
+  CONSOLE_VAR(s32, kClaheClipLimit,  "Vision.PreProcessing", 32);
+  CONSOLE_VAR(s32, kClaheTileSize,   "Vision.PreProcessing", 4);
+  CONSOLE_VAR(s32, kPostClaheSmooth, "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
+  
+  CONSOLE_VAR(s32, kScaleImage_numPyramidLevels,    "Vision.MarkerDetection", 1);
+  CONSOLE_VAR(f32, kScaleImage_thresholdMultiplier, "Vision.MarkerDetection", 0.8f);
+  CONSOLE_VAR(s32, kImagePyramid_baseScale,         "Vision.MarkerDetection", 4);
+  CONSOLE_VAR(f32, kDecode_minContrastRatio,        "Vision.MarkerDetection", 1.01f);
   
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
@@ -176,6 +183,8 @@ namespace Cozmo {
     
     _clahe->setClipLimit(kClaheClipLimit);
     _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+    _lastClaheTileSize = kClaheTileSize;
+    _lastClaheClipLimit = kClaheClipLimit;
     
     Result initMemoryResult = _memory.Initialize();
     if(initMemoryResult != RESULT_OK) {
@@ -538,15 +547,13 @@ namespace Cozmo {
   }
   
   Result VisionSystem::DetectMarkers(const Vision::Image& inputImageGray,
-                                      std::vector<Quad2f>& markerQuads)
+                                     std::vector<Quad2f>& markerQuads)
   {
     Result lastResult = RESULT_OK;
     
     BeginBenchmark("VisionSystem_LookForMarkers");
     
     AnkiAssert(_detectionParameters.isInitialized);
-    
-    _memory.ResetBuffers();
     
     // Convert to an Embedded::Array<u8> so the old embedded methods can use the
     // image data.
@@ -584,10 +591,28 @@ namespace Cozmo {
     
     for(auto invertImage : imageInversions)
     {
+      Vision::Image currentImage;
+      if(!markerQuads.empty())
+      {
+        // White out already-detected markers so we don't find them again
+        inputImageGray.CopyTo(currentImage);
+        
+        for(auto & quad : markerQuads)
+        {
+          Anki::Rectangle<s32> rect(quad);
+          Vision::Image roi = currentImage.GetROI(rect);
+          roi.FillWith(255);
+        }
+      }
+      else
+      {
+        currentImage = inputImageGray;
+      }
+      
       if(invertImage) {
-        GetImageHelper(inputImageGray.GetNegative(), grayscaleImage);
+        GetImageHelper(currentImage.GetNegative(), grayscaleImage);
       } else {
-        GetImageHelper(inputImageGray, grayscaleImage);
+        GetImageHelper(currentImage, grayscaleImage);
       }
       
       PreprocessImage(grayscaleImage);
@@ -617,9 +642,10 @@ namespace Cozmo {
       // TODO: Merge the fiducial detection parameters structs
       Embedded::FiducialDetectionParameters embeddedParams;
       embeddedParams.useIntegralImageFiltering = true;
-      embeddedParams.useIlluminationNormalization = !kUseCLAHE;
-      embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
-      embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
+      embeddedParams.useIlluminationNormalization = true;
+      embeddedParams.scaleImage_numPyramidLevels = kScaleImage_numPyramidLevels; // _detectionParameters.scaleImage_numPyramidLevels;
+      embeddedParams.scaleImage_thresholdMultiplier = static_cast<s32>(65536.f * kScaleImage_thresholdMultiplier); //_detectionParameters.scaleImage_thresholdMultiplier;
+      embeddedParams.imagePyramid_baseScale = kImagePyramid_baseScale;
       embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
       embeddedParams.component1d_maxSkipDistance =  _detectionParameters.component1d_maxSkipDistance;
       embeddedParams.component_minimumNumPixels = _detectionParameters.component_minimumNumPixels;
@@ -632,7 +658,7 @@ namespace Cozmo {
       embeddedParams.quads_minQuadArea = _detectionParameters.quads_minQuadArea;
       embeddedParams.quads_quadSymmetryThreshold = _detectionParameters.quads_quadSymmetryThreshold;
       embeddedParams.quads_minDistanceFromImageEdge = _detectionParameters.quads_minDistanceFromImageEdge;
-      embeddedParams.decode_minContrastRatio = _detectionParameters.decode_minContrastRatio;
+      embeddedParams.decode_minContrastRatio = kDecode_minContrastRatio; //_detectionParameters.decode_minContrastRatio;
       embeddedParams.maxConnectedComponentSegments = _detectionParameters.maxConnectedComponentSegments;
       embeddedParams.maxExtractedQuads = _detectionParameters.maxExtractedQuads;
       embeddedParams.refine_quadRefinementIterations = _detectionParameters.quadRefinementIterations;
@@ -674,7 +700,7 @@ namespace Cozmo {
        */
       
       const s32 numMarkers = _memory._markers.get_size();
-      markerQuads.reserve(numMarkers);
+      markerQuads.reserve(markerQuads.size() + numMarkers);
       
       for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
       {
@@ -2378,6 +2404,120 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
+  Result VisionSystem::ApplyCLAHE(const Vision::Image& inputImageGray,
+                                  Vision::Image& claheImage)
+  {
+    if(_lastClaheTileSize != kClaheTileSize) {
+      PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheTileSizeUpdated",
+                        "%d -> %d", _lastClaheTileSize, kClaheTileSize);
+      
+      _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+      _lastClaheTileSize = kClaheTileSize;
+    }
+    
+    if(_lastClaheClipLimit != kClaheClipLimit) {
+      PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheClipLimitUpdated",
+                        "%d -> %d", _lastClaheClipLimit, kClaheClipLimit);
+      
+      _clahe->setClipLimit(kClaheClipLimit);
+      _lastClaheClipLimit = kClaheClipLimit;
+    }
+    
+    Tic("CLAHE");
+    _clahe->apply(inputImageGray.get_CvMat_(), claheImage.get_CvMat_());
+    
+    if(kPostClaheSmooth > 0)
+    {
+      s32 kSize = 3*kPostClaheSmooth;
+      if(kSize % 2 == 0) {
+        ++kSize; // Make sure it's odd
+      }
+      cv::GaussianBlur(claheImage.get_CvMat_(), claheImage.get_CvMat_(),
+                       cv::Size(kSize,kSize), kPostClaheSmooth);
+    }
+    else if(kPostClaheSmooth < 0)
+    {
+      cv::boxFilter(claheImage.get_CvMat_(), claheImage.get_CvMat_(), -1,
+                    cv::Size(-kPostClaheSmooth, -kPostClaheSmooth));
+    }
+    Toc("CLAHE");
+    
+    if(DEBUG_DISPLAY_CLAHE_IMAGE) {
+      _currentResult.debugImageRGBs.push_back({"ImageCLAHE", claheImage});
+    }
+    
+    claheImage.SetTimestamp(inputImageGray.GetTimestamp()); // make sure to preserve timestamp!
+    
+    return RESULT_OK;
+    
+  } // ApplyCLAHE()
+  
+  
+  Result VisionSystem::DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
+                                              Vision::Image& claheImage,
+                                              std::vector<Quad2f>& markerQuads,
+                                              MarkerDetectionCLAHE useCLAHE)
+  {
+    Result lastResult = RESULT_OK;
+    
+    switch(useCLAHE)
+    {
+      case MarkerDetectionCLAHE::Off:
+      {
+        lastResult = DetectMarkers(inputImageGray, markerQuads);
+        break;
+      }
+        
+      case MarkerDetectionCLAHE::On:
+      {
+        _currentUseCLAHE = true;
+        ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+        
+        lastResult = DetectMarkers(claheImage, markerQuads);
+        
+        break;
+      }
+        
+      case MarkerDetectionCLAHE::Both:
+      {
+        _currentUseCLAHE = true;
+        ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+        
+        // First run will put quads into markerQuads
+        lastResult = DetectMarkers(inputImageGray, markerQuads);
+        
+        if(RESULT_OK == lastResult)
+        {
+          // Second run will white out existing markerQuads (so we don't
+          // re-detect) and also add new ones
+          lastResult = DetectMarkers(claheImage, markerQuads);
+        }
+        
+        break;
+      }
+        
+      case MarkerDetectionCLAHE::Alternating:
+      {
+        Vision::Image* whichImg = &inputImageGray;
+        if(_currentUseCLAHE) {
+          ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+          whichImg = &claheImage;
+        }
+        
+        lastResult = DetectMarkers(*whichImg, markerQuads);
+        
+        // Toggle for next frame
+        _currentUseCLAHE = !_currentUseCLAHE;
+        
+        break;
+      }
+    }
+    
+    return lastResult;
+    
+  } // DetectMarkersWithCLAHE()
+  
+  
   Result VisionSystem::Update(const VisionPoseData&      poseData,
                               const EncodedImage&        encodedImg)
   {
@@ -2392,6 +2532,7 @@ namespace Cozmo {
     }
     return Update(poseData, _image);
   }
+  
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,
@@ -2424,16 +2565,27 @@ namespace Cozmo {
 
     
     // Lots of the processing below needs a grayscale version of the image:
-    //const Vision::Image inputImageGray = inputImage.ToGray();
-    
     Vision::Image inputImageGray = inputImage.ToGray();
+    Vision::Image claheImage;
     
-    // Apply CLAHE:
-    if(kUseCLAHE) {
-      _clahe->apply(inputImageGray.get_CvMat_(), inputImageGray.get_CvMat_());
-      
-      // DEBUG!
-      //_currentResult.debugImageRGBs.push_back({"ImageCLAHE", inputImageGray});
+    // Set up the results for this frame:
+    VisionProcessingResult result;
+    result.timestamp = inputImage.GetTimestamp();
+    std::swap(result, _currentResult);
+    
+    // Apply CLAHE if enabled:
+    ASSERT_NAMED(kUseCLAHE_u8 <= Util::EnumToUnderlying(MarkerDetectionCLAHE::Alternating),
+                 "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+    
+    MarkerDetectionCLAHE kUseCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+    
+    if(kUseCLAHE != MarkerDetectionCLAHE::Off && _currentUseCLAHE)
+    {
+      lastResult = ApplyCLAHE(inputImageGray, claheImage);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+        return lastResult;
+      }
     }
     
     // Rolling shutter correction
@@ -2450,12 +2602,7 @@ namespace Cozmo {
         Toc("RollingShutterWarpImage");
       }
     }
-    
-    // Set up the results for this frame:
-    VisionProcessingResult result;
-    result.timestamp = inputImage.GetTimestamp();
-    std::swap(result, _currentResult);
-    
+
     // TODO: Provide a way to specify camera parameters from basestation
     //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
     
@@ -2468,11 +2615,21 @@ namespace Cozmo {
 
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
+      
       visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
-      if((lastResult = DetectMarkers(inputImageGray, markerQuads)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
+      
+      // Have to do this here, outside of DetectMarkers because we could call
+      // DetectMarkers() twice below, depending on kUseCLAHE setting (and we don't
+      // want to reset the memory twice because the tracker, which gets initialized
+      // inside DetectMarkers uses _memory too).
+      _memory.ResetBuffers();
+      
+      lastResult = DetectMarkersWithCLAHE(inputImageGray, claheImage, markerQuads, kUseCLAHE);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         return lastResult;
       }
+      
       Toc("TotalDetectingMarkers");
     }
     

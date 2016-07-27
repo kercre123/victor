@@ -21,7 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 50 // TODO: Make this a VisionParameter and pass it in dynamically
 #endif
 
-//#define SHOW_DRAWN_COMPONENTS
+//#define SHOW_DRAWN_COMPONENTS // Requires vision system to be in synchronous mode
 //#define SEND_COMPONENTS_TO_MATLAB
 
 namespace Anki
@@ -63,6 +63,7 @@ namespace Anki
       // Filter with a kernel sized for this ROI:
       // (The kernel is a bunch of -1's surrounding a single positive value
       //  at the center equal to the sum of all the -1's)
+      // NOTE: it's a tad slower to use s16, but we seem to get better performance with it
       cv::Mat_<s16> cvImageROI_filtered;
       
       /*
@@ -87,15 +88,15 @@ namespace Anki
                                         ((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
                                          (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
       
-      cv::Mat_<s16> kernel(kernelSize, kernelSize);
-      kernel = -1;
-      kernel(kernelSize/2, kernelSize/2) = kernelSize*kernelSize - 1;
+      cv::boxFilter(cvImageROI, cvImageROI_filtered, cvImageROI_filtered.depth(), cv::Size(kernelSize, kernelSize));
       
-      cv::filter2D(cvImageROI, cvImageROI_filtered, cvImageROI_filtered.depth(), kernel);
-      //cv::imshow("Filtered ROI", cvImageROI_filtered);
+      // Works better to maintain s16 "precision" here and then only to lose it when we
+      // normalize below
+      cv::subtract(cvImageROI, cvImageROI_filtered, cvImageROI_filtered);
       
       // Normalize to be between 0 and 255
       cv::normalize(cvImageROI_filtered, cvImageROI, 255, 0, CV_MINMAX);
+      
       //cv::imshow("Normalized Filtered ROI", cvImageROI);
       
       return RESULT_OK;
@@ -151,7 +152,7 @@ namespace Anki
           RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
 
         for(s32 i=0; i<(params.scaleImage_numPyramidLevels+2); i++) {
-          filterHalfWidths[i] = 1 << (i);
+          filterHalfWidths[i] = params.imagePyramid_baseScale << (i);
         }
 
         //const s32 halfWidthData[] = {1,2,3,4,6,8,12,16};

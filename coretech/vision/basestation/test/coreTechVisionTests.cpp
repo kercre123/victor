@@ -8,8 +8,10 @@
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
+#include "anki/vision/basestation/profiler.h"
 
 using namespace Anki;
 
@@ -236,3 +238,4 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
 
 } // GTEST_TEST(Camera, VisibilityAndOcclusion)
+
