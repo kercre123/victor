@@ -444,7 +444,7 @@ protected:
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
   std::multiset<std::string> _disableIDs;
   virtual bool IsRunnableInternal(const Robot& robot) const override final;
-  virtual bool IsRunnableReactionaryInternal(const Robot& robot) const = 0;
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const = 0;
   
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;

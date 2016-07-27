@@ -682,7 +682,7 @@ bool IReactionaryBehavior::IsRunnableInternal(const Robot& robot) const
 {
   bool isRunnable = _disableIDs.size() == 0;
   if(isRunnable) {
-    isRunnable = IsRunnableReactionaryInternal(robot);
+    isRunnable = IsRunnableInternalReactionary(robot);
   }
   return isRunnable;
 }

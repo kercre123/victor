@@ -44,7 +44,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
   }});
 }
 
-bool BehaviorReactToCliff::IsRunnableReactionaryInternal(const Robot& robot) const
+bool BehaviorReactToCliff::IsRunnableInternalReactionary(const Robot& robot) const
 {
   return true;
 }

@@ -57,7 +57,7 @@ bool BehaviorReactToPickup::ShouldRunForEvent(const ExternalInterface::MessageEn
   return ! robot.IsOnCharger();
 }
 
-bool BehaviorReactToPickup::IsRunnableReactionaryInternal(const Robot& robot) const
+bool BehaviorReactToPickup::IsRunnableInternalReactionary(const Robot& robot) const
 {
   return true;
 }

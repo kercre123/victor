@@ -28,7 +28,7 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(Robot& robo
   });
 }
 
-bool BehaviorReactToUnexpectedMovement::IsRunnableReactionaryInternal(const Robot& robot) const
+bool BehaviorReactToUnexpectedMovement::IsRunnableInternalReactionary(const Robot& robot) const
 {
   return true;
 }
