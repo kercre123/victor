@@ -25,8 +25,11 @@ namespace Anki.Debug {
     // Things here that are too small or don't fit many other places.
     // However in general prefer to put these with the classes they control.
     public void Init() {
-      DebugConsoleData.Instance.AddConsoleFunction("Erase All EnrolledFaces", "FaceEnrollment Meet Cozmo",
+      DebugConsoleData.Instance.AddConsoleFunction("Erase Skills", "Save Data Persistance",
+                                                              (string str) => { SkillSystem.Instance.DebugEraseStorage(); });
+      DebugConsoleData.Instance.AddConsoleFunction("Erase All Enrolled Faces", "Save Data Persistance",
                                                         (string str) => { RobotEngineManager.Instance.CurrentRobot.EraseAllEnrolledFaces(); });
+      DebugConsoleData.Instance.AddConsoleFunction("Reset All Robot Data", "Save Data Persistance", HandleResetRobot);
       DebugConsoleData.Instance.AddConsoleFunction("Reset PlayTest Session", "PlayTest", HandleResetSession);
 
       DebugConsoleData.Instance.AddConsoleVar("_CalibrationFocalX", "Camera Calibration", this);
@@ -43,9 +46,12 @@ namespace Anki.Debug {
     private float _CalibrationCenterY = 0;
 
 
-    private void HandleResetSession(string str) {
+    private void HandleResetRobot(string str) {
       RobotEngineManager.Instance.CurrentRobot.EraseAllEnrolledFaces();
       SkillSystem.Instance.DebugEraseStorage();
+    }
+    private void HandleResetSession(string str) {
+      HandleResetRobot(str);
       // use reflection to change readonly field
       typeof(DataPersistence.DataPersistenceManager).GetField("Data").SetValue(DataPersistence.DataPersistenceManager.Instance, new DataPersistence.SaveData());
       DataPersistence.DataPersistenceManager.Instance.Save();

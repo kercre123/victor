@@ -512,8 +512,6 @@ MonoBehaviour:
     panePrefab: {fileID: 149194, guid: 6952cd381a30e48b48aacd5aca28eb45, type: 2}
   - name: Data Persistence
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
-  - name: FaceEnrollment
-    panePrefab: {fileID: 184652, guid: 0df6b876209ca40c5b32f20b561782da, type: 2}
   - name: Playtest
     panePrefab: {fileID: 119064, guid: 9450d0bb23c9a405dadefc00ad27edd0, type: 2}
   - name: Features

@@ -66,7 +66,6 @@ public class ConnectionFlow : MonoBehaviour {
 
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
   }
 
   private void RestartConnectionFlow() {
@@ -193,6 +192,7 @@ public class ConnectionFlow : MonoBehaviour {
   private void ConnectToRobot() {
     DAS.Info("ConnectDialog.ConnectToRobot", "Trying to connect to robot");
     RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
   }
 
   private void HandleConnectedToEngine(string connectionIdentifier) {
