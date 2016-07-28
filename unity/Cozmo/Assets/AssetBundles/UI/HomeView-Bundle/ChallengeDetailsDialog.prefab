@@ -213,7 +213,7 @@ MonoBehaviour:
     JsonValue: '"#button.play"'
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
-    JsonValue: '"Sfx_Ui_Window_Close_Play"'
+    JsonValue: '"Play__Ui__Window_Close"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: ChallengeDetailsDialog:_StartChallengeButton

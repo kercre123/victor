@@ -23,7 +23,7 @@ namespace Anki {
       public struct AudioEventParameter {
 
         public static AudioEventParameter DefaultClick = new AudioEventParameter(
-                                                           GameEvent.GenericEvent.Sfx_Ui_Click_General_Play,
+                                                           GameEvent.GenericEvent.Play__Ui__Click_General,
                                                            GameEvent.EventGroupType.UI,
                                                            GameObjectType.UI);
 

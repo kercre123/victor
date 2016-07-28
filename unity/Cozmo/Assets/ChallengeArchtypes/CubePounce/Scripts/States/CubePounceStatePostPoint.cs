@@ -18,7 +18,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
         _CubePounceGame.AddPoint(false);
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Lose_Shared);
         _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.red }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
 
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Pounce);
@@ -27,7 +27,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         _CubePounceGame.AddPoint(true);
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Win_Shared);
         _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
 
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Player_Fail);

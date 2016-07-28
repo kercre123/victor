@@ -48,7 +48,7 @@ namespace Simon {
 
       SetScanPhase(ScanPhase.NoCubesSeen);
       InitShowCubesSlide();
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Game_Start);
     }
 
     // ignore base class events
@@ -218,7 +218,7 @@ namespace Simon {
 
     private void InitShowCubesSlide() {
       if (_ShowCozmoCubesSlide == null) {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.Window_Open);
         _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
       }
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));

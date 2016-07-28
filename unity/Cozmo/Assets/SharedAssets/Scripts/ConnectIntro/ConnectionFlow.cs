@@ -164,7 +164,7 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void HandleConnectingToCozmoScreenDone() {
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Cozmo_Connect);
     GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
     _ConnectionFlowBackgroundInstance.SetStateComplete(1);
     ShowSecuringConnectionScreen();

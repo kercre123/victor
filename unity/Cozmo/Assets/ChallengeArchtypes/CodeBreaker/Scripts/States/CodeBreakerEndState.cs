@@ -19,7 +19,7 @@ namespace CodeBreaker {
     public override void Enter() {
       base.Enter();
 
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Cozmo_Connect);
       _CurrentRobot.SendAnimationTrigger(_CozmoAnimationTrigger);
 
       // Show slide

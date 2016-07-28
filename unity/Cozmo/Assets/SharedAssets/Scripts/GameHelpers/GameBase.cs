@@ -549,7 +549,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
     _WonChallenge = true;
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Win_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
@@ -560,7 +560,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Lose_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
@@ -636,7 +636,7 @@ public abstract class GameBase : MonoBehaviour {
       }
     }
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Game_End);
 
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }

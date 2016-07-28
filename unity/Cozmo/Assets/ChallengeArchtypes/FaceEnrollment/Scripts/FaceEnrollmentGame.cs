@@ -194,7 +194,7 @@ namespace FaceEnrollment {
 
     private void EditOrEnrollFaceComplete(bool success) {
       if (success) {
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Win_Shared);
       }
       SharedMinigameView.ShowQuitButton();
       ShowFaceListSlide(SharedMinigameView);

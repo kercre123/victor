@@ -188,7 +188,7 @@ namespace Simon {
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
       Anki.Cozmo.Audio.AudioEventParameter audioEvent =
-        Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+        Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Cozmo_Connect);
       SimonCube simonCube;
       if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
         audioEvent = simonCube.soundName;
@@ -263,7 +263,7 @@ namespace Simon {
         simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo, LocalizationKeys.kSimonGameLabelCozmoTurn, statusLocKey);
       }
       else {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.Window_Open);
         simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, LocalizationKeys.kSimonGameLabelYourTurn, statusLocKey);
       }
 
