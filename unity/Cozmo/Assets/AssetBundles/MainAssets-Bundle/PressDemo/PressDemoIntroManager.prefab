@@ -45,6 +45,11 @@ MonoBehaviour:
       _EnumValueAsString: start_view_prefabs
       _EnumValue: 12
     _AssetDataName: SimpleConnectDialog
+  _CheckInDialogPrefabData:
+    _AssetBundle:
+      _EnumValueAsString: minigame_metadata
+      _EnumValue: 0
+    _AssetDataName: 
   _HubWorldPrefab: {fileID: 11477898, guid: bd9cdefcf513c4aa38b7a3dd570334b2, type: 2}
   _IntroScriptedSequenceName: 
 --- !u!1001 &100100000

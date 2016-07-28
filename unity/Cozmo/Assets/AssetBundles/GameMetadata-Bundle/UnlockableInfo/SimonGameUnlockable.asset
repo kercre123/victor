@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: MemoryMatchGame
-    _EnumValue: 15
+    _EnumValue: 17
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -28,3 +28,4 @@ MonoBehaviour:
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf, type: 3}
   CubesRequired: 3
+  _TimeSparkedSec: 60

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: ReactToSmiles
-    _EnumValue: 6
+    _EnumValue: 7
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -28,3 +28,4 @@ MonoBehaviour:
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   CubesRequired: 0
+  _TimeSparkedSec: 60

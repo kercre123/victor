@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KeepawayGame
-    _EnumValue: 17
+    _EnumValue: 15
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -28,3 +28,4 @@ MonoBehaviour:
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: 5a17a17c602924356a56e3152bae81a7, type: 3}
   CubesRequired: 1
+  _TimeSparkedSec: 60

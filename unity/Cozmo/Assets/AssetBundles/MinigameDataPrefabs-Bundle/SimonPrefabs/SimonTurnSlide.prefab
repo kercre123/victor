@@ -1042,7 +1042,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _CenterImage: {fileID: 11489782}
   _StatusTextLabel: {fileID: 0}
-  _CorrectSprite: {fileID: 21300000, guid: 6a5e48ac1bb7d481093ad70ea8c93f34, type: 3}
+  _CorrectSprite: {fileID: 21300000, guid: 96e7134f01fc247708f9f51794f47544, type: 3}
   _WrongSprite: {fileID: 21300000, guid: a06872b4ef1ea433698eaa1f0c3dd771, type: 3}
   _PlayerWidget: {fileID: 11421446}
   _CozmoWidget: {fileID: 11482056}

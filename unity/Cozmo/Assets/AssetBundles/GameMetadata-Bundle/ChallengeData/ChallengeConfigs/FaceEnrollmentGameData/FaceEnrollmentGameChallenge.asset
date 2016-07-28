@@ -22,7 +22,7 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: fdba5e56d36db40fdb260db03b84882b, type: 3}
   _UnlockId:
     _EnumValueAsString: MeetCozmoGame
-    _EnumValue: 18
+    _EnumValue: 16
   _Music:
     _Music: 1580491744
   MinigameConfig: {fileID: 11400000, guid: b674784e041d447f7bc1db7987a1d0d9, type: 2}

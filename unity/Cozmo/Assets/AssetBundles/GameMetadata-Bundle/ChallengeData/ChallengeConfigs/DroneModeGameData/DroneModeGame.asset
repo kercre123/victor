@@ -22,7 +22,7 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   _UnlockId:
     _EnumValueAsString: DroneModeGame
-    _EnumValue: 15
+    _EnumValue: 14
   _Music:
     _Music: -1060883196
   MinigameConfig: {fileID: 11400000, guid: f01a1b66151be43caaaf3b14a0fe42b7, type: 2}

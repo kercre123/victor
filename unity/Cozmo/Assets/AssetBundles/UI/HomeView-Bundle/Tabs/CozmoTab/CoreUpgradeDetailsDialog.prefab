@@ -761,7 +761,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: a4141ff8d4fff4d088c1cd1e73b399f1, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1143,6 +1143,7 @@ MonoBehaviour:
   _SparksButtonDescriptionLabel: {fileID: 0}
   _SparkTargetCenter: {x: 4.7, y: 4.5}
   _SparkTargetRandOffset: 1.5
+  _SparkHoldTimeSec: 1
 --- !u!114 &11455274
 MonoBehaviour:
   m_ObjectHideFlags: 1
