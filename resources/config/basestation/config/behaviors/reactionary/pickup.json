@@ -2,5 +2,6 @@
   "behaviorType": "ReactToPickup",
   "behaviorGroups": [
     "Reactionary"
-  ]
+  ],
+  "disableByDefault": false
 }

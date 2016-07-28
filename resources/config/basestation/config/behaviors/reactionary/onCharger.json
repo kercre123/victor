@@ -2,5 +2,6 @@
   "behaviorType": "ReactToOnCharger",
   "behaviorGroups": [
     "Reactionary"
-  ]
+  ],
+  "disableByDefault": true
 }

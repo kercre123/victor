@@ -2,5 +2,6 @@
   "behaviorType": "ReactToRobotOnFace",
   "behaviorGroups": [
     "Reactionary"
-  ]
+  ],
+  "disableByDefault": false
 }

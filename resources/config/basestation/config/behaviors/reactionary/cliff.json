@@ -2,5 +2,6 @@
   "behaviorType": "ReactToCliff",
   "behaviorGroups": [
     "Reactionary"
-  ]
+  ],
+  "disableByDefault": false
 }

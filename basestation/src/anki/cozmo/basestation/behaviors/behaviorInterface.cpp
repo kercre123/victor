@@ -46,6 +46,7 @@ static const char* kBehaviorGroupsKey          = "behaviorGroups";
 static const char* kRequiredUnlockKey          = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey    = "requiredRecentSwitchToParent_sec";
+static const char* kDisableReactionaryDefault  = "disableByDefault";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _behaviorType(BehaviorType::NoneBehavior)
@@ -580,6 +581,7 @@ IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& conf
   SubscribeToTags({
     GameToEngineTag::RequestEnableReactionaryBehavior
   });
+  LoadConfig(robot, config);
 }
 
 Result IReactionaryBehavior::InitInternal(Robot& robot)
@@ -618,6 +620,20 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
   StopInternalReactionary(robot);
 }
   
+void IReactionaryBehavior::LoadConfig(Robot& robot, const Json::Value& config)
+{
+  
+  bool disableBehavior = config.get(kDisableReactionaryDefault, false).asBool();
+  
+  if(disableBehavior) {
+    PRINT_NAMED_DEBUG("IReactionaryBehavior.LoadConfig.DisableBehavior",
+                      "Reactionary Behavior %s is being disabled", GetName().c_str());
+    
+    std::string id = "default_disabled";
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(id, GetType(), false);
+  }
+}
+
 void IReactionaryBehavior::SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags)
 {
   _engineToGameTags.insert(tags.begin(), tags.end());

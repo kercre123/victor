@@ -440,6 +440,8 @@ protected:
   virtual Result ResumeInternalReactionary(Robot& robot){return InitInternalReactionary(robot);};
   virtual void   StopInternalReactionary(Robot& robot){};
   
+  void LoadConfig(Robot& robot, const Json::Value& config);
+  
   //Handle tracking enable/disable requests
   virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
   std::multiset<std::string> _disableIDs;

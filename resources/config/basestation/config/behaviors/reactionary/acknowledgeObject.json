@@ -5,5 +5,6 @@
   "behaviorGroups": [
   ],
   "ReactionAnimGroup": "ReactToNewBlockSmall",
+  "disableByDefault": false,
   "SamePoseDistThresh_mm": 80
 }

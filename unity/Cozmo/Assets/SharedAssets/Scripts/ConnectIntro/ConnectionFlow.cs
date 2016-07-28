@@ -254,7 +254,7 @@ public class ConnectionFlow : MonoBehaviour {
     UIManager.CloseView(_ConnectionFlowBackgroundInstance);
 
     // explicitly enable charger behavior since it should be off by default in engine.
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("on_start_wakeup", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
     if (ConnectionFlowComplete != null) {
       ConnectionFlowComplete();
     }

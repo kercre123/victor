@@ -2,5 +2,6 @@
   "behaviorType": "ReactToUnexpectedMovement",
   "behaviorGroups": [
     "Reactionary"
-  ]
+  ],
+  "disableByDefault": false
 }
