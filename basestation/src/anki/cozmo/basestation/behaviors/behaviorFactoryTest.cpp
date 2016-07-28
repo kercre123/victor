@@ -119,16 +119,21 @@ namespace Cozmo {
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
   static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
-  static constexpr f32 _kMaxRobotAngleChangeDuringBackup_deg = 5.f;
+  static constexpr f32 _kMaxRobotAngleChangeDuringBackup_deg = 10.f;
   static constexpr f32 _kMinBattVoltage = 3.6f;
   
   static constexpr u16 _kMaxCliffValueOverDrop = 300;
   static constexpr u16 _kMinCliffValueOnGround = 800;
   
   // Checks for these firmware versions if non-zero
-  static constexpr u32 _kExpectedWifiVersion = 0x857b162;
-  static constexpr u32 _kExpectedRtipVersion = 0x857b162;
-  static constexpr u32 _kExpectedBodyVersion = 0;
+  static constexpr u32 _kMaxWifiVersion = 0x857b1ff;
+  static constexpr u32 _kMaxRtipVersion = 0x857b1ff;
+
+  static constexpr u32 _kMinWifiVersion = 0x857b162;
+  static constexpr u32 _kMinRtipVersion = 0x857b162;
+  
+  static constexpr u32 _kMinBodyHWVersion = 4;
+  
   
   // If no change in behavior state for this long then trigger failure
   static constexpr f32 _kWatchdogTimeout = 20;
@@ -201,6 +206,7 @@ namespace Cozmo {
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp, &BehaviorFactoryTest::HandleBlockPickedUp);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::bodyVersion, &BehaviorFactoryTest::HandleBodyVersion);
 
   }
   
@@ -244,6 +250,7 @@ namespace Cozmo {
     _numPlacementAttempts = 0;
     
     _activeObjectDiscovered = false;
+    _wrongBodyHWVersion = false;
     
     // Sim robot won't hear from any blocks
     if(!robot.IsPhysical())
@@ -290,6 +297,9 @@ namespace Cozmo {
     
     // Set head device lock so that video will stream down
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadDeviceLock(true)));
+    
+    // Request body firmware version
+    robot.SendMessage(RobotInterface::EngineToRobot(GetBodyVersion()));
     
     _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
     SetCurrState(FactoryTestState::GetPrevTestResults);
@@ -563,9 +573,8 @@ namespace Cozmo {
                            "Wifi: 0x%x, RTIP: 0x%x, Body: 0x%x",
                            fwInfo.wifiVersion, fwInfo.rtipVersion, fwInfo.bodyVersion);
           
-          if (((_kExpectedWifiVersion != 0) && (_kExpectedWifiVersion != fwInfo.wifiVersion)) ||
-              ((_kExpectedRtipVersion != 0) && (_kExpectedRtipVersion != fwInfo.rtipVersion)) ||
-              ((_kExpectedBodyVersion != 0) && (_kExpectedBodyVersion != fwInfo.bodyVersion))) {
+          if (((fwInfo.wifiVersion < _kMinWifiVersion) || (fwInfo.wifiVersion > _kMaxWifiVersion)) ||
+              ((fwInfo.rtipVersion < _kMinRtipVersion) || (fwInfo.rtipVersion > _kMaxRtipVersion))) {
             END_TEST(FactoryTestResultCode::WRONG_FIRMWARE_VERSION);
           }
         }
@@ -727,6 +736,11 @@ namespace Cozmo {
           // Confirm that the first calib photo was taken
           if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0) {
             END_TEST(FactoryTestResultCode::FIRST_CALIB_IMAGE_NOT_TAKEN);
+          }
+          
+          // Check body hw version
+          if (kBFT_CheckFWVersion && _wrongBodyHWVersion) {
+            END_TEST(FactoryTestResultCode::WRONG_BODY_HW_VERSION);
           }
           
           // Make sure cliff (and pickup) detection is enabled
@@ -1657,6 +1671,19 @@ namespace Cozmo {
     
     _stationID = payload.param;
   }
+  
+  void BehaviorFactoryTest::HandleBodyVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+  {
+    const RobotInterface::BodyVersion& payload = message.GetData().Get_bodyVersion();
+    
+    PRINT_NAMED_INFO("BehaviorFactoryTest.HandleBodyVersion.Recvd",
+                     "hwVersion: %d", payload.hw_version);
+    
+    if (payload.hw_version < _kMinBodyHWVersion) {
+      _wrongBodyHWVersion = true;
+    }
+  }
+
   
   Result BehaviorFactoryTest::HandleCameraCalibration(Robot &robot, const CameraCalibration &calibMsg)
   {

@@ -75,12 +75,12 @@ namespace Cozmo {
     Result HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg);
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
-    void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
-    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     
     // Handlers for signals coming from robot
+    void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
+    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    
+    void HandleBodyVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
@@ -163,6 +163,7 @@ namespace Cozmo {
     u8 _numPlacementAttempts;
     
     bool _activeObjectDiscovered = false;
+    bool _wrongBodyHWVersion;
     
     Pose3d _closestPredockPose;
     

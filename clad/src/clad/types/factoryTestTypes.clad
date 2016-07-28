@@ -100,6 +100,7 @@ enum uint_8 FactoryTestResultCode {
   BATTERY_TOO_LOW,
   NO_IMU_DATA,
   BACK_AND_FORTH_NOT_STRAIGHT,
+  WRONG_BODY_HW_VERSION,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
