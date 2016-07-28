@@ -761,13 +761,6 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     return;
   }
   
-  if(_ignoreExternalActions)
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.QueueSingleAction",
-                     "Ignoring QueueSingleAction message while external actions are disabled");
-    return;
-  }
-  
   // We'll pass around a reference to the Robot for convenience sake
   Robot& robot = *robotPointer;
   
@@ -981,6 +974,15 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
   }
   
+  if(_ignoreExternalActions)
+  {
+    PRINT_NAMED_INFO("RobotEventHandler.GameToEngineEvent",
+                     "Ignoring GameToEngineEvent message while external actions are disabled");
+    newAction->PrepForCompletion();
+    Util::SafeDelete(newAction);
+    return;
+  }
+  
   // Everything's ok and we have an action, so queue it
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
 }
@@ -995,19 +997,24 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
     return;
   }
   
-  if(_ignoreExternalActions)
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.QueueSingleAction",
-                     "Ignoring QueueSingleAction message while external actions are disabled");
-    return;
-  }
-  
   IActionRunner* action = CreateNewActionByType(*robot, msg.action);
   
+  const bool didSetTag = action->SetTag(msg.idTag);
+  
   // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!action->SetTag(msg.idTag))
+  if(!didSetTag || _ignoreExternalActions)
   {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction", "Failure to set action tag deleting action");
+    if(_ignoreExternalActions)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueSingleAction.IgnoringExternalActions",
+                          "Ignoring QueueSingleAction message while external actions are disabled");
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction.FailedToSetTag",
+                        "Failed to set tag deleting action");
+    }
+    action->PrepForCompletion();
     Util::SafeDelete(action);
   }
   else
@@ -1024,13 +1031,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
   if (nullptr == robot)
   {
-    return;
-  }
-  
-  if(_ignoreExternalActions)
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
-                     "Ignoring QueueCompoundAction message while external actions are disabled");
     return;
   }
   
@@ -1052,10 +1052,23 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
     
   } // for each action/actionType
   
+  const bool didSetTag = compoundAction->SetTag(msg.idTag);
+  
   // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!compoundAction->SetTag(msg.idTag))
+  if(!didSetTag || _ignoreExternalActions)
   {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction", "Failure to set action tag deleting action");
+    if(_ignoreExternalActions)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueCompoundAction.IgnoringExternalActions",
+                          "Ignoring QueueCompoundAction message while external actions are disabled");
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction.FailedToSetTag",
+                        "Failed to set tag deleting action");
+    }
+    
+    compoundAction->PrepForCompletion();
     Util::SafeDelete(compoundAction);
   }
   else
