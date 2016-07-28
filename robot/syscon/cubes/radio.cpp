@@ -210,9 +210,9 @@ static void OTARemoteDevice(uint32_t id) {
 void Radio::sendTestPacket(void) {
   const AdvertisePacket test_packet = {
     0x0D0B3D09,
-    0xFF03,
-    0xE3FF,
-    0x04,
+    0xFF03,     // I'm a cube 3
+    0x0000,     // Don't patch me, I have them all!
+    0x06,       // I'm a pilot/production cube
     0xFF
   };
 

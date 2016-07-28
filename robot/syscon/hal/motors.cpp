@@ -50,11 +50,8 @@ const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 
 const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
 
-// Encoder scaling reworked for Cozmo 4.0
-
 // Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
-// Applying a slip factor correction of 94.8%
 const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
 
 // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we

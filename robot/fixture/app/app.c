@@ -18,11 +18,11 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 51;
+u8 g_fixtureReleaseVersion = 53;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
-const char* FIXTYPES[] = FIXTURE_TYPES;
+const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
 FlashParams g_flashParams;
 
@@ -183,7 +183,9 @@ bool DetectDevice(void)
     case FIXTURE_BODY3_TEST:
       return BodyDetect();
     case FIXTURE_INFO_TEST:
-    case FIXTURE_ROBOT_TEST:
+    case FIXTURE_ROBOT1_TEST:
+    case FIXTURE_ROBOT2_TEST:
+    case FIXTURE_ROBOT3_TEST:
     case FIXTURE_PLAYPEN_TEST:
       return RobotDetect();
     case FIXTURE_MOTOR1A_TEST:
@@ -204,7 +206,7 @@ bool DetectDevice(void)
 }
 
 // Wait until the Device has been pulled off the fixture
-void WaitForDeviceOff(void)
+void WaitForDeviceOff(bool error)
 {
   // In debug mode, keep device powered up so we can continue talking to it
   if (g_fixtureType == FIXTURE_DEBUG)
@@ -226,6 +228,13 @@ void WaitForDeviceOff(void)
     u32 debounce = 0;
     while (g_isDevicePresent)
     {
+      // Blink annoying red LED
+      static u8 annoy;
+      if (error && (annoy++ & 0x80))
+        STM_EVAL_LEDOn(LEDRED);
+      else
+        STM_EVAL_LEDOff(LEDRED);
+      
       if (!DetectDevice())
       {
         // 500 checks * 1ms = 500ms delay showing error post removal
@@ -291,7 +300,7 @@ static void RunTests()
     SetOKText();
   }
   
-  WaitForDeviceOff();
+  WaitForDeviceOff(error != ERROR_OK);
 }
 
 // This checks for a Device (even asleep) that is in contact with the fixture
@@ -355,7 +364,9 @@ static void MainExecution()
     case FIXTURE_INFO_TEST:
       m_functions = GetInfoTestFunctions();
       break;
-    case FIXTURE_ROBOT_TEST:
+    case FIXTURE_ROBOT1_TEST:
+    case FIXTURE_ROBOT2_TEST:
+    case FIXTURE_ROBOT3_TEST:
       m_functions = GetRobotTestFunctions();
       break;
     case FIXTURE_PLAYPEN_TEST:
@@ -403,22 +414,7 @@ static void MainExecution()
     STM_EVAL_LEDOff(LEDRED);
     STM_EVAL_LEDOff(LEDGREEN);
     
-    const int maxTries = 5;
-    for (i = 0; i < maxTries; i++)
-    {
-      if (TryToRunTests())
-        break;
-    }
-    
-    if (i == maxTries)
-    {
-      error_t error = ERROR_OK;
-      if (error != ERROR_OK)
-      {
-        SetErrorText(error);
-        WaitForDeviceOff();
-      }
-    }
+    TryToRunTests();
   }
 }
 

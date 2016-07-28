@@ -406,10 +406,17 @@ void SetMotor(void)
   MotorMV(test);
 }  
 
+// Re-run a test
+void Again(void)
+{
+  g_isDevicePresent = false;  // Virtually remove device
+}
+
 void HeadESP();
 void CubePOST(void);
 static CommandFunction m_functions[] =
 {
+  {"Again", Again, FALSE},
   {"GetSerial", GetSerialCmd, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},

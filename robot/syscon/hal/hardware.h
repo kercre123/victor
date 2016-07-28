@@ -15,6 +15,7 @@ enum BODY_VERS {
   BODY_VER_SHIP = 3,    // First shipping firmware version
 };
 
+#ifndef FIXTURE
 enum watchdog_channels {
   WDOG_RTOS,
   WDOG_UART,
@@ -98,5 +99,6 @@ enum e_ppi_channel {
   PPI_MOTOR_CHANNEL_6,
   PPI_MOTOR_CHANNEL_7
 };
+#endif
 
 #endif

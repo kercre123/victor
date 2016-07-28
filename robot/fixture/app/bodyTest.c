@@ -10,8 +10,11 @@
 
 #include "app/fixture.h"
 #include "app/binaries.h"
+#include <string.h>
 
 #include "../syscon/hal/tests.h"
+#include "../syscon/hal/motors.h"
+
 using namespace Anki::Cozmo::RobotInterface;
 
 // Return true if device is detected on contacts
@@ -71,34 +74,68 @@ void HeadlessBoot(void)
   SendTestChar(-1);  
 }
 
-int TryMotor(u8 motor, s8 speed)
+// The real (mass production) numbers are: 8 ticks/revolution, 28.5mm diameter, 172.3:1 
+const int MM_PER_TICK_F12 = 0.5 + (4096.0 * 0.125 * 28.5 * 3.14159265359) / 172.3;
+const int MDEG_PER_RADIAN = 0.5 + 4096.0 * (180*1000 / (3.14159265359*65536));      // 0.12 const * 16.16 radian -> millidegrees
+
+// The API for this is tangled and gnarly:
+// Treads are simple - we just measure motor speed
+// To get head and lift limit-to-limit, start a "dummy TryMotor" with -motor, then reverse direction for real read
+// Tread speed is returned in mm/sec, head/lift are turned in 1/1000 degree (so 45000 is 45 deg)
+int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
 {
-  const int MOTOR_RUNTIME = 100 * 1000;
-  int first[4], second[4];
+  const int MOTOR_RUNTIME = 100 * 1000;   // 100ms is plenty
+  static int first[4], second[4];
+  bool doPrint = true;
+  
+  if (motor < 0)
+  {
+    doPrint = false;
+    motor = -motor;
+  }
   
   // Reset motor watchdog
   SendCommand(TEST_POWERON, 0, 0, NULL);
   
-  // Get motor up to speed
-  SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
-  MicroWait(MOTOR_RUNTIME);
+  // Get motor up to speed (if tread)
+  if (motor < 2)
+  {
+    SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
+    MicroWait(MOTOR_RUNTIME);   // Let tread spinup
+    SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
+    MicroWait(MOTOR_RUNTIME);   // Then run it
+ 
+  // For lift head/head, let motor -stop- moving first when it hits limit (but keep pushing)
+  } else {
+    MicroWait(MOTOR_RUNTIME);   // Let fast-spinning motor come to a stop first
+    SendCommand(TEST_RUNMOTOR, (speed&0xFC) + motor, 0, NULL);
+    if (limitToLimit)
+      memcpy(first, second, sizeof(first));   // Copy from previous run (against limit)
+    else
+      SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
+    
+    // Run it for a while
+    MicroWait(MOTOR_RUNTIME*2);
+    if (motor == MOTOR_HEAD)
+      MicroWait(MOTOR_RUNTIME*2); // Run the head a little longer - since it's slower moving
+  }
   
-  // Get start point
-  SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
-  MicroWait(MOTOR_RUNTIME);
-  
-  // Get end point
+  // Get end point, then stop motor
   SendCommand(TEST_GETMOTOR, 0, sizeof(second), (u8*)second);
-  
-  // Stop motor
   SendCommand(TEST_RUNMOTOR, 0 + motor, 0, NULL);
-  int ticks = second[motor] - first[motor];
   
-  ConsolePrintf("speedtest,%d,%d,%d\r\n", motor, speed, ticks);
+  int ticks = second[motor] - first[motor];
+  if (motor < 2)
+    ticks = ((1000000/MOTOR_RUNTIME)*ticks * MM_PER_TICK_F12) >> 12;    // mm/sec for 1/10th sec
+  else
+    ticks = (ticks * MDEG_PER_RADIAN) >> 12;       // Convert from 16.16 radians to millidegrees
+  
+  if (doPrint)
+    ConsolePrintf("speedtest,%d,%d,%d,%d,%d\r\n", motor+1, speed, ticks, first[motor], second[motor]);
   return ticks;
 }
 
-const int THRESH = 1500;
+const int THRESH = 975;   // 975mm/sec
 void BodyMotor(void)
 {
   if (TryMotor(0, 124) < THRESH)

@@ -21,7 +21,6 @@
 #define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
 #define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
 
-#define FIXTURE_ROBOT_TEST    8     // ID 4
 #define FIXTURE_INFO_TEST     14    // ID 4 + 3 + 2
 #define FIXTURE_PLAYPEN_TEST  15    // ID 4 + 3 + 2 + 1
 
@@ -34,12 +33,18 @@
 
 #define FIXTURE_CUBEX_TEST     21   // Will verify (but not program-from-scratch) any cube type
 
-#define FIXTURE_DEBUG          22   // Should be last ID
+// These can have any values, but must be in numeric order
+#define FIXTURE_ROBOT1_TEST    8    // ID 4
+#define FIXTURE_ROBOT2_TEST    22
+#define FIXTURE_ROBOT3_TEST    23
+
+#define FIXTURE_DEBUG          32   // Should be last ID
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID",  "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
-                        "ROBOT",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
-                        "FINISHC","FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX", \
+#define FIXTURE_TYPES { "NO ID",   "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
+                        "ROBOT1",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
+                        "FINISHC", "FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX",  "ROBOT2","ROBOT3", \
+                        "PACKOUT","LIFETEST","RECHARGE","","","","","", \
                         "DEBUG" }
 
 extern FixtureType g_fixtureType;
@@ -81,8 +86,22 @@ u32 GetSerial();
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
-#define ERROR_MOTOR_LEFT            310   // General problem driving left motor
-#define ERROR_MOTOR_RIGHT           320   // General problem driving r motor
+// General motor errors
+#define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
+#define ERROR_MOTOR_LEFT_SPEED      311   // Problem driving left motor at full speed
+#define ERROR_MOTOR_RIGHT           320   // Problem driving right motor (sticky or broken wire)
+#define ERROR_MOTOR_RIGHT_SPEED     321   // Problem driving right motor at full speed
+
+#define ERROR_MOTOR_LIFT            330   // Problem driving lift motor (sticky or broken wire)
+#define ERROR_MOTOR_LIFT_RANGE      331   // Lift can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_LIFT_BACKWARD   332   // Lift is wired backward
+#define ERROR_MOTOR_LIFT_NOSTOP     333   // Lift does not hit stop (bad encoder/missing lift arm)
+
+#define ERROR_MOTOR_HEAD            340   // Problem driving head motor (sticky or broken wire)
+#define ERROR_MOTOR_HEAD_RANGE      341   // Head can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_HEAD_BACKWARD   342   // Head is wired backward
+#define ERROR_MOTOR_HEAD_NOSTOP     343   // Head does not hit stop (bad encoder/missing head arm)
+#define ERROR_MOTOR_HEAD_SLOW_RANGE 345   // Head can't reach full range when run at low voltage
 
 // Body/finished robot testport errors
 #define ERROR_NO_PULSE              400   // Robot is not in debug/test mode
@@ -110,14 +129,21 @@ u32 GetSerial();
 #define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
 #define ERROR_HEAD_RADIO_TIMEOUT    513   // Unable to send command due to ESP timeout (broken connection?)
 
+#define ERROR_HEAD_SPEAKER          520   // Speaker not connected/damaged
+
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
+#define ERROR_BODY_OUTOFDATE        601   // Body board is running out of date firmware
 
 // Drop sensor errors
 #define ERROR_DROP_LEAKAGE          610   // Drop leakage detected
+#define ERROR_DROP_TOO_DIM          611   // Drop sensor bad LED (or reading too dim)
+#define ERROR_DROP_TOO_BRIGHT       612   // Drop sensor bad photodiode (or too much ambient light)
 
 // Power system errors
-#define ERROR_BAT_LEAKAGE           620   // Too much leakage through battery when off
+#define ERROR_BAT_LEAKAGE           620   // Too much leakage through battery when turned off
+#define ERROR_BAT_UNDERVOLT         621   // Battery voltage too low - must charge
+#define ERROR_BAT_CHARGER           622   // Battery charger not working
 
 // Motor harness errors
 #define ERROR_BACKPACK_LED          650   // Backpack LED miswired
@@ -136,6 +162,9 @@ u32 GetSerial();
 
 // 710-713 for cube/charger types 0-3
 #define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE1_TYPE_CHANGE     711   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE2_TYPE_CHANGE     712   // Cube type (1,2,3) does not match fixture type (1,2,3)
+#define ERROR_CUBE3_TYPE_CHANGE     713   // Cube type (1,2,3) does not match fixture type (1,2,3)
 
 #define ERROR_CUBE_NO_BOOT          750   // Bad regulator, IMU, or crystal
 #define ERROR_CUBE_MISSING_LED      751   // LED wiring problem
