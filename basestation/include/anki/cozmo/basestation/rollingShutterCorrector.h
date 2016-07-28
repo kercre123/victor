@@ -63,6 +63,8 @@ namespace Anki {
         std::deque<ImuData>::const_iterator end() const { return _history.end(); }
         ImuData front() const { return _history.front(); }
         ImuData back() const { return _history.back(); }
+        size_t size() const { return _history.size(); }
+        bool empty() const { return _history.empty(); }
       
       private:
         std::deque<ImuData> _history;

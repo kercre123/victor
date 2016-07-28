@@ -225,7 +225,7 @@ namespace Anki {
       
       // If we don't have imu data for the timestamps before and after the timestamp we are looking for just
       // use the latest data
-      if(!beforeAfterSet)
+      if(!beforeAfterSet && !poseData.imuDataHistory.empty())
       {
         rateY = poseData.imuDataHistory.back().rateY;
         rateZ = poseData.imuDataHistory.back().rateZ;

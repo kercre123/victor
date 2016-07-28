@@ -56,6 +56,8 @@ public:
   bool Append(const BirthCertificate& data);
   bool Append(const IMUInfo& data);
   bool Append(const CalibMetaInfo& data);
+  bool AppendCliffValueOnDrop(const CliffSensorValue& data);
+  bool AppendCliffValueOnGround(const CliffSensorValue& data);
   bool AppendCalibPose(const PoseData& data);
   bool AppendObservedCubePose(const PoseData& data);
   bool Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg);
@@ -66,6 +68,7 @@ public:
   
 private:
   
+  bool AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data);
   bool AppendPoseData(const std::string& poseName, const PoseData& data);
   bool AppendToFile(const std::string& data);
   

@@ -272,6 +272,30 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
+  
+  bool FactoryTestLogger::AppendCliffValueOnDrop(const CliffSensorValue& data) {
+    return AppendCliffSensorValue("CliffOnDrop", data);
+  }
+  
+  bool FactoryTestLogger::AppendCliffValueOnGround(const CliffSensorValue& data) {
+    return AppendCliffSensorValue("CliffOnGround", data);
+  }
+  
+  bool FactoryTestLogger::AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data)
+  {
+    std::stringstream ss;
+    if (_exportJson) {
+      Json::Value& node = _json[readingName];
+      node["val"] = data.val;
+      ss << "[" << readingName<< "]\n" << node;
+    } else {
+      ss << "\n[" << readingName << "]"
+      << "\nval: " << data.val;
+    }
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValue", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+      
   bool FactoryTestLogger::AppendCalibPose(const PoseData& data) {
     return AppendPoseData("CalibPose", data);
   }

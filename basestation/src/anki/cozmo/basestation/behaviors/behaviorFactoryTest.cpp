@@ -54,11 +54,6 @@ namespace Cozmo {
   // Does the test without doing any of the writing to NVStorage
   CONSOLE_VAR(bool, kBFT_EnableNVStorageWrites,   "BehaviorFactoryTest",  true);
   
-  // Skips the final block pickup.
-  // Eventually, it's possible we might not need to do this part of the test and that
-  // checking the block location is sufficient, but for now keep this to false!
-  CONSOLE_VAR(bool, kBFT_SkipBlockPickup,         "BehaviorFactoryTest",  false);
-  
   // Should be set to true once pilot build begins.
   // EP3 robots in the office however will not have this data so skip this check.
   CONSOLE_VAR(bool, kBFT_CheckPrevFixtureResults, "BehaviorFactoryTest",  false);
@@ -89,6 +84,9 @@ namespace Cozmo {
   
   // Whether or not to check for expected robot FW version
   CONSOLE_VAR(bool,  kBFT_CheckFWVersion,         "BehaviorFactoryTest",  true);
+  
+  // Whether or not to check that battery voltage stays above minimum throughtout test
+  CONSOLE_VAR(bool,  kBFT_CheckBattVoltage,       "BehaviorFactoryTest",  true);
   
   
   ////////////////////////////
@@ -121,6 +119,8 @@ namespace Cozmo {
   static constexpr u32 _kNumPickupRetries = 1;
   static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
   static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
+  static constexpr f32 _kMaxRobotAngleChangeDuringBackup_deg = 5.f;
+  static constexpr f32 _kMinBattVoltage = 3.6f;
   
   static constexpr u16 _kMaxCliffValueOverDrop = 300;
   static constexpr u16 _kMinCliffValueOnGround = 800;
@@ -200,6 +200,7 @@ namespace Cozmo {
     // bind to specific handlers in the robot class
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp, &BehaviorFactoryTest::HandleBlockPickedUp);
 
   }
   
@@ -228,6 +229,10 @@ namespace Cozmo {
     // Clear motor calibration flags
     _headCalibrated = false;
     _liftCalibrated = false;
+    
+    _blockPickedUpReceived = false;
+    _robotAngleAtPickup = 0;
+    _robotAngleAfterBackup = 0;
     
     // Set known poses
     _cliffDetectPose = Pose3d(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin());
@@ -497,6 +502,14 @@ namespace Cozmo {
       
     }
     
+    // If robot just picked up block then record robot angle
+    if (_blockPickedUpReceived) {
+      _robotAngleAtPickup = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+      PRINT_NAMED_INFO("BehaviorFactoryTest.Update.BlockPickedUpReceived",
+                       "Robot angle: %f deg", _robotAngleAtPickup.getDegrees());
+      _blockPickedUpReceived = false;
+    }
+    
     if (IsActing()) {
       return Status::Running;
     }
@@ -677,6 +690,11 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - CHARGER AND IMU CHECK - - - - - - - - - - - - - - -
       case FactoryTestState::ChargerAndIMUCheck:
       {
+        // Check that IMU data history has been received
+        if (robot.GetVisionComponent().GetImuDataHistory().empty()) {
+          END_TEST(FactoryTestResultCode::NO_IMU_DATA);
+        }
+        
         // Check that robot is on charger
         if (!robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
@@ -726,7 +744,7 @@ namespace Cozmo {
           
           StartActing(robot, compoundAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.f;
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.f;
                         return true;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);
@@ -745,6 +763,19 @@ namespace Cozmo {
           break;
         }
         
+        // Record cliff sensor value over drop
+        const CliffSensorValue cliffVal(robot.GetCliffDataRaw());
+        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.CliffOnDrop", "%u", cliffVal.val);
+        
+        // Write cliff val to log on device
+        _factoryTestLogger.AppendCliffValueOnDrop(cliffVal);
+        
+        // Store results to nvStorage
+        u8 buf[cliffVal.Size()];
+        size_t numBytes = cliffVal.Pack(buf, sizeof(buf));
+        QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CliffValOnDrop, buf, numBytes);
+        
+        
         // Check cliff sensor value
         if (robot.GetCliffDataRaw() > _kMaxCliffValueOverDrop) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOverDropTooHigh", "Val: %d", robot.GetCliffDataRaw());
@@ -755,6 +786,12 @@ namespace Cozmo {
         if (robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOffCharger", "");
           END_TEST(FactoryTestResultCode::STILL_ON_CHARGER);
+        }
+        
+        // Verify that battery voltage exceeds minimum threshold
+        if (kBFT_CheckBattVoltage && (robot.GetBatteryVoltage() < _kMinBattVoltage)) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.BattTooLow", "%fV", robot.GetBatteryVoltage());
+          END_TEST(FactoryTestResultCode::BATTERY_TOO_LOW);
         }
         
         // Set pose to expected
@@ -783,6 +820,18 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - GOTO CALIBRATION POSE - - - - - - - - - - - - - - -
       case FactoryTestState::GotoCalibrationPose:
       {
+        // Record cliff sensor value over ground
+        const CliffSensorValue cliffVal(robot.GetCliffDataRaw());
+        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.CliffOnGround", "%u", cliffVal.val);
+        
+        // Write cliff val to log on device
+        _factoryTestLogger.AppendCliffValueOnGround(cliffVal);
+        
+        // Store results to nvStorage
+        u8 buf[cliffVal.Size()];
+        size_t numBytes = cliffVal.Pack(buf, sizeof(buf));
+        QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CliffValOnGround, buf, numBytes);
+        
         // Check cliff sensor value
         if (robot.GetCliffDataRaw() < _kMinCliffValueOnGround) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOnGroundTooLow", "Val: %d", robot.GetCliffDataRaw());
@@ -872,15 +921,6 @@ namespace Cozmo {
             
             // Waiting for block to exist. Should be seeing it very soon!
             break;
-          }
-          
-          
-          // If robot hasn't discovered any active objects by now it probably won't so fail
-          if(!_activeObjectDiscovered)
-          {
-            PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
-                             "Test ending no active objects discovered");
-            END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
           }
           
         
@@ -1112,24 +1152,24 @@ namespace Cozmo {
         
         StartActing(robot, compoundAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
-                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
-                      // When robot path following is improved (particularly in sim) this physical check can be removed.
-                      if (result != ActionResult::SUCCESS && robot.IsPhysical()) {
-                        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.GotoPrePickupPoseFailed",
-                                            "actual: (x,y,deg) = %f, %f, %f, %fdeg; expected: %f, %f, %f, %fdeg",
-                                            robot.GetPose().GetTranslation().x(),
-                                            robot.GetPose().GetTranslation().y(),
-                                            robot.GetPose().GetTranslation().z(),
-                                            robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
-                                            _closestPredockPose.GetTranslation().x(),
-                                            _closestPredockPose.GetTranslation().y(),
-                                            _closestPredockPose.GetTranslation().z(),
-                                            _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-                        EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
-                      } else {
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
-                      }
+//                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
+//                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
+//                      // When robot path following is improved (particularly in sim) this physical check can be removed.
+//                      if (result != ActionResult::SUCCESS && robot.IsPhysical()) {
+//                        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.GotoPrePickupPoseFailed",
+//                                            "actual: (x,y,deg) = %f, %f, %f, %fdeg; expected: %f, %f, %f, %fdeg",
+//                                            robot.GetPose().GetTranslation().x(),
+//                                            robot.GetPose().GetTranslation().y(),
+//                                            robot.GetPose().GetTranslation().z(),
+//                                            robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
+//                                            _closestPredockPose.GetTranslation().x(),
+//                                            _closestPredockPose.GetTranslation().y(),
+//                                            _closestPredockPose.GetTranslation().z(),
+//                                            _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
+//                        EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
+//                      } else {
+//                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+//                      }
                       return true;
                     });
         
@@ -1143,12 +1183,14 @@ namespace Cozmo {
 
         if (!robot.GetPose().IsSameAs(_closestPredockPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInPrePickupPose",
-                              "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
+                              "actual: (x,y,deg) = %f, %f, %f, %fdeg; expected: %f, %f, %f, %fdeg",
                               robot.GetPose().GetTranslation().x(),
                               robot.GetPose().GetTranslation().y(),
+                              robot.GetPose().GetTranslation().z(),
                               robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                               _closestPredockPose.GetTranslation().x(),
                               _closestPredockPose.GetTranslation().y(),
+                              _closestPredockPose.GetTranslation().z(),
                               _closestPredockPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
           _closestPredockPose.Print();
           robot.GetPose().Print();
@@ -1199,12 +1241,12 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - START PICKUP - - - - - - - - - - - - - - -
       case FactoryTestState::StartPickup:
       {
-        if (kBFT_SkipBlockPickup) {
-          
-          // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
-          EndTest(robot, FactoryTestResultCode::SUCCESS);
-          break;
-          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // If robot hasn't discovered any active objects by now it probably won't so fail
+        if(!_activeObjectDiscovered)
+        {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
+                           "Test ending no active objects discovered");
+          END_TEST(FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
         }
         
         auto pickupCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -1234,6 +1276,15 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - PICKING UP BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PickingUpBlock:
       {
+        // Check that robot orientation didn't change much during backup
+        _robotAngleAfterBackup = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+        f32 angleChangeDeg = std::fabsf((_robotAngleAfterBackup - _robotAngleAtPickup).getDegrees());
+        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.AngleChangeDuringBackup",
+                         "%f deg", angleChangeDeg );
+        if (angleChangeDeg > _kMaxRobotAngleChangeDuringBackup_deg) {
+          END_TEST(FactoryTestResultCode::BACKUP_NOT_STRAIGHT);
+        }
+        
         
         auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
           if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
@@ -1255,7 +1306,6 @@ namespace Cozmo {
         
         // Put block down
         PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
-        //action->SetMotionProfile(_motionProfile);
         StartActing(robot,
                     action,
                     placementCallback);
@@ -1267,7 +1317,30 @@ namespace Cozmo {
       // - - - - - - - - - - - - - - PLACING BLOCK - - - - - - - - - - - - - - -
       case FactoryTestState::PlacingBlock:
       {
-
+        // Play animation that backs up 3 times. If there's a sticky wheel hopefully this cause some turns.
+        auto action = new PlayAnimationAction(robot, "anim_triple_backup");
+        StartActing(robot, action);
+        
+        SetCurrState(FactoryTestState::BackAndForth);
+        break;
+      }
+      case FactoryTestState::BackAndForth:
+      {
+        // Check that robot orientation didn't change much since it lifted up the block
+        Radians robotAngleAfterBackAndForth = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+        f32 angleChangeDeg = std::fabsf((robotAngleAfterBackAndForth - _robotAngleAtPickup).getDegrees());
+        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.AngleChangeDuringBackAndForth",
+                         "%f deg", angleChangeDeg );
+        if (angleChangeDeg > _kMaxRobotAngleChangeDuringBackup_deg) {
+          END_TEST(FactoryTestResultCode::BACK_AND_FORTH_NOT_STRAIGHT);
+        }
+        
+        // Verify that battery voltage exceeds minimum threshold
+        if (kBFT_CheckBattVoltage && (robot.GetBatteryVoltage() < _kMinBattVoltage)) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.BattTooLow", "%fV", robot.GetBatteryVoltage());
+          END_TEST(FactoryTestResultCode::BATTERY_TOO_LOW);
+        }
+        
         // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
         EndTest(robot, FactoryTestResultCode::SUCCESS);
         break;
@@ -1717,7 +1790,7 @@ namespace Cozmo {
         }
       }
       
-    } else {
+    } else if (_currentState > FactoryTestState::WaitingForMotorCalibration) {
       switch(msg.motorID) {
         case MotorID::MOTOR_HEAD:
           EndTest(robot, FactoryTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
@@ -1743,7 +1816,11 @@ namespace Cozmo {
       _activeObjectDiscovered = true;
     }
   }
-  
+ 
+  void BehaviorFactoryTest::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
+  {
+    _blockPickedUpReceived = true;
+  }
   
   void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback, u32 actionCallbackTag)
   {

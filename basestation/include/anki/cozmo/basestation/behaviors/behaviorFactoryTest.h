@@ -76,6 +76,7 @@ namespace Cozmo {
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
+    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     
     // Handlers for signals coming from robot
     void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -129,6 +130,10 @@ namespace Cozmo {
 
     bool     _headCalibrated;
     bool     _liftCalibrated;
+    
+    bool     _blockPickedUpReceived;
+    Radians  _robotAngleAtPickup;
+    Radians  _robotAngleAfterBackup;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;

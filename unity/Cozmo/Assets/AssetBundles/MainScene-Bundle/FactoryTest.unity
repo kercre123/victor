@@ -1256,7 +1256,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Ver: K2'
+  m_Text: 'Ver: K3'
 --- !u!222 &1451685361
 CanvasRenderer:
   m_ObjectHideFlags: 0

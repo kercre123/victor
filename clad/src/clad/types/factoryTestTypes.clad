@@ -23,6 +23,7 @@ enum uint_8 FactoryTestState {
   StartPickup,
   PickingUpBlock,
   PlacingBlock,
+  BackAndForth,
   WaitingForWritesToRobot,
 
   // NB: IF YOU ADD STATES HERE YOU MAY NEED TO INCREASE THE SIZE OF
@@ -95,9 +96,14 @@ enum uint_8 FactoryTestResultCode {
   WRONG_FIRMWARE_VERSION,
   CLIFF_VALUE_TOO_HIGH,
   CLIFF_VALUE_TOO_LOW,
+  BACKUP_NOT_STRAIGHT,
+  BATTERY_TOO_LOW,
+  NO_IMU_DATA,
+  BACK_AND_FORTH_NOT_STRAIGHT,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
+  // ==== NB: Factory expects codes to be 0-99 so if you exceed 100 errors codes let them know! ===
 }
 
 message FactoryTestResultEntry {
@@ -114,6 +120,10 @@ structure CalibMetaInfo {
 
 structure IMUInfo {
   float_32 driftRate_degPerSec
+}
+
+structure CliffSensorValue {
+  uint_16 val
 }
 
 structure PoseData {
