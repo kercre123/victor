@@ -1,0 +1,15 @@
+{
+  "behaviorType": "PlayAnim",
+  "name": "SparksIntro",
+  "flatScore": 20.0, // No really play first for everything!!
+  "requiredRecentSwitchToParent_sec":1.0,
+  "animTrigger":"SparkGetIn",
+  "num_loops":1,
+  "behaviorGroups": [
+    "SparksPounceOnMotion",
+    "SparksRollCube",
+    "SparksStackCube",
+    "SparksPickUpCube",
+    "SparksPopAWheelie"
+  ]
+}

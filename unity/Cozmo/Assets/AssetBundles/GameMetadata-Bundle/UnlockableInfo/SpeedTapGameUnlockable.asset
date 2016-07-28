@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: QuickTapGame
-    _EnumValue: 18
+    _EnumValue: 19
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

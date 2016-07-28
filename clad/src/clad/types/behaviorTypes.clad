@@ -54,6 +54,7 @@ enum uint_8 BehaviorType {
   AcknowledgeFace,
   DrivePath,
   ReactToUnexpectedMovement,
+  PickUpCube,
 
   Count
 }

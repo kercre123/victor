@@ -13,12 +13,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KeepawayGame
-    _EnumValue: 15
+    _EnumValue: 16
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
-  NeverAvailable: 1
+  NeverAvailable: 0
   DescriptionKey: unlockable.CubePounce.Description
   TitleKey: unlockable.CubePounce.Title
   UpgradeCostItemId: TestHexItem0

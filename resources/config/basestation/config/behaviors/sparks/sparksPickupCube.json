@@ -1,0 +1,9 @@
+{
+  "behaviorType": "PickUpCube",
+  "name": "sparksPickUpCube",
+  "flatScore": 5.0,
+  
+  "behaviorGroups": [
+    "SparksPickUpCube"
+  ]
+}

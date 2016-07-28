@@ -617,6 +617,38 @@
       "AnimName": "ag_soundOnlyTurnSmall"
     },
     {
+      "CladEvent": "SparkGetIn",
+      "AnimName": "ag_sparking_getin"
+    },
+    {
+      "CladEvent": "SparkGetOut",
+      "AnimName": "ag_sparking_getout"
+    },
+    {
+      "CladEvent": "SparkDriveEnd",
+      "AnimName": "ag_sparking_driving_stop"
+    },
+    {
+      "CladEvent": "SparkDriveLoop",
+      "AnimName": "ag_sparking_driving_loop"
+    },
+    {
+      "CladEvent": "SparkDriveStart",
+      "AnimName": "ag_sparking_driving_start"
+    },
+    {
+      "CladEvent": "SparkIdle",
+      "AnimName": "ag_sparking_idle"
+    },
+    {
+      "CladEvent": "SparkPickupInitialCubeReaction",
+      "AnimName": "ag_reactToNewBlock"
+    },
+    {
+      "CladEvent": "SparkPickupFinalCubeReaction",
+      "AnimName": "ag_pickUpCube_success"
+    },
+    {
       "CladEvent": "SpeedTapDrivingEnd",
       "AnimName": "ag_speedTap_endDriving"
     },

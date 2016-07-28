@@ -14,11 +14,8 @@ enum uint_8 UnlockId
 
   // Engine-side unlocks
   BuildPyramid,
-  FlipOntoBack,
   KnockOverThreeCubeStack,
   PickupCube,
-  ReactToSmiles,
-  RecognizePets,
   RollCube,
   StackTwoCubes,
   TakeCubeFromHand,

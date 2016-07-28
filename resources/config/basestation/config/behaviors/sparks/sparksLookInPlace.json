@@ -5,6 +5,7 @@
   "behaviorGroups": [
       "SparksRollCube",
       "SparksStackCube",
+      "SparksPickUpCube",
       "SparksPopAWheelie"
   ],
   "params":

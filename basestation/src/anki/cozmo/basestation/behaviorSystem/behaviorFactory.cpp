@@ -50,7 +50,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-
+#include "anki/cozmo/basestation/behaviors/behaviorPickupCube.h"
 
 
 namespace Anki {
@@ -257,6 +257,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToUnexpectedMovement:
     {
       newBehavior = new BehaviorReactToUnexpectedMovement(robot, config);
+      break;
+    }
+    case BehaviorType::PickUpCube:
+    {
+      newBehavior = new BehaviorPickUpCube(robot, config);
       break;
     }
     case BehaviorType::Count:

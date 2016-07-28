@@ -65,12 +65,36 @@
   },
   "unlockable.PounceOnMotionAction.Description": {
     "translation": "Finger pounce go!!!!!!"
+   },
+  "unlockable.BuildPyramid.Title": {
+    "translation": "Build Pyramid"
+  },
+  "unlockable.BuildPyramid.Description": {
+    "translation": "Build Pyramid with 3 blocks"
   },
   "unlockable.PopAWheelieAction.Title": {
     "translation": "Pop A Wheelie"
   },
   "unlockable.PopAWheelieAction.Description": {
     "translation": "Sometimes called Get on back"
+  },
+  "unlockable.KnockOverThreeCubeStack.Title": {
+    "translation": "Knock Over Three Cube Stack"
+  },
+  "unlockable.KnockOverThreeCubeStack.Description": {
+    "translation": "Knock Over Three Cube Stack Described in detail here."
+  },
+  "unlockable.PickupCube.Title": {
+    "translation": "Pickup Cube"
+  },
+  "unlockable.PickupCube.Description": {
+    "translation": "Picks up a cube"
+  },
+  "unlockable.PickupCube.Title": {
+    "translation": "Pickup Cube"
+  },
+  "unlockable.PickupCube.Description": {
+    "translation": "Picks up a cube"
   },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon"

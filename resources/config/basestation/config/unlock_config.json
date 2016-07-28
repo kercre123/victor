@@ -1,8 +1,6 @@
 {
   "defaultUnlocks": [
-    "RollCube",
-    "StackTwoCubes",
-    "MemoryMatchGame",
+    "MeetCozmoGame",
     "QuickTapGame"
   ]
 }

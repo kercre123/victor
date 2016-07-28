@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PopAWheelieAction
-    _EnumValue: 13
+    _EnumValue: 10
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0

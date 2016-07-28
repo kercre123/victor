@@ -108,6 +108,13 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   {
     return;
   }
+  
+  // Don't check for unexpected movement while playing animations that are moving the body
+  // because some of them rapidly move the motors which triggers false positives
+  if(_robot.IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK))
+  {
+    return;
+  }
 
   f32 lWheelSpeed_mmps = robotState.lwheel_speed_mmps;
   f32 rWheelSpeed_mmps = robotState.rwheel_speed_mmps;

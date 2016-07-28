@@ -96,6 +96,16 @@
          "behaviorGroups" : [ "SparksPopAWheelie" ]
        }
      },
+     {
+       "name" : "SparksPickUpCube",
+       "requireSpark":"PickupCube",
+       "behaviorChooser" :
+       {
+         "type" : "simple",
+         // this are the behaviors that are allowed in this behavior chooser
+         "behaviorGroups" : [ "SparksPickUpCube" ]
+        }
+     },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // FreeplayOne : old freeplay with game requests
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

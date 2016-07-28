@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -530,6 +531,29 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SetActiveSpark(UnlockId spark)
 {
+  // going into spark mode
+  if( _activeSpark == UnlockId::Count && spark != UnlockId::Count )
+  {
+    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDriveStart,
+      AnimationTrigger::SparkDriveLoop,
+      AnimationTrigger::SparkDriveEnd});
+    _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
+    
+    // HACK: to make the intro play properly we reset the chooser time,
+    // Since this is a goal change not a chooser change and goal changing isn't in yet.
+    // TODO: spark intro anim needs to play on goal enter.
+    if ( _currentChooserPtr == _freeplayChooser )
+    {
+      _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
+    }
+  }
+  // exiting spark mode
+  else if( _activeSpark != UnlockId::Count && spark == UnlockId::Count )
+  {
+    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    _robot.GetAnimationStreamer().PopIdleAnimation();
+  }
+  
   _activeSpark = spark;
 }
   

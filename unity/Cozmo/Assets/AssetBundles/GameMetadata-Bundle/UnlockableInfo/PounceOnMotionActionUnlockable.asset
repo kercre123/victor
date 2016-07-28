@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PounceOnMotionAction
-    _EnumValue: 12
+    _EnumValue: 9
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
