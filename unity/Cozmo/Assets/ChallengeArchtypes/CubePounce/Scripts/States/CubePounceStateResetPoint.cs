@@ -4,8 +4,8 @@ using System.Collections;
 namespace Cozmo.Minigame.CubePounce {
   public class CubePounceStateResetPoint : CubePounceState {
 
-    private bool _GetInAnimCompleted = false;
-    private bool _GetInAnimInProgress = false;
+    private bool _GetReadyAnimCompleted = false;
+    private bool _GetReadyAnimInProgress = false;
     private bool _CubeIsValid = false;
     private bool _TurnInProgress = false;
 
@@ -27,6 +27,9 @@ namespace Cozmo.Minigame.CubePounce {
         ReactToCubeGone();
         ReactToCubeOutOfRange();
       }
+
+      //TODO:(lc) this shouldn't be necessary, should be taken care of by animations
+      _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue, null, Anki.Cozmo.QueueActionPosition.IN_PARALLEL);
     }
 
     private void ReactToCubeGone() {
@@ -40,13 +43,19 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void ReactToCubeInRange() {
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetIn, HandleGetInAnimFinish);
-      _GetInAnimInProgress = true;
+      // TODO(lc) RE-enable this once animations are in. May require updating animation group
+      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetIn, HandleGetInAnimFinish);
+      _CurrentRobot.SetLiftHeight(1.0f, HandleGetInAnimFinish);
+
+      _GetReadyAnimInProgress = true;
     }
 
     private void ReactToCubeOutOfRange() {
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
-      _GetInAnimCompleted = false;
+      // TODO(lc) RE-enable this once animations are in. May require updating animation group
+      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
+      _CurrentRobot.SetLiftHeight(0.0f, null);
+
+      _GetReadyAnimCompleted = false;
     }
 
     private void TurnToCube() {
@@ -79,14 +88,14 @@ namespace Cozmo.Minigame.CubePounce {
         }
 
         bool withinLooseCubePounceDistance = _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm);
-        if (_GetInAnimCompleted && !withinLooseCubePounceDistance) {
+        if (_GetReadyAnimCompleted && !withinLooseCubePounceDistance) {
           ReactToCubeOutOfRange();
         }
-        else if (!_GetInAnimCompleted && !_GetInAnimInProgress && _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
+        else if (!_GetReadyAnimCompleted && !_GetReadyAnimInProgress && _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
           ReactToCubeInRange();
         }
 
-        if (_GetInAnimCompleted) {
+        if (_GetReadyAnimCompleted) {
           if (!_CubePounceGame.WithinAngleTolerance()) {
             TurnToCube();
             return;
@@ -100,8 +109,8 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleGetInAnimFinish(bool success) {
-      _GetInAnimCompleted = true;
-      _GetInAnimInProgress = false;
+      _GetReadyAnimCompleted = true;
+      _GetReadyAnimInProgress = false;
     }
 
     private void HandleTurnFinished(bool success) {
