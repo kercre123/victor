@@ -6,11 +6,11 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: particle_hex_hard
-  m_Shader: {fileID: 10721, guid: 0000000000000000f000000000000000, type: 0}
+  m_Name: DroneModeCameraFeed
+  m_Shader: {fileID: 4800000, guid: 127d3b7f8372946f59b2905214d507c2, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
@@ -19,7 +19,7 @@ Material:
         first:
           name: _MainTex
         second:
-          m_Texture: {fileID: 2800000, guid: d43aca102f38c452587c90a961c37ed3, type: 3}
+          m_Texture: {fileID: 2800000, guid: 4f0da02a1057c40ec8dd4a392925e935, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
@@ -78,6 +78,20 @@ Material:
           m_Texture: {fileID: 0}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _ScanTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 8013efcc1a58a4e38814a18c2cde3a07, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _MaskAlphaTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 269b068257eb6462fb31994d57d33ed8, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
         first:
@@ -127,6 +141,34 @@ Material:
         first:
           name: _Metallic
         second: 0
+      data:
+        first:
+          name: _maskBlend
+        second: 0.5
+      data:
+        first:
+          name: _maskSize
+        second: 1
+      data:
+        first:
+          name: _MaskBlend
+        second: 2.22
+      data:
+        first:
+          name: _MaskSize
+        second: 2.54
+      data:
+        first:
+          name: _UVOffsetOverTime
+        second: 0.02
+      data:
+        first:
+          name: _ScanBlend
+        second: 1.2
+      data:
+        first:
+          name: _ScanSize
+        second: 1.69
     m_Colors:
       data:
         first:
@@ -138,5 +180,9 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
       data:
         first:
-          name: _EmisColor
-        second: {r: 0.2, g: 0.2, b: 0.2, a: 0}
+          name: _TopColor
+        second: {r: 0.3455882, g: 0.7021299, b: 1, a: 1}
+      data:
+        first:
+          name: _BottomColor
+        second: {r: 0.05547146, g: 0.19917372, b: 0.39705884, a: 1}

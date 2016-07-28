@@ -10,7 +10,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
 ///   so far, we only both handling three types of cubes and a charger
 /// </summary>
-public class ObservedObject { // TODO Implement IHaveCameraPosition
+public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   public class Light : Robot.Light {
     public static new float MessageDelay = 0f;
@@ -47,7 +47,9 @@ public class ObservedObject { // TODO Implement IHaveCameraPosition
   public delegate void InFieldOfViewStateChangedHandler(ObservedObject objectChanged,
                                                         InFieldOfViewState oldState, InFieldOfViewState newState);
 
-  public static event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
+  public static event InFieldOfViewStateChangedHandler AnyInFieldOfViewStateChanged;
+
+  public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
 
   public uint RobotID { get; private set; }
 
@@ -65,8 +67,17 @@ public class ObservedObject { // TODO Implement IHaveCameraPosition
 
   public bool IsLooselyInFieldOfView { get { return CurrentInFieldOfViewState != InFieldOfViewState.NotVisible; } }
 
-  // TODO use VizRect to place reticles
-  public Rect VizRect { get; private set; }
+  public event VizRectChangedHandler OnVizRectChanged;
+  private Rect _VizRect;
+  public Rect VizRect {
+    get { return _VizRect; }
+    private set {
+      _VizRect = value;
+      if (OnVizRectChanged != null) {
+        OnVizRectChanged(this, _VizRect);
+      }
+    }
+  }
 
   public Vector3 WorldPosition { get; private set; }
 
@@ -135,12 +146,26 @@ public class ObservedObject { // TODO Implement IHaveCameraPosition
       if (value != _CurrentInFieldOfViewState) {
         InFieldOfViewState oldState = _CurrentInFieldOfViewState;
         _CurrentInFieldOfViewState = value;
+        if (AnyInFieldOfViewStateChanged != null) {
+          AnyInFieldOfViewStateChanged(this, oldState, _CurrentInFieldOfViewState);
+        }
         if (InFieldOfViewStateChanged != null) {
           InFieldOfViewStateChanged(this, oldState, _CurrentInFieldOfViewState);
         }
       }
     }
   }
+
+  public virtual string ReticleLabelLocKey {
+    get {
+      string key = LocalizationKeys.kDroneModeUnknownObjectReticleLabel;
+      if (this.ObjectType == ObjectType.Charger_Basic) {
+        key = LocalizationKeys.kDroneModeChargerReticleLabel;
+      }
+      return key;
+    }
+  }
+  public virtual string ReticleLabelStringArg { get { return null; } }
 
   public bool IsMoving { get; private set; }
 
@@ -342,10 +367,10 @@ public class ObservedObject { // TODO Implement IHaveCameraPosition
     SetLEDs(onColorsUint, offColor.ToUInt(), onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
-  public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+  public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 
-    Light light; 
+    Light light;
     for (int i = 0; i < Lights.Length; ++i) {
       light = Lights[i];
       light.OnColor = onColor;
@@ -361,11 +386,11 @@ public class ObservedObject { // TODO Implement IHaveCameraPosition
     relativeToY = 0;
   }
 
-  public void SetLEDs(uint[] lightColors, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+  public void SetLEDs(uint[] lightColors, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 
     uint onColor;
-    Light light; 
+    Light light;
     for (int i = 0; i < Lights.Length; ++i) {
       onColor = lightColors[i % lightColors.Length];
       light = Lights[i];
@@ -383,7 +408,7 @@ public class ObservedObject { // TODO Implement IHaveCameraPosition
   }
 
   public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
-    uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {  
+    uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
     SetLEDsRelative(relativeTo.x, relativeTo.y, onColor, offColor, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
   }
 

@@ -146,6 +146,10 @@ public static class LocalizationKeys {
   public const string kMinigameLabelCozmoPrep = "minigame.label.cozmoPrep";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
+  public const string kDroneModeUnknownFaceReticleLabel = "droneMode.unknownFaceReticleLabel";
+  public const string kDroneModeChargerReticleLabel = "droneMode.chargerReticleLabel";
+  public const string kDroneModeCubeReticleLabel = "droneMode.cubeReticleLabel";
+  public const string kDroneModeUnknownObjectReticleLabel = "droneMode.unknownObjectReticleLabel";
   public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";
   public const string kSimonGameHowToPlay = "simonGame.howToPlay";
   public const string kSimonGameDifficultyHardDescriptionLocked = "simonGame.difficulty.hardDescription.locked";
@@ -306,6 +310,7 @@ public static class LocalizationKeys {
   public const string kLootMid = "loot.Mid";
   public const string kLootAlmost = "loot.Almost";
   public const string kLootAnnounce = "loot.Announce";
+  public const string kLabelEmptyWithArg = "label.emptyWithArg";
   public const string kTitleSoundCheck = "title.soundCheck";
 
   #endregion

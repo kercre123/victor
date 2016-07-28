@@ -843,4 +843,15 @@ public class MockRobot : IRobot {
 
   public void EnableDroneMode(bool enable) {
   }
+
+  public event LightCubeStateEventHandler OnLightCubeAdded;
+  public event LightCubeStateEventHandler OnLightCubeRemoved;
+
+  public ObservedObject Charger { get; set; }
+
+  public event ChargerStateEventHandler OnChargerAdded;
+  public event ChargerStateEventHandler OnChargerRemoved;
+
+  public event FaceStateEventHandler OnFaceAdded;
+  public event FaceStateEventHandler OnFaceRemoved;
 }

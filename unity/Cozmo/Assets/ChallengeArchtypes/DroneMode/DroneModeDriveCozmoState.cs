@@ -66,7 +66,7 @@ namespace Cozmo {
 
           // EnableInput();
 
-          // Does this get called?
+          // Does this get called? I think Resume might not get called in COZMO-3221
         }
 
         private void EnableInput() {

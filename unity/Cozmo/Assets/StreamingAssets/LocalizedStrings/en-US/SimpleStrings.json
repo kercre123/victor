@@ -147,6 +147,9 @@
   "loot.Announce": {
     "translation": "Emotion Chip Charged!"
   },
+  "label.emptyWithArg":{
+    "translation": "{0}"
+  },
   "title.soundCheck": {
     "translation": "Sound Check"
   },
