@@ -50,22 +50,75 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &188734
+--- !u!1 &157048
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22475086}
+  - 222: {fileID: 22269528}
+  - 114: {fileID: 11408792}
+  m_Layer: 5
+  m_Name: Text
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &182304
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22401690}
-  - 114: {fileID: 11481786}
+  - 224: {fileID: 22444276}
+  - 222: {fileID: 22238816}
+  - 114: {fileID: 11461732}
   m_Layer: 5
-  m_Name: Quit Button
+  m_Name: GetACozmoButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11408792
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 157048}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 80
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 1
+    m_MaxSize: 100
+    m_Alignment: 3
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: '#button.GetACozmo'
+  _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11436326
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -140,6 +193,31 @@ MonoBehaviour:
   m_Text: '#connectivity.searchForCozmoFailedText'
   _AllUppercase: 0
   GlowText: 0
+--- !u!114 &11461732
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 182304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Interactable: 1
+  _TextLabel: {fileID: 11408792}
+  _TextLabelOffset: -5
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _AlphaController: {fileID: 0}
+  ButtonGraphics: []
+  _GlintAnimator: {fileID: 0}
+  _UISoundEvent:
+    _Event: Sfx_Ui_Click_General_Play
+    _EventType: UI
+    _GameObjectType: 2
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11473130
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -151,55 +229,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6a6df1ab25f240d2884ee1a7fa94aa6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _QuitButton: {fileID: 0}
   _ShowMeButton: {fileID: 0}
+  _GetACozmoButton: {fileID: 11461732}
   _WifiInstructionsViewPrefab: {fileID: 11483990, guid: a1b31871efbb945608143b5ebf5b66e8,
     type: 2}
---- !u!114 &11481786
-MonoBehaviour:
+--- !u!222 &22238816
+CanvasRenderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 188734}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:b
-    JsonValue: 0.349019617
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.407843143
-  - ObjectPath: ButtonIcon
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.4117647
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:b
-    JsonValue: 0.349019617
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:g
-    JsonValue: 0.407843143
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:r
-    JsonValue: 0.4117647
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:b
-    JsonValue: 0.215722322
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:g
-    JsonValue: 0.254751027
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:r
-    JsonValue: 0.257352948
-  ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: SearchForCozmoFailedScreen:_QuitButton
-    ReferencePath: 
-  ModifiedGlobalReferences: []
+  m_GameObject: {fileID: 182304}
 --- !u!222 &22266644
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -212,23 +251,30 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 108122}
---- !u!224 &22401690
+--- !u!222 &22269528
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 157048}
+--- !u!224 &22444276
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 188734}
+  m_GameObject: {fileID: 182304}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
+  m_Children:
+  - {fileID: 22475086}
   m_Father: {fileID: 22448706}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -150}
-  m_SizeDelta: {x: 189, y: 175}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -895, y: -613}
+  m_SizeDelta: {x: 800, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22448706
 RectTransform:
@@ -241,15 +287,15 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22401690}
   - {fileID: 22473026}
   - {fileID: 22461808}
+  - {fileID: 22444276}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000015258789}
-  m_SizeDelta: {x: 0, y: -0.000030517578}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461808
 RectTransform:
@@ -263,7 +309,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22448706}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -33}
@@ -281,11 +327,29 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22448706}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 335}
   m_SizeDelta: {x: 2000, y: 900}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22475086
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 157048}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22444276}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

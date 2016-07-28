@@ -1591,7 +1591,7 @@ public class Robot : IRobot {
   }
 
   public void UpdateLightMessages(bool now = false) {
-    if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnected)
+    if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnectedToEngine)
       return;
 
     if (Time.time > ObservedObject.Light.MessageDelay || now) {

@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class SimpleConnectDialog : MonoBehaviour {
+public class FirstTimeConnectDialog : MonoBehaviour {
 
   public System.Action ConnectionFlowComplete;
   public System.Action ConnectionFlowQuit;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ConnectButton;
+  private Cozmo.UI.CozmoButton _StartButton;
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _SimButton;
@@ -19,11 +19,19 @@ public class SimpleConnectDialog : MonoBehaviour {
   private ConnectionFlow _ConnectionFlowPrefab;
   private ConnectionFlow _ConnectionFlowInstance;
 
+  [SerializeField]
+  private SoundCheckView _SoundCheckViewPrefab;
+  private SoundCheckView _SoundCheckViewInstance;
+
+  [SerializeField]
+  private SimpleConnectView _PlaceCozmoOnChargerConnectViewPrefab;
+  private SimpleConnectView _PlaceCozmoOnChargerConnectViewInstance;
+
   private void Start() {
 
-    _ConnectButton.Initialize(HandleConnectButton, "connect_button", "connect_dialog");
-    _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
-    _MockButton.Initialize(HandleMockButton, "mock_button", "connect_dialog");
+    _StartButton.Initialize(HandleStartButton, "start_button", "simple_connect_dialog");
+    _SimButton.Initialize(HandleSimButton, "sim_button", "simple_connect_dialog");
+    _MockButton.Initialize(HandleMockButton, "mock_button", "simple_connect_dialog");
 
 #if !UNITY_EDITOR
     // hide sim and mock buttons for on device deployments
@@ -31,8 +39,19 @@ public class SimpleConnectDialog : MonoBehaviour {
     _MockButton.gameObject.SetActive(false);
 #endif
 
-    _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
+    _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
+  }
+
+  private void HandleStartButton() {
+    _SoundCheckViewInstance = UIManager.OpenView(_SoundCheckViewPrefab);
+    _SoundCheckViewInstance.OnSoundCheckComplete += HandleSoundCheckComplete;
+  }
+
+  private void HandleSoundCheckComplete() {
+    UIManager.CloseView(_SoundCheckViewInstance);
+    _PlaceCozmoOnChargerConnectViewInstance = UIManager.OpenView(_PlaceCozmoOnChargerConnectViewPrefab);
+    _PlaceCozmoOnChargerConnectViewInstance.OnConnectButton += HandleConnectButton;
   }
 
   private void HandleMockButton() {
@@ -43,11 +62,15 @@ public class SimpleConnectDialog : MonoBehaviour {
   }
 
   private void HandleConnectButton() {
+    _PlaceCozmoOnChargerConnectViewInstance.ViewClosed += StartConnectionFlow;
+    UIManager.CloseView(_PlaceCozmoOnChargerConnectViewInstance);
+  }
+
+  private void StartConnectionFlow() {
     _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlow>();
     _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
     _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
     _ConnectionFlowInstance.Play(sim: false);
-
   }
 
   private void HandleSimButton() {

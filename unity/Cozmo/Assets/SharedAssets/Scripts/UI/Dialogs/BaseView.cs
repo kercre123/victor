@@ -24,8 +24,13 @@ namespace Cozmo {
       public event SimpleBaseViewHandler ViewClosed;
       public event SimpleBaseViewHandler ViewCloseAnimationFinished;
 
+      public event SimpleBaseViewHandler ViewClosedByUser;
+      public event SimpleBaseViewHandler ViewClosedByUserAnimationFinished;
+
       [SerializeField]
       private string _DASEventViewName = "";
+
+      private bool _ClosingAnimationPlaying = false;
 
       public string DASEventViewName {
         get { return _DASEventViewName; }
@@ -47,17 +52,22 @@ namespace Cozmo {
       private bool _CloseDialogOnTapOutside;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
+      protected Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
 
       public bool DimBackground = false;
 
       private Sequence _TransitionAnimation;
 
       void OnDestroy() {
+        if (_ClosingAnimationPlaying) {
+          DAS.Warn("BaseView.OnDestroy", "BaseView being destroyed when close animation has not finished: " + _DASEventViewName);
+        }
         if (_TransitionAnimation != null) {
           _TransitionAnimation.Kill();
         }
       }
+
+      private bool _UserClosedView = false;
 
       #region Overriden Methods
 
@@ -97,13 +107,13 @@ namespace Cozmo {
         // Place the button underneath all the UI in this dialog
         fullScreenButton.transform.SetAsFirstSibling();
         Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
-        fullScreenCollider.OnTouch += (HandleCloseColliderClicked);
+        fullScreenCollider.OnTouch += (HandleUserClose);
         fullScreenCollider.Initialize("close_view_by_touch_outside_button", DASEventViewName);
       }
 
       private void SetupCloseButton() {
         if (_OptionalCloseDialogButton != null) {
-          _OptionalCloseDialogButton.Initialize(HandleCloseColliderClicked, "default_close_view_button", DASEventViewName);
+          _OptionalCloseDialogButton.Initialize(HandleUserClose, "default_close_view_button", DASEventViewName);
         }
       }
 
@@ -114,7 +124,8 @@ namespace Cozmo {
         }
       }
 
-      private void HandleCloseColliderClicked() {
+      private void HandleUserClose() {
+        _UserClosedView = true;
         CloseView();
       }
 
@@ -151,6 +162,7 @@ namespace Cozmo {
 
       private void PlayCloseAnimations() {
         UIManager.DisableTouchEvents();
+        _ClosingAnimationPlaying = true;
 
         // Play some animations
         if (_TransitionAnimation != null) {
@@ -164,6 +176,7 @@ namespace Cozmo {
       private void OnCloseAnimationsFinished() {
         DAS.Info(this, "OnCloseAnimationsFinished start");
         UIManager.EnableTouchEvents();
+        _ClosingAnimationPlaying = false;
         CleanUp();
         RaiseViewCloseAnimationFinished(this);
         Destroy(gameObject);
@@ -196,6 +209,9 @@ namespace Cozmo {
         if (view.ViewClosed != null) {
           view.ViewClosed();
         }
+        if (view._UserClosedView && view.ViewClosedByUser != null) {
+          view.ViewClosedByUser();
+        }
       }
 
       private static void RaiseViewCloseAnimationFinished(BaseView view) {
@@ -204,6 +220,9 @@ namespace Cozmo {
         }
         if (view.ViewCloseAnimationFinished != null) {
           view.ViewCloseAnimationFinished();
+        }
+        if (view._UserClosedView && view.ViewClosedByUserAnimationFinished != null) {
+          view.ViewClosedByUserAnimationFinished();
         }
       }
     }

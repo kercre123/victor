@@ -25,9 +25,6 @@ namespace Cozmo {
       private LayoutElement _SecondaryButtonLayoutElement;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _CloseButton;
-
-      [SerializeField]
       private CanvasGroup _AlphaController;
 
       [SerializeField]
@@ -74,15 +71,8 @@ namespace Cozmo {
 
         string viewName = GenerateDasName();
 
-        if (_CloseButton != null) {
-          _CloseButton.Initialize(
-            () => {
-              Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickBack);
-              CloseView();
-            },
-            viewName,
-            "close_alert_view_button");
-          _CloseButton.gameObject.SetActive(false);
+        if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.gameObject.SetActive(false);
         }
 
         if (_Icon != null) {
@@ -106,15 +96,13 @@ namespace Cozmo {
       }
 
       protected override void CleanUp() {
-        ResetButton(_PrimaryButton);
-        ResetButton(_CloseButton);
-        ResetButton(_SecondaryButton);
+
       }
 
       private void UpdateButtonViewControllerNames() {
         string viewName = GenerateDasName();
-        if (_CloseButton != null) {
-          _CloseButton.DASEventViewController = viewName;
+        if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.DASEventViewController = viewName;
         }
 
         // Hide all buttons
@@ -142,15 +130,9 @@ namespace Cozmo {
         return viewName;
       }
 
-      private void ResetButton(Cozmo.UI.CozmoButton button) {
-        if (button != null && button.isActiveAndEnabled) {
-          button.onClick.RemoveAllListeners();
-        }
-      }
-
       public void SetCloseButtonEnabled(bool enabled) {
-        if (_CloseButton != null) {
-          _CloseButton.gameObject.SetActive(enabled);
+        if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.gameObject.SetActive(enabled);
         }
         else {
           DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);
@@ -180,14 +162,8 @@ namespace Cozmo {
       }
 
       public void DisableAllButtons() {
-        ResetButton(_PrimaryButton);
         _PrimaryButton.Interactable = false;
-        ResetButton(_SecondaryButton);
         _SecondaryButton.Interactable = false;
-        if (_CloseButton != null) {
-          ResetButton(_CloseButton);
-          _CloseButton.Interactable = false;
-        }
       }
 
       private void SetupButton(Cozmo.UI.CozmoButton button, string titleKey, Action action,

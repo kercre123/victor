@@ -9,6 +9,16 @@ using Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo.Audio;
 using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
 
+public enum RobotConnectResponse {
+  Failed,
+  Success,
+  NeedsFirmwareUpgrade,
+  NeedsAppUpgrade,
+  NeedsPin,
+  InvalidPin,
+  PinMaxAttemptReached
+}
+
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
 /// and handles launching, ticking, and messaging with the Cozmo Engine
@@ -54,7 +64,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
+  public bool IsConnectedToEngine { get { return (_Channel != null && _Channel.IsConnected); } }
 
   private List<string> _RobotAnimationNames = new List<string>();
 
@@ -229,7 +239,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void SendMessage() {
-    if (!IsConnected) {
+    if (!IsConnectedToEngine) {
       DAS.Warn("RobotEngineManager.MessageNotSent", "Not Connected");
       return;
     }
@@ -373,7 +383,7 @@ public class RobotEngineManager : MonoBehaviour {
   /// <param name="robotId">The robot identifier.</param>
   /// <param name="robotIP">The ip address the robot is connected to.</param>
   /// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
-  public void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated) {
+  public void ConnectToRobot(int robotID, string robotIP, bool robotIsSimulated) {
     if (robotID < 0 || robotID > 255) {
       throw new ArgumentException("ID must be between 0 and 255.", "robotID");
     }

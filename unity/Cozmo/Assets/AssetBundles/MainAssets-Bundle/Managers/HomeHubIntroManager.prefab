@@ -40,18 +40,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SimpleConnectDialogPrefabData:
+  _FirstTimeConnectDialogPrefabData:
     _AssetBundle:
       _EnumValueAsString: start_view_prefabs
       _EnumValue: 12
-    _AssetDataName: SimpleConnectDialog
+    _AssetDataName: FirstTimeConnectDialog
   _CheckInDialogPrefabData:
     _AssetBundle:
       _EnumValueAsString: checkin_ui_prefabs
       _EnumValue: 16
     _AssetDataName: CheckInRewardDialog
   _HubWorldPrefab: {fileID: 11476446, guid: 44f04469ca0784cb2976d4476c98a378, type: 2}
-  _IntroScriptedSequenceName: 
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

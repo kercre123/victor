@@ -197,7 +197,7 @@ MonoBehaviour:
   ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: Cozmo.UI.AlertView:_CloseButton
+    FieldName: Cozmo.UI.AlertView:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11435156
@@ -316,7 +316,6 @@ MonoBehaviour:
   _PrimaryButton: {fileID: 0}
   _SecondaryButton: {fileID: 0}
   _SecondaryButtonLayoutElement: {fileID: 11471210}
-  _CloseButton: {fileID: 0}
   _AlphaController: {fileID: 22541362}
   _Icon: {fileID: 0}
 --- !u!114 &11471210
@@ -390,7 +389,7 @@ MonoBehaviour:
     JsonValue: '"Play"'
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
-    JsonValue: 945548936
+    JsonValue: '"945548936"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_PrimaryButton
@@ -423,6 +422,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22480226}
   m_RootOrder: 1
@@ -440,6 +440,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22450694}
   - {fileID: 22444510}
@@ -459,6 +460,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22450086}
   m_Father: {fileID: 22423310}
@@ -477,6 +479,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22444510}
   m_RootOrder: 0
@@ -494,6 +497,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22467474}
   m_Father: {fileID: 22423310}
@@ -512,6 +516,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22480226}
   m_RootOrder: 0
@@ -529,6 +534,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22497328}
   m_Father: {fileID: 0}
@@ -547,6 +553,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22450694}
   m_RootOrder: 0
@@ -564,6 +571,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22455996}
   - {fileID: 22418464}
@@ -583,6 +591,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22480226}
   - {fileID: 22423310}

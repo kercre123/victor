@@ -46,7 +46,7 @@ GameObject:
   - 114: {fileID: 11460048}
   - 114: {fileID: 11499096}
   m_Layer: 5
-  m_Name: ButtonConnectToSim
+  m_Name: ButtonSim
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -94,9 +94,9 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22463296}
-  - 114: {fileID: 11419770}
+  - 114: {fileID: 11438782}
   m_Layer: 5
-  m_Name: SimpleConnectDialog
+  m_Name: FirstTimeConnectDialog
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -113,7 +113,7 @@ GameObject:
   - 222: {fileID: 22262664}
   - 114: {fileID: 11439468}
   m_Layer: 5
-  m_Name: ButtonConnectToRobot
+  m_Name: ButtonStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -232,22 +232,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11419770
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 154098}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 984c605f8a2cb4c0f9ccf3adec2b61e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ConnectButton: {fileID: 11439468}
-  _SimButton: {fileID: 11499096}
-  _MockButton: {fileID: 11493334}
-  _ConnectionFlowPrefab: {fileID: 11481422, guid: b6b867e260b464aed8b33e07aba8d2b1,
-    type: 2}
 --- !u!114 &11422778
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -356,6 +340,26 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11438782
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17eab2764072b4ecfacc40609238ac70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _StartButton: {fileID: 11439468}
+  _SimButton: {fileID: 11499096}
+  _MockButton: {fileID: 11493334}
+  _ConnectionFlowPrefab: {fileID: 11481422, guid: b6b867e260b464aed8b33e07aba8d2b1,
+    type: 2}
+  _SoundCheckViewPrefab: {fileID: 11420606, guid: 49f156cce4e3a43829a0de82daa45d0e,
+    type: 2}
+  _PlaceCozmoOnChargerConnectViewPrefab: {fileID: 11415802, guid: ee0aabc9eebb14c539ef62710fbadebb,
+    type: 2}
 --- !u!114 &11439468
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -543,7 +547,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Connect
+  m_Text: Start
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11493334

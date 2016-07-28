@@ -62,7 +62,17 @@ MonoBehaviour:
     type: 2}
   _ConnectingToCozmoScreenPrefab: {fileID: 11467300, guid: 064d2b5ecb36c43d7abcc053f91a244f,
     type: 2}
+  _UpdateFirmwareScreenPrefab: {fileID: 11482222, guid: 3191bf1652972435d88cab949c7cd324,
+    type: 2}
+  _UpdateAppViewPrefab: {fileID: 11431642, guid: 0d6d37c4bed914a5794dd41e946275be,
+    type: 2}
   _WakingUpCozmoScreenPrefab: {fileID: 108122, guid: 68ce0b13cb2cc48a9b8a3f2009a88614,
+    type: 2}
+  _PinSecurityViewPrefab: {fileID: 11482308, guid: 5ea466020341e418395442ffb8a4765a,
+    type: 2}
+  _InvalidPinViewPrefab: {fileID: 11428586, guid: 4a89bac71d06d4c308631f650668e2a0,
+    type: 2}
+  _ReplaceCozmoOnChargerViewPrefab: {fileID: 11415802, guid: 9e087726d56dc48868bde717970215ee,
     type: 2}
   _PingStatus: {fileID: 11424054}
 --- !u!1001 &100100000

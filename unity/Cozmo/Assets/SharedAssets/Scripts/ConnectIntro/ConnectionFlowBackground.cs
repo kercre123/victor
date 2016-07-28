@@ -24,6 +24,15 @@ public class ConnectionFlowBackground : Cozmo.UI.BaseView {
   [SerializeField]
   private UnityEngine.UI.Image[] _StateBackgrounds;
 
+  public void ResetAllProgress() {
+    for (int i = 0; i < _StateImages.Length; ++i) {
+      _StateImages[i].overrideSprite = null;
+    }
+    for (int i = 0; i < _StateBackgrounds.Length; ++i) {
+      _StateBackgrounds[i].overrideSprite = null;
+    }
+  }
+
   public void SetStateInProgress(int currentState) {
     if (currentState < 0 || currentState >= _StateImages.Length) {
       DAS.Error("ConnectionFlowBackground.SetState", "Setting current state out of range");

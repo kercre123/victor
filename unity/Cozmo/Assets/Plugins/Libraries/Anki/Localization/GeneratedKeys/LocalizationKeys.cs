@@ -42,6 +42,7 @@ public static class LocalizationKeys {
   public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
   public const string kWhackAMoleTitle = "whackAMole.title";
   public const string kWhackAMoleDescription = "whackAMole.description";
+  public const string kConnectivityPlaceCozmoOnCharger = "connectivity.placeCozmoOnCharger";
 
   #endregion
 
@@ -52,6 +53,8 @@ public static class LocalizationKeys {
   public const string kConnectivitySearchingForCozmo = "connectivity.searchingForCozmo";
   public const string kConnectivitySecuringConnection = "connectivity.securingConnection";
   public const string kConnectionWakingUpCozmo = "connection.wakingUpCozmo";
+  public const string kConnectivityUpdatingFirmware = "connectivity.updatingFirmware";
+  public const string kConnectivityPairingPinTitle = "connectivity.pairingPinTitle";
 
   #endregion
 
@@ -274,6 +277,7 @@ public static class LocalizationKeys {
   public const string kButtonClose = "button.close";
   public const string kButtonDone = "button.done";
   public const string kButtonPlay = "button.play";
+  public const string kButtonSoundsGood = "button.soundsGood";
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kLabelXCount = "label.xCount";
@@ -289,6 +293,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalComplete = "dailyGoal.Complete";
   public const string kTimelineWeekLabel = "timeline.weekLabel";
   public const string kLabelConnect = "label.connect";
+  public const string kLabelStart = "label.start";
   public const string kLabelLoading = "label.loading";
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
@@ -301,6 +306,7 @@ public static class LocalizationKeys {
   public const string kLootMid = "loot.Mid";
   public const string kLootAlmost = "loot.Almost";
   public const string kLootAnnounce = "loot.Announce";
+  public const string kTitleSoundCheck = "title.soundCheck";
 
   #endregion
 
@@ -340,6 +346,7 @@ public static class LocalizationKeys {
   public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";
   public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
   public const string kSparksSparked = "sparks.Sparked";
+  public const string kSparksPressAndHold = "sparks.PressAndHold";
 
   #endregion
 

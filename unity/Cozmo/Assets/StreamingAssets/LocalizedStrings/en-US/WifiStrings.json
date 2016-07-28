@@ -25,7 +25,7 @@
     "translation": "Select the WiFi section from your settings menu"
   },
   "wifiStrings.Instructions.Slide2": {
-    "translation": "Choose <name> from the network list"
+    "translation": "Choose Cozmo from the network list.\nRaise Lift to view network name."
   },
   "wifiStrings.Instructions.Slide3": {
     "translation": "Enter the Wifi password if one is shown on your Cozmo"

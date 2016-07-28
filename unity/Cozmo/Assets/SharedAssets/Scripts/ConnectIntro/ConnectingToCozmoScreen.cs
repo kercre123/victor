@@ -2,27 +2,29 @@
 using System.Collections;
 
 public class ConnectingToCozmoScreen : MonoBehaviour {
-  public System.Action<bool> OnScreenComplete;
-  private bool _RobotConnected = false;
+  public System.Action ConnectionScreenComplete;
+
+  private bool _MinimumDelayMet = false;
+  private bool _ConnectionComplete = false;
 
   private void Start() {
-    Invoke("ShowScreenComplete", ConnectionFlow.kConnectionFlowDelay);
+    Invoke("MinimumDelayMet", ConnectionFlow.kConnectionFlowDelay);
   }
 
-  private void ShowScreenComplete() {
-    if (_RobotConnected) {
-      if (OnScreenComplete != null) {
-        OnScreenComplete(true);
+  private void MinimumDelayMet() {
+    _MinimumDelayMet = true;
+  }
+
+  private void Update() {
+    if (_MinimumDelayMet && _ConnectionComplete) {
+      if (ConnectionScreenComplete != null) {
+        ConnectionScreenComplete();
       }
     }
-    else {
-      // not connected yet, check again
-      Invoke("ShowScreenComplete", 0.1f);
-    }
-
   }
 
-  public void RobotConnected() {
-    _RobotConnected = true;
+  public void ConnectionComplete() {
+    _ConnectionComplete = true;
   }
+
 }

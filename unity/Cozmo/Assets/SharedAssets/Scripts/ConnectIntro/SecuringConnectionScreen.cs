@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class SecuringConnectionScreen : MonoBehaviour {
-  public System.Action<bool> OnScreenComplete;
+  public System.Action OnScreenComplete;
 
   private void Start() {
     Invoke("ShowScreenComplete", ConnectionFlow.kConnectionFlowDelay);
@@ -10,7 +10,7 @@ public class SecuringConnectionScreen : MonoBehaviour {
 
   private void ShowScreenComplete() {
     if (OnScreenComplete != null) {
-      OnScreenComplete(true);
+      OnScreenComplete();
     }
   }
 }

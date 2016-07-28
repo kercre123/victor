@@ -32,5 +32,17 @@
   },
   "connection.wakingUpCozmo": {
     "translation": "Waking up Cozmo..."
+  },
+  "connectivity.updatingFirmware": {
+    "translation": "Updating Firmware"
+  },
+  "connectivity.pairingPinTitle": {
+    "translation": "Enter the pin shown on your Cozmo"
+  },
+  "connectivity.invalidPinTitle": {
+    "translation": "Invalid Pin"
+  },
+  "connectivity.updateApp": {
+    "translation": "You must update your Cozmo App to continue"
   }
 }

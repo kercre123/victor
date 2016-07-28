@@ -60,6 +60,9 @@
   "button.play": {
     "translation": "Play"
   },
+  "button.soundsGood": {
+    "translation": "Sounds Good"
+  },
   "label.percentComplete": {
     "translation": "{0:P2} Complete"
   },
@@ -105,6 +108,9 @@
   "label.connect": {
     "translation": "Connect"
   },
+  "label.start": {
+    "translation": "Start"
+  },
   "label.loading": {
     "translation": "Loading"
   },
@@ -140,5 +146,11 @@
   },
   "loot.Announce": {
     "translation": "Emotion Chip Charged!"
+  },
+  "title.soundCheck": {
+    "translation": "Sound Check"
+  },
+  "button.GetACozmo": {
+    "translation": "Get A Cozmo"
   }
 }

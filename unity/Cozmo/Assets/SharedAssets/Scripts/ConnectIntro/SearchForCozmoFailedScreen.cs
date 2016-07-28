@@ -7,10 +7,10 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   public System.Action OnQuitFlow;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _QuitButton;
+  private Cozmo.UI.CozmoButton _ShowMeButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _ShowMeButton;
+  private Cozmo.UI.CozmoButton _GetACozmoButton;
 
   [SerializeField]
   private WifiInstructionsView _WifiInstructionsViewPrefab;
@@ -18,19 +18,23 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
 
   private PingStatus _PingStatus;
 
-  private void OnDestroy() {
-    if (_WifiInstructionsViewInstance != null) {
-      UIManager.CloseView(_WifiInstructionsViewInstance);
-    }
-  }
-
   public void Initialize(PingStatus pingStatus) {
     _PingStatus = pingStatus;
   }
 
-  private void Start() {
-    _QuitButton.Initialize(HandleQuitButton, "wifi_instructions_quit_button", "search_for_cozmo_failed_screen");
+  private void Awake() {
     _ShowMeButton.Initialize(HandleShowMeButton, "show_me_button", "search_for_cozmo_failed_screen");
+    _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
+  }
+
+  private void OnDestroy() {
+    if (_WifiInstructionsViewInstance != null) {
+      UIManager.CloseViewImmediately(_WifiInstructionsViewInstance);
+    }
+  }
+
+  private void HandleGetACozmoButton() {
+    Application.OpenURL("https://www.anki.com");
   }
 
   private void Update() {
@@ -41,7 +45,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     }
   }
 
-  private void HandleQuitButton() {
+  private void QuitFlow() {
     if (OnQuitFlow != null) {
       OnQuitFlow();
     }
@@ -49,6 +53,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
 
   private void HandleShowMeButton() {
     _WifiInstructionsViewInstance = UIManager.OpenView(_WifiInstructionsViewPrefab);
+    _WifiInstructionsViewInstance.ViewClosedByUser += QuitFlow;
   }
 
 }
