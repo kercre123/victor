@@ -49,6 +49,7 @@ BlockWorldComms {
 DEF Cozmo_1 CozmoBot {
   translation -0.13 0 0.001
   name "CozmoBot_1"
+  autoConnectToBlocks FALSE
 }
 WebotsKeyboardController {
   behaviorChooser "Selection"
