@@ -481,15 +481,15 @@ MonoBehaviour:
   _LootMidThreshold: 0.25
   _LootAlmostThreshold: 0.5
   _TapSoundEvent:
-    _Event: Sfx_Ui_Emotion_Chip_Charged_Tap_Play
+    _Event: Play__Ui__Emotion_Chip_Charged_Tap
     _EventType: UI
     _GameObjectType: 2
   _EmotionChipWindowOpenSoundEvent:
-    _Event: Sfx_Ui_Emotion_Chip_Charged_Start_Play
+    _Event: Play__Ui__Emotion_Chip_Charged_Start
     _EventType: UI
     _GameObjectType: 2
   _LootReleasedSoundEvent:
-    _Event: Sfx_Ui_Code_Fragment_Released_Play
+    _Event: Play__Ui__Code_Fragment_Released
     _EventType: UI
     _GameObjectType: 2
   _LootStartKey: loot.Start
@@ -4240,15 +4240,15 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _EmotionChipWindowOpenSoundEvent._Event
-      value: Sfx_Ui_Emotion_Chip_Charged_Start_Play
+      value: Play__Ui__Emotion_Chip_Charged_Start
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _TapSoundEvent._Event
-      value: Sfx_Ui_Emotion_Chip_Charged_Tap_Play
+      value: Play__Ui__Emotion_Chip_Charged_Tap
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _LootReleasedSoundEvent._Event
-      value: Sfx_Ui_Code_Fragment_Released_Play
+      value: Play__Ui__Code_Fragment_Released
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _EmotionChipWindowOpenSoundEvent._EventType
