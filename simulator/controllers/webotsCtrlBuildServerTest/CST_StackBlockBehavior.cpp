@@ -255,7 +255,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
           // figure out angle to turn to
           float targetAngle = atan2(kidnapCubePose.GetTranslation().y() - GetRobotPoseActual().GetTranslation().y(),
                                     kidnapCubePose.GetTranslation().x() - GetRobotPoseActual().GetTranslation().x());
-
+          
+          float robotTrueAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis().ToFloat();
+          float robotAssumedAngle = GetRobotPose().GetRotation().GetAngleAroundZaxis().ToFloat();
+          float robotAngleError = robotTrueAngle - robotAssumedAngle;
+          targetAngle -= robotAngleError;
           
           ExternalInterface::QueueSingleAction m;
           m.robotID = 1;
