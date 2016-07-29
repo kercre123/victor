@@ -479,6 +479,8 @@ class GamePlatformConfiguration(object):
                                                 "libcozmoEngine.so"), self.android_prestrip_lib_dir)
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
                                                 "libDAS.so"), self.android_prestrip_lib_dir)
+            # build android-specific java files
+            self.build_java(buildaction)
             # move third ndk libs.
             self.move_ndk()
             # strip libraries and copy into unity
@@ -539,6 +541,18 @@ class GamePlatformConfiguration(object):
                     ankibuild.util.File.cp(original, copy)
                 else:
                     sys.exit("Cannot locate {0}".format(original))
+
+    def build_java(self, command):
+        javadir = os.path.join(GAME_ROOT, 'project', 'android', 'cozmojava')
+        old_dir = ankibuild.util.File.pwd()
+        ankibuild.util.File.cd(javadir)
+        args = [os.path.join(javadir, 'gradlew'), command]
+        ankibuild.util.File.execute(args)
+        ankibuild.util.File.cd(old_dir)
+        built_lib_path = os.path.join(javadir, 'build', 'outputs', 'aar', 'cozmojava.aar')
+        if not os.path.exists(self.android_unity_plugin_dir):
+            os.makedirs(self.android_unity_plugin_dir)
+        ankibuild.util.File.cp(built_lib_path, self.android_unity_plugin_dir)
 
     def strip_libs(self):
         print_status('Stripping library symbols (if necessary)...')

@@ -8,7 +8,7 @@ args=$@
 
 if [ "$#" == "0" ]; then
   echo usage: $0 logcat-filter-1 logcat-filter-2 ... logcat-filter-N
-  args="-s -v threadtime Unity:I das:D libc:I DEBUG:D AndroidRuntime:W fmod:V BLEPeripheral:V VehicleConnection:D WifiMessagePort:V HockeyApp:V"
+  args="-s -v threadtime Unity:I das:D libc:I DEBUG:D AndroidRuntime:W fmod:V BLEPeripheral:V VehicleConnection:D WifiMessagePort:V HockeyApp:V BackgroundConnectivity:D"
   echo usign default filter: $args
 fi
 

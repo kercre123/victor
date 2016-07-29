@@ -53,7 +53,7 @@ public class HockeyAppAndroid : MonoBehaviour
     DontDestroyOnLoad(gameObject);
     CreateLogDirectory();
 
-    hockeyAppId = GetManifestProperty(GetCurrentActivity(), "HOCKEYAPP_APP_ID");
+    hockeyAppId = GetManifestProperty(CozmoBinding.GetCurrentActivity(), "HOCKEYAPP_APP_ID");
 
     if(exceptionLogging == true  && IsConnected() == true) {
       List<string> logFileDirs = GetLogFiles();
@@ -101,7 +101,7 @@ public class HockeyAppAndroid : MonoBehaviour
   {
     #if (UNITY_ANDROID && !UNITY_EDITOR)
     // get Unity activity
-    AndroidJavaObject currentActivity = GetCurrentActivity();
+    AndroidJavaObject currentActivity = CozmoBinding.GetCurrentActivity();
 
     // get DAS (for device ID)
     AndroidJavaClass dasClass = new AndroidJavaClass("com.anki.daslib.DAS");
@@ -147,13 +147,6 @@ public class HockeyAppAndroid : MonoBehaviour
   }
 
   #if (UNITY_ANDROID && !UNITY_EDITOR)
-  private static AndroidJavaObject GetCurrentActivity() {
-    AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-    return unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-  }
-  #endif
-
-  #if (UNITY_ANDROID && !UNITY_EDITOR)
   private string GetManifestProperty(AndroidJavaObject context, string name) {
     int getMetaData = new AndroidJavaClass("android.content.pm.PackageManager").GetStatic<int>("GET_META_DATA");
     AndroidJavaObject packageName = context.Call<AndroidJavaObject>("getPackageName");
@@ -177,7 +170,7 @@ public class HockeyAppAndroid : MonoBehaviour
     #if (UNITY_ANDROID && !UNITY_EDITOR)
     if (instance != null) {
       AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin"); 
-      pluginClass.CallStatic("checkForUpdate", GetCurrentActivity(), instance.serverURL, instance.hockeyAppId);
+      pluginClass.CallStatic("checkForUpdate", CozmoBinding.GetCurrentActivity(), instance.serverURL, instance.hockeyAppId);
     } else {
       Debug.Log("Failed to check for update. SDK has not been initialized, yet.");
     }
@@ -192,7 +185,7 @@ public class HockeyAppAndroid : MonoBehaviour
     #if (UNITY_ANDROID && !UNITY_EDITOR)
     if (instance != null) {
       AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin"); 
-      pluginClass.CallStatic("startFeedbackForm", GetCurrentActivity());
+      pluginClass.CallStatic("startFeedbackForm", CozmoBinding.GetCurrentActivity());
     } else {
       Debug.Log("Failed to present feedback form. SDK has not been initialized, yet.");
     }

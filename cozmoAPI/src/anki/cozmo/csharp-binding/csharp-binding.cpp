@@ -132,6 +132,8 @@ static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki
   std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
   std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
   DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
+  // try to post to server just in case we have internet at app startup
+  DASForceFlushNow();
 #endif
 }
 

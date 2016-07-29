@@ -95,6 +95,9 @@ public static class CozmoBinding {
     Profiler.BeginSample ("CozmoBinding.cozmo_startup");
     result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData.ToString());
     Profiler.EndSample ();
+    #if UNITY_ANDROID
+    new AndroidJavaClass("com.anki.cozmo.CozmoJava").CallStatic("init", GetCurrentActivity());
+    #endif
     #endif
     
     if (result != AnkiResult.RESULT_OK) {
@@ -145,5 +148,13 @@ public static class CozmoBinding {
     }
 
   }
+
+  #if (UNITY_ANDROID && !UNITY_EDITOR)
+  public static AndroidJavaObject GetCurrentActivity() {
+    AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+    return unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+  }
+  #endif
+
 }
 
