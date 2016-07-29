@@ -132,8 +132,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _musicConductor = new MusicConductor( *this,
                                           static_cast<AudioGameObject>( GameObjectType::Default ),
                                           Util::numeric_cast<AudioStateGroupId>( GameState::StateGroupType::Music ),
-                                          Util::numeric_cast<AudioEventId>( GameEvent::GenericEvent::Music_Play ),
-                                          Util::numeric_cast<AudioEventId>( GameEvent::GenericEvent::Music_Stop ) );
+                                          Util::numeric_cast<AudioEventId>( GameEvent::Music::Play ),
+                                          Util::numeric_cast<AudioEventId>( GameEvent::Music::Stop ) );
     
     // Setup our update method to be called periodically
     _dispatchQueue = Util::Dispatch::Create( "AudioController" );

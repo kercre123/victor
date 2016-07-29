@@ -190,7 +190,7 @@ Audio::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextStyle
   switch ( style ) {
     case SayTextStyle::Normal:
       // TODO: Create an event for non-name text to speech
-      return Audio::GameEvent::GenericEvent::Dev_External_Play;
+      return Audio::GameEvent::GenericEvent::Play__Dev_Robot__External_Source;
       break;
       
     case SayTextStyle::Name_Normal:
@@ -205,7 +205,7 @@ Audio::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextStyle
       PRINT_NAMED_ERROR("TextToSpeechComponent.GetAudioEvent", "Invalid SayTextStyle Count");
       break;
   }
-  return Audio::GameEvent::GenericEvent::Dev_External_Play;
+  return Audio::GameEvent::GenericEvent::Play__Dev_Robot__External_Source;
 } // GetAudioEvent()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
