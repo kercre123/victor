@@ -320,7 +320,7 @@ void Update()
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
-                                                                          "PSK:  %s\n"
+                                                                          "PSK: %s\n"
                                                                           "Chan: %d  Stas: %d\n"
                                                                           "WiFi-V: %x\nWiFi-D: %s\n"
                                                                           "RTIP-V: %x\nRTIP-D: %s\n"
@@ -385,7 +385,8 @@ void Update()
         const u64 columnMask = ((now/30000000) % 2) ? 0xaaaaaaaaaaaaaaaa : 0x5555555555555555;
         u64 frame[COLS];
         Draw::Clear(frame);
-        Draw::Number(frame, 8, Face::DecToBCD(wifiPin), 0, 4);
+        Draw::Number(frame, 8, Face::DecToBCD(wifiPin[0]), 0,  0);
+        Draw::Number(frame, 8, Face::DecToBCD(wifiPin[1]), 0, 24);
         Draw::Mask(frame, columnMask);
         Draw::Flip(frame);
         if ((now - lastExecTime) > 300000000)

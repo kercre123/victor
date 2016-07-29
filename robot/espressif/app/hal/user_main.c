@@ -26,7 +26,7 @@ void user_rf_pre_init(void)
   //system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
 }
 
-unsigned int wifiPin;
+unsigned int wifiPin[2];
 
 /// Forward declarations
 typedef void (*NVInitDoneCB)(const int8_t);
@@ -113,10 +113,11 @@ void user_init(void)
     os_printf("Error getting wifi softap config\r\n");
   }
 
-  wifiPin = rand() % 100000000;
+  wifiPin[0] = rand() % 100000000;
+  wifiPin[1] = rand() % 100000000;
 
   os_sprintf((char*)ap_config.ssid, ssid);
-  os_sprintf((char*)ap_config.password, "%08d", wifiPin);
+  os_sprintf((char*)ap_config.password, "%08d%08d", wifiPin[0], wifiPin[1]);
   ap_config.ssid_len = 0;
   ap_config.channel = (system_get_time() % 11) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
