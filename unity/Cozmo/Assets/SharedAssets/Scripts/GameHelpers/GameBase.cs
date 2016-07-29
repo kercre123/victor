@@ -549,7 +549,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
     _WonChallenge = true;
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Win_Shared);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
@@ -560,7 +560,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Lose_Shared);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Lose_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
@@ -636,7 +636,7 @@ public abstract class GameBase : MonoBehaviour {
       }
     }
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Game_End);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
 
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }
@@ -880,7 +880,7 @@ public abstract class GameBase : MonoBehaviour {
     alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
     alertView.TitleLocKey = titleKey;
     alertView.DescriptionLocKey = descriptionKey;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Game_End);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
   }
 
   private void HandleInterruptionQuitGameViewClosed() {

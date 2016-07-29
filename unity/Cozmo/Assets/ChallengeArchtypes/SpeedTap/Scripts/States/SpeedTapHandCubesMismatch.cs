@@ -23,7 +23,7 @@ namespace SpeedTap {
       _IsCozmoMoving = false;
 
       // Set lights on cubes
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Lightup);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lightup);
       _SpeedTapGame.Rules.SetLights(shouldMatch: false, game: _SpeedTapGame);
     }
 

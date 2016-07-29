@@ -135,7 +135,7 @@ namespace Simon {
     }
 
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Lose);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
       foreach (int cubeId in CubeIdsForGame) {
         if (cubeId == correctCubeID) {
           CurrentRobot.LightCubes[correctCubeID].SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);
@@ -188,7 +188,7 @@ namespace Simon {
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
       Anki.Cozmo.Audio.AudioEventParameter audioEvent =
-        Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Cozmo_Connect);
+        Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect);
       SimonCube simonCube;
       if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
         audioEvent = simonCube.soundName;
@@ -263,7 +263,7 @@ namespace Simon {
         simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo, LocalizationKeys.kSimonGameLabelCozmoTurn, statusLocKey);
       }
       else {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.Window_Open);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
         simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, LocalizationKeys.kSimonGameLabelYourTurn, statusLocKey);
       }
 

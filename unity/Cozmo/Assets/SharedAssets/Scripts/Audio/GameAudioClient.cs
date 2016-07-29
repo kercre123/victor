@@ -24,13 +24,13 @@ namespace Anki {
 
         public static AudioEventParameter DefaultClick = new AudioEventParameter(
                                                            GameEvent.GenericEvent.Play__Ui__Click_General,
-                                                           GameEvent.EventGroupType.UI,
+                                                           GameEvent.EventGroupType.Ui,
                                                            GameObjectType.UI);
 
-        public static AudioEventParameter UIEvent(GameEvent.UI ui) {
+        public static AudioEventParameter UIEvent(GameEvent.Ui ui) {
           return new AudioEventParameter(
             (GameEvent.GenericEvent)ui,
-            GameEvent.EventGroupType.UI,
+            GameEvent.EventGroupType.Ui,
             GameObjectType.UI);
         }
 
@@ -41,10 +41,10 @@ namespace Anki {
             GameObjectType.Aria);
         }
 
-        public static AudioEventParameter SFXEvent(GameEvent.SFX sfx) {
+        public static AudioEventParameter SFXEvent(GameEvent.Sfx sfx) {
           return new AudioEventParameter(
             (GameEvent.GenericEvent)sfx,
-            GameEvent.EventGroupType.SFX,
+            GameEvent.EventGroupType.Sfx,
             GameObjectType.SFX);
         }
 
@@ -109,14 +109,14 @@ namespace Anki {
           return client.PostEvent(parameter.Event, parameter.GameObjectType, callbackFlag, handler);
         }
 
-        static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI audioEvent,
+        static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
           return client.PostEvent((GameEvent.GenericEvent)audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
         }
 
-        static public ushort PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX audioEvent,
+        static public ushort PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx audioEvent,
                                           Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;

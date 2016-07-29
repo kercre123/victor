@@ -48,7 +48,7 @@ namespace Simon {
 
       SetScanPhase(ScanPhase.NoCubesSeen);
       InitShowCubesSlide();
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Game_Start);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_Start);
     }
 
     // ignore base class events
@@ -104,7 +104,7 @@ namespace Simon {
         LightCube cube = _CurrentRobot.LightCubes[cubeID];
         if (state == ScannedSetupCubeState.Seen) {
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Block_Connect);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Block_Connect);
         }
         else if (state == ScannedSetupCubeState.TooClose) {
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.ErrorColor.lightColor);
@@ -218,7 +218,7 @@ namespace Simon {
 
     private void InitShowCubesSlide() {
       if (_ShowCozmoCubesSlide == null) {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.Window_Open);
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
         _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
       }
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
@@ -274,7 +274,7 @@ namespace Simon {
             _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
           }
           // Error sound
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Tap_Red);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);
           SimonGame simonGame = _Game as SimonGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
                                                      simonGame.SimonSetupErrorPrefab.gameObject, "simon_error_slide");

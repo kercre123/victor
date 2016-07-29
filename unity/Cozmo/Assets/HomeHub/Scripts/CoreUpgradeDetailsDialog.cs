@@ -180,7 +180,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _UnlockableTintBackground.DOColor(UIColorPalette.GetUpgradeTintData(_UnlockInfo.CoreUpgradeTintColorName).TintColor, _UpgradeTween_sec));
     _UpgradeTween.Join(_UnlockableIcon.DOColor(Color.white, _UpgradeTween_sec));
     _UpgradeTween.AppendCallback(ResolveOnNewUnlock);
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Win_Shared);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
   }
 
   private void ResolveOnNewUnlock() {

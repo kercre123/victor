@@ -31,8 +31,8 @@ enum uint_32 EventGroupType
   GenericEvent,
   Music,
   Robot,
-  SFX,
-  UI,
+  Sfx,
+  Ui,
 }
 
 enum uint_32 GenericEvent
@@ -478,7 +478,7 @@ enum uint_32 Robot
   WordSpeedTap = 569647932,
 }
 
-enum uint_32 SFX
+enum uint_32 Sfx
 {
   Attention_Device = 419735887,
   Code_Fragment_Released = 1918333736,
@@ -513,7 +513,7 @@ enum uint_32 SFX
   Win_Shared = 1377668234,
 }
 
-enum uint_32 UI
+enum uint_32 Ui
 {
   Click_Back = 3218349115,
   Click_General = 902542,
