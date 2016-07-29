@@ -3,16 +3,6 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using Anki.UI;
 
-public delegate void VizRectChangedHandler(IVisibleInCamera reticleFocus, Rect newVizRect);
-public interface IVisibleInCamera {
-  Vector3 WorldPosition { get; }
-  Rect VizRect { get; }
-  bool IsInFieldOfView { get; }
-  event VizRectChangedHandler OnVizRectChanged;
-  string ReticleLabelLocKey { get; }
-  string ReticleLabelStringArg { get; }
-}
-
 namespace Cozmo.Minigame.DroneMode {
   public class DroneModeCameraFeed : MonoBehaviour {
 

@@ -69,8 +69,8 @@
 				fixed4 mask = tex2D(_MaskAlphaTex, i.uv);
 
 				// Manually grayscale
-				fixed lum = base.r*.3 + base.g*.59 + base.b*.11;
-				base = fixed4( lum, lum, lum, base.a ); 
+				// fixed lum = base.r*.3 + base.g*.59 + base.b*.11;
+				// base = fixed4( lum, lum, lum, base.a ); 
 
 				// Scan line effect 1 - blend
 				// base = lerp(base, scan, _ScanBlend) * i.color;

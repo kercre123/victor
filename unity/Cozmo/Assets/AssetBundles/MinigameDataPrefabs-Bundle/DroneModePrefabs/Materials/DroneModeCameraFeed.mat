@@ -164,11 +164,11 @@ Material:
       data:
         first:
           name: _ScanBlend
-        second: 1.2
+        second: 1.56
       data:
         first:
           name: _ScanSize
-        second: 1.69
+        second: 4.87
     m_Colors:
       data:
         first:
@@ -181,8 +181,8 @@ Material:
       data:
         first:
           name: _TopColor
-        second: {r: 0.3455882, g: 0.7021299, b: 1, a: 1}
+        second: {r: 0.47880623, g: 0.65059656, b: 0.7941176, a: 1}
       data:
         first:
           name: _BottomColor
-        second: {r: 0.05547146, g: 0.19917372, b: 0.39705884, a: 1}
+        second: {r: 0.2997405, g: 0.41182733, b: 0.5661765, a: 1}

@@ -917,6 +917,17 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  /// <summary>
+  /// Drives the motors so that cozmo moves in an arc.
+  /// When curveRadiusMm is negative, he turns to his right; positive = left
+  /// Set curveRadiusMm to 1 or -1 for a point turn and ~40000 for straight
+  /// </summary>
+  public void DriveArc(float wheelSpeedMmps, int curveRadiusMm) {
+    RobotEngineManager.Instance.Message.DriveArc =
+                        Singleton<DriveArc>.Instance.Initialize(wheelSpeedMmps, curveRadiusMm);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Place Object " + CarryingObject + " On Ground Here");
 

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using Anki.UI;
 
 namespace Cozmo.Minigame.DroneMode {

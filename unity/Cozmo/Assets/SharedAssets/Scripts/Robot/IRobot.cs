@@ -153,6 +153,8 @@ public interface IRobot : IDisposable {
 
   void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps);
 
+  void DriveArc(float wheelSpeedMmps, int curveRadiusMm);
+
   void PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);

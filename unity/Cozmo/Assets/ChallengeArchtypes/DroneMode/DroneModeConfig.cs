@@ -18,8 +18,8 @@ namespace Cozmo {
       private float _MaxForwardSpeed_mmps = 120f;
       public float MaxForwardSpeed_mmps { get { return _MaxForwardSpeed_mmps; } }
 
-      [SerializeField, Range(0f, CozmoUtil.kMaxWheelSpeedMM)]
-      private float _PointTurnSpeed_mmps = 90f;
+      [SerializeField, Range(0f, 6.28f)]
+      private float _PointTurnSpeed_mmps = 15f;
       public float PointTurnSpeed_mmps { get { return _PointTurnSpeed_mmps; } }
 
       [SerializeField, Range(0f, CozmoUtil.kMaxWheelSpeedMM)]
