@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.560579 -0.360191 -0.745663 4.86068
-  position 2.19534 -0.911446 1.98405
+  orientation -0.657878 -0.330965 -0.676505 5.00432
+  position 1.06931 -0.714936 1.17287
 }
 Can {
   translation -0.00973 0.156367 0.312

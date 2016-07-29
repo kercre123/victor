@@ -555,7 +555,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
   }
       
-  //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
+  const bool isCarryingObject = (msg.status&(uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK) != 0;
+  //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
   SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
   SetOnCharger(static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER));
@@ -673,7 +674,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                                        msg.pose_frame_id,
                                        newPose,
                                        msg.headAngle,
-                                       msg.liftAngle);
+                                       msg.liftAngle,
+                                       isCarryingObject);
   
   if(lastResult != RESULT_OK) {
     PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
@@ -1825,7 +1827,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   {
     // Update the computed historical pose as well so that subsequent block
     // pose updates use obsMarkers whose camera's parent pose is correct.
-    posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle);
+    posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle, posePtr->IsCarryingObject());
   }
 
       
@@ -2070,7 +2072,7 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   // pose updates use obsMarkers whose camera's parent pose is correct.
   // Note again that we store the pose w.r.t. the origin in history.
   // TODO: Should SetPose() do the flattening w.r.t. origin?
-  posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+  posePtr->SetAll(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle(), posePtr->IsCarryingObject());
       
   // Compute the new "current" pose from history which uses the
   // past vision-based "ground truth" pose we just computed.
@@ -2946,9 +2948,10 @@ Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
                                       const PoseFrameID_t frameID,
                                       const Pose3d& pose,
                                       const f32 head_angle,
-                                      const f32 lift_angle)
+                                      const f32 lift_angle,
+                                      const bool isCarryingObject)
 {
-  RobotPoseStamp poseStamp(frameID, pose, head_angle, lift_angle);
+  RobotPoseStamp poseStamp(frameID, pose, head_angle, lift_angle, isCarryingObject);
   return _poseHistory->AddRawOdomPose(t, poseStamp);
 }
     
@@ -3012,7 +3015,12 @@ Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
   //IncrementPoseFrameID();
   ++_frameId;
   
-  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle);
+  // vision poses do not care about whether you are carrying an object. This field has no meaning here, so we
+  // set to false always
+  // COZMO-3309 Need to change poseHistory to robot status history
+  const bool isCarryingObject = false;
+  
+  RobotPoseStamp poseStamp(_frameId, pose, head_angle, lift_angle, isCarryingObject);
   return _poseHistory->AddVisionOnlyPose(t, poseStamp);
 }
 

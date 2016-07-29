@@ -29,18 +29,21 @@ namespace Anki {
       RobotPoseStamp(const PoseFrameID_t frameID,
                      const Pose3d& pose,
                      const f32 head_angle,
-                     const f32 lift_angle);
+                     const f32 lift_angle,
+                     const bool isCarryingObject);
       
-      void SetPose(const PoseFrameID_t frameID,
+      void SetAll(const PoseFrameID_t frameID,
                    const Pose3d& pose,
                    const f32 head_angle,
-                   const f32 lift_angle);
+                   const f32 lift_angle,
+                   const bool isCarryingObject);
 
       
       const Pose3d& GetPose() const {return pose_;}
       const f32 GetHeadAngle() const {return headAngle_;}
       const f32 GetLiftAngle() const {return liftAngle_;}
       const PoseFrameID_t GetFrameId() const {return frame_;}
+      const bool IsCarryingObject() const { return _isCarryingObject; }
 
       void Print() const;
       
@@ -49,6 +52,7 @@ namespace Anki {
       PoseFrameID_t frame_;
       f32 headAngle_;
       f32 liftAngle_;
+      bool _isCarryingObject; // COZMO-3309: Need to change poseHistory to robot status history
     };
     
     

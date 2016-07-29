@@ -547,7 +547,8 @@ public:
                                  const PoseFrameID_t frameID,
                                  const Pose3d& pose,
                                  const f32 head_angle,
-                                 const f32 lift_angle);
+                                 const f32 lift_angle,
+                                 const bool isCarryingObject);
   
 //  Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
 //                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,

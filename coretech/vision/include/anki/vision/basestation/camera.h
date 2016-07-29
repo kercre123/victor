@@ -92,7 +92,8 @@ namespace Anki {
       //  its origin.
       // After projection, points' visibility can be checked using the helpers
       //  below.
-      void Project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
+      // returns true if the point is in camera view, false otherwise
+      bool Project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
       
       void Project3dPoints(const std::vector<Point3f> &objPoints,
                            std::vector<Point2f>       &imgPoints) const;

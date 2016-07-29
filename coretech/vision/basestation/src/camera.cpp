@@ -307,7 +307,7 @@ namespace Anki {
     } // Camera::IsVisible()
 
     
-    void Camera::Project3dPoint(const Point3f& objPoint,
+    bool Camera::Project3dPoint(const Point3f& objPoint,
                                 Point2f&       imgPoint) const
     {
       if(this->IsCalibrated() == false) {
@@ -320,7 +320,7 @@ namespace Anki {
       {
         // Point not visible (not in front of camera)
         imgPoint = BEHIND_OR_OCCLUDED;
-
+        return false;
       } else {
         // Point visible, project it
         imgPoint.x() = (objPoint.x() / objPoint.z());
@@ -333,6 +333,7 @@ namespace Anki {
         imgPoint.y() *= _calibration->GetFocalLength_y();
         
         imgPoint += _calibration->GetCenter();
+        return true;
       }
       
     } // Project3dPoint()

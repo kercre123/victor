@@ -385,6 +385,8 @@ namespace Cozmo {
       const bool inSameFrame = &lastPoseStamp.GetPose().FindOrigin() == &imagePoseStamp.GetPose().FindOrigin();
       const bool headSame = inSameFrame && NEAR(lastPoseStamp.GetHeadAngle(),
                                                 imagePoseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
+      const bool liftSame = inSameFrame && NEAR(lastPoseStamp.GetLiftAngle(),
+                                                imagePoseStamp.GetLiftAngle(), DEG_TO_RAD_F32(0.1));
       
       const bool poseSame = (inSameFrame &&
                              NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
@@ -398,7 +400,9 @@ namespace Cozmo {
       Lock();
       _nextPoseData.poseStamp = imagePoseStamp;
       _nextPoseData.timeStamp = imagePoseStampTimeStamp;
-      _nextPoseData.isMoving = !headSame || !poseSame;
+      _nextPoseData.isBodyMoving = !poseSame;
+      _nextPoseData.isHeadMoving = !headSame;
+      _nextPoseData.isLiftMoving = !liftSame;
       _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
       _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
                                                                      _nextPoseData.groundPlaneHomography);

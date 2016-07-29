@@ -81,7 +81,9 @@ namespace Cozmo {
     bool                  groundPlaneVisible;
     Matrix_3x3f           groundPlaneHomography;
     GroundPlaneROI        groundPlaneROI;
-    bool                  isMoving;
+    bool                  isBodyMoving = false;
+    bool                  isHeadMoving = false;
+    bool                  isLiftMoving = false;
     ImuDataHistory        imuDataHistory;
     
     VisionPoseData() = default;
@@ -99,7 +101,9 @@ namespace Cozmo {
       swap(first.groundPlaneVisible, second.groundPlaneVisible);
       swap(first.groundPlaneHomography, second.groundPlaneHomography);
       swap(first.groundPlaneROI, second.groundPlaneROI);
-      swap(first.isMoving, second.isMoving);
+      swap(first.isBodyMoving, second.isBodyMoving);
+      swap(first.isHeadMoving, second.isHeadMoving);
+      swap(first.isLiftMoving, second.isLiftMoving);
       swap(first.imuDataHistory, second.imuDataHistory);
       
       // Because the cameraPose is wrt the pose contained in poseStamp, set it explicitly

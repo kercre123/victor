@@ -1587,7 +1587,7 @@ namespace Cozmo {
     }
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
-    if(headSame && poseSame && !_poseData.isMoving && !_prevImage.IsEmpty() &&
+    if(headSame && poseSame && !_poseData.isBodyMoving && !_poseData.isHeadMoving && !_prevImage.IsEmpty() &&
 #      if USE_THREE_FRAME_MOTION_DETECTION
        !_prevPrevImage.IsEmpty() &&
 #      endif
@@ -1933,8 +1933,6 @@ namespace Cozmo {
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  
-#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
-  
   namespace {
     
     inline bool SetEdgePosition(const Matrix_3x3f& invH,
@@ -1957,8 +1955,81 @@ namespace Cozmo {
       return true;
     }
     
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
+                               bool isLiftBotInCamera, float liftBotY,
+                               int planeTopY, int planeBotY)
+  {
+    // note that top in an image is a smaller value than bottom because 0,0 starts at left,top corner, so
+    // you may find '>' and '<' confusing. They should appear reversed with respect to what you would think.
+    bool ret = false;
+    
+    // enable debug
+    // #define DEBUG_LIFT_INTERFERES_WITH_EDGES(x) printf("[D_LIFT_EDGES] %s", x);
+    // disable debug
+    #define DEBUG_LIFT_INTERFERES_WITH_EDGES(x)
+  
+    if ( !isLiftTopInCamera )
+    {
+      if ( !isLiftBotInCamera )
+      {
+        // neither end of the lift is in the camera, we are good
+        DEBUG_LIFT_INTERFERES_WITH_EDGES("(OK) Lift is too low or too high, all good\n");
+      }
+      else
+      {
+        // bottom end of the lift is in the camera, check if it's beyond the bbox
+        if ( liftBotY < planeTopY )
+        {
+          // bottom end of the lift is above the top of the ground plane, so the lift is above the camera
+          DEBUG_LIFT_INTERFERES_WITH_EDGES("(OK) Lift is high, all good\n");
+        }
+        else
+        {
+          // the bottom end of the lift is in the camera, and actually in the ground plane projection. This could
+          // cause edge detection on the lift itself.
+          DEBUG_LIFT_INTERFERES_WITH_EDGES("(BAD) Bottom border of the lift interferes with edges\n");
+          ret = true;
+        }
+      }
+    }
+    else {
+      // lift top is in the camera, check how far into the ground plane
+      if ( liftTopY > planeBotY )
+      {
+        // the top of the lift is below the bottom of the ground plane, we are good
+        DEBUG_LIFT_INTERFERES_WITH_EDGES("Lift is low, all good\n");
+      }
+      else {
+        // top of the lift is above the bottom ground plane, check if bottom of the lift is above the top of the plane
+        if ( !isLiftBotInCamera ) {
+          // bottom of the lift is not in the camera, since bottom is below the top (duh), and the top was in the camera,
+          // this means we can see the top of the lift and it interferes with edges, but we can't see the bottom.
+          DEBUG_LIFT_INTERFERES_WITH_EDGES("(BAD) Lift is slightly interfering\n");
+          ret = true;
+        }
+        else
+        {
+          // we can also see the bottom of the lift, check how far into the ground plane
+          if ( liftBotY < planeTopY )
+          {
+            // the bottom of the lift is above the top of the ground plane, we are good
+            DEBUG_LIFT_INTERFERES_WITH_EDGES("We can see the lift, but it's above the ground plane, all good\n");
+          }
+          else
+          {
+            DEBUG_LIFT_INTERFERES_WITH_EDGES("(BAD) Lift interferes with edges\n");
+            ret = true;
+          }
+        }
+      }
+    }
+    return ret;
+  }
+    
   } // anonymous namespace
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB &image)
   {
     // if the ground plane is not currently visible, do not detect edges
@@ -1971,6 +2042,14 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
+    // if the lift is moving it's probably not a good idea to detect edges, it might be entering our view
+    // if we are carrying an object, it's also not probably a good idea, since we would most likely detect
+    // its edges (unless it's carrying high and we are looking down, but that requires modeling what
+    // objects can be carried here).
+    if ( _poseData.isLiftMoving || _poseData.poseStamp.IsCarryingObject() ) {
+      return RESULT_OK;
+    }
+    
     // Get ROI around ground plane quad in image
     const Matrix_3x3f& H = _poseData.groundPlaneHomography;
     const GroundPlaneROI& roi = _poseData.groundPlaneROI;
@@ -1978,6 +2057,82 @@ namespace Cozmo {
     roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), groundInImage);
     
     Anki::Rectangle<s32> bbox(groundInImage);
+    
+    // rsam: I tried to create a mask for the lift, calculating top and bottom sides of the lift and projecting
+    // onto camera plane. Turns out that physical robots have a lot of slack in the lift, so this projection,
+    // despite being correct on the paper, was not close to where the camera was seeing the lift.
+    // For this reason we have to completely prevent edge detection unless the lift is fairly up (beyond ground plane),
+    // or fairly low. Fairly up and fairly low are the parameters set here. Additionally, instead of trying to
+    // detect borders below the bottom margin line, if any of the margin lines are inside the projected quad, we stop
+    // edge detection altogether. This means that unless the lift is totally out of the ground plane, we will not
+    // do edge detection at all. Note: if this becomes a nuisance, we can revisit this and craft a better
+    // hardware slack margin, and try to detect edges below the lift when the lift is on the ground plane projection
+    // by shrinking bbox's top Y to liftBottomY
+    const bool kDebugRenderBboxVsLift = false;
+    
+    // virtual points in the lift to identify whether the lift is our camera view
+    float liftBotY = .0f;
+    float liftTopY = .0f;
+    bool isLiftTopInCamera = true;
+    bool isLiftBotInCamera = true;
+    {
+      // we only need to provide slack to the bottom edge (empirically), because of two reasons:
+      // 1) slack makes the lift fall with respect to its expected position, not lift even higher
+      // 2) the ground plane does not start at the robot, but in front of it, which accounts for the top of the lift
+      //    when the camera is pointing down. Once we start moving the lift up, the fall slack kicks in and gives
+      //    breathing room with respect to the top of
+      const float kHardwareFallSlackMargin_mm = LIFT_HARDWARE_FALL_SLACK_MM;
+    
+      // offsets we are going to calculate (point at the top and front of the lift, and at the bottom and back of the lift)
+      Anki::Vec3f offsetTopFrontPoint{LIFT_FRONT_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT };
+      Anki::Vec3f offsetBotBackPoint { LIFT_BACK_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - kHardwareFallSlackMargin_mm};
+
+      // calculate the lift pose with respect to the poseStamp's origin
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
+      Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, &liftBasePose, "RobotLift");
+      Robot::ComputeLiftPose(_poseData.poseStamp.GetLiftAngle(), liftPose);
+      
+      // calculate lift wrt camera
+      Pose3d liftPoseWrtCamera;
+      if ( false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCamera)) {
+        PRINT_NAMED_ERROR("VisionSystem.DetectOverheadEdges.PoseTreeError", "Could not get lift pose w.r.t. camera pose.");
+        return RESULT_FAIL;
+      }
+      
+      // project lift's top onto camera and store Y
+      Anki::Vec3f liftTopWrtCamera = liftPoseWrtCamera * offsetTopFrontPoint;
+      Anki::Point2f liftTopCameraPoint;
+      isLiftTopInCamera = _camera.Project3dPoint(liftTopWrtCamera, liftTopCameraPoint);
+      liftTopY = liftTopCameraPoint.y();
+
+      // project lift's bot onto camera and store Y
+      Anki::Vec3f liftBotWrtCamera = liftPoseWrtCamera * offsetBotBackPoint;
+      Anki::Point2f liftBotCameraPoint;
+      isLiftBotInCamera = _camera.Project3dPoint(liftBotWrtCamera, liftBotCameraPoint);
+      liftBotY = liftBotCameraPoint.y();
+      
+      if ( kDebugRenderBboxVsLift )
+      {
+        _vizManager->DrawCameraOval(liftTopCameraPoint, 3, 3, NamedColors::YELLOW);
+        _vizManager->DrawCameraOval(liftBotCameraPoint, 3, 3, NamedColors::YELLOW);
+      }
+    }
+    
+    // render ground plane Y if needed
+    const int planeTopY = bbox.GetY();
+    const int planeBotY = bbox.GetYmax();
+    if ( kDebugRenderBboxVsLift ) {
+      _vizManager->DrawCameraOval(Anki::Point2f{120,planeTopY}, 3, 3, NamedColors::WHITE);
+      _vizManager->DrawCameraOval(Anki::Point2f{120,planeBotY}, 3, 3, NamedColors::WHITE);
+    }
+    
+    // check if the lift interferes with the edge detection, and if so, do not detect edges
+    const bool liftInterferesWithEdges = LiftInterferesWithEdges(isLiftTopInCamera, liftTopY, isLiftBotInCamera, liftBotY, planeTopY, planeBotY);
+    if ( liftInterferesWithEdges ) {
+      return RESULT_OK;
+    }
+    
+    // we are going to detect edges, grab relevant image
     Vision::ImageRGB imageROI = image.GetROI(bbox);
     
     // Find edges in that ROI
@@ -2085,7 +2240,8 @@ namespace Cozmo {
       
     }
     Toc("FindingGroundEdgePoints");
-    
+
+    #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
     if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     {
       Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
@@ -2164,6 +2320,34 @@ namespace Cozmo {
       }
     }
     candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
+    
+    // Transform border points into 3D, and into camera view and render
+    const bool kRenderEdgesInCameraView = false;
+    if ( kRenderEdgesInCameraView )
+    {
+      _vizManager->EraseSegments("kRenderEdgesInCameraView");
+      for( const auto& chain : edgeFrame.chains ) {
+        if ( !chain.isBorder ) {
+          continue;
+        }
+        for( const auto& point : chain.points ) {
+          // project the point to 3D
+          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), &_poseData.poseStamp.GetPose(), "ChainPoint");
+          Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToOrigin();
+          // disabled 3D render
+          // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
+          
+          // project it back to 2D
+          Pose3d pointWrtCamera;
+          if ( pointWrtOrigin.GetWithRespectTo(_poseData.cameraPose, pointWrtCamera) )
+          {
+            Anki::Point2f pointInCameraView;
+            _camera.Project3dPoint(pointWrtCamera.GetTranslation(), pointInCameraView);
+            _vizManager->DrawCameraOval(pointInCameraView, 1, 1, NamedColors::BLUE);
+          }
+        }
+      }
+    }
     
     // put in mailbox
     _currentResult.overheadEdges.push_back(std::move(edgeFrame));

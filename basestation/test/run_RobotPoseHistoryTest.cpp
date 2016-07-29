@@ -37,6 +37,9 @@ TEST(RobotPoseHistory, AddGetPose)
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 1005;
+  const bool carrying1 = false;
+  const bool carrying2 = true;
+  const bool carrying3 = false;
   
   
   hist.SetTimeWindow(1000);
@@ -52,7 +55,8 @@ TEST(RobotPoseHistory, AddGetPose)
                       RobotPoseStamp(frameID,
                                      p1,
                                      h1,
-                                     l1));
+                                     l1,
+                                     carrying1));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 1);
   ASSERT_TRUE(hist.ComputePoseAt(t1, t, p) == RESULT_OK);
@@ -60,13 +64,15 @@ TEST(RobotPoseHistory, AddGetPose)
   ASSERT_TRUE(p1 == p.GetPose());
   ASSERT_TRUE(h1 == p.GetHeadAngle());
   ASSERT_TRUE(l1 == p.GetLiftAngle());
+  ASSERT_TRUE(carrying1 == p.IsCarryingObject());
   
   // Add another pose
   hist.AddRawOdomPose(t2,
                       RobotPoseStamp(frameID,
                                      p2,
                                      h2,
-                                     l2));
+                                     l2,
+                                     carrying2));
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
@@ -85,13 +91,17 @@ TEST(RobotPoseHistory, AddGetPose)
   ASSERT_TRUE(hist.ComputePoseAt(5, t, p, true) == RESULT_OK);
   ASSERT_TRUE(p1p2avg.IsSameAs(p.GetPose(), 0.0001, 0.0001));
   
+  // since interpolation is in the middle it should be the newest
+  ASSERT_TRUE(p.IsCarryingObject() == carrying2);
+  
   
   // Add new pose that should bump off oldest pose
   hist.AddRawOdomPose(t3,
                       RobotPoseStamp(frameID,
                                      p3,
                                      h3,
-                                     l3));
+                                     l3,
+                                     carrying3));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   
@@ -108,7 +118,8 @@ TEST(RobotPoseHistory, AddGetPose)
                       RobotPoseStamp(frameID,
                                      p1,
                                      h1,
-                                     l1));
+                                     l1,
+                                     carrying1));
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);
@@ -149,23 +160,26 @@ TEST(RobotPoseHistory, GroundTruthPose)
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;
   const TimeStamp_t t3 = 20;
+  const bool carrying1 = false;
+  const bool carrying2 = true;
+  const bool carrying3 = false;
   
   hist.SetTimeWindow(1000);
   
   // Add all three poses
-  p.SetPose(frameID, p1, h1, l1);
+  p.SetAll(frameID, p1, h1, l1, carrying1);
   hist.AddRawOdomPose(t1, p);
 
-  p.SetPose(frameID, p2, h2, l2);
+  p.SetAll(frameID, p2, h2, l2, carrying2);
   hist.AddRawOdomPose(t2, p);
   
-  p.SetPose(frameID, p3, h3, l3);
+  p.SetAll(frameID, p3, h3, l3, carrying3);
   hist.AddRawOdomPose(t3, p);
   
   ASSERT_TRUE(hist.GetNumRawPoses() == 3);
 
   // 1) Add ground truth pose equivalent to p1 at same time t1
-  p.SetPose(frameID, p1, h1, l1);
+  p.SetAll(frameID, p1, h1, l1, carrying1);
   ASSERT_TRUE(hist.AddVisionOnlyPose(t1, p) == RESULT_OK);
   ASSERT_TRUE(hist.GetNumVisionPoses() == 1);
  
@@ -182,7 +196,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
 
   
   // 2) Adding ground truth pose equivalent to p1 at time t2
-  p.SetPose(frameID, p1, h1, l1);
+  p.SetAll(frameID, p1, h1, l1, carrying1);
   hist.AddVisionOnlyPose(t2, p);
   
   // Since the frame ID of the ground truth pose is the same the frame of the
@@ -198,7 +212,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   ASSERT_TRUE(p.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
   
   // 3) Now inserting the same ground truth pose again but with a higher frame id
-  p.SetPose(frameID+1, p1, h1, l1);
+  p.SetAll(frameID+1, p1, h1, l1, carrying1);
   hist.AddVisionOnlyPose(t2, p);
 
   // Requested pose at t3 should be pose p1 modified by the pose diff between p2 and p3

@@ -67,9 +67,23 @@ const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
 
 // The height of the top of the lift crossbar with respect to the wrist joint
 const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
+// Lift xbar height from top (where tool codes are) to bottom (the other side, the one at the bottom)
+const f32 LIFT_XBAR_HEIGHT = 8.5f; // measured manually (not in dimensions sheet)
+// The height of the bottom of the lift crossbar with respect to the wrist joint.
+// This is also the lift's overall bottom wrt wrist
+const f32 LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT = LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT-LIFT_XBAR_HEIGHT;
 
 // The distance along the x axis from the wrist joint to the front of the lifter plate
 const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
+// The distance along the x axis from the wrist joint to the back of the lifter plate
+const f32 LIFT_BACK_WRT_WRIST_JOINT = -1.f; // rsam: approx
+
+// I added this var because I have seen that physical robots have some slack that causes their lifts to
+// fall a little with respect to the position they should hold. This fact prevented accurate calculation
+// of where the borders of the lift would be in the camera. Applying this offset to the bottom of the lift,
+// provides a threshold where we expect the lift to be. This variable was calculated by hand, so it's up to
+// tweaks if different evidence is found.
+const f32 LIFT_HARDWARE_FALL_SLACK_MM = 8.0f;
 
 // Neck joint relative to robot origin
 const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
