@@ -2,6 +2,7 @@
   'includes': [
     'face-library.gypi',
     'opencv.gypi',
+    '../../../project/gyp/build-variables.gypi'
   ],
   
   'variables': {
@@ -295,7 +296,7 @@
           'xcode_settings': {
             'ARCHS': [ '>@(mac_target_archs)' ],
             'SDKROOT': 'macosx',
-            'MACOSX_DEPLOYMENT_TARGET': '10.9',
+            'MACOSX_DEPLOYMENT_TARGET': '<(macosx_deployment_target)',
             'LD_RUNPATH_SEARCH_PATHS': '@loader_path',
             'LD_DYLIB_INSTALL_NAME': '@loader_path/$(EXECUTABLE_PATH)',
             'FRAMEWORK_SEARCH_PATHS':'<(cti-gtest_path)',

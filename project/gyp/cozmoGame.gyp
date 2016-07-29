@@ -1,7 +1,8 @@
 {
   'includes': [
     '../../coretech/project/gyp/opencv.gypi',
-    '../../coretech/project/gyp/face-library.gypi'
+    '../../coretech/project/gyp/face-library.gypi',
+    'build-variables.gypi',
   ],
 
   'variables': {
@@ -439,7 +440,7 @@
           'xcode_settings': {
               'ARCHS': [ '>@(mac_target_archs)' ],
               'SDKROOT': 'macosx',
-              'MACOSX_DEPLOYMENT_TARGET': '10.10',
+              'MACOSX_DEPLOYMENT_TARGET': '<(macosx_deployment_target)',
               'LIBRARY_SEARCH_PATHS': [
                 '<(face_library_lib_path)',
                ],
