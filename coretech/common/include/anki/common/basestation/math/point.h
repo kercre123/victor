@@ -121,11 +121,25 @@ namespace Anki {
     Point<N,T>  operator-() const;
     
     // Comparison
+    // NOTE: Comparison of *all* elements must be true for the operator to return true!!!
+    //       See Any/All methods below to make this more explicit.
     bool operator< (const Point<N,T>& other) const; // all elements less than
     bool operator> (const Point<N,T>& other) const; // all elements greater than
     bool operator==(const Point<N,T>& other) const; // all elements equal
     bool operator<=(const Point<N,T>& other) const; // all elements less than or equal
     bool operator>=(const Point<N,T>& other) const; // all elements greater than or equal
+    
+    // Explicit Any vs. All comparison for choosing whether all elements or any element
+    // has to satisfy the comparison.
+    // GT = Greater Than, GTE = Greater Than or Equal, LT = Less Than, etc.
+    bool AnyGT(const Point<N,T>& other) const;
+    bool AllGT(const Point<N,T>& other) const;
+    bool AnyLT(const Point<N,T>& other) const;
+    bool AllLT(const Point<N,T>& other) const;
+    bool AnyGTE(const Point<N,T>& other) const;
+    bool AllGTE(const Point<N,T>& other) const;
+    bool AnyLTE(const Point<N,T>& other) const;
+    bool AllLTE(const Point<N,T>& other) const;
     
     // Absolute value of each element
     Point<N,T>  GetAbs() const;
@@ -145,17 +159,6 @@ namespace Anki {
     // and will be left at the origin, and zero will be returned.
     T MakeUnitLength(void);
 
-    // comparison object to compare the a single dimension
-    struct CompareX {
-      bool operator() (const Point<N,T>& lhs, const Point<N,T>& rhs) const;
-    };
-    struct CompareY {
-      bool operator() (const Point<N,T>& lhs, const Point<N,T>& rhs) const;
-    };
-    struct CompareZ {
-      bool operator() (const Point<N,T>& lhs, const Point<N,T>& rhs) const;
-    };
-    
   protected:
     
     std::array<T,N> data;

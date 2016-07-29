@@ -27,7 +27,7 @@ namespace Anki {
     float_32 q2,          
     float_32 q3,          
 
-		// TODO: Add a member for "w.r.t. which origin"
+    uint_32 originID, // Which coordinate frame this pose is in (0 for none or unknown)
   }
 
 } // namespace Anki

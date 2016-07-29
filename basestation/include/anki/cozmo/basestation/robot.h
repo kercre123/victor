@@ -29,6 +29,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -242,6 +243,8 @@ public:
   const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
   Pose3d                 GetCameraPose(f32 atAngle) const;
   Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+  
+  const PoseOriginList&  GetPoseOriginList() const { return _poseOriginList; }
   
   // These change the robot's internal (basestation) representation of its
   // head angle, and lift angle, but do NOT actually command the
@@ -816,8 +819,7 @@ protected:
   */
   
   // Geometry / Pose
-  std::vector<Pose3d*> _poseOrigins; // placeholder origin poses while robot isn't localized
-  std::map<const Pose3d*, PoseOriginID_t> _poseOriginIndexLUT; // look up index in _poseOrigins by Pose3d*
+  PoseOriginList    _poseOriginList;
   
   Pose3d*           _worldOrigin;
   Pose3d            _pose;
@@ -834,7 +836,6 @@ protected:
   f32               _localizedMarkerDistToCameraSq;
   
   Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
-  void FlattenOutOrigins();
     
   const Pose3d     _neckPose;     // joint around which head rotates
   Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint

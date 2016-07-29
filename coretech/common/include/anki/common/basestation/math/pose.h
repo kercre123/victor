@@ -52,6 +52,7 @@ namespace Anki {
   //  typedef Point3f Vec3f;
   //template<typename T> class Matrix;
   
+  class PoseOriginList;
 
   // Forward declaration of Pose3d so Pose2d can use it
   class Pose3d;
@@ -210,8 +211,9 @@ namespace Anki {
     Pose3d(const Pose3d &otherPose);
     
     // To/from CLAD PoseStruct3d
-    Pose3d(const PoseStruct3d& poseStruct);
-    operator PoseStruct3d() const;
+    // NOTE: neither sets/uses originID, so that must be handled manually
+    explicit Pose3d(const PoseStruct3d& poseStruct, const PoseOriginList& originList);
+    PoseStruct3d ToPoseStruct3d(const PoseOriginList& originList) const;
     
     //bool IsOrigin() const { return parent == nullptr; }
 

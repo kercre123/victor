@@ -20,7 +20,8 @@ public static class MockLightCubeUtil {
         cube.Rotation.w,
         cube.Rotation.x,
         cube.Rotation.y,
-        cube.Rotation.z),
+        cube.Rotation.z, 
+        0),
       cube.TopFaceNorthAngle,
       (byte)(cube.MarkersVisible ? 1 : 0),
       (byte)(cube.HasLights ? 1 : 0));

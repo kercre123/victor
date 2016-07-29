@@ -109,7 +109,7 @@ void BehaviorAcknowledgeFace::HandleWhileNotRunning(const EngineToGameEvent& eve
   
 void BehaviorAcknowledgeFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
 {
-  Pose3d facePose( msg.pose );
+  Pose3d facePose( msg.pose, robot.GetPoseOriginList() );
   
   ReactionData* data = nullptr;
   const bool alreadyReacted  = GetReactionData(msg.faceID, data);

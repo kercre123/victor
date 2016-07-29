@@ -54,7 +54,7 @@ public:
 private:
   
   Robot& _robot;
-  PoseOrigin _currentWorldOrigin;
+  const PoseOrigin* _currentWorldOrigin;
   
   // Struct for storing pairs of currently observed objects and their
   // matching object that is currently known.
@@ -67,7 +67,7 @@ private:
     void UpdateMatchedObjectPose(bool isRobotMoving);
   };
   
-  std::map<PoseOrigin, ObservedAndMatchedPair > _pairMap;
+  std::map<const PoseOrigin*, ObservedAndMatchedPair> _pairMap;
   
   // Completely skip all localization logic if the robot is not in a state
   // that it can localize to an object anyway

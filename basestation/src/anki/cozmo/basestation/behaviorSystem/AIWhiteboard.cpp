@@ -231,8 +231,7 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& m
   // decision then
   ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
   
-  Pose3d obsPose( msg.pose );
-  obsPose.SetParent( _robot.GetWorldOrigin() );
+  Pose3d obsPose( msg.pose, _robot.GetPoseOriginList() );
   
   // iterate objects we previously had and remove them if we think they belong to this object
   RemovePossibleObjectsMatching(possibleObject.objectType, obsPose);
@@ -252,9 +251,8 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   // decision then
   ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
-  Pose3d obsPose( msg.possibleObject.pose );
-  obsPose.SetParent( _robot.GetWorldOrigin() );
-
+  Pose3d obsPose( msg.possibleObject.pose, _robot.GetPoseOriginList() );
+  
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
     PRINT_NAMED_DEBUG("AIWhiteboard.ObservedPossible", "robot observed a possible object");
   }

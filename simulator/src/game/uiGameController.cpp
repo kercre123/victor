@@ -36,9 +36,21 @@ namespace Anki {
       
     // TODO: Update these not to need robotID
     
+    Pose3d UiGameController::CreatePoseHelper(const PoseStruct3d& poseStruct)
+    {
+      if(!_poseOriginList.ContainsOriginID( poseStruct.originID ))
+      {
+        PoseOrigin* newOrigin = new PoseOrigin();
+        _poseOriginList.AddOriginWithID(poseStruct.originID, newOrigin);
+      }
+      
+      Pose3d pose = Pose3d(poseStruct, _poseOriginList);
+      return pose;
+    }
+    
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
-      _robotPose = msg.pose;
+      _robotPose = CreatePoseHelper(msg.pose);
 
       // if localization has changed, update VizOrigin to the robot automatically
       // to better match the offsets
@@ -87,9 +99,7 @@ namespace Anki {
       }
       
       // Update pose
-      _objectIDToPoseMap[objID] = msg.pose;
-      
-
+      _objectIDToPoseMap[objID] = CreatePoseHelper(msg.pose);
       
       // TODO: Move this to WebotsKeyboardController?
       if (msg.markersVisible) {

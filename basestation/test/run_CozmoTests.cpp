@@ -67,7 +67,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   RobotState stateMsg;
   stateMsg.timestamp = 0;
   stateMsg.pose_frame_id = 0;
-  stateMsg.pose_origin_id = 0;
+  stateMsg.pose_origin_id = 1;
   stateMsg.pose.x = 0.0f;
   stateMsg.pose.y = 0.0f;
   stateMsg.pose.z = 0.0f;

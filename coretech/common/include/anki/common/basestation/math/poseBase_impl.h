@@ -184,7 +184,10 @@ namespace Anki {
       return true;
     }
     
-    if(&fromPose.FindOrigin() != &toPose.FindOrigin()) {
+    const PoseBase<PoseNd>* fromOrigin = &fromPose.FindOrigin();
+    const PoseBase<PoseNd>* toOrigin   = &toPose.FindOrigin();
+    if(fromOrigin != toOrigin)
+    {
       // We can get the transformation between two poses that are not WRT the
       // same origin!
       return false;

@@ -117,71 +117,18 @@ namespace Vision {
   
   bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
                                   const Point3f& distThreshold,
-                                  const Radians& angleThreshold,
+                                  const Radians& angleThresholdIn,
                                   Point3f& Tdiff,
                                   Radians& angleDiff) const
   {
-    bool isSame = true;
+    // If the #define for ignoring rotation is set, use M_PI as the rotation angle
+    // threshold, in which case rotation isn't even checked, since it always passes
+    const Radians angleThreshold = (IGNORE_ROTATION_FOR_IS_SAME_AS ? M_PI : angleThresholdIn);
     
-    Pose3d otherPose;
-    
-    // Other object is this object's parent, leave otherPose as default
-    // identity transformation and hook up parent connection.
-    if(&otherObject.GetPose() == _pose.GetParent()) {
-      otherPose.SetParent(&otherObject.GetPose());
-    }
-    
-    else if(_pose.IsOrigin()) {
-      // This object is an origin, GetParent() will be null, so we can't
-      // dereference it below to make them have the same parent.  So try
-      // to get other pose w.r.t. this origin.  If the other object is the
-      // same as an origin pose (which itself is an identity transformation)
-      // then the remaining transformation should be the identity.
-      if(otherObject.GetPose().GetWithRespectTo(_pose, otherPose) == false) {
-        PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
-                            "Could not get other object w.r.t. this origin object. Returning isSame == false.\n");
-        isSame = false;
-      }
-    }
-    
-    // Otherwise, attempt to make the two poses have the same parent so they
-    // are comparable
-    else if(otherObject.GetPose().GetWithRespectTo(*_pose.GetParent(), otherPose) == false) {
-      // If this fails, the objects must not have the same origin, so we cannot
-      // determine sameness based only on pose.
-      
-      // No need to warn: this can easily happen after the robot gets kidnapped
-      //  PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
-      //                      "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
-      
-      isSame = false;
-    }
-    
-    if(isSame) {
-      
-      CORETECH_ASSERT(otherPose.GetParent() == _pose.GetParent() ||
-                      (_pose.IsOrigin() && otherPose.GetParent() == &_pose));
-      
-#     if IGNORE_ROTATION_FOR_IS_SAME_AS
-      Point3f Tdiff(_pose.GetTranslation());
-      Tdiff -= otherPose.GetTranslation();
-      Tdiff = _pose.GetRotation() * Tdiff;
-      Tdiff.Abs();
-      isSame = Tdiff < distThreshold;
-#     else
-      if(this->GetRotationAmbiguities().empty()) {
-        isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold,
-                                Tdiff, angleDiff);
-      }
-      else {
-        isSame = _pose.IsSameAs_WithAmbiguity(otherPose,
-                                              this->GetRotationAmbiguities(),
-                                              distThreshold, angleThreshold, true,
-                                              Tdiff, angleDiff);
-      } // if/else there are ambiguities
-#     endif // IGNORE_ROTATION_FOR_IS_SAME_AS
-      
-    } // if(isSame)
+    const bool isSame = _pose.IsSameAs_WithAmbiguity(otherObject.GetPose(),
+                                                     GetRotationAmbiguities(),
+                                                     distThreshold, angleThreshold, true,
+                                                     Tdiff, angleDiff);
     
     return isSame;
     

@@ -133,7 +133,7 @@ s32 CST_FaceTracking::UpdateSimInternal()
 
 void CST_FaceTracking::HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg)
 {
-  _facePose = msg.pose;
+  _facePose = CreatePoseHelper(msg.pose);
   _faceIsObserved = true;
 }
 

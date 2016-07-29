@@ -111,6 +111,15 @@ protected:
   double _nextPrintTime = -1.0f;
   double _printInterval_s = 1.0;
   
+  bool IsRobotPoseCorrect(const Point3f& distThreshold, const Radians& angleThreshold,
+                          const Pose3d& transform = Pose3d()) const;
+  
+  bool IsObjectPoseWrtRobotCorrect(s32 objectID,
+                                   const Pose3d& actualPose,
+                                   const Point3f& distThresh_mm,
+                                   const Radians& angleThresh,
+                                   const char* debugStr) const;
+  
 }; // class CozmoSimTestController
 
   

@@ -37,24 +37,6 @@ GTEST_TEST(TestPoint, PointInitialization)
   
 }
 
-GTEST_TEST(TestPoint, Comparison)
-{
-  Point3f x(1.f, 2.f, 6.f);
-  Point3f y(4.f, 5.f, 3.f);
-
-  Point<3, f32>::CompareX comp0;
-  EXPECT_TRUE (comp0(x,y));
-  EXPECT_FALSE(comp0(y,x));
-
-  Point3f::CompareY comp1;
-  EXPECT_TRUE (comp1(x,y));
-  EXPECT_FALSE(comp1(y,x));
-
-  Point3f::CompareZ comp2;
-  EXPECT_FALSE(comp2(x,y));
-  EXPECT_TRUE (comp2(y,x));
-}
-
 GTEST_TEST(TestPoint, DotProductAndLength)
 {
   Point3f x(1.f, 2.f, 3.f);
@@ -70,5 +52,56 @@ GTEST_TEST(TestPoint, DotProductAndLength)
   
   EXPECT_EQ(DotProduct(a,b), 70.f);
   EXPECT_TRUE(NEAR(std::sqrt(DotProduct(a,a)), a.Length(), eps));
+  
+}
+
+GTEST_TEST(TestPoint, Comparison)
+{
+  const Point3f A(1.f, 2.f, 3.f);
+  const Point3f B(4.f, 5.f, 6.f);
+  const Point3f C(0.5f, 1.5f, 2.f);
+  const Point3f D(1.f, 3.f, 4.f);
+  const Point3f E(0.5f, 2.f, 2.f);
+  const Point3f F(2.f, 3.f, 2.f);
+  
+  // All A strictly less than B
+  EXPECT_TRUE(A.AllLT(B));
+  EXPECT_TRUE(A.AllLTE(B));
+  EXPECT_TRUE(A.AnyLT(B));
+  EXPECT_TRUE(A.AnyLTE(B));
+  EXPECT_FALSE(A.AllGT(B));
+  EXPECT_FALSE(A.AllGTE(B));
+  EXPECT_FALSE(A.AnyGT(B));
+  EXPECT_FALSE(A.AnyGTE(B));
+  
+  // All A strictly greater than C
+  EXPECT_TRUE(A.AllGT(C));
+  EXPECT_TRUE(A.AllGTE(C));
+  EXPECT_FALSE(A.AllLT(C));
+  EXPECT_FALSE(A.AllLTE(C));
+  EXPECT_FALSE(A.AnyLT(C));
+  EXPECT_FALSE(A.AnyLTE(C));
+  
+  // All A <= D
+  EXPECT_TRUE(A.AllLTE(D));
+  EXPECT_TRUE(A.AnyLTE(D));
+  EXPECT_TRUE(A.AnyLT(D));
+  EXPECT_FALSE(A.AllLT(D)); // A.x() == D.x()
+  
+  // All A >= E
+  EXPECT_TRUE(A.AllGTE(E));
+  EXPECT_TRUE(A.AnyGTE(E));
+  EXPECT_TRUE(A.AnyGT(E));
+  EXPECT_FALSE(A.AllGT(E)); // A.y() == E.y()
+  
+  // Mixed
+  EXPECT_TRUE(A.AnyGT(F));
+  EXPECT_TRUE(A.AnyLT(F));
+  EXPECT_TRUE(A.AnyGTE(F));
+  EXPECT_TRUE(A.AnyLTE(F));
+  EXPECT_FALSE(A.AllGT(F));
+  EXPECT_FALSE(A.AllLT(F));
+  EXPECT_FALSE(A.AllGTE(F));
+  EXPECT_FALSE(A.AllLTE(F));
   
 }

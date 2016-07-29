@@ -325,10 +325,11 @@ namespace Cozmo {
       
       // Send out an event about this face being observed
       using namespace ExternalInterface;
+      
       _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                              _robot.GetID(),
                                                              face.GetTimeStamp(),
-                                                             PoseStruct3d(face.GetHeadPose()),
+                                                             face.GetHeadPose().ToPoseStruct3d(_robot.GetPoseOriginList()),
                                                              face.GetRect().GetX(),
                                                              face.GetRect().GetY(),
                                                              face.GetRect().GetWidth(),

@@ -313,102 +313,133 @@ namespace Anki {
   template<PointDimType N, typename T>
   bool Point<N,T>::operator< (const Point<N,T>& other) const
   {
-    CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] < other[0];
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = this->data[i] < other[i];
-      ++i;
-    }
-    
-    return retVal;
+    return AllLT(other);
   }
   
   template<PointDimType N, typename T>
   bool Point<N,T>::operator> (const Point<N,T>& other) const
   {
-    CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] > other[0];
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = this->data[i] > other[i];
-      ++i;
-    }
-    
-    return retVal;
+    return AllGT(other);
   }
   
   template<PointDimType N, typename T>
   bool Point<N,T>::operator<= (const Point<N,T>& other) const
   {
-    CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] <= other[0];
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = this->data[i] <= other[i];
-      ++i;
-    }
-    
-    return retVal;
+    return AllLTE(other);
   }
   
   template<PointDimType N, typename T>
   bool Point<N,T>::operator>= (const Point<N,T>& other) const
   {
-    CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] >= other[0];
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = this->data[i] >= other[i];
-      ++i;
+    return AllGTE(other);
+  }
+  
+  // Returns true if any element of p1 matches p2 according to compareFcn
+  template<PointDimType N, typename T, class Compare>
+  inline bool AnyHelper(const Point<N,T>& p1, const Point<N,T>& p2,
+                        const Compare& compareFcn)
+  {
+    for(PointDimType i=0; i<N; ++i)
+    {
+      if(compareFcn(p1[i], p2[i]))
+      {
+        // Return true as soon as any element passes
+        return true;
+      }
     }
     
-    return retVal;
+    return false;
   }
+  
+  // Returns true if all elements of p1 match p2 according to compareFcn
+  template<PointDimType N, typename T, class Compare>
+  inline bool AllHelper(const Point<N,T>& p1, const Point<N,T>& p2,
+                        Compare&& compareFcn)
+  {
+    for(PointDimType i=0; i<N; ++i)
+    {
+      // Return false as soon as any member fails
+      if(!compareFcn(p1[i], p2[i]))
+      {
+        return false;
+      }
+    }
+    
+    // Nothing failed check, so all must be true
+    return true;
+  }
+  
   
   template<PointDimType N, typename T>
   bool Point<N,T>::operator==(const Point<N,T>& other) const
   {
-    CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] == other[0];
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = this->data[i] == other[i];
-      ++i;
-    }
-    
-    return retVal;
+    return AllHelper(*this, other, std::equal_to<T>());
   }
   
   template<PointDimType N, typename T>
   bool operator== (const Point<N,T> &point1, const Point<N,T> &point2)
   {
-    CORETECH_ASSERT(N>0);
-    
-    // Return true if all elements of data are equal, false otherwise.
-    bool retVal = point1[0] == point2[0];
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = point1[i] == point2[i];
-      ++i;
-    }
-    
-    return retVal;
+    return AllHelper(point1, point2, std::equal_to<T>());
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AnyGT(const Point<N,T>& other) const
+  {
+    return AnyHelper(*this, other, std::greater<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AllGT(const Point<N,T>& other) const
+  {
+    return AllHelper(*this, other, std::greater<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AnyLT(const Point<N,T>& other) const
+  {
+    return AnyHelper(*this, other, std::less<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AllLT(const Point<N,T>& other) const
+  {
+    return AllHelper(*this, other, std::less<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AnyGTE(const Point<N,T>& other) const
+  {
+    return AnyHelper(*this, other, std::greater_equal<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AllGTE(const Point<N,T>& other) const
+  {
+    return AllHelper(*this, other, std::greater_equal<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AnyLTE(const Point<N,T>& other) const
+  {
+    return AnyHelper(*this, other, std::less_equal<T>() );
+  }
+  
+  template<PointDimType N, typename T>
+  inline bool Point<N,T>::AllLTE(const Point<N,T>& other) const
+  {
+    return AllHelper(*this, other, std::less_equal<T>() );
   }
   
   template<PointDimType N, typename T>
   bool       IsNearlyEqual (const Point<N,T> &point1, const Point<N,T> &point2,
                           const T eps)
   {
-    // Return true if all elements of data are equal, false otherwise.
-    bool retVal = NEAR(point1[0], point2[0], eps);
-    PointDimType i = 1;
-    while(retVal && i<N) {
-      retVal = NEAR(point1[i], point2[i], eps);
-      ++i;
-    }
+    auto near = [eps](T value1, T value2) -> bool
+    {
+      return NEAR(value1, value2, eps);
+    };
     
-    return retVal;
+    return AllHelper(point1, point2, near);
   }
   
   template<PointDimType N, typename T>
@@ -542,24 +573,6 @@ namespace Anki {
     return temp.Length();
   }
 
-  template<PointDimType N, typename T>
-  bool Point<N,T>::CompareX::operator ()  (const Point<N,T>& lhs, const Point<N,T>& rhs) const
-  {
-    return lhs[0] < rhs[0];
-  }
-
-  template<PointDimType N, typename T>
-  bool Point<N,T>::CompareY::operator ()  (const Point<N,T>& lhs, const Point<N,T>& rhs) const
-  {
-    return lhs[1] < rhs[1];
-  }
-
-  template<PointDimType N, typename T>
-  bool Point<N,T>::CompareZ::operator ()  (const Point<N,T>& lhs, const Point<N,T>& rhs) const
-  {
-    return lhs[2] < rhs[2];
-  }
-  
   template<PointDimType N, typename T>
   bool AreVectorsAligned(const Point<N,T>& point1, const Point<N,T>& point2, const Radians& angleThreshold)
   {

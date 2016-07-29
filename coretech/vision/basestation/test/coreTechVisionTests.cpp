@@ -81,7 +81,9 @@ GTEST_TEST(PoseEstimation, FromQuads)
   const f32 pixelErrThreshold  = 1.f;
   
   // Set up the true pose
+  const Pose3d origin;
   Pose3d poseTrue;
+  poseTrue.SetParent(&origin);
   poseTrue.RotateBy(RotationVector3d(Xangle, X_AXIS_3D()));
   poseTrue.RotateBy(RotationVector3d(Yangle, Y_AXIS_3D()));
   poseTrue.RotateBy(RotationVector3d(Zangle, Z_AXIS_3D()));
@@ -104,7 +106,10 @@ GTEST_TEST(PoseEstimation, FromQuads)
                                   camCenter_x,   camCenter_y,
                                   0.f);           // skew
 
+  Pose3d cameraPose;
+  cameraPose.SetParent(&origin);
   Vision::Camera camera;
+  camera.SetPose(cameraPose);
   camera.SetCalibration(calib);
   
   Quad2f proj;

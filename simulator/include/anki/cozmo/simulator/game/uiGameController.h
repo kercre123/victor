@@ -12,6 +12,7 @@
 #include "anki/types.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -271,6 +272,8 @@ protected:
   s32 GetStepTimeMS() const;
   webots::Supervisor* GetSupervisor();
 
+  PoseOriginList _poseOriginList;
+  
   // Robot state message convenience functions
   const Pose3d& GetRobotPose() const;
   const Pose3d& GetRobotPoseActual() const;
@@ -294,6 +297,9 @@ protected:
   u32              GetNumObjectsInFamilyAndType(ObjectFamily family, ObjectType type) const;
   u32              GetNumObjects() const;
   void             ClearAllKnownObjects();
+  
+  // Helper to create a Pose3d from a poseStruct and add a new origin if needed
+  Pose3d CreatePoseHelper(const PoseStruct3d& poseStruct);
   
   const std::map<s32, Pose3d>& GetObjectPoseMap();
   

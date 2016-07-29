@@ -213,6 +213,78 @@ namespace Anki {
       }
     }
 
+    bool CozmoSimTestController::IsRobotPoseCorrect(const Point3f& distThreshold, const Radians& angleThreshold, const Pose3d& transform) const
+    {
+      Pose3d robotPose(GetRobotPose());
+      robotPose.PreComposeWith(transform); // preserves robot pose's parent
+      
+      Pose3d robotPoseActual(GetRobotPoseActual());
+      robotPoseActual.SetParent(robotPose.GetParent());
+      
+      const bool isSame = robotPose.IsSameAs(robotPoseActual, distThreshold, angleThreshold);
+      return isSame;
+    }
+  
+    bool CozmoSimTestController::IsObjectPoseWrtRobotCorrect(s32 objectID,
+                                                             const Pose3d& actualPose,
+                                                             const Point3f& distThresh_mm,
+                                                             const Radians& angleThresh,
+                                                             const char* debugStr) const
+    {
+      Pose3d objectPoseWrtRobot;
+      
+      if(RESULT_OK != GetObjectPose(objectID, objectPoseWrtRobot))
+      {
+        PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
+                            "%s: Could not get object %d's pose",
+                            debugStr, objectID);
+        return false;
+      }
+      
+      if(false == objectPoseWrtRobot.GetWithRespectTo(GetRobotPose(), objectPoseWrtRobot))
+      {
+        PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
+                            "%s: Could not get object %d's pose w.r.t. robot",
+                            debugStr, objectID);
+        return false;
+      }
+      
+      // Assume that actual object pose and actual robot pose are in the same origin
+      Pose3d robotPoseActual(GetRobotPoseActual());
+      robotPoseActual.SetParent(actualPose.GetParent());
+      
+      Pose3d actualObjectPoseWrtRobot;
+      
+      if(false == actualPose.GetWithRespectTo(robotPoseActual, actualObjectPoseWrtRobot))
+      {
+        PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
+                            "%s: Could not get object %d's actual pose w.r.t. actual robot",
+                            debugStr, objectID);
+        return false;
+      }
+      
+      
+      // Assuming the two object poses are w.r.t. the same robot, make them share
+      // a common origin and see if the represent the same pose relative to that common
+      // origin
+      const PoseOrigin fakeOrigin;
+      objectPoseWrtRobot.SetParent(&fakeOrigin);
+      actualObjectPoseWrtRobot.SetParent(&fakeOrigin);
+      
+      Vec3f Tdiff(0,0,0);
+      Radians angleDiff(0);
+      if(!objectPoseWrtRobot.IsSameAs(actualObjectPoseWrtRobot, distThresh_mm, angleThresh, Tdiff, angleDiff))
+      {
+        PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
+                            "%s: object %d's observed and actual poses do not match [Tdiff=(%.1f,%.1f,%.1f) angleDiff=%.1fdeg]",
+                            debugStr, objectID,
+                            Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
+        return false;
+      }
+      
+      return true;
+    }
+    
       
     // =========== CozmoSimTestFactory ============
     

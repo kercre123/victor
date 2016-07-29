@@ -48,7 +48,7 @@ namespace Anki {
         // object: the further away, the more slop we're allowed.
         Pose3d objectWrtRobot;
         if(false == actionObject->GetPose().GetWithRespectTo(preActionPose, objectWrtRobot)) {
-          PRINT_NAMED_WARNING("IDockAction.Init.ObjectPoseOriginProblem",
+          PRINT_NAMED_WARNING("ComputePreActionPoseDistThreshold.ObjectPoseOriginProblem",
                               "Could not get object %d's pose w.r.t. _robot.",
                               actionObject->GetID().GetValue());
           return -1.f;
@@ -57,7 +57,7 @@ namespace Anki {
         const f32 objectDistance = objectWrtRobot.GetTranslation().Length();
         const f32 preActionPoseDistThresh = objectDistance * std::sin(preActionPoseAngleTolerance.ToFloat());
         
-        PRINT_NAMED_INFO("IDockAction.Init.DistThresh",
+        PRINT_NAMED_INFO("ComputePreActionPoseDistThreshold.DistThresh",
                          "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm",
                          objectDistance, preActionPoseDistThresh);
         

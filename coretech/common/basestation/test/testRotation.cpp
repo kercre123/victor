@@ -503,7 +503,9 @@ GTEST_TEST(TestRotation, Rotation3d)
 // TODO: move these pose tests to their own testPose.cpp file
 GTEST_TEST(TestPose, IsSameAs)
 {
-  Pose3d P1(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f});
+  const Pose3d origin;
+  
+  Pose3d P1(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f}, &origin);
   
   // P3 is P1 with a slight perturbation
   Pose3d P2(P1);
@@ -519,7 +521,8 @@ GTEST_TEST(TestPose, IsSameAs)
 
 GTEST_TEST(TestPose, IsSameWithAmbiguity)
 {
-  Pose3d P_ref(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f});
+  const Pose3d origin;
+  Pose3d P_ref(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f}, &origin);
   Pose3d P1(P_ref);
   
   RotationMatrix3d R_amb({0,-1,0,  0,0,1,  1,0,0});
@@ -545,14 +548,19 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
   // The IsSameAs_WithAmbiguity function should see these two poses as the same,
   // though it is our job to factor out the reference pose from each, by post-
   // multiplying by its inverse.
-  EXPECT_TRUE( (P1*P_ref.GetInverse()).IsSameAs_WithAmbiguity(P2*P_ref.GetInverse(),
-                                                              ambiguities, 5.f,
-                                                              5*M_PI/180.f, true) );
+  Pose3d P1_mod(P1);
+  P1_mod *= P_ref.GetInverse(); // Use in-place multiplication to preserve origin
+  Pose3d P2_mod(P2);
+  P2_mod *= P_ref.GetInverse(); //  "
+  
+  EXPECT_TRUE( P1_mod.IsSameAs_WithAmbiguity(P2_mod,
+                                             ambiguities, 5.f,
+                                             5*M_PI/180.f, true) );
   
   // The symmetric test should also pass
-  EXPECT_TRUE( (P2*P_ref.GetInverse()).IsSameAs_WithAmbiguity(P1*P_ref.GetInverse(),
-                                                              ambiguities, 5.f,
-                                                              5*M_PI/180.f, true) );
+  EXPECT_TRUE( P2_mod.IsSameAs_WithAmbiguity(P1_mod,
+                                             ambiguities, 5.f,
+                                             5*M_PI/180.f, true) );
   
 }
 

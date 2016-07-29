@@ -130,7 +130,7 @@ void BehaviorAcknowledgeObject::HandleObjectObserved(const Robot& robot, const E
     return;
   }
   
-  Pose3d obsPose( msg.pose );
+  Pose3d obsPose( msg.pose, robot.GetPoseOriginList() );
   
   ReactionData* data = nullptr;
   const bool alreadyReacted = GetReactionData(msg.objectID, data);

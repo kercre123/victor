@@ -100,7 +100,7 @@ void PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
     .distance       = observedDistance,
   };
   
-  PoseOrigin matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
+  const PoseOrigin* matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
   
   // Don't bother if the matched object doesn't pass these up-front checks:
   const bool couldUseForLocalization = CouldUseObjectForLocalization(matchedObject, observedDistance);

@@ -268,11 +268,6 @@ Robot::~Robot()
   Util::SafeDelete(_drivingAnimationHandler);
   Util::SafeDelete(_speedChooser);
 
-  for(Pose3d* origin : _poseOrigins) {
-    Util::SafeDelete( origin );
-  }
-  _poseOrigins.clear();
-  
   _selectedPathPlanner = nullptr;
       
 }
@@ -416,12 +411,9 @@ void Robot::Delocalize()
   // to profile
       
   // Add a new pose origin to use until the robot gets localized again
-  _poseOrigins.emplace_back(new Pose3d());
-  _poseOrigins.back()->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
-  
-  _worldOrigin = _poseOrigins.back();
-  
-  _poseOriginIndexLUT[_worldOrigin] = Util::numeric_cast<PoseOriginID_t>(_poseOrigins.size()) - 1;
+  _worldOrigin = new Pose3d();
+  PoseOriginID_t originID = _poseOriginList.AddOrigin(_worldOrigin);
+  _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
   
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
@@ -443,7 +435,7 @@ void Robot::Delocalize()
                      "Sending new localization update at t=%u, with pose frame %u and origin ID=%u",
                      GetLastMsgTimestamp(),
                      GetPoseFrameID(),
-                     _poseOriginIndexLUT[_worldOrigin]);
+                     _poseOriginList.GetOriginID(_worldOrigin));
     SendAbsLocalizationUpdate(_pose, GetLastMsgTimestamp(), GetPoseFrameID());
   }
   
@@ -452,7 +444,7 @@ void Robot::Delocalize()
                                          "LocalizedTo: <nothing>");
   GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         (unsigned long)_poseOrigins.size(),
+                                         _poseOriginList.GetSize(),
                                          _worldOrigin->GetName().c_str());
   GetContext()->GetVizManager()->EraseAllVizObjects();
   
@@ -514,7 +506,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
   GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         (unsigned long)_poseOrigins.size(),
+                                         _poseOriginList.GetSize(),
                                          _worldOrigin->GetName().c_str());
       
   return RESULT_OK;
@@ -654,14 +646,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
         
     // Need to put the odometry update in terms of the current robot origin
-    if(msg.pose_origin_id >= _poseOrigins.size()) {
+    const Pose3d* origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
+    if(nullptr == origin) {
       PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BadOriginID",
                           "Received RobotState with originID=%u, only %zu pose origins available",
-                          msg.pose_origin_id, _poseOrigins.size());
+                          msg.pose_origin_id, GetPoseOriginList().GetSize());
       return RESULT_FAIL;
     }
     
-    newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, _poseOrigins[msg.pose_origin_id]);
+    newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, origin);
     
     // It's possible the pose origin to which this update refers has since been
     // rejiggered and is now the child of another origin. To add to history below,
@@ -1818,7 +1811,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
 
     // after updating all block world objects, flatten out origins to remove grandparents
-    FlattenOutOrigins();
+    _poseOriginList.Flatten(_worldOrigin);
         
   } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
@@ -1873,28 +1866,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   return RESULT_OK;
 } // LocalizeToObject()
     
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Robot::FlattenOutOrigins()
-{
-  for(Pose3d* origin : _poseOrigins)
-  {
-    assert(origin != nullptr); // Should REALLY never happen
-    
-    // if this origin has a parent and it's not the current worldOrigin, we want to update
-    // this origin to be a direct child of the current origin
-    if ( (origin->GetParent() != nullptr) && (origin->GetParent() != _worldOrigin) )
-    {
-      // get WRT current origin, and if we can (because our parent's origin is the current worldOrigin), then assign
-      Pose3d iterWRTCurrentOrigin;
-      if ( origin->GetWithRespectTo(*_worldOrigin, iterWRTCurrentOrigin) )
-      {
-        const std::string& newName = origin->GetName() + "_FLT";
-        *origin = iterWRTCurrentOrigin;
-        origin->SetName( newName );
-      }
-    }
-  }
-}
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
@@ -2796,19 +2767,19 @@ Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
   
   const Pose3d* origin = &poseWrtOrigin.FindOrigin();
 
-  auto indexIter = _poseOriginIndexLUT.find(origin);
-  if(indexIter == _poseOriginIndexLUT.end()) {
+  const PoseOriginID_t originID = GetPoseOriginList().GetOriginID(origin);
+  if(originID == PoseOriginList::UnknownOriginID)
+  {
     PRINT_NAMED_WARNING("Robot.SendAbsLocalizationUpdate.NoPoseOriginIndex",
                         "Origin %s (%p)",
                         origin->GetName().c_str(), origin);
     return RESULT_FAIL;
   }
   
-  const PoseOriginID_t originID = indexIter->second;
-  
   // Sanity check: if we grab the origin the index we just got, it should be the one we searched for
-  ASSERT_NAMED(_poseOrigins[originID] == origin,
+  ASSERT_NAMED(GetPoseOriginList().GetOriginByID(originID) == origin,
                "Robot.SendAbsLocalizationUpdate.OriginIndexLookupFailed");
+  
   return SendMessage(RobotInterface::EngineToRobot(
                        RobotInterface::AbsoluteLocalizationUpdate(
                          t,
@@ -3575,8 +3546,12 @@ ExternalInterface::RobotState Robot::GetRobotState()
       
   msg.robotID = GetID();
       
-  msg.pose = PoseStruct3d(GetPose());
-      
+  msg.pose = GetPose().ToPoseStruct3d(GetPoseOriginList());
+  if(msg.pose.originID == PoseOriginList::UnknownOriginID)
+  {
+    PRINT_NAMED_WARNING("Robot.GetRobotState.BadOriginID", "");
+  }
+  
   msg.poseAngle_rad = GetPose().GetRotationAngle<'Z'>().ToFloat();
   msg.posePitch_rad = GetPitchAngle().ToFloat();
       

@@ -549,7 +549,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         }
         
         using namespace ExternalInterface;
-
+        
         RobotObservedObject observation(_robot->GetID(),
                                         observedObject->GetLastObservedTime(),
                                         observedObject->GetFamily(),
@@ -559,7 +559,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                                         boundingBox.GetY(),
                                         boundingBox.GetWidth(),
                                         boundingBox.GetHeight(),
-                                        PoseStruct3d(observedObject->GetPose()),
+                                        observedObject->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
                                         topMarkerOrientation.ToFloat(),
                                         markersVisible,
                                         observedObject->IsActive());
@@ -1481,7 +1481,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
         const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
         bool hasNothingBehind = false;
-        const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f,
+        const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 40.f,
                                                                       xBorderPad, yBorderPad,
                                                                       hasNothingBehind);
         
@@ -1522,8 +1522,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           if(!matchingActiveIdFound) {
             // We "should" have seen the object! Clear it.
             PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.RemoveUnobservedObject",
-                             "Clearing object %d, which should have been seen, but wasn't.",
-                             unobserved.object->GetID().GetValue());
+                             "Clearing object %d, which should have been seen, but wasn't. "
+                             "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d numTimesUnobserved:%d",
+                             unobserved.object->GetID().GetValue(),
+                             shouldBeVisible, hasNothingBehind, isDirtyPoseState,
+                             unobserved.object->GetNumTimesUnobserved());
             
             ClearObject(unobserved.object);
           }

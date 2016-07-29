@@ -4,6 +4,7 @@
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/common/shared/utilities_shared.h"
@@ -216,19 +217,25 @@ namespace Anki {
     
   } // Constructor: Pose3d(Pose2d)
 
-  Pose3d::Pose3d(const PoseStruct3d& poseStruct)
+  Pose3d::Pose3d(const PoseStruct3d& poseStruct, const PoseOriginList& originList)
   : Pose3d(Rotation3d(UnitQuaternion<f32>(poseStruct.q0, poseStruct.q1, poseStruct.q2, poseStruct.q3)),
-           Vec3f(poseStruct.x, poseStruct.y, poseStruct.z))
+           Vec3f(poseStruct.x, poseStruct.y, poseStruct.z),
+           originList.GetOriginByID(poseStruct.originID))
   {
     
   }
   
-  Pose3d::operator PoseStruct3d() const
+  PoseStruct3d Pose3d::ToPoseStruct3d(const PoseOriginList& originList) const
   {
-    const Vec3f& T = GetTranslation();
-    const UnitQuaternion<f32>& Q = GetRotation().GetQuaternion();
+    // Must flatten the pose before making it a PoseStruct3d because we are about
+    // to lose all the information along the chain from the pose up to its origin
+    const Pose3d flattenedPose = GetWithRespectToOrigin();
     
-    PoseStruct3d poseStruct(T.x(), T.y(), T.z(), Q.w(), Q.x(), Q.y(), Q.z());
+    const Vec3f& T = flattenedPose.GetTranslation();
+    const UnitQuaternion<f32>& Q = flattenedPose.GetRotation().GetQuaternion();
+    
+    PoseStruct3d poseStruct(T.x(), T.y(), T.z(), Q.w(), Q.x(), Q.y(), Q.z(),
+                            originList.GetOriginID(&FindOrigin()));
     
     return poseStruct;
   }
@@ -358,55 +365,22 @@ namespace Anki {
                         const Radians& angleThreshold,
                         Vec3f& T_diff,
                         Radians& angleDiff) const
-//                        Pose3d& P_diff) const
   {
-    assert(distThreshold >= 0.f);
-    assert(angleThreshold.ToFloat() >= 0.f);
     
-    bool isSame = false;
-    /*
-    // Compute the transformation that takes P1 to P2
-    // Pdiff = P_other * inv(P_this)
-    P_diff = this->GetInverse();
-    P_diff.PreComposeWith(P_other);
+    const std::vector<RotationMatrix3d> R_ambiguities;
     
-    // First, check to see if the translational difference between the two
-    // poses is small enough to call them a match
-    //if(P_diff.GetTranslation().Length() < distThreshold) {
-    if(P_diff.GetTranslation().GetAbs() < distThreshold) {
-      
-      // Next check to see if the rotational difference is small
-      RotationVector3d Rvec(P_diff.GetRotationMatrix());
-      if(Rvec.GetAngle() < angleThreshold) {
-        isSame = true;
-      }
-
-    } // if translation component is small enough
-    */
+    return IsSameAs_WithAmbiguity(P_other,
+                                  R_ambiguities,
+                                  distThreshold,
+                                  angleThreshold,
+                                  false, // doesn't really matter with no ambiguities
+                                  T_diff,
+                                  angleDiff);
     
-    // Just directly compare the translations, followed by comparing the
-    // rotation matrices.
-    // Why is this better?!
-    
-    T_diff = P_other.GetTranslation() - this->GetTranslation();
-    
-    if(T_diff.GetAbs() <= distThreshold) {
-      angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
-      
-//      PRINT_INFO("Angle diff = %.3frad / %.1fdeg\n", // around (%.1f,%.1f,%.1f)\n",
-//                 angleDiff.ToFloat(), angleDiff.getDegrees()); //,
-//                 Rdiff.GetAxis().x(), Rdiff.GetAxis().y(), Rdiff.GetAxis().z());
-      if(angleDiff <= angleThreshold) {
-        isSame = true;
-      }
-    }
-    
-    return isSame;
-
   } // IsSameAs()
   
   
-  bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other,
+  bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other_in,
                                       const std::vector<RotationMatrix3d>& R_ambiguities,
                                       const Point3f&   distThreshold,
                                       const Radians&   angleThreshold,
@@ -414,7 +388,48 @@ namespace Anki {
                                       Vec3f& Tdiff,
                                       Radians& angleDiff) const
   {
-    bool isSame = false;
+    ASSERT_NAMED(distThreshold >= 0.f,
+                 "Pose3d.IsSameAs_WithAmbiguity.NegativeDistThreshold");
+    
+    ASSERT_NAMED(angleThreshold.ToFloat() >= 0.f,
+                 "Pose3d.IsSameAs_WithAmbiguity.NegativeAngleThreshold");
+    
+    Pose3d P_other;
+    
+    if(&P_other_in == this->GetParent())
+    {
+      // Other pose is this pose's parent, leave otherPose as default
+      // identity transformation and hook up parent connection.
+      P_other.SetParent(&P_other_in);
+    }
+    
+    else if(this->IsOrigin())
+    {
+      // This pose is an origin, GetParent() will be null, so we can't
+      // dereference it below to make them have the same parent.  So try
+      // to get other pose w.r.t. this origin.  If the other pose is the
+      // same as an origin pose (which itself is an identity transformation)
+      // then the remaining transformation should be the identity.
+      if(P_other_in.GetWithRespectTo(*this, P_other) == false) {
+        PRINT_NAMED_WARNING("Pose3d.IsSameAs.PosesHaveDifferentOrigins",
+                            "Could not get other pose w.r.t. this pose. Returning not same.");
+        return false;
+      }
+    }
+    
+    // Otherwise, attempt to make the two poses have the same parent so they
+    // are comparable
+    else if(P_other_in.GetWithRespectTo(*this->GetParent(), P_other) == false)
+    {
+      // If this fails, the poses must not have the same origin, so we cannot
+      // determine sameness.
+      
+      // No need to warn: this can easily happen after the robot gets kidnapped
+      //  PRINT_NAMED_WARNING("Pose3d.IsSameAs.ObjectsHaveDifferentOrigins",
+      //                      "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+      
+      return false;
+    }
 
     // P_this represents the canonical/reference pose after some arbitrary
     // transformation, T:
@@ -471,51 +486,70 @@ namespace Anki {
     } // if translation component is small enough
     */
     
+    // Simpler (?) version:
     // Just directly compare the translations, followed by comparing the
     // rotation matrices.
     // Why is this better?!
     
+    
+    ASSERT_NAMED(P_other.GetParent() == this->GetParent() ||
+                 (this->IsOrigin() && P_other.GetParent() == this),
+                 "Pose3d.IsSameAs.BadParents");
+    
     Tdiff = P_other.GetTranslation() - this->GetTranslation();
     
-    if(Tdiff.GetAbs() < distThreshold)
+    // NOTE: using > instead of >= so threshold of zero will still return true for identical poses
+    if(Tdiff.GetAbs().AnyGT(distThreshold))
     {
-      // Next check to see if the rotational difference is small
-      angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
-      
-      if(angleDiff < angleThreshold) {
-        // Rotation is same, without even considering the ambiguities
-        isSame = true;
-      } else {
-        // Need to consider ambiguities...
-        Rotation3d Rdiff(this->GetRotation());
-        Rdiff.Invert(); // Invert
-        Rdiff *= P_other.GetRotation();
-
-        // TODO: Does this directly with quaternions instead of converting to RotationMatrix
-        RotationMatrix3d RdiffMat( Rdiff.GetRotationMatrix() );
-        
-        if(useAbsRotation) {
-          // The ambiguities are assumed to be defined up various sign flips
-          RdiffMat.Abs();
-        }
-        
-        // Check to see if the rotational part of the pose difference is
-        // similar enough to one of the rotational ambiguities
-        for(const auto& R_ambiguity : R_ambiguities) {
-          if(RdiffMat.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
-            isSame = true;
-            break;
-          }
-        }
-        
-      }
+      return false;
     }
     
-    return isSame;
+    if(angleThreshold >= M_PI)
+    {
+      // No need to check the rotation (can't be more than 180 degrees0
+      return true;
+    }
     
+    // Next check to see if the rotational difference is small
+    angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
+    
+    // NOTE: using <= instead of < so threshold of zero still will still return true for identical poses
+    if(angleDiff <= angleThreshold)
+    {
+      // Rotation is same, without even considering the ambiguities
+      return true;
+    }
+    
+    if(!R_ambiguities.empty())
+    {
+      // Need to consider ambiguities...
+      Rotation3d Rdiff(this->GetRotation());
+      Rdiff.Invert(); // Invert
+      Rdiff *= P_other.GetRotation();
+      
+      // TODO: Does this directly with quaternions instead of converting to RotationMatrix
+      RotationMatrix3d RdiffMat( Rdiff.GetRotationMatrix() );
+      
+      if(useAbsRotation) {
+        // The ambiguities are assumed to be defined up various sign flips
+        RdiffMat.Abs();
+      }
+      
+      // Check to see if the rotational part of the pose difference is
+      // similar enough to one of the rotational ambiguities
+      for(const auto& R_ambiguity : R_ambiguities) {
+        if(RdiffMat.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
+          return true;
+        }
+      }
+    } // if(!R_ambiguities.empty())
+    
+    // If we get here, we didn't pass some check above, so poses are not the same
+    return false;
+
   } // IsSameAs_WithAmbiguity()
-  
-  
+
+
   std::string Pose3d::GetNamedPathToOrigin(bool showTranslations) const
   {
     return PoseBase<Pose3d>::GetNamedPathToOrigin(*this, showTranslations);

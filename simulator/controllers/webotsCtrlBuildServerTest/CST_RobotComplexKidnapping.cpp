@@ -40,6 +40,7 @@ namespace Cozmo {
     InitialLocalization,         // Localize to Object A
     NotifyKidnap ,               // Move robot to new position and delocalize
     Kidnap,                      // Wait for confirmation of delocalization
+    FinishTurn,                  // Wait for turn in place after kidnap to complete
     LocalizeToObjectB,           // Kidnap to R1, see and localize to new Object B
     ReSeeObjectA,                // Turn to re-see Object A, to force re-jiggering of origins
     LocalizeToObjectC,           // Kidnap to R2, turn to see C, localizing to it
@@ -94,6 +95,7 @@ namespace Cozmo {
     std::set<ObjectID> _objectsSeen;
     
     bool _turnInPlaceDone = false;
+    bool _isMoving = false;
     
     // Message handlers
     virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg) override;
@@ -115,7 +117,7 @@ namespace Cozmo {
   , _poseB_actual(0, Z_AXIS_3D(), {-_gridSpacing_mm, -_gridSpacing_mm, 22.f}, &_fakeOrigin)
   , _poseC_actual(0, Z_AXIS_3D(), {-2*_gridSpacing_mm, 0.f, 22.f}, &_fakeOrigin)
   , _objectPosesActual{&_poseA_actual, &_poseB_actual, &_poseC_actual}
-  , _poseAngleThresh(DEG_TO_RAD(15.f))
+  , _poseAngleThresh(DEG_TO_RAD(30.f))
   {
     
   }
@@ -136,7 +138,7 @@ namespace Cozmo {
       {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_objectID_A.IsSet(), 3)
         {
-          CST_ASSERT(GetRobotPose().IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh),
                      "Initial localization failed.");
           
           // Kidnap the robot (move actual robot and just tell it to delocalize
@@ -172,6 +174,16 @@ namespace Cozmo {
           _turnInPlaceDone = false;
           SendTurnInPlace(DEG_TO_RAD(_turnAngle_deg));
           
+          _kidnapStartTime = GetSupervisor()->getTime();
+          _testState = TestState::FinishTurn;
+        }
+        break;
+      }
+        
+      case TestState::FinishTurn:
+      {
+        if(CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && !_isMoving, _kidnapStartTime, 6))
+        {
           _testState = _nextState;
         }
         break;
@@ -180,10 +192,9 @@ namespace Cozmo {
       case TestState::LocalizeToObjectB:
       {
         // Wait until we see and localize to the other object
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && _objectID_B.IsSet(), 6)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_objectID_B.IsSet(), 2)
         {
-          const Pose3d checkPose = _kidnappedPose1 * GetRobotPose();
-          CST_ASSERT(checkPose.IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh, _kidnappedPose1),
                      "Localization to second object failed.");
           
           // We should only know about one object now: Object B
@@ -201,9 +212,9 @@ namespace Cozmo {
         
       case TestState::ReSeeObjectA:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && _robotState.localizedToObjectID == _objectID_A, 3)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_A, 2)
         {
-          CST_ASSERT(GetRobotPose().IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh),
                      "Localization after re-seeing first object failed.");
           
           // We should only know about two objects now: Objects A and B
@@ -224,7 +235,7 @@ namespace Cozmo {
         
       case TestState::LocalizeToObjectC:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && _objectID_C.IsSet() &&
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_objectID_C.IsSet() &&
                                          _robotState.localizedToObjectID == _objectID_C, 3)
         {
           // We should only know about one object now: Object C
@@ -245,7 +256,7 @@ namespace Cozmo {
         
       case TestState::SeeObjectAWithoutLocalizing:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && !_objectsSeen.empty(), 2)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!_objectsSeen.empty(), 3)
         {
           CST_ASSERT(_robotState.localizedToObjectID < 0,
                      "SeeObjectAWithoutLocalizing: Should not localize to object A - should be too far");
@@ -266,7 +277,7 @@ namespace Cozmo {
         
       case TestState::ReLocalizeToObjectC:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && _robotState.localizedToObjectID == _objectID_C, 3)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_C, 3)
         {
           // We should only know about A and C now
           CST_ASSERT(CheckObjectPoses({0,2}, "RelocalizeToObjectC"),
@@ -283,7 +294,7 @@ namespace Cozmo {
         
       case TestState::ReLocalizeToObjectB:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceDone && _robotState.localizedToObjectID == _objectID_B, 3)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_B, 3)
         {
           // We should know about all three objects now
           CST_ASSERT(CheckObjectPoses({0,1,2}, "RelocalizeToObjectB"),
@@ -315,57 +326,12 @@ namespace Cozmo {
       return false;
     }
     
-    Pose3d robotPose(GetRobotPose());
-    robotPose.SetParent(&_fakeOrigin);
-    
-    Pose3d robotPoseActual(GetRobotPoseActual());
-    robotPoseActual.SetParent(&_fakeOrigin);
-    
     for(auto & objectID : IDs)
     {
-      Pose3d objectPoseWrtRobot;
-    
-      
-      if(RESULT_OK != GetObjectPose(objectID, objectPoseWrtRobot))
+      if(!IsObjectPoseWrtRobotCorrect(objectID, *_objectPosesActual[objectID], _poseDistThresh_mm, _poseAngleThresh, debugStr))
       {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: Could not get object %d's pose",
-                            debugStr, objectID);
         return false;
       }
-      
-      objectPoseWrtRobot.SetParent(&_fakeOrigin);
-      
-      if(false == objectPoseWrtRobot.GetWithRespectTo(robotPose, objectPoseWrtRobot))
-      {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: Could not get object %d's pose w.r.t. robot",
-                            debugStr, objectID);
-        return false;
-      }
-      
-      Pose3d actualObjectPoseWrtRobot;
-      
-      if(false == _objectPosesActual[objectID]->GetWithRespectTo(robotPoseActual, actualObjectPoseWrtRobot))
-      {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: Could not get object %d's actual pose w.r.t. actual robot",
-                            debugStr, objectID);
-        return false;
-      }
-      
-      
-      Vec3f Tdiff(0,0,0);
-      Radians angleDiff(0);
-      if(!objectPoseWrtRobot.IsSameAs(actualObjectPoseWrtRobot, _poseDistThresh_mm, _poseAngleThresh, Tdiff, angleDiff))
-      {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: object %d's observed and actual poses do not match [Tdiff=(%.1f,%.1f,%.1f) angleDiff=%.1fdeg]",
-                            debugStr, objectID,
-                            Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
-        return false;
-      }
-      
     }
     
     return true;
@@ -376,6 +342,8 @@ namespace Cozmo {
   void CST_RobotKidnappingComplex::HandleRobotStateUpdate(const ExternalInterface::RobotState &msg)
   {
     _robotState = msg;
+    
+    _isMoving = msg.status & static_cast<uint16_t>(RobotStatusFlag::IS_MOVING);
     
     switch(_testState)
     {

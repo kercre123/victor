@@ -83,7 +83,7 @@ namespace Cozmo {
       {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_objectID_A.IsSet(), 3)
         {
-          CST_ASSERT(GetRobotPose().IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh),
                      "Initial localization failed.");
           
           // Kidnap the robot (move actual robot and just tell it to delocalize
@@ -124,8 +124,7 @@ namespace Cozmo {
         // Wait until we see and localize to the other object
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_objectID_B.IsSet(), 6)
         {
-          const Pose3d checkPose = _kidnappedPose * GetRobotPose();
-          CST_ASSERT(checkPose.IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh, _kidnappedPose),
                      "Localization to second object failed.");
           
           // Turn back to see object A
@@ -140,7 +139,7 @@ namespace Cozmo {
       {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_A, 3)
         {
-          CST_ASSERT(GetRobotPose().IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh),
                      "Localization after re-seeing first object failed.");
           
           Pose3d poseA, poseB;
@@ -149,8 +148,8 @@ namespace Cozmo {
           CST_ASSERT(RESULT_OK == GetObjectPose(_objectID_B, poseB),
                      "Failed to get second object's pose.");
           
-          const Pose3d poseA_actual(0, Z_AXIS_3D(), {150.f, 0.f, 22.f});
-          const Pose3d poseB_actual(0, Z_AXIS_3D(), {300.f, -150.f, 22.f});
+          const Pose3d poseA_actual(0, Z_AXIS_3D(), {150.f, 0.f, 22.f}, poseA.GetParent());
+          const Pose3d poseB_actual(0, Z_AXIS_3D(), {300.f, -150.f, 22.f}, poseB.GetParent());
           CST_ASSERT(poseA.IsSameAs(poseA_actual, _poseDistThresh_mm, _poseAngleThresh),
                      "First object's pose incorrect after re-localization.");
           

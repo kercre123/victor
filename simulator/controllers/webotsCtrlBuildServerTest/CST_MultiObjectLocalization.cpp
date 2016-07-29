@@ -141,7 +141,7 @@ namespace Cozmo {
       {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(HasRelocalizedTo(_objectID_A), 3)
         {
-          CST_ASSERT(GetRobotPose().IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh),
                      "Initial localization failed.");
           
           // We should only know about one object now: Object A
@@ -194,8 +194,7 @@ namespace Cozmo {
         // Wait until we see and localize to the other object
         IF_CONDITION_WITH_TIMEOUT_ASSERT(HasRelocalizedTo(_objectID_B), 6)
         {
-          const Pose3d checkPose = _kidnappedPose1 * GetRobotPose();
-          CST_ASSERT(checkPose.IsSameAs(GetRobotPoseActual(), _poseDistThresh_mm, _poseAngleThresh),
+          CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh, _kidnappedPose1),
                      "Localization to second object failed.");
           
           // We should only know about one object now: Object B
@@ -275,67 +274,24 @@ namespace Cozmo {
     return _result;
   }
   
+  
   bool CST_MultiObjectLocalization::CheckObjectPoses(std::vector<int>&& IDs, const char* debugStr)
   {
     if(_objectsSeen.size() != IDs.size())
     {
-      PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
+      PRINT_NAMED_WARNING("CST_MultiObjectLocalization.CheckObjectPoses",
                           "%s: Expecting to know about %zu objects, not %zu",
                           debugStr, IDs.size(), _objectsSeen.size());
       return false;
     }
     
-    Pose3d robotPose(GetRobotPose());
-    robotPose.SetParent(&_fakeOrigin);
-    
-    Pose3d robotPoseActual(GetRobotPoseActual());
-    robotPoseActual.SetParent(&_fakeOrigin);
-    
     for(auto & objectID : IDs)
     {
-      Pose3d objectPoseWrtRobot;
-    
-      
-      if(RESULT_OK != GetObjectPose(objectID, objectPoseWrtRobot))
+      if(!IsObjectPoseWrtRobotCorrect(objectID, *_objectPosesActual[objectID],
+                                      _poseDistThresh_mm, _poseAngleThresh, debugStr))
       {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: Could not get object %d's pose",
-                            debugStr, objectID);
         return false;
       }
-      
-      objectPoseWrtRobot.SetParent(&_fakeOrigin);
-      
-      if(false == objectPoseWrtRobot.GetWithRespectTo(robotPose, objectPoseWrtRobot))
-      {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: Could not get object %d's pose w.r.t. robot",
-                            debugStr, objectID);
-        return false;
-      }
-      
-      Pose3d actualObjectPoseWrtRobot;
-      
-      if(false == _objectPosesActual[objectID]->GetWithRespectTo(robotPoseActual, actualObjectPoseWrtRobot))
-      {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: Could not get object %d's actual pose w.r.t. actual robot",
-                            debugStr, objectID);
-        return false;
-      }
-      
-      
-      Vec3f Tdiff(0,0,0);
-      Radians angleDiff(0);
-      if(!objectPoseWrtRobot.IsSameAs(actualObjectPoseWrtRobot, _poseDistThresh_mm, _poseAngleThresh, Tdiff, angleDiff))
-      {
-        PRINT_NAMED_WARNING("CST_RobotKidnappingComplex.CheckObjectPoses",
-                            "%s: object %d's observed and actual poses do not match [Tdiff=(%.1f,%.1f,%.1f) angleDiff=%.1fdeg]",
-                            debugStr, objectID,
-                            Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
-        return false;
-      }
-      
     }
     
     return true;
