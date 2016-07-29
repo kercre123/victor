@@ -451,8 +451,8 @@ namespace Anki {
       // Checks for accelerations
       bool CheckUnintendedAcceleration() {
         return (ABS(pdFiltAccX_aligned_) > 5000) ||
-               (ABS(pdFiltAccY_aligned_) > 3000) ||
-               (ABS(pdFiltAccZ_aligned_) > 11000);
+               (ABS(pdFiltAccY_aligned_) > 5000) ||
+               (ABS(pdFiltAccZ_aligned_) > 12000);
       }
 
 

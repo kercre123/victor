@@ -29,8 +29,8 @@ extern "C" {
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/birthCertificate.h"
 #include "clad/types/imu.h"
+#include "../factoryversion.h"
 
-extern const unsigned int COZMO_VERSION_COMMIT;
 extern const char* DAS_USER;
 extern const char* BUILD_DATE;
 
@@ -340,8 +340,8 @@ void Update()
           memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
           Face::FacePrintf(fmtBuf,
                            ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                           COZMO_VERSION_COMMIT, BUILD_DATE + 5,
-                           RTIP::Version, RTIP::VersionDescription);
+                           FACTORY_VERSION, BUILD_DATE + 5,
+                           FACTORY_VERSION, RTIP::VersionDescription);
         }
         break;
       }
@@ -571,8 +571,8 @@ void Process_TestState(const RobotInterface::TestState& state)
       }
       else
       {
-        static const int32_t GYRO_CAL_THRESHOLD = 100;
-        static const int32_t ACC_CAL_THRESHOLD  = 100;
+        static const int32_t GYRO_CAL_THRESHOLD = 100;    // 100=1.5 DPS
+        static const int32_t ACC_CAL_THRESHOLD  = 1000;   // 1000=0.06 G
         static const int32_t IMU_CAL_SAMPLES    = 100;
         IMUCalibrationState* test = reinterpret_cast<IMUCalibrationState*>(testModeData);
         if (test->headInPosition == false)

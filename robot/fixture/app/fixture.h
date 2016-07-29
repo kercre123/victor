@@ -38,6 +38,10 @@
 #define FIXTURE_ROBOT2_TEST    22
 #define FIXTURE_ROBOT3_TEST    23
 
+#define FIXTURE_PACKOUT_TEST   24
+#define FIXTURE_LIFETEST_TEST  25
+#define FIXTURE_RECHARGE_TEST  26
+
 #define FIXTURE_DEBUG          32   // Should be last ID
 
 typedef unsigned char FixtureType;

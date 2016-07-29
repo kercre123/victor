@@ -11,6 +11,7 @@
 #include "driver/uart.h"
 #include "transport/reliableTransport.h"
 #include "anki/cozmo/robot/version.h" // Must only be included in one place
+#include "../factoryversion.h"
 
 #define DUMP_TO_UART 1
 #define DUMP_TO_RTC_MEM 0
@@ -119,7 +120,7 @@ extern void crash_dump(int* sp) {
 #if DUMP_TO_RTC_MEM
   unsigned int rtcWadder = RTC_MEM_START;
   system_rtc_mem_write(rtcWadder++, &CRASH_DUMP_STORAGE_HEADER, 4);
-  system_rtc_mem_write(rtcWadder++, &COZMO_VERSION_COMMIT, 4);
+  system_rtc_mem_write(rtcWadder++, &FACTORY_VERSION, 4);
   system_rtc_mem_write(rtcWadder++, &COZMO_BUILD_DATE, 4);
   
   system_rtc_mem_write(rtcWadder++, &regs->epc1, 4);
@@ -174,7 +175,7 @@ extern void crash_dump(int* sp) {
     int depc = get_depc();
     os_put_str("Fingerprint: 1/");
     P8X("xh=", crash_handler);
-    P8X(",v=0x", COZMO_VERSION_COMMIT);
+    P8X(",v=0x", FACTORY_VERSION);
     P8X(",b=0x", COZMO_BUILD_DATE);
     os_put_char('\n');
     P8X(" epc1: ", regs->epc1); P8X("  exccause: ", regs->exccause); P8X("  excvaddr: ", excvaddr);

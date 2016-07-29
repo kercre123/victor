@@ -52,6 +52,9 @@ const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
 
 // Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
+// WTF, none of those numbers even match the formula below, nevermind the real gearbox
+// So just add the industry standard "slip factor correction" of 94.8% - then ship it!
+// The real (mass production) numbers are: 8 ticks/revolution, 28.5mm diameter, 172.3:1 
 const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
 
 // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we

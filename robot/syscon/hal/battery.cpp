@@ -36,7 +36,7 @@ void manage_adc(void*);
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
 
-static Fixed vBat, vExt;
+Fixed vBat, vExt;
 static bool isCharging = false;
 static bool disableCharge = true;
 

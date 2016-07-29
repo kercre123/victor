@@ -16,13 +16,16 @@
 #include "../syscon/hal/tests.h"
 #include "../syscon/hal/hardware.h"
 #include "../syscon/hal/motors.h"
+#include "../generated/clad/robot/clad/types/fwTestMessages.h"
 
 using namespace Anki::Cozmo::RobotInterface;
 
 // XXX: Fix this if you ever fix current monitoring units
 // Robot is up and running - usually around 48K, rebooting at 32K - what a mess!
 #define BOOTED_CURRENT  40000
-#define PRESENT_CURRENT 5000
+#define PRESENT_CURRENT 1000
+
+extern BOOL g_isDevicePresent;
 
 // Return true if device is detected on contacts
 bool RobotDetect(void)
@@ -32,14 +35,14 @@ bool RobotDetect(void)
   PIN_OUT(GPIOC, PINC_CHGTX);
   PIN_IN(GPIOC, PINC_CHGRX);
   MicroWait(500);
+  
   // Hysteresis for shut-down robots 
-  static bool lastTime;
   int now = MonitorGetCurrent();
+  if (g_isDevicePresent && now > PRESENT_CURRENT)
+    return true;
   if (now > BOOTED_CURRENT)
-    lastTime = true;
-  if (now < PRESENT_CURRENT)
-    lastTime = false;
-  return lastTime;
+    return true;
+  return false;
 }
 
 void SendTestChar(int c);
@@ -48,10 +51,16 @@ void InfoTest(void)
 {
   unsigned int version[2];
   
-  MicroWait(200000);
-  SendTestChar(-1);
+  // Pump the comm-link 4 times before trying to send
+  for (int i = 0; i < 4; i++)
+    try {
+      SendTestChar(-1);
+    } catch (int e) { }
+  // Let Espressif finish booting
+  MicroWait(300000); 
+  
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
-  SendCommand(0x83, 0, sizeof(version), (u8*)version);
+  SendCommand(TEST_GETVER, 0, sizeof(version), (u8*)version);
 
   // Mimic robot format for SMERP
   int unused = version[0]>>16, hwversion = version[0]&0xffff, esn = version[1];
@@ -178,13 +187,13 @@ void HeadLimits(void)
   if (g_fixtureType < FIXTURE_ROBOT2_TEST)
     return;
   
-  const int MOTOR_RUNTIME = 1600 * 1000;
+  const int MOTOR_RUNTIME = 2000 * 1000;  // Need about 2 seconds for normal variation
   int first[4], second[4];
 
   SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
 
   // Reset motor watchdog and fire up the motor
-  SendCommand(TEST_POWERON, 1, 0, NULL);  // 2 seconds
+  SendCommand(TEST_POWERON, 2, 0, NULL);  // 3 seconds
   SendCommand(TEST_RUNMOTOR, (SLOW_POWER&0xFC) + MOTOR_HEAD, 0, NULL);
   MicroWait(MOTOR_RUNTIME);
   
@@ -260,8 +269,8 @@ void RobotFixtureDropSensor(void)
 
 void SpeakerTest(void)
 {
-  // Reflection test only on ROBOT2 and above (head properly fixtured)
-  if (g_fixtureType < FIXTURE_ROBOT2_TEST)
+  // Speaker test not on robot1 (head not yet properly fixtured)
+  if (g_fixtureType != FIXTURE_ROBOT1_TEST)
     return;
   SendCommand(TEST_PLAYTONE, 0, 0, 0);
 }
@@ -275,6 +284,57 @@ TestFunction* GetRobotTestFunctions(void)
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
+    SpeakerTest,            // Must be last
+    NULL
+  };
+
+  return functions;
+}
+
+// Charge for 2 minutes, then shut off reboot and restart
+void Recharge(void)
+{
+  SendCommand(TEST_POWERON, 120, 0, 0);
+  SendCommand(FTM_ADCInfo, 120, 0, 0);  
+}
+
+// Turn on power until battery dead, start slamming motors!
+void LifeTest(void)
+{
+  SendCommand(TEST_POWERON, 0xA5, 0, 0);  
+  SendCommand(TEST_MOTORSLAM, 0, 0, 0);
+}
+
+TestFunction* GetRechargeTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    Recharge,
+    PlaypenWaitTest,
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetLifetestTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    LifeTest,
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetPackoutTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
     SpeakerTest,            // Must be last
     NULL
   };

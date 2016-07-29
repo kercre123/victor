@@ -18,7 +18,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 53;
+u8 g_fixtureReleaseVersion = 55;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
@@ -152,8 +152,7 @@ void SetErrorText(u16 error)
   DisplayBigCenteredText("%3i", error % 1000);
   DisplayFlip();
   
-  // We want to force the red light to be seen for at least a second
-  MicroWait(1000000);
+  MicroWait(200000);      // So nobody misses the error
 }
 
 void SetOKText(void)
@@ -186,6 +185,9 @@ bool DetectDevice(void)
     case FIXTURE_ROBOT1_TEST:
     case FIXTURE_ROBOT2_TEST:
     case FIXTURE_ROBOT3_TEST:
+    case FIXTURE_PACKOUT_TEST:
+    case FIXTURE_LIFETEST_TEST:
+    case FIXTURE_RECHARGE_TEST:
     case FIXTURE_PLAYPEN_TEST:
       return RobotDetect();
     case FIXTURE_MOTOR1A_TEST:
@@ -338,8 +340,6 @@ static BOOL TryToRunTests(void)
 // Repeatedly scan for a device, then run through the tests when it appears
 static void MainExecution()
 {
-  int i;
-    
   switch (g_fixtureType)
   {
     case FIXTURE_CHARGER_TEST:
@@ -369,6 +369,15 @@ static void MainExecution()
     case FIXTURE_ROBOT3_TEST:
       m_functions = GetRobotTestFunctions();
       break;
+    case FIXTURE_PACKOUT_TEST:
+      m_functions = GetPackoutTestFunctions();
+      break; 
+    case FIXTURE_LIFETEST_TEST:
+      m_functions = GetLifetestTestFunctions();
+      break; 
+    case FIXTURE_RECHARGE_TEST:
+      m_functions = GetRechargeTestFunctions();
+      break; 
     case FIXTURE_PLAYPEN_TEST:
       m_functions = GetPlaypenTestFunctions();
       break;

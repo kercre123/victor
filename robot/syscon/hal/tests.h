@@ -19,6 +19,7 @@ enum {
   TEST_RUNMOTOR      = 0x87,
   TEST_LIGHT         = 0x88,
   TEST_MOTORSLAM     = 0x89,
+  TEST_ADC           = 0x8A,
 };
 
 #if defined(DO_ENCODER_TESTING) || defined(DO_MOTOR_TESTING) || defined(DO_LIGHTS_TESTING)

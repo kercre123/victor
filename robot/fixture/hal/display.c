@@ -271,12 +271,18 @@ void DisplayPrintf(const char *format, ...)
 void DisplayBigCenteredText(const char *format, ...)
 {
   const int scale = 3;
-  char text[169];
+  const int maxsize = 7;
+  char text[maxsize+1];
 
   va_list argptr;
   va_start(argptr, format);
-  int len = vsnprintf(text, sizeof(text), format, argptr);
+  int len = vsnprintf(text, maxsize+1, format, argptr);
   va_end(argptr);
+
+  // Cut off text to max size
+  if (len > maxsize)
+    len = maxsize;
+  text[maxsize] = 0;
   
   DisplayTextHeightMultiplier(scale);
   DisplayTextWidthMultiplier(scale);

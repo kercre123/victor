@@ -27,6 +27,7 @@ extern int resultLedOn;
 extern int resultLedOff;
 extern int g_powerOffTime;
 extern bool g_turnPowerOff;
+extern Fixed vBat, vExt;
 
 static void TestMotors(void* discard) {
   static int direction = 1;
@@ -162,7 +163,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     case TEST_DROP:
     {
       int data[2] = {resultLedOn, resultLedOff};
-      SendDown(sizeof(data), (u8*)data);  // On time, off time
+      SendDown(sizeof(data), (u8*)data);  // On value, off value
       return;   // Already replied
     }
     
@@ -171,6 +172,13 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       Backpack::testLight(param & 0xF);
       Battery::setHeadlight(param & 0x10); 
       break;    // Reply "OK"
+    
+    case TEST_ADC:
+    {
+      u16 data[2] = {vBat, vExt};
+      SendDown(sizeof(data), (u8*)data);
+      return;   // Already replied
+    }
   }
   
   // By default, send down an "OK" message

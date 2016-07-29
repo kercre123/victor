@@ -18,7 +18,10 @@ bool RobotDetect(void);
 TestFunction* GetInfoTestFunctions(void);
 TestFunction* GetRobotTestFunctions(void);
 TestFunction* GetPlaypenTestFunctions(void);
-
+TestFunction* GetPackoutTestFunctions(void);
+TestFunction* GetLifetestTestFunctions(void);
+TestFunction* GetRechargeTestFunctions(void);
+    
 bool MotorDetect(void);
 TestFunction* GetMotor1TestFunctions(void);
 TestFunction* GetMotor2ATestFunctions(void);

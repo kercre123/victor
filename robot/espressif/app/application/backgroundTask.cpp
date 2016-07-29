@@ -29,8 +29,7 @@ extern "C" {
 #include "anki/cozmo/robot/logging.h"
 #include "upgradeController.h"
 #include "animationController.h"
-
-extern const unsigned int COZMO_VERSION_COMMIT;
+#include "../factoryversion.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -253,8 +252,8 @@ extern "C" void backgroundTaskOnConnect(void)
   // Send our version information to the engine
   {
     RobotInterface::FWVersionInfo vi;
-    vi.wifiVersion = COZMO_VERSION_COMMIT;
-    vi.rtipVersion = RTIP::Version;
+    vi.wifiVersion = FACTORY_VERSION; // COZMO_VERSION_COMMIT;
+    vi.rtipVersion = FACTORY_VERSION; // RTIP::Version;
     vi.bodyVersion = 0; // Don't have access to this yet
     os_memcpy(vi.toRobotCLADHash,  messageEngineToRobotHash, sizeof(vi.toRobotCLADHash));
     os_memcpy(vi.toEngineCLADHash, messageRobotToEngineHash, sizeof(vi.toEngineCLADHash));
