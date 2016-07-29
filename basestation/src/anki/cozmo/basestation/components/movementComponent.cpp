@@ -401,6 +401,14 @@ Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
 
 Result MovementComponent::StopAllMotors()
 {
+  // If we are direct driving then make sure to unlock tracks and set flags appropriately
+  if(IsDirectDriving())
+  {
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingHead,   (u8)AnimTrackFlag::HEAD_TRACK);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingLift,   (u8)AnimTrackFlag::LIFT_TRACK);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK);
+  }
+  
   return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
 }
   

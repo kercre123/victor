@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -77,6 +78,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::goalPose,                    &Robot::HandleGoalPose);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotStopped,                &Robot::HandleRobotStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::potentialCliff,              &Robot::HandlePotentialCliffEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imageGyro,                   &Robot::HandleImageImuData);
@@ -636,6 +638,17 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
 }
 
   
+void Robot::HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  if(_isInDroneMode){
+    IActionRunner* action = new TriggerAnimationAction(*this, AnimationTrigger::DroneModeCliffEvent);
+    GetActionList().QueueActionNow(action);
+  }else{
+    PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
+    GetMoveComponent().StopAllMotors();
+    SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
+  }
+}
 
 void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {

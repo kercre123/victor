@@ -587,7 +587,6 @@ IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& conf
 Result IReactionaryBehavior::InitInternal(Robot& robot)
 {
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), true);
-  robot.GetActionList().Cancel();
   robot.AbortAll();
   
   if(robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&

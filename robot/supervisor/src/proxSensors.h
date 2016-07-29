@@ -27,6 +27,8 @@ namespace Anki {
 
       void EnableCliffDetector(bool enable);
       
+      void EnableStopOnCliff(bool enable);
+      
     } // namespace ProxSensors
   } // namespace Cozmo
 } // namespace Anki

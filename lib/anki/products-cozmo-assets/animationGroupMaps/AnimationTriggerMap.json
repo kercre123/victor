@@ -149,6 +149,10 @@
       "AnimName": "ag_explorer_drvback_start"
     },
     {
+      "CladEvent": "DroneModeCliffEvent",
+      "AnimName": "ag_reactToStop"
+    },
+    {
       "CladEvent": "DroneModeForwardDrivingEnd",
       "AnimName": "ag_explorer_endDriving"
     },

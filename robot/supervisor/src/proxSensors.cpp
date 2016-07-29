@@ -32,6 +32,8 @@ namespace Anki {
         u8 _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
         const u32 PROX_EVENT_CYCLE_PERIOD = 6;
         
+        bool _stopOnCliff = true;
+        
       } // "private" namespace
 
       void QueueCliffEvent(f32 x, f32 y, f32 angle) {
@@ -41,6 +43,7 @@ namespace Anki {
           _cliffMsg.y_mm = y;
           _cliffMsg.angle_rad = angle;
           _cliffMsg.detected = true;
+          _cliffMsg.didStopForCliff = _stopOnCliff;
         }
       }
       
@@ -71,20 +74,30 @@ namespace Anki {
             // TODO (maybe): Check for cases where cliff detect should not stop motors
             // 1) Turning in place
             // 2) Driving over something (i.e. pitch is higher than some degrees).
-            AnkiEvent( 20, "Cliff", 157, "Stopping due to cliff", 0);
+            AnkiEvent( 20, "Cliff", 157, "Stopping due to cliff: %d", 1, _stopOnCliff);
             
-            // Stop all motors and animations
-            PickAndPlaceController::Reset();
-            SteeringController::ExecuteDirectDrive(0,0);
-            
-            // Send stopped message
-            RobotInterface::RobotStopped msg;
-            RobotInterface::SendMessage(msg);
-            
+            if(_stopOnCliff)
+            {
+              // Stop all motors and animations
+              PickAndPlaceController::Reset();
+              SteeringController::ExecuteDirectDrive(0,0);
 #ifndef TARGET_K02
-            // TODO: On K02, need way to tell Espressif to cancel animations
-            AnimationController::Clear();
+              // TODO: On K02, need way to tell Espressif to cancel animations
+              AnimationController::Clear();
 #endif
+
+              // Send stopped message
+              RobotInterface::RobotStopped msg;
+              RobotInterface::SendMessage(msg);
+            }
+            else
+            {
+              // If we aren't stopping at this cliff then send a potential cliff message
+              // because we might not be able to verify that it is indeed a cliff
+              PotentialCliff msg;
+              RobotInterface::SendMessage(msg);
+            }
+            
             // Queue cliff detected message
             QueueCliffEvent(Localization::GetCurrPose_x(), Localization::GetCurrPose_y(), Localization::GetCurrPose_angle().ToFloat());
             
@@ -160,6 +173,10 @@ namespace Anki {
 
       void EnableCliffDetector(bool enable) {
         _enableCliffDetect = enable;
+      }
+      
+      void EnableStopOnCliff(bool enable) {
+        _stopOnCliff = enable;
       }
 
 

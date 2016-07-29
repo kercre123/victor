@@ -121,7 +121,7 @@ union RobotToEngine {
   TimeProfileStat            timeProfStat           = 0xBE,
   IMUDataChunk               imuDataChunk           = 0xBF,
   CliffEvent                 cliffEvent             = 0xC0,
-  //          FREE SLOT!!!                          = 0xC1,
+  PotentialCliff             potentialCliff         = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
   ChargerMountComplete       chargerMountCompleted  = 0xC4,

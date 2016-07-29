@@ -874,6 +874,7 @@ protected:
   bool             _isCliffSensorOn       = false;
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
+  bool             _isInDroneMode         = false;
 
   enum class OffTredsState{
     OnTreds
@@ -1031,6 +1032,8 @@ protected:
   void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  //HandlePotentialCliffEvent is only triggered when Cliff Events are disabled - currently only during drone mode
+  void HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   // For processing image chunks arriving from robot.
   // Sends complete images to VizManager for visualization (and possible saving).

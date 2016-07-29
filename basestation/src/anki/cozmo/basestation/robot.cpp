@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
@@ -48,6 +49,7 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -182,6 +184,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     SetupGainsHandlers(*_context->GetExternalInterface());
     SetupMiscHandlers(*_context->GetExternalInterface());
+    
+    //Drone Mode Listener
+    using namespace ExternalInterface;
+    auto helper = MakeAnkiEventUtil(*GetExternalInterface(), *this, _signalHandles);
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
   }
       
   // The call to Delocalize() will increment frameID, but we want it to be
@@ -2819,7 +2826,16 @@ Result Robot::SendEnablePickupParalysis(const bool enable) const
 {
   return SendRobotMessage<RobotInterface::EnablePickupParalysis>(enable);
 }
-    
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
+{
+  _isInDroneMode = msg.isStarted;
+  SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(!msg.isStarted)));
+}
+  
+
 TimeStamp_t Robot::GetLastImageTimeStamp() const {
   return GetVisionComponent().GetLastProcessedImageTimeStamp();
 }
@@ -3419,6 +3435,8 @@ Result Robot::AbortAll()
   if(AbortAnimation() != RESULT_OK) {
     anyFailures = true;
   }
+  
+  _movementComponent.StopAllMotors();
       
   if(anyFailures) {
     return RESULT_FAIL;

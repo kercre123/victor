@@ -28,6 +28,7 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
+#include "proxSensors.h"
 #ifdef TARGET_K02
 #include "hal/uart.h"
 #include "hal/imu.h"
@@ -682,6 +683,12 @@ namespace Anki {
           HAL::MotorSetPower(MOTOR_LIFT, 0);
           LiftController::Enable();
         }
+      }
+      
+      void Process_enableStopOnCliff(const RobotInterface::EnableStopOnCliff& msg)
+      {
+        AnkiInfo( 205, "EnableStopOnCliff", 512, "enabled %d", 1, msg.enable);
+        ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
 

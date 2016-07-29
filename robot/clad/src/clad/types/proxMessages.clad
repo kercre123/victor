@@ -11,7 +11,13 @@ message CliffEvent {
   float_32 x_mm,
   float_32 y_mm,
   float_32 angle_rad,
-  bool   detected
+  bool     detected,
+  bool     didStopForCliff
+}
+
+// Is only sent when the robot is told not to stop on cliff detected in order
+// to be able to react with animations at possible cliffs (driving over wires or carpet)
+message PotentialCliff {
 }
 
 // This is a temp message to fake obstacle detection by prox sensor.

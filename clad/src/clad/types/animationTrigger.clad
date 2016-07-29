@@ -50,6 +50,7 @@ enum uint_16 AnimationTrigger
   DroneModeBackwardDrivingEnd,
   DroneModeBackwardDrivingLoop,
   DroneModeBackwardDrivingStart,
+  DroneModeCliffEvent,
   DroneModeForwardDrivingEnd,
   DroneModeForwardDrivingLoop,
   DroneModeForwardDrivingStart,

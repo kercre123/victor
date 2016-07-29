@@ -42,12 +42,14 @@ namespace Cozmo {
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
           _CurrentRobot.EnableDroneMode(true);
+		  _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToCliff, false);
         }
 
         public override void Exit() {
           DisableInput();
           _RobotAnimator.CleanUp();
           _CurrentRobot.EnableDroneMode(false);
+		  _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToCliff, true);
         }
 
         public override void Update() {

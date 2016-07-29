@@ -303,6 +303,11 @@ message NVOpResultToBody
   NVStorage::NVOpResult report
 }
 
+message EnableStopOnCliff
+{
+  bool enable
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -398,6 +403,8 @@ union EngineToRobot
   IMUCalibrationData            setIMUCalibration           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
+  EnableStopOnCliff             enableStopOnCliff           = 0x60,
+
   
   // 0x80 to 0xAF: To WiFi
   // Available for future use                               = 0x80,
