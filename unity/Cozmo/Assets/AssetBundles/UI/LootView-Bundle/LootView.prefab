@@ -482,15 +482,15 @@ MonoBehaviour:
   _LootAlmostThreshold: 0.5
   _TapSoundEvent:
     _Event: Play__Ui__Emotion_Chip_Charged_Tap
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _EmotionChipWindowOpenSoundEvent:
     _Event: Play__Ui__Emotion_Chip_Charged_Start
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _LootReleasedSoundEvent:
     _Event: Play__Ui__Code_Fragment_Released
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _LootStartKey: loot.Start
   _LootMidKey: loot.Mid

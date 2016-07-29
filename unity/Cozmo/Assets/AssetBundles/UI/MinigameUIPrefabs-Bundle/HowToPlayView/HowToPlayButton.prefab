@@ -325,7 +325,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 11458032}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
   _PressedTintImage: {fileID: 11459758}
