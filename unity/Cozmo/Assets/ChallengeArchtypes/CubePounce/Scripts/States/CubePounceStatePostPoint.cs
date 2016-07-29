@@ -51,7 +51,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     private void DoRoundEndLogic() {
       if (_CubePounceGame.AllRoundsCompleted) {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Game_End);
         if (_CubePounceGame.CozmoRoundsWon > _CubePounceGame.PlayerRoundsWon) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinSession, HandleEndGameAnimFinish);
         }
@@ -60,7 +60,7 @@ namespace Cozmo.Minigame.CubePounce {
         }
       }
       else {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Round_End);
         GameAudioClient.SetMusicState(_CubePounceGame.GameConfig.BetweenRoundMusic);
         if (_CubePounceGame.CozmoScore > _CubePounceGame.PlayerScore) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinRound, HandleEndRoundAnimFinish);

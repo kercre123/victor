@@ -110,7 +110,7 @@ public class PressDemoHubWorld : HubWorldBase {
     alertView.DescriptionLocKey = "pressDemo.faceEnrollRequestDesc";
     _RequestDialog = alertView;
     _ExplicitFaceID = message.face_id;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRequestGame);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Request_Game);
   }
 
   private void HandleExternalRejection(object message) {
@@ -140,7 +140,7 @@ public class PressDemoHubWorld : HubWorldBase {
       alertView.DescriptionLocKey = LocalizationKeys.kPressDemoSpeedTapRequestAgainDesc;
     }
     _RequestDialog = alertView;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRequestGame);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Request_Game);
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {

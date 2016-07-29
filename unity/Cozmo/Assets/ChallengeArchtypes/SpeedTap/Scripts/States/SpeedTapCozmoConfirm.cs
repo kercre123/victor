@@ -18,7 +18,7 @@ namespace SpeedTap {
     }
 
     private void HandleTapDone(bool success) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Cube_Cozmo_Tap);
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
       _SpeedTapGame.CozmoBlock.SetLEDs(Cozmo.UI.CubePalette.Instance.ReadyColor.lightColor);
       _SpeedTapGame.SetCozmoOrigPos();

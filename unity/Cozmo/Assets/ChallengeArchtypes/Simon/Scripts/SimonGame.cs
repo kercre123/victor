@@ -135,7 +135,7 @@ namespace Simon {
     }
 
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Lose);
       foreach (int cubeId in CubeIdsForGame) {
         if (cubeId == correctCubeID) {
           CurrentRobot.LightCubes[correctCubeID].SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);

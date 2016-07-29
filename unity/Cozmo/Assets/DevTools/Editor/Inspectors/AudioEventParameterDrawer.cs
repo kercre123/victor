@@ -12,7 +12,7 @@ namespace Anki.Cozmo.Audio {
 
     private static readonly Dictionary<EventGroupType, Type> _EventTypeDictionary =
       new Dictionary<EventGroupType, Type> {
-        { EventGroupType.DevRobot, typeof(GameEvent.DevRobot) },
+        { EventGroupType.Dev_Robot, typeof(GameEvent.Dev_Robot) },
         { EventGroupType.GenericEvent, typeof(GameEvent.GenericEvent) },
         { EventGroupType.Music, typeof(GameEvent.Music) },
         { EventGroupType.Robot, typeof(GameEvent.Robot) },

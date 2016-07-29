@@ -104,7 +104,7 @@ namespace Simon {
         LightCube cube = _CurrentRobot.LightCubes[cubeID];
         if (state == ScannedSetupCubeState.Seen) {
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Block_Connect);
         }
         else if (state == ScannedSetupCubeState.TooClose) {
           cube.SetLEDs(Cozmo.UI.CubePalette.Instance.ErrorColor.lightColor);
@@ -274,7 +274,7 @@ namespace Simon {
             _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
           }
           // Error sound
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Tap_Red);
           SimonGame simonGame = _Game as SimonGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
                                                      simonGame.SimonSetupErrorPrefab.gameObject, "simon_error_slide");

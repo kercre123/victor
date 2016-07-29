@@ -114,7 +114,7 @@ namespace Simon {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Round_End);
       _GameInstance.AddPoint(false);
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonCozmoHandComplete, HandleOnCozmoWinAnimationDone);
       _IsAnimating = true;

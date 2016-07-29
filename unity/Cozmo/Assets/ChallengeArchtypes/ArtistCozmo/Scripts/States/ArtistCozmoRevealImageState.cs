@@ -17,7 +17,7 @@ namespace ArtistCozmo {
       base.Enter();
 
       // TODO: Get specific sound for this
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Lightup);
 
       ArtistCozmoGame game = (ArtistCozmoGame)_StateMachine.GetGame();
       game.DisplayImage(_Image, HandleSave, HandleRetry);
