@@ -53,7 +53,7 @@ namespace SpeedTap {
 
     private void HandlePlayerCubeTap() {
       // Ben wants to use the same sound for player tap and for Cozmo tap
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Cube_Cozmo_Tap);
       _StateMachine.SetNextState(new SpeedTapBeginRound());
     }
 

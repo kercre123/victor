@@ -245,7 +245,7 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetTitleArgs(new object[] { Localization.Get(_LastChallengeData.ChallengeTitleLocKey) });
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRequestGame);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Request_Game);
     _RequestPending = false;
     _RequestDialog = alertView;
   }

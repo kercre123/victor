@@ -880,7 +880,7 @@ public abstract class GameBase : MonoBehaviour {
     alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
     alertView.TitleLocKey = titleKey;
     alertView.DescriptionLocKey = descriptionKey;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Game_End);
   }
 
   private void HandleInterruptionQuitGameViewClosed() {

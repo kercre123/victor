@@ -48,17 +48,17 @@ MonoBehaviour:
   TotalRounds: 0
   _CubeColorsAndSounds:
   - soundName:
-      _Event: Sfx_Gp_Simon_Light_Red_Play
+      _Event: Play__Sfx__Gp_Simon_Light_Red
       _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 1, g: 0, b: 0, a: 1}
   - soundName:
-      _Event: Sfx_Gp_Simon_Light_Yellow_Play
+      _Event: Play__Sfx__Gp_Simon_Light_Yellow
       _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 0.94269776, g: 0.9558824, b: 0, a: 1}
   - soundName:
-      _Event: Sfx_Gp_Simon_Light_Blue_Play
+      _Event: Play__Sfx__Gp_Simon_Light_Blue
       _EventType: SFX
       _GameObjectType: 0
     cubeColor: {r: 0, g: 0.04543596, b: 0.9411765, a: 1}
@@ -197,7 +197,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].soundName._Event
-      value: Sfx_Gp_Simon_Light_Red_Play
+      value: Play__Sfx__Gp_Simon_Light_Red
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._EventType
@@ -209,7 +209,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[1].soundName._Event
-      value: Sfx_Gp_Simon_Light_Yellow_Play
+      value: Play__Sfx__Gp_Simon_Light_Yellow
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._EventType
@@ -221,7 +221,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[2].soundName._Event
-      value: Sfx_Gp_Simon_Light_Blue_Play
+      value: Play__Sfx__Gp_Simon_Light_Blue
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._EventType
@@ -233,7 +233,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[3].soundName._Event
-      value: Sfx_Gp_Simon_Light_Yellow_Play
+      value: Play__Sfx__Gp_Simon_Light_Yellow
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[0].cubeColor.r
@@ -277,7 +277,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].soundName._Event
-      value: Sfx_Gp_Simon_Light_Yellow_Play
+      value: Play__Sfx__Gp_Simon_Light_Yellow
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _CubeColorsAndSounds.Array.data[4].cubeColor.g
