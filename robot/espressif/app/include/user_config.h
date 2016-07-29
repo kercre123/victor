@@ -17,7 +17,7 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 /// Must drop 6dBm below max for FCC
 #define MAX_TPW (82-24)
 
-#define AP_MAX_CONNECTIONS 4
+#define AP_MAX_CONNECTIONS 1
 #define AP_IP       "172.31.1.1"
 #define AP_NETMASK  "255.255.255.0"
 #define AP_GATEWAY  "172.31.1.1"
