@@ -19,6 +19,8 @@ namespace Cozmo {
         }
       }
 
+      [ItemId]
+      public string EnergyID = "experience";
       public int ExpPerParticleEffect = 5;
       public int BurstPerParticleHit = 10;
       public float ExpParticleMinSpread = 50.0f;

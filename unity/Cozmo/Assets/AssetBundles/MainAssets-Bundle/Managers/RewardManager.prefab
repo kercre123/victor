@@ -40,7 +40,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 356f72b8dda834c49bc0a6027dafc8e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ActionRewardID: experience
+  energyID: experience
   _RewardConfig: {fileID: 11400000, guid: 22fefc389e51549978a4a7e6cad25f48, type: 2}
   NewDifficultyUnlock: -1
 --- !u!1001 &100100000

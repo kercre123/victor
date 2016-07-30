@@ -19,7 +19,7 @@ public class SerializableGameEvents : SerializableEnum<Anki.Cozmo.GameEvent> {
 /// </summary>
 public class GameEventWrapper {
   public GameEvent GameEventEnum { get; set; }
-  
+
   // So this is easy to call for other classes, just pass along variable length arguments.
   // Trying to pass in non-exact matches to Activator.CreateInstance causes runtime explosions.
   // and Dictionaries can get to verbose.
@@ -168,6 +168,17 @@ public class DailyGoalProgressGameEvent : GameEventWrapper {
 
 }
 
+public class SessionStartedGameEvent : GameEventWrapper {
+  public int CurrentStreak;
+
+  public override void Init(GameEvent Enum, params object[] args) {
+    base.Init(Enum);
+    if (args.Length > 0 && args[0].GetType() == typeof(int)) {
+      CurrentStreak = (int)args[0];
+    }
+  }
+}
+
 /// <summary>
 ///  Factory to create helper events so nothing has to think about them.
 /// </summary>
@@ -185,10 +196,10 @@ public class GameEventWrapperFactory {
     return out_ev;
   }
 
-  private static Dictionary<Anki.Cozmo.GameEvent,Type> _EnumWrappers;
+  private static Dictionary<Anki.Cozmo.GameEvent, Type> _EnumWrappers;
 
   public static void Init() {
-    _EnumWrappers = new Dictionary<Anki.Cozmo.GameEvent,Type>();
+    _EnumWrappers = new Dictionary<Anki.Cozmo.GameEvent, Type>();
     // Specific wrappers, otherwise just use the base class.
     Register(GameEvent.OnChallengeStarted, typeof(MinigameStartedGameEvent));
     Register(GameEvent.OnChallengePointScored, typeof(MinigameGameEvent));
@@ -198,6 +209,7 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnUnlockableEarned, typeof(UnlockableUnlockedGameEvent));
     Register(GameEvent.OnDailyGoalProgress, typeof(DailyGoalProgressGameEvent));
     Register(GameEvent.OnDailyGoalCompleted, typeof(DailyGoalCompleteGameEvent));
+    Register(GameEvent.OnNewDayStarted, typeof(SessionStartedGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {

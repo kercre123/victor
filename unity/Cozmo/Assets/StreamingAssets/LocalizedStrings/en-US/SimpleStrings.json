@@ -78,6 +78,9 @@
   "label.colonCount": {
     "translation": "{0}: {1}"
   },
+  "label.dayCount": {
+    "translation": "Day {0}"
+  },
   "dailySummary.title": {
     "translation": "Daily Summary for {0}/{1}"
   },

@@ -13,7 +13,6 @@ using DataPersistence;
 /// Manager for granting rewards that are mapped to game events
 /// </summary>
 public class RewardedActionManager : MonoBehaviour {
-
   public static RewardedActionManager Instance { get; private set; }
 
   public static string sRewardedActionsDirectory { get { return PlatformUtil.GetResourcesFolder("RewardedActions"); } }
@@ -39,7 +38,6 @@ public class RewardedActionManager : MonoBehaviour {
     }
   }
 
-  // TODO: Replace config with json
   [SerializeField]
   private GenericRewardsConfig _RewardConfig;
 
@@ -72,7 +70,9 @@ public class RewardedActionManager : MonoBehaviour {
       foreach (RewardedActionData reward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
         int count = 0;
         if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(reward, out count)) {
-          total += count;
+          if (reward.Reward.ItemID == _RewardConfig.EnergyID) {
+            total += count;
+          }
         }
       }
       return total;
@@ -109,7 +109,7 @@ public class RewardedActionManager : MonoBehaviour {
     else {
       DAS.Error(this, string.Format("No Reward Data to load in {0}", sRewardedActionsDirectory));
     }
-      
+
   }
 
   void OnDestroy() {

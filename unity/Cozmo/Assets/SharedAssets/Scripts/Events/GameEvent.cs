@@ -34,10 +34,12 @@ namespace Anki {
       // 13
       OnChallengeDifficultyUnlock,
       // 14
-      Count
+      OnNewDayStarted,
       // 15
+      Count
+      // 16
 
-    
+
 
     }
     // namespace Cozmo

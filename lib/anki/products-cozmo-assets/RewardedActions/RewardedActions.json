@@ -1,6 +1,56 @@
 {
   "RewardedActions": [
     {
+      "Id": 5,
+      "RewardEvent": {
+        "Value": "OnNewDayStarted"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDailyStreakCondition, Assembly-CSharp",
+          "UseMinSession": true,
+          "MinSession": 2,
+          "UseMaxSession": false,
+          "MaxSession": 0,
+          "Label": {
+            "text": "Current Daily Streak Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "treat",
+        "Amount": 2,
+        "DescriptionKey": "reward.description.StartNewDay"
+      }
+    },
+    {
+      "Id": 4,
+      "RewardEvent": {
+        "Value": "OnNewDayStarted"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDailyStreakCondition, Assembly-CSharp",
+          "UseMinSession": true,
+          "MinSession": 2,
+          "UseMaxSession": false,
+          "MaxSession": 0,
+          "Label": {
+            "text": "Current Daily Streak Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.StartNewDay"
+      }
+    },
+    {
       "Id": 3,
       "RewardEvent": {
         "Value": "OnChallengePointScored"

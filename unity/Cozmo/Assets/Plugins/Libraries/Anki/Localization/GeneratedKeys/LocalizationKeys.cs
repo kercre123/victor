@@ -43,6 +43,7 @@ public static class LocalizationKeys {
   public const string kWhackAMoleTitle = "whackAMole.title";
   public const string kWhackAMoleDescription = "whackAMole.description";
   public const string kConnectivityPlaceCozmoOnCharger = "connectivity.placeCozmoOnCharger";
+  public const string kConnectivityReplaceCozmoOnCharger = "connectivity.replaceCozmoOnCharger";
 
   #endregion
 
@@ -55,6 +56,8 @@ public static class LocalizationKeys {
   public const string kConnectionWakingUpCozmo = "connection.wakingUpCozmo";
   public const string kConnectivityUpdatingFirmware = "connectivity.updatingFirmware";
   public const string kConnectivityPairingPinTitle = "connectivity.pairingPinTitle";
+  public const string kConnectivityInvalidPinTitle = "connectivity.invalidPinTitle";
+  public const string kConnectivityUpdateApp = "connectivity.updateApp";
 
   #endregion
 
@@ -262,6 +265,7 @@ public static class LocalizationKeys {
   public const string kRewardCollectCollectEnergy = "reward.collect.CollectEnergy";
   public const string kRewardCollectInstruction = "reward.collect.Instruction";
   public const string kRewardDescriptionNewDifficulty = "reward.description.NewDifficulty";
+  public const string kRewardDescriptionStartNewDay = "reward.description.StartNewDay";
 
   #endregion
 
@@ -287,6 +291,7 @@ public static class LocalizationKeys {
   public const string kLabelXCount = "label.xCount";
   public const string kLabelSimpleCount = "label.simpleCount";
   public const string kLabelColonCount = "label.colonCount";
+  public const string kLabelDayCount = "label.dayCount";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kEndSessionTitle = "endSession.title";
   public const string kEndSessionDescription = "endSession.description";
@@ -312,6 +317,7 @@ public static class LocalizationKeys {
   public const string kLootAnnounce = "loot.Announce";
   public const string kLabelEmptyWithArg = "label.emptyWithArg";
   public const string kTitleSoundCheck = "title.soundCheck";
+  public const string kButtonGetACozmo = "button.GetACozmo";
 
   #endregion
 

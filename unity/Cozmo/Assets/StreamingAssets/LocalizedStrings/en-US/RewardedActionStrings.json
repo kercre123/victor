@@ -44,5 +44,8 @@
   },
   "reward.description.NewDifficulty": {
     "translation": "{0} Unlocked!"
+  },
+  "reward.description.StartNewDay": {
+    "translation": "Check In Streak Reward"
   }
 }
