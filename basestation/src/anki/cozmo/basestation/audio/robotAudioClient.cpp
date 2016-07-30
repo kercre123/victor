@@ -152,7 +152,7 @@ RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObje
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event,
                                                                 GameObjectType gameObjId,
-                                                                const CozmoEventCallbackFunc& callbackFunc )
+                                                                const CozmoEventCallbackFunc& callbackFunc ) const
 {
   const auto audioEventId = Util::numeric_cast<AudioEngine::AudioEventId>( event );
   const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
@@ -174,13 +174,26 @@ RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::Gener
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value )
+bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value ) const
 {
   using namespace AudioEngine;
   const AudioParameterId parameterId = Util::numeric_cast<AudioParameterId>( parameter );
   const AudioRTPCValue rtpcVal = Util::numeric_cast<AudioRTPCValue>( value );
   const AudioPlayingId audioPlayId = Util::numeric_cast<AudioPlayingId>( playId );
   return _audioController->SetParameterWithPlayingId( parameterId, rtpcVal, audioPlayId );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::StopCozmoEvent(GameObjectType gameObjId)
+{
+  const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
+  _audioController->StopAllAudioEvents(audioGameObjId);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::ProcessEvents() const
+{
+  _audioController->ProcessAudioQueue();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
