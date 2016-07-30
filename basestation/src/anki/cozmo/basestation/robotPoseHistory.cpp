@@ -212,25 +212,24 @@ namespace Anki {
         // Get iterator to the pose just before t_request
         const_PoseMapIter_t prev_it = it;
         --prev_it;
-        
+
+        // Get the pose transform between the two poses.
         Pose3d pTransform;
-        if(withInterpolation)
+        const bool inSameOrigin = it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform);
+        if(!inSameOrigin)
         {
-          // Get the pose transform between the two poses.
-          const bool inSameOrigin = it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform);
+          PRINT_NAMED_INFO("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
+                            "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
+                           t_request,
+                           prev_it->second.GetPose().FindOrigin().GetName().c_str(),
+                           it->second.GetPose().FindOrigin().GetName().c_str());
           
-          if(!inSameOrigin) {
-            PRINT_NAMED_INFO("RobotPoseHistory.GetRawPoseAt.MisMatchedOrigins",
-                              "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
-                             t_request,
-                             prev_it->second.GetPose().FindOrigin().GetName().c_str(),
-                             it->second.GetPose().FindOrigin().GetName().c_str());
-            
-            withInterpolation = false;
-          }
+          // they asked us for a t_request that is between two origins. We can't interpolate or decide which origin is
+          // "right" for you, so, we are going to fail
+          return RESULT_FAIL;
         }
         
-        if (withInterpolation)
+        if(withInterpolation)
         {
           // Compute scale factor between time to previous pose and time between previous pose and next pose.
           f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
@@ -257,7 +256,6 @@ namespace Anki {
 
           Pose3d interpPose(interpRotation, Z_AXIS_3D(), interpTrans, prev_it->second.GetPose().GetParent());
           p.SetAll(prev_it->second.GetFrameId(), interpPose, interpHeadAngle, interpLiftAngle, interpIsCarryingObject);
-          
         } else {
           
           // Return the pose closest to the requested time

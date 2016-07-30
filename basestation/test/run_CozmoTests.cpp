@@ -65,7 +65,7 @@ TEST(BlockWorld, AddAndRemoveObject)
 
   // Fake a state message update for robot
   RobotState stateMsg;
-  stateMsg.timestamp = 0;
+  stateMsg.timestamp = 1; // the robot should not report at 0, since we are after timeSync and 0 is used by the robot constructor to set everything to 0 
   stateMsg.pose_frame_id = 0;
   stateMsg.pose_origin_id = 1;
   stateMsg.pose.x = 0.0f;

@@ -164,7 +164,7 @@ public:
   // Localization
   //
   bool                   IsLocalized()     const;
-  void                   Delocalize();
+  void                   Delocalize(bool isCarryingObject);
       
   // Get the ID of the object we are localized to
   const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
@@ -564,7 +564,7 @@ public:
                                     const f32 head_angle,
                                     const f32 lift_angle);
 
-  TimeStamp_t GetLastMsgTimestamp() const;
+  TimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
     
   bool IsValidPoseKey(const HistPoseKey key) const;
     
@@ -755,6 +755,7 @@ protected:
   bool              _timeSynced = false;
   
   // Flag indicating whether a robotStateMessage was ever received
+  TimeStamp_t       _lastMsgTimestamp;
   bool              _newStateMsgAvailable = false;
     
   // A reference to the BlockWorld the robot lives in
@@ -792,6 +793,7 @@ protected:
 
   // Path Following. There are two planners, only one of which can
   // be selected at a time
+  Pose3d                   _currentPlannerGoal;
   IPathPlanner*            _selectedPathPlanner          = nullptr;
   IPathPlanner*            _longPathPlanner              = nullptr;
   IPathPlanner*            _shortPathPlanner             = nullptr;
@@ -941,7 +943,7 @@ protected:
   void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
   void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
-  void SetPickedUp(bool t);
+  void SetPickedUp(bool isPickedUpNew);
   void SetOnCharger(bool onCharger);
   
   

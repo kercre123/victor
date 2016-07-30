@@ -38,6 +38,13 @@ namespace Anki {
     CozmoSimTestController::~CozmoSimTestController()
     { }
     
+    void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnected const &msg)
+    {
+      // by default we don't want pick up animations in CSTs. If yours needs it, override HandleRobotConnected
+      ExternalInterface::RequestEnableReactionaryBehavior doNotAnimMsg("CozmoSimTestController",BehaviorType::ReactToPickup, false);
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(doNotAnimMsg)));
+    }
+    
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
                                                      std::string condAsString,
                                                      double start_time,

@@ -66,7 +66,9 @@ namespace Cozmo {
       
       bool    _inPosition = false;
       bool    _turnStarted = false;
-      Radians _targetAngle, _initialAngle, _halfAngle;
+      const Radians _requestedTargetAngle;
+      Radians _currentAngle;
+      Radians _currentTargetAngle, _initialAngle, _halfAngle;
       Pose3d  _targetPose, _initialPose;
       Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
       Radians _variability = 0;

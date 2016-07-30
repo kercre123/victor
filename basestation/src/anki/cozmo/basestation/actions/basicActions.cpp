@@ -35,7 +35,7 @@ namespace Anki {
               "TurnInPlace",
               RobotActionType::TURN_IN_PLACE,
               (u8)AnimTrackFlag::BODY_TRACK)
-    , _targetAngle(angle)
+    , _requestedTargetAngle(angle)
     , _isAbsoluteAngle(isAbsolute)
     {
       
@@ -102,7 +102,7 @@ namespace Anki {
     Result TurnInPlaceAction::SendSetBodyAngle() const
     {
       RobotInterface::SetBodyAngle setBodyAngle;
-      setBodyAngle.angle_rad             = _targetAngle.ToFloat();
+      setBodyAngle.angle_rad             = _currentTargetAngle.ToFloat();
       setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
       setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
       setBodyAngle.angle_tolerance       = _angleTolerance.ToFloat();
@@ -120,8 +120,10 @@ namespace Anki {
         currentHeading = _robot.GetPose().GetRotationAngle<'Z'>();
       }
       
-      Radians newAngle(currentHeading);
-      newAngle += _targetAngle;
+      // the new angle is, current + requested - [what we have done so far for retries, 0 for first time]
+      const float doneSoFar = (_currentAngle-_initialAngle).ToFloat();
+      Radians newAngle;
+      newAngle = currentHeading + _requestedTargetAngle - doneSoFar;
       if(_variability != 0) {
         newAngle += GetRNG().RandDblInRange(-_variability.ToDouble(),
                                             _variability.ToDouble());
@@ -138,7 +140,8 @@ namespace Anki {
                    "TurnInPlaceAction.Init.RobotOriginMismatch");
       
       _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
-      _targetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
+      _currentAngle = _initialAngle;
+      _currentTargetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
       
       Radians currentAngle;
       _inPosition = IsBodyInPosition(currentAngle);
@@ -158,11 +161,11 @@ namespace Anki {
           }
           
           // Store half the total difference so we know when to remove eye shift
-          _halfAngle = 0.5f*(_targetAngle - _initialAngle).getAbsoluteVal();
+          _halfAngle = 0.5f*(_currentTargetAngle - _initialAngle).getAbsoluteVal();
           
           // Move the eyes (only if not in position)
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
-          Radians angleDiff = _targetAngle - currentAngle;
+          Radians angleDiff = _currentTargetAngle - currentAngle;
           
           // Clip angleDiff to 89 degrees to prevent unintended behavior due to tangent
           bool angleClipped = false;
@@ -189,7 +192,7 @@ namespace Anki {
     bool TurnInPlaceAction::IsBodyInPosition(Radians& currentAngle) const
     {
       currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
-      const bool inPosition = NEAR(currentAngle-_targetAngle, 0.f, _angleTolerance);
+      const bool inPosition = NEAR(currentAngle-_currentTargetAngle, 0.f, _angleTolerance);
       return inPosition;
     }
     
@@ -201,13 +204,14 @@ namespace Anki {
       // poses and angles to be in the current coordinate frame
       if(_targetPose.GetParent() != _robot.GetWorldOrigin())
       {
-        if(!_targetPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _targetPose)) {
+        if(!_targetPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _targetPose))
+        {
           PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
                            "Could not get target pose w.r.t. current world origin");
           return ActionResult::FAILURE_RETRY;
         }
         
-        _targetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
+        _currentTargetAngle = _targetPose.GetRotation().GetAngleAroundZaxis();
         
         // Also need to update the angle being used by the steering controller
         // on the robot:
@@ -227,28 +231,27 @@ namespace Anki {
             _initialAngle = _initialPose.GetRotation().GetAngleAroundZaxis();
             
             // Store half the total difference so we know when to remove eye shift
-            _halfAngle = 0.5f*(_targetAngle - _initialAngle).getAbsoluteVal();
+            _halfAngle = 0.5f*(_currentTargetAngle - _initialAngle).getAbsoluteVal();
           }
         }
         
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.WorldOriginChanged",
-                         "New target angle = %.1fdeg", _targetAngle.getDegrees());
+                         "New target angle = %.1fdeg", _currentTargetAngle.getDegrees());
       }
       
-      Radians currentAngle;
-      
       if(!_inPosition) {
-        _inPosition = IsBodyInPosition(currentAngle);
+        _inPosition = IsBodyInPosition(_currentAngle);
+        
       }
       
       // When we've turned at least halfway, remove eye dart
       if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
-        if(_inPosition || NEAR(currentAngle-_targetAngle, 0.f, _halfAngle))
+        if(_inPosition || NEAR((_currentAngle-_currentTargetAngle).ToFloat(), 0.f, _halfAngle.ToFloat()))
         {
           PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
                            "Currently at %.1fdeg, on the way to %.1fdeg, within "
-                           "half angle of %.1fdeg", currentAngle.getDegrees(),
-                           _targetAngle.getDegrees(), _halfAngle.getDegrees());
+                           "half angle of %.1fdeg", _currentAngle.getDegrees(),
+                           _currentTargetAngle.getDegrees(), _halfAngle.getDegrees());
           _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
@@ -267,8 +270,8 @@ namespace Anki {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
                          "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
                          GetTag(),
-                         currentAngle.getDegrees(),
-                         _targetAngle.getDegrees(),
+                         _currentAngle.getDegrees(),
+                         _currentTargetAngle.getDegrees(),
                          _variability.getDegrees(),
                          _angleTolerance.ToFloat(),
                          _robot.GetPoseFrameID());

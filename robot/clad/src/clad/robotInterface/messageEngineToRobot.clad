@@ -194,6 +194,13 @@ message AbsoluteLocalizationUpdate
   float_32 headingAngle,
 }
 
+// Used only for testing with simulated robots. Engine will never send this message if it is talking
+// talking to a simulated robot
+message ForceDelocalizeSimulatedRobot
+{
+
+}
+
 message SyncTime
 {
   uint_32 robotID,
@@ -397,6 +404,7 @@ union EngineToRobot
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
   EnableStopOnCliff             enableStopOnCliff           = 0x60,
+  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
 
   
   // 0x80 to 0xAF: To WiFi

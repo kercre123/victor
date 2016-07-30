@@ -1141,11 +1141,14 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
                         "Failed to find robot %d to delocalize.", robotID);
       
       
-  } else {
+  } else if(!robot->IsPhysical()) {
     PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
                      "Forcibly delocalizing robot %d", robotID);
-      
-    robot->Delocalize();
+    
+    robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
+  } else {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.PhysicalRobot",
+                        "Refusing to force delocalize physical robot.");
   }
 }
   

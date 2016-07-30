@@ -72,6 +72,10 @@ namespace Anki {
         float vExt;
         bool onCharger;
         bool isCharging;
+        
+#ifdef SIMULATOR
+        bool isForcedDelocalizing_ = false;
+#endif
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -152,6 +156,7 @@ namespace Anki {
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
 #endif
+            
           default:
             AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %x", 1, msg.tag);
         }
@@ -225,6 +230,12 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
+#ifdef  SIMULATOR
+        if(isForcedDelocalizing_)
+        {
+          robotState_.status |= IS_PICKED_UP;
+        }
+#endif
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -301,6 +312,12 @@ namespace Anki {
          */
       } // ProcessAbsLocalizationUpdateMessage()
 
+      void Process_forceDelocalizeSimulatedRobot(const RobotInterface::ForceDelocalizeSimulatedRobot& msg)
+      {
+#ifdef SIMULATOR
+        isForcedDelocalizing_ = true;
+#endif
+      }
 
       void Process_dockingErrorSignal(const DockingErrorSignal& msg)
       {
@@ -969,6 +986,13 @@ namespace Anki {
           #ifndef TARGET_K02
             AnimationController::SendAnimStateMessage();
           #endif
+          
+          #ifdef SIMULATOR
+          {
+            isForcedDelocalizing_ = false;
+          }
+          #endif
+          
           return RESULT_OK;
         } else {
           return RESULT_FAIL;

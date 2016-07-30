@@ -135,6 +135,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   : _context(context)
   , _ID(robotID)
   , _timeSynced(false)
+  , _lastMsgTimestamp(0)
   , _blockWorld(this)
   , _faceWorld(*this)
   , _behaviorMgr(*this)
@@ -171,7 +172,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
   // Initializes _pose, _poseOrigins, and _worldOrigin:
-  Delocalize();
+  Delocalize(false);
       
   // Delocalize will mark isLocalized as false, but we are going to consider
   // the robot localized (by odometry alone) to start, until he gets picked up.
@@ -345,18 +346,17 @@ ObjectID Robot::AddUnconnectedCharger()
 }
 
     
-void Robot::SetPickedUp(bool t)
+void Robot::SetPickedUp(bool isPickedUpNew)
 {
   // We use the cliff sensor to help determine if we're picked up; if it's disabled then ignore when it is
   // reported as true. If it's false we want to be able to go through the put down logic below.
-  if (!IsCliffSensorEnabled() && t) {
+  if (!IsCliffSensorEnabled() && isPickedUpNew) {
     return;
   }
       
-  if(_isPickedUp == false && t == true) {
-    // Robot is being picked up: de-localize it
-    Delocalize();
-        
+  if(_isPickedUp == false && isPickedUpNew == true) {
+    // Robot is being picked up from not being picked up, notify systems
+
     _visionComponentPtr->Pause(true);
         
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
@@ -369,7 +369,7 @@ void Robot::SetPickedUp(bool t)
           ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
     }
   }
-  else if (true == _isPickedUp && false == t) {
+  else if (true == _isPickedUp && false == isPickedUpNew) {
     // Robot just got put back down
     _visionComponentPtr->Pause(false);
         
@@ -390,10 +390,10 @@ void Robot::SetPickedUp(bool t)
         
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
   }
-  _isPickedUp = t;
+  _isPickedUp = isPickedUpNew;
 }
     
-void Robot::Delocalize()
+void Robot::Delocalize(bool isCarryingObject)
 {
   PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
       
@@ -434,6 +434,7 @@ void Robot::Delocalize()
   // frame that have different origins (Not 100% sure this is totally necessary but seems
   // like the cleaner / safer thing to do.)
   AddVisionOnlyPoseToHistory(GetLastMsgTimestamp(), _pose, GetHeadAngle(), GetLiftAngle());
+  AddRawOdomPoseToHistory(GetLastMsgTimestamp(),GetPoseFrameID(), _pose, GetHeadAngle(), GetLiftAngle(), isCarryingObject);
   
   if(_timeSynced)
   {
@@ -531,6 +532,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   }
     
   // Set flag indicating that robot state messages have been received
+  _lastMsgTimestamp = msg.timestamp;
   _newStateMsgAvailable = true;
       
   // Update head angle
@@ -553,11 +555,18 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   if (IsTraversingPath() && GetLastRecvdPathID() == GetLastSentPathID()) {
     _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
   }
-      
+  
+  const bool isPickedUpNew = (msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+  const bool isDelocalizing = !_isPickedUp && isPickedUpNew;
+  
+  // this flag can have a small delay with respect to when we actually picked up the block, since Engine notifies
+  // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what
+  // we think it's true, rather than mixing timestamps of when it started carrying vs when the robot knows that it was
+  // carrying
   const bool isCarryingObject = (msg.status&(uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK) != 0;
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
-  SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
+  SetPickedUp(isPickedUpNew);
   SetOnCharger(static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER));
   _isCliffSensorOn = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED);
 
@@ -570,123 +579,130 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       
   _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
       
-  Pose3d newPose;
-      
-  if(IsOnRamp()) {
+  if ( isDelocalizing )
+  {
+    Delocalize(isCarryingObject);
+  }
+  else
+  {
+    Pose3d newPose;
         
-    // Sanity check:
-    CORETECH_ASSERT(_rampID.IsSet());
-        
-    // Don't update pose history while on a ramp.
-    // Instead, just compute how far the robot thinks it has gone (in the plane)
-    // and compare that to where it was when it started traversing the ramp.
-    // Adjust according to the angle of the ramp we know it's on.
-        
-    const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
-        
-    Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByID(_rampID, ObjectFamily::Ramp));
-    if(ramp == nullptr) {
-      PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
-                        "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
-                        _ID, _rampID.GetValue());
-      return RESULT_FAIL;
-    }
-        
-    // Progress must be along ramp's direction (init assuming ascent)
-    Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
-        
-    // Initialize tilt angle assuming we are ascending
-    Radians tiltAngle = ramp->GetAngle();
-        
-    switch(_rampDirection)
-    {
-      case Ramp::DESCENDING:
-        tiltAngle    *= -1.f;
-        headingAngle += M_PI;
-        break;
-      case Ramp::ASCENDING:
-        break;
-            
-      default:
-        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
-                          "Robot is on a ramp, expecting the ramp direction to be either "
-                          "ASCEND or DESCENDING, not %d.\n", _rampDirection);
+    if(IsOnRamp()) {
+          
+      // Sanity check:
+      CORETECH_ASSERT(_rampID.IsSet());
+          
+      // Don't update pose history while on a ramp.
+      // Instead, just compute how far the robot thinks it has gone (in the plane)
+      // and compare that to where it was when it started traversing the ramp.
+      // Adjust according to the angle of the ramp we know it's on.
+          
+      const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
+          
+      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByID(_rampID, ObjectFamily::Ramp));
+      if(ramp == nullptr) {
+        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
+                          "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
+                          _ID, _rampID.GetValue());
         return RESULT_FAIL;
-    }
-
-    const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
-    const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
-                                 _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
-                                 _rampStartHeight + heightAdjust);
-        
-    const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
-    const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
-        
-    newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
-    //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
-        
-  } else {
-    // This is "normal" mode, where we udpate pose history based on the
-    // reported odometry from the physical robot
-        
-    // Ignore physical robot's notion of z from the message? (msg.pose_z)
-    f32 pose_z = 0.f;
-
-    if(msg.pose_frame_id == GetPoseFrameID()) {
-      // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
-      pose_z = GetPose().GetWithRespectToOrigin().GetTranslation().z();
-    } else {
-      // This is an old odometry update from a previous pose frame ID. We
-      // need to look up the correct Z value to use for putting this
-      // message's (x,y) odometry info into history. Since it comes from
-      // pose history, it will already be w.r.t. world origin, since that's
-      // how we store everything in pose history.
-      RobotPoseStamp p;
-      lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                          "Failed to get last pose from history with frame ID=%d.\n",
-                          msg.pose_frame_id);
-        return lastResult;
       }
-      pose_z = p.GetPose().GetTranslation().z();
-    }
-        
-    // Need to put the odometry update in terms of the current robot origin
-    const Pose3d* origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
-    if(nullptr == origin) {
-      PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BadOriginID",
-                          "Received RobotState with originID=%u, only %zu pose origins available",
-                          msg.pose_origin_id, GetPoseOriginList().GetSize());
-      return RESULT_FAIL;
-    }
-    
-    newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, origin);
-    
-    // It's possible the pose origin to which this update refers has since been
-    // rejiggered and is now the child of another origin. To add to history below,
-    // we must first flatten it.
-    newPose = newPose.GetWithRespectToOrigin();
-  } // if/else on ramp
-  
-  // Add to history
-  lastResult = AddRawOdomPoseToHistory(msg.timestamp,
-                                       msg.pose_frame_id,
-                                       newPose,
-                                       msg.headAngle,
-                                       msg.liftAngle,
-                                       isCarryingObject);
-  
-  if(lastResult != RESULT_OK) {
-    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
-                        "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
-    return lastResult;
-  }
-  
-  if(UpdateCurrPoseFromHistory() == false) {
-    lastResult = RESULT_FAIL;
-  }
+          
+      // Progress must be along ramp's direction (init assuming ascent)
+      Radians headingAngle = ramp->GetPose().GetRotationAngle<'Z'>();
+          
+      // Initialize tilt angle assuming we are ascending
+      Radians tiltAngle = ramp->GetAngle();
+          
+      switch(_rampDirection)
+      {
+        case Ramp::DESCENDING:
+          tiltAngle    *= -1.f;
+          headingAngle += M_PI;
+          break;
+        case Ramp::ASCENDING:
+          break;
+              
+        default:
+          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
+                            "Robot is on a ramp, expecting the ramp direction to be either "
+                            "ASCEND or DESCENDING, not %d.\n", _rampDirection);
+          return RESULT_FAIL;
+      }
 
+      const f32 heightAdjust = distanceTraveled*sin(tiltAngle.ToFloat());
+      const Point3f newTranslation(_rampStartPosition.x() + distanceTraveled*cos(headingAngle.ToFloat()),
+                                   _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
+                                   _rampStartHeight + heightAdjust);
+          
+      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
+      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
+          
+      newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
+      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
+          
+    } else {
+      // This is "normal" mode, where we udpate pose history based on the
+      // reported odometry from the physical robot
+          
+      // Ignore physical robot's notion of z from the message? (msg.pose_z)
+      f32 pose_z = 0.f;
+
+      if(msg.pose_frame_id == GetPoseFrameID()) {
+        // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
+        pose_z = GetPose().GetWithRespectToOrigin().GetTranslation().z();
+      } else {
+        // This is an old odometry update from a previous pose frame ID. We
+        // need to look up the correct Z value to use for putting this
+        // message's (x,y) odometry info into history. Since it comes from
+        // pose history, it will already be w.r.t. world origin, since that's
+        // how we store everything in pose history.
+        RobotPoseStamp p;
+        lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
+                            "Failed to get last pose from history with frame ID=%d.\n",
+                            msg.pose_frame_id);
+          return lastResult;
+        }
+        pose_z = p.GetPose().GetTranslation().z();
+      }
+          
+      // Need to put the odometry update in terms of the current robot origin
+      const Pose3d* origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
+      if(nullptr == origin) {
+        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BadOriginID",
+                            "Received RobotState with originID=%u, only %zu pose origins available",
+                            msg.pose_origin_id, GetPoseOriginList().GetSize());
+        return RESULT_FAIL;
+      }
+      
+      newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, origin);
+      
+      // It's possible the pose origin to which this update refers has since been
+      // rejiggered and is now the child of another origin. To add to history below,
+      // we must first flatten it.
+      newPose = newPose.GetWithRespectToOrigin();
+    } // if/else on ramp
+    
+    // Add to history
+    lastResult = AddRawOdomPoseToHistory(msg.timestamp,
+                                         msg.pose_frame_id,
+                                         newPose,
+                                         msg.headAngle,
+                                         msg.liftAngle,
+                                         isCarryingObject);
+    
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
+                          "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
+      return lastResult;
+    }
+    
+    if(UpdateCurrPoseFromHistory() == false) {
+      lastResult = RESULT_FAIL;
+    }
+  }
+  
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
     "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
@@ -1053,24 +1069,59 @@ Result Robot::Update(bool ignoreVisionModes)
       if( IsTraversingPath() ) {
         _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
 
-        if( GetBlockWorld().DidObjectsChange() || forceReplan ) {
-          // see if we need to replan, but only bother checking if the world objects changed
-          switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
-            case EComputePathStatus::Error:
-              _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+        // haveOriginsChanged: note that we check if the parent of the currentPlannerGoal is different than the world
+        // origin. With origin rejiggering it's possible that our origin is the current world origin, as long as we
+        // could rejigger our parent to the new origin. If we could not rejigger, then our parent is also not the
+        // origin, but moreover we can't get the goal with respect to the new origin
+        const bool haveOriginsChanged = (_currentPlannerGoal.GetParent() != _worldOrigin);
+        const bool canAdjustOrigin = _currentPlannerGoal.GetWithRespectTo(*_worldOrigin, _currentPlannerGoal);
+        if ( haveOriginsChanged && !canAdjustOrigin )
+        {
+          // the origins changed and we can't rejigger our goal to the new origin (we probably delocalized),
+          // completely abort
+          _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+          AbortDrivingToPose();
+          PRINT_NAMED_INFO("Robot.Update.Replan.NotPossible", "Our goal is in another coordinate frame that we can't get wrt current, we can't replan");
+        }
+        else
+        {
+          // check if we need adjusting origins
+          if (haveOriginsChanged && canAdjustOrigin)
+          {
+            // our origin changed, but we were able to recompute _currentPlannerGoal wrt current origin. Abort the current
+            // plan and start driving to the updated _currentPlannerGoal. Note this can discard other goals for multiple goal requests,
+            // but it's likely that the closest goal is still the closest one, and this is a faster fix (rsam 2016)
+            AbortDrivingToPose();
+            PRINT_NAMED_INFO("Robot.Update.Replan.RejiggeringPlanner", "Our goal is in another coordinate frame, but we are updating to current frame");
+            const Result planningResult = StartDrivingToPose( _currentPlannerGoal, _pathMotionProfile );
+            if ( planningResult != RESULT_OK ) {
+              PRINT_NAMED_WARNING("Robot.Update.Replan.RejiggeringPlanner", "We could not start driving to rejiggered pose.");
+              // We failed to replan, abort
               AbortDrivingToPose();
-              PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
-              break;
+              _driveToPoseStatus = ERobotDriveToPoseStatus::Error; // reset in case StartDriving didn't set it
+            }
+          }
+          else if( GetBlockWorld().DidObjectsChange() || forceReplan )
+          {
+            // we didn't need to adjust origins
+            // see if we need to replan, but only bother checking if the world objects changed
+            switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
+              case EComputePathStatus::Error:
+                _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+                AbortDrivingToPose();
+                PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
+                break;
 
-            case EComputePathStatus::Running:
-              _numPlansStarted++;
-              PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
-              _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
-              break;
+              case EComputePathStatus::Running:
+                _numPlansStarted++;
+                PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
+                _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
+                break;
 
-            case EComputePathStatus::NoPlanNeeded:
-              // leave status as following, don't update plan attempts since no new planning is needed
-              break;
+              case EComputePathStatus::NoPlanNeeded:
+                // leave status as following, don't update plan attempts since no new planning is needed
+                break;
+            }
           }
         }
       }
@@ -1405,14 +1456,19 @@ Radians Robot::GetPitchAngle() const
         
 void Robot::SelectPlanner(const Pose3d& targetPose)
 {
-  Pose2d target2d(targetPose);
-  Pose2d start2d(GetPose());
+  // set our current planner goal to the given pose flattened out, so that we can later compare if the origin
+  // has changed since we started planning towards this pose. Also because the planner doesn't know about
+  // pose origins, so this pose should be wrt origin always
+  _currentPlannerGoal = targetPose.GetWithRespectToOrigin();
+
+  Pose2d target2d(_currentPlannerGoal);
+  Pose2d start2d(GetPose().GetWithRespectToOrigin());
 
   float distSquared = pow(target2d.GetX() - start2d.GetX(), 2) + pow(target2d.GetY() - start2d.GetY(), 2);
 
   if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
 
-    Radians finalAngleDelta = targetPose.GetRotationAngle<'Z'>() - GetDriveCenterPose().GetRotationAngle<'Z'>();
+    Radians finalAngleDelta = _currentPlannerGoal.GetRotationAngle<'Z'>() - GetDriveCenterPose().GetRotationAngle<'Z'>();
     const bool withinFinalAngleTolerance = finalAngleDelta.getAbsoluteVal().ToFloat() <=
       2 * PLANNER_MAINTAIN_ANGLE_THRESHOLD;
 
@@ -3048,11 +3104,6 @@ Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p,
   return _poseHistory->GetComputedPoseAt(t_request, p, key);
 }
 
-TimeStamp_t Robot::GetLastMsgTimestamp() const
-{
-  return _poseHistory->GetNewestTimeStamp();
-}
-    
 bool Robot::IsValidPoseKey(const HistPoseKey key) const
 {
   return _poseHistory->IsValidPoseKey(key);
