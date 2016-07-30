@@ -516,7 +516,7 @@ namespace Face {
     bool Print(u64* frame, const char* text, const int characters, const int x, const int y)
     {
       const int text_len   = (characters == 0) ? os_strlen(text) : characters;
-      const int text_width = text_len * 10;
+      const int text_width = text_len * MED_CHAR_WIDTH;
       
       if (x + text_width > COLS)
       {
