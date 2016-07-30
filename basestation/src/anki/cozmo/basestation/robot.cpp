@@ -104,7 +104,7 @@ CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
 //Constants for on side
 static const float kOnLeftSide_rawYAccel = -9000.0;
 static const float kOnRightSide_rawYAccel = 10500.0;
-CONSOLE_VAR(f32, kOnSideTolerance_rawYAccel, "Robot", 1000.0f);
+CONSOLE_VAR(f32, kOnSideTolerance_rawYAccel, "Robot", 3000.0f);
 CONSOLE_VAR(u32, kRobotTimeToConsiderOnSide_ms, "Robot", 300);
   
 
@@ -736,6 +736,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   const bool currFacePlant = std::abs( GetPitchAngle().ToDouble() - facePlantAngle ) <= pitchAngleTolerence;
   const bool currTurtleRoll = GetPitchAngle() > turtleRollMinAngle || GetPitchAngle() < turtleRollMaxAngle;
+  
   
   bool sendOffTredsValue = _lastSendOffTredsValue;
   switch(_offTredsState){
