@@ -43,9 +43,11 @@ namespace Anki {
       namespace Draw {
         void Clear(u64* frame);
         void Copy(u64* frame, const u64* image);
+        bool Copy(u64* frame, const u32* image, const int cols, const int x, const int y);
         void Mask(u64* frame, const u64 mask);
         void Invert(u64* frame);
-        void Number(u64* frame, int digits, u32 value, int x, int y, const bool big=true);
+        bool Number(u64* frame, int digits, u32 value, int x, int y);
+        bool Print(u64* frame, const char* text, const int characters, const int x, const int y);
         void Flip(u64* frame);
       }
 
