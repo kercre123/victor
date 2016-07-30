@@ -394,6 +394,9 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
     return;
   }
   
+  // Clear the audio buffers now that we are preparing to get new audio data
+  _audioBuffer->ClearBufferStreams();
+  
   
  // Begin Loading robot audio buffer by posting animation audio events
   SetAnimationState( AnimationState::LoadingStream );
@@ -434,7 +437,6 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
         _audioClient->SetCozmoEventParameter( playId,
                                               GameParameter::ParameterType::Event_Volume,
                                               animationEvent->volume );
-        
       },
                            "PostAudioEventToRobotDelay" );
   }

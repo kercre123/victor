@@ -51,9 +51,6 @@ RobotAudioAnimation::~RobotAudioAnimation()
     Util::Dispatch::Stop( _postEventTimerQueue );
     Util::Dispatch::Release( _postEventTimerQueue );
   }
-  if ( _audioBuffer != nullptr ) {
-    _audioBuffer->ClearBufferStreams();
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
