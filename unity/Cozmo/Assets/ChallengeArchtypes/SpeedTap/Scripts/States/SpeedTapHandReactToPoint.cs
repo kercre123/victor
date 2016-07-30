@@ -52,7 +52,7 @@ namespace SpeedTap {
 
       if (_SpeedTapGame.IsRoundComplete()) {
         GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Round_End);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
 
         _SpeedTapGame.EndCurrentRound();
 
@@ -116,10 +116,10 @@ namespace SpeedTap {
         _WinningCube.SetLEDsOff();
         SetLosingLightPattern(losingBlock, _kWinCycleSpeedSeconds);
         _CurrentCubeLightState = CubeLightState.LoserFlashing;
-        GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Lose);
+        GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
       }
       else {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Win);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
         _StartWinEffectTimestampSeconds = Time.time;
         losingBlock.SetLEDsOff();
         StartWinningBlockPattern();
@@ -194,7 +194,7 @@ namespace SpeedTap {
     }
 
     private void HandleEndGameAnimDone(bool success) {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Game_End);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
       _SpeedTapGame.ClearWinningLightPatterns();
       _SpeedTapGame.StartRoundBasedGameEnd();
       _SpeedTapGame.StartEndMusic();

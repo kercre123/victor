@@ -920,7 +920,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11423680
@@ -972,7 +972,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11432058
@@ -1338,7 +1338,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11484124
@@ -1433,7 +1433,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11499504

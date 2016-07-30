@@ -146,7 +146,7 @@ MonoBehaviour:
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
-    _EventType: UI
+    _EventType: Ui
     _GameObjectType: 2
 --- !u!114 &11409920
 MonoBehaviour:

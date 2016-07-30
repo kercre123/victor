@@ -49,17 +49,17 @@ MonoBehaviour:
   _CubeColorsAndSounds:
   - soundName:
       _Event: Play__Sfx__Gp_Simon_Light_Red
-      _EventType: SFX
+      _EventType: Sfx
       _GameObjectType: 0
     cubeColor: {r: 1, g: 0, b: 0, a: 1}
   - soundName:
       _Event: Play__Sfx__Gp_Simon_Light_Yellow
-      _EventType: SFX
+      _EventType: Sfx
       _GameObjectType: 0
     cubeColor: {r: 0.94269776, g: 0.9558824, b: 0, a: 1}
   - soundName:
       _Event: Play__Sfx__Gp_Simon_Light_Blue
-      _EventType: SFX
+      _EventType: Sfx
       _GameObjectType: 0
     cubeColor: {r: 0, g: 0.04543596, b: 0.9411765, a: 1}
   BetweenRoundsMusic:

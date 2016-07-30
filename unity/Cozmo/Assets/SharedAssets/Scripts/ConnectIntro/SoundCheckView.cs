@@ -29,7 +29,7 @@ public class SoundCheckView : Cozmo.UI.BaseView {
   }
 
   private void HandlePlayButton() {
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_St_Win);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
     // TODO: use actual audio finish trigger?
     Invoke("HandlePlaySoundComplete", 1.5f);
     _PlayButton.Interactable = false;

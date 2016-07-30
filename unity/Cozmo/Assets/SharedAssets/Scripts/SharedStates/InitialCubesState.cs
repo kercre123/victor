@@ -101,7 +101,7 @@ public class InitialCubesState : State {
         _Game.CubeIdsForGame.Add(cube.ID);
         addCube = true;
         cube.SetLEDs(CubePalette.Instance.InViewColor.lightColor);
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.Gp_Shared_Block_Connect);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Block_Connect);
       }
       else {
         cube.SetLEDs(CubePalette.Instance.InViewColor.lightColor);

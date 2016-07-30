@@ -21,8 +21,8 @@ namespace Anki.Cozmo.Audio {
 
     private static readonly Dictionary<string, Type> _EventTypeDictionary =
       new Dictionary<string, Type> {
-      { "UI", typeof(GameEvent.UI) },
-      { "SFX", typeof(GameEvent.SFX) },
+      { "Ui", typeof(GameEvent.Ui) },
+      { "Sfx", typeof(GameEvent.Sfx) },
       // Leave out VO for now, since we don't have any VO
       //{ "VO", typeof(GameEvent.GenericEvent) },
       { "Music", typeof(GameState.Music) }
@@ -71,10 +71,10 @@ namespace Anki.Cozmo.Audio {
         GameAudioClient.SetMusicState((Anki.Cozmo.Audio.GameState.Music)value);
         break;
       case "UI":
-        GameAudioClient.PostUIEvent((Anki.Cozmo.Audio.GameEvent.UI)value);
+        GameAudioClient.PostUIEvent((Anki.Cozmo.Audio.GameEvent.Ui)value);
         break;
       case "SFX":
-        GameAudioClient.PostSFXEvent((SFX)value);
+        GameAudioClient.PostSFXEvent((Sfx)value);
         break;
       case "VO":
         GameAudioClient.PostAnnouncerVOEvent((GenericEvent)value);
