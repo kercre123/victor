@@ -326,7 +326,20 @@ namespace Anki {
 #     endif // if NUM_AVERAGE_POSES > 1
       
     } // EstimateObservedPose()
-    
+
+    const char* NotVisibleReasonToString(KnownMarker::NotVisibleReason reason)
+    {
+      switch(reason) {
+        case KnownMarker::NotVisibleReason::IS_VISIBLE: return "IS_VISIBLE";
+        case KnownMarker::NotVisibleReason::POSE_PROBLEM: return "POSE_PROBLEM";
+        case KnownMarker::NotVisibleReason::BEHIND_CAMERA: return "BEHIND_CAMERA";
+        case KnownMarker::NotVisibleReason::NORMAL_NOT_ALIGNED: return "NORMAL_NOT_ALIGNED";
+        case KnownMarker::NotVisibleReason::TOO_SMALL: return "TOO_SMALL";
+        case KnownMarker::NotVisibleReason::OUTSIDE_FOV: return "OUTSIDE_FOV";
+        case KnownMarker::NotVisibleReason::OCCLUDED: return "OCCLUDED";
+        case KnownMarker::NotVisibleReason::NOTHING_BEHIND: return "NOTHING_BEHIND";
+      }
+    }
     
   } // namespace Vision
 } // namespace Anki

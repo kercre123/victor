@@ -149,7 +149,15 @@ namespace Anki {
                          const u16     xBorderPad,
                          const u16     yBorderPad,
                          bool& hasNothingBehind) const;
-                         
+
+      // Similar to the above, but return the highest NotVisibleReason that was returned for any of the
+      // markers (the latest check we got through for any one marker).
+      KnownMarker::NotVisibleReason IsVisibleFromWithReason(const Camera& camera,
+                                                            const f32     maxFaceNormalAngle,
+                                                            const f32     minMarkerImageSize,
+                                                            const bool    requireSomethingBehind,
+                                                            const u16     xBorderPad = 0,
+                                                            const u16     yBorderPad = 0) const;
       
       // Accessors:
       ObjectID           GetID()     const;

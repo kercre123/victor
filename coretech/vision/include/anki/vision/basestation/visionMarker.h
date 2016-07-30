@@ -119,7 +119,7 @@ namespace Anki {
       // not visible. Note that these are ordered, meaning if a given code is
       // returned, then none of the earlier ones are true. 
       enum class NotVisibleReason : u8 {
-        IS_VISIBLE, // if IsVisibleFrom() == true
+        IS_VISIBLE = 0, // if IsVisibleFrom() == true
         POSE_PROBLEM,
         BEHIND_CAMERA,
         NORMAL_NOT_ALIGNED,
@@ -220,6 +220,8 @@ namespace Anki {
       NotVisibleReason dummy;
       return IsVisibleFrom(camera, maxAngleRad, minImageSize, requireSomethingBehind, xBorderPad, yBorderPad, dummy);
     }
+
+    const char* NotVisibleReasonToString(KnownMarker::NotVisibleReason reason);
 
   } // namespace Vision
 } // namespace Anki

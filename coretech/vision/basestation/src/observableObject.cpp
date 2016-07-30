@@ -29,9 +29,12 @@
 // (translation) and block type.
 #define IGNORE_ROTATION_FOR_IS_SAME_AS 1
 
+// verbose output for each IsVisible check
+#define DEBUG_PRINT_NOT_VISIBLE_REASONS 0
+
 namespace Anki {
 namespace Vision {
-  
+
   ObservableObject::ObservableObject()
   {
     
@@ -48,9 +51,21 @@ namespace Vision {
     // Return true if any of this object's markers are visible from the
     // given camera
     for(auto const& marker : _markers) {
+      KnownMarker::NotVisibleReason reason;
       if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize,
-                              requireSomethingBehind, xBorderPad, yBorderPad)) {
+                              requireSomethingBehind, xBorderPad, yBorderPad, reason)) {
+        if( DEBUG_PRINT_NOT_VISIBLE_REASONS ) {
+          PRINT_NAMED_DEBUG("ObservableObject.IsVisibleFrom.MarkerVisible",
+                            "marker '%s' is visible",
+                            marker.GetCodeName());
+        }
         return true;
+      }
+      else if( DEBUG_PRINT_NOT_VISIBLE_REASONS ) {
+        PRINT_NAMED_DEBUG("ObservableObject.IsVisibleFrom.MarkerNotVisible",
+                          "marker '%s' is not visible for reason '%s'",
+                          marker.GetCodeName(),
+                          NotVisibleReasonToString(reason));
       }
     }
   
@@ -73,6 +88,11 @@ namespace Vision {
                               true, xBorderPad, yBorderPad, reason))
       {
         // As soon as any marker is visible from the camera, the object is visible from this camera
+        if( DEBUG_PRINT_NOT_VISIBLE_REASONS ) {
+          PRINT_NAMED_DEBUG("ObservableObject.IsVisibleFrom.MarkerVisible",
+                            "marker '%s' is visible",
+                            marker.GetCodeName());
+        }
         return true;
       } else if(reason == KnownMarker::NotVisibleReason::NOTHING_BEHIND) {
         // The marker is not visible from this camera and the reason given is
@@ -81,11 +101,43 @@ namespace Vision {
         // for a single marker.
         hasNothingBehind |= true;
       }
+
+      if( DEBUG_PRINT_NOT_VISIBLE_REASONS ) {
+        PRINT_NAMED_DEBUG("ObservableObject.IsVisibleFrom.MarkerNotVisible",
+                          "marker '%s' is not visible for reason '%s'",
+                          marker.GetCodeName(),
+                          NotVisibleReasonToString(reason));
+      }
     }
     
     return false;
   }
-  
+
+  KnownMarker::NotVisibleReason ObservableObject::IsVisibleFromWithReason(const Camera& camera,
+                                                                          const f32     maxFaceNormalAngle,
+                                                                          const f32     minMarkerImageSize,
+                                                                          const bool    requireSomethingBehind,
+                                                                          const u16     xBorderPad,
+                                                                          const u16     yBorderPad) const
+  {
+    KnownMarker::NotVisibleReason latestReason = KnownMarker::NotVisibleReason::IS_VISIBLE;
+    for(auto const& marker : _markers) {
+      KnownMarker::NotVisibleReason reason;
+      if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize,
+                              requireSomethingBehind, xBorderPad, yBorderPad, reason))
+      {
+        // As soon as any marker is visible from the camera, the object is visible from this camera
+        return KnownMarker::NotVisibleReason::IS_VISIBLE;
+      } else {
+        if( Util::EnumToUnderlying(reason) > Util::EnumToUnderlying(latestReason) ) {
+          latestReason = reason;
+        }
+      }
+    }
+
+    return latestReason;
+  }
+
   Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                          const Pose3d&        atPose,
                                                          const Point2f&       size_mm)
