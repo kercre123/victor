@@ -9,15 +9,16 @@ def img2arr(img):
     yr = 8
     while yr < img.size[1]:
         yr *= 2
-    fmt = "  0x{:0%dx},{}" % (yr//4)
-    out = "{" + os.linesep
+    fmt = "0x{:0%dx},{}" % (yr//4)
+    out = "{" 
     for x in range(img.size[0]):
         num = 0
         for y in range(img.size[1]):
             num |= (0 if img.getpixel((x,y)) else 1) << y
-        out += fmt.format(num, os.linesep if yr >= 32 else "")
-    out += "}" + os.linesep
+        out += fmt.format(num, os.linesep if yr >= 32 else " ")
+    out += "},"
     return out
 
 if __name__ == '__main__':
-    print(img2arr(Image.open(sys.argv[1])))
+    for fn in sys.argv[1:]:
+        print(img2arr(Image.open(fn)))

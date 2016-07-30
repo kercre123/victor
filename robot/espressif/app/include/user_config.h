@@ -24,6 +24,7 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 #define DHCP_START  "171.31.1.10"
 #define DHCP_END    "172.31.1.15"
 
-extern unsigned int wifiPin;
+#define WIFI_PSK_LEN (12)
+extern char wifiPsk[WIFI_PSK_LEN];
 
 #endif
