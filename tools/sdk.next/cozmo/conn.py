@@ -1,0 +1,164 @@
+__all__ = ['EvtRobotFound', 'CozmoConnection']
+
+
+import asyncio
+import re
+
+from . import logger
+from . import anim
+from . import clad_protocol
+from . import event
+from . import robot
+
+from . import _clad
+from ._clad import _clad_to_engine_cozmo, _clad_to_engine_iface, _clad_to_game_cozmo, _clad_to_game_iface
+
+
+
+class EvtRobotFound(event.Event):
+    '''Triggered when a Cozmo robot is detected, but before it's initialized.
+
+    :class:`cozmo.robot.EvtRobotReady` is dispatched when the robot is fully initialized.
+    '''
+    robot = 'The Cozmo object for the robot'
+
+
+_seen = set() # XXX debug tool
+def _log_first_seen(tag_name, msg):
+    '''Debug utility to log a message the first time one of its tag is received'''
+    if tag_name not in _seen:
+        _seen.add(tag_name)
+        logger.debug("Connection received message %s" % msg)
+
+
+class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
+    '''Manages the connection to the Cozmo app to communicate with the core engine.'''
+
+    cozmo_factory = robot.Cozmo
+    anim_names_factory = anim.AnimationNames
+
+    # overrides for CLADProtocol
+    clad_decode_union = _clad_to_game_iface.MessageEngineToGame
+    clad_encode_union = _clad_to_engine_iface.MessageGameToEngine
+
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self._is_connected = False
+        self._robots = {}
+        self._primary_robot = None
+
+        #: An anim.AnimationNames object that references all available animation names
+        self.anim_names = self.anim_names_factory(self)
+
+    def connection_made(self, transport):
+        super().connection_made(transport)
+        self._is_connected = True
+
+    def msg_received(self, msg):
+        '''Receives low level communication messages from the engine.'''
+        tag_name = msg.tag_name
+        if tag_name == 'Ping':
+            # short circuit to avoid unnecessary event overhead
+            return self._handle_ping(msg._data)
+
+        msg = msg._data
+        robot_id = getattr(msg, 'robotID', None)
+        event_name = '_Msg' +  tag_name
+
+        evttype = getattr(_clad, event_name, None)
+        if evttype is None:
+            logger.error('Received unknown CLAD message %s', event_name)
+            return
+
+        _log_first_seen(tag_name, msg)
+
+        if robot_id:
+            # dispatch robot-specific messages to Cozmo robot instances
+            return self._process_robot_msg(robot_id, evttype, msg)
+
+        self.dispatch_event(evttype, msg=msg)
+
+    def eof_received(self):
+        logger.error('Lost connection while talking to device; aborting message loop')
+        raise RuntimeError("Lost connection to Cozmo")
+
+    def _process_robot_msg(self, robot_id, evttype, msg):
+        if robot_id > 1:
+            # One day we might support multiple robots.. if we see a robot_id != 1
+            # currently though, it's an error.
+            logger.error('INVALID ROBOT_ID SEEN robot_id=%s event=%s msg=%s', robot_id, evttype, msg.__str__())
+            robot_id = 1 # XXX remove when errant messages have been fixed
+
+        robot = self._robots.get(robot_id)
+        if not robot:
+            logger.info('Found robot id=%s', robot_id)
+            robot = self.cozmo_factory(self, robot_id, is_primary=self._primary_robot is None)
+            self._robots[robot_id] = robot
+            if not self._primary_robot:
+                self._primary_robot = robot
+            # Dispatch an event notifying that a new robot has been found
+            # the robot itself will send EvtRobotReady after initialization
+            self.dispatch_event(EvtRobotFound, robot=robot)
+
+            # _initialize will set the robot to a known good state in the
+            # background and dispatch a EvtRobotReady event when completed.
+            robot._initialize()
+
+        robot.dispatch_event(evttype, msg=msg)
+
+
+    #### Properties ####
+
+    @property
+    def is_connected(self):
+        '''True if currently connected to a controlling device.'''
+        return self._is_connected
+
+
+    #### Private Event handlers ####
+
+    def _handle_ping(self, msg):
+        '''Response to a ping event'''
+        resp = _clad_to_engine_iface.Ping(
+            counter=msg.counter,
+            timeSent_ms=msg.timeSent_ms,
+            isResponse=True)
+        self.send_msg(msg)
+
+    def _recv_default_handler(self, event, **kw):
+        '''Default event handler'''
+        if event.event_name.startswith('msg_animation'):
+            return self.anim.dispatch_event(event)
+
+        logger.debug('Engine received unhandled event_name=%s  kw=%s', event, kw)
+
+    def _recv_msg_animation_available(self, evt, msg):
+        self.anim_names.dispatch_event(evt)
+
+    def _recv_msg_end_of_message(self, evt, *a, **kw):
+        self.anim_names.dispatch_event(evt)
+
+    def _recv_msg_ui_device_connected(self, _, *, msg):
+        self.anim_names.refresh()
+        logger.info("UI device connected")
+
+
+    #### Public Event Handlers ####
+
+    #### Commands ####
+
+    async def wait_for_robot(self, timeout=None):
+        '''Wait for a Cozmo robot to connect and complete initialization.
+
+        Args:
+            timeout (float): Maximum length of time to wait for a robot to be ready
+        Returns:
+            A :class:`cozmo.robot.Cozmo` instance that's ready to use.
+        '''
+        if not self._primary_robot:
+            await self.wait_for(EvtRobotFound, timeout=timeout)
+        if self._primary_robot.is_ready:
+            return self._primary_robot
+        await self._primary_robot.wait_for(robot.EvtRobotReady, timeout=timeout)
+        return self._primary_robot

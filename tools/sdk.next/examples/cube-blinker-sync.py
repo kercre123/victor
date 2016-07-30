@@ -1,0 +1,62 @@
+import asyncio
+import logging
+import time
+
+import cozmo
+
+class BlinkyCube(cozmo.objects.LightCube):
+    '''Subclass LightCube and add a light-chaser effect.'''
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self._chaser = None
+
+    def start_light_chaser(self):
+        if self._chaser:
+            raise ValueError("Light chaser already running")
+        async def _chaser():
+            while True:
+                for i in range(4):
+                    cols = [ cozmo.lights.off_light  ] * 4
+                    cols[i] = cozmo.lights.green_light
+                    self.set_light_corners(*cols)
+                    await asyncio.sleep(0.1, loop=self._loop)
+        self._chaser = asyncio.ensure_future(_chaser(), loop=self._loop)
+
+    def stop_light_chaser(self):
+        if self._chaser:
+            self._chaser.cancel()
+            self._chaser = None
+
+
+# Make sure World knows how to instantiate the subclass
+cozmo.world.World.light_cube_factory = BlinkyCube
+
+
+
+def run(coz_conn):
+    cube = None
+    coz = coz_conn.wait_for_robot() 
+    print("Got initialized Cozmo")
+
+    look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
+
+    try:
+        cube = coz.world.wait_for_observed_light_cube(timeout=30)
+    except asyncio.TimeoutError:
+        print("Didn't find a cube :-(")
+        return
+    finally:
+        look_around.stop()
+
+    cube.start_light_chaser()
+    try:
+        print("Waiting for cube to be tapped")
+        cube.wait_for_tap(timeout=10)
+        print("Cube tapped")
+    finally:
+        cube.stop_light_chaser()
+        cube.set_lights_off()
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.WARN)
+    cozmo.connect(run)
