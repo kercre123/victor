@@ -50,6 +50,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPickupCube.h"
 
 
@@ -264,6 +265,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorPickUpCube(robot, config);
       break;
     }
+    case BehaviorType::ReactToCubeMoved:
+    {
+      newBehavior = new BehaviorReactAcknowledgeCubeMoved(robot, config);
+      break;
+    }
     case BehaviorType::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));
@@ -275,6 +281,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
   if (newBehavior)
   {
     newBehavior->SetBehaviorType(behaviorType);
+    //Handle disable by default
+    if(newBehavior->IsReactionary()){
+      IReactionaryBehavior* reactionary = newBehavior->AsReactionaryBehavior();
+      reactionary->HandleDisableByDefault(robot);
+    }
     newBehavior = AddToFactory(newBehavior, nameCollisionRule);
   }
     

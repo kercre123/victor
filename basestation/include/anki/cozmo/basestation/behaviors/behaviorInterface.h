@@ -18,11 +18,13 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "json/json-forwards.h"
 #include <set>
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/behaviorGroup.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
@@ -198,6 +200,7 @@ protected:
   // Convenience aliases
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
+  using RobotToEngineEvent= AnkiEvent<RobotInterface::RobotToEngine>;
   using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
   using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
     
@@ -205,6 +208,7 @@ protected:
   // are interested in handling.
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
+  void SubscribeToTags(const uint32_t robotId, std::set<RobotInterface::RobotToEngineTag>&& tags);
     
   // Derived classes must override this method to handle events that come in
   // irrespective of whether the behavior is running or not. Note that the Robot
@@ -214,6 +218,7 @@ protected:
   // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhielNotRunning!
   virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) { }
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) { }
+  virtual void AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot) { }
     
   // Derived classes must override this method to handle events that come in
   // while the behavior is running. In this case, the behavior is allowed to
@@ -223,6 +228,7 @@ protected:
   // NOTE: AlwaysHandle is called first!
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) { }
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) { }
+  virtual void HandleWhileRunning(const RobotToEngineEvent& event, const Robot& robot) { }
     
   // Derived classes must override this method to handle events that come in
   // only while the behavior is NOT running. If it doesn't matter whether the
@@ -232,6 +238,7 @@ protected:
   // NOTE: AlwaysHandle is called first!
   virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
+  virtual void HandleWhileNotRunning(const RobotToEngineEvent& event, const Robot& robot) { }
 
   // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
   // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
@@ -406,25 +413,33 @@ public:
 
   virtual const std::set<EngineToGameTag>& GetEngineToGameTags() const { return _engineToGameTags; }
   virtual const std::set<GameToEngineTag>& GetGameToEngineTags() const { return _gameToEngineTags; }
+  virtual const std::set<RobotInterface::RobotToEngineTag>& GetRobotToEngineTags() const { return _robotToEngineTags; }
     
   // Subscribe to tags that should immediately trigger this behavior
   void SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTriggerTags(std::set<GameToEngineTag>&& tags);
+  void SubscribeToTriggerTags(const uint32_t robotId, std::set<RobotInterface::RobotToEngineTag>&& tags);
   
   //Handle enabling/disabling of reactionary behaviors
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) final override;
+  virtual void AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot) final override;
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot){};
   virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot){};
+  virtual void AlwaysHandleInternal(const RobotToEngineEvent& event, const Robot& robot){};
   
   // if a trigger tag is received, this function will be called. If it returns true, this behavior will run
   // immediately
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) { return true; }
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event, const Robot& robot) { return true; }
+  virtual bool ShouldRunForEvent(const RobotInterface::RobotToEngine& event, const Robot& robot) { return true; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 
   virtual bool IsReactionary() const override { return true;}
+  
+  //Deal with default disabling - has to be called after type is set for behavior
+  virtual void HandleDisableByDefault(Robot& robot);
   
   // if true, the previously running behavior will be resumed (if possible) after this behavior is
   // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
@@ -450,6 +465,9 @@ protected:
   
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;
+  std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
+  bool _isDisabledByDefault;
+
 }; // class IReactionaryBehavior
 
 template<typename EventTag>
@@ -469,6 +487,13 @@ inline const std::set<ExternalInterface::MessageGameToEngineTag>&
 GetReactionaryBehaviorTags<ExternalInterface::MessageGameToEngineTag>(const IReactionaryBehavior* behavior)
 {
   return behavior->GetGameToEngineTags();
+}
+  
+template<>
+inline const std::set<RobotInterface::RobotToEngineTag>&
+GetReactionaryBehaviorTags<RobotInterface::RobotToEngineTag>(const IReactionaryBehavior* behavior)
+{
+  return behavior->GetRobotToEngineTags();
 }
 
 

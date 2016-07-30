@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -235,7 +236,7 @@ void IBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
   if(_robot.HasExternalInterface()) {
     auto handlerCallback = [this](const GameToEngineEvent& event) {
-      this->HandleEvent(event);
+      HandleEvent(event);
     };
       
     for(auto tag : tags) {
@@ -248,12 +249,23 @@ void IBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
   if(_robot.HasExternalInterface()) {
     auto handlerCallback = [this](const EngineToGameEvent& event) {
-      this->HandleEvent(event);
+      HandleEvent(event);
     };
       
     for(auto tag : tags) {
       _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(tag, handlerCallback));
     }
+  }
+}
+  
+void IBehavior::SubscribeToTags(const uint32_t robotId, std::set<RobotInterface::RobotToEngineTag> &&tags)
+{
+  auto handlerCallback = [this](const RobotToEngineEvent& event) {
+    HandleEvent(event);
+  };
+  
+  for(auto tag : tags) {
+    _eventHandles.push_back(_robot.GetRobotMessageHandler()->Subscribe(robotId, tag, handlerCallback));
   }
 }
 
@@ -621,17 +633,22 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
   
 void IReactionaryBehavior::LoadConfig(Robot& robot, const Json::Value& config)
 {
+  _isDisabledByDefault = config.get(kDisableReactionaryDefault, false).asBool();
+
+}
   
-  bool disableBehavior = config.get(kDisableReactionaryDefault, false).asBool();
-  
-  if(disableBehavior) {
+void IReactionaryBehavior::HandleDisableByDefault(Robot& robot)
+{
+  if(_isDisabledByDefault) {
     PRINT_NAMED_DEBUG("IReactionaryBehavior.LoadConfig.DisableBehavior",
                       "Reactionary Behavior %s is being disabled", GetName().c_str());
     
     std::string id = "default_disabled";
     robot.GetBehaviorManager().RequestEnableReactionaryBehavior(id, GetType(), false);
   }
+  
 }
+
 
 void IReactionaryBehavior::SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags)
 {
@@ -643,6 +660,12 @@ void IReactionaryBehavior::SubscribeToTriggerTags(std::set<GameToEngineTag>&& ta
 {
   _gameToEngineTags.insert(tags.begin(), tags.end());
   SubscribeToTags(std::move(tags));
+}
+  
+void IReactionaryBehavior::SubscribeToTriggerTags(const uint32_t robotId, std::set<RobotInterface::RobotToEngineTag>&& tags)
+{
+  _robotToEngineTags.insert(tags.begin(), tags.end());
+  SubscribeToTags(robotId, std::move(tags));
 }
 
 void IReactionaryBehavior::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
@@ -673,6 +696,13 @@ void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Ro
   }else{
     AlwaysHandleInternal(event, robot);
   }
+}
+  
+  
+void IReactionaryBehavior::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)
+{
+  //Currently no default behavior, using Always Handle Internal for consistency
+  AlwaysHandleInternal(event, robot);
 }
   
 void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enable)

@@ -15,6 +15,7 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
 #include <string>
 
 namespace Anki {
@@ -28,6 +29,11 @@ inline const char* MessageTagToString(const ExternalInterface::MessageEngineToGa
 inline const char* MessageTagToString(const ExternalInterface::MessageGameToEngineTag& tag)
 {
   return MessageGameToEngineTagToString(tag);
+}
+
+inline const char* MessageTagToString(const RobotInterface::RobotToEngineTag& tag)
+{
+  return RobotToEngineTagToString(tag);
 }
 
 }

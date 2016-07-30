@@ -30,6 +30,7 @@ enum uint_8 BehaviorType {
   ReactToRobotOnFace,
   ReactToOnCharger,
   ReactToNewBlock,
+  ReactToCubeMoved,
   PlayAnim,
   UnityDriven,
   PounceOnMotion,

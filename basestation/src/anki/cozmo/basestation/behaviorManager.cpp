@@ -24,7 +24,10 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -221,6 +224,19 @@ void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
                   this,
                   std::placeholders::_1)));
   }
+  
+  // Subscribe our own callback to these events
+  RobotInterface::MessageHandler* robotInterface = _robot.GetRobotMessageHandler();
+  for (auto tag : behavior->GetRobotToEngineTags())
+  {
+    _eventHandlers.push_back(
+      robotInterface->Subscribe(_robot.GetID(),
+                                tag,
+                                std::bind(&BehaviorManager::ConsiderReactionaryBehaviorForEvent<RobotInterface::RobotToEngine>,
+                                          this,
+                                          std::placeholders::_1)));
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
