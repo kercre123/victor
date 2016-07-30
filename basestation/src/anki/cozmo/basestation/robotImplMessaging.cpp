@@ -68,7 +68,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                       &Robot::HandleTrace);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                 &Robot::HandleCrashReport);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::fwVersionInfo,               &Robot::HandleFWVersionInfo);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,      &Robot::HandleFWVersionInfo);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp,               &Robot::HandleBlockPickedUp);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPlaced,                 &Robot::HandleBlockPlaced);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered,      &Robot::HandleActiveObjectDiscovered);
@@ -201,13 +201,13 @@ void Robot::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& 
   static_assert(decltype(RobotInterface::FWVersionInfo::toRobotCLADHash)().size() == sizeof(messageEngineToRobotHash), "Incorrect sizes in CLAD version mismatch message");
   static_assert(decltype(RobotInterface::FWVersionInfo::toEngineCLADHash)().size() == sizeof(messageRobotToEngineHash), "Incorrect sizes in CLAD version mismatch message");
   
-  _fwVersionInfo = message.GetData().Get_fwVersionInfo();
+  _factoryFirmwareVersion = message.GetData().Get_factoryFirmwareVersion();
 
   std::string robotEngineToRobotStr;
   std::string engineEngineToRobotStr;
-  if (memcmp(_fwVersionInfo.toRobotCLADHash.data(), messageEngineToRobotHash, _fwVersionInfo.toRobotCLADHash.size())) {
+  if (memcmp(_factoryFirmwareVersion.toRobotCLADHash.data(), messageEngineToRobotHash, _factoryFirmwareVersion.toRobotCLADHash.size())) {
 
-    robotEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(_fwVersionInfo.toRobotCLADHash.data(), static_cast<uint32_t>(_fwVersionInfo.toRobotCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
+    robotEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(_factoryFirmwareVersion.toRobotCLADHash.data(), static_cast<uint32_t>(_factoryFirmwareVersion.toRobotCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
     engineEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(messageEngineToRobotHash, sizeof(messageEngineToRobotHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
 
     PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.", robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
@@ -217,9 +217,9 @@ void Robot::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& 
   
   std::string robotRobotToEngineStr;
   std::string engineRobotToEngineStr;
-  if (memcmp(_fwVersionInfo.toEngineCLADHash.data(), messageRobotToEngineHash, _fwVersionInfo.toEngineCLADHash.size())) {
+  if (memcmp(_factoryFirmwareVersion.toEngineCLADHash.data(), messageRobotToEngineHash, _factoryFirmwareVersion.toEngineCLADHash.size())) {
 
-    robotRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(_fwVersionInfo.toEngineCLADHash.data(), static_cast<uint32_t>(_fwVersionInfo.toEngineCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
+    robotRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(_factoryFirmwareVersion.toEngineCLADHash.data(), static_cast<uint32_t>(_factoryFirmwareVersion.toEngineCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
     engineRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(messageRobotToEngineHash, sizeof(messageRobotToEngineHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
     
     PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.", robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());

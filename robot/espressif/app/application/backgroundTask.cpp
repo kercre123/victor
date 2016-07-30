@@ -24,14 +24,10 @@ extern "C" {
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_hash.h"
-#include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/imageTypes.h"
 #include "anki/cozmo/robot/logging.h"
 #include "upgradeController.h"
 #include "animationController.h"
-
-extern const unsigned int COZMO_VERSION_COMMIT;
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -126,21 +122,21 @@ void RadioConnectionStateMachineUpdate()
     }
     case 5:
     {
-      RobotInterface::FWVersionInfo vi;
-      vi.wifiVersion = COZMO_VERSION_COMMIT;
-      vi.rtipVersion = RTIP::Version;
-      vi.bodyVersion = 0; // Don't have access to this yet
-      os_memcpy(vi.toRobotCLADHash,  messageEngineToRobotHash, sizeof(vi.toRobotCLADHash));
-      os_memcpy(vi.toEngineCLADHash, messageRobotToEngineHash, sizeof(vi.toEngineCLADHash));
-      if (RobotInterface::SendMessage(vi)) doRTConnectPhase++;
-      break;
-    }
-    case 6:
-    {
       RobotInterface::RobotAvailable idMsg;
       idMsg.robotID = getSerialNumber();
       idMsg.modelID = getModelNumber();
       if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
+      break;
+    }
+    case 6:
+    {
+      RobotInterface::FirmwareVersion versionMsg;
+      u32* versionInfoAsU32 = reinterpret_cast<u32*>(versionMsg.json);
+      os_memcpy(versionInfoAsU32,
+                Anki::Cozmo::UpgradeController::GetVersionInfo(),
+                Anki::Cozmo::UpgradeController::VERSION_INFO_MAX_LENGTH/sizeof(u32));
+      versionMsg.json_length = os_strlen((const char*)versionMsg.json);
+      if (RobotInterface::SendMessage(versionMsg)) doRTConnectPhase++;
       break;
     }
     case 7:

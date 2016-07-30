@@ -9,7 +9,6 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "proxSensors.h"
-#include "version.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -197,8 +196,6 @@ namespace Anki {
 #endif
 
         robotStateMessageCounter_ = 0;
-
-				SendVersionInfo();
 
         return RESULT_OK;
 

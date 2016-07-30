@@ -213,31 +213,6 @@ namespace Anki {
               }
               break;
             }
-            case RobotInterface::EngineToRobot::Tag_rtipVersion:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              RTIP::Version = msg.rtipVersion.version;
-              RTIP::Date    = msg.rtipVersion.date;
-              int i = 0;
-              msg.rtipVersion.description_length = MIN(msg.rtipVersion.description_length, VERSION_DESCRIPTION_SIZE-1);
-              while (i < msg.rtipVersion.description_length)
-              {
-                RTIP::VersionDescription[i] = msg.rtipVersion.description[i];
-                i++;
-              }
-              while (i < VERSION_DESCRIPTION_SIZE)
-              {
-                RTIP::VersionDescription[i] = 0;
-                i++;
-              }
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct              
-              DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
-              break ;
-            }
             case RobotInterface::EngineToRobot::Tag_setRTTO:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize);

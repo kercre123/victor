@@ -14,8 +14,6 @@
 
 using namespace Anki::Cozmo;
 
-extern const unsigned int COZMO_VERSION_COMMIT;
-
 extern GlobalDataToBody g_dataToBody;
 
 static const int CATHODE_COUNT = 3;
@@ -64,9 +62,9 @@ void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
     {
       static const LightState lights[] = {
         { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { COZMO_VERSION_COMMIT & 0xFFFF, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
         { 0x7FFF, 0x0000, 34, 67, 17, 17 },
-        { COZMO_VERSION_COMMIT >> 16, 0x0000, 34, 67, 17, 17 },
+        { 0x0000, 0x0000, 34, 67, 17, 17 },
         { 0x0000, 0x0000, 34, 67, 17, 17 }
       };
       setLights(lights);

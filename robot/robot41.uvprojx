@@ -10,7 +10,6 @@
       <TargetName>robot</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>MK02FN128xxx10</Device>
@@ -47,7 +46,7 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\app\</OutputDirectory>
+          <OutputDirectory>.\build\</OutputDirectory>
           <OutputName>robot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
@@ -69,9 +68,9 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make k02"</UserProg1Name>
+            <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -81,7 +80,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make k02_fix"</UserProg1Name>
+            <UserProg1Name>python tools\boot_header.py build\robot.axf</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -125,6 +124,47 @@
             <HexOffset>0</HexOffset>
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
+          <Simulator>
+            <UseSimulator>0</UseSimulator>
+            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
+            <RunToMain>1</RunToMain>
+            <RestoreBreakpoints>1</RestoreBreakpoints>
+            <RestoreWatchpoints>1</RestoreWatchpoints>
+            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
+            <RestoreFunctions>1</RestoreFunctions>
+            <RestoreToolbox>1</RestoreToolbox>
+            <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
+            <RestoreSysVw>1</RestoreSysVw>
+          </Simulator>
+          <Target>
+            <UseTarget>1</UseTarget>
+            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
+            <RunToMain>1</RunToMain>
+            <RestoreBreakpoints>1</RestoreBreakpoints>
+            <RestoreWatchpoints>1</RestoreWatchpoints>
+            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
+            <RestoreFunctions>0</RestoreFunctions>
+            <RestoreToolbox>1</RestoreToolbox>
+            <RestoreTracepoints>1</RestoreTracepoints>
+            <RestoreSysVw>1</RestoreSysVw>
+          </Target>
+          <RunDebugAfterBuild>0</RunDebugAfterBuild>
+          <TargetSelection>1</TargetSelection>
+          <SimDlls>
+            <CpuDll></CpuDll>
+            <CpuDllArguments></CpuDllArguments>
+            <PeripheralDll></PeripheralDll>
+            <PeripheralDllArguments></PeripheralDllArguments>
+            <InitializationFile></InitializationFile>
+          </SimDlls>
+          <TargetDlls>
+            <CpuDll></CpuDll>
+            <CpuDllArguments></CpuDllArguments>
+            <PeripheralDll></PeripheralDll>
+            <PeripheralDllArguments></PeripheralDllArguments>
+            <InitializationFile></InitializationFile>
+            <Driver>BIN\UL2CM3.DLL</Driver>
+          </TargetDlls>
         </DebugOption>
         <Utilities>
           <Flash1>
@@ -189,7 +229,6 @@
             <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
-            <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
             <RwSelD>3</RwSelD>
             <CodeSel>0</CodeSel>
@@ -326,10 +365,6 @@
             <useXO>0</useXO>
             <v6Lang>0</v6Lang>
             <v6LangP>0</v6LangP>
-            <vShortEn>1</vShortEn>
-            <vShortWch>1</vShortWch>
-            <v6Lto>0</v6Lto>
-            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--no_exceptions</MiscControls>
               <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
@@ -437,10 +472,6 @@
                     <useXO>2</useXO>
                     <v6Lang>0</v6Lang>
                     <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <v6Lto>0</v6Lto>
-                    <v6WtE>0</v6WtE>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>
@@ -645,11 +676,6 @@
               <FileName>testModeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>version.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\version.cpp</FilePath>
             </File>
             <File>
               <FileName>backpackLightController.cpp</FileName>

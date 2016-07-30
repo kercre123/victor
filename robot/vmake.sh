@@ -3,7 +3,7 @@
 export PRJ=robot
 cd "${0%/*}"
 if [ ! -d ../$PRJ ]; then echo "Must run from project folder"; exit 1; fi
-make k02 || exit 1
+make dev || exit 1
 echo Copying to anki-vm-keil:$HOSTNAME/$PRJ...
 rsync --delete -rte "ssh" ../$PRJ nathan@anki-vm-keil:$HOSTNAME
 echo Building...

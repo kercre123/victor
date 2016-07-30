@@ -3,7 +3,7 @@ Utility classes for interfacing with the Cozmo robot through reliable transport 
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, time, re, struct
+import sys, os, time, re, struct, json
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
@@ -196,21 +196,23 @@ class _Dispatcher(IDataReceiver):
             elif msg.tag == msg.Tag.mainCycleTimeError:
                 sys.stdout.write(repr(msg.mainCycleTimeError))
                 sys.stdout.write(os.linesep)
-            elif msg.tag == msg.Tag.fwVersionInfo:
-                toRobot = 0
-                for i, b in enumerate(msg.fwVersionInfo.toRobotCLADHash):
-                    toRobot |= b << (8*i)
-                toEngine = 0
-                for i, b in enumerate(msg.fwVersionInfo.toEngineCLADHash):
-                    toEngine |= b << (8*i)
-                if toRobot  != messageEngineToRobotHash:
-                    sys.stderr.write("WARNING: ToRobot CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toRobot,   messageEngineToRobotHash, linesep=os.linesep))
-                if toEngine != messageRobotToEngineHash:
-                    sys.stderr.write("WARNING: ToEngine CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toEngine, messageRobotToEngineHash, linesep=os.linesep))
+            elif msg.tag == msg.Tag.robotAvailable:
+                try:
+                    versionInfo = json.loads(msg.robotAvailable.versionInfo)
+                    toRobot  = versionInfo['messageEngineToRobotHash']
+                    toEngine = versionInfo['messageRobotToEngineHash']
+                    if toRobot  != messageEngineToRobotHash:
+                        sys.stderr.write("WARNING: ToRobot CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toRobot,   messageEngineToRobotHash, linesep=os.linesep))
+                    if toEngine != messageRobotToEngineHash:
+                        sys.stderr.write("WARNING: ToEngine CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toEngine, messageRobotToEngineHash, linesep=os.linesep))
+                except:
+                    sys.stderr.write("Unable to parse robot firmware version info")
+                    sys.stderr.write(os.linesep)
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:
                         sub(getattr(msg, msg.tag_name))
+
 
     def send(self, msg):
         return self.transport.SendData(True, False, self.dest, msg.pack())

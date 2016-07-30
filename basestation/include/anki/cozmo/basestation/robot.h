@@ -149,7 +149,7 @@ public:
   bool HasReceivedRobotState() const;
   
   // Version checks
-  const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _fwVersionInfo; }
+  const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _factoryFirmwareVersion; }
   bool HasMismatchedCLAD() const { return _hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD; }
   
   // Accessors
@@ -1012,7 +1012,7 @@ protected:
   TracePrinter _traceHandler;
 
   // Copy of last received firmware version info from robot
-  RobotInterface::FWVersionInfo _fwVersionInfo;
+  RobotInterface::FWVersionInfo _factoryFirmwareVersion;
   bool _hasMismatchedEngineToRobotCLAD;
   bool _hasMismatchedRobotToEngineCLAD;
   

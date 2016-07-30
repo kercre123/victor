@@ -271,13 +271,6 @@ message EnableReadToolCodeMode
   bool enable
 }
 
-message RTIPVersionInfo
-{
-  uint_32 version,
-  uint_32 date,
-  string  description
-}
-
 // Set ReliableTransport timeout time
 message DebugSetRTTO
 {
@@ -414,7 +407,7 @@ union EngineToRobot
   NVStorage::NVStorageRead      readNV                      = 0x84,
   NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
   // Available for future use                               = 0x86,
-  RTIPVersionInfo               rtipVersion                 = 0x87,
+  //          FREE SLOT!!!                                  = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,

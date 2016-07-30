@@ -22,6 +22,20 @@ namespace Anki {
       
       /// Callback on a network disconnect
       void OnDisconnect();
+      
+      /// Maximum possible size of firmware version meta data
+      extern const u32 VERSION_INFO_MAX_LENGTH;
+      
+      /// Retreive pointer to firmware version meta data in flash
+      u32* GetVersionInfo();
+      
+      extern "C" {
+        /// Retrieve numerical firmware version
+        s32 GetFirmwareVersion();
+        
+        /// Retrieve the numerical (epoch) build timestamp
+        u32 GetBuildTime();
+      }
     }
   }
 }

@@ -835,10 +835,6 @@ namespace Anki {
       {
         SimNVStorageSpace::WipeAll(msg);
       }
-      void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
-      {
-        // Nothing to do here
-      }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here

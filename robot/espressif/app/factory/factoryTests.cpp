@@ -20,6 +20,7 @@ extern "C" {
 #include "anki/cozmo/robot/esp.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
+#include "upgradeController.h"
 
 #include "wifi-cozmo-img.h"
 
@@ -29,10 +30,6 @@ extern "C" {
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/birthCertificate.h"
 #include "clad/types/imu.h"
-
-extern const unsigned int COZMO_VERSION_COMMIT;
-extern const char* DAS_USER;
-extern const char* BUILD_DATE;
 
 typedef void (*FTMUpdateFunc)(void);
 
@@ -234,8 +231,8 @@ void Process_TestState(const RobotInterface::TestState& state)
       static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
                                                                         "PSK:  %s\n"
                                                                         "Chan: %d  Stas: %d\n"
-                                                                        "WiFi-V: %x\nWiFi-D: %s\n"
-                                                                        "RTIP-V: %x\nRTIP-D: %s\n"
+                                                                        "FW Build: %d\n"
+                                                                        "FW Date:  %d\n"
                                                                         "Battery V x10: %d";
       const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
       if (!clientConnected())
@@ -249,8 +246,7 @@ void Process_TestState(const RobotInterface::TestState& state)
         memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
         Face::FacePrintf(fmtBuf,
                          ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                         COZMO_VERSION_COMMIT, BUILD_DATE + 5,
-                         RTIP::Version, RTIP::VersionDescription,
+                         UpgradeController::GetFirmwareVersion(), UpgradeController::GetBuildTime(),
                          state.battVolt10x);
       }
       break;

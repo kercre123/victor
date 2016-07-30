@@ -15,7 +15,6 @@
   <project>
     <PathAndName>.\syscon\syscon.uvprojx</PathAndName>
     <NodeIsActive>1</NodeIsActive>
-    <NodeIsExpanded>1</NodeIsExpanded>
     <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
   </project>
 

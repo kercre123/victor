@@ -9,128 +9,130 @@ ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/ syscon/hal
 
 UV4=C:/Keil_v5/UV4/UV4.exe
-STAGING_DIR=staging
-BINARY_DIR=binaries
-RELEASE_DIR=releases
+PY=python3
 
-VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
-VERSION_HEADER=include/anki/cozmo/robot/version.h
+GENERATED_DIR=generated
+BUILD_DIR=build
 
-UNSIGNED_BINARY=$(RELEASE_DIR)/cozmo.unsafe
-SIGNED_BINARY=$(RELEASE_DIR)/cozmo.safe
-STAGING_BINARY=$(STAGING_DIR)/cozmo.safe
+EXTERNALS_DIR=../EXTERNALS/firmware
 
 DIFFIE_KEY=certs/diffie.pem
 DEVELOPMENT_KEY=certs/development.pem
 AES_KEY=FA67CE138A376CD21A26118615326AA5
 SIGN_FLAGS=--sign $(AES_KEY) $(DEVELOPMENT_KEY)
+PUBLIC_KEY_EXPORTER=tools/export_public.py
+PUBLIC_KEYS_HEADER=$(GENERATED_DIR)/publickeys.h
+CALCMONT_DEPS=tools/calcMontgomery.cpp ../crypto/bignum.cpp
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app export_key tests
+WIFI_BINARY=$(BUILD_DIR)/esp.user.bin
+RTIP_BINARY=$(BUILD_DIR)/robot.axf
+BODY_BINARY=$(BUILD_DIR)/syscon.axf
+MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
+OTA_FILE=releases/cozmo.safe
 
-all: k02 esp sim
+.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild
 
-# Convenience rule
-fresh: clean $(ANKI_LOG_TABLE_JSON) all python
-	rm -Rf build ./syscon/build
+########################################################################################################################
+# Build rules for engine / app
 
-$(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
-	python3 $(ANKI_LOG_PP) --preprocessor --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
-
-purgeAnkiLog: $(ANKI_LOG_PP)
-	python3 $(ANKI_LOG_PP) --purge --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
-
-verboseAnkiLog: $(ANKI_LOG_PP)
-	python3 $(ANKI_LOG_PP) -vvv --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
-
-$(VERSION_HEADER):
-	$(VERSION_GENERATOR) $@
-
-python:
-	make -C clad python
+sim: $(ANKI_LOG_TABLE_JSON)
+	make fourzero -C clad -j4
 
 app: $(ANKI_LOG_TABLE_JSON)
 
-sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
-	make fourzero -C clad -j4
+# Default to make engine (simulator build simple)
+all: sim app esp k02 nrf
 
-nrf: export_key $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
-	make $@ -C clad -j4
+########################################################################################################################
+# Convenience rules
 
-k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
-	make $@ -C clad -j4
+dev: AnkiLog nrf k02 esp
 
-keil:
-	$(UV4) -c ./cozmo.uvmpw
-	$(UV4) -b ./cozmo.uvmpw
-
-staging_dir:
-	mkdir -p ./staging
-
-export_key:
-	mkdir -p generated build
-	rm -f build/calcMont*
-	python3 ./tools/export_public.py -d $(DIFFIE_KEY) -k $(DEVELOPMENT_KEY) -a $(AES_KEY) ./generated/publickeys.h
-	g++ -o build/calcMont ./tools/calcMontgomery.cpp ../crypto/bignum.cpp -I ../crypto -I generated
-	build/calcMont >> ./generated/publickeys.h
-
-crypto_files = ../crypto/bignum.cpp
-sign_test_files = ./robot-test/signtest.cpp ../crypto/rsa_pss.cpp ../crypto/aes.cpp ../crypto/crc32.cpp ../crypto/sha512.cpp
-diffie_test_files = ./robot-test/diffietest.cpp ../crypto/sha1.cpp
-
-tests: export_key $(sign_test_files)
-	g++ -o ./build/diffietest $(diffie_test_files) $(crypto_files) -I ../crypto -I ./generated
-	build/diffietest
-
-	g++ -o ./build/signtest $(sign_test_files) $(crypto_files) -I ../crypto -I include/anki/cozmo/robot -I ./generated
-	build/signtest $(UNSIGNED_BINARY) $(SIGNED_BINARY)
-
-k02_fix: staging_dir
-	python3 ./tools/boot_header.py ./build/app/robot.axf
-	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
-
-k02_fcc_fix: staging_dir
-	python3 ./tools/boot_header.py ./build/fcc/robot.axf
-
-nrf_fix:
-	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
-
-# This fixes the headers and places the binaries in release
-stage_binaries:
-	@if test ./build/app/robot.axf -nt ./binaries/robot.axf; then cp -v ./build/app/robot.axf ./binaries/robot.axf; fi
-	@if test ./syscon/build/app/syscon.axf -nt ./binaries/syscon.axf; then cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf; fi
-	@if test ./staging/esp.user.bin  -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin  ./binaries/esp.user.bin; fi
-
-# This is needed when timestamps get screwed up (as they constantly do with Vagrant/VM)
-force_stage_binaries:
-	cp -v ./build/app/robot.axf ./binaries/robot.axf
-	cp -v ./syscon/build/app/syscon.axf ./binaries/syscon.axf
-#	cp -v ./staging/esp.user.bin  ./binaries/esp.user.bin
-
-stage_factory_upgrade:
-	cp -v staging/esp.factory.bin binaries/esp.factory.bin
-	cp -v staging/factory.safe    binaries/factory.safe
-
-release: stage_binaries
-	#if [ -a $(UV4) ]; then make keil; fi;
-	python3 ./tools/sign.py -c --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(UNSIGNED_BINARY)
-	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(SIGNED_BINARY)
-	if test -e ./staging/factory_upgrade.safe; then cp -v ./staging/factory_upgrade.safe releases/; fi
-	make tests
-
-vesp:
-	vagrant ssh -c "make -C /vagrant/robot esp"
-
-esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) export_key staging_dir
-	make $@ -C clad -j4
-	make -C espressif lib/libmain_w.a
-	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
-	python3 ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
-	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf $(STAGING_BINARY)
-
-onBuildServer: esp
+ota: $(OTA_FILE)
 
 clean:
 	make -C clad clean
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
-	rm -f $(VERSION_HEADER)
+	#rm -rf $(BUILD_DIR)
+	rm -rf $(GENERATED_DIR)
+
+fresh: clean $(ANKI_LOG_TABLE_JSON) all python
+	rm -Rf build ./syscon/build
+
+python:
+	make $@ -C clad -j4
+
+$(BUILD_DIR):
+	mkdir -p $@
+
+$(GENERATED_DIR):
+	mkdir -p $@
+
+nrf: $(PUBLIC_KEYS_HEADER) $(ANKI_LOG_TABLE_JSON)
+	make $@ -C clad -j4
+
+k02: $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_TABLE_JSON)
+	make $@ -C clad -j4
+
+k02_fix:
+	$(PY) ./tools/boot_header.py ./build/app/robot.axf
+
+esp: $(ANKI_LOG_TABLE_JSON) $(PUBLIC_KEYS_HEADER)
+	make $@ -C clad -j4
+
+pull:
+	$(PY) pull_server_firmware.py
+
+vesp:
+	vagrant ssh -c "make -C /vagrant/robot esp"
+
+########################################################################################################################
+# Code generation and preprocessing
+
+$(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
+	$(PY) $(ANKI_LOG_PP) --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
+
+AnkiLog: $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
+	$(PY) $(ANKI_LOG_PP) --preprocessor $(ANKI_LOG_SRC_DIRS)
+
+verboseAnkiLog: $(ANKI_LOG_PP)
+	$(PY) $(ANKI_LOG_PP) -vvv --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
+
+purgeAnkiLog: $(ANKI_LOG_PP)
+	$(PY) $(ANKI_LOG_PP) --purge --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
+
+$(PUBLIC_KEYS_HEADER): Makefile $(PUBLIC_KEY_EXPORTER) $(CALCMONT_DEPS) $(GENERATED_DIR) $(BUILD_DIR)
+	$(PY) $(PUBLIC_KEY_EXPORTER) -d $(DIFFIE_KEY) -k $(DEVELOPMENT_KEY) -a $(AES_KEY) $@
+	g++ -o build/calcMont $(CALCMONT_DEPS) -I ../crypto -I $(GENERATED_DIR)
+	build/calcMont >> $@
+
+########################################################################################################################
+# Firmware Binaries
+
+keil:
+	$(UV4) -c ./cozmo.uvmpw
+	$(UV4) -b ./cozmo.uvmpw
+
+espBuild: esp AnkiLog
+	make -C espressif lib/libmain_w.a
+	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
+
+$(WIFI_BINARY): ./espressif/bin/upgrade/user1.2048.new.3.bin
+	$(PY) ./tools/wifiAppImageHeader.py $< $@
+
+$(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
+	mkdir -p $(dir $@)
+	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
+
+########################################################################################################################
+# Build server steps
+
+server.1: nrf k02
+	tar -cjf generated.tar.bz2 $(GENERATED_DIR)
+
+server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to generate these files
+	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY)
+
+server.3: espBuild $(OTA_FILE)
+	tar -czf firmware.tar.gz $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) # TODO add $(MAP_FILES)

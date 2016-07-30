@@ -1,0 +1,17 @@
+/** CLAD message types from factory firmware that are now obsolete but must be preserved for factory compatibility
+ */
+
+namespace Anki {
+  namespace Cozmo {
+    namespace RobotInterface {
+      message FWVersionInfo
+      {
+        uint_32 wifiVersion = 0, // TODO actually handle or replace them
+        uint_32 rtipVersion = 0,
+        uint_32 bodyVersion = 0,
+        uint_8  toRobotCLADHash[16],
+        uint_8  toEngineCLADHash[16]
+      }
+    }
+  }
+}

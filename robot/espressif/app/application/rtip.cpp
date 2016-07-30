@@ -19,10 +19,6 @@ namespace Anki {
 namespace Cozmo {
 namespace RTIP {
 
-u32 Version;
-u32 Date;
-char VersionDescription[VERSION_DESCRIPTION_SIZE]; 
-
 bool Init()
 {
   return true;

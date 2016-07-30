@@ -31,7 +31,7 @@ extern "C" {
 #include "rsa_pss.h"
 #include "publickeys.h"
 
-#define ESP_FW_MAX_SIZE  (0x07c000)
+#define ESP_FW_MAX_SIZE  (0x80000 - (APPLICATION_A_SECTOR * SECTOR_SIZE))
 #define ESP_FW_ADDR_MASK (0x07FFFF)
 
 #define WRITE_DATA_SIZE (1024)
@@ -54,6 +54,8 @@ void gen_random(void* ptr, int length)
 namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
+
+  const u32 VERSION_INFO_MAX_LENGTH = 1024;
 
   typedef enum
   {
@@ -84,22 +86,29 @@ namespace UpgradeController {
     OTATR_Apply,
   } OTATaskPhase;
 
-  uint32_t fwWriteAddress; ///< Where we will write the next image
-  uint32_t nextImageNumber; ///< Image number for the next upgrade
-  uint8_t* buffer; ///< Pointer to RX buffer
-  int32_t  bufferSize; ///< Number of bytes of storage at buffer
-  int32_t  bufferUsed; ///< Number of bytes of storage buffer currently filled
-  int32_t  bytesProcessed; ///< The number of bytes of OTA data that have been processed from the buffer
-  int32_t  counter; ///< A in phase counter
-  uint32_t timer; ///< A timeout time
-  int16_t  acceptedPacketNumber; ///< Highest packet number we have accepted
-  int8_t   retries; ///< Flash operation retries
-  OTATaskPhase phase; ///< Keeps track of our current task state
-  bool didWiFi; ///< We have new firmware for the Espressif
-  bool didRTIP; ///< We have written new firmare for the RTIP
-  bool haveTermination; ///< Have received termination
-  bool haveValidCert; ///< Have a valid certificate for the image
-  bool receivedIV;
+
+  extern "C"
+  {
+    extern int COZMO_VERSION_ID;
+    extern unsigned int COZMO_BUILD_DATE;
+  }
+
+  static uint32_t fwWriteAddress; ///< Where we will write the next image
+  static uint32_t nextImageNumber; ///< Image number for the next upgrade
+  static uint8_t* buffer; ///< Pointer to RX buffer
+  static int32_t  bufferSize; ///< Number of bytes of storage at buffer
+  static int32_t  bufferUsed; ///< Number of bytes of storage buffer currently filled
+  static int32_t  bytesProcessed; ///< The number of bytes of OTA data that have been processed from the buffer
+  static int32_t  counter; ///< A in phase counter
+  static uint32_t timer; ///< A timeout time
+  static int16_t  acceptedPacketNumber; ///< Highest packet number we have accepted
+  static int8_t   retries; ///< Flash operation retries
+  static OTATaskPhase phase; ///< Keeps track of our current task state
+  static bool didWiFi; ///< We have new firmware for the Espressif
+  static bool didRTIP; ///< We have written new firmare for the RTIP
+  static bool haveTermination; ///< Have received termination
+  static bool haveValidCert; ///< Have a valid certificate for the image
+  static bool receivedIV;
 
   static sha512_state firmware_digest;
   static uint8_t aes_iv[AES_KEY_LENGTH];
@@ -124,7 +133,6 @@ namespace UpgradeController {
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
     
-
     uint32 selectedImage;
     system_rtc_mem_read(RTC_IMAGE_SELECTION, &selectedImage, 4);
     nextImageNumber = ourHeader->imageNumber + 1;
@@ -149,6 +157,20 @@ namespace UpgradeController {
         return false;
       }
     }
+    
+    // Copy version metadata into RAM for unaligned access required for string search
+    uint32_t versionMetaDataBuffer[(VERSION_INFO_MAX_LENGTH/sizeof(uint32_t))+1]; // allow extra room for null term
+    os_memcpy(versionMetaDataBuffer, GetVersionInfo(), VERSION_INFO_MAX_LENGTH);
+    char* json = reinterpret_cast<char*>(versionMetaDataBuffer);
+    json[VERSION_INFO_MAX_LENGTH] = 0; // Force NULL termination
+    static const char* VERSION_TAG = "\"version\": ";
+    const char* versionStr = os_strstr(json, VERSION_TAG);
+    if (versionStr) COZMO_VERSION_ID = atoi(versionStr + os_strlen(VERSION_TAG));
+    else COZMO_VERSION_ID = -2;
+    static const char* TIME_TAG = "\"time\": ";
+    const char* timeStr = os_strstr(json, TIME_TAG);
+    if (timeStr) COZMO_BUILD_DATE = atoi(timeStr + os_strlen(TIME_TAG));
+    else COZMO_BUILD_DATE = 1;
     
     phase = OTAT_Ready;
     return true;
@@ -311,9 +333,9 @@ namespace UpgradeController {
       }
       case OTAT_Flash_Erase:
       {
-        if (counter < ESP_FW_MAX_SIZE)
+        if (counter < (ESP_FW_MAX_SIZE + SECTOR_SIZE)) // One extra sector for version info
         {
-          const uint32 sector = (fwWriteAddress + counter) / SECTOR_SIZE;
+          const uint32 sector = ((fwWriteAddress + counter) / SECTOR_SIZE) - 1; // One extra sector for version info
           #if DEBUG_OTA
           os_printf("Erase sector 0x%x\r\n", sector);
           #endif
@@ -499,20 +521,36 @@ namespace UpgradeController {
         {
           if (fwb->blockAddress == COMMENT_BLOCK)
           {
+            const uint32 destAddr = fwWriteAddress - SECTOR_SIZE; // One sector before beginning of firmware
             #if DEBUG_OTA
-            os_printf("OTA comment\r\n");
+            os_printf("WC 0x%x\r\n", destAddr);
             #endif
-            retries = MAX_RETRIES;
-            bufferUsed -= sizeof(FirmwareBlock);
-            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-            bytesProcessed += sizeof(FirmwareBlock);
-            ack.bytesProcessed = bytesProcessed;
-            ack.result = OKAY;
-            RobotInterface::SendMessage(ack);
-            
-            phase = OTAT_Flash_Verify;
-            counter = 0;
-            timer = 0;
+            const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+            if (rslt != SPI_FLASH_RESULT_OK)
+            {
+              if (retries-- <= 0)
+              {
+                #if DEBUG_OTA
+                os_printf("\tRan out of retries writing to Comment block\r\n");
+                #endif
+                ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+                RobotInterface::SendMessage(ack);
+                Reset();
+              }
+            }
+            else
+            {
+              retries = MAX_RETRIES;
+              bufferUsed -= sizeof(FirmwareBlock);
+              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+              bytesProcessed += sizeof(FirmwareBlock);
+              ack.bytesProcessed = bytesProcessed;
+              ack.result = OKAY;
+              RobotInterface::SendMessage(ack);
+              phase = OTAT_Flash_Verify;
+              counter = 0;
+              timer = 0;
+            }
           }
           else if (fwb->blockAddress == HEADER_BLOCK)
           {
@@ -1105,6 +1143,17 @@ namespace UpgradeController {
       Reset();
     }
   }
+  
+  u32* GetVersionInfo()
+  {
+    return FLASH_CACHE_POINTER + ((APP_VERSION_A_SECTOR * SECTOR_SIZE)/4);  // Use A address because both images see it mapped in that place.
+  }
+
+  /// Retrieve numerical firmware version
+  extern "C" s32 GetFirmwareVersion() { return COZMO_VERSION_ID; }
+  
+  /// Retrieve the numerical (epoch) build timestamp
+  extern "C" u32 GetBuildTime() { return COZMO_BUILD_DATE; }
 
 }
 }

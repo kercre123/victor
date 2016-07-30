@@ -8,6 +8,8 @@
 
 #define MAX_CRASH_REPORT_SIZE (512)
 
+#define MAX_VERSION_INFO_SIZE (1024)
+
 typedef struct {
 	int epc1;
 	int ps;

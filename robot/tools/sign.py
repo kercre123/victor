@@ -9,12 +9,18 @@ import random
 import math
 import json
 import time
+import sys, os
 import subprocess
 
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
+from hashlib import sha1
+
+sys.path.insert(0, os.path.join("generated", "cladPython", "robot"))
+from clad.robotInterface.messageEngineToRobot_hash import messageEngineToRobotHash
+from clad.robotInterface.messageRobotToEngine_hash import messageRobotToEngineHash
 
 parser = ArgumentParser()
 parser.add_argument("output", type=str,
@@ -28,8 +34,8 @@ parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
 parser.add_argument("-s", "--sign", nargs=2, type=str,
                     help="Create signature block")
-parser.add_argument("-c", "--comment", action="store_true",
-                    help="Add version information comment block")
+parser.add_argument("-c", "--comment", type=int, nargs="?", const=int(time.time()),
+                    help="Add version information comment block, argument is the desired version string")
 parser.add_argument("--prepend_size_word", action="store_true",
                     help="Put a single u32 size word at the front of the file for recovery images.")
 parser.add_argument("--factory_upgrade", nargs=2, type=str,
@@ -178,37 +184,23 @@ def make_header(key=None, iv=None, digestType=None):
 
     return header
 
-def get_version_comment_block():
-    version = execute('git', 'rev-parse', 'HEAD')
-    dirt = execute('git', 'status')
-
+def get_version_comment_block(args):
+    MAX_COMMENT_LEN = 1024
     comment = {
-        #'dirt': dirt[:1000],
-        'version': version.strip(),
+        'version': args.comment,
+        'git-rev': execute('git', 'rev-parse', 'HEAD').strip(),
         'date': time.ctime(),
-        'time': time.time(),
+        'time': int(time.time()),
+        'messageEngineToRobotHash': hex(messageEngineToRobotHash)[2:],
+        'messageRobotToEngineHash': hex(messageRobotToEngineHash)[2:],
     }
-
-    encodded = json.dumps(comment).encode("UTF-8")
-    return encodded + b"\x00"
-
-
-def get_version_comment_block():
-    p = subprocess.Popen(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
-    assert p.wait() == 0
-    comment = {}
-    comment['version'] = p.communicate()[0].decode().strip()
-    comment['date'] = time.ctime()
-    comment['time'] = time.time()
-    p = subprocess.Popen(['git', 'status'], stdout=subprocess.PIPE)
-    assert p.wait() == 0
-    #NOTE: Commenting this out, as it is probably not best for the wild
-    #comment['dirt'] = p.communicate()[0].decode()[:1000]
-    encodded = json.dumps(comment).encode("UTF-8")
-    paddingLength = BLOCK_LENGTH - len(encodded)
-    assert paddingLength > 0, "Must have null termination"
-    return encodded + (b"\x00" * paddingLength)
-    
+    for fw in ('wifi', 'rtip', 'body'):
+        fn = getattr(args, fw)
+        if fn is not None:
+            comment[fw + 'Sig'] = sha1(open(fn, 'rb').read()).hexdigest()
+    encodded = json.dumps(comment).encode("UTF-8") + b"\x00"
+    assert len(encodded) < MAX_COMMENT_LEN, "Comment block contents must be less than {:d}".format(MAX_COMMENT_LEN)
+    return encodded + (b"\x00" * (MAX_COMMENT_LEN - len(encodded)))
 
 # This generates a single file for RTIP that is actually both
 if __name__ == '__main__':
@@ -217,8 +209,8 @@ if __name__ == '__main__':
     # start building our firmware image
     fo = DigestFile(args.output, "wb", SHA512)
     
-    if args.comment:
-        fo.write(get_version_comment_block(), COMMENT_BLOCK)
+    if args.comment is not None:
+        fo.write(get_version_comment_block(args), COMMENT_BLOCK)
 
     # Load our RSA key
     if not args.sign == None:

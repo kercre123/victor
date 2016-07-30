@@ -10,14 +10,17 @@
 #include "driver/crash.h"
 #include "driver/uart.h"
 #include "transport/reliableTransport.h"
-#include "anki/cozmo/robot/version.h" // Must only be included in one place
 
 #define DUMP_TO_UART 1
+#define DUMP_STACK_TO_UART 0
 #define DUMP_TO_RTC_MEM 0
 
 #define RTC_MEM_START (64)
 
 static const unsigned int CRASH_DUMP_STORAGE_HEADER = 0xCDFAF320;
+
+int COZMO_VERSION_ID = 0;
+unsigned int COZMO_BUILD_DATE = 0;
 
 #define RANDOM_DATA_OFFSET FACTORY_DATA_SIZE
 #define MAX_RANDOM_DATA (8*sizeof(uint32_t))
@@ -119,7 +122,7 @@ extern void crash_dump(int* sp) {
 #if DUMP_TO_RTC_MEM
   unsigned int rtcWadder = RTC_MEM_START;
   system_rtc_mem_write(rtcWadder++, &CRASH_DUMP_STORAGE_HEADER, 4);
-  system_rtc_mem_write(rtcWadder++, &COZMO_VERSION_COMMIT, 4);
+  system_rtc_mem_write(rtcWadder++, &COZMO_VERSION_ID, 4);
   system_rtc_mem_write(rtcWadder++, &COZMO_BUILD_DATE, 4);
   
   system_rtc_mem_write(rtcWadder++, &regs->epc1, 4);
@@ -172,14 +175,17 @@ extern void crash_dump(int* sp) {
   if (usestack) {
     int excvaddr = get_excvaddr();
     int depc = get_depc();
+#if DUMP_STACK_TO_UART
     os_put_str("Fingerprint: 1/");
     P8X("xh=", crash_handler);
-    P8X(",v=0x", COZMO_VERSION_COMMIT);
+    P8X(",v=0x", COZMO_VERSION_ID);
     P8X(",b=0x", COZMO_BUILD_DATE);
     os_put_char('\n');
+#endif
     P8X(" epc1: ", regs->epc1); P8X("  exccause: ", regs->exccause); P8X("  excvaddr: ", excvaddr);
     P8X("  depc: ", depc);
     os_put_char('\n');
+#if DUMP_STACK_TO_UART
     P8X(" ps  : ", regs->ps);   P8X("  sar     : ", regs->sar);       P8X("  unk1    : ", regs->xx1);
     os_put_char('\n');
     // a1 is stack at exception
@@ -204,6 +210,7 @@ extern void crash_dump(int* sp) {
     P8X("  a15:  ", regs->a15);
     os_put_char('\n');
     crash_dump_stack_uart(p);
+#endif
   } else {
     os_put_str("Stack pointer may be corrupted: ");
     os_put_hex((int)sp, 4);

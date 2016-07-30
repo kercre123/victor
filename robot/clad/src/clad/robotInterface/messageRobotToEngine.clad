@@ -16,19 +16,11 @@
 #include "clad/types/nvStorage.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/fwTestMessages.clad"
+#include "clad/types/factoryFWOnly.clad"
 
 namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
-
-message FWVersionInfo
-{
-  uint_32 wifiVersion = 0, // TODO actually handle or replace them
-  uint_32 rtipVersion = 0,
-  uint_32 bodyVersion = 0,
-  uint_8  toRobotCLADHash[16],
-  uint_8  toEngineCLADHash[16]
-}
 
 message SyncTimeAck
 {
@@ -61,12 +53,6 @@ message AnimationEvent
   uint_32   timestamp,
   uint_8    tag,
   AnimEvent event_id
-}
-
-message RobotAvailable
-{
-  uint_32 robotID,
-  uint_16 modelID,
 }
 
 message NVReadResultToEngine
@@ -137,12 +123,13 @@ union RobotToEngine {
   CrashReport                crashReport            = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,
-  FWVersionInfo              fwVersionInfo          = 0xD2,
+  FWVersionInfo              factoryFirmwareVersion = 0xD2, ///< Depricated, only used by factory firmware
   DockingStatus              dockingStatus          = 0xD3,
   RobotStopped               robotStopped           = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
   FactoryTestParameter       factoryTestParam       = 0xD6,
 
+  FirmwareVersion            firmwareVersion        = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,
 
   //0xF0 to 0x FE: Unreliable message to the Engine

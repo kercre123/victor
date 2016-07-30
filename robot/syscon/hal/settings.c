@@ -10,8 +10,6 @@
 #include "ble_stack_handler_types.h"
 #include "timer.h"
 
-#include "anki/cozmo/robot/version.h"
-
 #include "ble_settings.h"
 
 // These are hooks we use for BLE callback
@@ -70,7 +68,7 @@ const int DEVICE_NAME_LENGTH = 5;
 // Advertising settings
 // NOTE: THIS IS NOT CONSTANT SO I CAN COPY SOME REGISTER VALUES IN AT RUNTIME
 ManufacturerData  manif_data = {
-  .revision = COZMO_VERSION_COMMIT 
+  .revision = 0 /// TODO plumb something in here
 };
 
 

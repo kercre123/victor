@@ -6,7 +6,7 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time, hashlib, struct, argparse
 
-DEFAULT_FIRMWARE_IMAGE = os.path.join("releases", "cozmo.safe")
+DEFAULT_FIRMWARE_IMAGE = os.path.join("build", "cozmo.safe")
 
 parser = argparse.ArgumentParser(description="Upgrade firmware")
 parser.add_argument("-w", "--wait", type=float,
@@ -101,8 +101,6 @@ if __name__ == '__main__':
     
     if os.path.isfile(argv.image):
         fwi = argv.image
-    elif argv.image == 'factory':
-        fwi = os.path.join("releases", "cozmo_factory_install.safe")
     else:
         sys.exit("No such file as {0}".format(argv.image))
     

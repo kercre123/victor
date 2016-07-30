@@ -197,9 +197,6 @@
       <LintExecutable></LintExecutable>
       <LintConfigFile></LintConfigFile>
       <bLintAuto>0</bLintAuto>
-      <Lin2Executable></Lin2Executable>
-      <Lin2ConfigFile></Lin2ConfigFile>
-      <bLin2Auto>0</bLin2Auto>
     </TargetOption>
   </Target>
 
@@ -214,6 +211,7 @@
       <FileNumber>1</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\battery.cpp</PathWithFileName>
@@ -226,6 +224,7 @@
       <FileNumber>2</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\head.cpp</PathWithFileName>
@@ -238,6 +237,7 @@
       <FileNumber>3</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\main.cpp</PathWithFileName>
@@ -250,6 +250,7 @@
       <FileNumber>4</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\motors.cpp</PathWithFileName>
@@ -262,6 +263,7 @@
       <FileNumber>5</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\timer.cpp</PathWithFileName>
@@ -274,6 +276,7 @@
       <FileNumber>6</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\logging.cpp</PathWithFileName>
@@ -286,6 +289,7 @@
       <FileNumber>7</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\backpack.cpp</PathWithFileName>
@@ -298,6 +302,7 @@
       <FileNumber>8</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\lights.cpp</PathWithFileName>
@@ -310,6 +315,7 @@
       <FileNumber>9</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\storage.cpp</PathWithFileName>
@@ -322,6 +328,7 @@
       <FileNumber>10</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\temp.cpp</PathWithFileName>
@@ -334,6 +341,7 @@
       <FileNumber>11</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\watchdog.cpp</PathWithFileName>
@@ -346,6 +354,7 @@
       <FileNumber>12</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\tasks.cpp</PathWithFileName>
@@ -366,6 +375,7 @@
       <FileNumber>13</FileNumber>
       <FileType>2</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\startup_nrf51.s</PathWithFileName>
@@ -378,6 +388,7 @@
       <FileNumber>14</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\lib\system_nrf51.c</PathWithFileName>
@@ -398,6 +409,7 @@
       <FileNumber>15</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\bluetooth.cpp</PathWithFileName>
@@ -410,6 +422,7 @@
       <FileNumber>16</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\components\ble\common\ble_advdata.c</PathWithFileName>
@@ -422,6 +435,7 @@
       <FileNumber>17</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\settings.c</PathWithFileName>
@@ -434,6 +448,7 @@
       <FileNumber>18</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\conn_params.c</PathWithFileName>
@@ -454,6 +469,7 @@
       <FileNumber>19</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\messages.cpp</PathWithFileName>
@@ -466,6 +482,7 @@
       <FileNumber>20</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\generated\clad\clad.cpp</PathWithFileName>
@@ -486,6 +503,7 @@
       <FileNumber>21</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\aes.cpp</PathWithFileName>
@@ -498,6 +516,7 @@
       <FileNumber>22</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\bignum.cpp</PathWithFileName>
@@ -510,6 +529,7 @@
       <FileNumber>23</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\crc32.cpp</PathWithFileName>
@@ -522,6 +542,7 @@
       <FileNumber>24</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\diffie.cpp</PathWithFileName>
@@ -534,6 +555,7 @@
       <FileNumber>25</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\random.cpp</PathWithFileName>
@@ -546,6 +568,7 @@
       <FileNumber>26</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\crypto\sha1.cpp</PathWithFileName>
@@ -566,6 +589,7 @@
       <FileNumber>27</FileNumber>
       <FileType>2</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\cubes\firmware.s</PathWithFileName>
@@ -578,6 +602,7 @@
       <FileNumber>28</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\cubes\micro_esb.cpp</PathWithFileName>
@@ -590,6 +615,7 @@
       <FileNumber>29</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\cubes\cubes.cpp</PathWithFileName>
