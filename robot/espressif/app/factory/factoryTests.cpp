@@ -386,9 +386,9 @@ void Update()
         u64 frame[COLS];
         Draw::Clear(frame);
         Draw::Copy(frame, PASSWORD_IMG, sizeof(PASSWORD_IMG)/sizeof(PASSWORD_IMG[0]), 0, y);
-        Draw::Print(frame, wifiPsk + 0, 4,  0, y+16);
+        Draw::Print(frame, wifiPsk + 0, 4,  2, y+16);
         Draw::Print(frame, wifiPsk + 4, 4, 44, y+16);
-        Draw::Print(frame, wifiPsk + 8, 4, 88, y+16);
+        Draw::Print(frame, wifiPsk + 8, 4, 86, y+16);
         Draw::Flip(frame);
         if ((now - lastExecTime) > 300000000)
         {
