@@ -92,9 +92,9 @@ void user_init(void)
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);
   
-  unsigned int randomSeed = macaddr[0];
-  getFactoryRandomSeed(&randomSeed, 4);
-  srand(randomSeed);
+  uint32 randomPSKData[WIFI_PSK_LEN];
+  getFactoryRandomSeed(randomPSKData, WIFI_PSK_LEN);
+  char* randomPSKChars = (char*)randomPSKData;
   
   if (getSerialNumber() == 0xFFFFffff)
   {
@@ -118,7 +118,8 @@ void user_init(void)
   os_sprintf((char*)ap_config.ssid, ssid);
   for (i=0; i<WIFI_PSK_LEN; ++i)
   {
-    ap_config.password[i] = wifiPsk[i] = VALID_PSK_CHARS[rand() % sizeof(VALID_PSK_CHARS)];
+    
+    ap_config.password[i] = wifiPsk[i] = VALID_PSK_CHARS[randomPSKChars[i] % (sizeof(VALID_PSK_CHARS)-1)]; // Sizeof string includes null which we don't want
   }
   ap_config.password[WIFI_PSK_LEN] = 0; // Null terminate
   ap_config.ssid_len = 0;

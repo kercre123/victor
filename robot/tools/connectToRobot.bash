@@ -16,7 +16,7 @@ if test -z `system_profiler SPAirPortDataType | grep $SSID`; then
 fi
 
 echo "Connecting to $SSID"
-if networksetup -setairportnetwork en0 $SSID GVC9D122N7ZQ; then
+if networksetup -setairportnetwork en0 $SSID QQQQQQQQQQQQ; then
     echo "Waiting for IP address"
     ping -o -q 172.31.1.1
     echo "Connected"
