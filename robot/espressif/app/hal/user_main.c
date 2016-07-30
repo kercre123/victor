@@ -26,7 +26,7 @@ void user_rf_pre_init(void)
   //system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
 }
 
-unsigned int wifiPin[2];
+char wifiPsk[WIFI_PSK_LEN];
 
 /// Forward declarations
 typedef void (*NVInitDoneCB)(const int8_t);
@@ -71,6 +71,8 @@ static void system_init_done(void)
  */
 void user_init(void)
 {
+  static const char VALID_PSK_CHARS[] = "0123456789ACDEFGHIJKLMNPQRSTVWXYZ"; // excluding B, O, and U
+  int i;
   char ssid[65];
   int8 err;
 
@@ -112,12 +114,13 @@ void user_init(void)
   {
     os_printf("Error getting wifi softap config\r\n");
   }
-
-  wifiPin[0] = rand() % 100000000;
-  wifiPin[1] = rand() % 100000000;
-
+  
   os_sprintf((char*)ap_config.ssid, ssid);
-  os_sprintf((char*)ap_config.password, "%08d%08d", wifiPin[0], wifiPin[1]);
+  for (i=0; i<WIFI_PSK_LEN; ++i)
+  {
+    ap_config.password[i] = wifiPsk[i] = VALID_PSK_CHARS[rand() % sizeof(VALID_PSK_CHARS)];
+  }
+  ap_config.password[WIFI_PSK_LEN] = 0; // Null terminate
   ap_config.ssid_len = 0;
   ap_config.channel = (system_get_time() % 11) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
