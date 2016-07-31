@@ -348,6 +348,12 @@ Result CozmoEngine::Update(const float currTime_sec)
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
   }
   
+  // Tick Audio Controller after all messages have been processed
+  const auto audioServer = _context->GetAudioServer();
+  if (audioServer != nullptr) {
+    audioServer->UpdateAudioController();
+  }
+  
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();

@@ -437,6 +437,8 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
         _audioClient->SetCozmoEventParameter( playId,
                                               GameParameter::ParameterType::Event_Volume,
                                               animationEvent->volume );
+        // Processes event NOW, minimize buffering latency
+        _audioClient->ProcessEvents();
       },
                            "PostAudioEventToRobotDelay" );
   }

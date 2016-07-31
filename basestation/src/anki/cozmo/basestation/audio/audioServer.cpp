@@ -207,6 +207,13 @@ void AudioServer::ProcessMessage( const PostAudioMusicState& message, Connection
   _audioController->GetMusicConductor()->SetMusicState( stateId, interrupt, minDuration_ms );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioServer::UpdateAudioController()
+{
+  _audioController->Update();
+}
+
+
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioServer::ConnectionIdType AudioServer::GetNewClientConnectionId()
