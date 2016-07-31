@@ -947,7 +947,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -e\n\nBUILT_APP_BUNDLE=\"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\"\n\necho \"ANKI_BUILD_APP_PATH=${ANKI_BUILD_APP_PATH}\"\necho \"BUILT_APP_BUNDLE=${BUILT_APP_BUNDLE}\"\n\nrm -f \"${ANKI_BUILD_APP_PATH}\"\necho ln -s \"${BUILT_APP_BUNDLE}\" \"${ANKI_BUILD_APP_PATH}\"\nln -s \"${BUILT_APP_BUNDLE}\" \"${ANKI_BUILD_APP_PATH}\"";
+			shellScript = "set -e\n\nBUILT_APP_BUNDLE=\"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\"\n\necho \"ANKI_BUILD_APP_PATH=${ANKI_BUILD_APP_PATH}\"\necho \"ANKI_BUILD_APP_PKG=${ANKI_BUILD_APP_PKG}\"\necho \"BUILT_APP_BUNDLE=${BUILT_APP_BUNDLE}\"\n\nrm -f \"${ANKI_BUILD_APP_PKG}\"\nmkdir -p \"${ANKI_BUILD_APP_PATH}\"\necho ln -s \"${BUILT_APP_BUNDLE}\" \"${ANKI_BUILD_APP_PATH}\"\nln -s \"${BUILT_APP_BUNDLE}\" \"${ANKI_BUILD_APP_PATH}\"";
 			showEnvVarsInLog = 0;
 		};
 		46F5C0B61A96C9830078F6E7 /* Copy Mono Assemblies */ = {

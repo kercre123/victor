@@ -429,7 +429,8 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
-                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path)]
+                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_dir),
+                'ANKI_BUILD_APP_PKG={0}'.format(self.artifact_path)]
 
             if self.other_cs_flags is not None:
                 xcconfig += ['OTHER_CODE_SIGN_FLAGS="{0}"'.format(self.other_cs_flags)]
