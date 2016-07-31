@@ -18,9 +18,28 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import subprocess
 import sys
 #sys.path.insert(0, os.path.abspath('../..'), os.path.abspath('..'))
 sys.path.extend([os.path.abspath('../..'), os.path.abspath('..')])
+
+
+version = "dev"
+
+try:
+    git_branch = subprocess.check_output(
+            ('git', 'symbolic-ref', '--short', 'HEAD'),
+            universal_newlines=True)
+
+    git_commit = subprocess.check_output(
+            ('git', 'rev-parse', 'HEAD'),
+            universal_newlines=True)
+
+    version = "%s - %s" % (git_branch, git_commit[:8])
+
+except subprocess.CalledProcessError as e:
+    print("Failed to run git: %s" % e)
+
 
 # -- General configuration ------------------------------------------------
 
@@ -70,7 +89,8 @@ author = 'Anki'
 # built documents.
 #
 # The short X.Y version.
-version = '0.1'
+#version = '0.1'
+
 # The full version, including alpha/beta/rc tags.
 release = '0.1'
 
@@ -180,7 +200,7 @@ html_static_path = ['_static']
 # bottom, using the given strftime format.
 # The empty string is equivalent to '%b %d, %Y'.
 #
-# html_last_updated_fmt = None
+html_last_updated_fmt = '%b, %d, %Y %I:%M:%S %Z'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
