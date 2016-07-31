@@ -129,10 +129,10 @@ namespace Cozmo {
   static constexpr u32 _kMaxWifiVersion = 0x857b1ff;
   static constexpr u32 _kMaxRtipVersion = 0x857b1ff;
 
-  static constexpr u32 _kMinWifiVersion = 0x857b162;
-  static constexpr u32 _kMinRtipVersion = 0x857b162;
+  static constexpr u32 _kMinWifiVersion = 0x857b163;
+  static constexpr u32 _kMinRtipVersion = 0x857b163;
   
-  static constexpr u32 _kMinBodyHWVersion = 4;
+  static constexpr u32 _kMinBodyHWVersion = 3;
   
   
   // If no change in behavior state for this long then trigger failure
@@ -664,7 +664,7 @@ namespace Cozmo {
         StartActing(robot, headAndLiftAction,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if (result != ActionResult::SUCCESS) {
-                        EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
+                        EndTest(robot, FactoryTestResultCode::INIT_LIFT_OR_HEAD_FAILED);
                         return false;
                       }
                       
