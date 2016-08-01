@@ -13,12 +13,15 @@ namespace Cozmo {
       [SerializeField, Cozmo.ItemId]
       private string _ItemId;
 
+      [SerializeField]
+      private bool _CountOnly = false;
+
       private void Start() {
         Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
         playerInventory.ItemAdded += HandleItemValueChanged;
         playerInventory.ItemRemoved += HandleItemValueChanged;
         playerInventory.ItemCountSet += HandleItemValueChanged;
-        _CountLabel.FormattingArgs = new object[] { GetItemNamePlural(), playerInventory.GetItemAmount(_ItemId) };
+        SetFormattingArgs(playerInventory.GetItemAmount(_ItemId));
 
         if (_ItemIcon != null) {
           ItemData data = ItemDataConfig.GetData(_ItemId);
@@ -40,6 +43,15 @@ namespace Cozmo {
 
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {
         if (itemId == _ItemId) {
+          SetFormattingArgs(newCount);
+        }
+      }
+
+      private void SetFormattingArgs(int newCount) {
+        if (_CountOnly) {
+          _CountLabel.FormattingArgs = new object[] { newCount };
+        }
+        else {
           _CountLabel.FormattingArgs = new object[] { GetItemNamePlural(), newCount };
         }
       }

@@ -10,6 +10,10 @@ public class ImageFadeInOut : MonoBehaviour {
   private Tween _Tween = null;
 
   private void Start() {
+    if (_Image == null) {
+      Destroy(this);
+      return;
+    }
     FadeOut();
   }
 

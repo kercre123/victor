@@ -22,7 +22,7 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: 5a17a17c602924356a56e3152bae81a7, type: 3}
   _UnlockId:
     _EnumValueAsString: KeepawayGame
-    _EnumValue: 15
+    _EnumValue: 12
   _Music:
     _Music: 1317044071
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}

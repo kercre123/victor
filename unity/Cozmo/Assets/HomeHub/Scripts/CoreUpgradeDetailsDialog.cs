@@ -27,12 +27,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private Image _UnlockableIcon;
 
   [SerializeField]
-  private Image _UnlockableTintBackground;
-
-  [SerializeField]
-  private Image _UnlockableActionIndicator;
-
-  [SerializeField]
   private AnkiTextLabel _CubesRequiredLabel;
 
   [SerializeField]
@@ -96,7 +90,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked) {
       _UnlockableIcon.color = Color.white;
-      _UnlockableTintBackground.color = UIColorPalette.GetUpgradeTintData(unlockInfo.CoreUpgradeTintColorName).TintColor;
       if (unlockInfo.UnlockableType == UnlockableType.Action) {
         _RequestTrickButtonContainer.gameObject.SetActive(true);
         SetupButton(_RequestTrickButton, null, "request_trick_button",
@@ -112,7 +105,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
       SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
         unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel);
       _UnlockableIcon.color = Color.gray;
-      _UnlockableTintBackground.color = Color.gray;
     }
 
     _UnlockableNameLabel.text = Localization.Get(unlockInfo.TitleKey);
@@ -122,8 +114,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
       unlockInfo.CubesRequired,
       ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
-
-    _UnlockableActionIndicator.gameObject.SetActive(unlockInfo.UnlockableType == UnlockableType.Action);
 
     UpdateState();
   }
@@ -176,8 +166,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void PlayUpgradeAnimation() {
     _UpgradeTween = DOTween.Sequence();
-    _UpgradeTween.Append(
-      _UnlockableTintBackground.DOColor(UIColorPalette.GetUpgradeTintData(_UnlockInfo.CoreUpgradeTintColorName).TintColor, _UpgradeTween_sec));
     _UpgradeTween.Join(_UnlockableIcon.DOColor(Color.white, _UpgradeTween_sec));
     _UpgradeTween.AppendCallback(ResolveOnNewUnlock);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);

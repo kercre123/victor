@@ -33,6 +33,10 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private CozmoButton _CozmoTabButton;
+    [SerializeField]
+    private Sprite _CozmoTabUpSpritePlay;
+    [SerializeField]
+    private Sprite _CozmoTabUpSpriteProfile;
 
     [SerializeField]
     private CozmoButton _CozmoTabDownButton;
@@ -42,12 +46,20 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private CozmoButton _PlayTabButton;
+    [SerializeField]
+    private Sprite _PlayTabUpSpriteCozmo;
+    [SerializeField]
+    private Sprite _PlayTabUpSpriteProfile;
 
     [SerializeField]
     private CozmoButton _PlayTabDownButton;
 
     [SerializeField]
     private CozmoButton _ProfileTabButton;
+    [SerializeField]
+    private Sprite _ProfileTabUpSpritePlay;
+    [SerializeField]
+    private Sprite _ProfileTabUpSpriteCozmo;
 
     [SerializeField]
     private CozmoButton _ProfileTabDownButton;
@@ -112,6 +124,9 @@ namespace Cozmo.HomeHub {
     private RectTransform _TopBarContainer;
 
     [SerializeField]
+    private Anki.UI.AnkiTextLabel _HexLabel;
+
+    [SerializeField]
     private float _TopBarAnimationYOriginOffset;
 
     [SerializeField]
@@ -141,8 +156,8 @@ namespace Cozmo.HomeHub {
       DASEventViewName = "home_view";
 
       _ChallengeStates = challengeStatesById;
-
       HandlePlayTabButton();
+      UpdatePuzzlePieceCount();
 
       _CozmoTabButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
       _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
@@ -297,6 +312,16 @@ namespace Cozmo.HomeHub {
       }
     }
 
+    private void UpdatePuzzlePieceCount() {
+      IEnumerable<string> puzzlePieceIds = Cozmo.HexItemList.GetPuzzlePieceIds();
+      int totalNumberHexes = 0;
+      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      foreach (string puzzlePieceId in puzzlePieceIds) {
+        totalNumberHexes += playerInventory.GetItemAmount(puzzlePieceId);
+      }
+      _HexLabel.FormattingArgs = new object[] { totalNumberHexes };
+    }
+
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
       _ChallengeStates = challengeStatesById;
     }
@@ -341,6 +366,22 @@ namespace Cozmo.HomeHub {
 
       _ProfileTabButton.gameObject.SetActive(currentTab != HomeTab.Profile);
       _ProfileTabDownButton.gameObject.SetActive(currentTab == HomeTab.Profile);
+
+      switch (currentTab) {
+      case HomeTab.Cozmo:
+        _PlayTabButton.GetComponent<Image>().overrideSprite = _PlayTabUpSpriteCozmo;
+        _ProfileTabButton.GetComponent<Image>().overrideSprite = _ProfileTabUpSpriteCozmo;
+        break;
+      case HomeTab.Play:
+        _CozmoTabButton.GetComponent<Image>().overrideSprite = _CozmoTabUpSpritePlay;
+        _ProfileTabButton.GetComponent<Image>().overrideSprite = _ProfileTabUpSpritePlay;
+        break;
+      case HomeTab.Profile:
+        _CozmoTabButton.GetComponent<Image>().overrideSprite = _CozmoTabUpSpriteProfile;
+        _PlayTabButton.GetComponent<Image>().overrideSprite = _PlayTabUpSpriteProfile;
+        break;
+      }
+
     }
 
     public Dictionary<string, ChallengeStatePacket> GetChallengeStates() {
@@ -378,6 +419,9 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+      if (Cozmo.HexItemList.IsPuzzlePiece(itemId)) {
+        UpdatePuzzlePieceCount();
+      }
       CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 

@@ -4,6 +4,7 @@ using Cozmo.UI;
 using System.Collections;
 
 public class CozmoUnlockableTile : MonoBehaviour {
+  private const float kLockedAlpha = 0.5f;
 
   public delegate void CozmoUnlockableTileTappedHandler(UnlockableInfo unlockData);
   public event CozmoUnlockableTileTappedHandler OnTapped;
@@ -18,16 +19,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
   public GameObject _UnlockedBackgroundContainer;
 
   [SerializeField]
-  public Image _UnlockedTintBackground;
-
-  [SerializeField]
   public Image _UnlockedIconSprite;
-
-  [SerializeField]
-  public Image _BeginningCircuitySprite;
-
-  [SerializeField]
-  public Image _EndCircuitrySprite;
 
   [SerializeField]
   public Image _ActionIndicator;
@@ -40,8 +32,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
 
   private UnlockableInfo _UnlockData;
 
-  public void Initialize(UnlockableInfo unlockableData, CozmoUnlocksPanel.CozmoUnlockState unlockState, string dasViewController,
-                        bool isBeginningTile, Sprite beginningSprite, bool isEndTile, Sprite endSprite) {
+  public void Initialize(UnlockableInfo unlockableData, CozmoUnlocksPanel.CozmoUnlockState unlockState, string dasViewController) {
     _UnlockData = unlockableData;
 
     gameObject.name = unlockableData.Id.Value.ToString();
@@ -55,24 +46,26 @@ public class CozmoUnlockableTile : MonoBehaviour {
     _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);
     _UnlockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked);
 
-    _BeginningCircuitySprite.gameObject.SetActive(isBeginningTile);
-    _BeginningCircuitySprite.overrideSprite = beginningSprite;
-    _EndCircuitrySprite.gameObject.SetActive(!isEndTile);
-    _EndCircuitrySprite.overrideSprite = endSprite;
+    Cozmo.Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
     _UnlockedIconSprite.sprite = unlockableData.CoreUpgradeIcon;
-    _UnlockedTintBackground.color = UIColorPalette.GetUpgradeTintData(unlockableData.CoreUpgradeTintColorName).TintColor;
-
-    _ActionIndicator.gameObject.SetActive(unlockableData.UnlockableType == UnlockableType.Action);
-
-    if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
-      Cozmo.Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      _AffordableIndicator.gameObject.SetActive(
-        playerInventory.CanRemoveItemAmount(unlockableData.UpgradeCostItemId, unlockableData.UpgradeCostAmountNeeded));
-    }
-    else {
+    switch (unlockState) {
+    case CozmoUnlocksPanel.CozmoUnlockState.Locked:
+      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      break;
+    case CozmoUnlocksPanel.CozmoUnlockState.Unlockable:
+      bool affordable = playerInventory.CanRemoveItemAmount(unlockableData.UpgradeCostItemId, unlockableData.UpgradeCostAmountNeeded);
+      _AffordableIndicator.gameObject.SetActive(affordable);
+      _LockedBackgroundContainer.gameObject.SetActive(!affordable);
+      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      break;
+    case CozmoUnlocksPanel.CozmoUnlockState.Unlocked:
+      _ActionIndicator.gameObject.SetActive(unlockableData.UnlockableType == UnlockableType.Action);
       _AffordableIndicator.gameObject.SetActive(false);
+      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, 1.0f);
+      break;
     }
+
   }
 
   private void HandleButtonTapped() {

@@ -28,17 +28,13 @@ namespace Cozmo {
       private CanvasGroup _AlphaController;
 
       [SerializeField]
-      private ChallengeIconProxy _Icon;
+      private IconProxy _Icon;
 
       public void SetIcon(Sprite icon) {
         if (_Icon != null) {
           _Icon.gameObject.SetActive(true);
           _Icon.SetIcon(icon);
         }
-      }
-
-      public void SetChallengeType(bool isGame) {
-        _Icon.SetChallengeIconAsGame(isGame);
       }
 
       private string _TitleKey;

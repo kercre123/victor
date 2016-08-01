@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: RollCube
-    _EnumValue: 9
+    _EnumValue: 6
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0

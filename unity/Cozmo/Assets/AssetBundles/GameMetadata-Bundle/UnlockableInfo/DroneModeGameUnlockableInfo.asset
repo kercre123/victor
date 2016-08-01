@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: DroneModeGame
-    _EnumValue: 14
+    _EnumValue: 11
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

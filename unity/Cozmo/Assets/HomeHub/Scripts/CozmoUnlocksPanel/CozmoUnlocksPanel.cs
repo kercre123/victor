@@ -28,17 +28,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private CozmoUnlockableTile _UnlocksTilePrefab;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _HexLabel;
-
-  [SerializeField]
   private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewPrefab;
   private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewInstance;
-
-  [SerializeField]
-  private Sprite[] _BeginningCircuitSprites;
-
-  [SerializeField]
-  private Sprite[] _EndCircuitSprites;
 
   void Start() {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
@@ -46,10 +37,6 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     _LockedTiles = new List<CozmoUnlockableTile>();
     LoadTiles();
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
-    UpdatePuzzlePieceCount();
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded += HandleItemValueChanged;
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved += HandleItemValueChanged;
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemCountSet += HandleItemValueChanged;
   }
 
   void OnDestroy() {
@@ -58,9 +45,6 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     }
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded -= HandleItemValueChanged;
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved -= HandleItemValueChanged;
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemCountSet -= HandleItemValueChanged;
   }
 
   public void LoadTiles() {
@@ -73,17 +57,12 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
     List<UnlockableInfo> lockedUnlockData = UnlockablesManager.Instance.GetUnavailableExplicit();
 
-    int numRows = 2;
-    int numBeginningTiles = numRows;
-    int endTilesStartIndex = unlockedUnlockData.Count + unlockableUnlockData.Count + lockedUnlockData.Count - numRows;
     GameObject tileInstance;
     CozmoUnlockableTile unlockableTile;
     for (int i = 0; i < unlockedUnlockData.Count; ++i) {
       tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
       unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-      unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName,
-        numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
-        numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+      unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName);
       unlockableTile.OnTapped += HandleTappedUnlocked;
       _UnlockedTiles.Add(unlockableTile);
       numTilesMade++;
@@ -92,9 +71,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     for (int i = 0; i < unlockableUnlockData.Count; ++i) {
       tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
       unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-      unlockableTile.Initialize(unlockableUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName,
-        numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
-        numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+      unlockableTile.Initialize(unlockableUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName);
       unlockableTile.OnTapped += HandleTappedUnlockable;
       _UnlockableTiles.Add(unlockableTile);
       numTilesMade++;
@@ -103,9 +80,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     for (int i = 0; i < lockedUnlockData.Count; ++i) {
       tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
       unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-      unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName,
-        numTilesMade < numBeginningTiles, _BeginningCircuitSprites[numTilesMade % _BeginningCircuitSprites.Length],
-        numTilesMade >= endTilesStartIndex, _EndCircuitSprites[numTilesMade % _EndCircuitSprites.Length]);
+      unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName);
       _LockedTiles.Add(unlockableTile);
       numTilesMade++;
     }
@@ -153,19 +128,4 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     LoadTiles();
   }
 
-  private void HandleItemValueChanged(string itemId, int delta, int count) {
-    if (Cozmo.HexItemList.IsPuzzlePiece(itemId)) {
-      UpdatePuzzlePieceCount();
-    }
-  }
-
-  private void UpdatePuzzlePieceCount() {
-    IEnumerable<string> puzzlePieceIds = Cozmo.HexItemList.GetPuzzlePieceIds();
-    int totalNumberHexes = 0;
-    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-    foreach (string puzzlePieceId in puzzlePieceIds) {
-      totalNumberHexes += playerInventory.GetItemAmount(puzzlePieceId);
-    }
-    _HexLabel.FormattingArgs = new object[] { totalNumberHexes };
-  }
 }
