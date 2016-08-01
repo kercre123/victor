@@ -242,6 +242,12 @@ namespace Anki {
               }
               break;
             }
+            case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
+              break ;
+            }
             case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct

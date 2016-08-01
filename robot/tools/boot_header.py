@@ -9,12 +9,12 @@ def fix_header(fn):
 	print("Fixing header for %s" % fn)
 
 	rom_data, base_addr, magic_location = rom_info(fn)
-	
+
 	with open(fn, "rb+") as fo:
 		checksum = zlib.crc32(rom_data[HEADER_LENGTH:])
 
 		fo.seek(magic_location)
-		fo.write(pack("<III", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
+		fo.write(pack("<IIi", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
 
 	return 
 

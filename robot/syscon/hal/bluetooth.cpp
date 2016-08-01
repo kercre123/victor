@@ -8,15 +8,12 @@
 #include "storage.h"
 #include "timer.h"
 
-#include "publickeys.h"
-
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 //#define DISABLE_TASK_CHECK
-//#define DISABLE_AUTHENTIFICATION
 
 #define member_size(type, member) sizeof(((type *)0)->member)
   
@@ -33,20 +30,15 @@ ble_gatts_char_handles_t    Bluetooth::transmit_handles;
 // Current connection state settings
 uint16_t                    Bluetooth::conn_handle;
 static uint8_t              m_nonce[member_size(Anki::Cozmo::HelloPhone, nonce)];
-static bool                 m_authenticated;
 static bool                 m_task_enabled;
 static uint32_t             dh_timeout;
 static bool                 dh_started;
 
 static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
 static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENGTH;
-static const uint8_t HELLO_SIGNATURE[] = { 'C', 'Z', 'M', '0' };
 
 // This is our inital state for pairing
-static DiffieHellman dh_state = {
-  &RSA_DIFFIE_MONT,
-  &RSA_DIFFIE_EXP_MONT,
-};
+static DiffieHellmanTask dh_state;
 
 struct BLE_CladBuffer {
   uint16_t  PADDING;
@@ -91,24 +83,10 @@ static void permissions_error(BLEError error) {
   sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 }
 
-void Bluetooth::authChallenge(const Anki::Cozmo::HelloRobot& msg) {
-  if (memcmp(msg.signature, HELLO_SIGNATURE, sizeof(HELLO_SIGNATURE))) {
-    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
-    return ;
-  }
-
-  if (memcmp(msg.nonce, m_nonce, sizeof(m_nonce))) {
-    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
-    return ;
-  }
-
-  m_authenticated = true;
-}
-
-static void dh_complete(const void* state, int) {
+static void dh_complete(const void* state) {
   using namespace Anki::Cozmo;
   
-  const DiffieHellman* dh = (const DiffieHellman*) state;
+  const DiffieHellmanTask* dh = (const DiffieHellmanTask*) state;
   
   // Transmit our encryped key
   EncodedAESKey msg;
@@ -131,10 +109,10 @@ void Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& ms
   Tasks::execute(&t);
 }
 
-static void dh_setup(const void* state, int) {
+static void dh_setup(const void* state) {
   using namespace Anki::Cozmo;
   
-  const DiffieHellman* dh = (const DiffieHellman*) state;
+  const DiffieHellmanTask* dh = (const DiffieHellmanTask*) state;
 
   // Display the pin number
   RobotInterface::DisplayNumber dn;
@@ -184,35 +162,19 @@ static bool message_encrypted(uint8_t op) {
   return true;
 }
 
-static bool message_authenticated(uint8_t op) {
-  using namespace Anki::Cozmo::RobotInterface;
-
-  // These are the only messages that may be used unauthenticated
-  switch (op) {
-    case EngineToRobot::Tag_enterPairing:
-    case EngineToRobot::Tag_encodedAESKey:
-    case EngineToRobot::Tag_helloRobotMessage:
-    case EngineToRobot::Tag_helloPhoneMessage:
-      return false;
+static void frame_data_received(const void* state) {
+  const AESTask *aes = (const AESTask*) state;
+  
+  if (!aes->hmac_test) {
+    permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+    return ;
   }
-
-  return true;
-}
-
-static void frame_data_received(const void*, int length) {
+  
   // Attempted to underflow the receive buffer
-  if (rx_buffer.length > length) {
+  if (rx_buffer.length > aes->data_length) {
     permissions_error(BLE_ERROR_BUFFER_UNDERFLOW);
     return ;
   }
-
-  #ifndef DISABLE_AUTHENTIFICATION
-  // Attempted to send a bad message over the wire, disconnect user and 
-  if (message_authenticated(rx_buffer.msgID) && !m_authenticated) {
-    permissions_error(BLE_ERROR_NOT_AUTHENTICATED);
-    return ;
-  }
-  #endif
 
   // Forward message up clad
   if (rx_buffer.msgID >= 0x30) {
@@ -257,26 +219,34 @@ static void frame_receive(CozmoFrame& receive)
   #endif
 
   // rx_buffer.pointer
+  static AESTask state = {
+    rx_buffer.raw,
+    rx_buffer.message_size,
+    m_nonce,
+    sizeof(m_nonce)
+  };
+  state.data_length = rx_buffer.message_size;
+  
   if (encrypted) {
     Task t;
+
     
     t.op = TASK_AES_DECODE;
     t.callback = frame_data_received;
-    t.state = rx_buffer.raw;
-    t.length = rx_buffer.message_size;
+    t.state = &state;
 
     Tasks::execute(&t);
   } else {
     // Feed unencrypted data through to the engine
-    frame_data_received(NULL, rx_buffer.message_size);
+    state.hmac_test = true;
+    frame_data_received(&state);
   }
 }
 
-static void send_welcome_message(const void*, int) {
+static void send_welcome_message(const void*) {
   using namespace Anki::Cozmo;
   
-  HelloPhone msg; 
-  memcpy(msg.signature, HELLO_SIGNATURE, sizeof(m_nonce));
+  HelloPhone msg;
   memcpy(msg.nonce, m_nonce, sizeof(m_nonce));
 
   RobotInterface::SendMessage(msg);
@@ -342,8 +312,9 @@ void Bluetooth::manage() {
   }
 }
 
-static void start_message_transmission(const void*, int size) {
-  tx_buffer.message_size = size;
+static void start_message_transmission(const void* state) {
+  const AESTask* aes = (const AESTask*) state;
+  tx_buffer.message_size = aes->data_length;
   tx_pending = true;
 }
 
@@ -371,11 +342,20 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
   if (encrypted) {
     Task t;
 
-    t.op = TASK_AES_ENCODE;
     tx_buffer.message_size = tx_buffer.length + 2;
+
+    static AESTask state = {
+      tx_buffer.raw,
+      tx_buffer.message_size,
+      m_nonce,
+      sizeof(m_nonce)
+    };
+    
+    state.data_length = tx_buffer.message_size;
+
+    t.op = TASK_AES_ENCODE;
     t.callback = start_message_transmission;
-    t.state = tx_buffer.raw;
-    t.length = tx_buffer.message_size;
+    t.state = &state;
         
     Tasks::execute(&t);
   } else {
@@ -397,14 +377,17 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
   {
     case BLE_GAP_EVT_CONNECTED:
       Bluetooth::conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-      m_authenticated = false;
       tx_pending = false;
       tx_buffered = false;
 
+      static const RandomTask random = {
+        m_nonce,
+        sizeof(m_nonce)
+      };
+    
       // Generate our welcome nonce
       t.op = TASK_GENERATE_RANDOM;
-      t.state = &m_nonce;
-      t.length = sizeof(m_nonce);
+      t.state = &random;
       t.callback = send_welcome_message;
       Tasks::execute(&t);
 

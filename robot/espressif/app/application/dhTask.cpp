@@ -59,6 +59,8 @@ void DiffieHellman::Start(const uint8_t* local, const uint8_t* remote) {
     return ;
   }
 
+  os_printf("DH Start");
+
   memcpy(task->local_exp, local, RANDOM_BYTES);
   memcpy(task->remote_exp, remote, RANDOM_BYTES);
   
@@ -133,6 +135,8 @@ void DiffieHellman::Update(void) {
     DiffieHellmanResults msg;
     memcpy(msg.result, task->mod_state.modulo.digits, RANDOM_BYTES);
     RobotInterface::SendMessage(msg);
+
+    os_printf("DH done");
 
     os_free(task);
     task = NULL;

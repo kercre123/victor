@@ -4,37 +4,6 @@
 #include "aes.h"
 #include "random.h"
 
-#ifdef NRF51
-
-extern "C" {
-  #include "nrf.h" 
-  #include "nrf_sdm.h"
-  #include "nrf_soc.h"
-}
-
-void aes_ecb(ecb_data_t* ecb) {
-  uint8_t softdevice_is_enabled;
-  sd_softdevice_is_enabled(&softdevice_is_enabled);
-
-  if (softdevice_is_enabled) {
-    sd_ecb_block_encrypt((nrf_ecb_hal_data_t*)ecb);
-  } else {
-    NRF_ECB->POWER = 1;
-    NRF_ECB->ECBDATAPTR = (uint32_t)ecb;
-    NRF_ECB->EVENTS_ENDECB = 0;
-    NRF_ECB->TASKS_STARTECB = 1;
-    while (!NRF_ECB->EVENTS_ENDECB) ;
-  }
-}
-
-#else
-
-void aes_ecb(ecb_data_t* ecb) {
-  AES128_ECB_encrypt(ecb->cleartext, ecb->key, ecb->ciphertext);
-}
-
-#endif
-
 /*****************************************************************************/
 /* Defines:                                                                  */
 /*****************************************************************************/
@@ -415,12 +384,12 @@ static void InvCipher(void)
   AddRoundKey(0);
 }
 
-static void BlockCopy(uint8_t* output, uint8_t* input)
+static void BlockCopy(uint8_t* output, const uint8_t* input)
 {
   memcpy(output, input, AES_KEY_LENGTH);
 }
 
-void AES128_ECB_encrypt(uint8_t* input, const uint8_t* key, uint8_t* output)
+void AES128_ECB_encrypt(const uint8_t* input, const uint8_t* key, uint8_t* output)
 {
   // Copy input to output, and work in-memory on output
   BlockCopy(output, input);
@@ -433,7 +402,7 @@ void AES128_ECB_encrypt(uint8_t* input, const uint8_t* key, uint8_t* output)
   Cipher();
 }
 
-void AES128_ECB_decrypt(uint8_t* input, const uint8_t* key, uint8_t *output)
+void AES128_ECB_decrypt(const uint8_t* input, const uint8_t* key, uint8_t *output)
 {
   // Copy input to output, and work in-memory on output
   BlockCopy(output, input);
@@ -459,50 +428,50 @@ void aes_fix_block(uint8_t* data, int& length) {
 }
 
 void aes_cfb_encode(const void* key, void* iv, const uint8_t* data, uint8_t* output, int length) {
-  ecb_data_t ecb;
+  uint8_t cleartext[AES_KEY_LENGTH];
+  uint8_t ciphertext[AES_KEY_LENGTH];
 
   void *target = iv;
   
   // Generate our IV
-  memcpy(ecb.key, key, AES_KEY_LENGTH);
-  gen_random(ecb.cleartext, AES_KEY_LENGTH); 
+  gen_random(cleartext, AES_KEY_LENGTH); 
   
   while (length > 0) {
-    aes_ecb(&ecb);
+    AES128_ECB_encrypt(cleartext, (uint8_t*)key, ciphertext);
 
     for (int i = 0; i < AES_KEY_LENGTH; i++) {
-      ecb.ciphertext[i] ^= *(data++);
+      ciphertext[i] ^= *(data++);
     }
 
-    memcpy(target, ecb.cleartext, AES_KEY_LENGTH);
-    memcpy(ecb.cleartext, ecb.ciphertext, AES_KEY_LENGTH);
+    memcpy(target, cleartext, AES_KEY_LENGTH);
+    memcpy(cleartext, ciphertext, AES_KEY_LENGTH);
     target = output;
     output += AES_KEY_LENGTH;
 
     length -= AES_KEY_LENGTH;
   }
 
-  memcpy(target, ecb.cleartext, AES_KEY_LENGTH);
+  memcpy(target, cleartext, AES_KEY_LENGTH);
 }
 
 void aes_cfb_decode(const void* key, const void* iv, const uint8_t* data, uint8_t* output, int length, void* aes_out) {
-  ecb_data_t ecb;
-
-  // Generate our IV
-  memcpy(ecb.key, key, AES_KEY_LENGTH);
-  memcpy(ecb.cleartext, iv, AES_KEY_LENGTH);
+  uint8_t cleartext[AES_KEY_LENGTH];
+  uint8_t ciphertext[AES_KEY_LENGTH];
+  
+  // IV primed
+  memcpy(cleartext, iv, AES_KEY_LENGTH);
   
   while (length > 0) {
-    aes_ecb(&ecb);
+    AES128_ECB_encrypt(cleartext, (uint8_t*)key, ciphertext);
 
     for (int i = 0; i < AES_KEY_LENGTH; i++) {
-      *(output++) = (ecb.cleartext[i] = *(data++)) ^ ecb.ciphertext[i];
+      *(output++) = (cleartext[i] = *(data++)) ^ ciphertext[i];
     }
 
     length -= AES_KEY_LENGTH;
   }
 
   if (aes_out) {
-    memcpy(aes_out, ecb.cleartext, AES_KEY_LENGTH);
+    memcpy(aes_out, cleartext, AES_KEY_LENGTH);
   }
 }

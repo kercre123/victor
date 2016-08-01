@@ -10,7 +10,6 @@
 #include "ble_stack_handler_types.h"
 
 __packed typedef struct {
-  uint32_t  revision;
   uint32_t  deviceid[2];
 } ManufacturerData;
 

@@ -6,45 +6,19 @@
 #include "random.h"
 #include "sha1.h"
 
+#include "publickeys.h"
+
 // Step to convert a pin + random to a hash
-static void dh_encode_random(uint8_t* output, int pin, const uint8_t* random) {
-  ecb_data_t ecb;
+void dh_encode_random(uint8_t* output, int pin, const uint8_t* random) {
+  // Hash our pin (keeping only lower portion
+  SHA1_CTX ctx;
+  sha1_init(&ctx);
+  sha1_update(&ctx, (uint8_t*)&pin, sizeof(pin));
 
-  {
-    // Hash our pin (keeping only lower portion
-    SHA1_CTX ctx;
-    sha1_init(&ctx);
-    sha1_update(&ctx, (uint8_t*)&pin, sizeof(pin));
-
-    uint8_t sig[SHA1_BLOCK_SIZE];
-    sha1_final(&ctx, sig);
+  uint8_t sig[SHA1_BLOCK_SIZE];
+  sha1_final(&ctx, sig);
   
-    // Setup ECB
-    memcpy(ecb.cleartext, random, AES_KEY_LENGTH);
-    memcpy(ecb.key, sig, sizeof(ecb.key));
-  }
-
-  aes_ecb(&ecb);
-
-  memcpy(output, ecb.ciphertext, AES_KEY_LENGTH);
-}
-
-static void fix_pin(uint32_t& pin) {
-  for (int bit = 0; bit < sizeof(pin) * 8; bit += 4) {
-    int nibble = (pin >> bit) & 0xF;
-    if (nibble > 0x9) {
-      pin += 0x06 << bit;
-    }
-  }
-}
-
-void dh_start(DiffieHellman* dh) {
-  // Generate our secret
-  gen_random(&dh->pin, sizeof(dh->pin));
-  fix_pin(dh->pin);
-  gen_random(dh->local_secret, SECRET_LENGTH);
-  dh_encode_random(dh->local_encoded, dh->pin, dh->local_secret);
-  dh_encode_random(dh->remote_encoded, dh->pin, dh->remote_secret);
+  AES128_ECB_encrypt(random, sig, output);
 }
 
 static inline void dh_random_to_num(big_num_t& num, const uint8_t* digits) {
@@ -53,33 +27,25 @@ static inline void dh_random_to_num(big_num_t& num, const uint8_t* digits) {
   num.negative = false;
 }
 
-void dh_finish(const void* key, DiffieHellman* dh) {
-  // Encode our AES key with the DH output
-  ecb_data_t ecb;
-  
-  memcpy(ecb.key, dh->diffie_result, AES_KEY_LENGTH);
-  memcpy(ecb.cleartext, key, AES_KEY_LENGTH);
-  
-  aes_ecb(&ecb);
-
-  memcpy(dh->encoded_key, ecb.ciphertext, AES_KEY_LENGTH);
-}
-
 // Supply remote_secret, local_secret, encoded_key and pin
-void dh_reverse(DiffieHellman* dh, uint8_t* key) {
+void dh_reverse(uint8_t* local_secret, uint8_t* remote_secret, int pin, uint8_t* key) {
   // Encode our secret as an exponent
   big_num_t temp;
   big_num_t state;
 
-  dh_encode_random(dh->local_encoded, dh->pin, dh->local_secret);
-  dh_random_to_num(temp, dh->local_secret);
-  mont_power(*dh->mont, state, *dh->gen, temp);
+  uint8_t local_encoded[SECRET_LENGTH];
+  uint8_t remote_encoded[SECRET_LENGTH];
+  uint8_t encoded_key[AES_KEY_LENGTH];
 
-  dh_encode_random(dh->remote_encoded, dh->pin, dh->remote_secret);
-  dh_random_to_num(temp, dh->remote_secret);
-  mont_power(*dh->mont, state, state, temp);
+  dh_encode_random(local_encoded, pin, local_secret);
+  dh_random_to_num(temp, local_secret);
+  mont_power(RSA_DIFFIE_MONT, state, RSA_DIFFIE_EXP_MONT, temp);
 
-  mont_from(*dh->mont, temp, state);
+  dh_encode_random(remote_encoded, pin, remote_secret);
+  dh_random_to_num(temp, remote_secret);
+  mont_power(RSA_DIFFIE_MONT, state, state, temp);
 
-  AES128_ECB_decrypt(dh->encoded_key, (uint8_t*)temp.digits, key);
+  mont_from(RSA_DIFFIE_MONT, temp, state);
+
+  AES128_ECB_decrypt(encoded_key, (uint8_t*)temp.digits, key);
 }

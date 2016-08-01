@@ -872,10 +872,6 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_helloRobotMessage(Anki::Cozmo::HelloRobot const&)
-      {
-        // Nothing to do here
-      }
       void Process_helloPhoneMessage(Anki::Cozmo::HelloPhone const&)
       {
         // Nothing to do here

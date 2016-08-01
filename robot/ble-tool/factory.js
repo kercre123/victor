@@ -20,22 +20,18 @@ noble.on('discover', function (device) {
   if (!data || data.length < 2 || data.readUInt16BE(0) != 0xBEEF) { return ; }
 
   // THIS CONTAINS SPECIAL MANUFACTURER CODE
-  if (data.length != 14) {
+  if (data.length != 10) {
     return ;
   }
-
-  var sha = data.readUInt32LE(2);
 
   function pad(v) { return (v+0x100000000).toString(16).substr(1) }
 
   // Display info we found out about cozmo
-  var deviceVersion = data.readUInt32LE(2);
-  var deviceID = pad(data.readUInt32LE(6)) + pad(data.readUInt32LE(10));
+  var deviceID = pad(data.readUInt32LE(2)) + pad(data.readUInt32LE(6));
 
   emitter.emit('advertised', { 
     device,
     name: device.advertisement.localName || "<noname>", 
-    revision: deviceVersion.toString(16),
     id: deviceID
   });
 
