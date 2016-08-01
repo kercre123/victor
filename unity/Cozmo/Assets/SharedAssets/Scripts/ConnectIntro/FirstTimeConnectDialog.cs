@@ -43,6 +43,16 @@ public class FirstTimeConnectDialog : MonoBehaviour {
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
   }
 
+  private void OnDestroy() {
+    if (_PlaceCozmoOnChargerConnectViewInstance != null) {
+      UIManager.CloseViewImmediately(_PlaceCozmoOnChargerConnectViewInstance);
+    }
+
+    if (_ConnectionFlowInstance != null) {
+      GameObject.Destroy(_ConnectionFlowInstance.gameObject);
+    }
+  }
+
   private void HandleStartButton() {
     _SoundCheckViewInstance = UIManager.OpenView(_SoundCheckViewPrefab);
     _SoundCheckViewInstance.OnSoundCheckComplete += HandleSoundCheckComplete;

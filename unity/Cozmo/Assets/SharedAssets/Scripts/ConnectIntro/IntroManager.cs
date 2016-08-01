@@ -9,7 +9,6 @@ public class IntroManager : MonoBehaviour {
 
   [SerializeField]
   private GameObjectDataLink _CheckInDialogPrefabData;
-
   private GameObject _CheckInDialogInstance;
 
   [SerializeField]
@@ -58,6 +57,10 @@ public class IntroManager : MonoBehaviour {
     if (null != _HubWorldInstance) {
       _HubWorldInstance.DestroyHubWorld();
     }
+
+    // remove connection flow instances before restarting the flow
+    HideFirstTimeConnectDialog();
+    HideCheckInFlow();
 
     StartFlow();
   }

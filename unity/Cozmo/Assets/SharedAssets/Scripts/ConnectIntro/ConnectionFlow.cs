@@ -74,6 +74,14 @@ public class ConnectionFlow : MonoBehaviour {
     RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToEngine;
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnectionResponse);
+
+    if (_PullCubeTabViewInstance != null) {
+      UIManager.CloseViewImmediately(_PullCubeTabViewInstance);
+    }
+
+    if (_ConnectionFlowBackgroundInstance != null) {
+      GameObject.Destroy(_ConnectionFlowBackgroundInstance.gameObject);
+    }
   }
 
   public void Play(bool sim) {
@@ -294,7 +302,10 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void FinishConnectionFlow() {
     UIManager.CloseView(_ConnectionFlowBackgroundInstance);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
+    }
+
     if (ConnectionFlowComplete != null) {
       ConnectionFlowComplete();
     }

@@ -110,6 +110,11 @@ public class CheckInFlow : MonoBehaviour {
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
   }
 
+  private void OnDestroy() {
+    if (_ConnectionFlowInstance != null) {
+      GameObject.Destroy(_ConnectionFlowInstance.gameObject);
+    }
+  }
 
   #region EnvelopeContainer
 

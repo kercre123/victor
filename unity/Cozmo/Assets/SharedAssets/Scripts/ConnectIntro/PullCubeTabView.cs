@@ -64,24 +64,29 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
 
   private void CheckForNewObjects() {
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-    foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
-      if (_ObjectConnectedList.Contains(kvp.Value.ObjectType) == false) {
-        _NewlyConnectedObject = kvp.Value.ObjectType;
-        _NewlyConnectedObjectTime = Time.time;
-        _NewlyConnectedObjectId = kvp.Key;
-        DAS.Info("PullCubeTabView.CheckForNewObject", "New object found! " + kvp.Value.ObjectType);
-        break;
+    if (robot != null) {
+      foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
+        if (_ObjectConnectedList.Contains(kvp.Value.ObjectType) == false) {
+          _NewlyConnectedObject = kvp.Value.ObjectType;
+          _NewlyConnectedObjectTime = Time.time;
+          _NewlyConnectedObjectId = kvp.Key;
+          DAS.Info("PullCubeTabView.CheckForNewObject", "New object found! " + kvp.Value.ObjectType);
+          break;
+        }
       }
     }
   }
 
   private void ProcessNewObject() {
-    if (Time.time - _NewlyConnectedObjectTime > _kTimeBetweenObjectsConnected) {
-      DAS.Debug("PullCubeTabView.ProcessNewObject", "Processing: " + _NewlyConnectedObject);
-      _ObjectConnectedImagesList[_ObjectConnectedList.Count].overrideSprite = _ConnectedStateSprite;
-      _ObjectConnectedList.Add(_NewlyConnectedObject);
-      _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
-      RobotEngineManager.Instance.CurrentRobot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.white);
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null) {
+      if (Time.time - _NewlyConnectedObjectTime > _kTimeBetweenObjectsConnected) {
+        DAS.Debug("PullCubeTabView.ProcessNewObject", "Processing: " + _NewlyConnectedObject);
+        _ObjectConnectedImagesList[_ObjectConnectedList.Count].overrideSprite = _ConnectedStateSprite;
+        _ObjectConnectedList.Add(_NewlyConnectedObject);
+        _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
+        robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.white);
+      }
     }
   }
 
@@ -93,8 +98,11 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-    foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-      kvp.Value.SetLEDsOff();
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null) {
+      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+        kvp.Value.SetLEDsOff();
+      }
     }
   }
 }
