@@ -124,8 +124,6 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     
     _audioEngine->LoadAudioScene( sceneTitle );
     
-    StartUpSetDefaults();
-
 #endif
   
     // Setup Music Conductor
@@ -392,10 +390,12 @@ bool AudioController::SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// THIS IS TEMP
-void AudioController::StartUpSetDefaults()
+void AudioController::ProcessAudioQueue() const
 {
-  SetParameter( static_cast<AudioEngine::AudioParameterId>( GameParameter::ParameterType::Robot_Volume ), 0.15, kInvalidAudioGameObject );
+#if USE_AUDIO_ENGINE
+  // NOTE: Don't need time delta
+  _audioEngine->Update( 0 );
+#endif
 }
 
 
@@ -505,9 +505,7 @@ void AudioController::Update()
   // Tick Music Conductor & Audio Engine
   _musicConductor->UpdateTick();
   
-  // NOTE: Don't need time delta
-  _audioEngine->Update( 0.0 );
-
+  ProcessAudioQueue();
 
 #if ENABLE_AC_RUN_TIME_DIAGNOSTICS
   {

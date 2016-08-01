@@ -118,14 +118,15 @@ public:
   bool SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject, AudioEngine::AudioReal32 controlVolume );
 
   
-  // TEMP: Set Cozmo Speaker Volumes
-  void StartUpSetDefaults();
-  
   // Expose PlugIn functionality
   AudioControllerPluginInterface* GetPluginInterface() const { return _pluginInterface; }
   
   // Music
   MusicConductor* GetMusicConductor() const { return _musicConductor; }
+  
+  // Process all Audio Engine events
+  // This flushes all audio events that have been posted
+  void ProcessAudioQueue() const;
   
 
 private:

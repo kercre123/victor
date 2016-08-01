@@ -54,9 +54,13 @@ public:
   using CozmoEventCallbackFunc = std::function<void( const AudioEngine::AudioCallbackInfo& callbackInfo )>;
   CozmoPlayId PostCozmoEvent( GameEvent::GenericEvent event,
                               GameObjectType GameObjId = GameObjectType::Invalid,
-                              const CozmoEventCallbackFunc& callbackFunc = nullptr );
+                              const CozmoEventCallbackFunc& callbackFunc = nullptr ) const;
   
-  bool SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value );
+  bool SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value ) const;
+  
+  void StopCozmoEvent(GameObjectType gameObjId);
+  
+  void ProcessEvents() const;
 
    // Create an Audio Animation for a specific animation. Only one animation can be played at a time
   void CreateAudioAnimation( Animation* anAnimation );
