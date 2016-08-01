@@ -10,6 +10,7 @@
 *
 */
 
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/comms/robotConnectionData.h"
 #include "anki/cozmo/basestation/comms/robotConnectionManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -82,30 +83,6 @@ void RobotConnectionManager::Update()
   }
   
   ProcessArrivedMessages();
-  
-  // If we have a cached address it means we've been disconnected and need to try and reconnect
-  if (_cachedAddress)
-  {
-    static auto lastTime = std::chrono::system_clock::now();
-    auto currentTime = std::chrono::system_clock::now();
-    auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime).count();
-    
-    constexpr auto kMinTimeBetweenConnectAttempts_ms = 100;
-    if (timeDiff > kMinTimeBetweenConnectAttempts_ms)
-    {
-      if (!IsValidConnection())
-      {
-        Connect(*_cachedAddress);
-      }
-      else
-      {
-        _cachedAddress.reset();
-        _robotManager->GetFirstRobot()->GetActionList().Clear();
-        //TODO:(lc) maybe also clear the animation streamer state here?
-      }
-      lastTime = currentTime;
-    }
-  } // if (_cachedAddress)
 }
   
 void RobotConnectionManager::Connect(const Util::TransportAddress& address)
@@ -216,11 +193,8 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   // Note not calling DisconnectCurrent because this message means reliableTransport is already deleting this connection data
   _currentConnectionData->Clear();
   
-  // Store off this address so we can try to reconnect to it
-  _cachedAddress.reset(new Util::TransportAddress(nextMessage.GetAddress()));
-  
-  // Cancel out any actions that were ongoing
-  _robotManager->GetFirstRobot()->GetActionList().Clear();
+  // This robot is gone.
+  _robotManager->RemoveRobot(_robotManager->GetFirstRobot()->GetID());
 }
 
 void RobotConnectionManager::HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage)

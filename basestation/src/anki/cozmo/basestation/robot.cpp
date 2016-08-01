@@ -6,7 +6,9 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/minimalAnglePlanner.h"
@@ -138,10 +140,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _lastMsgTimestamp(0)
   , _blockWorld(this)
   , _faceWorld(*this)
-  , _behaviorMgr(*this)
+  , _behaviorMgr(new BehaviorManager(*this))
   , _audioClient(new Audio::RobotAudioClient(this))
   , _animationStreamer(_context, *_audioClient)
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
+  , _actionList(new ActionList())
   , _movementComponent(*this)
   , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
   , _nvStorageComponent(*this, _context)
@@ -229,7 +232,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   // load available behaviors into the behavior factory
   LoadBehaviors();
-  _behaviorMgr.InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
+  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
 
       
   SetHeadAngle(_currentHeadAngle);
@@ -259,6 +262,14 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 Robot::~Robot()
 {
   AbortAll();
+  
+  // This needs to happen before ActionList is destroyed, because otherwise behaviors will try to respond
+  // to actions shutting down
+  _behaviorMgr.reset();
+  
+  // Destroy our actionList before things like the path planner, since actions often rely on those
+  // things existing
+  _actionList.reset();
       
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash
   // caused by the vision thread using _poseHistory when it was destroyed here
@@ -386,7 +397,7 @@ void Robot::SetPickedUp(bool isPickedUpNew)
     }
         
     // Check the lift to see if tool changed while we were picked up
-    //_actionList.QueueActionNext(new ReadToolCodeAction(*this));
+    //_actionList->QueueActionNext(new ReadToolCodeAction(*this));
         
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
   }
@@ -461,7 +472,7 @@ void Robot::Delocalize(bool isCarryingObject)
   _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
       
   // notify behavior whiteboard
-  _behaviorMgr.GetWhiteboard().OnRobotDelocalized();
+  _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
@@ -1010,9 +1021,9 @@ Result Robot::Update(bool ignoreVisionModes)
   static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
   if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
   {
-    _behaviorMgr.Update();
+    _behaviorMgr->Update();
         
-    const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
+    const IBehavior* behavior = _behaviorMgr->GetCurrentBehavior();
     if(behavior != nullptr) {
       if( behavior->IsActing() ) {
         behaviorDebugStr = "A ";
@@ -1028,7 +1039,7 @@ Result Robot::Update(bool ignoreVisionModes)
       }
     }
         
-    const IBehaviorChooser* behaviorChooser = _behaviorMgr.GetBehaviorChooser();
+    const IBehaviorChooser* behaviorChooser = _behaviorMgr->GetBehaviorChooser();
     if (behaviorChooser)
     {
       behaviorChooserName = behaviorChooser->GetName();
@@ -1042,7 +1053,7 @@ Result Robot::Update(bool ignoreVisionModes)
 
       
   //////// Update Robot's State Machine /////////////
-  Result actionResult = _actionList.Update();
+  Result actionResult = _actionList->Update();
   if(actionResult != RESULT_OK) {
     PRINT_NAMED_INFO("Robot.Update", "Robot %d had an action fail.", GetID());
   }        
@@ -1686,7 +1697,7 @@ void Robot::LoadBehaviors()
     if (!behaviorJson.empty())
     {
       // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
-      const Result ret = _behaviorMgr.CreateBehaviorFromConfiguration(behaviorJson);
+      const Result ret = _behaviorMgr->CreateBehaviorFromConfiguration(behaviorJson);
       if ( ret != RESULT_OK ) {
         PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create behavior from '%s'", filename.c_str());
       }
@@ -3474,7 +3485,7 @@ Result Robot::AbortAll()
 {
   bool anyFailures = false;
       
-  _actionList.Cancel();
+  _actionList->Cancel();
       
   if(AbortDrivingToPose() != RESULT_OK) {
     anyFailures = true;
@@ -3682,6 +3693,21 @@ ObjectType Robot::GetDiscoveredObjectType(FactoryID id)
     return it->second.objectType;
   }
   return ObjectType::Unknown;
+}
+  
+bool Robot::IsIdle() const
+{
+  return !IsTraversingPath() && _actionList->IsEmpty();
+}
+  
+const BehaviorFactory& Robot::GetBehaviorFactory() const
+{
+  return _behaviorMgr->GetBehaviorFactory();
+}
+
+BehaviorFactory& Robot::GetBehaviorFactory()
+{
+  return _behaviorMgr->GetBehaviorFactory();
 }
     
 } // namespace Cozmo

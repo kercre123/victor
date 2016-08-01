@@ -495,8 +495,11 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
     CleanUpOnDestroy();
-    // clears the action queue before quitting the game.
-    CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+
+    if (CurrentRobot != null) {
+      // clears the action queue before quitting the game.
+      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    }
     Destroy(gameObject);
   }
 

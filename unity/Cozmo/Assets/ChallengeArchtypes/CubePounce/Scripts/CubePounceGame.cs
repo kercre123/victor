@@ -59,7 +59,9 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     protected override void CleanUpOnDestroy() {
-      CurrentRobot.SetEnableCliffSensor(true);
+      if (null != CurrentRobot) {
+        CurrentRobot.SetEnableCliffSensor(true);
+      }
     }
 
     public LightCube GetCubeTarget() {

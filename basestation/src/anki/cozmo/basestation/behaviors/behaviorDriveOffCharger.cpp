@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"

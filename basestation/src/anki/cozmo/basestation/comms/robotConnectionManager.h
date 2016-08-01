@@ -58,7 +58,6 @@ private:
   std::unique_ptr<RobotConnectionData>      _currentConnectionData;
   std::unique_ptr<Util::UDPTransport>       _udpTransport;
   std::unique_ptr<Util::ReliableTransport>  _reliableTransport;
-  std::unique_ptr<Util::TransportAddress>   _cachedAddress;
   RobotManager*                             _robotManager = nullptr;
   std::deque<std::vector<uint8_t>>          _readyData;
   

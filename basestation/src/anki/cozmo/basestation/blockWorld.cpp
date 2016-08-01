@@ -19,6 +19,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"

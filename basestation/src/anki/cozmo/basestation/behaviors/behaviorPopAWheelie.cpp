@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"

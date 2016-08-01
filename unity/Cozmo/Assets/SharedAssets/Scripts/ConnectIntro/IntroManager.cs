@@ -19,29 +19,47 @@ public class IntroManager : MonoBehaviour {
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
   void Start() {
-
     Application.targetFrameRate = 30;
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
 
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
-      ShowFirstTimeFlow();
-    }
-    else {
-      ShowCheckInFlow();
-    }
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
+
+    StartFlow();
 
 #if !UNITY_EDITOR
     SetupEngine();
 #endif
   }
 
+  private void OnDestroy() {
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
+  }
+
+  private void StartFlow() {
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+      ShowFirstTimeFlow();
+    }
+    else {
+      ShowCheckInFlow();
+    }
+  }
+
   private void SetupEngine() {
     RobotEngineManager.Instance.StartEngine();
     // Set initial volumes
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
+  }
+
+
+  private void OnRobotDisconnect(object message) {
+    if (null != _HubWorldInstance) {
+      _HubWorldInstance.DestroyHubWorld();
+    }
+
+    StartFlow();
   }
 
   private void HandleFirstTimeConnectionFlowComplete() {

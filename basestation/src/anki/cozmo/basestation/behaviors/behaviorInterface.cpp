@@ -14,6 +14,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"

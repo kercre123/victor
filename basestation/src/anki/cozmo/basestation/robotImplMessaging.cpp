@@ -13,6 +13,7 @@
 
 #include <opencv2/imgproc.hpp>
 
+#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/actions/animActions.h"

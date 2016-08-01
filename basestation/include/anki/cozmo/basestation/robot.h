@@ -42,10 +42,8 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -114,6 +112,8 @@ class ActiveCube;
 class SpeedChooser;
 class DrivingAnimationHandler;
 class LightsComponent;
+class ActionList;
+class BehaviorManager;
   
 namespace Audio {
 class RobotAudioClient;
@@ -187,7 +187,7 @@ public:
   Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
     
   // Returns true if robot is not traversing a path and has no actions in its queue.
-  bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
+  bool   IsIdle() const;
   
   // True if we are on the sloped part of a ramp
   bool   IsOnRamp() const { return _onRamp; }
@@ -465,7 +465,7 @@ public:
   // Return a reference to the robot's action list for directly adding things
   // to do, either "now" or in queues.
   // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
-  ActionList& GetActionList() { return _actionList; }
+  ActionList& GetActionList() { return *_actionList; }
   
   // Send a message to the robot to place whatever it is carrying on the
   // ground right where it is. Returns RESULT_FAIL if robot is not carrying
@@ -694,11 +694,11 @@ public:
   const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
 
-  const BehaviorManager& GetBehaviorManager() const { return _behaviorMgr; }
-  BehaviorManager& GetBehaviorManager() { return _behaviorMgr; }
+  const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
+  BehaviorManager& GetBehaviorManager() { return *_behaviorMgr; }
 
-  const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
-  BehaviorFactory& GetBehaviorFactory() { return _behaviorMgr.GetBehaviorFactory(); }
+  const BehaviorFactory& GetBehaviorFactory() const;
+  BehaviorFactory& GetBehaviorFactory();
 
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -764,7 +764,7 @@ protected:
   // A container for faces/people the robot knows about
   FaceWorld         _faceWorld;
   
-  BehaviorManager   _behaviorMgr;
+  std::unique_ptr<BehaviorManager>   _behaviorMgr;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
@@ -780,7 +780,7 @@ protected:
   DrivingAnimationHandler* _drivingAnimationHandler;
   
   //ActionQueue         _actionQueue;
-  ActionList            _actionList;
+  std::unique_ptr<ActionList> _actionList;
   MovementComponent     _movementComponent;
   VisionComponent*      _visionComponentPtr;
   NVStorageComponent    _nvStorageComponent;

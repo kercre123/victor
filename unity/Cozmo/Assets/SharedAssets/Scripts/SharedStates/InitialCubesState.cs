@@ -63,6 +63,11 @@ public class InitialCubesState : State {
   protected virtual void CheckForNewlySeenCubes() {
     bool validCubesChanged = false;
     LightCube cube = null;
+
+    if (null == _CurrentRobot) {
+      return;
+    }
+
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       cube = lightCube.Value;
       validCubesChanged |= TryUpdateCubeIdForGame(cube);

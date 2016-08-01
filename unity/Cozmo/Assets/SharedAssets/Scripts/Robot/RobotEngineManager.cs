@@ -129,7 +129,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     if (_Channel != null) {
       if (_Channel.IsActive) {
-        Disconnect();
         Disconnected(DisconnectionReason.UnityReloaded);
       }
 
@@ -183,6 +182,14 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void AddRobot(byte robotID) {
+    RemoveRobot(robotID);
+
+    IRobot robot = new Robot(robotID);
+    Robots.Add(robotID, robot);
+    CurrentRobotID = robotID;
+  }
+
+  public void RemoveRobot(byte robotID) {
     IRobot oldRobot;
     if (Robots.TryGetValue(robotID, out oldRobot)) {
       if (oldRobot != null) {
@@ -190,11 +197,11 @@ public class RobotEngineManager : MonoBehaviour {
       }
       _LastCurrentRobot = null;
       Robots.Remove(robotID);
-    }
 
-    IRobot robot = new Robot(robotID);
-    Robots.Add(robotID, robot);
-    CurrentRobotID = robotID;
+      if (0 == Robots.Count) {
+        _IsRobotConnected = false;
+      }
+    }
   }
 
   public void Connect(string engineIP) {
@@ -235,7 +242,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void Disconnected(DisconnectionReason reason) {
     DAS.Debug("RobotEngineManager.Disconnected", reason.ToString());
-    _IsRobotConnected = false;
+    Disconnect();
   }
 
   public void SendMessage() {
@@ -309,8 +316,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
-    Disconnect();
-    Disconnected(DisconnectionReason.RobotDisconnected);
+    RemoveRobot((byte)message.robotID);
   }
 
   private void ProcessCLADVersionMismatch(Anki.Cozmo.ExternalInterface.EngineRobotCLADVersionMismatch message) {
