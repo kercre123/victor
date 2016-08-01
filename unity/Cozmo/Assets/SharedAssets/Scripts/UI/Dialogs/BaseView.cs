@@ -32,6 +32,10 @@ namespace Cozmo {
 
       private bool _ClosingAnimationPlaying = false;
 
+      public bool ClosingAnimationPlaying {
+        get { return _ClosingAnimationPlaying; }
+      }
+
       public string DASEventViewName {
         get { return _DASEventViewName; }
         protected set { _DASEventViewName = value; }

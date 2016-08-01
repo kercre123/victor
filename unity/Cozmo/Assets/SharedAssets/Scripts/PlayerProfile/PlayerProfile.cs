@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class PlayerProfile {
+  public bool FirstTimeUserFlow;
+
   public Dictionary<string, bool> CompletedScriptedSequences;
 
   public Conversations.ConversationHistory ConversationHistory;
@@ -24,6 +26,7 @@ public class PlayerProfile {
   public int SaveVersion;
 
   public PlayerProfile() {
+    FirstTimeUserFlow = true;
     CompletedScriptedSequences = new Dictionary<string, bool>();
     GameDifficulty = new Dictionary<string, int>();
     TotalGamesPlayed = new Dictionary<string, int>();

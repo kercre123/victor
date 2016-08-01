@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: MinigameUISpritesHDAtlas
+  spritePackingTag: BasicUISpritesHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

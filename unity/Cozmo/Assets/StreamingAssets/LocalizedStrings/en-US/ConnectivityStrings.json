@@ -44,5 +44,8 @@
   },
   "connectivity.updateApp": {
     "translation": "You must update your Cozmo App to continue"
+  },
+  "connectivity.pullTabsTitle": {
+    "translation": "Pull the tabs on your Power Cubes"
   }
 }

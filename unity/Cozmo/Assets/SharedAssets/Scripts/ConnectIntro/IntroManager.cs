@@ -26,7 +26,7 @@ public class IntroManager : MonoBehaviour {
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
 
-    if (DataPersistence.DataPersistenceManager.Instance.IsFirstSession) {
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       ShowFirstTimeFlow();
     }
     else {

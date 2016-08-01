@@ -68,12 +68,6 @@ namespace DataPersistence {
 
     public readonly SaveData Data;
 
-    public bool IsFirstSession {
-      get {
-        return (Data.DefaultProfile.Sessions.LastOrDefault() == null);
-      }
-    }
-
     public bool IsNewSessionNeeded {
       get {
         var lastSession = Data.DefaultProfile.Sessions.LastOrDefault();

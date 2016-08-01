@@ -74,6 +74,8 @@ MonoBehaviour:
     type: 2}
   _ReplaceCozmoOnChargerViewPrefab: {fileID: 11415802, guid: 9e087726d56dc48868bde717970215ee,
     type: 2}
+  _PullCubeTabViewPrefab: {fileID: 11475142, guid: 10ff16b5c067d4b1793107310ff27472,
+    type: 2}
   _PingStatus: {fileID: 11424054}
 --- !u!1001 &100100000
 Prefab:

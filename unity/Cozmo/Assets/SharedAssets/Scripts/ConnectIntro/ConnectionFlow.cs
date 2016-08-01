@@ -53,6 +53,10 @@ public class ConnectionFlow : MonoBehaviour {
   private SimpleConnectView _ReplaceCozmoOnChargerViewInstance;
 
   [SerializeField]
+  private PullCubeTabView _PullCubeTabViewPrefab;
+  private PullCubeTabView _PullCubeTabViewInstance;
+
+  [SerializeField]
   private PingStatus _PingStatus;
 
   private const int kRobotID = 1;
@@ -243,17 +247,53 @@ public class ConnectionFlow : MonoBehaviour {
       HandleWakeAnimationComplete(true);
     }
     else {
-      _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundInstance.transform);
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+        ShowPullCubeTabsFlow();
+      }
+      else {
+        CheckForRestoreRobotFlow();
+      }
     }
+  }
 
+  private void CheckForRestoreRobotFlow() {
+    // TODO: implement check for if we need to try to restore old robot profile to a new robot.
+
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+      // we are done with first time user flow.. TODO: move this to after onboarding?
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
+      FinishConnectionFlow();
+    }
+    else {
+      WakeupSequence();
+    }
+  }
+
+  private void WakeupSequence() {
+    _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundInstance.transform);
+    RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
   }
 
   private void HandleWakeAnimationComplete(bool success) {
     GameObject.Destroy(_WakingUpCozmoScreenInstance);
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+
     DAS.Debug("ConnectionFlow.HandleWakeAnimationComplete", "wake up animation: " + success);
     // explicitly enable charger behavior since it should be off by default in engine.
+
+    FinishConnectionFlow();
+  }
+
+  private void ShowPullCubeTabsFlow() {
+    _PullCubeTabViewInstance = UIManager.OpenView(_PullCubeTabViewPrefab);
+    _PullCubeTabViewInstance.ViewClosed += HandlePullCubeTabsCompeted;
+  }
+
+  private void HandlePullCubeTabsCompeted() {
+    CheckForRestoreRobotFlow();
+  }
+
+  private void FinishConnectionFlow() {
+    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
     RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
     if (ConnectionFlowComplete != null) {
       ConnectionFlowComplete();
@@ -315,6 +355,7 @@ public class ConnectionFlow : MonoBehaviour {
     switch (response) {
     case RobotConnectResponse.Success:
       if (_ConnectingToCozmoScreenInstance != null) {
+        // progress from the connection screen to the next part of the flow
         _ConnectingToCozmoScreenInstance.ConnectionComplete();
       }
       break;
