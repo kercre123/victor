@@ -134,12 +134,21 @@ namespace Cozmo {
       }
 
       public void CloseView() {
+        // if we are already closing the view don't make multiple calls
+        // to the callback and don't try to play the close animation again
+        if (_ClosingAnimationPlaying) {
+          return;
+        }
         RaiseViewClosed(this);
         PlayCloseAnimations();
       }
 
       public void CloseViewImmediately() {
-        RaiseViewClosed(this);
+        // if we are already closing the view then don't call the view closed callback again,
+        // but do proceed to stop the animation anyway.
+        if (!_ClosingAnimationPlaying) {
+          RaiseViewClosed(this);
+        }
 
         // Close dialog without playing animations
         OnCloseAnimationsFinished();
