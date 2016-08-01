@@ -52,7 +52,6 @@ namespace Bluetooth {
   bool transmit(const uint8_t* data, int length, uint8_t id);
 
   // These are message handlers
-  void authChallenge(const Anki::Cozmo::HelloRobot& msg);
   void enterPairing(const Anki::Cozmo::EnterPairing& msg);
   void diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults& msg);
 };

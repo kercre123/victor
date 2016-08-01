@@ -350,8 +350,7 @@ union EngineToRobot
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyRestart              bodyRestart                 = 0x0D,
 
-  DiffieHellmanResults          diffieHellmanResults        = 0x25,
-  HelloRobot                    helloRobotMessage           = 0x26,
+  DiffieHellmanResults          diffieHellmanResults        = 0x26,
   EnterPairing                  enterPairing                = 0x27,
 
   HelloPhone                    helloPhoneMessage           = 0x28,

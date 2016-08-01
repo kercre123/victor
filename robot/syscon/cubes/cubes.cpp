@@ -31,6 +31,12 @@ using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
 
+enum TIMER_COMPARE {
+  PREPARE_COMPARE,
+  RESUME_COMPARE,
+  RESET_COMPARE
+};
+
 // Global head / body sync values
 extern uesb_mainstate_t  m_uesb_mainstate;
 
@@ -66,6 +72,10 @@ static int ota_block_index;
 static int ack_timeouts;
 static int light_gamma;
 
+// OTA Timeout values
+static int ota_timeout_countdown;
+static bool ota_pending;
+
 // Variables for talking to an accessory
 static uint8_t currentAccessory;
 static AccessorySlot accessories[MAX_ACCESSORIES];
@@ -78,12 +88,6 @@ static uint8_t _tapTime = 0;
 void Radio::init() {
   light_gamma = 0x100;
 }
-
-enum TIMER_COMPARE {
-  PREPARE_COMPARE,
-  RESUME_COMPARE,
-  TIMEOUT_COMPARE
-};
 
 void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
@@ -125,7 +129,10 @@ void Radio::advertise(void) {
   NVIC_SetPriority(TIMER0_IRQn, RADIO_TIMER_PRIORITY);
 
   NRF_TIMER0->CC[PREPARE_COMPARE] = SCHEDULE_PERIOD;
-  NRF_TIMER0->CC[RESUME_COMPARE] = SCHEDULE_PERIOD + SILENCE_PERIOD;
+  NRF_TIMER0->CC[RESUME_COMPARE] = SILENCE_PERIOD;
+  NRF_TIMER0->CC[RESET_COMPARE] = SCHEDULE_PERIOD;
+  
+  NRF_TIMER0->SHORTS = TIMER_SHORTS_COMPARE2_CLEAR_Msk;
 
   NRF_TIMER0->TASKS_START = 1;
 }
@@ -167,7 +174,7 @@ static int AllocateAccessory(uint32_t id) {
 static void EnterState(RadioState state) { 
   radioState = state;
 
-  NRF_TIMER0->INTENCLR = TIMER_INTENCLR_COMPARE2_Msk;
+  ota_pending = false;
 
   switch (state) {
     case RADIO_PAIRING:
@@ -200,9 +207,8 @@ static void ota_send_next_block() {
   
   uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
 
-  NRF_TIMER0->TASKS_CAPTURE[TIMEOUT_COMPARE] = 1;
-  NRF_TIMER0->CC[TIMEOUT_COMPARE] += OTA_ACK_TIMEOUT;
-  NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE2_Msk;
+  ota_timeout_countdown = OTA_ACK_TIMEOUT;
+  ota_pending = true;
 }
 
 static uint8_t random() {
@@ -350,7 +356,7 @@ void uesb_event_handler(uint32_t flags)
       }
       
       NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-      int clocks = NRF_TIMER0->CC[RESUME_COMPARE] - NRF_TIMER0->CC[3] + (target_slot * SCHEDULE_PERIOD);
+      int clocks = (target_slot * SCHEDULE_PERIOD) - NRF_TIMER0->CC[3] + SILENCE_PERIOD;
       int ticks_to_next = (clocks << 5) / ((int)NRF_CLOCK_FREQUENCY >> 10);
 
       if (ticks_to_next < SCHEDULE_PERIOD) {
@@ -459,7 +465,7 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 }
 
 static void ota_timeout() {
-  NRF_TIMER0->INTENCLR = TIMER_INTENCLR_COMPARE2_Msk;
+  ota_pending = false;
   
   // Give up, we didn't receive any acks soon enough
   if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {    
@@ -588,22 +594,18 @@ extern "C" void TIMER0_IRQHandler(void) {
     return ;
   }
     
-  if (NRF_TIMER0->EVENTS_COMPARE[TIMEOUT_COMPARE]) {
-    NRF_TIMER0->EVENTS_COMPARE[TIMEOUT_COMPARE] = 0;
-
+  if (ota_pending && ota_timeout_countdown && !--ota_timeout_countdown) {
     ota_timeout();
   }
   
   if (NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE]) {
     NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
-    NRF_TIMER0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
 
     radio_prepare();
   }
 
   if (NRF_TIMER0->EVENTS_COMPARE[RESUME_COMPARE]) {
     NRF_TIMER0->EVENTS_COMPARE[RESUME_COMPARE] = 0;
-    NRF_TIMER0->CC[RESUME_COMPARE] += SCHEDULE_PERIOD;
 
     radio_resume();
   }

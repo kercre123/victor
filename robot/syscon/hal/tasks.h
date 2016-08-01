@@ -11,12 +11,34 @@
 
 static const int MAX_TASKS = 4;
 
+struct RandomTask {
+  uint8_t* data;
+  int      length;
+};
+
+struct AESTask {
+  uint8_t* data;
+  int      data_length;
+  uint8_t* nonce;
+  int      nonce_length;
+  bool     hmac_test;
+};
+
+struct DiffieHellmanTask {
+  uint32_t          pin;
+  uint8_t           local_secret[SECRET_LENGTH];
+  uint8_t           remote_secret[SECRET_LENGTH];
+  uint8_t           local_encoded[SECRET_LENGTH];
+  uint8_t           remote_encoded[SECRET_LENGTH];
+  uint8_t           diffie_result[SECRET_LENGTH];
+  uint8_t           encoded_key[AES_KEY_LENGTH];
+};
+
 enum TaskOperation {
   // Generate random number
   TASK_GENERATE_RANDOM,
   
   // AES CFB block mode stuff
-  TASK_ECB,
   TASK_AES_DECODE,
   TASK_AES_ENCODE,
   
@@ -25,13 +47,12 @@ enum TaskOperation {
   TASK_FINISH_DIFFIE_HELLMAN
 };
 
-typedef void (*task_callback)(const void *state, int length);
+typedef void (*task_callback)(const void *state);
 
 struct Task {
   TaskOperation op;
   task_callback callback;
   const void *state;
-  int length;
 };
 
 namespace Tasks {

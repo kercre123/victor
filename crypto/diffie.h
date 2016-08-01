@@ -5,22 +5,7 @@
 
 static const int SECRET_LENGTH = AES_KEY_LENGTH;
 
-struct DiffieHellman {
-  // These are the numbers for our diffie group
-  const big_mont_t* mont;
-  const big_num_t*  gen;
-  
-  uint32_t          pin;
-  uint8_t           local_secret[SECRET_LENGTH];
-  uint8_t           remote_secret[SECRET_LENGTH];
-  uint8_t           local_encoded[SECRET_LENGTH];
-  uint8_t           remote_encoded[SECRET_LENGTH];
-  uint8_t           diffie_result[SECRET_LENGTH];
-  uint8_t           encoded_key[AES_KEY_LENGTH];
-};
-
-void dh_start(DiffieHellman* dh);
-void dh_finish(const void* key, DiffieHellman* dh);
-void dh_reverse(DiffieHellman* dh, uint8_t* key);
+void dh_encode_random(uint8_t* output, int pin, const uint8_t* random);
+void dh_reverse(uint8_t* local_secret, uint8_t* remote_secret, int pin, uint8_t* key);
 
 #endif

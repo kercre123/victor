@@ -65,12 +65,7 @@ const ble_gap_sec_params_t m_sec_params = {
 const uint8_t DEVICE_NAME[] = "Cozmo";
 const int DEVICE_NAME_LENGTH = 5;
 
-// Advertising settings
-// NOTE: THIS IS NOT CONSTANT SO I CAN COPY SOME REGISTER VALUES IN AT RUNTIME
-ManufacturerData  manif_data = {
-  .revision = 0 /// TODO plumb something in here
-};
-
+ManufacturerData  manif_data;
 
 const ble_advdata_manuf_data_t m_manuf_data = {
   .company_identifier = MFG_DATA_ID,

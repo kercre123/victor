@@ -10,7 +10,7 @@ extern "C" {
 }
 #include "timer.h"
 
-#include "aes.h"
+#include "packet.h"
 #include "tasks.h"
 #include "diffie.h"
 #include "random.h"
@@ -56,6 +56,15 @@ void Tasks::execute(const Task* task) {
   fifoActive[index] = true;
 }
 
+static void fix_pin(uint32_t& pin) {
+  for (int bit = 0; bit < sizeof(pin) * 8; bit += 4) {
+    int nibble = (pin >> bit) & 0xF;
+    if (nibble > 0x9) {
+      pin += 0x06 << bit;
+    }
+  }
+}
+
 void Tasks::manage(void) {
   Task* task = &fifoQueue[fifoHead];
 
@@ -64,42 +73,56 @@ void Tasks::manage(void) {
     return ;
   }
 
-  int length = task->length;
-  
   switch (task->op) {
     case TASK_GENERATE_RANDOM:
-      gen_random((uint8_t*)task->state, task->length);
-      break ;
-    case TASK_ECB:
-      aes_ecb((ecb_data_t*) task->state);
-      break ;
-    case TASK_AES_DECODE:
       {
-        uint8_t* data = (uint8_t*) task->state;
-
-        aes_cfb_decode(aes_key(), data, data + AES_KEY_LENGTH, data, task->length);
-        length = task->length - AES_KEY_LENGTH;
+        RandomTask *random = (RandomTask*) task->state;
+        gen_random(random->data, random->length);
         break ;
       }
+
+    case TASK_AES_DECODE:
+      {
+        AESTask* aes = (AESTask*) task->state;
+        const uint8_t* key = (const uint8_t*) aes_key();
+
+        aes->hmac_test = aes_message_decode(key, aes->nonce, aes->nonce_length, aes->data, aes->data_length);
+        break ;
+      }
+
     case TASK_AES_ENCODE:
       {
-        uint8_t* data = (uint8_t*) task->state;
-        
-        aes_fix_block(data, task->length);
-        aes_cfb_encode(aes_key(), data, data, data + AES_KEY_LENGTH, task->length);
-        length = task->length + AES_KEY_LENGTH;
+        AESTask* aes = (AESTask*) task->state;
+        const uint8_t* key = (const uint8_t*) aes_key();
+
+        aes_message_encode(key, aes->nonce, aes->nonce_length, aes->data, aes->data_length);
       }
+
       break ;
     case TASK_START_DIFFIE_HELLMAN:
-      dh_start((DiffieHellman*) task->state);
+      {
+        DiffieHellmanTask* dh = (DiffieHellmanTask*) task->state;
+
+        // Generate our secret
+        gen_random(&dh->pin, sizeof(dh->pin));
+        fix_pin(dh->pin);
+        gen_random(dh->local_secret, SECRET_LENGTH);
+        dh_encode_random(dh->local_encoded, dh->pin, dh->local_secret);
+        dh_encode_random(dh->remote_encoded, dh->pin, dh->remote_secret);
+      }
+
       break ;
     case TASK_FINISH_DIFFIE_HELLMAN:
-      dh_finish(aes_key(), (DiffieHellman*) task->state);
+      {
+        DiffieHellmanTask* dh = (DiffieHellmanTask*) task->state;
+
+        AES128_ECB_encrypt((uint8_t*)aes_key(), dh->diffie_result, dh->encoded_key);
+      }
       break ;
   }
 
   if (task->callback) {
-    task->callback(task->state, length);
+    task->callback(task->state);
   }
 
   // Dequeue message

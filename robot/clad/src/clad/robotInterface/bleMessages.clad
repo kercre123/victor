@@ -25,16 +25,9 @@ namespace Cozmo {
 		uint_8 result[16]
 	}
 
-	// Note: These two messages are swapped so the target cannot just mirror our message back
-	// at us
+	// This sends a 32-byte nonce for generating HMACing with the robot
 	message HelloPhone {
-		uint_8	signature[4],
-		uint_8	nonce[10],
-	}
-
-	message HelloRobot {
-		uint_8	nonce[10],
-		uint_8	signature[4],
+		uint_8	nonce[32],
 	}
 }
 }

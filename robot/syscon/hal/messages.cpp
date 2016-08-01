@@ -65,11 +65,6 @@ static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
   Battery::setOperatingMode(msg.radioMode);
 }
 
-static void Process_helloRobotMessage(const HelloRobot& msg)
-{
-  Bluetooth::authChallenge(msg);
-}
-
 static void Process_enterPairing(const EnterPairing& msg)
 {
   Bluetooth::enterPairing(msg);
