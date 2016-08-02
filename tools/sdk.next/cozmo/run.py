@@ -50,8 +50,14 @@ def connect_async(f=None, loop=None, block=True, conn_factory=conn.CozmoConnecti
             loop = asyncio.get_event_loop()
 
         coz_conn = conn_factory(loop=loop)
-        connect = loop.create_connection(lambda: coz_conn, '127.0.0.1', 5107)
-        loop.run_until_complete(connect) # will throw an exception on connection failure
+
+        async def connect():
+            await loop.create_connection(lambda: coz_conn, '127.0.0.1', 5107)
+            # wait until the connected CLAD message is received from the engine.
+            await coz_conn.wait_for(conn.EvtConnected)
+
+        # will throw an exception on connection failure
+        loop.run_until_complete(connect())
     except Exception as e:
         if q:
             q.put(e)

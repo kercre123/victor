@@ -15,6 +15,14 @@ from ._clad import _clad_to_engine_cozmo, _clad_to_engine_iface, _clad_to_game_c
 
 
 
+class EvtConnected(event.Event):
+    '''Triggered when the initial connection to the device has been established.
+
+    This connection is setup before contacting the robot - Wait for EvtRobotFound
+    or EvtRobotReady for a usefully configured Cozmo instance.
+    '''
+    conn = 'The connected CozmoConnection object'
+
 class EvtRobotFound(event.Event):
     '''Triggered when a Cozmo robot is detected, but before it's initialized.
 
@@ -140,6 +148,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         self.anim_names.dispatch_event(evt)
 
     def _recv_msg_ui_device_connected(self, _, *, msg):
+        self.dispatch_event(EvtConnected, conn=self)
         self.anim_names.refresh()
         logger.info("UI device connected")
 
