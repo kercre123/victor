@@ -12,6 +12,9 @@
 
 static const int TIMER_CC_MAIN = 3;
 
+static const int TICKS_PER_SECOND = 32768 << 8;
+static const int FRAME_RATE = 30;
+
 // Initialize the RTC peripheral
 #ifdef __cplusplus
 namespace Timer {
@@ -20,9 +23,7 @@ namespace Timer {
 #endif
 
 // Get the counter - with each tick being ~120 ns (see COUNT_PER_MS)
-// XXX: Mike observed the counter jumping back, sometimes.  Is it still happening?
 #define GetCounter() ((u32)(NRF_RTC1->COUNTER << 8))
-#define GetFrame() (NRF_RTC1->COUNTER * (NRF_RTC1->PRESCALER + 1) / (int)(32768 / 30.00f)) // 33ms
 
 // Wait in a loop for the specified amount of microseconds
 void MicroWait(u32 microseconds);
