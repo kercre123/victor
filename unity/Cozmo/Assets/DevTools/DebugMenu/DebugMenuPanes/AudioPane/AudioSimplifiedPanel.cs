@@ -44,7 +44,9 @@ namespace Anki.Cozmo.Audio {
       var option = _EventGroupDropdown.options[val];
       _EventType = _EventTypeDictionary[option.text];
 
-      _EventDropdown.options = Enum.GetNames(_EventType).Select(x => new Dropdown.OptionData(x)).ToList();
+      var eventList = Enum.GetNames(_EventType).ToList();
+      eventList.Sort();
+      _EventDropdown.options = eventList.Select(x => new Dropdown.OptionData(x)).ToList();
     }
 
     private void HandlePlayClicked() {
@@ -70,13 +72,13 @@ namespace Anki.Cozmo.Audio {
       case "Music":
         GameAudioClient.SetMusicState((Anki.Cozmo.Audio.GameState.Music)value);
         break;
-      case "UI":
+      case "Ui":
         GameAudioClient.PostUIEvent((Anki.Cozmo.Audio.GameEvent.Ui)value);
         break;
-      case "SFX":
+      case "Sfx":
         GameAudioClient.PostSFXEvent((Sfx)value);
         break;
-      case "VO":
+      case "Vo":
         GameAudioClient.PostAnnouncerVOEvent((GenericEvent)value);
         break;
       }
@@ -89,13 +91,13 @@ namespace Anki.Cozmo.Audio {
       case "Music":
         GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
         break;
-      case "UI":
+      case "Ui":
         AudioClient.Instance.StopAllAudioEvents(GameObjectType.UI);
         break;
-      case "SFX":
+      case "Sfx":
         AudioClient.Instance.StopAllAudioEvents(GameObjectType.SFX);
         break;
-      case "VO":
+      case "Vo":
         AudioClient.Instance.StopAllAudioEvents(GameObjectType.Default);
         break;
       }
