@@ -89,14 +89,13 @@ namespace Anki {
     StorageType _value;
 
   }; // class UniqueEnumeratedValue
-  
+
+  void ResetObjectIDCounter();
+
   class ObjectID : public UniqueEnumeratedValue<int>
   {
+    friend void ResetObjectIDCounter();
   public:
-    
-    static StorageType UniqueIDCounter;
-    
-    static void Reset();
     
     void Set();
     
@@ -104,7 +103,10 @@ namespace Anki {
     
     ObjectID() = default;
     ObjectID(StorageType value) : UniqueEnumeratedValue<StorageType>(value) { }
-    
+
+  private:
+    static StorageType UniqueIDCounter;
+
   }; // class ObjectID
   
 } // namespace Anki

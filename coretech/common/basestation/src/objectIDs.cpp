@@ -22,8 +22,8 @@ namespace Anki {
   
   // Initialize static ID counter:
   ObjectID::StorageType ObjectID::UniqueIDCounter = 0;
-  
-  void ObjectID::Reset() {
+
+  void ResetObjectIDCounter() {
     ObjectID::UniqueIDCounter = 0;
   }
   
