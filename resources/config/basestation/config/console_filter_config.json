@@ -22,7 +22,8 @@
       { "channel": "VisionComponent", "enabled": false },
       { "channel": "VisionSystem",    "enabled": false },
       { "channel": "UnlockComponent", "enabled": true },
-      { "channel": "Behaviors",       "enabled": false }
+      { "channel": "Behaviors",       "enabled": false },
+      { "channel": "Audio_WwiseLog",  "enabled": false }
     ],
     "levels":
     [
