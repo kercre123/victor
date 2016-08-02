@@ -7,6 +7,7 @@
     "initial_animName" : "RequestGameMemoryMatchInitial0",
     "preDrive_animName" : "RequestGameMemoryMatchPreDrive0",
     "request_animName" : "RequestGameMemoryMatchRequest0",
+    "idle_animName" : "RequestGameMemoryMatchIdle0",
     "deny_animName" : "RequestGameMemoryMatchDeny0",
     "minRequestDelay_s" : 20.0,
     "score_factor": 0.5
@@ -16,6 +17,7 @@
     "initial_animName" : "RequestGameMemoryMatchInitial1",
     "preDrive_animName" : "RequestGameMemoryMatchPreDrive1",
     "request_animName" : "RequestGameMemoryMatchRequest1",
+    "idle_animName" : "RequestGameMemoryMatchIdle1",
     "deny_animName" : "RequestGameMemoryMatchDeny1",
     "minRequestDelay_s" : 20.0
   },

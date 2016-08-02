@@ -35,6 +35,7 @@ static const char* kInitialAnimationKey = "initial_animName";
 static const char* kPreDriveAnimationKey = "preDrive_animName";
 static const char* kRequestAnimNameKey = "request_animName";
 static const char* kDenyAnimNameKey = "deny_animName";
+static const char* kIdleAnimNameKey = "idle_animName";
 static const char* kMinRequestDelayKey = "minRequestDelay_s";
 static const char* kScoreFactorKey = "score_factor";
 static const char* kZeroBlockGroupKey =  "zero_block_config";
@@ -73,6 +74,7 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
   JsonTools::GetValueOptional(config,kPreDriveAnimationKey,preDriveAnimTrigger);
   JsonTools::GetValueOptional(config,kRequestAnimNameKey,requestAnimTrigger);
   JsonTools::GetValueOptional(config,kDenyAnimNameKey,denyAnimTrigger);
+  JsonTools::GetValueOptional(config,kIdleAnimNameKey,idleAnimTrigger);
   minRequestDelay = config.get(kMinRequestDelayKey, kMinRequestDelayDefault).asFloat();
   scoreFactor = config.get(kScoreFactorKey, 1.0f).asFloat();
 }
@@ -169,8 +171,6 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 
 IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& robot)
 {
-  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
   if( _state == State::SearchingForBlock ) {
     // if we are searching for a block, stop immediately when we find one
     if( GetNumBlocks(robot) > 0 ) {
@@ -181,9 +181,7 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
     }
   }
   
-  if( _state == State::TrackingFace &&
-      GetRequestMinDelayComplete_s() >= 0.0f &&
-      currentTime_sec >= GetRequestMinDelayComplete_s() ) {
+  if(CheckRequestTimeout()) {
     // timeout acts as a deny
     StopActing();
     SendDeny(robot);
@@ -198,12 +196,18 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
 
   return Status::Complete;
 }
+  
+bool BehaviorRequestGameSimple::CheckRequestTimeout(){
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  return (_state == State::Idle && GetRequestMinDelayComplete_s() >= 0.0f && currentTime_sec >= GetRequestMinDelayComplete_s());
+}
 
 void BehaviorRequestGameSimple::StopInternal(Robot& robot)
 {
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.StopInternal", "");
 
-  if( _state == State::TrackingFace ) {
+  if( _state == State::Idle ) {
     // this means we have send up the game request, so now we should send a Deny to cancel it
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.DenyRequest",
                      "behavior is denying it's own request");
@@ -472,26 +476,39 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   StartActing(new CompoundActionSequential(robot, {
         new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
         new TurnTowardsLastFacePoseAction(robot, PI_F)}),
-    &BehaviorRequestGameSimple::TransitionToTrackingFace);
+    &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(State::PlayingRequstAnim);
 }
-
-void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
+ 
+void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
   SendRequest(robot, _initialRequest);
-
-  if( GetFaceID() == Vision::UnknownFaceID ) {
-    PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
-                        "Can't do face tracking because there is no valid face!");
-    // use an action that just hangs to simulate the track face logic
-    StartActing( new HangAction(robot) );
+  
+  if(_activeConfig->idleAnimTrigger != AnimationTrigger::AnimNone){
+    //Loop animation so that it can be canceled
+    IdleAnimLoop(robot);
+  }else{
+    if( GetFaceID() == Vision::UnknownFaceID ) {
+      PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
+                          "Can't do face tracking because there is no valid face!");
+      // use an action that just hangs to simulate the track face logic
+      StartActing( new HangAction(robot) );
+    }
+    else {
+      // no callback here, behavior is over once this is done
+      StartActing( new TrackFaceAction(robot, GetFaceID()) );
+    }
   }
-  else {
-    // no callback here, behavior is over once this is done
-    StartActing( new TrackFaceAction(robot, GetFaceID()) );
-  }
 
-  SET_STATE(State::TrackingFace);
+  SET_STATE(State::Idle);
+}
+  
+void BehaviorRequestGameSimple::IdleAnimLoop(Robot& robot)
+{
+  if(!CheckRequestTimeout()){
+    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger),
+              &BehaviorRequestGameSimple::IdleAnimLoop);
+  }
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
@@ -510,7 +527,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   
   SET_STATE(State::PlayingDenyAnim);
 }
-
+  
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;

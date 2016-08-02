@@ -58,7 +58,7 @@ private:
     LookingAtFace,
     VerifyingFace,
     PlayingRequstAnim,
-    TrackingFace,
+    Idle,
     PlayingDenyAnim,
     SearchingForBlock
   };
@@ -72,6 +72,7 @@ private:
     AnimationTrigger preDriveAnimTrigger = AnimationTrigger::AnimNone;
     AnimationTrigger requestAnimTrigger = AnimationTrigger::AnimNone;
     AnimationTrigger denyAnimTrigger = AnimationTrigger::AnimNone;
+    AnimationTrigger idleAnimTrigger = AnimationTrigger::AnimNone;
     float       minRequestDelay;
     float       scoreFactor;
   };
@@ -113,12 +114,14 @@ private:
   void TransitionToLookingAtFace(Robot& robot);
   void TransitionToVerifyingFace(Robot& robot);
   void TransitionToPlayingRequstAnim(Robot& robot);
-  void TransitionToTrackingFace(Robot& robot);
+  void TransitionToIdle(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
   void TransitionToSearchingForBlock(Robot& robot);
-  
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);
+  void IdleAnimLoop(Robot& robot);
+  bool CheckRequestTimeout();
+
 };
 
 }

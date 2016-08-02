@@ -489,36 +489,76 @@
       "AnimName": "requestGame_speedTap_request"
     },
     {
-      "CladEvent": "RequestGameKeepAwayDeny0",
-      "AnimName": "requestGame_speedTap_deny"
+      "CladEvent": "RequestGameSpeedTapIdle0",
+      "AnimName": "ag_rtpkeepaway_idle"
     },
     {
-      "CladEvent": "RequestGameKeepAwayDeny1",
-      "AnimName": "requestGame_speedTap_deny"
+      "CladEvent": "RequestGameSpeedTapIdle1",
+      "AnimName": "ag_rtpkeepaway_idle"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapAccept0",
+      "AnimName": "ag_rtpkeepaway_playeryes"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapAccept1",
+      "AnimName": "ag_rtpkeepaway_playeryes"
     },
     {
       "CladEvent": "RequestGameKeepAwayInitial0",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_rtpkeepaway_ideatoplay"
     },
     {
       "CladEvent": "RequestGameKeepAwayInitial1",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_rtpkeepaway_ideatoplay"
     },
     {
       "CladEvent": "RequestGameKeepAwayPreDrive0",
-      "AnimName": "requestGame_speedTap_predrive"
+      "AnimName": "ag_rtpkeepaway_reacttocube"
     },
     {
       "CladEvent": "RequestGameKeepAwayPreDrive1",
-      "AnimName": "requestGame_speedTap_predrive"
+      "AnimName": "ag_rtpkeepaway_reacttocube"
     },
     {
       "CladEvent": "RequestGameKeepAwayRequest0",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_rtpkeepaway_askforgame"
     },
     {
       "CladEvent": "RequestGameKeepAwayRequest1",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_rtpkeepaway_askforgame"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayIdle0",
+      "AnimName": "ag_rtpkeepaway_idle"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayIdle1",
+      "AnimName": "ag_rtpkeepaway_idle"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayDeny0",
+      "AnimName": "ag_rtpkeepaway_playerno"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayDeny1",
+      "AnimName": "ag_rtpkeepaway_playerno"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayAccept0",
+      "AnimName": "ag_rtpkeepaway_playeryes"
+    },
+    {
+      "CladEvent": "RequestGameKeepAwayAccept1",
+      "AnimName": "ag_rtpkeepaway_playeryes"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchIdle0",
+      "AnimName": "ag_rtpkeepaway_idle"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchIdle1",
+      "AnimName": "ag_rtpkeepaway_idle"
     },
     {
       "CladEvent": "RequestGameMemoryMatchDeny0",
@@ -527,6 +567,14 @@
     {
       "CladEvent": "RequestGameMemoryMatchDeny1",
       "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchAccept0",
+      "AnimName": "ag_rtpkeepaway_playeryes"
+    },
+    {
+      "CladEvent": "RequestGameMemoryMatchAccept1",
+      "AnimName": "ag_rtpkeepaway_playeryes"
     },
     {
       "CladEvent": "RequestGameMemoryMatchInitial0",

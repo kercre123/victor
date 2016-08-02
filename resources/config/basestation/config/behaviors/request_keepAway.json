@@ -7,6 +7,7 @@
     "initial_animName" : "RequestGameKeepAwayInitial0",
     "preDrive_animName" : "RequestGameKeepAwayPreDrive0",
     "request_animName" : "RequestGameKeepAwayRequest0",
+    "idle_animName" : "RequestGameKeepAwayIdle0",
     "deny_animName" : "RequestGameKeepAwayDeny0",
     "minRequestDelay_s" : 20.0,
     "score_factor": 0.5
@@ -16,6 +17,7 @@
     "initial_animName" : "RequestGameKeepAwayInitial1",
     "preDrive_animName" : "RequestGameKeepAwayPreDrive1",
     "request_animName" : "RequestGameKeepAwayRequest1",
+    "idle_animName" : "RequestGameKeepAwayIdle1",
     "deny_animName" : "RequestGameKeepAwayDeny1",
     "minRequestDelay_s" : 20.0
   },

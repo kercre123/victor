@@ -41,7 +41,7 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
 : Anki::Cozmo::IReactionaryBehavior(robot, config)
 , _state(State::PlayingSenseReaction)
 {
-  SetDefaultName("ReactAcknowledgeCubeMoved");
+  SetDefaultName("ReactToCubeMoved");
   
   SubscribeToTriggerTags({
     EngineToGameTag::ObjectMovedWrapper
