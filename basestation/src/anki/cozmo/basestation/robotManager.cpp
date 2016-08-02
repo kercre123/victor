@@ -11,6 +11,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -64,8 +65,6 @@ namespace Anki {
         _signalHandles.push_back( externalInterface->Subscribe(tagGroups, broadcastAvailableAnimationGroupsCallback) );
         _signalHandles.push_back( externalInterface->Subscribe(tagAnims, broadcastAvailableAnimationsCallback) );
       }
-
-
     }
     
     RobotManager::~RobotManager() = default;
@@ -110,8 +109,13 @@ namespace Anki {
       } else {
         PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
       }
+      
+      if (_context->GetExternalInterface())
+      {
+        _robotEventHandler.SetupGainsHandlers(*(_context->GetExternalInterface()));
+        _robotEventHandler.SetupMiscHandlers(*(_context->GetExternalInterface()));
+      }
     }
-    
     
     void RobotManager::RemoveRobot(const RobotID_t withID)
     {
@@ -121,7 +125,6 @@ namespace Anki {
         
         _robotDisconnectedSignal.emit(withID);
         _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
-        
         
         delete(iter->second);
         iter = _robots.erase(iter);

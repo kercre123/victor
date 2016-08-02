@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
@@ -164,9 +165,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _speedChooser(new SpeedChooser(*this))
   , _blockFilter(new BlockFilter(this))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
-  , _traceHandler(_context->GetDataPlatform())
-  , _hasMismatchedEngineToRobotCLAD(false)
-  , _hasMismatchedRobotToEngineCLAD(false)
+  , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
 {
   _poseHistory = new RobotPoseHistory();
   PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -181,20 +180,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // the robot localized (by odometry alone) to start, until he gets picked up.
   _isLocalized = true;
   SetLocalizedTo(nullptr);
-      
-  InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID);
-      
-  if (HasExternalInterface())
-  {
-    SetupGainsHandlers(*_context->GetExternalInterface());
-    SetupMiscHandlers(*_context->GetExternalInterface());
-    
-    //Drone Mode Listener
-    using namespace ExternalInterface;
-    auto helper = MakeAnkiEventUtil(*GetExternalInterface(), *this, _signalHandles);
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
-  }
-      
+
+  _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
+  
+  
   // The call to Delocalize() will increment frameID, but we want it to be
   // initialzied to 0, to match the physical robot's initialization
   _frameId = 0;
@@ -232,8 +221,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
       
   // load available behaviors into the behavior factory
   LoadBehaviors();
-  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
 
+  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
       
   SetHeadAngle(_currentHeadAngle);
   _pdo = new PathDolerOuter(_context->GetRobotManager()->GetMsgHandler(), robotID);
@@ -297,16 +286,16 @@ void Robot::SetOnCharger(bool onCharger)
   Charger* charger = dynamic_cast<Charger*>(object);
   if (onCharger && !_isOnCharger) {
         
-    // If we don't actually have a charger, add an unconnected one now
-    if (nullptr == charger)
-    {
-      ObjectID newObj = AddUnconnectedCharger();
-      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
-      ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
-    }
+  // If we don't actually have a charger, add an unconnected one now
+  if (nullptr == charger)
+  {
+    ObjectID newObj = AddUnconnectedCharger();
+    charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
+    ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
+  }
         
-    PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
+  PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
         
   } else if (!onCharger && _isOnCharger) {
     PRINT_NAMED_INFO("Robot.SetOnCharger.OffCharger", "");

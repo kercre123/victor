@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "clad/types/dockingSignals.h"
 #include "util/console/consoleInterface.h"
 #include <ctime>
@@ -40,7 +41,7 @@
 
 namespace Anki {
   namespace Cozmo {
-  
+    
     CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest", 30);
     CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest", 3);
     CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest", (u8)DockingMethod::HYBRID_DOCKING);
@@ -71,7 +72,7 @@ namespace Anki {
     , _initialVisionMarker(Vision::MARKER_UNKNOWN)
     , _markerBeingSeen(Vision::MARKER_UNKNOWN)
     , _cubePlacementPose(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin())
-    , _logger(robot.GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
+    , _logger(robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
     {
       SetDefaultName("DockingTestSimple");
       
@@ -91,8 +92,8 @@ namespace Anki {
          robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
         _signalHandle = (robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(robot.GetID(),
-            RobotInterface::RobotToEngineTag::dockingStatus,
-            std::bind(&BehaviorDockingTestSimple::HandleDockingStatus, this, std::placeholders::_1)));
+                                                                                           RobotInterface::RobotToEngineTag::dockingStatus,
+                                                                                           std::bind(&BehaviorDockingTestSimple::HandleDockingStatus, this, std::placeholders::_1)));
       }
     }
     
@@ -104,7 +105,7 @@ namespace Anki {
     Result BehaviorDockingTestSimple::InitInternal(Robot& robot)
     {
       robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
-    
+      
       _currentState = State::Init;
       _numFails = 0;
       _numDockingRetries = 0;
@@ -112,7 +113,7 @@ namespace Anki {
       _numConsecFails = 0;
       _didHM = false;
       _failedCurrentAttempt = false;
-    
+      
       _actionCallbackMap.clear();
       robot.GetActionList().Cancel();
       
@@ -120,7 +121,7 @@ namespace Anki {
       struct tm* now = localtime(&t);
       
       Write("=====Start DockingTestSimple=====");
-      const RobotInterface::FWVersionInfo& fw = robot.GetFWVersionInfo();
+      const RobotInterface::FWVersionInfo& fw = robot.GetRobotToEngineImplMessaging().GetFWVersionInfo();
       std::stringstream ss;
       ss << "Firmware Version\n";
       ss << "Body Version: " << std::hex << fw.bodyVersion << "\n";
@@ -171,7 +172,7 @@ namespace Anki {
         _yellForCompletion = true;
         SetCurrStateAndFlashLights(State::ManualReset, robot);
       }
-    
+      
       if(IsActing())
       {
         return Status::Running;
@@ -191,7 +192,7 @@ namespace Anki {
           {
             robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, _imageFolder);
           }
-        
+          
           // Turn off backpack lights in case we needed to be manually reset
           robot.SetBackpackLights(fail_offColor, fail_offColor,
                                   fail_onPeriod_ms, fail_offPeriod_ms,
@@ -245,7 +246,7 @@ namespace Anki {
             Pose3d junk;
             _initialVisionMarker = const_cast<Vision::KnownMarker&>(block->GetTopMarker(junk));
             
-           
+            
             DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::ROLLING);
             driveAction->SetMotionProfile(_motionProfile);
             StartActing(robot, driveAction,
@@ -283,7 +284,7 @@ namespace Anki {
                           }
                           return false;
                         });
-           
+            
           }
           else
           {
@@ -299,41 +300,41 @@ namespace Anki {
           {
             _initialCubePose = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup)->GetPose();
             _initialRobotPose = robot.GetPose();
-          
+            
             if(kDriveToAndPickupBlock)
             {
               DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::DOCKING);
               driveAction->SetMotionProfile(_motionProfile);
               StartActing(robot, driveAction,
                           [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
-                              if(result == ActionResult::SUCCESS)
-                              {
-                                _initialRobotPose = robot.GetPose();
-                                PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
-                                action->SetDockingMethod((DockingMethod)kTestDockingMethod);
-                                StartActing(robot, action,
-                                            [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
-                                              if (result != ActionResult::SUCCESS) {
-                                                if(_numSawObject < 5)
-                                                {
-                                                  EndAttempt(robot, result, "PickupNotSeeingObject", true);
-                                                }
-                                                else
-                                                {
-                                                  EndAttempt(robot, result, "Pickup", true);
-                                                }
-                                                return false;
+                            if(result == ActionResult::SUCCESS)
+                            {
+                              _initialRobotPose = robot.GetPose();
+                              PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
+                              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+                              StartActing(robot, action,
+                                          [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
+                                            if (result != ActionResult::SUCCESS) {
+                                              if(_numSawObject < 5)
+                                              {
+                                                EndAttempt(robot, result, "PickupNotSeeingObject", true);
                                               }
-                                              SetCurrState(State::PlaceLow);
-                                              return true;
-                                            });
-                                return true;
-                              }
-                              else
-                              {
-                                EndAttempt(robot, result, "DriveToObject", true);
-                                return false;
-                              }
+                                              else
+                                              {
+                                                EndAttempt(robot, result, "Pickup", true);
+                                              }
+                                              return false;
+                                            }
+                                            SetCurrState(State::PlaceLow);
+                                            return true;
+                                          });
+                              return true;
+                            }
+                            else
+                            {
+                              EndAttempt(robot, result, "DriveToObject", true);
+                              return false;
+                            }
                             return false;
                           });
             }
@@ -388,7 +389,7 @@ namespace Anki {
           f32 randX = GetRNG().RandDblInRange(-kMaxXAwayFromPreDock_mm, kMaxXAwayFromPreDock_mm);
           f32 randY = GetRNG().RandDblInRange(-kMaxYAwayFromPreDock_mm, kMaxYAwayFromPreDock_mm);
           f32 randA = GetRNG().RandDblInRange(-DEG_TO_RAD(kMaxAngleAwayFromPreDock_deg),
-                                         DEG_TO_RAD(kMaxAngleAwayFromPreDock_deg));
+                                              DEG_TO_RAD(kMaxAngleAwayFromPreDock_deg));
           
           // Get the preActionPose relating to the marker we
           ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup));
@@ -533,7 +534,7 @@ namespace Anki {
     void BehaviorDockingTestSimple::StopInternal(Robot& robot)
     {
       robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(true);
-    
+      
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
         robot.GetActionList().Cancel(tag.first);
@@ -592,7 +593,7 @@ namespace Anki {
           return "Reset";
         case State::ManualReset:
           return "ManualReset";
-
+          
         default: return nullptr;
       }
       return nullptr;
@@ -662,13 +663,13 @@ namespace Anki {
           
         default:
           PRINT_NAMED_INFO("BehaviorDockingTest.HandleWhileRunning.InvalidTag",
-                            "Received unexpected event with tag %hhu.", event.GetData().GetTag());
+                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
           break;
       }
     }
     
     void BehaviorDockingTestSimple::HandleActionCompleted(Robot& robot,
-                                                      const ExternalInterface::RobotCompletedAction &msg)
+                                                          const ExternalInterface::RobotCompletedAction &msg)
     {
       if(!IsRunning()) {
         // Ignore action completion messages while not running
@@ -720,7 +721,7 @@ namespace Anki {
     }
     
     void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
-                                                     const ExternalInterface::RobotObservedObject &msg)
+                                                         const ExternalInterface::RobotObservedObject &msg)
     {
       ObjectID objectID = msg.objectID;
       const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
@@ -859,7 +860,7 @@ namespace Anki {
               p.GetRotationAngle().getDegrees());
       
       ss << "CubeRelativeToRobot " << buf << "\n";
-    
+      
       // For log parsing
       // result, rel block pose x, rel block pose y, rel block angle, dock method, didHM, numDockingRetries
       // numSawObject

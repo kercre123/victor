@@ -25,10 +25,10 @@ namespace Cozmo {
 // Forward declarations
 class ActionList;
 class IActionRunner;
+class IPathPlanner;
 class IExternalInterface;
 class RobotManager;
 class CozmoContext;
-  
 enum class QueueActionPosition : uint8_t;
 
 template <typename Type>
@@ -45,6 +45,9 @@ class RobotEventHandler : private Util::noncopyable
 public:
   RobotEventHandler(const CozmoContext* context);
   
+  void SetupMiscHandlers(IExternalInterface& externalInterface);
+  void SetupGainsHandlers(IExternalInterface& externalInterface);
+  
   template<typename T>
   void HandleMessage(const T& msg);
   
@@ -55,7 +58,6 @@ public:
 protected:
   const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   

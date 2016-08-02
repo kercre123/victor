@@ -18,7 +18,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/signals/simpleSignal_fwd.h"
-
 #include <memory>
 
 namespace Json {

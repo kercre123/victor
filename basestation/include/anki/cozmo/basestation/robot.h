@@ -112,8 +112,10 @@ class ActiveCube;
 class SpeedChooser;
 class DrivingAnimationHandler;
 class LightsComponent;
+class RobotToEngineImplMessaging;
 class ActionList;
 class BehaviorManager;
+
   
 namespace Audio {
 class RobotAudioClient;
@@ -148,18 +150,15 @@ public:
     
   bool HasReceivedRobotState() const;
   
-  // Version checks
-  const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _factoryFirmwareVersion; }
-  bool HasMismatchedCLAD() const { return _hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD; }
-  
   // Accessors
   const RobotID_t        GetID()         const;
   BlockWorld&            GetBlockWorld()       {return _blockWorld;}
   const BlockWorld&      GetBlockWorld() const {return _blockWorld;}
-    
+  
   FaceWorld&             GetFaceWorld()        {return _faceWorld;}
   const FaceWorld&       GetFaceWorld()  const {return _faceWorld;}
-    
+  const bool             GetTimeSynced() const {return _timeSynced;}
+  
   //
   // Localization
   //
@@ -168,7 +167,10 @@ public:
       
   // Get the ID of the object we are localized to
   const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
-      
+  
+  // Mutators
+  void SetTimeSynced(const bool timeSynced) {_timeSynced = timeSynced; }
+  
   // Set the object we are localized to.
   // Use nullptr to UnSet the localizedTo object but still mark the robot
   // as localized (i.e. to "odometry").
@@ -208,11 +210,13 @@ public:
   
   // Sets the charger that it's docking to
   void   SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
-  
+  const ObjectID GetCharger() const { return _chargerID; }
   // Updates the pose of the robot.
   // Sends new pose down to robot.
   // Increments frameID
   void SetNewPose(const Pose3d& newPose);
+  
+  const bool GetIsInDroneMode() { return _isInDroneMode; }
   
   //
   // Camera / Vision
@@ -320,11 +324,11 @@ public:
   // details
   ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
     
-  bool IsTraversingPath()   const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
+  bool IsTraversingPath()      const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
     
-  u16  GetCurrentPathSegment() const { return _currPathSegment; }
-  u16  GetLastRecvdPathID()    const { return _lastRecvdPathID; }
-  u16  GetLastSentPathID()     const { return _lastSentPathID;  }
+  u16  GetCurrentPathSegment()  const { return _currPathSegment; }
+  u16  GetLastRecvdPathID()     const { return _lastRecvdPathID; }
+  u16  GetLastSentPathID()      const { return _lastSentPathID;  }
 
   bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
   
@@ -350,7 +354,9 @@ public:
   bool IsOnBack() const {return _offTredsState == OffTredsState::OnBack;}
   bool IsOnSide() const {return _offTredsState == OffTredsState::OnSide;}
   bool IsOnFace() const {return _offTredsState == OffTredsState::OnFace;}
-    
+  
+  EncodedImage& GetEncodedImage() { return _encodedImage; }
+  
   void SetCarryingObject(ObjectID carryObjectID);
   void UnSetCarryingObjects(bool topOnly = false);
   
@@ -450,6 +456,7 @@ public:
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   
   // Returns true if a cliff event was detected
+  void SetCliffDetected(const bool isCliffDetected) { _isCliffDetected = isCliffDetected; }
   bool IsCliffDetected() const { return _isCliffDetected; }
   bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
@@ -459,6 +466,10 @@ public:
 
   // Return the timestamp of the last _processed_ image
   TimeStamp_t GetLastImageTimeStamp() const;
+  void SetLastImageTimeStamp(const TimeStamp_t lastImageTimestamp) { _lastImageRecvTime = lastImageTimestamp; }
+  void SetRepeatedImageCount(const u32 repeatedImageCount) { _repeatedImageCount = repeatedImageCount; }
+  const u32 GetRepeatedImageCount() const {return _repeatedImageCount; }
+  void IncRepeatedImageCount() { ++_repeatedImageCount; }
   
   // =========== Actions Commands =============
     
@@ -479,7 +490,7 @@ public:
   // it was initialized with SyncTime.
   s32 GetNumAnimationBytesPlayed() const;
   s32 GetNumAnimationAudioFramesPlayed() const;
-  
+  IPathPlanner* GetLongPathPlannerPtr() const {return _longPathPlanner; }
   // Returns a reference to a count of the total number of bytes or audio frames
   // streamed to the robot.
   s32 GetNumAnimationBytesStreamed() const;
@@ -497,6 +508,10 @@ public:
                  TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
   AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
+  void SetNumAnimationBytesPlayed(s32 numAnimationsBytesPlayed) { _numAnimationBytesPlayed = numAnimationsBytesPlayed; }
+  void SetNumAnimationAudioFramesPlayed(s32 numAnimationAudioFramesPlayed) { _numAnimationAudioFramesPlayed = numAnimationAudioFramesPlayed; }
+  void SetEnabledAnimTracks(s32 enabledAnimTracks) { _enabledAnimTracks = enabledAnimTracks; }
+  void SetAnimationTag(s32 animationTag) { _animationTag = animationTag; }
   
   // =========== Audio =============
   Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
@@ -655,9 +670,9 @@ public:
   // Helper template for sending Robot messages with clean syntax
   template<typename T, typename... Args>
   Result SendRobotMessage(Args&&... args) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(T(std::forward<Args>(args)...)));
-    }
+  {
+    return SendMessage(RobotInterface::EngineToRobot(T(std::forward<Args>(args)...)));
+  }
   
   // Send a message to the physical robot
   Result SendMessage(const RobotInterface::EngineToRobot& message,
@@ -667,14 +682,18 @@ public:
   // Sends debug string out to game and viz
   Result SendDebugString(const char *format, ...);
   
+  std::map<int,float>& GetObjectTimeMovingMap() { return _objectTimeMovingMap; }
+  
   // =========  Events  ============
   using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
   bool HasExternalInterface() const { return _context->GetExternalInterface() != nullptr; }
+  
   IExternalInterface* GetExternalInterface() {
     ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
     return _context->GetExternalInterface();
   }
+  
   RobotInterface::MessageHandler* GetRobotMessageHandler();
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
@@ -682,7 +701,10 @@ public:
   void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
   const u32 GetLastSentImageID() const { return _lastSentImageID; }
 
+  void SetCurrentImageDelay(double lastImageLatencyTime) { _lastImageLatencyTime_s = lastImageLatencyTime; }
   const Util::Stats::StatsAccumulator& GetImageStats() const { return _imageStats.GetPrimaryAccumulator(); }
+  Util::Stats::RecentStatsAccumulator& GetRecentImageStats() { return _imageStats; }
+  void SetTimeSinceLastImage(double timeSinceLastImage) { _timeSinceLastImage_s = 0.0; }
   double GetCurrentImageDelay() const { return std::max(_lastImageLatencyTime_s, _timeSinceLastImage_s); }
   
   MovementComponent& GetMoveComponent() { return _movementComponent; }
@@ -732,15 +754,17 @@ public:
   
   void BroadcastEngineErrorCode(EngineErrorCode error);
   
-  Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
+  Util::Data::DataPlatform* GetContextDataPlatform() { return _context->GetDataPlatform(); }
   const CozmoContext* GetContext() const { return _context; }
   
   ExternalInterface::RobotState GetRobotState();
   
-  // Returns type of discovered object by factoryID.
-  // If the factoryID is not in the list of discovered objects it returns Invalid.
-  // NOTE: Connected objects are not in the discovered objects list.
+  void SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, TimeStamp_t lastDiscoveredTimetamp);
   ObjectType GetDiscoveredObjectType(FactoryID id);
+  void RemoveDiscoveredObjects(FactoryID factoryId) { _discoveredObjects.erase(factoryId); }
+  const bool GetEnableDiscoveredObjectsBroadcasting() const { return _enableDiscoveredObjectsBroadcasting; }
+  
+  RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return *_robotToEngineImplMessaging; }
   
 protected:
   
@@ -931,6 +955,9 @@ protected:
   // A place to store reaction callback functions, indexed by the type of
   // vision marker that triggers them
   std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
+  
+  //tracks timestamps of when objects moved - maps ObjectID to time moving
+  std::map<int,float> _objectTimeMovingMap;
     
   EncodedImage _encodedImage;
   u32          _repeatedImageCount = 0;
@@ -1006,62 +1033,11 @@ protected:
   // have been discovered and should be connected to
   void ConnectToRequestedObjects();
 
-  
-  ///////// Messaging ////////
-  // These methods actually do the creation of messages and sending
-  // (via MessageHandler) to the physical robot
-  std::vector<Signal::SmartHandle> _signalHandles;
-  uint8_t _imuSeqID = 0;
-  std::ofstream _imuLogFileStream;
-  TracePrinter _traceHandler;
+  std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
 
-  // Copy of last received firmware version info from robot
-  RobotInterface::FWVersionInfo _factoryFirmwareVersion;
-  bool _hasMismatchedEngineToRobotCLAD;
-  bool _hasMismatchedRobotToEngineCLAD;
-  
-  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
-  void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
-  void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  //HandlePotentialCliffEvent is only triggered when Cliff Events are disabled - currently only during drone mode
-  void HandlePotentialCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  // For processing image chunks arriving from robot.
-  // Sends complete images to VizManager for visualization (and possible saving).
-  void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  // For processing imu data chunks arriving from robot.
-  // Writes the entire log of 3-axis accelerometer and 3-axis
-  // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
-  // can be read in from Matlab. (See robot/util/imuLogsTool.m)
-  void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  
-  //tracks timestamps of when objects moved - maps ObjectID to time moving
-  std::map<int,float> _objectTimeMovingMap;
-
-  void SetupMiscHandlers(IExternalInterface& externalInterface);
-  void SetupGainsHandlers(IExternalInterface& externalInterface);
-  
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
-                                   const TimeStamp_t&   t,
-                                   const PoseFrameID_t& frameId) const;
+                                     const TimeStamp_t&   t,
+                                     const PoseFrameID_t& frameId) const;
 
   Result ClearPath();
 
@@ -1105,6 +1081,16 @@ protected:
     
 }; // class Robot
 
+//
+// Inline Mutators
+//
+  
+inline void Robot::SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, TimeStamp_t lastDiscoveredTimetamp)
+{
+  _discoveredObjects[factoryId].factoryID = factoryId;
+  _discoveredObjects[factoryId].objectType = objectType;
+  _discoveredObjects[factoryId].lastDiscoveredTimeStamp = lastDiscoveredTimetamp;
+}
   
 //
 // Inline accessors:

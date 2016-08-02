@@ -1858,6 +1858,7 @@ namespace Anki {
 
       ASSERT_NAMED_EVENT(false, "UiGameController.GetLightCubeById",
         "Can't find the light cube with id %d in the world", lightCubeId);
+      return nullptr;
     }
 
     const double UiGameController::GetSupervisorTime() const

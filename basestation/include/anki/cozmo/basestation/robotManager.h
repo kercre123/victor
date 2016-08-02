@@ -116,7 +116,6 @@ public:
   using RobotMap = std::map<RobotID_t,Robot*>;
   const RobotMap& GetRobotMap() const { return _robots; }
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
-
     
 protected:
   RobotDisconnectedSignal _robotDisconnectedSignal;
