@@ -157,6 +157,9 @@ namespace Cozmo {
       private GameObject _ShowCozmoCubesSlidePrefab;
 
       [SerializeField]
+      private GameObject _ShowCozmoVideoPrefab;
+
+      [SerializeField]
       private ChallengeEndedDialog _ChallengeEndViewPrefab;
 
       #endregion

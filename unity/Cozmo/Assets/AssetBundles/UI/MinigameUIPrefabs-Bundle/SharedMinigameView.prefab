@@ -591,6 +591,8 @@ MonoBehaviour:
     type: 2}
   _ShowCozmoCubesSlidePrefab: {fileID: 146872, guid: 95d62b6d570b642638e6e63c769a1b62,
     type: 2}
+  _ShowCozmoVideoPrefab: {fileID: 146872, guid: 40ed55f641e834c7ea15be34f60efeff,
+    type: 2}
   _ChallengeEndViewPrefab: {fileID: 11474462, guid: 1b4135647dd7e4fb2bd98651dea5bac5,
     type: 2}
   _ScoreWidgetPrefab: {fileID: 11470090, guid: b9e65c08e72f64c788a56c09874e1484, type: 2}
