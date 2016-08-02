@@ -35,9 +35,6 @@ namespace PlugIns {
 
 namespace Anki {
 namespace Util {
-namespace Dispatch {
-  class Queue;
-}
 namespace Data {
   class DataPlatform;
 }
@@ -124,6 +121,11 @@ public:
   // Music
   MusicConductor* GetMusicConductor() const { return _musicConductor; }
   
+  // Tick Audio Engine
+  // This will Tick both Music Conductor & call ProcessAudioQueue()
+  // Note: This is thread safe
+  void Update();
+  
   // Process all Audio Engine events
   // This flushes all audio events that have been posted
   void ProcessAudioQueue() const;
@@ -145,9 +147,6 @@ private:
   std::unordered_map< AudioEngine::AudioPluginId, RobotAudioBuffer* > _robotAudioBufferIdMap;
   std::unordered_map< AudioEngine::AudioGameObject, AudioEngine::AudioPluginId > _gameObjectPluginIdMap;
   
-  Util::Dispatch::Queue*    _dispatchQueue  = nullptr;  // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle    _taskHandle     = nullptr;  // Handle to our tick callback task
-  
   bool _isInitialized = false;
   
   using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingId, AudioEngine::AudioCallbackContext* >;
@@ -163,9 +162,6 @@ private:
   
   // Setup WavePortal plug-in
   void SetupWavePortalPlugIn();
-    
-  // Tick Audio Engine
-  void Update();
   
   // Clean up call back messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );

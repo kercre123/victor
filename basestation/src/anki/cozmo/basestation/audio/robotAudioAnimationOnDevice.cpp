@@ -135,6 +135,8 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                             _audioClient->SetCozmoEventParameter( playId,
                                                                   GameParameter::ParameterType::Event_Volume,
                                                                   animationEvent->volume );
+                            // Processes event NOW, minimize playback sync latency
+                            _audioClient->ProcessEvents();
                           },
                            "PostAudioEventToDeviceDelay" );
     

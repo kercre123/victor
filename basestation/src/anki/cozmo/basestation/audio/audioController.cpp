@@ -43,15 +43,10 @@
 #include "DriveAudioEngine/PlugIns/hijackAudioPlugIn.h"
 #include "DriveAudioEngine/PlugIns/wavePortalPlugIn.h"
 #else
-
 // If we're excluding the audio libs, don't link any of the audio engine
 #define USE_AUDIO_ENGINE 0
-
 #endif
-#define ENABLE_AC_SLEEP_TIME_DIAGNOSTICS 1
-// RUN_TIME requires SLEEP_TIME
-#define ENABLE_AC_RUN_TIME_DIAGNOSTICS 1
-#define UPDATE_LOOP_SLEEP_DURATION_MS 10
+
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -100,7 +95,6 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   // The audio engine was initialized correctly, so now let's setup everything else
   if ( _isInitialized )
   {
-    ASSERT_NAMED( !_taskHandle, "AudioController.Initialize Invalid Task Handle" );
 #if USE_AUDIO_ENGINE
     
     // Register and Prepare Plug-Ins
@@ -132,26 +126,12 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
                                           Util::numeric_cast<AudioStateGroupId>( GameState::StateGroupType::Music ),
                                           Util::numeric_cast<AudioEventId>( GameEvent::Music::Play ),
                                           Util::numeric_cast<AudioEventId>( GameEvent::Music::Stop ) );
-    
-    // Setup our update method to be called periodically
-    _dispatchQueue = Util::Dispatch::Create( "AudioController" );
-    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(UPDATE_LOOP_SLEEP_DURATION_MS);
-    _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::~AudioController()
 {
-  if ( _taskHandle && _taskHandle->IsValid() ) {
-    _taskHandle->Invalidate();
-  }
-  
-  if ( _dispatchQueue != nullptr ) {
-    Util::Dispatch::Stop( _dispatchQueue );
-    Util::Dispatch::Release( _dispatchQueue );
-  }
-  
   Util::SafeDelete( _musicConductor );
   Util::SafeDelete( _pluginInterface );
   
@@ -482,44 +462,9 @@ void AudioController:: SetupWavePortalPlugIn()
 void AudioController::Update()
 {
 #if USE_AUDIO_ENGINE
-  
-#if ENABLE_AC_SLEEP_TIME_DIAGNOSTICS
-  const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  {
-    static bool firstUpdate = true;
-    static double lastUpdateTimeMs = 0.0;
-    if (! firstUpdate)
-    {
-      const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = UPDATE_LOOP_SLEEP_DURATION_MS + 15.;
-      if (timeSinceLastUpdate > maxLatency)
-      {
-        Anki::Util::sEventF("audio_controller.update.sleep.slow", {{DDATA,STR(UPDATE_LOOP_SLEEP_DURATION_MS)}}, "%.2f", timeSinceLastUpdate);
-      }
-    }
-    lastUpdateTimeMs = startUpdateTimeMs;
-    firstUpdate = false;
-  }
-#endif // ENABLE_AC_SLEEP_TIME_DIAGNOSTICS
-  
   // Tick Music Conductor & Audio Engine
   _musicConductor->UpdateTick();
-  
   ProcessAudioQueue();
-
-#if ENABLE_AC_RUN_TIME_DIAGNOSTICS
-  {
-    const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = UPDATE_LOOP_SLEEP_DURATION_MS;
-    if (updateLengthMs > maxUpdateDuration)
-    {
-      Anki::Util::sEventF("audio_controller.update.run.slow", {{DDATA,STR(UPDATE_LOOP_SLEEP_DURATION_MS)}}, "%.2f", updateLengthMs);
-    }
-  }
-#endif // ENABLE_AC_RUN_TIME_DIAGNOSTICS
-
-
 #endif
 }
 

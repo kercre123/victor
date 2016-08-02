@@ -66,6 +66,10 @@ public:
   
   AudioController* GetAudioController() { return _audioController; }
   
+  // Helper method to update Audio Controller
+  // Note: This is thread safe
+  void UpdateAudioController();
+  
 
 private:
   
