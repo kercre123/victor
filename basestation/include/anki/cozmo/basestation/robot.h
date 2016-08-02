@@ -1050,6 +1050,9 @@ protected:
   void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
+  //tracks timestamps of when objects moved - maps ObjectID to time moving
+  std::map<int,float> _objectTimeMovingMap;
 
   void SetupMiscHandlers(IExternalInterface& externalInterface);
   void SetupGainsHandlers(IExternalInterface& externalInterface);

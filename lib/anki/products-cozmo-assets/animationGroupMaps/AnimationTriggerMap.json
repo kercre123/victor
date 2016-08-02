@@ -45,6 +45,14 @@
       "AnimName": "ag_ConnectWakeUp"
     },
     {
+      "CladEvent": "CubeMovedSense",
+      "AnimName": "ag_reacttocliff_huh_01"
+    },
+    {
+      "CladEvent": "CubeMovedUpset",
+      "AnimName": "ag_reacttocliff_pickup"
+    },
+    {
       "CladEvent": "CubePounceFake",
       "AnimName": "ag_keepaway_fakeout"
     },

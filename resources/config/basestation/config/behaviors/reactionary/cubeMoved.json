@@ -1,6 +1,7 @@
 {
   "behaviorType": "ReactToCubeMoved",
   "behaviorGroups": [
+    "Reactionary"
   ],
   "disableByDefault": true
 }

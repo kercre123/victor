@@ -24,6 +24,8 @@ enum uint_16 AnimationTrigger
   CodeBreakerNewIdea,
   CodeBreakerThinking,
   ConnectWakeUp,
+  CubeMovedSense,
+  CubeMovedUpset,
   CubePounceFake,
   CubePounceLoseHand,
   CubePounceLoseRound,

@@ -282,6 +282,12 @@ message RobotMarkedObjectPoseUnknown {
     uint_32 objectID
 }
 
+// ObjectMovedEngineToGame
+message ObjectMovedWrapper {
+    float_32    timeMoving,
+    ObjectMoved objectMoved
+}
+
 // RobotReadToolCode
 message RobotReadToolCode {
   ToolCodeInfo info

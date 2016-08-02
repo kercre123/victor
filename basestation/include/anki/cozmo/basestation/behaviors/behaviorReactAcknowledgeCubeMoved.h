@@ -20,6 +20,14 @@
 namespace Anki {
 namespace Cozmo {
 
+class ReactionObjectData{
+public:
+  ReactionObjectData(int objectID, double nextUniqueTime, bool observedSinceLastResponse);
+  int _objectID;
+  double _nextUniqueTime;
+  bool _observedSinceLastResponse;
+};
+
 class BehaviorReactAcknowledgeCubeMoved : public IReactionaryBehavior
 {
 private:
@@ -27,20 +35,35 @@ private:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorReactAcknowledgeCubeMoved(Robot& robot, const Json::Value& config);
-  
+
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+
 public:
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override { return true;}
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   
 protected:
   
   virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual Status UpdateInternal(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
   
-  virtual void AlwaysHandleInternal(const RobotToEngineEvent& event, const Robot& robot) override;
   
 private:
+  enum class State {
+    PlayingSenseReaction,
+    TurningToLastLocationOfBlock,
+    ReactingToBlockAbsence
+  };
+    
+  State _state;
+  std::vector<ReactionObjectData> _reactionObjects;
+  uint32_t _activeObjectID;
+  
+  void TransitionToPlayingSenseReaction(Robot& robot);
+  void TransitionToTurningToLastLocationOfBlock(Robot& robot);
+  void TransitionToReactingToBlockAbsence(Robot& robot);
+  
+  void SetState_internal(State state, const std::string& stateName);
   
 }; // class BehaviorReactAcknowledgeCubeMoved
 

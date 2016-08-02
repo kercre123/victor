@@ -58,7 +58,7 @@ BehaviorReactToNewBlock::BehaviorReactToNewBlock(Robot& robot, const Json::Value
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::RobotMarkedObjectPoseUnknown,
-    EngineToGameTag::ObjectMoved,
+    EngineToGameTag::ObjectMovedWrapper,
   }});
 
 }
@@ -87,8 +87,8 @@ void BehaviorReactToNewBlock::AlwaysHandle(const EngineToGameEvent& event, const
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
       break;
       
-    case EngineToGameTag::ObjectMoved:
-      HandleObjectChanged(robot, event.GetData().Get_ObjectMoved().objectID);
+    case EngineToGameTag::ObjectMovedWrapper:
+      HandleObjectChanged(robot, event.GetData().Get_ObjectMovedWrapper().objectMoved.objectID);
       break;
       
     case EngineToGameTag::RobotMarkedObjectPoseUnknown:

@@ -123,7 +123,7 @@ namespace Anki
       const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType whichType) const;
       
       // Return a pointer to an object with the specified ID (in the current world
-      // coordinate frame. If that object does not exist, nullptr is returned.
+      // coordinate frame. If that object does not exist or its pose is unknown, nullptr is returned.
       // Be sure to ALWAYS check for the return being null!
       // Optionally, specify a family to search within.
       // For more complex queries, use one of the Find methods with a BlockWorldFilter.
