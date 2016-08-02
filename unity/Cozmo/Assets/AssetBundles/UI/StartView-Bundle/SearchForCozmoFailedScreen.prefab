@@ -136,23 +136,26 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Show Me"'
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:b
-    JsonValue: 0.349019617
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+    JsonValue: 0.333333343
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:g
-    JsonValue: 0.407843143
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:r
-    JsonValue: 0.4117647
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:b
-    JsonValue: 0.215722322
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:g
-    JsonValue: 0.254751027
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    JsonValue: 0.498039216
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:r
-    JsonValue: 0.257352948
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    JsonValue: 0.498039216
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+    JsonValue: 0.498039216
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: SearchForCozmoFailedScreen:_ShowMeButton
