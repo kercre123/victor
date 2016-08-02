@@ -269,7 +269,7 @@ Robot::~Robot()
   
   // Destroy our actionList before things like the path planner, since actions often rely on those
   // things existing
-  _actionList.reset();
+  Util::SafeDelete(_actionList);
       
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash
   // caused by the vision thread using _poseHistory when it was destroyed here

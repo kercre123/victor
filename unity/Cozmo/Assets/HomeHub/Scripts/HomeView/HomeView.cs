@@ -89,6 +89,8 @@ namespace Cozmo.HomeHub {
 
     private LootView _LootViewInstance = null;
 
+    public bool LootSequenceActive = false;
+
     [SerializeField]
     private GameObject _EnergyDooberPrefab;
     [SerializeField]
@@ -174,7 +176,7 @@ namespace Cozmo.HomeHub {
       UnlockablesManager.Instance.OnNewUnlock += CheckIfUnlockablesAffordableAndUpdateBadge;
       // If we have energy earned, create the energy doobers and clear pending action rewards
       if (RewardedActionManager.Instance.RewardPending) {
-
+        LootSequenceActive = true;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
         }
@@ -228,6 +230,7 @@ namespace Cozmo.HomeHub {
           _LootViewInstance = alertView;
           _LootViewInstance.ViewCloseAnimationFinished += (() => {
             _EmotionChipTag.gameObject.SetActive(true);
+            LootSequenceActive = false;
             CheckIfUnlockablesAffordableAndUpdateBadge();
             UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
             AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
@@ -238,7 +241,6 @@ namespace Cozmo.HomeHub {
 
     // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started
     private void EnergyDooberBurst(int pointsEarned) {
-      UIManager.DisableTouchEvents();
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
       int doobCount = Mathf.CeilToInt((float)pointsEarned / 5.0f);
       Sequence dooberSequence = DOTween.Sequence();
@@ -263,7 +265,7 @@ namespace Cozmo.HomeHub {
     private void ResolveDooberBurst() {
       RewardedActionManager.Instance.PendingActionRewards.Clear();
       if (ChestRewardManager.Instance.ChestPending == false) {
-        UIManager.EnableTouchEvents();
+        LootSequenceActive = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
         }
@@ -327,6 +329,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (LootSequenceActive) {
+        return;
+      }
       ClearCurrentTab();
       ShowNewCurrentTab(_CozmoTabPrefab);
       UpdateTabGraphics(HomeTab.Cozmo);
@@ -339,6 +345,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleProfileTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (LootSequenceActive) {
+        return;
+      }
       ClearCurrentTab();
       ShowNewCurrentTab(_ProfileTabPrefab);
       UpdateTabGraphics(HomeTab.Profile);
@@ -389,12 +399,20 @@ namespace Cozmo.HomeHub {
     }
 
     public void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      // Do not allow changing tabs while receiving chests
+      if (LootSequenceActive) {
+        return;
+      }
       if (OnLockedChallengeClicked != null) {
         OnLockedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      // Do not allow changing tabs while receiving chests
+      if (LootSequenceActive) {
+        return;
+      }
       if (OnUnlockedChallengeClicked != null) {
         OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
       }

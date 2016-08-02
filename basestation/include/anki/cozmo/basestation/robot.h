@@ -779,8 +779,10 @@ protected:
   
   DrivingAnimationHandler* _drivingAnimationHandler;
   
-  //ActionQueue         _actionQueue;
-  std::unique_ptr<ActionList> _actionList;
+  // Note that we want _actionList as a pointer instead of unique_ptr. This is because unique_ptrs are
+  // set to nullptr before being deleted, while regular pointers are not. Actions sometimes interact with
+  // the ActionList upon destruction, and we don't want to cause a crash because the pointer has already been nulled.
+  ActionList*           _actionList;
   MovementComponent     _movementComponent;
   VisionComponent*      _visionComponentPtr;
   NVStorageComponent    _nvStorageComponent;

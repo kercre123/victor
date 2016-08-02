@@ -54,6 +54,12 @@ public class RewardedActionManager : MonoBehaviour {
       return PendingActionRewards.Count > 0;
     }
   }
+
+  public string EnergyID {
+    get {
+      return _RewardConfig.EnergyID;
+    }
+  }
   // Set to -1 if no new difficulty was unlocked, otherwise is set to the new difficulty and included along
   // with Pending Unlockables as the next difficulty unlocked.
   public int NewDifficultyUnlock = -1;
@@ -179,5 +185,14 @@ public class RewardedActionManager : MonoBehaviour {
     GameEventManager.Instance.OnGameEvent -= GameEventReceived;
   }
 
+  public void FakeRewardPending(int count = 0) {
+    RewardedActionData fakeData = new RewardedActionData();
+    fakeData.Reward = new RewardData();
+    fakeData.RewardEvent.Value = GameEvent.Count;
+    fakeData.Reward.Amount = count;
+    fakeData.Reward.DescriptionKey = "FAKE";
+    fakeData.Reward.ItemID = _RewardConfig.EnergyID;
+    PendingActionRewards.Add(fakeData, fakeData.Reward.Amount);
+  }
 
 }
