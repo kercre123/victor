@@ -333,9 +333,9 @@ namespace UpgradeController {
       }
       case OTAT_Flash_Erase:
       {
-        if (counter < (ESP_FW_MAX_SIZE + SECTOR_SIZE)) // One extra sector for version info
+        if (counter < ESP_FW_MAX_SIZE)
         {
-          const uint32 sector = ((fwWriteAddress + counter) / SECTOR_SIZE) - 1; // One extra sector for version info
+          const uint32 sector = ((fwWriteAddress + counter) / SECTOR_SIZE);
           #if DEBUG_OTA
           os_printf("Erase sector 0x%x\r\n", sector);
           #endif
@@ -521,36 +521,19 @@ namespace UpgradeController {
         {
           if (fwb->blockAddress == COMMENT_BLOCK)
           {
-            const uint32 destAddr = fwWriteAddress - SECTOR_SIZE; // One sector before beginning of firmware
             #if DEBUG_OTA
-            os_printf("WC 0x%x\r\n", destAddr);
+            os_printf("Comment block\r\n");
             #endif
-            const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
-            if (rslt != SPI_FLASH_RESULT_OK)
-            {
-              if (retries-- <= 0)
-              {
-                #if DEBUG_OTA
-                os_printf("\tRan out of retries writing to Comment block\r\n");
-                #endif
-                ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
-                RobotInterface::SendMessage(ack);
-                Reset();
-              }
-            }
-            else
-            {
-              retries = MAX_RETRIES;
-              bufferUsed -= sizeof(FirmwareBlock);
-              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
-              bytesProcessed += sizeof(FirmwareBlock);
-              ack.bytesProcessed = bytesProcessed;
-              ack.result = OKAY;
-              RobotInterface::SendMessage(ack);
-              phase = OTAT_Flash_Verify;
-              counter = 0;
-              timer = 0;
-            }
+            retries = MAX_RETRIES;
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+            phase = OTAT_Flash_Verify;
+            counter = 0;
+            timer = 0;
           }
           else if (fwb->blockAddress == HEADER_BLOCK)
           {
@@ -1146,7 +1129,8 @@ namespace UpgradeController {
   
   u32* GetVersionInfo()
   {
-    return FLASH_CACHE_POINTER + ((APP_VERSION_A_SECTOR * SECTOR_SIZE)/4);  // Use A address because both images see it mapped in that place.
+    const uint32_t VERSION_INFO_ADDR = 0x80000 - 0x800; // Memory offset of version info for both apps
+    return FLASH_CACHE_POINTER + (VERSION_INFO_ADDR/4);  // Use A address because both images see it mapped in that place.
   }
 
   /// Retrieve numerical firmware version

@@ -134,7 +134,7 @@ void RadioConnectionStateMachineUpdate()
       u32* versionInfoAsU32 = reinterpret_cast<u32*>(versionMsg.json);
       os_memcpy(versionInfoAsU32,
                 Anki::Cozmo::UpgradeController::GetVersionInfo(),
-                Anki::Cozmo::UpgradeController::VERSION_INFO_MAX_LENGTH/sizeof(u32));
+                Anki::Cozmo::UpgradeController::VERSION_INFO_MAX_LENGTH);
       versionMsg.json_length = os_strlen((const char*)versionMsg.json);
       if (RobotInterface::SendMessage(versionMsg)) doRTConnectPhase++;
       break;

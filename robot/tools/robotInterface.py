@@ -196,18 +196,6 @@ class _Dispatcher(IDataReceiver):
             elif msg.tag == msg.Tag.mainCycleTimeError:
                 sys.stdout.write(repr(msg.mainCycleTimeError))
                 sys.stdout.write(os.linesep)
-            elif msg.tag == msg.Tag.robotAvailable:
-                try:
-                    versionInfo = json.loads(msg.robotAvailable.versionInfo)
-                    toRobot  = versionInfo['messageEngineToRobotHash']
-                    toEngine = versionInfo['messageRobotToEngineHash']
-                    if toRobot  != messageEngineToRobotHash:
-                        sys.stderr.write("WARNING: ToRobot CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toRobot,   messageEngineToRobotHash, linesep=os.linesep))
-                    if toEngine != messageRobotToEngineHash:
-                        sys.stderr.write("WARNING: ToEngine CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toEngine, messageRobotToEngineHash, linesep=os.linesep))
-                except:
-                    sys.stderr.write("Unable to parse robot firmware version info")
-                    sys.stderr.write(os.linesep)
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:

@@ -51,6 +51,7 @@ FACTORY_UPGRD_BLOCK = 0xFFfacfac
 COMMENT_BLOCK       = 0xFFFFFFFC    # this is the JSON used for the app
 HEADER_INFORMATION  = 0xFFFFFFFE    # this is used for the robot
 CERTIFICATE_BLOCK   = 0xFFFFFFFF
+WIFI_MAX_FW_SIZE    = ((0x80-0x03) * 0x1000) - BLOCK_LENGTH # Space available in flash map minus one block for version info
 
 class DigestFile:
     def __init__(self, fn, mode, digestType = SHA512):
@@ -209,8 +210,11 @@ if __name__ == '__main__':
     # start building our firmware image
     fo = DigestFile(args.output, "wb", SHA512)
     
+    commentBlock = None
+    
     if args.comment is not None:
-        fo.write(get_version_comment_block(args), COMMENT_BLOCK)
+        commentBlock = get_version_comment_block(args)
+        fo.write(commentBlock, COMMENT_BLOCK)
 
     # Load our RSA key
     if not args.sign == None:
@@ -238,6 +242,7 @@ if __name__ == '__main__':
         if kind == 'wifi':
             base_addr = WIFI_BLOCK
             rom_data = open(fn, "rb").read()
+            assert len(rom_data) <= WIFI_MAX_FW_SIZE
         else:    
             rom_data, base_addr = get_image(fn)
             if kind == 'body':
@@ -245,6 +250,8 @@ if __name__ == '__main__':
 
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block+base_addr, aes_key)
+        if kind == 'wifi' and commentBlock is not None:
+            fo.write(commentBlock, WIFI_BLOCK + WIFI_MAX_FW_SIZE, aes_key) # Add version info to end of wifi
     
     if args.factory_upgrade is not None:
         fo.write(b"", FACTORY_UPGRD_BLOCK, aes_key)
@@ -256,7 +263,7 @@ if __name__ == '__main__':
         for block, data in chunk(rom_data, BLOCK_LENGTH):
             fo.write(data, block + WIFI_BLOCK + 0x45000)
 
-    fo.writeCert(cert)    
+    fo.writeCert(cert)
     fo.close()
 
     if args.prepend_size_word:

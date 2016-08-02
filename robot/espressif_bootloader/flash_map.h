@@ -19,9 +19,7 @@
 typedef enum {
   BOOTLOADER_SECTOR           = 0x000, ///< Where the boot loader (this code) lives.
   FACTORY_SECTOR              = 0x001, ///< Where factory build information will be stored
-  APP_VERSION_A_SECTOR        = 0x002, ///< Where version header and other meta data about application A is stored
   APPLICATION_A_SECTOR        = 0x003, ///< Start of application image A region
-  APP_VERSION_B_SECTOR        = 0x102, ///< Where version header and other meta data about application A is stored
   APPLICATION_B_SECTOR        = 0x103, ///< Start of application image B region
   FACTORY_WIFI_FW_SECTOR      = 0x080, ///< Where the factory firmware starts
   FACTORY_RTIP_BODY_FW_SECTOR = 0x0c5, ///< Where the image for the RTIP and Body firmware is stored
