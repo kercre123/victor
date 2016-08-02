@@ -122,6 +122,9 @@ public class InventoryPane : MonoBehaviour {
 
   private void DebugAddItem(string itemId, int delta) {
     _PlayerInventory.AddItemAmount(itemId, delta);
+    if (delta > 0 && itemId == RewardedActionManager.Instance.EnergyID) {
+      RewardedActionManager.Instance.FakeRewardPending(delta);
+    }
     DataPersistenceManager.Instance.Save();
   }
 
