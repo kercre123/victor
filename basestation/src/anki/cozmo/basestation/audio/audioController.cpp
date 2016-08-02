@@ -28,6 +28,7 @@
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
 
+#include <sstream>
 #include <unordered_map>
 
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
@@ -117,6 +118,26 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _audioEngine->RegisterAudioScene( std::move(initScene) );
     
     _audioEngine->LoadAudioScene( sceneTitle );
+    
+    LogCallbackFunc logCallback = [this] ( uint32_t akErrorCode,
+                                           const char* errorMessage,
+                                           ErrorLevel errorLevel,
+                                           AudioPlayingId playingId,
+                                           AudioGameObject gameObjectId )
+    {
+      std::ostringstream logStream;
+      logStream << "ErrorCode: " << akErrorCode << " Message: '" << errorMessage << "' level: "
+                << (uint32_t)errorLevel << " PlayingId: " << playingId << " GameObjId: " << gameObjectId;
+      
+      PRINT_CH_INFO("Audio_WwiseLog",
+                    "AudioController",
+                    "%s", logStream.str().c_str());
+      if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
+        PRINT_NAMED_ERROR("AudioController.WwiseLogError", "%s", logStream.str().c_str());
+      }
+    };
+    
+    _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, logCallback );
     
 #endif
   
