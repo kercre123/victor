@@ -102,12 +102,41 @@ void Radio::advertise(void) {
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
 
+  #ifdef NATHAN_CUBE_JUNK
+  light_gamma = 0x80;
+  LightState colors[NUM_PROP_LIGHTS];
+  memset(&colors, 0, sizeof(colors));
+
+  colors[0].onFrames =
+  colors[1].onFrames =
+  colors[2].onFrames =
+  colors[3].onFrames =
+  colors[0].offFrames =
+  colors[1].offFrames =
+  colors[2].offFrames =
+  colors[3].offFrames = 10;
+
+  colors[0].onColor = 0x7C00;
+  colors[2].onColor = 0x03E0;
+  colors[1].onColor = 0x001F;
+  colors[3].onColor = 0x7FE0;
+
+  colors[0].offColor = 0x001F;
+  colors[1].offColor = 0x7FE0;
+  colors[2].offColor = 0x7C00;
+  colors[3].offColor = 0x03E0;
+
+  for (int c = 0; c < MAX_ACCESSORIES; c++) {
+    Radio::setPropLights(c, colors);
+  }
+  #else
   LightState black[NUM_PROP_LIGHTS];
   memset(&black, 0, sizeof(black));
 
   for (int c = 0; c < MAX_ACCESSORIES; c++) {
     Radio::setPropLights(c, black);
   }
+  #endif
   
   uesb_init(&uesb_config);
 
@@ -493,7 +522,11 @@ static void ota_timeout() {
 }
 
 static void radio_prepare(void) {
+  // Manage OTA timeouts
   if (radioState == RADIO_OTA) {
+    if (ota_pending && --ota_timeout_countdown <= 0) {
+      ota_timeout();
+    }
     return ;
   }
 
@@ -539,11 +572,7 @@ static void radio_prepare(void) {
       uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[light]].values;
 
       for (int ch = 0; ch < 3; ch++) {
-        #ifndef NATHAN_CUBE_JUNK
         tx_state.ledStatus[tx_index++] = (rgbi[ch] * light_gamma) >> 8;
-        #else
-        tx_state.ledStatus[tx_index++] = 0x80;
-        #endif
       }
     }
 
@@ -593,11 +622,7 @@ extern "C" void TIMER0_IRQHandler(void) {
   if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
     return ;
   }
-    
-  if (ota_pending && ota_timeout_countdown && !--ota_timeout_countdown) {
-    ota_timeout();
-  }
-  
+
   if (NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE]) {
     NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
 

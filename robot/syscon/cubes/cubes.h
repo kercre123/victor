@@ -28,7 +28,7 @@ static const int MAX_ACCESSORIES = TICK_LOOP;
 static const int ADV_CHANNEL = 81;
 
 static const int OTA_ACK_TIMEOUT = 5;
-static const int MAX_ACK_TIMEOUTS = 10;
+static const int MAX_ACK_TIMEOUTS = 50;
 static const int MAX_OTA_FAILURES = 5;
 
 // Advertising settings

@@ -117,10 +117,22 @@ void Lights::init() {
 }
 
 void Lights::manage() {
-  int time = GetFrame();
-  
+  static unsigned int last_counter = 0;
+  unsigned int counter = GetCounter();
+  unsigned int delta = counter - last_counter;
+  last_counter = counter;
+
+  static unsigned int frame_time = 0;
+  static unsigned int accumulator = 0;
+
+  accumulator += delta * FRAME_RATE;
+  while (accumulator >= TICKS_PER_SECOND) {
+    frame_time++;
+    accumulator -= TICKS_PER_SECOND;
+  }
+
   for (int i = 0; i < TOTAL_LIGHTS; i++) {
-    CalculateLEDColor(lightController.lights[i], time);
+    CalculateLEDColor(lightController.lights[i], frame_time);
   }
 }
 
