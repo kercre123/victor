@@ -113,6 +113,32 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region HelpTipsStrings
+
+  public const string kHelpTipsStringsViewTitle = "helpTipsStrings.viewTitle";
+  public const string kHelpTipsStringsSlide0Title = "helpTipsStrings.Slide0.title";
+  public const string kHelpTipsStringsSlide0Body = "helpTipsStrings.Slide0.body";
+  public const string kHelpTipsStringsSlide1Title = "helpTipsStrings.Slide1.title";
+  public const string kHelpTipsStringsSlide1Body = "helpTipsStrings.Slide1.body";
+  public const string kHelpTipsStringsSlide2Title = "helpTipsStrings.Slide2.title";
+  public const string kHelpTipsStringsSlide2Body = "helpTipsStrings.Slide2.body";
+  public const string kHelpTipsStringsSlide3Title = "helpTipsStrings.Slide3.title";
+  public const string kHelpTipsStringsSlide3Body = "helpTipsStrings.Slide3.body";
+  public const string kHelpTipsStringsSlide4Title = "helpTipsStrings.Slide4.title";
+  public const string kHelpTipsStringsSlide4Body = "helpTipsStrings.Slide4.body";
+  public const string kHelpTipsStringsSlide5Title = "helpTipsStrings.Slide5.title";
+  public const string kHelpTipsStringsSlide5Body = "helpTipsStrings.Slide5.body";
+  public const string kHelpTipsStringsSlide6Title = "helpTipsStrings.Slide6.title";
+  public const string kHelpTipsStringsSlide6Body = "helpTipsStrings.Slide6.body";
+  public const string kHelpTipsStringsSlide7Title = "helpTipsStrings.Slide7.title";
+  public const string kHelpTipsStringsSlide7Body = "helpTipsStrings.Slide7.body";
+  public const string kHelpTipsStringsSlide8Title = "helpTipsStrings.Slide8.title";
+  public const string kHelpTipsStringsSlide8Body = "helpTipsStrings.Slide8.body";
+  public const string kHelpTipsStringsSlide9Title = "helpTipsStrings.Slide9.title";
+  public const string kHelpTipsStringsSlide9Body = "helpTipsStrings.Slide9.body";
+
+  #endregion
+
   #region ItemStrings
 
   public const string kItemExperienceSingular = "item.experience.singular";
@@ -348,8 +374,14 @@ public static class LocalizationKeys {
   public const string kUnlockableCubeStackActionDescription = "unlockable.CubeStackAction.Description";
   public const string kUnlockablePounceOnMotionActionTitle = "unlockable.PounceOnMotionAction.Title";
   public const string kUnlockablePounceOnMotionActionDescription = "unlockable.PounceOnMotionAction.Description";
+  public const string kUnlockableBuildPyramidTitle = "unlockable.BuildPyramid.Title";
+  public const string kUnlockableBuildPyramidDescription = "unlockable.BuildPyramid.Description";
   public const string kUnlockablePopAWheelieActionTitle = "unlockable.PopAWheelieAction.Title";
   public const string kUnlockablePopAWheelieActionDescription = "unlockable.PopAWheelieAction.Description";
+  public const string kUnlockableKnockOverThreeCubeStackTitle = "unlockable.KnockOverThreeCubeStack.Title";
+  public const string kUnlockableKnockOverThreeCubeStackDescription = "unlockable.KnockOverThreeCubeStack.Description";
+  public const string kUnlockablePickupCubeTitle = "unlockable.PickupCube.Title";
+  public const string kUnlockablePickupCubeDescription = "unlockable.PickupCube.Description";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";

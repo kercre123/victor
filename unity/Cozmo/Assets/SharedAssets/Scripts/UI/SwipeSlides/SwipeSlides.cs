@@ -40,7 +40,7 @@ public class SwipeSlides : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     for (int i = 0; i < _SlidePrefabs.Length; ++i) {
       GameObject slideInstance = GameObject.Instantiate(_SlidePrefabs[i]);
       slideInstance.transform.SetParent(_SwipeContainer, false);
-      slideInstance.transform.localPosition = new Vector3(i * GetComponent<RectTransform>().rect.width, 0.0f, 0.0f);
+      slideInstance.transform.localPosition = new Vector3(i * GetComponent<RectTransform>().rect.width, slideInstance.transform.localPosition.y, slideInstance.transform.localPosition.z);
       _SlideInstances.Add(slideInstance);
     }
     _StartingPosition = _SwipeContainer.localPosition;

@@ -1,0 +1,99 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+
+  "helpTipsStrings.viewTitle": {
+    "translation": "HELP & TIPS"
+  },
+
+  "helpTipsStrings.Slide0.title": {
+    "translation": "Create a Great Play Space"
+  },
+  "helpTipsStrings.Slide0.body": {
+    "translation": "Cozmo likes a clean, open table in a well lit room. He sees best indoors and out of direct sunlight."
+  },
+  
+  "helpTipsStrings.Slide1.title": {
+    "translation": "Cozmo's Cubes"
+  },
+  "helpTipsStrings.Slide1.body": {
+    "translation": "Cozmo likes to be around his Cubes. They work best when he can see the symbol clearly, and they're right side up. Check out Settings for Cube maintenance."
+  },
+  
+  "helpTipsStrings.Slide2.title": {
+    "translation": "Cozmo Gets Better Over Time"
+  },
+  "helpTipsStrings.Slide2.body": {
+    "translation": "You can Upgrade Cozmo to learn more abilities, and watch Cozmo grow. You can also unlock new Cozmo Apps, and get more games & activities."
+  },
+  
+  "helpTipsStrings.Slide3.title": {
+    "translation": "Energy, Bits, and Sparks"
+  },
+  "helpTipsStrings.Slide3.body": {
+    "translation": "Earn Energy by completing your Daily Goals. Energy rewards you with Bits and Sparks: use these to unlock Cozmo's Upgrades & Apps!"
+  },
+  
+  "helpTipsStrings.Slide4.title": {
+    "translation": "Check-in with Cozmo"
+  },
+  "helpTipsStrings.Slide4.body": {
+    "translation": "Launch the Cozmo App to check-in every day and receive new rewards. Connect to Cozmo to wake him up and give him the attention he needs."
+  },
+  
+  "helpTipsStrings.Slide5.title": {
+    "translation": "Keep Cozmo Safe"
+  },
+  "helpTipsStrings.Slide5.body": {
+    "translation": "Cozmo needs you to keep him safe. He's just like a hamster or other small pet. Keep an eye on him in case he gets into trouble; he may need your help to get un-stuck."
+  },
+
+  "helpTipsStrings.Slide6.title": {
+    "translation": "Cleaning Cozmo"
+  },
+  "helpTipsStrings.Slide6.body": {
+    "translation": "Cozmo likes to be clean and dry. Check his treads for dust and debris if he has trouble moving."
+  },
+
+  "helpTipsStrings.Slide7.title": {
+    "translation": "Cozmo is Safe and Secure"
+  },
+  "helpTipsStrings.Slide7.body": {
+    "translation": "Cozmo and his camera are safe and secure. No images or video are ever stored, online or offline. Cozmo will only talk to authorized devices."
+  },
+
+  "helpTipsStrings.Slide8.title": {
+    "translation": "Charge Up"
+  },
+  "helpTipsStrings.Slide8.body": {
+    "translation": "Remember to place Cozmo on his charger and put him to Sleep when you’re done playing. If your charger is not around, use the Sleep option in Settings for a quick nap."
+  },
+
+  "helpTipsStrings.Slide9.title": {
+    "translation": "Stay Connected"
+  },
+  "helpTipsStrings.Slide9.body": {
+    "translation": "Cozmo needs a compatible mobile device to work. Stay close to him, and if you have problems, make sure you're on his Wifi network."
+  }
+
+
+
+
+}
