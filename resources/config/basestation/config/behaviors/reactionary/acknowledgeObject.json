@@ -2,7 +2,7 @@
   "behaviorType": "AcknowledgeObject",
   "name": "AcknowledgeObject",
   "behaviorGroups": [
-    // "Reactionary"
+    "Reactionary"
   ],
   "ReactionAnimGroup": "AcknowledgeObject",
   "disableByDefault": false,

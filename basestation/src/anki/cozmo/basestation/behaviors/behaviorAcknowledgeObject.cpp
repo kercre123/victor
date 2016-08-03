@@ -31,6 +31,7 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR(bool, kBAO_enableObjectAcknowledgement, "BehaviorAcknowledgeObject", false);
 CONSOLE_VAR(f32, kBAO_headAngleDistFactor, "BehaviorAcknowledgeObject", 1.0);
 CONSOLE_VAR(f32, kBAO_bodyAngleDistFactor, "BehaviorAcknowledgeObject", 3.0);
 CONSOLE_VAR(bool, kBAO_vizPossibleStackCube, "BehaviorAcknowledgeObject", false);
@@ -275,7 +276,7 @@ void BehaviorAcknowledgeObject::StopInternalAcknowledgement(Robot& robot)
 
 bool BehaviorAcknowledgeObject::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return !robot.IsCarryingObject() && ! robot.IsPickingOrPlacing();
+  return kBAO_enableObjectAcknowledgement && !robot.IsCarryingObject() && ! robot.IsPickingOrPlacing();
 }
 
 void BehaviorAcknowledgeObject::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
