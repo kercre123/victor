@@ -361,6 +361,11 @@ bool IBehavior::IsRunnable(const Robot& robot) const
     const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
     return isSwitchRecent;
   }
+  
+  //check if the behavior runs while in the air
+  if(robot.IsPickedUp() && !ShouldRunWhilePickedUp()){
+    return false;
+  }
 
   // no unlock or unlock passed, ask subclass
   const bool isRunnable = IsRunnableInternal(robot);

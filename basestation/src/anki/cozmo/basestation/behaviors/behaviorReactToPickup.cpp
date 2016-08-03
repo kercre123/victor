@@ -53,8 +53,9 @@ bool BehaviorReactToPickup::ShouldRunForEvent(const ExternalInterface::MessageEn
 {
   ASSERT_NAMED( event.GetTag() == EngineToGameTag::RobotPickedUp, "BehaviorReactToPickup.TriggerForWrongTag" );
 
-  // always run, unless we are on the charger // TODO:(bn) a reaction for being carried in the charger?
-  return ! robot.IsOnCharger();
+  // always run, unless we are on the charger or playing alternate reactionary behavior
+  // TODO:(bn) a reaction for being carried in the charger?
+  return ! (robot.IsOnCharger() || robot.IsOnSide() || robot.IsOnBack() || robot.IsOnFace());
 }
 
 bool BehaviorReactToPickup::IsRunnableInternalReactionary(const Robot& robot) const
@@ -91,7 +92,6 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
     PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
     return Status::Complete;
   }
-  
   // If we aren't acting, it might be time to play another reaction
   if (!isActing)
   {
