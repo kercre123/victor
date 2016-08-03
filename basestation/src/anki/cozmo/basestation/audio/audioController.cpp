@@ -126,7 +126,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
                                            AudioGameObject gameObjectId )
     {
       std::ostringstream logStream;
-      logStream << "ErrorCode: " << akErrorCode << " Message: '" << errorMessage << "' level: "
+      logStream << "ErrorCode: " << akErrorCode << " Message: '" << errorMessage << "' LevelBitFlag: "
                 << (uint32_t)errorLevel << " PlayingId: " << playingId << " GameObjId: " << gameObjectId;
       
       PRINT_CH_INFO("Audio_WwiseLog",
