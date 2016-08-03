@@ -541,15 +541,14 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
         run_webots_thread.start()
         run_webots_thread.join(timeout)
 
+        # Check log for crashes, errors, and warnings
+        (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, log_file_name)
 
         # Check if timeout exceeded
         if run_webots_thread.isAlive():
           UtilLog.error('{test_controller} exceeded timeout.'.format(test_controller=test_controller))
           stop_webots()
           continue
-
-        # Check log for crashes, errors, and warnings
-        (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, log_file_name)
 
         # Check for crashes
         if crash_count > 0:
@@ -624,7 +623,10 @@ def parse_output(log_level, log_file):
   for line in lines:
     if 'The process crashed some time after starting successfully.' in line:
       crash_count += 1
-    if '[Error]' in line:
+
+    # [Error] catches controller log errors
+    # 'ERROR:' catches potential problems with the webots world/protos
+    if '[Error]' in line or 'ERROR:' in line:
       error_count += 1
       if log_level is ForwardWebotsLogLevel.only_errors or log_level is ForwardWebotsLogLevel.only_teamcity_stats_and_errors:
         UtilLog.error("Webots log contained an error: '{error_msg}'".format(error_msg=line))
@@ -680,7 +682,11 @@ def any_test_failed(test_results):
       return True
   return False
 
-
+def any_test_succeeded(test_results):
+  for test in test_results.values():
+    if ResultCode.succeeded in test.values():
+      return True
+  return False
 
 # executes main script logic
 def main(args):
@@ -801,17 +807,20 @@ def main(args):
 
     num_of_tests = sum(len(test_controller) for test_controller in test_results.values())
 
-    UtilLog.info('Passed tests: ')
-    for test_controller, results_of_each_world in test_results.items():
-      for world, result in results_of_each_world.items():
-        if result is ResultCode.succeeded:
-          UtilLog.info("{test_controller} in {world} passed.".format(test_controller=test_controller, world=world))
+    if any_test_succeeded(test_results):
+      UtilLog.info('Passed tests: ')
 
-    UtilLog.info('Failed tests: ')
-    for test_controller, results_of_each_world in test_results.items():
-      for world, result in results_of_each_world.items():
-        if result is ResultCode.failed:
-          UtilLog.info("{test_controller} in {world} failed.".format(test_controller=test_controller, world=world))
+      for test_controller, results_of_each_world in test_results.items():
+        for world, result in results_of_each_world.items():
+          if result is ResultCode.succeeded:
+            UtilLog.info("{test_controller} in {world} passed.".format(test_controller=test_controller, world=world))
+
+    if any_test_failed(test_results):
+      UtilLog.info('Failed tests: ')
+      for test_controller, results_of_each_world in test_results.items():
+        for world, result in results_of_each_world.items():
+          if result is ResultCode.failed:
+            UtilLog.info("{test_controller} in {world} failed.".format(test_controller=test_controller, world=world))
 
     if not options.show_graphics:
       # Only makes sense to print these when gui is not on because if the gui is on the webots logs
