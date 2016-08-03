@@ -653,11 +653,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::popAWheelie:
       return GetPopAWheelieActionHelper(robot, actionUnion.Get_popAWheelie());
       
-    case RobotActionUnionTag::goToObject:
-      return GetDriveToObjectActionHelper(robot, actionUnion.Get_goToObject());
+    case RobotActionUnionTag::gotoObject:
+      return GetDriveToObjectActionHelper(robot, actionUnion.Get_gotoObject());
       
-    case RobotActionUnionTag::goToPose:
-      return GetDriveToPoseActionHelper(robot, actionUnion.Get_goToPose());
+    case RobotActionUnionTag::gotoPose:
+      return GetDriveToPoseActionHelper(robot, actionUnion.Get_gotoPose());
       
     case RobotActionUnionTag::alignWithObject:
       return GetDriveToAlignWithObjectActionHelper(robot, actionUnion.Get_alignWithObject());

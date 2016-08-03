@@ -1,5 +1,5 @@
 __all__ = ['EvtRobotReady',
-           'PickupObject', 'PlaceObjectOnGroundHere', 'TurnInPlace',
+           'PickupObject', 'PlaceObjectOnGroundHere', 'TurnInPlace', 'GoToPose'
            'Cozmo']
 
 
@@ -26,6 +26,22 @@ class EvtRobotReady(event.Event):
 
 
 #### Actions
+
+class GoToPose(action.Action):
+    '''Represents the go to pose action in progress.
+
+    Returned by :meth:`~cozmo.robot.Cozmo.go_to_pose` and :meth:`~cozmo.robot.Cozmo.go_to_pose_relative_robot`
+    '''
+    def __init__(self, pose, **kw):
+        super().__init__(**kw)
+        self.pose = pose
+
+    def _repr_values(self):
+        return "pose=%s" % (self.pose)
+
+    def _encode(self):
+        return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y, 
+                                              rad=self.pose.rotation.angle_z.radians)
 
 class PickupObject(action.Action):
     '''Represents the pickup object action in progress.
@@ -103,6 +119,7 @@ class Cozmo(event.Dispatcher):
     _action_dispatcher_factory = action._ActionDispatcher
     turn_in_place_factory = TurnInPlace
     pickup_object_factory = PickupObject
+    go_to_pose_factory = GoToPose
     place_object_on_ground_here_factory = PlaceObjectOnGroundHere
 
     # other factories
@@ -117,6 +134,7 @@ class Cozmo(event.Dispatcher):
         self.conn = conn
         self._is_ready = False
         self.robot_id = robot_id
+        self._pose = None
         self.is_primary = is_primary
 
         self.world = self.world_factory(self.conn, self, dispatch_parent=self)
@@ -167,6 +185,16 @@ class Cozmo(event.Dispatcher):
         '''
         return self.conn.anim_names
 
+    @property
+    def pose(self):
+        """Pose is the current pose of cozmo relative to where he started when the engine was initialized.
+
+        Returns:
+            A :class:`cozmo.util.Pose` object.
+        """
+        return self._pose
+    
+
 
     #### Private Event Handlers ####
 
@@ -180,6 +208,11 @@ class Cozmo(event.Dispatcher):
     def _recv_msg_processed_image(self, _, *, msg):
         pass
 
+    def _recv_msg_robot_state(self, evt, *, msg):
+        #TODO flesh out the rest of the params in the robotState message
+        self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
+                               q0=msg.pose.q0, q1=msg.pose.q1,
+                               q2=msg.pose.q2, q3=msg.pose.q3)
 
     #### Public Event Handlers ####
 
@@ -219,7 +252,7 @@ class Cozmo(event.Dispatcher):
         '''Starts an animation playing on a robot.
 
         Returns an Animation object as soon as the request to play the animation
-        ha been sent.  Call the wait_for_completed method on the animation
+        has been sent.  Call the wait_for_completed method on the animation
         if you wish to wait for completion (or listen for the
         :class:`cozmo.anim.EvtAnimationCompleted` event).
 
@@ -343,6 +376,42 @@ class Cozmo(event.Dispatcher):
         # TODO: Check whether Cozmo is known to be holding the object in question
         logger.info("Sending place down here request for object=%s", obj)
         action = self.place_object_on_ground_here_factory(obj=obj,
+                conn=self.conn, robot=self, dispatch_parent=self)
+        self._action_dispatcher._send_single_action(action)
+        return action
+
+    ## Robot Driving Commands ##
+
+    def go_to_pose(self, pose):
+        '''Tells Cozmo to drive to the specified pose and orientation.
+
+        Since cozmo can only navigate in two dimensions X and Y, the only
+        applicable elements of pose are position.x position.y and rotation.angle_z
+
+        Args:
+            pose: (:class:`cozmo.util.Pose`) - The destination pose
+        Returns:
+            A :class:`cozmo.robot.GoToPose` action object
+        '''
+        action = self.go_to_pose_factory(pose=pose,
+                conn=self.conn, robot=self, dispatch_parent=self)
+        self._action_dispatcher._send_single_action(action)
+        return action
+
+    def go_to_pose_relative_robot(self, pose):
+        '''Tells Cozmo to drive to the specified pose and orientation relative to his current position.
+
+           This function takes into account Cozmo's angle_z, so he always is facing along the x axis.
+           Since cozmo can only navigate in two dimensions X and Y, the only
+           applicable elements of pose are position.x position.y and rotation.angle_z
+
+        Args:
+            pose: (:class:`cozmo.util.Pose`) - The destination pose
+        Returns:
+            A :class:`cozmo.robot.GoToPose` action object
+        '''
+        dest_pose = self.pose.define_pose_relative_this(pose)
+        action = self.go_to_pose_factory(pose=dest_pose,
                 conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action

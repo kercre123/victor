@@ -44,6 +44,7 @@ class BaseObject(event.Dispatcher):
     def __init__(self, conn, world, object_id=None, **kw):
         super().__init__(**kw)
         self._object_id = object_id
+        self._pose = None
         self.conn = conn
         self.world = world
         self._robot = None # the robot controlling this object (if an active object)
@@ -96,7 +97,10 @@ class BaseObject(event.Dispatcher):
             # Don't trigger a user-visible update if the markers haven't been
             # confirmed visible to avoid false positives
             return
-        changed_fields = {'last_observed_time', 'last_event_time'}
+        changed_fields = {'last_observed_time', 'last_event_time', 'pose'}
+        self._pose = util.Pose(msg.pose.x,msg.pose.y,msg.pose.z,
+                          q0=msg.pose.q0, q1=msg.pose.q1,
+                          q2=msg.pose.q2, q3=msg.pose.q3)
         self.last_observed_time = msg.timestamp
         self.last_event_time = msg.timestamp
         image_box = util.ImageBox(msg.img_topLeft_x, msg.img_topLeft_y, msg.img_width, msg.img_height)
@@ -129,6 +133,8 @@ LightCube3Id = _clad_to_game_cozmo.ObjectType.Block_LIGHTCUBE3
 
 class LightCube(BaseObject):
     '''A light cube object has four LEDs that Cozmo can actively manipulate and communicate with.'''
+
+    #TODO investigate why the top marker orientation of a cube is a bit strange
 
     pickupable = True
 
