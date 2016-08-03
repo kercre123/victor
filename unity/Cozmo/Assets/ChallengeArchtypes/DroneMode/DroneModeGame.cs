@@ -41,6 +41,11 @@ namespace Cozmo {
           InitializeStateMachine();
         }
 
+        protected override void SetEnableReactionaryBehaviorsForGame(bool enable) {
+          CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToCliff, enable);
+          CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToCubeMoved, enable);
+        }
+
         private void InitializeStateMachine() {
           DroneModeShowInstructionsState instructionState = new DroneModeShowInstructionsState();
           _StateMachine.SetNextState(instructionState);

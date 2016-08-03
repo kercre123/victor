@@ -107,6 +107,13 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Initialization
 
+  // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
+  protected virtual void SetEnableReactionaryBehaviorsForGame(bool enable) {
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.ReactToCubeMoved, enable);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+  }
+
   // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
   // music to continue playing without using an activity specific track.
   public void InitializeMinigame(ChallengeData challengeData, bool playGameSpecificMusic = true) {
@@ -129,6 +136,8 @@ public abstract class GameBase : MonoBehaviour {
     RewardedActionManager.Instance.PendingActionRewards.Clear();
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
+
+    SetEnableReactionaryBehaviorsForGame(false);
 
     RegisterRobotReactionaryBehaviorEvents();
 
@@ -460,6 +469,8 @@ public abstract class GameBase : MonoBehaviour {
     //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
 
     DeregisterRobotReactionaryBehaviorEvents();
+
+    SetEnableReactionaryBehaviorsForGame(true);
 
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
