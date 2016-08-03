@@ -76,12 +76,28 @@ public class ConnectionFlow : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
 
+    Cleanup();
+  }
+
+  private void Cleanup() {
     if (_PullCubeTabViewInstance != null) {
       UIManager.CloseViewImmediately(_PullCubeTabViewInstance);
     }
 
     if (_ConnectionFlowBackgroundInstance != null) {
       GameObject.Destroy(_ConnectionFlowBackgroundInstance.gameObject);
+    }
+
+    if (_UpdateFirmwareScreenInstance != null) {
+      GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
+    }
+
+    if (_InvalidPinViewInstance != null) {
+      UIManager.CloseView(_InvalidPinViewInstance);
+    }
+
+    if (_WakingUpCozmoScreenInstance != null) {
+      GameObject.Destroy(_WakingUpCozmoScreenInstance.gameObject);
     }
   }
 
@@ -350,16 +366,10 @@ public class ConnectionFlow : MonoBehaviour {
       return;
     }
 
-    DAS.Debug("ConnectionFlow.RobotConnectionResponse", "RobotID: " + robotID);
-
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
-      ConsoleLogManager.Instance.EnableSOSLogs(true);
-    }
-
     // Set initial Robot Volume when connecting
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
-    DAS.Info("ConnectionFlow.RobotConnectionResponse", "Robot Connect Request Responded!");
-    // TODO: replace with actual robot response from engine.
+    DAS.Info("ConnectionFlow.RobotConnectionResponse", message.result.ToString());
+
     HandleRobotConnectResponse(message.result);
   }
 
@@ -395,5 +405,11 @@ public class ConnectionFlow : MonoBehaviour {
       ReplaceCozmoOnCharger();
       break;
     }
+  }
+
+  public void HandleRobotDisconnect() {
+    Cleanup();
+    CreateConnectionFlowBackground();
+    ShowSearchForCozmo();
   }
 }

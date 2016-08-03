@@ -126,6 +126,10 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   }
 
+  public void HandleRobotDisconnect() {
+    _ConnectionFlowInstance.HandleRobotDisconnect();
+  }
+
   private void HandleConnectionFlowQuit() {
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);

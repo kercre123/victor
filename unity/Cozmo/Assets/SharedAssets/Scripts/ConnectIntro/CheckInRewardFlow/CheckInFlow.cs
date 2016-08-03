@@ -381,5 +381,9 @@ public class CheckInFlow : MonoBehaviour {
     }
   }
 
+  public void HandleRobotDisconnect() {
+    _ConnectionFlowInstance.HandleRobotDisconnect();
+  }
+
   #endregion
 }

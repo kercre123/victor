@@ -58,12 +58,14 @@ public class IntroManager : MonoBehaviour {
       _HubWorldInstance.DestroyHubWorld();
     }
 
-    // remove connection flow instances before restarting the flow
+    // if we are in a connection flow then they should handle the disconnects properly.
     if (_FirstTimeConnectDialogInstance != null) {
-      HideFirstTimeConnectDialog();
+      _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().HandleRobotDisconnect();
+      return;
     }
-    if (_CheckInDialogInstance != null) {
-      HideCheckInFlow();
+    else if (_CheckInDialogInstance != null) {
+      _CheckInDialogInstance.GetComponent<CheckInFlow>().HandleRobotDisconnect();
+      return;
     }
 
     StartFlow();

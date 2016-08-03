@@ -163,6 +163,9 @@ public class StartupManager : MonoBehaviour {
   private void HandleConnectedToEngine(string connectionIdentifier) {
     DAS.Info("StartupManager.HandleConnectedToEngine", "Engine connected!");
     _EngineConnected = true;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
+      ConsoleLogManager.Instance.EnableSOSLogs(true);
+    }
   }
 
   private IEnumerator LoadDebugAssetBundle(AssetBundleManager assetBundleManager, bool isDebugBuild) {
