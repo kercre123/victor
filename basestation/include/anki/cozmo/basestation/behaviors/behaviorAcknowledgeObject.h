@@ -32,21 +32,28 @@ template<typename TYPE> class AnkiEvent;
 namespace ExternalInterface {
 struct RobotObservedObject;
 }
-  
+class ObservableObject;
   
 class BehaviorAcknowledgeObject : public IBehaviorPoseBasedAcknowledgement
 {
+private:
+  using super = IBehaviorPoseBasedAcknowledgement;
+public:
+
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config);
 
-  virtual Result InitInternal(Robot& robot) override;
+  virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
+  virtual void   StopInternalAcknowledgement(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual float EvaluateScoreInternal(const Robot& robot) const override;
-  
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
+
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   
@@ -55,11 +62,26 @@ private:
     ObjectFamily::LightCube,
     ObjectFamily::Block
   }};
-  
+
+  // NOTE: this may get called twice (once from ShouldConsiderObservedObjectHelper and once from AlwaysHandleInternal)
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
-  void HandleObjectMarkedUnknown(const Robot& robot, ObjectID objectID);
   
-  ObjectID _targetObject;
+  void HandleObjectMarkedUnknown(const Robot& robot, ObjectID objectID);
+
+  void BeginIteration(Robot& robot);
+  void LookUpForStackedCube(Robot& robot);
+  void FinishIteration(Robot& robot);
+
+  ObjectID SelectClosestTarget(const Robot& robot) const;
+
+  // NOTE: uses s32 instead of ObjectID to match IBehaviorPoseBasedAcknowledgement's generic ids
+  std::set<s32> _targetObjects;
+  ObjectID _currTarget;
+
+  // fake object to try to look at to check for possible stacks
+  std::unique_ptr<ObservableObject> _ghostStackedObject;
+
+  bool _shouldStart = true;
   
 }; // class BehaviorAcknowledgeObject
 

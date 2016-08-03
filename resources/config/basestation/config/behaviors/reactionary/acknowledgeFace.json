@@ -1,7 +1,6 @@
 {
   "behaviorType": "AcknowledgeFace",
   "name": "AcknowledgeFace",
-  "flatScore": 0.3,
   "behaviorGroups": [
   ],
   "ReactionAnimGroup": "ReactToNewBlockSmall",

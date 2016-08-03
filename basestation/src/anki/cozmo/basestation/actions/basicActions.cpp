@@ -1031,20 +1031,38 @@ namespace Anki {
         Util::SafeDelete(_visuallyVerifyAction);
       }
     }
-    
+
+    void TurnTowardsObjectAction::UseCustomObject(ObservableObject* objectPtr)
+    {
+      if( _objectID.IsSet() ) {
+        PRINT_NAMED_WARNING("TurnTowardsObjectAction.UseCustomObject.CustomObjectOverwiteId",
+                            "object id was already set to %d, but now setting it to use a custom object ptr",
+                            _objectID.GetValue());
+        _objectID.UnSet();
+      }
+      _objectPtr = objectPtr;
+    }
+
     ActionResult TurnTowardsObjectAction::Init()
     {
-      ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
-                          "Object with ID=%d no longer exists in the world.",
-                          _objectID.GetValue());
-        return ActionResult::FAILURE_ABORT;
+
+      if( nullptr == _objectPtr ) {
+        _objectPtr = _robot.GetBlockWorld().GetObjectByID(_objectID);
+        if(_objectPtr == nullptr) {
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
+                            "Object with ID=%d no longer exists in the world.",
+                            _objectID.GetValue());
+          return ActionResult::FAILURE_ABORT;
+        }
       }
+      // NOTE: in the case of a retry, init will be called multiple times, so it is possible that _objectID
+      // was originally set, and then _objectPtr was set the first time init was called, and they are both
+      // valid at this point. This note is just here so no one tries to add an assert against like that (like
+      // I did the first time)
       
       Pose3d objectPoseWrtRobot;
       if(_whichCode == Vision::Marker::ANY_CODE) {
-        if(false == object->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
+        if(false == _objectPtr->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectPoseOriginProblem",
                             "Could not get pose of object %d w.r.t. robot pose.",
                             _objectID.GetValue());
@@ -1052,7 +1070,7 @@ namespace Anki {
         }
       } else {
         // Use the closest marker with the specified code:
-        std::vector<Vision::KnownMarker*> const& markers = object->GetMarkersWithCode(_whichCode);
+        std::vector<Vision::KnownMarker*> const& markers = _objectPtr->GetMarkersWithCode(_whichCode);
         
         if(markers.empty()) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoMarkersWithCode",
@@ -1160,7 +1178,14 @@ namespace Anki {
       }
       
       if(_headTrackWhenDone) {
-        _robot.GetActionList().QueueActionNext(new TrackObjectAction(_robot, _objectID));
+        if( !_objectID.IsSet() ) {
+          PRINT_NAMED_WARNING("TurnTowardsObjectAction.CustomObject.TrackingNotsupported",
+                              "No valid object id (you probably specified a custom action), so can't track");
+          // TODO:(bn) hang action here for consistency?
+        }
+        else {
+          _robot.GetActionList().QueueActionNext(new TrackObjectAction(_robot, _objectID));
+        }
       }
 
       return ActionResult::SUCCESS;
@@ -1262,10 +1287,10 @@ namespace Anki {
     //  rotates around the neck.
     //  Also, the equation for computing the actual angle in closed form gets
     //  surprisingly nasty very quickly.
-    Radians TurnTowardsPoseAction::GetHeadAngle()
+    Radians TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(const Point3f& translationWrtRobot)
     {
-      const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-      const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length() - NECK_JOINT_POSITION[0];
+      const f32 heightDiff = translationWrtRobot.z() - NECK_JOINT_POSITION[2];
+      const f32 distanceXY = Point2f(translationWrtRobot).Length() - NECK_JOINT_POSITION[0];
       
       // Adding bias to account for the fact that the camera tends to look lower than
       // desired on account of it being lower wrt neck joint.
@@ -1281,9 +1306,18 @@ namespace Anki {
       const f32 biasScaleFactorHeight = CLIP((kNoBiasHeight_mm - heightDiff) / (kNoBiasHeight_mm - kFullBiasHeight_mm), 0, 1);
       
       // Adds 4 degrees to account for 4 degree lookdown on EP3
-      const Radians headAngle = std::atan2(heightDiff, distanceXY) + (kHeadAngleDistBias_rad * biasScaleFactorDist) + (kHeadAngleHeightBias_rad * biasScaleFactorHeight) + DEG_TO_RAD(4);
+      const Radians headAngle = std::atan2(heightDiff, distanceXY) +
+        (kHeadAngleDistBias_rad * biasScaleFactorDist) +
+        (kHeadAngleHeightBias_rad * biasScaleFactorHeight) +
+        DEG_TO_RAD(4);
 
       return headAngle;
+    }
+
+    Radians TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(const Point3f& translationWrtRobot)
+    {
+      return std::atan2(translationWrtRobot.y(),
+                        translationWrtRobot.x());
     }
     
     void TurnTowardsPoseAction::SetPose(const Pose3d& pose)
@@ -1318,8 +1352,7 @@ namespace Anki {
       if(_maxTurnAngle > 0)
       {
         // Compute the required angle to face the object
-        const Radians turnAngle = std::atan2(_poseWrtRobot.GetTranslation().y(),
-                                             _poseWrtRobot.GetTranslation().x());
+        const Radians turnAngle = GetRelativeBodyAngleToLookAtPose(_poseWrtRobot.GetTranslation());
         
         PRINT_NAMED_INFO("TurnTowardsPoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg", turnAngle.getDegrees());
@@ -1337,7 +1370,7 @@ namespace Anki {
       }
       
       // Compute the required head angle to face the object
-      Radians headAngle = GetHeadAngle();
+      Radians headAngle = GetAbsoluteHeadAngleToLookAtPose(_poseWrtRobot.GetTranslation());
       SetHeadTiltAngle(headAngle);
       
       // Proceed with base class's Init()
