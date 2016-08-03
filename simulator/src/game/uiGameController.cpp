@@ -250,6 +250,21 @@ namespace Anki {
       
       HandleActiveObjectTapped(msg);
     }
+    
+    void UiGameController::HandleKnownObjectBase(ExternalInterface::KnownObject const& msg)
+    {
+      PRINT_NAMED_INFO("HandleKnownObject", "Received message about known object %d (type: %s, poseState: %d)",
+                       msg.objectID, EnumToString(msg.objectType), msg.poseState);
+      
+      HandleKnownObject(msg);
+    }
+    
+    void UiGameController::HandleEndOfKnownObjectsBase(ExternalInterface::EndOfKnownObjects const& msg)
+    {
+      PRINT_NAMED_INFO("HandleEndOfKnownObjects", "");
+      
+      HandleEndOfKnownObjects(msg);
+    }
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
@@ -456,6 +471,12 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ObjectTapped());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::KnownObject:
+            HandleKnownObjectBase(message.Get_KnownObject());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::EndOfKnownObjects:
+            HandleEndOfKnownObjectsBase(message.Get_EndOfKnownObjects());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());

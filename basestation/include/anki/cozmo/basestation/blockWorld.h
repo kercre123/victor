@@ -431,6 +431,8 @@ namespace Anki
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
       
+      void BroadcastKnownObjects(bool connectedObjectsOnly);
+      
       // Note: these helpers return non-const pointers despite being marked const,
       // but that's because they are protected helpers wrapped by const/non-const
       // public methods:

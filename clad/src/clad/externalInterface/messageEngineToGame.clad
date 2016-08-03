@@ -288,6 +288,20 @@ message ObjectMovedWrapper {
     ObjectMoved objectMoved
 }
 
+message KnownObject {
+    uint_32      objectID,
+    uint_32      lastObservedTimestamp,
+    ObjectFamily objectFamily,
+    ObjectType   objectType,
+    PoseStruct3d pose,
+    uint_8       poseState,
+    bool         isConnected,
+}
+
+message EndOfKnownObjects {
+
+}
+
 // RobotReadToolCode
 message RobotReadToolCode {
   ToolCodeInfo info

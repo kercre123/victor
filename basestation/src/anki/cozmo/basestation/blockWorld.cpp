@@ -300,6 +300,14 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           SetMemoryMapRenderEnabled(msg.enabled);
         }));
       
+      // RequestKnownObjects
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::RequestKnownObjects,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::RequestKnownObjects& msg = event.GetData().Get_RequestKnownObjects();
+          BroadcastKnownObjects(msg.connectedObjectsOnly);
+        }));
+      
     }
     
     BlockWorld::~BlockWorld()
@@ -580,6 +588,44 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     return RESULT_OK;
     
   } // BroadcastObjectObservation()
+  
+  
+  void BlockWorld::BroadcastKnownObjects(bool connectedObjectsOnly)
+  {
+    if(_robot->HasExternalInterface())
+    {
+      using namespace ExternalInterface;
+      
+      std::vector<ObservableObject*> objects;
+      
+      // Create filter
+      BlockWorldFilter filter;
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      filter.SetFilterFcn(nullptr);  // To search for objects of all pose states
+      if (connectedObjectsOnly) {
+        filter.SetFilterFcn([](const ObservableObject* object) {
+          return (object->GetActiveID() >= 0);
+        });
+      }
+      
+      FindMatchingObjects(filter, objects);
+      
+      for (auto obj : objects) {
+        KnownObject objMsg(obj->GetID(),
+                           obj->GetLastObservedTime(),
+                           obj->GetFamily(),
+                           obj->GetType(),
+                           obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                           static_cast<u8>(obj->GetPoseState()),
+                           true);
+      
+        _robot->Broadcast(MessageEngineToGame(KnownObject(std::move(objMsg))));
+      }
+      
+      _robot->Broadcast(MessageEngineToGame(EndOfKnownObjects()));
+    }
+  }
+  
   
   Result BlockWorld::UpdateObjectOrigins(const Pose3d *oldOrigin,
                                          const Pose3d *newOrigin)

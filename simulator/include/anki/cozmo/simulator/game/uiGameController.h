@@ -104,6 +104,8 @@ protected:
   virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
+  virtual void HandleKnownObject(ExternalInterface::KnownObject const& msg){};
+  virtual void HandleEndOfKnownObjects(ExternalInterface::EndOfKnownObjects const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
   virtual void HandleAnimationAborted(ExternalInterface::AnimationAborted const& msg){};
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
@@ -374,6 +376,8 @@ private:
   void HandleActiveObjectMovedBase(ObjectMoved const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
+  void HandleKnownObjectBase(ExternalInterface::KnownObject const& msg);
+  void HandleEndOfKnownObjectsBase(ExternalInterface::EndOfKnownObjects const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   void HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg);
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
