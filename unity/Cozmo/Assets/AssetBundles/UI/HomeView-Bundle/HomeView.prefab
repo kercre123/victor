@@ -712,6 +712,7 @@ GameObject:
   - 224: {fileID: 22489284}
   - 222: {fileID: 22262936}
   - 114: {fileID: 11473260}
+  - 114: {fileID: 11489932}
   m_Layer: 5
   m_Name: HelpButton
   m_TagString: Untagged
@@ -1806,6 +1807,8 @@ MonoBehaviour:
   _TopBarAnimationYOriginOffset: 250
   _TopBarOpenEase: 27
   _TopBarCloseEase: 26
+  _HelpButton: {fileID: 11489932}
+  _HelpViewPrefab: {fileID: 11489240, guid: e8253b38997414ae39d897571e6d7ed8, type: 2}
 --- !u!114 &11477092
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1960,6 +1963,31 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11489932
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 195312}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Interactable: 1
+  _TextLabel: {fileID: 0}
+  _TextLabelOffset: -5
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _AlphaController: {fileID: 0}
+  ButtonGraphics: []
+  _GlintAnimator: {fileID: 0}
+  _UISoundEvent:
+    _Event: Play__Ui__Click_General
+    _EventType: Ui
+    _GameObjectType: 2
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11490630
 MonoBehaviour:
   m_ObjectHideFlags: 1

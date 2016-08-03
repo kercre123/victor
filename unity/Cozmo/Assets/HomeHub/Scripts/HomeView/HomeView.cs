@@ -140,6 +140,13 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private Ease _TopBarCloseEase = Ease.InBack;
 
+    [SerializeField]
+    private Cozmo.UI.CozmoButton _HelpButton;
+
+    [SerializeField]
+    private BaseView _HelpViewPrefab;
+    private BaseView _HelpViewInstance;
+
     private AlertView _RequestDialog = null;
 
     private HomeHub _HomeHubInstance;
@@ -184,6 +191,7 @@ namespace Cozmo.HomeHub {
       _CozmoTabButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
       _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
       _ProfileTabButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
+      _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventViewName);
 
       _CozmoTabDownButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
       _PlayTabDownButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
@@ -389,6 +397,10 @@ namespace Cozmo.HomeHub {
       UpdateTabGraphics(HomeTab.Profile);
     }
 
+    private void HandleHelpButton() {
+      _HelpViewInstance = UIManager.OpenView(_HelpViewPrefab);
+    }
+
     private void ClearCurrentTab() {
       if (_CurrentTab != null) {
         Destroy(_CurrentTab.gameObject);
@@ -576,6 +588,10 @@ namespace Cozmo.HomeHub {
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
       UnlockablesManager.Instance.OnNewUnlock -= HandlePlayTabButton;
       UnlockablesManager.Instance.OnNewUnlock -= CheckIfUnlockablesAffordableAndUpdateBadge;
+
+      if (_HelpViewInstance != null) {
+        UIManager.CloseView(_HelpViewInstance);
+      }
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;

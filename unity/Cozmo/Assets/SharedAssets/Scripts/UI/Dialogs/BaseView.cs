@@ -6,7 +6,7 @@ using Anki.UI;
 
 namespace Cozmo {
   namespace UI {
-    public abstract class BaseView : MonoBehaviour {
+    public class BaseView : MonoBehaviour {
 
       // Static events
       public delegate void BaseViewHandler(BaseView view);
@@ -91,7 +91,9 @@ namespace Cozmo {
         PlayOpenAnimations();
       }
 
-      protected abstract void CleanUp();
+      protected virtual void CleanUp() {
+
+      }
 
       protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
       }
