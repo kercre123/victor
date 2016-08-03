@@ -119,6 +119,7 @@ namespace Cozmo.HomeHub {
       _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
+      _HomeViewInstance.MinigameConfirmed += HandleStartChallengeRequest;
 
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
@@ -138,8 +139,6 @@ namespace Cozmo.HomeHub {
         if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
           robot.SetEnableFreeplayBehaviorChooser(true);
         }
-
-        DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
       }
     }
 
@@ -224,7 +223,7 @@ namespace Cozmo.HomeHub {
     }
 
     private IEnumerator ShowMinigameAfterHomeViewCloses(ChallengeData challengeData, ChallengePrefabData prefabData) {
-      while (_HomeViewInstance != null || _ChallengeDetailsDialogInstance != null) {
+      while (_HomeViewInstance != null || _ChallengeDetailsDialogInstance != null || _MiniGameInstance != null) {
         yield return 0;
       }
 
@@ -278,7 +277,6 @@ namespace Cozmo.HomeHub {
     private void HandleMiniGameQuit() {
       // Reset the current challenge and re-register the HandleStartChallengeRequest
       _CurrentChallengePlaying = null;
-      DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
     private void HandleMinigameFinishedClosing() {
@@ -347,8 +345,8 @@ namespace Cozmo.HomeHub {
         _HomeViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
         _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
         _HomeViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
+        _HomeViewInstance.MinigameConfirmed -= HandleStartChallengeRequest;
       }
-      DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
     }
 
     #region Testing

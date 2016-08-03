@@ -10,6 +10,7 @@ GameObject:
   - 224: {fileID: 22433786}
   - 222: {fileID: 22250312}
   - 114: {fileID: 11402098}
+  - 114: {fileID: 11483744}
   m_Layer: 5
   m_Name: HexFrame
   m_TagString: Untagged
@@ -70,7 +71,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &112722
 GameObject:
   m_ObjectHideFlags: 1
@@ -529,7 +530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &173476
 GameObject:
   m_ObjectHideFlags: 1
@@ -839,18 +840,15 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 3
+    JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
+    ReferencePath: 
   - ObjectPath: ../../../
     FieldName: Cozmo.HomeHub.HomeView:_HexLabel
     ReferencePath: 
@@ -1391,14 +1389,8 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
     JsonValue: 1.0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 3
+    JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.emptyWithArg"'
@@ -1797,6 +1789,7 @@ MonoBehaviour:
       _EnumValueAsString: loot_view_prefabs
       _EnumValue: 10
     _AssetDataName: LootView
+  RewardSequenceActive: 0
   _EnergyDooberPrefab: {fileID: 125416, guid: c146a460a04b54d96920707c6edba121, type: 2}
   _EnergyDooberStart: {fileID: 22498212}
   _EnergyDooberEnd: {fileID: 22451224}
@@ -1867,6 +1860,21 @@ MonoBehaviour:
   m_FillAmount: 0.91
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11483744
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dc55167ef35949318682a0a14e46fdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CountLabel: {fileID: 0}
+  _ItemIcon: {fileID: 11435452}
+  _ItemId: TestHexItem0
+  _CountOnly: 1
 --- !u!114 &11485164
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3845,10 +3853,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22424634}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 29, y: 0}
-  m_SizeDelta: {x: 59, y: 0}
+  m_AnchoredPosition: {x: 73, y: -256.5}
+  m_SizeDelta: {x: 0, y: 513}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22406890
 RectTransform:
@@ -4030,10 +4038,10 @@ RectTransform:
   - {fileID: 22434452}
   m_Father: {fileID: 22442450}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 150, y: -256}
+  m_SizeDelta: {x: 300, y: 512}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22423970
 RectTransform:
@@ -4068,8 +4076,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 29, y: 0}
-  m_SizeDelta: {x: 55, y: 0}
+  m_AnchoredPosition: {x: 71, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22424566
 RectTransform:
@@ -4104,10 +4112,10 @@ RectTransform:
   - {fileID: 22411170}
   m_Father: {fileID: 22442450}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -256.0125}
-  m_SizeDelta: {x: 300, y: 512.025}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22433442
 RectTransform:
@@ -4402,8 +4410,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 29, y: 0}
-  m_SizeDelta: {x: 55, y: 0}
+  m_AnchoredPosition: {x: 73, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22468128
 RectTransform:
@@ -4534,8 +4542,8 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -768.7383}
-  m_SizeDelta: {x: 300, y: 512.4922}
+  m_AnchoredPosition: {x: 150, y: -768.79724}
+  m_SizeDelta: {x: 300, y: 512.5315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22497190
 RectTransform:

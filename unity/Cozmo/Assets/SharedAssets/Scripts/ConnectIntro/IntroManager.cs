@@ -59,8 +59,12 @@ public class IntroManager : MonoBehaviour {
     }
 
     // remove connection flow instances before restarting the flow
-    HideFirstTimeConnectDialog();
-    HideCheckInFlow();
+    if (_FirstTimeConnectDialogInstance != null) {
+      HideFirstTimeConnectDialog();
+    }
+    if (_CheckInDialogInstance != null) {
+      HideCheckInFlow();
+    }
 
     StartFlow();
   }

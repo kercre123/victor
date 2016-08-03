@@ -25,14 +25,14 @@ public class DailyGoalManager : MonoBehaviour {
 
   #endregion
 
-  public Action<string> MinigameConfirmed;
-
   [SerializeField]
   private ChallengeDataList _ChallengeList;
 
-  private AlertView _RequestDialog = null;
-  private bool _RequestPending = false;
-
+  public ChallengeData CurrentChallengeToRequest {
+    get {
+      return _LastChallengeData;
+    }
+  }
   // The Last Challenge ID Cozmo has requested to play
   private ChallengeData _LastChallengeData;
 
@@ -145,8 +145,6 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void Start() {
     Instance = this;
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
     _CurrentGenData = new DailyGoalGenerationData();
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
@@ -172,11 +170,6 @@ public class DailyGoalManager : MonoBehaviour {
     else {
       DAS.Error(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
     }
-  }
-
-  private void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
   }
 
   private void LoadDailyGoalData(string path) {
@@ -218,69 +211,6 @@ public class DailyGoalManager : MonoBehaviour {
             }
           });
       }
-    }
-  }
-
-  private void HandleAskForMinigame(object messageObject) {
-    if (_RequestDialog != null) {
-      // Avoid dupes
-      return;
-    }
-
-    ChallengeData data = _LastChallengeData;
-    // Do not send the minigame message if the challenge is invalid.
-    if (data == null) {
-      return;
-    }
-
-    // Create alert view with Icon
-    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
-    // Hook up callbacks
-    alertView.SetCloseButtonEnabled(false);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
-    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
-    alertView.SetIcon(_LastChallengeData.ChallengeIcon);
-    alertView.ViewClosed += HandleRequestDialogClose;
-    alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
-    alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
-    alertView.SetTitleArgs(new object[] { Localization.Get(_LastChallengeData.ChallengeTitleLocKey) });
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Request_Game);
-    _RequestPending = false;
-    _RequestDialog = alertView;
-  }
-
-  private void LearnToCopeWithMiniGameRejection() {
-    DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    RobotEngineManager.Instance.SendDenyGameStart();
-  }
-
-  private void HandleMiniGameConfirm() {
-    DAS.Info(this, "HandleMiniGameConfirm");
-    _RequestPending = true;
-    if (_RequestDialog != null) {
-      _RequestDialog.DisableAllButtons();
-      _RequestDialog.ViewClosed -= HandleRequestDialogClose;
-    }
-    HandleMiniGameYesAnimEnd(true);
-  }
-
-  private void HandleMiniGameYesAnimEnd(bool success) {
-    DAS.Info(this, "HandleMiniGameYesAnimEnd");
-    MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
-  }
-
-  private void HandleExternalRejection(object messageObject) {
-    DAS.Info(this, "HandleExternalRejection");
-    if (_RequestDialog != null && _RequestPending == false) {
-      _RequestDialog.CloseView();
-    }
-  }
-
-  private void HandleRequestDialogClose() {
-    DAS.Info(this, "HandleUnexpectedClose");
-    if (_RequestDialog != null) {
-      _RequestDialog.ViewClosed -= HandleRequestDialogClose;
-      SetMinigameNeed();
     }
   }
 

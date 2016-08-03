@@ -20,6 +20,8 @@ namespace Cozmo.HomeHub {
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
+    public Action<string> MinigameConfirmed;
+
     [SerializeField]
     private HomeViewTab _CozmoTabPrefab;
 
@@ -89,7 +91,7 @@ namespace Cozmo.HomeHub {
 
     private LootView _LootViewInstance = null;
 
-    public bool LootSequenceActive = false;
+    public bool RewardSequenceActive = false;
 
     [SerializeField]
     private GameObject _EnergyDooberPrefab;
@@ -137,11 +139,19 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private Ease _TopBarCloseEase = Ease.InBack;
 
+    private AlertView _RequestDialog = null;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
       get { return _HomeHubInstance; }
       private set { _HomeHubInstance = value; }
+    }
+
+    public bool HomeViewCurrentlyOccupied {
+      get {
+        return (_RequestDialog != null || _LootViewInstance != null || RewardSequenceActive);
+      }
     }
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
@@ -168,6 +178,8 @@ namespace Cozmo.HomeHub {
       _CozmoTabDownButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
       _PlayTabDownButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
       _ProfileTabDownButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
@@ -176,7 +188,7 @@ namespace Cozmo.HomeHub {
       UnlockablesManager.Instance.OnNewUnlock += CheckIfUnlockablesAffordableAndUpdateBadge;
       // If we have energy earned, create the energy doobers and clear pending action rewards
       if (RewardedActionManager.Instance.RewardPending) {
-        LootSequenceActive = true;
+        RewardSequenceActive = true;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
         }
@@ -203,6 +215,7 @@ namespace Cozmo.HomeHub {
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded += HandleItemValueChanged;
+      playerInventory.ItemRemoved += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 
@@ -217,8 +230,10 @@ namespace Cozmo.HomeHub {
 
     // Opens loot view and fires and relevant events
     private void OpenLootView() {
-      if (_LootViewInstance != null) {
-        // Avoid dupes
+      if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
+        // Avoid dupes but fail gracefully
+        DAS.Warn("HomeView.OpenLootView", "HomeViewCurrentlyOccupied with non reward stuff when we tried to open LootView");
+        HandleLootViewCloseAnimationFinished();
         return;
       }
       _EmotionChipTag.gameObject.SetActive(false);
@@ -229,14 +244,19 @@ namespace Cozmo.HomeHub {
           alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
           _LootViewInstance = alertView;
           _LootViewInstance.ViewCloseAnimationFinished += (() => {
-            _EmotionChipTag.gameObject.SetActive(true);
-            LootSequenceActive = false;
-            CheckIfUnlockablesAffordableAndUpdateBadge();
-            UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+            HandleLootViewCloseAnimationFinished();
+            // Only unload the asset bundle if we actually loaded it before
             AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
           });
         });
       });
+    }
+
+    private void HandleLootViewCloseAnimationFinished() {
+      _EmotionChipTag.gameObject.SetActive(true);
+      RewardSequenceActive = false;
+      CheckIfUnlockablesAffordableAndUpdateBadge();
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
     }
 
     // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started
@@ -265,7 +285,7 @@ namespace Cozmo.HomeHub {
     private void ResolveDooberBurst() {
       RewardedActionManager.Instance.PendingActionRewards.Clear();
       if (ChestRewardManager.Instance.ChestPending == false) {
-        LootSequenceActive = false;
+        RewardSequenceActive = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
         }
@@ -330,7 +350,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleCozmoTabButton() {
       // Do not allow changing tabs while receiving chests
-      if (LootSequenceActive) {
+      if (HomeViewCurrentlyOccupied) {
         return;
       }
       ClearCurrentTab();
@@ -346,7 +366,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleProfileTabButton() {
       // Do not allow changing tabs while receiving chests
-      if (LootSequenceActive) {
+      if (HomeViewCurrentlyOccupied) {
         return;
       }
       ClearCurrentTab();
@@ -400,7 +420,7 @@ namespace Cozmo.HomeHub {
 
     public void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       // Do not allow changing tabs while receiving chests
-      if (LootSequenceActive) {
+      if (HomeViewCurrentlyOccupied) {
         return;
       }
       if (OnLockedChallengeClicked != null) {
@@ -410,7 +430,7 @@ namespace Cozmo.HomeHub {
 
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       // Do not allow changing tabs while receiving chests
-      if (LootSequenceActive) {
+      if (HomeViewCurrentlyOccupied) {
         return;
       }
       if (OnUnlockedChallengeClicked != null) {
@@ -462,7 +482,75 @@ namespace Cozmo.HomeHub {
       _AnyUpgradeAffordableIndicator.SetActive(canAfford);
     }
 
+    #region Request Game
+
+
+    private void HandleAskForMinigame(object messageObject) {
+      if (HomeViewCurrentlyOccupied) {
+        // Avoid dupes
+        return;
+      }
+
+      ChallengeData data = DailyGoalManager.Instance.CurrentChallengeToRequest;
+      // Do not send the minigame message if the challenge is invalid.
+      if (data == null) {
+        return;
+      }
+
+      // Create alert view with Icon
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: true);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
+      alertView.SetIcon(data.ChallengeIcon);
+      alertView.ViewClosed += HandleRequestDialogClose;
+      alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
+      alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Request_Game);
+      _RequestDialog = alertView;
+    }
+
+    private void LearnToCopeWithMiniGameRejection() {
+      DAS.Info(this, "LearnToCopeWithMiniGameRejection");
+      RobotEngineManager.Instance.SendDenyGameStart();
+    }
+
+    private void HandleMiniGameConfirm() {
+      DAS.Info(this, "HandleMiniGameConfirm");
+      if (_RequestDialog != null) {
+        _RequestDialog.DisableAllButtons();
+        _RequestDialog.ViewClosed -= HandleRequestDialogClose;
+      }
+      HandleMiniGameYesAnimEnd(true);
+    }
+
+    private void HandleMiniGameYesAnimEnd(bool success) {
+      DAS.Info(this, "HandleMiniGameYesAnimEnd");
+      MinigameConfirmed.Invoke(DailyGoalManager.Instance.CurrentChallengeToRequest.ChallengeID);
+    }
+
+    private void HandleExternalRejection(object messageObject) {
+      DAS.Info(this, "HandleExternalRejection");
+      if (_RequestDialog != null) {
+        _RequestDialog.CloseView();
+      }
+    }
+
+    private void HandleRequestDialogClose() {
+      DAS.Info(this, "HandleUnexpectedClose");
+      if (_RequestDialog != null) {
+        _RequestDialog.ViewClosed -= HandleRequestDialogClose;
+        DailyGoalManager.Instance.SetMinigameNeed();
+      }
+    }
+
+    #endregion
+
     protected override void CleanUp() {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
       ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
@@ -472,6 +560,7 @@ namespace Cozmo.HomeHub {
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;
+      playerInventory.ItemRemoved -= HandleItemValueChanged;
       StopCoroutine(BurstAfterInit());
     }
 

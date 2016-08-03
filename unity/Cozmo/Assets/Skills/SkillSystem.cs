@@ -65,7 +65,13 @@ public class SkillSystem {
 
   // If player last level was 10 but on a new cozmo thats only level 3. That cozmo should play at level 3
   public int GetCozmoSkillLevel(GameSkillData playerSkill) {
-    return Mathf.Min(_CozmoHighestLevels[_ChallengeIndex], playerSkill.LastLevel);
+    if (_CozmoHighestLevels.Length > _ChallengeIndex) {
+      return Mathf.Min(_CozmoHighestLevels[_ChallengeIndex], playerSkill.LastLevel);
+    }
+    else {
+      DAS.Warn("SkillSystem.GetCozmoSkillLevel", "GetCozmoSkillLevel out of range Exception, Something has gone terribly wrong.");
+      return 0;
+    }
   }
 
 
