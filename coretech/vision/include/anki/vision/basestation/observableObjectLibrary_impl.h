@@ -53,6 +53,24 @@ namespace Vision {
   void ObservableObjectLibrary<ObsObjectType>::AddObject(const ObsObjectType* object)
   {
     // TODO: Warn/error if we are overwriting an existing object with this type?
+    
+    for (auto knownObjectIter = _knownObjects.begin(); knownObjectIter != _knownObjects.end();)
+    {
+      auto knownObject = *knownObjectIter;
+      if (knownObject->GetType() == object->GetType())
+      {
+        // Since each Marker can only be bound to one Object, clear out the marker's list
+        // of matching objects, the object is added at the end of the function
+        PRINT_NAMED_WARNING("ObservableObjectLibrary.AddObject",
+                            "The object %s old definition was erased from the Known Objects library.", EnumToString(object->GetType()));
+        _objectsWithCode[object->GetMarkers().begin()->GetCode()].clear();
+        knownObjectIter = _knownObjects.erase(knownObjectIter);
+      }
+      else
+      {
+        ++knownObjectIter;
+      }
+    }
     _knownObjects.push_back(object);
     for(auto & marker : object->GetMarkers()) {
       _objectsWithCode[marker.GetCode()].insert(object);

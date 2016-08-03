@@ -58,16 +58,22 @@ class MessageMaker:
         return messages
 
 
-    def CreateObjectAtPose(self, x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm):
-        createObjectMsg = self.GToEI.CreateObjectAtPose()
-        createObjectMsg.x_mm = x_mm
-        createObjectMsg.y_mm = y_mm
-        createObjectMsg.angle_rad = angle_rad
-        createObjectMsg.depth_mm = depth_mm
-        createObjectMsg.width_mm = width_mm
-        createObjectMsg.height_mm = height_mm
+    def CreateFixedCustomObject(self, x_y_z, angle_rad, xSize_mm, ySize_mm, zSize_mm):
+        fixedObjectMsg = self.GToEI.CreateFixedCustomObject()
+        x,y,z = x_y_z
+        fixedObjectMsg.pose.x = x
+        fixedObjectMsg.pose.y = y
+        fixedObjectMsg.pose.z = z
+        # Quaternion of rotation angle_rad in the z axis
+        fixedObjectMsg.pose.q0 = angle_rad
+        fixedObjectMsg.pose.q1 = 0
+        fixedObjectMsg.pose.q2 = 0
+        fixedObjectMsg.pose.q3 = 1
+        fixedObjectMsg.xSize_mm = xSize_mm
+        fixedObjectMsg.ySize_mm = ySize_mm
+        fixedObjectMsg.zSize_mm = zSize_mm
 
-        toEngMessage = self.GToEM(CreateObjectAtPose = createObjectMsg)
+        toEngMessage = self.GToEM(CreateFixedCustomObject = fixedObjectMsg)
 
         return toEngMessage
 
@@ -381,3 +387,18 @@ class MessageMaker:
         toEngMessage = self.GToEM(SetActiveObjectLEDs=lightMsg)
 
         return toEngMessage
+
+    def DefineCustomObject(self, objectType, xSize_mm, ySize_mm, zSize_mm, markerWidth_mm, markerHeight_mm):
+        defineMsg = self.GToEI.DefineCustomObject()
+
+        defineMsg.objectType = objectType
+        defineMsg.xSize_mm = xSize_mm
+        defineMsg.ySize_mm = ySize_mm
+        defineMsg.zSize_mm = zSize_mm
+        defineMsg.markerWidth_mm = markerWidth_mm
+        defineMsg.markerHeight_mm = markerHeight_mm
+
+        toEngMessage = self.GToEM(DefineCustomObject=defineMsg)
+
+        return toEngMessage
+

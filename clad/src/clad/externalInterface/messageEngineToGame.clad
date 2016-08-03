@@ -276,6 +276,16 @@ message RobotDeletedAllCustomObjects {
     uint_32 robotID
 }
 
+// CreatedFixedCustomObject
+message CreatedFixedCustomObject {
+    uint_32 robotID
+}
+
+// DefinedCustomObject
+message DefinedCustomObject {
+    uint_32 robotID
+}
+
 // RobotMarkedObjectPoseUnknown
 message RobotMarkedObjectPoseUnknown {
     uint_32 robotID,

@@ -23,8 +23,10 @@
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
+#include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
+#include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralEyeParameters.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
@@ -281,16 +283,24 @@ message SetRobotCarryingObject {
     uint_8 robotID
 }
 
-// CreateObjectAtPose
-// Creates a CustomObject at the specific pose
-message CreateObjectAtPose {
-  float_32 x_mm,
-  float_32 y_mm,
-  float_32 z_mm,
-  float_32 angle_rad,
-  float_32 depth_mm,
-  float_32 width_mm,
-  float_32 height_mm
+// CreateFixedCustomObject
+// Creates a CustomObject at the specific pose with no marker associated with it
+message CreateFixedCustomObject {
+    PoseStruct3d pose,
+    float_32 xSize_mm,
+    float_32 ySize_mm,
+    float_32 zSize_mm,
+}
+
+// DefineCustomObject
+// Defines a custom object of the given type with the provided dimensions
+message DefineCustomObject {
+    ObjectType objectType,
+    float_32 xSize_mm,
+    float_32 ySize_mm,
+    float_32 zSize_mm,
+    float_32 markerWidth_mm,
+    float_32 markerHeight_mm
 }
 
 ///////////////////////////////////////////////////////////////////////////////

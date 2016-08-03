@@ -232,6 +232,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             
     } // BlockWorld() Constructor
   
+    void BlockWorld::DefineCustomObject(ObjectType type, f32 xSize_mm, f32 ySize_mm, f32 zSize_mm, f32 markerWidth_mm, f32 markerHeight_mm)
+    {
+        _objectLibrary[ObjectFamily::CustomObject].AddObject(new CustomObject(type, xSize_mm, ySize_mm, zSize_mm, markerWidth_mm, markerHeight_mm));
+    }
+  
     void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
     {
       using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
@@ -285,17 +290,31 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           CycleSelectedObject();
         }));
       
-      // CreateObjectAtPose
-      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::CreateObjectAtPose,
+      // CreateFixedCustomObject
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::CreateFixedCustomObject,
         [this] (const EventType& event)
         {
 
-          const ExternalInterface::CreateObjectAtPose& msg = event.GetData().Get_CreateObjectAtPose();
+          const ExternalInterface::CreateFixedCustomObject& msg = event.GetData().Get_CreateFixedCustomObject();
           
-          Pose3d newObjectPose(msg.angle_rad, Z_AXIS_3D(), {msg.x_mm, msg.y_mm, 0.0f},
-                               _robot->GetWorldOrigin());
+          Pose3d newObjectPose(msg.pose, _robot->GetPoseOriginList());
           
-          BlockWorld::AddCustomObject(newObjectPose, msg.depth_mm, msg.width_mm, msg.height_mm);
+          BlockWorld::CreateFixedCustomObject(newObjectPose, msg.xSize_mm, msg.ySize_mm, msg.zSize_mm);
+          
+          _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::CreatedFixedCustomObject>(_robot->GetID());
+        }));
+      
+      // DefineCustomObject
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::DefineCustomObject,
+        [this] (const EventType& event)
+        {
+          
+          const ExternalInterface::DefineCustomObject& msg = event.GetData().Get_DefineCustomObject();
+          
+          BlockWorld::DefineCustomObject(msg.objectType, msg.xSize_mm, msg.ySize_mm, msg.zSize_mm, msg.markerWidth_mm, msg.markerHeight_mm);
+          
+          _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID());
+
         }));
       
       // SetMemoryMapRenderEnabled
@@ -1771,13 +1790,13 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       return RESULT_OK;
     }
   
-    Result BlockWorld::AddCustomObject(const Pose3d& p, const f32 depth_mm, const f32 width_mm, const f32 height_mm)
+    Result BlockWorld::CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm)
     {
       //TODO share common code with AddMarkerlessObject
       TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
       
       // Create an instance of the custom object
-      auto customObject = std::make_shared<CustomObject>(ObjectType::CustomObstacle, depth_mm, width_mm, height_mm);
+      auto customObject = std::make_shared<CustomObject>(ObjectType::Custom_Fixed, xSize_mm, ySize_mm, zSize_mm);
       
       // Raise origin of object above ground.
       // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
@@ -3321,6 +3340,14 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           return updateResult;
         }
         
+        //
+        // Find any observed customObjects from the remaining markers
+        //
+        // Note that this removes markers from the list that it uses
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::CustomObject, atTimestamp);
+        if(updateResult != RESULT_OK) {
+          return updateResult;
+        }
 
         // TODO: Deal with unknown markers?
         

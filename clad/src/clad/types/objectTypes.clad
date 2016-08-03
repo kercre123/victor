@@ -75,7 +75,20 @@ namespace Cozmo {
     // Markerless Objects (e.g. obstacles)
     //
     ProxObstacle,
-    CustomObstacle,
+
+    //////////////////////////////////////////////////////////////////////////
+    // Custom Objects created using the old "block" markers i.e star and arrow
+    // These can be bound at runtime to cuboids of custom size
+    // Fixed objects do not have any markers associated with them
+    // Cube objects are a cube with the same marker on all 6 sides
+    // Box objects are cuboids prisms with unique markers on all 6 sides
+
+    Custom_STAR5_Cube,
+    Custom_STAR5_Box,
+    Custom_ARROW_Cube,
+    Custom_ARROW_Box,
+    Custom_Fixed,
+
     
   } // enum class ObjectType
   

@@ -8,9 +8,9 @@ to navigate around the wall"""
 
 cozmo = CozmoInterface()
 
-cozmo.CreateObjectRelativeToRobotPose(100,0,0,100,150,50)
+cozmo.CreateFixedCustomObjectRelativeToRobotPose((200,0,0), 0, 25,150,50)
 
-cozmo.DriveDistance(200,0,0, duration = 5)
+cozmo.DriveDistance(300,0,0, duration = 5)
 
 cozmo.Shutdown()
 

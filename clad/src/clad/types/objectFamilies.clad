@@ -16,7 +16,7 @@ namespace Cozmo {
     Charger,
     Mat,
     MarkerlessObject,
-    CustomObject
+    CustomObject,
   } // enum class ObjectFamily
   
 } // namespace Cozmo

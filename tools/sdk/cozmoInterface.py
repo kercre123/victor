@@ -140,12 +140,14 @@ class CozmoInterface:
             return num
         return 0
 
-    def CreateObjectRelativeToRobotPose(self, x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm):
-        (x,y,angle) = self.GetPoseRelRobot(x_mm, y_mm, angle_rad)
-        self.CreateObjectAtPose(x, y, angle, depth_mm, width_mm, height_mm)
+    def CreateFixedCustomObjectRelativeToRobotPose(self, x_y_z, angle_rad, xSize_mm, ySize_mm, zSize_mm):
+        preX,preY,preZ = x_y_z
+        (x,y,z,angle) = self.GetPoseRelRobot(preX, preY, preZ, angle_rad)
+        self.CreateFixedCustomObject((x,y,z), angle, xSize_mm, ySize_mm, zSize_mm)
 
-    def CreateObjectAtPose(self, x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm):
-        self.QueueMessage(self.messageMaker.CreateObjectAtPose(x_mm, y_mm, angle_rad, depth_mm, width_mm, height_mm))
+    def CreateFixedCustomObject(self, x_y_z, angle_rad, xSize_mm, ySize_mm, zSize_mm):
+        self.QueueMessage(self.messageMaker.CreateFixedCustomObject(x_y_z, angle_rad, xSize_mm, ySize_mm, zSize_mm))
+        Lock(LockTypes.createdFixedCustomObject)
 
     def StartSim(self):
         self.QueueMessage(self.messageMaker.StartSim())
@@ -243,21 +245,24 @@ class CozmoInterface:
     def GoToPose(self, x_mm, y_mm, rad):
         self.QueueMessage(self.messageMaker.GoToPose(gIdTag, x_mm, y_mm, rad))
 
-    def GetPoseRelRobot(self, x_mm, y_mm, angle_rad):
+    def GetPoseRelRobot(self, x_mm, y_mm, z_mm, angle_rad):
         currState = self.GetState()
         if not currState:
             print("Cozmo's state is none!")
             return (0,0,0)
         currX = currState.robotState.pose.x
         currY = currState.robotState.pose.y
+        currZ = currState.robotState.pose.z
         currRad = currState.robotState.poseAngle_rad
         finalX = currX + math.cos(currRad)*x_mm - math.sin(currRad)*y_mm
         finalY = currY + math.sin(currRad)*x_mm + math.cos(currRad)*y_mm
+        # TODO adjust finalZ to be relative to cozmo's pitch
+        finalZ = currZ + z_mm
         finalRad = currRad + angle_rad
-        return (finalX, finalY, finalRad)
+        return (finalX, finalY, finalZ, finalRad)
 
     def DriveDistance(self, x_mm, y_mm = 0, angle_rad = 0, duration = 0):
-        (x,y,angle) = self.GetPoseRelRobot(x_mm,y_mm,angle_rad)
+        (x,y,z,angle) = self.GetPoseRelRobot(x_mm,y_mm,0,angle_rad)
         self.GoToPose(x, y, angle)
         if duration:
             time.sleep(duration)
@@ -388,6 +393,22 @@ class CozmoInterface:
 
     def TurnTowardsPose(self, x_mm, y_mm, z_mm = 0, maxTurnAngle_rad= math.pi):
         self.QueueMessage(self.messageMaker.TurnTowardsPose(gIdTag, x_mm, y_mm, z_mm, maxTurnAngle_rad))
+
+    def ObjectTypeLookup(self, name):
+        try:
+            type = eval("GToE.ObjectType.Custom_" + name)
+        except:
+            type = None
+            sys.stdout.write("Type lookup failed, " + name + " is not a valid objectType" + os.linesep)
+            sys.stdout.write("Possible types are STAR5, ARROW")
+        return type
+
+    def DefineCustomObject(self, objectType, xSize_mm, ySize_mm, zSize_mm,
+                           markerWidth_mm = 25.0, markerHeight_mm = 25.0):
+        type = self.ObjectTypeLookup(objectType)
+        self.QueueMessage(self.messageMaker.DefineCustomObject(type, xSize_mm, ySize_mm, zSize_mm,
+                                                               markerWidth_mm, markerHeight_mm))
+        Lock(LockTypes.definedCustomObject)
 
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
@@ -622,6 +643,10 @@ class _EngineInterfaceImpl:
                         Unlock(LockTypes.robotDeletedAllCustomObjects)
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotPoked:
                         pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.DefinedCustomObject:
+                        Unlock(LockTypes.definedCustomObject)
+                    elif fromEngMsg.tag == fromEngMsg.Tag.CreatedFixedCustomObject:
+                        Unlock(LockTypes.createdFixedCustomObject)
                     else:
                         if self.verboseLevel >= VerboseLevel.High:
                             sys.stdout.write("Recv: Unhandled " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(srcAddr) +  os.linesep);
@@ -774,4 +799,5 @@ class LockTypes():
     onBack = 1
     robotDeletedAllObjects = 2
     robotDeletedAllCustomObjects = 3
-
+    createdFixedCustomObject = 4
+    definedCustomObject = 5
