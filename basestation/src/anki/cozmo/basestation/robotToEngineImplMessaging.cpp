@@ -89,7 +89,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                                     &RobotToEngineImplMessaging::HandleTrace);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                               &RobotToEngineImplMessaging::HandleCrashReport);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                &RobotToEngineImplMessaging::HandleFWVersionInfo);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::blockPickedUp,                  &RobotToEngineImplMessaging::HandleBlockPickedUp);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::blockPlaced,                    &RobotToEngineImplMessaging::HandleBlockPlaced);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectDiscovered,         &RobotToEngineImplMessaging::HandleActiveObjectDiscovered);
