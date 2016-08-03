@@ -660,11 +660,6 @@
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>version.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\version.cpp</FilePath>
-            </File>
-            <File>
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
@@ -1325,11 +1320,6 @@
               <FileName>testModeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>version.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\version.cpp</FilePath>
             </File>
             <File>
               <FileName>backpackLightController.cpp</FileName>

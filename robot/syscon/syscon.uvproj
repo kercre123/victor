@@ -589,6 +589,21 @@
               <FileType>8</FileType>
               <FilePath>..\..\crypto\sha1.cpp</FilePath>
             </File>
+            <File>
+              <FileName>packet.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\crypto\packet.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>hmac.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\crypto\hmac.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>md5.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\crypto\md5.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
