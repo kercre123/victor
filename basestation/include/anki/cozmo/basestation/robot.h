@@ -466,10 +466,6 @@ public:
 
   // Return the timestamp of the last _processed_ image
   TimeStamp_t GetLastImageTimeStamp() const;
-  void SetLastImageTimeStamp(const TimeStamp_t lastImageTimestamp) { _lastImageRecvTime = lastImageTimestamp; }
-  void SetRepeatedImageCount(const u32 repeatedImageCount) { _repeatedImageCount = repeatedImageCount; }
-  const u32 GetRepeatedImageCount() const {return _repeatedImageCount; }
-  void IncRepeatedImageCount() { ++_repeatedImageCount; }
   
   // =========== Actions Commands =============
     
@@ -960,8 +956,6 @@ protected:
   std::map<int,float> _objectTimeMovingMap;
     
   EncodedImage _encodedImage;
-  u32          _repeatedImageCount = 0;
-  double       _lastImageRecvTime  = -1.0;
   double       _timeSinceLastImage_s = 0.0;
   double       _lastImageLatencyTime_s = 0.0;
   Util::Stats::RecentStatsAccumulator _imageStats{50};

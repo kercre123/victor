@@ -69,6 +69,8 @@ public:
   void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
+  double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
+  
 private:
   // Copy of last received firmware version info from robot
   RobotInterface::FWVersionInfo _factoryFirmwareVersion;
@@ -82,6 +84,12 @@ private:
   uint8_t _imuSeqID = 0;
   std::ofstream _imuLogFileStream;
   TracePrinter _traceHandler;
+  
+  // For handling multiple images coming in on the same tick
+  u32          _repeatedImageCount = 0;
+  double       _lastImageRecvTime  = -1.0;
+  
+  
 };
 
 } // namespace Cozmo

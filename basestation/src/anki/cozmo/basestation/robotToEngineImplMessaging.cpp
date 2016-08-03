@@ -806,27 +806,20 @@ void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface
      */
     
     const double currentMessageTime = message.GetCurrentTime();
-    if (currentMessageTime != robot->GetLastImageTimeStamp())
+
+    if (currentMessageTime != _lastImageRecvTime)
     {
-      if (robot->GetLastImageTimeStamp() > 0.0)
-      {
-        //_lastImageLatencyTime_s = std::max(0.0, currentMessageTime - robot->GetLastImageTimeStamp());
-        robot->SetCurrentImageDelay(std::max(0.0, currentMessageTime - robot->GetLastImageTimeStamp()));
-        robot->GetRecentImageStats().AddStat(robot->GetCurrentImageDelay() * 1000.0);
-        robot->SetTimeSinceLastImage(0.0);
-      }
-      
-      robot->SetLastImageTimeStamp(currentMessageTime);
-      robot->SetRepeatedImageCount(0);
+      _lastImageRecvTime = currentMessageTime;
+      _repeatedImageCount = 0;
     }
     else
     {
-      robot->IncRepeatedImageCount();
-      if (robot->GetRepeatedImageCount() >= 3)
+      ++_repeatedImageCount;
+      if (_repeatedImageCount >= 3)
       {
-        PRINT_NAMED_WARNING("Robot.HandleImageChunk",
+        PRINT_NAMED_WARNING("RobotImplMessaging.HandleImageChunk",
                             "Ignoring %dth image (with t=%u) received during basestation tick at %fsec",
-                            robot->GetRepeatedImageCount(),
+                            _repeatedImageCount,
                             payload.frameTimeStamp,
                             currentMessageTime);
         
