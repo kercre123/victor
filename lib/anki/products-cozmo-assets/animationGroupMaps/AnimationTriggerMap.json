@@ -90,7 +90,7 @@
     },
     {
       "CladEvent": "CubePounceGetIn",
-      "AnimName": "ag_keepaway_getin"
+      "AnimName": "ag_keepaway_getready"
     },
     {
       "CladEvent": "CubePounceGetOut",
