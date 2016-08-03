@@ -15,6 +15,11 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+// includes for physics functions
+#include "anki/messaging/shared/UdpClient.h"
+#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/physicsInterface/messageSimPhysics.h"
+// end of physics includes
 #include <stdio.h>
 #include <string.h>
 
@@ -227,12 +232,12 @@ namespace Anki {
       HandleActiveObjectConnectionState(msg);
     }
     
-    void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
+    void UiGameController::HandleActiveObjectMovedWrapperBase(ExternalInterface::ObjectMovedWrapper const& msg)
     {
-     PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
-                      msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
+     // PRINT_NAMED_INFO("HandleActiveObjectMovedWrapper", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
+     //                  msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
       
-      HandleActiveObjectMoved(msg);
+      HandleActiveObjectMovedWrapper(msg);
     }
     
     void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
@@ -388,6 +393,9 @@ namespace Anki {
     
     void UiGameController::Init()
     {
+      // Setup the udp client for sending physics messages.
+      _physicsControllerClient.Connect("127.0.0.1", (uint16_t)VizConstants::WEBOTS_PHYSICS_CONTROLLER_PORT);
+
       // Make root point to WebotsKeyBoardController node
       _root = _supervisor.getSelf();
       
@@ -463,8 +471,8 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ObjectConnectionState:
             HandleActiveObjectConnectionStateBase(message.Get_ObjectConnectionState());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ObjectMoved:
-            HandleActiveObjectMovedBase(message.Get_ObjectMoved());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectMovedWrapper:
+            HandleActiveObjectMovedWrapperBase(message.Get_ObjectMovedWrapper());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectStoppedMoving:
             HandleActiveObjectStoppedMovingBase(message.Get_ObjectStoppedMoving());
@@ -494,16 +502,17 @@ namespace Anki {
             HandleFactoryTestResultBase(message.Get_FactoryTestResult());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAborted:
-            HandleAnimationAborted(message.Get_AnimationAborted());
+            HandleAnimationAbortedBase(message.Get_AnimationAborted());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::EndOfMessage:
-            HandleEndOfMessage(message.Get_EndOfMessage());
+            HandleEndOfMessageBase(message.Get_EndOfMessage());
             break;
           case ExternalInterface::MessageEngineToGameTag::BehaviorTransition:
             HandleBehaviorTransitionBase(message.Get_BehaviorTransition());
             break;
           case ExternalInterface::MessageEngineToGameTag::RespondEnabledBehaviorList:
             HandleEnabledBehaviorListBase(message.Get_RespondEnabledBehaviorList());
+            break;
           default:
             // ignore
             break;
@@ -1579,6 +1588,12 @@ namespace Anki {
       m.mode = mode;
       m.enable = enable;
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }  
+
+    void UiGameController::SendEnableBlockTapFilter(bool enable){
+      ExternalInterface::EnableBlockTapFilter m(enable);
+
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
     void UiGameController::QuitWebots(s32 status)
@@ -1886,6 +1901,7 @@ namespace Anki {
     {
       return _supervisor.getTime();
     }
+
     const bool UiGameController::HasXSecondsPassedYet(double& waitTimer, double xSeconds)
     {
       if (waitTimer < 0){
@@ -1904,6 +1920,21 @@ namespace Anki {
     webots::Node* UiGameController::GetNodeByDefName(const std::string& defName) const
     {
       return _supervisor.getFromDef(defName);
+    }
+
+    void UiGameController::SendApplyForce(const std::string& defName, 
+                                          int xForce, int yForce, int zForce)
+    {
+      PhysicsInterface::MessageSimPhysics message;
+      PhysicsInterface::ApplyForce msg;
+      msg.DefName = defName;
+      msg.xForce = xForce;
+      msg.yForce = yForce;
+      msg.zForce = zForce;
+      u8 buf[message.Size()];
+      message.Set_ApplyForce(msg);
+      size_t numBytes = message.Pack(buf, message.Size());
+      _physicsControllerClient.Send((char*)buf, (int)numBytes);
     }
   } // namespace Cozmo
 } // namespace Anki

@@ -13,11 +13,16 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wundef"
 #include <ode/ode.h>
-#pragma GCC diagnostic pop
 #include <plugins/physics.h>
+#pragma GCC diagnostic pop
+
 #include "physVizController.h"
+#include "physicsController.h"
 
 Anki::Cozmo::PhysVizController physVizController;
+Anki::Cozmo::PhysicsController physicsController;
+
+
 /*
  * Note: This plugin will become operational only after it was compiled and associated with the current world (.wbt).
  * To associate this plugin with the world follow these steps:
@@ -46,8 +51,9 @@ void webots_physics_init() {
   // Reset random number generators with constant seed for reproducible performance.
   srand(0);
   dRandSetSeed(0);
-  
+
   physVizController.Init();
+  physicsController.Init();
 }
 
 void webots_physics_step() {
@@ -58,6 +64,7 @@ void webots_physics_step() {
    */
 
   physVizController.Update();
+  physicsController.Update();
 }
 
 
@@ -86,6 +93,7 @@ void webots_physics_cleanup() {
    * You do not need to free any ODE object, they will be freed by Webots.
    */
   physVizController.Cleanup();
+  physicsController.Cleanup();
 }
 
 

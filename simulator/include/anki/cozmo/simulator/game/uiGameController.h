@@ -101,7 +101,7 @@ protected:
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(ImageChunk const& msg){};
   virtual void HandleActiveObjectConnectionState(ObjectConnectionState const& msg){};
-  virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
+  virtual void HandleActiveObjectMovedWrapper(ExternalInterface::ObjectMovedWrapper const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleKnownObject(ExternalInterface::KnownObject const& msg){};
@@ -268,6 +268,7 @@ protected:
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   void SendNVClearPartialPendingWriteData();
   void SendSetHeadlight(bool enable);
+  void SendEnableBlockTapFilter(bool enable);
   
 
   // ====== Accessors =====
@@ -360,6 +361,15 @@ protected:
   // @return     True if has x seconds passed since the first call of the function, False otherwise.
   //
   const bool HasXSecondsPassedYet(double& waitTimer, double xSeconds);
+
+  ///
+  // @brief      Apply a force to a node at the node origin in webots.
+  // @param[in]  defName  The defName of the node to apply force to. (https://www.cyberbotics.com/reference/def-and-use.php)
+  // @param[in]  xForce   The x force
+  // @param[in]  yForce   The y force
+  // @param[in]  zForce   The z force
+  //
+  void SendApplyForce(const std::string& defName, int xForce, int yForce, int zForce);
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
@@ -373,7 +383,7 @@ private:
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
   void HandleImageChunkBase(ImageChunk const& msg);
   void HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg);
-  void HandleActiveObjectMovedBase(ObjectMoved const& msg);
+  void HandleActiveObjectMovedWrapperBase(ExternalInterface::ObjectMovedWrapper const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleKnownObjectBase(ExternalInterface::KnownObject const& msg);
@@ -442,6 +452,8 @@ private:
   GameComms *_gameComms = nullptr;
   
   const Util::Data::DataPlatform* _dataPlatform = nullptr;
+
+  UdpClient _physicsControllerClient;
 
   
 }; // class UiGameController

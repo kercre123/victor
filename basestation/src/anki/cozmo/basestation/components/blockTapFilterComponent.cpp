@@ -119,34 +119,34 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
                   object->GetID().GetValue(), payload.objectID, payload.numTaps,
                   payload.timestamp, payload.tapTime, intensity, engineTime);
     
-    if( intensity > kTapIntensityMin )
+    if (!_enabled)
     {
-      // Update the ID to be the blockworld ID before broadcasting
-      payload.objectID = object->GetID();
-      payload.robotID = _robot.GetID();
-      
-      // not enabled means send immediately with no filtering.
-      if( !_enabled )
-      {
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
-      }
-      else
-      {
-        // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
-        if( _tapInfo.empty() )
-        {
-          // Potentially we could add more time based on LatencyAvg if we wanted to track that in the shipping app.
-          // Latency should be higher on lower end devices
-          _waitToTime = engineTime + kTapWaitOffset_ms;
-        }
-        _tapInfo.emplace_back(std::move(payload));
-      }
+      // Do not filter any taps if block tap filtering was disabled.
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
+      continue;
     }
-    else
+
+    if (intensity <= kTapIntensityMin)
     {
+      // Taps below threshold should be filtered and ignored.
       PRINT_CH_INFO("blocks", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
                     "Tap ignored %d < %d",intensity,kTapIntensityMin);
+      continue;
     }
+
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = object->GetID();
+    payload.robotID = _robot.GetID();
+
+    // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
+    if( _tapInfo.empty() )
+    {
+      // Potentially we could add more time based on LatencyAvg if we wanted to track that in the
+      // shipping app. Latency should be higher on lower end devices
+      _waitToTime = engineTime + kTapWaitOffset_ms;
+    }
+
+    _tapInfo.emplace_back(std::move(payload));
   }
 }
   

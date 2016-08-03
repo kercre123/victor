@@ -1,0 +1,17 @@
+namespace Anki {
+namespace Cozmo {
+namespace PhysicsInterface {
+
+message ApplyForce {
+  // Apply force for one physics/simulation tick. Units in Newtons.
+  float_32 xForce = 0.0,
+  float_32 yForce = 0.0,
+  float_32 zForce = 0.0,
+  string DefName
+}
+
+union MessageSimPhysics { }
+
+} // namespace PhysicsInterface
+} // namespace Cozmo
+} // namespace Anki
