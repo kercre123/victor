@@ -32,6 +32,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/multiClientChannel.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/console/consoleInterface.h"
 #include "util/global/globalDefinitions.h"
@@ -55,6 +56,7 @@
 #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
 #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
 
+#define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
 namespace Anki {
 namespace Cozmo {
@@ -395,6 +397,17 @@ Result CozmoEngine::InitInternal()
   // Setup Unity Audio Client Connections
   AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
   _context->GetAudioServer()->RegisterClientConnection( unityConnection );
+  
+  // Archive factory test logs
+  FactoryTestLogger factoryTestLogger;
+  u32 numLogs = factoryTestLogger.GetNumLogs(_context->GetDataPlatform());
+  if (numLogs >= MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING) {
+    if (factoryTestLogger.ArchiveLogs(_context->GetDataPlatform())) {
+      PRINT_NAMED_INFO("CozmoEngine.InitInternal.ArchivedFactoryLogs", "%d logs archived", numLogs);
+    } else {
+      PRINT_NAMED_WARNING("CozmoEngine.InitInternal.ArchivedFactoryLogsFailed", "");
+    }
+  }
   
   return RESULT_OK;
 }

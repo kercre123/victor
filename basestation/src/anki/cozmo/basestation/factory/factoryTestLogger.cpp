@@ -10,6 +10,7 @@
  *
  */
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
+#include "anki/cozmo/basestation/util/file/archiveUtil.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
@@ -22,6 +23,8 @@ namespace Cozmo {
 
   static const std::string _kLogTextFileName = "mfgData";
   static const std::string _kLogRootDirName = "factory_test_logs";
+  static const std::string _kArchiveRootDirName = "factory_test_log_archives";
+  static const Util::Data::Scope _kLogScope = Util::Data::Scope::Output;
   
   FactoryTestLogger::FactoryTestLogger(bool exportJson)
   : _logDir("")
@@ -42,19 +45,14 @@ namespace Cozmo {
     // Generate new log dir name
     std::string newLogDir = "";
     if (dataPlatform) {
-      newLogDir = Util::FileUtils::FullFilePath({dataPlatform->pathToResource(Util::Data::Scope::Cache, _kLogRootDirName), logName});
+      newLogDir = Util::FileUtils::FullFilePath({dataPlatform->pathToResource(_kLogScope, _kLogRootDirName), logName});
     } else {
       newLogDir = Util::FileUtils::FullFilePath({_kLogRootDirName, logName});
     }
 
     // Append date time to log name
     if (appendDateTime) {
-      auto time_point = std::chrono::system_clock::now();
-      time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
-      auto nowLocalTime = localtime(&nowTime);
-      char buf[newLogDir.length() + 50];
-      strftime(buf, sizeof(buf), "_-_%F_%H-%M-%S/", nowLocalTime);
-      newLogDir += buf;
+      newLogDir += "_-_" + GetCurrDateTime() + "/";
     }
 
     
@@ -414,6 +412,75 @@ namespace Cozmo {
     return Util::FileUtils::WriteFile(outFile, data);
   }
   
+  
+  uint32_t FactoryTestLogger::GetNumLogs(Util::Data::DataPlatform* dataPlatform)
+  {
+    // Get base directory of log directories
+    std::string baseDirectory = _kLogRootDirName;
+    if (dataPlatform) {
+      baseDirectory = dataPlatform->pathToResource(_kLogScope, _kLogRootDirName);
+    }
+    
+    // Get all log directories
+    std::vector<std::string> directoryList;
+    Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
+    
+    return static_cast<uint32_t>(directoryList.size());
+  }
+
+  uint32_t FactoryTestLogger::GetNumArchives(Util::Data::DataPlatform* dataPlatform)
+  {
+    // Get base directory of log directories
+    std::string baseDirectory = _kArchiveRootDirName;
+    if (dataPlatform) {
+      baseDirectory = dataPlatform->pathToResource(_kLogScope, _kArchiveRootDirName);
+    }
+    
+    // Get all log directories
+    std::vector<std::string> directoryList;
+    Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
+    
+    return static_cast<uint32_t>(directoryList.size());
+  }
+  
+  bool FactoryTestLogger::ArchiveLogs(Util::Data::DataPlatform* dataPlatform)
+  {
+    // Get base directory of log directories
+    std::string logBaseDirectory = _kLogRootDirName;
+    std::string archiveBaseDirectory = _kArchiveRootDirName;
+    if (dataPlatform) {
+      logBaseDirectory = dataPlatform->pathToResource(_kLogScope, _kLogRootDirName);
+      archiveBaseDirectory = dataPlatform->pathToResource(_kLogScope, _kArchiveRootDirName);
+    }
+    
+    // Make sure output directory exists
+    Util::FileUtils::CreateDirectory(archiveBaseDirectory, false, true);
+    
+    // Generate name of new archive based on current date-time
+    std::string archiveName = GetCurrDateTime() + ".tar.gz";
+    
+    // Create archive
+    auto filePaths = Util::FileUtils::FilesInDirectory(logBaseDirectory, true, nullptr, true);
+    if (ArchiveUtil::CreateArchiveFromFiles(archiveBaseDirectory + "/" + archiveName, logBaseDirectory, filePaths)) {
+    
+      // Delete original logs
+      Util::FileUtils::RemoveDirectory(logBaseDirectory);
+      
+      return true;
+    }
+    
+    return false;
+  }
+  
+  std::string FactoryTestLogger::GetCurrDateTime() const
+  {
+    auto time_point = std::chrono::system_clock::now();
+    time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
+    auto nowLocalTime = localtime(&nowTime);
+    char buf[50];
+    strftime(buf, sizeof(buf), "%F_%H-%M-%S", nowLocalTime);
+    return std::string(buf);
+  }
   
 } // end namespace Cozmo
 } // end namespace Anki

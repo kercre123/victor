@@ -65,12 +65,24 @@ public:
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);
 
+  // Returns the number of logs
+  uint32_t GetNumLogs(Util::Data::DataPlatform* dataPlatform);
+  
+  // Returns the number of archived logs
+  uint32_t GetNumArchives(Util::Data::DataPlatform* dataPlatform);
+  
+  // Archives all existing logs into a single file.
+  // Deletes original log directories.
+  bool ArchiveLogs(Util::Data::DataPlatform* dataPlatform);
+  
   
 private:
   
   bool AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data);
   bool AppendPoseData(const std::string& poseName, const PoseData& data);
   bool AppendToFile(const std::string& data);
+  
+  std::string GetCurrDateTime() const;
   
   std::string _logDir;
   std::string _logFileName;
