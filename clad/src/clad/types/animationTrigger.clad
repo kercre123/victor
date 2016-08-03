@@ -63,6 +63,7 @@ enum uint_16 AnimationTrigger
   FacePlantRollArmUp,
   FailedToRightFromFace,
   FlipDownFromBack,
+  HikingReactToNewArea,   // when Cozmo discovers a new area / beacon
   IdleOnCharger,
   InteractWithFacesInitial,
   InteractWithFacesSquint,

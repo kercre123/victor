@@ -201,6 +201,10 @@
       "AnimName": "FlipDownFromBack"
     },
     {
+      "CladEvent": "HikingReactToNewArea",
+      "AnimName": "ag_hiking_rtnewarea"
+    },
+    {
       "CladEvent": "IdleOnCharger",
       "AnimName": "ag_SleepLoop"
     },

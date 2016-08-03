@@ -1225,11 +1225,14 @@ namespace Anki
 #       endif
       
       if(label != -1) {
-        AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",
-                            "Valid label returned as nearest neighbor, but distance (%d) above threshold (%d).\n",
-                            distance, grayvalueThreshold);
-        verified = true;
-        selectedLabel = static_cast<OrientedMarkerLabel>(label);
+        if (distance < grayvalueThreshold) {
+          verified = true;
+          selectedLabel = static_cast<OrientedMarkerLabel>(label);
+        } else {
+          AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",
+                              "Valid label returned as nearest neighbor, but distance (%d) above threshold (%d).\n",
+                              distance, grayvalueThreshold);
+        }
       }
       
       EndBenchmark("vme_classify_nn");

@@ -93,7 +93,7 @@ private:
   // an additional distance from the goal. Each plane (at robot and at goal+dist) has a width defined in parameters
   //
   //                                    farPlane
-  // halfWitdhAtRobot*2     _______-------v
+  // halfWidthAtRobot*2     _______-------v
   //          v_______------              |
   //  +-------|-+                         |
   //  | Robot * |                    $    | farHalfWidth*2
@@ -103,7 +103,7 @@ private:
   //                                 |<-->|
   //                                  farPlaneDistFromGoal
   //
-  static void FlagQuadAsNotInteresting(Robot& robot, float halfWitdhAtRobot_mm, const Pose3d& goalPosition,
+  static void FlagQuadAsNotInteresting(Robot& robot, float halfWidthAtRobot_mm, const Pose3d& goalPosition,
     float farPlaneDistFromGoal_mm, float halfAtFarPlaneWidth_mm);
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

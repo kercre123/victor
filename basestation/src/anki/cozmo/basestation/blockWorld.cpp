@@ -105,13 +105,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CONSOLE VARS
 
-CONSOLE_VAR(bool, kEnableMemoryMap, "BlockWorld.MemoryMap", true); // kEnableMemoryMap: if set to true Cozmo creates/uses memory maps
-CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MemoryMap", false); // kDebugRenderOverheadEdges: enables/disables debug render
-
+// kEnableMemoryMap: if set to true Cozmo creates/uses memory maps
+CONSOLE_VAR(bool, kEnableMemoryMap, "BlockWorld.MemoryMap", true);
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMemoryMapRenderRate_sec, "BlockWorld.MemoryMap", 0.25f);
 
-// if set to true, interesting edges are reviewed after adding new ones to see whether they are still interesting
+// kDebugRenderOverheadEdges: enables/disables debug render of points reported from vision
+CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MemoryMap", false);
+// kDebugRenderOverheadEdgeClearQuads: enables/disables debug render of nonBorder quads from overhead detection (clear)
+CONSOLE_VAR(bool, kDebugRenderOverheadEdgeClearQuads, "BlockWorld.MemoryMap", false);
+// kDebugRenderOverheadEdgeBorderQuads: enables/disables debug render of border quads only (interesting edges)
+CONSOLE_VAR(bool, kDebugRenderOverheadEdgeBorderQuads, "BlockWorld.MemoryMap", false);
+
+// kReviewInterestingEdges: if set to true, interesting edges are reviewed after adding new ones to see whether they are still interesting
 CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges", true);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2897,9 +2903,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         // debug render
         if ( kDebugRenderOverheadEdges )
         {
-//          VizManager* vizManager = _robot->GetContext()->GetVizManager();
-//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, kDebugRenderOverheadEdgesZ_mm, NamedColors::CYAN, false);
-          
           // renders every segment reported by vision
           for (size_t i=0; i<chain.points.size()-1; ++i)
           {
@@ -2909,6 +2912,25 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             VizManager* vizManager = _robot->GetContext()->GetVizManager();
             vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false);
           }
+        }
+        else if ( kDebugRenderOverheadEdgeBorderQuads || kDebugRenderOverheadEdgeClearQuads )
+        {
+          Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
+                                                         frameInfo.groundplane[Quad::TopLeft].y(),
+                                                         0.0f);
+          Point2f wrtOrigin2DBL = observedPose * Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
+                                                         frameInfo.groundplane[Quad::BottomLeft].y(),
+                                                         0.0f);
+          Point2f wrtOrigin2DTR = observedPose * Point3f(frameInfo.groundplane[Quad::TopRight].x(),
+                                                         frameInfo.groundplane[Quad::TopRight].y(),
+                                                         0.0f);
+          Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
+                                                         frameInfo.groundplane[Quad::BottomRight].y(),
+                                                         0.0f);
+          
+          Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
+          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", groundPlaneWRTOrigin, kDebugRenderOverheadEdgesZ_mm, NamedColors::BLACK, false);
         }
 
         ASSERT_NAMED(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
@@ -3098,7 +3120,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // send quads to memory map
       for ( const auto& clearQuad2D : visionQuadsClear )
       {
-        if ( kDebugRenderOverheadEdges )
+        if ( kDebugRenderOverheadEdgeClearQuads )
         {
           ColorRGBA color = Anki::NamedColors::GREEN;
           VizManager* vizManager = _robot->GetContext()->GetVizManager();
@@ -3120,7 +3142,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // send quads to memory map
       for ( const auto& borderQuad2D : visionQuadsWithInterestingBorders )
       {
-        if ( kDebugRenderOverheadEdges )
+        if ( kDebugRenderOverheadEdgeBorderQuads )
         {
           ColorRGBA color = Anki::NamedColors::BLUE;
           VizManager* vizManager = _robot->GetContext()->GetVizManager();

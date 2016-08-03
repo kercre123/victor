@@ -21,8 +21,10 @@
       { "channel": "Unity"   ,        "enabled": false },
       { "channel": "VisionComponent", "enabled": false },
       { "channel": "VisionSystem",    "enabled": false },
-      { "channel": "UnlockComponent", "enabled": true },
+      { "channel": "UnlockComponent", "enabled": false },
+      { "channel": "Actions",         "enabled": false },
       { "channel": "Behaviors",       "enabled": false },
+      { "channel": "AIWhiteboard",    "enabled": false },      
       { "channel": "Audio_WwiseLog",  "enabled": false }
     ],
     "levels":

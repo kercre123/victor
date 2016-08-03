@@ -20,6 +20,7 @@
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
+#include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
@@ -160,9 +161,14 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorExploreVisitPossibleMarker(robot, config);
       break;
     }
-    case BehaviorType::ExploreBringCubeToBeacon:
+    case BehaviorType::BringCubeToBeacon:
     {
       newBehavior = new BehaviorExploreBringCubeToBeacon(robot, config);
+      break;
+    }
+    case BehaviorType::ThinkAboutBeacons:
+    {
+      newBehavior = new BehaviorThinkAboutBeacons(robot, config);
       break;
     }
     case BehaviorType::VisitInterestingEdge:

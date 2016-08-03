@@ -111,7 +111,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 
     // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
     std::vector<const ObservableObject *> intersectingObjects;
-    robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm);
+    robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm, ignoreSelfFilter);
     
     isFree = intersectingObjects.empty();
 
@@ -181,7 +181,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) co
       BlockWorldFilter filter;
       filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
       filter.SetFilterFcn([this,&beaconList](const ObservableObject* blockPtr) {
-        if(blockPtr->IsPoseStateKnown())
+        if(!blockPtr->IsPoseStateUnknown())
         {
           bool isBlockInAnyBeacon = false;
           

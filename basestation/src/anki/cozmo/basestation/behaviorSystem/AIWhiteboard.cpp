@@ -95,17 +95,21 @@ void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
       return false;
     }
   };
+  const size_t countBefore = _possibleObjects.size();
   _possibleObjects.remove_if( isObjectInsideQuad );
+  const size_t countAfter = _possibleObjects.size();
   
-  // update render in case we removed something
-  UpdatePossibleObjectRender();
+  // update render if we removed something
+  if ( countBefore != countAfter ) {
+    UpdatePossibleObjectRender();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose)
 {
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.FinishedSearch",
+    PRINT_CH_INFO("AIWhiteboard", "PossibleObject.FinishedSearch",
                       "finished search, so removing possible object");
   }
   RemovePossibleObjectsMatching(objectType, pose);
@@ -116,7 +120,7 @@ void AIWhiteboard::SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlock
 {
   _topOfStackToAdmire = topBlockID;
   _bottomOfStackToAdmire = bottomBlockID;
-  PRINT_NAMED_DEBUG("AIWhiteboard.StackToAdmire", "admiring stack [%d, %d] (bottom, top)",
+  PRINT_CH_INFO("AIWhiteboard", "StackToAdmire", "admiring stack [%d, %d] (bottom, top)",
                     _bottomOfStackToAdmire.GetValue(),
                     _topOfStackToAdmire.GetValue());
 }
@@ -178,11 +182,12 @@ void AIWhiteboard::RemovePossibleObjectsMatching(ObjectType objectType, const Po
         if ( isClosePossibleObject )
         {
           if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-            PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.Remove",
-                              "removing possible object that was at (%f, %f, %f)",
+            PRINT_CH_INFO("AIWhiteboard", "PossibleObject.Remove",
+                              "removing possible object that was at (%f, %f, %f), matching object type %d",
                               relPose.GetTranslation().x(),
                               relPose.GetTranslation().y(),
-                              relPose.GetTranslation().z());
+                              relPose.GetTranslation().z(),
+                              objectType);
           }
 
           // they are close, remove old entry
@@ -208,7 +213,7 @@ void AIWhiteboard::RemovePossibleObjectsFromZombieMaps()
     const bool isZombie = _robot.GetBlockWorld().IsZombiePoseOrigin(objOrigin);
     if ( isZombie ) {
       if ( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-        PRINT_NAMED_DEBUG("AIWhiteboard.RemovePossibleObjectsFromZombieMaps", "Deleted possible object because it was zombie");
+        PRINT_CH_INFO("AIWhiteboard", "RemovePossibleObjectsFromZombieMaps", "Deleted possible object because it was zombie");
       }
      iter = _possibleObjects.erase(iter);
     } else {
@@ -216,7 +221,7 @@ void AIWhiteboard::RemovePossibleObjectsFromZombieMaps()
     }
   }
   if ( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.RemovePossibleObjectsFromZombieMaps", "%zu possible objects not zombie", _possibleObjects.size());
+    PRINT_CH_INFO("AIWhiteboard", "RemovePossibleObjectsFromZombieMaps", "%zu possible objects not zombie", _possibleObjects.size());
   }
 }
 
@@ -254,7 +259,7 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   Pose3d obsPose( msg.possibleObject.pose, _robot.GetPoseOriginList() );
   
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.ObservedPossible", "robot observed a possible object");
+    PRINT_CH_INFO("AIWhiteboard", "ObservedPossible", "robot observed a possible object");
   }
 
   ConsiderNewPossibleObject(possibleObject.objectType, obsPose);
@@ -272,23 +277,25 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotMarkedObjectPoseU
     return;
   }
 
-  PRINT_NAMED_DEBUG("AIWhiteboard.MarkedUnknown",
+  PRINT_CH_INFO("AIWhiteboard", "MarkedUnknown",
                     "marked %d unknown, adding to possible objects",
                     msg.objectID);
 
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.PoseMarkedUnknown", "considering old pose from object %d as possible object",
+    PRINT_CH_INFO("AIWhiteboard", "PoseMarkedUnknown", "considering old pose from object %d as possible object",
                       msg.objectID);
   }
   
-  ConsiderNewPossibleObject(obj->GetType(), obj->GetPose());
+  // its position has become Unknown. We probably were at the location where we expected this object to be,
+  // and it's no there. So we don't want to keep its markers anymore
+  RemovePossibleObjectsMatching(obj->GetType(), obj->GetPose());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d& obsPose)
 {
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.Consider",
+    PRINT_CH_INFO("AIWhiteboard", "PossibleObject.Consider",
                       "considering pose (%f, %f, %f)",
                       obsPose.GetTranslation().x(),
                       obsPose.GetTranslation().y(),
@@ -301,7 +308,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
 
   if( ! isFlat ) {
     if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-      PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.NotFlat",
+      PRINT_CH_INFO("AIWhiteboard", "PossibleObject.NotFlat",
                         "pose isn't flat, so not adding to list (angle %fdeg)",
                         Rmat.GetAngularDeviationFromParentAxis<'Z'>().getDegrees());
     }
@@ -320,7 +327,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   // TODO:(bn) get the size based on obectType so this can be relative to the bottom of the object?
   if( relPose.GetTranslation().z() > kBW_MaxHeightForPossibleObject_mm ) {
     if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-      PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.TooHigh",
+      PRINT_CH_INFO("AIWhiteboard", "PossibleObject.TooHigh",
                         "pose is too high, not considering. relativeZ = %f",
                         relPose.GetTranslation().z());
     }
@@ -329,26 +336,27 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   }
 
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.RemovingOldObjects",
+    PRINT_CH_INFO("AIWhiteboard", "PossibleObject.RemovingOldObjects",
                       "removing any old possible objects that are nearby");
   }
 
   // remove any objects that are similar to this
   RemovePossibleObjectsMatching(objectType, obsPose);
   
-  // check with the world if this a object for an object we have already recognized, because in that case we
-  // are not interested in storing it again
+  // check with the world if this a possible marker for an object we have already recognized, because in that case we
+  // are not interested in storing it again.
+  
   Vec3f maxLocDist(kBW_PossibleObjectClose_mm);
   Radians maxLocAngle(kBW_PossibleObjectClose_rad);
   ObservableObject* prevObservedObject =
     _robot.GetBlockWorld().FindClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
   
   // found object nearby, no need
-  if ( nullptr != prevObservedObject && prevObservedObject->IsExistenceConfirmed() )
+  if ( nullptr != prevObservedObject )
   {
     if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-      PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.NearbyObject",
-                        "already had a real object nearby, not adding a new one");
+      PRINT_CH_INFO("AIWhiteboard", "PossibleObject.NearbyObject",
+                        "Already had a real(known) object nearby, not adding a new one");
     }
 
     return;
@@ -364,7 +372,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   }
 
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
-    PRINT_NAMED_DEBUG("AIWhiteboard.PossibleObject.Add",
+    PRINT_CH_INFO("AIWhiteboard", "PossibleObject.Add",
                       "added possible object. rot=%fdeg, z=%f",
                       Rmat.GetAngularDeviationFromParentAxis<'Z'>().getDegrees(),
                       relPose.GetTranslation().z());

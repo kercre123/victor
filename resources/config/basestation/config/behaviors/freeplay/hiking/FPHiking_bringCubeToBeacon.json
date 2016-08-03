@@ -1,0 +1,8 @@
+{
+  "behaviorType": "BringCubeToBeacon",
+  "name": "Hiking_BringCubeToBeacon",
+  "flatScore" : 2.1, // intended to interrupt general hiking
+  "behaviorGroups": [
+    "FreeplayHiking"
+  ]
+}

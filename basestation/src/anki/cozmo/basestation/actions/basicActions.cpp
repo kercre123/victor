@@ -206,7 +206,7 @@ namespace Anki {
       {
         if(!_targetPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _targetPose))
         {
-          PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
+          PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
                            "Could not get target pose w.r.t. current world origin");
           return ActionResult::FAILURE_RETRY;
         }
@@ -235,7 +235,7 @@ namespace Anki {
           }
         }
         
-        PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.WorldOriginChanged",
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginChanged",
                          "New target angle = %.1fdeg", _currentTargetAngle.getDegrees());
       }
       
@@ -248,7 +248,7 @@ namespace Anki {
       if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
         if(_inPosition || NEAR((_currentAngle-_currentTargetAngle).ToFloat(), 0.f, _halfAngle.ToFloat()))
         {
-          PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
+          PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
                            "Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg", _currentAngle.getDegrees(),
                            _currentTargetAngle.getDegrees(), _halfAngle.getDegrees());
@@ -266,8 +266,17 @@ namespace Anki {
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
         result = _robot.GetMoveComponent().AreWheelsMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone",
+                         "[%d] Reached angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d). WheelsMoving=%s",
+                         GetTag(),
+                         _currentAngle.getDegrees(),
+                         _currentTargetAngle.getDegrees(),
+                         _variability.getDegrees(),
+                         _angleTolerance.ToFloat(),
+                         _robot.GetPoseFrameID(),
+                         (_robot.GetMoveComponent().AreWheelsMoving() ? "Yes" : "No"));
       } else {
-        PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone",
                          "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
                          GetTag(),
                          _currentAngle.getDegrees(),
@@ -475,7 +484,7 @@ namespace Anki {
       }
       
       if(!_hasStarted) {
-        PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
+        PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
         if( _hasStarted && _shouldPlayDrivingAnimation) {
           _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
@@ -611,7 +620,7 @@ namespace Anki {
         // to "hold" the eyes, then remove eye shift
         if(_inPosition || NEAR(Radians(_robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
         {
-          PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
+          PRINT_CH_INFO("Actions", "MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
                            "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg",
                            GetTag(),
@@ -634,7 +643,7 @@ namespace Anki {
       if(_inPosition) {
         result = _robot.GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
-        PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
+        PRINT_CH_INFO("Actions", "MoveHeadToAngleAction.CheckIfDone",
                          "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
                          GetTag(),
                          RAD_TO_DEG(_robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
@@ -815,7 +824,7 @@ namespace Anki {
       if(_inPosition) {
         result = _robot.GetMoveComponent().IsLiftMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
-        PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
+        PRINT_CH_INFO("Actions", "MoveLiftToHeightAction.CheckIfDone",
                          "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
                          GetTag(),
                          _robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
@@ -1336,7 +1345,7 @@ namespace Anki {
       }
       
       if(_poseWrtRobot.GetParent() == nullptr) {
-        PRINT_NAMED_INFO("TurnTowardsPoseAction.SetPose.AssumingRobotOriginAsParent", "");
+        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.SetPose.AssumingRobotOriginAsParent", "");
         _poseWrtRobot.SetParent(_robot.GetWorldOrigin());
       }
       else if(false == _poseWrtRobot.GetWithRespectTo(_robot.GetPose(), _poseWrtRobot))
@@ -1354,13 +1363,13 @@ namespace Anki {
         // Compute the required angle to face the object
         const Radians turnAngle = GetRelativeBodyAngleToLookAtPose(_poseWrtRobot.GetTranslation());
         
-        PRINT_NAMED_INFO("TurnTowardsPoseAction.Init.TurnAngle",
+        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg", turnAngle.getDegrees());
         
         if(turnAngle.getAbsoluteVal() <= _maxTurnAngle) {
           SetBodyPanAngle(turnAngle);
         } else {
-          PRINT_NAMED_INFO("TurnTowardsPoseAction.Init.RequiredTurnTooLarge",
+          PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.RequiredTurnTooLarge",
                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
                             turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
           
@@ -1784,7 +1793,7 @@ namespace Anki {
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
          [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
            _toolCodeInfo = msg.GetData().Get_RobotReadToolCode().info;
-           PRINT_NAMED_INFO("ReadToolCodeAction.SignalHandler",
+           PRINT_CH_INFO("Actions", "ReadToolCodeAction.SignalHandler",
                             "Read tool code: %s", EnumToString(_toolCodeInfo.code));
            this->_state = State::ReadCompleted;
       });
@@ -1814,7 +1823,7 @@ namespace Anki {
             
             Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
             if(RESULT_OK != setCalibResult) {
-              PRINT_NAMED_INFO("ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
+              PRINT_CH_INFO("Actions", "ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
               result = ActionResult::FAILURE_ABORT;
             } else {
               // Tell the VisionSystem thread to check the tool code in the next image it gets.

@@ -16,6 +16,7 @@
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -24,7 +25,6 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -309,6 +309,11 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
   // this is the lambda that will run after the wait action finishes
   auto runAfterPause = [this, &robot, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
   {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".S4.AfterPause").c_str(),
+      "Previous action finished with code [%s]. Creating HeadTurnAction:",
+      EnumToString(actionRet.result)
+    );
+    
     // create head move action
     IAction* moveHeadAction = CreateHeadTurnAction(robot,
           _configParams.s4_BodyAngleRelativeRangeMin_deg,
@@ -337,6 +342,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
                                                       _configParams.s4_WaitBetweenChangesMax_sec);
     pauseAction = new WaitAction( robot, waitTime_sec );
   }
+  
+  PRINT_CH_INFO("Behaviors", (GetName() + ".S4.StartingPauseAnimAction").c_str(), "Triggering %s",
+    (trigger != AnimationTrigger::Count) ? animGroupName.c_str() : "pause" );
   
   // request action with transition to proper state
   ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
@@ -525,6 +533,12 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
   turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
   turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
+  PRINT_CH_INFO("Behaviors", (GetName() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, BSpeed %.2f, HSpeed %.2f",
+    RAD_TO_DEG(bodyTargetAngleAbs_rad.ToFloat()),
+    RAD_TO_DEG(headTargetAngleAbs_rad.ToFloat()),
+    bodyTurnSpeed_degPerSec,
+    headTurnSpeed_degPerSec);
+  
 // code for debugging
 //  PRINT_NAMED_WARNING("RSAM", "STATE %s (ho) set BODY %.2f, HEAD %.2f (curB %.2f, curH %.2f)",
 //    GetStateName().c_str(),

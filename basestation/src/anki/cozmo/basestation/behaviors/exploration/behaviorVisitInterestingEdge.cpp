@@ -306,7 +306,7 @@ void BehaviorVisitInterestingEdge::TransitionToS2_ObserveAtVantagePoint(Robot& r
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::FlagQuadAsNotInteresting(Robot& robot, float halfWitdhAtRobot_mm,
+void BehaviorVisitInterestingEdge::FlagQuadAsNotInteresting(Robot& robot, float halfWidthAtRobot_mm,
   const Pose3d& goalPosition, float farPlaneDistFromGoal_mm, float halfAtFarPlaneWidth_mm)
 {
   const Pose3d& robotPoseWRTOrigin = robot.GetPose().GetWithRespectToOrigin();
@@ -315,8 +315,8 @@ void BehaviorVisitInterestingEdge::FlagQuadAsNotInteresting(Robot& robot, float 
   if ( goalPosition.GetWithRespectTo(*robot.GetWorldOrigin(), goalWRTOrigin) )
   {
     // bottom corners of the quad are based on the robot pose
-    const Point3f& cornerBL = robotPoseWRTOrigin * Vec3f{ 0.f, +halfWitdhAtRobot_mm, 0.f};
-    const Point3f& cornerBR = robotPoseWRTOrigin * Vec3f{ 0.f, -halfWitdhAtRobot_mm, 0.f};
+    const Point3f& cornerBL = robotPoseWRTOrigin * Vec3f{ 0.f, +halfWidthAtRobot_mm, 0.f};
+    const Point3f& cornerBR = robotPoseWRTOrigin * Vec3f{ 0.f, -halfWidthAtRobot_mm, 0.f};
     
     // top corners of the quad are based on the far plane
     Vec3f dirRobotToGoal = (goalWRTOrigin.GetTranslation() - robotPoseWRTOrigin.GetTranslation());

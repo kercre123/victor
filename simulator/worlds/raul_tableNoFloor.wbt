@@ -6,7 +6,7 @@ Viewpoint {
   position 1.06931 -0.714936 1.17287
 }
 Can {
-  translation -0.00973 0.156367 0.312
+  translation -0.119022 0.292825 0.312
   rotation 1 0 0 1.5708
 }
 Background {
@@ -64,9 +64,10 @@ DEF Cozmo_1 CozmoBot {
 }
 WebotsKeyboardController {
   robotVolume 0
-  behaviorName "demo_lookInPlaceForFaces"
+  behaviorName "NoneBehavior"
   filterLogs TRUE
 }
 CozmoVizDisplay {
+  behaviorSelectionViz TRUE
   filterLogs TRUE
 }

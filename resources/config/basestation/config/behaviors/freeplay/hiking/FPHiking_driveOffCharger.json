@@ -1,0 +1,9 @@
+{
+  "behaviorType": "DriveOffCharger",
+  "name": "Hiking_DriveOffCharger",
+  "flatScore" : 10.0,
+  "extraDistanceToDrive_mm": 45.0,
+  "behaviorGroups": [
+    "FreeplayHiking"
+  ]
+}
