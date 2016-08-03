@@ -6,6 +6,12 @@ using System.Collections.Generic;
 public class PlayerProfile {
   public bool FirstTimeUserFlow;
 
+  public bool ProfileCreated;
+
+  public string ProfileName;
+
+  public System.DateTime Birthdate;
+
   public Dictionary<string, bool> CompletedScriptedSequences;
 
   public Conversations.ConversationHistory ConversationHistory;
@@ -27,6 +33,7 @@ public class PlayerProfile {
 
   public PlayerProfile() {
     FirstTimeUserFlow = true;
+    ProfileCreated = false;
     CompletedScriptedSequences = new Dictionary<string, bool>();
     GameDifficulty = new Dictionary<string, int>();
     TotalGamesPlayed = new Dictionary<string, int>();

@@ -360,6 +360,8 @@ MonoBehaviour:
     type: 2}
   _PlaceCozmoOnChargerConnectViewPrefab: {fileID: 11415802, guid: ee0aabc9eebb14c539ef62710fbadebb,
     type: 2}
+  _ProfileCreationViewPrefab: {fileID: 11497974, guid: d5a4eca7cb81e477e860e932642ff654,
+    type: 2}
 --- !u!114 &11439468
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -27,6 +27,10 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   private SimpleConnectView _PlaceCozmoOnChargerConnectViewPrefab;
   private SimpleConnectView _PlaceCozmoOnChargerConnectViewInstance;
 
+  [SerializeField]
+  private ProfileCreationView _ProfileCreationViewPrefab;
+  private ProfileCreationView _ProfileCreationViewInstance;
+
   private void Start() {
 
     _StartButton.Initialize(HandleStartButton, "start_button", "simple_connect_dialog");
@@ -54,12 +58,31 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void HandleStartButton() {
-    _SoundCheckViewInstance = UIManager.OpenView(_SoundCheckViewPrefab);
-    _SoundCheckViewInstance.OnSoundCheckComplete += HandleSoundCheckComplete;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated) {
+      ShowPlaceCozmoOnCharger();
+    }
+    else {
+      _SoundCheckViewInstance = UIManager.OpenView(_SoundCheckViewPrefab);
+      _SoundCheckViewInstance.OnSoundCheckComplete += HandleSoundCheckComplete;
+    }
   }
 
   private void HandleSoundCheckComplete() {
     UIManager.CloseView(_SoundCheckViewInstance);
+    ShowProfileCreationScreen();
+  }
+
+  private void ShowProfileCreationScreen() {
+    _ProfileCreationViewInstance = UIManager.OpenView(_ProfileCreationViewPrefab);
+    _ProfileCreationViewInstance.ViewClosed += HandleProfileCreationDone;
+  }
+
+  private void HandleProfileCreationDone() {
+    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated = true;
+    ShowPlaceCozmoOnCharger();
+  }
+
+  private void ShowPlaceCozmoOnCharger() {
     _PlaceCozmoOnChargerConnectViewInstance = UIManager.OpenView(_PlaceCozmoOnChargerConnectViewPrefab);
     _PlaceCozmoOnChargerConnectViewInstance.OnConnectButton += HandleConnectButton;
   }
