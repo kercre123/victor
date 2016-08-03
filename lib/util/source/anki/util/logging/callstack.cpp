@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <assert.h>
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // appropriate headers per platform
@@ -48,18 +49,38 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
     // A backtraceFrame looks like:
     // "0   webotsCtrlGameEngine                0x000000010cc84894 _ZN4Anki4Util14sDumpCallstackERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE + 52"
     // The mangled symbol is the third element from the back, when split by ' '
-    splitFrame.end()[-3] = abi::__cxa_demangle(splitFrame.end()[-3].c_str(), 0, 0, &status);
+    // 
+    // Use a tempPtr here in case __cxa_demangle cannot demangle the given string and returns a nullptr.
+    char* tempPtr = abi::__cxa_demangle(splitFrame.end()[-3].c_str(), 0, 0, &status);
+
+    switch (status) {
+      case 0:
+        assert(tempPtr != nullptr);
+        // Everything is fine, proceed to change the mangled name into the demangled version.
+        splitFrame.end()[-3] = tempPtr;
+        break;
+
+      case -2:
+      {
+        // Demangle didn't work, don't change the name.
+        PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
+                            "splitFrame.end()[-3] is not a valid name under the C++ ABI mangling rules.");
+        break;
+      }
+
+      default:
+      {
+        // Demangle didn't work, don't change the name.
+        PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
+                            "Couldn't demangle the symbol, __cxa_demangle returned status = %i", status);
+        break;
+      }
+    }
   } else {
-    PRINT_NAMED_WARNING("Callback.DemangleBacktraceSymbols",
+    PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
                         "Something is wrong with the format of the backtrace frame. It should look "
                         "something like "
                         "'0   webotsCtrlGameEngine                0x000000010cc84894 _ZN4Anki4Util14sDumpCallstackERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE + 52'");
-  }
-
-  if (status != 0) {
-    // Demangle didn't work, just print the raw name.
-    PRINT_NAMED_WARNING("Callback.DemangleBacktraceSymbols",
-                        "Couldn't demangle the symbol, __cxa_demangle returned status = %i", status);
   }
 
   std::ostringstream os;
