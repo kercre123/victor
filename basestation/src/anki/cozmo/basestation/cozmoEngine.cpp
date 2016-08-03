@@ -249,7 +249,6 @@ Result CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& conn
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(connectMsg.robotID);
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
   return RESULT_OK;
 }
 

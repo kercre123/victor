@@ -44,9 +44,9 @@ message UiDeviceAvailable {
     uint_32 deviceID
 }
 
-message RobotConnected {
+message RobotConnectionResponse {
     uint_32 robotID,
-    uint_8 successful
+    RobotConnectionResult result
 }
 
 message RobotDisconnected {

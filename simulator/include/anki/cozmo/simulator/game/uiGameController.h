@@ -97,7 +97,7 @@ protected:
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
   virtual void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg){};
   virtual void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn){};
-  virtual void HandleRobotConnected(ExternalInterface::RobotConnected const &msg){};
+  virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(ImageChunk const& msg){};
   virtual void HandleActiveObjectConnectionState(ObjectConnectionState const& msg){};
@@ -367,7 +367,7 @@ private:
   void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
   void HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn);
-  void HandleRobotConnectedBase(ExternalInterface::RobotConnected const &msg);
+  void HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg);
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
   void HandleImageChunkBase(ImageChunk const& msg);
   void HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg);

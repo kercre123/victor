@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Anki.Cozmo;
+using UnityEngine;
 using System.Collections;
 
 public class ConnectionFlow : MonoBehaviour {
@@ -67,13 +68,13 @@ public class ConnectionFlow : MonoBehaviour {
   private void Start() {
     RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnectionResponse);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
   }
 
   private void OnDestroy() {
     RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToEngine;
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(RobotConnectionResponse);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
 
     if (_PullCubeTabViewInstance != null) {
       UIManager.CloseViewImmediately(_PullCubeTabViewInstance);
@@ -342,7 +343,7 @@ public class ConnectionFlow : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
-  private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnected message) {
+  private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
     int robotID = (int)message.robotID;
     if (!RobotEngineManager.Instance.Robots.ContainsKey(robotID)) {
       DAS.Error(this, "Unknown robot connected: " + robotID.ToString());
@@ -359,38 +360,38 @@ public class ConnectionFlow : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
     DAS.Info("ConnectionFlow.RobotConnectionResponse", "Robot Connect Request Responded!");
     // TODO: replace with actual robot response from engine.
-    HandleRobotConnectResponse(RobotConnectResponse.Success);
+    HandleRobotConnectResponse(message.result);
   }
 
-  private void HandleRobotConnectResponse(RobotConnectResponse response) {
+  private void HandleRobotConnectResponse(RobotConnectionResult response) {
     switch (response) {
-    case RobotConnectResponse.Success:
+    case RobotConnectionResult.Success:
       if (_ConnectingToCozmoScreenInstance != null) {
         // progress from the connection screen to the next part of the flow
         _ConnectingToCozmoScreenInstance.ConnectionComplete();
       }
       break;
-    case RobotConnectResponse.Failed:
+    case RobotConnectionResult.ConnectionFailure:
       if (_ConnectingToCozmoScreenInstance != null) {
         GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
       }
       ReturnToSearch();
       break;
-    case RobotConnectResponse.NeedsAppUpgrade:
+    case RobotConnectionResult.OutdatedApp:
       UpdateAppScreen();
       break;
-    case RobotConnectResponse.NeedsFirmwareUpgrade:
+    case RobotConnectionResult.OutdatedFirmware:
       UpdateFirmware();
       break;
-    case RobotConnectResponse.NeedsPin:
+    case RobotConnectionResult.NeedsPin:
       GameObject.Destroy(_ConnectingToCozmoScreenInstance);
       ShowPinScreen();
       break;
-    case RobotConnectResponse.InvalidPin:
+    case RobotConnectionResult.InvalidPin:
       GameObject.Destroy(_ConnectingToCozmoScreenInstance);
       ShowInvalidPinScreen();
       break;
-    case RobotConnectResponse.PinMaxAttemptReached:
+    case RobotConnectionResult.PinMaxAttemptsReached:
       ReplaceCozmoOnCharger();
       break;
     }

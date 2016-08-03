@@ -235,7 +235,7 @@ public class SkillSystem {
   private void Destroy() {
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
 
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NVStorageData>(HandleNVStorageRead);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NVStorageOpResult>(HandleNVStorageOpResult);
   }
@@ -243,7 +243,7 @@ public class SkillSystem {
   private void Init() {
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
 
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NVStorageData>(HandleNVStorageRead);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NVStorageOpResult>(HandleNVStorageOpResult);
 
@@ -252,10 +252,12 @@ public class SkillSystem {
     SetCozmoHighestLevelsReached(null, 0);
   }
 
-  private void HandleRobotConnected(object message) {
-    RobotEngineManager.Instance.Message.NVStorageReadEntry = new G2U.NVStorageReadEntry();
-    RobotEngineManager.Instance.Message.NVStorageReadEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
-    RobotEngineManager.Instance.SendMessage();
+  private void HandleRobotConnected(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
+    if (message.result == Anki.Cozmo.RobotConnectionResult.Success) {
+      RobotEngineManager.Instance.Message.NVStorageReadEntry = new G2U.NVStorageReadEntry();
+      RobotEngineManager.Instance.Message.NVStorageReadEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
+      RobotEngineManager.Instance.SendMessage();
+    }
   }
   // if this was an failure we're never going to get the result we
   private void HandleNVStorageOpResult(G2U.NVStorageOpResult opResult) {

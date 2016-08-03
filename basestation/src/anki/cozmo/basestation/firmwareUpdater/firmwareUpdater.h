@@ -19,7 +19,9 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "clad/types/firmwareTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include <json/json-forwards.h>
 #include <assert.h>
+#include <functional>
 #include <map>
 #include <string>
 #include <thread>
@@ -74,6 +76,8 @@ private:
 class FirmwareUpdater
 {
 public:
+  static const char* const kFirmwareVersionKey; // = "version";
+  static const char* const kFirmwareTimeKey; // = "time";
   
   explicit FirmwareUpdater(const CozmoContext* context);
   ~FirmwareUpdater();
@@ -82,6 +86,9 @@ public:
   
   bool InitUpdate(const RobotMap& robots, int version);
   bool Update(const RobotMap& robots);
+
+  using JsonCallback = std::function<void(const Json::Value&)>;
+  void LoadHeader(const JsonCallback& callback);
   
   void HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::OTA::Ack& flashWriteAck);
   
@@ -141,7 +148,7 @@ private:
     return _fwSignatures[idx];
   }
   
-  void LoadHeaderData();
+  static void LoadHeaderData(AsyncLoaderData& fileLoaderData, const JsonCallback& callback);
   bool SendWriteMessages(const RobotMap& robots);
   
   // ==================== Member Data ====================

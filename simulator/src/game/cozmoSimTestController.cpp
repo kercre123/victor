@@ -38,7 +38,7 @@ namespace Anki {
     CozmoSimTestController::~CozmoSimTestController()
     { }
     
-    void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnected const &msg)
+    void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
     {
       // by default we don't want pick up animations in CSTs. If yours needs it, override HandleRobotConnected
       ExternalInterface::RequestEnableReactionaryBehavior doNotAnimMsg("CozmoSimTestController",BehaviorType::ReactToPickup, false);

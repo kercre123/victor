@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
+#include "anki/cozmo/basestation/robotInitialConnection.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -44,6 +45,8 @@ namespace Anki {
     , _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
     , _firmwareUpdater(new FirmwareUpdater(context))
     , _robotMessageHandler(new RobotInterface::MessageHandler())
+    , _fwVersion(0)
+    , _fwTime(0)
     {
       using namespace ExternalInterface;
       
@@ -98,6 +101,8 @@ namespace Anki {
       }
       
       PRINT_NAMED_EVENT("RobotManager.Init.TimeSpent", "%lld milliseconds", timeSpent_millis);
+
+      _firmwareUpdater->LoadHeader(std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
@@ -106,6 +111,9 @@ namespace Anki {
         PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
         _robots[withID] = new Robot(withID, _context);
         _IDs.push_back(withID);
+        _initialConnections.emplace(std::piecewise_construct,
+          std::forward_as_tuple(withID),
+          std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface(), _fwVersion, _fwTime));
       } else {
         PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
       }
@@ -124,7 +132,15 @@ namespace Anki {
         PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
         
         _robotDisconnectedSignal.emit(withID);
-        _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
+        // ask initial connection tracker if it's handling this
+        bool handledDisconnect = false;
+        auto initialIter = _initialConnections.find(withID);
+        if (initialIter != _initialConnections.end()) {
+          handledDisconnect = initialIter->second.HandleDisconnect();
+        }
+        if (!handledDisconnect) {
+          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
+        }
         
         delete(iter->second);
         iter = _robots.erase(iter);
@@ -136,6 +152,7 @@ namespace Anki {
             break;
           }
         }
+        _initialConnections.erase(withID);
       } else {
         PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.\n", withID);
       }
@@ -284,6 +301,15 @@ namespace Anki {
     std::string RobotManager::GetAnimationForTrigger( AnimationTrigger ev )
     {
       return _animationTriggerResponses->GetResponse(ev);
+    }
+
+    void RobotManager::ParseFirmwareHeader(const Json::Value& header)
+    {
+      JsonTools::GetValueOptional(header, FirmwareUpdater::kFirmwareVersionKey, _fwVersion);
+      JsonTools::GetValueOptional(header, FirmwareUpdater::kFirmwareTimeKey, _fwTime);
+      if (_fwVersion == 0 || _fwTime == 0) {
+        PRINT_NAMED_WARNING("RobotManager.ParseFirmwareHeader", "got version %d, time %d", _fwVersion, _fwTime);
+      }
     }
     
   } // namespace Cozmo

@@ -47,6 +47,7 @@ class CannedAnimationContainer;
 class AnimationGroupContainer;
 class FirmwareUpdater;
 class AnimationTriggerResponsesContainer;
+class RobotInitialConnection;
 
 class RobotManager : Util::noncopyable
 {
@@ -129,6 +130,12 @@ protected:
   std::unique_ptr<FirmwareUpdater> _firmwareUpdater;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
+  std::unordered_map<RobotID_t, RobotInitialConnection> _initialConnections;
+  uint32_t _fwVersion;
+  uint32_t _fwTime;
+
+private:
+  void ParseFirmwareHeader(const Json::Value& header);
 
 }; // class RobotManager
   

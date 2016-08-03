@@ -155,7 +155,7 @@ namespace Anki {
       HandleUiDeviceConnection(msgIn);
     }
     
-    void UiGameController::HandleRobotConnectedBase(ExternalInterface::RobotConnected const &msg)
+    void UiGameController::HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg)
     {
       // Once robot connects, set resolution
       //SendSetRobotImageSendMode(ISM_STREAM);
@@ -415,8 +415,8 @@ namespace Anki {
       // TODO: Have CLAD generate this?
       _msgHandler.RegisterCallbackForMessage([this](const ExternalInterface::MessageEngineToGame& message) {
         switch (message.GetTag()) {
-          case ExternalInterface::MessageEngineToGame::Tag::RobotConnected:
-            HandleRobotConnectedBase(message.Get_RobotConnected());
+          case ExternalInterface::MessageEngineToGame::Tag::RobotConnectionResponse:
+            HandleRobotConnectedBase(message.Get_RobotConnectionResponse());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotState:
             HandleRobotStateUpdateBase(message.Get_RobotState());

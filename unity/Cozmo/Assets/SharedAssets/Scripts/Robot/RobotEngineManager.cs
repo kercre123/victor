@@ -9,16 +9,6 @@ using Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo.Audio;
 using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
 
-public enum RobotConnectResponse {
-  Failed,
-  Success,
-  NeedsFirmwareUpgrade,
-  NeedsAppUpgrade,
-  NeedsPin,
-  InvalidPin,
-  PinMaxAttemptReached
-}
-
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
 /// and handles launching, ticking, and messaging with the Cozmo Engine
@@ -264,8 +254,8 @@ public class RobotEngineManager : MonoBehaviour {
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.UiDeviceAvailable:
       ProcessUiDeviceAvailable(message.UiDeviceAvailable);
       break;
-    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.RobotConnected:
-      ProcessRobotConnected(message.RobotConnected);
+    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.RobotConnectionResponse:
+      ProcessRobotConnectionResponse(message.RobotConnectionResponse);
       break;
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.RobotDisconnected:
       ProcessRobotDisconnected(message.RobotDisconnected);
@@ -304,11 +294,11 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  private void ProcessRobotConnected(Anki.Cozmo.ExternalInterface.RobotConnected message) {
+  private void ProcessRobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
 
     // Right now we only add one robot. in the future this should be
     // expanded potentially add multiple robots.
-    if (!_IsRobotConnected) {
+    if (!_IsRobotConnected && message.result != RobotConnectionResult.ConnectionFailure) {
       _IsRobotConnected = true;
       AddRobot((byte)message.robotID);
     }
@@ -431,8 +421,9 @@ public class RobotEngineManager : MonoBehaviour {
     CurrentRobotID = robotID;
 
     // mock connect message fire.
-    Anki.Cozmo.ExternalInterface.RobotConnected connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnected();
+    Anki.Cozmo.ExternalInterface.RobotConnectionResponse connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnectionResponse();
     connectedMessage.robotID = 1;
+    connectedMessage.result = RobotConnectionResult.Success;
     _CallbackManager.MessageReceived(connectedMessage);
   }
 

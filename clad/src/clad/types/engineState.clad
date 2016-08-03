@@ -16,5 +16,15 @@ enum uint_8 EngineState {
   Count
 }
 
+enum uint_8 RobotConnectionResult {
+  Success,
+  ConnectionFailure,
+  OutdatedFirmware,
+  OutdatedApp,
+  NeedsPin,
+  InvalidPin,
+  PinMaxAttemptsReached,
+}
+
 } // namespace Cozmo
 } // namespace Anki

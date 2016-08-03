@@ -748,6 +748,16 @@ namespace Anki {
         // Send block connection state when engine connects
         static bool wasConnected = false;
         if (!wasConnected && HAL::RadioIsConnected()) {
+          // send firmware info indicating simulated robot
+          {
+            std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":1}"};
+            RobotInterface::FirmwareVersion msg;
+            msg.RESRVED = 0;
+            msg.json_length = firmwareJson.size() + 1;
+            std::memcpy(msg.json, firmwareJson.c_str(), firmwareJson.size() + 1);
+            RobotInterface::SendMessage(msg);
+          }
+
           for (int i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
             if (activeObjectSlots_[i].connected) {
               ObjectConnectionState msg;

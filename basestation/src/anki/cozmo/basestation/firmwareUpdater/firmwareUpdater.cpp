@@ -26,6 +26,9 @@
 namespace Anki {
 namespace Cozmo {
 
+const char* const FirmwareUpdater::kFirmwareVersionKey = "version";
+const char* const FirmwareUpdater::kFirmwareTimeKey = "time";
+
 
 FirmwareUpdater::FirmwareUpdater(const CozmoContext* context)
   : _context(context)
@@ -54,7 +57,7 @@ void FirmwareUpdater::WaitForLoadingThreadToExit()
 
 
 // Note: LoadFirmwareFile runs in its own thread
-void LoadFirmwareFile(AsyncLoaderData* loaderData)
+void LoadFirmwareFile(AsyncLoaderData* loaderData, std::function<void()> callback)
 {
   FILE* fp = fopen(loaderData->GetFilename().c_str(), "rb");
   if (fp)
@@ -79,20 +82,28 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData)
   }
   
   loaderData->SetComplete();
-}
-  
-const char* GetFileNameForState(FirmwareUpdateStage state)
-{
-  switch(state)
+  if (callback)
   {
-    case FirmwareUpdateStage::Flashing:
-      return "cozmo.safe";
-    default:
-      assert(0);
-      return "";
+    callback();
   }
 }
   
+std::string GetFirmwareFilename()
+{
+  return "config/basestation/firmware/v0/cozmo.safe";
+}
+
+void FirmwareUpdater::LoadHeader(const JsonCallback& callback)
+{
+  _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename()));
+
+  auto loadCallback = [this, callback]
+  {
+    // after file is loaded, call LoadHeaderData() with the callback we were given
+    LoadHeaderData(_fileLoaderData, callback);
+  };
+  _loadingThread = std::thread(LoadFirmwareFile, &_fileLoaderData, loadCallback);
+}
   
 void FirmwareUpdater::SetSubState(const RobotMap& robots, FirmwareUpdateSubStage newState)
 {
@@ -313,11 +324,9 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
     case FirmwareUpdateSubStage::Init:
     {
       WaitForLoadingThreadToExit();
-      
-      std::string relativePath = std::string("config/basestation/firmware/v0/") + GetFileNameForState(_state);
-      
-      _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, relativePath) );
-      _loadingThread = std::thread(LoadFirmwareFile, &_fileLoaderData);
+
+      _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename()) );
+      _loadingThread = std::thread(LoadFirmwareFile, &_fileLoaderData, nullptr);
       
       PRINT_NAMED_INFO("FirmwareUpdater.Update.Init", "State %s:%s, loading file:'%s'\n",
              EnumToString(_state), EnumToString(_subState), _fileLoaderData.GetFilename().c_str());
@@ -342,7 +351,15 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
         }
         else
         {
-          LoadHeaderData();
+          LoadHeaderData(_fileLoaderData, [this] (const Json::Value& headerData)
+          {
+            // if success, try to get the values that we want
+            std::string versionString;
+            if (headerData.isObject() && JsonTools::GetValueOptional(headerData, kFirmwareVersionKey, versionString))
+            {
+              GetFwSignature(FirmwareUpdateStage::Flashing) = std::move(versionString);
+            }
+          });
           SetSubState( robots, FirmwareUpdateSubStage::Flash);
         }
       }
@@ -405,23 +422,23 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
   }
 }
   
-void FirmwareUpdater::LoadHeaderData()
+void FirmwareUpdater::LoadHeaderData(AsyncLoaderData& fileLoaderData, const JsonCallback& callback)
 {
-  if (!_fileLoaderData.IsComplete())
+  if (!fileLoaderData.IsComplete())
   {
     PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData", "Firmware file not yet loaded");
     return;
   }
   
   constexpr size_t kFirmwareHeaderMaxSize = 1024 * 2;
-  const size_t fileSize = _fileLoaderData.GetBytes().size();
+  const size_t fileSize = fileLoaderData.GetBytes().size();
   if (fileSize < kFirmwareHeaderMaxSize)
   {
     PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData", "Firmware file %zu bytes when expected to be > %zu bytes.", fileSize, kFirmwareHeaderMaxSize);
     return;
   }
   
-  const char* stringBegin = (const char*) _fileLoaderData.GetBytes().data();
+  const char* stringBegin = (const char*) fileLoaderData.GetBytes().data();
   
   // use std::memchr to find the nullptr at the end of the json string (otherwise assume using the whole 2k)
   const char* stringEnd = (char*) std::memchr(stringBegin, '\0', kFirmwareHeaderMaxSize);
@@ -434,11 +451,9 @@ void FirmwareUpdater::LoadHeaderData()
   Json::Value headerData;
   if (jsonReader.parse(stringBegin, stringEnd, headerData))
   {
-    // if success, try to get the values that we want
-    std::string versionString;
-    if (headerData.isObject() && JsonTools::GetValueOptional(headerData, "version", versionString))
+    if (callback)
     {
-      GetFwSignature(FirmwareUpdateStage::Flashing) = std::move(versionString);
+      callback(headerData);
     }
   }
   else

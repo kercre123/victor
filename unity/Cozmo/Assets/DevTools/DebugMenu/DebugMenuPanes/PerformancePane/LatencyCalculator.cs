@@ -34,7 +34,7 @@ public class LatencyCalculator : MonoBehaviour {
     // Wait til we have a real connection
     if (!_IsInitted && RobotEngineManager.Instance != null) {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.LatencyMessage>(HandleLatencyMsg);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
       _IsInitted = true;
       if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled) {
         ShowLatencyDisplay();
@@ -45,7 +45,7 @@ public class LatencyCalculator : MonoBehaviour {
   private void OnDestroy() {
     if (_IsInitted) {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.LatencyMessage>(HandleLatencyMsg);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnected>(HandleRobotConnected);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
     }
   }
 
@@ -67,9 +67,11 @@ public class LatencyCalculator : MonoBehaviour {
 
   }
 
-  private void HandleRobotConnected(object message) {
+  private void HandleRobotConnected(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
     // Force init connection monitoring as long as we need this component.
-    RobotEngineManager.Instance.SetDebugConsoleVar("NetConnStatsUpdate", "true");
+    if (message.result != Anki.Cozmo.RobotConnectionResult.ConnectionFailure) {
+      RobotEngineManager.Instance.SetDebugConsoleVar("NetConnStatsUpdate", "true");
+    }
   }
 
   private void ShowLatencyDisplay() {
