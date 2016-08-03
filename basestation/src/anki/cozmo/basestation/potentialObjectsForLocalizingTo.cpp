@@ -59,7 +59,7 @@ PotentialObjectsForLocalizingTo::PotentialObjectsForLocalizingTo(Robot& robot)
 void PotentialObjectsForLocalizingTo::ObservedAndMatchedPair::UpdateMatchedObjectPose(bool isRobotMoving)
 {
   VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.UpdateMatchedObjectPose",
-                      "Updating %s %d pose from (%.1f,%.1f,%.1f) to (%.1f,%.1f%.1f)",
+                      "Updating %s %d pose from (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f)",
                       EnumToString(matchedObject->GetType()),
                       matchedObject->GetID().GetValue(),
                       matchedObject->GetPose().GetTranslation().x(),

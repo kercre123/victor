@@ -98,6 +98,9 @@ namespace Anki {
     
     void Charger::SetPoseToRobot(const Pose3d& robotPose, BlockWorld& blockWorld)
     {
+      const Pose3d prevPose = GetPose();
+      const PoseState prevPoseState = GetPoseState();
+    
       Pose3d pose(-M_PI, Z_AXIS_3D(),
                   Point3f{RobotToChargerDistWhenDocked, 0, 0},
                   &robotPose,
@@ -106,7 +109,7 @@ namespace Anki {
       SetPose(pose.GetWithRespectToOrigin());
       
       // notify blockworld of the change to the pose, since it's an external change
-      blockWorld.OnObjectPoseChanged(GetID(), GetFamily(), GetPose(), GetPoseState());      
+      blockWorld.OnObjectPoseChanged(GetID(), GetFamily(), prevPose, prevPoseState, GetPose(), GetPoseState());
     }
     
     

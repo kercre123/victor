@@ -30,17 +30,19 @@ namespace NavMeshQuadTreeTypes {
 
 // content detected in nodes
 enum class ENodeContentType : uint8_t {
-  Invalid,              // invalid type (not set)
-  Subdivided,           // we are subdivided, children hold more detailed info
-  Unknown,              // no idea
-  ClearOfObstacle,      // what we know about the node is clear (could be partial info)
-  ClearOfCliff,         // what we know about the node is clear (could be partial info)
-  ObstacleCube,         // we have seen an obstacle in part of the node and we know the obstacle was a cube
-  ObstacleCharger,      // we have seen a charger in part of the node
-  ObstacleUnrecognized, // we have seen an obstacle in part of the node but we don't know what it is
-  Cliff,                // we have seen a cliff in part of the node
-  InterestingEdge,      // we have seen a vision edge and it's interesting
-  NotInterestingEdge,   // we have visited an interesting edge, so it's not interesting anymore
+  Invalid,               // invalid type (not set)
+  Subdivided,            // we are subdivided, children hold more detailed info
+  Unknown,               // no idea
+  ClearOfObstacle,       // what we know about the node is clear (could be partial info)
+  ClearOfCliff,          // what we know about the node is clear (could be partial info)
+  ObstacleCube,          // we have seen an obstacle in part of the node and we know the obstacle was a cube
+  ObstacleCubeRemoved,   // there used to be a cube in this area, but it has moved somewhere else
+  ObstacleCharger,       // we have seen a charger in part of the node
+  ObstacleChargerRemoved,// there used to be a charger in this area, but it has moved somewhere else
+  ObstacleUnrecognized,  // we have seen an obstacle in part of the node but we don't know what it is
+  Cliff,                 // we have seen a cliff in part of the node
+  InterestingEdge,       // we have seen a vision edge and it's interesting
+  NotInterestingEdge,    // we have visited an interesting edge, so it's not interesting anymore
 };
 
 // variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag

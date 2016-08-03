@@ -57,7 +57,9 @@ const char* ENodeContentTypeToString(ENodeContentType nodeContentType)
     case ENodeContentType::ClearOfObstacle: return "ClearOfObstacle";
     case ENodeContentType::ClearOfCliff: return "ClearOfCliff";
     case ENodeContentType::ObstacleCube: return "ObstacleCube";
+    case ENodeContentType::ObstacleCubeRemoved: return "ObstacleCubeRemoved";
     case ENodeContentType::ObstacleCharger: return "ObstacleCharger";
+    case ENodeContentType::ObstacleChargerRemoved: return "ObstacleChargerRemoved";
     case ENodeContentType::ObstacleUnrecognized: return "ObstacleUnrecognized";
     case ENodeContentType::Cliff: return "Cliff";
     case ENodeContentType::InterestingEdge: return "InterestingEdge";

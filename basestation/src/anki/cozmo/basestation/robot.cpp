@@ -2588,7 +2588,19 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
         PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
                          "Setting object %d on top of carried object as also being carried.",
                          actionObjectOnTop->GetID().GetValue());
+        
         onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
+        
+        // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
+        // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
+        // we are not dropping the cube yet
+        const Pose3d& oldPoseTop = actionObjectOnTop->GetPose(); // do this before setting the new one (at least cache copy)
+        const ActionableObject::PoseState oldPoseStateTop = actionObjectOnTop->GetPoseState();
+        const Pose3d& newPoseTop = onTopPoseWrtCarriedPose;
+        const ActionableObject::PoseState newPoseStateTop = ActionableObject::PoseState::Unknown;
+        GetBlockWorld().OnObjectPoseChanged(objectID, object->GetFamily(), oldPoseTop, oldPoseStateTop, newPoseTop, newPoseStateTop );
+        
+        // now that we have notified, do set the new pose
         actionObjectOnTop->SetPose(onTopPoseWrtCarriedPose);
         _carryingObjectOnTopID = actionObjectOnTop->GetID();
         actionObjectOnTop->SetBeingCarried(true);
@@ -2600,6 +2612,14 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
       
   SetCarryingObject(objectID); // also marks the object as carried
   _carryingMarker   = objectMarker;
+  
+  // Notify blockworld of the change in pose for the carrying object, but pretend the new pose is unknown since
+  // we are not dropping the cube yet
+  const Pose3d& oldPose = object->GetPose(); // this has to happen before we set it to the new (at least cache copy)
+  const ActionableObject::PoseState oldPoseState = object->GetPoseState();
+  const Pose3d& newPose = objectPoseWrtLiftPose;
+  const ActionableObject::PoseState newPoseState = ActionableObject::PoseState::Unknown;
+  GetBlockWorld().OnObjectPoseChanged(objectID, object->GetFamily(), oldPose, oldPoseState, newPose, newPoseState );
 
   // Don't actually change the object's pose until we've checked for objects on top
   object->SetPose(objectPoseWrtLiftPose);

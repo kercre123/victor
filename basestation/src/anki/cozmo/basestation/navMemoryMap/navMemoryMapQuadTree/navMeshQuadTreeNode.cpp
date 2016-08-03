@@ -239,17 +239,19 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
     ColorRGBA color =  Anki::NamedColors::WHITE;
     switch(_content.type)
     {
-      case ENodeContentType::Invalid             : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
-      case ENodeContentType::Subdivided          : { color = Anki::NamedColors::CYAN;     color.SetAlpha(1.0f); break; }
-      case ENodeContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
-      case ENodeContentType::ClearOfObstacle     : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ClearOfCliff        : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
-      case ENodeContentType::ObstacleCube        : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ObstacleCharger     : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
-      case ENodeContentType::Cliff               : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentType::InterestingEdge     : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
-      case ENodeContentType::NotInterestingEdge  : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
+      case ENodeContentType::Invalid                : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
+      case ENodeContentType::Subdivided             : { color = Anki::NamedColors::CYAN;     color.SetAlpha(1.0f); break; }
+      case ENodeContentType::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
+      case ENodeContentType::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
+      case ENodeContentType::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
+      case ENodeContentType::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
+      case ENodeContentType::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // we actually don't store this type, it clears ObstacleCube
+      case ENodeContentType::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
+      case ENodeContentType::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // we actually don't store this type, it clears ObstacleCharger
+      case ENodeContentType::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
+      case ENodeContentType::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
+      case ENodeContentType::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
+      case ENodeContentType::NotInterestingEdge     : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
     }
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
@@ -316,25 +318,26 @@ void NavMeshQuadTreeNode::ClearDescendants(NavMeshQuadTreeProcessor& processor)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
 {
-  // Cliff can override any other
-  if ( newContentType == ENodeContentType::Cliff ) {
+  if ( newContentType == ENodeContentType::Cliff )
+  {
+    // Cliff can override any other
     return true;
   }
-
-  // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
-  if ( _content.type == ENodeContentType::Cliff ) {
+  else if ( _content.type == ENodeContentType::Cliff )
+  {
+    // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
     const bool isTotalClear = (newContentType == ENodeContentType::ClearOfCliff) && (overlap == EContentOverlap::Total);
     return isTotalClear;
   }
-
-  // ClearOfCliff can not be overriden by ClearOfObstacle
-  if ( _content.type == ENodeContentType::ClearOfCliff && newContentType == ENodeContentType::ClearOfObstacle ) {
+  else if ( _content.type == ENodeContentType::ClearOfCliff && newContentType == ENodeContentType::ClearOfObstacle )
+  {
+    // ClearOfCliff can not be overriden by ClearOfObstacle
     return false;
   }
-  
-  // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
-  // we don't want to override a recognized marked cube or a cliff with their own border
-  if ( newContentType == ENodeContentType::InterestingEdge ) {
+  else if ( newContentType == ENodeContentType::InterestingEdge )
+  {
+    // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
+    // we don't want to override a recognized marked cube or a cliff with their own border
     if ( ( _content.type == ENodeContentType::ObstacleCube         ) ||
          ( _content.type == ENodeContentType::ObstacleCharger      ) ||
          ( _content.type == ENodeContentType::ObstacleUnrecognized ) ||
@@ -344,23 +347,37 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
       return false;
     }
   }
-  
-  // NotInterestingEdge can only override interesting edges
-  if ( newContentType == ENodeContentType::NotInterestingEdge ) {
+  else if ( newContentType == ENodeContentType::NotInterestingEdge )
+  {
+    // NotInterestingEdge can only override interesting edges
     if ( _content.type != ENodeContentType::InterestingEdge ) {
       return false;
     }
   }
-  
-  // NotInterestingEdge should not be overriden by clearOfObstacle or interesting edge. This is probably conservative,
-  // but the way interesting edges are currently added to the map would totally destroy non-interesting ones
-  // rsam: an improved versino could be to chek that it's a total overlap for ClearOfObstacle. Behaviors could
-  // also check that one interesting border very close to not interesting ones should probably be considered not
-  // interesting. This is probably necessary anyway due to the errors in visualization/localization
-  if ( _content.type == ENodeContentType::NotInterestingEdge ) {
+  else if ( _content.type == ENodeContentType::NotInterestingEdge )
+  {
+    // NotInterestingEdge should not be overriden by clearOfObstacle or interesting edge. This is probably conservative,
+    // but the way interesting edges are currently added to the map would totally destroy non-interesting ones
+    // rsam: an improved versino could be to chek that it's a total overlap for ClearOfObstacle. Behaviors could
+    // also check that one interesting border very close to not interesting ones should probably be considered not
+    // interesting. This is probably necessary anyway due to the errors in visualization/localization
     if ( (newContentType == ENodeContentType::InterestingEdge) ||
          (newContentType == ENodeContentType::ClearOfObstacle) )
     {
+      return false;
+    }
+  }
+  else if ( newContentType == ENodeContentType::ObstacleCubeRemoved )
+  {
+    // ObstacleCubeRemoved can only remove ObstacleCube
+    if ( _content.type != ENodeContentType::ObstacleCube ) {
+      return false;
+    }
+  }
+  else if ( newContentType == ENodeContentType::ObstacleChargerRemoved )
+  {
+    // ObstacleChargerRemoved can only remove ObstacleCharger
+    if ( _content.type != ENodeContentType::ObstacleCharger ) {
       return false;
     }
   }
@@ -438,9 +455,21 @@ void NavMeshQuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedC
 void NavMeshQuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
   const ENodeContentType oldcontent = _content.type;
+
+  // if we are trying to set a removed type, convert to the type we want to actually set
+  NodeContent finalContent = detectedContent;
+  {
+    const ENodeContentType newContent = detectedContent.type;
+    const bool isObstacleRemoved = (newContent == ENodeContentType::ObstacleChargerRemoved) ||
+                                   (newContent == ENodeContentType::ObstacleCubeRemoved);
+    if ( isObstacleRemoved )
+    {
+      finalContent.type = ENodeContentType::ClearOfObstacle;
+    }
+  }
   
   // this is where we can detect changes in content, for example new obstacles or things disappearing
-  _content = detectedContent;
+  _content = finalContent;
   
   // notify processor only when content type changes, not if the underlaying info changes
   const bool typeChanged = oldcontent != _content.type;

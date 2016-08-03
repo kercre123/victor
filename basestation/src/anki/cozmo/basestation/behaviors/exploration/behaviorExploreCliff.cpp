@@ -38,15 +38,17 @@ namespace {
 // is set to true, it means that if they are a border to a cliff, we will explore that cliff
 constexpr NavMemoryMapTypes::FullContentArray typesToExploreFrom =
 {
-  {NavMemoryMapTypes::EContentType::Unknown             , true },
-  {NavMemoryMapTypes::EContentType::ClearOfObstacle     , true },
-  {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCube        , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCharger     , false},
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, false},
-  {NavMemoryMapTypes::EContentType::Cliff               , false},
-  {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
-  {NavMemoryMapTypes::EContentType::NotInterestingEdge  , false}
+  {NavMemoryMapTypes::EContentType::Unknown               , true },
+  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , true },
+  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCube          , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCharger       , false},
+  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
+  {NavMemoryMapTypes::EContentType::Cliff                 , false},
+  {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
+  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
 };
 static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToExploreFrom),
   "This array does not define all types once and only once.");

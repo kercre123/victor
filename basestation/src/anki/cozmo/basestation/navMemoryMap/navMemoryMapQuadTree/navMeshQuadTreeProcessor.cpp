@@ -452,17 +452,19 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
 {
   ColorRGBA ret = Anki::NamedColors::BLACK;
   switch (contentType) {
-    case ENodeContentType::Invalid:              { CORETECH_ASSERT(!"not supported"); break; };
-    case ENodeContentType::Subdivided:           { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
-    case ENodeContentType::ClearOfObstacle:      { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::ClearOfCliff:         { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
-    case ENodeContentType::Unknown:              { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
-    case ENodeContentType::ObstacleCube:         { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::ObstacleCharger:      { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::ObstacleUnrecognized: { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::Cliff:                { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
-    case ENodeContentType::InterestingEdge:      { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
-    case ENodeContentType::NotInterestingEdge:   { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
+    case ENodeContentType::Invalid:               { CORETECH_ASSERT(!"not supported"); break; };
+    case ENodeContentType::Subdivided:            { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
+    case ENodeContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
+    case ENodeContentType::Unknown:               { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
+    case ENodeContentType::ObstacleCube:          { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
+    case ENodeContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
+    case ENodeContentType::ObstacleUnrecognized:  { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::Cliff:                 { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::InterestingEdge:       { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
+    case ENodeContentType::NotInterestingEdge:    { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
   }
   return ret;
 }

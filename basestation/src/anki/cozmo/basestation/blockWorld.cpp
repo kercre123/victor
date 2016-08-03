@@ -74,7 +74,7 @@ namespace Cozmo {
 namespace {
 
 // return the content type we would set in the memory type for each object family
-NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family)
+NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
 {
   using ContentType = NavMemoryMapTypes::EContentType;
   ContentType retType = ContentType::Unknown;
@@ -82,10 +82,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     case ObjectFamily::Block:
     case ObjectFamily::LightCube:
-      retType = ContentType::ObstacleCube;
+      // pick depending on addition or removal
+      retType = isAdding ? ContentType::ObstacleCube : ContentType::ObstacleCubeRemoved;
       break;
     case ObjectFamily::Charger:
-      retType = ContentType::ObstacleCharger;
+      retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
       break;
     case ObjectFamily::Invalid:
     case ObjectFamily::Unknown:
@@ -1176,6 +1177,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         }
       } // if(!matsInCurrentFrame.empty())
       
+      // unless we match the observed object to an existing object, it was not in the memory map
+      Pose3d oldPoseInMemMap;
+      ObservableObject::PoseState oldPoseStateInMemMap = ObservableObject::PoseState::Unknown;
+
       // After the if/else below, this should point to either the new object we
       // create in the current frame, or to an existing matched object in the current
       // frame
@@ -1230,6 +1235,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         // Let "observedObject" used below refer to the object we matched in the
         // current frame
         observedObject = matchingObject;
+        
+        // copy old variables to mimic those of the map as of now
+        oldPoseInMemMap = matchingObject->GetPose();
+        oldPoseStateInMemMap = matchingObject->GetPoseState();
         
       } // if/else (currFrameMatchIter == matchingObjects.end())
       
@@ -1294,21 +1303,17 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
       BroadcastObjectObservation(observedObject, true);
       
-      // Update MemoryMap using the observed object. NOTE: this will use its current pose for
-      // the bounding quad, which should be ok because we have guaranteed that observedObject
-      // is in the current world frame.
-      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-      if ( nullptr != currentNavMemoryMap ) {
-        // add bounding quad with type from family
-        NavMemoryMapTypes::EContentType contentType = ObjectFamilyToMemoryMapContentType(inFamily);
-        if ( contentType != NavMemoryMapTypes::EContentType::Unknown ) {
-          currentNavMemoryMap->AddQuad(observedObject->GetBoundingQuadXY(observedObject->GetPose().GetWithRespectToOrigin()),
-                                      contentType);
-        } else {
-          PRINT_NAMED_WARNING("BlockWorld.UnsuportedFamilyInMemoryMap",
-            "Family %s is not known in the memory map. Is this expected?", EnumToString(inFamily));
-        }
-      }
+      // new poses can be set during "potentialObjectsForLocalizingTo.Insert" (before) or
+      // during "potentialObjectsForLocalizingTo.LocalizeRobot()". We can't trust the poseState we currently
+      // have, since we don't know if this object is going to be used for localization. This is the
+      // best estimate we can do here
+      const bool isNewKnown = (!_robot->GetMoveComponent().IsMoving() && distToObjSeen <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM);
+
+      // oldPoseInMemMap      : set before
+      // oldPoseStateInMemMap : set before
+      const Pose3d& newPoseInMemMap = observedObject->GetPose();
+      const ActionableObject::PoseState newPoseStateInMemMap = isNewKnown ? ActionableObject::PoseState::Known : ActionableObject::PoseState::Dirty;
+      OnObjectPoseChanged(observedObject->GetID(), observedObject->GetFamily(), oldPoseInMemMap, oldPoseStateInMemMap, newPoseInMemMap, newPoseStateInMemMap );
       
       _didObjectsChange = true;
       _currentObservedObjects.push_back(observedObject);
@@ -1351,6 +1356,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       oldObjectOnBottom = objectOnTop->CloneType();
       oldObjectOnBottom->SetPose(objectOnTop->GetPose());
       objectOnTop->SetPose(topPose);
+      
+      // COZMO-3384: we probably don't need to notify here, since the bottom quad will properly
+      // mark the memory map. This is the reason why we probably should not add top cubes to the memory map at all
       
       // See if there's an object above this object
       newObjectOnBottom = objectOnTop;
@@ -2580,49 +2588,96 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     }
   
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family, const Pose3d& pose, ActionableObject::PoseState newPoseState)
+    void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
+      const Pose3d& oldPose, ActionableObject::PoseState oldPoseState,
+      const Pose3d& newPose, ActionableObject::PoseState newPoseState)
     {
       ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
-      
 
+      // find the object
+      const ObservableObject* object = GetObjectByID(objectID, family);
+      if ( nullptr == object )
+      {
+        PRINT_CH_INFO("BlockWorld",
+          "BlockWorld.OnObjectPoseChanged.NotAnObject",
+          "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
+        return;
+      }
+
+      // get current memory map
       INavMemoryMap* const currentNavMemoryMap = GetNavMemoryMap();
       if( nullptr == currentNavMemoryMap ) {
         return;
       }
       
-      // if this family is not stored in the memory map, inform about it (probably not a warning)
-      NavMemoryMapTypes::EContentType contentType = ObjectFamilyToMemoryMapContentType(family);
-      if ( contentType == NavMemoryMapTypes::EContentType::Unknown ) {
-        PRINT_CH_INFO("BlockWorld",
-          "BlockWorld.OnObjectPoseChanged.NonMapFamily",
-          "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
-        return;
-      }
-      
-      // if the pose is switching to known
-      if ( newPoseState == ActionableObject::PoseState::Known )
+      // ---- Remove from old if it was not unknown
+      if ( oldPoseState != ActionableObject::PoseState::Unknown )
       {
-        // find the object
-        const ObservableObject* object = GetObjectByID(objectID, family);
-        if ( object )
+        // get the type we use for removal
+        const NavMemoryMapTypes::EContentType removalContent = ObjectFamilyToMemoryMapContentType(family, false);
+        if ( removalContent != NavMemoryMapTypes::EContentType::Unknown )
         {
-          ASSERT_NAMED(object->IsPoseStateKnown(), "BlockWorld.OnObjectPoseChanged.PoseStateMismatch");
-          
-          // get bounding quad wrt current origin
-          Pose3d poseWRTWorld;
-          if ( object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), poseWRTWorld) )
+          // Related to COZMO-3383: Consider removing cube quads from maps not in current origin
+          // get old bounding quad wrt current origin
+          Pose3d oldPoseWrtCurrentWorld;
+          if ( oldPose.GetWithRespectTo(*_robot->GetWorldOrigin(), oldPoseWrtCurrentWorld) )
           {
-            const Quad2f& bquad = object->GetBoundingQuadXY(poseWRTWorld);
-            currentNavMemoryMap->AddQuad(bquad, contentType);
+            const Quad2f& newQuad = object->GetBoundingQuadXY(oldPoseWrtCurrentWorld);
+            currentNavMemoryMap->AddQuad(newQuad, removalContent);
           }
           else
           {
-            PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.InvalidPose", "Could not get %d's pose WRT current world!", objectID.GetValue());
+            // until COZMO-3383 is done, it should be ok to find an old pose in another origin
+  //          PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.InvalidNewPose",
+  //            "New pose not valid in this world for ID %d",
+  //            objectID.GetValue());
           }
+        } else {
+          PRINT_CH_INFO("BlockWorld",
+            "BlockWorld.OnObjectPoseChanged.NonMapFamilyForRemoval",
+            "Family '%s' does not have a removal type in memory map", ObjectFamilyToString(family) );
         }
-        else
+      }
+      
+      // ---- Add to new if new pose is not unknown
+      if ( newPoseState != ActionableObject::PoseState::Unknown )
+      {
+        // get the type we use for addition
+        const NavMemoryMapTypes::EContentType addedContent = ObjectFamilyToMemoryMapContentType(family, true);
+        if ( addedContent != NavMemoryMapTypes::EContentType::Unknown )
         {
-          PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.NotFound", "Object ID %d not found in blockworld", objectID.GetValue());
+          // get new bounding quad wrt current origin
+          Pose3d newPoseWrtWorld;
+          if ( newPose.GetWithRespectTo(*_robot->GetWorldOrigin(), newPoseWrtWorld) )
+          {
+            const Quad2f& newQuad = object->GetBoundingQuadXY(newPoseWrtWorld);
+            currentNavMemoryMap->AddQuad(newQuad, addedContent);
+            
+            
+            // since we added an obstacle, any borders we saw while dropping it should not be interesting
+            const float kScaledQuadToIncludeEdges = 2.0f;
+            // kScaledQuadToIncludeEdges: the resulting edge quad should include the interesting edges that
+            // are susceptible of being filled as not interesting. In other words: because we want to
+            // consider interesting edges around this obstacle, to see if we want them to be flagged as non-interesting,
+            // the quad to search for these edges has to be equal to the obstacle quad plus the margin
+            // in which we would find edges. For example, a good tight limit would be the size of the smallest
+            // quad in the memory map, since edges should be adjacent to the cube. This quad however is merely
+            // to limit the search for interesting edges, so it being bigger than the tightest threshold it's only a
+            // negligible performance hit (since the current quad tree processor caches nodes anyway for faster processing)
+            const Quad2f& edgeQuad = newQuad.GetScaled(kScaledQuadToIncludeEdges);
+            ReviewInterestingEdges(edgeQuad);
+          }
+          else
+          {
+            // how is this a known or dirty pose in another origin?
+            PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.InvalidNewPose",
+              "New pose not valid in this world for ID %d",
+              objectID.GetValue());
+          }
+        } else {
+          PRINT_CH_INFO("BlockWorld",
+            "BlockWorld.OnObjectPoseChanged.NonMapFamilyForAddition",
+            "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
         }
       }
     }
@@ -2711,15 +2766,17 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         // interesting edges adjacent to any of these types will be deemed not interesting
         constexpr NavMemoryMapTypes::FullContentArray typesWhoseEdgesAreNotInteresting =
         {
-          {NavMemoryMapTypes::EContentType::Unknown             , false},
-          {NavMemoryMapTypes::EContentType::ClearOfObstacle     , false},
-          {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
-          {NavMemoryMapTypes::EContentType::ObstacleCube        , true },
-          {NavMemoryMapTypes::EContentType::ObstacleCharger     , true },
-          {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, true },
-          {NavMemoryMapTypes::EContentType::Cliff               , false},
-          {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
-          {NavMemoryMapTypes::EContentType::NotInterestingEdge  , true }
+          {NavMemoryMapTypes::EContentType::Unknown               , false},
+          {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
+          {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
+          {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
+          {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+          {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
+          {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+          {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+          {NavMemoryMapTypes::EContentType::Cliff                 , false},
+          {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
+          {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
         };
         static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesWhoseEdgesAreNotInteresting),
           "This array does not define all types once and only once.");
@@ -2840,15 +2897,17 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           // what we would want to deduct, but we can't trust failure to detect edges so reliably
           constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfo =
           {
-            {NavMemoryMapTypes::EContentType::Unknown             , false},
-            {NavMemoryMapTypes::EContentType::ClearOfObstacle     , false},
-            {NavMemoryMapTypes::EContentType::ClearOfCliff        , false},
-            {NavMemoryMapTypes::EContentType::ObstacleCube        , true },
-            {NavMemoryMapTypes::EContentType::ObstacleCharger     , true },
-            {NavMemoryMapTypes::EContentType::ObstacleUnrecognized, true },
-            {NavMemoryMapTypes::EContentType::Cliff               , false},
-            {NavMemoryMapTypes::EContentType::InterestingEdge     , false},
-            {NavMemoryMapTypes::EContentType::NotInterestingEdge  , false}
+            {NavMemoryMapTypes::EContentType::Unknown               , false},
+            {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
+            {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
+            {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
+            {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+            {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
+            {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+            {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+            {NavMemoryMapTypes::EContentType::Cliff                 , false},
+            {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
+            {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
           };
           static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfo),
             "This array does not define all types once and only once.");

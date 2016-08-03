@@ -34,16 +34,18 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
 
   ENodeContentType nodeContentType = ENodeContentType::Invalid;
   switch (contentType) {
-    case EContentType::Unknown:              { nodeContentType = ENodeContentType::Unknown;              break; }
-    case EContentType::ClearOfObstacle:      { nodeContentType = ENodeContentType::ClearOfObstacle;      break; }
-    case EContentType::ClearOfCliff:         { nodeContentType = ENodeContentType::ClearOfCliff;         break; }
-    case EContentType::ObstacleCube:         { nodeContentType = ENodeContentType::ObstacleCube;         break; }
-    case EContentType::ObstacleCharger:      { nodeContentType = ENodeContentType::ObstacleCharger;      break; }
-    case EContentType::ObstacleUnrecognized: { nodeContentType = ENodeContentType::ObstacleUnrecognized; break; }
-    case EContentType::Cliff:                { nodeContentType = ENodeContentType::Cliff;                break; }
-    case EContentType::InterestingEdge:      { nodeContentType = ENodeContentType::InterestingEdge;      break; }
-    case EContentType::NotInterestingEdge:   { nodeContentType = ENodeContentType::NotInterestingEdge;   break; }
-    case EContentType::_Count:               { ASSERT_NAMED(false, "NavMeshQuadTreeTypes.ConvertContentType.InvalidType._Count"); break; }
+    case EContentType::Unknown:               { nodeContentType = ENodeContentType::Unknown;               break; }
+    case EContentType::ClearOfObstacle:       { nodeContentType = ENodeContentType::ClearOfObstacle;       break; }
+    case EContentType::ClearOfCliff:          { nodeContentType = ENodeContentType::ClearOfCliff;          break; }
+    case EContentType::ObstacleCube:          { nodeContentType = ENodeContentType::ObstacleCube;          break; }
+    case EContentType::ObstacleCubeRemoved:   { nodeContentType = ENodeContentType::ObstacleCubeRemoved;   break; }
+    case EContentType::ObstacleCharger:       { nodeContentType = ENodeContentType::ObstacleCharger;       break; }
+    case EContentType::ObstacleChargerRemoved:{ nodeContentType = ENodeContentType::ObstacleChargerRemoved;break; }
+    case EContentType::ObstacleUnrecognized:  { nodeContentType = ENodeContentType::ObstacleUnrecognized;  break; }
+    case EContentType::Cliff:                 { nodeContentType = ENodeContentType::Cliff;                 break; }
+    case EContentType::InterestingEdge:       { nodeContentType = ENodeContentType::InterestingEdge;       break; }
+    case EContentType::NotInterestingEdge:    { nodeContentType = ENodeContentType::NotInterestingEdge;    break; }
+    case EContentType::_Count:                { ASSERT_NAMED(false, "NavMeshQuadTreeTypes.ConvertContentType.InvalidType._Count"); break; }
   }
   
   CORETECH_ASSERT(nodeContentType != ENodeContentType::Invalid);

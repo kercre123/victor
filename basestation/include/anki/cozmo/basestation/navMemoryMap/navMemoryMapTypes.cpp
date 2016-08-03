@@ -27,7 +27,9 @@ bool ExpectsAdditionalData(EContentType type)
     case EContentType::ClearOfObstacle:
     case EContentType::ClearOfCliff:
     case EContentType::ObstacleCube:
+    case EContentType::ObstacleCubeRemoved:
     case EContentType::ObstacleCharger:
+    case EContentType::ObstacleChargerRemoved:
     case EContentType::ObstacleUnrecognized:
     case EContentType::InterestingEdge:
     case EContentType::NotInterestingEdge:

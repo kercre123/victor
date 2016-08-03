@@ -28,15 +28,17 @@ namespace NavMemoryMapTypes {
 
 // content detected in the map
 enum class EContentType : uint8_t {
-  Unknown,              // not discovered
-  ClearOfObstacle,      // an area without obstacles
-  ClearOfCliff,         // an area without obstacles or cliffs
-  ObstacleCube,         // an area with obstacles we recognize as cubes
-  ObstacleCharger,      // an area with obstacles we recognize as a charger
-  ObstacleUnrecognized, // an area with obstacles we do not recognize
-  Cliff,                // an area with cliffs or holes
-  InterestingEdge,      // a border/edge detected by the camera
-  NotInterestingEdge,   // a border/edge detected by the camera that we have already explored and it's not interesting anymore
+  Unknown,               // not discovered
+  ClearOfObstacle,       // an area without obstacles
+  ClearOfCliff,          // an area without obstacles or cliffs
+  ObstacleCube,          // an area with obstacles we recognize as cubes
+  ObstacleCubeRemoved,   // an area that used to have a cube and now the cube has moved somewhere else
+  ObstacleCharger,       // an area with obstacles we recognize as a charger
+  ObstacleChargerRemoved,// an area that used to have a charger and now the charger has moved somewhere else
+  ObstacleUnrecognized,  // an area with obstacles we do not recognize
+  Cliff,                 // an area with cliffs or holes
+  InterestingEdge,       // a border/edge detected by the camera
+  NotInterestingEdge,    // a border/edge detected by the camera that we have already explored and it's not interesting anymore
   _Count // Flag, not a type
 };
 
