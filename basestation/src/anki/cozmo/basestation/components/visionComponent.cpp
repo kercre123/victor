@@ -324,10 +324,18 @@ namespace Cozmo {
     // Track how fast we are receiving frames
     if(_lastReceivedImageTimeStamp_ms > 0) {
       // Time should not move backwards!
-      ASSERT_NAMED_EVENT(encodedImage.GetTimeStamp() >= _lastReceivedImageTimeStamp_ms,
-                         "VisionComponent.SetNextImage.UnexpectedTimeStamp",
-                         "Current:%u Last:%u",
-                         encodedImage.GetTimeStamp(), _lastReceivedImageTimeStamp_ms);
+      const bool timeWentBackwards = encodedImage.GetTimeStamp() < _lastReceivedImageTimeStamp_ms;
+      if (timeWentBackwards)
+      {
+        PRINT_NAMED_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
+                            "Current:%u Last:%u",
+                            encodedImage.GetTimeStamp(), _lastReceivedImageTimeStamp_ms);
+        
+        // This should be recoverable (it could happen if we receive a bunch of garbage image data)
+        // so reset the lastReceived timestamp so we can set it fresh next time we get an image
+        _lastReceivedImageTimeStamp_ms = 0;
+        return RESULT_FAIL;
+      }
       _framePeriod_ms = encodedImage.GetTimeStamp() - _lastReceivedImageTimeStamp_ms;
     }
     _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
