@@ -7,6 +7,7 @@ using Anki.UI;
 using Anki.Cozmo;
 using DG.Tweening;
 using Cozmo.MinigameWidgets;
+using Cozmo.Util;
 
 namespace Cozmo {
   namespace UI {
@@ -188,6 +189,22 @@ namespace Cozmo {
       [SerializeField]
       private CanvasGroup _AlphaController;
 
+      #region Onboarding
+      [SerializeField]
+      private AnkiTextLabel _LootTextInstructions1;
+      [SerializeField]
+      private AnkiTextLabel _LootTextInstructions2;
+      // Very special pause and sorting
+      [SerializeField]
+      private List<Transform> _OnboardingRewardTransforms1;
+      [SerializeField]
+      private List<Transform> _OnboardingRewardTransforms2;
+      [SerializeField]
+      private Transform _OnboardingDooberStart;
+      [SerializeField]
+      private float _OnboardingWaitTime = 5.0f;
+      #endregion
+
       private bool _BoxOpened;
 
       private void Awake() {
@@ -300,6 +317,8 @@ namespace Cozmo {
       private void UpdateLootText() {
         if (_BoxOpened) {
           _LootText.gameObject.SetActive(false);
+          _LootTextInstructions1.gameObject.SetActive(false);
+          _LootTextInstructions2.gameObject.SetActive(false);
         }
         else if (_currentCharge >= _LootAlmostThreshold) {
           LootText = _LootAlmostKey;
@@ -318,7 +337,12 @@ namespace Cozmo {
       private void RewardLoot() {
         _BurstParticles.Emit(_OpenChestBurst);
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_LootReleasedSoundEvent);
-        UnleashTheDoobers();
+        if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+          UnleashTheDoobersForOnboarding();
+        }
+        else {
+          UnleashTheDoobers();
+        }
       }
 
       private Transform SpawnDoober(string rewardID) {
@@ -371,6 +395,36 @@ namespace Cozmo {
         dooberSequence.Play();
 
         ChestRewardManager.Instance.PendingChestRewards.Clear();
+      }
+
+      private void UnleashTheDoobersForOnboarding() {
+        _OnboardingDooberStart.gameObject.SetActive(true);
+        _OnboardingRewardTransforms1.Shuffle();
+        _OnboardingRewardTransforms2.Shuffle();
+        List<List<Transform>> allAreas = new List<List<Transform>>();
+        allAreas.Add(_OnboardingRewardTransforms2);
+        allAreas.Add(_OnboardingRewardTransforms1);
+        Sequence dooberSequence = DOTween.Sequence();
+        int whichItem = 0;
+        foreach (string itemID in LootBoxRewards.Keys) {
+          List<Transform> possibleSpots = allAreas[whichItem % allAreas.Count];
+          for (int i = 0; i < LootBoxRewards[itemID]; i++) {
+            Transform newDoob = SpawnDoober(itemID);
+            Vector3 doobTarget = possibleSpots[i % possibleSpots.Count].position;
+            dooberSequence.Join(newDoob.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
+            dooberSequence.Join(newDoob.DOMove(doobTarget, _RewardExplosionDuration).SetEase(Ease.OutBack));
+          }
+          whichItem++;
+        }
+        // is just a hold for longer than usual to read the text on _OnboardingDooberStart
+        dooberSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration + _OnboardingWaitTime, OnboardingDooberSplosionComplete);
+        dooberSequence.Play();
+
+        ChestRewardManager.Instance.PendingChestRewards.Clear();
+      }
+      private void OnboardingDooberSplosionComplete() {
+        _OnboardingDooberStart.gameObject.SetActive(false);
+        CloseView();
       }
 
       private void TronLineBurst(int count) {
@@ -445,6 +499,10 @@ namespace Cozmo {
         _BurstParticles.Emit(_OpenChestBurst);
         TronLineBurst(_OpenChestBurst);
         _LootText.gameObject.SetActive(true);
+        if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+          _LootTextInstructions1.gameObject.SetActive(true);
+          _LootTextInstructions2.gameObject.SetActive(true);
+        }
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {

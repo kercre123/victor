@@ -65,7 +65,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   [SerializeField]
   private float _SparkHoldTimeSec = 1.0f;
 
-  private float _SparkButtonPressedTime = 0;
+  private float _SparkButtonPressedTime = -1.0f;
 
   private float _SparkStopTime = -1.0f;
   private CanvasGroup _DimBackgroundInstance = null;
@@ -77,8 +77,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private CoreUpgradeRequestedHandler _ButtonCostPaidSuccessCallback;
 
   private Sequence _UpgradeTween;
-
-  private bool _NewUnlock = false;
 
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
@@ -116,6 +114,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
       ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
 
     UpdateState();
+    // No quitting until they've finished onboarding
+    if (OnboardingManager.Instance.IsOnboardingRequiredHome() &&
+        _UnlockInfo.UnlockableType == UnlockableType.Action) {
+      _OptionalCloseDialogButton.gameObject.SetActive(false);
+    }
   }
 
   private void SetupButton(CozmoButton button, UnityEngine.Events.UnityAction buttonCallback,
@@ -173,8 +176,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void ResolveOnNewUnlock() {
     UpdateState();
-    _NewUnlock = true;
-    CloseView();
+    // reinit this view possibly with the sparks, instead of going back.
+    Initialize(_UnlockInfo, CozmoUnlocksPanel.CozmoUnlockState.Unlocked, _ButtonCostPaidSuccessCallback);
   }
 
   private void OnSparkPressed() {
@@ -207,23 +210,24 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void OnSparkReleased() {
-    float heldTime = (Time.time - _SparkButtonPressedTime);
-    if (heldTime >= _SparkHoldTimeSec) {
-      StartSparkUnlock();
-      CleanUpSparkAnimations();
-    }
-    else {
-      // Reverse the animations...
-      if (_SparksSequenceTweener != null) {
-        _SparksSequenceTweener.Kill();
-        _SparksSequenceTweener = null;
+    // Update has already happened and processed the spark
+    if (_SparkButtonPressedTime > 0) {
+      // Reverse, positive case is handled by Update
+      float heldTime = (Time.time - _SparkButtonPressedTime);
+      if (heldTime < _SparkHoldTimeSec) {
+        // Reverse the animations...
+        if (_SparksSequenceTweener != null) {
+          _SparksSequenceTweener.Kill();
+          _SparksSequenceTweener = null;
+        }
+        _SparksSequenceTweener = DOTween.Sequence();
+        _SparksSequenceTweener.Join(_DimBackgroundInstance.DOFade(0, heldTime));
+        for (int i = 0; i < _SparkImageInsts.Count; ++i) {
+          _SparksSequenceTweener.Join(_SparkImageInsts[i].DOMove(_RequestTrickButton.transform.position, heldTime));
+        }
+        _SparksSequenceTweener.OnComplete(HandleSparkReverseAnimationEnd);
       }
-      _SparksSequenceTweener = DOTween.Sequence();
-      _SparksSequenceTweener.Join(_DimBackgroundInstance.DOFade(0, heldTime));
-      for (int i = 0; i < _SparkImageInsts.Count; ++i) {
-        _SparksSequenceTweener.Join(_SparkImageInsts[i].DOMove(_RequestTrickButton.transform.position, heldTime));
-      }
-      _SparksSequenceTweener.OnComplete(HandleSparkReverseAnimationEnd);
+      _SparkButtonPressedTime = -1.0f;
     }
   }
 
@@ -250,6 +254,14 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void Update() {
+    if (_SparkButtonPressedTime > 0) {
+      float heldTime = (Time.time - _SparkButtonPressedTime);
+      if (heldTime >= _SparkHoldTimeSec) {
+        StartSparkUnlock();
+        CleanUpSparkAnimations();
+        _SparkButtonPressedTime = -1.0f;
+      }
+    }
     if (_SparkStopTime >= 0 && _SparkStopTime < Time.time) {
       StopSparkUnlock();
     }
@@ -279,7 +291,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
 
-    // apparently not a bigflag in unity
+    // apparently not a bitflag in unity
     RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_FRONT, Color.blue);
     RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.blue);
     RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_BACK, Color.blue);
@@ -296,6 +308,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _SparksTimerLabel.gameObject.SetActive(false);
     _SparkStopTime = -1.0f;
     UpdateState();
+
+    if (UnlockablesManager.Instance.OnSparkComplete != null) {
+      UnlockablesManager.Instance.OnSparkComplete.Invoke(this);
+    }
   }
 
   protected override void CleanUp() {
@@ -326,11 +342,5 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (_AlphaController != null) {
       closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
     }
-    // TODO: if we're moving activities out of here do we ever want to return?
-    closeAnimation.AppendCallback(() => {
-      if (UnlockablesManager.Instance.OnNewUnlock != null && _NewUnlock) {
-        UnlockablesManager.Instance.OnNewUnlock.Invoke();
-      }
-    });
   }
 }

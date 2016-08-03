@@ -112,7 +112,7 @@ namespace Cozmo {
           _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
         } else {
           if (DEBUG_SAYTEXT_ACTION) {
-            PRINT_NAMED_DEBUG("SayTextAction.Init.UsingAnimationGroup", "GameEvent=%hu (%s)",
+            PRINT_NAMED_DEBUG("SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s)",
                               _animationTrigger, EnumToString(_animationTrigger));
           }
           _playAnimationAction = new TriggerAnimationAction(_robot, _animationTrigger);

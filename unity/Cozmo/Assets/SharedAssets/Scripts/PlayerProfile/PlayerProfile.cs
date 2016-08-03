@@ -28,6 +28,8 @@ public class PlayerProfile {
 
   public Dictionary<string, int> TotalGamesPlayed;
 
+  public int OnboardingHomeStage;
+
   // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
   public int SaveVersion;
 
@@ -43,5 +45,6 @@ public class PlayerProfile {
     CozmoSkillLevels = new Dictionary<string, DataPersistence.GameSkillData>();
     Inventory = new Cozmo.Inventory();
     SaveVersion = 0;
+   OnboardingHomeStage = 0;
   }
 }

@@ -349,6 +349,18 @@
       "AnimName": "ag_faceEnrollment_Wiggle"
     },
     {
+      "CladEvent": "OnboardingBirth",
+      "AnimName": "ag_launch_firsttimewakeup"
+    },
+    {
+      "CladEvent": "OnboardingReactToCube",
+      "AnimName": "ag_launch_reacttocube"
+    },
+    {
+      "CladEvent": "OnboardingInteractWithCube",
+      "AnimName": "ag_launch_observecube"
+    },
+    {
       "CladEvent": "PlacedOnCharger",
       "AnimName": "ag_reactToCharger"
     },

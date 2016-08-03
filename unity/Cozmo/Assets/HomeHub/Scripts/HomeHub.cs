@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
@@ -124,7 +124,7 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
@@ -136,9 +136,16 @@ namespace Cozmo.HomeHub {
           ProceduralEyeParameters.MakeDefaultLeftEye(),
           ProceduralEyeParameters.MakeDefaultRightEye());
 
-        if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
-          robot.SetEnableFreeplayBehaviorChooser(true);
-        }
+        StartFreeplay(robot);
+      }
+    }
+
+    public void StartFreeplay(IRobot robot) {
+
+      if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
+          !OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+        robot.SetEnableFreeplayBehaviorChooser(true);
       }
     }
 

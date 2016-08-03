@@ -58,6 +58,7 @@ public static class LocalizationKeys {
   public const string kConnectivityPairingPinTitle = "connectivity.pairingPinTitle";
   public const string kConnectivityInvalidPinTitle = "connectivity.invalidPinTitle";
   public const string kConnectivityUpdateApp = "connectivity.updateApp";
+  public const string kConnectivityPullTabsTitle = "connectivity.pullTabsTitle";
 
   #endregion
 
@@ -263,6 +264,31 @@ public static class LocalizationKeys {
   public const string kNotificationLocal2 = "notification.local2";
   public const string kNotificationLocal3 = "notification.local3";
   public const string kNotificationLocal4 = "notification.local4";
+
+  #endregion
+
+  #region OnboardingStrings
+
+  public const string kOnboardingSlide0 = "onboarding.Slide0";
+  public const string kOnboardingSlide1 = "onboarding.Slide1";
+  public const string kOnboardingSlide2 = "onboarding.Slide2";
+  public const string kOnboardingSlide3 = "onboarding.Slide3";
+  public const string kOnboardingSlide4 = "onboarding.Slide4";
+  public const string kOnboardingSlide1a = "onboarding.Slide1a";
+  public const string kOnboardingPhase3Body1 = "onboarding.Phase3.Body1";
+  public const string kOnboardingPhase3Body2 = "onboarding.Phase3.Body2";
+  public const string kOnboardingPhase3Body3 = "onboarding.Phase3.Body3";
+  public const string kOnboardingPhase3Body4 = "onboarding.Phase3.Body4";
+  public const string kOnboardingPhase4Body1a = "onboarding.Phase4.Body1a";
+  public const string kOnboardingPhase4Body1b = "onboarding.Phase4.Body1b";
+  public const string kOnboardingPhase4Body2a = "onboarding.Phase4.Body2a";
+  public const string kOnboardingPhase4Body2b = "onboarding.Phase4.Body2b";
+  public const string kOnboardingPhase4Body3bits = "onboarding.Phase4.Body3bits";
+  public const string kOnboardingPhase4Body3sparks = "onboarding.Phase4.Body3sparks";
+  public const string kOnboardingPhase4Body4 = "onboarding.Phase4.Body4";
+  public const string kOnboardingPhase5Body1 = "onboarding.Phase5.Body1";
+  public const string kOnboardingPhase5Body2 = "onboarding.Phase5.Body2";
+  public const string kOnboardingPhase5Body3 = "onboarding.Phase5.Body3";
 
   #endregion
 

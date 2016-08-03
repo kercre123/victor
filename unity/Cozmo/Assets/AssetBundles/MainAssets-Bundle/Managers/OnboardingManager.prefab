@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &192142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 430874}
+  - 114: {fileID: 11467430}
+  m_Layer: 0
+  m_Name: OnboardingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &430874
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 192142}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!114 &11467430
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 192142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4887f77b48c344d53a94972a455cfb2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HomeOnboardingStages:
+  - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
+  - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}
+  - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
+  - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
+  - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
+  - {fileID: 11498296, guid: b3db4e05e330e46908d15bc271c92558, type: 2}
+  - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
+  - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
+  - {fileID: 11410378, guid: 908edc21d209b41159416f5383387705, type: 2}
+  - {fileID: 11407180, guid: 9fb21568656644549ab7f9f9783f8815, type: 2}
+  - {fileID: 11442482, guid: f6c2e8426a4ec48fb9ad931e3b8605a2, type: 2}
+  - {fileID: 11481006, guid: 959fa8ad92264464a87d01febec5a53c, type: 2}
+  _DebugLayerPrefab: {fileID: 103178, guid: d8451532cb4d14fc0a3f7bb0535f4fd9, type: 2}
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 192142}
+  m_IsPrefabParent: 1

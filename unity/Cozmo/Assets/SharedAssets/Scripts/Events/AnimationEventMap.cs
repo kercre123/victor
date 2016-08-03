@@ -4,6 +4,12 @@ using System.Collections.Generic;
 using Anki.Cozmo;
 using Newtonsoft.Json;
 
+
+[System.Serializable]
+public class SerializableAnimationTrigger : SerializableEnum<Anki.Cozmo.AnimationTrigger> {
+}
+
+
 /// <summary>
 /// Full List of Pairs for CladEvents to AnimationGroups.
 /// </summary>

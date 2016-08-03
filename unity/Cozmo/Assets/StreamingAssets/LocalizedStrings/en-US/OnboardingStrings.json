@@ -1,0 +1,81 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "onboarding.Slide0": {
+    "translation": "Create a <b>great</b> play space [ imagine an image here ]"
+  },
+  "onboarding.Slide1": {
+    "translation": "This Cozmo has already been through the Tutorial.\n Would you like to skip it or start again?"
+  },
+  "onboarding.Slide2": {
+    "translation": "Cozmo is a very special robot and needs a special owner.\n Follow the instructions carefully! <b>Are you ready to begin?</b>"
+  },
+  "onboarding.Slide3": {
+    "translation": "Show Cozmo a Cube."
+  },
+  "onboarding.Slide4": {
+    "translation": "Just like you, if it's too close, it's hard to see."
+  },
+  "onboarding.Slide1a": {
+    "translation": "COZMO LOGO"
+  },
+  "onboarding.Phase3.Body1": {
+    "translation": "<b>Show Cozmo a Cube</b> It will turn <color=green>green</color> when he can see it"
+  },
+  "onboarding.Phase3.Body2": {
+    "translation": "Just like you, if it's too close, It's hard to see"
+  },
+  "onboarding.Phase3.Body3": {
+    "translation": "Let Cozmo inspect the cube on it's own"
+  },
+  "onboarding.Phase3.Body4": {
+    "translation": "<b>It looks Good</b>"
+  },
+  "onboarding.Phase4.Body1a": {
+    "translation": "As you play with Cozmo, you'll charge his emotion chip"
+  },
+  "onboarding.Phase4.Body1b": {
+    "translation": "This chip is what makes him special, and alive"
+  },
+  "onboarding.Phase4.Body2a": {
+    "translation": "When the chip is fully charged,"
+  },
+  "onboarding.Phase4.Body2b": {
+    "translation": "you need to open it!"
+  },
+  "onboarding.Phase4.Body3bits": {
+    "translation": "Use <color=purple>bits</color> to Upgrade Cozmo"
+  },
+  "onboarding.Phase4.Body3sparks": {
+    "translation": "Use <color=blue>sparks</color> to get Cozmo to perform"
+  },
+  "onboarding.Phase4.Body4": {
+    "translation": "These are Cozmo's Upgrades. Use your <color=purple>BITS</color> to Upgrade the Pickup Cube."
+  },
+  "onboarding.Phase5.Body1": {
+    "translation": "It's time to play some games!\n\nTap the Play tab, here."
+  },
+  "onboarding.Phase5.Body2": {
+    "translation": "Here's what to do next for Today.\n\nThis is the quickest way to Upgrade Cozmo!"
+  },
+  "onboarding.Phase5.Body3": {
+    "translation": "These are Cozmo Apps. Your first goal is to use Meet Cozmo.\nTry it now!"
+  }
+}

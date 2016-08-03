@@ -19,6 +19,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public Action OnNewUnlock;
+  public Action<CoreUpgradeDetailsDialog> OnSparkComplete;
 
   private Dictionary<Anki.Cozmo.UnlockId, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockId, bool>();
 

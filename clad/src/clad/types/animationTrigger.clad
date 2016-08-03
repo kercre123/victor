@@ -7,8 +7,10 @@
 namespace Anki {
 namespace Cozmo {
 
-
-enum uint_16 AnimationTrigger
+// Because of a bug in unity editor custom drawers
+// they only properly draw our serielized enums as int32s or bytes.
+// ideally this would be a uint16.
+enum int_32 AnimationTrigger
 {
   AnimNone, // can't conflict with python keyword'
 
@@ -100,6 +102,9 @@ enum uint_16 AnimationTrigger
   OnSpeedtapTap,
   OnWaitForCubesMinigameSetup,
   OnWiggle,
+  OnboardingBirth,
+  OnboardingReactToCube,
+  OnboardingInteractWithCube,
   PlacedOnCharger,
   PopAWheelieInitial,
   PopAWheelieRealign,

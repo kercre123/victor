@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,6 +21,7 @@ namespace Cozmo.HomeHub {
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
     public Action<string> MinigameConfirmed;
+    public Action<string> OnTabChanged;
 
     [SerializeField]
     private HomeViewTab _CozmoTabPrefab;
@@ -148,10 +149,19 @@ namespace Cozmo.HomeHub {
       private set { _HomeHubInstance = value; }
     }
 
+    public Transform TabContentContainer {
+      get { return _TabContentContainer.transform; }
+    }
     public bool HomeViewCurrentlyOccupied {
       get {
         return (_RequestDialog != null || _LootViewInstance != null || RewardSequenceActive);
       }
+    }
+    public Transform TabButtonContainer {
+      get { return _TabButtonContainer.transform; }
+    }
+    public Transform TopBarContainer {
+      get { return _TopBarContainer.transform; }
     }
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
@@ -217,6 +227,10 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemAdded += HandleItemValueChanged;
       playerInventory.ItemRemoved += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
+
+      if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+        OnboardingManager.Instance.InitHomeHubOnboarding(this);
+      }
     }
 
     private IEnumerator BurstAfterInit() {
@@ -255,12 +269,13 @@ namespace Cozmo.HomeHub {
     private void HandleLootViewCloseAnimationFinished() {
       _EmotionChipTag.gameObject.SetActive(true);
       RewardSequenceActive = false;
+      _LootViewInstance = null;
       CheckIfUnlockablesAffordableAndUpdateBadge();
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
     }
 
     // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started
-    private void EnergyDooberBurst(int pointsEarned) {
+    public void EnergyDooberBurst(int pointsEarned) {
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
       int doobCount = Mathf.CeilToInt((float)pointsEarned / 5.0f);
       Sequence dooberSequence = DOTween.Sequence();
@@ -348,7 +363,7 @@ namespace Cozmo.HomeHub {
       _ChallengeStates = challengeStatesById;
     }
 
-    private void HandleCozmoTabButton() {
+    public void HandleCozmoTabButton() {
       // Do not allow changing tabs while receiving chests
       if (HomeViewCurrentlyOccupied) {
         return;
@@ -385,6 +400,10 @@ namespace Cozmo.HomeHub {
       _CurrentTab = Instantiate(homeViewTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
+
+      if (OnTabChanged != null) {
+        OnTabChanged(homeViewTabPrefab.name);
+      }
     }
 
     private void UpdateTabGraphics(HomeTab currentTab) {
