@@ -1,0 +1,6 @@
+*.o
+*.a
+*.safe
+signtest
+diffietest
+dhreverse

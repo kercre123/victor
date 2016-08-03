@@ -28,24 +28,24 @@ static inline void dh_random_to_num(big_num_t& num, const uint8_t* digits) {
 }
 
 // Supply remote_secret, local_secret, encoded_key and pin
-void dh_reverse(uint8_t* local_secret, uint8_t* remote_secret, int pin, uint8_t* key) {
+void dh_reverse(const uint8_t* local_secret, const uint8_t* remote_secret, int pin, uint8_t* key) {
   // Encode our secret as an exponent
   big_num_t temp;
   big_num_t state;
 
-  uint8_t local_encoded[SECRET_LENGTH];
-  uint8_t remote_encoded[SECRET_LENGTH];
+  uint8_t encoded_secret[SECRET_LENGTH];
   uint8_t encoded_key[AES_KEY_LENGTH];
 
-  dh_encode_random(local_encoded, pin, local_secret);
-  dh_random_to_num(temp, local_secret);
+  dh_encode_random(encoded_secret, pin, local_secret);  
+  dh_random_to_num(temp, encoded_secret);
   mont_power(RSA_DIFFIE_MONT, state, RSA_DIFFIE_EXP_MONT, temp);
 
-  dh_encode_random(remote_encoded, pin, remote_secret);
-  dh_random_to_num(temp, remote_secret);
+  dh_encode_random(encoded_secret, pin, remote_secret);
+  dh_random_to_num(temp, encoded_secret);
   mont_power(RSA_DIFFIE_MONT, state, state, temp);
 
   mont_from(RSA_DIFFIE_MONT, temp, state);
 
+  memcpy(encoded_key, key, AES_KEY_LENGTH);
   AES128_ECB_decrypt(encoded_key, (uint8_t*)temp.digits, key);
 }
