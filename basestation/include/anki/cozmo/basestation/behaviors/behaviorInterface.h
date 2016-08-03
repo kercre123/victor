@@ -122,7 +122,7 @@ public:
   const BehaviorType GetType() const { return _behaviorType; }
   const std::string& GetStateName() const { return _stateName; }
   virtual bool IsReactionary() const { return false;}
-  virtual bool ShouldRunInAir() const { return false;}
+  virtual bool ShouldRunWhilePickedUp() const { return false;}
 
   double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
 
@@ -438,7 +438,7 @@ public:
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 
   virtual bool IsReactionary() const override { return true;}
-  virtual bool ShouldRunInAir() const override { return true;}
+  virtual bool ShouldRunWhilePickedUp() const override { return true;}
   
   //Deal with default disabling - has to be called after type is set for behavior
   virtual void HandleDisableByDefault(Robot& robot);

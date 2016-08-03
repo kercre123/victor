@@ -362,7 +362,7 @@ bool IBehavior::IsRunnable(const Robot& robot) const
   }
   
   //check if the behavior runs while in the air
-  if(robot.IsPickedUp() && !ShouldRunInAir()){
+  if(robot.IsPickedUp() && !ShouldRunWhilePickedUp()){
     return false;
   }
 
