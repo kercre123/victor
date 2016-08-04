@@ -81,6 +81,8 @@ private:
   bool AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data);
   bool AppendPoseData(const std::string& poseName, const PoseData& data);
   bool AppendToFile(const std::string& data);
+
+  bool ArchiveAndDelete(const std::string& archiveName, const std::string& logBaseDir);
   
   std::string GetCurrDateTime() const;
   

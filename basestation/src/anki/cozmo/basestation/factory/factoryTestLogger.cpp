@@ -18,6 +18,8 @@
 #include <sstream>
 #include <chrono>
 
+#define ARCHIVE_OLD_LOGS 1
+
 namespace Anki {
 namespace Cozmo {
 
@@ -443,6 +445,23 @@ namespace Cozmo {
     return static_cast<uint32_t>(directoryList.size());
   }
   
+  bool FactoryTestLogger::ArchiveAndDelete(const std::string& archiveName, const std::string& logBaseDir)
+  {
+    auto filePaths = Util::FileUtils::FilesInDirectory(logBaseDir, true, nullptr, true);
+    if (ArchiveUtil::CreateArchiveFromFiles(archiveName, logBaseDir, filePaths)) {
+      
+      // Delete original logs
+      Util::FileUtils::RemoveDirectory(logBaseDir);
+      
+      return true;
+    }
+    
+    PRINT_NAMED_WARNING("FactoryTestLogger.ArchiveAndDelete.Failed",
+                        "ArchiveName: %s, LogBaseDir: %s",
+                        archiveName.c_str(), logBaseDir.c_str());
+    return false;
+  }
+  
   bool FactoryTestLogger::ArchiveLogs(Util::Data::DataPlatform* dataPlatform)
   {
     // Get base directory of log directories
@@ -460,14 +479,19 @@ namespace Cozmo {
     std::string archiveName = GetCurrDateTime() + ".tar.gz";
     
     // Create archive
-    auto filePaths = Util::FileUtils::FilesInDirectory(logBaseDirectory, true, nullptr, true);
-    if (ArchiveUtil::CreateArchiveFromFiles(archiveBaseDirectory + "/" + archiveName, logBaseDirectory, filePaths)) {
-    
-      // Delete original logs
-      Util::FileUtils::RemoveDirectory(logBaseDirectory);
-      
-      return true;
+    if (!ArchiveAndDelete(archiveBaseDirectory + "/" + archiveName, logBaseDirectory)) {
+      return false;
     }
+    
+#if ARCHIVE_OLD_LOGS
+    archiveName = "old_" + GetCurrDateTime() + ".tar.gz";
+    logBaseDirectory = dataPlatform->pathToResource(Util::Data::Scope::Cache, _kLogRootDirName);
+    if (!ArchiveAndDelete(archiveBaseDirectory + "/" + archiveName, logBaseDirectory)) {
+      return false;
+    }
+#endif
+    
+    
     
     return false;
   }
