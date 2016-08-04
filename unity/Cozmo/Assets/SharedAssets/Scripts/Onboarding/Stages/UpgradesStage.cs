@@ -14,10 +14,10 @@ namespace Onboarding {
     }
 
     public void OnDestroy() {
-      BaseView.BaseViewClosed -= HandleViewOpened;
+      BaseView.BaseViewOpened -= HandleViewOpened;
     }
 
-    public void HandleViewOpened(BaseView view) {
+    private void HandleViewOpened(BaseView view) {
       OnboardingManager.Instance.GoToNextStage();
     }
   }

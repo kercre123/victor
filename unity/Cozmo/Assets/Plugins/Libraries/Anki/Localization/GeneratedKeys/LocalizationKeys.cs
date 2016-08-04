@@ -59,6 +59,7 @@ public static class LocalizationKeys {
   public const string kConnectivityInvalidPinTitle = "connectivity.invalidPinTitle";
   public const string kConnectivityUpdateApp = "connectivity.updateApp";
   public const string kConnectivityPullTabsTitle = "connectivity.pullTabsTitle";
+  public const string kConnectivityEnterDOB = "connectivity.enterDOB";
 
   #endregion
 
@@ -304,6 +305,8 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase3Body2 = "onboarding.Phase3.Body2";
   public const string kOnboardingPhase3Body3 = "onboarding.Phase3.Body3";
   public const string kOnboardingPhase3Body4 = "onboarding.Phase3.Body4";
+  public const string kOnboardingPhase3ErrorCube = "onboarding.Phase3.ErrorCube";
+  public const string kOnboardingPhase3ErrorCozmo = "onboarding.Phase3.ErrorCozmo";
   public const string kOnboardingPhase4Body1a = "onboarding.Phase4.Body1a";
   public const string kOnboardingPhase4Body1b = "onboarding.Phase4.Body1b";
   public const string kOnboardingPhase4Body2a = "onboarding.Phase4.Body2a";

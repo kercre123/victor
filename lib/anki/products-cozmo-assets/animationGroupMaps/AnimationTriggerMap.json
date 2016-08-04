@@ -349,8 +349,16 @@
       "AnimName": "ag_faceEnrollment_Wiggle"
     },
     {
+      "CladEvent": "OnboardingPreBirth",
+      "AnimName": "ag_lookAtFace_keepAlive"
+    },
+    {
       "CladEvent": "OnboardingBirth",
       "AnimName": "ag_launch_firsttimewakeup"
+    },
+    {
+      "CladEvent": "OnboardingReactToFace",
+      "AnimName": "ag_reactToNewBlock"
     },
     {
       "CladEvent": "OnboardingReactToCube",

@@ -145,12 +145,9 @@ void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
   
 void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
 {
+  // actively want him to just turn around with the same cube...
   SET_STATE(DoingFinalReaction);
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupFinalCubeReaction));
-  // Turn all the way around
-  action->AddAction(new TurnInPlaceAction(robot,Radians(PI_F),false));
-  StartActing(action,
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupFinalCubeReaction),
               [this,&robot](ActionResult res) {
                   // Will no longer be runnable
                   _targetBlock.UnSet();

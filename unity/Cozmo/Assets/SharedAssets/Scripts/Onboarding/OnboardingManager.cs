@@ -49,9 +49,19 @@ public class OnboardingManager : MonoBehaviour {
 
   public void InitHomeHubOnboarding(Cozmo.HomeHub.HomeView homeview) {
     _HomeView = homeview;
-
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding);
     // TODO: Get more design on where "checkpoints" are.
     SetSpecificStage(0);
+  }
+
+  private void ExitHomeHubOnboarding() {
+    // Exit back into a normal view...
+    if (_DebugLayer != null) {
+      GameObject.Destroy(_DebugLayer);
+    }
+
+    HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+    UpdateStage();
   }
 
   public void GoToNextStage() {
@@ -74,20 +84,16 @@ public class OnboardingManager : MonoBehaviour {
     DataPersistenceManager.Instance.Data.DefaultProfile.OnboardingHomeStage = _CurrStage;
     if (_CurrStage >= 0 && _CurrStage < _HomeOnboardingStages.Length) {
       _CurrStageInst = UIManager.CreateUIElement(_HomeOnboardingStages[_CurrStage], _HomeView.transform);
-      UpdateHomeView(_HomeOnboardingStages[_CurrStage].ActiveTopBar,
-                     _HomeOnboardingStages[_CurrStage].ActiveMenuContent,
-                     _HomeOnboardingStages[_CurrStage].ActiveTabButtons);
+      UpdateStage(_HomeOnboardingStages[_CurrStage].ActiveTopBar,
+                   _HomeOnboardingStages[_CurrStage].ActiveMenuContent,
+                   _HomeOnboardingStages[_CurrStage].ActiveTabButtons,
+                   _HomeOnboardingStages[_CurrStage].ReactionsEnabled);
 
       // TODO: when reskin done, put in a gameObject here. It's basically below the energy but above the content.
       _CurrStageInst.transform.SetSiblingIndex(_HomeView.transform.childCount - 4);
     }
     else {
-      // Exit back into a normal view...
-      if (_DebugLayer != null) {
-        GameObject.Destroy(_DebugLayer);
-      }
-      HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
-      UpdateHomeView();
+      ExitHomeHubOnboarding();
     }
 
     DataPersistenceManager.Instance.Save();
@@ -119,12 +125,13 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-  private void UpdateHomeView(bool showTopBar = true, bool showContent = true, bool showButtons = true) {
+  private void UpdateStage(bool showTopBar = true, bool showContent = true, bool showButtons = true, bool reactionsEnabled = true) {
     if (_HomeView) {
       _HomeView.TopBarContainer.gameObject.SetActive(showTopBar);
       _HomeView.TabContentContainer.gameObject.SetActive(showContent);
       _HomeView.TabButtonContainer.gameObject.SetActive(showButtons);
     }
+    RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(reactionsEnabled);
   }
 
 }

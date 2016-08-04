@@ -108,6 +108,7 @@ MonoBehaviour:
   _ActiveTopBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
+  _ReactionsEnabled: 0
   _ContinueButtonInstance: {fileID: 0}
 --- !u!114 &11459748
 MonoBehaviour:

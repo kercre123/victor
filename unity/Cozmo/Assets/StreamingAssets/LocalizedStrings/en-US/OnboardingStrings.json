@@ -48,6 +48,12 @@
   "onboarding.Phase3.Body4": {
     "translation": "<b>It looks Good</b>"
   },
+  "onboarding.Phase3.ErrorCube": {
+    "translation": "The Cube Has moved!"
+  },
+  "onboarding.Phase3.ErrorCozmo": {
+    "translation": "Cozmo needs to be on a stable, flat, surface and to explore on his own."
+  },
   "onboarding.Phase4.Body1a": {
     "translation": "As you play with Cozmo, you'll charge his emotion chip"
   },

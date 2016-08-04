@@ -65,9 +65,11 @@ MonoBehaviour:
   _ActiveTopBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
+  _ReactionsEnabled: 1
   _Animation:
     _EnumValueAsString: OnboardingBirth
-    _EnumValue: 83
+    _EnumValue: 89
+  _LookForFacesMaxTime_Sec: 8
 --- !u!114 &11431754
 MonoBehaviour:
   m_ObjectHideFlags: 1

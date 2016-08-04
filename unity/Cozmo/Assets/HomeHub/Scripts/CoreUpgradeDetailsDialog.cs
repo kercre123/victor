@@ -86,6 +86,25 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _RequestTrickButtonContainer.gameObject.SetActive(false);
     _SparksTimerLabel.gameObject.SetActive(false);
 
+    // No quitting until they've finished onboarding
+    if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+      if (_UnlockInfo.UnlockableType == UnlockableType.Action) {
+        _OptionalCloseDialogButton.gameObject.SetActive(false);
+      }
+      // QA testing jumps around during stages. As a failsafe just give the amount needed since they can't exist.
+      Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
+        if (!playerInventory.CanRemoveItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded)) {
+          playerInventory.AddItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded);
+        }
+      }
+      else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked) {
+        if (!playerInventory.CanRemoveItemAmount(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded)) {
+          playerInventory.AddItemAmount(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded);
+        }
+      }
+    }
+
     if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked) {
       _UnlockableIcon.color = Color.white;
       if (unlockInfo.UnlockableType == UnlockableType.Action) {
@@ -114,11 +133,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
 
     UpdateState();
-    // No quitting until they've finished onboarding
-    if (OnboardingManager.Instance.IsOnboardingRequiredHome() &&
-        _UnlockInfo.UnlockableType == UnlockableType.Action) {
-      _OptionalCloseDialogButton.gameObject.SetActive(false);
-    }
+
   }
 
   private void SetupButton(CozmoButton button, UnityEngine.Events.UnityAction buttonCallback,
@@ -280,6 +295,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void StartSparkUnlock() {
+    if (UnlockablesManager.Instance.OnSparkStarted != null) {
+      UnlockablesManager.Instance.OnSparkStarted.Invoke(_UnlockInfo.Id.Value);
+    }
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     // Inventory valid was already checked when the button was initialized.
     playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
