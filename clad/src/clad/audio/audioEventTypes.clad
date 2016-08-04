@@ -31,6 +31,8 @@ enum uint_32 EventGroupType
   GenericEvent,
   Music,
   Robot,
+  Robot_Sfx,
+  Robot_Vo,
   Sfx,
   Ui,
 }
@@ -47,8 +49,27 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_1K_1Sec = 4068444155,
   Play__Dev_Robot__Tone_1K_5Sec = 1034417959,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
-  Play__Music = 899895346,
+  Play__Music__Play = 2748524418,
+  Play__Robot_Sfx__Spark_Launch = 771536042,
+  Play__Robot_Vo__Gp_Explorer_Backup_Beep = 1939604322,
+  Play__Robot_Vo__Gp_Keepaway_Fakeout_Pounce_Fast = 1992185148,
+  Play__Robot_Vo__Gp_Keepaway_Fakeout_Pounce_Scare = 888370506,
+  Play__Robot_Vo__Gp_Keepaway_Fakeout_Sneaky_Start = 2606311637,
+  Play__Robot_Vo__Gp_Keepaway_Get_In_Ready = 2743085071,
+  Play__Robot_Vo__Gp_Shared_Humph = 2079303,
+  Play__Robot_Vo__Gp_Shared_Win_Dance_Hum_1 = 1324616160,
+  Play__Robot_Vo__Shared_Bored_Look_Side = 751598833,
+  Play__Robot_Vo__Shared_Bored_Look_Up = 2589648919,
+  Play__Robot_Vo__Shared_Bored_Sigh_Long = 412109486,
+  Play__Robot_Vo__Shared_Bored_Sigh_Short = 2741090610,
+  Play__Robot_Vo__Shared_Inhale = 237432456,
+  Play__Robot_Vo__Word_Cube_Excited = 1262712072,
+  Play__Robot_Vo__Word_Cube_Neutral = 740915407,
+  Play__Robot_Vo__Word_Keepaway_Excited = 3097808214,
+  Play__Robot_Vo__Word_Keepaway_Request = 3460255911,
+  Play__Robot_Vo__Word_Keepaway_Sad = 2098273712,
   Play__Sfx__Attention_Device = 419735887,
+  Play__Sfx__Bpk_Red_Loop_Play = 2801910427,
   Play__Sfx__Code_Fragment_Released = 1918333736,
   Play__Sfx__Context_Switch_Loop_Play = 285232462,
   Play__Sfx__Cozmo_Connect = 3867011295,
@@ -63,8 +84,6 @@ enum uint_32 GenericEvent
   Play__Sfx__Gp_Shared_Request_Game = 1936634046,
   Play__Sfx__Gp_Shared_Round_End = 3799430148,
   Play__Sfx__Gp_Simon_Light_Blue = 2750453042,
-  Play__Sfx__Gp_Simon_Light_Green = 4110616195,
-  Play__Sfx__Gp_Simon_Light_Purple = 1667232420,
   Play__Sfx__Gp_Simon_Light_Red = 1199619783,
   Play__Sfx__Gp_Simon_Light_Yellow = 1915406258,
   Play__Sfx__Gp_St_Cube_Cozmo_Tap = 2843679148,
@@ -76,6 +95,8 @@ enum uint_32 GenericEvent
   Play__Sfx__Placeholder = 3278074531,
   Play__Sfx__Relationship_Gain = 1770649520,
   Play__Sfx__Relationship_Lose = 774876030,
+  Play__Sfx__Spark_Button_Loop_Play = 2431289432,
+  Play__Sfx__Spark_Launch = 38276463,
   Play__Sfx__Win_Shared = 1377668234,
   Play__Ui__Click_Back = 3218349115,
   Play__Ui__Click_General = 902542,
@@ -135,8 +156,10 @@ enum uint_32 GenericEvent
   Sfx_Srv_Surprised_Long_Play = 3526083160,
   Sfx_Srv_Surprised_Play = 963363667,
   Sfx_Srv_Surprised_Short_Play = 2913987754,
-  Stop__Music = 2632708460,
+  Stop__Music__Stop = 148746486,
+  Stop__Sfx__Bpk_Red_Loop_Stop = 1201502079,
   Stop__Sfx__Context_Switch_Loop_Stop = 1449741558,
+  Stop__Sfx__Spark_Button_Loop_Stop = 3747191960,
   Vo_Coz_Dev_Test_01_Play = 2490335911,
   Vo_Coz_Dev_Test_02_Play = 2941826454,
   Vo_Coz_Dev_Test_03_Play = 1724354181,
@@ -279,8 +302,8 @@ enum uint_32 GenericEvent
 enum uint_32 Music
 {
   Invalid = 0,  // Use this to check for Invalid events
-  Play = 899895346,
-  Stop = 2632708460,
+  Play = 2748524418,
+  Stop = 148746486,
 }
 
 enum uint_32 Robot
@@ -478,9 +501,39 @@ enum uint_32 Robot
   WordSpeedTap = 569647932,
 }
 
+enum uint_32 Robot_Sfx
+{
+  Invalid = 0,  // Use this to check for Invalid events
+  Spark_Launch = 771536042,
+}
+
+enum uint_32 Robot_Vo
+{
+  Gp_Explorer_Backup_Beep = 1939604322,
+  Gp_Keepaway_Fakeout_Pounce_Fast = 1992185148,
+  Gp_Keepaway_Fakeout_Pounce_Scare = 888370506,
+  Gp_Keepaway_Fakeout_Sneaky_Start = 2606311637,
+  Gp_Keepaway_Get_In_Ready = 2743085071,
+  Gp_Shared_Humph = 2079303,
+  Gp_Shared_Win_Dance_Hum_1 = 1324616160,
+  Invalid = 0,  // Use this to check for Invalid events
+  Shared_Bored_Look_Side = 751598833,
+  Shared_Bored_Look_Up = 2589648919,
+  Shared_Bored_Sigh_Long = 412109486,
+  Shared_Bored_Sigh_Short = 2741090610,
+  Shared_Inhale = 237432456,
+  Word_Cube_Excited = 1262712072,
+  Word_Cube_Neutral = 740915407,
+  Word_Keepaway_Excited = 3097808214,
+  Word_Keepaway_Request = 3460255911,
+  Word_Keepaway_Sad = 2098273712,
+}
+
 enum uint_32 Sfx
 {
   Attention_Device = 419735887,
+  Bpk_Red_Loop_Play = 2801910427,
+  Bpk_Red_Loop_Stop = 1201502079,
   Code_Fragment_Released = 1918333736,
   Context_Switch_Loop_Play = 285232462,
   Context_Switch_Loop_Stop = 1449741558,
@@ -496,8 +549,6 @@ enum uint_32 Sfx
   Gp_Shared_Request_Game = 1936634046,
   Gp_Shared_Round_End = 3799430148,
   Gp_Simon_Light_Blue = 2750453042,
-  Gp_Simon_Light_Green = 4110616195,
-  Gp_Simon_Light_Purple = 1667232420,
   Gp_Simon_Light_Red = 1199619783,
   Gp_Simon_Light_Yellow = 1915406258,
   Gp_St_Cube_Cozmo_Tap = 2843679148,
@@ -510,6 +561,9 @@ enum uint_32 Sfx
   Placeholder = 3278074531,
   Relationship_Gain = 1770649520,
   Relationship_Lose = 774876030,
+  Spark_Button_Loop_Play = 2431289432,
+  Spark_Button_Loop_Stop = 3747191960,
+  Spark_Launch = 38276463,
   Win_Shared = 1377668234,
 }
 
