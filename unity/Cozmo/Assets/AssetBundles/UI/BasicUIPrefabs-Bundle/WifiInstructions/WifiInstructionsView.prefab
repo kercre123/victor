@@ -16,23 +16,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &145038
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22427612}
-  - 222: {fileID: 22254986}
-  - 114: {fileID: 11495800}
-  m_Layer: 5
-  m_Name: InstructionsContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &145444
 GameObject:
   m_ObjectHideFlags: 1
@@ -60,6 +43,7 @@ GameObject:
   - 224: {fileID: 22461814}
   - 222: {fileID: 22277488}
   - 114: {fileID: 11483990}
+  - 114: {fileID: 11473468}
   m_Layer: 5
   m_Name: WifiInstructionsView
   m_TagString: Untagged
@@ -69,7 +53,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &182248
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -158,6 +142,26 @@ MonoBehaviour:
     _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
+--- !u!114 &11473468
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 173596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6579bf731e26496da1ac1e4e45051b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _SlidePrefabs:
+  - {fileID: 170546, guid: 9ebd2cd21286543298336f6690c0f4c5, type: 2}
+  - {fileID: 166310, guid: 55383874563894ad592ee15798b806df, type: 2}
+  - {fileID: 112936, guid: 92d815d3c7aa94d1faf8b5b0fa2c46aa, type: 2}
+  - {fileID: 112936, guid: 2236bc300437b4eb18349c6bbe8e90ca, type: 2}
+  - {fileID: 112936, guid: c48effaa0c4c74e15a93e91b17ea7cc1, type: 2}
+  _SwipeContainer: {fileID: 22405804}
+  _PageIndicatorPrefab: {fileID: 11435474, guid: 570bebd44cb114622b6d8fb39a91247a,
+    type: 2}
 --- !u!114 &11474252
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -201,26 +205,6 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 11458820}
   DimBackground: 0
---- !u!114 &11495800
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145038}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6579bf731e26496da1ac1e4e45051b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _SlidePrefabs:
-  - {fileID: 170546, guid: 9ebd2cd21286543298336f6690c0f4c5, type: 2}
-  - {fileID: 166310, guid: 55383874563894ad592ee15798b806df, type: 2}
-  - {fileID: 112936, guid: 92d815d3c7aa94d1faf8b5b0fa2c46aa, type: 2}
-  - {fileID: 112936, guid: 2236bc300437b4eb18349c6bbe8e90ca, type: 2}
-  - {fileID: 112936, guid: c48effaa0c4c74e15a93e91b17ea7cc1, type: 2}
-  _SwipeContainer: {fileID: 22405804}
-  _PageIndicatorPrefab: {fileID: 11435474, guid: 570bebd44cb114622b6d8fb39a91247a,
-    type: 2}
 --- !u!222 &22249756
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -233,12 +217,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 145444}
---- !u!222 &22254986
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145038}
 --- !u!222 &22277488
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -281,31 +259,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22427612}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 150}
-  m_SizeDelta: {x: 0, y: -300}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22427612
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145038}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children:
-  - {fileID: 22405804}
   m_Father: {fileID: 22461814}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 150}
+  m_SizeDelta: {x: 0, y: -300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22430006
 RectTransform:
@@ -337,7 +296,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22466598}
-  - {fileID: 22427612}
+  - {fileID: 22405804}
   - {fileID: 22404124}
   m_Father: {fileID: 0}
   m_RootOrder: 0
