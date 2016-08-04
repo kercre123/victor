@@ -24,7 +24,6 @@ namespace RobotInterface {
 
 message SyncTimeAck
 {
-  bool isPhysical
 }
 
 message RobotPoked

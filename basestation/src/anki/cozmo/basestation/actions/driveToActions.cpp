@@ -363,7 +363,7 @@ namespace Anki {
                           _robot.GetID(), _objectID.GetValue());
         
         result = ActionResult::FAILURE_ABORT;
-      } else if(ObservableObject::PoseState::Unknown == object->GetPoseState()) {
+      } else if(PoseState::Unknown == object->GetPoseState()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
                           "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
                           _robot.GetID(), _objectID.GetValue());

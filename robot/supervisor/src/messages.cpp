@@ -251,12 +251,6 @@ namespace Anki {
         AnkiInfo( 100, "Messages.Process_syncTime.Recvd", 305, "", 0);
 
         RobotInterface::SyncTimeAck syncTimeAckMsg;
-#ifdef  SIMULATOR
-        syncTimeAckMsg.isPhysical = false;
-#       else
-        syncTimeAckMsg.isPhysical = true;
-#       endif
-
         if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
           AnkiWarn( 102, "Messages.Process_syncTime.AckFailed", 352, "Failed to send syncTimeAckMsg", 0);
         }

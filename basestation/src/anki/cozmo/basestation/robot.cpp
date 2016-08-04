@@ -2378,7 +2378,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
   }
 
   // Mark as dirty so that the robot no longer localizes to this object
-  object->SetPoseState(Anki::Vision::ObservableObject::PoseState::Dirty);
+  object->SetPoseState(PoseState::Dirty);
       
   _usingManualPathSpeed = useManualSpeed;
   _lastPickOrPlaceSucceeded = false;
@@ -2595,9 +2595,9 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
         // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
         // we are not dropping the cube yet
         const Pose3d& oldPoseTop = actionObjectOnTop->GetPose(); // do this before setting the new one (at least cache copy)
-        const ActionableObject::PoseState oldPoseStateTop = actionObjectOnTop->GetPoseState();
+        const PoseState oldPoseStateTop = actionObjectOnTop->GetPoseState();
         const Pose3d& newPoseTop = onTopPoseWrtCarriedPose;
-        const ActionableObject::PoseState newPoseStateTop = ActionableObject::PoseState::Unknown;
+        const PoseState newPoseStateTop = PoseState::Unknown;
         GetBlockWorld().OnObjectPoseChanged(objectID, object->GetFamily(), oldPoseTop, oldPoseStateTop, newPoseTop, newPoseStateTop );
         
         // now that we have notified, do set the new pose
@@ -2616,9 +2616,9 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
   // Notify blockworld of the change in pose for the carrying object, but pretend the new pose is unknown since
   // we are not dropping the cube yet
   const Pose3d& oldPose = object->GetPose(); // this has to happen before we set it to the new (at least cache copy)
-  const ActionableObject::PoseState oldPoseState = object->GetPoseState();
+  const PoseState oldPoseState = object->GetPoseState();
   const Pose3d& newPose = objectPoseWrtLiftPose;
-  const ActionableObject::PoseState newPoseState = ActionableObject::PoseState::Unknown;
+  const PoseState newPoseState = PoseState::Unknown;
   GetBlockWorld().OnObjectPoseChanged(objectID, object->GetFamily(), oldPose, oldPoseState, newPose, newPoseState );
 
   // Don't actually change the object's pose until we've checked for objects on top

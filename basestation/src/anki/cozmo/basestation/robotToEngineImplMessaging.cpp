@@ -50,6 +50,10 @@
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0
 
+// Always play robot audio on device
+#define ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE 0
+
+
 namespace Anki {
 namespace Cozmo {
   
@@ -108,6 +112,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncTimeAck,                    &RobotToEngineImplMessaging::HandleSyncTimeAck);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotPoked,                     &RobotToEngineImplMessaging::HandleRobotPoked);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,                            &RobotToEngineImplMessaging::HandleRobotSetID);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                 &RobotToEngineImplMessaging::HandleFirmwareVersion);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorCalibration,               &RobotToEngineImplMessaging::HandleMotorCalibration);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   
@@ -215,6 +220,32 @@ void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface
   // This should be definition always have a phys ID
   Anki::Util::sEvent("robot.handleRobotSetID",{},string_id);
 }
+  
+  
+void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  // Extract sim flag from json
+  const auto& fwData = message.GetData().Get_firmwareVersion().json;
+  std::string jsonString{fwData.begin(), fwData.end()};
+  Json::Reader reader;
+  Json::Value headerData;
+  reader.parse(jsonString, headerData);
+  
+  // simulated robot will have special tag in json
+  const bool robotIsPhysical = headerData["sim"].isNull();
+  PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
+  robot->SetPhysicalRobot(robotIsPhysical);
+  
+  // Update robot audio output source
+  auto outputSource = (robotIsPhysical && !ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE) ?
+                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot :
+                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice;
+  robot->GetRobotAudioClient()->SetOutputSource(outputSource);
+  
+  // Send syncTime
+  robot->SyncTime();
+}
+  
 
 void RobotToEngineImplMessaging::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
@@ -496,7 +527,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
                        EnumToString(object->GetType()), EnumToString(payload.objectMoved.upAxis));
       
       
-      if(object->GetPoseState() == ObservableObject::PoseState::Known)
+      if(object->GetPoseState() == PoseState::Known)
       {
         PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
                          "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
@@ -507,7 +538,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
         // we don't know where it is anymore. Next time we see it, relocalize it
         // relative to robot's pose estimate. Then we can use it for localization
         // again.
-        object->SetPoseState(ObservableObject::PoseState::Dirty);
+        object->SetPoseState(PoseState::Dirty);
         
         // If this is the object we were localized to, unset our localizedToID.
         // Note we are still "localized" by odometry, however.
@@ -607,11 +638,11 @@ void RobotToEngineImplMessaging::HandleActiveObjectStopped(const AnkiEvent<Robot
         continue;
       }
       
-      if(object->GetPoseState() == ObservableObject::PoseState::Known) {
+      if(object->GetPoseState() == PoseState::Known) {
         // Not sure how an object could have a known pose before it stopped moving,
         // but just to be safe, re-delocalize and force a re-localization now
         // that we've gotten the stopped-moving message.
-        object->SetPoseState(ObservableObject::PoseState::Dirty);
+        object->SetPoseState(PoseState::Dirty);
         
         // If this is the object we were localized to, unset our localizedToID.
         // Note we are still "localized" by odometry, however.
@@ -931,9 +962,6 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
 void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   robot->SetTimeSynced(true);
-  
-  RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
-  robot->SetPhysicalRobot(payload.isPhysical);
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

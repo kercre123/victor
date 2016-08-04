@@ -27,7 +27,7 @@
 #include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
-#include "util/signals/simpleSignal_fwd.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/types/actionTypes.h"
 
 #include <vector>
@@ -89,8 +89,8 @@ namespace Anki
       
       // notify the blockWorld that someone has changed the pose of an object
       void OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
-        const Pose3d& oldPose, ActionableObject::PoseState oldPoseState,
-        const Pose3d& newPose, ActionableObject::PoseState newPoseState);
+        const Pose3d& oldPose, PoseState oldPoseState,
+        const Pose3d& newPose, PoseState newPoseState);
 	  
       // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
       // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
@@ -336,6 +336,15 @@ namespace Anki
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
+
+      
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Navigation memory
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // template for all events we subscribe to
+      template<typename T>
+      void HandleMessage(const T& msg);
       
     protected:
       

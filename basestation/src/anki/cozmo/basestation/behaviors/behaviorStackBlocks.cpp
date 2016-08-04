@@ -427,9 +427,9 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
 {
   const char* poseStateStr = "";
   switch(obj->GetPoseState()) {
-    case ObservableObject::PoseState::Known: poseStateStr = "known"; break;
-    case ObservableObject::PoseState::Unknown: poseStateStr = "unknown"; break;
-    case ObservableObject::PoseState::Dirty: poseStateStr = "dirty"; break;
+    case PoseState::Known: poseStateStr = "known"; break;
+    case PoseState::Unknown: poseStateStr = "unknown"; break;
+    case PoseState::Dirty: poseStateStr = "dirty"; break;
   }
   
   PRINT_NAMED_DEBUG(event,

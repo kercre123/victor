@@ -184,7 +184,6 @@ void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMess
   }
   
   _currentConnectionData->SetState(RobotConnectionData::State::Connected);
-  _robotManager->GetFirstRobot()->SyncTime();
 }
 
 void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData& nextMessage)

@@ -233,7 +233,7 @@ public:
   // Specify whether this robot is a physical robot or not.
   // Currently, adjusts headCamPose by slop factor if it's physical.
   void SetPhysicalRobot(bool isPhysical);
-  bool IsPhysical() {return _isPhysical;}
+  bool IsPhysical() const {return _isPhysical;}
     
   //
   // Pose (of the robot or its parts)

@@ -141,7 +141,7 @@ namespace Anki {
     
     bool ActiveObject::CanBeUsedForLocalization() const
     {
-      return (GetPoseState() == ObservableObject::PoseState::Known &&
+      return (GetPoseState() == PoseState::Known &&
               GetLastPoseUpdateDistance() >= 0.f &&
               GetLastPoseUpdateDistance() <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
               GetIdentityState() == ActiveIdentityState::Identified &&

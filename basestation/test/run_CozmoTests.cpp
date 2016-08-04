@@ -165,7 +165,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   blockWorld.ClearObject(objID);
   object = blockWorld.GetObjectByID(objID);
   ASSERT_NE(object, nullptr);
-  ASSERT_EQ(object->GetPoseState(), ObservableObject::PoseState::Unknown);
+  ASSERT_EQ(object->GetPoseState(), PoseState::Unknown);
   
 } // BlockWorld.AddAndRemoveObject
 

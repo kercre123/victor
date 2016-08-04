@@ -24,9 +24,6 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
-// Always play audio on device
-#define OVERRIDE_ON_DEVICE_OUTPUT_SOURCE 0
-
 
 namespace Anki {
 namespace Cozmo {
@@ -46,30 +43,6 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   }
 
   _audioController = context->GetAudioServer()->GetAudioController();
-
-  // Add listener to robot messages
-  // This only helps to determine if we should play sound on Webots or on the Robot
-  auto robotSyncCallback = [this] ( const AnkiEvent<RobotInterface::RobotToEngine>& message ) {
-    RobotAudioOutputSource outputSource = RobotAudioOutputSource::PlayOnDevice;
-
-    if ( ! OVERRIDE_ON_DEVICE_OUTPUT_SOURCE ) {
-      const RobotInterface::SyncTimeAck msg = message.GetData().Get_syncTimeAck();
-      outputSource = msg.isPhysical ? RobotAudioOutputSource::PlayOnRobot : RobotAudioOutputSource::PlayOnDevice;
-    }
-
-    // Rely on casting to convert between the RobotAudioClient enum and the CLAD generated enum for
-    // the easy ToString function
-
-    PRINT_NAMED_DEBUG(
-      "RobotAudioClient.RobotAudioClient.RobotSyncCallback",
-      "outputSource: %s",
-      ExternalInterface::RobotAudioOutputSourceCLADToString(
-        (ExternalInterface::RobotAudioOutputSourceCLAD)outputSource
-      )
-    );
-
-    SetOutputSource( outputSource );
-  };
   
   auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
     const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
@@ -107,13 +80,6 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
     PRINT_NAMED_DEBUG("RobotAudioClient.RobotAudioClient.RobotAudioOutputSourceCallback", "outputSource: %hhu", msg.source);
   };
   
-  RobotInterface::MessageHandler* robotMsgHandler = context->GetRobotManager()->GetMsgHandler();
-  if ( robotMsgHandler) {
-    _signalHandles.push_back( robotMsgHandler->Subscribe( _robot->GetID(),
-                                                          RobotInterface::RobotToEngineTag::syncTimeAck,
-                                                          robotSyncCallback ) );
-  }
-
   IExternalInterface* gameToEngineInterface = context->GetExternalInterface();
   if ( gameToEngineInterface ) {
     PRINT_NAMED_DEBUG("RobotAudioClient.RobotAudioClient", "gameToEngineInterface exists");

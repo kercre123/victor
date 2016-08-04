@@ -304,7 +304,7 @@ message KnownObject {
     ObjectFamily objectFamily,
     ObjectType   objectType,
     PoseStruct3d pose,
-    uint_8       poseState,
+    PoseState    poseState,
     bool         isConnected,
 }
 

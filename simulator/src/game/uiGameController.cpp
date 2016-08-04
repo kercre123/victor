@@ -258,7 +258,7 @@ namespace Anki {
     
     void UiGameController::HandleKnownObjectBase(ExternalInterface::KnownObject const& msg)
     {
-      PRINT_NAMED_INFO("HandleKnownObject", "Received message about known object %d (type: %s, poseState: %d)",
+      PRINT_NAMED_INFO("HandleKnownObject", "Received message about known object %d (type: %s, poseState: %hhu)",
                        msg.objectID, EnumToString(msg.objectType), msg.poseState);
       
       HandleKnownObject(msg);

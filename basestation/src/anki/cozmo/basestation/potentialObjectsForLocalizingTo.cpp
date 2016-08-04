@@ -73,10 +73,10 @@ void PotentialObjectsForLocalizingTo::ObservedAndMatchedPair::UpdateMatchedObjec
   {
     // If we're seeing this object from too far away or while moving...
     
-    if(matchedObject->GetPoseState() != ObservableObject::PoseState::Known) {
+    if(matchedObject->GetPoseState() != PoseState::Known) {
       // ...and it was already not known (dirty or unknown), then update the pose
       // and leave or upgrade it to dirty
-      matchedObject->SetPose( observedObject->GetPose(), distance, ObservableObject::PoseState::Dirty);
+      matchedObject->SetPose( observedObject->GetPose(), distance, PoseState::Dirty);
     }
     
     // ... and it was previously known, then don't update it with what is likely a
@@ -299,7 +299,7 @@ bool PotentialObjectsForLocalizingTo::CouldUseObjectForLocalization(const Observ
                       matchingObject->GetID().GetValue(),
                       closeEnough, distToObj,
                       objectCanBeUsedForLocalization,
-                      matchingObject->GetPoseState()==ObservableObject::PoseState::Known ? "Known" : "Unknown/Dirty",
+                      matchingObject->GetPoseState()==PoseState::Known ? "Known" : "Unknown/Dirty",
                       isDockingObject, isTrackToObject);
                       
   return useThisObjectToLocalize;

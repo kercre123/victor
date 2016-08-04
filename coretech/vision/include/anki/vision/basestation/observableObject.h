@@ -29,6 +29,7 @@
 
 #include "anki/common/basestation/math/point_impl.h"
 
+#include "clad/types/poseStructs.h"
 
 
 namespace Anki {
@@ -46,14 +47,6 @@ namespace Anki {
     class ObservableObject
     {
     public:
-      
-      enum class PoseState
-      {
-        Known,
-        Dirty,
-        Unknown
-      };
-      
       
       // Do we want to be req'd to instantiate with all codes up front?
       ObservableObject();

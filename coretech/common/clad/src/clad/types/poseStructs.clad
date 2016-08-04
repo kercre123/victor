@@ -30,4 +30,13 @@ namespace Anki {
     uint_32 originID, // Which coordinate frame this pose is in (0 for none or unknown)
   }
 
+
+  enum uint_8 PoseState
+  {
+    Known,
+    Dirty,
+    Unknown
+  }
+
+
 } // namespace Anki

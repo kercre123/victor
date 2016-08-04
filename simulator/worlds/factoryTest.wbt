@@ -52,7 +52,7 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
 }
 WebotsKeyboardController {
-  behaviorChooser "Selection"
+  behaviorChooserName "Selection"
   behaviorName "FactoryTest"
 }
 CozmoVizDisplay {

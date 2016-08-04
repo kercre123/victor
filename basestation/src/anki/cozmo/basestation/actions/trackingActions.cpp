@@ -373,7 +373,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   assert(nullptr != matchingObject);
   
-  ASSERT_NAMED(ObservableObject::PoseState::Unknown != matchingObject->GetPoseState(),
+  ASSERT_NAMED(PoseState::Unknown != matchingObject->GetPoseState(),
                "Object's pose state should not be Unknkown");
   
   _lastTrackToPose = matchingObject->GetPose();
