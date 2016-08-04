@@ -200,7 +200,7 @@ Supervisor {
         ly = idx[i][2] * (hWidth - ledWidth/2 + 0.0001)
         lz = idx[i][3] * (hWidth - ledWidth/2 + 0.0001)
     }%
-    LED {
+    DEF %{=led_name}% BetterLED {
       name "%{=led_name}%"
       children [
         DEF LED_SHAPE Group {

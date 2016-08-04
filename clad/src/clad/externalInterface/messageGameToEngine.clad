@@ -597,24 +597,24 @@ message SetHeadlight
   bool enable
 }
 
-// SetActiveObjectLEDs
 message SetActiveObjectLEDs {
     uint_32  objectID,
     uint_32  onColor,
     uint_32  offColor,
     uint_32  onPeriod_ms,
     uint_32  offPeriod_ms,
-    uint_32  transitionOnPeriod_ms,
-    uint_32  transitionOffPeriod_ms,
-    float_32 relativeToX,
-    float_32 relativeToY,
+    uint_32  transitionOnPeriod_ms,  // The fade period from off color to on color
+    uint_32  transitionOffPeriod_ms,  // The fade period from on color to off color
+    float_32 relativeToX,  // ignored if makeRelative is RELATIVE_LED_MODE_OFF
+    float_32 relativeToY,  // ignored if makeRelative is RELATIVE_LED_MODE_OFF
     WhichCubeLEDs   whichLEDs,
     MakeRelativeMode   makeRelative,
     uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
     uint_8   robotID
 }
 
-// SetAllActiveObjectLEDs
+
+// See SetActiveObjectLEDs for parameter documentation
 message SetAllActiveObjectLEDs {
   uint_32  objectID,
   uint_32  onColor[4],
@@ -625,7 +625,7 @@ message SetAllActiveObjectLEDs {
   uint_32  transitionOffPeriod_ms[4],
   float_32 relativeToX,
   float_32 relativeToY,
-  MakeRelativeMode   makeRelative,  // if 0, ignores relativeX/relativeY
+  MakeRelativeMode   makeRelative,
   uint_8   robotID
 }
 

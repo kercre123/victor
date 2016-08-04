@@ -9,6 +9,8 @@
 #ifndef __UI_GAME_CONTROLLER_H__
 #define __UI_GAME_CONTROLLER_H__
 
+#include <webots/Supervisor.hpp>
+#include <unordered_set>
 #include "anki/types.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/math/pose.h"
@@ -22,8 +24,7 @@
 #include "clad/types/objectFamilies.h"
 #include "clad/types/visionModes.h"
 #include "clad/types/nvStorageTypes.h"
-#include <webots/Supervisor.hpp>
-#include <unordered_set>
+#include "clad/types/activeObjectTypes.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
@@ -269,7 +270,36 @@ protected:
   void SendNVClearPartialPendingWriteData();
   void SendSetHeadlight(bool enable);
   void SendEnableBlockTapFilter(bool enable);
-  
+
+  ///
+  // @brief      Send SetActiveObjectLEDs CLAD message
+  //
+  // See the .clad file for documentation on parameters. The parameter robotID does not need to be
+  // passed in.
+  //
+  void SendSetActiveObjectLEDs(const u32 objectID, 
+                               const u32 onColor,
+                               const u32 offColor,
+                               const u32 onPeriod_ms,
+                               const u32 offPeriod_ms,
+                               const u32 transitionOnPeriod_ms,
+                               const u32 transitionOffPeriod_ms,
+                               const f32 relativeToX,
+                               const f32 relativeToY,
+                               const WhichCubeLEDs whichLEDs,
+                               const MakeRelativeMode makeRelative,
+                               const bool turnOffUnspecifiedLEDs);
+
+  void SendSetAllActiveObjectLEDs(const u32 objectID, 
+                                  const std::array<u32, 4> onColor,
+                                  const std::array<u32, 4> offColor,
+                                  const std::array<u32, 4> onPeriod_ms,
+                                  const std::array<u32, 4> offPeriod_ms,
+                                  const std::array<u32, 4> transitionOnPeriod_ms,
+                                  const std::array<u32, 4> transitionOffPeriod_ms,
+                                  const f32 relativeToX,
+                                  const f32 relativeToY,
+                                  const MakeRelativeMode makeRelative);
 
   // ====== Accessors =====
   s32 GetStepTimeMS() const;

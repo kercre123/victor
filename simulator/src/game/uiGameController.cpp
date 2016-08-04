@@ -1596,6 +1596,66 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
+    void UiGameController::SendSetActiveObjectLEDs(const u32 objectID, 
+                                                   const u32 onColor,
+                                                   const u32 offColor,
+                                                   const u32 onPeriod_ms,
+                                                   const u32 offPeriod_ms,
+                                                   const u32 transitionOnPeriod_ms,
+                                                   const u32 transitionOffPeriod_ms,
+                                                   const f32 relativeToX,
+                                                   const f32 relativeToY,
+                                                   const WhichCubeLEDs whichLEDs,
+                                                   const MakeRelativeMode makeRelative,
+                                                   const bool turnOffUnspecifiedLEDs)
+    {
+      ExternalInterface::SetActiveObjectLEDs m(
+        objectID,
+        onColor,
+        offColor,
+        onPeriod_ms,
+        offPeriod_ms,
+        transitionOnPeriod_ms,
+        transitionOffPeriod_ms,
+        relativeToX,
+        relativeToY,
+        whichLEDs,
+        makeRelative,
+        turnOffUnspecifiedLEDs,
+        1  // robotID
+      );
+
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+
+    void UiGameController::SendSetAllActiveObjectLEDs(const u32 objectID, 
+                                                      const std::array<u32, 4> onColor,
+                                                      const std::array<u32, 4> offColor,
+                                                      const std::array<u32, 4> onPeriod_ms,
+                                                      const std::array<u32, 4> offPeriod_ms,
+                                                      const std::array<u32, 4> transitionOnPeriod_ms,
+                                                      const std::array<u32, 4> transitionOffPeriod_ms,
+                                                      const f32 relativeToX,
+                                                      const f32 relativeToY,
+                                                      const MakeRelativeMode makeRelative)
+    {
+      ExternalInterface::SetAllActiveObjectLEDs m(
+        objectID,
+        onColor,
+        offColor,
+        onPeriod_ms,
+        offPeriod_ms,
+        transitionOnPeriod_ms,
+        transitionOffPeriod_ms,
+        relativeToX,
+        relativeToY,
+        makeRelative,
+        1  // robotID
+      );
+
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+
     void UiGameController::QuitWebots(s32 status)
     {
       PRINT_NAMED_INFO("UiGameController.QuitWebots.Result", "%d", status);

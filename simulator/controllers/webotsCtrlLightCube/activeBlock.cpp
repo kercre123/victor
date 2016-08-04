@@ -76,6 +76,8 @@ namespace {
   BlockState state_ = NORMAL;
   
   webots::LED* led_[NUM_CUBE_LEDS];
+  webots::Node* betterLed_[NUM_CUBE_LEDS];
+
   LightState ledParams_[NUM_CUBE_LEDS];
   TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
   
@@ -135,6 +137,12 @@ namespace {
 // to make it suitable for webots LED 24bit RGB color
 inline void SetLED_helper(u32 index, u32 rgbaColor) {
   led_[index]->set(rgbaColor);
+
+  double red = (rgbaColor & 0x00ff0000) >> 16;  // get first byte
+  double green = (rgbaColor & 0x0000ff00) >> 8;  // second byte
+  double blue = (rgbaColor & 0x000000ff);  // third byte
+  double betterColor[3] = {red, green, blue};
+  betterLed_[index]->getField("betterColor")->setSFVec3f(betterColor);
 }
 
 
@@ -160,6 +168,8 @@ void Process_setCubeLights(const CubeLights& msg)
   
   // Set lights immediately
   for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
+    // The color in the CLAD structure LightState is 16 bits structed as the following in binary:
+    // irrrrrgggggbbbbb, that's 1 bit for infrared, 5 bits for red, green, blue, respectively.
     const u32 newColor = ((msg.lights[i].onColor & LED_ENC_RED) << (16 - 10 + 3)) |
                          ((msg.lights[i].onColor & LED_ENC_GRN) << ( 8 -  5 + 3)) |
                          ((msg.lights[i].onColor & LED_ENC_BLU) << ( 0 -  0 + 3));
@@ -281,6 +291,9 @@ Result Init()
     sprintf(led_name, "led%d", i);
     led_[i] = active_object_controller.getLED(led_name);
     assert(led_[i] != nullptr);
+
+    betterLed_[i] = active_object_controller.getFromDef(led_name);
+    assert(betterLed_[i] != nullptr);
   }
   
   // Get radio receiver
