@@ -36,7 +36,7 @@ namespace Anki {
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge with the Unlock"), ChallengeID);
-        Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Newly unlocked difficulty level"), Difficulty);
+        Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Newly unlocked difficulty level from OnChallengeDifficultyUnlock"), Difficulty);
         EditorGUILayout.EndHorizontal();
       }
       #endif

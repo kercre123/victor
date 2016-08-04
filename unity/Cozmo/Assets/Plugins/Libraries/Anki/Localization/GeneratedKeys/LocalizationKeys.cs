@@ -88,18 +88,43 @@ public static class LocalizationKeys {
   #region DailyGoalStrings
 
   public const string kDailyGoalTitleMissing = "dailyGoal.title.missing";
-  public const string kDailyGoalDescriptionMissing = "dailyGoal.description.missing";
+  public const string kDailyGoalTitlePlaySpeedTapTwice = "dailyGoal.title.PlaySpeedTapTwice";
   public const string kDailyGoalTitleWinSpeedTap = "dailyGoal.title.WinSpeedTap";
-  public const string kDailyGoalDescriptionWinSpeedTap = "dailyGoal.description.WinSpeedTap";
-  public const string kDailyGoalTitlePlaySpeedTap = "dailyGoal.title.PlaySpeedTap";
-  public const string kDailyGoalDescriptionPlaySpeedTap = "dailyGoal.description.PlaySpeedTap";
-  public const string kDailyGoalTitleWinSpeedTapHands = "dailyGoal.title.WinSpeedTapHands";
-  public const string kDailyGoalDescriptionWinSpeedTapHands = "dailyGoal.description.WinSpeedTapHands";
+  public const string kDailyGoalTitlePlaySpeedTapLevel1 = "dailyGoal.title.PlaySpeedTap.Level1";
+  public const string kDailyGoalTitleWinSpeedTapLevel1 = "dailyGoal.title.WinSpeedTap.Level1";
+  public const string kDailyGoalTitlePlaySpeedTapLevel2 = "dailyGoal.title.PlaySpeedTap.Level2";
+  public const string kDailyGoalTitleWinSpeedTapLevel2 = "dailyGoal.title.WinSpeedTap.Level2";
+  public const string kDailyGoalTitlePlaySpeedTapLevel3 = "dailyGoal.title.PlaySpeedTap.Level3";
+  public const string kDailyGoalTitleWinSpeedTapLevel3 = "dailyGoal.title.WinSpeedTap.Level3";
+  public const string kDailyGoalTitleSpeedTapShutoutRound = "dailyGoal.title.SpeedTap.Shutout.Round";
+  public const string kDailyGoalTitleSpeedTapTieBreakerRound = "dailyGoal.title.SpeedTap.TieBreaker.Round";
+  public const string kDailyGoalTitleWinSpeedTapNoRed = "dailyGoal.title.WinSpeedTap.NoRed";
+  public const string kDailyGoalTitlePlayKeepaway = "dailyGoal.title.PlayKeepaway";
+  public const string kDailyGoalTitleWinKeepaway = "dailyGoal.title.WinKeepaway";
+  public const string kDailyGoalTitleWinKeepawayShutout = "dailyGoal.title.WinKeepaway.Shutout";
+  public const string kDailyGoalTitleWinKeepawayTieBreaker = "dailyGoal.title.WinKeepaway.TieBreaker";
   public const string kDailyGoalCompletedText = "dailyGoal.completedText";
   public const string kDailyGoalTitleUnlockMeetCozmo = "dailyGoal.title.UnlockMeetCozmo";
-  public const string kDailyGoalDescriptionUnlockMeetCozmo = "dailyGoal.description.UnlockMeetCozmo";
   public const string kDailyGoalTitleMeetNewFace = "dailyGoal.title.MeetNewFace";
-  public const string kDailyGoalDescriptionMeetNewFace = "dailyGoal.description.MeetNewFace";
+  public const string kDailyGoalTitleUnlockUpgradeBuildPyramid = "dailyGoal.title.UnlockUpgradeBuildPyramid";
+  public const string kDailyGoalTitleUnlockUpgradeFlipOntoBack = "dailyGoal.title.UnlockUpgradeFlipOntoBack";
+  public const string kDailyGoalTitleUnlockUpgradeKnockOverThreeCubeStack = "dailyGoal.title.UnlockUpgradeKnockOverThreeCubeStack";
+  public const string kDailyGoalTitleUnlockUpgradePickupCube = "dailyGoal.title.UnlockUpgradePickupCube";
+  public const string kDailyGoalTitleUnlockUpgradePounceOnMotion = "dailyGoal.title.UnlockUpgradePounceOnMotion";
+  public const string kDailyGoalTitleUnlockUpgradeReactToSmiles = "dailyGoal.title.UnlockUpgradeReactToSmiles";
+  public const string kDailyGoalTitleUnlockUpgradeRecognizePets = "dailyGoal.title.UnlockUpgradeRecognizePets";
+  public const string kDailyGoalTitleUnlockUpgradeRollCube = "dailyGoal.title.UnlockUpgradeRollCube";
+  public const string kDailyGoalTitleUnlockUpgradeStackTwoCubes = "dailyGoal.title.UnlockUpgradeStackTwoCubes";
+  public const string kDailyGoalTitleUnlockUpgradeTakeCubeFromHand = "dailyGoal.title.UnlockUpgradeTakeCubeFromHand";
+  public const string kDailyGoalTitleUnlockUpgradePounceOnMotionAction = "dailyGoal.title.UnlockUpgradePounceOnMotionAction";
+  public const string kDailyGoalTitleUnlockUpgradePopAWheelieAction = "dailyGoal.title.UnlockUpgradePopAWheelieAction";
+  public const string kDailyGoalTitleUnlockAppDroneModeGame = "dailyGoal.title.UnlockAppDroneModeGame";
+  public const string kDailyGoalTitleUnlockAppKeepawayGame = "dailyGoal.title.UnlockAppKeepawayGame";
+  public const string kDailyGoalTitleUnlockAppMemoryMatchGame = "dailyGoal.title.UnlockAppMemoryMatchGame";
+  public const string kDailyGoalTitleUnlockAppQuickTapGame = "dailyGoal.title.UnlockAppQuickTapGame";
+  public const string kDailyGoalTitleUnlockQuickTapDifficultyTwoColor = "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor";
+  public const string kDailyGoalTitleUnlockQuickTapDifficultyThreeColor = "dailyGoal.title.UnlockQuickTapDifficulty.ThreeColor";
+  public const string kDailyGoalTitleUnlockQuickTapDifficultyFourColor = "dailyGoal.title.UnlockQuickTapDifficulty.FourColor";
 
   #endregion
 

@@ -21,20 +21,93 @@
   "reward.description.Missing": {
     "translation": "Missing description"
   },
-  "reward.description.SpeedTapWinGame": {
-    "translation": "Win Speed Tap"
+
+  "reward.description.Freeplay.Uninterrupted.5": {
+    "translation": "Let Cozmo explore uninterrupted for 5 minutes"
   },
-  "reward.description.SpeedTapWinHand": {
-    "translation": "Score Points in Speed Tap"
+  "reward.description.Freeplay.Spark": {
+    "translation": "Spark a behavior"
   },
-  "reward.description.PlayGame": {
-    "translation": "Play a game with Cozmo"
+  "reward.description.Freeplay.CompleteBehavior.Stack": {
+    "translation": "Cozmo Completed the “Stack Cubes” behavior successfully"
   },
-  "reward.description.SimonMatch": {
-    "translation": "Score Points in Simon"
+  "reward.description.Freeplay.CompleteBehavior.Pounce": {
+    "translation": "Cozmo Completed the “Pounce on Motion” behavior successfully"
   },
-  "reward.description.SimonOnPlayerWin": {
-    "translation": "Outlast Cozmo in Simon"
+  "reward.description.Freeplay.CompleteBehavior.TipOver": {
+    "translation": "Cozmo Completed the “Tip over Stack of Cubes” behavior successfully"
+  },
+  "reward.description.Freeplay.CompleteBehavior.Pyramid": {
+    "translation": "Cozmo Completed the “Build a Pyramid” behavior successfully"
+  },
+  "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
+    "translation": "Cozmo Completed the “Pop a Wheelie” behavior successfully"
+  },
+  "reward.description.QuickTap.Played": {
+    "translation": "Played a game of Quick Tap"
+  },
+  "reward.description.QuickTap.WinGame.OneColor": {
+    "translation": "Won a game of Quick Tap in “One color” mode"
+  },
+  "reward.description.QuickTap.WinGame.TwoColor": {
+    "translation": "Won a game of Quick Tap in “Two colors” mode"
+  },
+  "reward.description.QuickTap.WinGame.ThreeColor": {
+    "translation": "Won a game of Quick Tap in “Three colors” mode"
+  },
+  "reward.description.QuickTap.WinGame.FourColor": {
+    "translation": "Won a game of Quick Tap in “Four colors” mode"
+  },
+  "reward.description.QuickTap.Accuracy.50": {
+    "translation": "Finished a game of Quick Tap with tap accuracy >50%"
+  },
+  "reward.description.QuickTap.Accuracy.75": {
+    "translation": "Finished a game of Quick Tap with tap accuracy >75%"
+  },
+  "reward.description.QuickTap.Accuracy.100": {
+    "translation": "Finished a game of Quick Tap with 100% tap accuracy!"
+  },
+  "reward.description.QuickTap.Shutout.SingleRound": {
+    "translation": "Shut out Cozmo in a round of Quick Tap"
+  },
+  "reward.description.QuickTap.Shutout.TwoRounds": {
+    "translation": "Shut out Cozmo in two rounds of Quick Tap"
+  },
+  "reward.description.QuickTap.RedCubes.NeverTap": {
+    "translation": "Finished a game of Quick Tap without ever tapping on a red cube"
+  },
+  "reward.description.QuickTap.TieBreaker.OneRound": {
+    "translation": "Won a round of Quick Tap after being tied 4-4"
+  },
+  "reward.description.QuickTap.TieBreaker.TwoRounds": {
+    "translation": "Won two rounds of Quick Tap after being tied 4-4"
+  },  
+  "reward.description.Keepaway.Played": {
+    "translation": "Played a game of Keepaway"
+  },
+  "reward.description.Keepaway.Won": {
+    "translation": "Won a game of Keepaway"
+  },
+  "reward.description.Keepaway.Shutout": {
+    "translation": "Won a game of Keepaway in a shutout"
+  },
+  "reward.description.Keepaway.NoFakes": {
+    "translation": "Finished a game of Keepaway without ever getting faked out."
+  },
+  "reward.description.Keepaway.TieBreaker": {
+    "translation": "Won Keepaway after being tied 4-4"
+  },
+  "reward.description.Explorer.Time.5": {
+    "translation": "Played Explorer Mode for > 5 minutes"
+  },
+  "reward.description.Explorer.Time.10": {
+    "translation": "Played Explorer Mode for > 10 minutes"
+  },
+  "reward.description.Explorer.Time.15": {
+    "translation": "Played Explorer Mode for > 15 minutes"
+  },
+  "reward.description.Explorer.Time.20": {
+    "translation": "Played Explorer Mode for > 20 minutes"
   },
   "reward.collect.CollectEnergy": {
     "translation": "+{0} Energy!"

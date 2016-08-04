@@ -1,6 +1,396 @@
 {
   "RewardedActions": [
     {
+      "Id": 16,
+      "RewardEvent": {
+        "Value": "OnChallengeRoundEnd"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 4,
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.TieBreaker.OneRound"
+      }
+    },
+    {
+      "Id": 15,
+      "RewardEvent": {
+        "Value": "OnChallengeRoundEnd"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 0,
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.Shutout.SingleRound"
+      }
+    },
+    {
+      "Id": 14,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 3,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.WinGame.FourColor"
+      }
+    },
+    {
+      "Id": 13,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 2,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.WinGame.ThreeColor"
+      }
+    },
+    {
+      "Id": 12,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.WinGame.TwoColor"
+      }
+    },
+    {
+      "Id": 11,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.WinGame.OneColor"
+      }
+    },
+    {
+      "Id": 10,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "QuickTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.Played"
+      }
+    },
+    {
+      "Id": 9,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "KeepawayGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 4,
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Keepaway.TieBreaker"
+      }
+    },
+    {
+      "Id": 8,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "KeepawayGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 0,
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Keepaway.Shutout"
+      }
+    },
+    {
+      "Id": 7,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "KeepawayGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Keepaway.Won"
+      }
+    },
+    {
+      "Id": 6,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "KeepawayGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Keepaway.Played"
+      }
+    },
+    {
       "Id": 5,
       "RewardEvent": {
         "Value": "OnNewDayStarted"
@@ -48,80 +438,6 @@
         "ItemID": "experience",
         "Amount": 10,
         "DescriptionKey": "reward.description.StartNewDay"
-      }
-    },
-    {
-      "Id": 3,
-      "RewardEvent": {
-        "Value": "OnChallengePointScored"
-      },
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 10,
-        "DescriptionKey": "reward.description.SimonMatch"
-      }
-    },
-    {
-      "Id": 2,
-      "RewardEvent": {
-        "Value": "OnChallengePointScored"
-      },
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 5,
-        "DescriptionKey": "reward.description.SpeedTapWinHand"
-      }
-    },
-    {
-      "Id": 1,
-      "RewardEvent": {
-        "Value": "OnChallengeComplete"
-      },
-      "EventConditions": [],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 25,
-        "DescriptionKey": "reward.description.PlayGame"
       }
     }
   ]
