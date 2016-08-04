@@ -14,15 +14,16 @@ enum uint_32 External
   Invalid = 0,
 }
 
-enum uint_32 Freeplay
+enum uint_32 Freeplay_Mood
 {
-  Freeplay__Busy = 4216199348,
-  Freeplay__Chill = 392489515,
-  Freeplay__Happy = 2777933599,
-  Freeplay__Neutral = 3469562548,
-  Freeplay__Sad = 2096125369,
-  Freeplay__Sleep = 2139901732,
+  Busy = 1427625958,
+  Chill = 4294400669,
+  Cubedetect = 1800298039,
+  Happy = 1427264549,
   Invalid = 0,
+  Neutral = 670611050,
+  Sad = 443572635,
+  Sleep = 3671647190,
 }
 
 enum uint_32 GenericSwitch
@@ -49,7 +50,7 @@ enum uint_32 Relationship
 enum uint_32 SwitchGroupType
 {
   External = 1442075084,
-  Freeplay = 150865113,
+  Freeplay_Mood = 2205807877,
   Invalid = 0,
   Mood = 3128647864,
   Relationship = 3723222599,
