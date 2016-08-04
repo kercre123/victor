@@ -359,7 +359,7 @@ protected:
 
 
   ///
-  // @brief      Sets the light cube pose.
+  // @brief      Physically move the cube in simulation.
   // @param[in]  lightCubeId  The light cube identifier
   // @param[in]  pose         Pose with translation in millimeters.
   //
