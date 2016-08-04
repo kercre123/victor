@@ -497,6 +497,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
+    _SharedMinigameViewInstance.CloseViewImmediately();
     CleanUp();
   }
 

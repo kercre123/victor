@@ -61,7 +61,6 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   private const int MaxBufferSize = 8192;
   private const int BufferStatePoolLength = 1280;
   private const int MaxQueuedSends = 640;
-  private const int MaxQueuedReceives = 640;
 
   // unique object used for locking
   private readonly object sync = new object();
@@ -86,6 +85,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   private ConnectionState connectionState = ConnectionState.Disconnected;
   private DisconnectionReason currentDisconnectionReason = DisconnectionReason.ConnectionLost;
   private int pendingOperations = 0;
+  private int _BytesReceived = 0;
 
   // timers
   private const float AdvertiseTick = .25f;
@@ -94,12 +94,10 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   //dmd2do this is padded crazy long to bandaid engine hanging issues
   private float lastUpdateTime = 0;
   private float lastAdvertiseTime = 0;
-  private float startAdvertiseTime = 0;
-  private float lastReceiveTime = 0;
 
   // various queues
   private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
-  private readonly Queue<MessageIn> receivedMessages = new Queue<MessageIn>(MaxQueuedReceives);
+  private readonly Queue<MessageIn> receivedMessages = new Queue<MessageIn>();
 
   // lists of pooled objects
   private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
@@ -158,8 +156,6 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
       }
 
-      // reset lastReceiveTime so we have time to reconnect
-      lastReceiveTime = lastUpdateTime = Time.realtimeSinceStartup;
       IPAddress localAddress = GetLocalIPv4();
 
       try {
@@ -197,7 +193,6 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           advertisementClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 
           // advertise
-          startAdvertiseTime = lastUpdateTime;
           SendAdvertisement();
         }
         catch (Exception e) {
@@ -205,9 +200,6 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
           return;
         }
-      }
-      else {
-        startAdvertiseTime = lastUpdateTime;
       }
 
       // set state
@@ -266,26 +258,12 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         lastUpdateTime = Time.realtimeSinceStartup;
 
         if (connectionState == ConnectionState.Advertising) {
-          if (startAdvertiseTime + AdvertiseTimeout < lastUpdateTime) {
-            DAS.Error(this, "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
-            DestroySynchronously(DisconnectionReason.ConnectionLost);
-            return;
-          }
-
           try {
             SendAdvertisement();
           }
           catch (Exception e) {
             Debug.LogException(e);
             DestroySynchronously(DisconnectionReason.FailedToAdvertise);
-            return;
-          }
-        }
-
-        if (connectionState == ConnectionState.Connected) {
-          if (lastReceiveTime + ReceiveTimeout < lastUpdateTime) {
-            DAS.Error(this, "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
-            DestroySynchronously(DisconnectionReason.ConnectionLost);
             return;
           }
         }
@@ -343,6 +321,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         Debug.LogException(e);
       }
     }
+    _BytesReceived = 0;
   }
 
   // either
@@ -576,19 +555,18 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           if (connectionState == ConnectionState.Advertising) {
             connectionState = ConnectionState.Connected;
             mainEndPoint = ipEndPoint;
-            lastReceiveTime = lastUpdateTime;
 
             // ignore first message
           }
           else if (mainEndPoint.Equals(ipEndPoint)) {
 
-            lastReceiveTime = lastUpdateTime;
-
             MessageIn message;
+            int messageSize = 0;
             try {
               message = new MessageIn();
               try {
                 message.Unpack(state.stream);
+                messageSize = message.Size;
               }
               catch (Exception e) {
                 if (message.Size != state.length) {
@@ -599,9 +577,9 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
                 }
                 throw;
               }
-              if (message.Size != state.length) {
+              if (messageSize != state.length) {
                 throw new Exception("Could not parse message " + message.GetTag() + ": " +
-                "message size " + message.Size.ToString() +
+                "message size " + messageSize.ToString() +
                 " not equal to buffer size " + state.length.ToString());
               }
             }
@@ -611,13 +589,15 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
               return;
             }
 
-            if (receivedMessages.Count >= MaxQueuedReceives) {
-              DAS.Error(this, "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
+            int maxSize = (int)Anki.Cozmo.ExternalInterface.CommsConstants.kDirectCommsBufferSize;
+            if ((_BytesReceived + messageSize) >= maxSize) {
+              DAS.Error("Unity.UdpChannel.TooManyBytesTooQuickly", "Too many bytes received too quickly. (" + maxSize.ToString() + " bytes allowed.)");
               Destroy(DisconnectionReason.ConnectionThrottled);
               return;
             }
 
             receivedMessages.Enqueue(message);
+            _BytesReceived += messageSize;
           }
         }
 

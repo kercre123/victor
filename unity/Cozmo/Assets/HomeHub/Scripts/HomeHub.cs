@@ -11,14 +11,7 @@ namespace Cozmo.HomeHub {
 
     private static HomeHub _Instance = null;
 
-    public static HomeHub Instance {
-      get {
-        if (_Instance == null) {
-          DAS.Error("HomeHub.Instance", "NULL HomeHub Instance");
-        }
-        return _Instance;
-      }
-    }
+    public static HomeHub Instance { get { return _Instance; } }
 
     [SerializeField]
     private SerializableAssetBundleNames _MinigameDataPrefabAssetBundle;
@@ -308,10 +301,13 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Save();
     }
 
-    private void CloseMiniGameImmediately() {
+    public void CloseMiniGameImmediately() {
       if (_MiniGameInstance != null) {
         DeregisterMinigameEvents();
         _MiniGameInstance.CloseMinigameImmediately();
+        _MiniGameInstance = null;
+        UnloadMinigameAssetBundle();
+        StartLoadHomeView();
       }
     }
 
