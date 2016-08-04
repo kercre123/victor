@@ -5,6 +5,7 @@ import subprocess
 import argparse
 import json
 import os
+import tempfile
 from os import path
 
 __scriptDir = path.dirname(path.realpath(__file__))
@@ -55,8 +56,8 @@ def __parse_input_args():
     update_alt_workspace_parser.add_argument('soundBankDir', action='store', help='Location of the Sound banks root directory')
     update_alt_workspace_parser.add_argument('--metadata-merge', action='store', help='Merge generate metadata.csv with other_metadata.csv file')
 
+    # Update metadata in Maya Animations
     generate_maya_data_parser = subparsers.add_parser(__generate_maya_cozmo_data, help='Generate json file for maya plug-in')
-    generate_maya_data_parser.add_argument('soundBankDir', action='store', help='Location of the Sound banks root directory')
     generate_maya_data_parser.add_argument('outputFilePath', action='store', help='Location the CozmoMayaPlugIn.json will be stored')
     generate_maya_data_parser.add_argument('groups', nargs='+', help='List of Event Group names to insert into json file')
 
@@ -95,8 +96,7 @@ def main():
         __updateAltWorkspace(options.soundBankDir, options.metadata_merge)
 
     elif __generate_maya_cozmo_data == options.commands:
-        __generateMayaCozmoData(options.soundBankDir, options.outputFilePath, options.groups)
-
+        __generateMayaCozmoData(options.outputFilePath, options.groups)
 
 
 def __updateSoundbanks(version, mergeMetadataPath):
@@ -191,14 +191,20 @@ def __updateAltWorkspace(soundBankDir, mergeMetaFilePath):
     print 'Metadata CSV has been updated and is ready for manual updates, file is located at:\n%s' % path.realpath(altMetadataPath)
 
 
+def __generateMayaCozmoData(outputFilePath, groups):
 
-def __generateMayaCozmoData(soundBankDir, outputFilePath, groups):
+    # Generate tmp metadata.csv by using current WwiseId.h and merging the projects current wwiseId.h events
+    tempMetaFilePath = tempfile.mkstemp(dir="/tmp", prefix="tempAudioEventMetadata-", suffix=".csv")[1]
+    tempMetaDataScriptArgs = [__wwiseToAppMetadataScript, 'metadata', __wwiseIdsFilePath, tempMetaFilePath, '-m', __audioMetadataFilePath]
+    subprocess.call(tempMetaDataScriptArgs)
 
-    scriptArgs = [__wwiseToAppMetadataScript, 'metadata-to-json', soundBankDir, outputFilePath]
-    scriptArgs += groups
+    # Use temp metadata to generate Maya Json file
+    mayaDataScriptArgs = [__wwiseToAppMetadataScript, 'metadata-to-json', tempMetaFilePath, outputFilePath]
+    mayaDataScriptArgs += groups
+    subprocess.call(mayaDataScriptArgs)
 
-    subprocess.call(scriptArgs)
-
+    # Delete temp metadata.csv file
+    os.remove(tempMetaFilePath)
 
 
 def __abort(msg):
