@@ -38,12 +38,22 @@ namespace Anki {
     CozmoSimTestController::~CozmoSimTestController()
     { }
     
-    void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
-    {
-      // by default we don't want pick up animations in CSTs. If yours needs it, override HandleRobotConnected
-      ExternalInterface::RequestEnableReactionaryBehavior doNotAnimMsg("CozmoSimTestController",BehaviorType::ReactToPickup, false);
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(doNotAnimMsg)));
-    }
+  void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
+  {
+    // by default we don't want pick these reactions, you can override this function if you tests needs them
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+                                                         "CozmoSimTestController",
+                                                         BehaviorType::ReactToPickup,
+                                                         false)));
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+                                                         "CozmoSimTestController",
+                                                         BehaviorType::ReactToCubeMoved,
+                                                         false)));
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+                                                         "CozmoSimTestController",
+                                                         BehaviorType::AcknowledgeObject,
+                                                         false)));
+  }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
                                                      std::string condAsString,
@@ -66,7 +76,6 @@ namespace Anki {
       
       return cond;
     }
-    
     
     s32 CozmoSimTestController::UpdateInternal()
     {

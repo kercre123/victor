@@ -39,7 +39,7 @@ private:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
 
 public:
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override { return true;}
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   

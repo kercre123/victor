@@ -12,10 +12,11 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorReactAcknowledgeCubeMoved.h"
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -27,6 +28,8 @@ const float kRadiusRobotTolerence = 50;
 
 namespace Anki {
 namespace Cozmo {
+
+CONSOLE_VAR(bool, kBRACM_enableObjectMovedReact, "BehaviorCubeMoved", false);
 
 ReactionObjectData::ReactionObjectData(int objectID, double nextUniqueTime, bool observedSinceLastResponse)
 {
@@ -51,6 +54,11 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
     EngineToGameTag::RobotObservedObject
   });
   
+}
+
+bool BehaviorReactAcknowledgeCubeMoved::IsRunnableInternalReactionary(const Robot& robot) const
+{
+  return kBRACM_enableObjectMovedReact;
 }
 
 bool BehaviorReactAcknowledgeCubeMoved::ShouldRunForEvent(const MessageEngineToGame& event, const Robot& robot)

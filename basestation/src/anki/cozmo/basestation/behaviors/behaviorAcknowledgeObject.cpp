@@ -31,7 +31,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kBAO_enableObjectAcknowledgement, "BehaviorAcknowledgeObject", false);
+CONSOLE_VAR(bool, kBAO_enableObjectAcknowledgement, "BehaviorAcknowledgeObject", true);
 CONSOLE_VAR(f32, kBAO_headAngleDistFactor, "BehaviorAcknowledgeObject", 1.0);
 CONSOLE_VAR(f32, kBAO_bodyAngleDistFactor, "BehaviorAcknowledgeObject", 3.0);
 CONSOLE_VAR(bool, kBAO_vizPossibleStackCube, "BehaviorAcknowledgeObject", false);
