@@ -117,6 +117,7 @@ protected:
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
   virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
+  virtual void HandleRobotPickedUp(const ExternalInterface::RobotPickedUp& msg){};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -427,7 +428,8 @@ private:
   void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
   void HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg);
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
-  
+  void HandleRobotPickedUpBase(ExternalInterface::RobotPickedUp const& msg);
+
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
 

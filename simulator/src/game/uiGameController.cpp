@@ -349,6 +349,13 @@ namespace Anki {
       HandleEnabledBehaviorList(msg);
     }
 
+    void UiGameController::HandleRobotPickedUpBase(ExternalInterface::RobotPickedUp const& msg)
+    {
+      PRINT_NAMED_INFO("HandleRobotPickedUp", "Recieved RobotPickedUp message.");
+
+      HandleRobotPickedUp(msg);
+    }
+
     
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
     {
@@ -512,6 +519,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::RespondEnabledBehaviorList:
             HandleEnabledBehaviorListBase(message.Get_RespondEnabledBehaviorList());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::RobotPickedUp:
+            HandleRobotPickedUpBase(message.Get_RobotPickedUp());
             break;
           default:
             // ignore
