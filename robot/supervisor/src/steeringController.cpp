@@ -741,6 +741,7 @@ namespace Anki {
         rightSpeed = speed_mmps;
       } else if(curvatureRadius_mm == 0) {
         ExecutePointTurn(DEG_TO_RAD_F32(speed_mmps), 50);
+        return;
       } else {
         // Drive an arc
         

@@ -117,9 +117,7 @@ keil:
 espBuild: esp AnkiLog
 	make -C espressif lib/libmain_w.a
 	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
-
-$(WIFI_BINARY): ./espressif/bin/upgrade/user1.2048.new.3.bin
-	$(PY) ./tools/wifiAppImageHeader.py $< $@
+	$(PY) ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin $(WIFI_BINARY)
 
 $(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	mkdir -p $(dir $@)
