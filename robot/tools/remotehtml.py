@@ -14,14 +14,12 @@ import websockets
 
 client = """<html>
     <head>
-        <title>FARTS</title>
+        <title>Cozmo remote control</title>
     </head>
-    <body>
+    <body style='background-size: contain; background-color: green; background-position: center center; background-repeat: no-repeat;'>
         <script>
       var ws = new WebSocket("ws://127.0.0.1:8765/");
-      var img = document.createElement("img");
       var motors = { left: 0, right: 0 }
-      document.body.appendChild(img);
 
       function calcSpeed(motors) {
         var left = 0, right = 0;
@@ -87,7 +85,7 @@ client = """<html>
                 var reader  = new FileReader();
 
                 reader.addEventListener("load", function () {
-                    img.src = reader.result;
+                    document.body.style.backgroundImage = `url("${reader.result}")`;
                 }, false);
 
                 reader.readAsDataURL(event.data);
@@ -111,7 +109,7 @@ class Remote:
     def __init__(self):
         self.upgrader = None
         self.animStreamer = None
-        self.images = []
+        self.image = None
 
         robotInterface.Init(False)
 
@@ -119,12 +117,12 @@ class Remote:
         self.run()
 
     def receiveImage(self, img, size):
-        self.images = self.images + [img]
+        self.image = img
 
     async def producer(self):
-        while len(self.images) < 1:
+        while not self.image:
             asyncio.sleep(0.01)
-        image, self.images = self.images[0], self.images[1:]
+        image, self.image = self.image, None
 
         return image
 
