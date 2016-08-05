@@ -4,8 +4,6 @@ using UnityEngine;
 namespace Onboarding {
 
   public class SparksStage : OnboardingBaseStage {
-
-
     public override void Start() {
       base.Start();
 
@@ -31,6 +29,21 @@ namespace Onboarding {
     private void HandleSparkComplete(CoreUpgradeDetailsDialog dialog) {
       dialog.CloseView();
     }
+
+#if ENABLE_DEBUG_PANEL
+    public override void SkipPressed() {
+      if (!UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.PickupCube)) {
+        UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.PickupCube, true);
+      }
+      // Gross but only done once we've hit this stage and only for debugging.
+      // Basically waiting a minute sucks for testing and the the opened event is in the previous state.
+      // So just find the window in scene in case "debug skip" is pressed.
+      BaseView sparksView = FindObjectOfType<CoreUpgradeDetailsDialog>();
+      if (sparksView != null) {
+        sparksView.CloseView();
+      }
+    }
+#endif
 
     private void HandleViewClosed(BaseView view) {
       if (view is CoreUpgradeDetailsDialog) {

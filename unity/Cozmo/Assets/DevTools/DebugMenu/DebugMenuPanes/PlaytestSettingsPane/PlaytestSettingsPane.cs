@@ -11,8 +11,7 @@ public class PlaytestSettingsPane : MonoBehaviour {
   }
 
   private void ResetSession() {
-    RobotEngineManager.Instance.CurrentRobot.EraseAllEnrolledFaces();
-    SkillSystem.Instance.DebugEraseStorage();
+    Anki.Debug.DebugConsoleData.Instance.UnityData.HandleResetRobot("PlaytestSettingsPane");
     // use reflection to change readonly field
     typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
     DataPersistenceManager.Instance.Save();

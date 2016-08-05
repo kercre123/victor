@@ -109,8 +109,7 @@ namespace DataPersistence {
     }
 
     private void SubmitResetRobotData() {
-      // Add anything else we save on the robot here.
-      SkillSystem.Instance.DebugEraseStorage();
+      Anki.Debug.DebugConsoleData.Instance.UnityData.HandleResetRobot("DataPersistancePane");
     }
 
   }

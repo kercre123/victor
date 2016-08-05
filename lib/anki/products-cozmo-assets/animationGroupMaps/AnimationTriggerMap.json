@@ -374,7 +374,7 @@
     },
     {
       "CladEvent": "OnboardingPreBirth",
-      "AnimName": "ag_lookAtFace_keepAlive"
+      "AnimName": "ag_launch_backpackidle"
     },
     {
       "CladEvent": "OnboardingBirth",
@@ -754,7 +754,7 @@
     },
     {
       "CladEvent": "SparkPickupInitialCubeReaction",
-      "AnimName": "ag_reactToNewBlock"
+      "AnimName": "ag_reacttoblock_react_short"
     },
     {
       "CladEvent": "SparkPickupFinalCubeReaction",

@@ -65,7 +65,7 @@ MonoBehaviour:
   _ActiveTopBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
-  _ReactionsEnabled: 1
+  _ReactionsEnabled: 0
   _Animation:
     _EnumValueAsString: OnboardingBirth
     _EnumValue: 89

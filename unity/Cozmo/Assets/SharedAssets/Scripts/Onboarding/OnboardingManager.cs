@@ -26,6 +26,8 @@ public class OnboardingManager : MonoBehaviour {
   private GameObject _CurrStageInst = null;
   private int _CurrStage = -1;
 
+  private Transform _OnboardingTransform;
+
   [SerializeField]
   private GameObject _DebugLayerPrefab;
   private GameObject _DebugLayer;
@@ -47,8 +49,9 @@ public class OnboardingManager : MonoBehaviour {
     return DataPersistenceManager.Instance.Data.DefaultProfile.OnboardingHomeStage < _HomeOnboardingStages.Length;
   }
 
-  public void InitHomeHubOnboarding(Cozmo.HomeHub.HomeView homeview) {
+  public void InitHomeHubOnboarding(HomeView homeview, Transform onboardingLayer) {
     _HomeView = homeview;
+    _OnboardingTransform = onboardingLayer;
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding);
     // TODO: Get more design on where "checkpoints" are.
     SetSpecificStage(0);
@@ -76,21 +79,18 @@ public class OnboardingManager : MonoBehaviour {
     // Create the debug layer to have a few buttons to work with on screen easily for QA
     // who will have to see this all the time.
 #if ENABLE_DEBUG_PANEL
-    if (_DebugLayer == null && _DebugLayerPrefab != null && _HomeView != null) {
-      _DebugLayer = UIManager.CreateUIElement(_DebugLayerPrefab, _HomeView.transform);
+    if ( _DebugLayer == null && _DebugLayerPrefab != null ) {
+      _DebugLayer = UIManager.CreateUIElement(_DebugLayerPrefab, DebugMenuManager.Instance.DebugOverlayCanvas.transform);
     }
 #endif
     _CurrStage = nextStage;
     DataPersistenceManager.Instance.Data.DefaultProfile.OnboardingHomeStage = _CurrStage;
     if (_CurrStage >= 0 && _CurrStage < _HomeOnboardingStages.Length) {
-      _CurrStageInst = UIManager.CreateUIElement(_HomeOnboardingStages[_CurrStage], _HomeView.transform);
+      _CurrStageInst = UIManager.CreateUIElement(_HomeOnboardingStages[_CurrStage], _OnboardingTransform);
       UpdateStage(_HomeOnboardingStages[_CurrStage].ActiveTopBar,
                    _HomeOnboardingStages[_CurrStage].ActiveMenuContent,
                    _HomeOnboardingStages[_CurrStage].ActiveTabButtons,
                    _HomeOnboardingStages[_CurrStage].ReactionsEnabled);
-
-      // TODO: when reskin done, put in a gameObject here. It's basically below the energy but above the content.
-      _CurrStageInst.transform.SetSiblingIndex(_HomeView.transform.childCount - 4);
     }
     else {
       ExitHomeHubOnboarding();
@@ -113,6 +113,9 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void DebugSkipAll() {
+    if (!UnlockablesManager.Instance.IsUnlocked(UnlockId.PickupCube)) {
+      UnlockablesManager.Instance.TrySetUnlocked(UnlockId.PickupCube, true);
+    }
     OnboardingManager.Instance.SetSpecificStage(_HomeOnboardingStages.Length);
   }
   private void SkipPressed() {

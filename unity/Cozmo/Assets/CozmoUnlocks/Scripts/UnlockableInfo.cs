@@ -8,7 +8,7 @@ public enum UnlockableType {
 }
 
 [Serializable]
-public class UnlockableInfo : ScriptableObject {
+public class UnlockableInfo : ScriptableObject, IComparable {
   public SerializableUnlockIds Id;
 
   public UnlockableType UnlockableType;
@@ -44,6 +44,8 @@ public class UnlockableInfo : ScriptableObject {
 
   public int CubesRequired = 1;
 
+  public int SortOrder = 100;
+
   [SerializeField]
   private float _TimeSparkedSec = 60.0f;
   public float TimeSparkedSec { get { return _TimeSparkedSec; } }
@@ -51,6 +53,21 @@ public class UnlockableInfo : ScriptableObject {
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {
 
+  }
+
+  public int CompareTo(object obj) {
+    if (obj != null) {
+      UnlockableInfo otherEntry = obj as UnlockableInfo;
+      if (otherEntry != null) {
+        // if we're set equal, then alphabetize
+        if (SortOrder == otherEntry.SortOrder) {
+          return Localization.Get(TitleKey).CompareTo(Localization.Get(otherEntry.TitleKey));
+        }
+        // Lower is closer to front.
+        return SortOrder - otherEntry.SortOrder;
+      }
+    }
+    return 1;
   }
 
 }

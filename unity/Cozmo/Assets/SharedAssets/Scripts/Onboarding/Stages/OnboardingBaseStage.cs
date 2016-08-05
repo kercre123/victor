@@ -24,12 +24,15 @@ namespace Onboarding {
     [SerializeField]
     protected bool _ReactionsEnabled = true;
 
+    [SerializeField]
+    protected bool _PlayIdle = false;
+
 
     public virtual void Start() {
       DAS.Info("onboarding.stage.started", name);
 
       // Early idle states need to loop the loading animation.
-      if (!_ReactionsEnabled) {
+      if (_PlayIdle) {
         HandleLoopedAnimationComplete();
       }
     }

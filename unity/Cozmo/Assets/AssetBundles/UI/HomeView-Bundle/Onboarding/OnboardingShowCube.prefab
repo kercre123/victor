@@ -216,15 +216,10 @@ MonoBehaviour:
   _ActiveTopBar: 1
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
+  _ReactionsEnabled: 0
+  _PlayIdle: 0
   _ShowCozmoCubesLabel: {fileID: 0}
   _CozmoImageTransform: {fileID: 22404440}
-  _OutOfViewAlpha: 0.5
-  _InViewColor:
-    uiSprite: {fileID: 0}
-    lightColor: {r: 0, g: 0, b: 0, a: 0}
-  _OutViewColor:
-    uiSprite: {fileID: 0}
-    lightColor: {r: 0, g: 0, b: 0, a: 0}
   _ContinueButtonInstance: {fileID: 0}
 --- !u!114 &11436152
 MonoBehaviour:

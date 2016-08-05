@@ -374,6 +374,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &177392
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22436112}
+  - 114: {fileID: 11494566}
+  m_Layer: 5
+  m_Name: Green Button
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &182962
 GameObject:
   m_ObjectHideFlags: 1
@@ -690,6 +706,11 @@ MonoBehaviour:
   _BurstParticles: {fileID: 19823308, guid: 1882952d39275477f8ca3cfef4827c74, type: 2}
   _BannerPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998, type: 2}
   _LootText: {fileID: 11458894}
+  _LootButton: {fileID: 11488180}
+  _LootBox: {fileID: 22481126}
+  _LootGlow: {fileID: 11484582}
+  _BoxGlow: {fileID: 11422754}
+  _AlphaController: {fileID: 22594492}
   _LootTextInstructions1: {fileID: 11457488}
   _LootTextInstructions2: {fileID: 11488944}
   _OnboardingRewardTransforms1:
@@ -701,11 +722,7 @@ MonoBehaviour:
   - {fileID: 22425080}
   - {fileID: 22405386}
   _OnboardingDooberStart: {fileID: 22486736}
-  _LootButton: {fileID: 11488180}
-  _LootBox: {fileID: 22481126}
-  _LootGlow: {fileID: 11484582}
-  _BoxGlow: {fileID: 11422754}
-  _AlphaController: {fileID: 22594492}
+  _ContinueButtonInstance: {fileID: 0}
 --- !u!114 &11457488
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -906,6 +923,27 @@ MonoBehaviour:
   m_Text: '#onboarding.Phase4.Body2b'
   _AllUppercase: 0
   GlowText: 0
+--- !u!114 &11494566
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 177392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+  ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#button.continue"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Cozmo.UI.LootView:_ContinueButtonInstance
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11497132
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4390,6 +4428,24 @@ RectTransform:
   m_AnchoredPosition: {x: 374, y: 282}
   m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22436112
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 177392}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22486736}
+  m_RootOrder: 8
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 730, y: -525.9515}
+  m_SizeDelta: {x: 1117, y: 268}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22440270
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4720,6 +4776,7 @@ RectTransform:
   - {fileID: 22464094}
   - {fileID: 22425080}
   - {fileID: 22405386}
+  - {fileID: 22436112}
   m_Father: {fileID: 22446516}
   m_RootOrder: 7
   m_AnchorMin: {x: 0.5, y: 0.5}

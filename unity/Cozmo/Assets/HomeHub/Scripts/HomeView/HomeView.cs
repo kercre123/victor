@@ -147,6 +147,9 @@ namespace Cozmo.HomeHub {
     private BaseView _HelpViewPrefab;
     private BaseView _HelpViewInstance;
 
+    [SerializeField]
+    private Transform _OnboardingTransform;
+
     private AlertView _RequestDialog = null;
 
     private HomeHub _HomeHubInstance;
@@ -234,7 +237,7 @@ namespace Cozmo.HomeHub {
       CheckIfUnlockablesAffordableAndUpdateBadge();
 
       if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
-        OnboardingManager.Instance.InitHomeHubOnboarding(this);
+        OnboardingManager.Instance.InitHomeHubOnboarding(this, _OnboardingTransform);
       }
     }
 

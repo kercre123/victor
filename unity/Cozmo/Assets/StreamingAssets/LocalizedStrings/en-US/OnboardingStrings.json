@@ -37,7 +37,7 @@
     "translation": "COZMO LOGO"
   },
   "onboarding.Phase3.Body1": {
-    "translation": "<b>Show Cozmo a Cube</b> It will turn <color=green>green</color> when he can see it"
+    "translation": "<b>Show Cozmo a Cube</b> It will turn <color=cyan>cyan</color> when he can see it"
   },
   "onboarding.Phase3.Body2": {
     "translation": "Just like you, if it's too close, It's hard to see"

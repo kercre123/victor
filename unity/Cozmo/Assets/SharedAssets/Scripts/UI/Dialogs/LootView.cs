@@ -202,7 +202,7 @@ namespace Cozmo {
       [SerializeField]
       private Transform _OnboardingDooberStart;
       [SerializeField]
-      private float _OnboardingWaitTime = 5.0f;
+      private CozmoButton _ContinueButtonInstance;
       #endregion
 
       private bool _BoxOpened;
@@ -416,9 +416,9 @@ namespace Cozmo {
           }
           whichItem++;
         }
-        // is just a hold for longer than usual to read the text on _OnboardingDooberStart
-        dooberSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration + _OnboardingWaitTime, OnboardingDooberSplosionComplete);
         dooberSequence.Play();
+
+        _ContinueButtonInstance.Initialize(OnboardingDooberSplosionComplete, "onboarding.button.loot", "Onboarding");
 
         ChestRewardManager.Instance.PendingChestRewards.Clear();
       }

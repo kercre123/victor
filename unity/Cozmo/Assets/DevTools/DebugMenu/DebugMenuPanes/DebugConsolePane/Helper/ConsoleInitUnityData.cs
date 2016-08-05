@@ -47,9 +47,12 @@ namespace Anki.Debug {
     private float _CalibrationCenterY = 0;
 
 
-    private void HandleResetRobot(string str) {
-      RobotEngineManager.Instance.CurrentRobot.EraseAllEnrolledFaces();
-      SkillSystem.Instance.DebugEraseStorage();
+    public void HandleResetRobot(string str) {
+      if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.EraseAllEnrolledFaces();
+        SkillSystem.Instance.DebugEraseStorage();
+        UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.Defaults, true);
+      }
     }
     private void HandleResetSession(string str) {
       HandleResetRobot(str);

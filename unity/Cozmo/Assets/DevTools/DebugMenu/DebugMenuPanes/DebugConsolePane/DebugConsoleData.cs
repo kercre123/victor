@@ -69,6 +69,7 @@ namespace Anki.Debug {
     private bool _NeedsUIUpdate;
     private Dictionary<string, List<DebugConsoleVarData>> _DataByCategory;
     private ConsoleInitUnityData _UnityData = null;
+    public ConsoleInitUnityData UnityData { get { return _UnityData; } }
 
     private DebugConsolePane _ConsolePane;
 
