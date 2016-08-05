@@ -22,6 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+
 //#define NATHAN_CUBE_JUNK
 //#define CUBE_HOP
 
@@ -58,12 +59,6 @@ static const uesb_address_desc_t PairingAddress = {
   ADVERTISE_ADDRESS,
   sizeof(AdvertisePacket)
 };
-
-static const uesb_address_desc_t NoiseAddress = {
-  1,
-  0xE7E7E7E7
-};
-
 
 // These are variables used for handling OTA
 static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
@@ -293,7 +288,6 @@ void uesb_event_handler(uint32_t flags)
       ota_send_next_block();
     } else {
       EnterState(RADIO_PAIRING);
-      uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
     }
 
     break ;
@@ -514,7 +508,6 @@ static void ota_timeout() {
     }
 
     EnterState(RADIO_PAIRING);
-    uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
     return ;
   }
 
@@ -522,6 +515,9 @@ static void ota_timeout() {
 }
 
 static void radio_prepare(void) {
+  // Schedule our next radio prepare
+  uesb_stop();
+
   // Manage OTA timeouts
   if (radioState == RADIO_OTA) {
     if (ota_pending && --ota_timeout_countdown <= 0) {
@@ -530,10 +526,7 @@ static void radio_prepare(void) {
     return ;
   }
 
-  // Schedule our next radio prepare
-  uesb_stop();
-
-    // Transmit to accessories round-robin
+  // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;
     ++_tapTime;
@@ -550,8 +543,6 @@ static void radio_prepare(void) {
       
       // This just send garbage and return to pairing mode when finished
       EnterState(RADIO_PAIRING);
-      uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
-      
       return ;
     }
     #endif
@@ -608,7 +599,6 @@ static void radio_prepare(void) {
     
     // This just send garbage and return to pairing mode when finished
     EnterState(RADIO_PAIRING);
-    uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
   }
 }
 
