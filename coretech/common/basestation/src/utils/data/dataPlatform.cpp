@@ -43,7 +43,7 @@ std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::
 
   if (s.empty()) {
     switch (resourceScope) {
-      case Scope::Output:
+      case Scope::Persistent:
         s += _filesPath;
         s += "/output";
         break;

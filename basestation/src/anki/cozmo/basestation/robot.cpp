@@ -246,6 +246,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _visionComponentPtr->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
+  
+  // Read all neccessary data off the robot and back it up
+  // Potentially duplicates some reads like FaceAlbumData
+  _nvStorageComponent.GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
       
 } // Constructor: Robot
     

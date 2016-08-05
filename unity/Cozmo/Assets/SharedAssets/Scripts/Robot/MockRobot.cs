@@ -846,6 +846,18 @@ public class MockRobot : IRobot {
 
   public void EnableDroneMode(bool enable) {
   }
+		
+  public void RestoreRobotFromBackup(uint backupToRestoreFrom) {
+  }
+
+  public void WipeRobotGameData() {
+  }
+
+  public void RequestRobotRestoreData() {
+  }
+
+  public void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index, byte numTotalBlobs) {
+  }
 
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;

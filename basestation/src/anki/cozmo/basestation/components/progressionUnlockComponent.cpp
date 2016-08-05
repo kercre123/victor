@@ -56,7 +56,7 @@ void ProgressionUnlockComponent::Init(const Json::Value &config)
                         kDefaultUnlockIdsConfigKey);
   }
 
-  ReadCurrentUnlocksFromRobot(0);
+  ReadCurrentUnlocksFromRobot();
   
   // register to get unlock requests
   if( _robot.HasExternalInterface() ) {
@@ -103,7 +103,7 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
       }
     }
   }
-  else
+  else if(IsUnlockIdValid(unlock))
   {
     // depending on whether we want to set/unset the unlock
     if ( unlocked )
@@ -150,7 +150,7 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
   
   if(success)
   {
-    WriteCurrentUnlocksToRobot(unlock, unlocked, 0);
+    WriteCurrentUnlocksToRobot(unlock, unlocked);
   }
   
   return true;
@@ -204,19 +204,10 @@ void ProgressionUnlockComponent::Update()
 
 }
 
-void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked, u8 attemptNumIn)
+void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked)
 {
   ANKI_CPU_PROFILE("ProgressionUnlockComponent::WriteCurrentUnlocksToRobot");
   
-  u8 attemptNum = attemptNumIn + 1;
-  if(attemptNum > kNumAttemptsToWrite)
-  {
-    PRINT_NAMED_WARNING("ProgressionUnlockComponent.WriteCurrentUnlocksToRobot",
-                        "Write failed too many times");
-    _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteUnlocksToRobot);
-    return;
-  }
-
   UnlockedIdsList unlockedIds;
   unlockedIds.unlockedIds.fill(UnlockId::Invalid);
   int index = 0;
@@ -229,15 +220,14 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
   size_t numBytes = unlockedIds.Pack(buf, sizeof(buf));
   
   if(!_robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_GameUnlocks, buf, numBytes,
-                                          [this, id, unlocked, attemptNum](NVStorage::NVResult res)
+                                          [this, id, unlocked](NVStorage::NVResult res)
                                           {
                                             if (res != NVStorage::NVResult::NV_OKAY)
                                             {
                                               PRINT_CH_INFO("UnlockComponent",
                                                             "WriteCurrentUnlocksToRobot",
-                                                            "Write failed with %s trying again",
+                                                            "Write failed with %s",
                                                             EnumToString(res));
-                                              WriteCurrentUnlocksToRobot(id, unlocked, attemptNum);
                                             }
                                             else
                                             {
@@ -256,24 +246,14 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
   {
     PRINT_CH_INFO("UnlockComponent",
                   "WriteCurrentUnlocksToRobot",
-                  "Write failed trying again");
-    WriteCurrentUnlocksToRobot(id, unlocked, attemptNum);
+                  "Write failed");
   }
 }
 
-void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot(u8 attemptNumIn)
+void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
 {
-  u8 attemptNum = attemptNumIn + 1;
-  if(attemptNum > kNumAttemptsToWrite)
-  {
-    PRINT_NAMED_WARNING("ProgressionUnlockComponent.ReadCurrentUnlocksToRobot",
-                        "Read failed too many times");
-    _robot.BroadcastEngineErrorCode(EngineErrorCode::ReadUnlocksFromRobot);
-    return;
-  }
-  
   if(!_robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_GameUnlocks,
-                                          [this, attemptNum](u8* data, size_t size, NVStorage::NVResult res)
+                                          [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
                                             if(res != NVStorage::NVResult::NV_OKAY)
                                             {
@@ -294,23 +274,39 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot(u8 attemptNumIn)
                                               {
                                                 PRINT_CH_INFO("UnlockComponent",
                                                               "ReadGameUnlocks",
-                                                              "Read failed with %s trying again",
+                                                              "Read failed with %s",
                                                               EnumToString(res));
-                                                ReadCurrentUnlocksFromRobot(attemptNum);
                                               }
                                             }
                                             else
                                             {
                                               UnlockedIdsList unlockedIds;
                                               
+                                              if(size < NVStorageComponent::MakeWordAligned(unlockedIds.Size()))
+                                              {
+                                                PRINT_NAMED_INFO("ProgressionUnlockComponent.ReadFewerUnlocks",
+                                                                 "Padding unlock data due to size mismatch");
+                                                
+                                                std::vector<u8> padded = std::vector<u8>(data, data + size);
+                                                
+                                                for(int i = 0; i < unlockedIds.Size() - size; ++i)
+                                                {
+                                                  padded.insert(padded.end(), 0);
+                                                }
+                                                
+                                                ASSERT_NAMED(unlockedIds.Size() == padded.size(),
+                                                             "unlockIds and padded not equal in size");
+                                                
+                                                size = unlockedIds.Size();
+                                                data = padded.data();
+                                              }
+                                              
                                               if(size != NVStorageComponent::MakeWordAligned(unlockedIds.Size()))
                                               {
-                                                PRINT_CH_INFO("UnlockComponent",
-                                                              "ReadGameUnlocks",
-                                                              "Size mismatch expected %zu, got %zu trying again",
-                                                              NVStorageComponent::MakeWordAligned(unlockedIds.Size()),
-                                                              size);
-                                                ReadCurrentUnlocksFromRobot(attemptNum);
+                                                PRINT_NAMED_ERROR("UnlockComponent.ReadGameUnlocks",
+                                                                  "Size mismatch expected %zu, got %zu",
+                                                                  NVStorageComponent::MakeWordAligned(unlockedIds.Size()),
+                                                                  size);
                                               }
                                               else
                                               {
@@ -332,8 +328,7 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot(u8 attemptNumIn)
   {
     PRINT_CH_INFO("UnlockComponent",
                   "ReadCurrentUnlocksToRobot",
-                  "Read failed trying again");
-    ReadCurrentUnlocksFromRobot(attemptNum);
+                  "Read failed");
   }
 }
 
@@ -345,7 +340,7 @@ void ProgressionUnlockComponent::HandleMessage(const ExternalInterface::RequestS
   {
     PRINT_CH_INFO("UnlockComponent",
                   "HandleRequestSetUnlock",
-                  "Invalid unlockId %hhu, ignoring",
+                  "Invalid unlockId %d, ignoring",
                   msg.unlockID);
     return;
   }

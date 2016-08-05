@@ -27,9 +27,11 @@ namespace NVStorage {
     //NVEntry_ReallyEraseAll    = 0x1,  // Erase everything including factory entries.
                                       // NOTE: Not sure we want to expose these to game/SDK
 
-    NVEntry_GameSkillLevels = 2,
+    // NOTE: If you want a tag to be backed-up by engine make sure to add it to backup_config.json
 
-    NVEntry_GameUnlocks = 0x3,
+    NVEntry_GameSkillLevels = 0x2,
+
+    NVEntry_OnboardingData = 0x3,
 
 
     NVEntry_Junk = 0xFFFF,
@@ -39,10 +41,16 @@ namespace NVStorage {
     // The number of blobs that can be associated with a multi-blob tag is 0xffff
     // (e.g. The NVEntryTag 0x10000 reserves tags 0x10000 through 0x1ffff)
     // though this value is actually lower because it is limited in NVStorageComponent.
-    NVEntry_FaceAlbumData  = 0x00FA0000,
-    NVEntry_FaceEnrollData = 0x00FE0000,
 
-    NVEntry_MultiBlobJunk = 0x7FFF0000,
+    // Storing game unlocks in a multiblob tag in case we add a lot of them
+    // With UnlockId as a u16 we can only store 512 of them in on tag so this is just
+    // for future proofing
+    NVEntry_GameUnlocks     = 0x00010000,
+
+    NVEntry_FaceAlbumData   = 0x00FA0000,
+    NVEntry_FaceEnrollData  = 0x00FE0000,
+
+    NVEntry_MultiBlobJunk   = 0x7FFF0000,
 
     // ====== Factory entries ========
     // Same rules as regarding single and multi-blob entries

@@ -518,6 +518,8 @@ MonoBehaviour:
     panePrefab: {fileID: 119064, guid: 5b2d29212da0348a1ba82efde08dd49a, type: 2}
   - name: FakeTap
     panePrefab: {fileID: 183772, guid: d5295c6abc723485eb37f70ee0b3b697, type: 2}
+  - name: RobotRestore
+    panePrefab: {fileID: 191910, guid: 4e9789da007f24a9aa1fef9ad1a33e49, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 159258}

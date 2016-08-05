@@ -2177,12 +2177,26 @@ namespace Anki {
               
               case (s32)'Y':
               {
-                ExternalInterface::FlipBlock m;
-                m.objectID = -1;
-                m.motionProf = pathMotionProfile_;
-                ExternalInterface::MessageGameToEngine message;
-                message.Set_FlipBlock(m);
-                SendMessage(message);
+                bool alt = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                bool shift = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+                
+                if(alt && shift)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RestoreRobotFromBackup()));
+                }
+                else if(alt)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WipeRobotGameData()));
+                }
+                else
+                {
+                  ExternalInterface::FlipBlock m;
+                  m.objectID = -1;
+                  m.motionProf = pathMotionProfile_;
+                  ExternalInterface::MessageGameToEngine message;
+                  message.Set_FlipBlock(m);
+                  SendMessage(message);
+                }
                 break;
               }
             

@@ -38,7 +38,7 @@ public:
   
   
   void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot);
-  void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);

@@ -258,6 +258,7 @@ simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
 simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
 simulator/controllers/webotsCtrlGameEngine/resources
 simulator/controllers/webotsCtrlGameEngine/temp
+simulator/controllers/webotsCtrlGameEngine/files
 simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib

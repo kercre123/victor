@@ -133,7 +133,11 @@ public:
   {
     for (T i = T(0); i < T::Count; ++i)
     {
-      _stringToEnumMap[EnumToString(i)] = i;
+      const char* s = EnumToString(i);
+      if(s != nullptr)
+      {
+        _stringToEnumMap[s] = i;
+      }
     }
   }
   

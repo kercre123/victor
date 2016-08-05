@@ -1743,4 +1743,25 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.Message.EnableDroneMode = Singleton<EnableDroneMode>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
   }
+
+  public void RestoreRobotFromBackup(uint backupToRestoreFrom) {
+    RobotEngineManager.Instance.Message.RestoreRobotFromBackup = Singleton<RestoreRobotFromBackup>.Instance.Initialize(backupToRestoreFrom);
+    RobotEngineManager.Instance.SendMessage();
+  }
+		
+  public void WipeRobotGameData() {
+    RobotEngineManager.Instance.Message.WipeRobotGameData = Singleton<WipeRobotGameData>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void RequestRobotRestoreData() {
+    RobotEngineManager.Instance.Message.RequestRobotRestoreData = Singleton<RequestRobotRestoreData>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index, byte numTotalBlobs)
+  {
+    RobotEngineManager.Instance.Message.NVStorageWriteEntry = Singleton<NVStorageWriteEntry>.Instance.Initialize (tag, size, data, index, numTotalBlobs);
+    RobotEngineManager.Instance.SendMessage ();
+  }
 }

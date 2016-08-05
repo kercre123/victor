@@ -762,6 +762,10 @@ public:
   
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return *_robotToEngineImplMessaging; }
   
+  const u32 GetSerialNumber() const { return _serialNumber; }
+  void SetSerialNumber(const u32 num) { _serialNumber = num; }
+  void SetModelNumber(const u32 num) { _modelNumber = num; }
+  
 protected:
   
   const CozmoContext* _context;
@@ -770,6 +774,8 @@ protected:
   // The robot's identifier
   RobotID_t         _ID;
   bool              _isPhysical = false;
+  u32               _serialNumber = 0;
+  u32               _modelNumber  = 0;
   
   // Whether or not sync time was acknowledged by physical robot
   bool              _timeSynced = false;

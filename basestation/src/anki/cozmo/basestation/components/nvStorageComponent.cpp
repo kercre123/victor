@@ -30,6 +30,7 @@ namespace Cozmo {
   
 NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* context)
   : _robot(inRobot)
+  , _backupManager(inRobot)
 {
 
   if (context) {
@@ -166,7 +167,10 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
       // than what is already stored in the robot.
       PRINT_NAMED_DEBUG("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
                         "Tag: %s", EnumToString(tag));
+      
       _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+      
+      _backupManager.QueueDataToWrite(tag, std::vector<u8>());
     }
   }
   
@@ -181,6 +185,9 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
   
   // Queue write request
   _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
+  
+  // Let the backup manager know this tag and data have been queued to be written
+  _backupManager.QueueDataToWrite(tag, std::vector<u8>(data, data+size));
   
   if (DEBUG_NVSTORAGE_COMPONENT) {
     PRINT_NAMED_DEBUG("NVStorageComponent.Write.DataQueued",
@@ -209,6 +216,8 @@ bool NVStorageComponent::Erase(NVStorage::NVEntryTag tag,
   }
   
   _requestQueue.emplace(tag, callback, broadcastResultToGame);
+  
+  _backupManager.QueueDataToWrite(tag, std::vector<u8>());
   
   if (DEBUG_NVSTORAGE_COMPONENT) {
     PRINT_NAMED_DEBUG("NVStorageComponent.Erase.Queued",
@@ -669,6 +678,9 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
         PRINT_NAMED_DEBUG("NVStorageComponent.HandleNVOpResult.ExecutingWriteCallback", "%s", baseTagStr);
         _writeDataAckMap[baseTag].callback(payload.report.result);
       }
+      
+      // Let the backup manager know that the write for this tag has completed
+      _backupManager.WriteDataForTag(static_cast<NVStorage::NVEntryTag>(baseTag), payload.report.result);
       
       _writeDataAckMap.erase(baseTag);
     }

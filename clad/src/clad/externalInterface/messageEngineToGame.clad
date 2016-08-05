@@ -173,6 +173,19 @@ message UnexpectedMovement {
   UnexpectedMovementType movementType
 }
 
+// Whether or not the restore was successful
+message RestoreRobotStatus {
+  bool didWipe,
+  bool success
+}
+
+// Sends an array of robot serial numbers that we have backup data for and whether or not
+// game should prompt for restore
+message RestoreRobotOptions {
+  bool shouldPromptForRestore,
+  uint_32 robotsWithBackupData[uint_8]
+}
+
 // Generic string for sending debug string up to game
 message DebugString {
     string    text

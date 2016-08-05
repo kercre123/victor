@@ -195,6 +195,23 @@ message IMURequest {
     uint_32 length_ms
 }
 
+// Will restore the currently connected robot with either an automatically determined
+// backup file or from the specified one
+message RestoreRobotFromBackup {
+  uint_32 robotToRestoreFrom = 0
+}
+
+// Requests data about the backups we have and whether or not to prompt the user
+// to restore this robot
+message RequestRobotRestoreData {
+
+}
+
+// Wipes all game data on the robot
+message WipeRobotGameData {
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Action Queuing Commands  (Actions themselves are in messageActions.clad!)
 ///////////////////////////////////////////////////////////////////////////////

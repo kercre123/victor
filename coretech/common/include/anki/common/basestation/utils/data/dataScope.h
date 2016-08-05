@@ -18,7 +18,7 @@ namespace Util {
 namespace Data {
 
 enum class Scope {
-  Output,
+  Persistent,
   Resources,
   Cache,
   CurrentGameLog,

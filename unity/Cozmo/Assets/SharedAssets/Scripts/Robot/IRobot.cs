@@ -302,4 +302,11 @@ public interface IRobot : IDisposable {
 
   void EnableDroneMode(bool enable);
 
+  void RestoreRobotFromBackup(uint backupToRestoreFrom);
+
+  void WipeRobotGameData();
+
+  void RequestRobotRestoreData();
+
+  void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index = 0, byte numTotalBlobs = 1);
 }

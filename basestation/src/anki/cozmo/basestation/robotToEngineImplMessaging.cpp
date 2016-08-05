@@ -112,7 +112,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncTimeAck,                    &RobotToEngineImplMessaging::HandleSyncTimeAck);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotPoked,                     &RobotToEngineImplMessaging::HandleRobotPoked);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,                            &RobotToEngineImplMessaging::HandleRobotSetID);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                 &RobotToEngineImplMessaging::HandleFirmwareVersion);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorCalibration,               &RobotToEngineImplMessaging::HandleMotorCalibration);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
@@ -224,7 +224,7 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
 
-void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleRobotSetID");
   
@@ -236,6 +236,9 @@ void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface
   
   // This should be definition always have a phys ID
   Anki::Util::sEvent("robot.handleRobotSetID",{},string_id);
+  
+  robot->SetSerialNumber(payload.robotID);
+  robot->SetModelNumber(payload.modelID);
 }
   
   

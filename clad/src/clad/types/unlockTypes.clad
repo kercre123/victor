@@ -2,39 +2,47 @@
 */
 
 
+// **** RULES ****
+// 1) Only add unlocks at the end before "Count"
+// 2) Never reorder or change the numbering of the unlocks including commented out ones
+// 3) Remove an unlock by commenting out the line making sure to follow rule 2
+// 4) Renaming is not recommended
 namespace Anki {
 namespace Cozmo {
 
-enum uint_8 UnlockId
+enum int_32 UnlockId
 {
-  Invalid = 0,
+  Invalid                 = 0,
 
-  All,
-  Defaults,
+  All                     = 1,
+  Defaults                = 2,
 
-  // Engine-side unlocks
-  BuildPyramid,
-  KnockOverThreeCubeStack,
-  PickupCube,
-  RollCube,
-  StackTwoCubes,
-  TakeCubeFromHand,
-  PounceOnMotionAction,
-  PopAWheelieAction,
+  BuildPyramid            = 3,
+  //FlipOntoBack            = 4,
+  KnockOverThreeCubeStack = 5,
+  PickupCube              = 6,
+  //ReactToSmiles           = 7,
+  //RecognizePets           = 8,
+  RollCube                = 9,
+  StackTwoCubes           = 10,
+  TakeCubeFromHand        = 11,
+  PounceOnMotionAction    = 12,
+  PopAWheelieAction       = 13,
+  DroneModeGame           = 14,
+  KeepawayGame            = 15,
+  MeetCozmoGame           = 16,
+  MemoryMatchGame         = 17,
+  QuickTapGame            = 18,
 
-  // App-side unlocks
-  DroneModeGame,
-  KeepawayGame,
-  MeetCozmoGame,
-  MemoryMatchGame,
-  QuickTapGame,
+  // ADD NEW UNLOCKS HERE
 
   Count
 }
 
+
 // List of the unlockIds that are unlocked
 structure UnlockedIdsList {
-  UnlockId unlockedIds[128]
+  UnlockId unlockedIds[512]
 }
 
 } // namespace Cozmo

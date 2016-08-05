@@ -13,6 +13,7 @@
 #ifndef __Cozmo_Basestation_NVStorageComponent_H__
 #define __Cozmo_Basestation_NVStorageComponent_H__
 
+#include "anki/cozmo/basestation/robotDataBackupManager.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
@@ -119,6 +120,8 @@ public:
   // Kevin's sandbox function for testing
   // For dev only!
   void Test();
+  
+  RobotDataBackupManager& GetRobotDataBackupManager() { return _backupManager; }
  
 private:
   
@@ -327,6 +330,10 @@ private:
   // If an operation is not acked within this timeout then give up waiting for it.
   // (Average write/read rate is ~10KB/s)
   static constexpr u32 _kAckTimeout_ms = 12800;
+  
+  // Manages the robot data backups
+  // The backup manager lives here as it needs to update the backup everytime we write new things to the robot
+  RobotDataBackupManager _backupManager;
   
 };
 

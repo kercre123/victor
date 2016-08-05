@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KeepawayGame
-    _EnumValue: 12
+    _EnumValue: 15
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0

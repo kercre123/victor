@@ -50,9 +50,9 @@ public:
 
 private:
 
-  void WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked, u8 attemptNumIn);
+  void WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked);
   
-  void ReadCurrentUnlocksFromRobot(u8 attemptNumIn);
+  void ReadCurrentUnlocksFromRobot();
   
   bool IsUnlockIdValid(UnlockId id);
 

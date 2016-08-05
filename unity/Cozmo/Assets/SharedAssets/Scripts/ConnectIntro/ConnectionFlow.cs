@@ -283,10 +283,21 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void CheckForRestoreRobotFlow() {
     // TODO: implement check for if we need to try to restore old robot profile to a new robot.
-
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // we are done with first time user flow.. TODO: move this to after onboarding?
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
+      DataPersistence.DataPersistenceManager.Instance.Save();
+
+      // Need to create the stuct the will be written to the NVEntryTag, set values in it, and then pack it into a
+      // memoryStream which will modify the byte array it was constructed with. That byte array is then what is
+      // passed to the NVStorageWrite message
+      Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
+      data.hasCompletedOnboarding = true;
+      byte[] byteArr = new byte[1024];
+      System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
+      data.Pack(ms);
+      RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, (ushort)data.Size, byteArr);
+
       FinishConnectionFlow();
     }
     else {
