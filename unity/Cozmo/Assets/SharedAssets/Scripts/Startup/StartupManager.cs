@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Anki.Assets;
 using System.IO;
 using System;
@@ -80,8 +81,16 @@ public class StartupManager : MonoBehaviour {
     _CurrentNumDots = 0;
     StartCoroutine(UpdateLoadingDots());
 
+    // set up progress bar updater for resource extraction
+    float startingProgress = _CurrentProgress;
+    const float totalResourceExtractionProgress = 0.5f;
+    Action<float> progressUpdater = prog => {
+      float totalProgress = startingProgress + totalResourceExtractionProgress * Mathf.Clamp(prog, 0.0f, 1.0f);
+      AddLoadingBarProgress(totalProgress - _CurrentProgress);
+    };
+
     // Extract resource files in platforms that need it
-    yield return ExtractResourceFiles();
+    yield return ExtractResourceFiles(progressUpdater);
 
     // If there was any error extracting the files, this is blocker and we can't continue running the app
     if (!string.IsNullOrEmpty(_ExtractionErrorMessage)) {
@@ -371,14 +380,14 @@ public class StartupManager : MonoBehaviour {
     }
   }
 
-  private IEnumerator ExtractResourceFiles() {
+  private IEnumerator ExtractResourceFiles(Action<float> progressUpdater) {
 #if !UNITY_EDITOR && UNITY_ANDROID
     // In Android the files in streamingAssetsPath are in the jar file which means our native code can't access them. Here
     // we extract them from the jar file into persistentDataPath using the resources manifest.
     string fromPath = Application.streamingAssetsPath + "/";
     string toPath = PlatformUtil.GetResourcesBaseFolder() + "/";
 
-    DAS.Info("StartupManager.Awake.ExtractResourceFiles", "About to extract resource files. fromPath = " + fromPath + ". toPath = " + toPath);
+    Debug.Log("About to extract resource files. fromPath = " + fromPath + ". toPath = " + toPath);
 
     try {
 
@@ -391,7 +400,7 @@ public class StartupManager : MonoBehaviour {
     }
     catch (Exception e) {
       _ExtractionErrorMessage = "There was an exception extracting the resource files: " + e.ToString();
-      DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+      Debug.LogError(_ExtractionErrorMessage);
       yield break;
     }
 
@@ -401,33 +410,16 @@ public class StartupManager : MonoBehaviour {
 
     if (!string.IsNullOrEmpty(resourcesWWW.error)) {
       _ExtractionErrorMessage = "Error loading resources.txt: " + resourcesWWW.error;
-      DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+      Debug.LogError(_ExtractionErrorMessage);
       yield break;
     }
 
     // Extract every individual file
     string[] files = resourcesWWW.text.Split('\n');
+    List<string> filesToLoad = new List<string>();
     foreach (string fileName in files) {
       if (fileName.Contains(".")) {
-        WWW www = new WWW(fromPath + fileName);
-        yield return www;
-
-        if (!string.IsNullOrEmpty(www.error)) {
-          _ExtractionErrorMessage = "Error extracting file: " + www.error;
-          DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
-          yield break;
-        }
-
-        try {
-          File.WriteAllBytes(toPath + fileName, www.bytes);
-        }
-        catch (Exception e) {
-          _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
-          DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
-          yield break;
-        }
-
-        www.Dispose();
+        filesToLoad.Add(fileName);
       } else {
         // Assume this is a directory
         try {
@@ -435,11 +427,51 @@ public class StartupManager : MonoBehaviour {
         }
         catch (Exception e) {
           _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
-          DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+          Debug.LogError(_ExtractionErrorMessage);
           yield break;
         }
       }
     }
+
+    Debug.Log("Starting resource extraction");
+
+    // define how many parallel loads we allow
+    // in the results of my testing, 8 was the smallest number at which we basically didn't get any faster
+    // by increasing the number any higher (was ~33% faster than 4, roughly same speed as 16)
+    const int maxLoadCount = 8;
+
+    float totalFiles = (float)filesToLoad.Count;
+    LinkedList<LoadWrapper> wwws = new LinkedList<LoadWrapper>();
+    while (filesToLoad.Count > 0 || wwws.Count > 0) {
+      // go through existing loads and remove completed ones
+      for (var safeIter = wwws.First; safeIter != null;) {
+        var node = safeIter;
+        safeIter = node.Next;
+        if (node.Value.www.isDone) {
+          bool success = ExtractOneFile(node.Value.www, toPath + node.Value.filename);
+          if (!success) {
+            yield break;
+          }
+          wwws.Remove(node);
+        }
+      }
+      // fill empty slots with more loads
+      while (wwws.Count < maxLoadCount && filesToLoad.Count > 0) {
+        string newFile = filesToLoad[filesToLoad.Count - 1];
+        filesToLoad.RemoveAt(filesToLoad.Count - 1);
+        LoadWrapper wrapper = new LoadWrapper();
+        wrapper.www = new WWW(fromPath + newFile);
+        wrapper.filename = newFile;
+        wwws.AddLast(wrapper);
+      }
+      // update and return
+      progressUpdater((totalFiles - filesToLoad.Count) / totalFiles);
+      yield return null;
+    }
+
+    progressUpdater(1.0f);
+
+    Debug.Log("Done with resource extraction");
 
     resourcesWWW.Dispose();
 #endif
@@ -447,4 +479,31 @@ public class StartupManager : MonoBehaviour {
     _ExtractionErrorMessage = null;
     yield return null;
   }
+
+#if !UNITY_EDITOR && UNITY_ANDROID
+  private class LoadWrapper {
+    public WWW www;
+    public string filename;
+  }
+
+  private bool ExtractOneFile(WWW www, string toPath) {
+    if (!string.IsNullOrEmpty(www.error)) {
+      _ExtractionErrorMessage = "Error extracting file: " + www.error;
+      Debug.LogError(_ExtractionErrorMessage);
+      return false;
+    }
+
+    try {
+      File.WriteAllBytes(toPath, www.bytes);
+    }
+    catch (Exception e) {
+      _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
+      Debug.LogError(_ExtractionErrorMessage);
+      return false;
+    }
+
+    www.Dispose();
+    return true;
+  }
+#endif
 }
