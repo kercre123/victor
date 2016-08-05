@@ -5,6 +5,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -358,6 +359,8 @@ namespace Cozmo {
   
   Result FaceWorld::Update()
   {
+    ANKI_CPU_PROFILE("FaceWorld::Update");
+    
     // Delete any faces we haven't seen in awhile
     for(auto faceIter = _knownFaces.begin(); faceIter != _knownFaces.end(); )
     {

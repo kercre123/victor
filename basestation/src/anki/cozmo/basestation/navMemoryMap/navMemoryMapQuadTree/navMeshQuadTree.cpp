@@ -17,6 +17,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
@@ -53,6 +54,8 @@ void NavMeshQuadTree::Draw(size_t mapIdxHint) const
 {
   if ( _gfxDirty && kRenderNavMeshQuadTree )
   {
+    ANKI_CPU_PROFILE("NavMeshQuadTree::Draw");
+    
     // ask root to add proper quads to be rendered
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
@@ -96,6 +99,8 @@ void NavMeshQuadTree::Draw(size_t mapIdxHint) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::ClearDraw() const
 {
+  ANKI_CPU_PROFILE("NavMeshQuadTree::ClearDraw");
+  
   // clear previous quads
   std::stringstream instanceId;
   instanceId << "NavMeshQuadTree_" << this;
@@ -110,9 +115,13 @@ void NavMeshQuadTree::ClearDraw() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent)
 {
+  ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad");
+  
   // render approx last quad added
   if ( kRenderLastAddedQuad )
   {
+    ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad.Render");
+    
     ColorRGBA color = Anki::NamedColors::WHITE;
     const float z = 70.0f;
     Point3f topLeft = {quad[Quad::CornerName::TopLeft].x(), quad[Quad::CornerName::TopLeft].y(), z};

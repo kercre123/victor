@@ -20,7 +20,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 
 #define DEBUG_NVSTORAGE_COMPONENT 0
@@ -373,6 +373,8 @@ bool NVStorageComponent::HasPendingRequests()
   
 void NVStorageComponent::Update()
 {
+  ANKI_CPU_PROFILE("NVStorageComponent::Update");
+  
   // If expecting read data to arrive, check timeout.
   if (!_recvDataMap.empty()) {
     if (_recvDataMap.size() > 1) {
@@ -564,6 +566,8 @@ void NVStorageComponent::HandleNVData(const AnkiEvent<RobotInterface::RobotToEng
 
 void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
+  ANKI_CPU_PROFILE("Robot::HandleNVOpResult");
+  
   RobotInterface::NVOpResultToEngine payload = message.GetData().Get_nvResult();
   if (DEBUG_NVSTORAGE_COMPONENT) {
     PRINT_NAMED_DEBUG("NVStorageComponent.HandleNVOpResult.Recvd",

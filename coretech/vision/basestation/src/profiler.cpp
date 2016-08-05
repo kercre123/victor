@@ -39,7 +39,7 @@ namespace Vision {
   
   double Profiler::AverageToc(const char* timerName) { return 0.; }
   
-  void Profiler::PrintAverageTiming() const { }
+  void Profiler::PrintAverageTiming() { }
 
 # else
   

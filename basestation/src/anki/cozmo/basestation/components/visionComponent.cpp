@@ -41,6 +41,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
@@ -485,6 +486,7 @@ namespace Cozmo {
         case RunMode::Asynchronous:
         {
           if(!_paused) {
+            ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
             Lock();
 
             const bool isDroppingFrame = !_nextImg.IsEmpty();
@@ -608,6 +610,7 @@ namespace Cozmo {
   void VisionComponent::UpdateVisionSystem(const VisionPoseData&  poseData,
                                            const EncodedImage&    encodedImg)
   {
+    ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
     Result result = _visionSystem->Update(poseData, encodedImg);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
@@ -640,9 +643,12 @@ namespace Cozmo {
         std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
         continue;
       }
+      
+      ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuThreadProfiler::kLogFrequencyNever);
 
       if (!_currentImg.IsEmpty())
       {
+        ANKI_CPU_PROFILE("ProcessImage");
         // There is an image to be processed; do so now
         UpdateVisionSystem(_currentPoseData, _currentImg);
         
@@ -657,6 +663,7 @@ namespace Cozmo {
       }
       else if(!_nextImg.IsEmpty())
       {
+        ANKI_CPU_PROFILE("SwapInNewImage");
         // We have an image waiting to be processed: swap it in (avoid copy)
         Lock();
         std::swap(_currentImg, _nextImg);
@@ -666,11 +673,14 @@ namespace Cozmo {
       }
       else
       {
+        ANKI_CPU_PROFILE("SleepForNextImage");
         // Waiting on next image
         std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
       
     } // while(_running)
+    
+    ANKI_CPU_REMOVE_THIS_THREAD();
 
     PRINT_NAMED_INFO("VisionComponent.Processor",
                      "Terminated Robot VisionComponent::Processor thread");
@@ -817,6 +827,8 @@ namespace Cozmo {
   
   Result VisionComponent::UpdateAllResults(VisionProcessingResult& procResult_out)
   {
+    ANKI_CPU_PROFILE("VC::UpdateAllResults");
+    
     bool anyFailures = false;
     
     if(_visionSystem != nullptr)

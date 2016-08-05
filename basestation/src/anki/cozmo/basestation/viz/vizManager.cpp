@@ -23,6 +23,8 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/vizInterface/messageViz.h"
+#include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include <fstream>
@@ -34,6 +36,9 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
+    CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
     
@@ -87,20 +92,31 @@ namespace Anki {
 
     void VizManager::SendMessage(const VizInterface::MessageViz& message)
     {
-      if (!_isInitialized)
+      if (!_isInitialized || !kSendAnythingToViz)
+      {
         return;
+      }
+      
+      ANKI_CPU_PROFILE("VizManager::SendMessage");
 
       const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
       uint8_t buffer[MAX_MESSAGE_SIZE]{0};
 
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
-      if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
-        PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+      
+      {
+        ANKI_CPU_PROFILE("VizClient.Send");
+        if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
+          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+        }
       }
       
-      if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
-        if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
-          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+      {
+        ANKI_CPU_PROFILE("UnityVizClient.Send");
+        if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
+          if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
+            PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+          }
         }
       }
         
@@ -116,6 +132,7 @@ namespace Anki {
     
     void VizManager::ShowObjects(bool show)
     {
+      ANKI_CPU_PROFILE("VizManager::ShowObjects");
       SendMessage(VizInterface::MessageViz(VizInterface::ShowObjects(show)));
     }
     
@@ -123,6 +140,7 @@ namespace Anki {
     // ===== Robot drawing function =======
     
     void VizManager::DrawRobot(const u32 robotID, const Pose3d& pose, const f32 headAngle, const f32 liftAngle) {
+      ANKI_CPU_PROFILE("VizManager::DrawRobot");
       SendMessage(VizInterface::MessageViz(
         VizInterface::SetRobot(robotID,
           (float)MM_TO_M(pose.GetTranslation().x()),
@@ -248,18 +266,24 @@ namespace Anki {
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)
     {
+      ANKI_CPU_PROFILE("VizManager::DrawCameraOval");
+      
       SendMessage(VizInterface::MessageViz(
         VizInterface::CameraOval((uint32_t)color, center.x(), center.y(), xRadius, yRadius)));
     }
     
     void VizManager::DrawCameraLine(const Point2f& start, const Point2f& end, const ColorRGBA& color)
     {
+      ANKI_CPU_PROFILE("VizManager::DrawCameraLine");
+      
       SendMessage(VizInterface::MessageViz(
         VizInterface::CameraLine((uint32_t)color, start.x(), start.y(), end.x(), end.y())));
     }
     
     void VizManager::DrawCameraText(const Point2f& position, const std::string& text, const ColorRGBA& color)
     {
+      ANKI_CPU_PROFILE("VizManager::DrawCameraText");
+      
       SendMessage(VizInterface::MessageViz(
         VizInterface::CameraText((uint32_t)color, std::round(position.x()), std::round(position.y()), {text})));
     }
@@ -398,6 +422,8 @@ namespace Anki {
       const ColorRGBA& color,
       const f32* params)
     {
+      ANKI_CPU_PROFILE("VizManager::DrawObject");
+      
       VizInterface::Object v;
       v.objectID = objectID;
       v.objectTypeID = objectTypeID;
@@ -431,17 +457,22 @@ namespace Anki {
     
     void VizManager::EraseVizObject(const Handle_t objectID)
     {
+      ANKI_CPU_PROFILE("VizManager::EraseVizObject");
       SendMessage(VizInterface::MessageViz(VizInterface::EraseObject(objectID, 0, 0)));
     }
     
 
     void VizManager::EraseAllVizObjects()
     {
+      ANKI_CPU_PROFILE("VizManager::EraseAllVizObjects");
+      
       SendMessage(VizInterface::MessageViz(VizInterface::EraseObject((uint32_t)VizConstants::ALL_OBJECT_IDs, 0, 0)));
     }
     
     void VizManager::EraseVizObjectType(const VizObjectType type)
     {
+      ANKI_CPU_PROFILE("VizManager::EraseVizObjectType");
+      
       SendMessage(VizInterface::MessageViz(
         VizInterface::EraseObject((uint32_t)VizConstants::OBJECT_ID_RANGE,
           VizObjectBaseID[(int)type], VizObjectBaseID[(int)type+1]-1)));
@@ -494,6 +525,8 @@ namespace Anki {
       const f32 x_start_mm, const f32 y_start_mm,
       const f32 x_end_mm, const f32 y_end_mm)
     {
+      ANKI_CPU_PROFILE("VizManager::AppendPathSegmentLine");
+      
       VizInterface::AppendPathSegmentLine v;
       v.pathID = pathID;
       v.x_start_m = MM_TO_M(x_start_mm);
@@ -509,6 +542,8 @@ namespace Anki {
       const f32 x_center_mm, const f32 y_center_mm,
       const f32 radius_mm, const f32 startRad, const f32 sweepRad)
     {
+      ANKI_CPU_PROFILE("VizManager::AppendPathSegmentArc");
+      
       VizInterface::AppendPathSegmentArc v;
       v.pathID = pathID;
       v.x_center_m = MM_TO_M(x_center_mm);
@@ -522,16 +557,19 @@ namespace Anki {
 
     void VizManager::ErasePath(const u32 pathID)
     {
+      ANKI_CPU_PROFILE("VizManager::ErasePath");
       SendMessage(VizInterface::MessageViz(VizInterface::ErasePath(pathID)));
     }
 
     void VizManager::EraseAllPaths()
     {
+      ANKI_CPU_PROFILE("VizManager::EraseAllPaths");
       SendMessage(VizInterface::MessageViz(VizInterface::ErasePath((uint32_t)VizConstants::ALL_PATH_IDs)));
     }
     
     void VizManager::SetPathColor(const u32 pathID, const ColorRGBA& color)
     {
+      ANKI_CPU_PROFILE("VizManager::SetPathColor");
       SendMessage(VizInterface::MessageViz(VizInterface::SetPathColor(pathID, (uint32_t)color)));
     }
     
@@ -540,6 +578,7 @@ namespace Anki {
     
     void VizManager::EraseQuad(const uint32_t quadType, const u32 quadID)
     {
+      ANKI_CPU_PROFILE("VizManager::EraseQuad");
       SendMessage(VizInterface::MessageViz(VizInterface::EraseQuad(quadType, quadID)));
     }
     
@@ -571,12 +610,14 @@ namespace Anki {
     
     void VizManager::EraseSegments(const std::string& identifier)
     {
+      ANKI_CPU_PROFILE("VizManager::EraseSegments");
       SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
     }
     
 
     void VizManager::DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads)
     {
+      ANKI_CPU_PROFILE("VizManager::DrawQuadVector");
       SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
       
       // split quad vector into several messages
@@ -609,6 +650,7 @@ namespace Anki {
           remainingQuads -= quadsPerMessage;
           
           // send message
+          ANKI_CPU_PROFILE("VizManager::SimpleQuadVectorMessage");
           SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessage{identifier, partQuads}));
         }
       }
@@ -618,6 +660,8 @@ namespace Anki {
     
     void VizManager::EraseQuadVector(const std::string& identifier)
     {
+      ANKI_CPU_PROFILE("VizManager::EraseQuadVector");
+      
       SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
       SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageEnd{identifier}));
     }
@@ -634,6 +678,8 @@ namespace Anki {
 
     void VizManager::SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...)
     {
+      ANKI_CPU_PROFILE("VizManager::SetText");
+      
       char buffer[2048]{0};
       va_list argptr;
       va_start(argptr, format);
@@ -664,6 +710,7 @@ namespace Anki {
     // ============== Misc. Debug methods =================
     void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle)
     {
+      ANKI_CPU_PROFILE("VizManager::SetDockingError");
       SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, z_dist, angle)));
     }
 
@@ -675,41 +722,52 @@ namespace Anki {
                                     const u8 enabledAnimTracks,
                                     const u8 animTag)
     {
+      ANKI_CPU_PROFILE("VizManager::SendRobotState");
       SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)
     {
+      ANKI_CPU_PROFILE("VizManager::SendRobotMood");
       SendMessage(VizInterface::MessageViz(std::move(robotMood)));
     }
 
     void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
     {
-      SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
+      if (kSendBehaviorScoresToViz)
+      {
+        ANKI_CPU_PROFILE("VizManager::SendRobotBehaviorSelectData");
+        SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
+      }
     }
 
     void VizManager::SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected)
     {
+      ANKI_CPU_PROFILE("VizManager::SendNewBehaviorSelected");
       SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
     }
 
     void VizManager::SendStartRobotUpdate()
     {
+      ANKI_CPU_PROFILE("VizManager::SendStartRobotUpdate");
       SendMessage(VizInterface::MessageViz(VizInterface::StartRobotUpdate()));
     }
 
     void VizManager::SendEndRobotUpdate()
     {
+      ANKI_CPU_PROFILE("VizManager::SendEndRobotUpdate");
       SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
     }
     
     void VizManager::SendSaveImages(ImageSendMode mode, std::string path)
     {
+      ANKI_CPU_PROFILE("VizManager::SendSaveImages");
       SendMessage(VizInterface::MessageViz(VizInterface::SaveImages(mode, path)));
     }
 
     void VizManager::SendSaveState(bool enabled, std::string path)
     {
+      ANKI_CPU_PROFILE("VizManager::SendSaveState");
       SendMessage(VizInterface::MessageViz(VizInterface::SaveState(enabled, path)));
     }
     
@@ -746,6 +804,7 @@ namespace Anki {
       if(!_sendImages) {
         return;
       }
+      ANKI_CPU_PROFILE("VizManager::SendImageChunk");
       SendMessage(VizInterface::MessageViz(ImageChunk(robotImageChunk)));
     }
     
@@ -855,6 +914,8 @@ namespace Anki {
                                      const u16 bottomRight_x, const u16 bottomRight_y,
                                      const u16 bottomLeft_x, const u16 bottomLeft_y)
     {
+      ANKI_CPU_PROFILE("VizManager::SendTrackerQuad");
+      
       VizInterface::TrackerQuad v;
       v.topLeft_x = topLeft_x;
       v.topLeft_y = topLeft_y;
@@ -869,6 +930,8 @@ namespace Anki {
     
     void VizManager::SetOrigin(const SetVizOrigin& msg)
     {
+      ANKI_CPU_PROFILE("VizManager::SetOrigin");
+      
       SetVizOrigin v(msg);
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }

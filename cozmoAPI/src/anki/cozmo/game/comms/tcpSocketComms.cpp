@@ -16,6 +16,7 @@
 #include "anki/messaging/basestation/IComms.h"
 #include "anki/messaging/shared/TcpServer.h"
 #include "json/json.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
@@ -75,6 +76,8 @@ void TcpSocketComms::HandleDisconnect()
   
 void TcpSocketComms::Update()
 {
+  ANKI_CPU_PROFILE("TcpSocketComms::Update");
+  
   // See if we lost the client since last upate
   if (_hasClient && !_tcpServer->HasClient())
   {
@@ -98,6 +101,8 @@ void TcpSocketComms::Update()
 
 bool TcpSocketComms::SendMessage(const Comms::MsgPacket& msgPacket)
 {
+  ANKI_CPU_PROFILE("TcpSocketComms::SendMessage");
+  
   if (IsConnected())
   {
     // Send the size of the message, followed by the message itself
@@ -107,12 +112,10 @@ bool TcpSocketComms::SendMessage(const Comms::MsgPacket& msgPacket)
     
     static_assert(sizeof(msgPacket.dataLen) == 2, "size mismatch");
     
-    int res = _tcpServer->Send((const char*)&msgPacket.dataLen, sizeof(msgPacket.dataLen));
-    if (res < 0)
-    {
-      return false;
-    }
-    res = _tcpServer->Send((const char*)msgPacket.data, msgPacket.dataLen);
+    // Data directly follows the dataLen in msgPatcket, so we can do 1 contiguous send
+    
+    const int res = _tcpServer->Send((const char*)&msgPacket.dataLen, sizeof(msgPacket.dataLen) + msgPacket.dataLen);
+    
     if (res < 0)
     {
       return false;

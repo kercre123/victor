@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/comms/robotConnectionManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "util/transport/udpTransport.h"
 #include "util/transport/reliableConnection.h"
@@ -76,6 +77,8 @@ void RobotConnectionManager::ConfigureReliableTransport()
   
 void RobotConnectionManager::Update()
 {
+  ANKI_CPU_PROFILE("RobotConnectionManager::Update");
+  
   // If we're running reliableTransport sync we need to update it
   if(_reliableTransport->IsSynchronous())
   {

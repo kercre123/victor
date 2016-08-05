@@ -16,6 +16,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/transport/connectionStats.h"
 #include "util/math/math.h"
 
@@ -49,6 +50,8 @@ BlockTapFilterComponent::BlockTapFilterComponent(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockTapFilterComponent::Update()
 {
+  ANKI_CPU_PROFILE("BlockTapFilterComponent::Update");
+  
   if( !_tapInfo.empty() )
   {
     TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();

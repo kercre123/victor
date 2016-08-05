@@ -37,6 +37,7 @@
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -263,6 +264,8 @@ void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::Message
 
 Result CozmoEngine::Update(const float currTime_sec)
 {
+  ANKI_CPU_PROFILE("CozmoEngine::Update");
+  
   if(!_isInitialized) {
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
@@ -370,6 +373,20 @@ Result CozmoEngine::Update(const float currTime_sec)
   return RESULT_OK;
 }
   
+#if REMOTE_CONSOLE_ENABLED
+void PrintTimingInfoStats(const ExternalInterface::TimingInfo& timingInfo, const char* name)
+{
+  PRINT_NAMED_INFO("CozmoEngine.LatencyStats", "%s: = %f (%f..%f)", name, timingInfo.avgTime_ms, timingInfo.minTime_ms, timingInfo.maxTime_ms);
+}
+  
+void PrintTimingInfoStats(const ExternalInterface::CurrentTimingInfo& timingInfo, const char* name)
+{
+  PRINT_NAMED_INFO("CozmoEngine.LatencyStats", "%s: = %f (%f..%f) (curr: %f)", name, timingInfo.avgTime_ms, timingInfo.minTime_ms, timingInfo.maxTime_ms, timingInfo.currentTime_ms);
+}
+CONSOLE_VAR(bool, kLogMessageLatencyOnce, "Network.Stats", false);
+#endif // REMOTE_CONSOLE_ENABLED
+
+
 void CozmoEngine::SendLatencyInfo()
 {
   if (Util::kNetConnStatsUpdate)
@@ -403,6 +420,28 @@ void CozmoEngine::SendLatencyInfo()
                                                                                      std::move(unityEngineLatency),
                                                                                      std::move(sdkEngineLatency),
                                                                                      std::move(imageLatency) ));
+
+    #if REMOTE_CONSOLE_ENABLED
+    if (kLogMessageLatencyOnce)
+    {
+      PrintTimingInfoStats(wifiLatency,      "wifi");
+      PrintTimingInfoStats(extSendQueueTime, "extSendQueue");
+      PrintTimingInfoStats(sendQueueTime,    "sendQueue");
+      PrintTimingInfoStats(recvQueueTime,    "recvQueue");
+      if (unityLatency.GetNumDbl() > 0.0)
+      {
+        PrintTimingInfoStats(unityEngineLatency, "unity");
+      }
+      if (sdkLatency.GetNumDbl() > 0.0)
+      {
+        PrintTimingInfoStats(sdkEngineLatency, "sdk");
+      }
+      
+      PrintTimingInfoStats(imageLatency, "image");
+      
+      kLogMessageLatencyOnce = false;
+    }
+    #endif // REMOTE_CONSOLE_ENABLED
     
     _context->GetExternalInterface()->Broadcast( std::move(debugLatencyMessage) );
   }

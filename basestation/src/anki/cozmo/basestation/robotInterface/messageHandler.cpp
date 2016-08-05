@@ -27,6 +27,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "json/json.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/transport/transportAddress.h"
 
@@ -69,6 +70,8 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
 
 void MessageHandler::ProcessMessages()
 {
+  ANKI_CPU_PROFILE("MessageHandler::ProcessMessages");
+  
   if(_isInitialized)
   {
     _robotConnectionManager->Update();
@@ -138,12 +141,16 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
 
 void MessageHandler::Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message)
 {
+  ANKI_CPU_PROFILE("Broadcast_R2E");
+  
   u32 type = static_cast<u32>(message.GetTag());
   _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
 }
 
 void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message)
 {
+  ANKI_CPU_PROFILE("Broadcast_R2E");
+  
   u32 type = static_cast<u32>(message.GetTag());
   _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }

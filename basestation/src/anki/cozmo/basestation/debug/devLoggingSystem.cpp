@@ -17,6 +17,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/rollingFileLogger.h"
@@ -185,6 +186,7 @@ void DevLoggingSystem::LogMessage(const ExternalInterface::MessageEngineToGame& 
     return;
   }
 
+  ANKI_CPU_PROFILE("LogMessage_EToG");
   _engineToGameLog->Write(PrepareMessage(message));
 }
   
@@ -197,12 +199,14 @@ void DevLoggingSystem::LogMessage(const ExternalInterface::MessageGameToEngine& 
     return;
   }
   
+  ANKI_CPU_PROFILE("LogMessage_GToE");
   _gameToEngineLog->Write(PrepareMessage(message));
 }
 
 template<>
 void DevLoggingSystem::LogMessage(const RobotInterface::EngineToRobot& message)
 {
+  ANKI_CPU_PROFILE("LogMessage_EToR");
   _engineToRobotLog->Write(PrepareMessage(message));
 }
 
@@ -215,6 +219,7 @@ void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
     return;
   }
   
+  ANKI_CPU_PROFILE("LogMessage_RToE");
   _robotToEngineLog->Write(PrepareMessage(message));
 }
     
@@ -227,6 +232,7 @@ void DevLoggingSystem::LogMessage(const VizInterface::MessageViz& message)
     return;
   }
     
+  ANKI_CPU_PROFILE("LogMessage_Viz");
   _engineToVizLog->Write(PrepareMessage(message));
 }
   

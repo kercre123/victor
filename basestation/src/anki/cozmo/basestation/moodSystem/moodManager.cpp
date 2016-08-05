@@ -23,6 +23,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/vizInterface/messageViz.h"
+#include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -38,6 +40,9 @@ namespace Cozmo {
 static StaticMoodData sStaticMoodData;
 
 static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
+  
+  
+CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
 
 StaticMoodData& MoodManager::GetStaticMoodData()
@@ -128,6 +133,8 @@ void MoodManager::Reset()
 
 void MoodManager::Update(double currentTime)
 {
+  ANKI_CPU_PROFILE("MoodManager::Update");
+  
   const float kMinTimeStep = 0.0001f; // minimal sensible timestep, should be at least > epsilon
   float timeDelta = (_lastUpdateTime != 0.0) ? float(currentTime - _lastUpdateTime) : kMinTimeStep;
   if (timeDelta < kMinTimeStep)
@@ -158,7 +165,7 @@ void MoodManager::Update(double currentTime)
   _eventNames.clear();
   
   // Can have null robot for unit tests
-  if (nullptr != _robot)
+  if ((nullptr != _robot) && kSendMoodToViz)
   {
     _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));
   }
@@ -228,6 +235,8 @@ void MoodManager::HandleMessage(const ExternalInterface::MoodMessage& msg)
   
 void MoodManager::SendEmotionsToGame()
 {
+  ANKI_CPU_PROFILE("MoodManager::SendEmotionsToGame"); // ~1ms per tick (iPhone 5S in Release) - could send every N ticks?
+  
   if (_robot)
   {
     std::vector<float> emotionValues;

@@ -176,10 +176,10 @@ class _EngineInterfaceImpl:
                         msg = fromEngMsg.UpdateEngineState
                         if self.verboseLevel >= VerboseLevel.High:
                             sys.stdout.write("Recv: UpdateEngineState from " + str(msg.oldState) + " to " + str(msg.newState) + os.linesep)
-                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotConnected:
-                        msg = fromEngMsg.RobotConnected
-                        if self.verboseLevel >= VerboseLevel.High:
-                            sys.stdout.write("Recv: RobotConnected id=" + str(msg.robotID) + " successful=" + str(msg.successful) + os.linesep)                        
+                    # elif fromEngMsg.tag == fromEngMsg.Tag.RobotConnected:
+                    #     msg = fromEngMsg.RobotConnected
+                    #     if self.verboseLevel >= VerboseLevel.High:
+                    #         sys.stdout.write("Recv: RobotConnected id=" + str(msg.robotID) + " successful=" + str(msg.successful) + os.linesep)                        
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedPossibleObject:
                         msg = fromEngMsg.RobotObservedPossibleObject
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedObject:

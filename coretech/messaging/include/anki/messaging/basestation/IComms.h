@@ -46,12 +46,16 @@ namespace Anki {
       }
       
       static const int MAX_SIZE = 2048;
-      u8 data[MAX_SIZE];   // TODO: Make this a vector?
+      
+      // dataLen MUST be stored immediately before data so that we can send messages as [len][msg] without copying
       u16 dataLen = 0;
+      u8 data[MAX_SIZE];
+      
       s32 sourceId = -1;
       s32 destId = -1;
       double timeStamp_s = 0.0;
     };
+    static_assert(offsetof(MsgPacket, data) == (offsetof(MsgPacket, dataLen) + sizeof(MsgPacket::dataLen)), "Error len and data not contiguous!");
       
     class IComms {
     public:

@@ -35,6 +35,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/behaviorChooserType.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
@@ -421,6 +422,8 @@ void BehaviorManager::RequestEnableReactionaryBehavior(std::string requesterID, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::Update()
 {
+  ANKI_CPU_PROFILE("BehaviorManager::Update");
+  
   Result lastResult = RESULT_OK;
     
   if(!_isInitialized) {

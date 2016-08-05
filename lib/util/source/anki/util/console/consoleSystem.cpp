@@ -812,6 +812,7 @@ public:
   
   MenuConsoleChannel(char* outText, uint32_t outTextLength)
     : _outText(outText)
+    , _channelName(DEFAULT_CHANNEL_NAME)
     , _outTextLength(outText ? outTextLength : 0u)
     , _outTextPos(0)
     , _requiredCapacity(0)
@@ -840,7 +841,7 @@ public:
     
     if ((_outText == nullptr) || (_requiredCapacity > _outTextLength))
     {
-      PRINT_NAMED_INFO("MenuConsoleChannel", "Ran out of room - needed %u chars, only given %u", _requiredCapacity, _outTextLength);
+      PRINT_CH_INFO(_channelName, "MenuConsoleChannel", "Ran out of room - needed %u chars, only given %u", _requiredCapacity, _outTextLength);
     }
     
     delete[] _tempBuffer;
@@ -873,7 +874,7 @@ public:
       
       if (_ttyLoggingEnabled)
       {
-        PRINT_NAMED_INFO("Console", "%s", _tempBuffer);
+        PRINT_CH_INFO(_channelName, "Console", "%s", _tempBuffer);
       }
       
       _requiredCapacity += printRetVal;
@@ -907,12 +908,16 @@ public:
     return _ttyLoggingEnabled;
   }
   
+  const char* GetChannelName() const override { return _channelName; }
+  void SetChannelName(const char* newName) override { _channelName = newName; }
+  
 private:
   
   static const size_t kTempBufferSize = 1024;
   
   char*     _tempBuffer;
   char*     _outText;
+  const char* _channelName;
   uint32_t  _outTextLength;
   uint32_t  _outTextPos;
   uint32_t  _requiredCapacity;

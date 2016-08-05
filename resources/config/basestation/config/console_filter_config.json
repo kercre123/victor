@@ -15,6 +15,7 @@
     [
       { "channel": "Unnamed" ,        "enabled": false }, // Unnamed is currently the default channel
       { "channel": "CoreTech",        "enabled": false },
+      { "channel": "CpuProfiler",     "enabled": true  },
       { "channel": "Keyboard",        "enabled": true },
       { "channel": "Network",         "enabled": false },
       { "channel": "Profiler",        "enabled": false },

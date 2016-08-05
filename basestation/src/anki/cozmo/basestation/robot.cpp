@@ -65,6 +65,7 @@
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/gameStatusFlag.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/transport/reliableConnection.h"
@@ -524,6 +525,8 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
     
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
+  ANKI_CPU_PROFILE("Robot::UpdateFullRobotState");
+  
   Result lastResult = RESULT_OK;
 
   // Ignore state messages received before time sync
@@ -944,6 +947,8 @@ void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
     
 Result Robot::Update(bool ignoreVisionModes)
 {
+  ANKI_CPU_PROFILE("Robot::Update");
+
 #if(0)
   ActiveBlockLightTest(1);
   return RESULT_OK;
@@ -2187,6 +2192,8 @@ Result Robot::ExecutePath(const Planning::Path& path, const bool useManualSpeed)
     
 Result Robot::SetOnRamp(bool t)
 {
+  ANKI_CPU_PROFILE("Robot::SetOnRamp");
+  
   if(t == _onRamp) {
     // Nothing to do
     return RESULT_OK;
@@ -2272,6 +2279,8 @@ Result Robot::SetOnRamp(bool t)
     
 Result Robot::SetPoseOnCharger()
 {
+  ANKI_CPU_PROFILE("Robot::SetPoseOnCharger");
+  
   Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger));
   if(charger == nullptr) {
     PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.NoChargerWithID",

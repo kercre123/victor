@@ -47,6 +47,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/math/math.h"
 
@@ -810,6 +811,8 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::UpdateNavMemoryMap()
   {
+    ANKI_CPU_PROFILE("BlockWorld::UpdateNavMemoryMap");
+    
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
     if ( nullptr != currentNavMemoryMap )
     {
@@ -3240,6 +3243,8 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
 
   Result BlockWorld::Update()
   {
+    ANKI_CPU_PROFILE("BlockWorld::Update");
+    
     // New timestep, new set of occluders.  Get rid of anything registered as
     // an occluder with the robot's camera
     _robot->GetVisionComponent().GetCamera().ClearOccluders();

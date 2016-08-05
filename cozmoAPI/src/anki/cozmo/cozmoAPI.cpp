@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/game/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include <chrono>
 
@@ -70,6 +71,10 @@ bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& 
   return gameInitResult;
 }
 
+
+ANKI_CPU_PROFILER_ENABLED_ONLY(const float kMaxDesiredEngineDuration = 60.0f); // Above this warn etc.
+
+
 bool CozmoAPI::Update(const double currentTime_sec)
 {
   // If we have a joinable thread already, shouldn't be updating
@@ -84,6 +89,8 @@ bool CozmoAPI::Update(const double currentTime_sec)
     PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
     return false;
   }
+  
+  ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
   
   return _cozmoRunner->Update(currentTime_sec);
 }
@@ -169,6 +176,8 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 
   while(_isRunning)
   {
+    ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
+    
     auto tickStart = std::chrono::system_clock::now();
 
     std::chrono::duration<double> timeSeconds = tickStart - runStart;
@@ -179,7 +188,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       Stop();
     }
     
-    const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) );
+    const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) ); // 60 * 0.2 = 12 milliseconds!?
     
     auto tickNow = std::chrono::system_clock::now();
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
@@ -193,6 +202,8 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     }
     else
     {
+      ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
+      
       if (ms_left < minimumSleepTimeMs)
       {
         ms_left = minimumSleepTimeMs;

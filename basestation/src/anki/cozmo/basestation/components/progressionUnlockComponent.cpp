@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "util/console/consoleInterface.h"
@@ -205,6 +206,8 @@ void ProgressionUnlockComponent::Update()
 
 void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked, u8 attemptNumIn)
 {
+  ANKI_CPU_PROFILE("ProgressionUnlockComponent::WriteCurrentUnlocksToRobot");
+  
   u8 attemptNum = attemptNumIn + 1;
   if(attemptNum > kNumAttemptsToWrite)
   {

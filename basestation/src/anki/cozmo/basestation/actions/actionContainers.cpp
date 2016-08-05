@@ -14,8 +14,9 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "util/logging/logging.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -192,6 +193,8 @@ namespace Anki {
     
     Result ActionList::Update()
     {
+      ANKI_CPU_PROFILE("ActionList::Update");
+      
       Result lastResult = RESULT_OK;
       
       for(auto queueIter = _queues.begin(); queueIter != _queues.end(); )

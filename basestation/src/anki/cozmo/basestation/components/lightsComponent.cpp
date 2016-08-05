@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 
 static const u32 kTimeToMarkCubeNonVisible_ms = 3000;
 
@@ -36,6 +37,8 @@ LightsComponent::LightsComponent(Robot& robot)
 
 void LightsComponent::Update()
 {
+  ANKI_CPU_PROFILE("LightsComponent::Update");
+  
   if( !_enabled ) {
     return;
   }

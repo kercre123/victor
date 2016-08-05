@@ -22,6 +22,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 #include "json/json.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/time/stepTimers.h"
@@ -210,6 +211,8 @@ namespace Anki {
     
     void RobotManager::UpdateAllRobots()
     {
+      ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
+      
       //for (auto &r : _robots) {
       for(auto r = _robots.begin(); r != _robots.end(); ) {
         // Call update
@@ -250,6 +253,7 @@ namespace Anki {
     
     void RobotManager::UpdateRobotConnection()
     {
+      ANKI_CPU_PROFILE("RobotManager::UpdateRobotConnection");
       _robotMessageHandler->ProcessMessages();
     }
     

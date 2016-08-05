@@ -35,6 +35,7 @@
 #include <anki/messaging/basestation/advertisementService.h>
 
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/enums/enumOperators.h"
 #include "util/time/universalTime.h"
 
@@ -200,8 +201,11 @@ namespace Anki {
     
     void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId desinationId)
     {
-      if (GetNumConnectedDevicesOnAnySocket() > 0)
+      // There is almost always a connected device, so better to just always pack the message even if it won't be sent
+      //if (GetNumConnectedDevicesOnAnySocket() > 0)
       {
+        ANKI_CPU_PROFILE("UiMH::DeliverToGame");
+        
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
         
@@ -246,6 +250,8 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes, const size_t packetSize,
                                                  UiConnectionType connectionType, bool isSingleMessage, bool handleMessagesFromConnection)
     {
+      ANKI_CPU_PROFILE("UiMH::ProcessMessageBytes");
+      
       ExternalInterface::MessageGameToEngine message;
       uint16_t bytesRemaining = packetSize;
       const uint8_t* messagePtr = packetBytes;
@@ -346,6 +352,8 @@ namespace Anki {
     // Broadcasting MessageGameToEngine messages are only internal
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
     {
+      ANKI_CPU_PROFILE("UiMH::Broadcast_GToE"); // Some expensive and untracked - TODO: Capture message type for profile
+      
       _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
     } // Broadcast(MessageGameToEngine)
@@ -353,6 +361,8 @@ namespace Anki {
     
     void UiMessageHandler::Broadcast(ExternalInterface::MessageGameToEngine&& message)
     {
+      ANKI_CPU_PROFILE("UiMH::BroadcastMove_GToE");
+      
       u32 type = static_cast<u32>(message.GetTag());
       _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
@@ -362,6 +372,8 @@ namespace Anki {
     // Called from any not main thread and dealt with during the update.
     void UiMessageHandler::BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message)
     {
+      ANKI_CPU_PROFILE("UiMH::BroadcastDeferred_GToE");
+      
       std::lock_guard<std::mutex> lock(_mutex);
       _threadedMsgs.emplace_back(message);
     }
@@ -369,6 +381,8 @@ namespace Anki {
     
     void UiMessageHandler::BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message)
     {
+      ANKI_CPU_PROFILE("UiMH::BroadcastDeferredMove_GToE");
+      
       std::lock_guard<std::mutex> lock(_mutex);
       _threadedMsgs.emplace_back(std::move(message));
     }
@@ -377,6 +391,8 @@ namespace Anki {
     // Broadcasting MessageEngineToGame messages also delivers them out of the engine
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageEngineToGame& message)
     {
+      ANKI_CPU_PROFILE("UiMH::Broadcast_EToG");
+      
       DeliverToGame(message);
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
@@ -385,6 +401,8 @@ namespace Anki {
     
     void UiMessageHandler::Broadcast(ExternalInterface::MessageEngineToGame&& message)
     {
+      ANKI_CPU_PROFILE("UiMH::BroadcastMove_EToG");
+      
       DeliverToGame(message);
       u32 type = static_cast<u32>(message.GetTag());
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
@@ -409,6 +427,8 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessages()
     {
+      ANKI_CPU_PROFILE("UiMH::ProcessMessages");
+      
       Result retVal = RESULT_FAIL;
       
       if(_isInitialized)
@@ -448,6 +468,8 @@ namespace Anki {
     
     Result UiMessageHandler::Update()
     {
+      ANKI_CPU_PROFILE("UiMH::Update");
+      
       // Update all the comms
       
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
@@ -460,12 +482,13 @@ namespace Anki {
           if(socketComms->GetNumConnectedDevices() > 0)
           {
             // Ping the connection to let them know we're still here
+            // TODO - throttle so it only sends every few ticks or ms
             
-            ExternalInterface::MessageEngineToGame message;
+            ANKI_CPU_PROFILE("UiMH::Update::SendPing");
             
             ExternalInterface::Ping outPing( socketComms->NextPingCounter(),
                                             Util::Time::UniversalTime::GetCurrentTimeInMilliseconds(), false );
-            message.Set_Ping(outPing);
+            ExternalInterface::MessageEngineToGame message(std::move(outPing));
             DeliverToGame(message, (DestinationId)i);
           }
         }
@@ -513,6 +536,7 @@ namespace Anki {
       }
       
       {
+        ANKI_CPU_PROFILE("UiMH::BroadcastThreadedMessages");
         std::lock_guard<std::mutex> lock(_mutex);
         if( _threadedMsgs.size() > 0 )
         {

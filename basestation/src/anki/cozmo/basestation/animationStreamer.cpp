@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
@@ -1280,6 +1281,8 @@ namespace Cozmo {
   
   Result AnimationStreamer::Update(Robot& robot)
   {
+    ANKI_CPU_PROFILE("AnimationStreamer::Update");
+    
     Result lastResult = RESULT_OK;
     
     bool streamUpdated = false;
