@@ -484,31 +484,22 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
   SendRequest(robot, _initialRequest);
   
-  if(_activeConfig->idleAnimTrigger != AnimationTrigger::AnimNone){
-    //Loop animation so that it can be canceled
-    IdleAnimLoop(robot);
+  if(_activeConfig->idleAnimTrigger != AnimationTrigger::AnimNone
+     && GetFaceID() != Vision::UnknownFaceID){
+    // no callback here, behavior is over once this is done
+    StartActing(new CompoundActionParallel(robot, {
+      new TrackFaceAction(robot, GetFaceID()),
+      new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0),
+    }));
+  }else if(GetFaceID() != Vision::UnknownFaceID){
+    StartActing(new TrackFaceAction(robot, GetFaceID()));
+  }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::AnimNone){
+    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0));
   }else{
-    if( GetFaceID() == Vision::UnknownFaceID ) {
-      PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
-                          "Can't do face tracking because there is no valid face!");
-      // use an action that just hangs to simulate the track face logic
-      StartActing( new HangAction(robot) );
-    }
-    else {
-      // no callback here, behavior is over once this is done
-      StartActing( new TrackFaceAction(robot, GetFaceID()) );
-    }
+    StartActing( new HangAction(robot) );
   }
 
   SET_STATE(State::Idle);
-}
-  
-void BehaviorRequestGameSimple::IdleAnimLoop(Robot& robot)
-{
-  if(!CheckRequestTimeout()){
-    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger),
-              &BehaviorRequestGameSimple::IdleAnimLoop);
-  }
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)

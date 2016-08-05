@@ -71,7 +71,7 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedFace,
-    EngineToGameTag::RobotDeletedFace,
+    EngineToGameTag::RobotDeletedFace
   }});
 
   SubscribeToTags({
@@ -292,7 +292,8 @@ void IBehaviorRequestGame::HandleObservedFace(const Robot& robot,
                                               const ExternalInterface::RobotObservedFace& msg)
 {
   // If faceID not already set or we're not currently tracking the update the faceID
-  if (_faceID == Vision::UnknownFaceID) {
+  if (_faceID == Vision::UnknownFaceID
+      || _faceID != msg.faceID) {
     _faceID = static_cast<FaceID_t>(msg.faceID);
   }
 

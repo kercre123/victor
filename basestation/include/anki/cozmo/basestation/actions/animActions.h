@@ -36,6 +36,7 @@ namespace Anki {
                           bool interruptRunning = true);
       // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
       // Caller owns the animation -- it will not be deleted by this action.
+      // Numloops 0 causes the action to loop forever
       PlayAnimationAction(Robot& robot,
                           Animation* animation,
                           u32 numLoops = 1,
@@ -74,6 +75,7 @@ namespace Anki {
     {
     public:
       // Preferred constructor, used by the factory CreatePlayAnimationAction
+      // Numloops 0 causes the action to loop forever
       explicit TriggerAnimationAction(Robot& robot,
                                         AnimationTrigger animEvent,
                                         u32 numLoops = 1,

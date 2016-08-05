@@ -119,7 +119,6 @@ private:
   void TransitionToSearchingForBlock(Robot& robot);
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);
-  void IdleAnimLoop(Robot& robot);
   bool CheckRequestTimeout();
 
 };
