@@ -5,6 +5,7 @@
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/dasTransferTask.h"
+#include "anki/cozmo/basestation/util/transferQueue/gameLogTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/shared/cozmoConfig_common.h"
@@ -27,6 +28,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   #if USE_DAS
   , _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
+  , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
 {
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr != dataPlatform)
@@ -36,6 +38,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   #if USE_DAS
   _dasTransferTask->Init(_transferQueueMgr.get());
   #endif
+  _gameLogTransferTask->Init(_transferQueueMgr.get());
 }
 
 

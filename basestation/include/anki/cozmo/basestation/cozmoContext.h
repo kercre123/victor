@@ -23,6 +23,7 @@
 namespace Anki {
 namespace Util {
   class DasTransferTask;
+  class GameLogTransferTask;
   class RandomGenerator;
   class TransferQueueMgr;
   namespace Data {
@@ -99,6 +100,7 @@ private:
   std::unique_ptr<VizManager>                     _vizManager;
   std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
   std::unique_ptr<Util::DasTransferTask>          _dasTransferTask;
+  std::unique_ptr<Util::GameLogTransferTask>      _gameLogTransferTask;
 };
   
 

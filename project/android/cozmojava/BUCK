@@ -1,0 +1,14 @@
+prebuilt_jar(
+  name = 'android-support',
+  binary_jar = 'lib/support-v4-19.1.0.jar',
+)
+
+android_library(
+  name = 'cozmojava_lib',
+  srcs = glob(['src/**/*.java']),
+  manifest = 'src/main/AndroidManifest.xml',
+  source = '1.6',
+  target = '1.6',
+  deps = [':android-support'],
+  visibility = ['PUBLIC'],
+)

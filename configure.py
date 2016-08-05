@@ -544,13 +544,9 @@ class GamePlatformConfiguration(object):
                     sys.exit("Cannot locate {0}".format(original))
 
     def build_java(self, command):
-        javadir = os.path.join(GAME_ROOT, 'project', 'android', 'cozmojava')
-        old_dir = ankibuild.util.File.pwd()
-        ankibuild.util.File.cd(javadir)
-        args = [os.path.join(javadir, 'gradlew'), command]
-        ankibuild.util.File.execute(args)
-        ankibuild.util.File.cd(old_dir)
-        built_lib_path = os.path.join(javadir, 'build', 'outputs', 'aar', 'cozmojava.aar')
+        buck_args = ['buck', 'build', ':cozmojava']
+        ankibuild.util.File.execute(buck_args)
+        built_lib_path = os.path.join(GAME_ROOT, 'buck-out', 'gen', 'cozmojava.aar')
         if not os.path.exists(self.android_unity_plugin_dir):
             os.makedirs(self.android_unity_plugin_dir)
         ankibuild.util.File.cp(built_lib_path, self.android_unity_plugin_dir)

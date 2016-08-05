@@ -1,0 +1,6 @@
+[android]
+  build_tools_version=19.1.0
+  target=android-19
+
+[alias]
+  util=//:util

@@ -10,9 +10,9 @@
  **/
 
 #include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
+#include "util/http/httpAdapter_android.h"
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter()
 {
-  // implementation forthcoming
-  return nullptr;
+  return new Anki::Util::HttpAdapter();
 }

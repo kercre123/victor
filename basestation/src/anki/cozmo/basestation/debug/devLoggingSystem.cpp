@@ -56,7 +56,7 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
 {
   std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
   _allLogsBaseDirectory = baseDirectory;
-  
+
   // TODO:(lc) For the playtest we don't want to delete any log files, since they could be very valuable
   //DeleteFiles(_allLogsBaseDirectory, kArchiveExtensionString);
   ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
@@ -106,8 +106,6 @@ void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, cons
   
 void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
 {
-  // TODO:(lc) Use the name prefix arg to either directly change the file names being saved or simply upload them with the name
-  
   // First create an archive for the current logs
   auto filePaths = Util::FileUtils::FilesInDirectory(_devLoggingBaseDirectory, true, Util::RollingFileLogger::kDefaultFileExtension, true);
   ArchiveUtil::CreateArchiveFromFiles(_devLoggingBaseDirectory + kArchiveExtensionString, _devLoggingBaseDirectory, filePaths);
@@ -125,12 +123,16 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
   Util::FileUtils::CreateDirectory(waitingDir);
   for (auto& filename : filesToMove)
   {
-    std::string newFilename = GetPathString(waitingDir, filename);
+    std::string newFilename = GetPathString(waitingDir, namePrefix + filename);
     Util::FileUtils::DeleteFile(newFilename);
     std::rename(GetPathString(_allLogsBaseDirectory, filename).c_str(), newFilename.c_str());
   }
-  
-  // TODO:(lc) Post all to amazon
+}
+
+std::vector<std::string> DevLoggingSystem::GetLogFilenamesForUpload() const
+{
+  std::string waitingDir = GetPathString(_allLogsBaseDirectory, kWaitingForUploadDirName);
+  return Util::FileUtils::FilesInDirectory(waitingDir, true, kArchiveExtensionString.c_str());
 }
 
 std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path) const
@@ -235,21 +237,6 @@ void DevLoggingSystem::LogMessage(const VizInterface::MessageViz& message)
   ANKI_CPU_PROFILE("LogMessage_Viz");
   _engineToVizLog->Write(PrepareMessage(message));
 }
-  
-#if REMOTE_CONSOLE_ENABLED
-void UploadDevLogs( ConsoleFunctionContextRef context )
-{
-  auto namePrefix = ConsoleArg_GetOptional_String( context, "namePrefix", "" );
-  
-  auto devLogging = DevLoggingSystem::GetInstance();
-  if (nullptr != devLogging)
-  {
-    devLogging->PrepareForUpload(namePrefix);
-  }
-}
-CONSOLE_FUNC( UploadDevLogs, "Dev", optional const char* namePrefix );
-#endif
-
 
 } // end namespace Cozmo
 } // end namespace Anki

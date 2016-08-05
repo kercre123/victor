@@ -9,6 +9,7 @@
 #ifndef __Util__FileUtils_H__
 #define __Util__FileUtils_H__
 
+#include <cstdint>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -40,7 +41,9 @@ public:
   static bool FileExists(const std::string& fileName);
 
   static std::string ReadFile(const std::string& fileName);
-    
+
+  static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName);
+
   static bool WriteFile(const std::string& fileName, const std::string& body);
   
   static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body);

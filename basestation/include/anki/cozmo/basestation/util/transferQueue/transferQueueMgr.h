@@ -25,8 +25,8 @@
 #define __Cozmo_Basestation_Util_TransferQueue_TransferQueueMgr_H__
 
 #include "util/helpers/noncopyable.h"
+#include "util/http/abstractHttpAdapter.h"
 #include "util/signals/simpleSignal.hpp"
-#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
 #include <mutex>
 
 
@@ -54,6 +54,7 @@ namespace Anki {
 
       Signal::Signal<void(Dispatch::Queue*, const TaskCompleteFunc&)> _signal;
       std::mutex _mutex;
+      std::condition_variable _waitVar;
       
       void StartDataTransfer();
       

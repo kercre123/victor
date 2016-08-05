@@ -12,29 +12,48 @@
 
 #include "anki/cozmo/basestation/util/transferQueue/transferTaskHttp.h"
 #include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Util {
 
 TransferTaskHttp::TransferTaskHttp()
 : _httpAdapter(CreateHttpAdapter())
+, _numTransfers(0)
 {
 }
 
 void TransferTaskHttp::OnTransferReady(Dispatch::Queue* queue, const TransferQueueMgr::TaskCompleteFunc& completionFunc)
 {
-  auto startRequestFunc = [this, queue, completionFunc] (const HttpRequest& request, const HttpRequestCallback& userCallback) {
-    auto userCallbackWrapper = [userCallback, completionFunc] (const HttpRequest& innerRequest,
-                                                               const int responseCode,
-                                                               const std::map<std::string, std::string>& responseHeaders,
-                                                               const std::vector<uint8_t>& responseBody) {
+  ASSERT_NAMED(_numTransfers == 0, "TransferTaskHttp.InvalidStartTransferCount");
+  _numTransfers = 0;
+  bool transfersStarted = false;
+
+  auto startRequestFunc = [this, queue, completionFunc, &transfersStarted] (const HttpRequest& request, const HttpRequestCallback& userCallback) {
+    transfersStarted = true;
+    auto userCallbackWrapper = [this, userCallback, completionFunc] (const HttpRequest& innerRequest,
+                                                                     const int responseCode,
+                                                                     const std::map<std::string, std::string>& responseHeaders,
+                                                                     const std::vector<uint8_t>& responseBody) {
       // execute the user callback and tell the transfer manager we finished
-      userCallback(innerRequest, responseCode, responseHeaders, responseBody);
-      completionFunc();
+      if (userCallback) {
+        userCallback(innerRequest, responseCode, responseHeaders, responseBody);
+      }
+      _numTransfers--;
+      if (_numTransfers == 0) {
+        completionFunc();
+      }
     };
+
+    _numTransfers++;
     _httpAdapter->StartRequest(request, queue, userCallbackWrapper);
   };
   OnReady(startRequestFunc);
+
+  // if OnReady resulted in transfers being started, this variable will have been modified
+  if (!transfersStarted) {
+    completionFunc();
+  }
 }
 
 }

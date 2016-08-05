@@ -15,7 +15,7 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "anki/cozmo/basestation/util/http/httpRequest.h"
+#include "util/http/httpRequest.h"
 
 namespace Anki {
   
@@ -27,7 +27,16 @@ namespace Anki {
   
   namespace Util {
     
-    using HttpRequestCallback = std::function<void (const HttpRequest& request, const int responseCode, const std::map<std::string, std::string>& responseHeaders, const std::vector<uint8_t>& responseBody)>;
+    using HttpRequestCallback =
+      std::function<void (const HttpRequest& request,
+                          const int responseCode,
+                          const std::map<std::string, std::string>& responseHeaders,
+                          const std::vector<uint8_t>& responseBody)>;
+    using HttpRequestDownloadProgressCallback =
+      std::function<void (const HttpRequest& request,
+                          const int64_t bytesWritten,
+                          const int64_t totalBytesWritten,
+                          const int64_t totalBytesExpectedToWrite)>;
     static constexpr const int kHttpRequestCallbackTookTooLongMilliseconds = 250;
   // Abstract base class
     class IHttpAdapter

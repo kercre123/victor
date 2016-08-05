@@ -13,8 +13,9 @@
 #include "anki/cozmo/csharp-binding/android/android-binding.h"
 #include "anki/cozmo/csharp-binding/csharp-binding.h"
 #include "anki/cozmo/csharp-binding/breakpad/google_breakpad.h"
+#include "util/jni/includeJni.h"
+#include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
-#include <jni.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -47,6 +48,7 @@ Java_com_anki_cozmo_BackgroundConnectivity_ExecuteBackgroundTransfers(JNIEnv* en
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
+  Anki::Util::JNIUtils::SetJvm(vm);
   return JNI_VERSION_1_6;
 }
 

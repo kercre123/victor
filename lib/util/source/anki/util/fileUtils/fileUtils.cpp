@@ -188,6 +188,20 @@ std::string FileUtils::ReadFile(const std::string& fileName)
   }
 }
   
+std::vector<uint8_t> FileUtils::ReadFileAsBinary(const std::string& fileName)
+{
+  std::ifstream fileIn;
+  fileIn.open(fileName, std::ios::in | std::ifstream::binary);
+  if( fileIn.is_open() ) {
+    std::vector<uint8_t> data{std::istreambuf_iterator<char>(fileIn), std::istreambuf_iterator<char>()};
+    fileIn.close();
+    return data;
+  }
+  else {
+    return {};
+  }
+}
+
 bool FileUtils::WriteFile(const std::string &fileName, const std::string &body)
 {
   std::vector<uint8_t> bytes;

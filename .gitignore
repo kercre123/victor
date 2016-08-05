@@ -487,3 +487,7 @@ coretech/generated
 
 # VSCode
 .vscode
+
+# Buck
+**.buckd
+**/buck-out

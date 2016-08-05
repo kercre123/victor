@@ -14,7 +14,6 @@
  **/
 
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
-#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
 #include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
@@ -57,19 +56,18 @@ namespace Anki {
     {
       ASSERT_NAMED(_numRequests == 0, "TransferQueueMgr.StartDataTransfer.InvalidRequestCount");
       std::unique_lock<std::mutex> lock{_mutex};
-      std::condition_variable waitVar;
       _numRequests = 0;
 
       // set up completion func to notify this thread every time a task finishes
-      auto completionFunc = [this, &waitVar] {
-        Dispatch::Async(_queue, [this, &waitVar] {
+      auto completionFunc = [this] {
+        Dispatch::Async(_queue, [this] {
           {
             // synchronously decrease the number of requests...
             std::lock_guard<std::mutex> lg{_mutex};
             _numRequests--;
           }
           // ...and notify the main thread that a task finished
-          waitVar.notify_one();
+          _waitVar.notify_one();
         });
       };
       // synchronously notify all tasks to begin on the queue
@@ -77,7 +75,7 @@ namespace Anki {
         _signal.emit(_queue, completionFunc);
       });
       // ...and then wait for them all to finish (if no tasks are started this will just instantly continue)
-      waitVar.wait(lock, [this] { return _numRequests == 0; });
+      _waitVar.wait(lock, [this] { return _numRequests == 0; });
     }
 
   } // namespace Util

@@ -38,6 +38,7 @@ namespace Anki.Debug {
       DebugConsoleData.Instance.AddConsoleVar("_CalibrationCenterY", "Camera Calibration", this);
       DebugConsoleData.Instance.AddConsoleFunction("Set Calibration", "Camera Calibration",
                                                               (string str) => { RobotEngineManager.Instance.CurrentRobot.SetCalibrationData(_CalibrationFocalX, _CalibrationFocalY, _CalibrationCenterX, _CalibrationCenterY); });
+      DebugConsoleData.Instance.AddConsoleFunction("Upload Dev/DAS Logs", "Dev", (string str) => { CozmoBinding.cozmo_execute_background_transfers(); });
     }
 
     private float _CalibrationFocalX = 0;

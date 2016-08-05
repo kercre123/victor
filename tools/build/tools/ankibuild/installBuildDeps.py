@@ -149,6 +149,10 @@ class DependencyInstaller(object):
 
     if not self.getHomebrew():
       return False
+
+    if 'buck' in homebrew_deps:
+      subprocess.call(['brew', 'tap', 'facebook/fb'])
+
     for tool in homebrew_deps:
       if not self.installTool(tool):
         return False

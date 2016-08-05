@@ -14,9 +14,11 @@
 #define ANKI_COZMO_BASETATION_TRANSFERTASKHTTP_H
 
 #include "anki/cozmo/basestation/util/transferQueue/transferTask.h"
-#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
+#include "util/http/abstractHttpAdapter.h"
+#include <atomic>
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace Anki {
 namespace Util {
@@ -37,6 +39,7 @@ private:
   virtual void OnTransferReady(Dispatch::Queue* queue, const TransferQueueMgr::TaskCompleteFunc& completionFunc) override;
 
   std::unique_ptr<IHttpAdapter> _httpAdapter;
+  std::atomic<int> _numTransfers;
 };
 
 }

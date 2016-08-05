@@ -41,6 +41,7 @@ public:
   const std::string& GetDevLoggingBaseDirectory() const { return _devLoggingBaseDirectory; }
   
   void PrepareForUpload(const std::string& namePrefix) const;
+  std::vector<std::string> GetLogFilenamesForUpload() const;
   
   static const std::string kPrintName;
   static const std::string kGameToEngineName;
@@ -60,7 +61,7 @@ private:
   std::unique_ptr<Util::RollingFileLogger>    _robotToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToRobotLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToVizLog;
-  
+
   std::string _allLogsBaseDirectory;
   std::string _devLoggingBaseDirectory;
   

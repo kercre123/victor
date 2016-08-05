@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Util_Http_HttpAdapterMacIos_H_
 #define __Cozmo_Basestation_Util_Http_HttpAdapterMacIos_H_
 
-#include "anki/cozmo/basestation/util/http/abstractHttpAdapter.h"
+#include "util/http/abstractHttpAdapter.h"
 #import <Foundation/Foundation.h>
 
 namespace Anki {
