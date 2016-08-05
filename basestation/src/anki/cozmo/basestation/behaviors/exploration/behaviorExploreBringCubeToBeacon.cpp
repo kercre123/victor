@@ -294,7 +294,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
         // object was picked up
         TransitionToObjectPickedUp(robot);
       }
-      else if (actionRet.result == ActionResult::FAILURE_RETRY)
+      else if ((actionRet.result == ActionResult::FAILURE_RETRY) || (actionRet.result == ActionResult::FAILURE_TIMEOUT))
       {
         // do we currently have the object in the lift?
         const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);

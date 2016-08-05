@@ -1,7 +1,15 @@
+//
+// Hiking_GeneralLookInPlace
+// This behavior runs in the general case of looking for cubes or edges, when we don't have anything interesting
+// at the moment that requires our attention. It's meant to scan the world to add edges, cubes and other info to
+// the memory map, so that other behaviors can trigger.
+//
+//
 {
-  "behaviorType": "ExploreLookAroundInPlace",
   "name": "Hiking_GeneralLookInPlace",
-  "flatScore" : 1.0,
+
+  "behaviorType": "ExploreLookAroundInPlace",
+  "flatScore": 1.0,
   "behaviorGroups": [
     "FreeplayHiking"
   ],

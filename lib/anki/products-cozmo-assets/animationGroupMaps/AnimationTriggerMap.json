@@ -201,8 +201,32 @@
       "AnimName": "FlipDownFromBack"
     },
     {
+      "CladEvent": "HikingIntro",
+      "AnimName": "ag_hiking_observe"
+    },
+    {
+      "CladEvent": "HikingObserve",
+      "AnimName": "ag_hiking_observe"
+    },
+    {
+      "CladEvent": "HikingReactGeneric",
+      "AnimName": "ag_hiking_react_01"
+    },
+    {
+      "CladEvent": "HikingReactToEdge",
+      "AnimName": "ag_hiking_rtedge"
+    },
+    {
       "CladEvent": "HikingReactToNewArea",
       "AnimName": "ag_hiking_rtnewarea"
+    },
+    {
+      "CladEvent": "HikingReactToPossibleMarker",
+      "AnimName": "ag_hiking_rtpmarker"
+    },
+    {
+      "CladEvent": "HikingWakeUpOffCharger",
+      "AnimName": "ag_hiking_observe"
     },
     {
       "CladEvent": "IdleOnCharger",

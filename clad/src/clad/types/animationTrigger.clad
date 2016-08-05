@@ -65,7 +65,13 @@ enum int_32 AnimationTrigger
   FacePlantRollArmUp,
   FailedToRightFromFace,
   FlipDownFromBack,
-  HikingReactToNewArea,   // when Cozmo discovers a new area / beacon
+  HikingIntro,                 // played when we start hiking. This may be used as Intro anim for hiking goal
+  HikingObserve,               // when Cozmo visits interesting edges, pretending he is recognizing the border/object
+  HikingReactGeneric,          // placeholder for generic reactions so that we plug in appropriate specific animations
+  HikingReactToEdge,           // when Cozmo sees an interesting edge while looking for cubes
+  HikingReactToNewArea,        // when Cozmo discovers a new area / beacon
+  HikingReactToPossibleMarker, // when Cozmo sees a cube from far away (this may be used for discovering edges)
+  HikingWakeUpOffCharger,      // when Cozmo wakes up directly into hiking. This may not be needed for final product
   IdleOnCharger,
   InteractWithFacesInitial,
   InteractWithFacesSquint,

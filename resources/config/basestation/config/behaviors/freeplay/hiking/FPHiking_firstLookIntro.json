@@ -1,0 +1,19 @@
+//
+// Hiking_FirstLookIntro
+// When Cozmo starts hiking after doing something else. In the hiking demo this triggers when you start Cozmo
+// off the charger. In the final product this may be replaced by (or used as) the intro into Hiking goal.
+//
+//
+//
+{
+  "name": "Hiking_FirstLookIntro",
+
+  "behaviorType": "PlayAnim",
+  "flatScore": 9.0,
+  "behaviorGroups": [
+    "FreeplayHiking"
+  ],
+  
+  "requiredRecentSwitchToParent_sec" : 1.0,
+  "animTrigger": "HikingIntro"  
+}

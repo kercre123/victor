@@ -79,9 +79,9 @@ struct ContentValueEntry {
   // constexpr constructor
   constexpr ContentValueEntry(EContentType c, bool v) : content(c), value(v) {}
   
-  // non-constexpr accessors
-  EContentType Content() const { return content; }
-  bool Value() const { return value; }
+  // constexpr accessors
+  constexpr EContentType Content() const { return content; }
+  constexpr bool Value() const { return value; }
   
 private:
 

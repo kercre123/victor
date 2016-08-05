@@ -67,6 +67,26 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // behavior configuration passed on initialization
+  struct Configuration
+  {
+    std::string observeEdgeAnimTrigger; // animation to play when we observe an interesting edge
+    // goal selection / vantage point calculation
+    float   distanceFromLookAtPointMin_mm = 0.0f;     // min value of random distance from LookAt point to generate vantage point
+    float   distanceFromLookAtPointMax_mm = 0.0f;     // max value of random distance from LookAt point to generate vantage point
+    float   distanceInsideGoalToLookAt_mm = 0.0f;     // the actual point to look at will be inside the interesting border by this distance (important for offsets)
+    float   additionalClearanceInFront_mm = 0.0f;     // additional distance in front of the robot that we need to clear (with raycast) to be a valid vantage point
+    float   additionalClearanceBehind_mm  = 0.0f;     // additional distance behind the robot that we have to clear (with raycast) to be a valid vantage point
+    float   vantagePointAngleOffsetPerTry_deg = 0.0f; // how much we rotate the vantage vector every attempt
+    uint8_t vantagePointAngleOffsetTries = 0;         // how many offsets we try after the vantageDirection. 1 try means +offset and -offset
+    // see diagram below for vantageCone
+    float vantageConeHalfWidthAtRobot_mm = 0.0f;       // half width at robot pose of the cone that flags non-interesting edges
+    float vantageConeFarPlaneDistFromLookAt_mm = 0.0f; // distance of far plane with respect to the lookAt point (=goal + distanceInsideGoalToLookAt_mm)
+    float vantageConeHalfWidthAtFarPlane_mm = 0.0f;    // half width at far plane of the cone that flags non-interesting edges
+    // quad that clears around a goal for which we couldn't calculate a good vantage point
+    float noVantageGoalHalfQuadSideSize_mm = 50.0f; // when we can't find a goal, half of the side size of the quad centered around the goal that flags as not interesting (optional in json)
+  };
+  
   // score/distance associated with a border
   struct BorderScore {
     BorderScore() : borderInfo(), distanceSQ(0) {}
@@ -89,32 +109,47 @@ private:
   // given a set of border goals, generate the vantage points for the robot to observe/clear those borders
   void GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const;
   
-  // flags a quad in front of the robot as not interesting. The quad is defined from robot pose to the goal point plus
-  // an additional distance from the goal. Each plane (at robot and at goal+dist) has a width defined in parameters
+  // flags a quad in front of the robot as not interesting. The quad is defined from robot pose to the look at point, plus
+  // an additional distance from the lookAt point. Each plane (at robot and at lookAt+dist) has a width defined in parameters
+  //         ! ! ! ! vantageCone ! ! ! !
   //
   //                                    farPlane
   // halfWidthAtRobot*2     _______-------v
-  //          v_______------              |
-  //  +-------|-+                         |
-  //  | Robot * |                    $    | farHalfWidth*2
-  //  +-------|-+                   goal  |
-  //           -------_____               |
+  //          v_______------     goal     |
+  //  +-------|-+                  v      |
+  //  | Robot * |                  $  $   | halfWidthAtFarPlane*2
+  //  +-------|-+                     ^   |
+  //           -------_____        lookAt |
   //                       --------_______|
   //                                 |<-->|
   //                                  farPlaneDistFromGoal
   //
-  static void FlagQuadAsNotInteresting(Robot& robot, float halfWidthAtRobot_mm, const Pose3d& goalPosition,
-    float farPlaneDistFromGoal_mm, float halfAtFarPlaneWidth_mm);
-    
+  static void FlagVisitedQuadAsNotInteresting(Robot& robot, float halfWidthAtRobot_mm, const Vec3f& lookAtPoint,
+    float farPlaneDistFromLookAt_mm, float halfWidthAtFarPlane_mm);
+  
+  // create a quad around a goal that is not interesting anymore (note it's around the goal, not around the lookAt point)
+  // The quad is aligned with the given normal
+  static void FlagQuadAroundGoalAsNotInteresting(Robot& robot, const Vec3f& goalPoint, const Vec3f& goalNormal, float halfQuadSideSize_mm);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Init
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // set configuration values from the given config
+  void LoadConfig(const Json::Value& config);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // parsed configurations params from json
+  Configuration _configParams;
 
   // set of points the robot is interested in visiting towards clearing borders
   VantagePointVector _currentVantagePoints;
   
-  // goal we are visiting
-  Pose3d _goalPose;
+  // point we are looking at
+  Vec3f _lookAtPoint;
 };
   
 

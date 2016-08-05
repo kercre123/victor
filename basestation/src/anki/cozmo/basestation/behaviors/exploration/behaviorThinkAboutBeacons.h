@@ -56,7 +56,7 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // beahvior configuration passed on initialization
+  // behavior configuration passed on initialization
   struct Configuration
   {
     std::string newAreaAnimTrigger; // animation to play when we discover a new area

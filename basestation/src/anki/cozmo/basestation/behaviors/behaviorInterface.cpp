@@ -402,6 +402,16 @@ double IBehavior::GetRunningDuration() const
   }
   return 0.0;
 }
+
+Result IBehavior::ResumeInternal(Robot& robot)
+{
+  // by default, if we are runnable again, initialize and start over
+  Result resumeResult = RESULT_FAIL;
+  if ( IsRunnable(robot) ) {
+    resumeResult = InitInternal(robot);
+  }
+  return resumeResult;
+}
    
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
 float IBehavior::EvaluateScoreInternal(const Robot& robot) const

@@ -179,7 +179,7 @@ protected:
   inline void SetBehaviorType(BehaviorType type) {if(_behaviorType == BehaviorType::NoneBehavior){ _behaviorType = type;}};
     
   virtual Result InitInternal(Robot& robot) = 0;
-  virtual Result ResumeInternal(Robot& robot) { return InitInternal(robot); }
+  virtual Result ResumeInternal(Robot& robot);
   virtual bool IsRunnableInternal(const Robot& robot) const = 0;
 
   // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or

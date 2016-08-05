@@ -264,14 +264,7 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction(Robot& robot);
-      virtual ~PlaceObjectOnGroundAction()
-      {
-        if(_faceAndVerifyAction != nullptr)
-        {
-          _faceAndVerifyAction->PrepForCompletion();
-        }
-        Util::SafeDelete(_faceAndVerifyAction);
-      }
+      virtual ~PlaceObjectOnGroundAction();
       
     protected:
       

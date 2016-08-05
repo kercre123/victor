@@ -1,7 +1,15 @@
+//
+// Hiking_BringCubeToBeacon
+// This behavior triggers whenever we don't have cubes in beacons or we need to move a cube to a specific beacon. It
+// should not be responsible for picking when to activate a new beacon (ThinkAboutBeacons), but it can be responsible
+// for selecting the cube to move, or the location to drop it inside the beacon.
+//
+//
 {
-  "behaviorType": "BringCubeToBeacon",
   "name": "Hiking_BringCubeToBeacon",
-  "flatScore" : 2.1, // intended to interrupt general hiking
+
+  "behaviorType": "BringCubeToBeacon",
+  "flatScore": 2.1, // intended to interrupt general hiking
   "behaviorGroups": [
     "FreeplayHiking"
   ]

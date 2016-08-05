@@ -1,8 +1,49 @@
+//
+// Hiking_VisitInterestingEdge
+// This behavior triggers when Cozmo wants to purposely visit an interesting edge (and then flag as not-interesting
+// anymore). It shows the player that Cozmo can see objects than don't have markers.
+//
+//
+//
 {
-  "behaviorType": "VisitInterestingEdge",
   "name": "Hiking_VisitInterestingEdge",
+
+  "behaviorType": "VisitInterestingEdge",
   "flatScore": 0.5,
   "behaviorGroups": [
     "FreeplayHiking"
-  ]
+  ],
+  
+  "params": {
+  
+    // anim for observing
+    "observeEdgeAnimTrigger": "HikingObserve",
+    
+    // vantage point generation
+    "distanceFromLookAtPointMin_mm": 75.0,
+    "distanceFromLookAtPointMax_mm": 100.0,
+    "distanceInsideGoalToLookAt_mm" : 15.0,
+    "additionalClearanceInFront_mm": 0.0,
+    "additionalClearanceBehind_mm": 10.0, // for backpack
+    
+    "vantagePointAngleOffsetPerTry_deg": 45,
+    "vantagePointAngleOffsetTries": 1, // trying 1 offset, 2 additional rays + 1 (at no rotation)
+    
+    //               vantageCone
+    //
+    //                                    farPlane
+    // halfWidthAtRobot*2     _______-------v
+    //          v_______------     goal     |
+    //  +-------|-+                  v      |
+    //  | Robot * |                  $  $   | halfWidthAtFarPlane*2
+    //  +-------|-+                     ^   |
+    //           -------_____        lookAt |
+    //                       --------_______|
+    //                                 |<-->|
+    //                                  farPlaneDistFromGoal
+    //
+    "vantageConeHalfWidthAtRobot_mm": 80.0,
+    "vantageConeFarPlaneDistFromLookAt_mm": 50.0,
+    "vantageConeHalfWidthAtFarPlane_mm": 120.0
+  }
 }

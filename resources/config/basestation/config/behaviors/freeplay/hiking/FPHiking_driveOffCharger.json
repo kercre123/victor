@@ -1,9 +1,18 @@
+//
+// Hiking_DriveOffCharger
+// Behavior that triggers when Cozmo starts hiking straight from the charger. This might not be in the final
+// product if it always plays the wake up sequence; but there should be no reason to not allow start hiking.
+//
+//
+//
 {
-  "behaviorType": "DriveOffCharger",
   "name": "Hiking_DriveOffCharger",
-  "flatScore" : 10.0,
-  "extraDistanceToDrive_mm": 45.0,
+
+  "behaviorType": "DriveOffCharger",
+  "flatScore": 10.0,
   "behaviorGroups": [
     "FreeplayHiking"
-  ]
+  ],
+  
+  "extraDistanceToDrive_mm": 45.0
 }

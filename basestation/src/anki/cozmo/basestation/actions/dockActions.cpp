@@ -942,6 +942,22 @@ namespace Anki {
       
     }
     
+    PlaceObjectOnGroundAction::~PlaceObjectOnGroundAction()
+    {
+      // COZMO-3434 manually request to enable AckObject
+      if(GetState() != ActionResult::FAILURE_NOT_STARTED) {
+        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("PlaceObjectOnGroundAction",
+                                                                     BehaviorType::AcknowledgeObject,
+                                                                     true);
+      }
+    
+      if(_faceAndVerifyAction != nullptr)
+      {
+        _faceAndVerifyAction->PrepForCompletion();
+      }
+      Util::SafeDelete(_faceAndVerifyAction);
+    }
+    
     ActionResult PlaceObjectOnGroundAction::Init()
     {
       ActionResult result = ActionResult::RUNNING;
@@ -983,6 +999,16 @@ namespace Anki {
       _robot.GetMoveComponent().StopAllMotors();
       
       _startedPlacing = false;
+      
+      // COZMO-3434 manually request to disable AckObject
+      if(ActionResult::SUCCESS == result ||
+         ActionResult::RUNNING == result)
+      {
+        // disable the reactionary behavior for objects, since we are placing one
+        _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("PlaceObjectOnGroundAction",
+                                                                     BehaviorType::AcknowledgeObject,
+                                                                     false);
+      }
       
       return result;
       
