@@ -6,8 +6,10 @@ from  ._internal.clad.externalInterface import messageEngineToGame as messageEng
 from ._internal.clad.externalInterface import messageGameToEngine as messageGameToEngine
 
 # shortcut access to CLAD classes
+_clad_to_engine_anki = messageGameToEngine.Anki
 _clad_to_engine_cozmo = messageGameToEngine.Anki.Cozmo
 _clad_to_engine_iface = messageGameToEngine.Anki.Cozmo.ExternalInterface
+_clad_to_game_anki = messageEngineToGame.Anki
 _clad_to_game_cozmo = messageEngineToGame.Anki.Cozmo
 _clad_to_game_iface = messageEngineToGame.Anki.Cozmo.ExternalInterface
 

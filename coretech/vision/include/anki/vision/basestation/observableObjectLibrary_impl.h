@@ -63,7 +63,10 @@ namespace Vision {
         // of matching objects, the object is added at the end of the function
         PRINT_NAMED_WARNING("ObservableObjectLibrary.AddObject",
                             "The object %s old definition was erased from the Known Objects library.", EnumToString(object->GetType()));
-        _objectsWithCode[object->GetMarkers().begin()->GetCode()].clear();
+        for (const auto& marker : object->GetMarkers())
+        {
+          _objectsWithCode[marker.GetCode()].clear();
+        }
         knownObjectIter = _knownObjects.erase(knownObjectIter);
       }
       else

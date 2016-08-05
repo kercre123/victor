@@ -6,15 +6,7 @@ __ALL__ = ['Angle', 'degrees', 'radians',
 import collections
 import math
 import re
-
-
-# from https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
-_first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-_all_cap_re = re.compile('([a-z0-9])([A-Z])')
-def _uncamelcase(name):
-    s1 = _first_cap_re.sub(r'\1_\2', name)
-    return _all_cap_re.sub(r'\1_\2', s1).lower()
-
+from ._clad import _clad_to_engine_anki
 
 ImageBox = collections.namedtuple('ImageBox', 'top_left_x top_left_y width height')
 ImageBox.__doc__ += ': Defines a bounding box within an image frame.'
@@ -72,7 +64,6 @@ class Angle:
         '''The angle in degrees.'''
         return self._radians / math.pi * 180
 
-
 def degrees(degrees):
     '''Returns an :class:`cozmo.util.Angle` instance set to the specified number of degrees.'''
     return Angle(degrees=degrees)
@@ -92,14 +83,15 @@ class Pose:
     position and rotation defined by rotation about the z axis
     '''
         
-    __slots__ = ('_position', '_rotation')
+    __slots__ = ('_position', '_rotation', '_origin_id')
 
-    def __init__(self, x, y, z, q0=None, q1=None, q2=None, q3=None, angle_z=None):
+    def __init__(self, x, y, z, q0=None, q1=None, q2=None, q3=None, angle_z=None, origin_id=0):
         self._position = Position(x,y,z)
         self._rotation = Rotation(q0,q1,q2,q3,angle_z)
+        self._origin_id = origin_id
 
     def __repr__(self):
-        return "<%s %s %s>" % (self.__class__.__name__, self.position, self.rotation)
+        return "<%s %s %s origin_id=%d>" % (self.__class__.__name__, self.position, self.rotation, self.origin_id)
 
     def __add__(self, other):
         if not isinstance(other, Pose):
@@ -116,14 +108,14 @@ class Pose:
         return pose_quaternion(pos.x, pos.y, pos.z, rot.q0, rot.q1, rot.q2, rot.q3)
 
     def __mul__(self, other):
-        if not isinstance(other, (int, float, Pose)):
+        if not isinstance(other, (int, float)):
             raise TypeError("Unsupported operand for * expected number")  
         pos = self.position * other
         rot = self.rotation * other
         return pose_quaternion(pos.x, pos.y, pos.z, rot.q0, rot.q1, rot.q2, rot.q3)
 
     def __truediv__(self, other):
-        if not isinstance(other, (int, float, Pose)):
+        if not isinstance(other, (int, float)):
             raise TypeError("Unsupported operand for / expected number")  
         pos = self.position / other
         rot = self.rotation / other
@@ -133,7 +125,7 @@ class Pose:
         '''Creates a new pose such that new_pose's origin is now at the location of this pose.
 
         Args:
-            new_pose: (:class:`cozmo.util.Pose`) - The pose which origin is being changed.
+            new_pose (:class:`cozmo.util.Pose`): The pose which origin is being changed.
         Returns:
             A :class:`cozmo.util.pose` object for which the origin was this pose's origin.
         '''
@@ -151,6 +143,11 @@ class Pose:
         res_angle = angle_z + new_angle_z
         return Pose(res_x, res_y, res_z, angle_z=res_angle)
 
+    def encode_pose(self):
+        x, y, z = self.position.x_y_z
+        q0, q1, q2, q3 = self.rotation.q0_q1_q2_q3
+        return _clad_to_engine_anki.PoseStruct3d(x, y, z, q0, q1, q2, q3, self.origin_id)
+
     @property
     def position(self):
         '''The :class:`cozmo.util.Position` component of this pose.'''
@@ -161,14 +158,25 @@ class Pose:
         '''The :class:`cozmo.util.Rotation` component of this pose.'''
         return self._rotation
 
+    @property
+    def origin_id(self):
+        '''An int which represents which coordinate frame this pose is in.'''
+        return self._origin_id
 
-def pose_quaternion(x, y, z, q0, q1, q2, q3):
+    @origin_id.setter
+    def origin_id(self, value):
+        if not isinstance(value, int):
+            raise TypeError("The type of origin_id must be int")
+        self._origin_id = value
+
+
+def pose_quaternion(x, y, z, q0, q1, q2, q3, origin_id=0):
     '''Returns a :class:`cozmo.util.Pose` instance set to the pose given in quaternion format.'''
-    return Pose(x, y, z, q0=q0, q1=q1, q2=q2, q3=q3)
+    return Pose(x, y, z, q0=q0, q1=q1, q2=q2, q3=q3, origin_id=origin_id)
 
-def pose_z_angle(x, y, z, angle_z):
+def pose_z_angle(x, y, z, angle_z, origin_id=0):
     '''Returns a :class:`cozmo.util.Pose` instance set to the pose given in z angle format.'''
-    return Pose(x, y, z, angle_z=angle_z)
+    return Pose(x, y, z, angle_z=angle_z, origin_id=origin_id)
 
 class Rotation:
     '''Represents the rotation of an object in the world. Can be generated with
@@ -189,21 +197,12 @@ class Rotation:
             raise ValueError("Expected either the q0 q1 q2 and q3 or angle_z keyword arguments")
         if is_quaternion and angle_z:
             raise ValueError("Expected either the q0 q1 q2 and q3 or or angle_z keyword argument, not both")
-        if angle_z:
+        if angle_z is not None:
             if not isinstance(angle_z, Angle):
                 raise TypeError("Unsupported type for angle_z expected Angle")
-            #Define the quaternion to be converted from a euler angle (x,y,z) of 0,0,angle_z
-            #These equations have their original equations above, and simplified implemented
-            # q0 = cos(x/2)*cos(y/2)*cos(z/2) + sin(x/2)*sin(y/2)*sin(z/2)
-            q0 = math.cos(angle_z.radians/2)
-            # q1 = sin(x/2)*cos(y/2)*cos(z/2) - cos(x/2)*sin(y/2)*sin(z/2)
-            q1 = 0
-            # q2 = cos(x/2)*sin(y/2)*cos(z/2) + sin(x/2)*cos(y/2)*sin(z/2)
-            q2 = 0
-            # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
-            q3 = math.sin(angle_z.radians/2)
+            q0,q1,q2,q3 = angle_z_to_quaternion(angle_z)
 
-        self._q0,self._q1,self._q2,self._q3 = q0,q1,q2,q3
+        self._q0, self._q1, self._q2, self._q3 = q0, q1, q2, q3
 
     def __repr__(self):
         return ("<%s q0: %.2f q1: %.2f q2: %.2f q3: %.2f (angle_z: %s)>" %
@@ -234,17 +233,17 @@ class Rotation:
     def q0(self):
         '''The q0 (w) value of the quaterinon defining this rotation.'''
         return self._q0
-    
+
     @property
     def q1(self):
         '''The q1 (i) value of the quaterinon defining this rotation.'''
         return self._q1
-    
+
     @property
     def q2(self):
         '''The q2 (j) value of the quaterinon defining this rotation.'''
         return self._q2
-    
+
     @property
     def q3(self):
         '''The q3 (k) value of the quaterinon defining this rotation.'''
@@ -254,7 +253,7 @@ class Rotation:
     def q0_q1_q2_q3(self):
         '''A tuple containing all elements of the quaternion (q0,q1,q2,q3)'''
         return self._q0,self._q1,self._q2,self._q3
-    
+
     @property
     def angle_z(self):
         '''The z euler component of the object's rotation. Defined as the rotation in the z axis.'''
@@ -268,6 +267,28 @@ def rotation_quaternion(q0, q1, q2, q3):
 def rotation_z_angle(angle_z):
     '''Returns a rotation instance set by an angle in the z axis'''
     return Rotation(angle_z=angle_z)
+
+def angle_z_to_quaternion(angle_z):
+    '''This function converts an angle in the z axis (eueler angler z component) to a quaternion.
+
+    Args:
+        angle_z (:class:`cozmo.util.Angle`): The z axis angle. 
+
+    Returns:
+        q0,q1,q2,q3 (foat, float, float, float): A tuple with all the members of a quaternion defined by angle_z.
+    '''
+
+    #Define the quaternion to be converted from a euler angle (x,y,z) of 0,0,angle_z
+    #These equations have their original equations above, and simplified implemented
+    # q0 = cos(x/2)*cos(y/2)*cos(z/2) + sin(x/2)*sin(y/2)*sin(z/2)
+    q0 = math.cos(angle_z.radians/2)
+    # q1 = sin(x/2)*cos(y/2)*cos(z/2) - cos(x/2)*sin(y/2)*sin(z/2)
+    q1 = 0
+    # q2 = cos(x/2)*sin(y/2)*cos(z/2) + sin(x/2)*cos(y/2)*sin(z/2)
+    q2 = 0
+    # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
+    q3 = math.sin(angle_z.radians/2)
+    return q0,q1,q2,q3
     
 class Position:
     '''Represents the rotation of an object in the world. Can be generated with

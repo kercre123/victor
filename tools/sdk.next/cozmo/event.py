@@ -72,8 +72,13 @@ from . import logger
 
 from . import exceptions
 from . import base
-from . import util
 
+# from https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
+_first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+_all_cap_re = re.compile('([a-z0-9])([A-Z])')
+def _uncamelcase(name):
+    s1 = _first_cap_re.sub(r'\1_\2', name)
+    return _all_cap_re.sub(r'\1_\2', s1).lower()
 
 registered_events = {}
 
@@ -176,7 +181,7 @@ class Event(metaclass=_AutoRegister):
 
     @classmethod
     def _handler_method_name(cls):
-        name = 'recv_' + util._uncamelcase(cls.event_name)
+        name = 'recv_' + _uncamelcase(cls.event_name)
         if cls._internal:
             name = '_' + name
         return name

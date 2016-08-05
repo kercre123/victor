@@ -76,8 +76,6 @@ class Behavior(event.Dispatcher):
 
 
 
-
-
 class BehaviorTypes:
     '''Defines all available robot behaviors.
 

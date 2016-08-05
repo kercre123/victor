@@ -30,7 +30,7 @@ class EvtRobotReady(event.Event):
 class GoToPose(action.Action):
     '''Represents the go to pose action in progress.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.go_to_pose` and :meth:`~cozmo.robot.Cozmo.go_to_pose_relative_robot`
+    Returned by :meth:`~cozmo.robot.Cozmo.go_to_pose`
     '''
     def __init__(self, pose, **kw):
         super().__init__(**kw)
@@ -382,36 +382,24 @@ class Cozmo(event.Dispatcher):
 
     ## Robot Driving Commands ##
 
-    def go_to_pose(self, pose):
+    def go_to_pose(self, pose, relative_to_robot=False):
         '''Tells Cozmo to drive to the specified pose and orientation.
 
-        Since cozmo can only navigate in two dimensions X and Y, the only
-        applicable elements of pose are position.x position.y and rotation.angle_z
+        If relative_to_robot is set to true, the given pose will assume the robot's pose
+        as it's origin.
+        Since Cozmo understands position by monitoring his tread movement, he does not
+        understand movment in the z axis. This means that the only applicable elements of 
+        pose in this situation are position.x position.y and rotation.angle_z.
 
         Args:
-            pose: (:class:`cozmo.util.Pose`) - The destination pose
+            pose: (:class:`cozmo.util.Pose`): The destination pose
+            relative_to_robot (bool): Whether the given pose is relative to the robot's pose.
         Returns:
             A :class:`cozmo.robot.GoToPose` action object
         '''
+        if relative_to_robot:
+            pose = self.pose.define_pose_relative_this(pose)
         action = self.go_to_pose_factory(pose=pose,
-                conn=self.conn, robot=self, dispatch_parent=self)
-        self._action_dispatcher._send_single_action(action)
-        return action
-
-    def go_to_pose_relative_robot(self, pose):
-        '''Tells Cozmo to drive to the specified pose and orientation relative to his current position.
-
-           This function takes into account Cozmo's angle_z, so he always is facing along the x axis.
-           Since cozmo can only navigate in two dimensions X and Y, the only
-           applicable elements of pose are position.x position.y and rotation.angle_z
-
-        Args:
-            pose: (:class:`cozmo.util.Pose`) - The destination pose
-        Returns:
-            A :class:`cozmo.robot.GoToPose` action object
-        '''
-        dest_pose = self.pose.define_pose_relative_this(pose)
-        action = self.go_to_pose_factory(pose=dest_pose,
                 conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action

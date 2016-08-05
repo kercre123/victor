@@ -278,7 +278,8 @@ message RobotDeletedAllCustomObjects {
 
 // CreatedFixedCustomObject
 message CreatedFixedCustomObject {
-    uint_32 robotID
+    uint_32 robotID,
+    uint_32 objectID
 }
 
 // DefinedCustomObject

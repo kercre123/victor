@@ -309,9 +309,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
   {
     Pose3d newObjectPose(msg.pose, _robot->GetPoseOriginList());
     
-    BlockWorld::CreateFixedCustomObject(newObjectPose, msg.xSize_mm, msg.ySize_mm, msg.zSize_mm);
+    ObjectID id = BlockWorld::CreateFixedCustomObject(newObjectPose, msg.xSize_mm, msg.ySize_mm, msg.zSize_mm);
     
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::CreatedFixedCustomObject>(_robot->GetID());
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::CreatedFixedCustomObject>(_robot->GetID(), id);
   };
 
   template<>
@@ -1788,7 +1788,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     return RESULT_OK;
   }
 
-  Result BlockWorld::CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm)
+  ObjectID BlockWorld::CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm)
   {
     //TODO share common code with AddMarkerlessObject
     TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
@@ -1803,36 +1803,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     customObject->SetPose(obsPose);
     customObject->SetPoseParent(_robot->GetPose().GetParent());
     
-    // Check if this custom obstacle already exists
-    std::vector<ObservableObject*> existingObjects;
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
-    if(originIter != _existingObjects.end())
-    {
-      FindOverlappingObjects(customObject.get(), originIter->second[ObjectFamily::CustomObject], existingObjects);
-    }
-    
-    // Update the last observed time of existing overlapping obstacles
-    for(auto obj : existingObjects) {
-      obj->SetLastObservedTime(lastTimestamp);
-    }
-    
-    // No need to add the obstacle again if it already exists
-    if (!existingObjects.empty()) {
-      return RESULT_OK;
-    }
-    
-    
-    // Check if the obstacle intersects with any other existing objects in the scene.
-    BlockWorldFilter filter;
-    if(_robot->GetLocalizedTo().IsSet()) {
-      // Ignore the mat object that the robot is localized to (?)
-      filter.AddIgnoreID(_robot->GetLocalizedTo());
-    }
-    FindIntersectingObjects(customObject.get(), existingObjects, 0, filter);
-    if (!existingObjects.empty()) {
-      return RESULT_OK;
-    }
-    
     // HACK: to make it think it was observed enough times so as not to get immediately deleted.
     //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
     for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
@@ -1843,7 +1813,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     _didObjectsChange = true;
     _currentObservedObjects.push_back(customObject.get());
     
-    return RESULT_OK;
+    return customObject->GetID();
   }
 
   void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const

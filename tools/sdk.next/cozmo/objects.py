@@ -3,6 +3,7 @@ __all__ = ['EvtObjectTapped', 'EvtObjectObserved', 'EvtObjectConnectChanged',
 
 
 import asyncio
+import collections
 
 from . import logger
 
@@ -11,7 +12,7 @@ from . import event
 from . import lights
 from . import util
 
-from ._clad import _clad_to_engine_iface, _clad_to_game_cozmo
+from ._clad import _clad_to_engine_iface, _clad_to_game_cozmo, _clad_to_engine_cozmo
 
 
 class EvtObjectObserved(event.Event):
@@ -53,8 +54,7 @@ class BaseObject(event.Dispatcher):
         self.last_event_time = None
         #: (float) The time the object was last observed by the robot
         self.last_observed_time = None
-        #: (float) The time the object was last tapped
-        self.last_tapped_time = None
+
 
     def __repr__(self):
         return '<%s object_id=%s>' % (self.__class__.__name__, self.object_id)
@@ -84,6 +84,9 @@ class BaseObject(event.Dispatcher):
         logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
         self._object_id = value
 
+    @property
+    def pose(self):
+        return self._pose
 
     #### Private Event Handlers ####
 
@@ -98,9 +101,10 @@ class BaseObject(event.Dispatcher):
             # confirmed visible to avoid false positives
             return
         changed_fields = {'last_observed_time', 'last_event_time', 'pose'}
-        self._pose = util.Pose(msg.pose.x,msg.pose.y,msg.pose.z,
-                          q0=msg.pose.q0, q1=msg.pose.q1,
-                          q2=msg.pose.q2, q3=msg.pose.q3)
+        self._pose = util.Pose(msg.pose.x, msg.pose.y, msg.pose.z,
+                               q0=msg.pose.q0, q1=msg.pose.q1,
+                               q2=msg.pose.q2, q3=msg.pose.q3,
+                               origin_id=msg.pose.originID)
         self.last_observed_time = msg.timestamp
         self.last_event_time = msg.timestamp
         image_box = util.ImageBox(msg.img_topLeft_x, msg.img_topLeft_y, msg.img_width, msg.img_height)
@@ -108,18 +112,7 @@ class BaseObject(event.Dispatcher):
                 markers_visible=msg.markersVisible,
                 updated=changed_fields, image_box=image_box)
 
-    def _recv_msg_object_tapped(self, evt, *, msg):
-        changed_fields = {'last_event_time', 'last_tapped_time'}
-        self.last_event_time = msg.timestamp
-        self.last_tapped_time = msg.timestamp
-        self.dispatch_event(EvtObjectTapped, obj=self, tap_count=msg.numTaps, tap_duration=msg.tapTime)
-
-
     #### Public Event Handlers ####
-
-    def recv_evt_object_tapped(self, evt, **kw):
-        pass
-
 
     #### Event Wrappers ####
 
@@ -133,13 +126,14 @@ LightCube3Id = _clad_to_game_cozmo.ObjectType.Block_LIGHTCUBE3
 
 class LightCube(BaseObject):
     '''A light cube object has four LEDs that Cozmo can actively manipulate and communicate with.'''
-
     #TODO investigate why the top marker orientation of a cube is a bit strange
 
     pickupable = True
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        #: (float) The time the object was last tapped
+        self.last_tapped_time = None
 
     def __repr__(self):
         return '<%s object_id=%s>' % (self.__class__.__name__, self._object_id)
@@ -171,8 +165,19 @@ class LightCube(BaseObject):
 
 
     #### Properties ####
+    
     #### Private Event Handlers ####
+    def _recv_msg_object_tapped(self, evt, *, msg):
+        changed_fields = {'last_event_time', 'last_tapped_time'}
+        self.last_event_time = msg.timestamp
+        self.last_tapped_time = msg.timestamp
+        self.dispatch_event(EvtObjectTapped, obj=self, tap_count=msg.numTaps, tap_duration=msg.tapTime)
+
+
     #### Public Event Handlers ####
+
+    def recv_evt_object_tapped(self, evt, **kw):
+        pass
 
     #### Commands ####
 
@@ -203,3 +208,134 @@ class LightCube(BaseObject):
     def set_lights_off(self):
         '''Turn off all the lights on the cube.'''
         self.set_lights(lights.off_light)
+
+
+
+class CustomObject(BaseObject):
+    '''An object defined by the SDK. It is bound to a specific objectType i.e Custom_STAR5_Box.
+
+    This defined object is given a size in the x,y and z axis. The dimensions of the markers on the
+    object are also defined. We get an :class:`cozmo.objects.EvtObjectObserved` message when the robot sees these markers.
+    '''
+
+    def __init__(self, conn, world, object_type, 
+                 x_size_mm, y_size_mm, z_size_mm,
+                 marker_width_mm, marker_height_mm, **kw):
+        super().__init__(conn, world, **kw)
+
+        self.object_type = object_type
+        self._x_size_mm = x_size_mm
+        self._y_size_mm = y_size_mm
+        self._z_size_mm = z_size_mm
+        self._marker_width_mm = marker_width_mm
+        self._marker_height_mm = marker_height_mm
+
+
+    def __repr__(self):
+        return ('<{self.__class__.__name__} object_id={self._object_id:.1f} '+
+                'size_mm={self.x_size_mm:.1f} etc>'.format(self=self))
+
+    #### Private Methods ####
+
+    #### Event Wrappers ####
+    #### Properties ####
+    @property
+    def x_size_mm(self):
+        return self._x_size_mm
+    
+    @property
+    def y_size_mm(self):
+        return self._y_size_mm
+    
+    @property
+    def z_size_mm(self):
+        return self._z_size_mm
+    
+    @property
+    def marker_width_mm(self):
+        return self._marker_width_mm
+    
+    @property
+    def marker_height_mm(self):
+        return self._marker_height_mm
+    
+
+    #### Private Event Handlers ####
+
+    #### Public Event Handlers ####
+
+    #### Commands ####
+
+
+class CustomObjectTypes:
+    '''Defines all available object types.
+
+    For use with :meth:`cozmo.world.World.define_custom_object`.
+    '''
+
+_CustomObjectType = collections.namedtuple('_CustomObjectType', 'name id')
+
+for (_name, _id) in _clad_to_engine_cozmo.ObjectType.__dict__.items():
+    if not _name.startswith('_') and _name.startswith('Custom_') and _id > 0:
+        # only index CustomObjects
+        setattr(CustomObjectTypes, _name, _CustomObjectType(_name, _id))
+
+
+class FixedCustomObject():
+    '''A fixed object defined by the SDK. It is given a pose and x,y,z sizes. 
+
+    This object can not be observed by the robot so its pose never changes.
+    Their position is static in Cozmo's world view, once instantiated, these objects
+    never move. This could be used to make Cozmo aware of objects and know to path around them 
+    even when they don't have any markers.
+    '''
+
+    def __init__(self, pose, x_size_mm, y_size_mm, z_size_mm, object_id, *a, **kw):
+        super().__init__(*a, **kw)
+        self._pose = pose
+        self._object_id = object_id
+        self._x_size_mm = x_size_mm
+        self._y_size_mm = y_size_mm
+        self._z_size_mm = z_size_mm
+
+    def __repr__(self):
+        return ('<%s pose =%s object_id=%d x_size_mm=%.1f y_size_mm=%.1f z_size_mm=%.1f=>' %
+                                        (self.__class__.__name__, self.pose, self.object_id,
+                                         self.x_size_mm, self.y_size_mm, self.z_size_mm))
+
+    #### Private Methods ####
+    #### Event Wrappers ####
+    #### Properties ####
+    @property
+    def object_id(self):
+        '''The internal id assigned to the object.'''
+        return self._object_id
+
+    @object_id.setter
+    def object_id(self, value):
+        if self._object_id is not None:
+            raise ValueError("Cannot change object id once set (from %s to %s)" % (self._object_id, value))
+        logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
+        self._object_id = value
+
+    @property
+    def pose(self):
+        return self._pose
+    
+    @property
+    def x_size_mm(self):
+        return self._x_size_mm
+    
+    @property
+    def y_size_mm(self):
+        return self._y_size_mm
+    
+    @property
+    def z_size_mm(self):
+        return self._z_size_mm
+    
+
+    #### Private Event Handlers ####
+    #### Public Event Handlers ####
+    #### Commands ####
+
