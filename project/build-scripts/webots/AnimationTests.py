@@ -99,6 +99,11 @@ def main(cli_args):
 def fetch_all_available_animations(password = "", build_type = "Debug"):
   """Fetch all the animations available to cozmo.
 
+  Note: This is only meant for use for build servers. This relies on there being no other file with
+  webots_out_CST_Animations_get_animations.wbt in the name. That is, since the webots log files are
+  time stamped and have changing names, this function relies on the fact that the first log it finds
+  for the dummy get_animations run contains the proper, updated, and full list of animations.
+
   password --
     User password that may be needed to pass into webotsTest and put webots executables to the
     firewall exception list. Only needed if you want to keep firewall on.
@@ -116,10 +121,17 @@ def fetch_all_available_animations(password = "", build_type = "Debug"):
     ]) == 0
 
   build_folder = webotsTest.get_build_folder(webotsTest.BuildType.Debug)
-  log_file_path = webotsTest.get_log_file_path(build_folder, "CST_Animations", WBT_FILE_NAME)
+  get_animations_log_wo_timestamp = webotsTest.get_log_file_path("", "CST_Animations", WBT_FILE_NAME)
+  get_animations_log_wo_extension = get_animations_log_wo_timestamp.rsplit(".", 1)[0]
+
+  # Go through the log folder to find the dummy run log
+  all_files_in_build_folder = os.listdir(build_folder)
+  for log_file in all_files_in_build_folder:
+    if get_animations_log_wo_extension in log_file:
+      get_animations_log = os.path.join(build_folder, log_file)
 
   available_animations = []
-  with open(log_file_path, 'r') as log_file:
+  with open(get_animations_log, 'r') as log_file:
     regex = r"(?<=HandleAnimationAvailable Animation available: )(.*)(?=\n)"
     available_animations = re.findall(regex, log_file.read())
 
