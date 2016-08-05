@@ -10,6 +10,7 @@
 #include "driver/uart.h"
 #include "driver/i2spi.h"
 #include "driver/crash.h"
+#include "driver/factoryData.h"
 #include "gpio.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
@@ -84,6 +85,9 @@ void user_init(void)
   gpio_init();
 
   os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
+
+  // Setup factory data access methods
+  factoryDataInit();
 
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);

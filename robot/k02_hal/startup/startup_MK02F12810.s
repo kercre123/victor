@@ -64,7 +64,7 @@ __Signature     DCD     Reset_Handler
 __Vectors       DCD     __initial_sp   ; Top of Stack
                 DCD     Reset_Handler  ; Reset Handler
                 DCD     NMI_Handler                         ;NMI Handler
-                DCD     HardFault_Handler                   ;Hard Fault Handler
+                DCD     HardFault_PreHandler                ;Hard Fault Handler
                 DCD     MemManage_Handler                   ;MPU Fault Handler
                 DCD     BusFault_Handler                    ;Bus Fault Handler
                 DCD     UsageFault_Handler                  ;Usage Fault Handler
@@ -189,16 +189,29 @@ _irq_clear_end
                 BX      R0
                 ENDP
 
+HardFault_PreHandler\
+                PROC
+                IMPORT  HardFault_Handler
+                IMPORT  CRASHLOG_POINTER
+
+                PUSH    {r4-r7}
+                MOV     r4, r8
+                MOV     r5, r9
+                MOV     r6, r10
+                MOV     r7, r11
+                PUSH    {r4-r7}
+                
+                ; Store crashlog to global pointer
+                LDR     r4, =CRASHLOG_POINTER
+                MOV     r5, sp
+                STR     r5, [r4, #0]
+                B       HardFault_Handler
+                ENDP
 
 ; Dummy Exception Handlers (infinite loops which can be modified)
 NMI_Handler\
                 PROC
                 EXPORT  NMI_Handler         [WEAK]
-                B       .
-                ENDP
-HardFault_Handler\
-                PROC
-                EXPORT  HardFault_Handler         [WEAK]
                 B       .
                 ENDP
 MemManage_Handler\

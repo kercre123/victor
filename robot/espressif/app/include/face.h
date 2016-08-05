@@ -26,7 +26,10 @@ namespace Anki {
       static const int ROWS = 64;
       static const int PAGES = ROWS / 8;
       
-      extern u64 m_frame[COLS+12];
+      extern "C"
+      {
+        extern u64 m_frame[COLS+12];
+      }
 
       // Sets up data structures, call before any other methods
       Result Init();

@@ -74,7 +74,7 @@ __Signature     DCD     Reset_Handler
 __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler             ; 1
                 DCD     NMI_Handler               ; 2
-                DCD     HardFault_Handler         ; 3
+                DCD     HardFault_PreHandler      ; 3
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
@@ -161,11 +161,29 @@ Reset_Handler   PROC
 
 ; Dummy Exception Handlers (infinite loops which can be modified)
 
+HardFault_PreHandler PROC
+                IMPORT   HardFault_Handler
+                IMPORT   CRASHLOG_POINTER
+
+                PUSH     {r4-r7}
+
+                MOV      r4, r8
+                MOV      r5, r9
+                MOV      r6, r10
+                MOV      r7, r11
+                PUSH     {r4-r7}
+
+                LDR     r4, =CRASHLOG_POINTER
+                MOV     r5, sp
+                STR     r5, [r4, #0]
+
+                LDR     r4, =HardFault_Handler
+                BX      r4
+                ENDP
 
 Default_Handler PROC
 
                 EXPORT   NMI_Handler [WEAK]
-                EXPORT   HardFault_Handler [WEAK]
                 EXPORT   SVC_Handler [WEAK]
                 EXPORT   PendSV_Handler [WEAK]
                 EXPORT   SysTick_Handler [WEAK]
@@ -194,7 +212,6 @@ Default_Handler PROC
                 EXPORT   SWI3_IRQHandler [WEAK]
                 EXPORT   SWI4_IRQHandler [WEAK]
                 EXPORT   SWI5_IRQHandler [WEAK]
-HardFault_Handler
 NMI_Handler
 SVC_Handler
 PendSV_Handler

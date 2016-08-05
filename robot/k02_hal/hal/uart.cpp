@@ -14,7 +14,8 @@
 
 enum TRANSFER_MODE {
   TRANSMIT_RECEIVE,
-  TRANSMIT_SEND
+  TRANSMIT_SEND,
+  TRANSMIT_CRASHLOG
 };
 
 static const int uart_fifo_size = 8;
@@ -30,6 +31,8 @@ volatile bool Anki::Cozmo::HAL::UART::HeadDataReceived = false;
 static TRANSFER_MODE uart_mode;
 
 static int txRxIndex;
+static int crashLogBytes;
+static const uint8_t* crashLogData;
 
 inline void transmit_mode(TRANSFER_MODE mode);
 
@@ -64,11 +67,26 @@ void Anki::Cozmo::HAL::UART::Init() {
   PORTD_PCR6 = PORT_PCR_MUX(3);
   PORTD_PCR7 = PORT_PCR_MUX(3);
 
+  crashLogBytes = 0;
+
   transmit_mode(TRANSMIT_RECEIVE);
+}
+
+void Anki::Cozmo::HAL::UART::SendCrashLog(const void* data, int bytes) {
+  crashLogBytes = bytes;
+  crashLogData = (uint8_t*) data;
+  
 }
 
 inline void transmit_mode(TRANSFER_MODE mode) { 
   switch (mode) {
+    case TRANSMIT_CRASHLOG:
+    {
+      UART0_C2 = UART_C2_TE_MASK;
+     
+      txRxIndex = 0;
+      break ;
+    }
     case TRANSMIT_SEND:
     {
       Anki::Cozmo::HAL::Spine::Dequeue(&(g_dataToBody.cladBuffer));
@@ -139,11 +157,33 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
           Watchdog::kick(WDOG_SPINE_COMMS);
           HeadDataReceived = true;
           
-          transmit_mode(TRANSMIT_SEND);
+          if (crashLogBytes > 0) {
+            transmit_mode(TRANSMIT_CRASHLOG);
+          } else {
+            transmit_mode(TRANSMIT_SEND);
+          }
         }
       }
-      
+
       break ;
+    case TRANSMIT_CRASHLOG:
+      {  
+        static const uint8_t crashheader[] = {'C', 'R', 'S', 'H'};
+        
+        while (UART0_TCFIFO < uart_fifo_size) {
+          if (txRxIndex < sizeof(crashheader)) {
+            UART0_D = crashheader[txRxIndex++];
+          } else if (crashLogBytes > 0) {
+            UART0_D = *(crashLogData++);
+            crashLogBytes--;
+          } else if (UART0_S1 & UART_S1_TC_MASK) {
+            NVIC_SystemReset();
+          }
+        }
+
+        break ;
+      }
+
     case TRANSMIT_SEND:
       // Transmission was complete, start receiving bytes once transmission has completed
       if (txRxIndex >= sizeof(GlobalDataToBody)) {

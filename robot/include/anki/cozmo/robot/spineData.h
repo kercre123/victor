@@ -21,13 +21,15 @@ static const int charger_baud_rate  = 100000;
 
 enum SPISource
 {
-  SPI_SOURCE_HEAD    = 0x64616568,
-  SPI_SOURCE_BODY    = 0x79646f62
+  SPI_SOURCE_HEAD     = 0x64616568,
+  SPI_SOURCE_BODY     = 0x79646f62,
+  SPI_SOURCE_CRASHLOG = 0x48535243
 };
 
 // 32 bytes of payload plus tag
 #define SPINE_MAX_CLAD_MSG_SIZE_DOWN (40)
 #define SPINE_MAX_CLAD_MSG_SIZE_UP (32)
+#define SPINE_CRASH_LOG_SIZE (sizeof(CrashLog_K02))
 
 struct CladBufferDown
 {

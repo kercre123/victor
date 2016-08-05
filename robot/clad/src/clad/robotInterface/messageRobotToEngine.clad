@@ -76,8 +76,10 @@ enum int_8 CrashSource
 
 message CrashReport
 {
-  uint_32 dump[128],
+  int_32  errorCode,
+  int_16  RESERVED, // Padding for now
   CrashSource which,
+  uint_32 dump[uint_8],
 }
 
 /// *************** Overall message pipe ******************************* ///

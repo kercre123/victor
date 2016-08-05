@@ -179,7 +179,7 @@ void DMA2_IRQHandler(void) {
     return ;
   }
 
-  DAC::Tone();
+  DAC::Tone(1.0f);
 
   // Check for silence in the 
   static const int MaximumSilence = 32;

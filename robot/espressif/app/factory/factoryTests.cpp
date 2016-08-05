@@ -8,7 +8,7 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
-#include "driver/crash.h"
+#include "driver/factoryData.h"
 #include "driver/i2spi.h"
 #include "foregroundTask.h"
 }

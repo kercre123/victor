@@ -8,12 +8,12 @@ extern "C" {
 
 #include "storage.h"
 
-static const uint32_t STORAGE_ADDRESS = (0x18000 + 0x6C00);
-static const int STORAGE_SIZE = 0x400;
-static const int TOTAL_WORDS = (STORAGE_SIZE - 4) / sizeof(uint32_t);
-
 // upper 16bits are a revision
 static const uint32_t MAGICKEY_VALUE = 0x01005a43;
+static const int STORAGE_SIZE = 0x400;
+static const uint32_t STORAGE_ADDRESS = (0x1F000 - STORAGE_SIZE);
+static const int TOTAL_WORDS = (STORAGE_SIZE - sizeof(MAGICKEY_VALUE)) / sizeof(uint32_t);
+static const uint32_t UNUSED_ENTRY = ~0;
 
 struct StorageTOC {
   union {
@@ -34,10 +34,17 @@ struct StorageData {
   };
 };
 
+struct StorageEntry {
+  const void* ptr;
+  int length;
+};
+
 static StorageData* const STORAGE = (StorageData*) STORAGE_ADDRESS;
 
-static StorageTOC* end_of_toc;
-static uint32_t* start_of_data;
+static StorageEntry toc[STORAGE_TOTAL_KEYS];
+static int words_left;
+static int end_of_data;
+static int end_of_toc;
 
 // These are our raw access calls
 static void storage_erase() {
@@ -60,10 +67,16 @@ static StorageError storage_write_word(uint32_t* address, uint32_t word) {
     return STORAGE_OUT_OF_BOUNDS;
   }
 
+  // Address was not erased
   if (~0 != *address) {
     return STORAGE_NOT_ERASED;
   }
 
+  // Do not write an empty word
+  if (word == ~0) {
+    return STORAGE_OK;
+  }
+  
   NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
   *address = word;
@@ -74,6 +87,30 @@ static StorageError storage_write_word(uint32_t* address, uint32_t word) {
   return STORAGE_OK;
 }
 
+static void setup_storage(void) {
+  // Initialize our in memory FAT
+  memset(toc, 0, sizeof(toc));
+  end_of_data = STORAGE_SIZE;
+
+  for (end_of_toc = 0; STORAGE->toc[end_of_toc].raw != UNUSED_ENTRY; end_of_toc++) {
+    StorageTOC* entry = &STORAGE->toc[end_of_toc];
+    
+    toc[entry->key].ptr = (const void*)(STORAGE_ADDRESS + entry->address);
+    toc[entry->key].length = entry->length;
+    
+    end_of_data = entry->address;
+  }
+
+  // Since we sometimes level more compact, we have to make sure we only write on word boundaries
+  end_of_data &= ~3;
+  
+  words_left = (end_of_data - sizeof(MAGICKEY_VALUE)) / sizeof(uint32_t) - (end_of_toc + 1);
+}
+
+static int write_words(int bytes) {  
+  return (bytes + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+}
+
 static void storage_level(void) {
   StorageData memory;
 
@@ -81,55 +118,43 @@ static void storage_level(void) {
   memset(&memory, 0xFF, sizeof(memory));
   memory.magickey = MAGICKEY_VALUE;
 
-  // Start creating a limited TOC
-  StorageTOC *last_toc = &memory.toc[0];
-  StorageTOC *cursor = &STORAGE->toc[0];
-  bool collapse = false;
-  
-  // Reduce repeat keys
-  while (cursor < end_of_toc) {
-    StorageTOC *locate = &memory.toc[0];
-    
-    // See if this is a redundant key
-    while (locate < last_toc) {
-      if (locate->key == cursor->key) {
-        collapse = true;
-        break ;
-      }
-      locate++;
+  // Empty memory points
+  int data_write_ptr = TOTAL_WORDS;
+  int toc_write_ptr = 0;
+
+  for (int i = 0; i < STORAGE_TOTAL_KEYS; i++) {
+    // Null entry
+    if (!toc[i].length) {
+      continue ;
     }
-    
-    memcpy(locate, cursor++, sizeof(StorageTOC));
-    
-    // New key, collapse
-    if (locate == last_toc) { last_toc++; }
-  }
-  
-  // No duplicate keys, do not flaten
-  if (!collapse) return ;
 
-  // Flatten data
-  cursor = &memory.toc[0];
-  uint32_t* start_of_memory = (uint32_t*)&memory;
-  uint32_t* end_of_memory = (uint32_t*)((int)&memory + STORAGE_SIZE);
-  
-  while (cursor < last_toc) {
-    int words = (cursor->length + sizeof(uint32_t) - 1) / sizeof(uint32_t);
-    
-    end_of_memory -= words;
-    memcpy(end_of_memory, (void*)(STORAGE_ADDRESS + cursor->address), cursor->length);
-    cursor->address = (int)end_of_memory - (int)start_of_memory;
-    cursor++;
+    // Copy in our data (could pack tighter)
+    data_write_ptr -= write_words(toc[i].length);
+    memcpy(&memory.raw[data_write_ptr], toc[i].ptr, toc[i].length);
+
+    // Setup our toc
+    StorageTOC* entry = &memory.toc[toc_write_ptr++];
+    entry->length = toc[i].length;
+    entry->key = i;
+    entry->address = data_write_ptr * sizeof(uint32_t) + sizeof(MAGICKEY_VALUE);
   }
 
-  // Write memory copy back to disk
+  // Do not need to level memory
+  if (!memcmp(&memory, STORAGE, sizeof(memory))) {
+    return ;
+  }
+  
+  // Write back to memory
+  uint32_t* read = (uint32_t*) &memory;
+  uint32_t* write = (uint32_t*) STORAGE_ADDRESS;
+  
   storage_erase();
-  for (int i = 0; i < STORAGE_SIZE / sizeof(uint32_t); i++) {
-    uint32_t word = *(start_of_memory++);
-    
-    if (word == ~0) { continue ; }
-    storage_write_word((uint32_t*)(STORAGE_ADDRESS + i), word);
+  for (int i = 0; i < sizeof(memory) / sizeof(uint32_t); i++) {
+    storage_write_word(&write[i], read[i]);
   }
+
+  // Reconfigure out flash space
+  setup_storage();
 }
 
 // These are our KVS functions
@@ -144,101 +169,70 @@ void Storage::init() {
     storage_format();
   }
 
-  // This is the next available TOC area
-  end_of_toc = &STORAGE->toc[0];
-  
-  // Find an unallocated sector
-  while (end_of_toc->raw != ~0) {
-    end_of_toc++;
-  }
-
-  // This is the last byte written
-  if (end_of_toc != STORAGE->toc) {
-    start_of_data = (uint32_t*) (STORAGE_ADDRESS + end_of_toc[-1].address);
-  } else {
-    start_of_data = (uint32_t*)(STORAGE_ADDRESS + STORAGE_SIZE);
-  }
+  setup_storage();
 
   // Level storage on boot to make sure that we don't do this expensive operation unless we have to.
   storage_level();
 }
 
-static StorageTOC* find_key(StorageKey ident) {
-  StorageTOC* end = &end_of_toc[-1];
-  
-  while (end >= STORAGE->toc) {
-    if (end->key == ident) {
-      return end;
-    }
-    end--;
-  }
-  
-  return NULL;
-}
-
 static bool store_key(StorageKey ident, const void* data, int length) {
-  // Find 32-bit write address
-  int round_length = (length + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+  int word_length = write_words(length);
 
-  uint32_t* write_location = start_of_data - round_length;
-  
-  // Out of space error
-  if ((void*)(write_location - 1) <= (void*)end_of_toc) {
+  // Do we have enough space for the entire entry plus the TOC entry
+  if (words_left < word_length + 1) {
     return false;
   }
 
-  start_of_data = write_location;
+  words_left -= word_length + 1;
 
-  // Stage our structure
+  // Write and allocate data space
+  end_of_data -= word_length * sizeof(uint32_t);
+  const uint8_t* source = (const uint8_t*)data;
+  uint32_t* target = (uint32_t*)(STORAGE_ADDRESS + end_of_data);
+  
+  for (int i = 0; i < word_length; i++) {
+    uint32_t data;
+    memcpy(&data, &source[i*sizeof(data)], sizeof(data));
+    storage_write_word(&target[i], data);
+  }
+  
+  // Write out our table of contents
   StorageTOC toc;
+
   toc.key = ident;
   toc.length = length;
-  toc.address = (int)write_location - STORAGE_ADDRESS;
-  
-  // Write to memory
-  const uint32_t* raw_data = (const uint32_t*) data;
-
-  storage_write_word((uint32_t*)(end_of_toc++), toc.raw);
-  for (int i = 0; i < length; i += 4) {
-    storage_write_word(write_location++, *(raw_data++));
-  }
+  toc.address = end_of_data;
+  storage_write_word(&STORAGE->toc[end_of_toc++].raw, toc.raw);
 
   return true;
 }
 
-StorageError Storage::get(StorageKey ident, void* data, int& length) {
-  StorageTOC* toc = find_key(ident);
-  
-  if (toc == NULL) {
-    return STORAGE_NOT_FOUND;
-  }
-  
-  memcpy(data, (uint32_t*) (STORAGE_ADDRESS + toc->address), toc->length);
-  length = toc->length;
-  
-  return STORAGE_OK;
-}
-
 StorageError Storage::set(StorageKey ident, const void* data, int length) {
+  StorageEntry* entry = &toc[ident];
+
+  // Check if this key needs to be updated
+  if (entry->length == length && !memcmp(data, entry->ptr, length)) {
+    return STORAGE_OK;
+  }
+
   if (store_key(ident, data, length)) {
     return STORAGE_OK;
   }
   
   storage_level();
 
-  if (!store_key(ident, data, length)) {
-    return STORAGE_OUT_OF_SPACE;
+  if (store_key(ident, data, length)) {
+    return STORAGE_OK;
   }
 
-  return STORAGE_OK;
+  return STORAGE_OUT_OF_SPACE;
 }
 
-const void* Storage::get_lazy(StorageKey ident) {
-  StorageTOC* toc = find_key(ident);
-  
-  if (toc == NULL) {
-    return NULL;
-  }
-  
-  return (const void*) (STORAGE_ADDRESS + toc->address);
+const void* Storage::get(StorageKey ident, int& length) {
+  length = toc[ident].length;
+  return toc[ident].ptr;
+}
+
+const void* Storage::get(StorageKey ident) {
+  return toc[ident].ptr;
 }

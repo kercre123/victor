@@ -34,7 +34,8 @@ namespace Anki
         void Transmit(void);
 
         void SendRecoveryData(const uint8_t* data, int bytes);
-
+        void SendCrashLog(const void* data, int bytes);
+        
         void DebugInit(void);
         void DebugPrintf(const char *format, ...);
         void DebugPrintProfile(int value);

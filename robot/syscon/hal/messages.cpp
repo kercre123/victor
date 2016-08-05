@@ -11,8 +11,10 @@
 #include "bluetooth.h"
 #include "backpack.h"
 #include "battery.h"
+#include "storage.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 extern void enterOperatingMode(Anki::Cozmo::BodyRadioMode mode);
 
@@ -81,6 +83,33 @@ static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
 
 static void Process_nvOpResultToBody(const RobotInterface::NVOpResultToBody& msg)
 {
+}
+
+static void Process_readBodyStorage(const ReadBodyStorage& msg) {
+  const uint8_t* data;
+  int length;
+  
+  data = (const uint8_t*) Storage::get((StorageKey)msg.key, length);
+
+  BodyStorageContents reply;
+  length -= msg.offset;
+
+  if (length > sizeof(reply.data)) {
+    length = sizeof(reply.data);
+  } else if (length < 0) {
+    length = 0;
+  }
+
+  reply.key = msg.key;
+  reply.offset = msg.offset;
+  reply.data_length = length;
+  memcpy(reply.data, &data[msg.offset], length);
+  
+  RobotInterface::SendMessage(reply);
+}
+
+static void Process_writeBodyStorage(const WriteBodyStorage& msg) {
+  Storage::set((StorageKey)msg.key, msg.data, msg.data_length);
 }
 
 static void Process_killBodyCode(const KillBodyCode& msg)

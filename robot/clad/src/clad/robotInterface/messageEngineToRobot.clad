@@ -45,6 +45,25 @@ namespace Cozmo {
     uint_8  gamma
   }
 
+  message ReadBodyStorage
+  {
+    uint_8  key,
+    uint_8  offset
+  }
+
+  message WriteBodyStorage
+  {
+    uint_8  key,
+    uint_8  data[uint_8:26]
+  }
+
+  message BodyStorageContents
+  {
+    uint_8  key,
+    uint_8  offset,
+    uint_8  data[uint_8:26]
+  }
+
 namespace RobotInterface {
 
 /** Pipe from engine to robot.
@@ -349,6 +368,8 @@ union EngineToRobot
   SetHeadlight                  setHeadlight                = 0x0B,
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyRestart              bodyRestart                 = 0x0D,
+  ReadBodyStorage               readBodyStorage             = 0x0E,
+  WriteBodyStorage              writeBodyStorage            = 0x0F,
 
   DiffieHellmanResults          diffieHellmanResults        = 0x26,
   EnterPairing                  enterPairing                = 0x27,
@@ -436,6 +457,7 @@ union EngineToRobot
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
+  BodyStorageContents           bodyStorageContents         = 0xA4,
 
   OTA::Write                    otaWrite                    = 0xAF,
 
@@ -447,6 +469,7 @@ union EngineToRobot
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
+
 
 } // namespace Robot Interface
 } // namespace Cozmo

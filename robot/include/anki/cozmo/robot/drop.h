@@ -11,12 +11,7 @@
 
 //#include <stdint.h>
 
-// ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
-#define ASSERT_CONCAT_(a, b) a##b
-#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-#define ASSERT_IS_POWER_OF_TWO(e) ct_assert((e & (e-1)) == 0)
-#define ASSERT_IS_MULTIPLE_OF_TWO(e) ct_assert((e % 2) == 0)
+#include "anki/cozmo/robot/ctassert.h"
 
 /// Data date for exchanges
 #define I2SPI_FREQUENCY (10000000)

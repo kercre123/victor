@@ -48,7 +48,7 @@ all: sim app esp k02 nrf
 
 dev: AnkiLog nrf k02 esp
 
-ota: $(OTA_FILE)
+ota: $(OTA_FILE) $(MAP_FILES)
 
 clean:
 	make -C clad clean
@@ -123,6 +123,15 @@ $(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py
 	mkdir -p $(dir $@)
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
+$(BUILD_DIR)/esp.map: espressif/app/esp.map
+	cp $< $@
+
+$(BUILD_DIR)/robot.map: $(BUILD_DIR)/app/robot.map
+	cp $< $@
+
+$(BUILD_DIR)/syscon.map: syscon/build/app/syscon.map
+	cp $< $@
+
 ########################################################################################################################
 # Build server steps
 
@@ -132,5 +141,5 @@ server.1: nrf k02
 server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to generate these files
 	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY)
 
-server.3: espBuild $(OTA_FILE)
-	tar -czf firmware.tar.gz $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) # TODO add $(MAP_FILES)
+server.3: espBuild $(OTA_FILE) $(MAP_FILES)
+	tar -czf firmware.tar.gz $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) $(MAP_FILES)

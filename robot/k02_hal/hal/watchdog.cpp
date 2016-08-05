@@ -6,6 +6,7 @@
 #include "watchdog.h"
 #include "spi.h"
 #include "uart.h"
+#include "dac.h"
 
 #include "anki/cozmo/robot/hal.h"
 
@@ -92,6 +93,7 @@ void Anki::Cozmo::HAL::Watchdog::pet() {
 extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
+  Anki::Cozmo::HAL::DAC::Tone(2.0f);
   if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
     Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
   }

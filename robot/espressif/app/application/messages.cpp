@@ -17,6 +17,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "nvStorage.h"
 #include "wifi_configuration.h"
 #include "upgradeController.h"
+#include "crashReporter.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
@@ -319,6 +320,12 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               WiFiConfiguration::Off(msg.wifiOff.sleep);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_bodyStorageContents:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              CrashReporter::AcceptBodyStorage(msg.bodyStorageContents);
               break;
             }
             default:

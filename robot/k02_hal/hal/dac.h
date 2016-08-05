@@ -10,7 +10,7 @@ namespace Anki {
         void EnableAudio(bool enable);
         void Feed(bool enable, uint8_t* samples);
         void Sync();
-        void Tone();
+        void Tone(const float mult);
       }
     }
   }

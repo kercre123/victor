@@ -19,13 +19,13 @@
 typedef enum {
   BOOTLOADER_SECTOR           = 0x000, ///< Where the boot loader (this code) lives.
   FACTORY_SECTOR              = 0x001, ///< Where factory build information will be stored
+  CRASH_DUMP_SECTOR           = 0x002, ///< Where we will store crash dumps for reporting
   APPLICATION_A_SECTOR        = 0x003, ///< Start of application image A region
   APPLICATION_B_SECTOR        = 0x103, ///< Start of application image B region
   FACTORY_WIFI_FW_SECTOR      = 0x080, ///< Where the factory firmware starts
   FACTORY_RTIP_BODY_FW_SECTOR = 0x0c5, ///< Where the image for the RTIP and Body firmware is stored
   FACTORY_NV_STORAGE_SECTOR   = 0x0de, ///< A region used for storing large factory test data
   FIXTURE_STORAGE_SECTOR      = 0x0fc, ///< 16KB for fixture data
-  CRASH_DUMP_SECTOR           = 0x100, ///< Where we will store crash dumps for reporting
   NV_STORAGE_SECTOR           = 0x1c0, ///< Start of NV Storage region
   ESP_INIT_DATA_SECTOR        = 0x1fc, ///< Where the Espressif OS keeps it's init data, two sectors long
   ESP_WIFI_CFG_SECTOR         = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long

@@ -5,6 +5,8 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "lights.h"
+#include "storage.h"
+#include "anki/cozmo/robot/crashLogs.h"
 
 #include "cubes.h"
 #include "watchdog.h"
@@ -22,7 +24,7 @@
 
 using namespace Anki::Cozmo;
 
-uint8_t   txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
+uint8_t txRxBuffer[MAX(MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead)), SPINE_CRASH_LOG_SIZE)];
 
 enum TRANSMIT_MODE {
   TRANSMIT_UNKNOWN,
@@ -185,7 +187,7 @@ void UART0_IRQHandler()
         if (txRxIndex < 4) {
           header_shift = (header_shift >> 8) | (data << 24);
           
-          if (header_shift == SPI_SOURCE_HEAD) {
+          if (header_shift == SPI_SOURCE_HEAD || header_shift == SPI_SOURCE_CRASHLOG) {
             txRxIndex = 4;
             return ;
           }
@@ -193,6 +195,17 @@ void UART0_IRQHandler()
           txRxBuffer[txRxIndex] = data;
         }
 
+        // Looks like the head crashed, log and reset
+        if (header_shift == SPI_SOURCE_CRASHLOG) {
+          txRxBuffer[txRxIndex++ - 4] = data;
+
+          if (txRxIndex - 4 >= SPINE_CRASH_LOG_SIZE) {
+            Storage::set(STORAGE_CRASH_LOG_K02, txRxBuffer, SPINE_CRASH_LOG_SIZE);
+            NVIC_SystemReset();
+          }
+          break ;
+        }
+        
         // We received a full packet
         if (++txRxIndex >= sizeof(GlobalDataToBody)) {
           memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));

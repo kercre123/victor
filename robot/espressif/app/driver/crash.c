@@ -6,30 +6,16 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "user_interface.h"
-#include "flash_map.h"
 #include "driver/crash.h"
 #include "driver/uart.h"
+#include "spi_flash.h"
 #include "transport/reliableTransport.h"
 
-#define DUMP_TO_UART 1
-#define DUMP_STACK_TO_UART 0
-#define DUMP_TO_RTC_MEM 0
-
-#define RTC_MEM_START (64)
-
-static const unsigned int CRASH_DUMP_STORAGE_HEADER = 0xCDFAF320;
-
-int COZMO_VERSION_ID = 0;
-unsigned int COZMO_BUILD_DATE = 0;
-
-#define RANDOM_DATA_OFFSET FACTORY_DATA_SIZE
-#define MAX_RANDOM_DATA (8*sizeof(uint32_t))
-
-#define FACTORY_DATA_SIZE (8)
-
-static uint32_t factoryData[FACTORY_DATA_SIZE/sizeof(uint32_t)];
-
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
+
+static int nextCrashRecordSlot;
+
+extern u64 m_frame[128+12]; // Face frame buffer which we will take over to build our dump in
 
 void os_put_str(char* str)
 {
@@ -40,51 +26,7 @@ void os_put_str(char* str)
   }
 }
 
-#define P4X(s,n) os_put_str(s); os_put_hex(n, 4);
-#define P8X(s,n) os_put_str(s); os_put_hex((int)(n), 8);
-
-#define STACK_DUMP_NUM_COLS 8
-#define STACK_DUMP_MAX_SIZE 256
-
-void crash_dump_hex(int* p, int cnt) {
-  int i;
-  for (i = 0; i < cnt; i++) {
-    if (i % STACK_DUMP_NUM_COLS == 0) {
-      os_put_hex((int )(p + i), 8);
-      os_put_char('|');
-    }
-    os_put_hex(p[i], 8);
-    os_put_char((i + 1) % STACK_DUMP_NUM_COLS ? ' ' : '\n');
-  }
-}
-
 #define STACKOK(i) (((unsigned int)i > 0x3fffc000) && ((unsigned int)i < 0x40000000) && (((unsigned int)i & 3) == 0))
-
-extern void crash_handler(int exccause, ex_regs regs);
-
-void crash_dump_stack_uart(int* sp) {
-  int* p = sp - 8; // @nathan-anki Should we really be subtracting 8 again here?
-  int n = (0x40000000 - (unsigned int)p);
-  if (n > STACK_DUMP_MAX_SIZE) {
-    n = STACK_DUMP_MAX_SIZE;
-  }
-  os_put_str("Stack (");
-  os_put_hex((unsigned int)sp, 8);
-  os_put_str(")\n");
-  crash_dump_hex(p, n / 4);
-}
-
-unsigned int crash_dump_stack_rtc(int* sp, unsigned int waddr) {
-  int* p = sp - 8; // @nathan-anki Should we really be subtracting 8 again here?
-  int n = (0x40000000 - (unsigned int)p);
-  if (n > STACK_DUMP_MAX_SIZE) {
-    n = STACK_DUMP_MAX_SIZE;
-  }
-  system_rtc_mem_write(waddr++, &n, 4);
-  system_rtc_mem_write(waddr, p, n);
-  waddr += n/4;
-  return waddr;
-}
 
 static int get_excvaddr() {
   int v;
@@ -105,11 +47,16 @@ static int get_depc() {
 }
 
 extern void crash_dump(int* sp) {
-  ex_regs *regs = (ex_regs*) sp;
+  ex_regs_esp *regs = (ex_regs_esp*) sp;
   // stack pointer at exception place
   int* ex_sp = (sp + 256 / 4);
   int* p = ex_sp - 8;
   int usestack = STACKOK(p);
+  int i;
+  CrashRecord* record = (CrashRecord*)m_frame;
+  CrashLog_ESP* cle = (CrashLog_ESP*)record->dump;
+
+  ets_intr_lock(); // Disable all interrupts
 
   os_put_str("Fatal Exception: ");
   os_put_hex(regs->epc1, 8);
@@ -117,106 +64,33 @@ extern void crash_dump(int* sp) {
   os_put_hex(regs->exccause, 2);
   os_put_str("), sp ");
   os_put_hex((int)sp, 8);
+  os_put_char('\r');
   os_put_char('\n');
-
-#if DUMP_TO_RTC_MEM
-  unsigned int rtcWadder = RTC_MEM_START;
-  system_rtc_mem_write(rtcWadder++, &CRASH_DUMP_STORAGE_HEADER, 4);
-  system_rtc_mem_write(rtcWadder++, &COZMO_VERSION_ID, 4);
-  system_rtc_mem_write(rtcWadder++, &COZMO_BUILD_DATE, 4);
   
-  system_rtc_mem_write(rtcWadder++, &regs->epc1, 4);
-  system_rtc_mem_write(rtcWadder++, &regs->ps,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->sar,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->xx1,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->a0,   4);
-  system_rtc_mem_write(rtcWadder++, &ex_sp,      4); // a1
-  system_rtc_mem_write(rtcWadder++, &regs->a2,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a3,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a4,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a5,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a6,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a7,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a8,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a9,   4);
-  system_rtc_mem_write(rtcWadder++, &regs->a10,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->a11,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->a12,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->a13,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->a14,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->a15,  4);
-  system_rtc_mem_write(rtcWadder++, &regs->exccause, 4);
-  unsigned int canaries = g_conn.canary1 | (g_conn.canary2 << 8) | (g_conn.canary3 << 16);
-  system_rtc_mem_write(rtcWadder++, &canaries, 4);
+  record->nWritten = 0;
+  record->nReported = 0xFFFFffff;
+  record->reporter  = 0; // Espressif is 0
+  record->errorCode = 0; // Regular crash
+  // Copy in exception registers
+  for (i=0; i<sizeof(ex_regs_esp)/sizeof(int); ++i)
+  {
+    record->dump[i] = sp[i];
+  }
+  cle->sp = (int)sp;
   if (usestack)
   {
-    int exdepc[2];
-    exdepc[0] = get_excvaddr();
-    exdepc[1] = get_depc();
-    system_rtc_mem_write(rtcWadder, exdepc, 8);
-    rtcWadder += 2;
-    crash_dump_stack_rtc(p, rtcWadder);
+    cle->excvaddr = get_excvaddr();
+    cle->depc     = get_depc();
+    cle->stackDumpSize = (0x40000000 - (unsigned int)p);
+    if (cle->stackDumpSize > ESP_STACK_DUMP_SIZE) cle->stackDumpSize = ESP_STACK_DUMP_SIZE;
+    for (i=0; i<cle->stackDumpSize; i++) cle->stack[i] = p[i];
   }
   else
   {
-    int zero = 0;
-    system_rtc_mem_write(rtcWadder, &zero, 4);
+    cle->stackDumpSize =  0;
   }
 
-#endif // DUMP_TO_RTC_MEM
-
-#if DUMP_TO_UART
-  os_put_str("RT canaries: ");
-  os_put_hex(g_conn.canary1, 2);
-  os_put_hex(g_conn.canary2, 2);
-  os_put_hex(g_conn.canary3, 2);
-  os_put_char('\n');
-  
-  if (usestack) {
-    int excvaddr = get_excvaddr();
-    int depc = get_depc();
-#if DUMP_STACK_TO_UART
-    os_put_str("Fingerprint: 1/");
-    P8X("xh=", crash_handler);
-    P8X(",v=0x", COZMO_VERSION_ID);
-    P8X(",b=0x", COZMO_BUILD_DATE);
-    os_put_char('\n');
-#endif
-    P8X(" epc1: ", regs->epc1); P8X("  exccause: ", regs->exccause); P8X("  excvaddr: ", excvaddr);
-    P8X("  depc: ", depc);
-    os_put_char('\n');
-#if DUMP_STACK_TO_UART
-    P8X(" ps  : ", regs->ps);   P8X("  sar     : ", regs->sar);       P8X("  unk1    : ", regs->xx1);
-    os_put_char('\n');
-    // a1 is stack at exception
-    P8X(" a0 :  ", regs->a0);
-    P8X("  a1 :  ", (int )ex_sp);
-    P8X("  a2 :  ", regs->a2);
-    P8X("  a3 :  ", regs->a3);
-    os_put_char('\n');
-    P8X(" a4 :  ", regs->a4);
-    P8X("  a5 :  ", regs->a5);
-    P8X("  a6 :  ", regs->a6);
-    P8X("  a7 :  ", regs->a7);
-    os_put_char('\n');
-    P8X(" a8 :  ", regs->a8);
-    P8X("  a9 :  ", regs->a9);
-    P8X("  a10:  ", regs->a10);
-    P8X("  a11:  ", regs->a11);
-    os_put_char('\n');
-    P8X(" a12:  ", regs->a12);
-    P8X("  a13:  ", regs->a13);
-    P8X("  a14:  ", regs->a14);
-    P8X("  a15:  ", regs->a15);
-    os_put_char('\n');
-    crash_dump_stack_uart(p);
-#endif
-  } else {
-    os_put_str("Stack pointer may be corrupted: ");
-    os_put_hex((int)sp, 4);
-    os_put_char('\n');
-  }
-#endif // DUMP_TO_UART
+  os_put_hex(crashHandlerPutReport(record), 2);
 
   while (1);    // Wait for watchdog to get us
 }
@@ -226,7 +100,7 @@ extern void crash_dump(int* sp) {
  * a3 and a4 may be used because they are not used by standard handler.
  */
 //__attribute__((noinline))
-void crash_handler(int exccause, ex_regs regs) {
+void crash_handler(int exccause, ex_regs_esp regs) {
   asm("addi a1, a1, -16");    // Adjust stack to point to crash registers
   asm("s32i.n  a0, a1, 12");   // Store a0 in crash registers
   asm("addi a2, a1, 16");     // Pass stack as first argument to crash_dump
@@ -238,81 +112,99 @@ extern void* _xtos_set_exception_handler(int exno, void (*exhandler)());
 // Register crash handler with XTOS - must be called before 
 void ICACHE_FLASH_ATTR crashHandlerInit(void)
 {
+  int reportedRecords = 0;
+  int recordNumber;
+  nextCrashRecordSlot = -1; // Invalid
+  
+  // Find how many records we have written and how many we have reported
+  for (recordNumber=0; recordNumber<MAX_CRASH_LOGS; ++recordNumber)
+  {
+    CrashRecord rec;
+    const uint32 recordAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * recordNumber);
+    const SpiFlashOpResult rslt = spi_flash_read(recordAddress, (uint32*)&rec, CRASH_RECORD_SIZE);
+    if (rslt != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("crashHandlerInit: Couldn't read existing records at 0x%x, %d\r\n", recordAddress, rslt);
+      break;
+    }
+    else
+    {
+      if (rec.nWritten == 0xFFFFffff) // This slot is blank, quit here
+      {
+        nextCrashRecordSlot = recordNumber;
+        break;
+      }
+      else if (rec.nReported != 0xFFFFffff) // This record has been reported
+      {
+        reportedRecords = recordNumber + 1;
+      }
+    }
+  }
+  
+  if ((recordNumber > 0) && (reportedRecords == recordNumber)) // Have records but all reported
+  {
+    SpiFlashOpResult rslt = spi_flash_erase_sector(CRASH_DUMP_SECTOR);
+    if (rslt != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("crashHandlerInit: Couldn't erase reported records in sector 0x%x, %d\r\n", CRASH_DUMP_SECTOR, rslt);
+    }
+    else
+    {
+      nextCrashRecordSlot = 0;
+    }
+  }
+  
+  if (nextCrashRecordSlot < 0) os_printf("crashHandlerInit: No slots available for new records\r\n");
+  
   // See lx106 datasheet for details - NOTE: ALL XTENSA CORES USE DIFFERENT EXCEPTION NUMBERS
   _xtos_set_exception_handler(0, crash_handler);    // Bad instruction  
   _xtos_set_exception_handler(2, crash_handler);    // Bad instruction address
-  _xtos_set_exception_handler(3, crash_handler);    // Bad load/store address 
+  _xtos_set_exception_handler(3, crash_handler);    // Bad load/store address
   _xtos_set_exception_handler(9, crash_handler);    // Bad load/store alignment  
   _xtos_set_exception_handler(28, crash_handler);   // Bad load address
   _xtos_set_exception_handler(29, crash_handler);   // Bad store address
-  
-  if (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE, factoryData, FACTORY_DATA_SIZE) != SPI_FLASH_RESULT_OK)
+}
+
+int ICACHE_FLASH_ATTR crashHandlerGetReport(const int index, CrashRecord* record)
+{
+  if (index < 0 || index >= MAX_CRASH_LOGS) return -1;
+  if (record == NULL) return -2;
+  const uint32 recordAddr = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * index);
+  const SpiFlashOpResult rslt = spi_flash_read(recordAddr, (uint32*)record, CRASH_RECORD_SIZE);
+  if (rslt == SPI_FLASH_RESULT_OK) return 0;
+  else
   {
-    os_memset(factoryData, 0xff, FACTORY_DATA_SIZE);
+    os_printf("crashHandlerGetReport: Error reading record from flash at 0x%x, %d\r\n", recordAddr, rslt);
+    return rslt;
   }
 }
 
-extern void FacePrintf(const char *format, ...); // Forward declaration
-
-bool ICACHE_FLASH_ATTR crashHandlerHasReport(void)
+/// Must not be ICACHE_FLASH_ATTR if we want to use in actual crash handler
+int crashHandlerPutReport(CrashRecord* record)
 {
-  unsigned int header;
-  system_rtc_mem_read(RTC_MEM_START, &header, 4);
-  if(header == CRASH_DUMP_STORAGE_HEADER)
+  if (nextCrashRecordSlot < 0 || nextCrashRecordSlot >= MAX_CRASH_LOGS) return -1;
+  if (record == NULL) return -2;
+  const uint32 recordWriteAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * nextCrashRecordSlot);
+  record->nWritten  = 0;
+  record->nReported = 0xFFFFffff;
+  const SpiFlashOpResult rslt = spi_flash_write(recordWriteAddress, (uint32*)record, CRASH_RECORD_SIZE);
+  if (rslt == SPI_FLASH_RESULT_OK)
   {
-    static const char crashMessageFormat[] ICACHE_RODATA_ATTR = "CRASH REPORT\npc = 0x%x\ncause = 0x%x\n";
-    const uint32_t fmtSz = ((sizeof(crashMessageFormat)+3)/4)*4;
-    char fmtBuf[fmtSz];
-    ex_regs regs;
-    system_rtc_mem_read(RTC_MEM_START + 3, &regs, sizeof(ex_regs));
-    os_memcpy(fmtBuf, crashMessageFormat, fmtSz);
-    FacePrintf(fmtBuf, regs.epc1, regs.exccause);
-    return true;
+    const int ret = nextCrashRecordSlot;
+    nextCrashRecordSlot++;
+    return ret;
   }
   else
   {
-    return false;
+    return -3;
   }
 }
 
-bool ICACHE_FLASH_ATTR crashHandlerClearReport(void)
+int ICACHE_FLASH_ATTR crashHandlerMarkReported(const int index)
 {
-  int zero = 0;
-  return system_rtc_mem_write(RTC_MEM_START, &zero, 4);
-}
-
-int ICACHE_FLASH_ATTR crashHandlerGetReport(uint32_t* dest, const int available)
-{
-  const int readLen = available < MAX_CRASH_REPORT_SIZE ? available : MAX_CRASH_REPORT_SIZE;
-  if (system_rtc_mem_read(RTC_MEM_START, dest, readLen))
-  {
-    return readLen;
-  }
-  else
-  {
-    return -1;
-  }
-}
-
-uint32_t ICACHE_FLASH_ATTR getSerialNumber(void)
-{
-  return factoryData[0];
-}
-
-uint32_t ICACHE_FLASH_ATTR getSSIDNumber(void)
-{
-  const uint32_t sn = getSerialNumber();
-  const uint32_t fix = sn >> 24;
-  return (((sn & 0x00FF0000) ^ (fix << 16)) & 0x77) | ((sn & 0x0000FF00) ^ (fix << 8)) | ((sn & 0x000000FF) ^ fix);
-}
-
-uint16_t ICACHE_FLASH_ATTR getModelNumber(void)
-{
-  return factoryData[1] & 0xffff;
-}
-
-bool ICACHE_FLASH_ATTR getFactoryRandomSeed(uint32_t* dest, const int len)
-{
-  if (len > MAX_RANDOM_DATA) return false;
-  else return (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE + RANDOM_DATA_OFFSET, dest, len) == SPI_FLASH_RESULT_OK);
+  if (index < 0 || index >= MAX_CRASH_LOGS) return -1;
+  const uint32 recordAddr = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * index);
+  uint32 nReported = 0;
+  const SpiFlashOpResult rslt = spi_flash_write(recordAddr + 4, &nReported, 4);
+  return rslt;
 }

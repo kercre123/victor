@@ -360,7 +360,6 @@ coretech/vision/robot/test/embeddedVisionTests - Copy.cpp
 robot/robot_embedded-tests.dep
 *.MikeAnderson
 *.dep
-*.map
 *.ini
 robot/syscon/JLinkLog.txt
 robot/chipSimulator/robot_chipSimulator.uvguix.anki

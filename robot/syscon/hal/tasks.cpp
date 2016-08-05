@@ -40,7 +40,7 @@ void Tasks::init() {
 
 // Top 16 bytes of application space
 const void* Tasks::aes_key() {
-  return Storage::get_lazy(STORAGE_AES_KEY);
+  return Storage::get(STORAGE_AES_KEY);
 }
 
 void Tasks::execute(const Task* task) {

@@ -757,6 +757,18 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
+      void Process_readBodyStorage(Anki::Cozmo::ReadBodyStorage const&) {
+        // Handled on the NRF
+      }
+
+      void Process_writeBodyStorage(Anki::Cozmo::WriteBodyStorage const&) {
+        // Handled on the NRF
+      }
+      
+      void Process_bodyStorageContents(Anki::Cozmo::BodyStorageContents const&) {
+        // Handled on the Espressif
+      }
+      
       void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
       {
         RobotInterface::AnimationEvent emsg;

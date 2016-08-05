@@ -200,7 +200,9 @@ namespace Face {
     {0x0000, 0x0f03, 0x0f83, 0x0dc3, 0x0ce3, 0x0c73, 0x0c3b, 0x0c1f, 0x0c0f, 0x0000}, // X
   };
 
-  u64 m_frame[COLS + 12]; // OVERALLOCATE FOR OTA BECAUSE REASONS
+  extern "C" {
+    u64 m_frame[COLS + 12]; // OVERALLOCATE FOR OTA BECAUSE REASONS
+  }
   ScreenRect m_rects[WORKING_RECTS]; // Extra rect for working
   ScreenRect *m_activeRect;
   RectScanStatus m_scanStatus;
@@ -476,7 +478,7 @@ namespace Face {
     {
       if ((imgCols + x) > COLS)
       {
-        AnkiWarn( 197, "Face.Draw.Copy.TooWide", 513, "%d + %d > %d", 3, imgCols, x, COLS);
+        AnkiWarn( 197, "Face.Draw.Copy.TooWide", 520, "%d + %d > %d", 3, imgCols, x, COLS);
         return false;
       }
       
@@ -495,7 +497,7 @@ namespace Face {
 
       if (x + number_width > COLS)
       {
-        AnkiWarn( 206, "Face.Draw.Number.TooWide", 513, "%d + %d > %d", 3, x, number_width, COLS);
+        AnkiWarn( 213, "Face.Draw.Number.TooWide", 520, "%d + %d > %d", 3, x, number_width, COLS);
         return false;
       }
 
@@ -520,7 +522,7 @@ namespace Face {
       
       if (x + text_width > COLS)
       {
-        AnkiWarn( 207, "Face.Draw.Print.TooWide", 513, "%d + %d > %d", 3, x, text_width, COLS);
+        AnkiWarn( 214, "Face.Draw.Print.TooWide", 520, "%d + %d > %d", 3, x, text_width, COLS);
         return false;
       }
       

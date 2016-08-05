@@ -11,7 +11,6 @@ extern "C" {
 #include "backgroundTask.h"
 #include "client.h"
 #include "driver/i2spi.h"
-#include "driver/crash.h"
 }
 #include "rtip.h"
 #include "activeObjectManager.h"
@@ -28,6 +27,7 @@ extern "C" {
 #include "anki/cozmo/robot/logging.h"
 #include "upgradeController.h"
 #include "animationController.h"
+#include "crashReporter.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -38,21 +38,7 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
-
-bool readAndSendCrashReport(uint32_t param)
-{
-  RobotInterface::CrashReport crMsg;
-  crMsg.which = RobotInterface::WiFiCrash;
-  if (crashHandlerGetReport(crMsg.dump, crMsg.MAX_SIZE) > 0)
-  {
-    if (RobotInterface::SendMessage(crMsg))
-    {
-      crashHandlerClearReport();
-      return false;
-    }
-  }
-  return true;
-}
+  
 
 void RadioConnectionStateMachineUpdate()
 {
@@ -113,22 +99,13 @@ void RadioConnectionStateMachineUpdate()
     }
     case 4:
     {
-      if (crashHandlerHasReport())
-      {
-        if (readAndSendCrashReport(0)) doRTConnectPhase++;
-      }
-      else doRTConnectPhase++;
-      break;
-    }
-    case 5:
-    {
       RobotInterface::RobotAvailable idMsg;
       idMsg.robotID = getSerialNumber();
       idMsg.modelID = getModelNumber();
       if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
       break;
     }
-    case 6:
+    case 5:
     {
       RobotInterface::FirmwareVersion versionMsg;
       u32* versionInfoAsU32 = reinterpret_cast<u32*>(versionMsg.json);
@@ -139,9 +116,10 @@ void RadioConnectionStateMachineUpdate()
       if (RobotInterface::SendMessage(versionMsg)) doRTConnectPhase++;
       break;
     }
-    case 7:
+    case 6:
     {
       sendRadioState = true;
+      CrashReporter::StartSending();
       doRTConnectPhase = 0; // Done
       break;
     }
@@ -200,6 +178,7 @@ void RadioConnectionStateMachineUpdate()
   lastStaCount = currentStaCount;
   lastConCount = currentConCount;
 }
+
 
 
 /** The OS task which dispatches subtasks.
@@ -273,7 +252,12 @@ void Exec(os_event_t *event)
     case 7:
     {
       DiffieHellman::Update();
-      break ;
+      break;
+    }
+    case 8:
+    {
+      CrashReporter::Update();
+      break;
     }
     // Add new "long execution" tasks as switch cases here.
     default:
@@ -345,6 +329,11 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize WiFiConfiguration module\r\n");
     return -8;
   }
+  else if (Anki::Cozmo::CrashReporter::Init() == false)
+  {
+    os_printf("\tCouldn't initalize CrashReporter\r\n");
+    return -9;
+  }
   // Upgrade controller should be initalized last
   else if (Anki::Cozmo::UpgradeController::Init() == false)
   {
@@ -360,5 +349,6 @@ extern "C" int8_t backgroundTaskInit(void)
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
+  Anki::Cozmo::CrashReporter::StartQuerry();
   return false;
 }

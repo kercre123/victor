@@ -23,16 +23,11 @@ extern "C" {
 #include "watchdog.h"
 #include "temp.h"
 
+#include "anki/cozmo/robot/crashLogs.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
-
-extern "C" void HardFault_Handler(void) {
-  __disable_irq();
-  Backpack::blink();
-  NVIC_SystemReset();
-}
 
 // This is our near-realtime loop
 void main_execution(void) {
@@ -47,7 +42,7 @@ void main_execution(void) {
 int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
-
+  
   Storage::init();
 
   // Initialize our scheduler

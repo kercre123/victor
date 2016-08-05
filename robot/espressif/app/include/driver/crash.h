@@ -6,55 +6,34 @@
 #ifndef __ESPRESSIF_DRIVER_CRASH_H_
 #define __ESPRESSIF_DRIVER_CRASH_H_
 
-#define MAX_CRASH_REPORT_SIZE (512)
+#include "flash_map.h"
+#include "anki/cozmo/robot/crashLogs.h"
 
-#define MAX_VERSION_INFO_SIZE (1024)
+#define MAX_CRASH_LOGS (SECTOR_SIZE / CRASH_RECORD_SIZE)
 
-typedef struct {
-	int epc1;
-	int ps;
-	int sar;
-	int xx1;
-	int a0;
-	int a2;
-	int a3;
-	int a4;
-	int a5;
-	int a6;
-	int a7;
-	int a8;
-	int a9;
-	int a10;
-	int a11;
-	int a12;
-	int a13;
-	int a14;
-	int a15;
-	int exccause;
-} ex_regs;
-
-/// Initlize the custom crash handler
+/** Initlize the custom crash handler
+ * Erases any already reported records.
+ */
 void crashHandlerInit(void);
 
-/// Returns true if there is a logged crash to report
-bool crashHandlerHasReport(void);
+/** Fetches the stored report of given indexinto the buffer
+ * @param[in]  index which crash record index to fetch from. Must be in range [0, MAX_CRASH_LOGS)
+ * @param[out] record A pointer to a CrashRecord structure to copy the record from flash into
+ * @return 0 on success or other on failure
+ */
+int crashHandlerGetReport(const int index, CrashRecord* record);
 
-/// Clears the stored crash report
-bool crashHandlerClearReport(void);
+/** Writes a crash record manually into flash
+ * This is for storing crash records from the other processor for later reporting
+ * @param[in] record A pointer to the record to write
+ * @return the index the report was written true on success or a negative number on error
+ */
+int crashHandlerPutReport(CrashRecord* record);
 
-/// Fetches the stored report into the buffer
-int crashHandlerGetReport(uint32_t* dest, const int available);
-
-/// Returns the robot's serial number or 0xFFFFffff if not set
-uint32_t getSerialNumber(void);
-
-/// Returns the SSID for the robot based on serial number
-uint32_t getSSIDNumber(void);
-
-/// Returns the robot's model number or 0xffff if not set
-uint16_t getModelNumber(void);
-
-/// Retrieves the random seed populated in flash by the factory fixture
-bool getFactoryRandomSeed(uint32_t* dest, const int len);
+/** Marks the crash report at index as reported so it may be erased later.
+ * @param index The report index to mark reported
+ * @return 0 on success or other on error
+ */
+int crashHandlerMarkReported(const int index);
 
 #endif

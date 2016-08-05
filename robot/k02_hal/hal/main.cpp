@@ -120,9 +120,9 @@ int main (void)
   for(;;)
   {
     // Pump Wifi clad as quickly as possible
-    while (!UART::FoundSync()) {
+    do {
       WiFi::Update();
-    }
+    } while (!UART::FoundSync());
 
     // Wait for head body sync to occur
     UART::WaitForSync();

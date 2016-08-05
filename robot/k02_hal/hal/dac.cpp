@@ -107,11 +107,11 @@ void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {
 // This is temporary
 #include <math.h>
 
-void Anki::Cozmo::HAL::DAC::Tone(void) {
+void Anki::Cozmo::HAL::DAC::Tone(const float mult) {
   static const float MAGNITUDE = 0x200;
   
   for (int i = 0; i < DAC_WORDS; i++) {
-    DAC_WRITE[i] = (int)(sinf(M_PI_2 * i / DAC_WORDS) * MAGNITUDE + MAGNITUDE);
+    DAC_WRITE[i] = (int)(sinf(M_PI_2 * mult * i / DAC_WORDS) * MAGNITUDE + MAGNITUDE);
   }
 
   EnableAudio(true);
