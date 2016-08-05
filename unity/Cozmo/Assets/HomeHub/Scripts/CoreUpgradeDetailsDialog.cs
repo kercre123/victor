@@ -55,8 +55,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
   [SerializeField]
   private GameObject _DimmerPrefab;
   [SerializeField]
-  private AnkiTextLabel _SparksTimerLabel;
-  [SerializeField]
   private AnkiTextLabel _SparksButtonDescriptionLabel;
   [SerializeField]
   private Vector2 _SparkTargetCenter;
@@ -84,7 +82,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
     _RequestTrickButtonContainer.gameObject.SetActive(false);
-    _SparksTimerLabel.gameObject.SetActive(false);
 
     // No quitting until they've finished onboarding
     if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
@@ -280,9 +277,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (_SparkStopTime >= 0 && _SparkStopTime < Time.time) {
       StopSparkUnlock();
     }
-    else if (_SparkStopTime > 0) {
-      _SparksTimerLabel.text = Localization.GetWithArgs(LocalizationKeys.kSparksSparked, (int)(_SparkStopTime - Time.time));
-    }
   }
 
   private void UpdateInventoryLabel(string itemId, AnkiTextLabel label) {
@@ -304,8 +298,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
     _SparkStopTime = Time.time + _UnlockInfo.TimeSparkedSec;
-    _SparksTimerLabel.gameObject.SetActive(true);
-    _SparksTimerLabel.text = Localization.GetWithArgs(LocalizationKeys.kSparksSparked, (int)(_SparkStopTime - Time.time));
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
 
@@ -323,7 +315,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
       RobotEngineManager.Instance.CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_BACK, Color.black);
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
-    _SparksTimerLabel.gameObject.SetActive(false);
     _SparkStopTime = -1.0f;
     UpdateState();
 

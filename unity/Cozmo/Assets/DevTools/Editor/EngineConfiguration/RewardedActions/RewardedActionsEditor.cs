@@ -166,7 +166,7 @@ public class RewardedActionsEditor : EditorWindow {
   }
 
   private void DrawToolbar() {
-    
+
     EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
 
     if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
@@ -195,7 +195,7 @@ public class RewardedActionsEditor : EditorWindow {
     }
     // Save Current Event Map Button
     if (_CurrentRewardData != null) {
-      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
+      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {
         if (string.IsNullOrEmpty(_CurrentRewardFile)) {
           _CurrentRewardFile = EditorUtility.SaveFilePanel("Save EventMap", sRewardedActionsDirectory, _CurrentRewardFileName, "json");
         }
@@ -226,7 +226,7 @@ public class RewardedActionsEditor : EditorWindow {
             if (good) {
 
               File.WriteAllText(_CurrentRewardFile, JsonConvert.SerializeObject(_CurrentRewardData, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
-              if (EditorUtility.DisplayDialog("Alert!", "Would you like to output a .csv to Desktop?", "Yes", "No")) { 
+              if (EditorUtility.DisplayDialog("Alert!", "Would you like to output a .csv to Desktop?", "Yes", "No")) {
                 GenerateCSV();
               }
               // Reload groups
@@ -260,11 +260,11 @@ public class RewardedActionsEditor : EditorWindow {
   }
 
   private void DrawRewardedActionData(RewardedActionListData data) {
-    
+
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
     EditorGUIUtility.labelWidth = 100;
-    EditorDrawingUtility.DrawFilteredGroupedList("Rewarded Actions", data.RewardedActions, DrawRewardedActionEntry, AddRewardedActionEntry, x => x.RewardEvent.Value, 
+    EditorDrawingUtility.DrawFilteredGroupedList("Rewarded Actions", data.RewardedActions, DrawRewardedActionEntry, AddRewardedActionEntry, x => x.RewardEvent.Value,
       _EventSearchField, GameEvent.Count, e => e.ToString());
     EditorGUILayout.EndScrollView();
     EditorGUILayout.EndVertical();
@@ -284,6 +284,21 @@ public class RewardedActionsEditor : EditorWindow {
     _RewardFoldouts.Add(newAction.Id, false);
     _ConditionFoldouts.Add(newAction.Id, false);
     return newAction;
+  }
+
+  private void CopyRewardedActionEntry(RewardedActionData genData) {
+    RewardedActionData copy = genData.Copy();
+    copy.Id = GetNextRewardId();
+    // If the GetNextRewardId returns a key that's still in the Dictionaries, it is because
+    // we have removed the genData but not cleansed the Dictionary of that ID, free up
+    // the ID.
+    if (_RewardFoldouts.ContainsKey(copy.Id)) {
+      _RewardFoldouts.Remove(copy.Id);
+      _ConditionFoldouts.Remove(copy.Id);
+    }
+    _RewardFoldouts.Add(copy.Id, false);
+    _ConditionFoldouts.Add(copy.Id, false);
+    _CurrentRewardData.RewardedActions.Add(copy);
   }
 
   public RewardedActionData DrawRewardedActionEntry(RewardedActionData data) {
@@ -313,6 +328,10 @@ public class RewardedActionsEditor : EditorWindow {
       if (EditorUtility.DisplayDialog("Hold up!", "Should we delete this Reward?\n" + rewardDescription, "Yes", "No")) {
         _CurrentRewardData.RewardedActions.Remove(data);
       }
+    }
+
+    if (GUILayout.Button(string.Format("Copy {0}", rewardDescription), EditorDrawingUtility.AddButtonStyle)) {
+      CopyRewardedActionEntry(data);
     }
 
     DrawLabelFields(data);
@@ -354,7 +373,7 @@ public class RewardedActionsEditor : EditorWindow {
       GUI.contentColor = Color.green;
     }
     conditionsOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), conditionsOpen,
-      new GUIContent(string.Format("Reward Conditions{0}", (data.EventConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(data.EventConditions) : "")), 
+      new GUIContent(string.Format("Reward Conditions{0}", (data.EventConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(data.EventConditions) : "")),
         "Conditions that must be met for the Reward to be earned"), EditorDrawingUtility.FoldoutStyle);
     GUI.contentColor = Color.white;
     if (conditionsOpen) {

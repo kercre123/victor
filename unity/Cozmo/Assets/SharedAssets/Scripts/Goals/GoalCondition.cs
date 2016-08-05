@@ -23,7 +23,7 @@ namespace Anki {
       public virtual bool ConditionMet(GameEventWrapper cozEvent = null) {
         return true;
       }
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       private GUIContent _Label;
 
       public GUIContent Label {
@@ -39,9 +39,9 @@ namespace Anki {
           return _Label;
         }
       }
-      #endif
+#endif
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       // Function to draw the controls for this Condition
       public virtual void OnGUI_DrawUniqueControls() {
         EditorGUILayout.BeginVertical();
@@ -51,7 +51,8 @@ namespace Anki {
       }
 
       public abstract void DrawControls();
-      #endif
+
+#endif
     }
   }
 }

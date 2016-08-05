@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using Newtonsoft.Json;
 
 namespace Cozmo {
   namespace UI {
@@ -28,6 +29,22 @@ namespace Cozmo {
       /// </summary>
       public List<GoalCondition> EventConditions = new List<GoalCondition>();
       public RewardData Reward;
+
+      /// <summary>
+      /// Creates a copy of this instance and returns it with an Id of 0
+      /// </summary>
+      public RewardedActionData Copy() {
+        RewardedActionData newReward;
+        string json = "";
+        json = JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings {
+          TypeNameHandling = TypeNameHandling.Auto
+        });
+        newReward = JsonConvert.DeserializeObject<RewardedActionData>(json, new JsonSerializerSettings {
+          TypeNameHandling = TypeNameHandling.Auto
+        });
+        newReward.Id = 0;
+        return newReward;
+      }
     }
 
     [System.Serializable]

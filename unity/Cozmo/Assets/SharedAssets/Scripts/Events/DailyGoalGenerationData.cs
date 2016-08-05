@@ -5,6 +5,7 @@ using Anki.Cozmo;
 using Cozmo;
 using Cozmo.UI;
 using Cozmo.Util;
+using Newtonsoft.Json;
 
 /// <summary>
 /// Full List of Pairs for CladEvents to AnimationGroups.
@@ -99,6 +100,22 @@ namespace Anki.Cozmo {
           }
         }
         return true;
+      }
+
+      /// <summary>
+      /// Creates a copy of this instance and returns it with an Id of 0
+      /// </summary>
+      public GoalEntry Copy() {
+        GoalEntry newGoal;
+        string json = "";
+        json = JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings {
+          TypeNameHandling = TypeNameHandling.Auto
+        });
+        newGoal = JsonConvert.DeserializeObject<GoalEntry>(json, new JsonSerializerSettings {
+          TypeNameHandling = TypeNameHandling.Auto
+        });
+        newGoal.Id = 0;
+        return newGoal;
       }
     }
   }

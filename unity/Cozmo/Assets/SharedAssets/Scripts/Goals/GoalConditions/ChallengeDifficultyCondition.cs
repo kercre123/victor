@@ -17,7 +17,7 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class ChallengeDifficultyCondition : GoalCondition {
-     
+
       public int Difficulty;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
@@ -25,19 +25,20 @@ namespace Anki {
         if (cozEvent is MinigameGameEvent) {
           MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
           if (miniGameEvent.Difficulty <= Difficulty) {
-            isMet = true;          
+            isMet = true;
           }
         }
         return isMet;
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Current difficulty level of the challenge"), Difficulty);
         EditorGUILayout.EndHorizontal();
       }
-      #endif
+
+#endif
     }
   }
 }

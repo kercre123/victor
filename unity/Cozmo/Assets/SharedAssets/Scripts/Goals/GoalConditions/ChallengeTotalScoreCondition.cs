@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cozmo;
 using DataPersistence;
+using Cozmo.HomeHub;
 
 
 
@@ -11,12 +12,12 @@ using DataPersistence;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that check if a player/cozmo score value is high enough
+/// Goal condition that check the total score in a game
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class ChallengeScoreCondition : GoalCondition {
+    public class ChallengeTotalScoreCondition : GoalCondition {
 
       public bool IsPlayer;
       public int TargetScore;
@@ -25,14 +26,15 @@ namespace Anki {
       // Returns true if the specified player's score is equal to or greater than the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameGameEvent) {
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
+        if ((cozEvent is MinigameGameEvent)) {
+          GameBase miniGameInstance = HomeHub.Instance.MiniGameInstance;
+          if (miniGameInstance == null) { return false; }
           int toCheck = 0;
           if (IsPlayer) {
-            toCheck = miniGameEvent.PlayerScore;
+            toCheck = miniGameInstance.PlayerScoreTotal;
           }
           else {
-            toCheck = miniGameEvent.CozmoScore;
+            toCheck = miniGameInstance.CozmoScoreTotal;
           }
           if (toCheck >= TargetScore) {
             isMet = !LessThan;

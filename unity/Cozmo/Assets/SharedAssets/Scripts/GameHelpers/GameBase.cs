@@ -286,6 +286,13 @@ public abstract class GameBase : MonoBehaviour {
   [HideInInspector]
   public int PlayerScore;
 
+  // Number of Rounds Won this Game
+  [HideInInspector]
+  public int PlayerScoreTotal;
+
+  [HideInInspector]
+  public int CozmoScoreTotal;
+
   // Points needed to win Round
   [HideInInspector]
   public int MaxScorePerRound;
@@ -299,9 +306,11 @@ public abstract class GameBase : MonoBehaviour {
   public virtual void AddPoint(bool playerScored) {
     if (playerScored) {
       PlayerScore++;
+      PlayerScoreTotal++;
     }
     else {
       CozmoScore++;
+      CozmoScoreTotal++;
     }
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengePointScored, _ChallengeData.ChallengeID, _CurrentDifficulty, playerScored, PlayerScore, CozmoScore, IsHighIntensityRound()));
   }

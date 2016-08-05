@@ -18,6 +18,18 @@
       "/{*}"
     ]
   },
+  "unlockable.Unlock": {
+    "translation": "Unlock"
+  },
+  "unlockable.ViewPreReq": {
+    "translation": "View Upgrade"
+  },
+  "unlockable.PreReqNeeded.Description": {
+    "translation": "You need to unlock {0} first!"
+  },
+  "unlockable.BitsRequired.Description": {
+    "translation": "{0} {1} required"
+  },
   "unlockable.CubePounce.Title": {
     "translation": "Keepaway"
   },

@@ -115,7 +115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 242e6fa335cc0498dbfce8a9c7b0697d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _IconImage: {fileID: 11471792}
+  IconImage: {fileID: 11471792}
   _ShowBackground: 1
   _BackgroundImage: {fileID: 11456304}
 --- !u!222 &22241544

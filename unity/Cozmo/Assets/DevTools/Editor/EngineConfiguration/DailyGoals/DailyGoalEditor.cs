@@ -179,7 +179,7 @@ public class DailyGoalEditor : EditorWindow {
   }
 
   private void DrawToolbar() {
-    
+
     EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
 
     if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
@@ -208,7 +208,7 @@ public class DailyGoalEditor : EditorWindow {
     }
     // Save Current Event Map Button
     if (_CurrentGenData != null) {
-      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
+      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {
         if (string.IsNullOrEmpty(_CurrentGoalGenFile)) {
           _CurrentGoalGenFile = EditorUtility.SaveFilePanel("Save EventMap", sDailyGoalDirectory, _CurrentGoalGenName, "json");
         }
@@ -239,7 +239,7 @@ public class DailyGoalEditor : EditorWindow {
             if (good) {
 
               File.WriteAllText(_CurrentGoalGenFile, JsonConvert.SerializeObject(_CurrentGenData, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
-              if (EditorUtility.DisplayDialog("Alert!", "Would you like to output a .csv to Desktop?", "Yes", "No")) { 
+              if (EditorUtility.DisplayDialog("Alert!", "Would you like to output a .csv to Desktop?", "Yes", "No")) {
                 GenerateCSV();
               }
               // Reload groups
@@ -273,11 +273,11 @@ public class DailyGoalEditor : EditorWindow {
   }
 
   private void DrawDailyGoalGenerationData(DailyGoalGenerationData genData) {
-    
+
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
     EditorGUIUtility.labelWidth = 100;
-    EditorDrawingUtility.DrawFilteredGroupedList("DailyGoals", genData.GenList, DrawGoalDataEntry, AddDailyGoalEntry, x => x.CladEvent, 
+    EditorDrawingUtility.DrawFilteredGroupedList("DailyGoals", genData.GenList, DrawGoalDataEntry, AddDailyGoalEntry, x => x.CladEvent,
       _EventSearchField, GameEvent.Count, e => e.ToString());
     EditorGUILayout.EndScrollView();
     EditorGUILayout.EndVertical();
@@ -297,6 +297,21 @@ public class DailyGoalEditor : EditorWindow {
     _DailyGoalFoldouts.Add(newGoal.Id, false);
     _ConditionFoldouts.Add(newGoal.Id, new CondFoldouts(false, false));
     return newGoal;
+  }
+
+  private void CopyDailyGoalEntry(DailyGoalGenerationData.GoalEntry genData) {
+    DailyGoalGenerationData.GoalEntry copy = genData.Copy();
+    copy.Id = GetNextGoalId();
+    // If the GetNextGoalId returns a key that's still in the Dictionaries, it is because
+    // we have removed the genData but not cleansed the Dictionary of that ID, free up
+    // the ID.
+    if (_DailyGoalFoldouts.ContainsKey(copy.Id)) {
+      _DailyGoalFoldouts.Remove(copy.Id);
+      _ConditionFoldouts.Remove(copy.Id);
+    }
+    _DailyGoalFoldouts.Add(copy.Id, false);
+    _ConditionFoldouts.Add(copy.Id, new CondFoldouts(false, false));
+    _CurrentGenData.GenList.Add(copy);
   }
 
   public DailyGoalGenerationData.GoalEntry DrawGoalDataEntry(DailyGoalGenerationData.GoalEntry genData) {
@@ -328,6 +343,10 @@ public class DailyGoalEditor : EditorWindow {
       }
     }
 
+    if (GUILayout.Button(string.Format("Copy {0}", goalName), EditorDrawingUtility.AddButtonStyle)) {
+      CopyDailyGoalEntry(genData);
+    }
+
     DrawGoalFields(genData);
 
     DrawConditionFoldouts(genData);
@@ -357,7 +376,7 @@ public class DailyGoalEditor : EditorWindow {
       GUI.contentColor = Color.green;
     }
     genCondOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), genCondOpen,
-      new GUIContent(string.Format("Generation Conditions{0}", (genData.GenConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(genData.GenConditions) : "")), 
+      new GUIContent(string.Format("Generation Conditions{0}", (genData.GenConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(genData.GenConditions) : "")),
         "Conditions that must be met for the Goal to be selected for Generation"), EditorDrawingUtility.FoldoutStyle);
     GUI.contentColor = Color.white;
     if (genCondOpen) {
@@ -368,7 +387,7 @@ public class DailyGoalEditor : EditorWindow {
       GUI.contentColor = Color.green;
     }
     proCondOpen = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), proCondOpen,
-      new GUIContent(string.Format("Progress Conditions{0}", (genData.ProgressConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(genData.ProgressConditions) : "")), 
+      new GUIContent(string.Format("Progress Conditions{0}", (genData.ProgressConditions.Count > 0 ? EditorDrawingUtility.GetConditionListString(genData.ProgressConditions) : "")),
         "Conditions that must be met for the Goal to be progressed when its GameEvent fires"), EditorDrawingUtility.FoldoutStyle);
     GUI.contentColor = Color.white;
     if (proCondOpen) {

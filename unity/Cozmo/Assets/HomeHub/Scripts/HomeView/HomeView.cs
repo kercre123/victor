@@ -161,7 +161,7 @@ namespace Cozmo.HomeHub {
     }
     public bool HomeViewCurrentlyOccupied {
       get {
-        return (_RequestDialog != null || _LootViewInstance != null || RewardSequenceActive);
+        return (_RequestDialog != null || _LootViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive || RewardSequenceActive);
       }
     }
     public Transform TabButtonContainer {
@@ -173,9 +173,7 @@ namespace Cozmo.HomeHub {
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 
-    public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
-    public event ButtonClickedHandler OnCompletedChallengeClicked;
 
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
@@ -202,8 +200,7 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
-      UnlockablesManager.Instance.OnNewUnlock += HandlePlayTabButton;
-      UnlockablesManager.Instance.OnNewUnlock += CheckIfUnlockablesAffordableAndUpdateBadge;
+      UnlockablesManager.Instance.OnUnlockPopupRequested += HandleUnlockView;
       // If we have energy earned, create the energy doobers and clear pending action rewards
       if (RewardedActionManager.Instance.RewardPending) {
         RewardSequenceActive = true;
@@ -248,6 +245,19 @@ namespace Cozmo.HomeHub {
 
     private void HandleChestGained() {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+    }
+
+    private void HandleUnlockView(Anki.Cozmo.UnlockId unlockID, bool showPopup) {
+      // TODO: Make Tabs pass in information to allow for immediate Popups like former App Unlock
+      // if showPopup, then pass info to the Tab.
+      UnlockableInfo info = UnlockablesManager.Instance.GetUnlockableInfo(unlockID);
+      if (info.UnlockableType == UnlockableType.Game) {
+        HandlePlayTabButton();
+      }
+      else {
+        HandleCozmoTabButton();
+      }
+      CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 
     // Opens loot view and fires and relevant events
@@ -449,16 +459,6 @@ namespace Cozmo.HomeHub {
       return _ChallengeStates;
     }
 
-    public void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
-      if (OnLockedChallengeClicked != null) {
-        OnLockedChallengeClicked(challengeClicked, buttonTransform);
-      }
-    }
-
     public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       // Do not allow changing tabs while receiving chests
       if (HomeViewCurrentlyOccupied) {
@@ -586,8 +586,7 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
-      UnlockablesManager.Instance.OnNewUnlock -= HandlePlayTabButton;
-      UnlockablesManager.Instance.OnNewUnlock -= CheckIfUnlockablesAffordableAndUpdateBadge;
+      UnlockablesManager.Instance.OnUnlockPopupRequested -= HandleUnlockView;
 
       if (_HelpViewInstance != null) {
         UIManager.CloseView(_HelpViewInstance);

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using DataPersistence;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
@@ -20,23 +21,48 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private Anki.UI.AnkiTextLabel _ChallengeTitle;
 
+    [SerializeField]
+    private GameObject _LockedBadgeContainer;
+
     private string _ChallengeId;
+
+    [SerializeField]
+    private GameObject _AvailableContainer;
+    [SerializeField]
+    private GameObject _UnavailableContainer;
+
+    [SerializeField]
+    private GameObject _AffordableIndicator;
 
     [SerializeField]
     private GameObject _NewUnlockIndicator;
 
-    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false, bool isNew = false) {
+    public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false, bool isNew = false, bool isUnlocked = true, bool isAvailable = true) {
+      _NewUnlockIndicator.SetActive(isNew);
+      _LockedBadgeContainer.SetActive(!isUnlocked);
+      _AffordableIndicator.SetActive(false);
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
         _IconProxy.SetIcon(challengeData.ChallengeIcon);
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
-      }
+        if (!isUnlocked) {
+          if (isAvailable) {
+            UnlockableInfo uInfo = UnlockablesManager.Instance.GetUnlockableInfo(challengeData.UnlockId.Value);
+            Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+            bool canAfford = playerInventory.CanRemoveItemAmount(uInfo.UpgradeCostItemId, uInfo.UpgradeCostAmountNeeded);
+            _AffordableIndicator.SetActive(canAfford);
+            _LockedBadgeContainer.SetActive(!canAfford);
 
-      _NewUnlockIndicator.SetActive(isNew);
+          }
+          _IconProxy.SetAlpha(0.4f);
+        }
+      }
 
       _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);
       _ButtonScript.onPress.AddListener(HandlePointerDown);
       _ButtonScript.onRelease.AddListener(HandlePointerUp);
+      _AvailableContainer.SetActive(isAvailable);
+      _UnavailableContainer.SetActive(!isAvailable);
     }
 
     private void HandlePointerDown() {

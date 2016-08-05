@@ -158,5 +158,9 @@
   },
   "button.GetACozmo": {
     "translation": "Get A Cozmo"
+  },
+  "label.available": {
+    "translation": "Available!"
   }
+
 }

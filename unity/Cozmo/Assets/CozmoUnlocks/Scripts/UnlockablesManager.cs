@@ -18,9 +18,9 @@ public class UnlockablesManager : MonoBehaviour {
     }
   }
 
-  public Action OnNewUnlock;
   public Action<UnlockId> OnSparkStarted;
   public Action<CoreUpgradeDetailsDialog> OnSparkComplete;
+  public Action<Anki.Cozmo.UnlockId, bool> OnUnlockPopupRequested;
 
   private Dictionary<Anki.Cozmo.UnlockId, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockId, bool>();
 
@@ -132,7 +132,14 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public bool IsUnlocked(Anki.Cozmo.UnlockId id) {
-    return _UnlockablesState[id];
+    bool unlocked = false;
+    if (_UnlockablesState.TryGetValue(id, out unlocked)) {
+      return unlocked;
+    }
+    else {
+      DAS.Error("UnlockablesManager.IsUnlocked", string.Format("_UnlockablesState does not contain {0}", id));
+      return false;
+    }
   }
 
   public bool IsUnlockableAvailable(Anki.Cozmo.UnlockId id) {

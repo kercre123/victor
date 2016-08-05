@@ -337,11 +337,35 @@ public static class LocalizationKeys {
   #region RewardedActionStrings
 
   public const string kRewardDescriptionMissing = "reward.description.Missing";
-  public const string kRewardDescriptionSpeedTapWinGame = "reward.description.SpeedTapWinGame";
-  public const string kRewardDescriptionSpeedTapWinHand = "reward.description.SpeedTapWinHand";
-  public const string kRewardDescriptionPlayGame = "reward.description.PlayGame";
-  public const string kRewardDescriptionSimonMatch = "reward.description.SimonMatch";
-  public const string kRewardDescriptionSimonOnPlayerWin = "reward.description.SimonOnPlayerWin";
+  public const string kRewardDescriptionFreeplayUninterrupted5 = "reward.description.Freeplay.Uninterrupted.5";
+  public const string kRewardDescriptionFreeplaySpark = "reward.description.Freeplay.Spark";
+  public const string kRewardDescriptionFreeplayCompleteBehaviorStack = "reward.description.Freeplay.CompleteBehavior.Stack";
+  public const string kRewardDescriptionFreeplayCompleteBehaviorPounce = "reward.description.Freeplay.CompleteBehavior.Pounce";
+  public const string kRewardDescriptionFreeplayCompleteBehaviorTipOver = "reward.description.Freeplay.CompleteBehavior.TipOver";
+  public const string kRewardDescriptionFreeplayCompleteBehaviorPyramid = "reward.description.Freeplay.CompleteBehavior.Pyramid";
+  public const string kRewardDescriptionFreeplayCompleteBehaviorPopWheelie = "reward.description.Freeplay.CompleteBehavior.PopWheelie";
+  public const string kRewardDescriptionQuickTapPlayed = "reward.description.QuickTap.Played";
+  public const string kRewardDescriptionQuickTapWinGameOneColor = "reward.description.QuickTap.WinGame.OneColor";
+  public const string kRewardDescriptionQuickTapWinGameTwoColor = "reward.description.QuickTap.WinGame.TwoColor";
+  public const string kRewardDescriptionQuickTapWinGameThreeColor = "reward.description.QuickTap.WinGame.ThreeColor";
+  public const string kRewardDescriptionQuickTapWinGameFourColor = "reward.description.QuickTap.WinGame.FourColor";
+  public const string kRewardDescriptionQuickTapAccuracy50 = "reward.description.QuickTap.Accuracy.50";
+  public const string kRewardDescriptionQuickTapAccuracy75 = "reward.description.QuickTap.Accuracy.75";
+  public const string kRewardDescriptionQuickTapAccuracy100 = "reward.description.QuickTap.Accuracy.100";
+  public const string kRewardDescriptionQuickTapShutoutSingleRound = "reward.description.QuickTap.Shutout.SingleRound";
+  public const string kRewardDescriptionQuickTapShutoutTwoRounds = "reward.description.QuickTap.Shutout.TwoRounds";
+  public const string kRewardDescriptionQuickTapRedCubesNeverTap = "reward.description.QuickTap.RedCubes.NeverTap";
+  public const string kRewardDescriptionQuickTapTieBreakerOneRound = "reward.description.QuickTap.TieBreaker.OneRound";
+  public const string kRewardDescriptionQuickTapTieBreakerTwoRounds = "reward.description.QuickTap.TieBreaker.TwoRounds";
+  public const string kRewardDescriptionKeepawayPlayed = "reward.description.Keepaway.Played";
+  public const string kRewardDescriptionKeepawayWon = "reward.description.Keepaway.Won";
+  public const string kRewardDescriptionKeepawayShutout = "reward.description.Keepaway.Shutout";
+  public const string kRewardDescriptionKeepawayNoFakes = "reward.description.Keepaway.NoFakes";
+  public const string kRewardDescriptionKeepawayTieBreaker = "reward.description.Keepaway.TieBreaker";
+  public const string kRewardDescriptionExplorerTime5 = "reward.description.Explorer.Time.5";
+  public const string kRewardDescriptionExplorerTime10 = "reward.description.Explorer.Time.10";
+  public const string kRewardDescriptionExplorerTime15 = "reward.description.Explorer.Time.15";
+  public const string kRewardDescriptionExplorerTime20 = "reward.description.Explorer.Time.20";
   public const string kRewardCollectCollectEnergy = "reward.collect.CollectEnergy";
   public const string kRewardCollectInstruction = "reward.collect.Instruction";
   public const string kRewardDescriptionNewDifficulty = "reward.description.NewDifficulty";
@@ -398,6 +422,7 @@ public static class LocalizationKeys {
   public const string kLabelEmptyWithArg = "label.emptyWithArg";
   public const string kTitleSoundCheck = "title.soundCheck";
   public const string kButtonGetACozmo = "button.GetACozmo";
+  public const string kLabelAvailable = "label.available";
 
   #endregion
 
@@ -412,6 +437,10 @@ public static class LocalizationKeys {
 
   #region UnlockStrings
 
+  public const string kUnlockableUnlock = "unlockable.Unlock";
+  public const string kUnlockableViewPreReq = "unlockable.ViewPreReq";
+  public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
+  public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
   public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";
   public const string kUnlockableFaceEnrollmentTitle = "unlockable.FaceEnrollment.Title";

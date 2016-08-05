@@ -60,29 +60,35 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     GameObject tileInstance;
     CozmoUnlockableTile unlockableTile;
     for (int i = 0; i < unlockedUnlockData.Count; ++i) {
-      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-      unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName);
-      unlockableTile.OnTapped += HandleTappedUnlocked;
-      _UnlockedTiles.Add(unlockableTile);
-      numTilesMade++;
+      if (unlockedUnlockData[i].UnlockableType == UnlockableType.Action) {
+        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+        unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName);
+        unlockableTile.OnTapped += HandleTappedUnlocked;
+        _UnlockedTiles.Add(unlockableTile);
+        numTilesMade++;
+      }
     }
 
     for (int i = 0; i < unlockableUnlockData.Count; ++i) {
-      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-      unlockableTile.Initialize(unlockableUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName);
-      unlockableTile.OnTapped += HandleTappedUnlockable;
-      _UnlockableTiles.Add(unlockableTile);
-      numTilesMade++;
+      if (unlockableUnlockData[i].UnlockableType == UnlockableType.Action) {
+        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+        unlockableTile.Initialize(unlockableUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName);
+        unlockableTile.OnTapped += HandleTappedUnlockable;
+        _UnlockableTiles.Add(unlockableTile);
+        numTilesMade++;
+      }
     }
 
     for (int i = 0; i < lockedUnlockData.Count; ++i) {
-      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-      unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName);
-      _LockedTiles.Add(unlockableTile);
-      numTilesMade++;
+      if (lockedUnlockData[i].UnlockableType == UnlockableType.Action) {
+        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+        unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName);
+        _LockedTiles.Add(unlockableTile);
+        numTilesMade++;
+      }
     }
   }
 

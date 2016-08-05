@@ -5,8 +5,7 @@ namespace Cozmo {
   namespace UI {
     public class IconProxy : MonoBehaviour {
 
-      [SerializeField]
-      private Image _IconImage;
+      public Image IconImage;
 
       [SerializeField]
       private bool _ShowBackground = true;
@@ -21,13 +20,13 @@ namespace Cozmo {
       }
 
       public void SetIcon(Sprite sprite) {
-        _IconImage.sprite = sprite;
+        IconImage.sprite = sprite;
       }
 
       public void SetAlpha(float alpha) {
-        Color oldColor = _IconImage.color;
+        Color oldColor = IconImage.color;
         oldColor.a = alpha;
-        _IconImage.color = oldColor;
+        IconImage.color = oldColor;
       }
     }
   }

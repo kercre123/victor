@@ -26,6 +26,12 @@ namespace Cozmo.HomeHub {
 
     private ChallengeDetailsDialog _ChallengeDetailsDialogInstance;
 
+    public bool IsChallengeDetailsActive {
+      get {
+        return _ChallengeDetailsDialogInstance != null;
+      }
+    }
+
     [SerializeField]
     private ChallengeDataList _ChallengeDataList;
 
@@ -109,9 +115,7 @@ namespace Cozmo.HomeHub {
       }
 
       _HomeViewInstance = UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>());
-      _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-      _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
       _HomeViewInstance.MinigameConfirmed += HandleStartChallengeRequest;
 
       // Show the current state of challenges being locked/unlocked
@@ -142,26 +146,21 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      // Do nothing for now
-    }
-
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
-    }
-
-    private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
     }
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       if (_ChallengeDetailsDialogInstance == null) {
+        // Throttle Multitouch bug potential
+        _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
         _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
           _ChallengeDetailsDialogInstance = UIManager.OpenView(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
             newView => {
-              newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
+              newView.Initialize(_ChallengeStatesById[challenge].Data);
             });
 
+          _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
           // React to when we should start the challenge.
           _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
         });
@@ -345,9 +344,7 @@ namespace Cozmo.HomeHub {
 
     private void DeregisterDialogEvents() {
       if (_HomeViewInstance != null) {
-        _HomeViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
         _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-        _HomeViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
         _HomeViewInstance.MinigameConfirmed -= HandleStartChallengeRequest;
       }
     }
