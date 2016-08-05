@@ -2,8 +2,10 @@
   "behaviorType": "AcknowledgeFace",
   "name": "AcknowledgeFace",
   "behaviorGroups": [
+    "Reactionary"
   ],
   "ReactionAnimGroup": "ReactToNewBlockSmall",
   "disableByDefault": false,
-  "SamePoseDistThresh_mm": 300
+  "SamePoseDistThresh_mm": 300,
+  "NumImagesToWaitFor": 4
 }

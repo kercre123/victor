@@ -38,15 +38,17 @@ namespace ExternalInterface {
   
 class BehaviorAcknowledgeFace : public IBehaviorPoseBasedAcknowledgement
 {
-
+private:
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
-  
+  using super = IBehaviorPoseBasedAcknowledgement;
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
 
@@ -56,8 +58,13 @@ private:
 
   void HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg);
   void HandleFaceDeleted(const Robot& robot, Vision::FaceID_t faceID);
+
+  void BeginIteration(Robot& robot);
+  void FinishIteration(Robot& robot);
   
   Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
+
+  bool _shouldStart = false;
   
 }; // class BehaviorAcknowledgeFace
 
