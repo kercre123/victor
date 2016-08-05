@@ -63,8 +63,9 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
       case -2:
       {
         // Demangle didn't work, don't change the name.
-        PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
-                            "splitFrame.end()[-3] is not a valid name under the C++ ABI mangling rules.");
+        PRINT_NAMED_DEBUG("Callstack.DemangleBacktraceSymbols",
+                          "%s is not a valid name under the C++ ABI mangling rules.",
+                          splitFrame.end()[-3].c_str());
         break;
       }
 
