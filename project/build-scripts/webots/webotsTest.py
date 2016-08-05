@@ -459,7 +459,8 @@ def get_tests(config_file_path):
   return tests
 
 
-def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_level, num_retries = 0):
+def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_level, num_retries = 0,
+              fail_on_error=False):
   """Run webots tests and store the logs.
 
   Args:
@@ -565,9 +566,9 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
                           return_code=output.test_return_code))
           continue
 
-        # if error_count > 0:
-        #   UtilLog.error('There was an error in the webots log.')
-        #   continue
+        if fail_on_error and error_count > 0:
+          UtilLog.error('There was an error in the webots log.')
+          continue
 
         test_result = ResultCode.succeeded  # pylint: disable=redefined-variable-type
 
@@ -763,6 +764,12 @@ def main(args):
                       1, that means each test will be run for a maximum of two times, if the first
                       run of each test fails.""")
 
+  parser.add_argument('--failOnError',
+                      dest='fail_on_error',
+                      action='store_true',
+                      help="""If set, if an error is found inside the webots logs, that particular
+                      test that contained the error will be considered as failed.""")
+
   (options, _) = parser.parse_known_args(args)
 
   options.build_type = BuildType[options.build_type]
@@ -803,7 +810,8 @@ def main(args):
                                                                      options.show_graphics,
                                                                      options.timeout,
                                                                      options.log_level,
-                                                                     options.num_retries)
+                                                                     options.num_retries,
+                                                                     options.fail_on_error)
 
     num_of_tests = sum(len(test_controller) for test_controller in test_results.values())
 
