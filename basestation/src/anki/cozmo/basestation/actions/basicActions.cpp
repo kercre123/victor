@@ -1432,7 +1432,25 @@ namespace Anki {
                                                (u8)AnimTrackFlag::BODY_TRACK);
       }
     }
-    
+
+    void TurnTowardsFaceAction::SetSayNameAnimationTrigger(AnimationTrigger trigger)
+    {
+      if( ! _sayName ) {
+        PRINT_NAMED_WARNING("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
+                            "setting say name trigger, but we aren't going to say the name. This is useless");
+      }
+      _nameAnimTrigger = trigger;
+    }
+
+    void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
+    {
+      if( ! _sayName ) {
+        PRINT_NAMED_WARNING("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
+                            "setting anim trigger for unnamed faces, but we aren't going to say the name.");
+      }
+      _noNameAnimTrigger = trigger;
+    }
+
     ActionResult TurnTowardsFaceAction::Init()
     {
       // If we have a last observed face set, use its pose. Otherwise pose wil not be set
@@ -1588,6 +1606,8 @@ namespace Anki {
                                 _maxFramesToWait);
               ASSERT_NAMED(nullptr == _action, "TurnTowardsLastFacePoseAction.CheckIfDone.ActionPointerShouldStillBeNull");
               SetAction(new WaitForImagesAction(_robot, _maxFramesToWait, VisionMode::DetectingFaces));
+              // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
+              // and buy us more time. Skipping for now
               _state = State::WaitingForFace;
             } else {
               // ...if we've already seen a face, jump straight to turning
@@ -1623,11 +1643,24 @@ namespace Anki {
             if(ActionResult::SUCCESS == result && _sayName)
             {
               const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
-              if(nullptr != face && !face->GetName().empty())
-              {
-                SetAction(new SayTextAction(_robot, face->GetName(), SayTextStyle::Name_Normal, false));
-                _state = State::SayingName;
-                result = ActionResult::RUNNING;
+              if(nullptr != face) {
+                if( face->GetName().empty() ) {
+                  if( _noNameAnimTrigger != AnimationTrigger::Count ) {
+                    SetAction(new TriggerAnimationAction(_robot, _noNameAnimTrigger));
+                    _state = State::SayingName;
+                    result = ActionResult::RUNNING;
+                  }
+                }
+                else {
+                  // we have a name
+                  SayTextAction* sayText = new SayTextAction(_robot, face->GetName(), SayTextStyle::Name_Normal, false);
+                  if( _nameAnimTrigger != AnimationTrigger::Count ) {
+                    sayText->SetAnimationTrigger( _nameAnimTrigger );
+                  }
+                  SetAction(sayText);
+                  _state = State::SayingName;
+                  result = ActionResult::RUNNING;
+                }
               }
             }
           }
