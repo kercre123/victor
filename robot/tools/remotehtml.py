@@ -3,14 +3,13 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, time, json
+import sys, os, time, json, threading
 sys.path.insert(0, os.path.join("tools"))
-import robotInterface, fota, animationStreamer, minipegReceiver
-import threading
-from io import BytesIO
+
 from flask import Flask
-import asyncio
-import websockets
+import asyncio, websockets
+
+import robotInterface, fota, animationStreamer, minipegReceiver
 
 client = """<html>
     <head>
