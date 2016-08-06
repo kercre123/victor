@@ -20,10 +20,13 @@ public class LatencyCalculator : MonoBehaviour {
     _IsInitted = false;
   }
 
-  public void EnableLatencyPopup(bool enable) {
+  public void EnableLatencyPopup(bool enable, bool forceShowNow = false) {
     _Enabled = enable;
     if (_Enabled == false && _LatencyDisplayInst != null) {
       GameObject.Destroy(_LatencyDisplayInst.gameObject);
+    }
+    else if (_Enabled && forceShowNow) {
+      ShowLatencyDisplay();
     }
   }
 
@@ -36,9 +39,7 @@ public class LatencyCalculator : MonoBehaviour {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.LatencyMessage>(HandleLatencyMsg);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
       _IsInitted = true;
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled) {
-        ShowLatencyDisplay();
-      }
+      _Enabled = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled;
     }
   }
 

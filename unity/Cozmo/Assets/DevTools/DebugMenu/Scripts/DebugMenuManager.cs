@@ -101,7 +101,7 @@ public class DebugMenuManager : MonoBehaviour {
     return _DebugMenuDialogInstance != null;
   }
 
-  public void EnableLatencyPopup(bool enable) {
-    _LatencyCalculator.EnableLatencyPopup(enable);
+  public void EnableLatencyPopup(bool enable, bool forceShowNow = false) {
+    _LatencyCalculator.EnableLatencyPopup(enable, forceShowNow);
   }
 }

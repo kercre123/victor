@@ -127,6 +127,10 @@ public class ConsoleLogPane : MonoBehaviour {
 
   public void HandleToggleLatency(bool enable) {
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled = enable;
+    // The first time you hit this checkbox, it forces it up immediately. 
+    // You can then close it on the popup if you don't want it.
+    // It will pop up again on subsequent runs when it's in a "warning" stage
+    DebugMenuManager.Instance.EnableLatencyPopup(enable, enable);
     DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
