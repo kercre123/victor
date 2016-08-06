@@ -50,6 +50,8 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_1K_5Sec = 1034417959,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
   Play__Music__Play = 2748524418,
+  Play__Robot_Sfx__Bpk_Red_Loop_Play = 2658520760,
+  Play__Robot_Sfx__Bpk_White_Loop_Play = 118136366,
   Play__Robot_Sfx__Spark_Launch = 771536042,
   Play__Robot_Vo__Gp_Explorer_Backup_Beep = 1939604322,
   Play__Robot_Vo__Gp_Keepaway_Fakeout_Pounce_Fast = 1992185148,
@@ -69,7 +71,6 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Word_Keepaway_Request = 3460255911,
   Play__Robot_Vo__Word_Keepaway_Sad = 2098273712,
   Play__Sfx__Attention_Device = 419735887,
-  Play__Sfx__Bpk_Red_Loop_Play = 2801910427,
   Play__Sfx__Code_Fragment_Released = 1918333736,
   Play__Sfx__Context_Switch_Loop_Play = 285232462,
   Play__Sfx__Cozmo_Connect = 3867011295,
@@ -157,7 +158,8 @@ enum uint_32 GenericEvent
   Sfx_Srv_Surprised_Play = 963363667,
   Sfx_Srv_Surprised_Short_Play = 2913987754,
   Stop__Music__Stop = 148746486,
-  Stop__Sfx__Bpk_Red_Loop_Stop = 1201502079,
+  Stop__Robot_Sfx__Bpk_Red_Loop_Stop = 1319205172,
+  Stop__Robot_Sfx__Bpk_White_Loop_Stop = 3518231466,
   Stop__Sfx__Context_Switch_Loop_Stop = 1449741558,
   Stop__Sfx__Spark_Button_Loop_Stop = 3747191960,
   Vo_Coz_Dev_Test_01_Play = 2490335911,
@@ -503,6 +505,10 @@ enum uint_32 Robot
 
 enum uint_32 Robot_Sfx
 {
+  Bpk_Red_Loop_Play = 2658520760,
+  Bpk_Red_Loop_Stop = 1319205172,
+  Bpk_White_Loop_Play = 118136366,
+  Bpk_White_Loop_Stop = 3518231466,
   Invalid = 0,  // Use this to check for Invalid events
   Spark_Launch = 771536042,
 }
@@ -532,8 +538,6 @@ enum uint_32 Robot_Vo
 enum uint_32 Sfx
 {
   Attention_Device = 419735887,
-  Bpk_Red_Loop_Play = 2801910427,
-  Bpk_Red_Loop_Stop = 1201502079,
   Code_Fragment_Released = 1918333736,
   Context_Switch_Loop_Play = 285232462,
   Context_Switch_Loop_Stop = 1449741558,
