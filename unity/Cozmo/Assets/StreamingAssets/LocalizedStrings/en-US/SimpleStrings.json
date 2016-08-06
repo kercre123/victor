@@ -150,7 +150,7 @@
   "loot.Announce": {
     "translation": "Emotion Chip Charged!"
   },
-  "label.emptyWithArg":{
+  "label.emptyWithArg": {
     "translation": "{0}"
   },
   "title.soundCheck": {
@@ -158,6 +158,12 @@
   },
   "button.GetACozmo": {
     "translation": "Get A Cozmo"
+  },
+  "button.start": {
+    "translation": "Start"
+  },
+  "soundcheck.description": {
+    "translation": "Turn on your device's audio!"
   },
   "label.available": {
     "translation": "Available!"

@@ -49,6 +49,12 @@
     "translation": "Pull the tabs on your Power Cubes"
   },
   "connectivity.enterDOB": {
-    "translation": "Enter your birthdate:"
+    "translation": "Enter your birthdate"
+  },
+  "connectivity.enterName": {
+    "translation": "Enter your name"
+  },
+  "connectivity.pairingDesc": {
+    "translation": "This step is required when connecting from a new device"
   }
 }

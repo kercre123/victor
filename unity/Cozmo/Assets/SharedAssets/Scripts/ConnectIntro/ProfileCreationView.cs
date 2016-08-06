@@ -16,6 +16,9 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   private Cozmo.UI.CozmoButton _ContinueButton;
 
   [SerializeField]
+  private Anki.UI.AnkiTextLabel _NameLabel;
+
+  [SerializeField]
   private Anki.UI.AnkiTextLabel _BirthdateLabel;
 
   private const int kNameFieldCharacterLimit = 14;
@@ -57,6 +60,7 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   }
 
   private void HideNameInput() {
+    _NameLabel.gameObject.SetActive(false);
     _NameField.gameObject.SetActive(false);
     _NameDoneButton.gameObject.SetActive(false);
   }

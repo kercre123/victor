@@ -208,11 +208,13 @@ public class ConnectionFlow : MonoBehaviour {
   private void FirmwareUpdated(bool success) {
     GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
 
-    if (success) {
-      ReturnToSearch();
+    if (!success) {
+      DAS.Warn("ConnectionFlow.FirmwareUpdated", "Firmware Update Failed");
+      ReplaceCozmoOnCharger();
     }
     else {
-      ReplaceCozmoOnCharger();
+      DAS.Info("ConnectionFlow.FirmwareUpdated", "Firmware Update Successful");
+      // if it does succeed the robot should eventually disconnect, then HandleRobotDisconnect will take care of the flow
     }
 
   }
@@ -371,12 +373,6 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
-    int robotID = (int)message.robotID;
-    if (!RobotEngineManager.Instance.Robots.ContainsKey(robotID)) {
-      DAS.Error(this, "Unknown robot connected: " + robotID.ToString());
-      return;
-    }
-
     // Set initial Robot Volume when connecting
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
     DAS.Info("ConnectionFlow.RobotConnectionResponse", message.result.ToString());

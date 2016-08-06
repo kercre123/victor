@@ -79,6 +79,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   private void HandleProfileCreationDone() {
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated = true;
+    DataPersistence.DataPersistenceManager.Instance.Save();
     ShowPlaceCozmoOnCharger();
   }
 

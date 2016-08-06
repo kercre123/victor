@@ -19,9 +19,6 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   private UnityEngine.UI.Image[] _ObjectConnectedImagesList;
 
   [SerializeField]
-  private Sprite _DisconnectedStateSprite;
-
-  [SerializeField]
   private Sprite _ConnectedStateSprite;
 
   private List<Anki.Cozmo.ObjectType> _ObjectConnectedList = new List<Anki.Cozmo.ObjectType>();
@@ -38,6 +35,9 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     _ContinueButton.Initialize(HandleContinueButton, "pull_cube_tab_continue_button", this.DASEventViewName);
     _ContinueButton.gameObject.SetActive(false);
     _StartTime = Time.time;
+    for (int i = 0; i < _ObjectConnectedImagesList.Length; ++i) {
+      _ObjectConnectedImagesList[i].gameObject.SetActive(false);
+    }
   }
 
   private void Update() {
@@ -82,10 +82,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     if (robot != null) {
       if (Time.time - _NewlyConnectedObjectTime > _kTimeBetweenObjectsConnected) {
         DAS.Debug("PullCubeTabView.ProcessNewObject", "Processing: " + _NewlyConnectedObject);
-        _ObjectConnectedImagesList[_ObjectConnectedList.Count].overrideSprite = _ConnectedStateSprite;
+        _ObjectConnectedImagesList[_ObjectConnectedList.Count].gameObject.SetActive(true);
         _ObjectConnectedList.Add(_NewlyConnectedObject);
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
-        robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.white);
+        robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.cyan);
       }
     }
   }
