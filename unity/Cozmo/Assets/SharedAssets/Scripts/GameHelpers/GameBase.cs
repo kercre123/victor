@@ -229,6 +229,22 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
 
+    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+    bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
+
+    if (videoPlayedAlready || noInstructionVideo) {
+      FinishedInstructionalVideo();
+    }
+    else {
+      SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+      if (!videoPlayedAlready) {
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      }
+    }
+  }
+
+  private void FinishedInstructionalVideo() {
     InitializeGame(_ChallengeData.MinigameConfig);
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }

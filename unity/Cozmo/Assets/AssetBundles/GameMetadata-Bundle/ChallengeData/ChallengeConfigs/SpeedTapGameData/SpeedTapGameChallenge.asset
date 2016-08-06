@@ -27,6 +27,7 @@ MonoBehaviour:
     _Music: 1317044071
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
   IsMinigame: 1
+  InstructionVideoPath: Videos/htp_Quicktap_iphone_24fps.mp4
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:

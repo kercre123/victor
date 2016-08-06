@@ -4,6 +4,8 @@ using System.Collections;
 
 public class ShowCozmoVideo : MonoBehaviour {
 
+  public System.Action OnContinueButton;
+
   [SerializeField]
   private MediaPlayerCtrl _MediaPlayerCtrl;
 
@@ -11,18 +13,23 @@ public class ShowCozmoVideo : MonoBehaviour {
   private RawImage _RawImage;
 
   [SerializeField]
-  private Button _ReplayButton;
+  private Cozmo.UI.CozmoButton _ReplayButton;
 
   [SerializeField]
-  private Button _ContinueButton;
+  private Cozmo.UI.CozmoButton _ContinueButton;
 
-  #if UNITY_EDITOR
+#if UNITY_EDITOR
   // The plugin only works in iOS and Android. In the editor we use Unity's video player functionality.
   private Coroutine _PlayCoroutine;
-  #endif
+#endif
 
   private void Awake() {
-    #if !UNITY_EDITOR
+    _ContinueButton.onClick.AddListener(() => {
+      if (OnContinueButton != null) {
+        OnContinueButton();
+      }
+    });
+#if !UNITY_EDITOR
     // Disable the background image until the video has been loaded
     _RawImage.enabled = false;
 
@@ -40,27 +47,27 @@ public class ShowCozmoVideo : MonoBehaviour {
     _MediaPlayerCtrl.OnEnd += () => {
       HandleVideoFinished();
     };
-    #endif
+#endif
   }
 
   private void OnDestroy() {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     if (_PlayCoroutine != null) {
       StopCoroutine(_PlayCoroutine);
       _PlayCoroutine = null;
     }
-    #else
+#else
     _MediaPlayerCtrl.UnLoad();
-    #endif
+#endif
   }
 
   // filename is a path relative to the StreamingAssets folder
   public void PlayVideo(string filename) {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     _PlayCoroutine = StartCoroutine(LoadAndPlayCoroutine(filename));
-    #else
+#else
     _MediaPlayerCtrl.Load(filename);
-    #endif
+#endif
   }
 
   private void HandleVideoFinished() {
@@ -68,12 +75,16 @@ public class ShowCozmoVideo : MonoBehaviour {
     _ContinueButton.gameObject.SetActive(true);
   }
 
-  #if UNITY_EDITOR
+  public void ShowContinueButton(bool show) {
+    _ContinueButton.gameObject.SetActive(show);
+  }
+
+#if UNITY_EDITOR
   private IEnumerator LoadAndPlayCoroutine(string filename) {
     WWW fileWWW = new WWW("file://" + Application.streamingAssetsPath + "/" + filename);
 
     // Wait until the video has been loaded
-    while (!fileWWW.isDone){
+    while (!fileWWW.isDone) {
       yield return null;
     }
 
@@ -103,5 +114,5 @@ public class ShowCozmoVideo : MonoBehaviour {
 
     _PlayCoroutine = null;
   }
-  #endif
+#endif
 }

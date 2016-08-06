@@ -157,9 +157,6 @@ namespace Cozmo {
       private GameObject _ShowCozmoCubesSlidePrefab;
 
       [SerializeField]
-      private GameObject _ShowCozmoVideoPrefab;
-
-      [SerializeField]
       private ChallengeEndedDialog _ChallengeEndViewPrefab;
 
       #endregion
@@ -199,6 +196,10 @@ namespace Cozmo {
 
       [SerializeField]
       private ParticleSystem[] _BackgroundParticles;
+
+      [SerializeField]
+      private ShowCozmoVideo _ShowCozmoVideoPrefab;
+      private ShowCozmoVideo _ShowCozmoVideoInstance;
 
       private CanvasGroup _CurrentSlide;
       private string _CurrentSlideName;
@@ -882,6 +883,20 @@ namespace Cozmo {
       public void HideSpinnerWidget() {
         HideWidget(_SpinnerWidgetInstance);
         _SpinnerWidgetInstance = null;
+      }
+
+      public void PlayVideo(string videoPath, System.Action onVideoContinue) {
+        _ShowCozmoVideoInstance = GameObject.Instantiate(_ShowCozmoVideoPrefab.gameObject).GetComponent<ShowCozmoVideo>();
+        _ShowCozmoVideoInstance.PlayVideo(videoPath);
+        _ShowCozmoVideoInstance.transform.SetParent(transform, false);
+        _ShowCozmoVideoInstance.OnContinueButton += onVideoContinue;
+        _ShowCozmoVideoInstance.OnContinueButton += DestroyVideo;
+      }
+
+      private void DestroyVideo() {
+        if (_ShowCozmoVideoInstance != null) {
+          GameObject.Destroy(_ShowCozmoVideoInstance.gameObject);
+        }
       }
     }
   }

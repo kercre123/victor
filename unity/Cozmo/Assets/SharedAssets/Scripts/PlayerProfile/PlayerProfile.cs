@@ -18,6 +18,10 @@ public class PlayerProfile {
 
   public List<DataPersistence.TimelineEntryData> Sessions;
 
+  // this would work better as a HashSet or a list but for some reason
+  // our json serializer shits itself if it is a HashSet<string> or a List<string>
+  public Dictionary<string, bool> GameInstructionalVideoPlayed;
+
   public Cozmo.Inventory Inventory;
 
   public Dictionary<string, DataPersistence.GameSkillData> CozmoSkillLevels;
@@ -41,10 +45,11 @@ public class PlayerProfile {
     TotalGamesPlayed = new Dictionary<string, int>();
     ConversationHistory = new Conversations.ConversationHistory();
     Sessions = new List<DataPersistence.TimelineEntryData>();
+    GameInstructionalVideoPlayed = new Dictionary<string, bool>();
     VolumePreferences = new Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float>();
     CozmoSkillLevels = new Dictionary<string, DataPersistence.GameSkillData>();
     Inventory = new Cozmo.Inventory();
     SaveVersion = 0;
-   OnboardingHomeStage = 0;
+    OnboardingHomeStage = 0;
   }
 }

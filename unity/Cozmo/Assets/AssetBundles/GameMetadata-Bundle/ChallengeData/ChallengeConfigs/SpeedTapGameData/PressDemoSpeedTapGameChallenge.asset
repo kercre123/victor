@@ -22,11 +22,12 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49, type: 3}
   _UnlockId:
     _EnumValueAsString: QuickTapGame
-    _EnumValue: 18
+    _EnumValue: 15
   _Music:
     _Music: -340344697
   MinigameConfig: {fileID: 11400000, guid: bb54c8b70204c4ae2b5a583d5c3d855f, type: 2}
   IsMinigame: 1
+  InstructionVideoPath: 
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:

@@ -167,6 +167,8 @@
   },
   "label.available": {
     "translation": "Available!"
+  },
+  "button.replay": {
+    "translation": "Replay"
   }
-
 }
