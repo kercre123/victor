@@ -27,7 +27,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -59,7 +59,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -81,7 +81,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -121,7 +121,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -161,7 +161,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -201,7 +201,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -241,7 +241,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -263,7 +263,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -304,7 +304,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -345,7 +345,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -376,7 +376,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,

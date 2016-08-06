@@ -23,7 +23,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -76,7 +76,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -116,7 +116,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 3,
           "UseMaxDiff": false,
@@ -131,7 +131,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -160,7 +160,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 3,
           "UseMaxDiff": false,
@@ -184,7 +184,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -213,7 +213,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 2,
           "UseMaxDiff": false,
@@ -228,7 +228,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -257,7 +257,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 2,
           "UseMaxDiff": false,
@@ -281,7 +281,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -310,7 +310,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 1,
           "UseMaxDiff": false,
@@ -325,7 +325,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -354,7 +354,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 1,
           "UseMaxDiff": false,
@@ -378,7 +378,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -429,7 +429,7 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -462,7 +462,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "KeepawayGame",
+          "ChallengeID": "CubePounceGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -495,7 +495,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -537,7 +537,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -570,7 +570,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -623,7 +623,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -653,7 +653,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 2,
           "UseMaxDiff": true,
@@ -668,7 +668,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Difficulty": 3,
           "Label": {
             "text": "Challenge Difficulty Unlocked Condition",
@@ -689,7 +689,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 1,
           "UseMaxDiff": true,
@@ -704,7 +704,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Difficulty": 2,
           "Label": {
             "text": "Challenge Difficulty Unlocked Condition",
@@ -725,7 +725,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "UseMinDiff": true,
           "MinDiff": 0,
           "UseMaxDiff": true,
@@ -740,7 +740,7 @@
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "QuickTapGame",
+          "ChallengeID": "SpeedTapGame",
           "Difficulty": 1,
           "Label": {
             "text": "Challenge Difficulty Unlocked Condition",
