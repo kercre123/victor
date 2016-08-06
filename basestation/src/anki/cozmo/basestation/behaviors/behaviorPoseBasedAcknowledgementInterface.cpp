@@ -11,6 +11,7 @@
  *
  **/
 
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPoseBasedAcknowledgementInterface.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -19,7 +20,11 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace {
 CONSOLE_VAR(bool, kDebugAcknowledgements, "AcknowledgementBehaviors", false);
+CONSOLE_VAR(f32, kHeadAngleDistFactor, "AcknowledgementBehaviors", 1.0);
+CONSOLE_VAR(f32, kBodyAngleDistFactor, "AcknowledgementBehaviors", 3.0);
+}
 
 static const char * const kReactionAnimGroupKey = "ReactionAnimGroup";
 static const char * const kMaxTurnAngleKey      = "MaxTurnAngle_deg";
@@ -149,67 +154,133 @@ void IBehaviorPoseBasedAcknowledgement::HandleNewObservation(s32 id,
   }
 }
 
-void IBehaviorPoseBasedAcknowledgement::GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets) const
-{
-  // for each id we are tracking, check if it should be reacted to by comparing it's last observation (time
-  // and pose) to the last time / place we reacted to it
-  
+bool IBehaviorPoseBasedAcknowledgement::ShouldReactToTarget(const Robot& robot,
+                                                            const ReactionDataMap::value_type& reactionPair) const
+{  
   u32 currTimestamp = robot.GetLastImageTimeStamp();
-  for( const auto& reactionPair : _reactionData ) {
-    bool shouldReact = reactionPair.second.lastReactionTime_ms == 0;
-    // if we have never reacted, we always want to. Otherwise, check the cooldown and pose
+  
+  bool shouldReact = reactionPair.second.lastReactionTime_ms == 0;
+  // if we have never reacted, we always want to. Otherwise, check the cooldown and pose
 
-    if( !shouldReact ) {
-      const bool isCoolDownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
-      const bool isPoseDifferent = !reactionPair.second.lastPose.IsSameAs(reactionPair.second.lastReactionPose,
-                                                                          _params.samePoseDistThreshold_mm,
-                                                                          _params.samePoseAngleThreshold_rad);
-      shouldReact = isCoolDownOver || isPoseDifferent;
+  if( !shouldReact ) {
+    const bool isCoolDownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
+    const bool isPoseDifferent = !reactionPair.second.lastPose.IsSameAs(reactionPair.second.lastReactionPose,
+                                                                        _params.samePoseDistThreshold_mm,
+                                                                        _params.samePoseAngleThreshold_rad);
+    shouldReact = isCoolDownOver || isPoseDifferent;
 
-      if( kDebugAcknowledgements ) {
-        std::string eventName;
-        if( shouldReact ) {
-          eventName = GetName() + ".HandleNewObservation.ShouldReactAgain";
-        }
-        else {
-          eventName = GetName() + ".HandleNewObservation.DontReactAgain";
-        }
-        
-        PRINT_CH_INFO("Behaviors", eventName.c_str(),
-                      "%3d: cooldownOver?%d poseDifferent?%d lastSeenTime=%dms, currTime=%dms, (cooldown=%dms), "
-                      "lastReactionPose=(%f, %f, %f) @time %dms, currPose=(%f, %f, %f)",
-                      reactionPair.first,
-                      isCoolDownOver ? 1 : 0,
-                      isPoseDifferent ? 1 : 0,
-                      reactionPair.second.lastSeenTime_ms,
-                      currTimestamp,
-                      _params.coolDownDuration_ms,
-                      reactionPair.second.lastReactionPose.GetTranslation().x(),
-                      reactionPair.second.lastReactionPose.GetTranslation().y(),
-                      reactionPair.second.lastReactionPose.GetTranslation().z(),
-                      reactionPair.second.lastReactionTime_ms,
-                      reactionPair.second.lastPose.GetTranslation().x(),
-                      reactionPair.second.lastPose.GetTranslation().y(),
-                      reactionPair.second.lastPose.GetTranslation().z());
+    if( kDebugAcknowledgements ) {
+      std::string eventName;
+      if( shouldReact ) {
+        eventName = GetName() + ".HandleNewObservation.ShouldReactAgain";
       }
-    }
-    else if( kDebugAcknowledgements ) {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".DoInitialReaction").c_str(),
-                    "Doing first reaction to new id %d at ts=%dms, pose (%f, %f, %f)",
+      else {
+        eventName = GetName() + ".HandleNewObservation.DontReactAgain";
+      }
+        
+      PRINT_CH_INFO("Behaviors", eventName.c_str(),
+                    "%3d: cooldownOver?%d poseDifferent?%d lastSeenTime=%dms, currTime=%dms, (cooldown=%dms), "
+                    "lastReactionPose=(%f, %f, %f) @time %dms, currPose=(%f, %f, %f)",
                     reactionPair.first,
+                    isCoolDownOver ? 1 : 0,
+                    isPoseDifferent ? 1 : 0,
                     reactionPair.second.lastSeenTime_ms,
+                    currTimestamp,
+                    _params.coolDownDuration_ms,
+                    reactionPair.second.lastReactionPose.GetTranslation().x(),
+                    reactionPair.second.lastReactionPose.GetTranslation().y(),
+                    reactionPair.second.lastReactionPose.GetTranslation().z(),
+                    reactionPair.second.lastReactionTime_ms,
                     reactionPair.second.lastPose.GetTranslation().x(),
                     reactionPair.second.lastPose.GetTranslation().y(),
                     reactionPair.second.lastPose.GetTranslation().z());
     }
+  }
+  else if( kDebugAcknowledgements ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".DoInitialReaction").c_str(),
+                  "Doing first reaction to new id %d at ts=%dms, pose (%f, %f, %f)",
+                  reactionPair.first,
+                  reactionPair.second.lastSeenTime_ms,
+                  reactionPair.second.lastPose.GetTranslation().x(),
+                  reactionPair.second.lastPose.GetTranslation().y(),
+                  reactionPair.second.lastPose.GetTranslation().z());
+  }
                     
+  return shouldReact;
+}
 
-    if( shouldReact ) {
+void IBehaviorPoseBasedAcknowledgement::GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets) const
+{
+  // for each id we are tracking, check if it should be reacted to by comparing it's last observation (time
+  // and pose) to the last time / place we reacted to it
+  for( const auto& reactionPair : _reactionData ) {
+    if( ShouldReactToTarget(robot, reactionPair) ) {
       targets.insert(reactionPair.first);
     }
   }
 }
 
+bool IBehaviorPoseBasedAcknowledgement::HasDesiredReactionTargets(const Robot& robot) const
+{
+  for( const auto& reactionPair : _reactionData ) {
+    if( ShouldReactToTarget(robot, reactionPair) ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& bestTarget) const
+{
+  // TODO:(bn) cache targets instead of doing this per-tick?
+  std::set<s32> targets;
+  GetDesiredReactionTargets(robot, targets);
+  if( targets.empty() ) {
+    return false;
+  }
+
+  if( targets.size() == 1 ) {
+    bestTarget = *targets.begin();
+    PRINT_NAMED_DEBUG((GetName() + ".GetBestTarget.SinglePose").c_str(),
+                      "returning the only valid target id: %d",
+                      bestTarget);
+    return true;
+  }
+
+  float bestCost = std::numeric_limits<float>::max();
+  bool ret = false;
+  for( auto targetID : targets ) {
+    ASSERT_NAMED(_reactionData.find(targetID) != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadTargetId");
+    
+    Pose3d poseWrtRobot;
+    if( ! _reactionData.at(targetID).lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
+      // no transform, probably a different origin
+      continue;
+    }
+
+    Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
+    Radians relBodyTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(poseWrtRobot.GetTranslation());
+
+    Radians relHeadTurnAngle = absHeadTurnAngle - robot.GetHeadAngle();
+
+    float cost = kHeadAngleDistFactor * relHeadTurnAngle.getAbsoluteVal().ToFloat() +
+      kBodyAngleDistFactor * relBodyTurnAngle.getAbsoluteVal().ToFloat();
+
+    PRINT_NAMED_DEBUG((GetName() + ".GetBestTarget.ConsiderPose").c_str(),
+                      "pose id %d turns head by %fdeg, body by %fdeg, cost=%f",
+                      targetID,
+                      relHeadTurnAngle.getDegrees(),
+                      relBodyTurnAngle.getDegrees(),
+                      cost);
+    if( cost < bestCost ) {
+      bestTarget = targetID;
+      bestCost = cost;
+      ret = true;
+    }
+  }
+
+  return ret;
+}
 
 void IBehaviorPoseBasedAcknowledgement::RobotReactedToId(const Robot& robot, s32 id)
 {

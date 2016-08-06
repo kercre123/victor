@@ -28,6 +28,10 @@
 
 namespace Anki {
 namespace Cozmo {
+
+namespace AcknowledgeFaceConsoleVars{
+CONSOLE_VAR(bool, kEnableFaceAcknowledgeReact, "AcknowledgeFaceBehavior", false);
+}
   
 BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config)
 : IBehaviorPoseBasedAcknowledgement(robot, config)
@@ -46,40 +50,63 @@ BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value
   
 Result BehaviorAcknowledgeFace::InitInternalReactionary(Robot& robot)
 {
-  TurnTowardsPoseAction* turnAction = new TurnTowardsFaceAction(robot, _targetFace, _params.maxTurnAngle_rad);
-  turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
-  turnAction->SetPanTolerance(_params.panTolerance_rad);
+  // don't actually init until the first Update call. This gives other messages that came in this tick a
+  // chance to be processed, in case we see multiple faces in the same tick.
+  _shouldStart = true;
 
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(turnAction);
+  return Result::RESULT_OK;
+}
 
-  if( _params.numImagesToWaitFor > 0 ) {
-    // Will fail the action if we don't see the face, so we don't play the reaction
-    // not looking at a face
-    VisuallyVerifyFaceAction* verifyAction = new VisuallyVerifyFaceAction(robot, _targetFace);
-    verifyAction->SetNumImagesToWaitFor(_params.numImagesToWaitFor);
-    action->AddAction(verifyAction);
+IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
+{
+  if( _shouldStart ) {
+    _shouldStart = false;
+    // now figure out which object to react to
+    BeginIteration(robot);
   }
 
-  action->AddAction(new TriggerAnimationAction(robot, _params.reactionAnimTrigger));
-  
-  StartActing(action,
-              [this, &robot](ActionResult res) {
-                // Whether or not we succeeded, unset the target face (We've already added it to the reacted
-                // set). Note that if we get interrupted by another reactionary behavior, this will not run
-                RobotReactedToId(robot, _targetFace);
-                _targetFace = Vision::UnknownFaceID;
-              });
+  return super::UpdateInternal(robot);
+}
 
-  
-  return Result::RESULT_OK;
-  
+
+void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
+{
+  _targetFace = Vision::UnknownFaceID;
+  s32 bestTarget = 0;
+  if( GetBestTarget(robot, bestTarget) ) {
+    _targetFace = bestTarget;
+  }
+  else {
+    return;
+  }
+
+  TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
+                                                                _targetFace,
+                                                                _params.maxTurnAngle_rad,
+                                                                true); // say name
+  turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
+  turnAction->SetPanTolerance(_params.panTolerance_rad);
+  turnAction->SetSayNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed);
+  turnAction->SetNoNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceUnnamed);
+  turnAction->SetMaxFramesToWait(_params.numImagesToWaitFor);
+
+  StartActing(turnAction, &BehaviorAcknowledgeFace::FinishIteration);
 } // InitInternalReactionary()
+
+void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
+{
+  // inform parent class that we completed a reaction
+  RobotReactedToId(robot, _targetFace);
+
+  // move on to the next target, if there is one
+  BeginIteration(robot);
+}
 
   
 bool BehaviorAcknowledgeFace::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return true; // TODO: consider !carrying object
+  // TODO: consider !carrying object, or maybe lock lift track if we are carrying?
+  return AcknowledgeFaceConsoleVars::kEnableFaceAcknowledgeReact && !robot.IsOnCharger() && !robot.IsOnChargerPlatform();
 }
   
 
@@ -106,8 +133,17 @@ void BehaviorAcknowledgeFace::AlwaysHandleInternal(const EngineToGameEvent& even
 
 void BehaviorAcknowledgeFace::HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg)
 {
+  if( !IsRunnableInternalReactionary(robot) ) {
+    // this let's us react as soon as e.g. we come off the charger
+    return;
+  }
+  
   if( msg.faceID < 0 ) {
     // ignore temporary tracking-only ids
+
+    // TODO:(bn) should we still track / react to tracking-only IDs? Andrew says it's not important because
+    // they only last a very short time, or hang around if the face is too far or non-frontal, so we don't
+    // really need to react to those anyway
     return;
   }
 
@@ -123,25 +159,18 @@ bool BehaviorAcknowledgeFace::ShouldRunForEvent(const ExternalInterface::Message
                       event.GetTag());
     return false;
   }
-  
-  std::set<s32> facesToReactTo;
-  GetDesiredReactionTargets(robot, facesToReactTo);
 
-  if( facesToReactTo.empty() ) {
-    return false;
-  }
-  else {
-    // for now, just react to one arbitrary face in the bunch.
-    // TODO:(bn) properly handle multiple faces, like we are doing for objects
-    _targetFace = *facesToReactTo.begin();
-    return true;
-  }
+  // this will be set in begin iteration
+  _targetFace = Vision::UnknownFaceID;
+  return HasDesiredReactionTargets(robot);
 }
   
 void BehaviorAcknowledgeFace::HandleFaceDeleted(const Robot& robot, Vision::FaceID_t faceID)
 {
   if( faceID == _targetFace ) {
     _targetFace = Vision::UnknownFaceID;
+    // NOTE: doesn't stop this iteration, so the reaction will still finish, then we'll go to another face if
+    // we have one
   }
   
   const bool faceRemoved = RemoveReactionData(faceID);

@@ -264,7 +264,8 @@ void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventT
   {
     if (0 != GetReactionaryBehaviorTags<typename EventType::Tag>(behavior).count(event.GetData().GetTag()))
     {
-      if ( behavior->ShouldRunForEvent(event.GetData(),_robot) &&
+      if ( !behavior->IsRunning() &&
+           behavior->ShouldRunForEvent(event.GetData(),_robot) &&
            behavior->IsRunnable(_robot) ) {
         PRINT_NAMED_INFO("ReactionaryBehavior.Found",
                          "found reactionary behavior '%s' in response to event of type '%s'",

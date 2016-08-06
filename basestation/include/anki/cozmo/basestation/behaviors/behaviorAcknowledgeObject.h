@@ -72,16 +72,13 @@ private:
   void LookUpForStackedCube(Robot& robot);
   void FinishIteration(Robot& robot);
 
-  ObjectID SelectClosestTarget(const Robot& robot) const;
-
   // NOTE: uses s32 instead of ObjectID to match IBehaviorPoseBasedAcknowledgement's generic ids
-  std::set<s32> _targetObjects;
   ObjectID _currTarget;
 
   // fake object to try to look at to check for possible stacks
   std::unique_ptr<ObservableObject> _ghostStackedObject;
 
-  bool _shouldStart = true;
+  bool _shouldStart = false;
   
 }; // class BehaviorAcknowledgeObject
 

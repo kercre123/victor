@@ -72,8 +72,16 @@ protected:
   void HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp);
   void HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp, bool reactionEnabled);
 
+  // returns true if there are any valid targets, false otherwise
+  bool HasDesiredReactionTargets(const Robot& robot) const;
+  
   // adds ids to the set which this behavior thinks we should react to. Doesn't remove or clear
-  void GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets) const;
+  void GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets) const;  
+
+  // find the target in the desired targets which has the lowest cost of looking at. That is, the one that is
+  // "easiest" (for some definition of easiest defined in the cpp file) to TurnTowards. It returns true if one
+  // was found, false otherwise
+  bool GetBestTarget(const Robot& robot, s32& bestTarget) const;
 
   // tells this class that the robot has reacted to a given id, assuming the reaction happened at the last
   // time the object was observed
@@ -83,7 +91,11 @@ private:
 
   using super = IReactionaryBehavior;
 
-  std::map<s32, ReactionData > _reactionData;
+  using ReactionDataMap = std::map<s32, ReactionData >;
+  
+  bool ShouldReactToTarget(const Robot& robot, const ReactionDataMap::value_type& reactionPair) const;
+
+  ReactionDataMap _reactionData;
  
 }; // class IBehaviorPoseBasedAcknowledgement
 

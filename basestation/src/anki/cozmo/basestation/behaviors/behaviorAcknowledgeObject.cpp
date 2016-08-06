@@ -31,11 +31,10 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kBAO_enableObjectAcknowledgement, "BehaviorAcknowledgeObject", true);
-CONSOLE_VAR(f32, kBAO_headAngleDistFactor, "BehaviorAcknowledgeObject", 1.0);
-CONSOLE_VAR(f32, kBAO_bodyAngleDistFactor, "BehaviorAcknowledgeObject", 3.0);
-CONSOLE_VAR(bool, kBAO_vizPossibleStackCube, "BehaviorAcknowledgeObject", false);
-
+namespace {
+CONSOLE_VAR(bool, kEnableObjectAcknowledgement, "BehaviorAcknowledgeObject", true);
+CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
+}
 
 BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config)
 : IBehaviorPoseBasedAcknowledgement(robot, config)
@@ -88,13 +87,13 @@ IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal(Robot& robot)
 
 void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
 {
-  if( _targetObjects.empty() ) {
-    return;
+  _currTarget.UnSet();  
+  s32 bestTarget = 0;
+  if( GetBestTarget(robot, bestTarget) ) {
+    _currTarget = bestTarget;
+    ASSERT_NAMED(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
   }
-
-  _currTarget = SelectClosestTarget(robot);
-  if( ! _currTarget.IsSet() ) {
-    // couldn't get target for some reason (poses may be in a different origin)
+  else {
     return;
   }
 
@@ -144,7 +143,7 @@ void BehaviorAcknowledgeObject::LookUpForStackedCube(Robot& robot)
         ghostPose.GetTranslation().z() + obj->GetSize().z()});
     _ghostStackedObject->SetPose(ghostPose);
 
-    if( kBAO_vizPossibleStackCube ) {
+    if( kVizPossibleStackCube ) {
       _ghostStackedObject->Visualize(NamedColors::WHITE);
     }
     
@@ -198,85 +197,24 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   RobotReactedToId(robot, _currTarget.GetValue());
 
   // move on to the next target, if there is one
-  _targetObjects.clear();
-  GetDesiredReactionTargets(robot, _targetObjects);
-  
-  _currTarget.UnSet();
-  
   BeginIteration(robot);
-}
-
-ObjectID BehaviorAcknowledgeObject::SelectClosestTarget(const Robot& robot) const
-{
-  ASSERT_NAMED( !_targetObjects.empty(), "BehaviorAcknowledgeObject.SelectClosestTarget.Empty" );
-  
-  if( _targetObjects.size() == 1 ) {
-    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.SelectClosestTarget.SingleTarget",
-                      "Object %d is the only possible target, returning that",
-                      *_targetObjects.begin());
-    return *_targetObjects.begin();
-  }
-  else {
-    ObjectID bestObj;
-    float bestCost = std::numeric_limits<float>::max();
-    
-    for(const auto& objID : _targetObjects) {
-      const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(objID);
-      if( obj == nullptr ) {
-        PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.SelectClosestTarget.NullObject",
-                            "Object %d returning null",
-                            objID);                           
-        continue;
-      }
-
-      Pose3d poseWrtRobot;
-      if( ! obj->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot ) ) {
-        // no transform, probably a different origin
-        continue;
-      }
-      
-      Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
-      Radians relBodyTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(poseWrtRobot.GetTranslation());
-
-      Radians relHeadTurnAngle = absHeadTurnAngle - robot.GetHeadAngle();
-
-      float cost = kBAO_headAngleDistFactor * relHeadTurnAngle.getAbsoluteVal().ToFloat() +
-                   kBAO_bodyAngleDistFactor * relBodyTurnAngle.getAbsoluteVal().ToFloat();
-
-      PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.SelectClosestTarget.ConsiderPose",
-                        "Object %d turns head by %fdeg, body by %fdeg, cost=%f",
-                        objID,
-                        relHeadTurnAngle.getDegrees(),
-                        relBodyTurnAngle.getDegrees(),
-                        cost);
-
-      if( cost < bestCost ) {
-        bestObj = objID;
-        bestCost = cost;
-      }      
-    }
-
-    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.SelectClosestTarget.BestPose",
-                      "reaction to object %d",
-                      bestObj.GetValue());
-
-    // return the best object, or an unset value if there is no best object    
-    return bestObj;
-  }
 }
  
 void BehaviorAcknowledgeObject::StopInternalAcknowledgement(Robot& robot)
 {
   // if we get interrupted for any reason, kill the queue. We don't want to back up a bunch of stuff in here,
   // this is meant to handle seeing new objects while we are running
-  _targetObjects.clear();
   _currTarget.UnSet();
   _shouldStart = false;
 }
 
 bool BehaviorAcknowledgeObject::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return kBAO_enableObjectAcknowledgement && !robot.IsCarryingObject() && ! robot.IsPickingOrPlacing();
+  return kEnableObjectAcknowledgement &&
+    !robot.IsCarryingObject() &&
+    !robot.IsPickingOrPlacing() &&
+    !robot.IsOnCharger() &&
+    !robot.IsOnChargerPlatform();
 }
 
 void BehaviorAcknowledgeObject::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
@@ -306,6 +244,11 @@ void BehaviorAcknowledgeObject::HandleObjectObserved(const Robot& robot,
 {
   // NOTE: this may get called twice (once from ShouldConsiderObservedObjectHelper and once from
   // AlwaysHandleInternal)
+
+  if( !IsRunnableInternalReactionary(robot) ) {
+    // this let's us react as soon as e.g. we come off the charger
+    return;
+  }
 
   // Only objects whose marker we actually see are valid
   if( ! msg.markersVisible ) {
@@ -350,11 +293,9 @@ bool BehaviorAcknowledgeObject::ShouldRunForEvent(const ExternalInterface::Messa
   // before returning
   HandleObjectObserved(robot, msg);
 
-  // update desired targets
-  _targetObjects.clear();
-  GetDesiredReactionTargets(robot, _targetObjects);
-
-  return !_targetObjects.empty();
+  // this will be set in begin iteration
+  _currTarget.UnSet();
+  return HasDesiredReactionTargets(robot);
 } // ShouldRunForEvent()
 
   

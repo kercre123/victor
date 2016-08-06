@@ -461,6 +461,14 @@ namespace Cozmo {
       // Set the maximum number of frames we are will to wait to see a face after
       // the initial blind turn to the last face pose.
       void SetMaxFramesToWait(u32 N) { _maxFramesToWait = N; }
+
+      // Sets the animation trigger to use to say the name. Only valid if sayName was true
+      void SetSayNameAnimationTrigger(AnimationTrigger trigger);
+      
+      // Sets the backup animation to play if the name is not known, but there is a confirmed face. Only valid
+      // if sayName is true (this is because we are trying to use an animation to say the name, but if we
+      // don't have a name, we want to use this animation instead)
+      void SetNoNameAnimationTrigger(AnimationTrigger trigger);
       
       // Template for all events we subscribe to
       template<typename T>
@@ -476,17 +484,20 @@ namespace Cozmo {
         Turning,
         WaitingForFace,
         FineTuning,
-        SayingName,
+        SayingName, // saying name, or playing noNameAnimTrigger
       };
       
-      Vision::FaceID_t        _faceID            = Vision::UnknownFaceID;
-      IActionRunner*          _action            = nullptr;
-      f32                     _closestDistSq     = std::numeric_limits<f32>::max();
-      u32                     _maxFramesToWait   = 10;
-      Vision::FaceID_t        _obsFaceID         = Vision::UnknownFaceID;
-      State                   _state             = State::Turning;
-      bool                    _sayName           = false;
-      bool                    _tracksLocked      = false;
+      Vision::FaceID_t  _faceID            = Vision::UnknownFaceID;
+      IActionRunner*    _action            = nullptr;
+      f32               _closestDistSq     = std::numeric_limits<f32>::max();
+      u32               _maxFramesToWait   = 10;
+      Vision::FaceID_t  _obsFaceID         = Vision::UnknownFaceID;
+      State             _state             = State::Turning;
+      bool              _sayName           = false;
+      bool              _tracksLocked      = false;
+      AnimationTrigger  _nameAnimTrigger   = AnimationTrigger::Count;
+      AnimationTrigger  _noNameAnimTrigger = AnimationTrigger::Count;
+
       
       std::vector<Signal::SmartHandle> _signalHandles;
 

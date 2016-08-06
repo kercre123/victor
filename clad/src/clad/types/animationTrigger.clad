@@ -15,6 +15,9 @@ enum int_32 AnimationTrigger
   AnimNone, // can't conflict with python keyword'
 
   // Animation triggers, sorted alphabetically
+  AcknowledgeFaceInitPause,
+  AcknowledgeFaceNamed,
+  AcknowledgeFaceUnnamed,
   AcknowledgeObject,
   AdmireStackAttemptGrabThirdCube,
   AdmireStackFocusEyes,

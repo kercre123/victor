@@ -37,6 +37,11 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace AcknowledgeFaceConsoleVars {
+// TODO:(bn) delete this once this is on by default
+extern bool kEnableFaceAcknowledgeReact;
+}
+
   using namespace ExternalInterface;
 
   static const char * const kInitialTakeAnimGroupKey = "initial_take_anim_group";
@@ -135,6 +140,11 @@ namespace Cozmo {
   {
     // runnable if there are any faces that we might want to interact with
 
+    if( AcknowledgeFaceConsoleVars::kEnableFaceAcknowledgeReact ) {
+      // let the other behavior run instead
+      return false;
+    }
+    
     if( robot.IsCarryingObject() ) {
       return false;
     }

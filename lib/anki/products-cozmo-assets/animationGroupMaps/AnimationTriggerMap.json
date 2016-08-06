@@ -1,6 +1,18 @@
 {
   "Pairs": [
     {
+      "CladEvent": "AcknowledgeFaceInitPause",
+      "AnimName": "ag_pause_idle"
+    },
+    {
+      "CladEvent": "AcknowledgeFaceNamed",
+      "AnimName": "ag_interactFaces_Enrolled"
+    },
+    {
+      "CladEvent": "AcknowledgeFaceUnnamed",
+      "AnimName": "ag_interactFaces_Unenrolled"
+    },
+    {
       "CladEvent": "AcknowledgeObject",
       "AnimName": "ag_reactToNewBlock"
     },
