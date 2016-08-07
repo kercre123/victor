@@ -13,13 +13,28 @@
 namespace Anki {
 namespace Vision {
 
+  // NOTE: This enum must be uint_16 because VersionNumber is assumed to be two bytes
+  enum uint_16 FaceRecognitionConstants
+  {
+    // If the EnrolledFaceStorage structure below changes, this version number
+    // must be incremented
+    EnrolledFaceStorageVersionNumber = 0x0001,
+
+    // Constants related to number of items we can store for recognition.
+    // Note that num album entries per face includes one entry reserved for session-only use.
+    MaxNumFacesInAlbum            = 10,
+    MaxNumAlbumEntriesPerFace     = 5,
+    MaxNumEnrollDataPerAlbumEntry = 4,
+  }
+
+  // NOTE: If this structure is changed, the version number above should be incremented!
   structure EnrolledFaceStorage
   {
     int_64      enrollmentTimeCount,
     int_64      lastDataUpdateTimeCount,
-    int_64      lastSeenTimeCount,
+    int_64      albumEntryUpdateTimes[uint_8], // should be same length as albumEntries
     int_32      faceID,
-    uint_8      nextDataToUpdate,
+    int_32      albumEntries[uint_8],
     string      name
   }
 

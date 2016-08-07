@@ -1375,7 +1375,7 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
 
-  Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+  Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
@@ -1386,12 +1386,7 @@ namespace Cozmo {
     
     ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
     
-    return _faceTracker->AssignNameToID(faceID, name);
-  }
-
-  Vision::FaceID_t VisionSystem::EraseFace(const std::string& name)
-  {
-    return _faceTracker->EraseFace(name);
+    return _faceTracker->AssignNameToID(faceID, name, mergeWithID);
   }
 
   Result VisionSystem::EraseFace(Vision::FaceID_t faceID)

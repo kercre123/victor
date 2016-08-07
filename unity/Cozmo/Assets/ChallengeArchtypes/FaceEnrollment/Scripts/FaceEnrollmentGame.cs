@@ -146,7 +146,9 @@ namespace FaceEnrollment {
 
     private void HandleInstructionsSlideEntered() {
       if (_UseFixedFaceID) {
-        CurrentRobot.EnrollNamedFace(_FixedFaceID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
+        // TODO: Make sure the mergeIntoID makes sense! (COZMO-2926)
+        const int tempMergeIntoID = 0;
+        CurrentRobot.EnrollNamedFace(_FixedFaceID, tempMergeIntoID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
         _AttemptedEnrollFace = true;
       }
       else {
@@ -161,7 +163,9 @@ namespace FaceEnrollment {
         return;
       }
 
-      CurrentRobot.EnrollNamedFace(message.faceID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
+      // TODO: Get mergeIntoID from UI if we are re-enrolling! (COZMO-2926)
+      const int tempMergeIntoID = 0;
+      CurrentRobot.EnrollNamedFace(message.faceID, tempMergeIntoID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
       _FaceIDToEnroll = message.faceID;
       _AttemptedEnrollFace = true;
     }

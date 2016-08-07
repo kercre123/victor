@@ -37,6 +37,7 @@ public class MockRobot : IRobot {
   public bool IsLocalized() {
     return true;
   }
+
   public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
     Vector3 offset = worldSpacePosition - this.WorldPosition;
     offset = Quaternion.Inverse(this.Rotation) * offset;
@@ -221,7 +222,7 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
-  public void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(0.5f, callback);
   }
 

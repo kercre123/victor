@@ -14,16 +14,20 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/robot.h"
+
 #include "anki/vision/basestation/trackedFace.h"
+
 #include "util/console/consoleInterface.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+
+#include "clad/types/enrolledFaceStorage.h"
 
 #include <cmath>
 
@@ -44,17 +48,19 @@ namespace Cozmo {
     kIdleAnimName = AnimationTriggerFromString(ConsoleArg_Get_String(context, "name"));
   }
   
-  CONSOLE_FUNC(SetIdleAnimName,             "Actions.EnrollNamedFace", const char* name);
-  CONSOLE_VAR(f32, kENF_MinSoundSpace_s,    "Actions.EnrollNamedFace", 0.25f);
-  CONSOLE_VAR(f32, kENF_MaxSoundSpace_s,    "Actions.EnrollNamedFace", 0.75f);
-  CONSOLE_VAR(bool, kENF_UseBackpackLights, "Actions.EnrollNamedFace", true);
-  CONSOLE_VAR(TimeStamp_t, kENF_TimeoutForBackpackLights_ms, "Actions.EnrollNamedFace", 250);
-  CONSOLE_VAR(f32, kENF_UpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
-  CONSOLE_VAR(f32, kENF_UpdateFaceAngleThreshold_deg,        "Actions.EnrollNamedFace", 45.f);
+  namespace {
+    CONSOLE_FUNC(SetIdleAnimName,                                        "Actions.EnrollNamedFace", const char* name);
+    CONSOLE_VAR(f32,               kMinSoundSpace_s,                     "Actions.EnrollNamedFace", 0.25f);
+    CONSOLE_VAR(f32,               kMaxSoundSpace_s,                     "Actions.EnrollNamedFace", 0.75f);
+    CONSOLE_VAR(bool,              kUseBackpackLights,                   "Actions.EnrollNamedFace", true);
+    CONSOLE_VAR(TimeStamp_t,       kTimeoutForBackpackLights_ms,         "Actions.EnrollNamedFace", 250);
+    CONSOLE_VAR(f32,               kUpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
+    CONSOLE_VAR(f32,               kUpdateFaceAngleThreshold_deg,        "Actions.EnrollNamedFace", 45.f);
+  }
   
   static void SetBackpackLightsHelper(Robot& robot, const ColorRGBA& color)
   {
-    if(kENF_UseBackpackLights)
+    if(kUseBackpackLights)
     {
       std::array<u32, (size_t)LEDId::NUM_BACKPACK_LEDS> onColor, offColor, onPeriod, offPeriod, transitionOnPeriod, transitionOffPeriod;
       onColor.fill(color);
@@ -67,12 +73,14 @@ namespace Cozmo {
     }
   }
   
-  EnrollNamedFaceAction::EnrollNamedFaceAction(Robot& robot, Vision::FaceID_t faceID, const std::string& name)
+  EnrollNamedFaceAction::EnrollNamedFaceAction(Robot& robot, Vision::FaceID_t faceID, const std::string& name,
+                                               Vision::FaceID_t saveID)
   : IAction(robot,
             "EnrollNamedFace",
             RobotActionType::ENROLL_NAMED_FACE,
             (u8)AnimTrackFlag::NO_TRACKS)
   , _faceID(faceID)
+  , _saveID(saveID)
   , _faceName(name)
   {
     // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
@@ -120,7 +128,7 @@ namespace Cozmo {
     TrackFaceAction* trackAction = new TrackFaceAction(robot, faceID);
     //trackAction->SetSound("");
     // Make him make more sound while enrolling:
-    trackAction->SetSoundSpacing(kENF_MinSoundSpace_s, kENF_MaxSoundSpace_s);
+    trackAction->SetSoundSpacing(kMinSoundSpace_s, kMaxSoundSpace_s);
     trackAction->SetMinPanAngleForSound(DEG_TO_RAD(5));
     trackAction->SetMinTiltAngleForSound(DEG_TO_RAD(5));
     return trackAction;
@@ -130,15 +138,21 @@ namespace Cozmo {
   {
     IActionRunner* action = nullptr;
     
-    const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
-    if(nullptr != face) {
-      action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
+    if(faceID != Vision::UnknownFaceID)
+    {
+      const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
+      if(nullptr != face) {
+        action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
+      } else {
+        // Couldn't find face in face world, try turning towards last face pose
+        PRINT_NAMED_INFO("EnrollNamedFaceAction.CreateTurnTowardsFaceAction.NullFace",
+                         "No face with ID=%d in FaceWorld. Using TurnTowardsLastFacePose",
+                         faceID);
+      }
     }
-    else {
-      // Couldn't find face in face world, try turning towards last face pose
-      PRINT_NAMED_INFO("EnrollNamedFaceAction.CreateTurnTowardsFaceAction.NullFace",
-                       "No face with ID=%d in FaceWorld. Using TurnTowardsLastFacePose",
-                       faceID);
+    
+    if(action == nullptr)
+    {
       action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD_F32(45.f));
     }
     
@@ -163,7 +177,7 @@ namespace Cozmo {
         // Look at face, sit still and collect N enrollments
         _enrollSequence.emplace_back(EnrollStep{
           .pose = Vision::FaceEnrollmentPose::LookingStraight,
-          .numEnrollments = 6,
+          .numEnrollments = (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry,
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
@@ -323,15 +337,8 @@ namespace Cozmo {
                      _faceID);
 
     PRINT_NAMED_DEBUG("EnrollNamedFaceAction.Init_DEBUG",
-                     "Initialize with ID=%d and name '%s'",
-                     _faceID, _faceName.c_str());
-
-    if(_faceID <= 0) {
-      PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.InvalidID",
-                          "Can only enroll positive IDs, not unknown/tracker ID %d",
-                          _faceID);
-      return ActionResult::FAILURE_ABORT;
-    }
+                      "Initialize with ID=%d and name '%s'",
+                      _faceID, _faceName.c_str());
 
     Result initSeqResult = InitSequence();
     if(RESULT_OK != initSeqResult) {
@@ -423,8 +430,16 @@ namespace Cozmo {
         _state = State::PreActing;
       }
         
+      // NOTE that we expect a valid (positive) face ID to be set if we enter any of the
+      // remaining states
+        
       case State::PreActing:
       {
+        if(_faceID <= Vision::UnknownFaceID) {
+          PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.InvalidFaceID_PreActing", "");
+          return ActionResult::FAILURE_ABORT;
+        }
+        
         if(_action != nullptr)
         {
           ActionResult subResult = _action->Update();
@@ -458,6 +473,11 @@ namespace Cozmo {
         
       case State::Enrolling:
       {
+        if(_faceID <= Vision::UnknownFaceID) {
+          PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.InvalidFaceID_Enrolling", "");
+          return ActionResult::FAILURE_ABORT;
+        }
+        
         if(_action != nullptr)
         {
           ActionResult subResult = _action->Update();
@@ -479,7 +499,7 @@ namespace Cozmo {
         
         // Make the backpack lights turn off if we can't see the person
         auto lastImageTime = _robot.GetLastImageTimeStamp();
-        if(lastImageTime - _lastFaceSeen_ms > kENF_TimeoutForBackpackLights_ms)
+        if(lastImageTime - _lastFaceSeen_ms > kTimeoutForBackpackLights_ms)
         {
           _lastFaceSeen_ms = 0;
           SetBackpackLightsHelper(_robot, NamedColors::BLACK);
@@ -511,6 +531,11 @@ namespace Cozmo {
         
       case State::PostActing:
       {
+        if(_faceID <= Vision::UnknownFaceID) {
+          PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.InvalidFaceID_PostActing", "");
+          return ActionResult::FAILURE_ABORT;
+        }
+        
         if(_action != nullptr)
         {
           ActionResult subResult = _action->Update();
@@ -536,7 +561,7 @@ namespace Cozmo {
             // Completed all steps!
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.CompletedAllSteps", "");
             
-            _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName);
+            _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
             
             if(_sayNameWhenDone) {
               // Play success animation which says player's name
@@ -629,20 +654,34 @@ namespace Cozmo {
   {
     if(msg.faceID != _faceID)
     {
-      auto myFace = _robot.GetFaceWorld().GetFace(_faceID);
-      auto newFace = _robot.GetFaceWorld().GetFace(msg.faceID);
-      
-      if(nullptr != myFace && nullptr != newFace &&
-         newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
-                                         kENF_UpdateFacePositionThreshold_mm,
-                                         DEG_TO_RAD_F32(kENF_UpdateFaceAngleThreshold_deg)))
+      if(_faceID != Vision::UnknownFaceID)
       {
-        PRINT_NAMED_INFO("EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceID",
-                         "Was enrolling ID=%d, changing to ID=%d based on pose",
-                         _faceID, msg.faceID);
+        // Face ID is already set but we're seeing a face with a different ID.
+        // See if it matches the pose of the one we were already enrolling.
+        auto myFace = _robot.GetFaceWorld().GetFace(_faceID);
+        auto newFace = _robot.GetFaceWorld().GetFace(msg.faceID);
         
-        // NOTE: Making these equal triggers the next "if" on purpose
+        if(nullptr != myFace && nullptr != newFace &&
+           newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
+                                           kUpdateFacePositionThreshold_mm,
+                                           DEG_TO_RAD_F32(kUpdateFaceAngleThreshold_deg)))
+        {
+          PRINT_NAMED_INFO("EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceID",
+                           "Was enrolling ID=%d, changing to ID=%d based on pose",
+                           _faceID, msg.faceID);
+          
+          // NOTE: Making these equal triggers the next "if" on purpose
+          _faceID = msg.faceID;
+        }
+      }
+      else if(msg.faceID > 0)
+      {
+        // We don't have a face ID set yet. Wait for one that has been enrolled (has
+        // positive ID), and then start using that one.
         _faceID = msg.faceID;
+        
+        PRINT_NAMED_INFO("EnrollNamedFaceAction.HandleRobotObservedFace.SettingFaceID",
+                         "Set face ID to %d", _faceID);
       }
     }
     

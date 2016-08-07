@@ -203,8 +203,10 @@ struct DockingErrorSignal;
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
 
-    // Links a name with a face ID and sets up the robot's ability to say that name
-    void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
+    // Links a name with a face ID and sets up the robot's ability to say that name.
+    // Then merges the newly-named ID into mergeWithID, if set to a valid existing ID.
+    void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name,
+                          Vision::FaceID_t mergeWithID = Vision::UnknownFaceID);
     
 		// Enable face enrollment mode and optionally specify the ID for which 
     // enrollment is allowed (use UnknownFaceID to indicate "any" ID).
@@ -216,7 +218,6 @@ struct DockingErrorSignal;
 
     // Erase faces
     Result EraseFace(Vision::FaceID_t faceID);
-    Result EraseFace(const std::string& name);
     void   EraseAllFaces();
     
     // Will assign a new name to a given face ID. The old name is provided as a

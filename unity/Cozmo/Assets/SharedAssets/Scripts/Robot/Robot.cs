@@ -173,6 +173,7 @@ public class Robot : IRobot {
   public event ChargerStateEventHandler OnChargerRemoved;
 
   private ObservedObject _Charger = null;
+
   public ObservedObject Charger {
     get { return _Charger; }
     private set {
@@ -984,10 +985,10 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID + " with " + name);
-    SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, name, seq, saveToRobot), callback, queueActionPosition);
+    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID + " with " + name + " to be merged into ID=" + mergeIntoID);
+    SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
   /*public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {

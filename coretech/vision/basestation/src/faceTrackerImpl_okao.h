@@ -56,8 +56,7 @@ namespace Vision {
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
 
-    Result   AssignNameToID(FaceID_t faceID, const std::string& name);
-    FaceID_t EraseFace(const std::string& name);
+    Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
     Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName);

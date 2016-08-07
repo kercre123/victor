@@ -45,10 +45,11 @@ message DriveStraight {
 
 // EnrollNamedFace
 message EnrollNamedFace {
-   int_32 faceID,
+   int_32 faceID,        // The ID of the face to enroll (0 for next one we see)
+   int_32 mergeIntoID=0, // The ID of an existing face to merge final enrollment into (0 for none, i.e. use faceID)
    string name,
    FaceEnrollmentSequence sequence,
-   bool saveToRobot=1  // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+   bool saveToRobot=1    // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
 }
 
 // FlipBlock

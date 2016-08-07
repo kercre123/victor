@@ -1559,7 +1559,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
       const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
       bool hasNothingBehind = false;
-      const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 40.f,
+        const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera,
+                                                                      MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_DEG,
+                                                                      MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX,
                                                                     xBorderPad, yBorderPad,
                                                                     hasNothingBehind);
       

@@ -278,7 +278,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
           } else if(observedID >= 0) {
             // Recognized, not just tracked
             stats.facesRecognized++;
-            faceTracker->AssignNameToID(observedID, testDir);
+            faceTracker->AssignNameToID(observedID, testDir, Vision::UnknownFaceID);
             PRINT_NAMED_INFO("FaceRecogntion.VideoRecognitionAndTracking.AddingName",
                              "Registering '%s' to ID %d", testDir, observedID);
             isNameSet = true;

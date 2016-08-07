@@ -26,7 +26,6 @@ namespace Anki {
 namespace Vision{
   extern s32 kFaceRecognitionThreshold;
   extern f32 kTimeBetweenFaceEnrollmentUpdates_sec;
-  extern f32 kTimeBetweenInitialFaceEnrollmentUpdates_sec;
   extern s32 kMinFaceDetectConfidenceToEnroll;
   extern bool kGetEnrollmentTimeFromImageTimestamp;
 }
@@ -133,7 +132,7 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
     if(nameAndID.name == name) {
       PRINT_NAMED_WARNING("LiveEnroll.ReplacingUser",
                           "User '%s' already exists. Will re-enroll.", name.c_str());
-      faceTracker.EraseFace(name);
+      faceTracker.EraseFace(nameAndID.faceID);
       break;
     }
   }
@@ -175,7 +174,6 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
     Vision::FaceEnrollmentPose::LookingStraightFar,
     Vision::FaceEnrollmentPose::Disabled
   };
-  Vision::kTimeBetweenInitialFaceEnrollmentUpdates_sec = 0.75f;
   
   ASSERT_NAMED(sequence.size() < 10, "Enroll.EnrollmentSequenceTooLong");
 
@@ -279,7 +277,7 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
   frame.CloseDisplayWindow("LiveEnroll");
   
   // Assign the name to the ID and save
-  faceTracker.AssignNameToID(face.GetID(), name);
+  faceTracker.AssignNameToID(face.GetID(), name, Vision::UnknownFaceID);
   faceTracker.SaveAlbum(albumName);
   
 } // LiveEnroll()
@@ -391,7 +389,6 @@ void CannedRun(const std::string& mode, Vision::FaceTracker& faceTracker, const 
   
   // Adjust console vars
   //Vision::kFaceRecognitionThreshold = 500;
-  Vision::kTimeBetweenInitialFaceEnrollmentUpdates_sec = 0.25f;
   Vision::kGetEnrollmentTimeFromImageTimestamp = true;
   
   TimeStamp_t fakeTime_ms = 0;
@@ -484,7 +481,7 @@ void CannedRun(const std::string& mode, Vision::FaceTracker& faceTracker, const 
         } while(++iFile < imageFiles.size() && face.GetNumEnrollments() < kNumEnrollmentsNeeded);
         
         if(face.GetNumEnrollments() >= kNumEnrollmentsNeeded) {
-          faceTracker.AssignNameToID(face.GetID(), peopleDirs[iPerson]);
+          faceTracker.AssignNameToID(face.GetID(), peopleDirs[iPerson], Vision::UnknownFaceID);
           PRINT_NAMED_INFO("RecognizeFaces.EnrollmentCompleted", "Enrolled ID %d with name %s",
                            face.GetID(), peopleDirs[iPerson].c_str());
           nameToFaceID[peopleDirs[iPerson]] = face.GetID();

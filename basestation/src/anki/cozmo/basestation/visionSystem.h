@@ -272,7 +272,7 @@ namespace Cozmo {
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
-    Result AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
+    Result AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID);
     
     // Enable face enrollment mode and optionally specify the ID for which 
     // enrollment is allowed (use UnknownFaceID to indicate "any" ID).
@@ -293,10 +293,8 @@ namespace Cozmo {
                                  const std::vector<u8>& enrollData,
                                  std::list<Vision::FaceNameAndID>& namesAndIDs);
 
-    // Returns the ID of the erased face, or UnknownFaceID if the name isn't found
-    Vision::FaceID_t EraseFace(const std::string& name);
-    Result           EraseFace(Vision::FaceID_t faceID);
-    void             EraseAllFaces();
+    Result EraseFace(Vision::FaceID_t faceID);
+    void   EraseAllFaces();
     
     Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName);
     

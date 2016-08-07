@@ -2025,21 +2025,33 @@ namespace Anki {
                 if (shiftPressed && !altPressed) {
                   // SHIFT+F: Associate name with current face
                   webots::Field* userNameField = root_->getField("userName");
+                  webots::Field* enrollToIDField = root_->getField("enrollToID");
+                  
                   if(nullptr != userNameField)
                   {
                     std::string userName = userNameField->getSFString();
                     if(!userName.empty())
                     {
+                      if(nullptr == enrollToIDField)
+                      {
+                        printf("No 'enrollToID' field!");
+                        break;
+                      }
+                      
+                      const s32 enrollToID = enrollToIDField->getSFInt32();
+                      
 //                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
 //                      ExternalInterface::AssignNameToFace assignNameToFace;
 //                      assignNameToFace.faceID = GetLastObservedFaceID();
 //                      assignNameToFace.name   = userName;
 //                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
+                      
                       printf("Enrolling face ID %d with name '%s'\n", GetLastObservedFaceID(), userName.c_str());
                       ExternalInterface::EnrollNamedFace enrollNamedFace;
-                      enrollNamedFace.faceID   = GetLastObservedFaceID();
-                      enrollNamedFace.name     = userName;
-                      enrollNamedFace.sequence = FaceEnrollmentSequence::Simple;
+                      enrollNamedFace.faceID      = GetLastObservedFaceID();
+                      enrollNamedFace.mergeIntoID = enrollToID;
+                      enrollNamedFace.name        = userName;
+                      enrollNamedFace.sequence    = FaceEnrollmentSequence::Simple;
                       enrollNamedFace.saveToRobot = false; // for testing it's nice not to save
                       SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
                     } else {

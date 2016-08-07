@@ -91,7 +91,6 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByName>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceEnrollmentPose>();
@@ -1860,7 +1859,7 @@ namespace Cozmo {
     // If one of the data is not empty, neither should be (we can't have album data with
     // no enroll data or vice versa)
     ASSERT_NAMED(!_albumData.empty() && !_enrollData.empty(),
-                 "VisionComponent.SaveFaceAblumToRobot.BadAlbumOrEnrollData");
+                 "VisionComponent.SaveFaceAlbumToRobot.BadAlbumOrEnrollData");
     
     // Use NVStorage to save it
     bool sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
@@ -1981,11 +1980,11 @@ namespace Cozmo {
   }
   
   
-  void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+  void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
   {  
     // Pair this name and ID in the vision system
     Lock();
-    _visionSystem->AssignNameToFace(faceID, name);
+    _visionSystem->AssignNameToFace(faceID, name, mergeWithID);
     Unlock();
   }
   
@@ -2009,25 +2008,6 @@ namespace Cozmo {
       ExternalInterface::RobotErasedEnrolledFace msg;
       msg.faceID  = faceID;
       msg.name    = "";
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-      return RESULT_OK;
-    } else {
-      return RESULT_FAIL;
-    }
-  }
-  
-  Result VisionComponent::EraseFace(const std::string& name)
-  {
-    Lock();
-    Vision::FaceID_t erasedID = _visionSystem->EraseFace(name);
-    Unlock();
-    if(Vision::UnknownFaceID != erasedID) {
-      // Update robot
-      SaveFaceAlbumToRobot();
-      // Send back confirmation
-      ExternalInterface::RobotErasedEnrolledFace msg;
-      msg.faceID  = erasedID;
-      msg.name    = name;
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       return RESULT_OK;
     } else {
@@ -2107,12 +2087,6 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::VisionRunMode& msg)
   {
     SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
-  }
-  
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::EraseEnrolledFaceByName& msg)
-  {
-    EraseFace(msg.name);
   }
   
   template<>

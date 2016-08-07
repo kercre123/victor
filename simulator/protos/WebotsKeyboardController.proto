@@ -22,6 +22,9 @@ PROTO WebotsKeyboardController [
   # Name to assign to current faceID
   field SFString userName ""
   
+  # ID to Store Enollment as (0 just uses the ID of the face being enrolled)
+  field SFInt32 enrollToID 0
+  
   # String to say when using SayText
   field SFString sayString "Hello"
 

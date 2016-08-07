@@ -71,14 +71,9 @@ namespace Vision {
     return Impl::GetMinEyeDistanceForEnrollment();
   }
   
-  Result FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name)
+  Result FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name, FaceID_t mergeWithID)
   {
-    return _pImpl->AssignNameToID(faceID, name);
-  }
-
-  FaceID_t FaceTracker::EraseFace(const std::string& name)
-  {
-    return _pImpl->EraseFace(name);
+    return _pImpl->AssignNameToID(faceID, name, mergeWithID);
   }
 
   Result FaceTracker::EraseFace(FaceID_t faceID)

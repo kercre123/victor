@@ -543,6 +543,14 @@ IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterf
           Have also marked the messages who have robot id but value is incorrect and changed them to get first robot using step above.
 */
 
+IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterface::EnrollNamedFace& enrollNamedFace)
+{
+  EnrollNamedFaceAction* enrollAction = new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name, enrollNamedFace.mergeIntoID);
+  enrollAction->SetSequenceType(enrollNamedFace.sequence);
+  enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
+  return enrollAction;
+}
+  
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& msg)
 {
@@ -707,14 +715,8 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     }
       
     case RobotActionUnionTag::enrollNamedFace:
-    {
-      auto & enrollNamedFace = actionUnion.Get_enrollNamedFace();
-      EnrollNamedFaceAction* action =  new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name);
-      action->SetSequenceType(enrollNamedFace.sequence);
-      action->EnableSaveToRobot(enrollNamedFace.saveToRobot);
-      return action;
-    }
-      
+      return GetEnrollNamedFaceActionHelper(robot, actionUnion.Get_enrollNamedFace());
+    
     case RobotActionUnionTag::flipBlock:
     {
       ObjectID selectedObjectID = actionUnion.Get_flipBlock().objectID;
@@ -920,11 +922,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
     case ExternalInterface::MessageGameToEngineTag::EnrollNamedFace:
     {
-      auto & enrollNamedFace = event.GetData().Get_EnrollNamedFace();
-      EnrollNamedFaceAction* enrollAction = new EnrollNamedFaceAction(robotRef, enrollNamedFace.faceID, enrollNamedFace.name);
-      enrollAction->SetSequenceType(enrollNamedFace.sequence);
-      enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
-      newAction = enrollAction;
+      newAction = GetEnrollNamedFaceActionHelper(robotRef, event.GetData().Get_EnrollNamedFace());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::FlipBlock:

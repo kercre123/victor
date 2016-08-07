@@ -26,6 +26,8 @@
 #include "CommonDef.h"
 #include "DetectorComDef.h"
 
+#include "util/math/numericCast.h"
+
 #include <list>
 #include <map>
 #include <ctime>
@@ -42,6 +44,7 @@ namespace Vision {
   class FaceRecognizer : public Profiler
   {
   public:
+    using TrackingID_t = EnrolledFaceEntry::TrackingID_t;
     
     FaceRecognizer(const Json::Value& config);
     
@@ -49,8 +52,7 @@ namespace Vision {
     
     Result Init(HCOMMON okaoCommonHandle);
 
-    Result   AssignNameToID(FaceID_t faceID, const std::string& name);
-    FaceID_t EraseFace(const std::string& name);
+    Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
     
@@ -72,17 +74,16 @@ namespace Vision {
     // Use N = -1 to allow ongoing enrollment.
     void SetAllowedEnrollments(s32 N, FaceID_t forFaceID);
     
-    void RemoveTrackingID(INT32 trackerID);
+    void RemoveTrackingID(TrackingID_t trackerID);
     
     // Return existing or newly-computed recognitino info for a given tracking ID.
     // If a specific enrollment ID and count are in use, and the enrollment just
     // completed (the count was just reached), then that count is returned in
     // 'enrollmentCountReached'. Otherwise 0 is returned.
-    EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached);
+    EnrolledFaceEntry GetRecognitionData(TrackingID_t forTrackingID, s32& enrollmentCountReached);
     
     Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
-    
     
     Result GetSerializedData(std::vector<u8>& albumData,
                              std::vector<u8>& enrollData);
@@ -94,7 +95,13 @@ namespace Vision {
 
   private:
     
-    using EnrollmentData = std::map<FaceID_t,EnrolledFaceEntry>;
+    // Aliases for better readability
+    using OkaoResult       = INT32; // NOTE: "INT32" is an OKAO library type
+    using AlbumEntryID_t   = EnrolledFaceEntry::AlbumEntryID_t;
+    using RecognitionScore = EnrolledFaceEntry::RecognitionScore;
+    using EnrollmentData   = std::map<FaceID_t,EnrolledFaceEntry>;
+    
+    using AlbumEntryToFaceID = std::map<AlbumEntryID_t, FaceID_t>;
     
     // Called by Run() in async mode whenever there's a new image to be processed.
     // Called on each use of SetNextFaceToRecognize() when running synchronously.
@@ -102,19 +109,23 @@ namespace Vision {
     // or Idle on failure.
     void ExtractFeatures();
     
-    Result RegisterNewUser(HFEATURE& hFeature);
+    AlbumEntryID_t GetNextAlbumEntryToUse();
+    FaceID_t GetNextFaceID();
     
-    Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
+    Result RegisterNewUser(HFEATURE& hFeature, FaceID_t& faceID);
     
-    Result RecognizeFace(FaceID_t& faceID, INT32& recognitionScore);
+    Result UpdateExistingAlbumEntry(AlbumEntryID_t albumEntry, HFEATURE& hFeature, RecognitionScore score);
+    
+    Result RecognizeFace(FaceID_t& faceID, RecognitionScore& recognitionScore);
     
 		bool   IsMergingAllowed(FaceID_t toFaceID) const;
 		
     Result MergeFaces(FaceID_t keepID, FaceID_t mergeID);
+  
+    Result SelectiveMergeHelper(EnrollmentData::iterator keepIter, EnrollmentData::iterator mergeIter);
     
-    Result RemoveUser(INT32 userID);
+    Result RemoveUser(FaceID_t userID);
     EnrollmentData::iterator RemoveUser(EnrollmentData::iterator userIter);
-    Result RemoveUserHelper(INT32 userID);
 
     Result GetSerializedAlbum(std::vector<u8>& serializedAlbum) const;
     
@@ -125,21 +136,34 @@ namespace Vision {
     static Result SetSerializedEnrollData(const std::vector<u8>& serializedEnrollData,
                                           EnrollmentData& newEnrollmentData);
     
+    static void CreateAlbumEntryToFaceLUT(const EnrollmentData& enrollmentData,
+                                          AlbumEntryToFaceID& albumEntryToFaceID);
+  
     // Makes sure the given album and enrollment data look consistent
     static Result SanityCheckBookkeeping(const HALBUM& okaoFaceAlbum,
-                                         const EnrollmentData& enrollmentData);
+                                         const EnrollmentData& enrollmentData,
+                                         const AlbumEntryToFaceID& albumEntryToFaceID);
 
     Result UseLoadedAlbumAndEnrollData(HALBUM& loadedAlbumData,
                                        EnrollmentData& loadedEnrollmentData);
     
-    // These cannot be changed while running (requires re-init of Okao album)
-    static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
-    static const INT32 MaxAlbumFaces = 100; // can't be more than 1000
+    // Returns UnknownFaceID on failure
+    FaceID_t GetFaceIDforAlbumEntry(AlbumEntryID_t albumEntry) const;
     
-    static_assert(MaxAlbumFaces <= 1000 && MaxAlbumFaces > 1,
-                  "MaxAlbumFaces should be between 1 and 1000 for OKAO Library.");
-    static_assert(MaxAlbumDataPerFace > 1 && MaxAlbumDataPerFace <= 10,
-                  "MaxAlbumDataPerFace should be between 1 and 10 for OKAO Library.");
+    void AddDebugInfo(FaceID_t matchedID, RecognitionScore score,
+                      std::list<FaceRecognitionMatch>& newDebugInfo) const;
+    
+    // TODO: Using Util::numeric_cast here would be nice, but its not (always) constexpr...
+    static constexpr s32 kMaxFacesInAlbum            = (s32)FaceRecognitionConstants::MaxNumFacesInAlbum;
+    static constexpr s32 kMaxAlbumEntriesPerFace     = (s32)FaceRecognitionConstants::MaxNumAlbumEntriesPerFace;
+    static constexpr s32 kMaxEnrollDataPerAlbumEntry = (s32)FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry;
+    
+    // Make sure we are within fixed limits of the OKAO library
+    static constexpr s32 kMaxTotalAlbumEntries = 1000;
+    static_assert(kMaxFacesInAlbum*kMaxAlbumEntriesPerFace <= kMaxTotalAlbumEntries,
+                  "MaxTotalAlbumEntries too large for OKAO Library (Max is 1000).");
+    static_assert(kMaxEnrollDataPerAlbumEntry <= 10,
+                  "MaxEnrollDataPerAlbumEntry too large for OKAO Library (Max is 10).");
     
     bool        _isInitialized                 = false;
     HCOMMON     _okaoCommonHandle              = NULL; // not allocated here, passed in
@@ -168,9 +192,11 @@ namespace Vision {
     DETECTION_INFO _detectionInfo;
     
     // Internal bookkeeping and parameters
-    std::map<INT32, FaceID_t> _trackingToFaceID;
+    std::map<TrackingID_t, FaceID_t> _trackingToFaceID;
+    AlbumEntryToFaceID   _albumEntryToFaceID;
     
-    INT32 _lastRegisteredUserID = 1; // Don't start at zero: that's the UnknownFace ID!
+    FaceID_t     _nextFaceID     = 1; // Skip UnknownFaceID
+    AlbumEntryID_t _nextAlbumEntry = 0; 
     
     // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),
     // and how many enrollments we are allowed to add ( <0 means as many as we want)
@@ -185,8 +211,9 @@ namespace Vision {
     EnrollmentData _enrollmentData;
     
     // For debugging what is in current enrollment images
-    std::map<FaceID_t,std::array<Vision::ImageRGB, MaxAlbumDataPerFace>> _enrollmentImages;
-    void SetEnrollmentImage(FaceID_t userID, s32 whichEnrollData, const EnrolledFaceEntry& enrollData);
+    std::map<AlbumEntryID_t,std::array<Vision::ImageRGB, kMaxEnrollDataPerAlbumEntry>> _enrollmentImages;
+    void SetEnrollmentImage(AlbumEntryID_t albumEntry, s32 dataEntry);
+    void DisplayEnrollmentImages() const;
     
   }; // class FaceRecognizer
   

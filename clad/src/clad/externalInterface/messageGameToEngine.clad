@@ -368,11 +368,6 @@ message SetFaceEnrollmentPose {
   Vision::FaceEnrollmentPose pose
 }
 
-// Erase a face record by name
-message EraseEnrolledFaceByName {
-  string name
-}
-
 // Erase a face record by ID
 message EraseEnrolledFaceByID {
   int_32 faceID

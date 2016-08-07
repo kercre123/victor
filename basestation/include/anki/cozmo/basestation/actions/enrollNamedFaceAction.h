@@ -28,7 +28,13 @@ namespace Cozmo {
   class EnrollNamedFaceAction : public IAction
   {
   public:
-    EnrollNamedFaceAction(Robot& robot, Vision::FaceID_t faceID, const std::string& name);
+    
+    // The enrollID is which face to look at / track for this enrollment. If set to
+    // Vision::UnknownFaceID, the next face we see with a positive ID will be used.
+    // The optional saveID is the existing ID we want to merge the new enrollment
+    // data into (if it exists).
+    EnrollNamedFaceAction(Robot& robot, Vision::FaceID_t enrollID, const std::string& name,
+                          Vision::FaceID_t saveID = Vision::UnknownFaceID);
     
     virtual ~EnrollNamedFaceAction();
     
@@ -67,6 +73,7 @@ namespace Cozmo {
 
     // Member variables:
     Vision::FaceID_t          _faceID = Vision::UnknownFaceID;
+    Vision::FaceID_t          _saveID = Vision::UnknownFaceID;
     std::string               _faceName;
     Radians                   _lastRelBodyAngle = 0.f;
     IActionRunner*            _action = nullptr;

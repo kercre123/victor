@@ -9,6 +9,12 @@
 namespace Anki {
   namespace Cozmo {
     
+    /***************************************************************************
+     *
+     *                          Vision
+     *
+     **************************************************************************/
+    
     // Resolution of images that are streamed to basestation (dev purposes)
     const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
@@ -18,6 +24,9 @@ namespace Anki {
     
     // Minimum number of times not to observe an object marked dirty before clearing it.
     const s32 MIN_TIMES_TO_NOT_OBSERVE_DIRTY_OBJECT = 2;
+    
+    const f32 MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_DEG = 45.f;
+    const f32 MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX = 40.f;
     
     /***************************************************************************
      *
