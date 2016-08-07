@@ -9,6 +9,36 @@ that's running on your device.  Those files should be installed into
 Start the USB Mux TCP relay before running an example using the `run-example.sh`
 script.
 
+## Requirements
+
+The SDK needs Python 3.5 or later.  Running inside a virtualenv environment is
+recommended to isolate the package dependencies for the SDK from other work.
+
+On Mac:
+
+* `brew install python3`
+* `pip3 install virtualenv`
+* `pip3 install virtualenvwrapper` (adds some useful commands)
+* Add the following to your .bashrc if it's not already there:
+    * `export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3`
+    * `source /usr/local/bin/virtualenvwrapper.sh`
+* Start a new shell
+* `cd cozmo-one/tools/sdk.next` (or wherever you have the code checked out to)
+* `mkvirtualenv sdk`
+* `workon sdk` (use to switch to the new virtual env)
+ 
+When working in the sdk virtualenv the `python` command will be linked to 
+python3, pip installing packages will only affect that environment, etc.
+ 
+## Running the examples
+
+* `cd cozmo-one/tools/sdk.next`
+* `workon sdk`
+* `./run-example.sh examples/turn.py`
+
+You can edit the run-example.sh script to uncomment the logging
+lines if you'd like more verbose output.
+
 ## Coding Standards
 
 Code should roughly comply with [PEP 8](https://www.python.org/dev/peps/pep-0008/).
