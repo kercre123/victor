@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
 using System;
 
 namespace Anki {
@@ -15,6 +17,11 @@ namespace Anki {
 
       public const string _kProjectName = "Cozmo";
       private const string _kBuildOuputFolder = "../../build/";
+
+      private static string[] _kFileExclusions = {
+        ".meta",
+        ".DS_Store",
+      };
 
       #if UNITY_EDITOR
       private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
@@ -107,6 +114,52 @@ namespace Anki {
         }
       }
 
+      private static List<string> GetDirectoryAndFileNamesRecursive(string currentDir) {
+        string[] allFiles = Directory.GetFiles(currentDir, "*", SearchOption.AllDirectories);
+        List<string> fileList = new List<string>(Array.FindAll(allFiles, file => {
+          return string.IsNullOrEmpty(Array.Find(_kFileExclusions, excl => file.Contains(excl)));
+        }));
+        fileList.Sort();
+        return fileList;
+      }
+
+      public static byte[] GetDirectoryMD5Hash(string dirName) {
+        using (MD5 md5 = MD5.Create()) {
+          List<byte[]> hashes = new List<byte[]>();
+          List<string> filenames = GetDirectoryAndFileNamesRecursive(dirName);
+          StringBuilder fileString = new StringBuilder();
+          int totalHashSize = 0;
+
+          filenames.ForEach(filename => {
+            try {
+              fileString.Append(filename);
+              FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite); 
+              fs.Position = 0;
+              byte[] hash = md5.ComputeHash(fs);
+              totalHashSize += hash.Length;
+              hashes.Add(hash);
+              fs.Close();
+            }
+            catch (Exception e) {
+              Debug.LogError("error hashing file: " + e.ToString());
+            }
+          });
+
+          // combine hashes together
+          byte[] filenamesBlob = Encoding.UTF8.GetBytes(fileString.ToString());
+          byte[] hashBlob = new byte[filenamesBlob.Length + totalHashSize];
+          filenamesBlob.CopyTo(hashBlob, 0);
+          int currentIndex = filenamesBlob.Length;
+          hashes.ForEach(hash => {
+            hash.CopyTo(hashBlob, currentIndex);
+            currentIndex += hash.Length;
+          });
+
+          // hash the big blob
+          return md5.ComputeHash(hashBlob);
+        }
+      }
+
       [MenuItem(Build.Builder._kProjectName + "/Build/Copy Engine Assets to StreamingAssets")]
       public static string CopyEngineAssetsToStreamingAssets() {
         try {
@@ -137,9 +190,11 @@ namespace Anki {
 
           // Copy audio banks from a specific folder depending on the platform
           string soundFolder;
+          bool includeHashFile = false;
           switch (EditorUserBuildSettings.activeBuildTarget) {
           case BuildTarget.Android:
             soundFolder = "Android";
+            includeHashFile = true;
             break;
 
           case BuildTarget.iOS:
@@ -156,6 +211,23 @@ namespace Anki {
             throw new NotImplementedException();
           }
           FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
+
+          if (includeHashFile) {
+            Debug.Log("Starting hash...");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            byte[] filesHash = GetDirectoryMD5Hash("Assets/StreamingAssets");
+            StringBuilder hashString = new StringBuilder();
+            Array.ForEach(filesHash, data => {
+              hashString.Append(data.ToString("x2"));
+            });
+            sw.Stop();
+            Debug.Log("Hash value is: " + hashString + ", time: " + sw.Elapsed.TotalSeconds);
+
+            var fs = File.Create("Assets/StreamingAssets/cozmo_resources/allAssetHash.txt");
+            var hashBytes = Encoding.UTF8.GetBytes(hashString.ToString());
+            fs.Write(hashBytes, 0, hashBytes.Length);
+            fs.Close();
+          }
 
           Debug.Log("Engine assets copied to StreamingAssets");
           return null;
@@ -443,7 +515,7 @@ namespace Anki {
         string[] files = Directory.GetFiles("Assets/StreamingAssets", "*.*", SearchOption.AllDirectories);
         foreach (string f in files) {
           // Filter the files we don't need to ship
-          if (!f.Contains(".meta") && !f.Contains(".DS_Store")) {
+          if (string.IsNullOrEmpty(Array.Find(_kFileExclusions, excl => f.Contains(excl)))) {
             all.Add(f.Substring(substringIndex));
           }
         }

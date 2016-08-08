@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.Assets;
 using System.IO;
+using System.Linq;
 using System;
 
 /// <summary>
@@ -389,13 +390,49 @@ public class StartupManager : MonoBehaviour {
 
     Debug.Log("About to extract resource files. fromPath = " + fromPath + ". toPath = " + toPath);
 
-    try {
+    // see if we can skip resource load
+    {
+      bool hashMatches = false;
+      byte[] diskBytes = null;
+      const string assetPath = "cozmo_resources/allAssetHash.txt";
 
-      // TODO: Implement some kind of hashing system so we don't have to extract the files every app launch
+      try {
+        if (File.Exists(toPath + assetPath)) {
+          diskBytes = File.ReadAllBytes(toPath + assetPath);
+        }
+      } catch (Exception e) {
+        _ExtractionErrorMessage = "Exception checking asset hash: " + e.ToString();
+        Debug.LogError(_ExtractionErrorMessage);
+        yield break;
+      }
+
+      if (diskBytes != null) {
+        WWW appAssetHash = new WWW(fromPath + assetPath);
+        yield return appAssetHash;
+
+        try {
+          if (diskBytes.SequenceEqual(appAssetHash.bytes)) {
+            // data on disk is equal to data in this app bundle
+            hashMatches = true;
+          }
+        } catch (Exception e) {
+          _ExtractionErrorMessage = "Exception checking asset hash: " + e.ToString();
+          Debug.LogError(_ExtractionErrorMessage);
+          yield break;
+        }
+      }
+
+      if (hashMatches) {
+        Debug.Log("Skipping extraction, existing hash matches");
+        progressUpdater(1.0f);
+        yield break;
+      }
+    }
+
+    try {
       if (Directory.Exists(toPath)) {
         Directory.Delete(toPath, true);
       }
-
       Directory.CreateDirectory(toPath);
     }
     catch (Exception e) {
