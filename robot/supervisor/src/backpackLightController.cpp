@@ -40,59 +40,24 @@ namespace BackpackLightController {
     
 #ifdef SIMULATOR
     TimeStamp_t _ledPhases[NUM_BACKPACK_LEDS];
-#endif
     
-    // Light params when off charger
-    const RobotInterface::BackpackLights _defaultOffChargerParams = {{
-      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
-      {0x03e0, 0x0200, 10, 10, 50, 50}, // LED_BACKPACK_FRONT
-      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_MIDDLE
-      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_BACK
-      {0, 0, 0, 0, 0, 0}  // LED_BACKPACK_BACK
-    }};
-
-    // Light params when charging
-    const RobotInterface::BackpackLights _chargingParams = {{
-      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
-      {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_FRONT
-      {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_MIDDLE
-      {0x03e0, 0x0180, 20, 6, 20, 6}, // LED_BACKPACK_BACK
-      {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
-    }};
-
-    // // Light when charged
-    // const RobotInterface::BackpackLights _chargedParams = {{
-    //   {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
-    //   {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
-    //   {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE
-    //   {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_BACK
-    //   {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
-    // }};
-
-    // // Voltage at which it is considered charged
-    // // TODO: Should there be a HAL::IsFastCharging()?
-    // const u8 CHARGED_BATT_VOLTAGE_10x = 46;
-
-    // // Number of cycles it must be detected as charged or not charged before it switches over
-    // const s32 LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD = 200;
-    // s32 _isChargedCount = 0;
-
     // The current LED params being played
     const RobotInterface::BackpackLights* _currParams = &_ledParams[BPL_USER];
-
+#endif
+    
     bool       _enable;
   };
 
   void SetParams(const RobotInterface::BackpackLights& params)
   {
-    _currParams = &params;
 #ifdef SIMULATOR
+    _currParams = &params;
     memset(_ledPhases, 0, sizeof(_ledPhases));
 #else
     RobotInterface::SendMessage(params);
 #endif
   }
-  
+
   void EnableLayer(const BackpackLightLayer layer, bool forceUpdate)
   {
     if (layer >= BPL_NUM_LAYERS) {
@@ -118,29 +83,10 @@ namespace BackpackLightController {
 
   Result Init()
   {
-    memcpy(&_ledParams[BPL_USER], &_defaultOffChargerParams, sizeof(_ledParams[BPL_USER]));
+    memset(&_ledParams[BPL_USER], 0, sizeof(_ledParams[BPL_USER]));
     _enable = true;
 
     return RESULT_OK;
-  }
-
-  // Set which light parameters are to be displayed based on onCharger status.
-  // NOTE: While on charger, backpack lights can be set, but they won't show
-  //       until the robot comes off the charger. This may or may not be what we want.
-  void SetCurrParams()
-  {
-    static bool wasOnCharger = false;
-    
-    if (HAL::BatteryIsOnCharger() && !wasOnCharger) {
-      // Reset current lights and switch to charging lights
-      SetParams(_chargingParams);
-    }
-    else if (!HAL::BatteryIsOnCharger() && wasOnCharger)
-    {
-      // Reset current lights and switch to user-defined lights
-      SetParams(_ledParams[_layer]);
-    }
-    wasOnCharger = HAL::BatteryIsOnCharger();
   }
 
   Result Update()
@@ -148,8 +94,6 @@ namespace BackpackLightController {
     if (!_enable) {
       return RESULT_OK;
     }
-
-    SetCurrParams();
 
 #ifdef SIMULATOR
     TimeStamp_t currentTime = HAL::GetTimeStamp();

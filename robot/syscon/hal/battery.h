@@ -17,7 +17,7 @@ namespace Battery {
   void setHeadlight(bool status);
   void manage(void);
   uint8_t getLevel(void);
-  
+
   // Turn on power to the head
   void powerOn();
 

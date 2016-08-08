@@ -12,6 +12,8 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
+#include "backpackLightData.h"
+
 using namespace Anki::Cozmo;
 
 extern GlobalDataToBody g_dataToBody;
@@ -22,6 +24,9 @@ static const int CHANNEL_COUNT = 4;
 static const int TIMER_GRAIN = 2;
 static const int TIMER_DELTA_MINIMUM = 2;
 static const int MAX_DARK = (0x100 >> TIMER_GRAIN) + 16;
+
+static LightState _userLights[BACKPACK_LIGHT_CHANNELS];
+static bool lights_locked;
 
 struct charliePlex_s
 {
@@ -50,50 +55,11 @@ static int off_time = 0;
 // Start all pins as input
 void Backpack::init()
 {
-  defaultPattern(LIGHTS_BOOTING);
+  setLights(BackpackLights::startup);
+  defaultPattern(LIGHTS_RELEASE);
   
   // Prime our counter
   Backpack::update(0);
-}
-
-void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
-  switch (pattern) {
-    case LIGHTS_BOOTING:
-    {
-      static const LightState lights[] = {
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x7FFF, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 }
-      };
-      setLights(lights);
-      
-      break ;
-    }
-    case LIGHTS_LOW_POWER:
-    {
-      /*
-      static const LightState lights[] = {
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0007, 0x0000, 34, 67, 17, 17 },
-        { 0x0007, 0x0000, 34, 67, 17, 17 },
-        { 0x0007, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 }
-      };
-      */
-      static const LightState lights[] = {
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 },
-        { 0x0000, 0x0000, 34, 67, 17, 17 }
-      };
-
-      setLights(lights);
-      break ;
-    }
-  };
 }
 
 // This is a temporary fix until I can make the comparisons not jam
@@ -175,10 +141,47 @@ void Backpack::blink(void) {
   }
 }
 
-void Backpack::setLights(const LightState* update) {
+static void updateLights(const LightState* update) {
+  using namespace Backpack;
+
   for (int i = 0; i < NUM_BACKPACK_LEDS; i++) {
     Lights::update(lightController.backpack[i], &update[i]);
   }
+}
+
+void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
+  switch (pattern) {
+    case LIGHTS_RELEASE:
+      lights_locked = false;
+      updateLights(_userLights);
+      break ;
+    case LIGHTS_CHARGING:
+      lights_locked = true;
+      updateLights(BackpackLights::charging);
+      break ;
+    case LIGHTS_CHARGED:
+      lights_locked = true;
+      updateLights(BackpackLights::charged);
+      break ;
+    case LIGHTS_CHARGER_OOS:
+      lights_locked = true;
+      updateLights(BackpackLights::charger_oos);
+      break ;
+    case LIGHTS_SLEEPING:
+      lights_locked = false;
+      updateLights(BackpackLights::off);
+      break ;
+  };
+}
+
+void Backpack::setLights(const LightState* update) {
+  memcpy(_userLights, update, sizeof(_userLights));
+  
+  if (lights_locked) {
+    return ;
+  }
+  
+  updateLights(_userLights);
 }
 
 void Backpack::update(int compare) { 

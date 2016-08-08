@@ -15,6 +15,7 @@ extern "C" {
 #include "diffie.h"
 #include "random.h"
 #include "storage.h"
+#include "bluetooth.h"
 
 static volatile int fifoHead;
 static volatile int fifoTail;
@@ -106,6 +107,9 @@ void Tasks::manage(void) {
         // Generate our secret
         gen_random(&dh->pin, sizeof(dh->pin));
         fix_pin(dh->pin);
+        
+        dh->pin &= (1 << (BLUETOOTH_PIN_DIGITS * 4)) - 1;
+        
         gen_random(dh->local_secret, SECRET_LENGTH);
         dh_encode_random(dh->local_encoded, dh->pin, dh->local_secret);
         dh_encode_random(dh->remote_encoded, dh->pin, dh->remote_secret);

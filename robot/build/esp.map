@@ -45,12 +45,12 @@ hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
                               hal/.output/eagle/release/lib/libuserhal.a(user_main.o) (foregroundTaskInit)
 driver/.output/eagle/release/lib/libdriver.a(crash.o)
                               hal/.output/eagle/release/lib/libuserhal.a(user_main.o) (crashHandlerInit)
+driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+                              hal/.output/eagle/release/lib/libuserhal.a(user_main.o) (factoryDataInit)
 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
                               hal/.output/eagle/release/lib/libuserhal.a(user_main.o) (i2spiInit)
 driver/.output/eagle/release/lib/libdriver.a(uart.o)
                               driver/.output/eagle/release/lib/libdriver.a(crash.o) (os_put_char)
-driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
-                              hal/.output/eagle/release/lib/libuserhal.a(user_main.o) (factoryDataInit)
 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
                               hal/.output/eagle/release/lib/libuserhal.a(client.o) (ReliableTransport_Init)
 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
@@ -59,6 +59,8 @@ transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
                               transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o) (PreviousSequenceId)
 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
                               hal/.output/eagle/release/lib/libuserhal.a(user_main.o) (backgroundTaskInit)
+application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                              application/.output/eagle/release/lib/libapplication.a(backgroundTask.o) (_ZN4Anki5Cozmo13CrashReporter4InitEv)
 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
                               application/.output/eagle/release/lib/libapplication.a(backgroundTask.o) (_ZN13DiffieHellman4InitEv)
 application/.output/eagle/release/lib/libapplication.a(face.o)
@@ -71,8 +73,6 @@ application/.output/eagle/release/lib/libapplication.a(rtip.o)
                               application/.output/eagle/release/lib/libapplication.a(backgroundTask.o) (_ZN4Anki5Cozmo4RTIP4InitEv)
 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                               application/.output/eagle/release/lib/libapplication.a(backgroundTask.o) (_ZN4Anki5Cozmo17UpgradeController4InitEv)
-application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                              application/.output/eagle/release/lib/libapplication.a(backgroundTask.o) (_ZN4Anki5Cozmo13CrashReporter4InitEv)
 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
                               application/.output/eagle/release/lib/libapplication.a(backgroundTask.o) (_ZN4Anki5Cozmo19ActiveObjectManager4InitEv)
 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
@@ -280,8 +280,8 @@ wifiPsk             0xc               hal/.output/eagle/release/lib/libuserhal.a
 
 Discarded input sections
 
- .group         0x0000000000000000       0x14 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .group         0x0000000000000000       0x14 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .group         0x0000000000000000       0x14 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
 
 Memory Configuration
 
@@ -389,20 +389,20 @@ END GROUP
  .data          0x000000003ffe8011        0x0 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .data          0x000000003ffe8011        0x0 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .data          0x000000003ffe8011        0x0 driver/.output/eagle/release/lib/libdriver.a(crash.o)
+ .data          0x000000003ffe8011        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .data          0x000000003ffe8011        0x0 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .data          0x000000003ffe8011        0x0 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .data          0x000000003ffe8011        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .data          0x000000003ffe8011        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .data          0x000000003ffe8011        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .data          0x000000003ffe8011        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
+ .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(face.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(messages.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(rtip.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .data          0x000000003ffe8011        0x0 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .data          0x000000003ffe8011        0x0 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .data          0x000000003ffe8011        0x0 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -610,8 +610,10 @@ END GROUP
  .rodata._ZN4Anki5Cozmo14BackgroundTask4ExecEP11ETSEventTag
                 0x000000003ffe8b28       0x24 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
  .rodata.str1.1
-                0x0000000000000000       0xb3 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+                0x0000000000000000       0xb3 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
                                           0x1 (size before relaxing)
+ .rodata.str1.1
+                0x0000000000000000        0x1 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  .rodata._ZN13DiffieHellman6UpdateEv
                 0x000000003ffe8b4c       0x18 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  *fill*         0x000000003ffe8b64        0x4 
@@ -642,8 +644,6 @@ END GROUP
  .rodata._ZN4Anki5Cozmo17UpgradeController23VERSION_INFO_MAX_LENGTHE
                 0x000000003ffe8e6c        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                 0x000000003ffe8e6c                _ZN4Anki5Cozmo17UpgradeController23VERSION_INFO_MAX_LENGTHE
- .rodata.str1.1
-                0x0000000000000000        0x1 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .rodata.str1.1
                 0x0000000000000000       0x3e factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
                                           0x5 (size before relaxing)
@@ -716,20 +716,20 @@ END GROUP
  *(.gnu.version_r)
  *(.eh_frame)
  .eh_frame      0x000000003ffe9a48       0xa8 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .eh_frame      0x000000003ffe9af0       0x60 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .eh_frame      0x000000003ffe9af0       0x70 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                         0x80 (size before relaxing)
+ .eh_frame      0x000000003ffe9b60       0x60 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
                                          0x70 (size before relaxing)
- .eh_frame      0x000000003ffe9b50      0x1d4 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .eh_frame      0x000000003ffe9bc0      0x1d4 application/.output/eagle/release/lib/libapplication.a(face.o)
                                         0x1e4 (size before relaxing)
- .eh_frame      0x000000003ffe9d24      0x15c application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .eh_frame      0x000000003ffe9d94      0x15c application/.output/eagle/release/lib/libapplication.a(messages.o)
                                         0x16c (size before relaxing)
- .eh_frame      0x000000003ffe9e80      0x1a0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .eh_frame      0x000000003ffe9ef0      0x1a0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                         0x1b0 (size before relaxing)
- .eh_frame      0x000000003ffea020       0x70 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .eh_frame      0x000000003ffea090       0x70 application/.output/eagle/release/lib/libapplication.a(rtip.o)
                                          0x80 (size before relaxing)
- .eh_frame      0x000000003ffea090      0x114 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .eh_frame      0x000000003ffea100      0x114 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                         0x124 (size before relaxing)
- .eh_frame      0x000000003ffea1a4       0x70 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                                         0x80 (size before relaxing)
  .eh_frame      0x000000003ffea214       0x4c application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
                                          0x5c (size before relaxing)
  .eh_frame      0x000000003ffea260       0xfc factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
@@ -837,20 +837,20 @@ END GROUP
  .bss           0x000000003ffeb100        0x0 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .bss           0x000000003ffeb100        0x0 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .bss           0x000000003ffeb100        0x0 driver/.output/eagle/release/lib/libdriver.a(crash.o)
+ .bss           0x000000003ffeb100        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .bss           0x000000003ffeb100        0x0 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .bss           0x000000003ffeb100        0x0 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .bss           0x000000003ffeb100        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .bss           0x000000003ffeb100        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .bss           0x000000003ffeb100        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .bss           0x000000003ffeb100        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
+ .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(face.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(messages.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(rtip.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .bss           0x000000003ffeb100        0x0 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .bss           0x000000003ffeb100        0x0 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .bss           0x000000003ffeb100        0x0 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -1098,51 +1098,51 @@ END GROUP
                 0x000000003fff0e94       0x80 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .bss.nextCrashRecordSlot
                 0x000000003fff0f14        0x4 driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .bss.drop$2568
-                0x000000003fff0f18       0x64 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.drift$2570
-                0x000000003fff0f7c        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.dropWrInd$2569
-                0x000000003fff0f7e        0x1 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- *fill*         0x000000003fff0f7f        0x1 
- .bss.dropPhase
-                0x000000003fff0f80        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
-                0x000000003fff0f80                dropPhase
- .bss.bootloaderCommandPhase
-                0x000000003fff0f82        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.pendingFWB
-                0x000000003fff0f84        0x4 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.rtipRXQueueEstimate
-                0x000000003fff0f88        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.rtipBootloaderState
-                0x000000003fff0f8a        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.messageBufferRind
-                0x000000003fff0f8c        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.messageBufferWind
-                0x000000003fff0f8e        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.messageBuffer
-                0x000000003fff0f90      0x400 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.resumePhase
-                0x000000003fff1390        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.outgoingPhase
-                0x000000003fff1392        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.nextOutgoingDesc
-                0x000000003fff1394        0x4 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.rxQueue   0x000000003fff1398       0x90 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.rxBufs    0x000000003fff1428     0x1800 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.txFillCount
-                0x000000003fff2c28        0x1 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- *fill*         0x000000003fff2c29        0x3 
- .bss.txQueue   0x000000003fff2c2c       0x90 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .bss.txBufs    0x000000003fff2cbc     0x1800 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .bss.factoryData
-                0x000000003fff44bc        0x8 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+                0x000000003fff0f18        0x8 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .bss.COZMO_BUILD_DATE
-                0x000000003fff44c4        0x4 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
-                0x000000003fff44c4                COZMO_BUILD_DATE
+                0x000000003fff0f20        0x4 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+                0x000000003fff0f20                COZMO_BUILD_DATE
  .bss.COZMO_VERSION_ID
-                0x000000003fff44c8        0x4 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
-                0x000000003fff44c8                COZMO_VERSION_ID
+                0x000000003fff0f24        0x4 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+                0x000000003fff0f24                COZMO_VERSION_ID
+ .bss.drop$2568
+                0x000000003fff0f28       0x64 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.drift$2570
+                0x000000003fff0f8c        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.dropWrInd$2569
+                0x000000003fff0f8e        0x1 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ *fill*         0x000000003fff0f8f        0x1 
+ .bss.dropPhase
+                0x000000003fff0f90        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+                0x000000003fff0f90                dropPhase
+ .bss.bootloaderCommandPhase
+                0x000000003fff0f92        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.pendingFWB
+                0x000000003fff0f94        0x4 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.rtipRXQueueEstimate
+                0x000000003fff0f98        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.rtipBootloaderState
+                0x000000003fff0f9a        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.messageBufferRind
+                0x000000003fff0f9c        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.messageBufferWind
+                0x000000003fff0f9e        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.messageBuffer
+                0x000000003fff0fa0      0x400 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.resumePhase
+                0x000000003fff13a0        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.outgoingPhase
+                0x000000003fff13a2        0x2 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.nextOutgoingDesc
+                0x000000003fff13a4        0x4 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.rxQueue   0x000000003fff13a8       0x90 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.rxBufs    0x000000003fff1438     0x1800 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.txFillCount
+                0x000000003fff2c38        0x1 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ *fill*         0x000000003fff2c39        0x3 
+ .bss.txQueue   0x000000003fff2c3c       0x90 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .bss.txBufs    0x000000003fff2ccc     0x1800 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .bss.reliableTransport_timeoutMicroseconds
                 0x000000003fff44cc        0x4 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .bss._ZZN4Anki5Cozmo14BackgroundTask4ExecEP11ETSEventTagE15lastErrorReport
@@ -1168,97 +1168,97 @@ END GROUP
  .bss.backgroundTaskQueue
                 0x000000003fff44f0       0x10 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
                 0x000000003fff44f0                backgroundTaskQueue
- .bss._ZL4task  0x000000003fff4500        0x4 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .bss._ZL5state
-                0x000000003fff4504        0x4 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .bss._ZZ14PumpScreenDataE13transmitChain
-                0x000000003fff4508        0x1 application/.output/eagle/release/lib/libapplication.a(face.o)
- .bss._ZN4Anki5Cozmo4Face5_modeE
-                0x000000003fff4509        0x1 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff4509                _ZN4Anki5Cozmo4Face5_modeE
- .bss._ZN4Anki5Cozmo4Face10m_rectLockE
-                0x000000003fff450a        0x1 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff450a                _ZN4Anki5Cozmo4Face10m_rectLockE
- *fill*         0x000000003fff450b        0x1 
- .bss._ZN4Anki5Cozmo4Face16m_remainingRectsE
-                0x000000003fff450c        0x4 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff450c                _ZN4Anki5Cozmo4Face16m_remainingRectsE
- .bss._ZN4Anki5Cozmo4Face12m_scanStatusE
-                0x000000003fff4510        0x3 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff4510                _ZN4Anki5Cozmo4Face12m_scanStatusE
- *fill*         0x000000003fff4513        0x1 
- .bss._ZN4Anki5Cozmo4Face12m_activeRectE
-                0x000000003fff4514        0x4 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff4514                _ZN4Anki5Cozmo4Face12m_activeRectE
- .bss._ZN4Anki5Cozmo4Face7m_rectsE
-                0x000000003fff4518       0x14 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff4518                _ZN4Anki5Cozmo4Face7m_rectsE
- *fill*         0x000000003fff452c        0x4 
- .bss.m_frame   0x000000003fff4530      0x460 application/.output/eagle/release/lib/libapplication.a(face.o)
-                0x000000003fff4530                m_frame
- .bss._ZZN4Anki5Cozmo14RobotInterface7SendLogEatthzE14missedMessages
-                0x000000003fff4990        0x4 application/.output/eagle/release/lib/libapplication.a(messages.o)
- .bss._ZL12nvOpReportTo
-                0x000000003fff4994        0x1 application/.output/eagle/release/lib/libapplication.a(messages.o)
- *fill*         0x000000003fff4995        0x3 
- .bss._ZZN4Anki5Cozmo9NVStorage6UpdateEvE6header
-                0x000000003fff4998        0xc application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .bss._ZN4Anki5Cozmo9NVStorageL2nvE
-                0x000000003fff49a4       0x38 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .bss._ZZ17AcceptRTIPMessageE11relayBuffer
-                0x000000003fff49dc      0x180 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .bss._ZZ17AcceptRTIPMessageE11relayQueued
-                0x000000003fff4b5c        0x1 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL6aes_ivE
-                0x000000003fff4b5d       0x10 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- *fill*         0x000000003fff4b6d        0x3 
- .bss._ZN4Anki5Cozmo17UpgradeControllerL15firmware_digestE
-                0x000000003fff4b70       0xd0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL10receivedIVE
-                0x000000003fff4c40        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL13haveValidCertE
-                0x000000003fff4c41        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL15haveTerminationE
-                0x000000003fff4c42        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL7didRTIPE
-                0x000000003fff4c43        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL7didWiFiE
-                0x000000003fff4c44        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- *fill*         0x000000003fff4c45        0x3 
- .bss._ZN4Anki5Cozmo17UpgradeControllerL5phaseE
-                0x000000003fff4c48        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL7retriesE
-                0x000000003fff4c4c        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- *fill*         0x000000003fff4c4d        0x1 
- .bss._ZN4Anki5Cozmo17UpgradeControllerL20acceptedPacketNumberE
-                0x000000003fff4c4e        0x2 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL5timerE
-                0x000000003fff4c50        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL7counterE
-                0x000000003fff4c54        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL14bytesProcessedE
-                0x000000003fff4c58        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL10bufferUsedE
-                0x000000003fff4c5c        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL10bufferSizeE
-                0x000000003fff4c60        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL6bufferE
-                0x000000003fff4c64        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL15nextImageNumberE
-                0x000000003fff4c68        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .bss._ZN4Anki5Cozmo17UpgradeControllerL14fwWriteAddressE
-                0x000000003fff4c6c        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .bss._ZN4Anki5Cozmo13CrashReporterL11reportIndexE
-                0x000000003fff4c70        0x4 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                0x000000003fff4500        0x4 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .bss._ZN4Anki5Cozmo13CrashReporterL18bodyCrashReadStateE
-                0x000000003fff4c74        0x1 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                0x000000003fff4504        0x1 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .bss._ZN4Anki5Cozmo13CrashReporterL18rtipCrashReadStateE
-                0x000000003fff4c75        0x1 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- *fill*         0x000000003fff4c76        0x2 
+                0x000000003fff4505        0x1 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ *fill*         0x000000003fff4506        0x2 
  .bss._ZN4Anki5Cozmo13CrashReporterL12bodyCrashLogE
-                0x000000003fff4c78        0x4 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                0x000000003fff4508        0x4 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .bss._ZN4Anki5Cozmo13CrashReporterL12rtipCrashLogE
-                0x000000003fff4c7c        0x4 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                0x000000003fff450c        0x4 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .bss._ZL4task  0x000000003fff4510        0x4 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .bss._ZL5state
+                0x000000003fff4514        0x4 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .bss._ZZ14PumpScreenDataE13transmitChain
+                0x000000003fff4518        0x1 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .bss._ZN4Anki5Cozmo4Face5_modeE
+                0x000000003fff4519        0x1 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff4519                _ZN4Anki5Cozmo4Face5_modeE
+ .bss._ZN4Anki5Cozmo4Face10m_rectLockE
+                0x000000003fff451a        0x1 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff451a                _ZN4Anki5Cozmo4Face10m_rectLockE
+ *fill*         0x000000003fff451b        0x1 
+ .bss._ZN4Anki5Cozmo4Face16m_remainingRectsE
+                0x000000003fff451c        0x4 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff451c                _ZN4Anki5Cozmo4Face16m_remainingRectsE
+ .bss._ZN4Anki5Cozmo4Face12m_scanStatusE
+                0x000000003fff4520        0x3 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff4520                _ZN4Anki5Cozmo4Face12m_scanStatusE
+ *fill*         0x000000003fff4523        0x1 
+ .bss._ZN4Anki5Cozmo4Face12m_activeRectE
+                0x000000003fff4524        0x4 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff4524                _ZN4Anki5Cozmo4Face12m_activeRectE
+ .bss._ZN4Anki5Cozmo4Face7m_rectsE
+                0x000000003fff4528       0x14 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff4528                _ZN4Anki5Cozmo4Face7m_rectsE
+ *fill*         0x000000003fff453c        0x4 
+ .bss.m_frame   0x000000003fff4540      0x460 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000003fff4540                m_frame
+ .bss._ZZN4Anki5Cozmo14RobotInterface7SendLogEatthzE14missedMessages
+                0x000000003fff49a0        0x4 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .bss._ZL12nvOpReportTo
+                0x000000003fff49a4        0x1 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ *fill*         0x000000003fff49a5        0x3 
+ .bss._ZZN4Anki5Cozmo9NVStorage6UpdateEvE6header
+                0x000000003fff49a8        0xc application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .bss._ZN4Anki5Cozmo9NVStorageL2nvE
+                0x000000003fff49b4       0x38 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .bss._ZZ17AcceptRTIPMessageE11relayBuffer
+                0x000000003fff49ec      0x180 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .bss._ZZ17AcceptRTIPMessageE11relayQueued
+                0x000000003fff4b6c        0x1 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL6aes_ivE
+                0x000000003fff4b6d       0x10 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ *fill*         0x000000003fff4b7d        0x3 
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL15firmware_digestE
+                0x000000003fff4b80       0xd0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL10receivedIVE
+                0x000000003fff4c50        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL13haveValidCertE
+                0x000000003fff4c51        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL15haveTerminationE
+                0x000000003fff4c52        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL7didRTIPE
+                0x000000003fff4c53        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL7didWiFiE
+                0x000000003fff4c54        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ *fill*         0x000000003fff4c55        0x3 
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL5phaseE
+                0x000000003fff4c58        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL7retriesE
+                0x000000003fff4c5c        0x1 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ *fill*         0x000000003fff4c5d        0x1 
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL20acceptedPacketNumberE
+                0x000000003fff4c5e        0x2 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL5timerE
+                0x000000003fff4c60        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL7counterE
+                0x000000003fff4c64        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL14bytesProcessedE
+                0x000000003fff4c68        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL10bufferUsedE
+                0x000000003fff4c6c        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL10bufferSizeE
+                0x000000003fff4c70        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL6bufferE
+                0x000000003fff4c74        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL15nextImageNumberE
+                0x000000003fff4c78        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .bss._ZN4Anki5Cozmo17UpgradeControllerL14fwWriteAddressE
+                0x000000003fff4c7c        0x4 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .bss._ZN4Anki5Cozmo19ActiveObjectManagerL18lastBodyUpdateTimeE
                 0x000000003fff4c80        0x4 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .bss._ZN4Anki5Cozmo19ActiveObjectManagerL10needUpdateE
@@ -1472,326 +1472,326 @@ END GROUP
                                          0x27 (size before relaxing)
                 0x0000000040203b50                i2spiSynchronizedCallback
  *fill*         0x0000000040203b6b        0x1 
+ .text._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
+                0x0000000040203b6c       0x22 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                         0x2e (size before relaxing)
+                0x0000000040203b6c                _ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
+ *fill*         0x0000000040203b8e        0x2 
+ .text._ZN4Anki5Cozmo13CrashReporter4InitEv
+                0x0000000040203b90       0x39 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                0x0000000040203ba4                _ZN4Anki5Cozmo13CrashReporter4InitEv
+ *fill*         0x0000000040203bc9        0x3 
+ .text._ZN4Anki5Cozmo13CrashReporter12StartSendingEv
+                0x0000000040203bcc        0x9 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                          0xd (size before relaxing)
+                0x0000000040203bcc                _ZN4Anki5Cozmo13CrashReporter12StartSendingEv
+ *fill*         0x0000000040203bd5        0x3 
+ .text._ZN4Anki5Cozmo13CrashReporter11StartQuerryEv
+                0x0000000040203bd8        0xa application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                          0xe (size before relaxing)
+                0x0000000040203bd8                _ZN4Anki5Cozmo13CrashReporter11StartQuerryEv
+ *fill*         0x0000000040203be2        0x2 
+ .text._ZN4Anki5Cozmo13CrashReporter6UpdateEv
+                0x0000000040203be4      0x217 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                        0x27f (size before relaxing)
+                0x0000000040203bf4                _ZN4Anki5Cozmo13CrashReporter6UpdateEv
+ *fill*         0x0000000040203dfb        0x1 
+ .text._ZN4Anki5Cozmo13CrashReporter17AcceptBodyStorageERNS0_19BodyStorageContentsE
+                0x0000000040203dfc       0xf1 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                        0x115 (size before relaxing)
+                0x0000000040203e00                _ZN4Anki5Cozmo13CrashReporter17AcceptBodyStorageERNS0_19BodyStorageContentsE
+ *fill*         0x0000000040203eed        0x3 
  .text._ZN13DiffieHellman4InitEv
-                0x0000000040203b6c       0x18 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
-                0x0000000040203b74                _ZN13DiffieHellman4InitEv
+                0x0000000040203ef0       0x18 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+                0x0000000040203ef8                _ZN13DiffieHellman4InitEv
  .text._ZN13DiffieHellman5StartEPKhS1_
-                0x0000000040203b84       0x97 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+                0x0000000040203f08       0x8f application/.output/eagle/release/lib/libapplication.a(dhTask.o)
                                          0xaf (size before relaxing)
-                0x0000000040203b98                _ZN13DiffieHellman5StartEPKhS1_
- *fill*         0x0000000040203c1b        0x1 
+                0x0000000040203f14                _ZN13DiffieHellman5StartEPKhS1_
+ *fill*         0x0000000040203f97        0x1 
  .text._ZN13DiffieHellman6UpdateEv
-                0x0000000040203c1c      0x168 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+                0x0000000040203f98      0x168 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
                                         0x1bc (size before relaxing)
-                0x0000000040203c30                _ZN13DiffieHellman6UpdateEv
+                0x0000000040203fac                _ZN13DiffieHellman6UpdateEv
  .text._ZN4Anki5Cozmo4FaceL9ResetScanEv
-                0x0000000040203d84       0x2f application/.output/eagle/release/lib/libapplication.a(face.o)
- *fill*         0x0000000040203db3        0x1 
+                0x0000000040204100       0x2f application/.output/eagle/release/lib/libapplication.a(face.o)
+ *fill*         0x000000004020412f        0x1 
  .text._ZN4Anki5Cozmo4FaceL16ConsolidateRectsEb
-                0x0000000040203db4      0x172 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204130      0x172 application/.output/eagle/release/lib/libapplication.a(face.o)
                                         0x18a (size before relaxing)
- *fill*         0x0000000040203f26        0x2 
+ *fill*         0x00000000402042a2        0x2 
  .text._ZN4Anki5Cozmo4FaceL11ResetScreenEv
-                0x0000000040203f28       0x46 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402042a4       0x46 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x5a (size before relaxing)
- *fill*         0x0000000040203f6e        0x2 
+ *fill*         0x00000000402042ea        0x2 
  .text._ZN4Anki5Cozmo4FaceL11CreateRectsEPyhhhh$constprop$1
-                0x0000000040203f70       0xda application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402042ec       0xda application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0xfa (size before relaxing)
- *fill*         0x000000004020404a        0x2 
+ *fill*         0x00000000402043c6        0x2 
  .text._Z17FaceDisplayDecodePKhhhPy
-                0x000000004020404c       0xf1 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402043c8       0xf1 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0xf5 (size before relaxing)
-                0x000000004020405c                _Z17FaceDisplayDecodePKhhhPy
- *fill*         0x000000004020413d        0x3 
+                0x00000000402043d8                _Z17FaceDisplayDecodePKhhhPy
+ *fill*         0x00000000402044b9        0x3 
  .text._ZN4Anki5Cozmo4Face4InitEv
-                0x0000000040204140       0x1d application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402044bc       0x1d application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x25 (size before relaxing)
-                0x0000000040204144                _ZN4Anki5Cozmo4Face4InitEv
- *fill*         0x000000004020415d        0x3 
+                0x00000000402044c0                _ZN4Anki5Cozmo4Face4InitEv
+ *fill*         0x00000000402044d9        0x3 
  .text.PumpScreenData
-                0x0000000040204160       0xb2 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402044dc       0xb2 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0xd2 (size before relaxing)
-                0x0000000040204164                PumpScreenData
- *fill*         0x0000000040204212        0x2 
+                0x00000000402044e0                PumpScreenData
+ *fill*         0x000000004020458e        0x2 
  .text._ZN4Anki5Cozmo4Face14PrintFormattedEPc
-                0x0000000040204214       0xb0 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204590       0xb0 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0xc0 (size before relaxing)
-                0x0000000040204218                _ZN4Anki5Cozmo4Face14PrintFormattedEPc
+                0x0000000040204594                _ZN4Anki5Cozmo4Face14PrintFormattedEPc
  .text._ZN4Anki5Cozmo4Face8DecToBCDEj
-                0x00000000402042c4       0x4a application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204640       0x4a application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x4e (size before relaxing)
-                0x00000000402042c8                _ZN4Anki5Cozmo4Face8DecToBCDEj
- *fill*         0x000000004020430e        0x2 
+                0x0000000040204644                _ZN4Anki5Cozmo4Face8DecToBCDEj
+ *fill*         0x000000004020468a        0x2 
  .text._ZN4Anki5Cozmo4Face4Draw5ClearEPy
-                0x0000000040204310       0x17 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x000000004020468c       0x17 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x1b (size before relaxing)
-                0x0000000040204310                _ZN4Anki5Cozmo4Face4Draw5ClearEPy
- *fill*         0x0000000040204327        0x1 
+                0x000000004020468c                _ZN4Anki5Cozmo4Face4Draw5ClearEPy
+ *fill*         0x00000000402046a3        0x1 
  .text._ZN4Anki5Cozmo4Face4Draw4CopyEPyPKy
-                0x0000000040204328       0x15 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402046a4       0x15 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x19 (size before relaxing)
-                0x0000000040204328                _ZN4Anki5Cozmo4Face4Draw4CopyEPyPKy
- *fill*         0x000000004020433d        0x3 
+                0x00000000402046a4                _ZN4Anki5Cozmo4Face4Draw4CopyEPyPKy
+ *fill*         0x00000000402046b9        0x3 
  .text._ZN4Anki5Cozmo4Face4Draw4CopyEPyPKjiii
-                0x0000000040204340       0x76 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402046bc       0x76 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x7e (size before relaxing)
-                0x0000000040204340                _ZN4Anki5Cozmo4Face4Draw4CopyEPyPKjiii
- *fill*         0x00000000402043b6        0x2 
+                0x00000000402046bc                _ZN4Anki5Cozmo4Face4Draw4CopyEPyPKjiii
+ *fill*         0x0000000040204732        0x2 
  .text._ZN4Anki5Cozmo4Face4Draw6NumberEPyijii
-                0x00000000402043b8       0xc9 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204734       0xc9 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0xd5 (size before relaxing)
-                0x00000000402043c0                _ZN4Anki5Cozmo4Face4Draw6NumberEPyijii
- *fill*         0x0000000040204481        0x3 
+                0x000000004020473c                _ZN4Anki5Cozmo4Face4Draw6NumberEPyijii
+ *fill*         0x00000000402047fd        0x3 
  .text._ZN4Anki5Cozmo4Face4Draw5PrintEPyPKciii
-                0x0000000040204484       0xf8 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204800       0xf8 application/.output/eagle/release/lib/libapplication.a(face.o)
                                         0x104 (size before relaxing)
-                0x000000004020448c                _ZN4Anki5Cozmo4Face4Draw5PrintEPyPKciii
+                0x0000000040204808                _ZN4Anki5Cozmo4Face4Draw5PrintEPyPKciii
  .text._ZN4Anki5Cozmo4Face4Draw4FlipEPy
-                0x000000004020457c        0xf application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402048f8        0xf application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x17 (size before relaxing)
-                0x000000004020457c                _ZN4Anki5Cozmo4Face4Draw4FlipEPy
- *fill*         0x000000004020458b        0x1 
+                0x00000000402048f8                _ZN4Anki5Cozmo4Face4Draw4FlipEPy
+ *fill*         0x0000000040204907        0x1 
  .text._ZN4Anki5Cozmo4Face5ClearEv
-                0x000000004020458c       0x2c application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204908       0x2c application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x34 (size before relaxing)
-                0x000000004020458c                _ZN4Anki5Cozmo4Face5ClearEv
+                0x0000000040204908                _ZN4Anki5Cozmo4Face5ClearEv
  .text.FacePrintf
-                0x00000000402045b8       0x69 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204934       0x69 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x79 (size before relaxing)
-                0x00000000402045b8                FacePrintf
- *fill*         0x0000000040204621        0x3 
+                0x0000000040204934                FacePrintf
+ *fill*         0x000000004020499d        0x3 
  .text.FaceDebugPrintf
-                0x0000000040204624       0x5b application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402049a0       0x5b application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x6b (size before relaxing)
-                0x0000000040204624                FaceDebugPrintf
- *fill*         0x000000004020467f        0x1 
+                0x00000000402049a0                FaceDebugPrintf
+ *fill*         0x00000000402049fb        0x1 
  .text.FaceUnPrintf
-                0x0000000040204680       0x2a application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000402049fc       0x2a application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x3a (size before relaxing)
-                0x0000000040204680                FaceUnPrintf
- *fill*         0x00000000402046aa        0x2 
+                0x00000000402049fc                FaceUnPrintf
+ *fill*         0x0000000040204a26        0x2 
  .text._ZN4Anki5Cozmo4Face17GetRemainingRectsEv
-                0x00000000402046ac        0x7 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204a28        0x7 application/.output/eagle/release/lib/libapplication.a(face.o)
                                           0xb (size before relaxing)
-                0x00000000402046ac                _ZN4Anki5Cozmo4Face17GetRemainingRectsEv
- *fill*         0x00000000402046b3        0x1 
+                0x0000000040204a28                _ZN4Anki5Cozmo4Face17GetRemainingRectsEv
+ *fill*         0x0000000040204a2f        0x1 
  .text._ZN4Anki5Cozmo3HAL11FaceAnimateEPht
-                0x00000000402046b4       0x45 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x0000000040204a30       0x45 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0x59 (size before relaxing)
-                0x00000000402046b4                _ZN4Anki5Cozmo3HAL11FaceAnimateEPht
- *fill*         0x00000000402046f9        0x3 
+                0x0000000040204a30                _ZN4Anki5Cozmo3HAL11FaceAnimateEPht
+ *fill*         0x0000000040204a75        0x3 
  .text._ZN4Anki5Cozmo8Messages8SendTextEaPKc13__va_list_tag
-                0x00000000402046fc       0x6a application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204a78       0x6a application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x86 (size before relaxing)
-                0x00000000402046fc                _ZN4Anki5Cozmo8Messages8SendTextEaPKc13__va_list_tag
- *fill*         0x0000000040204766        0x2 
+                0x0000000040204a78                _ZN4Anki5Cozmo8Messages8SendTextEaPKc13__va_list_tag
+ *fill*         0x0000000040204ae2        0x2 
  .text._ZN4Anki5Cozmo8Messages8SendTextEPKcz
-                0x0000000040204768       0x2d application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204ae4       0x2d application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x35 (size before relaxing)
-                0x0000000040204768                _ZN4Anki5Cozmo8Messages8SendTextEPKcz
- *fill*         0x0000000040204795        0x3 
+                0x0000000040204ae4                _ZN4Anki5Cozmo8Messages8SendTextEPKcz
+ *fill*         0x0000000040204b11        0x3 
  .text._ZN4Anki5Cozmo14RobotInterface7SendLogEatthz
-                0x0000000040204798       0xc1 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204b14       0xc1 application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0xcd (size before relaxing)
-                0x000000004020479c                _ZN4Anki5Cozmo14RobotInterface7SendLogEatthz
- *fill*         0x0000000040204859        0x3 
+                0x0000000040204b18                _ZN4Anki5Cozmo14RobotInterface7SendLogEatthz
+ *fill*         0x0000000040204bd5        0x3 
  .text._ZN4Anki5Cozmo8MessagesL14SendNVOpResultEPKNS0_9NVStorage10NVOpResultEa
-                0x000000004020485c       0x65 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204bd8       0x65 application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x7d (size before relaxing)
- *fill*         0x00000000402048c1        0x3 
+ *fill*         0x0000000040204c3d        0x3 
  .text._ZN4Anki5Cozmo8MessagesL17NVMultiReadDoneCBEja
-                0x00000000402048c4       0x2b application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204c40       0x2b application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x33 (size before relaxing)
- *fill*         0x00000000402048ef        0x1 
+ *fill*         0x0000000040204c6b        0x1 
  .text._ZN4Anki5Cozmo8MessagesL18NVMultiEraseDoneCBEja
-                0x00000000402048f0       0x27 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204c6c       0x27 application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x33 (size before relaxing)
- *fill*         0x0000000040204917        0x1 
+ *fill*         0x0000000040204c93        0x1 
  .text._ZN4Anki5Cozmo8MessagesL19NVEraseDoneCallbackEja
-                0x0000000040204918       0x27 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204c94       0x27 application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x33 (size before relaxing)
- *fill*         0x000000004020493f        0x1 
+ *fill*         0x0000000040204cbb        0x1 
  .text._ZN4Anki5Cozmo8MessagesL19NVWriteDoneCallbackEPKNS0_9NVStorage13NVStorageBlobEa
-                0x0000000040204940       0x2c application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204cbc       0x2c application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x34 (size before relaxing)
  .text._ZN4Anki5Cozmo8MessagesL12NVReadDoneCBEPNS0_9NVStorage13NVStorageBlobEa
-                0x000000004020496c       0xae application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204ce8       0xae application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0xe2 (size before relaxing)
- *fill*         0x0000000040204a1a        0x2 
+ *fill*         0x0000000040204d96        0x2 
  .text.ProcessMessage
-                0x0000000040204a1c      0x3d7 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000040204d98      0x3d7 application/.output/eagle/release/lib/libapplication.a(messages.o)
                                         0x4db (size before relaxing)
-                0x0000000040204a44                ProcessMessage
- *fill*         0x0000000040204df3        0x1 
+                0x0000000040204dc0                ProcessMessage
+ *fill*         0x000000004020516f        0x1 
  .text._ZN4Anki5Cozmo9NVStorageL17getStartOfSegmentEv
-                0x0000000040204df4       0x36 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- *fill*         0x0000000040204e2a        0x2 
+                0x0000000040205170       0x36 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ *fill*         0x00000000402051a6        0x2 
  .text._ZN4Anki5Cozmo9NVStorageL10resetEraseEv
-                0x0000000040204e2c       0x3b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x00000000402051a8       0x3b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x47 (size before relaxing)
- *fill*         0x0000000040204e67        0x1 
+ *fill*         0x00000000402051e3        0x1 
  .text._ZN4Anki5Cozmo9NVStorageL9resetReadEv
-                0x0000000040204e68       0x3b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x00000000402051e4       0x3b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x47 (size before relaxing)
- *fill*         0x0000000040204ea3        0x1 
+ *fill*         0x000000004020521f        0x1 
  .text._ZN4Anki5Cozmo9NVStorageL10resetWriteEv
-                0x0000000040204ea4       0x4b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205220       0x4b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x57 (size before relaxing)
- *fill*         0x0000000040204eef        0x1 
+ *fill*         0x000000004020526b        0x1 
  .text._ZN4Anki5Cozmo9NVStorageL21GarbageCollectionTaskEj
-                0x0000000040204ef0      0x3f6 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x000000004020526c      0x3f6 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                         0x462 (size before relaxing)
- *fill*         0x00000000402052e6        0x2 
+ *fill*         0x0000000040205662        0x2 
  .text._ZN4Anki5Cozmo9NVStorageL8endWriteEa
-                0x00000000402052e8       0x51 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205664       0x51 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x61 (size before relaxing)
- *fill*         0x0000000040205339        0x3 
+ *fill*         0x00000000402056b5        0x3 
  .text._ZN4Anki5Cozmo9NVStorageL14processFailureEa
-                0x000000004020533c       0x8b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x00000000402056b8       0x8b application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0xa7 (size before relaxing)
- *fill*         0x00000000402053c7        0x1 
+ *fill*         0x0000000040205743        0x1 
  .text._ZN4Anki5Cozmo9NVStorage11WipeAllTaskEj
-                0x00000000402053c8       0xeb application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205744       0xeb application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                         0x10f (size before relaxing)
-                0x00000000402053cc                _ZN4Anki5Cozmo9NVStorage11WipeAllTaskEj
- *fill*         0x00000000402054b3        0x1 
+                0x0000000040205748                _ZN4Anki5Cozmo9NVStorage11WipeAllTaskEj
+ *fill*         0x000000004020582f        0x1 
  .text._ZN4Anki5Cozmo9NVStorageL6isBusyEv
-                0x00000000402054b4       0x18 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205830       0x18 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x1c (size before relaxing)
  .text.GarbageCollect
-                0x00000000402054cc       0x87 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205848       0x87 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x9f (size before relaxing)
-                0x00000000402054d8                GarbageCollect
- *fill*         0x0000000040205553        0x1 
- .text.NVInit   0x0000000040205554      0x1b5 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205854                GarbageCollect
+ *fill*         0x00000000402058cf        0x1 
+ .text.NVInit   0x00000000402058d0      0x1b5 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                         0x211 (size before relaxing)
-                0x000000004020556c                NVInit
- *fill*         0x0000000040205709        0x3 
+                0x00000000402058e8                NVInit
+ *fill*         0x0000000040205a85        0x3 
  .text._ZN4Anki5Cozmo9NVStorage6UpdateEv
-                0x000000004020570c      0x6a2 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040205a88      0x6a2 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                         0x75e (size before relaxing)
-                0x0000000040205720                _ZN4Anki5Cozmo9NVStorage6UpdateEv
- *fill*         0x0000000040205dae        0x2 
+                0x0000000040205a9c                _ZN4Anki5Cozmo9NVStorage6UpdateEv
+ *fill*         0x000000004020612a        0x2 
  .text._ZN4Anki5Cozmo9NVStorage5WriteEPNS1_13NVStorageBlobEPFvPKS2_aE
-                0x0000000040205db0       0x8a application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x000000004020612c       0x8a application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0xaa (size before relaxing)
-                0x0000000040205db4                _ZN4Anki5Cozmo9NVStorage5WriteEPNS1_13NVStorageBlobEPFvPKS2_aE
- *fill*         0x0000000040205e3a        0x2 
+                0x0000000040206130                _ZN4Anki5Cozmo9NVStorage5WriteEPNS1_13NVStorageBlobEPFvPKS2_aE
+ *fill*         0x00000000402061b6        0x2 
  .text._ZN4Anki5Cozmo9NVStorage10EraseRangeEjjPFvjaES3_
-                0x0000000040205e3c       0x4c application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x00000000402061b8       0x4c application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x60 (size before relaxing)
-                0x0000000040205e3c                _ZN4Anki5Cozmo9NVStorage10EraseRangeEjjPFvjaES3_
+                0x00000000402061b8                _ZN4Anki5Cozmo9NVStorage10EraseRangeEjjPFvjaES3_
  .text._ZN4Anki5Cozmo9NVStorage5EraseEjPFvjaE
-                0x0000000040205e88       0x1a application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040206204       0x1a application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x22 (size before relaxing)
-                0x0000000040205e88                _ZN4Anki5Cozmo9NVStorage5EraseEjPFvjaE
- *fill*         0x0000000040205ea2        0x2 
+                0x0000000040206204                _ZN4Anki5Cozmo9NVStorage5EraseEjPFvjaE
+ *fill*         0x000000004020621e        0x2 
  .text._ZN4Anki5Cozmo9NVStorage9ReadRangeEjjPFvPNS1_13NVStorageBlobEaEPFvjaE
-                0x0000000040205ea4       0x92 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000040206220       0x92 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0xa6 (size before relaxing)
-                0x0000000040205ea8                _ZN4Anki5Cozmo9NVStorage9ReadRangeEjjPFvPNS1_13NVStorageBlobEaEPFvjaE
- *fill*         0x0000000040205f36        0x2 
+                0x0000000040206224                _ZN4Anki5Cozmo9NVStorage9ReadRangeEjjPFvPNS1_13NVStorageBlobEaEPFvjaE
+ *fill*         0x00000000402062b2        0x2 
  .text._ZN4Anki5Cozmo9NVStorage4ReadEjPFvPNS1_13NVStorageBlobEaE
-                0x0000000040205f38       0x1a application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x00000000402062b4       0x1a application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x22 (size before relaxing)
-                0x0000000040205f38                _ZN4Anki5Cozmo9NVStorage4ReadEjPFvPNS1_13NVStorageBlobEaE
- *fill*         0x0000000040205f52        0x2 
+                0x00000000402062b4                _ZN4Anki5Cozmo9NVStorage4ReadEjPFvPNS1_13NVStorageBlobEaE
+ *fill*         0x00000000402062ce        0x2 
  .text._ZN4Anki5Cozmo9NVStorage7WipeAllEhbPFvjaEbb
-                0x0000000040205f54       0xa8 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x00000000402062d0       0xa8 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0xc8 (size before relaxing)
-                0x0000000040205f58                _ZN4Anki5Cozmo9NVStorage7WipeAllEhbPFvjaEbb
+                0x00000000402062d4                _ZN4Anki5Cozmo9NVStorage7WipeAllEhbPFvjaEbb
  .text._ZN4Anki5Cozmo4RTIP11SendMessageEPKhth
-                0x0000000040205ffc       0xbe application/.output/eagle/release/lib/libapplication.a(rtip.o)
+                0x0000000040206378       0xbe application/.output/eagle/release/lib/libapplication.a(rtip.o)
                                          0xda (size before relaxing)
-                0x0000000040205ffc                _ZN4Anki5Cozmo4RTIP11SendMessageEPKhth
- *fill*         0x00000000402060ba        0x2 
+                0x0000000040206378                _ZN4Anki5Cozmo4RTIP11SendMessageEPKhth
+ *fill*         0x0000000040206436        0x2 
  .text._ZN4Anki5Cozmo4RTIP11SendMessageERNS0_14RobotInterface13EngineToRobotE
-                0x00000000402060bc       0x22 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+                0x0000000040206438       0x22 application/.output/eagle/release/lib/libapplication.a(rtip.o)
                                          0x2e (size before relaxing)
-                0x00000000402060bc                _ZN4Anki5Cozmo4RTIP11SendMessageERNS0_14RobotInterface13EngineToRobotE
- *fill*         0x00000000402060de        0x2 
+                0x0000000040206438                _ZN4Anki5Cozmo4RTIP11SendMessageERNS0_14RobotInterface13EngineToRobotE
+ *fill*         0x000000004020645a        0x2 
  .text.AcceptRTIPMessage
-                0x00000000402060e0      0x184 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+                0x000000004020645c      0x184 application/.output/eagle/release/lib/libapplication.a(rtip.o)
                                         0x1cc (size before relaxing)
-                0x00000000402060f0                AcceptRTIPMessage
+                0x000000004020646c                AcceptRTIPMessage
  .text._ZN4Anki5Cozmo17UpgradeControllerL5ResetEv
-                0x0000000040206264       0x54 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x00000000402065e0       0x54 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                          0x64 (size before relaxing)
  .text._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
-                0x00000000402062b8       0x17 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x0000000040206634       0x17 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                          0x1b (size before relaxing)
-                0x00000000402062b8                _ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
- *fill*         0x00000000402062cf        0x1 
+                0x0000000040206634                _ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
+ *fill*         0x000000004020664b        0x1 
  .text._Z10gen_randomPvi
-                0x00000000402062d0        0xf application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x000000004020664c        0xf application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                          0x17 (size before relaxing)
-                0x00000000402062d0                _Z10gen_randomPvi
- *fill*         0x00000000402062df        0x1 
+                0x000000004020664c                _Z10gen_randomPvi
+ *fill*         0x000000004020665b        0x1 
  .text._ZN4Anki5Cozmo17UpgradeController4InitEv
-                0x00000000402062e0      0x1d2 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x000000004020665c      0x1d2 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                         0x206 (size before relaxing)
-                0x000000004020635c                _ZN4Anki5Cozmo17UpgradeController4InitEv
- *fill*         0x00000000402064b2        0x2 
+                0x00000000402066d8                _ZN4Anki5Cozmo17UpgradeController4InitEv
+ *fill*         0x000000004020682e        0x2 
  .text._ZN4Anki5Cozmo17UpgradeController5WriteERNS0_14RobotInterface3OTA5WriteE
-                0x00000000402064b4      0x143 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x0000000040206830      0x143 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                         0x19b (size before relaxing)
-                0x00000000402064cc                _ZN4Anki5Cozmo17UpgradeController5WriteERNS0_14RobotInterface3OTA5WriteE
- *fill*         0x00000000402065f7        0x1 
+                0x0000000040206848                _ZN4Anki5Cozmo17UpgradeController5WriteERNS0_14RobotInterface3OTA5WriteE
+ *fill*         0x0000000040206973        0x1 
  .text._ZN4Anki5Cozmo17UpgradeController6UpdateEv
-                0x00000000402065f8      0xb06 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x0000000040206974      0xb06 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                         0xd8e (size before relaxing)
-                0x00000000402066e0                _ZN4Anki5Cozmo17UpgradeController6UpdateEv
- *fill*         0x00000000402070fe        0x2 
+                0x0000000040206a5c                _ZN4Anki5Cozmo17UpgradeController6UpdateEv
+ *fill*         0x000000004020747a        0x2 
  .text._ZN4Anki5Cozmo17UpgradeController12OnDisconnectEv
-                0x0000000040207100       0x1f application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x000000004020747c       0x1f application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                          0x27 (size before relaxing)
-                0x0000000040207100                _ZN4Anki5Cozmo17UpgradeController12OnDisconnectEv
- *fill*         0x000000004020711f        0x1 
+                0x000000004020747c                _ZN4Anki5Cozmo17UpgradeController12OnDisconnectEv
+ *fill*         0x000000004020749b        0x1 
  .text._ZN4Anki5Cozmo17UpgradeController14GetVersionInfoEv
-                0x0000000040207120        0x5 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x000000004020749c        0x5 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                           0x9 (size before relaxing)
-                0x0000000040207120                _ZN4Anki5Cozmo17UpgradeController14GetVersionInfoEv
- *fill*         0x0000000040207125        0x3 
+                0x000000004020749c                _ZN4Anki5Cozmo17UpgradeController14GetVersionInfoEv
+ *fill*         0x00000000402074a1        0x3 
  .text.GetFirmwareVersion
-                0x0000000040207128        0x7 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x00000000402074a4        0x7 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                           0xb (size before relaxing)
-                0x0000000040207128                GetFirmwareVersion
- *fill*         0x000000004020712f        0x1 
+                0x00000000402074a4                GetFirmwareVersion
+ *fill*         0x00000000402074ab        0x1 
  .text.GetBuildTime
-                0x0000000040207130        0x7 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x00000000402074ac        0x7 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                           0xb (size before relaxing)
-                0x0000000040207130                GetBuildTime
- *fill*         0x0000000040207137        0x1 
- .text._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
-                0x0000000040207138       0x22 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                                         0x2e (size before relaxing)
-                0x0000000040207138                _ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
- *fill*         0x000000004020715a        0x2 
- .text._ZN4Anki5Cozmo13CrashReporter4InitEv
-                0x000000004020715c       0x39 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                0x0000000040207170                _ZN4Anki5Cozmo13CrashReporter4InitEv
- *fill*         0x0000000040207195        0x3 
- .text._ZN4Anki5Cozmo13CrashReporter12StartSendingEv
-                0x0000000040207198        0x9 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                                          0xd (size before relaxing)
-                0x0000000040207198                _ZN4Anki5Cozmo13CrashReporter12StartSendingEv
- *fill*         0x00000000402071a1        0x3 
- .text._ZN4Anki5Cozmo13CrashReporter11StartQuerryEv
-                0x00000000402071a4        0xa application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                                          0xe (size before relaxing)
-                0x00000000402071a4                _ZN4Anki5Cozmo13CrashReporter11StartQuerryEv
- *fill*         0x00000000402071ae        0x2 
- .text._ZN4Anki5Cozmo13CrashReporter6UpdateEv
-                0x00000000402071b0      0x213 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                                        0x27f (size before relaxing)
-                0x00000000402071bc                _ZN4Anki5Cozmo13CrashReporter6UpdateEv
- *fill*         0x00000000402073c3        0x1 
- .text._ZN4Anki5Cozmo13CrashReporter17AcceptBodyStorageERNS0_19BodyStorageContentsE
-                0x00000000402073c4       0xed application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
-                                        0x115 (size before relaxing)
-                0x00000000402073c4                _ZN4Anki5Cozmo13CrashReporter17AcceptBodyStorageERNS0_19BodyStorageContentsE
- *fill*         0x00000000402074b1        0x3 
+                0x00000000402074ac                GetBuildTime
+ *fill*         0x00000000402074b3        0x1 
  .literal._ZN4Anki5Cozmo19ActiveObjectManager4InitEv
                 0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .literal._ZN4Anki5Cozmo19ActiveObjectManager6UpdateEv
@@ -1816,6 +1816,25 @@ END GROUP
  .literal.i2spiSynchronizedCallback
                 0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
  .text          0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
+ *fill*         0x00000000402074b4        0x0 
+ *fill*         0x00000000402074b4        0x0 
+ *fill*         0x00000000402074b4        0x0 
+ .literal._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
+                0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .literal._ZN4Anki5Cozmo13CrashReporter4InitEv
+                0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .literal._ZN4Anki5Cozmo13CrashReporter12StartSendingEv
+                0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .literal._ZN4Anki5Cozmo13CrashReporter11StartQuerryEv
+                0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .literal._ZN4Anki5Cozmo13CrashReporter6UpdateEv
+                0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .literal._ZN4Anki5Cozmo13CrashReporter17AcceptBodyStorageERNS0_19BodyStorageContentsE
+                0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .text          0x00000000402074b4        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ *fill*         0x00000000402074b4        0x0 
+ *fill*         0x00000000402074b4        0x0 
+ *fill*         0x00000000402074b4        0x0 
  *fill*         0x00000000402074b4        0x0 
  *fill*         0x00000000402074b4        0x0 
  *fill*         0x00000000402074b4        0x0 
@@ -2029,25 +2048,6 @@ END GROUP
  *fill*         0x0000000040207510        0x0 
  *fill*         0x0000000040207510        0x0 
  *fill*         0x0000000040207510        0x0 
- *fill*         0x0000000040207510        0x0 
- *fill*         0x0000000040207510        0x0 
- *fill*         0x0000000040207510        0x0 
- *fill*         0x0000000040207510        0x0 
- *fill*         0x0000000040207510        0x0 
- *fill*         0x0000000040207510        0x0 
- .literal._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
-                0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- .literal._ZN4Anki5Cozmo13CrashReporter4InitEv
-                0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- .literal._ZN4Anki5Cozmo13CrashReporter12StartSendingEv
-                0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- .literal._ZN4Anki5Cozmo13CrashReporter11StartQuerryEv
-                0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- .literal._ZN4Anki5Cozmo13CrashReporter6UpdateEv
-                0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- .literal._ZN4Anki5Cozmo13CrashReporter17AcceptBodyStorageERNS0_19BodyStorageContentsE
-                0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
- .text          0x0000000040207510        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  *fill*         0x0000000040207510        0x0 
  *fill*         0x0000000040207510        0x0 
  *fill*         0x0000000040207510        0x0 
@@ -3240,38 +3240,38 @@ END GROUP
                 0x000000004020fd4c                crashHandlerGetReport
                 0x000000004020fd98                crashHandlerMarkReported
  *fill*         0x000000004020fdc1        0x3 
- .irom0.text    0x000000004020fdc4      0x72c driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
-                                        0x7bc (size before relaxing)
-                0x000000004020feb8                i2spiInit
-                0x00000000402102bc                i2spiQueueMessage
-                0x0000000040210380                i2spiMessageQueueIsEmpty
-                0x00000000402103d0                i2spiSwitchMode
-                0x00000000402104a8                i2spiGetRtipBootloaderState
-                0x00000000402104c0                i2spiBootloaderPushChunk
-                0x00000000402104dc                i2spiBootloaderCommandDone
- .irom0.text    0x00000000402104f0      0x46c driver/.output/eagle/release/lib/libdriver.a(uart.o)
-                                        0x4dc (size before relaxing)
-                0x000000004021063c                uart_tx_buffer
-                0x0000000040210688                uart_init
-                0x00000000402106b8                uart_start
-                0x00000000402106e0                UART_SetWordLength
-                0x0000000040210708                UART_SetStopBits
-                0x0000000040210738                UART_SetLineInverse
-                0x0000000040210768                UART_SetParity
-                0x00000000402107a0                UART_SetBaudrate
-                0x00000000402107d8                UART_SetFlowCtrl
-                0x000000004021089c                UART_WaitTxFifoEmpty
-                0x00000000402108f0                UART_ResetFifo
-                0x0000000040210924                UART_ClearIntrStatus
-                0x000000004021093c                UART_SetIntrEna
- .irom0.text    0x000000004021095c       0x9b driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .irom0.text    0x000000004020fdc4       0x9b driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
                                          0xbb (size before relaxing)
-                0x0000000040210960                factoryDataInit
-                0x0000000040210994                getSerialNumber
-                0x000000004021099c                getSSIDNumber
-                0x00000000402109bc                getModelNumber
-                0x00000000402109c8                getFactoryRandomSeed
- *fill*         0x00000000402109f7        0x1 
+                0x000000004020fdc8                factoryDataInit
+                0x000000004020fdfc                getSerialNumber
+                0x000000004020fe04                getSSIDNumber
+                0x000000004020fe24                getModelNumber
+                0x000000004020fe30                getFactoryRandomSeed
+ *fill*         0x000000004020fe5f        0x1 
+ .irom0.text    0x000000004020fe60      0x72c driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+                                        0x7bc (size before relaxing)
+                0x000000004020ff54                i2spiInit
+                0x0000000040210358                i2spiQueueMessage
+                0x000000004021041c                i2spiMessageQueueIsEmpty
+                0x000000004021046c                i2spiSwitchMode
+                0x0000000040210544                i2spiGetRtipBootloaderState
+                0x000000004021055c                i2spiBootloaderPushChunk
+                0x0000000040210578                i2spiBootloaderCommandDone
+ .irom0.text    0x000000004021058c      0x46c driver/.output/eagle/release/lib/libdriver.a(uart.o)
+                                        0x4dc (size before relaxing)
+                0x00000000402106d8                uart_tx_buffer
+                0x0000000040210724                uart_init
+                0x0000000040210754                uart_start
+                0x000000004021077c                UART_SetWordLength
+                0x00000000402107a4                UART_SetStopBits
+                0x00000000402107d4                UART_SetLineInverse
+                0x0000000040210804                UART_SetParity
+                0x000000004021083c                UART_SetBaudrate
+                0x0000000040210874                UART_SetFlowCtrl
+                0x0000000040210938                UART_WaitTxFifoEmpty
+                0x000000004021098c                UART_ResetFifo
+                0x00000000402109c0                UART_ClearIntrStatus
+                0x00000000402109d8                UART_SetIntrEna
  .irom0.text    0x00000000402109f8      0x979 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
                                         0xa39 (size before relaxing)
                 0x0000000040210b70                ReliableConnection_printState
@@ -4300,14 +4300,14 @@ END GROUP
  .irom.text     0x0000000040238e58      0x107 driver/.output/eagle/release/lib/libdriver.a(crash.o)
  *fill*         0x0000000040238f5f        0x1 
  .irom0.literal
+                0x0000000040238f60        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ *fill*         0x0000000040238f60        0x0 
+ .irom0.literal
                 0x0000000040238f60        0x0 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .irom.text     0x0000000040238f60      0x1aa driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  *fill*         0x000000004023910a        0x2 
  .irom0.literal
                 0x000000004023910c        0x0 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .irom0.literal
-                0x000000004023910c        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
- *fill*         0x000000004023910c        0x0 
  .irom0.literal
                 0x000000004023910c        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  *fill*         0x000000004023910c        0x0 
@@ -5084,6 +5084,7 @@ END GROUP
  *fill*         0x00000000401076e1        0x0 
  *fill*         0x00000000401076e1        0x0 
  *fill*         0x00000000401076e1        0x0 
+ .text          0x00000000401076e1        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  *fill*         0x00000000401076e1        0x3 
  .literal.dmaisr
                 0x00000000401076e4        0x0 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
@@ -5133,7 +5134,6 @@ END GROUP
  *fill*         0x0000000040107700        0x0 
  *fill*         0x0000000040107700        0x0 
  *fill*         0x0000000040107700        0x0 
- .text          0x0000000040107700        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .text          0x0000000040107700        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  *fill*         0x0000000040107700        0x0 
  .literal.IsMessageTypeAlwaysSentUnreliably
@@ -5679,20 +5679,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_frame   0x0000000000000108      0x1b4 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .debug_frame   0x00000000000002bc       0x78 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .debug_frame   0x0000000000000334      0x110 driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .debug_frame   0x0000000000000444      0x184 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .debug_frame   0x00000000000005c8      0x1f4 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .debug_frame   0x00000000000007bc       0x88 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_frame   0x0000000000000444       0x88 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_frame   0x00000000000004cc      0x184 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .debug_frame   0x0000000000000650      0x1f4 driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_frame   0x0000000000000844      0x2a4 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_frame   0x0000000000000ae8       0x50 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .debug_frame   0x0000000000000b38       0x40 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .debug_frame   0x0000000000000b78       0xa8 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .debug_frame   0x0000000000000c20       0x80 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .debug_frame   0x0000000000000ca0      0x328 application/.output/eagle/release/lib/libapplication.a(face.o)
- .debug_frame   0x0000000000000fc8      0x17c application/.output/eagle/release/lib/libapplication.a(messages.o)
- .debug_frame   0x0000000000001144      0x2b0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .debug_frame   0x00000000000013f4       0x90 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .debug_frame   0x0000000000001484      0x154 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .debug_frame   0x00000000000015d8       0xb0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_frame   0x0000000000000c20       0xb0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_frame   0x0000000000000cd0       0x80 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .debug_frame   0x0000000000000d50      0x328 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .debug_frame   0x0000000000001078      0x17c application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .debug_frame   0x00000000000011f4      0x2b0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .debug_frame   0x00000000000014a4       0x90 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .debug_frame   0x0000000000001534      0x154 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_frame   0x0000000000001688       0xc4 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_frame   0x000000000000174c      0x14c factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .debug_frame   0x0000000000001898      0x294 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -5725,20 +5725,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_info    0x00000000000011d5      0xf43 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .debug_info    0x0000000000002118      0x418 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .debug_info    0x0000000000002530      0xabb driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .debug_info    0x0000000000002feb     0x1623 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .debug_info    0x000000000000460e      0xe13 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .debug_info    0x0000000000005421      0x2d8 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_info    0x0000000000002feb      0x2d8 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_info    0x00000000000032c3     0x1623 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .debug_info    0x00000000000048e6      0xe13 driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_info    0x00000000000056f9     0x1365 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_info    0x0000000000006a5e      0x196 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .debug_info    0x0000000000006bf4      0x169 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .debug_info    0x0000000000006d5d     0x14a3 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .debug_info    0x0000000000008200      0xb04 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .debug_info    0x0000000000008d04     0x2712 application/.output/eagle/release/lib/libapplication.a(face.o)
- .debug_info    0x000000000000b416     0x7272 application/.output/eagle/release/lib/libapplication.a(messages.o)
- .debug_info    0x0000000000012688     0x254c application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .debug_info    0x0000000000014bd4     0x5aeb application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .debug_info    0x000000000001a6bf     0x2845 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .debug_info    0x000000000001cf04      0xe90 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_info    0x0000000000008200      0xe90 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_info    0x0000000000009090      0xb04 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .debug_info    0x0000000000009b94     0x2712 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .debug_info    0x000000000000c2a6     0x7272 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .debug_info    0x0000000000013518     0x254c application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .debug_info    0x0000000000015a64     0x5aeb application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .debug_info    0x000000000001b54f     0x2845 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_info    0x000000000001dd94      0x57f application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_info    0x000000000001e313     0x697c factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .debug_info    0x0000000000024c8f     0x7411 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -5790,20 +5790,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_abbrev  0x0000000000000484      0x2dc hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .debug_abbrev  0x0000000000000760      0x1b6 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .debug_abbrev  0x0000000000000916      0x2ae driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .debug_abbrev  0x0000000000000bc4      0x391 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .debug_abbrev  0x0000000000000f55      0x32d driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .debug_abbrev  0x0000000000001282      0x1a5 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_abbrev  0x0000000000000bc4      0x1a5 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_abbrev  0x0000000000000d69      0x391 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .debug_abbrev  0x00000000000010fa      0x32d driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_abbrev  0x0000000000001427      0x395 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_abbrev  0x00000000000017bc       0xa2 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .debug_abbrev  0x000000000000185e       0xb4 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .debug_abbrev  0x0000000000001912      0x428 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .debug_abbrev  0x0000000000001d3a      0x3a2 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .debug_abbrev  0x00000000000020dc      0x490 application/.output/eagle/release/lib/libapplication.a(face.o)
- .debug_abbrev  0x000000000000256c      0x549 application/.output/eagle/release/lib/libapplication.a(messages.o)
- .debug_abbrev  0x0000000000002ab5      0x4e1 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .debug_abbrev  0x0000000000002f96      0x3e4 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .debug_abbrev  0x000000000000337a      0x514 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .debug_abbrev  0x000000000000388e      0x37a application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_abbrev  0x0000000000001d3a      0x37a application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_abbrev  0x00000000000020b4      0x3a2 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .debug_abbrev  0x0000000000002456      0x490 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .debug_abbrev  0x00000000000028e6      0x549 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .debug_abbrev  0x0000000000002e2f      0x4e1 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .debug_abbrev  0x0000000000003310      0x3e4 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .debug_abbrev  0x00000000000036f4      0x514 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_abbrev  0x0000000000003c08      0x2e2 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_abbrev  0x0000000000003eea      0x592 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .debug_abbrev  0x000000000000447c      0x680 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -5865,11 +5865,11 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_aranges
                 0x0000000000000180       0x50 driver/.output/eagle/release/lib/libdriver.a(crash.o)
  .debug_aranges
-                0x00000000000001d0       0x80 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+                0x00000000000001d0       0x40 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .debug_aranges
-                0x0000000000000250       0xd0 driver/.output/eagle/release/lib/libdriver.a(uart.o)
+                0x0000000000000210       0x80 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .debug_aranges
-                0x0000000000000320       0x40 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+                0x0000000000000290       0xd0 driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_aranges
                 0x0000000000000360       0xb0 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_aranges
@@ -5879,19 +5879,19 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_aranges
                 0x0000000000000478       0x38 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
  .debug_aranges
-                0x00000000000004b0       0x30 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+                0x00000000000004b0       0x48 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .debug_aranges
-                0x00000000000004e0       0xd8 application/.output/eagle/release/lib/libapplication.a(face.o)
+                0x00000000000004f8       0x30 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  .debug_aranges
-                0x00000000000005b8       0x70 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                0x0000000000000528       0xd8 application/.output/eagle/release/lib/libapplication.a(face.o)
  .debug_aranges
-                0x0000000000000628       0xa8 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                0x0000000000000600       0x70 application/.output/eagle/release/lib/libapplication.a(messages.o)
  .debug_aranges
-                0x00000000000006d0       0x38 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+                0x0000000000000670       0xa8 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
  .debug_aranges
-                0x0000000000000708       0x68 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                0x0000000000000718       0x38 application/.output/eagle/release/lib/libapplication.a(rtip.o)
  .debug_aranges
-                0x0000000000000770       0x48 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                0x0000000000000750       0x68 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_aranges
                 0x00000000000007b8       0x40 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_aranges
@@ -5979,20 +5979,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_ranges  0x0000000000000038       0x98 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .debug_ranges  0x00000000000000d0       0x20 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .debug_ranges  0x00000000000000f0       0x88 driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .debug_ranges  0x0000000000000178      0x1f8 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .debug_ranges  0x0000000000000370      0x148 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .debug_ranges  0x00000000000004b8       0x30 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_ranges  0x0000000000000178       0x30 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_ranges  0x00000000000001a8      0x1f8 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .debug_ranges  0x00000000000003a0      0x148 driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_ranges  0x00000000000004e8      0x170 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_ranges  0x0000000000000658       0x28 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .debug_ranges  0x0000000000000680       0x20 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .debug_ranges  0x00000000000006a0       0x70 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .debug_ranges  0x0000000000000710       0x70 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .debug_ranges  0x0000000000000780      0x340 application/.output/eagle/release/lib/libapplication.a(face.o)
- .debug_ranges  0x0000000000000ac0      0x160 application/.output/eagle/release/lib/libapplication.a(messages.o)
- .debug_ranges  0x0000000000000c20      0x248 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .debug_ranges  0x0000000000000e68       0x88 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .debug_ranges  0x0000000000000ef0      0x160 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .debug_ranges  0x0000000000001050       0x38 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_ranges  0x0000000000000710       0x38 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_ranges  0x0000000000000748       0x70 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .debug_ranges  0x00000000000007b8      0x340 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .debug_ranges  0x0000000000000af8      0x160 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .debug_ranges  0x0000000000000c58      0x248 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .debug_ranges  0x0000000000000ea0       0x88 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .debug_ranges  0x0000000000000f28      0x160 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_ranges  0x0000000000001088       0xc0 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_ranges  0x0000000000001148      0x118 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .debug_ranges  0x0000000000001260      0x1d0 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -6023,20 +6023,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .debug_line    0x00000000000008c2      0x518 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .debug_line    0x0000000000000dda      0x198 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .debug_line    0x0000000000000f72      0x509 driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .debug_line    0x000000000000147b      0xfec driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .debug_line    0x0000000000002467      0x5fd driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .debug_line    0x0000000000002a64      0x167 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_line    0x000000000000147b      0x167 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_line    0x00000000000015e2      0xfec driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .debug_line    0x00000000000025ce      0x5fd driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_line    0x0000000000002bcb      0xa91 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_line    0x000000000000365c      0x157 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .debug_line    0x00000000000037b3      0x14c transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .debug_line    0x00000000000038ff      0x77b application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .debug_line    0x000000000000407a      0x3d3 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .debug_line    0x000000000000444d      0xbcd application/.output/eagle/release/lib/libapplication.a(face.o)
- .debug_line    0x000000000000501a      0xaaa application/.output/eagle/release/lib/libapplication.a(messages.o)
- .debug_line    0x0000000000005ac4     0x1366 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .debug_line    0x0000000000006e2a      0x4f4 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .debug_line    0x000000000000731e      0xe40 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .debug_line    0x000000000000815e      0x5de application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_line    0x000000000000407a      0x5de application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_line    0x0000000000004658      0x3d3 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .debug_line    0x0000000000004a2b      0xbcd application/.output/eagle/release/lib/libapplication.a(face.o)
+ .debug_line    0x00000000000055f8      0xaaa application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .debug_line    0x00000000000060a2     0x1366 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .debug_line    0x0000000000007408      0x4f4 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .debug_line    0x00000000000078fc      0xe40 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_line    0x000000000000873c      0x3a3 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_line    0x0000000000008adf      0x88a factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .debug_line    0x0000000000009369      0xd63 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -6091,12 +6091,12 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
                                         0x2df (size before relaxing)
  .debug_str     0x000000000000119a      0x30a driver/.output/eagle/release/lib/libdriver.a(crash.o)
                                         0x536 (size before relaxing)
- .debug_str     0x00000000000014a4      0x6fb driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
-                                        0xa0c (size before relaxing)
- .debug_str     0x0000000000001b9f      0x58e driver/.output/eagle/release/lib/libdriver.a(uart.o)
-                                        0x88b (size before relaxing)
- .debug_str     0x000000000000212d       0x4b driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_str     0x00000000000014a4       0x4b driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
                                         0x352 (size before relaxing)
+ .debug_str     0x00000000000014ef      0x6fb driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+                                        0xa0c (size before relaxing)
+ .debug_str     0x0000000000001bea      0x58e driver/.output/eagle/release/lib/libdriver.a(uart.o)
+                                        0x88b (size before relaxing)
  .debug_str     0x0000000000002178      0x322 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
                                         0x919 (size before relaxing)
  .debug_str     0x000000000000249a       0x46 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
@@ -6105,20 +6105,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
                                         0x1fb (size before relaxing)
  .debug_str     0x000000000000250e      0xfe8 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
                                        0x12d5 (size before relaxing)
- .debug_str     0x00000000000034f6      0x3fb application/.output/eagle/release/lib/libapplication.a(dhTask.o)
-                                        0x710 (size before relaxing)
- .debug_str     0x00000000000038f1      0x652 application/.output/eagle/release/lib/libapplication.a(face.o)
-                                        0xb76 (size before relaxing)
- .debug_str     0x0000000000003f43     0x70f8 application/.output/eagle/release/lib/libapplication.a(messages.o)
-                                       0x81e0 (size before relaxing)
- .debug_str     0x000000000000b03b      0x546 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
-                                       0x12cf (size before relaxing)
- .debug_str     0x000000000000b581       0x8a application/.output/eagle/release/lib/libapplication.a(rtip.o)
-                                       0x6a75 (size before relaxing)
- .debug_str     0x000000000000b60b      0x909 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
-                                       0x1584 (size before relaxing)
- .debug_str     0x000000000000bf14      0x2ab application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_str     0x00000000000034f6      0x57a application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
                                         0xa5b (size before relaxing)
+ .debug_str     0x0000000000003a70      0x3e4 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+                                        0x710 (size before relaxing)
+ .debug_str     0x0000000000003e54      0x652 application/.output/eagle/release/lib/libapplication.a(face.o)
+                                        0xb76 (size before relaxing)
+ .debug_str     0x00000000000044a6     0x6e40 application/.output/eagle/release/lib/libapplication.a(messages.o)
+                                       0x81e0 (size before relaxing)
+ .debug_str     0x000000000000b2e6      0x546 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+                                       0x12cf (size before relaxing)
+ .debug_str     0x000000000000b82c       0x8a application/.output/eagle/release/lib/libapplication.a(rtip.o)
+                                       0x6a75 (size before relaxing)
+ .debug_str     0x000000000000b8b6      0x909 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                                       0x1584 (size before relaxing)
  .debug_str     0x000000000000c1bf      0x10b application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
                                         0x51c (size before relaxing)
  .debug_str     0x000000000000c2ca      0x2a4 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
@@ -6188,20 +6188,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .comment       0x0000000000000000       0x22 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .comment       0x0000000000000000       0x22 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .comment       0x0000000000000000       0x22 driver/.output/eagle/release/lib/libdriver.a(crash.o)
+ .comment       0x0000000000000000       0x22 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .comment       0x0000000000000000       0x22 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .comment       0x0000000000000000       0x22 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .comment       0x0000000000000000       0x22 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .comment       0x0000000000000000       0x22 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .comment       0x0000000000000000       0x22 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .comment       0x0000000000000000       0x22 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
+ .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(face.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(messages.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(rtip.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .comment       0x0000000000000000       0x22 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .comment       0x0000000000000000       0x22 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .comment       0x0000000000000000       0x22 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -6390,20 +6390,20 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .xtensa.info   0x0000000000000000        0x0 hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .xtensa.info   0x0000000000000000        0x0 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .xtensa.info   0x0000000000000000        0x0 driver/.output/eagle/release/lib/libdriver.a(crash.o)
+ .xtensa.info   0x0000000000000000        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .xtensa.info   0x0000000000000000        0x0 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
  .xtensa.info   0x0000000000000000        0x0 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .xtensa.info   0x0000000000000000        0x0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
  .xtensa.info   0x0000000000000000        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .xtensa.info   0x0000000000000000        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .xtensa.info   0x0000000000000000        0x0 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
+ .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(face.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(messages.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(rtip.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .xtensa.info   0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .xtensa.info   0x0000000000000000        0x0 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .xtensa.info   0x0000000000000000        0x0 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
@@ -6518,7 +6518,7 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .xtensa.info   0x0000000000000000        0x0 ../lib/libcrypto.a(aes-internal-enc.o)
  .xtensa.info   0x0000000000000000        0x0 ../lib/libcrypto.a(aes-internal.o)
 
-.xt.lit         0x0000000000000000     0x15c0
+.xt.lit         0x0000000000000000     0x15c8
  .xt.lit        0x0000000000000000        0x8 driver/.output/eagle/release/lib/libdriver.a(cache.o)
  .xt.lit        0x0000000000000008      0x208 ../lib/libmain_w.a(user_interface.o)
                                         0x490 (size before relaxing)
@@ -6548,211 +6548,211 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
                                          0x18 (size before relaxing)
  .xt.lit        0x00000000000003f0       0x20 driver/.output/eagle/release/lib/libdriver.a(crash.o)
                                          0x30 (size before relaxing)
- .xt.lit        0x0000000000000410       0x40 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
-                                         0x60 (size before relaxing)
- .xt.lit        0x0000000000000450       0x48 driver/.output/eagle/release/lib/libdriver.a(uart.o)
-                                         0xb8 (size before relaxing)
- .xt.lit        0x0000000000000498       0x10 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .xt.lit        0x0000000000000410       0x10 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
                                          0x28 (size before relaxing)
+ .xt.lit        0x0000000000000420       0x40 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+                                         0x60 (size before relaxing)
+ .xt.lit        0x0000000000000460       0x48 driver/.output/eagle/release/lib/libdriver.a(uart.o)
+                                         0xb8 (size before relaxing)
  .xt.lit        0x00000000000004a8       0x58 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
                                          0x68 (size before relaxing)
  .xt.lit        0x0000000000000500        0x8 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .xt.lit        0x0000000000000508        0x8 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .xt.lit        0x0000000000000510       0x18 application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x0000000000000528       0x18 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .xt.lit        0x0000000000000540       0x58 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .xt.lit        0x0000000000000528       0x18 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+                                         0x28 (size before relaxing)
+ .xt.lit        0x0000000000000540       0x18 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .xt.lit        0x0000000000000558       0x58 application/.output/eagle/release/lib/libapplication.a(face.o)
                                          0xa8 (size before relaxing)
- .xt.lit        0x0000000000000598       0x18 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .xt.lit        0x00000000000005b0       0x18 application/.output/eagle/release/lib/libapplication.a(messages.o)
                                          0x50 (size before relaxing)
- .xt.lit        0x00000000000005b0       0x50 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .xt.lit        0x00000000000005c8       0x50 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                          0x90 (size before relaxing)
- .xt.lit        0x0000000000000600        0x8 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .xt.lit        0x0000000000000618        0x8 application/.output/eagle/release/lib/libapplication.a(rtip.o)
                                          0x18 (size before relaxing)
- .xt.lit        0x0000000000000608       0x20 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .xt.lit        0x0000000000000620       0x20 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                          0x48 (size before relaxing)
- .xt.lit        0x0000000000000628       0x10 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .xt.lit        0x0000000000000640       0x18 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
                                          0x28 (size before relaxing)
- .xt.lit        0x0000000000000638       0x18 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
-                                         0x28 (size before relaxing)
- .xt.lit        0x0000000000000650       0x40 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
+ .xt.lit        0x0000000000000658       0x40 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
                                          0x58 (size before relaxing)
- .xt.lit        0x0000000000000690       0x50 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
+ .xt.lit        0x0000000000000698       0x50 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)
                                          0xc0 (size before relaxing)
- .xt.lit        0x00000000000006e0       0x10 crypto/.output/eagle/release/lib/libusercrypto.a(sha512.o)
+ .xt.lit        0x00000000000006e8       0x10 crypto/.output/eagle/release/lib/libusercrypto.a(sha512.o)
                                          0x28 (size before relaxing)
- .xt.lit        0x00000000000006f0       0x28 crypto/.output/eagle/release/lib/libusercrypto.a(bignum.o)
+ .xt.lit        0x00000000000006f8       0x28 crypto/.output/eagle/release/lib/libusercrypto.a(bignum.o)
                                          0xb8 (size before relaxing)
- .xt.lit        0x0000000000000718       0x18 crypto/.output/eagle/release/lib/libusercrypto.a(rsa_pss.o)
+ .xt.lit        0x0000000000000720       0x18 crypto/.output/eagle/release/lib/libusercrypto.a(rsa_pss.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x0000000000000730        0x8 crypto/.output/eagle/release/lib/libusercrypto.a(crc32.o)
- .xt.lit        0x0000000000000738       0x18 crypto/.output/eagle/release/lib/libusercrypto.a(aes.o)
+ .xt.lit        0x0000000000000738        0x8 crypto/.output/eagle/release/lib/libusercrypto.a(crc32.o)
+ .xt.lit        0x0000000000000740       0x18 crypto/.output/eagle/release/lib/libusercrypto.a(aes.o)
                                          0x58 (size before relaxing)
- .xt.lit        0x0000000000000750       0x10 ../lib/libphy.a(phy.o)
+ .xt.lit        0x0000000000000758       0x10 ../lib/libphy.a(phy.o)
                                          0x68 (size before relaxing)
- .xt.lit        0x0000000000000760       0x88 ../lib/libphy.a(phy_chip_v6_ana.o)
+ .xt.lit        0x0000000000000768       0x88 ../lib/libphy.a(phy_chip_v6_ana.o)
                                          0xc0 (size before relaxing)
- .xt.lit        0x00000000000007e8      0x150 ../lib/libphy.a(phy_chip_v6.o)
+ .xt.lit        0x00000000000007f0      0x150 ../lib/libphy.a(phy_chip_v6.o)
                                         0x220 (size before relaxing)
- .xt.lit        0x0000000000000938       0x70 ../lib/libphy.a(phy_chip_v6_cal.o)
+ .xt.lit        0x0000000000000940       0x70 ../lib/libphy.a(phy_chip_v6_cal.o)
                                          0xe8 (size before relaxing)
- .xt.lit        0x00000000000009a8       0x78 ../lib/libphy.a(phy_sleep.o)
+ .xt.lit        0x00000000000009b0       0x78 ../lib/libphy.a(phy_sleep.o)
                                          0xd8 (size before relaxing)
- .xt.lit        0x0000000000000a20       0x30 ../lib/libpp.a(if_hwctrl.o)
+ .xt.lit        0x0000000000000a28       0x30 ../lib/libpp.a(if_hwctrl.o)
                                          0xa0 (size before relaxing)
- .xt.lit        0x0000000000000a50       0x70 ../lib/libpp.a(lmac.o)
+ .xt.lit        0x0000000000000a58       0x70 ../lib/libpp.a(lmac.o)
                                         0x130 (size before relaxing)
- .xt.lit        0x0000000000000ac0       0xd0 ../lib/libpp.a(pm.o)
+ .xt.lit        0x0000000000000ac8       0xd0 ../lib/libpp.a(pm.o)
                                         0x190 (size before relaxing)
- .xt.lit        0x0000000000000b90       0x60 ../lib/libpp.a(pm_for_bcn_only_mode.o)
+ .xt.lit        0x0000000000000b98       0x60 ../lib/libpp.a(pm_for_bcn_only_mode.o)
                                          0x98 (size before relaxing)
- .xt.lit        0x0000000000000bf0       0xd8 ../lib/libpp.a(pp.o)
+ .xt.lit        0x0000000000000bf8       0xd8 ../lib/libpp.a(pp.o)
                                         0x1b0 (size before relaxing)
- .xt.lit        0x0000000000000cc8       0x18 ../lib/libpp.a(rate_control.o)
+ .xt.lit        0x0000000000000cd0       0x18 ../lib/libpp.a(rate_control.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x0000000000000ce0       0x68 ../lib/libpp.a(trc.o)
+ .xt.lit        0x0000000000000ce8       0x68 ../lib/libpp.a(trc.o)
                                          0xa8 (size before relaxing)
- .xt.lit        0x0000000000000d48       0xd0 ../lib/libpp.a(wdev.o)
+ .xt.lit        0x0000000000000d50       0xd0 ../lib/libpp.a(wdev.o)
                                         0x198 (size before relaxing)
- .xt.lit        0x0000000000000e18       0x18 ../lib/libpp.a(esf_buf.o)
+ .xt.lit        0x0000000000000e20       0x18 ../lib/libpp.a(esf_buf.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x0000000000000e30       0x28 ../lib/libnet80211.a(ieee80211.o)
+ .xt.lit        0x0000000000000e38       0x28 ../lib/libnet80211.a(ieee80211.o)
                                          0x50 (size before relaxing)
- .xt.lit        0x0000000000000e58        0x0 ../lib/libnet80211.a(ieee80211_crypto.o)
+ .xt.lit        0x0000000000000e60        0x0 ../lib/libnet80211.a(ieee80211_crypto.o)
                                          0x10 (size before relaxing)
- .xt.lit        0x0000000000000e58        0x8 ../lib/libnet80211.a(ieee80211_ets.o)
- .xt.lit        0x0000000000000e60       0x68 ../lib/libnet80211.a(ieee80211_hostap.o)
+ .xt.lit        0x0000000000000e60        0x8 ../lib/libnet80211.a(ieee80211_ets.o)
+ .xt.lit        0x0000000000000e68       0x68 ../lib/libnet80211.a(ieee80211_hostap.o)
                                          0x78 (size before relaxing)
- .xt.lit        0x0000000000000ec8       0x48 ../lib/libnet80211.a(ieee80211_ht.o)
+ .xt.lit        0x0000000000000ed0       0x48 ../lib/libnet80211.a(ieee80211_ht.o)
                                          0x70 (size before relaxing)
- .xt.lit        0x0000000000000f10       0x38 ../lib/libnet80211.a(ieee80211_input.o)
+ .xt.lit        0x0000000000000f18       0x38 ../lib/libnet80211.a(ieee80211_input.o)
                                          0x60 (size before relaxing)
- .xt.lit        0x0000000000000f48       0x18 ../lib/libnet80211.a(ieee80211_mesh_quick.o)
+ .xt.lit        0x0000000000000f50       0x18 ../lib/libnet80211.a(ieee80211_mesh_quick.o)
                                          0x28 (size before relaxing)
- .xt.lit        0x0000000000000f60       0x38 ../lib/libnet80211.a(ieee80211_output.o)
+ .xt.lit        0x0000000000000f68       0x38 ../lib/libnet80211.a(ieee80211_output.o)
                                          0xa8 (size before relaxing)
- .xt.lit        0x0000000000000f98        0x8 ../lib/libnet80211.a(ieee80211_phy.o)
+ .xt.lit        0x0000000000000fa0        0x8 ../lib/libnet80211.a(ieee80211_phy.o)
                                          0x18 (size before relaxing)
- .xt.lit        0x0000000000000fa0        0x8 ../lib/libnet80211.a(ieee80211_power.o)
+ .xt.lit        0x0000000000000fa8        0x8 ../lib/libnet80211.a(ieee80211_power.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x0000000000000fa8       0x18 ../lib/libnet80211.a(ieee80211_proto.o)
- .xt.lit        0x0000000000000fc0        0x0 ../lib/libnet80211.a(ieee80211_rfid.o)
+ .xt.lit        0x0000000000000fb0       0x18 ../lib/libnet80211.a(ieee80211_proto.o)
+ .xt.lit        0x0000000000000fc8        0x0 ../lib/libnet80211.a(ieee80211_rfid.o)
                                          0x30 (size before relaxing)
- .xt.lit        0x0000000000000fc0       0x50 ../lib/libnet80211.a(ieee80211_scan.o)
+ .xt.lit        0x0000000000000fc8       0x50 ../lib/libnet80211.a(ieee80211_scan.o)
                                          0xd8 (size before relaxing)
- .xt.lit        0x0000000000001010       0x30 ../lib/libnet80211.a(ieee80211_sta.o)
+ .xt.lit        0x0000000000001018       0x30 ../lib/libnet80211.a(ieee80211_sta.o)
                                          0x60 (size before relaxing)
- .xt.lit        0x0000000000001040       0x20 ../lib/libnet80211.a(wl_chm.o)
+ .xt.lit        0x0000000000001048       0x20 ../lib/libnet80211.a(wl_chm.o)
                                          0x60 (size before relaxing)
- .xt.lit        0x0000000000001060       0x90 ../lib/libnet80211.a(wl_cnx.o)
+ .xt.lit        0x0000000000001068       0x90 ../lib/libnet80211.a(wl_cnx.o)
                                         0x138 (size before relaxing)
- .xt.lit        0x00000000000010f0       0x20 ../lib/libnet80211.a(ieee80211_action.o)
+ .xt.lit        0x00000000000010f8       0x20 ../lib/libnet80211.a(ieee80211_action.o)
                                          0x30 (size before relaxing)
- .xt.lit        0x0000000000001110       0x20 ../lib/libnet80211.a(ieee80211_action_vendor.o)
+ .xt.lit        0x0000000000001118       0x20 ../lib/libnet80211.a(ieee80211_action_vendor.o)
                                          0x50 (size before relaxing)
- .xt.lit        0x0000000000001130        0x0 ../lib/libnet80211.a(ieee80211_crypto_ccmp.o)
+ .xt.lit        0x0000000000001138        0x0 ../lib/libnet80211.a(ieee80211_crypto_ccmp.o)
                                          0x10 (size before relaxing)
- .xt.lit        0x0000000000001130        0x8 ../lib/libnet80211.a(ieee80211_ie_vendor.o)
+ .xt.lit        0x0000000000001138        0x8 ../lib/libnet80211.a(ieee80211_ie_vendor.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x0000000000001138       0x48 ../lib/liblwip.a(dhcp.o)
+ .xt.lit        0x0000000000001140       0x48 ../lib/liblwip.a(dhcp.o)
                                          0xc0 (size before relaxing)
- .xt.lit        0x0000000000001180       0x28 ../lib/liblwip.a(dhcpserver.o)
+ .xt.lit        0x0000000000001188       0x28 ../lib/liblwip.a(dhcpserver.o)
                                          0x98 (size before relaxing)
- .xt.lit        0x00000000000011a8       0x20 ../lib/liblwip.a(dns.o)
+ .xt.lit        0x00000000000011b0       0x20 ../lib/liblwip.a(dns.o)
                                          0x48 (size before relaxing)
- .xt.lit        0x00000000000011c8       0x28 ../lib/liblwip.a(espconn.o)
+ .xt.lit        0x00000000000011d0       0x28 ../lib/liblwip.a(espconn.o)
                                          0xe8 (size before relaxing)
- .xt.lit        0x00000000000011f0       0x68 ../lib/liblwip.a(espconn_tcp.o)
+ .xt.lit        0x00000000000011f8       0x68 ../lib/liblwip.a(espconn_tcp.o)
                                          0xc0 (size before relaxing)
- .xt.lit        0x0000000000001258       0x18 ../lib/liblwip.a(espconn_udp.o)
+ .xt.lit        0x0000000000001260       0x18 ../lib/liblwip.a(espconn_udp.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x0000000000001270       0x30 ../lib/liblwip.a(etharp.o)
+ .xt.lit        0x0000000000001278       0x30 ../lib/liblwip.a(etharp.o)
                                          0x78 (size before relaxing)
- .xt.lit        0x00000000000012a0       0x18 ../lib/liblwip.a(igmp.o)
+ .xt.lit        0x00000000000012a8       0x18 ../lib/liblwip.a(igmp.o)
                                          0x70 (size before relaxing)
- .xt.lit        0x00000000000012b8        0x8 ../lib/liblwip.a(init.o)
- .xt.lit        0x00000000000012c0        0x8 ../lib/liblwip.a(ip_addr.o)
+ .xt.lit        0x00000000000012c0        0x8 ../lib/liblwip.a(init.o)
+ .xt.lit        0x00000000000012c8        0x8 ../lib/liblwip.a(ip_addr.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x00000000000012c8       0x10 ../lib/liblwip.a(ip.o)
+ .xt.lit        0x00000000000012d0       0x10 ../lib/liblwip.a(ip.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x00000000000012d8       0x10 ../lib/liblwip.a(netif.o)
+ .xt.lit        0x00000000000012e0       0x10 ../lib/liblwip.a(netif.o)
                                          0x40 (size before relaxing)
- .xt.lit        0x00000000000012e8       0x10 ../lib/liblwip.a(pbuf.o)
+ .xt.lit        0x00000000000012f0       0x10 ../lib/liblwip.a(pbuf.o)
                                          0x48 (size before relaxing)
- .xt.lit        0x00000000000012f8       0x10 ../lib/liblwip.a(raw.o)
+ .xt.lit        0x0000000000001300       0x10 ../lib/liblwip.a(raw.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x0000000000001308       0x18 ../lib/liblwip.a(tcp_in.o)
+ .xt.lit        0x0000000000001310       0x18 ../lib/liblwip.a(tcp_in.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x0000000000001320       0x50 ../lib/liblwip.a(tcp.o)
+ .xt.lit        0x0000000000001328       0x50 ../lib/liblwip.a(tcp.o)
                                          0xb8 (size before relaxing)
- .xt.lit        0x0000000000001370       0x28 ../lib/liblwip.a(tcp_out.o)
+ .xt.lit        0x0000000000001378       0x28 ../lib/liblwip.a(tcp_out.o)
                                          0x68 (size before relaxing)
- .xt.lit        0x0000000000001398       0x48 ../lib/liblwip.a(timers.o)
+ .xt.lit        0x00000000000013a0       0x48 ../lib/liblwip.a(timers.o)
                                          0x68 (size before relaxing)
- .xt.lit        0x00000000000013e0       0x18 ../lib/liblwip.a(udp.o)
+ .xt.lit        0x00000000000013e8       0x18 ../lib/liblwip.a(udp.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x00000000000013f8        0x8 ../lib/liblwip.a(icmp.o)
+ .xt.lit        0x0000000000001400        0x8 ../lib/liblwip.a(icmp.o)
                                          0x10 (size before relaxing)
- .xt.lit        0x0000000000001400       0x18 ../lib/libwpa.a(ap_config.o)
+ .xt.lit        0x0000000000001408       0x18 ../lib/libwpa.a(ap_config.o)
                                          0x40 (size before relaxing)
- .xt.lit        0x0000000000001418       0x10 ../lib/libwpa.a(common.o)
+ .xt.lit        0x0000000000001420       0x10 ../lib/libwpa.a(common.o)
                                          0x18 (size before relaxing)
- .xt.lit        0x0000000000001428        0x8 ../lib/libwpa.a(os_xtensa.o)
+ .xt.lit        0x0000000000001430        0x8 ../lib/libwpa.a(os_xtensa.o)
                                          0x10 (size before relaxing)
- .xt.lit        0x0000000000001430       0x70 ../lib/libwpa.a(wpa_auth.o)
+ .xt.lit        0x0000000000001438       0x70 ../lib/libwpa.a(wpa_auth.o)
                                         0x100 (size before relaxing)
- .xt.lit        0x00000000000014a0       0x10 ../lib/libwpa.a(wpa_auth_ie.o)
+ .xt.lit        0x00000000000014a8       0x10 ../lib/libwpa.a(wpa_auth_ie.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x00000000000014b0       0x38 ../lib/libwpa.a(wpa.o)
+ .xt.lit        0x00000000000014b8       0x38 ../lib/libwpa.a(wpa.o)
                                         0x110 (size before relaxing)
- .xt.lit        0x00000000000014e8       0x28 ../lib/libwpa.a(wpa_common.o)
+ .xt.lit        0x00000000000014f0       0x28 ../lib/libwpa.a(wpa_common.o)
                                          0x58 (size before relaxing)
- .xt.lit        0x0000000000001510        0x8 ../lib/libwpa.a(wpa_debug.o)
- .xt.lit        0x0000000000001518        0x0 ../lib/libwpa.a(wpa_ie.o)
+ .xt.lit        0x0000000000001518        0x8 ../lib/libwpa.a(wpa_debug.o)
+ .xt.lit        0x0000000000001520        0x0 ../lib/libwpa.a(wpa_ie.o)
                                          0x18 (size before relaxing)
- .xt.lit        0x0000000000001518       0x18 ../lib/libwpa.a(wpa_main.o)
+ .xt.lit        0x0000000000001520       0x18 ../lib/libwpa.a(wpa_main.o)
                                          0x48 (size before relaxing)
- .xt.lit        0x0000000000001530        0x0 ../lib/libwpa.a(wpas_glue.o)
+ .xt.lit        0x0000000000001538        0x0 ../lib/libwpa.a(wpas_glue.o)
                                          0x10 (size before relaxing)
- .xt.lit        0x0000000000001530        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/../../../../xtensa-lx106-elf/lib/libc.a(lib_a-atoi.o)
+ .xt.lit        0x0000000000001538        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/../../../../xtensa-lx106-elf/lib/libc.a(lib_a-atoi.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001530        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/../../../../xtensa-lx106-elf/lib/libc.a(lib_a-strtol.o)
- .xt.lit        0x0000000000001538        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_addsubsf3.o)
- .xt.lit        0x0000000000001540        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_mulsf3.o)
+ .xt.lit        0x0000000000001538        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/../../../../xtensa-lx106-elf/lib/libc.a(lib_a-strtol.o)
+ .xt.lit        0x0000000000001540        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_addsubsf3.o)
+ .xt.lit        0x0000000000001548        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_mulsf3.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001540        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_divsf3.o)
+ .xt.lit        0x0000000000001548        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_divsf3.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001540        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_fixsfsi.o)
+ .xt.lit        0x0000000000001548        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_fixsfsi.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001540        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_fixunssfsi.o)
+ .xt.lit        0x0000000000001548        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_fixunssfsi.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001540        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_muldf3.o)
- .xt.lit        0x0000000000001548        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_divdf3.o)
+ .xt.lit        0x0000000000001548        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_muldf3.o)
+ .xt.lit        0x0000000000001550        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_divdf3.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001548        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_fixdfsi.o)
+ .xt.lit        0x0000000000001550        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_fixdfsi.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001548        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_truncdfsf2.o)
- .xt.lit        0x0000000000001550        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_divdi3.o)
+ .xt.lit        0x0000000000001550        0x8 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_truncdfsf2.o)
+ .xt.lit        0x0000000000001558        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_divdi3.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001550        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_umoddi3.o)
+ .xt.lit        0x0000000000001558        0x0 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_umoddi3.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x0000000000001550       0x10 hal/.output/eagle/release/lib/libuserhal.a(radio.o)
+ .xt.lit        0x0000000000001558       0x10 hal/.output/eagle/release/lib/libuserhal.a(radio.o)
                                          0x18 (size before relaxing)
- .xt.lit        0x0000000000001560       0x30 hal/.output/eagle/release/lib/libuserhal.a(wifi_configuration.o)
+ .xt.lit        0x0000000000001568       0x30 hal/.output/eagle/release/lib/libuserhal.a(wifi_configuration.o)
                                          0x38 (size before relaxing)
- .xt.lit        0x0000000000001590        0x8 clad/.output/eagle/release/lib/libclad.a(messageEngineToRobot.o)
+ .xt.lit        0x0000000000001598        0x8 clad/.output/eagle/release/lib/libclad.a(messageEngineToRobot.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x0000000000001598        0x8 clad/.output/eagle/release/lib/libclad.a(messageRobotToEngine.o)
+ .xt.lit        0x00000000000015a0        0x8 clad/.output/eagle/release/lib/libclad.a(messageRobotToEngine.o)
                                          0x20 (size before relaxing)
- .xt.lit        0x00000000000015a0        0x8 ../lib/libnet80211.a(ieee80211_crypto_tkip.o)
+ .xt.lit        0x00000000000015a8        0x8 ../lib/libnet80211.a(ieee80211_crypto_tkip.o)
                                          0x10 (size before relaxing)
- .xt.lit        0x00000000000015a8        0x0 ../lib/libnet80211.a(ieee80211_crypto_wep.o)
+ .xt.lit        0x00000000000015b0        0x0 ../lib/libnet80211.a(ieee80211_crypto_wep.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x00000000000015a8        0x0 ../lib/libcrypto.a(aes-wrap.o)
+ .xt.lit        0x00000000000015b0        0x0 ../lib/libcrypto.a(aes-wrap.o)
                                           0x8 (size before relaxing)
- .xt.lit        0x00000000000015a8       0x10 ../lib/libcrypto.a(aes-internal-enc.o)
+ .xt.lit        0x00000000000015b0       0x10 ../lib/libcrypto.a(aes-internal-enc.o)
                                          0x18 (size before relaxing)
- .xt.lit        0x00000000000015b8        0x8 ../lib/libcrypto.a(aes-internal.o)
+ .xt.lit        0x00000000000015c0        0x8 ../lib/libcrypto.a(aes-internal.o)
 
 .xt.prop        0x0000000000000000    0x2f364
  .xt.prop       0x0000000000000000       0x60 driver/.output/eagle/release/lib/libdriver.a(cache.o)
@@ -6791,27 +6791,27 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
                                          0xc0 (size before relaxing)
  .xt.prop       0x000000000000618c      0x3a8 driver/.output/eagle/release/lib/libdriver.a(crash.o)
                                         0x3b4 (size before relaxing)
- .xt.prop       0x0000000000006534      0x918 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .xt.prop       0x0000000000006534       0xf0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .xt.prop       0x0000000000006624      0x918 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
                                         0x954 (size before relaxing)
- .xt.prop       0x0000000000006e4c      0x468 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .xt.prop       0x00000000000072b4       0xf0 driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .xt.prop       0x0000000000006f3c      0x468 driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .xt.prop       0x00000000000073a4      0x72c transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
                                         0x750 (size before relaxing)
  .xt.prop       0x0000000000007ad0       0xcc transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .xt.prop       0x0000000000007b9c       0xd8 transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .xt.prop       0x0000000000007c74      0x4ec application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
                                         0x51c (size before relaxing)
- .xt.prop       0x0000000000008160      0x168 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .xt.prop       0x0000000000008160      0x294 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .xt.prop       0x00000000000083f4      0x168 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
                                         0x180 (size before relaxing)
- .xt.prop       0x00000000000082c8      0x720 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .xt.prop       0x000000000000855c      0x720 application/.output/eagle/release/lib/libapplication.a(face.o)
                                         0x72c (size before relaxing)
- .xt.prop       0x00000000000089e8      0x5b8 application/.output/eagle/release/lib/libapplication.a(messages.o)
- .xt.prop       0x0000000000008fa0      0xe64 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .xt.prop       0x0000000000008c7c      0x5b8 application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .xt.prop       0x0000000000009234      0xe64 application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
                                         0xec4 (size before relaxing)
- .xt.prop       0x0000000000009e04      0x1c8 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .xt.prop       0x0000000000009fcc      0xbb8 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+ .xt.prop       0x000000000000a098      0x1c8 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .xt.prop       0x000000000000a260      0xbb8 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
                                         0xc00 (size before relaxing)
- .xt.prop       0x000000000000ab84      0x294 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
  .xt.prop       0x000000000000ae18      0x138 application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .xt.prop       0x000000000000af50      0x384 factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
                                         0x390 (size before relaxing)
@@ -6992,17 +6992,6 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
                                          0xe4 (size before relaxing)
  .xt.prop       0x000000000002f2b0       0xb4 ../lib/libcrypto.a(aes-internal.o)
 
-.xt.lit._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
-                0x0000000000000000        0x0
- .xt.lit._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
-                0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
-                                          0x8 (size before relaxing)
-
-.xt.prop._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
-                0x0000000000000000       0x24
- .xt.prop._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
-                0x0000000000000000       0x24 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
-
 .xt.lit._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
                 0x0000000000000000        0x0
  .xt.lit._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
@@ -7014,26 +7003,37 @@ OUTPUT(.output/eagle/release/image/eagle.app.v6.out elf32-xtensa-le)
  .xt.prop._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS0_16WriteBodyStorageE
                 0x0000000000000000       0x24 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
 
+.xt.lit._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
+                0x0000000000000000        0x0
+ .xt.lit._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
+                0x0000000000000000        0x0 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+                                          0x8 (size before relaxing)
+
+.xt.prop._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
+                0x0000000000000000       0x24
+ .xt.prop._ZN4Anki5Cozmo14RobotInterface11SendMessageERKNS1_3OTA3AckE
+                0x0000000000000000       0x24 application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
+
 .debug_loc      0x0000000000000000     0xc987
  .debug_loc     0x0000000000000000       0x50 /opt/xtensa-lx106-elf/bin/../lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a(_muldi3.o)
  .debug_loc     0x0000000000000050       0x95 hal/.output/eagle/release/lib/libuserhal.a(user_main.o)
  .debug_loc     0x00000000000000e5      0x34e hal/.output/eagle/release/lib/libuserhal.a(client.o)
  .debug_loc     0x0000000000000433       0xd3 hal/.output/eagle/release/lib/libuserhal.a(foregroundTask.o)
  .debug_loc     0x0000000000000506      0x48f driver/.output/eagle/release/lib/libdriver.a(crash.o)
- .debug_loc     0x0000000000000995      0x9c7 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
- .debug_loc     0x000000000000135c      0x851 driver/.output/eagle/release/lib/libdriver.a(uart.o)
- .debug_loc     0x0000000000001bad       0x7e driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_loc     0x0000000000000995       0x7e driver/.output/eagle/release/lib/libdriver.a(factoryData.o)
+ .debug_loc     0x0000000000000a13      0x9c7 driver/.output/eagle/release/lib/libdriver.a(i2spi.o)
+ .debug_loc     0x00000000000013da      0x851 driver/.output/eagle/release/lib/libdriver.a(uart.o)
  .debug_loc     0x0000000000001c2b      0xdf1 transport/.output/eagle/release/lib/libtransport.a(reliableTransport.o)
  .debug_loc     0x0000000000002a1c       0x83 transport/.output/eagle/release/lib/libtransport.a(reliableMessageTypes.o)
  .debug_loc     0x0000000000002a9f       0xac transport/.output/eagle/release/lib/libtransport.a(reliableSequenceId.o)
  .debug_loc     0x0000000000002b4b      0x20a application/.output/eagle/release/lib/libapplication.a(backgroundTask.o)
- .debug_loc     0x0000000000002d55      0x122 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
- .debug_loc     0x0000000000002e77      0xfb8 application/.output/eagle/release/lib/libapplication.a(face.o)
- .debug_loc     0x0000000000003e2f      0x94b application/.output/eagle/release/lib/libapplication.a(messages.o)
- .debug_loc     0x000000000000477a      0xe1e application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
- .debug_loc     0x0000000000005598      0x317 application/.output/eagle/release/lib/libapplication.a(rtip.o)
- .debug_loc     0x00000000000058af      0x3cd application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
- .debug_loc     0x0000000000005c7c      0x147 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_loc     0x0000000000002d55      0x147 application/.output/eagle/release/lib/libapplication.a(crashReporter.o)
+ .debug_loc     0x0000000000002e9c      0x122 application/.output/eagle/release/lib/libapplication.a(dhTask.o)
+ .debug_loc     0x0000000000002fbe      0xfb8 application/.output/eagle/release/lib/libapplication.a(face.o)
+ .debug_loc     0x0000000000003f76      0x94b application/.output/eagle/release/lib/libapplication.a(messages.o)
+ .debug_loc     0x00000000000048c1      0xe1e application/.output/eagle/release/lib/libapplication.a(nvStorage.o)
+ .debug_loc     0x00000000000056df      0x317 application/.output/eagle/release/lib/libapplication.a(rtip.o)
+ .debug_loc     0x00000000000059f6      0x3cd application/.output/eagle/release/lib/libapplication.a(upgradeController.o)
  .debug_loc     0x0000000000005dc3      0x10e application/.output/eagle/release/lib/libapplication.a(activeObjectManager.o)
  .debug_loc     0x0000000000005ed1      0x45b factory/.output/eagle/release/lib/libfactory.a(factoryTests.o)
  .debug_loc     0x000000000000632c      0x577 supervisor/.output/eagle/release/lib/libsupervisor.a(animationController.o)

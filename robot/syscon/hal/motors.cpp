@@ -76,7 +76,8 @@ Fixed g_radiansPerHeadTick;   // XXX: Remove this once Pilot robots are obsolete
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
-static volatile bool motorDisable = true;
+static volatile bool motorDisable = false;
+static volatile bool chargeOkEnabled = false;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 static const MotorConfig m_config[MOTOR_COUNT] = {
@@ -190,30 +191,44 @@ void Motors::disable(bool disable) {
   if (motorDisable == disable) {
     return ;
   }
-  
+
   // Enable motors, recalibrate encoders
   if (!disable) {
+    nrf_gpio_cfg_default(PIN_nCHGOK);
+    setup();
+    
     using namespace Anki::Cozmo::RobotInterface;
     
     StartMotorCalibration msg;
     msg.calibrateHead = true;
     msg.calibrateLift = true;
     SendMessage(msg);
-  }
+  } else {
+    teardown();
 
+    nrf_gpio_cfg_input(PIN_nCHGOK, NRF_GPIO_PIN_PULLUP);
+  }
+  
   motorDisable = disable;
 }
 
-void Motors::teardown(void) {
-  // Turn off our timers
-  NRF_TIMER1->TASKS_STOP = 1;
-  NRF_TIMER2->TASKS_STOP = 1;
 
+// static bool chargeOkEnabled = false;
+// Returns 'true' when the the charger says the battery is full
+bool Motors::getChargeOkay() {
+  return motorDisable ? nrf_gpio_pin_read(PIN_nCHGOK) : false;
+}
+
+
+void Motors::teardown(void) {
+  // Disable our PPI channels
+  NRF_PPI->CHENCLR = 0xFF;
+  
   // Tear down GPIOTE tasks
   for (int i = 0; i < MOTOR_COUNT; i++) {
     const MotorConfig* motorConfig = &m_config[i];
 
-    nrf_gpiote_task_disable(i);
+    //nrf_gpiote_task_disable(i);
     nrf_gpio_pin_clear(motorConfig->n1Pin);
     nrf_gpio_pin_clear(motorConfig->n2Pin);
     nrf_gpio_pin_clear(motorConfig->pPin);
@@ -225,12 +240,32 @@ void Motors::teardown(void) {
 
   MicroWait(250000);
 
-  for (int i = 0; i < 32; i++) {
-    if (i == PIN_PWR_EN) continue ;
-    nrf_gpio_cfg_default(i);
+  for (int i = 0; i < MOTOR_COUNT; i++) {
+    const MotorConfig* motorConfig = &m_config[i];
+
+    nrf_gpio_cfg_default(motorConfig->n1Pin);
+    nrf_gpio_cfg_default(motorConfig->n2Pin);
+    nrf_gpio_cfg_default(motorConfig->pPin);
+  }
+}
+
+void Motors::setup(void) {
+  // Configure each motor pin as an output
+  for (int i = 0; i < MOTOR_COUNT; i++)
+  {
+    // Configure the pins for the motor bridge to be outputs and default low (stopped)
+    const MotorConfig* motorConfig = &m_config[i];
+
+    nrf_gpio_pin_clear(motorConfig->n1Pin);
+    nrf_gpio_pin_clear(motorConfig->n2Pin);
+    nrf_gpio_pin_clear(motorConfig->pPin);
+    nrf_gpio_cfg_output(motorConfig->n1Pin);
+    nrf_gpio_cfg_output(motorConfig->n2Pin);
+    nrf_gpio_cfg_output(motorConfig->pPin);
   }
 
-  MicroWait(250000);
+  // Disable our PPI
+  NRF_PPI->CHENSET = 0xFF;
 }
 
 // Reset Nordic tasks to allow less glitchy changes.
@@ -324,7 +359,7 @@ void Motors::init()
   sd_nvic_SetPriority(GPIOTE_IRQn, ENCODER_PRIORITY);
   sd_nvic_EnableIRQ(GPIOTE_IRQn);
 
-    // Clear all GPIOTE interrupts
+  // Clear all GPIOTE interrupts
   NRF_GPIOTE->INTENCLR = 0xFFFFFFFF;
     
   // Clear pending events
@@ -336,19 +371,14 @@ void Motors::init()
   // Enable interrupt on port event
   NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
   
+  setup(); // Configure output pins
+  
   // Configure each motor pin as an output
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
     // Configure the pins for the motor bridge to be outputs and default low (stopped)
     const MotorConfig* motorConfig = &m_config[i];
 
-    nrf_gpio_pin_clear(motorConfig->n1Pin);
-    nrf_gpio_pin_clear(motorConfig->n2Pin);
-    nrf_gpio_pin_clear(motorConfig->pPin);
-    nrf_gpio_cfg_output(motorConfig->n1Pin);
-    nrf_gpio_cfg_output(motorConfig->n2Pin);
-    nrf_gpio_cfg_output(motorConfig->pPin);
-    
     // Enable sensing for each encoder pin (only one per quadrature encoder)
     const u8 pin = motorConfig->encoderPins[0];
     const u32 mask = 1 << pin;
@@ -479,14 +509,6 @@ s32 Motors::debugWheelsGetTicks(u8 motorID)
                                 | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos) \
                                 | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) \
                                 | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos)
-
-void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
-{
-  /*
-  int i = m_motors[motorID].position;
-  UART::print("%c%c%c%c", i, i >> 8, i >> 16, i >> 24);
-  */
-}
 
 // Apologies for the straight-line code - it's required for performance
 // The encoders literally lose ticks unless this code can finish within ~30uS

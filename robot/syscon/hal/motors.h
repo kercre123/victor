@@ -19,9 +19,13 @@ typedef s32 Fixed;
 namespace Motors {
   // Initialize the PWM peripheral on the designated pins in the source file.
   void init();
-  void teardown(void);  // Only used for rebooting the machine
+  
+  void teardown(void);  // Disable motors safely and reconfigure GPIO
+  void setup(void);
+  
   void disable(bool disable);
-
+  bool getChargeOkay();
+  
   // Set the (unitless) power for a specified motor in the range [-798, 798].
   void setPower(u8 motorID, s16 power);
   Fixed getSpeed(u8 motorID);

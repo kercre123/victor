@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "cubes.h"
+#include "backpack.h"
 
 #include "clad/types/ledTypes.h"
 
@@ -66,7 +67,7 @@ struct LightValues {
 union ControllerLights {
   struct {
     LightValues cube[MAX_ACCESSORIES][NUM_PROP_LIGHTS];
-    LightValues backpack[5];
+    LightValues backpack[BACKPACK_LIGHT_CHANNELS];
   };
   
   LightValues lights[];

@@ -52,8 +52,8 @@ enum e_nrf_gpio {
   PIN_LED4            = 11,
 
   // Charging
-  PIN_CHARGE_EN       = 20,  // TODO
-  PIN_nCHGOK          = 2,   // TODO
+  PIN_CHARGE_EN       = 20,
+  PIN_nCHGOK          = 2,
 
   // Power
   PIN_PWR_EN          = 15,

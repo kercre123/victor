@@ -117,8 +117,8 @@ static void dh_setup(const void* state) {
   // Display the pin number
   RobotInterface::DisplayNumber dn;
   dn.value = dh->pin;
-  dn.digits = 8;
-  dn.x = 0;
+  dn.digits = BLUETOOTH_PIN_DIGITS;
+  dn.x = (8 - BLUETOOTH_PIN_DIGITS) * 8;
   dn.y = 16;
   RobotInterface::SendMessage(dn);
 
