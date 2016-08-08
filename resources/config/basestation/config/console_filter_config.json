@@ -27,7 +27,8 @@
       { "channel": "Behaviors",       "enabled": false },
       { "channel": "AIWhiteboard",    "enabled": false },      
       { "channel": "Audio_WwiseLog",  "enabled": false },
-      { "channel": "FaceRecognizer",  "enabled": false }
+      { "channel": "FaceRecognizer",  "enabled": false },
+      { "channel": "UiComms",         "enabled": false }
 
     ],
     "levels":

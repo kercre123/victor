@@ -51,18 +51,19 @@ namespace Anki {
     
 #if (defined(ANKI_IOS_BUILD) || defined(ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
-  #define ANKI_ENABLE_SDK_OVER_TCP  1
 #else
   #define ANKI_ENABLE_SDK_OVER_UDP  1
-  #define ANKI_ENABLE_SDK_OVER_TCP  0
 #endif
+
+#define ANKI_ENABLE_SDK_OVER_TCP  1
     
     
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
     
     
-    CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "SDK", true);
-    CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "SDK", true);
+    CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "UiComms", true);
+    CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "UiComms", true);
+    CONSOLE_VAR(uint32_t, kPingSendFreq, "UiComms", 20); // 0 = never
     
     
     bool IsSdkConnection(UiConnectionType type)
@@ -472,6 +473,9 @@ namespace Anki {
       
       // Update all the comms
       
+      const bool sendPingThisTick = (kPingSendFreq > 0) && ((_updateCount % kPingSendFreq) == 0);
+      ++_updateCount;
+      
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
         ISocketComms* socketComms = GetSocketComms(i);
@@ -479,10 +483,9 @@ namespace Anki {
         {
           socketComms->Update();
           
-          if(socketComms->GetNumConnectedDevices() > 0)
+          if(sendPingThisTick && (socketComms->GetNumConnectedDevices() > 0))
           {
             // Ping the connection to let them know we're still here
-            // TODO - throttle so it only sends every few ticks or ms
             
             ANKI_CPU_PROFILE("UiMH::Update::SendPing");
             
@@ -518,7 +521,7 @@ namespace Anki {
               // Force connection to first (local) UI device
               if (ConnectToUiDevice(deviceId, i))
               {
-                PRINT_NAMED_INFO("UiMessageHandler.Update.Connected",
+                PRINT_CH_INFO("UiComms", "UiMessageHandler.Update.Connected",
                                  "Automatically connected to local %s device %d!", EnumToString(i), deviceId);
               }
               else
@@ -573,7 +576,7 @@ namespace Anki {
           
           const bool success = ConnectToUiDevice(deviceID, msg.connectionType);
           if(success) {
-            PRINT_NAMED_INFO("UiMessageHandler.HandleEvents", "Connected to %s device %d!",
+            PRINT_CH_INFO("UiComms", "UiMessageHandler.HandleEvents", "Connected to %s device %d!",
                              EnumToString(msg.connectionType), deviceID);
           } else {
             PRINT_NAMED_ERROR("UiMessageHandler.HandleEvents", "Failed to connect to %s device %d!",
@@ -591,7 +594,7 @@ namespace Anki {
 
           if (socketComms && socketComms->DisconnectDeviceByID(deviceId))
           {
-            PRINT_NAMED_INFO("UiMessageHandler.ProcessMessage", "Disconnected from %s device %d!",
+            PRINT_CH_INFO("UiComms", "UiMessageHandler.ProcessMessage", "Disconnected from %s device %d!",
                              EnumToString(msg.connectionType), deviceId);
           }
 

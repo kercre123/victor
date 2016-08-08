@@ -76,7 +76,7 @@ class _EngineInterfaceImpl:
             sys.stdout.write("Creating TCP SDK Connection" + os.linesep)
 
             engineIpAddress = "127.0.0.1"
-            sdkTcpPort = 5107
+            sdkTcpPort = 5106
 
             self.engineConnection = TcpConnection(verboseLevel, engineIpAddress, sdkTcpPort, GToEI, GToEM)
         else:

@@ -52,7 +52,7 @@ def connect_async(f=None, loop=None, block=True, conn_factory=conn.CozmoConnecti
         coz_conn = conn_factory(loop=loop)
 
         async def connect():
-            await loop.create_connection(lambda: coz_conn, '127.0.0.1', 5107)
+            await loop.create_connection(lambda: coz_conn, '127.0.0.1', 5106)
             # wait until the connected CLAD message is received from the engine.
             await coz_conn.wait_for(conn.EvtConnected)
 

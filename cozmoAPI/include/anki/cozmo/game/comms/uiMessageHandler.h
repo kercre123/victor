@@ -127,6 +127,8 @@ namespace Anki {
       std::vector<ExternalInterface::MessageGameToEngine> _threadedMsgs;
       std::mutex _mutex;
       
+      uint32_t   _updateCount = 0;
+      
     }; // class MessageHandler
     
     

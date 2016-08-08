@@ -49,7 +49,7 @@ void UdpSocketComms::StartAdvertising(UiConnectionType connectionType)
   const int registrationPort = isUI ? UI_ADVERTISEMENT_REGISTRATION_PORT : SDK_ADVERTISEMENT_REGISTRATION_PORT;
   const int advertisingPort  = isUI ? UI_ADVERTISING_PORT : SDK_ADVERTISING_PORT;
 
-  PRINT_NAMED_INFO("UdpSocketComms::StartAdvertising",
+  PRINT_CH_INFO("UiComms", "UdpSocketComms::StartAdvertising",
                    "Starting %sAdvertisementService, reg port %d, ad port %d",
                    EnumToString(connectionType), registrationPort, advertisingPort);
 

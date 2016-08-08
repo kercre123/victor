@@ -20,10 +20,10 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kPrintUiMessageLatency, "GameToEngineConnection", false);
+CONSOLE_VAR(bool, kPrintUiMessageLatency, "UiComms", false);
   
-const uint32_t kMaxLatencySamples = 250;
-const uint32_t kReportFrequency = 125;
+const uint32_t kMaxLatencySamples = 20;
+const uint32_t kReportFrequency = 10;
 
 ISocketComms::ISocketComms()
   : _latencyStats(kMaxLatencySamples)
@@ -46,8 +46,8 @@ void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
       const float minLatency = (numSamples > 0) ? _latencyStats.GetMin() : 0.0f;
       const float maxLatency = (numSamples > 0) ? _latencyStats.GetMax() : 0.0f;
     
-      PRINT_CH_INFO("Network", "UiMessageHandler.Latency", "Latency Data (sec): Samples= %u Average= %.5f Sd= %.5f Min= %.5f Max %.5f",
-                           numSamples, averageLatency, stdDevLatency, minLatency, maxLatency);
+      PRINT_CH_INFO("UiComms", "UiMessageLatency", "%.2f ms, [%.2f..%.2f], SD= %.2f, %u samples",
+                           averageLatency, minLatency, maxLatency, stdDevLatency, numSamples);
     }
   }
 }
