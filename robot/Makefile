@@ -128,8 +128,8 @@ $(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py
 	mkdir -p $(dir $@)
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
-$(BUILD_DIR)/esp.map: espressif/app/esp.map
-	cp $< $@
+$(BUILD_DIR)/esp.map:
+	if test -e espressif/app/esp.map; then cp espressif/app/esp.map $@; fi
 
 $(BUILD_DIR)/robot.map:
 	if test -e  $(BUILD_DIR)/app/robot.map; then cp $(BUILD_DIR)/app/robot.map $@; fi
