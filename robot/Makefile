@@ -139,7 +139,7 @@ server.1: nrf k02
 	tar -cjf generated.tar.bz2 $(GENERATED_DIR)
 
 server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to generate these files
-	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY)
+	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY) $(BUILD_DIR)/app/robot.map syscon/build/app/syscon.map
 
 server.3: espBuild $(OTA_FILE) $(MAP_FILES)
 	tar -czf firmware.tar.gz $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) $(MAP_FILES)
