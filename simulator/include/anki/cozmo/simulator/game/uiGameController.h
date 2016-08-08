@@ -114,6 +114,8 @@ protected:
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   virtual void HandleFactoryTestResult(ExternalInterface::FactoryTestResult const& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
+  virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg){};
+  
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
   virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
@@ -429,7 +431,8 @@ private:
   void HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg);
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   void HandleRobotPickedUpBase(ExternalInterface::RobotPickedUp const& msg);
-
+  void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
+  
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
 

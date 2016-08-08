@@ -192,6 +192,12 @@ namespace Anki {
       // _lastFace = msg;
     }
 
+    void WebotsKeyboardController::HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg)
+    {
+      printf("HandleLoadedKnownFace: '%s' (ID:%d) enrolled %zd seconds ago, last seen %zd seconds ago\n",
+             msg.name.c_str(), msg.faceID, msg.secondsSinceEnrolled, msg.secondsSinceLastSeen);
+    }
+    
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
     {
       // Useful for debug, but otherwise unneeded since this is displayed in the

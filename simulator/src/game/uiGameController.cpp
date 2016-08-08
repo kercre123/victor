@@ -127,6 +127,11 @@ namespace Anki {
       HandleRobotObservedFace(msg);
     }
     
+    void UiGameController::HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg)
+    {
+      HandleLoadedKnownFace(msg);
+    }
+    
     void UiGameController::HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg)
     {
       PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot %d reported deleting object %d", msg.robotID, msg.objectID);
@@ -522,6 +527,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::RobotPickedUp:
             HandleRobotPickedUpBase(message.Get_RobotPickedUp());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::LoadedKnownFace:
+            HandleLoadedKnownFaceBase(message.Get_LoadedKnownFace());
             break;
           default:
             // ignore

@@ -22,11 +22,14 @@
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/rollingShutterCorrector.h"
 #include "anki/cozmo/basestation/visionSystem.h"
+
+#include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/visionModes.h"
+
 #include "util/helpers/noncopyable.h"
-#include "anki/cozmo/basestation/rollingShutterCorrector.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <thread>
@@ -311,7 +314,7 @@ struct DockingErrorSignal;
     void Stop();
     
     // Helper for loading face album data from file / robot
-    void BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const;
+    void BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const;
     
     // Individual processing update helpers
     Result UpdateFaces(const VisionProcessingResult& result);

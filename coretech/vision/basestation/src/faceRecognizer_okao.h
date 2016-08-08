@@ -19,6 +19,8 @@
 #include "anki/vision/basestation/profiler.h"
 #include "anki/vision/basestation/enrolledFaceEntry.h"
 
+#include "clad/types/loadedKnownFace.h"
+
 // Omron OKAO Vision
 #include "OkaoAPI.h"
 #include "OkaoPtAPI.h" // Face parts detection
@@ -56,7 +58,8 @@ namespace Vision {
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
     
-    Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                      Vision::LoadedKnownFace& renamedFace);
     
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
@@ -82,7 +85,7 @@ namespace Vision {
     // 'enrollmentCountReached'. Otherwise 0 is returned.
     EnrolledFaceEntry GetRecognitionData(TrackingID_t forTrackingID, s32& enrollmentCountReached);
     
-    Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
+    Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     Result SaveAlbum(const std::string& albumName);
     
     Result GetSerializedData(std::vector<u8>& albumData,
@@ -91,7 +94,7 @@ namespace Vision {
     // Populates the list of names and IDs recovered from the serialized data on success
     Result SetSerializedData(const std::vector<u8>& albumData,
                              const std::vector<u8>& enrollData,
-                             std::list<FaceNameAndID>& namesAndIDs);
+                             std::list<LoadedKnownFace>& loadedFaces);
 
   private:
     
@@ -195,7 +198,7 @@ namespace Vision {
     std::map<TrackingID_t, FaceID_t> _trackingToFaceID;
     AlbumEntryToFaceID   _albumEntryToFaceID;
     
-    FaceID_t     _nextFaceID     = 1; // Skip UnknownFaceID
+    FaceID_t       _nextFaceID     = 1; // Skip UnknownFaceID
     AlbumEntryID_t _nextAlbumEntry = 0; 
     
     // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),

@@ -29,6 +29,7 @@
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/types/engineErrorCodes.clad"
+#include "clad/types/loadedKnownFace.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -323,13 +324,6 @@ message EndOfKnownObjects {
 // RobotReadToolCode
 message RobotReadToolCode {
   ToolCodeInfo info
-}
-
-// Sent when a face is loaded from a saved album, in order to keep the game's list of
-// names and IDs in sync with the engine
-message RobotLoadedKnownFace {
-    int_32 faceID,
-    string name
 }
 
 // RobotReachedEnrollmentCount

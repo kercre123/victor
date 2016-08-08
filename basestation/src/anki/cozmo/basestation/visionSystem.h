@@ -52,12 +52,15 @@
 #include "anki/vision/basestation/profiler.h"
 
 #include "visionParameters.h"
+
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
+#include "clad/types/loadedKnownFace.h"
 #include "clad/types/visionModes.h"
 #include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+
 #include "util/bitFlags/bitFlags.h"
 
 #include <mutex>
@@ -282,7 +285,7 @@ namespace Cozmo {
                                Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
                                s32 numEnrollments = -1);
     
-    Result LoadFaceAlbum(const std::string& albumName, std::list<Vision::FaceNameAndID>& namesAndIDs);
+    Result LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace>& loadedFaces);
     
     Result SaveFaceAlbum(const std::string& albumName);
     
@@ -291,12 +294,13 @@ namespace Cozmo {
     
     Result SetSerializedFaceData(const std::vector<u8>& albumData,
                                  const std::vector<u8>& enrollData,
-                                 std::list<Vision::FaceNameAndID>& namesAndIDs);
+                                 std::list<Vision::LoadedKnownFace>& loadedFaces);
 
     Result EraseFace(Vision::FaceID_t faceID);
     void   EraseAllFaces();
     
-    Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                      Vision::LoadedKnownFace& renamedFace);
     
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,

@@ -17,6 +17,8 @@
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/types/faceEnrollmentPoses.h"
+#include "clad/types/loadedKnownFace.h"
+
 #include <list>
 
 // Forward declaration:
@@ -59,17 +61,18 @@ namespace Vision {
     
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
-    Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                        Vision::LoadedKnownFace& renamedFace);
     
     Result SaveAlbum(const std::string& albumName);
-    Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
+    Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     
     Result GetSerializedData(std::vector<u8>& albumData,
                              std::vector<u8>& enrollData);
     
     Result SetSerializedData(const std::vector<u8>& albumData,
                              const std::vector<u8>& enrollData,
-                             std::list<FaceNameAndID>& namesAndIDs);
+                             std::list<LoadedKnownFace>& loadedFaces);
 
     void PrintTiming();
     

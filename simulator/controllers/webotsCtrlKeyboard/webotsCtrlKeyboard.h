@@ -43,6 +43,8 @@ protected:
   virtual void HandleNVStorageData(const ExternalInterface::NVStorageData &msg) override;
   virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
+  virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg) override;
+  
 private:
 
   bool _shouldQuit = false;

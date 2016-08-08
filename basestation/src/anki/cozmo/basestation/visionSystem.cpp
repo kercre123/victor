@@ -1406,9 +1406,10 @@ namespace Cozmo {
     _faceTracker->EraseAllFaces();
   }
   
-  Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                                  Vision::LoadedKnownFace& renamedFace)
   {
-    return _faceTracker->RenameFace(faceID, oldName, newName);
+    return _faceTracker->RenameFace(faceID, oldName, newName, renamedFace);
   }
   
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
@@ -3615,16 +3616,16 @@ namespace Cozmo {
   
   Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,
                                              const std::vector<u8>& enrollData,
-                                             std::list<Vision::FaceNameAndID>& namesAndIDs)
+                                             std::list<Vision::LoadedKnownFace>& loadedFaces)
   {
     ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SetSerializedFaceData.NullFaceTracker");
-    return _faceTracker->SetSerializedData(albumData, enrollData, namesAndIDs);
+    return _faceTracker->SetSerializedData(albumData, enrollData, loadedFaces);
   }
   
-  Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::FaceNameAndID> &namesAndIDs)
+  Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace> &loadedFaces)
   {
     ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
-    return _faceTracker->LoadAlbum(albumName, namesAndIDs);
+    return _faceTracker->LoadAlbum(albumName, loadedFaces);
   }
   
   Result VisionSystem::SaveFaceAlbum(const std::string& albumName)

@@ -1350,8 +1350,12 @@ namespace Anki {
       }
       else if(false == _poseWrtRobot.GetWithRespectTo(_robot.GetPose(), _poseWrtRobot))
       {
-        PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseOriginFailure",
-                          "Could not get pose w.r.t. robot pose.");
+        // TODO: It's possible this is just "normal" when dealing with delocalization, so possibly downgradable to Info later
+        PRINT_NAMED_WARNING("TurnTowardsPoseAction.Init.PoseOriginFailure",
+                            "Could not get pose (in frame %d) w.r.t. robot pose (in frame %d).",
+                            _robot.GetPoseOriginList().GetOriginID(&_poseWrtRobot.FindOrigin()),
+                            _robot.GetPoseOriginList().GetOriginID(_robot.GetWorldOrigin()));
+        
         _poseWrtRobot.Print();
         _poseWrtRobot.PrintNamedPathToOrigin(false);
         _robot.GetPose().PrintNamedPathToOrigin(false);

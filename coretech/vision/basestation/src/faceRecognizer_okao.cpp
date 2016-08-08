@@ -91,6 +91,13 @@ namespace Vision {
     return str;
   }
   
+  inline static s64 GetSecondsSince(std::chrono::time_point<std::chrono::system_clock> now, EnrolledFaceEntry::Time t)
+  {
+    using namespace std::chrono;
+    const s64 secondsSince = Util::numeric_cast<s64>(duration_cast<seconds>(now - t).count());
+    return secondsSince;
+  }
+  
   FaceRecognizer::FaceRecognizer(const Json::Value& config)
   {
     if(config.isMember(JsonKey::FaceRecognitionGroup))
@@ -567,7 +574,7 @@ namespace Vision {
       // See if there are any session-only faces we can overwrite before giving up.
       // If so, choose the one that it's been the longest since we updated.
       FaceID_t oldestSessionOnlyID = UnknownFaceID;
-      EnrolledFaceEntry::Time oldestUpdateTime(std::chrono::milliseconds::max());
+      EnrolledFaceEntry::Time oldestUpdateTime(std::chrono::seconds::max());
       for(auto & enrollData : _enrollmentData) {
         if(enrollData.second.IsForThisSessionOnly() && enrollData.second.GetLastUpdateTime() < oldestUpdateTime) {
           oldestSessionOnlyID = enrollData.second.GetFaceID();
@@ -826,9 +833,9 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    auto const timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(updateTime - enrollData.GetLastUpdateTime());
+    auto const timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(updateTime - enrollData.GetLastUpdateTime());
     
-    auto const timeBetweenEnrollments = std::chrono::milliseconds((long long)std::round(1000.f*kTimeBetweenFaceEnrollmentUpdates_sec));
+    auto const timeBetweenEnrollments = std::chrono::seconds(Util::numeric_cast<s64>(std::round(kTimeBetweenFaceEnrollmentUpdates_sec)));
     
     const bool isEnrollmentEnabled = _enrollmentCount != 0 && (_enrollmentID == UnknownFaceID ||
                                                                _enrollmentID == faceID);
@@ -1049,7 +1056,7 @@ namespace Vision {
       dispImg.FillWith(0);
       
       s32 iAlbumEntry=0;
-      EnrolledFaceEntry::Time lastSeenTime = EnrolledFaceEntry::Time(std::chrono::milliseconds(0));
+      EnrolledFaceEntry::Time lastSeenTime = EnrolledFaceEntry::Time(std::chrono::seconds(0));
       s32 lastSeenIndex = -1;
       
       const AlbumEntryID_t sessionOnlyEntry = enrollData.second.GetSessionOnlyAlbumEntry();
@@ -1834,7 +1841,8 @@ namespace Vision {
     
   } // EraseAllFaces()
   
-  Result FaceRecognizer::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  Result FaceRecognizer::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                                    Vision::LoadedKnownFace& renamedFace)
   {
     auto enrollIter = _enrollmentData.find(faceID);
     if(enrollIter != _enrollmentData.end())
@@ -1846,6 +1854,17 @@ namespace Vision {
         // Print additional info with the names in debug only, for privacy reasons
         PRINT_NAMED_DEBUG("FaceRecognizer.RenameFace.Success_DEBUG", "Renamed ID=%d from '%s' to '%s'",
                           faceID, oldName.c_str(), enrollIter->second.GetName().c_str());
+        
+        using namespace std::chrono;
+        auto const nowTime = system_clock::now();
+        
+        // Construct and then swap to make sure we miss fields that get added to LoadedKnownFace later
+        Vision::LoadedKnownFace temp(GetSecondsSince(nowTime, enrollIter->second.GetEnrollmentTime()),
+                                     GetSecondsSince(nowTime, enrollIter->second.FindLastSeenTime()),
+                                     enrollIter->second.GetFaceID(),
+                                     enrollIter->second.GetName());
+        std::swap(temp, renamedFace);
+        
         return RESULT_OK;
       }
       else
@@ -1888,7 +1907,7 @@ namespace Vision {
   
   Result FaceRecognizer::SetSerializedData(const std::vector<u8>& albumData,
                                            const std::vector<u8>& enrollData,
-                                           std::list<FaceNameAndID>& namesAndIDs)
+                                           std::list<LoadedKnownFace>& loadedFaces)
   {
     if(NULL == _okaoCommonHandle) {
       PRINT_NAMED_ERROR("FaceRecognizer.SetSerializedData.NullOkaoCommonHandle", "");
@@ -1913,17 +1932,19 @@ namespace Vision {
         lastResult = UseLoadedAlbumAndEnrollData(loadedAlbum, loadedEnrollmentData);
 
         if(RESULT_OK == lastResult) {
+          
+          auto const nowTime = std::chrono::system_clock::now();
+          
           for(auto & entry : _enrollmentData)
           {
             PRINT_NAMED_DEBUG("FaceRecognizer.SetSerializedData.AddedEnrollmentDataEntry",
                               "User '%s' with ID=%d",
                               entry.second.GetName().c_str(), entry.second.GetFaceID());
             
-            FaceNameAndID nameAndID{
-              .name = entry.second.GetName(),
-              .faceID = entry.second.GetFaceID(),
-            };
-            namesAndIDs.emplace_back(std::move(nameAndID));
+            loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
+                                                     GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
+                                                     entry.second.GetFaceID(),
+                                                     entry.second.GetName()));
           }
         }
       }
@@ -2198,7 +2219,7 @@ namespace Vision {
   
   
   Result FaceRecognizer::LoadAlbum(const std::string& albumName,
-                                   std::list<FaceNameAndID>& namesAndIDs)
+                                   std::list<LoadedKnownFace>& namesAndIDs)
   {
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.NotInitialized", "");
@@ -2256,7 +2277,11 @@ namespace Vision {
           if(! success) {
             PRINT_NAMED_WARNING("FaceRecognizer.LoadAlbum.EnrollDataFileReadFail", "");
             result = RESULT_FAIL;
-          } else {
+          }
+          else
+          {
+            auto const nowTime = std::chrono::system_clock::now();
+            
             for(auto & idStr : json.getMemberNames()) {
               FaceID_t faceID = std::stoi(idStr);
               if(!json.isMember(idStr)) {
@@ -2267,7 +2292,10 @@ namespace Vision {
               } else {
                 EnrolledFaceEntry entry(faceID, json[idStr]);
                 
-                namesAndIDs.emplace_back( FaceNameAndID{.name = entry.GetName(), .faceID = faceID} );
+                namesAndIDs.emplace_back( LoadedKnownFace(GetSecondsSince(nowTime, entry.GetEnrollmentTime()),
+                                                          GetSecondsSince(nowTime, entry.FindLastSeenTime()),
+                                                          entry.GetFaceID(),
+                                                          entry.GetName()) );
                 
                 // Debug prints name, info does not, for privacy reasons
                 PRINT_NAMED_DEBUG("FaceRecognizer.LoadAlbum.LoadedEnrollmentData_Debug", "ID=%d, '%s'",

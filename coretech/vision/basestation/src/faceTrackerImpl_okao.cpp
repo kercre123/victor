@@ -633,12 +633,13 @@ namespace Vision {
     return _recognizer.SaveAlbum(albumName);
   }
   
-  Result FaceTracker::Impl::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  Result FaceTracker::Impl::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                                       Vision::LoadedKnownFace& renamedFace)
   {
-    return _recognizer.RenameFace(faceID, oldName, newName);
+    return _recognizer.RenameFace(faceID, oldName, newName, renamedFace);
   }
   
-  Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& names)
+  Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces)
   {
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("FaceTrackerImpl.LoadAlbum.NotInitialized", "");
@@ -650,7 +651,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    return _recognizer.LoadAlbum(albumName, names);
+    return _recognizer.LoadAlbum(albumName, loadedFaces);
   }
   
   float FaceTracker::Impl::GetMinEyeDistanceForEnrollment()
@@ -845,9 +846,9 @@ namespace Vision {
   
   Result FaceTracker::Impl::SetSerializedData(const std::vector<u8>& albumData,
                                               const std::vector<u8>& enrollData,
-                                              std::list<FaceNameAndID>& namesAndIDs)
+                                              std::list<LoadedKnownFace>& loadedFaces)
   {
-    return _recognizer.SetSerializedData(albumData, enrollData, namesAndIDs);
+    return _recognizer.SetSerializedData(albumData, enrollData, loadedFaces);
   }
 
   

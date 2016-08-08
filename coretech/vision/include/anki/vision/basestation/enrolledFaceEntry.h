@@ -157,7 +157,7 @@ protected:
   std::string         _name;
   RecognitionScore    _score = 1000;  // [0,1000]
   
-  AlbumEntryID_t        _sessionOnlyAlbumEntry;
+  AlbumEntryID_t      _sessionOnlyAlbumEntry;
   Time                _enrollmentTime;         // When this enrolled face was added to our album
   Time                _lastDataUpdateTime;     // Last time we updated any album entry associated with this face
 

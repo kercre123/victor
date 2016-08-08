@@ -86,9 +86,10 @@ namespace Vision {
     return _pImpl->EraseAllFaces();
   }
   
-  Result FaceTracker::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName)
+  Result FaceTracker::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                                 Vision::LoadedKnownFace& renamedFace)
   {
-    return _pImpl->RenameFace(faceID, oldName, newName);
+    return _pImpl->RenameFace(faceID, oldName, newName, renamedFace);
   }
   
   Result FaceTracker::SaveAlbum(const std::string& albumName)
@@ -96,9 +97,9 @@ namespace Vision {
     return _pImpl->SaveAlbum(albumName);
   }
   
-  Result FaceTracker::LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs)
+  Result FaceTracker::LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces)
   {
-    return _pImpl->LoadAlbum(albumName, namesAndIDs);
+    return _pImpl->LoadAlbum(albumName, loadedFaces);
   }
   
   void FaceTracker::PrintTiming()
@@ -121,9 +122,9 @@ namespace Vision {
   
   Result FaceTracker::SetSerializedData(const std::vector<u8>& albumData,
                                         const std::vector<u8>& enrollData,
-                                        std::list<FaceNameAndID>& namesAndIDs)
+                                        std::list<LoadedKnownFace>& loadedFaces)
   {
-    return _pImpl->SetSerializedData(albumData, enrollData, namesAndIDs);
+    return _pImpl->SetSerializedData(albumData, enrollData, loadedFaces);
   }
   
   /*

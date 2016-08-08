@@ -16,6 +16,8 @@
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/profiler.h"
 
+#include "clad/types/loadedKnownFace.h"
+
 #include "faceRecognizer_okao.h"
 
 // Omron OKAO Vision
@@ -59,9 +61,10 @@ namespace Vision {
     Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
-    Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                        Vision::LoadedKnownFace& renamedFace);
 
-    Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
+    Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     Result SaveAlbum(const std::string& albumName);
 
     Result GetSerializedData(std::vector<u8>& albumData,
@@ -69,7 +72,7 @@ namespace Vision {
 
     Result SetSerializedData(const std::vector<u8>& albumData,
                              const std::vector<u8>& enrollData,
-                             std::list<FaceNameAndID>& namesAndIDs);
+                             std::list<LoadedKnownFace>& loadedFaces);
 
   private:
     

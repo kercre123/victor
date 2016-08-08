@@ -35,7 +35,7 @@ namespace Vision {
 inline static Json::LargestInt TimeToInt64(EnrolledFaceEntry::Time time)
 {
   using namespace std::chrono;
-  auto jsonTime = Util::numeric_cast<Json::LargestInt>(duration_cast<milliseconds>(time.time_since_epoch()).count());
+  auto jsonTime = Util::numeric_cast<Json::LargestInt>(duration_cast<seconds>(time.time_since_epoch()).count());
   return jsonTime;
 }
   
@@ -43,19 +43,19 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Time enrollmentTime)
 : _faceID(withID)
 , _sessionOnlyAlbumEntry(-1)
 , _enrollmentTime(enrollmentTime)
-, _lastDataUpdateTime(std::chrono::milliseconds(0))
+, _lastDataUpdateTime(std::chrono::seconds(0))
 {
 
 }
 
 EnrolledFaceEntry::EnrolledFaceEntry()
-: EnrolledFaceEntry(UnknownFaceID, Time(std::chrono::milliseconds(0)))
+: EnrolledFaceEntry(UnknownFaceID, Time(std::chrono::seconds(0)))
 {
   
 }
   
 EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
-: EnrolledFaceEntry(withID, Time(std::chrono::milliseconds(0)))
+: EnrolledFaceEntry(withID, Time(std::chrono::seconds(0)))
 {
   auto MissingFieldWarning = [withID](const char* fieldName) {
     PRINT_NAMED_WARNING("EnrolledFaceEntry.ConstructFromJson.MissingField",
@@ -68,7 +68,7 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
   } else {
     numTicks = json[JsonKey::enrollmentTime].asLargestInt();
   }
-  _enrollmentTime = Time(std::chrono::milliseconds(numTicks));
+  _enrollmentTime = Time(std::chrono::seconds(numTicks));
   
   if(!json.isMember(JsonKey::lastDataUpdateTime)) {
     MissingFieldWarning(JsonKey::lastDataUpdateTime);
@@ -76,7 +76,7 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
   } else {
     numTicks = json[JsonKey::lastDataUpdateTime].asLargestInt();
   }
-  _lastDataUpdateTime = Time(std::chrono::milliseconds(numTicks));
+  _lastDataUpdateTime = Time(std::chrono::seconds(numTicks));
   
   if(!json.isMember(JsonKey::name)) {
     MissingFieldWarning(JsonKey::name);
@@ -106,7 +106,7 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
         if(entry != UnknownAlbumEntryID)
         {
           numTicks = jsonAlbumEntry[JsonKey::lastSeenTime].asLargestInt();
-          _albumEntrySeenTimes[entry] = Time(std::chrono::milliseconds(numTicks));
+          _albumEntrySeenTimes[entry] = Time(std::chrono::seconds(numTicks));
         }
         
         // First entry in Json is the session-only entry, by convention
@@ -124,8 +124,8 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
 EnrolledFaceEntry::EnrolledFaceEntry(const EnrolledFaceStorage& message)
 : _faceID(message.faceID)
 , _name(message.name)
-, _enrollmentTime(std::chrono::milliseconds(message.enrollmentTimeCount))
-, _lastDataUpdateTime(std::chrono::milliseconds(message.lastDataUpdateTimeCount))
+, _enrollmentTime(std::chrono::seconds(message.enrollmentTimeCount))
+, _lastDataUpdateTime(std::chrono::seconds(message.lastDataUpdateTimeCount))
 {
   if(message.albumEntries.size() != message.albumEntryUpdateTimes.size())
   {
@@ -147,7 +147,7 @@ EnrolledFaceEntry::EnrolledFaceEntry(const EnrolledFaceStorage& message)
       
       if(albumEntry != UnknownAlbumEntryID)
       {
-        const Time seenTime = Time(std::chrono::milliseconds( message.albumEntryUpdateTimes[iEntry] ));
+        const Time seenTime = Time(std::chrono::seconds( message.albumEntryUpdateTimes[iEntry] ));
         _albumEntrySeenTimes[albumEntry] = seenTime;
       }
     }
@@ -192,8 +192,8 @@ EnrolledFaceStorage EnrolledFaceEntry::ConvertToEnrolledFaceStorage() const
   EnrolledFaceStorage message;
   using namespace std::chrono;
   
-  message.enrollmentTimeCount     = duration_cast<milliseconds>(_enrollmentTime.time_since_epoch()).count();
-  message.lastDataUpdateTimeCount = duration_cast<milliseconds>(_lastDataUpdateTime.time_since_epoch()).count();
+  message.enrollmentTimeCount     = duration_cast<seconds>(_enrollmentTime.time_since_epoch()).count();
+  message.lastDataUpdateTimeCount = duration_cast<seconds>(_lastDataUpdateTime.time_since_epoch()).count();
   message.faceID                  = _faceID;
   message.name                    = _name;
   
@@ -379,11 +379,11 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(EnrolledFaceEntry& other,
 {
   const Time otherSessionOnlyTime = (other._sessionOnlyAlbumEntry != UnknownAlbumEntryID ?
                                      other._albumEntrySeenTimes.at(other._sessionOnlyAlbumEntry) :
-                                     Time(std::chrono::milliseconds(0)));
+                                     Time(std::chrono::seconds(0)));
   
   const Time thisSessionOnlyTime  = (_sessionOnlyAlbumEntry != UnknownAlbumEntryID ?
                                      _albumEntrySeenTimes.at(this->_sessionOnlyAlbumEntry) :
-                                     Time(std::chrono::milliseconds(0)));
+                                     Time(std::chrono::seconds(0)));
   
   const bool useOtherSessionOnlyEntry = (otherSessionOnlyTime > thisSessionOnlyTime);
   

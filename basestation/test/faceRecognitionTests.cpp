@@ -196,13 +196,13 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
                                           config);
     
     if(iReload > 0) {
-      std::list<Vision::FaceNameAndID> loadedNames;
-      Result loadResult = faceTracker->LoadAlbum("testAlbum", loadedNames);
+      std::list<Vision::LoadedKnownFace> loadedFaces;
+      Result loadResult = faceTracker->LoadAlbum("testAlbum", loadedFaces);
       ASSERT_EQ(loadResult, RESULT_OK);
-      ASSERT_EQ(loadedNames.size(), allNames.size());
+      ASSERT_EQ(loadedFaces.size(), allNames.size());
       
       // All loaded names should be in the all names set
-      for(auto & nameAndID : loadedNames) {
+      for(auto & nameAndID : loadedFaces) {
         ASSERT_TRUE(allNames.count(nameAndID.name) > 0);
       }
       

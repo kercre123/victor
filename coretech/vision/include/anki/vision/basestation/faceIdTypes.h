@@ -29,12 +29,6 @@ namespace Vision {
     FaceID_t newID;
   };
   
-  struct FaceNameAndID
-  {
-    std::string  name;
-    FaceID_t     faceID;
-  };
-  
   struct FaceRecognitionMatch
   {
     std::string  name;

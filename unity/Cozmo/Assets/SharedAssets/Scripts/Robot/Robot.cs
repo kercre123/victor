@@ -348,7 +348,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
 
     ObservedObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace>(HandleRobotLoadedKnownFace);
+    RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
   }
 
   public void Dispose() {
@@ -420,8 +420,9 @@ public class Robot : IRobot {
     ClearData();
   }
 
-  private void HandleRobotLoadedKnownFace(Anki.Cozmo.ExternalInterface.RobotLoadedKnownFace knownFaceMessage) {
-    EnrolledFaces.Add(knownFaceMessage.faceID, knownFaceMessage.name);
+  private void HandleLoadedKnownFace(Anki.Vision.LoadedKnownFace loadedKnownFaceMessage) {
+    // TODO: Use the enrollment and last seen times in the message (COZMO-2926)
+    EnrolledFaces.Add(loadedKnownFaceMessage.faceID, loadedKnownFaceMessage.name);
   }
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {

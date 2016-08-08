@@ -123,9 +123,9 @@ namespace Cozmo {
       // Erase all faces on the robot
       EraseAllFaces();
       
-      std::list<Vision::FaceNameAndID> namesAndIDs;
-      result = _visionSystem->LoadFaceAlbum(faceAlbumName, namesAndIDs);
-      BroadcastLoadedNamesAndIDs(namesAndIDs);
+      std::list<Vision::LoadedKnownFace> loadedFaces;
+      result = _visionSystem->LoadFaceAlbum(faceAlbumName, loadedFaces);
+      BroadcastLoadedNamesAndIDs(loadedFaces);
       
       if(RESULT_OK != result) {
         PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
@@ -1897,8 +1897,8 @@ namespace Cozmo {
       {
         // Read completed: try to use the data to update the face album/enroll data
         Lock();
-        std::list<Vision::FaceNameAndID> namesAndIDs;
-        Result setResult = _visionSystem->SetSerializedFaceData(_albumData, _enrollData, namesAndIDs);
+        std::list<Vision::LoadedKnownFace> loadedFaces;
+        Result setResult = _visionSystem->SetSerializedFaceData(_albumData, _enrollData, loadedFaces);
         Unlock();
         
         if(RESULT_OK == setResult) {
@@ -1906,7 +1906,7 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
-          BroadcastLoadedNamesAndIDs(namesAndIDs);
+          BroadcastLoadedNamesAndIDs(loadedFaces);
           
         } else {
           PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
@@ -1965,9 +1965,9 @@ namespace Cozmo {
   
   Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path)
   {
-    std::list<Vision::FaceNameAndID> namesAndIDs;
-    Result result = _visionSystem->LoadFaceAlbum(path, namesAndIDs);
-    BroadcastLoadedNamesAndIDs(namesAndIDs);
+    std::list<Vision::LoadedKnownFace> loadedFaces;
+    Result result = _visionSystem->LoadFaceAlbum(path, loadedFaces);
+    BroadcastLoadedNamesAndIDs(loadedFaces);
     
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",
@@ -2026,38 +2026,33 @@ namespace Cozmo {
   
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
+    Vision::LoadedKnownFace loadedKnownFace;
     Lock();
-    Result result = _visionSystem->RenameFace(faceID, oldName, newName);
+    Result result = _visionSystem->RenameFace(faceID, oldName, newName, loadedKnownFace);
     Unlock();
     
     if(RESULT_OK == result)
     {
       SaveFaceAlbumToRobot();
-      ExternalInterface::RobotLoadedKnownFace msg;
-      msg.faceID = faceID;
-      msg.name   = newName;
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame( std::move(loadedKnownFace) ));
     }
     
     return result;
   }
   
-  void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const
+  void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const
   {
     // Notify about the newly-available names and IDs, and create wave files
     // for the names if they don't already exist, so we've already got them
     // when we want to say them at some point later.
     using namespace ExternalInterface;
     _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
-    for(auto & nameAndID : namesAndIDs)
+    for(auto & loadedFace : loadedFaces)
     {
-      RobotLoadedKnownFace msg;
-      msg.name = nameAndID.name;
-      msg.faceID = nameAndID.faceID;
-      _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+      _robot.Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
       
       // TODO: Need to determine what styles need to be created
-      _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
+      _robot.GetTextToSpeechComponent().CreateSpeech(loadedFace.name, SayTextStyle::Normal);
     }
   }
   

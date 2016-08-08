@@ -120,14 +120,14 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
   bool enrollmentComplete = false;
   
   // Get existing library
-  std::list<Vision::FaceNameAndID> namesAndIDs;
-  Result loadResult = faceTracker.LoadAlbum(albumName, namesAndIDs);
+  std::list<Vision::LoadedKnownFace> loadedFaces;
+  Result loadResult = faceTracker.LoadAlbum(albumName, loadedFaces);
   if(RESULT_OK != loadResult) {
     PRINT_NAMED_WARNING("LiveEnroll.LoadAlbumFail", "Could not load album named '%s'",
                         albumName.c_str());
   }
   
-  for(auto const& nameAndID : namesAndIDs)
+  for(auto const& nameAndID : loadedFaces)
   {
     if(nameAndID.name == name) {
       PRINT_NAMED_WARNING("LiveEnroll.ReplacingUser",
@@ -286,8 +286,8 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
 void LiveRecognize(Vision::FaceTracker& faceTracker, const std::string& albumName)
 {
   // Load album of faces to recognize
-  std::list<Vision::FaceNameAndID> namesAndIDs;
-  Result loadResult = faceTracker.LoadAlbum(albumName, namesAndIDs);
+  std::list<Vision::LoadedKnownFace> loadedFaces;
+  Result loadResult = faceTracker.LoadAlbum(albumName, loadedFaces);
   ASSERT_NAMED(loadResult == RESULT_OK, "Recognize.LoadAlbumFail");
   
   // Set up capture device
