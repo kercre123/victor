@@ -55,6 +55,7 @@ clean:
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
 	#rm -rf $(BUILD_DIR)
+	#rm -rf syscon/build
 	rm -rf $(GENERATED_DIR)
 
 fresh: clean $(ANKI_LOG_TABLE_JSON) all python
@@ -131,10 +132,10 @@ $(BUILD_DIR)/esp.map: espressif/app/esp.map
 	cp $< $@
 
 $(BUILD_DIR)/robot.map:
-	if test -e  $(BUILD_DIR)/app/robot.map; cp $(BUILD_DIR)/app/robot.map $@; fi
+	if test -e  $(BUILD_DIR)/app/robot.map; then cp $(BUILD_DIR)/app/robot.map $@; fi
 
 $(BUILD_DIR)/syscon.map:
-	if test -e syscon/build/app/syscon.map; cp syscon/build/app/syscon.map $@; fi
+	if test -e syscon/build/app/syscon.map; then cp syscon/build/app/syscon.map $@; fi
 
 ########################################################################################################################
 # Build server steps
