@@ -12,9 +12,13 @@
  *
  **/
 
+#ifdef TARGET_ESPRESSIF
 #include "c_types.h"
+#else
+#include <stdint.h>
+#endif
 
-#include "transport/reliableMessageTypes.h"
+#include "anki/cozmo/transport/reliableMessageTypes.h"
 
 bool IsMessageTypeAlwaysSentUnreliably(EReliableMessageType messageType)
 {

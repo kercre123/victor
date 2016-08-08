@@ -15,6 +15,8 @@ ifndef PDIR
 GEN_LIBS = libtransport.a
 endif
 
+TRANSPORT_DIR=../../../transport
+
 #############################################################
 # Configuration i.e. compile options etc.
 # Target specific stuff (defines etc.) goes in here!
@@ -23,6 +25,10 @@ endif
 #   for a subtree within the makefile rooted therein
 #
 #DEFINES += 
+
+vpath %.c $(TRANSPORT_DIR)
+
+CSRCS := $(shell cd $(TRANSPORT_DIR); find . -type f -iname '*.c')
 
 #############################################################
 # Recursion Magic - Don't touch this!!

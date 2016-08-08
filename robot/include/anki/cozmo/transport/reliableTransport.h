@@ -14,20 +14,17 @@
 #include <stdint.h>
 #endif
 
-#include "util/transport/reliableMessageTypes.h"
-#include "util/transport/reliableSequenceId.h"
-#include "IUnreliableTransport.h"
+#include "anki/cozmo/transport/reliableMessageTypes.h"
+#include "anki/cozmo/transport/reliableSequenceId.h"
+#include "anki/cozmo/transport/IUnreliableTransport.h"
 
 #ifdef __cplusplus
 // Bring some specific things into the namespace
-#define EReliableMessageType Anki::Util::EReliableMessageType
-#define eRMT_SingleReliableMessage   ::Anki::Util::eRMT_SingleReliableMessage
-#define eRMT_SingleUnreliableMessage ::Anki::Util::eRMT_SingleUnreliableMessage
 #define ReliableSequenceId   Anki::Util::ReliableSequenceId
 extern "C" {
 #else
 #ifndef TARGET_ESPRESSIF
-#include "cBool.h"
+#include "anki/cozmo/transport/cBool.h"
 #endif
 #endif
 
@@ -60,12 +57,10 @@ typedef struct _AnkiReliablePacketHeader
 /// How much we can send in one packet
 #define ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE (UnreliableTransport_MAX_BYTES_PER_PACKET - sizeof(AnkiReliablePacketHeader) - ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH)
 
-/// Unacked message retransmit interval in units of whatever GetCurrentTime returns
-#define ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME 33
+/// Unacked message retransmit interval in microseconds returns
+#define ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME 33000
 /// Maximum time without receiving a message before we consider it dead
-#define ReliableConnection_CONNECTION_TIMEOUT 5000
-/// A warning time before actual timeout
-#define ReliableConnection_CONNECTION_PRETIMEOUT 1000
+#define ReliableConnection_CONNECTION_DEFAULT_TIMEOUT 5000000
 
 /** Structure for pending reliable messages in the queue
  * This is inserted as a header in between messages in the reliable message queue buffers
@@ -78,7 +73,7 @@ typedef struct _PendingReliableMessage
 } PendingReliableMessageMetaData;
 
 /// Number of pending reliable messages we will queue per connection
-#define ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH 32
+#define ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH 64
 
 /** Structure for maintaining information about a reliable connection
  * dest is a void pointer which is passed directly to the unreliable transport layer. We use void pointer so as not to
@@ -95,9 +90,9 @@ typedef struct _ReliableConnection
   uint32_t latestRecvTime; ///< latestRecvTime
   uint16_t txQueued; ///< The number of bytes of data queued up in txBuf
   uint16_t pendingReliableBytes; ///< The number of bytes of pending reliable messages stored
-  uint8_t  numPendingReliableMessages; ///< The number of reliable messages currently queued
   uint8_t  txBuf[UnreliableTransport_MAX_BYTES_PER_PACKET]; ///< Buffer for forming packets
   uint8_t  canary1; ///< Here to die if somebody overruns txBuf.
+  uint8_t  numPendingReliableMessages; ///< The number of reliable messages currently queued
   uint8_t  pendingMessages[ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE]; ///< Data storage for buffered reliable messages
   uint8_t  canary2;
   PendingReliableMessageMetaData pendingMsgMeta[ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH]; ///< Queue of pending messages
@@ -166,11 +161,19 @@ int16_t ReliableTransport_ReceiveData(ReliableConnection* connection, uint8_t* b
  */
 bool ReliableTransport_Update(ReliableConnection* connection);
 
+/** Sets the reliable transport connection timeout period.
+ * @param timeoutMicroSeconds Timeout in microseconds.
+ */
+void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
+
 /** Debugging function to print the state of the reliable connection
  * @param connection The connection instance to print
  */
 void ReliableConnection_printState(ReliableConnection* connection);
 
+/** Retrieve the number of bytes of reliable data queue available
+ */
+int16_t ReliableConnection_GetReliableQueueAvailable(ReliableConnection* connection);
 
 // end extern "C"
 #ifdef __cplusplus

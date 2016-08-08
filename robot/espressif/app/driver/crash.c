@@ -9,7 +9,7 @@
 #include "driver/crash.h"
 #include "driver/uart.h"
 #include "spi_flash.h"
-#include "transport/reliableTransport.h"
+#include "anki/cozmo/transport/reliableTransport.h"
 
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
 

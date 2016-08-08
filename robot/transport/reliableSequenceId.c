@@ -1,7 +1,9 @@
 #ifdef TARGET_ESPRESSIF
 #include "c_types.h"
+#else
+#include <stdint.h>
 #endif
-#include "util/transport/reliableSequenceId.h"
+#include "anki/cozmo/transport/reliableSequenceId.h"
 
 ReliableSequenceId PreviousSequenceId(ReliableSequenceId inSeqId)
 {

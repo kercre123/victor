@@ -1,7 +1,7 @@
 #ifndef __I_RECEIVER_H
 #define __I_RECEIVER_H
 
-#include "transport/reliableTransport.h"
+#include "anki/cozmo/transport/reliableTransport.h"
 
 #ifdef __cplusplus
 extern "C" {

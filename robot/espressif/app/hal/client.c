@@ -9,8 +9,8 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "backgroundTask.h"
-#include "transport/IReceiver.h"
-#include "transport/reliableTransport.h"
+#include "anki/cozmo/transport/IReceiver.h"
+#include "anki/cozmo/transport/reliableTransport.h"
 
 //#define DEBUG_CLIENT
 

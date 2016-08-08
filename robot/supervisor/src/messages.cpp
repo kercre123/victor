@@ -6,10 +6,10 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-#ifndef TARGET_K02
-#include "../sim_hal/transport/IUnreliableTransport.h"
-#include "../sim_hal/transport/IReceiver.h"
-#include "../sim_hal/transport/reliableTransport.h"
+#ifdef SIMULATOR
+#include "anki/cozmo/transport/IUnreliableTransport.h"
+#include "anki/cozmo/transport/IReceiver.h"
+#include "anki/cozmo/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
 #include "../sim_hal/sim_nvStorage.h"
 #endif

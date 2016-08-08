@@ -12,8 +12,19 @@
 
 #ifndef __Util_Transport_ReliableMessageTypes_H__
 #define __Util_Transport_ReliableMessageTypes_H__
-
+#ifdef TARGET_ESPRESSIF
 #include "c_types.h"
+#else
+#include <stdint.h>
+#ifndef __cplusplus
+#include "anki/cozmo/transport/cBool.h"
+#endif
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
   eRMT_Invalid = 0,
@@ -42,5 +53,9 @@ const char* ReliableMessageTypeToString(EReliableMessageType messageType);
   
 bool IsValidMessageType(EReliableMessageType messageType);
 
+// end extern "C"
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __Util_Transport_ReliableMessageTypes_H__
