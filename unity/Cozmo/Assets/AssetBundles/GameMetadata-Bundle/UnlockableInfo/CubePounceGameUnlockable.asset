@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: KeepawayGame
     _EnumValue: 15
   UnlockableType: 0
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: PounceOnMotionAction
+    _EnumValue: 9
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0

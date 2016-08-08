@@ -9,23 +9,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
-  m_Name: SimonGameUnlockable
+  m_Name: KnockOverStacksUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: MemoryMatchGame
-    _EnumValue: 17
-  UnlockableType: 0
-  Prerequisites: []
+    _EnumValueAsString: KnockOverThreeCubeStack
+    _EnumValue: 4
+  UnlockableType: 1
+  Prerequisites:
+  - _EnumValueAsString: PounceOnMotionAction
+    _EnumValue: 9
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
-  DescriptionKey: unlockable.Simon.Description
-  TitleKey: unlockable.Simon.Title
+  DescriptionKey: unlockable.KnockOverThreeCubeStack.Description
+  TitleKey: unlockable.KnockOverThreeCubeStack.Title
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradePurple
-  CoreUpgradeIcon: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf, type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   CubesRequired: 3
   _TimeSparkedSec: 60

@@ -9,13 +9,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
-  m_Name: DroneModeGameUnlockableInfo
+  m_Name: ExplorerModeGameUnlockableInfo
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: DroneModeGame
     _EnumValue: 11
   UnlockableType: 0
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: KeepawayGame
+    _EnumValue: 12
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0

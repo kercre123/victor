@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: BuildPyramid
     _EnumValue: 3
   UnlockableType: 1
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: KnockOverThreeCubeStack
+    _EnumValue: 4
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0

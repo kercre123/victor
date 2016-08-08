@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: RollCube
     _EnumValue: 6
   UnlockableType: 1
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: StackTwoCubes
+    _EnumValue: 7
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0

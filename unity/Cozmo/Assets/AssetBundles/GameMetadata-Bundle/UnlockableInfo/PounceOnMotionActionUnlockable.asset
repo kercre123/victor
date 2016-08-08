@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: PounceOnMotionAction
     _EnumValue: 12
   UnlockableType: 1
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: RollCube
+    _EnumValue: 6
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0

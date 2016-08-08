@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: PopAWheelieAction
     _EnumValue: 13
   UnlockableType: 1
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: BuildPyramid
+    _EnumValue: 3
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
