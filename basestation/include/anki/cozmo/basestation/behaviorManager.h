@@ -141,6 +141,9 @@ private:
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopCurrentBehavior();
+  
+  //Allow reactionary behaviors to request a switch without a message
+  void CheckForComputationalSwitch();
 
   void SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior);
   

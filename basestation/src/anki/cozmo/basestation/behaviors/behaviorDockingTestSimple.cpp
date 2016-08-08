@@ -83,7 +83,7 @@ namespace Anki {
         EngineToGameTag::RobotCompletedAction,
         EngineToGameTag::RobotObservedObject,
         EngineToGameTag::RobotDeletedObject,
-        EngineToGameTag::ObjectMovedWrapper,
+        EngineToGameTag::ObjectMoved,
         EngineToGameTag::RobotStopped,
         EngineToGameTag::RobotPutDown
       }});

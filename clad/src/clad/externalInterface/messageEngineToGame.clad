@@ -306,12 +306,6 @@ message RobotMarkedObjectPoseUnknown {
     uint_32 objectID
 }
 
-// ObjectMovedEngineToGame
-message ObjectMovedWrapper {
-    float_32    timeMoving,
-    ObjectMoved objectMoved
-}
-
 message KnownObject {
     uint_32      objectID,
     uint_32      lastObservedTimestamp,

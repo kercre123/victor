@@ -434,7 +434,12 @@ public:
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) { return true; }
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event, const Robot& robot) { return true; }
   virtual bool ShouldRunForEvent(const RobotInterface::RobotToEngine& event, const Robot& robot) { return true; }
-    
+  
+  // behavior manager checks the return value of this function every tick
+  // to see if the reactionary behavior has requested a computational switch
+  // override to trigger a reactionary behavior based on something other than a message
+  virtual bool ShouldComputationallySwitch(const Robot& robot){ return false;}
+  
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 
   virtual bool IsReactionary() const override { return true;}

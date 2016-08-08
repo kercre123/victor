@@ -596,8 +596,28 @@ namespace Anki {
     return distVec;
   }
 
-  
+  f32 ComputeEuclidianDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
+  {
+    // Make sure the two poses share a common parent:
+    
+    if(pose1.GetParent() != pose2.GetParent()) {
+      Pose3d pose1wrt2;
+      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
+        PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent",
+                          "Could not get pose1 w.r.t. pose2.");
+        return Vec3f(0.f,0.f,0.f).Length();
+      }
+      return pose1wrt2.GetTranslation().Length();
+    }
+    
+    
+    //Compute the euclidian distance
+    double xDiff =  pow(pose1.GetTranslation().x() - pose2.GetTranslation().x(), 2);
+    double yDiff =  pow(pose1.GetTranslation().y() - pose2.GetTranslation().y(), 2);
+    double zDiff =  pow(pose1.GetTranslation().z() - pose2.GetTranslation().z(), 2);
+    
+    return sqrt(xDiff + yDiff + zDiff);
 
-
+  }
   
 } // namespace Anki

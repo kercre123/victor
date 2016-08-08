@@ -20,31 +20,31 @@
 namespace Anki {
 namespace Cozmo {
 
-class ReactionObjectData{
-public:
-  ReactionObjectData(int objectID, double nextUniqueTime, bool observedSinceLastResponse);
-  int _objectID;
-  double _nextUniqueTime;
-  bool _observedSinceLastResponse;
-};
+//Forward declarations
+class ReactionObjectData;
+  
+namespace ExternalInterface {
+  struct RobotObservedObject;
+}
+
+  
 
 class BehaviorReactAcknowledgeCubeMoved : public IReactionaryBehavior
 {
-private:
   
+private:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorReactAcknowledgeCubeMoved(Robot& robot, const Json::Value& config);
 
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
 
 public:
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
-  
+  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
+
 protected:
-  
+  virtual void StopInternalReactionary(Robot& robot) override;
   virtual Result InitInternalReactionary(Robot& robot) override;
   
   
@@ -54,15 +54,24 @@ private:
     TurningToLastLocationOfBlock,
     ReactingToBlockAbsence
   };
+  
+  typedef std::vector<ReactionObjectData>::iterator Reaction_iter;
     
   State _state;
-  std::vector<ReactionObjectData> _reactionObjects;
-  uint32_t _activeObjectID;
+  ObjectID _activeObjectID; //Most recent move - object to turn towards
+  ObjectID _switchObjectID; //Allow one cube moved to interupt another
+  std::vector<ReactionObjectData> _reactionObjects; //Tracking for all active objects
   
   void TransitionToPlayingSenseReaction(Robot& robot);
   void TransitionToTurningToLastLocationOfBlock(Robot& robot);
   void TransitionToReactingToBlockAbsence(Robot& robot);
   
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  void HandleObjectMoved(const Robot& robot, const ObjectMoved& msg);
+  void HandleObjectStopped(const Robot& robot, const ObjectStoppedMoving& msg);
+  void HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
+  Reaction_iter GetReactionaryIterator(ObjectID objectID);
+
   void SetState_internal(State state, const std::string& stateName);
   
 }; // class BehaviorReactAcknowledgeCubeMoved

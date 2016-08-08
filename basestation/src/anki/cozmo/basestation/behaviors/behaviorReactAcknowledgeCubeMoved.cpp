@@ -15,13 +15,13 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-const float kMinTimeMoving = 0.2;
-const float kDelayBetweenMessages = 1.0;
+const float kMinTimeMoving_ms = 1000;
 const float kDelayForUserPresentBlock_s = 1.0;
 const float kDelayToRecognizeBlock_s = 0.5;
 const float kRadiusRobotTolerence = 50;
@@ -29,15 +29,42 @@ const float kRadiusRobotTolerence = 50;
 namespace Anki {
 namespace Cozmo {
 
+
+class ReactionObjectData{
+public:
+  ReactionObjectData(ObjectID objectID);
+  ObjectID GetObjectID() const;
+  bool ObjectHasMovedLongEnough(const Robot& robot);
+  bool ObjectUpAxisHasChanged(const Robot& robot);
+  bool ObjectOutsideIgnoreArea(const Robot& robot);
+  
+  // update values for reactionObject
+  void ObjectStartedMoving(const Robot& robot, const ObjectMoved& msg);
+  void ObjectStoppedMoving(const Robot& robot);
+  void ObjectObserved(const Robot& robot);
+  void ResetObject();
+  
+  bool operator==(const ReactionObjectData &other) const;
+  
+private:
+  ObjectID _objectID;
+  TimeStamp_t _timeStartedMoving;
+  UpAxis _upAxis;
+  
+  // tracking if the block has moved long enough
+  bool _isObjectMoving;
+  bool _observedSinceLastReaction;
+  
+  // tracking if the block has changed orientation since last observed
+  bool _hasUpAxisChanged;
+};
+  
+  
 CONSOLE_VAR(bool, kBRACM_enableObjectMovedReact, "BehaviorCubeMoved", false);
-
-ReactionObjectData::ReactionObjectData(int objectID, double nextUniqueTime, bool observedSinceLastResponse)
-{
-  _objectID = objectID;
-  _nextUniqueTime = nextUniqueTime;
-  _observedSinceLastResponse = observedSinceLastResponse;
-}
-
+  
+//////
+/// ReactAcknowledge Cube Moved
+/////
 using namespace ExternalInterface;
 
 BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robot, const Json::Value& config)
@@ -46,68 +73,50 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
 {
   SetDefaultName("ReactToCubeMoved");
   
-  SubscribeToTriggerTags({
-    EngineToGameTag::ObjectMovedWrapper
-  });
-  
-  SubscribeToTags({
-    EngineToGameTag::RobotObservedObject
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedObject,
+    EngineToGameTag::ObjectMoved,
+    EngineToGameTag::ObjectStoppedMoving,
+  }});
   
 }
 
 bool BehaviorReactAcknowledgeCubeMoved::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return kBRACM_enableObjectMovedReact;
+  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_switchObjectID);
+  if(obj == nullptr){
+    return false;
+  }
+  
+  static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see
+  static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it
+  bool isVisible = obj->IsVisibleFrom(robot.GetVisionComponent().GetCamera(),
+                                      kMaxNormalAngle,
+                                      kMinImageSizePix,
+                                      false);
+  
+  return kBRACM_enableObjectMovedReact && !isVisible;
 }
-
-bool BehaviorReactAcknowledgeCubeMoved::ShouldRunForEvent(const MessageEngineToGame& event, const Robot& robot)
+  
+bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot& robot)
 {
-  bool shouldRun = false;
-  double time_s =  BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  uint32_t objectID = event.Get_ObjectMovedWrapper().objectMoved.objectID;
-  float_t timeSpentMoving = event.Get_ObjectMovedWrapper().timeMoving;
-  
-  std::vector<ReactionObjectData>::iterator iter;
-  for(iter = _reactionObjects.begin(); iter != _reactionObjects.end(); ++iter){
-    if (iter->_objectID == objectID){
-      break;
+  for(auto object: _reactionObjects){
+    if(object.ObjectOutsideIgnoreArea(robot)
+       && (object.ObjectHasMovedLongEnough(robot))  //|| object.ObjectUpAxisHasChanged(robot))
+    ){
+      SET_STATE(PlayingSenseReaction);
+      //Ensure there's no throttling between two blocks if moved
+      _switchObjectID = object.GetObjectID();
+      object.ResetObject();
+      return true;
     }
   }
-  
-  if(iter == _reactionObjects.end()){
-    _reactionObjects.push_back(ReactionObjectData(objectID, time_s, false));
-    iter = _reactionObjects.end();
-    --iter;
-  }
-  
-  //Only trigger reactionary behavior if enough time has elapsed and the object's position is known
-  if(iter->_nextUniqueTime <= time_s && iter->_observedSinceLastResponse
-     && timeSpentMoving > kMinTimeMoving){
-    iter->_nextUniqueTime = time_s + kDelayBetweenMessages;
-    iter->_observedSinceLastResponse = false;
-    
-    //Ensure object is in robot's current frame of reference
-    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(objectID);
-    if(obj != nullptr)
-    {
-      //Ensure the object's position is outside of a certain radius of the robot
-      const Pose3d& blockPose = obj->GetPose();
-      const Pose3d& robotPose = robot.GetPose();
-      f32 distance = ComputeDistanceBetween(blockPose, robotPose);
-      if(distance > kRadiusRobotTolerence){
-        shouldRun = true;
-        SET_STATE(PlayingSenseReaction);
-        _activeObjectID = objectID;
-      }
-    }
-  }
-  
-  return shouldRun;
+  return false;
 }
 
 Result BehaviorReactAcknowledgeCubeMoved::InitInternalReactionary(Robot& robot)
 {
+  _activeObjectID = _switchObjectID;
   switch(_state){
     case State::PlayingSenseReaction:
       TransitionToPlayingSenseReaction(robot);
@@ -121,6 +130,13 @@ Result BehaviorReactAcknowledgeCubeMoved::InitInternalReactionary(Robot& robot)
   }
   
   return Result::RESULT_OK;
+}
+
+void BehaviorReactAcknowledgeCubeMoved::StopInternalReactionary(Robot& robot)
+{
+  //Ensure that two cubes being moved does not cause the robot to throttle back and forth
+  auto iter = GetReactionaryIterator(_activeObjectID);
+  iter->ResetObject();
 }
   
 void BehaviorReactAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(Robot& robot)
@@ -161,26 +177,162 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot
   
 void BehaviorReactAcknowledgeCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
-  if(event.GetData().GetTag() == EngineToGameTag::RobotObservedObject){
-    RobotObservedObject objOvserved = event.GetData().Get_RobotObservedObject();
-    uint32_t objectID = objOvserved.objectID;
-
-    for(auto iter = _reactionObjects.begin(); iter != _reactionObjects.end(); ++iter){
-      if (iter->_objectID == objectID){
-        iter->_observedSinceLastResponse = true;
-        break;
-      }
-    }
+  switch(event.GetData().GetTag()){
+    case EngineToGameTag::ObjectMoved:
+      HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
+      break;
+    case EngineToGameTag::ObjectStoppedMoving:
+      HandleObjectStopped(robot, event.GetData().Get_ObjectStoppedMoving());
+      break;
+    case EngineToGameTag::RobotObservedObject:
+      HandleObservedObject(robot, event.GetData().Get_RobotObservedObject());
+      break;
+    default:
+      break;
   }
 }
+  
+void BehaviorReactAcknowledgeCubeMoved::HandleObjectMoved(const Robot& robot, const ObjectMoved& msg)
+{
+  auto iter = GetReactionaryIterator(msg.objectID);
+  iter->ObjectStartedMoving(robot, msg);
+}
+  
+void BehaviorReactAcknowledgeCubeMoved::HandleObjectStopped(const Robot& robot, const ObjectStoppedMoving& msg)
+{
+  auto iter = GetReactionaryIterator(msg.objectID);
+  iter->ObjectStoppedMoving(robot);
+}
+  
+void BehaviorReactAcknowledgeCubeMoved::HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
+{
+  auto iter = GetReactionaryIterator(msg.objectID);
+  iter->ObjectObserved(robot);
+}
+  
+BehaviorReactAcknowledgeCubeMoved::Reaction_iter BehaviorReactAcknowledgeCubeMoved::GetReactionaryIterator(ObjectID objectID)
+{
+  Reaction_iter iter = std::find(_reactionObjects.begin(), _reactionObjects.end(), objectID);
+  if(iter == _reactionObjects.end()){
+    _reactionObjects.push_back(ReactionObjectData(objectID));
+    iter = _reactionObjects.end();
+    iter--;
+  }
+  
+  return iter;
+}
 
-  
-  
+
 void BehaviorReactAcknowledgeCubeMoved::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorReactAcknowledgeCubeMoved.TransitionTo", "%s", stateName.c_str());
   SetStateName(stateName);
+}
+  
+//////
+/// ReactionObject
+/////
+
+ReactionObjectData::ReactionObjectData(ObjectID objectID)
+: _objectID(objectID)
+, _timeStartedMoving(0)
+, _upAxis(UpAxis::Unknown)
+, _isObjectMoving(false)
+, _observedSinceLastReaction(false)
+, _hasUpAxisChanged(false)
+{
+}
+
+ObjectID ReactionObjectData::GetObjectID() const
+{
+  return _objectID;
+}
+  
+bool ReactionObjectData::operator==(const ReactionObjectData &other) const
+{
+  return this->_objectID == other.GetObjectID();
+}
+
+  
+bool ReactionObjectData::ObjectHasMovedLongEnough(const Robot& robot)
+{
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  if(object == nullptr){
+    return false;
+  }
+  
+  if(_isObjectMoving && _observedSinceLastReaction){
+    TimeStamp_t time_ms = robot.GetLastMsgTimestamp();
+    if(time_ms - _timeStartedMoving > kMinTimeMoving_ms){
+      return true;
+    }
+  }
+  
+  return false;
+}
+  
+bool ReactionObjectData::ObjectUpAxisHasChanged(const Robot& robot)
+{
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  if(object == nullptr){
+    return false;
+  }
+  
+  return _hasUpAxisChanged;
+}
+  
+bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
+{
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  if(object == nullptr){
+    return false;
+  }
+  
+  const Pose3d& blockPose = object->GetPose();
+  const Pose3d& robotPose = robot.GetPose();
+  f32 distance = ComputeEuclidianDistanceBetween(blockPose, robotPose);
+  return distance > kRadiusRobotTolerence;
+}
+
+// update values for reactionObject
+void ReactionObjectData::ObjectStartedMoving(const Robot& robot, const ObjectMoved& msg)
+{
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  if(object == nullptr){
+    _isObjectMoving = false;
+    return;
+  }else if(!_isObjectMoving){
+    _isObjectMoving = true;
+    _timeStartedMoving = msg.timestamp;
+    _upAxis = msg.upAxis;
+  }else{
+    if(msg.upAxis != _upAxis){
+      _hasUpAxisChanged = true;
+      _upAxis = msg.upAxis;
+    }
+  }
+}
+  
+void ReactionObjectData::ObjectStoppedMoving(const Robot& robot)
+{
+  _isObjectMoving = false;
+  _hasUpAxisChanged = false;
+}
+  
+void ReactionObjectData::ObjectObserved(const Robot& robot)
+{
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+  if(object != nullptr){
+    _observedSinceLastReaction = true;
+  }
+}
+
+void ReactionObjectData::ResetObject()
+{
+  _isObjectMoving = false;
+  _hasUpAxisChanged = false;
+  _observedSinceLastReaction = false;
 }
   
 } // namespace Cozmo

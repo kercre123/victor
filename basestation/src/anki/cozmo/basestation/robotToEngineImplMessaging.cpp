@@ -523,8 +523,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectMoved");
   
   // We make a copy of this message so we can update the object ID before broadcasting
-  ExternalInterface::ObjectMovedWrapper payload;
-  payload.objectMoved = message.GetData().Get_activeObjectMoved();
+  ObjectMoved payload = message.GetData().Get_activeObjectMoved();
   
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
@@ -532,7 +531,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
   BlockWorldFilter filter;
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   filter.SetFilterFcn([&payload](const ObservableObject* object) {
-    return object->IsActive() && object->GetActiveID() == payload.objectMoved.objectID;
+    return object->IsActive() && object->GetActiveID() == payload.objectID;
   });
   
   std::vector<ObservableObject *> matchingObjects;
@@ -541,7 +540,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
   if(matchingObjects.empty())
   {
     PRINT_NAMED_WARNING("Robot.HandleActiveObjectMoved.UnknownActiveID",
-                        "Could not find match for active object ID %d", payload.objectMoved.objectID);
+                        "Could not find match for active object ID %d", payload.objectID);
     return;
   }
   
@@ -561,7 +560,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
       PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ObjectMoved",
                        "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
                        object->GetID().GetValue(), object->GetActiveID(),
-                       EnumToString(object->GetType()), EnumToString(payload.objectMoved.upAxis));
+                       EnumToString(object->GetType()), EnumToString(payload.upAxis));
       
       
       if(object->GetPoseState() == PoseState::Known)
@@ -569,7 +568,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
         PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
                          "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
                          object->GetID().GetValue(), object->GetActiveID(),
-                         EnumToString(object->GetType()), EnumToString(payload.objectMoved.upAxis));
+                         EnumToString(object->GetType()), EnumToString(payload.upAxis));
         
         // Once an object moves, we can no longer use it for localization because
         // we don't know where it is anymore. Next time we see it, relocalize it
@@ -600,34 +599,20 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
         }
       }
       
-      float time_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      
-      //Ensure a value is set
-      if(robot->GetObjectTimeMovingMap().find(object->GetID()) == robot->GetObjectTimeMovingMap().end()){
-        robot->GetObjectTimeMovingMap().insert(std::make_pair(object->GetID(), time_s));
-      }
-      
-      //update time to 0 if this is the first block move since a stop (indicated by a negative value)
-      if(robot->GetObjectTimeMovingMap()[object->GetID()] < 0){
-        robot->GetObjectTimeMovingMap()[object->GetID()] = time_s;
-      }
-      
-      
       // Don't notify game about moving objects that are being carried, nor moving
       // NOTE: Game could receive multiple messages for the same object in different frames. Is that OK?
       ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
       assert(actionObject != nullptr);
       if(!actionObject->IsBeingCarried()) {
         // Update the ID to be the blockworld ID before broadcasting
-        payload.objectMoved.objectID = object->GetID();
-        payload.objectMoved.robotID = robot->GetID();
-        payload.timeMoving = time_s - robot->GetObjectTimeMovingMap()[object->GetID()];
-        robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectMovedWrapper(payload)));
+        payload.objectID = object->GetID();
+        payload.robotID = robot->GetID();
+        robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
       }
     }
     
     // Set moving state of object
-    object->SetIsMoving(true, payload.objectMoved.timestamp);
+    object->SetIsMoving(true, payload.timestamp);
   }
 }
 
@@ -705,14 +690,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectStopped(const AnkiEvent<Robot
           }
         }
       }
-      
-      //Ensure a value is set
-      if(robot->GetObjectTimeMovingMap().find(object->GetID()) == robot->GetObjectTimeMovingMap().end()){
-        robot->GetObjectTimeMovingMap().insert(std::make_pair(object->GetID(), -1.f));
-      }
-      //reset to negative time to indicate the next move is an initial move
-      robot->GetObjectTimeMovingMap()[object->GetID()] = -1.f;
-      
       
       // Update the ID to be the blockworld ID before broadcasting
       payload.objectID = object->GetID();

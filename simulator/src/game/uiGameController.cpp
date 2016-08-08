@@ -232,12 +232,12 @@ namespace Anki {
       HandleActiveObjectConnectionState(msg);
     }
     
-    void UiGameController::HandleActiveObjectMovedWrapperBase(ExternalInterface::ObjectMovedWrapper const& msg)
+    void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
     {
      // PRINT_NAMED_INFO("HandleActiveObjectMovedWrapper", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
      //                  msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
       
-      HandleActiveObjectMovedWrapper(msg);
+      HandleActiveObjectMoved(msg);
     }
     
     void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
@@ -478,8 +478,8 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ObjectConnectionState:
             HandleActiveObjectConnectionStateBase(message.Get_ObjectConnectionState());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ObjectMovedWrapper:
-            HandleActiveObjectMovedWrapperBase(message.Get_ObjectMovedWrapper());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectMoved:
+            HandleActiveObjectMovedBase(message.Get_ObjectMoved());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectStoppedMoving:
             HandleActiveObjectStoppedMovingBase(message.Get_ObjectStoppedMoving());

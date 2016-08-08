@@ -349,6 +349,7 @@ namespace Anki {
     return ComputeVectorBetween(pose1, pose2).Length();
   }
   
+  f32 ComputeEuclidianDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
   
   //
   // Inline accessors:

@@ -437,6 +437,9 @@ Result BehaviorManager::Update()
   if( ! _runningReactionaryBehavior ) {
     SwitchToNextBehavior();
   }
+  
+  //Allow reactionary behaviors to request a switch without a message
+  CheckForComputationalSwitch();
     
   if(nullptr != _currentBehavior) {
     // We have a current behavior, update it.
@@ -485,6 +488,7 @@ Result BehaviorManager::Update()
         break;
     } // switch(status)
   }
+
     
   return lastResult;
 } // Update()
@@ -534,6 +538,27 @@ void BehaviorManager::StopCurrentBehavior()
     _currentBehavior->Stop();
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::CheckForComputationalSwitch()
+{
+  //Check to see if any reactionary behaviors want to perform a computational switch
+  bool hasSwitched = false;
+  for( auto rBehavior: _reactionaryBehaviors){
+    if(!rBehavior->IsRunning()
+       && rBehavior->ShouldComputationallySwitch(_robot)){
+      if(rBehavior->IsRunnable(_robot)){
+        SwitchToReactionaryBehavior(rBehavior);
+        if(hasSwitched){
+          PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
+                              "Multiple behaviors switched to in a single basestation tick");
+        }
+        hasSwitched = true;
+      }
+    }
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)

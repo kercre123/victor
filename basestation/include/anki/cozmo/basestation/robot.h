@@ -678,8 +678,6 @@ public:
   // Sends debug string out to game and viz
   Result SendDebugString(const char *format, ...);
   
-  std::map<int,float>& GetObjectTimeMovingMap() { return _objectTimeMovingMap; }
-  
   // =========  Events  ============
   using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
@@ -957,9 +955,6 @@ protected:
   // A place to store reaction callback functions, indexed by the type of
   // vision marker that triggers them
   std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
-  
-  //tracks timestamps of when objects moved - maps ObjectID to time moving
-  std::map<int,float> _objectTimeMovingMap;
     
   EncodedImage _encodedImage;
   double       _timeSinceLastImage_s = 0.0;

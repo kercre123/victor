@@ -25,7 +25,7 @@ private:
 
   void HandleActiveObjectTapped(const ObjectTapped& msg) override;
   void HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg) override;
-  void HandleActiveObjectMovedWrapper(const ExternalInterface::ObjectMovedWrapper& msg) override;
+  void HandleActiveObjectMoved(const ObjectMoved& msg) override;
 
   TestState _testState = TestState::Init;
   const Pose3d _cubePose1 = {0, Vec3f(0.f, 0.f, 1.f), Vec3f(200.f, 50.f, 22.1f)};
@@ -123,7 +123,7 @@ void CST_MotionMessagesFromBlocks::HandleActiveObjectStoppedMoving(const ObjectS
   _wasStopped = true;
 }
 
-void CST_MotionMessagesFromBlocks::HandleActiveObjectMovedWrapper(const ExternalInterface::ObjectMovedWrapper& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectMoved(const ObjectMoved& msg)
 {
   _wasMoved = true;
 }

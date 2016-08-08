@@ -136,7 +136,7 @@ namespace Cozmo {
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
-      EngineToGameTag::ObjectMovedWrapper,
+      EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
       EngineToGameTag::RobotPickedUp,
@@ -1023,8 +1023,8 @@ namespace Cozmo {
         _lastHandlerResult = HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
         break;
         
-      case EngineToGameTag::ObjectMovedWrapper:
-        _lastHandlerResult = HandleObjectMoved(robot, event.GetData().Get_ObjectMovedWrapper().objectMoved);
+      case EngineToGameTag::ObjectMoved:
+        _lastHandlerResult = HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
         break;
         
       case EngineToGameTag::CameraCalibration:

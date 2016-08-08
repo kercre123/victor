@@ -102,7 +102,7 @@ protected:
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(ImageChunk const& msg){};
   virtual void HandleActiveObjectConnectionState(ObjectConnectionState const& msg){};
-  virtual void HandleActiveObjectMovedWrapper(ExternalInterface::ObjectMovedWrapper const& msg){};
+  virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleKnownObject(ExternalInterface::KnownObject const& msg){};
@@ -414,7 +414,7 @@ private:
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
   void HandleImageChunkBase(ImageChunk const& msg);
   void HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg);
-  void HandleActiveObjectMovedWrapperBase(ExternalInterface::ObjectMovedWrapper const& msg);
+  void HandleActiveObjectMovedBase(ObjectMoved const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleKnownObjectBase(ExternalInterface::KnownObject const& msg);
