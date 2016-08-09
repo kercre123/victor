@@ -93,7 +93,11 @@ public class ConnectionFlow : MonoBehaviour {
     }
 
     if (_InvalidPinViewInstance != null) {
-      UIManager.CloseView(_InvalidPinViewInstance);
+      UIManager.CloseViewImmediately(_InvalidPinViewInstance);
+    }
+
+    if (_ReplaceCozmoOnChargerViewInstance != null) {
+      UIManager.CloseViewImmediately(_ReplaceCozmoOnChargerViewInstance);
     }
 
     if (_WakingUpCozmoScreenInstance != null) {
@@ -414,6 +418,11 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   public void HandleRobotDisconnect() {
+    if (_ReplaceCozmoOnChargerViewInstance != null) {
+      // don't try to go through the search flow if the replace cozmo on charger view is up.
+      return;
+    }
+
     Cleanup();
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
