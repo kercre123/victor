@@ -134,7 +134,7 @@ namespace Anki {
 
     const Pose2d& FindOrigin() const;
 
-    void Print() const;
+    void Print(const std::string& channel = DEFAULT_CHANNEL_NAME, const std::string& eventName = "Pose3d.Print") const;
     
   protected:
     Point2f _translation;
@@ -320,7 +320,7 @@ namespace Anki {
     
     // TODO: Provide IsSameAs_WithAmbiguity() wrappers that don't require Tdiff/angleDiff outputs
 
-    void Print() const;
+    void Print(const std::string& channel = DEFAULT_CHANNEL_NAME, const std::string& eventName = "Pose3d.Print") const;
     
     std::string GetNamedPathToOrigin(bool showTranslations)   const;
     void        PrintNamedPathToOrigin(bool showTranslations) const;

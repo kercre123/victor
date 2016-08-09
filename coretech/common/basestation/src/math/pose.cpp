@@ -112,9 +112,10 @@ namespace Anki {
     return *this;
   }
 
-  void Pose2d::Print() const
+  void Pose2d::Print(const std::string& channel, const std::string& eventName) const
   {
-    CoreTechPrint("Pose2d%s%s: Translation=(%f, %f), RotAng=%frad (%.1fdeg), parent 0x%x;%s\n",
+    PRINT_CH_INFO(channel.c_str(), eventName.c_str(),
+                  "Pose2d%s%s: Translation=(%f, %f), RotAng=%frad (%.1fdeg), parent 0x%p;%s",
                   GetName().empty() ? "" : " ", GetName().c_str(),
                   _translation.x(), _translation.y(),
                   _angle.ToFloat(), _angle.getDegrees(),
@@ -560,9 +561,10 @@ namespace Anki {
     PoseBase<Pose3d>::PrintNamedPathToOrigin(*this, showTranslations);
   }
   
-  void Pose3d::Print() const
+  void Pose3d::Print(const std::string& channel, const std::string& eventName) const
   {
-    PRINT_NAMED_INFO("Pose3d.Print", "Pose%s%s: Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg), parent 0x%p;%s\n",
+    PRINT_CH_INFO(channel.c_str(), eventName.c_str(),
+                  "Pose%s%s: Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg), parent 0x%p;%s",
                   GetName().empty() ? "" : " ", GetName().c_str(),
                   _translation.x(), _translation.y(), _translation.z(),
                   GetRotationAxis().x(), GetRotationAxis().y(), GetRotationAxis().z(),
