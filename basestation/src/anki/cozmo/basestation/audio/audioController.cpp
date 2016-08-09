@@ -12,8 +12,10 @@
  */
 
 #include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
 #include "anki/cozmo/basestation/audio/musicConductor.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/audio/audioBusses.h"
@@ -21,18 +23,14 @@
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include "clad/audio/audioStateTypes.h"
-#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
-
 #include <sstream>
 #include <unordered_map>
 
-#include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
-#include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
@@ -58,13 +56,23 @@ namespace Audio {
   
 using namespace AudioEngine;
 
+// Resolve audio asset file path
+static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
+#if USE_AUDIO_ENGINE
+  // Setup Ak Logging callback
+  static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlayingId, AudioGameObject );
+#endif
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
+AudioController::AudioController( const CozmoContext* context )
 : _pluginInterface( new AudioControllerPluginInterface( *this ) )
 {
 #if USE_AUDIO_ENGINE
   {
+    ASSERT_NAMED(nullptr != context, "AudioController.AudioController.CozmocContex.IsNull");
+    
     _audioEngine = new AudioEngineController();
+    const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
     
@@ -78,14 +86,59 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     AudioEngine::SetupConfig config{};
     // Assets
     config.assetFilePath = assetPath;
+    // Path resolver function
+    config.pathResolver = std::bind(&ResolvePathToAudioFile, assetPath,
+                                    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    
+    // Add Assets Zips to list.
+
+#if defined(ANKI_PLATFORM_ANDROID)
+    // Set andoid asset manager & path
+    
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// FIXME: This is an example of how OverDrive sets the android asset manager & asset manager base path - JMR
+//    JNI::Context* context = JNI::Context::GetInstance();
+//    config.assetManager =  (void *)  nullptr; // context->GetAssetManager();
+//    config.assetManagerBasePath = "rams/overdrive/basestation/sound";
+//    if (!obbPath.empty()) {
+//      for (auto const& it : soundZips) {
+//        pathsToSoundZipFiles.push_back(obbPath + "?assets/rams/overdrive/" + it);
+//      }
+//    }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    // FIXME: This is a temp solution until code above is working
+    // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
+    std::string zipAssets = assetPath + "AudioAssets.zip";
+    if (Util::FileUtils::FileExists(zipAssets)) {
+      config.pathToZipFiles.push_back(zipAssets);
+    }
+    else {
+      PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
+    }
+    
+#else
+    // iOS & Mac Platfroms
+    // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
+    std::string zipAssets = assetPath + "AudioAssets.zip";
+    if (Util::FileUtils::FileExists(zipAssets)) {
+      config.pathToZipFiles.push_back(zipAssets);
+    }
+    else {
+      PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
+    }
+#endif
+    
+    // Set Local
     config.audioLocal = AudioLocaleType::EnglishUS;
-    // Memory
+    // Engine Memory
     config.defaultMemoryPoolSize      = ( 4 * 1024 * 1024 );
     config.defaultLEMemoryPoolSize    = ( 4 * 1024 * 1024 );
     config.defaultPoolBlockSize       = 1024;
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
     
+    // Start your Engines!!!
     _isInitialized = _audioEngine->Initialize( config );
     
     // If we're using the audio engine, assert that it was successfully initialized.
@@ -97,6 +150,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   if ( _isInitialized )
   {
 #if USE_AUDIO_ENGINE
+    // Setup Ak Logging callback
+    _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, &AudioEngineLogCallback );
     
     // Register and Prepare Plug-Ins
     SetupHijackAudioPlugInAndRobotAudioBuffers();
@@ -118,26 +173,6 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _audioEngine->RegisterAudioScene( std::move(initScene) );
     
     _audioEngine->LoadAudioScene( sceneTitle );
-    
-    LogCallbackFunc logCallback = [this] ( uint32_t akErrorCode,
-                                           const char* errorMessage,
-                                           ErrorLevel errorLevel,
-                                           AudioPlayingId playingId,
-                                           AudioGameObject gameObjectId )
-    {
-      std::ostringstream logStream;
-      logStream << "ErrorCode: " << akErrorCode << " Message: '" << errorMessage << "' LevelBitFlag: "
-                << (uint32_t)errorLevel << " PlayingId: " << playingId << " GameObjId: " << gameObjectId;
-      
-      PRINT_CH_INFO("Audio_WwiseLog",
-                    "AudioController",
-                    "%s", logStream.str().c_str());
-      if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
-        PRINT_NAMED_ERROR("AudioController.WwiseLogError", "%s", logStream.str().c_str());
-      }
-    };
-    
-    _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, logCallback );
     
 #endif
   
@@ -231,7 +266,8 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioE
     }
     
 #if HijackAudioPlugInDebugLogs
-    _plugInLog.emplace_back( TimeLog( LogEnumType::Post, "EventId: " + std::to_string(eventId) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+    _plugInLog.emplace_back( TimeLog( LogEnumType::Post, "EventId: " + std::to_string(eventId),
+                                      Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
   }
 #endif
@@ -407,7 +443,8 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
 #if USE_AUDIO_ENGINE
   using namespace PlugIns;
   // Setup CozmoPlugIn & RobotAudioBuffer
-  _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
+  _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ),
+                                              static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
 
   // Setup Callbacks
   _hijackAudioPlugIn->SetCreatePlugInCallback( [this] ( const uint32_t plugInId )
@@ -423,7 +460,8 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
     
     
 #if HijackAudioPlugInDebugLogs
-    _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+    _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "",
+                                      Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
   } );
   
@@ -441,7 +479,8 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
     
     
 #if HijackAudioPlugInDebugLogs
-    _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+    _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "",
+                                      Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
     PrintPlugInLog();
 #endif
   } );
@@ -457,7 +496,8 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
     }
      
 #if HijackAudioPlugInDebugLogs
-     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(frameCount),
+                                       Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
   } );
   
@@ -524,6 +564,49 @@ void AudioController::ClearGarbageCollector()
   _callbackGarbageCollector.clear();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
+                             const char* inName,
+                             char* outPath,
+                             const size_t outPathLen )
+{
+  if (!inName || !outPath || !outPathLen) {
+    return false;
+  }
+  *outPath = '\0';
+  if (dataPlatformResourcePath.empty()) {
+    return false;
+  }
+  std::string path = dataPlatformResourcePath + std::string(inName);
+  if (path.empty()) {
+    return false;
+  }
+  (void) strncpy(outPath, path.c_str(), outPathLen);
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#if USE_AUDIO_ENGINE
+// Setup Ak Logging callback
+void AudioEngineLogCallback( uint32_t akErrorCode,
+                            const char* errorMessage,
+                            ErrorLevel errorLevel,
+                            AudioPlayingId playingId,
+                            AudioGameObject gameObjectId )
+{
+  std::ostringstream logStream;
+  logStream << "ErrorCode: " << akErrorCode << " Message: '" << ((nullptr != errorMessage) ? errorMessage : "")
+  << "' LevelBitFlag: " << (uint32_t)errorLevel << " PlayingId: " << playingId << " GameObjId: " << gameObjectId;
+  
+  PRINT_CH_INFO("Audio_WwiseLog",
+                "AudioController",
+                "%s", logStream.str().c_str());
+  if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
+    PRINT_NAMED_ERROR("AudioController.WwiseLogError", "%s", logStream.str().c_str());
+  }
+};
+#endif
+  
 
 // Debug Cozmo PlugIn Logs
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -555,7 +638,8 @@ void AudioController::PrintPlugInLog() {
         isFirstUpdateLog = true;
         
         printf("Create PlugIn %s - time: %f ms\n \
-               - Post -> Create time delta = %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ), ConvertToMiliSec( createTime - postTime ));
+               - Post -> Create time delta = %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ),
+               ConvertToMiliSec( createTime - postTime ));
       }
         break;
         
@@ -566,10 +650,12 @@ void AudioController::PrintPlugInLog() {
         
         if ( isFirstUpdateLog ) {
           printf("- Post -> Update time delta = %f ms\n \
-                  - Create -> Update time delta = %f ms\n", ConvertToMiliSec( aLog.TimeInNanoSec - postTime ), ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
+                  - Create -> Update time delta = %f ms\n", ConvertToMiliSec( aLog.TimeInNanoSec - postTime ),
+                 ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
         }
         else {
-          printf("- Previous Update -> Update time delta = %f ms\n", ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
+          printf("- Previous Update -> Update time delta = %f ms\n",
+                 ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
           
         }
         
@@ -581,7 +667,9 @@ void AudioController::PrintPlugInLog() {
       case LogEnumType::DestoryPlugIn:
       {
         printf("Destory Plugin %s - time: %f ms\n \
-               ----------------------------------------------\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+               ----------------------------------------------\n",
+               aLog.Msg.c_str(),
+               ConvertToMiliSec( aLog.TimeInNanoSec ));
       }
         break;
         

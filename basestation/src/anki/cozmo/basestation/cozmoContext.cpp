@@ -33,7 +33,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr != dataPlatform)
   {
-    _audioServer.reset(new Audio::AudioServer(new Audio::AudioController(dataPlatform)));
+    _audioServer.reset(new Audio::AudioServer(new Audio::AudioController(this)));
   }
   #if USE_DAS
   _dasTransferTask->Init(_transferQueueMgr.get());

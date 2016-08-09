@@ -34,13 +34,9 @@ namespace PlugIns {
 }
 
 namespace Anki {
-namespace Util {
-namespace Data {
-  class DataPlatform;
-}
-  
-}
 namespace Cozmo {
+class CozmoContext;
+  
 namespace Audio {
 
 class MusicConductor;
@@ -55,8 +51,7 @@ class AudioController : public Util::noncopyable
   
 public:
   
-  AudioController( Util::Data::DataPlatform* dataPlatfrom );
-  // TODO: Need to add Language Local, pathToZipFile, zipBasePath, assetManager & assetManagerBasePath for RAMS & Android
+  AudioController( const CozmoContext* context );
   
   ~AudioController();
 
@@ -154,7 +149,7 @@ private:
   
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
   
-  MusicConductor*  _musicConductor = nullptr;
+  MusicConductor* _musicConductor = nullptr;
   
 
   // Setup HijackAudio plug-in & robot buffers
