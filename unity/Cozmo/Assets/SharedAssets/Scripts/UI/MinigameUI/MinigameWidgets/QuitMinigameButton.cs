@@ -22,7 +22,7 @@ namespace Cozmo {
       private CozmoButton _QuitButtonInstance;
 
       public string DASEventViewController {
-        get { return _QuitButtonInstance.DASEventViewController; } 
+        get { return _QuitButtonInstance.DASEventViewController; }
         set { _QuitButtonInstance.DASEventViewController = value; }
       }
 
@@ -82,6 +82,14 @@ namespace Cozmo {
 
       private void HandleQuitConfirmed() {
         _ConfimedQuit = true;
+      }
+
+      public void SetButtonGraphic(Sprite sprite) {
+        _QuitButtonInstance.SetButtonGraphic(sprite);
+      }
+
+      public void SetButtonTint(Color tintColor) {
+        _QuitButtonInstance.SetButtonTint(tintColor);
       }
     }
   }

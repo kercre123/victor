@@ -54,6 +54,10 @@ namespace Cozmo.Minigame.DroneMode {
     private Color _BackgroundColor;
     public Color BackgroundColor { get { return _BackgroundColor; } }
 
+    [SerializeField]
+    private Sprite _QuitButtonSprite;
+    public Sprite QuitButtonSprite { get { return _QuitButtonSprite; } }
+
     // TODO Remove debug text field
     public Anki.UI.AnkiTextLabel TiltText;
 

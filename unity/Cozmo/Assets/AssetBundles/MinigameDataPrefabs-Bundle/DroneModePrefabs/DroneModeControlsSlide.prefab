@@ -740,6 +740,7 @@ MonoBehaviour:
   _HeadDownThreshold: 0.45
   _HeadUpThreshold: 0.55
   _BackgroundColor: {r: 0.14117648, g: 0.8627451, b: 0.9019608, a: 1}
+  _QuitButtonSprite: {fileID: 21300000, guid: fded4416f84714f928966ec6788973a4, type: 3}
   TiltText: {fileID: 11466266}
   _CameraFeed: {fileID: 11410814}
 --- !u!114 &11421486

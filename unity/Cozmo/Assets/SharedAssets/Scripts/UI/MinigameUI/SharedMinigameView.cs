@@ -544,6 +544,18 @@ namespace Cozmo {
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
       }
 
+      public void SetQuitButtonGraphic(Sprite sprite) {
+        if (_QuitButtonInstance != null) {
+          _QuitButtonInstance.SetButtonGraphic(sprite);
+        }
+      }
+
+      public void SetQuitButtonColor(Color tintColor) {
+        if (_QuitButtonInstance != null) {
+          _QuitButtonInstance.SetButtonTint(tintColor);
+        }
+      }
+
       public void ShowBackButton(BackButton.BackButtonHandler backTapped) {
         HideQuitButton();
         CreateWidgetIfNull<BackButton>(ref _BackButtonInstance, _BackButtonPrefab, ContentLayer.Middle);

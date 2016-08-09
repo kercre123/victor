@@ -16,10 +16,10 @@ namespace Cozmo.UI {
 
     public bool ShowDisabledStateWhenInteractable {
       get { return _ShowDisabledStateWhenInteractable; }
-      set { 
-        _ShowDisabledStateWhenInteractable = value; 
+      set {
+        _ShowDisabledStateWhenInteractable = value;
         UpdateVisuals();
-      } 
+      }
     }
 
     public Anki.Cozmo.Audio.AudioEventParameter SoundEvent {
@@ -81,6 +81,31 @@ namespace Cozmo.UI {
         _GlintAnimator.EnableGlint(show);
       }
     }
-  }
 
+    public void SetButtonGraphic(Sprite sprite) {
+      foreach (var graphic in ButtonGraphics) {
+        graphic.enabledSprite = sprite;
+        graphic.disabledSprite = sprite;
+        graphic.pressedSprite = sprite;
+      }
+
+      UpdateVisuals();
+    }
+
+    public void SetButtonTint(Color tintColor) {
+      foreach (var graphic in ButtonGraphics) {
+        float oldAlpha = graphic.enabledColor.a;
+        graphic.enabledColor = tintColor;
+        graphic.enabledColor.a = oldAlpha;
+
+        oldAlpha = graphic.pressedColor.a;
+        graphic.pressedColor = tintColor;
+        graphic.pressedColor.a = oldAlpha;
+
+        graphic.disabledColor = tintColor * graphic.disabledColor;
+      }
+
+      UpdateVisuals();
+    }
+  }
 }

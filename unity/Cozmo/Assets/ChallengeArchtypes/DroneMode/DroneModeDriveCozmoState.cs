@@ -38,11 +38,6 @@ namespace Cozmo {
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           EnableInput();
 
-          SetupRobotForDriveState();
-
-          _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
-          _CurrentRobot.EnableDroneMode(true);
-
           // TODO Use different colors for bottom and top colors
           // Top = R36, G220, B230
           // Bottom = R25, G131, B213
@@ -50,6 +45,12 @@ namespace Cozmo {
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
                                                                           _DroneModeControlsSlide.BackgroundColor);
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
+          _DroneModeGame.SharedMinigameView.SetQuitButtonGraphic(_DroneModeControlsSlide.QuitButtonSprite);
+
+          SetupRobotForDriveState();
+
+          _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
+          _CurrentRobot.EnableDroneMode(true);
         }
 
         public override void Exit() {
