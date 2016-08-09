@@ -5,7 +5,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  enum uint_8 VisionMode
+  enum uint_16 VisionMode
   {
     Idle                   = 0x00,
     DetectingMarkers,
@@ -15,6 +15,7 @@ namespace Cozmo {
     DetectingOverheadEdges,
     ReadingToolCode,
     ComputingCalibration,
+    CheckingQuality,
     Count
   }
       

@@ -63,6 +63,18 @@ namespace Cozmo {
   // (in order to provide a little breathing room for main thread)
   CONSOLE_VAR_RANGED(u8, kVision_MinSleepTime_ms, "Vision.General", 2, 1, 10);
   
+  
+  namespace {
+    // These aren't actually constant, b/c they are loaded from configuration files,
+    // but they are used like constants in the code.
+    
+    // How long to see bad image quality continuously before alerting
+    TimeStamp_t kImageQualityAlertDuration_ms = 3000;
+    
+    // Time between sending repeated EngineErrorCodeMessages after first alert
+    TimeStamp_t kImageQualityAlertSpacing_ms = 5000;
+  }
+  
   VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
   : _robot(robot)
   , _context(context)
@@ -105,6 +117,24 @@ namespace Cozmo {
   Result VisionComponent::Init(const Json::Value& config)
   {
     _isInitialized = false;
+    
+    const Json::Value& imageQualityConfig = config["ImageQuality"];
+    if(!JsonTools::GetValueOptional(imageQualityConfig,
+                                    "TimeBeforeErrorMessage_ms",
+                                    kImageQualityAlertDuration_ms))
+    {
+      PRINT_NAMED_ERROR("VisionComponent.Init.MissingJsonParameter", "ImageQuality.TimeBeforeErrorMessage_ms");
+      return RESULT_FAIL;
+    }
+    
+    if(!JsonTools::GetValueOptional(imageQualityConfig,
+                                    "RepeatedErrorMessageInverval_ms",
+                                    kImageQualityAlertSpacing_ms))
+    {
+      PRINT_NAMED_ERROR("VisionComponent.Init.MissingJsonParameter", "ImageQuality.RepeatedErrorMessageInverval_ms");
+      return RESULT_FAIL;
+    }
+    
     Result result = _visionSystem->Init(config);
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("VisionComponent.Init.VisionSystemInitFailed", "");
@@ -875,6 +905,7 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
         tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
+        tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         
         // Display any debug images left by the vision system
         for(auto & debugGray : result.debugImages) {
@@ -1206,6 +1237,59 @@ namespace Cozmo {
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
   
+    return RESULT_OK;
+  }
+  
+  Result VisionComponent::UpdateImageQuality(const VisionProcessingResult& procResult)
+  {
+    if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
+    {
+      // Just switched image qualities
+      _currentQualityBeginTime_ms = procResult.timestamp;
+      _waitForNextAlert_ms = kImageQualityAlertDuration_ms; // for first alert, use "duration" time
+    }
+    else if(procResult.imageQuality != ImageQuality::Good)
+    {
+      const TimeStamp_t timeWithThisQuality_ms = procResult.timestamp - _currentQualityBeginTime_ms;
+      
+      if(timeWithThisQuality_ms > _waitForNextAlert_ms)
+      {
+        // If we get here, we've been in a non-good image quality for too long.
+        // Send out a warning.
+        EngineErrorCode errorCode = EngineErrorCode::Count;
+        
+        switch(_lastImageQuality)
+        {
+          case ImageQuality::Good:
+            // can't get here due to IF above (but need case to prevent compiler error without default)
+            assert(false);
+            break;
+            
+          case ImageQuality::TooDark:
+            errorCode = EngineErrorCode::ImageQualityTooDark;
+            break;
+            
+          case ImageQuality::TooBright:
+            errorCode = EngineErrorCode::ImageQualityTooBright;
+            break;
+        }
+        
+        PRINT_CH_INFO("VisionComponent", "UpdateImageQuality.BroadcastingBadImageQuality",
+                      "Seeing %s for more than %u > %ums, broadcasting engine error %s",
+                      EnumToString(procResult.imageQuality), timeWithThisQuality_ms,
+                      _waitForNextAlert_ms, EnumToString(errorCode));
+        
+        using namespace ExternalInterface;
+        _robot.Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
+        
+        // Reset start time just to avoid spamming the error
+        _currentQualityBeginTime_ms = procResult.timestamp;
+        _waitForNextAlert_ms = kImageQualityAlertSpacing_ms; // after first alert use "spacing" time
+      }
+    }
+    
+    _lastImageQuality = procResult.imageQuality;
+    
     return RESULT_OK;
   }
 

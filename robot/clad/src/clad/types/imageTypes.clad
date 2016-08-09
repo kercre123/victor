@@ -81,5 +81,11 @@ message CameraCalibration
   float_32 distCoeffs[8], // NUM_RADIAL_DISTORTION_COEFFS
 }
 
+enum uint_8 ImageQuality {
+  Good       = 0,
+  TooDark,
+  TooBright
+}
+
 } // namespace Cozmo
 } // namespace Anki

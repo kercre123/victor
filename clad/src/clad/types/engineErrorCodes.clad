@@ -10,28 +10,35 @@ namespace Cozmo {
 enum uint_8 EngineErrorCode
 {
   // Description
-  // Storage on robot is full
+  //  Storage on robot is full
   // Solution
-  // Erase some things in storage or do a factory reset to wipe everything
+  //  Erase some things in storage or do a factory reset to wipe everything
   RobotNVStorageFull,
 
   // Description
-  // Failed to write unlock data to robot
+  //  Failed to write unlock data to robot
   // Solution
-  // -
+  //  -
   WriteUnlocksToRobot,
 
   // Description
-  // Failed to read unlock data from robot
+  //  Failed to read unlock data from robot
   // Solution
-  // -
+  //  -
   ReadUnlocksFromRobot,
 
   // Description
-  // Failed to write face data to robot
+  //  Failed to write face data to robot
   // Solution
-  // -
+  //  -
   WriteFacesToRobot,
+
+  // Description
+  //  Image quality appears to be too bright or too dark
+  // Solution
+  //  Notify user to adjust lighting
+  ImageQualityTooDark,
+  ImageQualityTooBright,
 
   Count
 }

@@ -131,7 +131,9 @@ namespace Cozmo {
   struct VisionProcessingResult
   {
     TimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
-    Util::BitFlags8<VisionMode> modesProcessed;
+    Util::BitFlags16<VisionMode> modesProcessed;
+    
+    ImageQuality imageQuality;
     
     std::list<VizInterface::TrackerQuad>               trackerQuads;
     std::list<ExternalInterface::RobotObservedMotion>  observedMotions;
@@ -271,7 +273,7 @@ namespace Cozmo {
                                  Embedded::Point3<f32>&       translationWrtRobot);
     
     // VisionMode <-> String Lookups
-    std::string GetModeName(Util::BitFlags8<VisionMode> mode) const;
+    std::string GetModeName(Util::BitFlags16<VisionMode> mode) const;
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
@@ -321,6 +323,8 @@ namespace Cozmo {
     Result DetectMarkers(const Vision::Image& inputImage,
                          std::vector<Quad2f>& markerQuads);
 
+    Result CheckImageQuality(const Vision::Image& inputImage);
+    
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;
@@ -366,8 +370,8 @@ namespace Cozmo {
     // TODO: Move this to visionParameters
     const s32 MAX_TRACKING_FAILURES = 1;
     
-    Util::BitFlags8<VisionMode> _mode;
-    Util::BitFlags8<VisionMode> _modeBeforeTracking;
+    Util::BitFlags16<VisionMode> _mode;
+    Util::BitFlags16<VisionMode> _modeBeforeTracking;
     
     bool _calibrateFromToolCode = false;
     
