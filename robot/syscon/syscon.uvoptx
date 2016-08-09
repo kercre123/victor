@@ -117,7 +117,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>/</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -171,6 +170,11 @@
           <count>4</count>
           <WinNumber>1</WinNumber>
           <ItemText>NRF_GPIO-&gt;PIN_CNF[20]</ItemText>
+        </Ww>
+        <Ww>
+          <count>5</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>g_dataToHead</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
