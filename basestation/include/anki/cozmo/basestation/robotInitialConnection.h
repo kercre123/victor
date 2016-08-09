@@ -23,9 +23,13 @@ namespace Cozmo {
 namespace RobotInterface {
 class MessageHandler;
 class RobotToEngine;
+
+enum class RobotToEngineTag : uint8_t;
+enum class EngineToRobotTag : uint8_t;
 }
 
 class IExternalInterface;
+enum class RobotConnectionResult : uint8_t;
 
 class RobotInitialConnection : private Util::SignalHolder
 {
@@ -37,16 +41,22 @@ public:
   // returns true if robot was in the process of connecting and we broadcasted a connection failed message
   bool HandleDisconnect();
 
+  // returns if we should filter out (not deliver) a given message type to/from this robot
+  // if firmware doesn't match, we'll do this to almost every message
+  bool ShouldFilterMessage(RobotInterface::RobotToEngineTag messageTag) const;
+  bool ShouldFilterMessage(RobotInterface::EngineToRobotTag messageTag) const;
+
 private:
   void HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>&);
-  void OnNotified();
+  void OnNotified(RobotConnectionResult result);
 
   RobotID_t _id;
   bool _notified;
   IExternalInterface* _externalInterface;
   uint32_t _fwVersion;
   uint32_t _fwTime;
+  bool _validFirmware;
 };
 
 }

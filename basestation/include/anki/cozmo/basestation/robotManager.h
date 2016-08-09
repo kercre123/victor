@@ -39,6 +39,8 @@ namespace Cozmo {
 // Forward declarations:
 namespace RobotInterface {
 class MessageHandler;
+enum class EngineToRobotTag : uint8_t;
+enum class RobotToEngineTag : uint8_t;
 }
 class Robot;
 class IExternalInterface;
@@ -117,7 +119,10 @@ public:
   using RobotMap = std::map<RobotID_t,Robot*>;
   const RobotMap& GetRobotMap() const { return _robots; }
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
-    
+
+  bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::RobotToEngineTag msgType) const;
+  bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::EngineToRobotTag msgType) const;
+
 protected:
   RobotDisconnectedSignal _robotDisconnectedSignal;
   RobotMap _robots;
