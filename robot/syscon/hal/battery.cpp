@@ -260,7 +260,7 @@ static void setChargeState(CurrentChargeState state) {
   switch(state) {
     case CHARGE_OFF_CHARGER:
       isCharging = false;
-      Backpack::defaultPattern(LIGHTS_RELEASE);
+      Backpack::defaultPattern(LIGHTS_USER);
       nrf_gpio_pin_clear(PIN_CHARGE_EN);
       break ;
     case CHARGE_CHARGING:

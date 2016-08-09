@@ -56,7 +56,7 @@ static int off_time = 0;
 void Backpack::init()
 {
   setLights(BackpackLights::startup);
-  defaultPattern(LIGHTS_RELEASE);
+  defaultPattern(LIGHTS_USER);
   
   // Prime our counter
   Backpack::update(0);
@@ -151,7 +151,7 @@ static void updateLights(const LightState* update) {
 
 void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
   switch (pattern) {
-    case LIGHTS_RELEASE:
+    case LIGHTS_USER:
       lights_locked = false;
       updateLights(_userLights);
       break ;

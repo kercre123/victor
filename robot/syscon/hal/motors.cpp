@@ -213,7 +213,6 @@ void Motors::disable(bool disable) {
 }
 
 
-// static bool chargeOkEnabled = false;
 // Returns 'true' when the the charger says the battery is full
 bool Motors::getChargeOkay() {
   return motorDisable ? nrf_gpio_pin_read(PIN_nCHGOK) : false;
@@ -264,7 +263,7 @@ void Motors::setup(void) {
     nrf_gpio_cfg_output(motorConfig->pPin);
   }
 
-  // Disable our PPI
+  // Enable our PPI
   NRF_PPI->CHENSET = 0xFF;
 }
 
