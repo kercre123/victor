@@ -24,6 +24,7 @@ enum BLEError {
 };
 
 static const int COZMO_FRAME_DATA_LENGTH = AES_KEY_LENGTH;
+static const int BLUETOOTH_PIN_DIGITS = 6;
 
 enum CozmoFrameFlags {
   START_OF_MESSAGE = 0x01,

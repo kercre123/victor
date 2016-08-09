@@ -477,14 +477,14 @@
               <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
             </File>
             <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wifi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\wifi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
             </File>
             <File>
               <FileName>motors.cpp</FileName>

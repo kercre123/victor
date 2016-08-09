@@ -6,9 +6,14 @@
 
 using namespace Anki::Cozmo;
 
+static const int BACKPACK_LIGHT_CHANNELS = 5;
+
 enum DefaultBackpackPattern {
-  LIGHTS_BOOTING,
-  LIGHTS_LOW_POWER
+  LIGHTS_USER,
+  LIGHTS_CHARGING,
+  LIGHTS_CHARGED,
+  LIGHTS_SLEEPING,
+  LIGHTS_CHARGER_OOS
 };
 
 namespace Backpack {
