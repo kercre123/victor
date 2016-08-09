@@ -504,6 +504,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\tasks.cpp</FilePath>
             </File>
+            <File>
+              <FileName>crashlogger.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\crashlogger.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
