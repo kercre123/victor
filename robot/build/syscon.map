@@ -29,9 +29,9 @@ Section Cross References
     battery.o(i._ZN7Battery4initEv) refers to battery.o(i._Z14startADCsample11AnalogInput) for startADCsample(AnalogInput)
     battery.o(i._ZN7Battery4initEv) refers to battery.o(i._Z10calcResulti) for calcResult(int)
     battery.o(i._ZN7Battery4initEv) refers to battery.o(.data) for .data
+    battery.o(i._ZN7Battery6manageEv) refers to timer.o(.emb_text) for MicroWait(unsigned)
     battery.o(i._ZN7Battery6manageEv) refers to battery.o(i._Z10calcResulti) for calcResult(int)
     battery.o(i._ZN7Battery6manageEv) refers to cxa_guard_acquire.o(i.__cxa_guard_acquire) for __cxa_guard_acquire
-    battery.o(i._ZN7Battery6manageEv) refers to timer.o(.emb_text) for MicroWait(unsigned)
     battery.o(i._ZN7Battery6manageEv) refers to battery.o(i._Z14startADCsample11AnalogInput) for startADCsample(AnalogInput)
     battery.o(i._ZN7Battery6manageEv) refers to temp.o(i._ZN4Temp7getTempEv) for Temp::getTemp()
     battery.o(i._ZN7Battery6manageEv) refers to idiv.o(.text) for __aeabi_idivmod
@@ -1112,28 +1112,28 @@ Image Symbol Table
     ../../../edgfe/lib_src/guard.c           0x00000000   Number         0  cxa_guard_acquire.o ABSOLUTE
     ../clib/../cmprslib/zerorunl2.c          0x00000000   Number         0  __dczerorl2.o ABSOLUTE
     ../clib/microlib/division.c              0x00000000   Number         0  idiv.o ABSOLUTE
-    ../clib/microlib/division.c              0x00000000   Number         0  ldiv.o ABSOLUTE
-    ../clib/microlib/division.c              0x00000000   Number         0  uidiv.o ABSOLUTE
     ../clib/microlib/division.c              0x00000000   Number         0  uldiv.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry5.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry11a.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry2.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry11b.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry9a.o ABSOLUTE
+    ../clib/microlib/division.c              0x00000000   Number         0  uidiv.o ABSOLUTE
+    ../clib/microlib/division.c              0x00000000   Number         0  ldiv.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry7b.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry8a.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry8b.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry7a.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry9a.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry9b.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry10a.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry2.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry5.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry7a.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry11b.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry11a.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry10b.o ABSOLUTE
-    ../clib/microlib/longlong.c              0x00000000   Number         0  llshl.o ABSOLUTE
-    ../clib/microlib/longlong.c              0x00000000   Number         0  llushr.o ABSOLUTE
     ../clib/microlib/longlong.c              0x00000000   Number         0  llsshr.o ABSOLUTE
+    ../clib/microlib/longlong.c              0x00000000   Number         0  llushr.o ABSOLUTE
+    ../clib/microlib/longlong.c              0x00000000   Number         0  llshl.o ABSOLUTE
     ../clib/microlib/string/memcmp.c         0x00000000   Number         0  memcmp.o ABSOLUTE
-    ../clib/microlib/string/memcpy.c         0x00000000   Number         0  memcpyb.o ABSOLUTE
     ../clib/microlib/string/memcpy.c         0x00000000   Number         0  memcpya.o ABSOLUTE
+    ../clib/microlib/string/memcpy.c         0x00000000   Number         0  memcpyb.o ABSOLUTE
     ../clib/microlib/string/memset.c         0x00000000   Number         0  memseta.o ABSOLUTE
     ../clib/microlib/stubs.s                 0x00000000   Number         0  iusefp.o ABSOLUTE
     ../fplib/microlib/fpadd.c                0x00000000   Number         0  dadd.o ABSOLUTE
@@ -1231,8 +1231,8 @@ Image Symbol Table
     .text                                    0x00018620   Section        0  llshl.o(.text)
     .text                                    0x00018640   Section        0  llushr.o(.text)
     .text                                    0x00018662   Section        0  llsshr.o(.text)
-    .text                                    0x00018688   Section        0  iusefp.o(.text)
     .text                                    0x00018688   Section        0  depilogue.o(.text)
+    .text                                    0x00018688   Section        0  iusefp.o(.text)
     .text                                    0x00018748   Section       36  init.o(.text)
     .text                                    0x0001876c   Section        0  __dczerorl2.o(.text)
     i.GPIOTE_IRQHandler                      0x000187c4   Section        0  motors.o(i.GPIOTE_IRQHandler)
@@ -1312,7 +1312,7 @@ Image Symbol Table
     Cipher()                                 0x0001acad   Thumb Code   246  aes.o(i._Z6Cipherv)
     i._Z8MD5_InitP7MD5_CTX                   0x0001adac   Section        0  md5.o(i._Z8MD5_InitP7MD5_CTX)
     i._Z8dh_setupPKv                         0x0001add4   Section        0  bluetooth.o(i._Z8dh_setupPKv)
-    dh_setup(const void*)                    0x0001add5   Thumb Code   100  bluetooth.o(i._Z8dh_setupPKv)
+    dh_setup(const void*)                    0x0001add5   Thumb Code    98  bluetooth.o(i._Z8dh_setupPKv)
     i._Z9MD5_FinalPhP7MD5_CTX                0x0001ae40   Section        0  md5.o(i._Z9MD5_FinalPhP7MD5_CTX)
     i._Z9ShiftRowsv                          0x0001af14   Section        0  aes.o(i._Z9ShiftRowsv)
     ShiftRows()                              0x0001af15   Thumb Code    54  aes.o(i._Z9ShiftRowsv)
@@ -1341,99 +1341,99 @@ Image Symbol Table
     i._ZN5Spine7dequeueEP12CladBufferUp      0x0001b770   Section        0  messages.o(i._ZN5Spine7dequeueEP12CladBufferUp)
     i._ZN5Tasks4initEv                       0x0001b7b8   Section        0  tasks.o(i._ZN5Tasks4initEv)
     i._ZN5Tasks6manageEv                     0x0001b808   Section        0  tasks.o(i._ZN5Tasks6manageEv)
-    i._ZN5Tasks7executeEPK4Task              0x0001b908   Section        0  tasks.o(i._ZN5Tasks7executeEPK4Task)
-    i._ZN5Timer4initEv                       0x0001b954   Section        0  timer.o(i._ZN5Timer4initEv)
-    i._ZN6Lights4initEv                      0x0001b9b0   Section        0  lights.o(i._ZN6Lights4initEv)
-    i._ZN6Lights6manageEv                    0x0001ba64   Section        0  lights.o(i._ZN6Lights6manageEv)
-    i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE 0x0001bc04   Section        0  lights.o(i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE)
-    i._ZN6Motors13getChargeOkayEv            0x0001bcbc   Section        0  motors.o(i._ZN6Motors13getChargeOkayEv)
-    i._ZN6Motors4initEv                      0x0001bce0   Section        0  motors.o(i._ZN6Motors4initEv)
-    i._ZN6Motors5setupEv                     0x0001bda8   Section        0  motors.o(i._ZN6Motors5setupEv)
-    i._ZN6Motors6manageEv                    0x0001be0c   Section        0  motors.o(i._ZN6Motors6manageEv)
-    i._ZN6Motors7disableEb                   0x0001bf6c   Section        0  motors.o(i._ZN6Motors7disableEb)
-    i._ZN6Motors8getSpeedEh                  0x0001bfb0   Section        0  motors.o(i._ZN6Motors8getSpeedEh)
-    i._ZN6Motors8teardownEv                  0x0001c020   Section        0  motors.o(i._ZN6Motors8teardownEv)
-    i._ZN7Battery12setHeadlightEb            0x0001c0ac   Section        0  battery.o(i._ZN7Battery12setHeadlightEb)
-    i._ZN7Battery16setOperatingModeEa        0x0001c0c4   Section        0  battery.o(i._ZN7Battery16setOperatingModeEa)
-    i._ZN7Battery19updateOperatingModeEv     0x0001c0d0   Section        0  battery.o(i._ZN7Battery19updateOperatingModeEv)
-    i._ZN7Battery4initEv                     0x0001c184   Section        0  battery.o(i._ZN7Battery4initEv)
-    i._ZN7Battery6manageEv                   0x0001c254   Section        0  battery.o(i._ZN7Battery6manageEv)
-    i._ZN7Storage3getE10StorageKey           0x0001c490   Section        0  storage.o(i._ZN7Storage3getE10StorageKey)
-    i._ZN7Storage3getE10StorageKeyRi         0x0001c49c   Section        0  storage.o(i._ZN7Storage3getE10StorageKeyRi)
-    i._ZN7Storage3setE10StorageKeyPKvi       0x0001c4b0   Section        0  storage.o(i._ZN7Storage3setE10StorageKeyPKvi)
-    i._ZN7Storage4initEv                     0x0001c4fc   Section        0  storage.o(i._ZN7Storage4initEv)
-    i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern 0x0001c558   Section        0  backpack.o(i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern)
-    i._ZN8Backpack4initEv                    0x0001c5b4   Section        0  backpack.o(i._ZN8Backpack4initEv)
-    i._ZN8Backpack6manageEv                  0x0001c5e8   Section        0  backpack.o(i._ZN8Backpack6manageEv)
-    i._ZN8Backpack6updateEi                  0x0001c67c   Section        0  backpack.o(i._ZN8Backpack6updateEi)
-    i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE 0x0001c764   Section        0  backpack.o(i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE)
-    i._ZN8Watchdog4initEv                    0x0001c788   Section        0  watchdog.o(i._ZN8Watchdog4initEv)
-    i._ZN8Watchdog4kickEh                    0x0001c7a8   Section        0  watchdog.o(i._ZN8Watchdog4kickEh)
-    i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE 0x0001c7bc   Section        0  bluetooth.o(i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE)
-    i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE 0x0001c7fc   Section        0  bluetooth.o(i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE)
-    i._ZN9Bluetooth4initEv                   0x0001c83c   Section        0  bluetooth.o(i._ZN9Bluetooth4initEv)
-    i._ZN9Bluetooth6manageEv                 0x0001c884   Section        0  bluetooth.o(i._ZN9Bluetooth6manageEv)
-    i._ZN9Bluetooth7enabledEv                0x0001c948   Section        0  bluetooth.o(i._ZN9Bluetooth7enabledEv)
-    i._ZN9Bluetooth8shutdownEv               0x0001c954   Section        0  bluetooth.o(i._ZN9Bluetooth8shutdownEv)
-    i._ZN9Bluetooth8transmitEPKhih           0x0001c970   Section        0  bluetooth.o(i._ZN9Bluetooth8transmitEPKhih)
-    i._ZN9Bluetooth9advertiseEv              0x0001ca18   Section        0  bluetooth.o(i._ZN9Bluetooth9advertiseEv)
-    i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv 0x0001cd08   Section        0  clad.o(i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv)
-    i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv 0x0001cd10   Section        0  clad.o(i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv)
-    i.__ARM_clz                              0x0001cd16   Section        0  depilogue.o(i.__ARM_clz)
-    i.__ARM_common_ll_mulss                  0x0001cd44   Section        0  battery.o(i.__ARM_common_ll_mulss)
-    i.__cxa_guard_acquire                    0x0001cd76   Section        0  cxa_guard_acquire.o(i.__cxa_guard_acquire)
-    i.__scatterload_copy                     0x0001cd88   Section       14  handlers.o(i.__scatterload_copy)
-    i.__scatterload_null                     0x0001cd96   Section        2  handlers.o(i.__scatterload_null)
-    i.__scatterload_zeroinit                 0x0001cd98   Section       14  handlers.o(i.__scatterload_zeroinit)
-    i.adv_data_encode                        0x0001cda8   Section        0  ble_advdata.o(i.adv_data_encode)
-    adv_data_encode                          0x0001cda9   Thumb Code   826  ble_advdata.o(i.adv_data_encode)
-    i.ble_advdata_set                        0x0001d0e8   Section        0  ble_advdata.o(i.ble_advdata_set)
-    i.ble_app_timer_manage                   0x0001d154   Section        0  conn_params.o(i.ble_app_timer_manage)
-    i.ble_conn_params_init                   0x0001d1d8   Section        0  conn_params.o(i.ble_conn_params_init)
-    i.ble_conn_params_on_ble_evt             0x0001d238   Section        0  conn_params.o(i.ble_conn_params_on_ble_evt)
-    i.conn_params_error_handler              0x0001d2c4   Section        0  bluetooth.o(i.conn_params_error_handler)
-    i.conn_params_negotiation                0x0001d2e0   Section        0  conn_params.o(i.conn_params_negotiation)
-    conn_params_negotiation                  0x0001d2e1   Thumb Code    90  conn_params.o(i.conn_params_negotiation)
-    i.main                                   0x0001d350   Section        0  main.o(i.main)
-    i.on_conn_params_evt                     0x0001d3a0   Section        0  bluetooth.o(i.on_conn_params_evt)
-    i.uuid_list_sized_encode                 0x0001d3d4   Section        0  ble_advdata.o(i.uuid_list_sized_encode)
-    uuid_list_sized_encode                   0x0001d3d5   Thumb Code   166  ble_advdata.o(i.uuid_list_sized_encode)
-    .constdata                               0x0001d47a   Section       24  motors.o(.constdata)
-    m_config                                 0x0001d47a   Data          24  motors.o(.constdata)
-    .constdata                               0x0001d494   Section      288  backpack.o(.constdata)
-    PinSet                                   0x0001d494   Data          16  backpack.o(.constdata)
-    BackpackLights::charging                 0x0001d4a4   Data          40  backpack.o(.constdata)
-    BackpackLights::charged                  0x0001d4cc   Data          40  backpack.o(.constdata)
-    BackpackLights::off                      0x0001d4f4   Data          40  backpack.o(.constdata)
-    BackpackLights::charger_oos              0x0001d51c   Data          40  backpack.o(.constdata)
-    BackpackLights::startup                  0x0001d544   Data          40  backpack.o(.constdata)
-    setting                                  0x0001d56c   Data          55  backpack.o(.constdata)
-    pins                                     0x0001d5a4   Data          16  backpack.o(.constdata)
-    .constdata                               0x0001d5b4   Section      512  lights.o(.constdata)
-    DivTable                                 0x0001d5b4   Data         512  lights.o(.constdata)
-    .constdata                               0x0001d7b4   Section        8  bluetooth.o(.constdata)
-    random                                   0x0001d7b4   Data           8  bluetooth.o(.constdata)
-    .constdata                               0x0001d7bc   Section       16  settings.o(.constdata)
-    .constdata                               0x0001d7cc   Section        2  settings.o(.constdata)
-    .constdata                               0x0001d7ce   Section        2  settings.o(.constdata)
-    .constdata                               0x0001d7d0   Section        2  settings.o(.constdata)
-    .constdata                               0x0001d7d2   Section        8  settings.o(.constdata)
-    .constdata                               0x0001d7dc   Section       24  settings.o(.constdata)
-    .constdata                               0x0001d7f4   Section       28  settings.o(.constdata)
-    .constdata                               0x0001d810   Section        5  settings.o(.constdata)
-    .constdata                               0x0001d815   Section        6  settings.o(.constdata)
-    .constdata                               0x0001d81c   Section        4  settings.o(.constdata)
-    .constdata                               0x0001d820   Section       12  settings.o(.constdata)
-    .constdata                               0x0001d82c   Section       48  settings.o(.constdata)
-    .constdata                               0x0001d85c   Section      767  aes.o(.constdata)
-    sbox                                     0x0001d85c   Data         256  aes.o(.constdata)
-    rsbox                                    0x0001d95c   Data         256  aes.o(.constdata)
-    Rcon                                     0x0001da5c   Data         255  aes.o(.constdata)
-    .constdata                               0x0001db5c   Section       80  cubes.o(.constdata)
-    PairingAddress                           0x0001db5c   Data          12  cubes.o(.constdata)
-    channel_order                            0x0001db80   Data          16  cubes.o(.constdata)
-    .text                                    0x0001dbac   Section     1824  firmware.o(.text)
-    .data                                    0x20002000   Section       44  battery.o(.data)
+    i._ZN5Tasks7executeEPK4Task              0x0001b90c   Section        0  tasks.o(i._ZN5Tasks7executeEPK4Task)
+    i._ZN5Timer4initEv                       0x0001b958   Section        0  timer.o(i._ZN5Timer4initEv)
+    i._ZN6Lights4initEv                      0x0001b9b4   Section        0  lights.o(i._ZN6Lights4initEv)
+    i._ZN6Lights6manageEv                    0x0001ba68   Section        0  lights.o(i._ZN6Lights6manageEv)
+    i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE 0x0001bc08   Section        0  lights.o(i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE)
+    i._ZN6Motors13getChargeOkayEv            0x0001bcc0   Section        0  motors.o(i._ZN6Motors13getChargeOkayEv)
+    i._ZN6Motors4initEv                      0x0001bce4   Section        0  motors.o(i._ZN6Motors4initEv)
+    i._ZN6Motors5setupEv                     0x0001bdac   Section        0  motors.o(i._ZN6Motors5setupEv)
+    i._ZN6Motors6manageEv                    0x0001be10   Section        0  motors.o(i._ZN6Motors6manageEv)
+    i._ZN6Motors7disableEb                   0x0001bf70   Section        0  motors.o(i._ZN6Motors7disableEb)
+    i._ZN6Motors8getSpeedEh                  0x0001bfb4   Section        0  motors.o(i._ZN6Motors8getSpeedEh)
+    i._ZN6Motors8teardownEv                  0x0001c024   Section        0  motors.o(i._ZN6Motors8teardownEv)
+    i._ZN7Battery12setHeadlightEb            0x0001c0b0   Section        0  battery.o(i._ZN7Battery12setHeadlightEb)
+    i._ZN7Battery16setOperatingModeEa        0x0001c0c8   Section        0  battery.o(i._ZN7Battery16setOperatingModeEa)
+    i._ZN7Battery19updateOperatingModeEv     0x0001c0d4   Section        0  battery.o(i._ZN7Battery19updateOperatingModeEv)
+    i._ZN7Battery4initEv                     0x0001c188   Section        0  battery.o(i._ZN7Battery4initEv)
+    i._ZN7Battery6manageEv                   0x0001c258   Section        0  battery.o(i._ZN7Battery6manageEv)
+    i._ZN7Storage3getE10StorageKey           0x0001c4d0   Section        0  storage.o(i._ZN7Storage3getE10StorageKey)
+    i._ZN7Storage3getE10StorageKeyRi         0x0001c4dc   Section        0  storage.o(i._ZN7Storage3getE10StorageKeyRi)
+    i._ZN7Storage3setE10StorageKeyPKvi       0x0001c4f0   Section        0  storage.o(i._ZN7Storage3setE10StorageKeyPKvi)
+    i._ZN7Storage4initEv                     0x0001c53c   Section        0  storage.o(i._ZN7Storage4initEv)
+    i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern 0x0001c598   Section        0  backpack.o(i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern)
+    i._ZN8Backpack4initEv                    0x0001c5f4   Section        0  backpack.o(i._ZN8Backpack4initEv)
+    i._ZN8Backpack6manageEv                  0x0001c628   Section        0  backpack.o(i._ZN8Backpack6manageEv)
+    i._ZN8Backpack6updateEi                  0x0001c6bc   Section        0  backpack.o(i._ZN8Backpack6updateEi)
+    i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE 0x0001c7a4   Section        0  backpack.o(i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE)
+    i._ZN8Watchdog4initEv                    0x0001c7c8   Section        0  watchdog.o(i._ZN8Watchdog4initEv)
+    i._ZN8Watchdog4kickEh                    0x0001c7e8   Section        0  watchdog.o(i._ZN8Watchdog4kickEh)
+    i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE 0x0001c7fc   Section        0  bluetooth.o(i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE)
+    i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE 0x0001c83c   Section        0  bluetooth.o(i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE)
+    i._ZN9Bluetooth4initEv                   0x0001c87c   Section        0  bluetooth.o(i._ZN9Bluetooth4initEv)
+    i._ZN9Bluetooth6manageEv                 0x0001c8c4   Section        0  bluetooth.o(i._ZN9Bluetooth6manageEv)
+    i._ZN9Bluetooth7enabledEv                0x0001c988   Section        0  bluetooth.o(i._ZN9Bluetooth7enabledEv)
+    i._ZN9Bluetooth8shutdownEv               0x0001c994   Section        0  bluetooth.o(i._ZN9Bluetooth8shutdownEv)
+    i._ZN9Bluetooth8transmitEPKhih           0x0001c9b0   Section        0  bluetooth.o(i._ZN9Bluetooth8transmitEPKhih)
+    i._ZN9Bluetooth9advertiseEv              0x0001ca58   Section        0  bluetooth.o(i._ZN9Bluetooth9advertiseEv)
+    i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv 0x0001cd48   Section        0  clad.o(i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv)
+    i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv 0x0001cd50   Section        0  clad.o(i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv)
+    i.__ARM_clz                              0x0001cd56   Section        0  depilogue.o(i.__ARM_clz)
+    i.__ARM_common_ll_mulss                  0x0001cd84   Section        0  battery.o(i.__ARM_common_ll_mulss)
+    i.__cxa_guard_acquire                    0x0001cdb6   Section        0  cxa_guard_acquire.o(i.__cxa_guard_acquire)
+    i.__scatterload_copy                     0x0001cdc8   Section       14  handlers.o(i.__scatterload_copy)
+    i.__scatterload_null                     0x0001cdd6   Section        2  handlers.o(i.__scatterload_null)
+    i.__scatterload_zeroinit                 0x0001cdd8   Section       14  handlers.o(i.__scatterload_zeroinit)
+    i.adv_data_encode                        0x0001cde8   Section        0  ble_advdata.o(i.adv_data_encode)
+    adv_data_encode                          0x0001cde9   Thumb Code   826  ble_advdata.o(i.adv_data_encode)
+    i.ble_advdata_set                        0x0001d128   Section        0  ble_advdata.o(i.ble_advdata_set)
+    i.ble_app_timer_manage                   0x0001d194   Section        0  conn_params.o(i.ble_app_timer_manage)
+    i.ble_conn_params_init                   0x0001d218   Section        0  conn_params.o(i.ble_conn_params_init)
+    i.ble_conn_params_on_ble_evt             0x0001d278   Section        0  conn_params.o(i.ble_conn_params_on_ble_evt)
+    i.conn_params_error_handler              0x0001d304   Section        0  bluetooth.o(i.conn_params_error_handler)
+    i.conn_params_negotiation                0x0001d320   Section        0  conn_params.o(i.conn_params_negotiation)
+    conn_params_negotiation                  0x0001d321   Thumb Code    90  conn_params.o(i.conn_params_negotiation)
+    i.main                                   0x0001d390   Section        0  main.o(i.main)
+    i.on_conn_params_evt                     0x0001d3e0   Section        0  bluetooth.o(i.on_conn_params_evt)
+    i.uuid_list_sized_encode                 0x0001d414   Section        0  ble_advdata.o(i.uuid_list_sized_encode)
+    uuid_list_sized_encode                   0x0001d415   Thumb Code   166  ble_advdata.o(i.uuid_list_sized_encode)
+    .constdata                               0x0001d4ba   Section       24  motors.o(.constdata)
+    m_config                                 0x0001d4ba   Data          24  motors.o(.constdata)
+    .constdata                               0x0001d4d4   Section      288  backpack.o(.constdata)
+    PinSet                                   0x0001d4d4   Data          16  backpack.o(.constdata)
+    BackpackLights::charging                 0x0001d4e4   Data          40  backpack.o(.constdata)
+    BackpackLights::charged                  0x0001d50c   Data          40  backpack.o(.constdata)
+    BackpackLights::off                      0x0001d534   Data          40  backpack.o(.constdata)
+    BackpackLights::charger_oos              0x0001d55c   Data          40  backpack.o(.constdata)
+    BackpackLights::startup                  0x0001d584   Data          40  backpack.o(.constdata)
+    setting                                  0x0001d5ac   Data          55  backpack.o(.constdata)
+    pins                                     0x0001d5e4   Data          16  backpack.o(.constdata)
+    .constdata                               0x0001d5f4   Section      512  lights.o(.constdata)
+    DivTable                                 0x0001d5f4   Data         512  lights.o(.constdata)
+    .constdata                               0x0001d7f4   Section        8  bluetooth.o(.constdata)
+    random                                   0x0001d7f4   Data           8  bluetooth.o(.constdata)
+    .constdata                               0x0001d7fc   Section       16  settings.o(.constdata)
+    .constdata                               0x0001d80c   Section        2  settings.o(.constdata)
+    .constdata                               0x0001d80e   Section        2  settings.o(.constdata)
+    .constdata                               0x0001d810   Section        2  settings.o(.constdata)
+    .constdata                               0x0001d812   Section        8  settings.o(.constdata)
+    .constdata                               0x0001d81c   Section       24  settings.o(.constdata)
+    .constdata                               0x0001d834   Section       28  settings.o(.constdata)
+    .constdata                               0x0001d850   Section        5  settings.o(.constdata)
+    .constdata                               0x0001d855   Section        6  settings.o(.constdata)
+    .constdata                               0x0001d85c   Section        4  settings.o(.constdata)
+    .constdata                               0x0001d860   Section       12  settings.o(.constdata)
+    .constdata                               0x0001d86c   Section       48  settings.o(.constdata)
+    .constdata                               0x0001d89c   Section      767  aes.o(.constdata)
+    sbox                                     0x0001d89c   Data         256  aes.o(.constdata)
+    rsbox                                    0x0001d99c   Data         256  aes.o(.constdata)
+    Rcon                                     0x0001da9c   Data         255  aes.o(.constdata)
+    .constdata                               0x0001db9c   Section       80  cubes.o(.constdata)
+    PairingAddress                           0x0001db9c   Data          12  cubes.o(.constdata)
+    channel_order                            0x0001dbc0   Data          16  cubes.o(.constdata)
+    .text                                    0x0001dbec   Section     1824  firmware.o(.text)
+    .data                                    0x20002000   Section       48  battery.o(.data)
     isCharging                               0x20002000   Data           1  battery.o(.data)
     disableCharge                            0x20002001   Data           1  battery.o(.data)
     current_operating_mode                   0x20002002   Data           1  battery.o(.data)
@@ -1446,114 +1446,115 @@ Image Symbol Table
     resultLedOff                             0x20002018   Data           4  battery.o(.data)
     _ZGVlowBatTimer                          0x2000201c   Data           4  battery.o(.data)
     lowBatTimer                              0x20002020   Data           4  battery.o(.data)
-    vBat                                     0x20002024   Data           4  battery.o(.data)
-    vExt                                     0x20002028   Data           4  battery.o(.data)
-    .data                                    0x2000202c   Section       16  head.o(.data)
-    uart_mode                                0x2000202c   Data           1  head.o(.data)
-    header_shift                             0x20002030   Data           4  head.o(.data)
-    fixture_data                             0x20002034   Data           4  head.o(.data)
-    txRxIndex                                0x20002038   Data           4  head.o(.data)
-    .data                                    0x2000203c   Section      124  motors.o(.data)
-    motorDisable                             0x2000203c   Data           1  motors.o(.data)
-    m_motors                                 0x20002048   Data         112  motors.o(.data)
-    .data                                    0x200020b8   Section        4  timer.o(.data)
-    target                                   0x200020b8   Data           4  timer.o(.data)
-    .data                                    0x200020bc   Section        4  logging.o(.data)
-    missedMessages                           0x200020bc   Data           4  logging.o(.data)
-    .data                                    0x200020c0   Section       20  backpack.o(.data)
-    lights_locked                            0x200020c0   Data           1  backpack.o(.data)
-    active                                   0x200020c1   Data           3  backpack.o(.data)
-    active_channel                           0x200020c4   Data           4  backpack.o(.data)
-    currentChannel                           0x200020c8   Data           4  backpack.o(.data)
-    total_active                             0x200020cc   Data           4  backpack.o(.data)
-    off_time                                 0x200020d0   Data           4  backpack.o(.data)
-    .data                                    0x200020d4   Section       12  lights.o(.data)
-    last_counter                             0x200020d4   Data           4  lights.o(.data)
-    frame_time                               0x200020d8   Data           4  lights.o(.data)
-    accumulator                              0x200020dc   Data           4  lights.o(.data)
-    .data                                    0x200020e0   Section       12  storage.o(.data)
-    words_left                               0x200020e0   Data           4  storage.o(.data)
-    end_of_data                              0x200020e4   Data           4  storage.o(.data)
-    end_of_toc                               0x200020e8   Data           4  storage.o(.data)
-    .data                                    0x200020ec   Section        4  temp.o(.data)
-    .data                                    0x200020f0   Section       12  tasks.o(.data)
-    fifoHead                                 0x200020f0   Data           4  tasks.o(.data)
-    fifoTail                                 0x200020f4   Data           4  tasks.o(.data)
-    fifoActive                               0x200020f8   Data           4  tasks.o(.data)
-    .data                                    0x200020fc   Section        4  crashlogger.o(.data)
-    .data                                    0x20002100   Section        4  system_nrf51.o(.data)
-    __tagsym$$used                           0x20002100   Number         0  system_nrf51.o(.data)
-    .data                                    0x20002104   Section       80  bluetooth.o(.data)
-    m_sd_enabled                             0x20002104   Data           1  bluetooth.o(.data)
-    m_task_enabled                           0x20002105   Data           1  bluetooth.o(.data)
-    dh_started                               0x20002106   Data           1  bluetooth.o(.data)
-    tx_pending                               0x20002107   Data           1  bluetooth.o(.data)
-    tx_buffered                              0x20002108   Data           1  bluetooth.o(.data)
-    _ZGV_ZZ13frame_receiveR10CozmoFrameE5state 0x20002110   Data           4  bluetooth.o(.data)
-    _ZGV_ZZN9Bluetooth8transmitEPKhihE5state 0x20002114   Data           4  bluetooth.o(.data)
-    dh_timeout                               0x20002118   Data           4  bluetooth.o(.data)
-    frame_receive(CozmoFrame&)::state        0x2000212c   Data          20  bluetooth.o(.data)
-    Bluetooth::transmit(const unsigned char*, int, unsigned char)::state 0x20002140   Data          20  bluetooth.o(.data)
-    .data                                    0x20002154   Section        8  settings.o(.data)
-    .data                                    0x2000215c   Section       22  conn_params.o(.data)
-    m_timeout_active                         0x2000215c   Data           1  conn_params.o(.data)
-    m_change_param                           0x2000215d   Data           1  conn_params.o(.data)
-    m_update_count                           0x2000215e   Data           1  conn_params.o(.data)
-    m_timeout_clock                          0x2000215f   Data           1  conn_params.o(.data)
-    m_conn_handle                            0x20002160   Data           2  conn_params.o(.data)
-    m_preferred_conn_params                  0x20002162   Data           8  conn_params.o(.data)
-    m_current_conn_params                    0x2000216a   Data           8  conn_params.o(.data)
-    .data                                    0x20002174   Section        8  messages.o(.data)
-    queue_enter                              0x20002174   Data           4  messages.o(.data)
-    queue_exit                               0x20002178   Data           4  messages.o(.data)
-    .data                                    0x2000217c   Section        8  aes.o(.data)
-    state                                    0x2000217c   Data           4  aes.o(.data)
-    Key                                      0x20002180   Data           4  aes.o(.data)
-    .data                                    0x20002184   Section        1  micro_esb.o(.data)
-    .data                                    0x20002188   Section       52  cubes.o(.data)
-    _tapTime                                 0x20002188   Data           1  cubes.o(.data)
-    c                                        0x20002189   Data           1  cubes.o(.data)
-    ota_pending                              0x2000218a   Data           1  cubes.o(.data)
-    currentAccessory                         0x2000218b   Data           1  cubes.o(.data)
-    radioState                               0x2000218c   Data           1  cubes.o(.data)
-    ota_device                               0x20002190   Data           4  cubes.o(.data)
-    ota_block_index                          0x20002194   Data           4  cubes.o(.data)
-    ack_timeouts                             0x20002198   Data           4  cubes.o(.data)
-    light_gamma                              0x2000219c   Data           4  cubes.o(.data)
-    ota_timeout_countdown                    0x200021a0   Data           4  cubes.o(.data)
-    ValidPerfs                               0x200021a4   Data          12  cubes.o(.data)
-    OTAAddress                               0x200021b0   Data          12  cubes.o(.data)
-    .bss                                     0x200021bc   Section      220  head.o(.bss)
-    .bss                                     0x20002298   Section       52  backpack.o(.bss)
-    _userLights                              0x20002298   Data          40  backpack.o(.bss)
-    drive_value                              0x200022c0   Data          12  backpack.o(.bss)
-    .bss                                     0x200022cc   Section      924  lights.o(.bss)
-    .bss                                     0x20002668   Section       24  storage.o(.bss)
-    toc                                      0x20002668   Data          24  storage.o(.bss)
-    .bss                                     0x20002680   Section       48  tasks.o(.bss)
-    fifoQueue                                0x20002680   Data          48  tasks.o(.bss)
-    .bss                                     0x200026b0   Section      748  bluetooth.o(.bss)
-    p_master_id                              0x200026b0   Data          10  bluetooth.o(.bss)
-    keys_exchanged                           0x200026bc   Data          24  bluetooth.o(.bss)
-    value                                    0x200026d4   Data          17  bluetooth.o(.bss)
-    value                                    0x200026e5   Data          17  bluetooth.o(.bss)
-    m_nonce                                  0x200026f6   Data          32  bluetooth.o(.bss)
-    dh_state                                 0x20002718   Data         100  bluetooth.o(.bss)
-    rx_buffer                                0x2000277c   Data         272  bluetooth.o(.bss)
-    tx_buffer                                0x2000288c   Data         272  bluetooth.o(.bss)
-    .bss                                     0x2000299c   Section       28  conn_params.o(.bss)
-    m_conn_params_config                     0x2000299c   Data          28  conn_params.o(.bss)
-    .bss                                     0x200029b8   Section      152  messages.o(.bss)
-    queue                                    0x200029b8   Data         152  messages.o(.bss)
-    .bss                                     0x20002a50   Section      176  aes.o(.bss)
-    RoundKey                                 0x20002a50   Data         176  aes.o(.bss)
-    .bss                                     0x20002b00   Section      884  micro_esb.o(.bss)
-    m_config_local                           0x20002b00   Data          28  micro_esb.o(.bss)
-    m_tx_fifo                                0x20002b1c   Data         428  micro_esb.o(.bss)
-    m_rx_fifo                                0x20002cc8   Data         428  micro_esb.o(.bss)
-    .bss                                     0x20002e74   Section      252  cubes.o(.bss)
-    accessories                              0x20002e74   Data         252  cubes.o(.bss)
-    STACK                                    0x20002f70   Section     3072  startup_nrf51.o(STACK)
+    ground_short                             0x20002024   Data           4  battery.o(.data)
+    vBat                                     0x20002028   Data           4  battery.o(.data)
+    vExt                                     0x2000202c   Data           4  battery.o(.data)
+    .data                                    0x20002030   Section       16  head.o(.data)
+    uart_mode                                0x20002030   Data           1  head.o(.data)
+    header_shift                             0x20002034   Data           4  head.o(.data)
+    fixture_data                             0x20002038   Data           4  head.o(.data)
+    txRxIndex                                0x2000203c   Data           4  head.o(.data)
+    .data                                    0x20002040   Section      124  motors.o(.data)
+    motorDisable                             0x20002040   Data           1  motors.o(.data)
+    m_motors                                 0x2000204c   Data         112  motors.o(.data)
+    .data                                    0x200020bc   Section        4  timer.o(.data)
+    target                                   0x200020bc   Data           4  timer.o(.data)
+    .data                                    0x200020c0   Section        4  logging.o(.data)
+    missedMessages                           0x200020c0   Data           4  logging.o(.data)
+    .data                                    0x200020c4   Section       20  backpack.o(.data)
+    lights_locked                            0x200020c4   Data           1  backpack.o(.data)
+    active                                   0x200020c5   Data           3  backpack.o(.data)
+    active_channel                           0x200020c8   Data           4  backpack.o(.data)
+    currentChannel                           0x200020cc   Data           4  backpack.o(.data)
+    total_active                             0x200020d0   Data           4  backpack.o(.data)
+    off_time                                 0x200020d4   Data           4  backpack.o(.data)
+    .data                                    0x200020d8   Section       12  lights.o(.data)
+    last_counter                             0x200020d8   Data           4  lights.o(.data)
+    frame_time                               0x200020dc   Data           4  lights.o(.data)
+    accumulator                              0x200020e0   Data           4  lights.o(.data)
+    .data                                    0x200020e4   Section       12  storage.o(.data)
+    words_left                               0x200020e4   Data           4  storage.o(.data)
+    end_of_data                              0x200020e8   Data           4  storage.o(.data)
+    end_of_toc                               0x200020ec   Data           4  storage.o(.data)
+    .data                                    0x200020f0   Section        4  temp.o(.data)
+    .data                                    0x200020f4   Section       12  tasks.o(.data)
+    fifoHead                                 0x200020f4   Data           4  tasks.o(.data)
+    fifoTail                                 0x200020f8   Data           4  tasks.o(.data)
+    fifoActive                               0x200020fc   Data           4  tasks.o(.data)
+    .data                                    0x20002100   Section        4  crashlogger.o(.data)
+    .data                                    0x20002104   Section        4  system_nrf51.o(.data)
+    __tagsym$$used                           0x20002104   Number         0  system_nrf51.o(.data)
+    .data                                    0x20002108   Section       80  bluetooth.o(.data)
+    m_sd_enabled                             0x20002108   Data           1  bluetooth.o(.data)
+    m_task_enabled                           0x20002109   Data           1  bluetooth.o(.data)
+    dh_started                               0x2000210a   Data           1  bluetooth.o(.data)
+    tx_pending                               0x2000210b   Data           1  bluetooth.o(.data)
+    tx_buffered                              0x2000210c   Data           1  bluetooth.o(.data)
+    _ZGV_ZZ13frame_receiveR10CozmoFrameE5state 0x20002114   Data           4  bluetooth.o(.data)
+    _ZGV_ZZN9Bluetooth8transmitEPKhihE5state 0x20002118   Data           4  bluetooth.o(.data)
+    dh_timeout                               0x2000211c   Data           4  bluetooth.o(.data)
+    frame_receive(CozmoFrame&)::state        0x20002130   Data          20  bluetooth.o(.data)
+    Bluetooth::transmit(const unsigned char*, int, unsigned char)::state 0x20002144   Data          20  bluetooth.o(.data)
+    .data                                    0x20002158   Section        8  settings.o(.data)
+    .data                                    0x20002160   Section       22  conn_params.o(.data)
+    m_timeout_active                         0x20002160   Data           1  conn_params.o(.data)
+    m_change_param                           0x20002161   Data           1  conn_params.o(.data)
+    m_update_count                           0x20002162   Data           1  conn_params.o(.data)
+    m_timeout_clock                          0x20002163   Data           1  conn_params.o(.data)
+    m_conn_handle                            0x20002164   Data           2  conn_params.o(.data)
+    m_preferred_conn_params                  0x20002166   Data           8  conn_params.o(.data)
+    m_current_conn_params                    0x2000216e   Data           8  conn_params.o(.data)
+    .data                                    0x20002178   Section        8  messages.o(.data)
+    queue_enter                              0x20002178   Data           4  messages.o(.data)
+    queue_exit                               0x2000217c   Data           4  messages.o(.data)
+    .data                                    0x20002180   Section        8  aes.o(.data)
+    state                                    0x20002180   Data           4  aes.o(.data)
+    Key                                      0x20002184   Data           4  aes.o(.data)
+    .data                                    0x20002188   Section        1  micro_esb.o(.data)
+    .data                                    0x2000218c   Section       52  cubes.o(.data)
+    _tapTime                                 0x2000218c   Data           1  cubes.o(.data)
+    c                                        0x2000218d   Data           1  cubes.o(.data)
+    ota_pending                              0x2000218e   Data           1  cubes.o(.data)
+    currentAccessory                         0x2000218f   Data           1  cubes.o(.data)
+    radioState                               0x20002190   Data           1  cubes.o(.data)
+    ota_device                               0x20002194   Data           4  cubes.o(.data)
+    ota_block_index                          0x20002198   Data           4  cubes.o(.data)
+    ack_timeouts                             0x2000219c   Data           4  cubes.o(.data)
+    light_gamma                              0x200021a0   Data           4  cubes.o(.data)
+    ota_timeout_countdown                    0x200021a4   Data           4  cubes.o(.data)
+    ValidPerfs                               0x200021a8   Data          12  cubes.o(.data)
+    OTAAddress                               0x200021b4   Data          12  cubes.o(.data)
+    .bss                                     0x200021c0   Section      220  head.o(.bss)
+    .bss                                     0x2000229c   Section       52  backpack.o(.bss)
+    _userLights                              0x2000229c   Data          40  backpack.o(.bss)
+    drive_value                              0x200022c4   Data          12  backpack.o(.bss)
+    .bss                                     0x200022d0   Section      924  lights.o(.bss)
+    .bss                                     0x2000266c   Section       24  storage.o(.bss)
+    toc                                      0x2000266c   Data          24  storage.o(.bss)
+    .bss                                     0x20002684   Section       48  tasks.o(.bss)
+    fifoQueue                                0x20002684   Data          48  tasks.o(.bss)
+    .bss                                     0x200026b4   Section      748  bluetooth.o(.bss)
+    p_master_id                              0x200026b4   Data          10  bluetooth.o(.bss)
+    keys_exchanged                           0x200026c0   Data          24  bluetooth.o(.bss)
+    value                                    0x200026d8   Data          17  bluetooth.o(.bss)
+    value                                    0x200026e9   Data          17  bluetooth.o(.bss)
+    m_nonce                                  0x200026fa   Data          32  bluetooth.o(.bss)
+    dh_state                                 0x2000271c   Data         100  bluetooth.o(.bss)
+    rx_buffer                                0x20002780   Data         272  bluetooth.o(.bss)
+    tx_buffer                                0x20002890   Data         272  bluetooth.o(.bss)
+    .bss                                     0x200029a0   Section       28  conn_params.o(.bss)
+    m_conn_params_config                     0x200029a0   Data          28  conn_params.o(.bss)
+    .bss                                     0x200029bc   Section      152  messages.o(.bss)
+    queue                                    0x200029bc   Data         152  messages.o(.bss)
+    .bss                                     0x20002a54   Section      176  aes.o(.bss)
+    RoundKey                                 0x20002a54   Data         176  aes.o(.bss)
+    .bss                                     0x20002b04   Section      884  micro_esb.o(.bss)
+    m_config_local                           0x20002b04   Data          28  micro_esb.o(.bss)
+    m_tx_fifo                                0x20002b20   Data         428  micro_esb.o(.bss)
+    m_rx_fifo                                0x20002ccc   Data         428  micro_esb.o(.bss)
+    .bss                                     0x20002e78   Section      252  cubes.o(.bss)
+    accessories                              0x20002e78   Data         252  cubes.o(.bss)
+    STACK                                    0x20002f78   Section     3072  startup_nrf51.o(STACK)
 
     Global Symbols
 
@@ -1695,94 +1696,94 @@ Image Symbol Table
     Spine::init()                            0x0001b755   Thumb Code    24  messages.o(i._ZN5Spine4initEv)
     Spine::dequeue(CladBufferUp*)            0x0001b771   Thumb Code    62  messages.o(i._ZN5Spine7dequeueEP12CladBufferUp)
     Tasks::init()                            0x0001b7b9   Thumb Code    70  tasks.o(i._ZN5Tasks4initEv)
-    Tasks::manage()                          0x0001b809   Thumb Code   242  tasks.o(i._ZN5Tasks6manageEv)
-    Tasks::execute(const Task*)              0x0001b909   Thumb Code    62  tasks.o(i._ZN5Tasks7executeEPK4Task)
-    Timer::init()                            0x0001b955   Thumb Code    60  timer.o(i._ZN5Timer4initEv)
-    Lights::init()                           0x0001b9b1   Thumb Code   176  lights.o(i._ZN6Lights4initEv)
-    Lights::manage()                         0x0001ba65   Thumb Code   400  lights.o(i._ZN6Lights6manageEv)
-    Lights::update(LightValues&, const Anki::Cozmo::LightState*) 0x0001bc05   Thumb Code   182  lights.o(i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE)
-    Motors::getChargeOkay()                  0x0001bcbd   Thumb Code    28  motors.o(i._ZN6Motors13getChargeOkayEv)
-    Motors::init()                           0x0001bce1   Thumb Code   168  motors.o(i._ZN6Motors4initEv)
-    Motors::setup()                          0x0001bda9   Thumb Code    82  motors.o(i._ZN6Motors5setupEv)
-    Motors::manage()                         0x0001be0d   Thumb Code   290  motors.o(i._ZN6Motors6manageEv)
-    Motors::disable(bool)                    0x0001bf6d   Thumb Code    58  motors.o(i._ZN6Motors7disableEb)
-    Motors::getSpeed(unsigned char)          0x0001bfb1   Thumb Code   100  motors.o(i._ZN6Motors8getSpeedEh)
-    Motors::teardown()                       0x0001c021   Thumb Code   110  motors.o(i._ZN6Motors8teardownEv)
-    Battery::setHeadlight(bool)              0x0001c0ad   Thumb Code    18  battery.o(i._ZN7Battery12setHeadlightEb)
-    Battery::setOperatingMode(signed char)   0x0001c0c5   Thumb Code     6  battery.o(i._ZN7Battery16setOperatingModeEa)
-    Battery::updateOperatingMode()           0x0001c0d1   Thumb Code   160  battery.o(i._ZN7Battery19updateOperatingModeEv)
-    Battery::init()                          0x0001c185   Thumb Code   156  battery.o(i._ZN7Battery4initEv)
-    Battery::manage()                        0x0001c255   Thumb Code   502  battery.o(i._ZN7Battery6manageEv)
-    Storage::get(StorageKey)                 0x0001c491   Thumb Code     8  storage.o(i._ZN7Storage3getE10StorageKey)
-    Storage::get(StorageKey, int&)           0x0001c49d   Thumb Code    14  storage.o(i._ZN7Storage3getE10StorageKeyRi)
-    Storage::set(StorageKey, const void*, int) 0x0001c4b1   Thumb Code    72  storage.o(i._ZN7Storage3setE10StorageKeyPKvi)
-    Storage::init()                          0x0001c4fd   Thumb Code    80  storage.o(i._ZN7Storage4initEv)
-    Backpack::defaultPattern(DefaultBackpackPattern) 0x0001c559   Thumb Code    66  backpack.o(i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern)
-    Backpack::init()                         0x0001c5b5   Thumb Code    40  backpack.o(i._ZN8Backpack4initEv)
-    Backpack::manage()                       0x0001c5e9   Thumb Code   120  backpack.o(i._ZN8Backpack6manageEv)
-    Backpack::update(int)                    0x0001c67d   Thumb Code   200  backpack.o(i._ZN8Backpack6updateEi)
-    Backpack::setLights(const Anki::Cozmo::LightState*) 0x0001c765   Thumb Code    28  backpack.o(i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE)
-    Watchdog::init()                         0x0001c789   Thumb Code    22  watchdog.o(i._ZN8Watchdog4initEv)
-    Watchdog::kick(unsigned char)            0x0001c7a9   Thumb Code    12  watchdog.o(i._ZN8Watchdog4kickEh)
-    Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing&) 0x0001c7bd   Thumb Code    48  bluetooth.o(i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE)
-    Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults&) 0x0001c7fd   Thumb Code    48  bluetooth.o(i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE)
-    Bluetooth::init()                        0x0001c83d   Thumb Code    54  bluetooth.o(i._ZN9Bluetooth4initEv)
-    Bluetooth::manage()                      0x0001c885   Thumb Code   174  bluetooth.o(i._ZN9Bluetooth6manageEv)
-    Bluetooth::enabled()                     0x0001c949   Thumb Code     6  bluetooth.o(i._ZN9Bluetooth7enabledEv)
-    Bluetooth::shutdown()                    0x0001c955   Thumb Code    22  bluetooth.o(i._ZN9Bluetooth8shutdownEv)
-    Bluetooth::transmit(const unsigned char*, int, unsigned char) 0x0001c971   Thumb Code   144  bluetooth.o(i._ZN9Bluetooth8transmitEPKhih)
-    Bluetooth::advertise()                   0x0001ca19   Thumb Code   668  bluetooth.o(i._ZN9Bluetooth9advertiseEv)
-    Anki::Cozmo::RobotInterface::PrintTrace::Size() const 0x0001cd09   Thumb Code     8  clad.o(i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv)
-    Anki::Cozmo::BodyStorageContents::Size() const 0x0001cd11   Thumb Code     6  clad.o(i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv)
-    __ARM_clz                                0x0001cd17   Thumb Code    46  depilogue.o(i.__ARM_clz)
-    __ARM_common_ll_mulss                    0x0001cd45   Thumb Code    50  battery.o(i.__ARM_common_ll_mulss)
-    __cxa_guard_acquire                      0x0001cd77   Thumb Code    18  cxa_guard_acquire.o(i.__cxa_guard_acquire)
-    __scatterload_copy                       0x0001cd89   Thumb Code    14  handlers.o(i.__scatterload_copy)
-    __scatterload_null                       0x0001cd97   Thumb Code     2  handlers.o(i.__scatterload_null)
-    __scatterload_zeroinit                   0x0001cd99   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
-    ble_advdata_set                          0x0001d0e9   Thumb Code   106  ble_advdata.o(i.ble_advdata_set)
-    ble_app_timer_manage                     0x0001d155   Thumb Code   110  conn_params.o(i.ble_app_timer_manage)
-    ble_conn_params_init                     0x0001d1d9   Thumb Code    84  conn_params.o(i.ble_conn_params_init)
-    ble_conn_params_on_ble_evt               0x0001d239   Thumb Code   132  conn_params.o(i.ble_conn_params_on_ble_evt)
-    conn_params_error_handler                0x0001d2c5   Thumb Code    18  bluetooth.o(i.conn_params_error_handler)
-    main                                     0x0001d351   Thumb Code    80  main.o(i.main)
-    on_conn_params_evt                       0x0001d3a1   Thumb Code    38  bluetooth.o(i.on_conn_params_evt)
-    COZMO_UUID_BASE                          0x0001d7bc   Data          16  settings.o(.constdata)
-    COZMO_UUID_SERVICE                       0x0001d7cc   Data           2  settings.o(.constdata)
-    COZMO_UUID_RECEIVE_CHAR                  0x0001d7ce   Data           2  settings.o(.constdata)
-    COZMO_UUID_TRANSMIT_CHAR                 0x0001d7d0   Data           2  settings.o(.constdata)
-    gap_conn_params                          0x0001d7d2   Data           8  settings.o(.constdata)
-    adv_params                               0x0001d7dc   Data          24  settings.o(.constdata)
-    cp_init                                  0x0001d7f4   Data          28  settings.o(.constdata)
-    m_sec_params                             0x0001d810   Data           5  settings.o(.constdata)
-    DEVICE_NAME                              0x0001d815   Data           6  settings.o(.constdata)
-    DEVICE_NAME_LENGTH                       0x0001d81c   Data           4  settings.o(.constdata)
-    m_manuf_data                             0x0001d820   Data          12  settings.o(.constdata)
-    m_advdata                                0x0001d82c   Data          48  settings.o(.constdata)
-    __CUBE_XS                                0x0001dbac   Data           0  firmware.o(.text)
-    __CUBE_XS6                               0x0001dfbc   Data           0  firmware.o(.text)
-    Region$$Table$$Base                      0x0001e2cc   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x0001e2ec   Number         0  anon$$obj.o(Region$$Table)
+    Tasks::manage()                          0x0001b809   Thumb Code   248  tasks.o(i._ZN5Tasks6manageEv)
+    Tasks::execute(const Task*)              0x0001b90d   Thumb Code    62  tasks.o(i._ZN5Tasks7executeEPK4Task)
+    Timer::init()                            0x0001b959   Thumb Code    60  timer.o(i._ZN5Timer4initEv)
+    Lights::init()                           0x0001b9b5   Thumb Code   176  lights.o(i._ZN6Lights4initEv)
+    Lights::manage()                         0x0001ba69   Thumb Code   400  lights.o(i._ZN6Lights6manageEv)
+    Lights::update(LightValues&, const Anki::Cozmo::LightState*) 0x0001bc09   Thumb Code   182  lights.o(i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE)
+    Motors::getChargeOkay()                  0x0001bcc1   Thumb Code    28  motors.o(i._ZN6Motors13getChargeOkayEv)
+    Motors::init()                           0x0001bce5   Thumb Code   168  motors.o(i._ZN6Motors4initEv)
+    Motors::setup()                          0x0001bdad   Thumb Code    82  motors.o(i._ZN6Motors5setupEv)
+    Motors::manage()                         0x0001be11   Thumb Code   290  motors.o(i._ZN6Motors6manageEv)
+    Motors::disable(bool)                    0x0001bf71   Thumb Code    58  motors.o(i._ZN6Motors7disableEb)
+    Motors::getSpeed(unsigned char)          0x0001bfb5   Thumb Code   100  motors.o(i._ZN6Motors8getSpeedEh)
+    Motors::teardown()                       0x0001c025   Thumb Code   110  motors.o(i._ZN6Motors8teardownEv)
+    Battery::setHeadlight(bool)              0x0001c0b1   Thumb Code    18  battery.o(i._ZN7Battery12setHeadlightEb)
+    Battery::setOperatingMode(signed char)   0x0001c0c9   Thumb Code     6  battery.o(i._ZN7Battery16setOperatingModeEa)
+    Battery::updateOperatingMode()           0x0001c0d5   Thumb Code   160  battery.o(i._ZN7Battery19updateOperatingModeEv)
+    Battery::init()                          0x0001c189   Thumb Code   156  battery.o(i._ZN7Battery4initEv)
+    Battery::manage()                        0x0001c259   Thumb Code   568  battery.o(i._ZN7Battery6manageEv)
+    Storage::get(StorageKey)                 0x0001c4d1   Thumb Code     8  storage.o(i._ZN7Storage3getE10StorageKey)
+    Storage::get(StorageKey, int&)           0x0001c4dd   Thumb Code    14  storage.o(i._ZN7Storage3getE10StorageKeyRi)
+    Storage::set(StorageKey, const void*, int) 0x0001c4f1   Thumb Code    72  storage.o(i._ZN7Storage3setE10StorageKeyPKvi)
+    Storage::init()                          0x0001c53d   Thumb Code    80  storage.o(i._ZN7Storage4initEv)
+    Backpack::defaultPattern(DefaultBackpackPattern) 0x0001c599   Thumb Code    66  backpack.o(i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern)
+    Backpack::init()                         0x0001c5f5   Thumb Code    40  backpack.o(i._ZN8Backpack4initEv)
+    Backpack::manage()                       0x0001c629   Thumb Code   120  backpack.o(i._ZN8Backpack6manageEv)
+    Backpack::update(int)                    0x0001c6bd   Thumb Code   200  backpack.o(i._ZN8Backpack6updateEi)
+    Backpack::setLights(const Anki::Cozmo::LightState*) 0x0001c7a5   Thumb Code    28  backpack.o(i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE)
+    Watchdog::init()                         0x0001c7c9   Thumb Code    22  watchdog.o(i._ZN8Watchdog4initEv)
+    Watchdog::kick(unsigned char)            0x0001c7e9   Thumb Code    12  watchdog.o(i._ZN8Watchdog4kickEh)
+    Bluetooth::enterPairing(const Anki::Cozmo::EnterPairing&) 0x0001c7fd   Thumb Code    48  bluetooth.o(i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE)
+    Bluetooth::diffieHellmanResults(const Anki::Cozmo::DiffieHellmanResults&) 0x0001c83d   Thumb Code    48  bluetooth.o(i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE)
+    Bluetooth::init()                        0x0001c87d   Thumb Code    54  bluetooth.o(i._ZN9Bluetooth4initEv)
+    Bluetooth::manage()                      0x0001c8c5   Thumb Code   174  bluetooth.o(i._ZN9Bluetooth6manageEv)
+    Bluetooth::enabled()                     0x0001c989   Thumb Code     6  bluetooth.o(i._ZN9Bluetooth7enabledEv)
+    Bluetooth::shutdown()                    0x0001c995   Thumb Code    22  bluetooth.o(i._ZN9Bluetooth8shutdownEv)
+    Bluetooth::transmit(const unsigned char*, int, unsigned char) 0x0001c9b1   Thumb Code   144  bluetooth.o(i._ZN9Bluetooth8transmitEPKhih)
+    Bluetooth::advertise()                   0x0001ca59   Thumb Code   668  bluetooth.o(i._ZN9Bluetooth9advertiseEv)
+    Anki::Cozmo::RobotInterface::PrintTrace::Size() const 0x0001cd49   Thumb Code     8  clad.o(i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv)
+    Anki::Cozmo::BodyStorageContents::Size() const 0x0001cd51   Thumb Code     6  clad.o(i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv)
+    __ARM_clz                                0x0001cd57   Thumb Code    46  depilogue.o(i.__ARM_clz)
+    __ARM_common_ll_mulss                    0x0001cd85   Thumb Code    50  battery.o(i.__ARM_common_ll_mulss)
+    __cxa_guard_acquire                      0x0001cdb7   Thumb Code    18  cxa_guard_acquire.o(i.__cxa_guard_acquire)
+    __scatterload_copy                       0x0001cdc9   Thumb Code    14  handlers.o(i.__scatterload_copy)
+    __scatterload_null                       0x0001cdd7   Thumb Code     2  handlers.o(i.__scatterload_null)
+    __scatterload_zeroinit                   0x0001cdd9   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
+    ble_advdata_set                          0x0001d129   Thumb Code   106  ble_advdata.o(i.ble_advdata_set)
+    ble_app_timer_manage                     0x0001d195   Thumb Code   110  conn_params.o(i.ble_app_timer_manage)
+    ble_conn_params_init                     0x0001d219   Thumb Code    84  conn_params.o(i.ble_conn_params_init)
+    ble_conn_params_on_ble_evt               0x0001d279   Thumb Code   132  conn_params.o(i.ble_conn_params_on_ble_evt)
+    conn_params_error_handler                0x0001d305   Thumb Code    18  bluetooth.o(i.conn_params_error_handler)
+    main                                     0x0001d391   Thumb Code    80  main.o(i.main)
+    on_conn_params_evt                       0x0001d3e1   Thumb Code    38  bluetooth.o(i.on_conn_params_evt)
+    COZMO_UUID_BASE                          0x0001d7fc   Data          16  settings.o(.constdata)
+    COZMO_UUID_SERVICE                       0x0001d80c   Data           2  settings.o(.constdata)
+    COZMO_UUID_RECEIVE_CHAR                  0x0001d80e   Data           2  settings.o(.constdata)
+    COZMO_UUID_TRANSMIT_CHAR                 0x0001d810   Data           2  settings.o(.constdata)
+    gap_conn_params                          0x0001d812   Data           8  settings.o(.constdata)
+    adv_params                               0x0001d81c   Data          24  settings.o(.constdata)
+    cp_init                                  0x0001d834   Data          28  settings.o(.constdata)
+    m_sec_params                             0x0001d850   Data           5  settings.o(.constdata)
+    DEVICE_NAME                              0x0001d855   Data           6  settings.o(.constdata)
+    DEVICE_NAME_LENGTH                       0x0001d85c   Data           4  settings.o(.constdata)
+    m_manuf_data                             0x0001d860   Data          12  settings.o(.constdata)
+    m_advdata                                0x0001d86c   Data          48  settings.o(.constdata)
+    __CUBE_XS                                0x0001dbec   Data           0  firmware.o(.text)
+    __CUBE_XS6                               0x0001dffc   Data           0  firmware.o(.text)
+    Region$$Table$$Base                      0x0001e30c   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x0001e32c   Number         0  anon$$obj.o(Region$$Table)
     Battery::onContacts                      0x20002005   Data           1  battery.o(.data)
     m_pinIndex                               0x20002006   Data           1  battery.o(.data)
-    lowPowerMode                             0x2000202d   Data           1  head.o(.data)
-    Head::spokenTo                           0x2000202e   Data           1  head.o(.data)
-    m_lastState                              0x20002040   Data           4  motors.o(.data)
-    g_radiansPerHeadTick                     0x20002044   Data           4  motors.o(.data)
-    temperature                              0x200020ec   Data           4  temp.o(.data)
-    CRASHLOG_POINTER                         0x200020fc   Data           4  crashlogger.o(.data)
-    SystemCoreClock                          0x20002100   Data           4  system_nrf51.o(.data)
-    Bluetooth::service_handle                0x2000210a   Data           2  bluetooth.o(.data)
-    Bluetooth::conn_handle                   0x2000210c   Data           2  bluetooth.o(.data)
-    Bluetooth::receive_handles               0x2000211c   Data           8  bluetooth.o(.data)
-    Bluetooth::transmit_handles              0x20002124   Data           8  bluetooth.o(.data)
-    manif_data                               0x20002154   Data           8  settings.o(.data)
-    m_uesb_mainstate                         0x20002184   Data           1  micro_esb.o(.data)
-    txRxBuffer                               0x200021bc   Data          88  head.o(.bss)
-    g_dataToHead                             0x20002214   Data          76  head.o(.bss)
-    g_dataToBody                             0x20002260   Data          56  head.o(.bss)
-    lightController                          0x200022cc   Data         924  lights.o(.bss)
-    __initial_sp                             0x20003b70   Data           0  startup_nrf51.o(STACK)
+    lowPowerMode                             0x20002031   Data           1  head.o(.data)
+    Head::spokenTo                           0x20002032   Data           1  head.o(.data)
+    m_lastState                              0x20002044   Data           4  motors.o(.data)
+    g_radiansPerHeadTick                     0x20002048   Data           4  motors.o(.data)
+    temperature                              0x200020f0   Data           4  temp.o(.data)
+    CRASHLOG_POINTER                         0x20002100   Data           4  crashlogger.o(.data)
+    SystemCoreClock                          0x20002104   Data           4  system_nrf51.o(.data)
+    Bluetooth::service_handle                0x2000210e   Data           2  bluetooth.o(.data)
+    Bluetooth::conn_handle                   0x20002110   Data           2  bluetooth.o(.data)
+    Bluetooth::receive_handles               0x20002120   Data           8  bluetooth.o(.data)
+    Bluetooth::transmit_handles              0x20002128   Data           8  bluetooth.o(.data)
+    manif_data                               0x20002158   Data           8  settings.o(.data)
+    m_uesb_mainstate                         0x20002188   Data           1  micro_esb.o(.data)
+    txRxBuffer                               0x200021c0   Data          88  head.o(.bss)
+    g_dataToHead                             0x20002218   Data          76  head.o(.bss)
+    g_dataToBody                             0x20002264   Data          56  head.o(.bss)
+    lightController                          0x200022d0   Data         924  lights.o(.bss)
+    __initial_sp                             0x20003b78   Data           0  startup_nrf51.o(STACK)
 
 
 
@@ -1792,256 +1793,257 @@ Memory Map of the image
 
   Image Entry point : 0x000180dd
 
-  Load Region LR_IROM1 (Base: 0x00018000, Size: 0x000064a8, Max: 0x00006c00, ABSOLUTE, COMPRESSED[0x0000632c])
+  Load Region LR_IROM1 (Base: 0x00018000, Size: 0x000064ec, Max: 0x00006c00, ABSOLUTE, COMPRESSED[0x0000636c])
 
-    Execution Region ER_IROM1 (Base: 0x00018000, Size: 0x000062ec, Max: 0x00006c00, ABSOLUTE)
+    Execution Region ER_IROM1 (Base: 0x00018000, Size: 0x0000632c, Max: 0x00006c00, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x00018000   0x000000dc   Data   RO         1516    RESET               startup_nrf51.o
-    0x000180dc   0x00000000   Code   RO         3803  * .ARM.Collect$$$$00000000  mc_p.l(entry.o)
-    0x000180dc   0x00000004   Code   RO         3834    .ARM.Collect$$$$00000001  mc_p.l(entry2.o)
-    0x000180e0   0x00000004   Code   RO         3837    .ARM.Collect$$$$00000004  mc_p.l(entry5.o)
-    0x000180e4   0x00000000   Code   RO         3839    .ARM.Collect$$$$00000008  mc_p.l(entry7b.o)
-    0x000180e4   0x00000000   Code   RO         3841    .ARM.Collect$$$$0000000A  mc_p.l(entry8b.o)
-    0x000180e4   0x00000008   Code   RO         3842    .ARM.Collect$$$$0000000B  mc_p.l(entry9a.o)
-    0x000180ec   0x00000000   Code   RO         3844    .ARM.Collect$$$$0000000D  mc_p.l(entry10a.o)
-    0x000180ec   0x00000000   Code   RO         3846    .ARM.Collect$$$$0000000F  mc_p.l(entry11a.o)
-    0x000180ec   0x00000004   Code   RO         3835    .ARM.Collect$$$$00002712  mc_p.l(entry2.o)
+    0x00018000   0x000000dc   Data   RO         1562    RESET               startup_nrf51.o
+    0x000180dc   0x00000000   Code   RO         3849  * .ARM.Collect$$$$00000000  mc_p.l(entry.o)
+    0x000180dc   0x00000004   Code   RO         3880    .ARM.Collect$$$$00000001  mc_p.l(entry2.o)
+    0x000180e0   0x00000004   Code   RO         3883    .ARM.Collect$$$$00000004  mc_p.l(entry5.o)
+    0x000180e4   0x00000000   Code   RO         3885    .ARM.Collect$$$$00000008  mc_p.l(entry7b.o)
+    0x000180e4   0x00000000   Code   RO         3887    .ARM.Collect$$$$0000000A  mc_p.l(entry8b.o)
+    0x000180e4   0x00000008   Code   RO         3888    .ARM.Collect$$$$0000000B  mc_p.l(entry9a.o)
+    0x000180ec   0x00000000   Code   RO         3890    .ARM.Collect$$$$0000000D  mc_p.l(entry10a.o)
+    0x000180ec   0x00000000   Code   RO         3892    .ARM.Collect$$$$0000000F  mc_p.l(entry11a.o)
+    0x000180ec   0x00000004   Code   RO         3881    .ARM.Collect$$$$00002712  mc_p.l(entry2.o)
     0x000180f0   0x0000001e   Code   RO          980    .emb_text           timer.o
     0x0001810e   0x00000002   PAD
-    0x00018110   0x0000004c   Code   RO         1517    .text               startup_nrf51.o
-    0x0001815c   0x0000002c   Code   RO         3806    .text               mc_p.l(uidiv.o)
-    0x00018188   0x00000028   Code   RO         3808    .text               mc_p.l(idiv.o)
-    0x000181b0   0x0000004c   Code   RO         3810    .text               mc_p.l(ldiv.o)
-    0x000181fc   0x00000024   Code   RO         3812    .text               mc_p.l(memcpya.o)
-    0x00018220   0x00000024   Code   RO         3814    .text               mc_p.l(memseta.o)
-    0x00018244   0x0000001a   Code   RO         3816    .text               mc_p.l(memcmp.o)
+    0x00018110   0x0000004c   Code   RO         1563    .text               startup_nrf51.o
+    0x0001815c   0x0000002c   Code   RO         3852    .text               mc_p.l(uidiv.o)
+    0x00018188   0x00000028   Code   RO         3854    .text               mc_p.l(idiv.o)
+    0x000181b0   0x0000004c   Code   RO         3856    .text               mc_p.l(ldiv.o)
+    0x000181fc   0x00000024   Code   RO         3858    .text               mc_p.l(memcpya.o)
+    0x00018220   0x00000024   Code   RO         3860    .text               mc_p.l(memseta.o)
+    0x00018244   0x0000001a   Code   RO         3862    .text               mc_p.l(memcmp.o)
     0x0001825e   0x00000002   PAD
-    0x00018260   0x00000164   Code   RO         3820    .text               mf_p.l(dadd.o)
-    0x000183c4   0x000000f0   Code   RO         3822    .text               mf_p.l(ddiv.o)
-    0x000184b4   0x0000002c   Code   RO         3824    .text               mf_p.l(dscalb.o)
-    0x000184e0   0x0000001c   Code   RO         3826    .text               mf_p.l(dfltui.o)
-    0x000184fc   0x0000002c   Code   RO         3828    .text               mf_p.l(dfltl.o)
-    0x00018528   0x00000048   Code   RO         3830    .text               mf_p.l(dfixi.o)
-    0x00018570   0x00000050   Code   RO         3832    .text               mf_p.l(dfixl.o)
-    0x000185c0   0x00000060   Code   RO         3848    .text               mc_p.l(uldiv.o)
-    0x00018620   0x00000020   Code   RO         3850    .text               mc_p.l(llshl.o)
-    0x00018640   0x00000022   Code   RO         3852    .text               mc_p.l(llushr.o)
-    0x00018662   0x00000026   Code   RO         3854    .text               mc_p.l(llsshr.o)
-    0x00018688   0x00000000   Code   RO         3856    .text               mc_p.l(iusefp.o)
-    0x00018688   0x000000be   Code   RO         3857    .text               mf_p.l(depilogue.o)
+    0x00018260   0x00000164   Code   RO         3866    .text               mf_p.l(dadd.o)
+    0x000183c4   0x000000f0   Code   RO         3868    .text               mf_p.l(ddiv.o)
+    0x000184b4   0x0000002c   Code   RO         3870    .text               mf_p.l(dscalb.o)
+    0x000184e0   0x0000001c   Code   RO         3872    .text               mf_p.l(dfltui.o)
+    0x000184fc   0x0000002c   Code   RO         3874    .text               mf_p.l(dfltl.o)
+    0x00018528   0x00000048   Code   RO         3876    .text               mf_p.l(dfixi.o)
+    0x00018570   0x00000050   Code   RO         3878    .text               mf_p.l(dfixl.o)
+    0x000185c0   0x00000060   Code   RO         3894    .text               mc_p.l(uldiv.o)
+    0x00018620   0x00000020   Code   RO         3896    .text               mc_p.l(llshl.o)
+    0x00018640   0x00000022   Code   RO         3898    .text               mc_p.l(llushr.o)
+    0x00018662   0x00000026   Code   RO         3900    .text               mc_p.l(llsshr.o)
+    0x00018688   0x00000000   Code   RO         3902    .text               mc_p.l(iusefp.o)
+    0x00018688   0x000000be   Code   RO         3903    .text               mf_p.l(depilogue.o)
     0x00018746   0x00000002   PAD
-    0x00018748   0x00000024   Code   RO         3861    .text               mc_p.l(init.o)
-    0x0001876c   0x00000056   Code   RO         3871    .text               mc_p.l(__dczerorl2.o)
+    0x00018748   0x00000024   Code   RO         3907    .text               mc_p.l(init.o)
+    0x0001876c   0x00000056   Code   RO         3917    .text               mc_p.l(__dczerorl2.o)
     0x000187c2   0x00000002   PAD
     0x000187c4   0x000000f0   Code   RO          782    i.GPIOTE_IRQHandler  motors.o
-    0x000188b4   0x0000002c   Code   RO         1486    i.HardFault_Handler  crashlogger.o
-    0x000188e0   0x000000d8   Code   RO         3518    i.RADIO_IRQHandler  micro_esb.o
+    0x000188b4   0x0000002c   Code   RO         1532    i.HardFault_Handler  crashlogger.o
+    0x000188e0   0x000000d8   Code   RO         3564    i.RADIO_IRQHandler  micro_esb.o
     0x000189b8   0x00000054   Code   RO          981    i.RTC1_IRQHandler   timer.o
-    0x00018a0c   0x00000268   Code   RO         1589    i.SWI2_IRQHandler   bluetooth.o
-    0x00018c74   0x00000080   Code   RO         1524    i.SystemInit        system_nrf51.o
-    0x00018cf4   0x00000180   Code   RO         3623    i.TIMER0_IRQHandler  cubes.o
+    0x00018a0c   0x00000268   Code   RO         1635    i.SWI2_IRQHandler   bluetooth.o
+    0x00018c74   0x00000080   Code   RO         1570    i.SystemInit        system_nrf51.o
+    0x00018cf4   0x00000180   Code   RO         3669    i.TIMER0_IRQHandler  cubes.o
     0x00018e74   0x00000158   Code   RO          333    i.UART0_IRQHandler  head.o
-    0x00018fcc   0x00000044   Code   RO         3624    i._Z10EnterState10RadioState  cubes.o
-    0x00019010   0x0000007e   Code   RO         3436    i._Z10MD5_UpdateP7MD5_CTXPKvm  md5.o
+    0x00018fcc   0x00000044   Code   RO         3670    i._Z10EnterState10RadioState  cubes.o
+    0x00019010   0x0000007e   Code   RO         3482    i._Z10MD5_UpdateP7MD5_CTXPKvm  md5.o
     0x0001908e   0x00000002   PAD
     0x00019090   0x00000064   Code   RO            3    i._Z10calcResulti   battery.o
-    0x000190f4   0x00000084   Code   RO         3377    i._Z10gen_randomPvi  random.o
-    0x00019178   0x000000b6   Code   RO         3396    i._Z10sha1_finalP8SHA1_CTXPh  sha1.o
+    0x000190f4   0x00000084   Code   RO         3423    i._Z10gen_randomPvi  random.o
+    0x00019178   0x000000b6   Code   RO         3442    i._Z10sha1_finalP8SHA1_CTXPh  sha1.o
     0x0001922e   0x00000002   PAD
-    0x00019230   0x00000108   Code   RO         3519    i._Z10uesb_startv   micro_esb.o
-    0x00019338   0x00000040   Code   RO         3022    i._Z11AddRoundKeyh  aes.o
-    0x00019378   0x00000090   Code   RO         3472    i._Z11create_hmacPhPKhiS1_i  hmac.o
-    0x00019408   0x00000026   Code   RO         1590    i._Z11dh_completePKv  bluetooth.o
-    0x0001942e   0x00000042   Code   RO         3397    i._Z11sha1_updateP8SHA1_CTXPKhj  sha1.o
-    0x00019470   0x000000b0   Code   RO         3024    i._Z12KeyExpansionv  aes.o
-    0x00019520   0x00000080   Code   RO         3520    i._Z12uesb_disablev  micro_esb.o
+    0x00019230   0x00000108   Code   RO         3565    i._Z10uesb_startv   micro_esb.o
+    0x00019338   0x00000040   Code   RO         3068    i._Z11AddRoundKeyh  aes.o
+    0x00019378   0x00000090   Code   RO         3518    i._Z11create_hmacPhPKhiS1_i  hmac.o
+    0x00019408   0x00000026   Code   RO         1636    i._Z11dh_completePKv  bluetooth.o
+    0x0001942e   0x00000042   Code   RO         3443    i._Z11sha1_updateP8SHA1_CTXPKhj  sha1.o
+    0x00019470   0x000000b0   Code   RO         3070    i._Z12KeyExpansionv  aes.o
+    0x00019520   0x00000080   Code   RO         3566    i._Z12uesb_disablev  micro_esb.o
     0x000195a0   0x00000028   Code   RO         1109    i._Z12updateLightsPKN4Anki5Cozmo10LightStateE  backpack.o
     0x000195c8   0x00000158   Code   RO          783    i._Z13ConfigureTaskhPVj  motors.o
-    0x00019720   0x00000028   Code   RO         3026    i._Z13aes_fix_blockPhRi  aes.o
+    0x00019720   0x00000028   Code   RO         3072    i._Z13aes_fix_blockPhRi  aes.o
     0x00019748   0x00000074   Code   RO         1270    i._Z13setup_storagev  storage.o
     0x000197bc   0x00000104   Code   RO         1271    i._Z13storage_levelv  storage.o
     0x000198c0   0x0000007c   Code   RO          784    i._Z14ConfigureTimerP14NRF_TIMER_Typehh  motors.o
-    0x0001993c   0x0000006c   Code   RO         3027    i._Z14aes_cfb_decodePKvS0_PKhPhiPv  aes.o
-    0x000199a8   0x00000078   Code   RO         3028    i._Z14aes_cfb_encodePKvPvPKhPhi  aes.o
+    0x0001993c   0x0000006c   Code   RO         3073    i._Z14aes_cfb_decodePKvS0_PKhPhiPv  aes.o
+    0x000199a8   0x00000078   Code   RO         3074    i._Z14aes_cfb_encodePKvPvPKhPhi  aes.o
     0x00019a20   0x0000001a   Code   RO          586    i._Z14main_executionv  main.o
     0x00019a3a   0x00000002   PAD
     0x00019a3c   0x00000060   Code   RO            4    i._Z14setChargeState18CurrentChargeState  battery.o
-    0x00019a9c   0x0000018a   Code   RO         3398    i._Z14sha1_transformP8SHA1_CTXPKh  sha1.o
+    0x00019a9c   0x0000018a   Code   RO         3444    i._Z14sha1_transformP8SHA1_CTXPKh  sha1.o
     0x00019c26   0x00000002   PAD
     0x00019c28   0x00000038   Code   RO            5    i._Z14startADCsample11AnalogInput  battery.o
     0x00019c60   0x00000080   Code   RO          334    i._Z15setTransmitMode13TRANSMIT_MODE  head.o
-    0x00019ce0   0x0000002e   Code   RO         3339    i._Z16dh_encode_randomPhiPKh  diffie.o
+    0x00019ce0   0x0000002e   Code   RO         3385    i._Z16dh_encode_randomPhiPKh  diffie.o
     0x00019d0e   0x00000002   PAD
-    0x00019d10   0x00000024   Code   RO         3030    i._Z18AES128_ECB_encryptPKhS0_Ph  aes.o
-    0x00019d34   0x0000003a   Code   RO         3495    i._Z18aes_message_decodePKhS0_iPhRi  packet.o
-    0x00019d6e   0x00000044   Code   RO         3496    i._Z18aes_message_encodePKhS0_iPhRi  packet.o
+    0x00019d10   0x00000024   Code   RO         3076    i._Z18AES128_ECB_encryptPKhS0_Ph  aes.o
+    0x00019d34   0x0000003a   Code   RO         3541    i._Z18aes_message_decodePKhS0_iPhRi  packet.o
+    0x00019d6e   0x00000044   Code   RO         3542    i._Z18aes_message_encodePKhS0_iPhRi  packet.o
     0x00019db2   0x00000002   PAD
     0x00019db4   0x00000054   Code   RO         1272    i._Z18storage_write_wordPjj  storage.o
-    0x00019e08   0x0000023c   Code   RO         3625    i._Z18uesb_event_handlerj  cubes.o
-    0x0001a044   0x0000006c   Code   RO         3521    i._Z19configure_addressesPK19uesb_address_desc_t  micro_esb.o
-    0x0001a0b0   0x00000044   Code   RO         1591    i._Z19frame_data_receivedPKv  bluetooth.o
-    0x0001a0f4   0x00000040   Code   RO         3626    i._Z19ota_send_next_blockv  cubes.o
-    0x0001a134   0x00000018   Code   RO         3522    i._Z19uesb_set_rx_addressPK19uesb_address_desc_t  micro_esb.o
-    0x0001a14c   0x00000020   Code   RO         1592    i._Z20send_welcome_messagePKv  bluetooth.o
-    0x0001a16c   0x0000006c   Code   RO         3523    i._Z20uesb_read_rx_payloadP14uesb_payload_t  micro_esb.o
-    0x0001a1d8   0x00000010   Code   RO         3524    i._Z21uesb_write_tx_payloadPK19uesb_address_desc_tPKvh  micro_esb.o
-    0x0001a1e8   0x00000088   Code   RO         3525    i._Z23uesb_prepare_tx_payloadPK19uesb_address_desc_tPKvh  micro_esb.o
-    0x0001a270   0x00000030   Code   RO         3627    i._Z25SendObjectConnectionStatei  cubes.o
-    0x0001a2a0   0x00000018   Code   RO         1593    i._Z26start_message_transmissionPKv  bluetooth.o
-    0x0001a2b8   0x0000001c   Code   RO         1594    i._Z28softdevice_assertion_handlerjtPKh  bluetooth.o
-    0x0001a2d4   0x000009d8   Code   RO         3437    i._Z4bodyP7MD5_CTXPKvm  md5.o
-    0x0001acac   0x00000100   Code   RO         3031    i._Z6Cipherv        aes.o
-    0x0001adac   0x00000028   Code   RO         3438    i._Z8MD5_InitP7MD5_CTX  md5.o
-    0x0001add4   0x0000006c   Code   RO         1595    i._Z8dh_setupPKv    bluetooth.o
-    0x0001ae40   0x000000d4   Code   RO         3439    i._Z9MD5_FinalPhP7MD5_CTX  md5.o
-    0x0001af14   0x0000003c   Code   RO         3032    i._Z9ShiftRowsv     aes.o
-    0x0001af50   0x00000054   Code   RO         3399    i._Z9sha1_initP8SHA1_CTX  sha1.o
+    0x00019e08   0x0000023c   Code   RO         3671    i._Z18uesb_event_handlerj  cubes.o
+    0x0001a044   0x0000006c   Code   RO         3567    i._Z19configure_addressesPK19uesb_address_desc_t  micro_esb.o
+    0x0001a0b0   0x00000044   Code   RO         1637    i._Z19frame_data_receivedPKv  bluetooth.o
+    0x0001a0f4   0x00000040   Code   RO         3672    i._Z19ota_send_next_blockv  cubes.o
+    0x0001a134   0x00000018   Code   RO         3568    i._Z19uesb_set_rx_addressPK19uesb_address_desc_t  micro_esb.o
+    0x0001a14c   0x00000020   Code   RO         1638    i._Z20send_welcome_messagePKv  bluetooth.o
+    0x0001a16c   0x0000006c   Code   RO         3569    i._Z20uesb_read_rx_payloadP14uesb_payload_t  micro_esb.o
+    0x0001a1d8   0x00000010   Code   RO         3570    i._Z21uesb_write_tx_payloadPK19uesb_address_desc_tPKvh  micro_esb.o
+    0x0001a1e8   0x00000088   Code   RO         3571    i._Z23uesb_prepare_tx_payloadPK19uesb_address_desc_tPKvh  micro_esb.o
+    0x0001a270   0x00000030   Code   RO         3673    i._Z25SendObjectConnectionStatei  cubes.o
+    0x0001a2a0   0x00000018   Code   RO         1639    i._Z26start_message_transmissionPKv  bluetooth.o
+    0x0001a2b8   0x0000001c   Code   RO         1640    i._Z28softdevice_assertion_handlerjtPKh  bluetooth.o
+    0x0001a2d4   0x000009d8   Code   RO         3483    i._Z4bodyP7MD5_CTXPKvm  md5.o
+    0x0001acac   0x00000100   Code   RO         3077    i._Z6Cipherv        aes.o
+    0x0001adac   0x00000028   Code   RO         3484    i._Z8MD5_InitP7MD5_CTX  md5.o
+    0x0001add4   0x0000006c   Code   RO         1641    i._Z8dh_setupPKv    bluetooth.o
+    0x0001ae40   0x000000d4   Code   RO         3485    i._Z9MD5_FinalPhP7MD5_CTX  md5.o
+    0x0001af14   0x0000003c   Code   RO         3078    i._Z9ShiftRowsv     aes.o
+    0x0001af50   0x00000054   Code   RO         3445    i._Z9sha1_initP8SHA1_CTX  sha1.o
     0x0001afa4   0x000000fc   Code   RO         1273    i._Z9store_key10StorageKeyPKvi  storage.o
-    0x0001b0a0   0x0000002a   Code   RO         3473    i._Z9test_hmacPKhS0_iS0_i  hmac.o
+    0x0001b0a0   0x0000002a   Code   RO         3519    i._Z9test_hmacPKhS0_iS0_i  hmac.o
     0x0001b0ca   0x00000002   PAD
-    0x0001b0cc   0x0000008c   Code   RO         3526    i._Z9uesb_initPK13uesb_config_t  micro_esb.o
-    0x0001b158   0x00000038   Code   RO         3527    i._Z9uesb_stopv     micro_esb.o
+    0x0001b0cc   0x0000008c   Code   RO         3572    i._Z9uesb_initPK13uesb_config_t  micro_esb.o
+    0x0001b158   0x00000038   Code   RO         3573    i._Z9uesb_stopv     micro_esb.o
     0x0001b190   0x00000080   Code   RO         1023    i._ZN4Anki5Cozmo14RobotInterface7SendLogEatthz  logging.o
-    0x0001b210   0x0000009c   Code   RO         2022    i._ZN4Anki5Cozmo3HAL16RadioSendMessageEPKvth  messages.o
+    0x0001b210   0x0000009c   Code   RO         2068    i._ZN4Anki5Cozmo3HAL16RadioSendMessageEPKvth  messages.o
     0x0001b2ac   0x00000018   Code   RO          335    i._ZN4Head17enterLowPowerModeEv  head.o
     0x0001b2c4   0x00000078   Code   RO          337    i._ZN4Head4initEv   head.o
     0x0001b33c   0x000000a0   Code   RO          338    i._ZN4Head6manageEv  head.o
     0x0001b3dc   0x00000014   Code   RO         1338    i._ZN4Temp4initEv   temp.o
     0x0001b3f0   0x0000003c   Code   RO         1339    i._ZN4Temp6manageEv  temp.o
     0x0001b42c   0x0000000c   Code   RO         1340    i._ZN4Temp7getTempEv  temp.o
-    0x0001b438   0x00000044   Code   RO         3628    i._ZN5Radio10assignPropEjj  cubes.o
-    0x0001b47c   0x0000000c   Code   RO         3629    i._ZN5Radio13setLightGammaEh  cubes.o
-    0x0001b488   0x00000030   Code   RO         3630    i._ZN5Radio13setPropLightsEjPKN4Anki5Cozmo10LightStateE  cubes.o
-    0x0001b4b8   0x00000010   Code   RO         3631    i._ZN5Radio4initEv  cubes.o
-    0x0001b4c8   0x0000001c   Code   RO         3632    i._ZN5Radio8shutdownEv  cubes.o
-    0x0001b4e4   0x000000f8   Code   RO         3633    i._ZN5Radio9advertiseEv  cubes.o
-    0x0001b5dc   0x00000178   Code   RO         2023    i._ZN5Spine14processMessageEPv  messages.o
-    0x0001b754   0x0000001c   Code   RO         2024    i._ZN5Spine4initEv  messages.o
-    0x0001b770   0x00000048   Code   RO         2025    i._ZN5Spine7dequeueEP12CladBufferUp  messages.o
+    0x0001b438   0x00000044   Code   RO         3674    i._ZN5Radio10assignPropEjj  cubes.o
+    0x0001b47c   0x0000000c   Code   RO         3675    i._ZN5Radio13setLightGammaEh  cubes.o
+    0x0001b488   0x00000030   Code   RO         3676    i._ZN5Radio13setPropLightsEjPKN4Anki5Cozmo10LightStateE  cubes.o
+    0x0001b4b8   0x00000010   Code   RO         3677    i._ZN5Radio4initEv  cubes.o
+    0x0001b4c8   0x0000001c   Code   RO         3678    i._ZN5Radio8shutdownEv  cubes.o
+    0x0001b4e4   0x000000f8   Code   RO         3679    i._ZN5Radio9advertiseEv  cubes.o
+    0x0001b5dc   0x00000178   Code   RO         2069    i._ZN5Spine14processMessageEPv  messages.o
+    0x0001b754   0x0000001c   Code   RO         2070    i._ZN5Spine4initEv  messages.o
+    0x0001b770   0x00000048   Code   RO         2071    i._ZN5Spine7dequeueEP12CladBufferUp  messages.o
     0x0001b7b8   0x00000050   Code   RO         1422    i._ZN5Tasks4initEv  tasks.o
-    0x0001b808   0x00000100   Code   RO         1423    i._ZN5Tasks6manageEv  tasks.o
-    0x0001b908   0x0000004c   Code   RO         1425    i._ZN5Tasks7executeEPK4Task  tasks.o
-    0x0001b954   0x0000005c   Code   RO          982    i._ZN5Timer4initEv  timer.o
-    0x0001b9b0   0x000000b4   Code   RO         1223    i._ZN6Lights4initEv  lights.o
-    0x0001ba64   0x000001a0   Code   RO         1224    i._ZN6Lights6manageEv  lights.o
-    0x0001bc04   0x000000b6   Code   RO         1225    i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE  lights.o
-    0x0001bcba   0x00000002   PAD
-    0x0001bcbc   0x00000024   Code   RO          785    i._ZN6Motors13getChargeOkayEv  motors.o
-    0x0001bce0   0x000000c8   Code   RO          787    i._ZN6Motors4initEv  motors.o
-    0x0001bda8   0x00000064   Code   RO          788    i._ZN6Motors5setupEv  motors.o
-    0x0001be0c   0x00000160   Code   RO          789    i._ZN6Motors6manageEv  motors.o
-    0x0001bf6c   0x00000044   Code   RO          790    i._ZN6Motors7disableEb  motors.o
-    0x0001bfb0   0x00000070   Code   RO          791    i._ZN6Motors8getSpeedEh  motors.o
-    0x0001c020   0x0000008c   Code   RO          793    i._ZN6Motors8teardownEv  motors.o
-    0x0001c0ac   0x00000018   Code   RO            6    i._ZN7Battery12setHeadlightEb  battery.o
-    0x0001c0c4   0x0000000c   Code   RO            7    i._ZN7Battery16setOperatingModeEa  battery.o
-    0x0001c0d0   0x000000b4   Code   RO            8    i._ZN7Battery19updateOperatingModeEv  battery.o
-    0x0001c184   0x000000d0   Code   RO            9    i._ZN7Battery4initEv  battery.o
-    0x0001c254   0x0000023c   Code   RO           10    i._ZN7Battery6manageEv  battery.o
-    0x0001c490   0x0000000c   Code   RO         1274    i._ZN7Storage3getE10StorageKey  storage.o
-    0x0001c49c   0x00000014   Code   RO         1275    i._ZN7Storage3getE10StorageKeyRi  storage.o
-    0x0001c4b0   0x0000004c   Code   RO         1276    i._ZN7Storage3setE10StorageKeyPKvi  storage.o
-    0x0001c4fc   0x0000005c   Code   RO         1277    i._ZN7Storage4initEv  storage.o
-    0x0001c558   0x0000005c   Code   RO         1110    i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern  backpack.o
-    0x0001c5b4   0x00000034   Code   RO         1111    i._ZN8Backpack4initEv  backpack.o
-    0x0001c5e8   0x00000094   Code   RO         1113    i._ZN8Backpack6manageEv  backpack.o
-    0x0001c67c   0x000000e8   Code   RO         1114    i._ZN8Backpack6updateEi  backpack.o
-    0x0001c764   0x00000024   Code   RO         1115    i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE  backpack.o
-    0x0001c788   0x00000020   Code   RO         1376    i._ZN8Watchdog4initEv  watchdog.o
-    0x0001c7a8   0x00000014   Code   RO         1377    i._ZN8Watchdog4kickEh  watchdog.o
-    0x0001c7bc   0x00000040   Code   RO         1596    i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE  bluetooth.o
-    0x0001c7fc   0x00000040   Code   RO         1597    i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE  bluetooth.o
-    0x0001c83c   0x00000048   Code   RO         1598    i._ZN9Bluetooth4initEv  bluetooth.o
-    0x0001c884   0x000000c4   Code   RO         1599    i._ZN9Bluetooth6manageEv  bluetooth.o
-    0x0001c948   0x0000000c   Code   RO         1600    i._ZN9Bluetooth7enabledEv  bluetooth.o
-    0x0001c954   0x0000001c   Code   RO         1601    i._ZN9Bluetooth8shutdownEv  bluetooth.o
-    0x0001c970   0x000000a8   Code   RO         1602    i._ZN9Bluetooth8transmitEPKhih  bluetooth.o
-    0x0001ca18   0x000002f0   Code   RO         1603    i._ZN9Bluetooth9advertiseEv  bluetooth.o
-    0x0001cd08   0x00000008   Code   RO         2119    i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv  clad.o
-    0x0001cd10   0x00000006   Code   RO         2141    i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv  clad.o
-    0x0001cd16   0x0000002e   Code   RO         3859    i.__ARM_clz         mf_p.l(depilogue.o)
-    0x0001cd44   0x00000032   Code   RO           82    i.__ARM_common_ll_mulss  battery.o
-    0x0001cd76   0x00000012   Code   RO         3797    i.__cxa_guard_acquire  cpprt_p.l(cxa_guard_acquire.o)
-    0x0001cd88   0x0000000e   Code   RO         3865    i.__scatterload_copy  mc_p.l(handlers.o)
-    0x0001cd96   0x00000002   Code   RO         3866    i.__scatterload_null  mc_p.l(handlers.o)
-    0x0001cd98   0x0000000e   Code   RO         3867    i.__scatterload_zeroinit  mc_p.l(handlers.o)
-    0x0001cda6   0x00000002   PAD
-    0x0001cda8   0x00000340   Code   RO         1804    i.adv_data_encode   ble_advdata.o
-    0x0001d0e8   0x0000006a   Code   RO         1805    i.ble_advdata_set   ble_advdata.o
-    0x0001d152   0x00000002   PAD
-    0x0001d154   0x00000084   Code   RO         1958    i.ble_app_timer_manage  conn_params.o
-    0x0001d1d8   0x00000060   Code   RO         1960    i.ble_conn_params_init  conn_params.o
-    0x0001d238   0x0000008c   Code   RO         1961    i.ble_conn_params_on_ble_evt  conn_params.o
-    0x0001d2c4   0x0000001c   Code   RO         1605    i.conn_params_error_handler  bluetooth.o
-    0x0001d2e0   0x00000070   Code   RO         1963    i.conn_params_negotiation  conn_params.o
-    0x0001d350   0x00000050   Code   RO          587    i.main              main.o
-    0x0001d3a0   0x00000034   Code   RO         1606    i.on_conn_params_evt  bluetooth.o
-    0x0001d3d4   0x000000a6   Code   RO         1806    i.uuid_list_sized_encode  ble_advdata.o
-    0x0001d47a   0x00000018   Data   RO          806    .constdata          motors.o
-    0x0001d492   0x00000002   PAD
-    0x0001d494   0x00000120   Data   RO         1124    .constdata          backpack.o
-    0x0001d5b4   0x00000200   Data   RO         1230    .constdata          lights.o
-    0x0001d7b4   0x00000008   Data   RO         1626    .constdata          bluetooth.o
-    0x0001d7bc   0x00000010   Data   RO         1879    .constdata          settings.o
-    0x0001d7cc   0x00000002   Data   RO         1880    .constdata          settings.o
-    0x0001d7ce   0x00000002   Data   RO         1881    .constdata          settings.o
-    0x0001d7d0   0x00000002   Data   RO         1882    .constdata          settings.o
-    0x0001d7d2   0x00000008   Data   RO         1883    .constdata          settings.o
-    0x0001d7da   0x00000002   PAD
-    0x0001d7dc   0x00000018   Data   RO         1884    .constdata          settings.o
-    0x0001d7f4   0x0000001c   Data   RO         1885    .constdata          settings.o
-    0x0001d810   0x00000005   Data   RO         1886    .constdata          settings.o
-    0x0001d815   0x00000006   Data   RO         1887    .constdata          settings.o
-    0x0001d81b   0x00000001   PAD
-    0x0001d81c   0x00000004   Data   RO         1888    .constdata          settings.o
-    0x0001d820   0x0000000c   Data   RO         1889    .constdata          settings.o
-    0x0001d82c   0x00000030   Data   RO         1890    .constdata          settings.o
-    0x0001d85c   0x000002ff   Data   RO         3045    .constdata          aes.o
-    0x0001db5b   0x00000001   PAD
-    0x0001db5c   0x00000050   Data   RO         3646    .constdata          cubes.o
-    0x0001dbac   0x00000720   Data   RO         3515    .text               firmware.o
-    0x0001e2cc   0x00000020   Data   RO         3863    Region$$Table       anon$$obj.o
+    0x0001b808   0x00000104   Code   RO         1423    i._ZN5Tasks6manageEv  tasks.o
+    0x0001b90c   0x0000004c   Code   RO         1425    i._ZN5Tasks7executeEPK4Task  tasks.o
+    0x0001b958   0x0000005c   Code   RO          982    i._ZN5Timer4initEv  timer.o
+    0x0001b9b4   0x000000b4   Code   RO         1223    i._ZN6Lights4initEv  lights.o
+    0x0001ba68   0x000001a0   Code   RO         1224    i._ZN6Lights6manageEv  lights.o
+    0x0001bc08   0x000000b6   Code   RO         1225    i._ZN6Lights6updateER11LightValuesPKN4Anki5Cozmo10LightStateE  lights.o
+    0x0001bcbe   0x00000002   PAD
+    0x0001bcc0   0x00000024   Code   RO          785    i._ZN6Motors13getChargeOkayEv  motors.o
+    0x0001bce4   0x000000c8   Code   RO          787    i._ZN6Motors4initEv  motors.o
+    0x0001bdac   0x00000064   Code   RO          788    i._ZN6Motors5setupEv  motors.o
+    0x0001be10   0x00000160   Code   RO          789    i._ZN6Motors6manageEv  motors.o
+    0x0001bf70   0x00000044   Code   RO          790    i._ZN6Motors7disableEb  motors.o
+    0x0001bfb4   0x00000070   Code   RO          791    i._ZN6Motors8getSpeedEh  motors.o
+    0x0001c024   0x0000008c   Code   RO          793    i._ZN6Motors8teardownEv  motors.o
+    0x0001c0b0   0x00000018   Code   RO            6    i._ZN7Battery12setHeadlightEb  battery.o
+    0x0001c0c8   0x0000000c   Code   RO            7    i._ZN7Battery16setOperatingModeEa  battery.o
+    0x0001c0d4   0x000000b4   Code   RO            8    i._ZN7Battery19updateOperatingModeEv  battery.o
+    0x0001c188   0x000000d0   Code   RO            9    i._ZN7Battery4initEv  battery.o
+    0x0001c258   0x00000278   Code   RO           10    i._ZN7Battery6manageEv  battery.o
+    0x0001c4d0   0x0000000c   Code   RO         1274    i._ZN7Storage3getE10StorageKey  storage.o
+    0x0001c4dc   0x00000014   Code   RO         1275    i._ZN7Storage3getE10StorageKeyRi  storage.o
+    0x0001c4f0   0x0000004c   Code   RO         1276    i._ZN7Storage3setE10StorageKeyPKvi  storage.o
+    0x0001c53c   0x0000005c   Code   RO         1277    i._ZN7Storage4initEv  storage.o
+    0x0001c598   0x0000005c   Code   RO         1110    i._ZN8Backpack14defaultPatternE22DefaultBackpackPattern  backpack.o
+    0x0001c5f4   0x00000034   Code   RO         1111    i._ZN8Backpack4initEv  backpack.o
+    0x0001c628   0x00000094   Code   RO         1113    i._ZN8Backpack6manageEv  backpack.o
+    0x0001c6bc   0x000000e8   Code   RO         1114    i._ZN8Backpack6updateEi  backpack.o
+    0x0001c7a4   0x00000024   Code   RO         1115    i._ZN8Backpack9setLightsEPKN4Anki5Cozmo10LightStateE  backpack.o
+    0x0001c7c8   0x00000020   Code   RO         1376    i._ZN8Watchdog4initEv  watchdog.o
+    0x0001c7e8   0x00000014   Code   RO         1377    i._ZN8Watchdog4kickEh  watchdog.o
+    0x0001c7fc   0x00000040   Code   RO         1642    i._ZN9Bluetooth12enterPairingERKN4Anki5Cozmo12EnterPairingE  bluetooth.o
+    0x0001c83c   0x00000040   Code   RO         1643    i._ZN9Bluetooth20diffieHellmanResultsERKN4Anki5Cozmo20DiffieHellmanResultsE  bluetooth.o
+    0x0001c87c   0x00000048   Code   RO         1644    i._ZN9Bluetooth4initEv  bluetooth.o
+    0x0001c8c4   0x000000c4   Code   RO         1645    i._ZN9Bluetooth6manageEv  bluetooth.o
+    0x0001c988   0x0000000c   Code   RO         1646    i._ZN9Bluetooth7enabledEv  bluetooth.o
+    0x0001c994   0x0000001c   Code   RO         1647    i._ZN9Bluetooth8shutdownEv  bluetooth.o
+    0x0001c9b0   0x000000a8   Code   RO         1648    i._ZN9Bluetooth8transmitEPKhih  bluetooth.o
+    0x0001ca58   0x000002f0   Code   RO         1649    i._ZN9Bluetooth9advertiseEv  bluetooth.o
+    0x0001cd48   0x00000008   Code   RO         2165    i._ZNK4Anki5Cozmo14RobotInterface10PrintTrace4SizeEv  clad.o
+    0x0001cd50   0x00000006   Code   RO         2187    i._ZNK4Anki5Cozmo19BodyStorageContents4SizeEv  clad.o
+    0x0001cd56   0x0000002e   Code   RO         3905    i.__ARM_clz         mf_p.l(depilogue.o)
+    0x0001cd84   0x00000032   Code   RO           82    i.__ARM_common_ll_mulss  battery.o
+    0x0001cdb6   0x00000012   Code   RO         3843    i.__cxa_guard_acquire  cpprt_p.l(cxa_guard_acquire.o)
+    0x0001cdc8   0x0000000e   Code   RO         3911    i.__scatterload_copy  mc_p.l(handlers.o)
+    0x0001cdd6   0x00000002   Code   RO         3912    i.__scatterload_null  mc_p.l(handlers.o)
+    0x0001cdd8   0x0000000e   Code   RO         3913    i.__scatterload_zeroinit  mc_p.l(handlers.o)
+    0x0001cde6   0x00000002   PAD
+    0x0001cde8   0x00000340   Code   RO         1850    i.adv_data_encode   ble_advdata.o
+    0x0001d128   0x0000006a   Code   RO         1851    i.ble_advdata_set   ble_advdata.o
+    0x0001d192   0x00000002   PAD
+    0x0001d194   0x00000084   Code   RO         2004    i.ble_app_timer_manage  conn_params.o
+    0x0001d218   0x00000060   Code   RO         2006    i.ble_conn_params_init  conn_params.o
+    0x0001d278   0x0000008c   Code   RO         2007    i.ble_conn_params_on_ble_evt  conn_params.o
+    0x0001d304   0x0000001c   Code   RO         1651    i.conn_params_error_handler  bluetooth.o
+    0x0001d320   0x00000070   Code   RO         2009    i.conn_params_negotiation  conn_params.o
+    0x0001d390   0x00000050   Code   RO          587    i.main              main.o
+    0x0001d3e0   0x00000034   Code   RO         1652    i.on_conn_params_evt  bluetooth.o
+    0x0001d414   0x000000a6   Code   RO         1852    i.uuid_list_sized_encode  ble_advdata.o
+    0x0001d4ba   0x00000018   Data   RO          806    .constdata          motors.o
+    0x0001d4d2   0x00000002   PAD
+    0x0001d4d4   0x00000120   Data   RO         1124    .constdata          backpack.o
+    0x0001d5f4   0x00000200   Data   RO         1230    .constdata          lights.o
+    0x0001d7f4   0x00000008   Data   RO         1672    .constdata          bluetooth.o
+    0x0001d7fc   0x00000010   Data   RO         1925    .constdata          settings.o
+    0x0001d80c   0x00000002   Data   RO         1926    .constdata          settings.o
+    0x0001d80e   0x00000002   Data   RO         1927    .constdata          settings.o
+    0x0001d810   0x00000002   Data   RO         1928    .constdata          settings.o
+    0x0001d812   0x00000008   Data   RO         1929    .constdata          settings.o
+    0x0001d81a   0x00000002   PAD
+    0x0001d81c   0x00000018   Data   RO         1930    .constdata          settings.o
+    0x0001d834   0x0000001c   Data   RO         1931    .constdata          settings.o
+    0x0001d850   0x00000005   Data   RO         1932    .constdata          settings.o
+    0x0001d855   0x00000006   Data   RO         1933    .constdata          settings.o
+    0x0001d85b   0x00000001   PAD
+    0x0001d85c   0x00000004   Data   RO         1934    .constdata          settings.o
+    0x0001d860   0x0000000c   Data   RO         1935    .constdata          settings.o
+    0x0001d86c   0x00000030   Data   RO         1936    .constdata          settings.o
+    0x0001d89c   0x000002ff   Data   RO         3091    .constdata          aes.o
+    0x0001db9b   0x00000001   PAD
+    0x0001db9c   0x00000050   Data   RO         3692    .constdata          cubes.o
+    0x0001dbec   0x00000720   Data   RO         3561    .text               firmware.o
+    0x0001e30c   0x00000020   Data   RO         3909    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM1 (Base: 0x20002000, Size: 0x00001b70, Max: 0x00001ffc, ABSOLUTE, COMPRESSED[0x00000040])
+    Execution Region RW_IRAM1 (Base: 0x20002000, Size: 0x00001b78, Max: 0x00001ffc, ABSOLUTE, COMPRESSED[0x00000040])
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x20002000   0x0000002c   Data   RW           25    .data               battery.o
-    0x2000202c   0x00000010   Data   RW          346    .data               head.o
-    0x2000203c   0x0000007c   Data   RW          807    .data               motors.o
-    0x200020b8   0x00000004   Data   RW          985    .data               timer.o
-    0x200020bc   0x00000004   Data   RW         1025    .data               logging.o
-    0x200020c0   0x00000014   Data   RW         1125    .data               backpack.o
-    0x200020d4   0x0000000c   Data   RW         1231    .data               lights.o
-    0x200020e0   0x0000000c   Data   RW         1287    .data               storage.o
-    0x200020ec   0x00000004   Data   RW         1344    .data               temp.o
-    0x200020f0   0x0000000c   Data   RW         1431    .data               tasks.o
-    0x200020fc   0x00000004   Data   RW         1488    .data               crashlogger.o
-    0x20002100   0x00000004   Data   RW         1525    .data               system_nrf51.o
-    0x20002104   0x00000050   Data   RW         1627    .data               bluetooth.o
-    0x20002154   0x00000008   Data   RW         1891    .data               settings.o
-    0x2000215c   0x00000016   Data   RW         1965    .data               conn_params.o
-    0x20002172   0x00000002   PAD
-    0x20002174   0x00000008   Data   RW         2031    .data               messages.o
-    0x2000217c   0x00000008   Data   RW         3046    .data               aes.o
-    0x20002184   0x00000001   Data   RW         3539    .data               micro_esb.o
-    0x20002185   0x00000003   PAD
-    0x20002188   0x00000034   Data   RW         3647    .data               cubes.o
-    0x200021bc   0x000000dc   Zero   RW          345    .bss                head.o
-    0x20002298   0x00000034   Zero   RW         1123    .bss                backpack.o
-    0x200022cc   0x0000039c   Zero   RW         1229    .bss                lights.o
-    0x20002668   0x00000018   Zero   RW         1286    .bss                storage.o
-    0x20002680   0x00000030   Zero   RW         1430    .bss                tasks.o
-    0x200026b0   0x000002ec   Zero   RW         1625    .bss                bluetooth.o
-    0x2000299c   0x0000001c   Zero   RW         1964    .bss                conn_params.o
-    0x200029b8   0x00000098   Zero   RW         2030    .bss                messages.o
-    0x20002a50   0x000000b0   Zero   RW         3044    .bss                aes.o
-    0x20002b00   0x00000374   Zero   RW         3538    .bss                micro_esb.o
-    0x20002e74   0x000000fc   Zero   RW         3645    .bss                cubes.o
-    0x20002f70   0x00000c00   Zero   RW         1514    STACK               startup_nrf51.o
+    0x20002000   0x00000030   Data   RW           25    .data               battery.o
+    0x20002030   0x00000010   Data   RW          346    .data               head.o
+    0x20002040   0x0000007c   Data   RW          807    .data               motors.o
+    0x200020bc   0x00000004   Data   RW          985    .data               timer.o
+    0x200020c0   0x00000004   Data   RW         1025    .data               logging.o
+    0x200020c4   0x00000014   Data   RW         1125    .data               backpack.o
+    0x200020d8   0x0000000c   Data   RW         1231    .data               lights.o
+    0x200020e4   0x0000000c   Data   RW         1287    .data               storage.o
+    0x200020f0   0x00000004   Data   RW         1344    .data               temp.o
+    0x200020f4   0x0000000c   Data   RW         1431    .data               tasks.o
+    0x20002100   0x00000004   Data   RW         1534    .data               crashlogger.o
+    0x20002104   0x00000004   Data   RW         1571    .data               system_nrf51.o
+    0x20002108   0x00000050   Data   RW         1673    .data               bluetooth.o
+    0x20002158   0x00000008   Data   RW         1937    .data               settings.o
+    0x20002160   0x00000016   Data   RW         2011    .data               conn_params.o
+    0x20002176   0x00000002   PAD
+    0x20002178   0x00000008   Data   RW         2077    .data               messages.o
+    0x20002180   0x00000008   Data   RW         3092    .data               aes.o
+    0x20002188   0x00000001   Data   RW         3585    .data               micro_esb.o
+    0x20002189   0x00000003   PAD
+    0x2000218c   0x00000034   Data   RW         3693    .data               cubes.o
+    0x200021c0   0x000000dc   Zero   RW          345    .bss                head.o
+    0x2000229c   0x00000034   Zero   RW         1123    .bss                backpack.o
+    0x200022d0   0x0000039c   Zero   RW         1229    .bss                lights.o
+    0x2000266c   0x00000018   Zero   RW         1286    .bss                storage.o
+    0x20002684   0x00000030   Zero   RW         1430    .bss                tasks.o
+    0x200026b4   0x000002ec   Zero   RW         1671    .bss                bluetooth.o
+    0x200029a0   0x0000001c   Zero   RW         2010    .bss                conn_params.o
+    0x200029bc   0x00000098   Zero   RW         2076    .bss                messages.o
+    0x20002a54   0x000000b0   Zero   RW         3090    .bss                aes.o
+    0x20002b04   0x00000374   Zero   RW         3584    .bss                micro_esb.o
+    0x20002e78   0x000000fc   Zero   RW         3691    .bss                cubes.o
+    0x20002f74   0x00000004   PAD
+    0x20002f78   0x00000c00   Zero   RW         1560    STACK               startup_nrf51.o
 
 
 ==============================================================================
@@ -2052,25 +2054,25 @@ Image component sizes
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
 
        860         54        767          8        176       9155   aes.o
-       600        116        288         20         52      14404   backpack.o
-      1298        200          0         44          0     116920   battery.o
+       600        116        288         20         52      14400   backpack.o
+      1358        194          0         48          0     117116   battery.o
       1104          6          0          0          0      39150   ble_advdata.o
-      2350        320          8         80        748      75885   bluetooth.o
-        14          0          0          0          0      66404   clad.o
+      2350        322          8         80        748      75905   bluetooth.o
+        14          0          0          0          0      66432   clad.o
        480         64          0         22         28      11586   conn_params.o
         44         14          0          4          0       9267   crashlogger.o
       1556        164         80         52        252      79885   cubes.o
         46          0          0          0          0       3871   diffie.o
          0          0       1824          0          0          0   firmware.o
-       776        190          0         16        220     109219   head.o
+       776        190          0         16        220     109247   head.o
        186          0          0          0          0       2290   hmac.o
        778         20        512         12        924       5819   lights.o
-       128          4          0          4          0      46810   logging.o
-       106          0          0          0          0      84756   main.o
+       128          4          0          4          0      46838   logging.o
+       106          0          0          0          0      84784   main.o
       2898        274          0          0          0       5112   md5.o
        632         48          0          8        152      48057   messages.o
       1196        266          0          1        884      34199   micro_esb.o
-      1716        232         24        124          0     109441   motors.o
+      1716        232         24        124          0     109469   motors.o
        126          0          0          0          0       1974   packet.o
        132         14          0          0          0       1537   random.o
          0          0        157          8          0      10541   settings.o
@@ -2078,15 +2080,15 @@ Image component sizes
         76         24        220          0       3072        432   startup_nrf51.o
        912         78          0         12         24       7352   storage.o
        128         20          0          4          0       5871   system_nrf51.o
-       412         44          0         12         48       5612   tasks.o
+       416         42          0         12         48       5636   tasks.o
         92         30          0          4          0       1286   temp.o
        206         48          0          4          0       9329   timer.o
         52         18          0          0          0      18907   watchdog.o
 
     ----------------------------------------------------------------------
-     19650       2286       3918        444       6580     940431   Object Totals
+     19714       2280       3918        448       6584     940807   Object Totals
          0          0         32          0          0          0   (incl. Generated)
-        20          0          6          5          0          0   (incl. Padding)
+        20          0          6          5          4          0   (incl. Padding)
 
     ----------------------------------------------------------------------
 
@@ -2146,15 +2148,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     21406       2340       3918        444       6580     935887   Grand Totals
-     21406       2340       3918         64       6580     935887   ELF Image Totals (compressed)
-     21406       2340       3918         64          0          0   ROM Totals
+     21470       2334       3918        448       6584     936263   Grand Totals
+     21470       2334       3918         64       6584     936263   ELF Image Totals (compressed)
+     21470       2334       3918         64          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                25324 (  24.73kB)
-    Total RW  Size (RW Data + ZI Data)              7024 (   6.86kB)
-    Total ROM Size (Code + RO Data + RW Data)      25388 (  24.79kB)
+    Total RO  Size (Code + RO Data)                25388 (  24.79kB)
+    Total RW  Size (RW Data + ZI Data)              7032 (   6.87kB)
+    Total ROM Size (Code + RO Data + RW Data)      25452 (  24.86kB)
 
 ==============================================================================
 
