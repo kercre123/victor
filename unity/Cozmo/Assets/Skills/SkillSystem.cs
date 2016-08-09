@@ -191,6 +191,7 @@ public class SkillSystem {
           if (thresholdPassed) {
             float winPercent = (currSkillData.WinPointsTotal / pointTotal);
             // We're losing too much, level up
+            RewardedActionManager.Instance.NewSkillChange = 1;
 
             if (winPercent < skillLevelConfig.LowerBoundThreshold) {
               int cozmoSkillLevel = GetCozmoSkillLevel(currSkillData);
@@ -218,6 +219,7 @@ public class SkillSystem {
             }
             // we're winning too much, level down
             else if (winPercent > skillLevelConfig.UpperBoundThreshold) {
+              RewardedActionManager.Instance.NewSkillChange = -1;
               currSkillData.ChangeLevel(currSkillData.LastLevel - 1);
               // cozmosHighestRobotLevel never levels down
               DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null,

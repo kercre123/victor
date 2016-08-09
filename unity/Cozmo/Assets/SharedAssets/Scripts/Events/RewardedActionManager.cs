@@ -70,6 +70,14 @@ public class RewardedActionManager : MonoBehaviour {
     }
   }
 
+  public int NewSkillChange = 0;
+
+  public bool NewSkillChangePending {
+    get {
+      return NewSkillChange != 0;
+    }
+  }
+
   public int TotalPendingEnergy {
     get {
       int total = 0;

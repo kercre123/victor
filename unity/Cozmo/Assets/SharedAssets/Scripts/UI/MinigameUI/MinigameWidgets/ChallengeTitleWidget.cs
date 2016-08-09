@@ -13,21 +13,11 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
 
-      [SerializeField]
-      private UnityEngine.UI.Image _ChallengeIcon;
-
       public string Text {
         set {
           _ChallengeTitleLabel.text = value;
         }
       }
-
-      public Sprite Icon {
-        set {
-          _ChallengeIcon.overrideSprite = value;
-        }
-      }
-
       #region IMinigameWidget
 
       public override void DestroyWidgetImmediately() {

@@ -191,6 +191,8 @@ public static class LocalizationKeys {
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameTextWinner = "minigame.text.winner";
   public const string kMinigameTextScore = "minigame.text.score";
+  public const string kMinigameTextScorePlayer = "minigame.text.score.player";
+  public const string kMinigameTextScoreCozmo = "minigame.text.score.cozmo";
   public const string kMinigameLabelShowCubesSingular = "minigame.label.showCubes.singular";
   public const string kMinigameLabelShowCubesPlural = "minigame.label.showCubes.plural";
   public const string kMinigameLabelWaitingForCubesSingular = "minigame.label.waitingForCubes.singular";
@@ -372,6 +374,8 @@ public static class LocalizationKeys {
   public const string kRewardCollectInstruction = "reward.collect.Instruction";
   public const string kRewardDescriptionNewDifficulty = "reward.description.NewDifficulty";
   public const string kRewardDescriptionStartNewDay = "reward.description.StartNewDay";
+  public const string kRewardDescriptionSkillUp = "reward.description.SkillUp";
+  public const string kRewardDescriptionSkillDown = "reward.description.SkillDown";
 
   #endregion
 

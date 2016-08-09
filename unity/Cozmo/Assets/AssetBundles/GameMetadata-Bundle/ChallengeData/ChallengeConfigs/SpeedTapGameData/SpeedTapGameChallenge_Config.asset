@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
-    - _EnumValueAsString: OnChallengeRoundEnd
-      _EnumValue: 2
+    - _EnumValueAsString: OnChallengeComplete
+      _EnumValue: 3
     _ChallengePointEvent:
     - _EnumValueAsString: OnChallengePointScored
       _EnumValue: 1
