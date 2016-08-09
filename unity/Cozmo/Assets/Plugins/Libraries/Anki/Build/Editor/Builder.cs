@@ -24,6 +24,10 @@ namespace Anki {
         ".DS_Store",
       };
 
+      private static string[] _kDirectoryExclusions = {
+        "AssetBundles",
+      };
+
       private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
 
       [MenuItem(_kSimulationMode)]
@@ -516,24 +520,36 @@ namespace Anki {
       // Generate the resources.txt file. This file will be used on Android to extract all the files from the jar file.
       // The file has a line for folder that needs to be created and for every file that needs to be extracted.
       // The paths in the file need to be relative to Assets/StreamingAssets.
+      [MenuItem(Build.Builder._kProjectName + "/Build/Generate Resources Manifest")]
       private static void GenerateResourcesManifest() {
-        int substringIndex = "Assets/StreamingAsssets".Length;
+        string resourcesDirectory = "Assets/StreamingAssets";
+        int substringIndex = resourcesDirectory.Length + 1;
         List<string> all = new List<string>();
 
-        string[] directories = Directory.GetDirectories("Assets/StreamingAssets", "*", SearchOption.AllDirectories);
+        string[] directories = Directory.GetDirectories(resourcesDirectory, "*", SearchOption.AllDirectories);
         foreach (string d in directories) {
-          all.Add(d.Substring(substringIndex));
-        }
+          // Only add the folder if it is not in the list of exclussions
+          if (string.IsNullOrEmpty(Array.Find(_kDirectoryExclusions, (string exclusion) => {
+            return d.Contains(exclusion);
+          }))) { 
+            // Add a line with just the folder first to create it at runtime
+            all.Add(d.Substring(substringIndex));
 
-        string[] files = Directory.GetFiles("Assets/StreamingAssets", "*.*", SearchOption.AllDirectories);
-        foreach (string f in files) {
-          // Filter the files we don't need to ship
-          if (string.IsNullOrEmpty(Array.Find(_kFileExclusions, excl => f.Contains(excl)))) {
-            all.Add(f.Substring(substringIndex));
+            // Now add a line for every valid file in the folder
+            string[] files = Directory.GetFiles(d, "*", SearchOption.TopDirectoryOnly);
+            foreach (string f in files) {
+              // Only add the file if it is not in the list of exclussions
+              if (string.IsNullOrEmpty(Array.Find(_kFileExclusions, (string exclusion) => {
+                return f.Contains(exclusion);
+              }))) {
+                all.Add(f.Substring(substringIndex));
+              }
+            }
           }
         }
 
-        File.WriteAllLines("Assets/StreamingAssets/resources.txt", all.ToArray());
+        File.WriteAllLines(resourcesDirectory + "/resources.txt", all.ToArray());
+
       }
 
       // Returns all the enabled scenes from the editor settings
