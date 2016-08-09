@@ -12,6 +12,8 @@ public class StateMachine {
 
   private bool _IsPaused = false;
 
+  private Anki.Cozmo.BehaviorType _reactionThatPausedGame = Anki.Cozmo.BehaviorType.NoneBehavior;
+
   public bool IsPaused {
     get {
       return _IsPaused;
@@ -93,6 +95,7 @@ public class StateMachine {
     if (!_IsPaused) {
       _IsPaused = true;
       if (_CurrState != null) {
+        _reactionThatPausedGame = reactionaryBehavior;
         _CurrState.Pause(reason, reactionaryBehavior);
       }
     }
@@ -102,8 +105,13 @@ public class StateMachine {
     if (_IsPaused) {
       _IsPaused = false;
       if (_CurrState != null) {
+        _reactionThatPausedGame = Anki.Cozmo.BehaviorType.NoneBehavior;
         _CurrState.Resume(reason, reactionaryBehavior);
       }
     }
+  }
+
+  public Anki.Cozmo.BehaviorType GetReactionThatPausedGame(){
+	return _reactionThatPausedGame;
   }
 }

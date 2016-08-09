@@ -506,10 +506,15 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
     _currentChooserPtr->OnDeselected();
   }
 
+  bool currentNotReactionary = !(_currentBehavior != nullptr && _currentBehavior->IsReactionary());
+  
   // The behavior pointers may no longer be valid, so clear them
-  SwitchToBehavior(nullptr);
+  if(currentNotReactionary){
+    SwitchToBehavior(nullptr);
+    _runningReactionaryBehavior = false;
+  }
+  
   _behaviorToResume = nullptr;
-  _runningReactionaryBehavior = false;
 
   _currentChooserPtr = newChooser;
   _currentChooserPtr->OnSelected();
@@ -518,7 +523,9 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
-  SwitchToNextBehavior();
+  if(currentNotReactionary){
+    SwitchToNextBehavior();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

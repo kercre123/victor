@@ -533,7 +533,7 @@ public abstract class GameBase : MonoBehaviour {
     }
     CleanUpOnDestroy();
 
-    if (CurrentRobot != null) {
+	if (CurrentRobot != null && _StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
       // clears the action queue before quitting the game.
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
     }
