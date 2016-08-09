@@ -168,7 +168,7 @@ private:
   enum class LogEnumType {
     Post,
     CreatePlugIn,
-    DestoryPlugIn,
+    DestroyPlugIn,
     Update,
   };
   
