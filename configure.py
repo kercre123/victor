@@ -564,7 +564,9 @@ class GamePlatformConfiguration(object):
         copytree(self.android_lib_dir, self.android_unity_plugin_dir)
 
     def call_unity(self):
-
+        if self.platform != 'android':
+            print ('Error: invalid call to unity. only allowed for android builds.')
+            return False
         args = [self.options.unity_binary_path, "-quit", "-batchmode", "-nographics"]
         args += ['-projectPath', self.unity_project_root]
         args += ['-executeMethod', 'CommandLineBuild.Build']
@@ -572,7 +574,8 @@ class GamePlatformConfiguration(object):
         args += ['--config', self.options.configuration]
         args += ['--build-number', self.options.set_build_number]
         args += ['--build-path', os.path.join(self.options.build_dir, self.platform)]
-        print args
+        args += ['--build-type', 'PlayerAndAssets']
+        args += ['--asset-path', 'Assets/StreamingAssets/cozmo_resources']
         ankibuild.util.File.execute(args)
         # TODO: Modify unity.py to handle this logic.  Problem is that unity.py is too coupled to xcode.
         # example of what this function should look like.

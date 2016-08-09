@@ -236,6 +236,19 @@ class File(object):
         if os.path.isdir(destination):
             destination = os.path.join(destination, os.path.basename(source))
         cls.write(destination, cls.read(source))
+        return True
+
+    @classmethod
+    def cptree(cls, source, destination):
+        if not os.path.isdir(source):
+            print (source + " is not a folder")
+            return False
+        try:
+            shutil.copytree(source, destination)
+        except OSError as exc:
+            print ("error: " + str(exc))
+            return False
+        return True
 
     @classmethod
     def read(cls, path):
