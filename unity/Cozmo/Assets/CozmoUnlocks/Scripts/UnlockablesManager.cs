@@ -43,6 +43,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void Start() {
+    InitializeUnlockablesState();
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
   }
@@ -64,6 +65,16 @@ public class UnlockablesManager : MonoBehaviour {
       }
     }
     return true;
+  }
+
+  // Should only be called before connecting to robot, robot will overwrite these
+  public void InitializeUnlockablesState() {
+    // TODO: Replace this placeholder with using backup data instead of setting everything to false.
+    for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
+      if (_UnlockablesState.ContainsKey(_UnlockableInfoList.UnlockableInfoData[i].Id.Value) == false) {
+        _UnlockablesState.Add(_UnlockableInfoList.UnlockableInfoData[i].Id.Value, false);
+      }
+    }
   }
 
   public List<UnlockableInfo> GetUnlockedGames() {

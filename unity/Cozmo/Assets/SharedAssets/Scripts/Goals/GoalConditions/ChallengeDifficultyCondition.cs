@@ -24,7 +24,7 @@ namespace Anki {
         bool isMet = false;
         if (cozEvent is MinigameGameEvent) {
           MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-          if (miniGameEvent.Difficulty <= Difficulty) {
+          if (miniGameEvent.Difficulty == Difficulty) {
             isMet = true;
           }
         }
