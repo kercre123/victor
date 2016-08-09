@@ -76,5 +76,18 @@ void ILoggerProvider::PrintChanneledLogI(const char* channel,
   }
 }
 
+void ILoggerProvider::PrintChanneledLogD(const char* channel,
+      const char* eventName,
+      const std::vector<std::pair<const char*, const char*>>& keyValues,
+      const char* eventValue)
+{
+  // if no filter is set or the channel is enabled
+  if ( !_infoFilter || _infoFilter->IsChannelEnabled(channel) )
+  {
+    // pass to subclass
+    PrintLogD(channel, eventName, keyValues, eventValue);
+  }
+}
+
 } // namespace Util
 } // namespace Anki

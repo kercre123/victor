@@ -97,7 +97,7 @@ void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** 
   for(int i = 0; i < keyValueCount; ++i) {
     keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
   }
-  Anki::Util::sDebugF(eventName, keyValues, "%s", eventValue);
+  Anki::Util::sChanneledDebugF("Unity", eventName, keyValues, "%s", eventValue);
 }
 
 void Unity_DAS_SetGlobal(const char* key, const char* value)

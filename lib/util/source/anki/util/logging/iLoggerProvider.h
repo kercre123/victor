@@ -59,9 +59,6 @@ public:
   virtual void PrintLogW(const char* eventName,
     const std::vector<std::pair<const char*, const char*>>& keyValues,
     const char* eventValue) = 0;
-  virtual void PrintLogD(const char* eventName,
-    const std::vector<std::pair<const char*, const char*>>& keyValues,
-    const char* eventValue) = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Filtered logs
@@ -69,12 +66,16 @@ public:
   // Channel filters apply to these levels. This method will filter messages and delegate to subclasses through
   // protected API the messages that pass the filter
   
-  // Note this is virtual because some classes may need the channel for something, but it's not pure because
-  // it's not required to print anything, by default it delegates on PrintLogI
+  // Delegates on PrintLogI to print infos that pass channel filtering
   void PrintChanneledLogI(const char* channel,
     const char* eventName,
     const std::vector<std::pair<const char*, const char*>>& keyValues,
     const char* eventValue);
+
+  void PrintChanneledLogD(const char* channel,
+                          const char* eventName,
+                          const std::vector<std::pair<const char*, const char*>>& keyValues,
+                          const char* eventValue);
 
 protected:
 
@@ -87,7 +88,12 @@ protected:
     const char* eventName,
     const std::vector<std::pair<const char*, const char*>>& keyValues,
     const char* eventValue) = 0;
-  
+
+  virtual void PrintLogD(const char* channel,
+    const char* eventName,
+    const std::vector<std::pair<const char*, const char*>>& keyValues,
+    const char* eventValue) = 0;
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

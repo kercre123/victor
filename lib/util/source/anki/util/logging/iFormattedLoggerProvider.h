@@ -50,11 +50,12 @@ namespace Anki {
         if (!IsLogLevelEnabled(LOG_LEVEL_INFO)) {return;}
         FormatAndLogChanneled(LOG_LEVEL_INFO, channelName, eventName, keyValues, eventValue);
       };
-      inline void PrintLogD(const char* eventName,
+      inline void PrintLogD(const char* channelName,
+                            const char* eventName,
                             const std::vector<std::pair<const char*, const char*>>& keyValues,
                             const char* eventValue) override {
         if (!IsLogLevelEnabled(LOG_LEVEL_DEBUG)) {return;}
-        FormatAndLog(LOG_LEVEL_DEBUG, eventName, keyValues, eventValue);
+        FormatAndLogChanneled(LOG_LEVEL_DEBUG, channelName, eventName, keyValues, eventValue);
       }
       
       // sets the minimum log level that is enabled. Levels above this one will also be enabled

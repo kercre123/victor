@@ -80,11 +80,11 @@ __attribute__((__used__))
 void sChanneledInfo(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
-void sDebugF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
+void sChanneledDebugF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
 __attribute__((__used__))
-void sDebugV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
+void sChanneledDebugV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
 __attribute__((__used__))
-void sDebug(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sChanneledDebug(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 void sSetGlobal(const char* key, const char* value);
 
@@ -105,10 +105,11 @@ void sSetGlobal(const char* key, const char* value);
 #define PRINT_NAMED_ERROR(name, format, ...) do{::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); ::Anki::Util::_errG=true; }while(0)
 #define PRINT_NAMED_WARNING(name, format, ...) do{::Anki::Util::sWarningF(name, {}, format, ##__VA_ARGS__);}while(0)
 #define PRINT_NAMED_INFO(name, format, ...) do{::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__);}while(0)
-#define PRINT_NAMED_DEBUG(name, format, ...) do{::Anki::Util::sDebugF(name, {}, format, ##__VA_ARGS__);}while(0)
+#define PRINT_NAMED_DEBUG(name, format, ...) do{::Anki::Util::sChanneledDebugF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__);}while(0)
 
 // Logging with channels.
 #define PRINT_CH_INFO(channel, name, format, ...) do{::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
+#define PRINT_CH_DEBUG(channel, name, format, ...) do{::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
 
 // Streams
 #define PRINT_STREAM_ERROR(eventName, args) do{         \
@@ -128,7 +129,7 @@ void sSetGlobal(const char* key, const char* value);
 
 #define PRINT_STREAM_DEBUG(eventName, args) do{         \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sDebug(eventName, {}, ss.str().c_str()); \
+      ::Anki::Util::sChanneledDebug(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
     }while(0)
 
 // Auto streams

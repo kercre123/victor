@@ -127,7 +127,7 @@ void LogChanneledInfo(const char* channel, const char* eventName, const KVV& key
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void LogDebug(const char* eventName, const KVV& keyValues, const char* string)
+void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyValues, const char* string)
 {
   if (gLoggerProvider == nullptr) {
     return;
@@ -143,7 +143,7 @@ void LogDebug(const char* eventName, const KVV& keyValues, const char* string)
  
   // append string to tick count
   finalLogStr << string;
-  gLoggerProvider->PrintLogD(eventName, keyValues, finalLogStr.str().c_str());
+  gLoggerProvider->PrintChanneledLogD(channel, eventName, keyValues, finalLogStr.str().c_str());
 }
 
 }
@@ -320,7 +320,7 @@ void sChanneledInfo(const char* channelName, const char* eventName, const KVV& k
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void sDebugF(const char* eventName, const KVV& keyValues, const char* format, ...)
+void sChanneledDebugF(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, ...)
 {
   if (gLoggerProvider == nullptr) {
     return;
@@ -334,11 +334,11 @@ void sDebugF(const char* eventName, const KVV& keyValues, const char* format, ..
   va_end(args);
 
   // log it
-  LogDebug(eventName, keyValues, logString);
+  LogChannelDebug(channelName, eventName, keyValues, logString);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void sDebugV(const char* eventName, const KVV& keyValues, const char* format, va_list args)
+void sChanneledDebugV(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, va_list args)
 {
   if (gLoggerProvider == nullptr) {
     return;
@@ -349,18 +349,18 @@ void sDebugV(const char* eventName, const KVV& keyValues, const char* format, va
   vsnprintf(logString, kMaxStringBufferSize, format, args);
 
   // log it
-  LogDebug(eventName, keyValues, logString);
+  LogChannelDebug(channelName, eventName, keyValues, logString);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void sDebug(const char* eventName, const KVV& keyValues, const char* eventValue)
+void sChanneledDebug(const char* channelName, const char* eventName, const KVV& keyValues, const char* eventValue)
 {
   if (gLoggerProvider == nullptr) {
     return;
   }
   
   // log it
-  LogDebug(eventName, keyValues, eventValue);
+  LogChannelDebug(channelName, eventName, keyValues, eventValue);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
