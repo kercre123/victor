@@ -5,13 +5,13 @@ namespace Cozmo {
     namespace DroneMode {
       public class DroneModeDriveCozmoState : State {
         private const float _kSendMessageInterval_sec = 0.1f;
-        private const float _kDriveSpeedChangeThreshold_mmps = 5f;
-        private const float _kTurnDirectionChangeThreshold = 0.05f;
-        private const float _kHeadTiltChangeThreshold_radps = 0.05f;
-        private const float _kLiftFactorThreshold = 0.05f;
+        private const float _kDriveSpeedChangeThreshold_mmps = 1f;
+        private const float _kTurnDirectionChangeThreshold = 0.01f;
+        private const float _kHeadTiltChangeThreshold_radps = 0.01f;
+        private const float _kLiftFactorThreshold = 0.01f;
 
         private const float _kRadiusMax_mm = 255f;
-        private const float _kRadiusMin_mm = 3f;
+        private const float _kRadiusMin_mm = 2f;
 
         private DroneModeGame _DroneModeGame;
         private DroneModeControlsSlide _DroneModeControlsSlide;
@@ -169,29 +169,36 @@ namespace Cozmo {
         }
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
+          // Drive slower while turning so that we're not spinning like crazy
           float absTurnFactor = Mathf.Abs(turnDirection);
-          float driveRobotSpeed_mmps = Mathf.Lerp(_DroneModeGame.PointTurnSpeed_mmps, Mathf.Abs(driveSpeed_mmps), 1 - (absTurnFactor * absTurnFactor * absTurnFactor));
+          float driveRobotSpeed_mmps = driveSpeed_mmps * (1 - (absTurnFactor * absTurnFactor * absTurnFactor)); // Cubic ease
           if (driveSpeed_mmps < 0) {
             driveRobotSpeed_mmps *= -1;
           }
+
+          // Turn more sharply with a greater tilt
           float turnFactor = (1 - Mathf.Abs(turnDirection));
           float arcRadius_mm = Mathf.Max(_kRadiusMax_mm * turnFactor, _kRadiusMin_mm);
           if (turnDirection > 0f) {
             arcRadius_mm *= -1;
           }
-          _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm;
+
+          // TODO remove debug text field
+          _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
           _CurrentRobot.DriveArc(driveRobotSpeed_mmps, (int)arcRadius_mm);
           return driveRobotSpeed_mmps;
         }
 
         private float PointTurnRobotWheels(float turnDirection) {
           float pointTurnSpeed_mmps = _DroneModeGame.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
-          int arcRadius_mm = 1;
+          float arcRadius_mm = _kRadiusMin_mm;
           if (turnDirection > 0f) {
             arcRadius_mm *= -1;
           }
-          _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + pointTurnSpeed_mmps + " \nradius mm = " + arcRadius_mm;
-          _CurrentRobot.DriveArc(pointTurnSpeed_mmps, arcRadius_mm);
+
+          // TODO remove debug text field
+          _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + pointTurnSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
+          _CurrentRobot.DriveArc(pointTurnSpeed_mmps, (int)arcRadius_mm);
           return pointTurnSpeed_mmps;
         }
 
@@ -205,9 +212,9 @@ namespace Cozmo {
         private void HandleTurnDirectionChanged(float newTurnDirection) {
           if (!newTurnDirection.IsNear(_TargetTurnDirection, _kTurnDirectionChangeThreshold)) {
             _TargetTurnDirection = newTurnDirection;
-
-            // TODO Remove debug text field
-            // _DroneModeControlsSlide.TiltText.text = "Tilt: " + _TargetTurnDirection;
+          }
+          else if (newTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)) {
+            _TargetTurnDirection = 0f;
           }
         }
 
