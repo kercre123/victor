@@ -24,7 +24,6 @@
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
-#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
@@ -54,6 +53,7 @@
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPickupCube.h"
+#include "anki/cozmo/basestation/behaviors/behaviorKnockOverCubes.h"
 
 
 namespace Anki {
@@ -222,11 +222,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorStackBlocks(robot, config);
       break;
     }
-    case BehaviorType::AdmireStack:
-    {
-      newBehavior = new BehaviorAdmireStack(robot, config);
-      break;
-    }
     case BehaviorType::PutDownBlock:
     {
       newBehavior = new BehaviorPutDownBlock(robot, config);
@@ -280,6 +275,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToCubeMoved:
     {
       newBehavior = new BehaviorReactAcknowledgeCubeMoved(robot, config);
+      break;
+    }
+    case BehaviorType::KnockOverCubes:
+    {
+      newBehavior = new BehaviorKnockOverCubes(robot, config);
       break;
     }
     case BehaviorType::Count:

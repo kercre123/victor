@@ -97,6 +97,16 @@
        }
      },
      {
+       "name" : "sparksKnockOverCubes",
+       "requireSpark":"KnockOverThreeCubeStack",
+       "behaviorChooser" :
+       {
+         "type" : "simple",
+         // this are the behaviors that are allowed in this behavior chooser
+         "behaviorGroups" : [ "SparksKnockOverCubes" ]
+       }
+     },
+     {
        "name" : "SparksPickUpCube",
        "requireSpark":"PickupCube",
        "behaviorChooser" :

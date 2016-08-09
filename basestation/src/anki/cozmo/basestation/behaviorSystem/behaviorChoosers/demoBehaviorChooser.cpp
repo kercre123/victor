@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -97,8 +96,8 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
                       kFearEdgeBehavior);
   }
 
-  _admireStackBehavior = static_cast<BehaviorAdmireStack*>(
-    _robot.GetBehaviorFactory().FindBehaviorByName(kKnockOverStackBehavior));
+  //_admireStackBehavior = static_cast<BehaviorAdmireStack*>(
+  //  _robot.GetBehaviorFactory().FindBehaviorByName(kKnockOverStackBehavior));
 
   if( nullptr == _admireStackBehavior ) {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
@@ -370,13 +369,13 @@ bool DemoBehaviorChooser::ShouldTransitionOutOfCubesState()
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) || ! _admireStackBehavior->DidKnockOverStack() ) {
-    return false;
-  }
-  else {
+  //if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) || ! _admireStackBehavior->DidKnockOverStack() ) {
+  //  return false;
+  //}
+  //else {
     // disable checking the cube states for now, just let it transition
     return true;
-  }
+  //}
   
   // check block world for three cubes in the correct state for transition
   
@@ -536,8 +535,8 @@ void DemoBehaviorChooser::ResetDemoRelatedState()
   ASSERT_NAMED(nullptr != _admireStackBehavior, "DemoBehaviorChooser.HandleStartDemoWithEdge.MissingAdmireStackBehavior");
   if (nullptr != _admireStackBehavior)
   {
-    _admireStackBehavior->ResetDidKnockOverStack();
-    _admireStackBehavior->ResetStartCount();
+    //_admireStackBehavior->ResetDidKnockOverStack();
+    //_admireStackBehavior->ResetStartCount();
   }
   
 }

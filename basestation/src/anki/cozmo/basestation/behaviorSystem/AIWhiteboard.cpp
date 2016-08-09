@@ -116,16 +116,6 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID)
-{
-  _topOfStackToAdmire = topBlockID;
-  _bottomOfStackToAdmire = bottomBlockID;
-  PRINT_CH_INFO("AIWhiteboard", "StackToAdmire", "admiring stack [%d, %d] (bottom, top)",
-                    _bottomOfStackToAdmire.GetValue(),
-                    _topOfStackToAdmire.GetValue());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObjects) const
 {
   possibleObjects.clear();

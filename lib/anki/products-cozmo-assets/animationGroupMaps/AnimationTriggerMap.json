@@ -17,26 +17,6 @@
       "AnimName": "ag_reactToNewBlock"
     },
     {
-      "CladEvent": "AdmireStackAttemptGrabThirdCube",
-      "AnimName": "knockOverStack_grabAttempt"
-    },
-    {
-      "CladEvent": "AdmireStackFocusEyes",
-      "AnimName": "ag_reacttoblock_focusedeyes"
-    },
-    {
-      "CladEvent": "AdmireStackKnockOverPreDrivingFailure",
-      "AnimName": "ag_RequestGamePickupFail"
-    },
-    {
-      "CladEvent": "AdmireStackKnockOverSuccess",
-      "AnimName": "knockOverStack_success"
-    },
-    {
-      "CladEvent": "AdmireStackReactToThirdCube",
-      "AnimName": "knockOverStack_react"
-    },
-    {
       "CladEvent": "AskToBeRightedLeft",
       "AnimName": "ag_reacttocliff_stuckleftside_01"
     },
@@ -275,6 +255,18 @@
     {
       "CladEvent": "InteractWithFacesWait",
       "AnimName": "interactWithFaces_squint"
+    },
+    {
+      "CladEvent": "KnockOverEyes",
+      "AnimName": "interactWithFaces_squint"
+    },
+    {
+      "CladEvent": "KnockOverGrabAttempt",
+      "AnimName": "knockOverStack_grabAttempt"
+    },
+    {
+      "CladEvent": "KnockOverSuccess",
+      "AnimName": "knockOverStack_success"
     },
     {
       "CladEvent": "LookInPlaceForFacesBodyPause",

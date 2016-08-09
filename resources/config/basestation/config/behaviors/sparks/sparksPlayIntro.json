@@ -10,6 +10,7 @@
     "SparksRollCube",
     "SparksStackCube",
     "SparksPickUpCube",
-    "SparksPopAWheelie"
+    "SparksPopAWheelie",
+    "SparksKnockOverCubes"
   ]
 }
