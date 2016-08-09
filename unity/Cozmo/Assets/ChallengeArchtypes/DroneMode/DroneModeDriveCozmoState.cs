@@ -42,6 +42,14 @@ namespace Cozmo {
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
           _CurrentRobot.EnableDroneMode(true);
+
+          // TODO Use different colors for bottom and top colors
+          // Top = R36, G220, B230
+          // Bottom = R25, G131, B213
+          // See ticket https://ankiinc.atlassian.net/browse/COZMO-2516 and BackgroundColorController.cs
+          UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
+                                                                          _DroneModeControlsSlide.BackgroundColor);
+          _DroneModeGame.SharedMinigameView.HideMiddleBackground();
         }
 
         public override void Exit() {

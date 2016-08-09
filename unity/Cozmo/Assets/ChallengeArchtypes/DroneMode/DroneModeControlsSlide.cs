@@ -50,6 +50,10 @@ namespace Cozmo.Minigame.DroneMode {
     [SerializeField, Range(0f, 1f)]
     private float _HeadUpThreshold;
 
+    [SerializeField]
+    private Color _BackgroundColor;
+    public Color BackgroundColor { get { return _BackgroundColor; } }
+
     // TODO Remove debug text field
     public Anki.UI.AnkiTextLabel TiltText;
 
