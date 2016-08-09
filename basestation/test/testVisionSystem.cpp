@@ -35,8 +35,8 @@ namespace Cozmo {
 }
 }
 
-// Makes sure at least one marker is detected in every image in "test/lowLightMarkerDetectionTests"
-TEST(VisionSystem, DetectingMarkersInLowLight)
+
+TEST(VisionSystem, MarkerDetectionTests)
 {
 # define DISABLED        0
 # define ENABLED         1
@@ -77,86 +77,119 @@ TEST(VisionSystem, DetectingMarkersInLowLight)
   
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                                   "test/lowLightMarkerDetectionTests");
-  const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(testImageDir, false, ".jpg");
+                                                                                   "test/markerDetectionTests");
+  
+  struct TestDefinition
+  {
+    std::string subDir;
+    f32         expectedFailureRate;
+    std::function<bool(size_t numMarkers)> didSucceedFcn;
+  };
+  
+  const std::vector<TestDefinition> testDefinitions = {
+    TestDefinition{
+      .subDir = "LowLight",
+      .expectedFailureRate = .02f,
+      .didSucceedFcn = [](size_t numMarkers) -> bool
+      {
+        return numMarkers > 0;
+      }
+    },
+    
+    TestDefinition{
+      .subDir = "NoMarkers",
+      .expectedFailureRate = 0.f,
+      .didSucceedFcn = [](size_t numMarkers) -> bool
+      {
+        return numMarkers == 0;
+      }
+    },
+  };
   
   Vision::ImageRGB img;
   
-  u32 numFailures = 0;
-  for(auto & filename : testFiles)
+  for(auto & testDefinition : testDefinitions)
   {
-    result = img.Load(Util::FileUtils::FullFilePath({testImageDir, filename}));
-    ASSERT_EQ(RESULT_OK, result);
+    const std::string& subDir = testDefinition.subDir;
     
-    Cozmo::VisionPoseData robotState; // not needed just to detect markers
-    result = visionSystem.Update(robotState, img);
-    ASSERT_EQ(RESULT_OK, result);
+    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".jpg");
     
-    Cozmo::VisionProcessingResult processingResult;
-    bool resultAvailable = visionSystem.CheckMailbox(processingResult);
-    EXPECT_TRUE(resultAvailable);
-    
-    // For now, the measure of "success" for an image is if we detected at least
-    // one marker in it. We are not checking whether the marker's type or position
-    // is correct.
-    if(processingResult.observedMarkers.empty())
+    u32 numFailures = 0;
+    for(auto & filename : testFiles)
     {
-      ++numFailures;
-    }
-    
-    if(DEBUG_DISPLAY != DISABLED)
-    {
-      for(auto const& debugImg : processingResult.debugImageRGBs)
+      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
+      ASSERT_EQ(RESULT_OK, result);
+      
+      Cozmo::VisionPoseData robotState; // not needed just to detect markers
+      result = visionSystem.Update(robotState, img);
+      ASSERT_EQ(RESULT_OK, result);
+      
+      Cozmo::VisionProcessingResult processingResult;
+      bool resultAvailable = visionSystem.CheckMailbox(processingResult);
+      EXPECT_TRUE(resultAvailable);
+      
+      // For now, the measure of "success" for an image is if we detected at least
+      // one marker in it. We are not checking whether the marker's type or position
+      // is correct.
+      if(!testDefinition.didSucceedFcn(processingResult.observedMarkers.size()))
       {
-        debugImg.second.Display(debugImg.first.c_str());
+        ++numFailures;
       }
       
-      Vision::ImageRGB dispImg(img);
-      for(auto const& marker : processingResult.observedMarkers)
+      if(DEBUG_DISPLAY != DISABLED)
       {
-        dispImg.DrawQuad(marker.GetImageCorners(), NamedColors::RED, 2);
-        dispImg.DrawLine(marker.GetImageCorners().GetTopLeft(),
-                         marker.GetImageCorners().GetTopRight(),
-                         NamedColors::GREEN, 3);
-        std::string markerName(Vision::MarkerTypeStrings[marker.GetCode()]);
-        markerName = markerName.substr(strlen("MARKER_"), std::string::npos);
-        
-        // Use leftmost corner to anchor text
-        Point2f textPoint(std::numeric_limits<f32>::max(), 0.f);
-        for(auto const& corner : marker.GetImageCorners())
+        for(auto const& debugImg : processingResult.debugImageRGBs)
         {
-          if(corner.x() < textPoint.x())
-          {
-            textPoint = corner;
-          }
+          debugImg.second.Display(debugImg.first.c_str());
         }
-        dispImg.DrawText(textPoint, markerName, NamedColors::YELLOW, 0.5f, true);
+        
+        Vision::ImageRGB dispImg(img);
+        for(auto const& marker : processingResult.observedMarkers)
+        {
+          dispImg.DrawQuad(marker.GetImageCorners(), NamedColors::RED, 2);
+          dispImg.DrawLine(marker.GetImageCorners().GetTopLeft(),
+                           marker.GetImageCorners().GetTopRight(),
+                           NamedColors::GREEN, 3);
+          std::string markerName(Vision::MarkerTypeStrings[marker.GetCode()]);
+          markerName = markerName.substr(strlen("MARKER_"), std::string::npos);
+          
+          // Use leftmost corner to anchor text
+          Point2f textPoint(std::numeric_limits<f32>::max(), 0.f);
+          for(auto const& corner : marker.GetImageCorners())
+          {
+            if(corner.x() < textPoint.x())
+            {
+              textPoint = corner;
+            }
+          }
+          dispImg.DrawText(textPoint, markerName, NamedColors::YELLOW, 0.5f, true);
+        }
+        dispImg.Display(filename.c_str(), 0);
+        
+        if(DEBUG_DISPLAY == ENABLE_AND_SAVE)
+        {
+          dispImg.Save("temp/markerDetectionTests/" + filename + ".png");
+        }
       }
-      dispImg.Display(filename.c_str(), 0);
       
-      if(DEBUG_DISPLAY == ENABLE_AND_SAVE)
-      {
-        dispImg.Save("temp/DetectingMarkersInLowLight/" + filename + ".png");
-      }
     }
     
+    const f32 failureRate = (f32) numFailures / (f32) testFiles.size();
+    
+    PRINT_NAMED_INFO("VisionSystem.MarkerDetectionTests",
+                     "%s: %.1f%% failures (%u of %zu)",
+                     subDir.c_str(), 100.f*failureRate, numFailures, testFiles.size());
+    
+    // Note that we're not expecting perfection here
+    ASSERT_LE(failureRate, testDefinition.expectedFailureRate);
   }
-  
-  const f32 failureRate = (f32) numFailures / (f32) testFiles.size();
-  
-  PRINT_NAMED_INFO("VisionSystem.DetectingMarkersInLowLight",
-                   "%.1f%% failures (%u of %zu)",
-                   100.f*failureRate, numFailures, testFiles.size());
-  
-  // Note that we're not expecting perfection here
-  ASSERT_LE(failureRate, .02f);
   
 # undef DEBUG_DISPLAY
 # undef ENABLED
 # undef DISABLED
 # undef ENABLE_AND_SAVE
   
-} // DetectingMarkersInLowLight
+} // MarkerDetectionTests
 
 
 // Makes sure image quality matches the subdirectory name for all images in

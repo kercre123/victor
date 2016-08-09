@@ -276,21 +276,13 @@ void sWarning(const char* eventName, const KVV& keyValues, const char* eventValu
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
 void sChanneledInfoF(const char* channelName, const char* eventName, const KVV& keyValues, const char* format, ...)
 {
-  if (gLoggerProvider == nullptr) {
-    return;
-  }
-  
-  // parse string
   va_list args;
-  char logString[kMaxStringBufferSize]{0};
   va_start(args, format);
-  vsnprintf(logString, kMaxStringBufferSize, format, args);
+  sChanneledInfoV(channelName, eventName, keyValues, format, args);
   va_end(args);
-
-  // log it
-  LogChanneledInfo(channelName, eventName, keyValues, logString);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

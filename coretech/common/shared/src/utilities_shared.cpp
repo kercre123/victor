@@ -35,7 +35,9 @@ namespace Anki
       if (CoreTechPrintFunc) {
         printed = (*CoreTechPrintFunc)(format, argList);
       } else {
-        PRINT_CH_INFO("CoreTech", "", format, argList);
+        // NOTE: Can't use PRINT_CH_INFO macro here because it won't forward
+        // variadic argList correctly (it calls sChanneledInfoF)
+        ::Anki::Util::sChanneledInfoV("CoreTech", "", {}, format, argList);
       }
       return printed;
     }

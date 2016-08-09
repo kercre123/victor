@@ -97,7 +97,9 @@ namespace Embedded {
                                        "NearestNeighborLibrary.GetNearestNeighbor.GetProbesFailed",
                                        "");
     
-    closestDistance = s32_MAX;
+    // Start with closest distance set to the threshold so if nothing is
+    // below that threshold, closestIndex will never get set
+    closestDistance = distThreshold;
     s32 secondClosestDistance = s32_MAX;
     
     cv::normalize(_probeValues, _probeValues, 255, 0, CV_MINMAX);

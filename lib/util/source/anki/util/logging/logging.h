@@ -70,6 +70,7 @@ void sWarning(const char* eventName, const std::vector<std::pair<const char*, co
 //void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
 __attribute__((__used__))
 void sChanneledInfoF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
+
 //__attribute__((__used__))
 //void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args);
 __attribute__((__used__))
