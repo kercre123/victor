@@ -21,7 +21,7 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _BirthdateLabel;
 
-  private const int kNameFieldCharacterLimit = 14;
+  private const int kNameFieldCharacterLimit = 12;
 
   private void Awake() {
     _NameDoneButton.Initialize(HandleNameDoneButton, "name_done_button", this.DASEventViewName);
