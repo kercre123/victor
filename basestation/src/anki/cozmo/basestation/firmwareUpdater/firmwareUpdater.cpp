@@ -371,6 +371,7 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
       {
         if (SendWriteMessages(robots))
         {
+          SendProgressToGame( robots, 1.0f );
           SetSubState( robots, FirmwareUpdateSubStage::SendFlashEOF );
         }
         else

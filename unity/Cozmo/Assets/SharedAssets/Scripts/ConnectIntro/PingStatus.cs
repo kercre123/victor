@@ -3,8 +3,8 @@ using System.Collections;
 
 public class PingStatus : MonoBehaviour {
 
-  private const float kWaitBetweenSuccesfulPings = 3.0f;
-  private const float kWaitBetweenFailedPings = 2.0f;
+  private const float kWaitBetweenSuccesfulPings = 1.0f;
+  private const float kWaitBetweenFailedPings = 1.0f;
   private const float kKillPingTime = 10.0f;
   private const float kLogTime = 2.0f;
 
@@ -12,11 +12,16 @@ public class PingStatus : MonoBehaviour {
   private Coroutine _coroutine;
   private bool _PingCompleted = true;
   private bool _PingSuccessful = false;
-  //  private float _LastLogTime = 0.0f;
+  private bool _NetworkCheckSuccessful = false;
+  private float _LastLogTime = 0.0f;
   private float _LastPingTime = 0.0f;
 
   public bool GetPingStatus() {
     return _PingSuccessful;
+  }
+
+  public bool GetNetworkStatus() {
+    return _NetworkCheckSuccessful;
   }
 
   void Start() {
@@ -25,7 +30,6 @@ public class PingStatus : MonoBehaviour {
 
   void OnDestroy() {
     if (_coroutine != null) {
-      DAS.Debug(this, "Stopping ping coroutine");
       StopCoroutine(_coroutine);
       _coroutine = null;
     }
@@ -49,42 +53,35 @@ public class PingStatus : MonoBehaviour {
   }
 
   private IEnumerator PingCoroutine() {
-    //    DAS.Debug(this, "Pinging " + RobotEngineManager.kRobotIP);
-    //    _Ping = new Ping(RobotEngineManager.kRobotIP);
-    //    _PingCompleted = false;
-    //
-    //    float startTime = Time.time;
-    //    _LastLogTime = Time.time;
-    //
-    //    // Cancel the ping if it is not comleted in a certain amount of time to make sure it doesn't keep running forever
-    //    while (!_Ping.isDone && ((Time.time - startTime) < kKillPingTime)) {
-    //      if ((Time.time - _LastLogTime) > kLogTime) {
-    //        DAS.Debug(this, "Still pinging " + RobotEngineManager.kRobotIP);
-    //        _LastLogTime = Time.time;
-    //      }
-    //      yield return null;
-    //    }
-    //
-    //    if (_Ping.isDone) {
-    //      DAS.Debug(this, "Ping completed. Time is = " + _Ping.time);
-    //    } else {
-    //      DAS.Debug(this, "Ping failed");
-    //    }
-    //
-    //    _PingSuccessful = _Ping.time > 0;
-    //    _Ping.DestroyPing();
-    //    _Ping = null;
-    //    _PingCompleted = true;
-
-    // Disabling using Ping since it is leaking threads on device which
-    // is causing multiple issues especially in the factory test app.
-    // See https://fogbugz.unity3d.com/default.asp?804440_vdqj6tngkifda521
-    // While we wait for this to be fixed in Unity, we have decided to use the
-    // WiFi address as an indication of whether we are connected to the right 
-    // network.
+    // Network check first
     System.Net.IPAddress ipAddress = RobotUdpChannel.GetLocalIPv4();
-    _PingSuccessful = (ipAddress != null) && ipAddress.ToString().StartsWith("172.31");
+    _NetworkCheckSuccessful = (ipAddress != null) && ipAddress.ToString().StartsWith("172.31");
+    if (!_NetworkCheckSuccessful) {
+      _PingSuccessful = false;
+      _PingCompleted = true;
+      _coroutine = null;
+      yield break;
+    }
+
+    // Real ping now if we pass the network check
+    _Ping = new Ping(RobotEngineManager.kRobotIP);
+    _PingCompleted = false;
+
+    float startTime = Time.time;
+    _LastLogTime = Time.time;
+
+    // Cancel the ping if it is not completed in a certain amount of time to make sure it doesn't keep running forever
+    while (!_Ping.isDone && ((Time.time - startTime) < kKillPingTime)) {
+      if ((Time.time - _LastLogTime) > kLogTime) {
+        _LastLogTime = Time.time;
+      }
+      yield return null;
+    }
+
+    _PingSuccessful = _Ping.time > 0;
+    _Ping.DestroyPing();
+    _Ping = null;
     _PingCompleted = true;
-    yield break;
+    _coroutine = null;
   }
 }

@@ -20,7 +20,11 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   }
 
   private void HandleFirmwareProgress(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
-    _ProgressBar.SetProgress(message.percentComplete / 100.0f);
+    // ignore the other substate progression messages
+    if (message.subStage == Anki.Cozmo.FirmwareUpdateSubStage.Flash) {
+      DAS.Debug("UpdateFirmwareScreen.HandleFirmwareProgress", message.percentComplete.ToString());
+      _ProgressBar.SetProgress(message.percentComplete / 100.0f);
+    }
   }
 
   private void FirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
