@@ -337,6 +337,7 @@ public class ConnectionFlow : MonoBehaviour {
     UIManager.CloseView(_ConnectionFlowBackgroundInstance);
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
     }
 
     if (ConnectionFlowComplete != null) {

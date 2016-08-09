@@ -5,7 +5,7 @@
     "Reactionary"
   ],
   "ReactionAnimGroup": "AcknowledgeObject",
-  "disableByDefault": false,
+  "disableByDefault": true,
   "SamePoseDistThresh_mm": 80, 
   "CoolDownDuration_ms": 600000,
   "NumImagesToWaitFor": 2
