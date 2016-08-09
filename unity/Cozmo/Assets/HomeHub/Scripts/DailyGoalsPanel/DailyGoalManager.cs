@@ -73,7 +73,23 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   public ChallengeData PickMiniGameToRequest() {
-    RequestGameConfig config = _RequestMinigameConfig.RequestList[UnityEngine.Random.Range(0, _RequestMinigameConfig.RequestList.Length)];
+    List<RequestGameConfig> unlockedList = new List<RequestGameConfig>();
+
+    for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; ++i) {
+      UnlockId unlockid = UnlockId.Count;
+      for (int j = 0; j < _ChallengeList.ChallengeData.Length; ++j) {
+        if (_ChallengeList.ChallengeData[j].ChallengeID == _RequestMinigameConfig.RequestList[i].ChallengeID) {
+          unlockid = _ChallengeList.ChallengeData[j].UnlockId.Value;
+          break;
+        }
+      }
+      if (UnlockablesManager.Instance.IsUnlocked(unlockid)) {
+        unlockedList.Add(_RequestMinigameConfig.RequestList[i]);
+      }
+    }
+
+    RequestGameConfig config = unlockedList[UnityEngine.Random.Range(0, unlockedList.Count)];
+
     for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
       if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
         _LastChallengeData = _ChallengeList.ChallengeData[i];

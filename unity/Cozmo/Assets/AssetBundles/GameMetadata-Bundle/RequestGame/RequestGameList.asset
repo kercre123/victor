@@ -13,3 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RequestList:
   - {fileID: 11400000, guid: 82d2376d069fd4124a51a6ef0b723900, type: 2}
+  - {fileID: 11400000, guid: 33a1fac60bcbe4c468dc901cb5f5f396, type: 2}
