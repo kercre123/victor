@@ -6,6 +6,7 @@
   "put_down_animation_group": "RollBlockPutDown",
   "behaviorGroups": [
     "AffectsBlocks",
-    "FreeplayOne"
+    "FreeplayOne",
+    "ShowOff"
   ]
 }

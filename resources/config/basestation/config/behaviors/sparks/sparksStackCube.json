@@ -3,7 +3,6 @@
   "name": "sparksStackCube",
   "flatScore" : 5.0,
   "behaviorGroups": [
-    "SparksStackCube",
-    "ShowOff"
+    "SparksStackCube"
   ]
 }

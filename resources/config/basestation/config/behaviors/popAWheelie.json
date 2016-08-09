@@ -1,7 +1,8 @@
 {
   "behaviorType": "PopAWheelie",
-  "name": "sparksPopAWheelie",
-  "flatScore": 10,
+  "name": "popAWheelie",
+  "requiredUnlockId": "PopAWheelieAction",
+  "flatScore":  0.7,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,
   "repetitionPenalty": {
@@ -17,6 +18,7 @@
     ]
   },
   "behaviorGroups": [
-      "SparksPopAWheelie"
+      "FreePlayOne",
+      "ShowOff"
   ]
 }

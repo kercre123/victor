@@ -3,7 +3,6 @@
   "name": "sparksPounceOnMotion",
   "flatScore" : 5.0,
   "behaviorGroups": [
-    "SparksPounceOnMotion",
-    "ShowOff"
+    "SparksPounceOnMotion"
   ]
 }

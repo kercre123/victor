@@ -3,7 +3,8 @@
   "name": "LookInPlaceForCubes",
   "flatScore": 0.4,
   "behaviorGroups": [
-    "FreeplayOne"
+    "FreeplayOne",
+    "ShowOff"
   ],
 
   // -- configuration parameters for ExploreLookAroundInPlace

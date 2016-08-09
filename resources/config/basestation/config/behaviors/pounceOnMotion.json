@@ -19,7 +19,8 @@
     ]
   },
   "behaviorGroups": [
-    "FreeplayOne"
+    "FreeplayOne",
+    "ShowOff"
   ],
   "maxNoGroundMotionBeforeBored_running_Sec": 15.0,
   "maxNoGroundMotionBeforeBored_notRunning_Sec": 3.0,

@@ -21,6 +21,7 @@
   },
   "behaviorGroups": [
     "AffectsBlocks",
-    "FreeplayOne"
+    "FreeplayOne",
+    "ShowOff"
   ]
 }
