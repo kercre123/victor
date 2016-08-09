@@ -72,16 +72,20 @@ protected:
   void HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp);
   void HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp, bool reactionEnabled);
 
+  // For the next three functions, the bool `matchAnyPose` defaults to false. If true, then it checks poses
+  // against any other pose, regardless of ID. If false, it only checks against it's own ID. Cooldown is still
+  // checked against the passed in ID
+  
   // returns true if there are any valid targets, false otherwise
-  bool HasDesiredReactionTargets(const Robot& robot) const;
+  bool HasDesiredReactionTargets(const Robot& robot, bool matchAnyPose = false) const;
   
   // adds ids to the set which this behavior thinks we should react to. Doesn't remove or clear
-  void GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets) const;  
+  void GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets, bool matchAnyPose = false) const;  
 
   // find the target in the desired targets which has the lowest cost of looking at. That is, the one that is
   // "easiest" (for some definition of easiest defined in the cpp file) to TurnTowards. It returns true if one
   // was found, false otherwise
-  bool GetBestTarget(const Robot& robot, s32& bestTarget) const;
+  bool GetBestTarget(const Robot& robot, s32& bestTarget, bool matchAnyPose = false) const;
 
   // tells this class that the robot has reacted to a given id, assuming the reaction happened at the last
   // time the object was observed
@@ -93,7 +97,10 @@ private:
 
   using ReactionDataMap = std::map<s32, ReactionData >;
   
-  bool ShouldReactToTarget(const Robot& robot, const ReactionDataMap::value_type& reactionPair) const;
+  bool ShouldReactToTarget(const Robot& robot, const ReactionDataMap::value_type& reactionPair, bool matchAnyPose) const;
+
+  bool ShouldReactToTarget_poseHelper(const Pose3d& thisPair,
+                                      const Pose3d& otherPair) const;
 
   ReactionDataMap _reactionData;
  

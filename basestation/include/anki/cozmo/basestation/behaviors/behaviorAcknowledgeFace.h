@@ -36,18 +36,22 @@ namespace ExternalInterface {
 }
   
   
-class BehaviorAcknowledgeFace : public IBehaviorPoseBasedAcknowledgement
+class BehaviorAcknowledgeFace : public IReactionaryBehavior
 {
 private:
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
-  using super = IBehaviorPoseBasedAcknowledgement;
+  using super = IReactionaryBehavior;
 
+public:
+  virtual bool ShouldResumeLastBehavior() const override { return true; }
+  
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual void   StopInternalReactionary(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
@@ -57,14 +61,33 @@ protected:
 private:
 
   void HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg);
-  void HandleFaceDeleted(const Robot& robot, Vision::FaceID_t faceID);
 
   void BeginIteration(Robot& robot);
   void FinishIteration(Robot& robot);
+
+  // sets _targetFace to the best face to look at from _desiredTargets. Returns true if it found one to react
+  // to, false otherwise
+  bool GetBestTarget(const Robot& robot);
+
+  // helper to add a face as something we want to react to (or not, if we are disabled). Returns true if it
+  // added anything
+  bool AddDesiredFace(Vision::FaceID_t faceID);
   
+  // current target
   Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
 
+  // everything we want to react to before we stop (to handle multiple faces in the same frame)
+  std::set< Vision::FaceID_t > _desiredTargets;
+  
   bool _shouldStart = false;
+
+  // face IDs (enrolled only) which we have done an initial reaction to
+  std::set< Vision::FaceID_t > _hasReactedToFace;
+
+  // true if we saw the face close last time, false otherwise (applies hysteresis internally)
+  std::map< Vision::FaceID_t, bool > _faceWasClose;
+
+  float _lastReactionTime_s = -1.0f;
   
 }; // class BehaviorAcknowledgeFace
 
