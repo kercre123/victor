@@ -217,6 +217,7 @@ void Motors::disable(bool disable) {
   }
   
   motorDisable = disable;
+  manage();
 }
 
 
@@ -249,6 +250,9 @@ void Motors::teardown(void) {
 }
 
 void Motors::setup(void) {
+  // Disable our PPI channels (Should not be enabled for safety)
+  NRF_PPI->CHENCLR = 0xFF;
+
   // Clear our motor pins just for safety's sake
   NRF_GPIO->OUTCLR = ALL_MOTOR_PINS;
 
@@ -445,12 +449,16 @@ Fixed Motors::getSpeed(u8 motorID)
 
 void Motors::manage()
 {
-  bool enable = Head::spokenTo && !motorDisable;
+  if (!Head::spokenTo || motorDisable) {
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+      Motors::setPower(i, 0);
+    }
+    return ;
+  }
 
   // Copy (valid) data to update motors
-  for (int i = 0; i < MOTOR_COUNT; i++)
-  {
-    Motors::setPower(i, enable ? g_dataToBody.motorPWM[i] : 0);
+  for (int i = 0; i < MOTOR_COUNT; i++) {
+    Motors::setPower(i, g_dataToBody.motorPWM[i]);
   }
 
   // Stop the timer task and clear it, along with GPIO for the motors

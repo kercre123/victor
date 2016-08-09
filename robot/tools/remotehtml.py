@@ -39,11 +39,23 @@ client = """<html>
           right -= 100.0;
         }
 
-        return { left, right }
+        return { left, right, lift: motors.lift, head: motors.head }
       }
 
       document.addEventListener("keydown", function (e) {
         switch (e.keyCode) {
+            case 87: // W
+                motors.lift = +1.0;
+                break ;
+            case 83: // S
+                motors.lift = -1.0;
+                break ;
+            case 69: // E
+                motors.head = +1.5;
+                break ;
+            case 68: // D
+                motors.head = -1.5;
+                break ;
             case 38: // up
                 motors.up = true;
                 break ;
@@ -81,13 +93,20 @@ client = """<html>
       });
 
       ws.onmessage = function (event) {
-                var reader  = new FileReader();
+                if (event.data instanceof Blob) {
+                    // assume binary data is an image
+                    var reader  = new FileReader();
 
-                reader.addEventListener("load", function () {
-                    document.body.style.backgroundImage = `url("${reader.result}")`;
-                }, false);
+                    reader.addEventListener("load", function () {
+                        document.body.style.backgroundImage = `url("${reader.result}")`;
+                    }, false);
 
-                reader.readAsDataURL(event.data);
+                    reader.readAsDataURL(event.data);
+                } else {
+                    var message = JSON.parse(event.data);
+
+                    // TODO: HANDLE ANYTHING THAT IS A STRING HERE
+                }
       };
         </script>
     </body>
@@ -127,7 +146,13 @@ class Remote:
 
     async def consumer(self, message):
         message = json.loads(message)
+        
         robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(message['left'], message['right'])))
+
+        if 'lift' in message:
+            robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
+        if 'head' in message:
+            robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
 
     async def socket_loop(self, websocket, path):
         while True:

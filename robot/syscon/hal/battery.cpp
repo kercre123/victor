@@ -18,12 +18,11 @@
 #include "head.h"
 #include "tasks.h"
 
-static const int MaxContactTime     = 90000;  // (30min) 20ms per count
-static const int MaxChargedTime     = 360000; // 2 hours
-static const int BounceContactTime  = 50;     // 1 seconds
+static const int MaxContactTime     = 30 * 60 * (1000 / 20);  // (30min) 20ms per count
+static const int MaxChargedTime     = MaxContactTime * 8; // 4 hours
 static const int MinContactTime     = 25;     // .5s
-static const int MinChargeTime      = 100;    // 2s seconds
-static const int MaxChargeBounces   = 5;
+static const int MinChargeTime      = 250;    // Should charge for at least 5 seconds
+static const int MaxChargeBounces   = 5;      // If we toggle 5 times too quickly, call charger out of spec
 static const int OffOOSChargerReset = 250;    // 5 seconds
 
 // Updated to 3.0
@@ -287,7 +286,6 @@ static void updateChargeState(Fixed vext) {
   static int chargeBounces = 0;
 
   // Check that we are at safe charging thresholds
-  
   onContacts = vExt > VEXT_DETECT_THRESHOLD || (isCharging && vExt > VEXT_CHARGE_THRESHOLD);
 
   // Measure the amount of time we are on the charger
@@ -311,7 +309,7 @@ static void updateChargeState(Fixed vext) {
       }
 
       // Charger says we are done, or we've been charging for 30 minutes
-      if (Motors::getChargeOkay() && ContactTime >= MinChargeTime || ContactTime >= MaxContactTime) {
+      if ((Motors::getChargeOkay() && ContactTime >= MinChargeTime) || ContactTime >= MaxContactTime) {
         setChargeState(CHARGE_CHARGED);
         break ;
       }
@@ -329,7 +327,7 @@ static void updateChargeState(Fixed vext) {
       }
 
       // We appear to have a stable charge time (clear bounce count)
-      if (ContactTime > BounceContactTime) {
+      if (ContactTime > MinChargeTime) {
         chargeBounces = 0;
       }
 
