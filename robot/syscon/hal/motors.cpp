@@ -456,44 +456,44 @@ Fixed Motors::getSpeed(u8 motorID)
 void Motors::manage()
 {
   if (!Head::spokenTo || motorDisable) {
+    // Head not spoken to, motors are disabled, set power to 0
     for (int i = 0; i < MOTOR_COUNT; i++) {
       Motors::setPower(i, 0);
     }
-    return ;
-  }
+  } else {
+    // Copy (valid) data to update motors
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+      Motors::setPower(i, g_dataToBody.motorPWM[i]);
+    }
 
-  // Copy (valid) data to update motors
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-    Motors::setPower(i, g_dataToBody.motorPWM[i]);
-  }
+    // Stop the timer task and clear it, along with GPIO for the motors
+    if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||
+        (m_motors[1].nextPWM != m_motors[1].oldPWM))
+    {
+      NRF_TIMER1->TASKS_STOP = 1;
+      NRF_TIMER1->TASKS_CLEAR = 1;
+      
+      // Try to reconfigure the motors - if there are any faults, bail out
+      ConfigureTask(MOTOR_LEFT_WHEEL, &(NRF_TIMER1->CC[0]));
+      ConfigureTask(MOTOR_RIGHT_WHEEL, &(NRF_TIMER1->CC[1]));
 
-  // Stop the timer task and clear it, along with GPIO for the motors
-  if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||
-      (m_motors[1].nextPWM != m_motors[1].oldPWM))
-  {
-    NRF_TIMER1->TASKS_STOP = 1;
-    NRF_TIMER1->TASKS_CLEAR = 1;
+      // Restart the timer
+      NRF_TIMER1->TASKS_START = 1;
+    }
     
-    // Try to reconfigure the motors - if there are any faults, bail out
-    ConfigureTask(MOTOR_LEFT_WHEEL, &(NRF_TIMER1->CC[0]));
-    ConfigureTask(MOTOR_RIGHT_WHEEL, &(NRF_TIMER1->CC[1]));
+    if ((m_motors[2].nextPWM != m_motors[2].oldPWM) ||
+        (m_motors[3].nextPWM != m_motors[3].oldPWM))
+    {
+      NRF_TIMER2->TASKS_STOP = 1;
+      NRF_TIMER2->TASKS_CLEAR = 1;
+      
+      // Try to reconfigure the motors - if there are any faults, bail out
+      ConfigureTask(MOTOR_LIFT, &(NRF_TIMER2->CC[0]));
+      ConfigureTask(MOTOR_HEAD, &(NRF_TIMER2->CC[1]));
 
-    // Restart the timer
-    NRF_TIMER1->TASKS_START = 1;
-  }
-  
-  if ((m_motors[2].nextPWM != m_motors[2].oldPWM) ||
-      (m_motors[3].nextPWM != m_motors[3].oldPWM))
-  {
-    NRF_TIMER2->TASKS_STOP = 1;
-    NRF_TIMER2->TASKS_CLEAR = 1;
-    
-    // Try to reconfigure the motors - if there are any faults, bail out
-    ConfigureTask(MOTOR_LIFT, &(NRF_TIMER2->CC[0]));
-    ConfigureTask(MOTOR_HEAD, &(NRF_TIMER2->CC[1]));
-
-    // Restart the timer
-    NRF_TIMER2->TASKS_START = 1;
+      // Restart the timer
+      NRF_TIMER2->TASKS_START = 1;
+    }
   }
 
   // Update the SPI data structure to send data back to the head

@@ -211,7 +211,7 @@ void Battery::updateOperatingMode() {
         NVIC_EnableIRQ(GPIOTE_IRQn);
         NVIC_EnableIRQ(RTC1_IRQn);
       }
-      
+
       break ;
     
     case BODY_ACCESSORY_OPERATING_MODE:
