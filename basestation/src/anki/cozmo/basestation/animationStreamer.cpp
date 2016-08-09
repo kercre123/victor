@@ -346,6 +346,14 @@ namespace Cozmo {
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
+      // Switch interlacing for both systems that create images to put on the face.
+      // Since animations are relatively short, and InitStream gets called for each
+      // new animation or each loop of the same animation, this guarantees we will
+      // change scanlines periodically to avoid burn-in. Note that KeepFaceAlive
+      // uses a procedural blink, which also switches the scanlines.
+      ProceduralFaceDrawer::SwitchInterlacing();
+      FaceAnimationManager::SwitchInterlacing();
+      
       _tag = withTag;
       
       _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();

@@ -27,6 +27,10 @@ namespace Cozmo {
     // Actually draw the face with the current parameters
     static Vision::Image DrawFace(const ProceduralFace& _faceData);
     
+    // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
+    // to be called each time we blink.
+    static void SwitchInterlacing();
+    
   private:
     
     using Parameter = ProceduralEyeParameter;
@@ -37,10 +41,6 @@ namespace Cozmo {
     
     static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                         f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
-    
-    // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
-    // to be called each time we blink.
-    static void SwitchInterlacing();
     
     static u8 _firstScanLine;
   }; // class ProceduralFace

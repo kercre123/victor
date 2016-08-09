@@ -16,6 +16,7 @@
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/logging/logging.h"
+#include "util/fileUtils/fileUtils.h"
 
 #include <opencv2/highgui.hpp>
 
@@ -35,6 +36,8 @@ namespace Cozmo {
   FaceAnimationManager* FaceAnimationManager::_singletonInstance = nullptr;
   const std::string FaceAnimationManager::ProceduralAnimName("_PROCEDURAL_");
   
+  u8 FaceAnimationManager::_firstScanLine = 0;
+  
   FaceAnimationManager::FaceAnimationManager()
   {
     _availableAnimations[ProceduralAnimName];
@@ -49,13 +52,31 @@ namespace Cozmo {
     }
   }
   
+  static void AddScanlinesHelper(const Vision::Image& img, std::pair<std::vector<u8>,std::vector<u8>>& rleFrames)
+  {
+    // Compress twice: once for each scanline version
+    Vision::Image imgWithScanlines;
+    img.CopyTo(imgWithScanlines);
+    for(s32 iScanline=0; iScanline<img.GetNumRows(); iScanline+=2)
+    {
+      memset(imgWithScanlines.GetRow(iScanline), 0, img.GetNumCols()*sizeof(u8));
+    }
+    FaceAnimationManager::CompressRLE(imgWithScanlines, rleFrames.first);
+    
+    img.CopyTo(imgWithScanlines);
+    for(s32 iScanline=1; iScanline<img.GetNumRows(); iScanline+=2)
+    {
+      memset(imgWithScanlines.GetRow(iScanline), 0, img.GetNumCols()*sizeof(u8));
+    }
+    FaceAnimationManager::CompressRLE(imgWithScanlines, rleFrames.second);
+  }
   
   // Read the animations in a dir
   void FaceAnimationManager::ReadFaceAnimationDir(const Util::Data::DataPlatform* dataPlatform)
   {
     if (dataPlatform == nullptr) { return; }
     const std::string animationFolder = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/faceAnimations/");
-
+    
     DIR* dir = opendir(animationFolder.c_str());
     if ( dir != nullptr) {
       dirent* ent = nullptr;
@@ -68,7 +89,7 @@ namespace Cozmo {
             continue;
           }
           
-          std::string fullDirName = animationFolder + ent->d_name;
+          std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, ent->d_name});
           struct stat attrib{0};
           int result = stat(fullDirName.c_str(), &attrib);
           if (result == -1) {
@@ -165,27 +186,34 @@ namespace Cozmo {
                   }
                   
                   // Read the image
-                  const std::string fullFilename(fullDirName + PATH_SEPARATOR + frameEntry->d_name);
-                  cv::Mat_<u8> img = cv::imread(fullFilename, CV_LOAD_IMAGE_GRAYSCALE);
+                  const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirName, frameEntry->d_name});
+                  Vision::Image img;
+                  Result loadResult = img.Load(fullFilename);
                   
-                  if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
+                  if(loadResult != RESULT_OK ||
+                     img.GetNumRows() != IMAGE_HEIGHT ||
+                     img.GetNumCols() != IMAGE_WIDTH)
+                  {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
                                       "Image in %s is %dx%d instead of %dx%d.",
                                       fullFilename.c_str(),
-                                      img.cols, img.rows,
+                                      img.GetNumCols(), img.GetNumRows(),
                                       IMAGE_WIDTH, IMAGE_HEIGHT);
                     continue;
                   }
                   
                   // Binarize
-                  img = img > 128;
+                  img.Threshold(128);
                   
                   // DEBUG
                   //cv::imshow("FaceAnimImage", img);
                   //cv::waitKey(30);
+
+                  // Compress twice: once for each scanline version
+                  std::pair<std::vector<u8>, std::vector<u8> > compressedScanlinedPair;
+                  AddScanlinesHelper(img, compressedScanlinedPair);
                   
-                  anim.rleFrames.push_back({});
-                  CompressRLE(img, anim.rleFrames.back());
+                  anim.rleFrames.push_back(std::move(compressedScanlinedPair));
                 }
               }
             }
@@ -225,8 +253,12 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    anim->rleFrames.push_back({});
-    CompressRLE(faceImg.Threshold(128), anim->rleFrames.back());
+    // Add scanlines and compress each way
+    std::pair<std::vector<u8>, std::vector<u8> > compressedScanlinedPair;
+    AddScanlinesHelper(faceImg.Threshold(128), compressedScanlinedPair);
+    
+    anim->rleFrames.push_back(std::move(compressedScanlinedPair));
+
     return RESULT_OK;
   }
 
@@ -267,7 +299,17 @@ namespace Cozmo {
       
       if(frameNum < anim.GetNumFrames()) {
         
-        return &(anim.rleFrames[frameNum]);
+        const std::vector<u8>* returnVectorPtr = nullptr;
+        if(_firstScanLine == 0)
+        {
+          returnVectorPtr = &anim.rleFrames[frameNum].first;
+        }
+        else
+        {
+          returnVectorPtr = &anim.rleFrames[frameNum].second;
+        }
+        
+        return returnVectorPtr;
         
       } else {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
