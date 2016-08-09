@@ -31,6 +31,13 @@ namespace Cozmo.Minigame.CubePounce {
     [Range(0f,100f)]
     public float CubeDistanceBetween_mm; // = 55f;
 
+    [Range(0f,100f)]
+    public float CubeDistanceTooClose_mm; // = 30f;
+
+    // The distance away from the cube pounce activation line that causes cozmo to stop being able to pounce
+    [Range(0f,300f)]
+    public float CubeDistanceGreyZone_mm; // = 50f;
+
     // Number of degrees difference in Cozmos pitch to be considered a success when pouncing
     [Range(0f,90f)]
     public float PouncePitchDiffSuccess_deg; // = 5.0f;
@@ -43,6 +50,10 @@ namespace Cozmo.Minigame.CubePounce {
     [Range(0f,10f)]
     public float CubeVisibleBufferTime_s; // = 1f
 
+    // Amount of time that cube can be moved during fakeout without granting a point to Cozmo
+    [Range(0f,3f)]
+    public float FakeoutCubeMoveTime_s; // = 0.5f
+
     // Number of degrees tolerance for Cozmo to be facing toward the cube
     [Range(0f,90f)]
     public float CubeFacingAngleTolerance_deg; // = 5.0f;
@@ -52,5 +63,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     [Range(0.000001f,100f)]
     public float TurnAcceleration_rps2; // = 100f;
+
+    public bool FakeoutMovePenaltyEnabled; // = true;
   }
 }

@@ -395,8 +395,8 @@ namespace Cozmo {
                 const f32 backupSpeed_mmps = 100.f;
                 const f32 backupDist_mm = GetRNG().RandDblInRange(_kMinBackup_mm, _kMaxBackup_mm);
                 _totalBackup_mm += backupDist_mm;
-                DriveStraightAction* backUpAction = new DriveStraightAction(_robot, -backupDist_mm, backupSpeed_mmps);
-                backUpAction->SetShouldPlayDrivingAnimation(false); // don't want head to move down!
+                const bool shouldPlayAnimation = false; // don't want head to move down!
+                DriveStraightAction* backUpAction = new DriveStraightAction(_robot, -backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
                 lookAroundAction->AddAction(backUpAction);
               }
               

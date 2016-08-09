@@ -540,6 +540,21 @@ public class Robot : IRobot {
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
 
+  public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback, QueueActionPosition queueActionPosition, bool isParallel = false) {
+    var tag = GetNextIdTag();
+    RobotEngineManager.Instance.Message.QueueCompoundAction =
+      Singleton<QueueCompoundAction>.Instance.Initialize(
+        robotID: ID,
+        idTag: tag,
+        numRetries: 0,
+        parallel: isParallel,
+        position: queueActionPosition,
+        actions: actions);
+    RobotEngineManager.Instance.SendMessage();
+
+    _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
+  }
+
 
   #region Mood Stats
 
@@ -1379,13 +1394,6 @@ public class Robot : IRobot {
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "SetLiftHeight: " + heightFactor);
-    if (LiftHeightFactor.IsNear(heightFactor, 0.05f) && queueActionPosition == QueueActionPosition.NOW) {
-      if (callback != null) {
-        callback(true);
-      }
-      return;
-    }
-
 
     SendQueueSingleAction(Singleton<SetLiftHeight>.Instance.Initialize(
       height_mm: (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM,

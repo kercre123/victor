@@ -40,7 +40,8 @@ message AlignWithObject {
 //  Drives a straight line forward or backward without using the planner.
 message DriveStraight {
    float_32 speed_mmps,  // Speed should be positive
-   float_32 dist_mm      // Use +ve for forward, -ve for backward
+   float_32 dist_mm,     // Use +ve for forward, -ve for backward
+   bool shouldPlayAnimation = 1
 }
 
 // EnrollNamedFace

@@ -85,8 +85,12 @@
       "AnimName": "ag_keepaway_losegame"
     },
     {
-      "CladEvent": "CubePouncePounce",
+      "CladEvent": "CubePouncePounce_0",
       "AnimName": "ag_keepaway_pounce"
+    },
+    {
+      "CladEvent": "CubePouncePounce_1",
+      "AnimName": "ag_keepaway_fastpounce"
     },
     {
       "CladEvent": "CubePounceWinHand",
@@ -102,11 +106,27 @@
     },
     {
       "CladEvent": "CubePounceGetIn",
-      "AnimName": "ag_keepaway_getready"
+      "AnimName": "ag_keepaway_getin_02"
     },
     {
       "CladEvent": "CubePounceGetOut",
       "AnimName": "ag_keepaway_getout"
+    },
+    {
+      "CladEvent": "CubePounceGetReady",
+      "AnimName": "ag_keepaway_getready"
+    },
+    {
+      "CladEvent": "CubePounceGetUnready",
+      "AnimName": "ag_keepaway_unready"
+    },
+    {
+      "CladEvent": "CubePounceIdleLiftUp",
+      "AnimName": "ag_keepaway_idle"
+    },
+    {
+      "CladEvent": "CubePounceIdleLiftDown",
+      "AnimName": "ag_keepaway_idleliftdown"
     },
     {
       "CladEvent": "DemoOnSawNewNamedFace",

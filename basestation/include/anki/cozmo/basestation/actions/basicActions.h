@@ -116,13 +116,11 @@ namespace Cozmo {
     public:
       // Positive distance for forward, negative for backward.
       // Speed should be positive.
-      DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps);
+      DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation = true);
       virtual ~DriveStraightAction();
       
       void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
       void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
-      
-      void SetShouldPlayDrivingAnimation(bool shouldPlay) { _shouldPlayDrivingAnimation = shouldPlay; }
       
     protected:
       

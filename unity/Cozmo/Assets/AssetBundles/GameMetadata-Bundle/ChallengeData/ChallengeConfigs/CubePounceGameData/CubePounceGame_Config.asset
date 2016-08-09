@@ -27,9 +27,13 @@ MonoBehaviour:
   _BetweenRoundMusic:
     _Music: 274928299
   CubeDistanceBetween_mm: 55
+  CubeDistanceTooClose_mm: 0
+  CubeDistanceGreyZone_mm: 50
   PouncePitchDiffSuccess_deg: 5
   CubeLightFlashInterval_s: 0.1
   CubeVisibleBufferTime_s: 1
+  FakeoutCubeMoveTime_s: 1.1
   CubeFacingAngleTolerance_deg: 8
   TurnSpeed_rps: 10
   TurnAcceleration_rps2: 100
+  FakeoutMovePenaltyEnabled: 1

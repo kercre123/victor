@@ -399,13 +399,14 @@ namespace Anki {
   
 #pragma mark ---- DriveStraightAction ----
     
-    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps)
+    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation)
     : IAction(robot,
               "DriveStraight",
               RobotActionType::DRIVE_STRAIGHT,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
+    , _shouldPlayDrivingAnimation(shouldPlayAnimation)
     {
       if(_speed_mmps < 0.f) {
         PRINT_NAMED_WARNING("DriveStraightAction.Constructor.NegativeSpeed",

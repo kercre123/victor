@@ -189,8 +189,7 @@ void BehaviorAdmireStack::TransitionToWatchingStack(Robot& robot)
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() < kBAS_minDistanceFromStack_mm + fudgeFactor) {
       float distToDrive = kBAS_minDistanceFromStack_mm - poseWrtRobot.GetTranslation().x();
-      DriveStraightAction* driveAction = new DriveStraightAction(robot, -distToDrive, kBAS_backupForSearchSpeed_mmps);
-      driveAction->SetShouldPlayDrivingAnimation(false);
+      DriveStraightAction* driveAction = new DriveStraightAction(robot, -distToDrive, kBAS_backupForSearchSpeed_mmps, false);
       action->AddAction(driveAction);
     }
   }

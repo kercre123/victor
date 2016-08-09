@@ -2,6 +2,7 @@
 using Anki.Cozmo.Audio;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Cozmo.Minigame.CubePounce {
   // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
@@ -12,16 +13,19 @@ namespace Cozmo.Minigame.CubePounce {
     // between the faceplate and front weel center plane
     private const float _kWheelCenterToFacePlane_mm = 13.0f;
 
-    // The distance away from the cube pounce activation line that causes cozmo to stop being able to pounce
-    private const float _kCubePlaceDistSlush_mm = 5.0f;
-
     public float CubePlaceDistTight_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm; } }
 
-    public float CubePlaceDistLoose_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm + _kCubePlaceDistSlush_mm; } }
+    public float CubePlaceDistLoose_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm + GameConfig.CubeDistanceGreyZone_mm; } }
+
+    public float CubePlaceDistTooClose_mm { get { return GameConfig.CubeDistanceTooClose_mm + _kWheelCenterToFacePlane_mm; } }
 
     private float _CubeTargetSeenTime_s = -1;
 
     private bool _CubeSeenRecently = false;
+
+    private bool _CubeCurrentlyMoving = false;
+
+    public bool CurrentlyInFakeoutState { get; set; }
 
     public bool CubeSeenRecently { get { return _CubeSeenRecently; } }
 
@@ -29,6 +33,8 @@ namespace Cozmo.Minigame.CubePounce {
 
     private float _CurrentPounceChance;
     private LightCube _CurrentTarget = null;
+
+    private Coroutine _CheckMovePenaltyCoroutine;
 
     public bool AllRoundsCompleted {
       get {
@@ -48,6 +54,8 @@ namespace Cozmo.Minigame.CubePounce {
       _CurrentTarget = null;
       InitializeMinigameObjects(GameConfig.NumCubesRequired());
       CurrentRobot.SetEnableCliffSensor(false);
+      LightCube.OnMovedAction += HandleCubeMoved;
+      LightCube.OnStoppedAction += HandleCubeStopped;
     }
 
     protected void InitializeMinigameObjects(int numCubes) {
@@ -61,7 +69,12 @@ namespace Cozmo.Minigame.CubePounce {
     protected override void CleanUpOnDestroy() {
       if (null != CurrentRobot) {
         CurrentRobot.SetEnableCliffSensor(true);
+        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
+        CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
       }
+      LightCube.OnMovedAction -= HandleCubeMoved;
+      LightCube.OnStoppedAction -= HandleCubeStopped;
+      StopCoroutine(_CheckMovePenaltyCoroutine);
     }
 
     public LightCube GetCubeTarget() {
@@ -163,6 +176,34 @@ namespace Cozmo.Minigame.CubePounce {
 
       DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), null, quitGameScoreKeyValues);
       DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
+    }
+
+    private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
+      if (id == GetCubeTarget().ID) {
+        _CubeCurrentlyMoving = true;
+
+        if (CurrentlyInFakeoutState && GameConfig.FakeoutMovePenaltyEnabled) {
+          // Set this to false immediately so we don't get multiple penalties during the same fakeout
+          CurrentlyInFakeoutState = false;
+
+          // Start a routine that will check whether the cube is moving and grant a point if needed
+          _CheckMovePenaltyCoroutine = StartCoroutine(CheckMovePenalty());
+        }
+      }
+    }
+
+    private IEnumerator CheckMovePenalty() {
+      yield return new WaitForSeconds(GameConfig.FakeoutCubeMoveTime_s);
+
+      if (_CubeCurrentlyMoving) { 
+        _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
+      }
+    }
+
+    private void HandleCubeStopped(int id) {
+      if (id == GetCubeTarget().ID) {
+        _CubeCurrentlyMoving = false;
+      }
     }
   }
 }

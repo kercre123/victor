@@ -19,7 +19,7 @@ namespace Cozmo.Minigame.CubePounce {
       if (_CubePounceGame.CubeSeenRecently) {
         ReactToCubeReturned();
 
-        if (!_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
+        if (!_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
           ReactToCubeOutOfRange();
         }
       }
@@ -43,16 +43,25 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void ReactToCubeInRange() {
-      // TODO(lc) RE-enable this once animations are in. May require updating animation group
-      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetIn, HandleGetInAnimFinish);
+      // TODO:(lc) when all getins have lift ending high, enable this instead of setting lift height directly
+      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetReady, HandleGetInAnimFinish);
+
+      // TODO:(lc) when these idles are ready (have head angle and lift height set correctly) enable them
+      //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp);
+
       _CurrentRobot.SetLiftHeight(1.0f, HandleGetInAnimFinish);
 
       _GetReadyAnimInProgress = true;
     }
 
     private void ReactToCubeOutOfRange() {
-      // TODO(lc) RE-enable this once animations are in. May require updating animation group
-      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
+
+      // TODO:(lc) GetUnReady needs to end with lift down and head at correct angle, then can remove setting lift height manually
+      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetUnready, null);
+
+      // TODO:(lc) when these idles are ready (have head angle and lift height set correctly) enable them
+      //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
+
       _CurrentRobot.SetLiftHeight(0.0f, null);
 
       _GetReadyAnimCompleted = false;
@@ -87,22 +96,15 @@ namespace Cozmo.Minigame.CubePounce {
           return;
         }
 
-        bool withinLooseCubePounceDistance = _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm);
-        if (_GetReadyAnimCompleted && !withinLooseCubePounceDistance) {
-          ReactToCubeOutOfRange();
-        }
-        else if (!_GetReadyAnimCompleted && !_GetReadyAnimInProgress && _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
+        if (!_GetReadyAnimCompleted && !_GetReadyAnimInProgress && _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
           ReactToCubeInRange();
         }
-
-        if (_GetReadyAnimCompleted) {
-          if (!_CubePounceGame.WithinAngleTolerance()) {
-            TurnToCube();
-            return;
+        else if (_GetReadyAnimCompleted) {
+          if (!_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
+            ReactToCubeOutOfRange();
           }
-
-          if (withinLooseCubePounceDistance) {
-            _StateMachine.SetNextState(_CubePounceGame.GetNextFakeoutOrAttemptState());
+          else if (_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
+            _StateMachine.SetNextState(new CubePounceStatePause());
           }
         }
       }

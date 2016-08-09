@@ -20,6 +20,9 @@ namespace Cozmo.Minigame.CubePounce {
       } else {
         _StateMachine.SetNextState(new CubePounceStateResetPoint());
       }
+
+      // TODO:(lc) When this getin is ready (simple getin to game with lift down and head angle correct) enable it
+      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetIn, null);
     }
   }
 }
