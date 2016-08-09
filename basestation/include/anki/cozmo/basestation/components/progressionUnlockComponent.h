@@ -47,6 +47,8 @@ public:
 
   template<typename T>
   void HandleMessage(const T& msg);
+  
+  const std::set<UnlockId>& GetDefaultUnlocks() const { return _defaultUnlocks; }
 
 private:
 

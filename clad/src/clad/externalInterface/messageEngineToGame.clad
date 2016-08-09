@@ -443,13 +443,9 @@ message RequestSetUnlockResult {
   bool unlocked
 }
 
-structure UnlockEntry {
-  UnlockId unlockID,
-  bool unlocked
-}
-
 message UnlockStatus {
-  UnlockEntry unlocks[uint_8]
+  UnlockId unlocks[uint_8],
+  bool fromBackup = 0
 }  
 
 

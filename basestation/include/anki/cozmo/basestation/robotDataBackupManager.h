@@ -55,6 +55,10 @@ private:
   // Writes the data in _dataOnRobot to file as long as the robot has completed onboarding
   void WriteBackupFile();
   
+  // Reads and parses the specified backup file and puts the data in dataInBackup
+  bool ParseBackupFile(const std::string fileName,
+                       std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup);
+  
   // Determines which backup file to use (currently selects the backup file corresponding to the robot that
   // has been connected to the most)
   bool GetFileToUseForBackup(std::string& file);

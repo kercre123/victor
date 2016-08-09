@@ -183,9 +183,18 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void HandleUnlockStatus(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
+
+    if(message.fromBackup) {
+      return;
+    }
+
     Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
+    for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; ++i) {
+      loadedUnlockables.Add((UnlockId)i, false);
+    }
+	
     for (int i = 0; i < message.unlocks.Length; ++i) {
-      loadedUnlockables.Add(message.unlocks[i].unlockID, message.unlocks[i].unlocked);
+      loadedUnlockables[message.unlocks[i]] = true;
     }
     OnConnectLoad(loadedUnlockables);
   }

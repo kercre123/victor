@@ -171,22 +171,6 @@ void ProgressionUnlockComponent::SendUnlockStatus() const
     return;
   }
 
-  // vector we are going to send
-  std::vector<ExternalInterface::UnlockEntry> allUnlocks;
-
-  // fill the vector with entries from 0 to count-1 all set to false
-  using EnumSize_t = std::underlying_type<UnlockId>::type;
-  EnumSize_t unlockTypeCount = Util::EnumToUnderlying( UnlockId::Count );
-  allUnlocks.reserve(unlockTypeCount);
-  for(EnumSize_t typeIt=0; typeIt<unlockTypeCount; ++typeIt) {
-    allUnlocks.emplace_back( (UnlockId)typeIt, false );
-  }
-  
-  // iterate actually unlocked ones and set their entry flag to true
-  for( const auto& unlockIt : _currentUnlocks ) {
-    allUnlocks[ Util::EnumToUnderlying( unlockIt ) ].unlocked = true;
-  }
-
   PRINT_CH_INFO("UnlockComponent",
                 "SendUnlockStatus",
                 "Sending current unlock status (%zu unlocked)",
@@ -195,7 +179,7 @@ void ProgressionUnlockComponent::SendUnlockStatus() const
   // now send
   _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
                                               ExternalInterface::UnlockStatus(
-                                                allUnlocks)));
+                                                std::vector<UnlockId>(_currentUnlocks.begin(), _currentUnlocks.end()), false)));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

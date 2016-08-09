@@ -13,6 +13,7 @@
  **/
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataBackupManager.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -39,6 +40,7 @@ RobotDataBackupManager::RobotDataBackupManager(Robot& robot)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RestoreRobotFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestRobotRestoreData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
   }
   
   if(Util::FileUtils::CreateDirectory(kPathToFile, false, true) == false)
@@ -287,56 +289,16 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   
   PRINT_NAMED_INFO("RobotDataBackupManager.RestoreFromBackup", "Using file %s for backup", fileName.c_str());
   
-  std::string file = Util::FileUtils::ReadFile(kPathToFile + fileName);
-  
-  if(file.length() == 0)
+  // _dataOnRobot will get cleared by this call so only _tagDataMap will need to be cleared
+  if(!ParseBackupFile(fileName, _dataOnRobot))
   {
-    PRINT_NAMED_ERROR("RobotDataBackupManager.RestoreFromBackup.ReadFileFailed", "Unable to read backup file");
     return;
   }
-  const char* fileContents = file.data();
-  
-  // Clear both of these since they are no longer valid as we are restoring
-  _dataOnRobot.clear();
   _tagDataMap.clear();
   
   // Since the only way we could have a restore file is if the corresponding robot had completed onboarding
   // then this robot will technically have completed onboarding too due to the restore
   _hasCompletedOnboarding = true;
-  
-  // Parses the contents of the backup file into blobs and adds them to _dataOnRobot
-  bool finishedParsing = false;
-  uint32_t sectionStart = 0;
-  while(!finishedParsing)
-  {
-    uint32_t tag = (fileContents[sectionStart] & 0xff) |
-    (fileContents[sectionStart+1] & 0xff) << 8 |
-    (fileContents[sectionStart+2] & 0xff) << 16 |
-    (fileContents[sectionStart+3] & 0xff) << 24;
-    
-    sectionStart += 4;
-    
-    uint32_t blob_length = (fileContents[sectionStart] & 0xff) |
-    (fileContents[sectionStart+1] & 0xff) << 8 |
-    (fileContents[sectionStart+2] & 0xff) << 16 |
-    (fileContents[sectionStart+3] & 0xff) << 24;
-    
-    sectionStart += 4;
-    
-    NVStorage::NVStorageBlob b;
-    b.tag = tag;
-    std::vector<u8> temp(fileContents+sectionStart, fileContents+sectionStart+blob_length);
-    b.blob.swap(temp);
-    
-    sectionStart += blob_length;
-    
-    _dataOnRobot[b.tag] = b;
-    
-    if(sectionStart >= file.length())
-    {
-      finishedParsing = true;
-    }
-  }
 
   _restoreOrWipeFailed = false;
 
@@ -518,6 +480,102 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestRobot
                    (restoreOptions.shouldPromptForRestore ? "True" : "False"));
   
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(restoreOptions)));
+}
+
+template<>
+void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
+{
+  std::unordered_map<u32, NVStorage::NVStorageBlob> dataInBackup;
+  std::string file;
+  if(GetFileToUseForBackup(file))
+  {
+    if(ParseBackupFile(file, dataInBackup))
+    {
+      // Check to see if there is unlock data in the backup if not we will just send back the default unlocks
+      auto unlocks = dataInBackup.find(static_cast<u32>(NVStorage::NVEntryTag::NVEntry_GameUnlocks));
+      if(unlocks != dataInBackup.end())
+      {
+        UnlockedIdsList unlockList;
+        unlockList.Unpack(unlocks->second.blob.data(), unlocks->second.blob.size());
+        
+        std::vector<UnlockId> vec;
+        for(const UnlockId& unlock : unlockList.unlockedIds)
+        {
+          if(unlock == UnlockId::Invalid)
+          {
+            break;
+          }
+          vec.push_back(unlock);
+        }
+        
+        // Send to game telling them this unlock data is from the backup not the actual robot
+        _robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(vec.begin(), vec.end()), true)));
+      }
+      else
+      {
+        PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup",
+                         "No unlock data in backup sending default unlock data");
+        
+        const auto& defaultUnlocks = _robot.GetProgressionUnlockComponent().GetDefaultUnlocks();
+        
+        // Send to game telling them this unlock data is from the backup not the actual robot
+        _robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));
+      }
+      
+      
+    }
+  }
+}
+
+bool RobotDataBackupManager::ParseBackupFile(const std::string fileName,
+                                             std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup)
+{
+  std::string file = Util::FileUtils::ReadFile(kPathToFile + fileName);
+  
+  if(file.length() == 0)
+  {
+    PRINT_NAMED_ERROR("RobotDataBackupManager.ParseBackupFile.ReadFileFailed",
+                      "Unable to read backup file");
+    return false;
+  }
+  const char* fileContents = file.data();
+  
+  dataInBackup.clear();
+  
+  // Parses the contents of the backup file into blobs and adds them to dataInBackup
+  bool finishedParsing = false;
+  uint32_t sectionStart = 0;
+  while(!finishedParsing)
+  {
+    uint32_t tag = (fileContents[sectionStart] & 0xff) |
+    (fileContents[sectionStart+1] & 0xff) << 8 |
+    (fileContents[sectionStart+2] & 0xff) << 16 |
+    (fileContents[sectionStart+3] & 0xff) << 24;
+    
+    sectionStart += 4;
+    
+    uint32_t blob_length = (fileContents[sectionStart] & 0xff) |
+    (fileContents[sectionStart+1] & 0xff) << 8 |
+    (fileContents[sectionStart+2] & 0xff) << 16 |
+    (fileContents[sectionStart+3] & 0xff) << 24;
+    
+    sectionStart += 4;
+    
+    NVStorage::NVStorageBlob b;
+    b.tag = tag;
+    std::vector<u8> temp(fileContents+sectionStart, fileContents+sectionStart+blob_length);
+    b.blob.swap(temp);
+    
+    sectionStart += blob_length;
+    
+    dataInBackup[b.tag] = b;
+    
+    if(sectionStart >= file.length())
+    {
+      finishedParsing = true;
+    }
+  }
+  return true;
 }
   
 }
