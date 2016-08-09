@@ -55,13 +55,13 @@
     "translation": "Cozmo will think of a code and you have a certain number of tries to get it right."
   },
   "cubeSlap.title": {
-    "translation": "Keep Away"
+    "translation": "Keepaway"
   },
   "cubeSlap.description": {
     "translation": "Think you're faster than Cozmo? Put your reaction time to the test!"
   },
   "droneMode.title": {
-    "translation": "Explore Mode"
+    "translation": "Explorer Mode"
   },
   "droneMode.description": {
     "translation": "Cozmo allows you to pilot him."
@@ -115,16 +115,16 @@
     "translation": "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
   },
   "simonGame.title": {
-    "translation": "Simon"
+    "translation": "Memory Match"
   },
   "simonGame.description": {
-    "translation": "Simon is a game of sound and memory. Listen carefully and remember each note!"
+    "translation": "Memory Match is a game of sound and memory. Listen carefully and remember each note!"
   },
   "speedTap.title": {
-    "translation": "Speed Tap"
+    "translation": "Quick Tap"
   },
   "speedTap.description": {
-    "translation": "Speed Tap is a test of fast reflexes and sharp wits. Pay close attention, and try to keep your cool!"
+    "translation": "Quick Tap is a test of fast reflexes and sharp wits. Pay close attention, and try to keep your cool!"
   },
   "treasureHuntGame01.title": {
     "translation": "Treasure Hunt Challenge"
