@@ -96,6 +96,7 @@ void system_uart_swap(void);
 void system_uart_de_swap(void);
 
 uint16 system_adc_read(void);
+void system_adc_read_fast(uint16 *adc_addr, uint16 adc_num, uint8 adc_clk_div);
 uint16 system_get_vdd33(void);
 
 const char *system_get_sdk_version(void);
@@ -129,7 +130,6 @@ enum flash_size_map {
 
 enum flash_size_map system_get_flash_size_map(void);
 
-uint16 system_get_vdd33(void);
 void system_phy_set_max_tpw(uint8 max_tpw);
 void system_phy_set_tpw_via_vdd33(uint16 vdd33);
 void system_phy_set_rfoption(uint8 option);
@@ -256,6 +256,8 @@ int wifi_station_set_cert_key(uint8 *client_cert, int client_cert_len,
     uint8 *private_key, int private_key_len,
     uint8 *private_key_passwd, int private_key_passwd_len);
 void wifi_station_clear_cert_key(void);
+int wifi_station_set_username(uint8 *username, int len);
+void wifi_station_clear_username(void);
 
 struct softap_config {
     uint8 ssid[32];
@@ -358,6 +360,11 @@ void wifi_fpm_do_wakeup(void);
 sint8 wifi_fpm_do_sleep(uint32 sleep_time_in_us);
 void wifi_fpm_set_sleep_type(enum sleep_type type);
 enum sleep_type wifi_fpm_get_sleep_type(void);
+
+typedef void (*fpm_wakeup_cb)(void);
+void wifi_fpm_set_wakeup_cb(fpm_wakeup_cb cb);
+
+void wifi_fpm_auto_sleep_set_in_null_mode(uint8 req);
 
 enum {
     EVENT_STAMODE_CONNECTED = 0,
