@@ -76,6 +76,13 @@ Fixed g_radiansPerHeadTick;   // XXX: Remove this once Pilot robots are obsolete
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
+// This is a map of all motor drive pins
+static const int ALL_MOTOR_PINS =
+  PIN_LEFT_P  | PIN_LEFT_N1  | PIN_LEFT_N2 |
+  PIN_RIGHT_P | PIN_RIGHT_N1 | PIN_RIGHT_N2 |
+  PIN_HEAD_P  | PIN_HEAD_N1  | PIN_HEAD_N2 |
+  PIN_LIFT_P  | PIN_LIFT_N1  | PIN_LIFT_N2;
+
 static volatile bool motorDisable = false;
 static volatile bool chargeOkEnabled = false;
 
@@ -220,18 +227,11 @@ bool Motors::getChargeOkay() {
 
 
 void Motors::teardown(void) {
-  // Disable our PPI channels
+  // Disable our PPI channels (prevent toggling)
   NRF_PPI->CHENCLR = 0xFF;
   
-  // Tear down GPIOTE tasks
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-    const MotorConfig* motorConfig = &m_config[i];
-
-    //nrf_gpiote_task_disable(i);
-    nrf_gpio_pin_clear(motorConfig->n1Pin);
-    nrf_gpio_pin_clear(motorConfig->n2Pin);
-    nrf_gpio_pin_clear(motorConfig->pPin);
-  }
+  // Clear motor drive 
+  NRF_GPIO->OUTCLR = ALL_MOTOR_PINS;
   
   // Clear timers
   NRF_TIMER1->TASKS_CLEAR = 1;
@@ -249,15 +249,15 @@ void Motors::teardown(void) {
 }
 
 void Motors::setup(void) {
+  // Clear our motor pins just for safety's sake
+  NRF_GPIO->OUTCLR = ALL_MOTOR_PINS;
+
   // Configure each motor pin as an output
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
     // Configure the pins for the motor bridge to be outputs and default low (stopped)
     const MotorConfig* motorConfig = &m_config[i];
 
-    nrf_gpio_pin_clear(motorConfig->n1Pin);
-    nrf_gpio_pin_clear(motorConfig->n2Pin);
-    nrf_gpio_pin_clear(motorConfig->pPin);
     nrf_gpio_cfg_output(motorConfig->n1Pin);
     nrf_gpio_cfg_output(motorConfig->n2Pin);
     nrf_gpio_cfg_output(motorConfig->pPin);
