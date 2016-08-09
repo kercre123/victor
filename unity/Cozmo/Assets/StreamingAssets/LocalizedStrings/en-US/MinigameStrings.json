@@ -42,6 +42,12 @@
   "minigame.text.score": {
     "translation": "Score"
   },
+  "minigame.text.score.player": {
+    "translation": "Player Score"
+  },
+  "minigame.text.score.cozmo": {
+    "translation": "Cozmo Score"
+  },
   "minigame.label.showCubes.singular": {
     "translation": "Put {0} cube in front of Cozmo. It will turn white when he can see it."
   },

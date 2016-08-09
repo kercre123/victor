@@ -55,6 +55,7 @@ clean:
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
 	#rm -rf $(BUILD_DIR)
+	#rm -rf syscon/build
 	rm -rf $(GENERATED_DIR)
 
 fresh: clean $(ANKI_LOG_TABLE_JSON) all python
@@ -76,7 +77,11 @@ k02: $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02_fix:
-	$(PY) ./tools/boot_header.py ./build/app/robot.axf
+	$(PY) ./tools/boot_header.py ./build/robot.axf
+
+nrf_fix:
+	$(PY) ./tools/boot_header.py ./build/syscon.axf
+
 
 esp: $(ANKI_LOG_TABLE_JSON) $(PUBLIC_KEYS_HEADER)
 	make $@ -C clad -j4
@@ -123,14 +128,14 @@ $(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py
 	mkdir -p $(dir $@)
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
-$(BUILD_DIR)/esp.map: espressif/app/esp.map
-	cp $< $@
+$(BUILD_DIR)/esp.map:
+	if test -e espressif/app/esp.map; then cp espressif/app/esp.map $@; fi
 
-$(BUILD_DIR)/robot.map: $(BUILD_DIR)/app/robot.map
-	cp $< $@
+$(BUILD_DIR)/robot.map:
+	if test -e  $(BUILD_DIR)/app/robot.map; then cp $(BUILD_DIR)/app/robot.map $@; fi
 
-$(BUILD_DIR)/syscon.map: syscon/build/app/syscon.map
-	cp $< $@
+$(BUILD_DIR)/syscon.map:
+	if test -e syscon/build/app/syscon.map; then cp syscon/build/app/syscon.map $@; fi
 
 ########################################################################################################################
 # Build server steps

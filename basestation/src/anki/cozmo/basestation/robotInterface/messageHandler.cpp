@@ -85,8 +85,15 @@ void MessageHandler::ProcessMessages()
         PRINT_NAMED_ERROR("MessageHandler.ProcessMessages","Tried to process message of invalid size");
         continue;
       }
-      
+
+      auto robotId = _robotManager->GetFirstRobot()->GetID();
+
+      // see if message type should be filtered out based on potential firmware mismatch
       const RobotInterface::RobotToEngineTag msgType = static_cast<RobotInterface::RobotToEngineTag>(nextData.data()[0]);
+      if (_robotManager->ShouldFilterMessage(robotId, msgType)) {
+        continue;
+      }
+
       RobotInterface::RobotToEngine message;
       const size_t unpackSize = message.Unpack(nextData.data(), dataSize);
       if (unpackSize != nextData.size()) {
@@ -102,7 +109,7 @@ void MessageHandler::ProcessMessages()
       }
 #endif
       
-      Broadcast(_robotManager->GetFirstRobot()->GetID(), std::move(message));
+      Broadcast(robotId, std::move(message));
     }
   }
 }
@@ -114,13 +121,18 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
     return RESULT_FAIL;
   }
   
+  if (_robotManager->ShouldFilterMessage(robotId, msg.GetTag()))
+  {
+    return RESULT_FAIL;
+  }
+
 #if ANKI_DEV_CHEATS
   if (nullptr != DevLoggingSystem::GetInstance())
   {
     DevLoggingSystem::GetInstance()->LogMessage(msg);
   }
 #endif
-  
+
   const auto expectedSize = msg.Size();
   std::vector<uint8_t> messageData(msg.Size());
   const auto packedSize = msg.Pack(messageData.data(), expectedSize);

@@ -17,26 +17,6 @@
       "AnimName": "ag_reactToNewBlock"
     },
     {
-      "CladEvent": "AdmireStackAttemptGrabThirdCube",
-      "AnimName": "knockOverStack_grabAttempt"
-    },
-    {
-      "CladEvent": "AdmireStackFocusEyes",
-      "AnimName": "ag_reacttoblock_focusedeyes"
-    },
-    {
-      "CladEvent": "AdmireStackKnockOverPreDrivingFailure",
-      "AnimName": "ag_RequestGamePickupFail"
-    },
-    {
-      "CladEvent": "AdmireStackKnockOverSuccess",
-      "AnimName": "knockOverStack_success"
-    },
-    {
-      "CladEvent": "AdmireStackReactToThirdCube",
-      "AnimName": "knockOverStack_react"
-    },
-    {
       "CladEvent": "AskToBeRightedLeft",
       "AnimName": "ag_reacttocliff_stuckleftside_01"
     },
@@ -85,8 +65,12 @@
       "AnimName": "ag_keepaway_losegame"
     },
     {
-      "CladEvent": "CubePouncePounce",
+      "CladEvent": "CubePouncePounce_0",
       "AnimName": "ag_keepaway_pounce"
+    },
+    {
+      "CladEvent": "CubePouncePounce_1",
+      "AnimName": "ag_keepaway_fastpounce"
     },
     {
       "CladEvent": "CubePounceWinHand",
@@ -102,11 +86,27 @@
     },
     {
       "CladEvent": "CubePounceGetIn",
-      "AnimName": "ag_keepaway_getready"
+      "AnimName": "ag_keepaway_getin_02"
     },
     {
       "CladEvent": "CubePounceGetOut",
       "AnimName": "ag_keepaway_getout"
+    },
+    {
+      "CladEvent": "CubePounceGetReady",
+      "AnimName": "ag_keepaway_getready"
+    },
+    {
+      "CladEvent": "CubePounceGetUnready",
+      "AnimName": "ag_keepaway_unready"
+    },
+    {
+      "CladEvent": "CubePounceIdleLiftUp",
+      "AnimName": "ag_keepaway_idle"
+    },
+    {
+      "CladEvent": "CubePounceIdleLiftDown",
+      "AnimName": "ag_keepaway_idleliftdown"
     },
     {
       "CladEvent": "DemoOnSawNewNamedFace",
@@ -214,14 +214,14 @@
     },
     {
       "CladEvent": "HikingIntro",
-      "AnimName": "ag_hiking_observe"
+      "AnimName": "ag_hiking_wakeup"
     },
     {
       "CladEvent": "HikingObserve",
       "AnimName": "ag_hiking_observe"
     },
     {
-      "CladEvent": "HikingReactGeneric",
+      "CladEvent": "HikingInterestingEdgeThought",
       "AnimName": "ag_hiking_react_01"
     },
     {
@@ -238,7 +238,7 @@
     },
     {
       "CladEvent": "HikingWakeUpOffCharger",
-      "AnimName": "ag_hiking_observe"
+      "AnimName": "ag_hiking_wakeup"
     },
     {
       "CladEvent": "IdleOnCharger",
@@ -255,6 +255,18 @@
     {
       "CladEvent": "InteractWithFacesWait",
       "AnimName": "interactWithFaces_squint"
+    },
+    {
+      "CladEvent": "KnockOverEyes",
+      "AnimName": "interactWithFaces_squint"
+    },
+    {
+      "CladEvent": "KnockOverGrabAttempt",
+      "AnimName": "knockOverStack_grabAttempt"
+    },
+    {
+      "CladEvent": "KnockOverSuccess",
+      "AnimName": "knockOverStack_success"
     },
     {
       "CladEvent": "LookInPlaceForFacesBodyPause",

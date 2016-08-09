@@ -170,5 +170,8 @@
   },
   "button.replay": {
     "translation": "Replay"
+  },
+  "label.to": {
+    "translation": "To:"
   }
 }

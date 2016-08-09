@@ -25,14 +25,15 @@ namespace Anki {
           while (stream.CanRead) {
             int numRead = stream.Read(buffer, numReadTotal, (int)buffer.Length - numReadTotal);
             numReadTotal += numRead;
-            DAS.Debug(this, String.Format("received bytes {0} total {1}", numRead, numReadTotal));
+			Debug.Log(String.Format("received bytes {0} total {1}", numRead, numReadTotal));
             if (numRead > 0) // for now all data gets in at once. in the future, we might have to indicate "end of data"
               break;
-          } 
+          }
 
           // parse message
           string message = System.Text.Encoding.Default.GetString(buffer);
-          DAS.Debug(this, "message " + message);
+          message = message.TrimEnd('\r', '\n', '\0');
+          Debug.Log("message [" + message + "]");
 
           string[] args = message.Split(' ');
 
@@ -58,7 +59,7 @@ namespace Anki {
             returnCode = 1;
             response = "[ERROR] build failed\n" + buildResult;
           }
-            
+
           // Encode the response to send back.
           // Format [ responseCode, ...message... ]
           int resultBufferLen = Encoding.UTF8.GetByteCount(response);
@@ -69,7 +70,7 @@ namespace Anki {
           stream.Write(resultBuffer, 0, resultBuffer.Length);
 
           buildResult = null;
-        } 
+        }
         catch (Exception e) {
           DAS.Debug(this, "Exception: " + e.ToString());
         }

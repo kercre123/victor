@@ -118,7 +118,24 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceDetection", true);
   
+  // Vision processing scheduler (COZMO-3218) will probably affects this
   CONSOLE_VAR_RANGED(u8, kMarkerDetectionFrequency, "Vision.Performance", 1, 1, 10);
+  
+  namespace {
+    // Image quality checks:
+    // - If mean is below low dark threshold with any stddev, or below the high dark threshold
+    //   with stddev also below threshold, then it is too dark
+    // - If mean is above the high bright threshold with any stddev, or above the low bright
+    //   threshold with stddev also below threshold, then it is too bright
+    // NOTE: Vision processing scheduler (COZMO-3218) will probably affects the (need for) frequency
+    u8 kQualityCheckFrequency;
+    u8 kImageMeanTooDarkLowThreshold;
+    u8 kImageMeanTooDarkHighThreshold;
+    u8 kImageStddevTooDarkThreshold;
+    u8 kImageMeanTooBrightHighThreshold;
+    u8 kImageMeanTooBrightLowThreshold;
+    u8 kImageStddevTooBrightThreshold;
+  }
   
   using namespace Embedded;
   
@@ -156,23 +173,50 @@ namespace Cozmo {
     //EnableMode(VisionMode::DetectingMotion,  true);
     //EnableMode(VisionMode::DetectingFaces,   true);
     //EnableMode(VisionMode::DetectingOverheadEdges, true);
-    
-    if(config.isMember("InitialVisionModes"))
+    if(!config.isMember("InitialVisionModes"))
     {
-      const Json::Value& configModes = config["InitialVisionModes"];
-      for(auto & modeName : configModes.getMemberNames())
-      {
-        VisionMode mode = GetModeFromString(modeName);
-        if(mode == VisionMode::Idle) {
-          PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
-                              "Ignoring initial Idle mode for string '%s' in vision config",
-                              modeName.c_str());
-        } else {
-          EnableMode(mode, configModes[modeName].asBool());
-        }
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
+      return RESULT_FAIL;
+    }
+    
+    const Json::Value& configModes = config["InitialVisionModes"];
+    for(auto & modeName : configModes.getMemberNames())
+    {
+      VisionMode mode = GetModeFromString(modeName);
+      if(mode == VisionMode::Idle) {
+        PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
+                            "Ignoring initial Idle mode for string '%s' in vision config",
+                            modeName.c_str());
+      } else {
+        EnableMode(mode, configModes[modeName].asBool());
       }
     }
- 
+    
+    if(!config.isMember("ImageQuality"))
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
+      return RESULT_FAIL;
+    }
+    
+    // Helper macro to try to get the specified field and store it in the given variable
+    // and return RESULT_FAIL if that doesn't work
+#   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
+    if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
+      return RESULT_FAIL; \
+    }
+
+    const Json::Value& imageQualityConfig = config["ImageQuality"];
+    GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency", kQualityCheckFrequency);
+    
+    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkMeanThreshold_low",  kImageMeanTooDarkLowThreshold);
+    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkMeanThreshold_high", kImageMeanTooDarkHighThreshold);
+    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkStdDevThreshold",    kImageStddevTooDarkThreshold);
+    
+    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightMeanThreshold_high", kImageMeanTooBrightHighThreshold);
+    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightMeanThreshold_low",  kImageMeanTooBrightLowThreshold);
+    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightStddevThreshold",    kImageStddevTooBrightThreshold);
+    
     PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
                      "With model path %s.", _dataPath.c_str());
     _faceTracker = new Vision::FaceTracker(_dataPath, config);
@@ -785,7 +829,35 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectMarkers()
   
-  
+  Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage)
+  {
+    cv::Scalar cvMean, cvStddev;
+    cv::meanStdDev(inputImage.get_CvMat_(), cvMean, cvStddev);
+    
+    const u8 mean = cvMean.val[0];
+    const u8 stddev = cvStddev.val[0];
+    
+    if(mean < kImageMeanTooDarkLowThreshold ||
+       (mean < kImageMeanTooDarkHighThreshold && stddev < kImageStddevTooDarkThreshold))
+    {
+      PRINT_CH_INFO("VisionSystem", "CheckImageQuality.TooDark",
+                    "Mean:%u Stddev:%u", mean, stddev);
+      _currentResult.imageQuality = ImageQuality::TooDark;
+    }
+    else if(mean > kImageMeanTooBrightHighThreshold ||
+            (mean > kImageMeanTooBrightLowThreshold && stddev < kImageStddevTooBrightThreshold))
+    {
+      PRINT_CH_INFO("VisionSystem", "CheckImageQuality.TooBright",
+                    "Mean:%u Stddev:%u", mean, stddev);
+      _currentResult.imageQuality = ImageQuality::TooBright;
+    }
+    else
+    {
+      _currentResult.imageQuality = ImageQuality::Good;
+    }
+    
+    return RESULT_OK;
+  }
   
   // Divide image by mean of whatever is inside the trackingQuad
   Result VisionSystem::BrightnessNormalizeImage(Embedded::Array<u8>& image,
@@ -1758,11 +1830,14 @@ namespace Cozmo {
       
       if(imgRegionArea > 0 || groundRegionArea > 0.f)
       {
-        PRINT_CH_INFO("VisionSystem", "DetectMotion.FoundCentroid",
+        if(DEBUG_MOTION_DETECTION)
+        {
+          PRINT_CH_INFO("VisionSystem", "DetectMotion.FoundCentroid",
                          "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                          "-- %.1f%% of ground area at (%.1f,%.1f)",
                          imgRegionArea, centroid.x(), centroid.y(),
                          groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
+        }
         
         _lastMotionTime = image.GetTimestamp();
         
@@ -2392,7 +2467,7 @@ namespace Cozmo {
     return VisionSystem::GetModeName(_mode);
   }
   
-  std::string VisionSystem::GetModeName(Util::BitFlags8<VisionMode> mode) const
+  std::string VisionSystem::GetModeName(Util::BitFlags16<VisionMode> mode) const
   {
     std::string retStr("");
     for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
@@ -2742,16 +2817,33 @@ namespace Cozmo {
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
     
-
-    
-    // Lots of the processing below needs a grayscale version of the image:
-    Vision::Image inputImageGray = inputImage.ToGray();
-    Vision::Image claheImage;
-    
     // Set up the results for this frame:
     VisionProcessingResult result;
     result.timestamp = inputImage.GetTimestamp();
+    result.imageQuality = ImageQuality::Good;
     std::swap(result, _currentResult);
+    
+    auto& visionModesProcessed = _currentResult.modesProcessed;
+    visionModesProcessed.ClearFlags();
+    
+    // Lots of the processing below needs a grayscale version of the image:
+    Vision::Image inputImageGray = inputImage.ToGray();
+    
+    if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
+    {
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
+      
+      Tic("CheckingImageQuality");
+      lastResult = CheckImageQuality(inputImageGray);
+      Toc("CheckingImageQuality");
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
+        return lastResult;
+      }
+    }
+    
+    Vision::Image claheImage;
     
     // Apply CLAHE if enabled:
     ASSERT_NAMED(kUseCLAHE_u8 <= Util::EnumToUnderlying(MarkerDetectionCLAHE::Alternating),
@@ -2789,9 +2881,6 @@ namespace Cozmo {
     EndBenchmark("VisionSystem_CameraImagingPipeline");
     
     std::vector<Quad2f> markerQuads;
-    
-    auto& visionModesProcessed = _currentResult.modesProcessed;
-    visionModesProcessed.ClearFlags();
 
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
@@ -2901,8 +2990,20 @@ namespace Cozmo {
       return false;
     }
     
+    if (_currentResult.imageQuality != ImageQuality::Good)
+    {
+      return false;
+    }
+    
+    // These checks will be affected by vision scheduler (COZMO-3218):
+    
     // Marker processing only gets to happen every nth frame
     if (VisionMode::DetectingMarkers == mode && (_frameNumber % kMarkerDetectionFrequency) != 0)
+    {
+      return false;
+    }
+    
+    if (VisionMode::CheckingQuality == mode && (_frameNumber % kQualityCheckFrequency) != 0)
     {
       return false;
     }

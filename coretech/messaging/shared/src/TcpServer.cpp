@@ -39,6 +39,17 @@ void TcpServer::set_nonblock(int socket) {
     fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
+int SetSockOptHelper(int socketfd, int level, int option, const void* optionValue, socklen_t optionLen)
+{
+  int status = setsockopt(socketfd, level, option, optionValue, optionLen);
+  if (status == -1)
+  {
+    DEBUG_TCP_SERVER("TcpServer: Failed to set socket options (status=" << status << ")");
+  }
+  
+  return status;
+}
+
 bool TcpServer::StartListening(const unsigned short port)
 {
     if (socketfd >= 0) {
@@ -84,16 +95,19 @@ bool TcpServer::StartListening(const unsigned short port)
     // we use to make the setsockopt() function to make sure the port is not in use
     // by a previous execution of our code. (see man page for more information)
     int yes = 1;
-    status = setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-
-    status = setsockopt(socketfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(int));
+    status = SetSockOptHelper(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
   
-    //status = setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));  // For auto-detecting disconnected clients.
+    #if defined(LINUX) || defined(ANDROID)
+    // No SO_NOSIGPIPE available on these platforms - handled with MSG_NOSIGNAL flag on send instead
+    #else
+    // don't generate a SIGPIPE exception for writing to a closed socket
+    status = SetSockOptHelper(socketfd, SOL_SOCKET, SO_NOSIGPIPE, &yes, sizeof(yes));
+    #endif // defined(LINUX) || defined(ANDROID)
+  
+    status = SetSockOptHelper(socketfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
+    //status = SetSockOptHelper(socketfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));  // For auto-detecting disconnected clients.
+  
     set_nonblock(socketfd);
-    if (status == -1) {
-      DEBUG_TCP_SERVER("TcpServer: Failed to set socket options (status=" << status << ")");
-    }
-
   
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
@@ -168,8 +182,16 @@ int TcpServer::Send(const char* data, int size)
   }
 
   DEBUG_TCP_SERVER_VERBOSE("TcpServer: sending " << size << " bytes " << data);
-
-  const ssize_t bytes_sent = send(client_sd, data, size, 0);
+  
+  #if defined(LINUX) || defined(ANDROID)
+  // Prevent SIGPIPE if the socket has closed, not supported on all platforms
+  const int sendFlags = MSG_NOSIGNAL;
+  #else
+  // No MSG_NOSIGNAL available on these platforms - handled with SO_NOSIGPIPE socketopt instead
+  const int sendFlags = 0;
+  #endif // defined(LINUX) || defined(ANDROID)
+  
+  const ssize_t bytes_sent = send(client_sd, data, size, sendFlags);
   
   if(bytes_sent > std::numeric_limits<int>::max()) {
     DEBUG_TCP_SERVER("TcpServer: Send warning, num bytes sent > max integer.\n");
@@ -189,9 +211,6 @@ int TcpServer::Recv(char* data, int maxSize)
 
   ssize_t bytes_received;
   bytes_received = recv(client_sd, data, maxSize, 0);
-  // If no data arrives, the program will just wait here until some data arrives.
-
-
   
   if (bytes_received <= 0) {
     if (errno != EWOULDBLOCK)

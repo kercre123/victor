@@ -546,15 +546,14 @@ void BehaviorManager::CheckForComputationalSwitch()
   bool hasSwitched = false;
   for( auto rBehavior: _reactionaryBehaviors){
     if(!rBehavior->IsRunning()
+       && rBehavior->IsRunnable(_robot)
        && rBehavior->ShouldComputationallySwitch(_robot)){
-      if(rBehavior->IsRunnable(_robot)){
-        SwitchToReactionaryBehavior(rBehavior);
-        if(hasSwitched){
-          PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
+          SwitchToReactionaryBehavior(rBehavior);
+          if(hasSwitched){
+            PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
                               "Multiple behaviors switched to in a single basestation tick");
-        }
-        hasSwitched = true;
-      }
+          }
+          hasSwitched = true;
     }
   }
 }

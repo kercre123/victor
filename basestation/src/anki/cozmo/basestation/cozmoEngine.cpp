@@ -376,12 +376,12 @@ Result CozmoEngine::Update(const float currTime_sec)
 #if REMOTE_CONSOLE_ENABLED
 void PrintTimingInfoStats(const ExternalInterface::TimingInfo& timingInfo, const char* name)
 {
-  PRINT_NAMED_INFO("CozmoEngine.LatencyStats", "%s: = %f (%f..%f)", name, timingInfo.avgTime_ms, timingInfo.minTime_ms, timingInfo.maxTime_ms);
+  PRINT_CH_INFO("UiComms", "CozmoEngine.LatencyStats", "%s: = %f (%f..%f)", name, timingInfo.avgTime_ms, timingInfo.minTime_ms, timingInfo.maxTime_ms);
 }
   
 void PrintTimingInfoStats(const ExternalInterface::CurrentTimingInfo& timingInfo, const char* name)
 {
-  PRINT_NAMED_INFO("CozmoEngine.LatencyStats", "%s: = %f (%f..%f) (curr: %f)", name, timingInfo.avgTime_ms, timingInfo.minTime_ms, timingInfo.maxTime_ms, timingInfo.currentTime_ms);
+  PRINT_CH_INFO("UiComms", "CozmoEngine.LatencyStats", "%s: = %f (%f..%f) (curr: %f)", name, timingInfo.avgTime_ms, timingInfo.minTime_ms, timingInfo.maxTime_ms, timingInfo.currentTime_ms);
 }
 CONSOLE_VAR(bool, kLogMessageLatencyOnce, "Network.Stats", false);
 #endif // REMOTE_CONSOLE_ENABLED

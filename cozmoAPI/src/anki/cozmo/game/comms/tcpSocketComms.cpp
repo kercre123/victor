@@ -52,7 +52,7 @@ bool TcpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
   if (portValue.isNumeric())
   {
     const uint32_t port = portValue.asUInt();
-    PRINT_NAMED_INFO("TcpSocketComms.StartListening", "Start Listening on port %u", port);
+    PRINT_CH_INFO("UiComms", "TcpSocketComms.StartListening", "Start Listening on port %u", port);
     _tcpServer->StartListening(port);
   }
   else
@@ -81,7 +81,7 @@ void TcpSocketComms::Update()
   // See if we lost the client since last upate
   if (_hasClient && !_tcpServer->HasClient())
   {
-    PRINT_NAMED_INFO("TcpSocketComms.Update.ClientLost", "Client Connection to Device %d lost", _connectedId);
+    PRINT_CH_INFO("UiComms", "TcpSocketComms.Update.ClientLost", "Client Connection to Device %d lost", _connectedId);
     HandleDisconnect();
   }
   
@@ -92,7 +92,7 @@ void TcpSocketComms::Update()
       _hasClient = _tcpServer->HasClient();
       if (_hasClient)
       {
-        PRINT_NAMED_INFO("TcpSocketComms.Update.ClientAccepted", "Client Connected to server");
+        PRINT_CH_INFO("UiComms", "TcpSocketComms.Update.ClientAccepted", "Client Connected to server");
       }
     }
   }

@@ -1,0 +1,16 @@
+{
+  "behaviorType": "KnockOverCubes",
+  "name": "knockOverCubes",
+  "flatScore": 7.0,
+  "minimumStackHeight": 3,
+  "shouldStreamline": false,
+  "reachForBlockTrigger" : "KnockOverGrabAttempt",
+  "knockOverEyesTrigger" : "KnockOverEyes",
+  "knockOverSuccessTrigger" : "KnockOverSuccess",
+  "knockOverPutDownTrigger" : "PutDownBlockPutDown",
+  "behaviorGroups": [
+      "ShowOff",
+      "FreeplayOne"
+
+  ]
+}

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -421,6 +422,12 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
 const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(const ObservableObject* object,
   const AIBeacon* beacon, const Robot& robot) const
 {
+  // here we would check if stacking is (un)locked
+  const bool canStackCubes = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::StackTwoCubes);
+  if ( !canStackCubes ) {
+    return nullptr;
+  }
+
   // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
   BlockWorldFilter filter;
   filter.SetAllowedFamilies({{ ObjectFamily::Block, ObjectFamily::LightCube }});

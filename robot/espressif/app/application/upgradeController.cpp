@@ -932,6 +932,10 @@ namespace UpgradeController {
         RobotInterface::SendMessage(ack);
         AnkiDebug( 172, "UpgradeController.state", 464, "Wait for reboot", 0);
         phase = OTAT_Wait_For_Reboot;
+        #if DEBUG_OTA
+        os_printf("OTAT Wait for Reboot\r\n");
+        #endif
+        timer = system_get_time() + 100000; // delay for messages to clear
         break;
       }
       case OTAT_Wait_For_Reboot:
@@ -939,6 +943,10 @@ namespace UpgradeController {
         if (i2spiGetRtipBootloaderState() == STATE_NACK)
         {
           phase = OTATR_Set_Evil_A;
+        }
+        else if (system_get_time() > timer)
+        {
+          system_deep_sleep(0);
         }
         else
         {

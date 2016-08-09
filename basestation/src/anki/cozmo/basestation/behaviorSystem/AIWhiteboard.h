@@ -74,18 +74,6 @@ public:
 
   // called when we've searched for a possible object at a given pose, but failed to find it
   void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Cube Stacks
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
-  void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID);
-  void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); _bottomOfStackToAdmire.UnSet(); }
-  
-  bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
-  ObjectID GetStackToAdmireTopBlockID() const { return _topOfStackToAdmire; }
-  ObjectID GetStackToAdmireBottomBlockID() const { return _bottomOfStackToAdmire; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -154,9 +142,6 @@ private:
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
 
-  //
-  ObjectID _topOfStackToAdmire;
-  ObjectID _bottomOfStackToAdmire;
 };
   
 

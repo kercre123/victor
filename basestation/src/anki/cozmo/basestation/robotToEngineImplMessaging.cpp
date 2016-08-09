@@ -488,7 +488,10 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         } else {
           // We expect all objects with the same active ID (across coordinate frames) to have the same
           // object ID
-          ASSERT_NAMED(objID == obj->GetID(), "Robot.HandleActiveObjectConnectionState.MismatchedIDs");
+          ASSERT_NAMED_EVENT(objID == obj->GetID(), "Robot.HandleActiveObjectConnectionState.MismatchedIDs",
+                             "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
+                             objID.GetValue(), payload.objectID, payload.factoryID,
+                             payload.device_type, &obj->GetPose().FindOrigin());
         }
         
         if( ! obj->IsPoseStateKnown() ) {

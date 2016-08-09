@@ -137,7 +137,8 @@ namespace Vision {
     Result GetSerializedEnrollData(std::vector<u8>& serializedEnrollData);
     
     static Result SetSerializedEnrollData(const std::vector<u8>& serializedEnrollData,
-                                          EnrollmentData& newEnrollmentData);
+                                          EnrollmentData& newEnrollmentData,
+                                          FaceID_t& newNextFaceID);
     
     static void CreateAlbumEntryToFaceLUT(const EnrollmentData& enrollmentData,
                                           AlbumEntryToFaceID& albumEntryToFaceID);
@@ -200,7 +201,7 @@ namespace Vision {
     
     FaceID_t       _nextFaceID     = 1; // Skip UnknownFaceID
     AlbumEntryID_t _nextAlbumEntry = 0; 
-    
+
     // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),
     // and how many enrollments we are allowed to add ( <0 means as many as we want)
     bool      _isEnrollmentEnabled = true;

@@ -311,4 +311,6 @@ public interface IRobot : IDisposable {
   void RequestRobotRestoreData();
 
   void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index = 0, byte numTotalBlobs = 1);
+
+  void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false);
 }

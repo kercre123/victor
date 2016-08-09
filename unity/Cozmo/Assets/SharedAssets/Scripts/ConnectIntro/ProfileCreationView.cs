@@ -21,17 +21,22 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _BirthdateLabel;
 
-  private const int kNameFieldCharacterLimit = 14;
+  private const int kNameFieldCharacterLimit = 12;
 
   private void Awake() {
     _NameDoneButton.Initialize(HandleNameDoneButton, "name_done_button", this.DASEventViewName);
     _ContinueButton.Initialize(HandleBirthdateEntryDone, "continue_button", this.DASEventViewName);
     _NameField.onValidateInput += ValidateNameField;
+    _NameField.onValueChanged.AddListener(HandleNameFieldChange);
     _NameField.keyboardType = TouchScreenKeyboardType.Default;
     _NameField.ActivateInputField();
     _NameField.shouldHideMobileInput = true;
-    _BirthDatePicker.date = System.DateTime.Today;
     _BirthDatePicker.maxYear = System.DateTime.Today.Year + 1;
+    _NameDoneButton.Interactable = false;
+  }
+
+  private void Start() {
+    _BirthDatePicker.date = System.DateTime.Now;
     ShowDOBEntry(false);
   }
 
@@ -43,6 +48,15 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
       return charToValidate;
     }
     return '\0';
+  }
+
+  private void HandleNameFieldChange(string input) {
+    if (input.Length > 0) {
+      _NameDoneButton.Interactable = true;
+    }
+    else {
+      _NameDoneButton.Interactable = false;
+    }
   }
 
   private void HandleNameDoneButton() {

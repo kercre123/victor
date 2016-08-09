@@ -27,7 +27,6 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
-CONSOLE_VAR(bool, kRenderNavMeshQuadTreeProcessor, "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

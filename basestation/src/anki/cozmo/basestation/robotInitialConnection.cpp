@@ -22,24 +22,61 @@ namespace Anki {
 namespace Cozmo {
 
 using namespace ExternalInterface;
+using namespace RobotInterface;
 
-RobotInitialConnection::RobotInitialConnection(RobotID_t id, RobotInterface::MessageHandler* messageHandler,
+RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* messageHandler,
     IExternalInterface* externalInterface, uint32_t fwVersion, uint32_t fwTime)
 : _id(id)
 , _notified(false)
 , _externalInterface(externalInterface)
 , _fwVersion(fwVersion)
 , _fwTime(fwTime)
+, _validFirmware(true) // innocent until proven guilty
 {
   if (_externalInterface == nullptr) {
     return;
   }
 
   auto handleFactoryFunc = std::bind(&RobotInitialConnection::HandleFactoryFirmware, this, std::placeholders::_1);
-  AddSignalHandle(messageHandler->Subscribe(_id, RobotInterface::RobotToEngineTag::factoryFirmwareVersion, handleFactoryFunc));
+  AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::factoryFirmwareVersion, handleFactoryFunc));
 
   auto handleFirmwareFunc = std::bind(&RobotInitialConnection::HandleFirmwareVersion, this, std::placeholders::_1);
-  AddSignalHandle(messageHandler->Subscribe(_id, RobotInterface::RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
+  AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
+}
+
+bool RobotInitialConnection::ShouldFilterMessage(RobotToEngineTag messageTag) const
+{
+  if (_validFirmware) {
+    return false;
+  }
+
+  switch (messageTag) {
+    // these messages are ok on outdated firmware
+    case RobotToEngineTag::otaAck:
+    case RobotToEngineTag::robotAvailable:
+    case RobotToEngineTag::factoryFirmwareVersion:
+    case RobotToEngineTag::firmwareVersion:
+      return false;
+
+    default:
+      return true;
+  }
+}
+
+bool RobotInitialConnection::ShouldFilterMessage(EngineToRobotTag messageTag) const
+{
+  if (_validFirmware) {
+    return false;
+  }
+
+  switch (messageTag) {
+      // these messages are ok on outdated firmware
+    case EngineToRobotTag::otaWrite:
+      return false;
+
+    default:
+      return true;
+  }
 }
 
 bool RobotInitialConnection::HandleDisconnect()
@@ -50,12 +87,13 @@ bool RobotInitialConnection::HandleDisconnect()
 
   PRINT_NAMED_INFO("RobotInitialConnection.HandleDisconnect", "robot connection failed");
 
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, RobotConnectionResult::ConnectionFailure}});
-  OnNotified();
+  const auto result = RobotConnectionResult::ConnectionFailure;
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
+  OnNotified(result);
   return true;
 }
 
-void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&)
+void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotToEngine>&)
 {
   if (_notified || _externalInterface == nullptr) {
     return;
@@ -63,11 +101,12 @@ void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotInterfac
 
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFactoryFirmware", "robot has factory firmware");
 
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, RobotConnectionResult::OutdatedFirmware}});
-  OnNotified();
+  const auto result = RobotConnectionResult::OutdatedFirmware;
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
+  OnNotified(result);
 }
 
-void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine>& message)
 {
   if (_notified || _externalInterface == nullptr) {
     return;
@@ -114,11 +153,19 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotInterfac
   }
 
   _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
-  OnNotified();
+  OnNotified(result);
 }
 
-void RobotInitialConnection::OnNotified()
+void RobotInitialConnection::OnNotified(RobotConnectionResult result)
 {
+  switch (result) {
+    case RobotConnectionResult::OutdatedFirmware:
+    case RobotConnectionResult::OutdatedApp:
+      _validFirmware = false;
+      break;
+    default:
+      break;
+  }
   _notified = true;
   ClearSignalHandles();
 }

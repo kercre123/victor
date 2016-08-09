@@ -53,6 +53,7 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.EnableContinueButton(isUnlocked);
     if (isUnlocked) {
       _Game.SharedMinigameView.HideLockedBackground();
+      _Game.SharedMinigameView.ShowMiddleBackground();
       _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
         _Game.SharedMinigameView.ShowWideAnimationSlide(_SelectedDifficultyData.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
                                                         animationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
@@ -60,6 +61,7 @@ public class SelectDifficultyState : State {
     }
     else {
       _Game.SharedMinigameView.ShowWideSlideWithText(data.LockedDifficultyDescription.Key, null);
+      _Game.SharedMinigameView.HideMiddleBackground();
       _Game.SharedMinigameView.ShowLockedBackground();
     }
   }

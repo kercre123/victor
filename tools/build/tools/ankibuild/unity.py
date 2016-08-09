@@ -120,6 +120,8 @@ class UnityBuildConfig(object):
         self.script_engine = 'mono2x'
         self.script_debugging = False
         self.script_profiling = False
+        self.asset_destination_path = None
+        self.build_type = 'PlayerAndAssets'
         self.verbose = False
         self.unity_exe = UnityBuildConfig.default_unity_exe()
         self.destination_file = None
@@ -142,6 +144,11 @@ class UnityBuildConfig(object):
 
         parser.add_argument('--sdk', action="store", choices=('iphoneos', 'iphonesimulator'), default="iphoneos")
         parser.add_argument('--script-engine', action="store", choices=('mono2x', 'il2cpp'), default="mono2x")
+        parser.add_argument('--build-type', action="store", choices=('PlayerAndAssets', 'OnlyAssets', 'OnlyPlayer'),
+                            default="PlayerAndAssets", dest='build_type')
+        parser.add_argument('--asset-destination-path', action="store",
+                            default="Assets/StreamingAssets/cozmo_resources", dest='asset_destination_path',
+                            help="where to copy assets to")
         parser.add_argument('--script-debugging', action="store_true", default=False,
                         help="Enable Mono script debugging in UnityEngine")
         parser.add_argument('--script-profiling', action="store_true", default=False,
@@ -288,6 +295,8 @@ class UnityBuild(object):
         message += " --sdk " + self.build_config.sdk
         message += " --build-path " + self.build_config.build_dir
         message += " --script-engine " + self.build_config.script_engine
+        message += " --asset-path " + self.build_config.asset_destination_path
+        message += " --build-type " + self.build_config.build_type
 
         logFilePath = os.path.expanduser('~/Library/Logs/Unity/Editor.log')
         handleUnityLog = open(logFilePath, 'r')
@@ -345,6 +354,9 @@ class UnityBuild(object):
         procArgs.extend(["--sdk", self.build_config.sdk])
         procArgs.extend(["--build-path", self.build_config.build_dir])
         procArgs.extend(["--script-engine", self.build_config.script_engine])
+        procArgs.extend(["--asset-path ", self.build_config.asset_destination_path])
+        procArgs.extend(["--build-type ", self.build_config.build_type])
+
         if self.build_config.script_debugging:
             procArgs.extend(["--debug"])
         # script profiling is believed to work only when script debugging is enabled (pauley)
@@ -387,6 +399,10 @@ class UnityBuild(object):
         self.parse_log_file(logFilePath)
 
         if result != 0:
+            return result
+
+        # if we are only copying assets do not do other checks. just return result.
+        if self.build_config.build_type == "OnlyAssets":
             return result
 
         # Make sure a Build directory was created, otherwise fail the build

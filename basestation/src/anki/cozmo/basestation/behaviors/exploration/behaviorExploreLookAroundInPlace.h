@@ -19,7 +19,6 @@
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 #include <list>
 #include <set>

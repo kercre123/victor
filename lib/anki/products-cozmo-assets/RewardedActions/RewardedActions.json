@@ -10,6 +10,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -50,7 +51,8 @@
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
-          "TargetScore": 0,
+          "TargetScore": 1,
+          "LessThan": true,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -283,6 +285,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -323,7 +326,8 @@
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
-          "TargetScore": 0,
+          "TargetScore": 1,
+          "LessThan": true,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,

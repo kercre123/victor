@@ -1582,13 +1582,19 @@ namespace Vision {
     // were not taken by keepID above).
     for(auto & albumEntryPair : mergeIter->second.GetAlbumEntries())
     {
-      _albumEntryToFaceID.erase(albumEntryPair.first);
-      OkaoResult okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntryPair.first);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceRecognizer.MergeFaces.ClearUserFailed",
-                            "AlbumEntry:%d from mergeID:%d",
-                            albumEntryPair.first, mergeID);
-        return RESULT_FAIL;
+      // If this entry is not now claimed by keepID, we should clear it because we're about
+      // to clear its album entries. Note that we must do this before calling RemoveUser
+      // below because it would otherwise undo the reassignment to keepID above
+      if(_albumEntryToFaceID.at(albumEntryPair.first) == mergeID)
+      {
+        _albumEntryToFaceID.erase(albumEntryPair.first);
+        OkaoResult okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntryPair.first);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_WARNING("FaceRecognizer.MergeFaces.ClearUserFailed",
+                              "AlbumEntry:%d from mergeID:%d",
+                              albumEntryPair.first, mergeID);
+          return RESULT_FAIL;
+        }
       }
     }
     mergeIter->second.ClearAlbumEntries();
@@ -1924,14 +1930,20 @@ namespace Vision {
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedData.SetSerializedAlbumFail", "");
     } else {
-      lastResult = SetSerializedEnrollData(enrollData, loadedEnrollmentData);
+      FaceID_t loadedNextFaceID = UnknownFaceID;
+      lastResult = SetSerializedEnrollData(enrollData, loadedEnrollmentData, loadedNextFaceID);
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedData.SetSerializedEnrollDataFail", "");
       } else {
         
         lastResult = UseLoadedAlbumAndEnrollData(loadedAlbum, loadedEnrollmentData);
 
-        if(RESULT_OK == lastResult) {
+        if(RESULT_OK == lastResult)
+        {
+          PRINT_CH_INFO("FaceRecognizer", "SetSerializedData.NewNextFaceID",
+                        "Setting next FaceID=%d", loadedNextFaceID);
+          
+          _nextFaceID = loadedNextFaceID;
           
           auto const nowTime = std::chrono::system_clock::now();
           
@@ -2088,6 +2100,16 @@ namespace Vision {
       ASSERT_NAMED( ((u32*)serializedEnrollData.data())[0] == ((u32*)VersionPrefix)[0] ,
                    "FaceRecognizer.GetSerialzedEnrollData.AddingVersionPrefixFailed");
       
+      PRINT_CH_INFO("FaceRecognizer", "GetSerializedEnrollData.AddedVersionData",
+                    "Added to front: %04X%04X",
+                    ((u16*)serializedEnrollData.data())[0],
+                    ((u16*)serializedEnrollData.data())[1]);
+      
+      // Put the next faceID in first, so we can start there next time and avoid
+      // re-using IDs, since that is better for DAS
+      const u8* faceIdU8 = (u8*)(&_nextFaceID);
+      std::copy(faceIdU8, faceIdU8+sizeof(FaceID_t), std::back_inserter(serializedEnrollData));
+      
       for(auto & enrollData : _enrollmentData)
       {
         // Skip session-only entries
@@ -2101,13 +2123,15 @@ namespace Vision {
   }
   
   Result FaceRecognizer::SetSerializedEnrollData(const std::vector<u8>& serializedEnrollData,
-                                                 EnrollmentData& newEnrollmentData)
+                                                 EnrollmentData& newEnrollmentData,
+                                                 FaceID_t& newNextFaceID)
   {
     // Check for correct version prefix
-    if(serializedEnrollData.size() < sizeof(VersionPrefix)) {
+    const size_t kMinSize = sizeof(VersionPrefix) + sizeof(FaceID_t);
+    if(serializedEnrollData.size() < kMinSize) {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedEnrollData.TooShortForVersion",
-                          "Data is not even %zu bytes long to read version",
-                          sizeof(VersionPrefix));
+                          "Data is not even %zu bytes long to read version and nextFaceID",
+                          kMinSize);
       return RESULT_FAIL;
     }
     
@@ -2117,9 +2141,10 @@ namespace Vision {
     if(incomingVersion != correctVersion)
     {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedEnrollData.VersionPrefixMismatch",
-                          "Expected: %04X%04X, Incoming: %04X%04x",
+                          "Expected: %04X%04X, Incoming: %04X%04X",
                           VersionPrefix[0], VersionPrefix[1],
-                          serializedEnrollData[0], serializedEnrollData[1]);
+                          ((u16*)serializedEnrollData.data())[0],
+                          ((u16*)serializedEnrollData.data())[1]);
       
       // TODO: Provide helpers to "upgrade" old versions?
       
@@ -2132,6 +2157,12 @@ namespace Vision {
     EnrolledFaceEntry entry;
     
     size_t startIndex = sizeof(VersionPrefix); // start after the prefix
+    
+    // Grab the starting faceID from the start of the buffer
+    newNextFaceID = ((FaceID_t*)(serializedEnrollData.data()+startIndex))[0];
+    
+    startIndex += sizeof(FaceID_t);
+    
     while(startIndex < serializedEnrollData.size()-3) // "-3" to handle an extra bytes of padding
     {
       Result lastResult = entry.Deserialize(serializedEnrollData, startIndex);

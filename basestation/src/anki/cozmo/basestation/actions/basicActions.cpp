@@ -399,13 +399,14 @@ namespace Anki {
   
 #pragma mark ---- DriveStraightAction ----
     
-    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps)
+    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation)
     : IAction(robot,
               "DriveStraight",
               RobotActionType::DRIVE_STRAIGHT,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
+    , _shouldPlayDrivingAnimation(shouldPlayAnimation)
     {
       if(_speed_mmps < 0.f) {
         PRINT_NAMED_WARNING("DriveStraightAction.Constructor.NegativeSpeed",
@@ -1055,7 +1056,7 @@ namespace Anki {
     ActionResult TurnTowardsObjectAction::Init()
     {
 
-      if( nullptr == _objectPtr ) {
+      if( _objectID.IsSet() ) {
         _objectPtr = _robot.GetBlockWorld().GetObjectByID(_objectID);
         if(_objectPtr == nullptr) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
@@ -1068,6 +1069,10 @@ namespace Anki {
       // was originally set, and then _objectPtr was set the first time init was called, and they are both
       // valid at this point. This note is just here so no one tries to add an assert against like that (like
       // I did the first time)
+      if( nullptr == _objectPtr ) {
+        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.NullObject", "don't have a valid object ptr or ID");
+        return ActionResult::FAILURE_ABORT;
+      }
       
       Pose3d objectPoseWrtRobot;
       if(_whichCode == Vision::Marker::ANY_CODE) {

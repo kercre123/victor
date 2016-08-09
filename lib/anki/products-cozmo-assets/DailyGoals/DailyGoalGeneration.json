@@ -34,6 +34,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 5,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -44,6 +45,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -87,6 +89,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 5,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -97,6 +100,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 0,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -440,7 +444,7 @@
       "Id": 21
     },
     {
-      "TitleKey": "dailyGoal.title.PlayKeepawayTwice",
+      "TitleKey": "dailyGoal.title.PlayKeepaway",
       "RewardType": "experience",
       "PointsRewarded": 20,
       "Target": 2,
@@ -517,7 +521,7 @@
     {
       "TitleKey": "dailyGoal.title.PlaySpeedTapTwice",
       "RewardType": "experience",
-      "PointsRewarded": 30,
+      "PointsRewarded": 20,
       "Target": 2,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
@@ -581,6 +585,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -591,6 +596,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 5,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -634,6 +640,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 0,
+          "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,

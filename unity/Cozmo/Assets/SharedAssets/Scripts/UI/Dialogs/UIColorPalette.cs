@@ -60,6 +60,14 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Color _GameSetupColor;
+
+      public static Color GameSetupColor {
+        get { return Instance._GameSetupColor; }
+      }
+
+
+      [SerializeField]
       private Color _GameBackgroundColor;
 
       public static Color GameBackgroundColor {

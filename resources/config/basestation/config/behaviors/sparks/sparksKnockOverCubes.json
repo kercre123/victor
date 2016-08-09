@@ -1,0 +1,13 @@
+{
+  "behaviorType": "KnockOverCubes",
+  "name": "sparksKnockOverCubes",
+  "flatScore": 7.0,
+  "minimumStackHeight": 2,
+  "shouldStreamline": true,
+  "knockOverEyesTrigger": "KnockOverEyes",
+  "knockOverSuccessTrigger": "KnockOverSuccess",
+  "knockOverPutDownTrigger": "PutDownBlockPutDown",
+  "behaviorGroups": [
+      "SparksKnockOverCubes"
+  ]
+}

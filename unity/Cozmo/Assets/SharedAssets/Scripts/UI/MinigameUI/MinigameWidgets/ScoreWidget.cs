@@ -19,10 +19,6 @@ namespace Cozmo {
           _AnimationXOffset = value;
           bool isOnLeft = (_AnimationXOffset < 0);
 
-          // Widget on the left; use the left circuit
-          _LeftCircuitry.gameObject.SetActive(isOnLeft);
-          _RightCircuitry.gameObject.SetActive(!isOnLeft);
-
           // Flip background x scale if on left
           if (isOnLeft) {
             _Background.gameObject.transform.localScale = new Vector3(-1, 1, 1);
@@ -35,13 +31,16 @@ namespace Cozmo {
       private Image _PortraitImage;
 
       [SerializeField]
-      private LayoutElement _ScoreContainer;
+      private GameObject _ScoreContainer;
+
+      [SerializeField]
+      private AnkiTextLabel _ScoreNameLabel;
 
       [SerializeField]
       private AnkiTextLabel _ScoreCountLabel;
 
       [SerializeField]
-      private LayoutElement _RoundContainer;
+      private GameObject _RoundContainer;
 
       [SerializeField]
       private SegmentedBar _RoundCountBar;
@@ -53,17 +52,11 @@ namespace Cozmo {
       private Canvas _WinnerCanvas;
 
       [SerializeField]
-      private Image _LeftCircuitry;
-
-      [SerializeField]
-      private Image _RightCircuitry;
-
-      [SerializeField]
       private Image _Background;
 
       public int MaxRounds {
         set {
-          _RoundContainer.gameObject.SetActive(true);
+          _RoundContainer.SetActive(true);
           _RoundCountBar.SetMaximumSegments(value);
           _RoundCountBar.SetCurrentNumSegments(0);
         }
@@ -77,7 +70,7 @@ namespace Cozmo {
 
       public int Score {
         set {
-          _ScoreContainer.gameObject.SetActive(true);
+          _ScoreContainer.SetActive(true);
           _ScoreCountLabel.text = Localization.GetNumber(value);
         }
       }
@@ -91,6 +84,20 @@ namespace Cozmo {
       public bool IsWinner {
         set {
           _WinnerContainer.gameObject.SetActive(value);
+          _ScoreNameLabel.gameObject.SetActive(!value);
+        }
+      }
+
+      public bool IsPlayer {
+        set {
+          string locKey = "";
+          if (value) {
+            locKey = LocalizationKeys.kMinigameTextScorePlayer;
+          }
+          else {
+            locKey = LocalizationKeys.kMinigameTextScoreCozmo;
+          }
+          _ScoreNameLabel.text = Localization.Get(locKey); ;
         }
       }
 
@@ -101,8 +108,8 @@ namespace Cozmo {
       }
 
       private void Awake() {
-        _ScoreContainer.gameObject.SetActive(false);
-        _RoundContainer.gameObject.SetActive(false);
+        _ScoreContainer.SetActive(false);
+        _RoundContainer.SetActive(false);
         _WinnerContainer.gameObject.SetActive(false);
       }
 

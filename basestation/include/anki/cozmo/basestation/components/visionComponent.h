@@ -289,6 +289,10 @@ struct DockingErrorSignal;
     TimeStamp_t _processingPeriod_ms = 0;  // How fast we are processing frames
     TimeStamp_t _framePeriod_ms = 0;       // How fast we are receiving frames
     
+    ImageQuality _lastImageQuality = ImageQuality::Good;
+    TimeStamp_t  _currentQualityBeginTime_ms = 0;
+    TimeStamp_t  _waitForNextAlert_ms = 0;
+    
     VisionPoseData   _currentPoseData;
     VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
@@ -328,6 +332,8 @@ struct DockingErrorSignal;
     Result UpdateToolCode(const VisionProcessingResult& result);
     
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
+    
+    Result UpdateImageQuality(const VisionProcessingResult& procResult);
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest

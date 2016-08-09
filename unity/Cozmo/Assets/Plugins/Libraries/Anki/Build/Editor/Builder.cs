@@ -18,12 +18,12 @@ namespace Anki {
       public const string _kProjectName = "Cozmo";
       private const string _kBuildOuputFolder = "../../build/";
 
+#if UNITY_EDITOR
       private static string[] _kFileExclusions = {
         ".meta",
         ".DS_Store",
       };
 
-      #if UNITY_EDITOR
       private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
 
       [MenuItem(_kSimulationMode)]
@@ -36,7 +36,7 @@ namespace Anki {
         Menu.SetChecked(_kSimulationMode, Assets.AssetBundleManager.SimulateAssetBundleInEditor);
         return true;
       }
-      #endif
+#endif
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Find Duplicate Assets in Bundles")]
       public static void FindDuplicateAssetsInBundles() {
@@ -163,79 +163,85 @@ namespace Anki {
       [MenuItem(Build.Builder._kProjectName + "/Build/Copy Engine Assets to StreamingAssets")]
       public static string CopyEngineAssetsToStreamingAssets() {
         try {
-          // Delete and create the directory to make sure we don't leave stale assets
-          FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources");
-          Directory.CreateDirectory("Assets/StreamingAssets/cozmo_resources");
-
-          // Copy engine resources
-          // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
-          // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
-          FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources/assets/.svn");
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
-            "Assets/StreamingAssets/cozmo_resources/assets/animationGroupMaps");
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
-            "Assets/StreamingAssets/cozmo_resources/assets/DailyGoals");
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
-            "Assets/StreamingAssets/cozmo_resources/assets/RewardedActions");
-
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", "Assets/StreamingAssets/cozmo_resources/config");
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", "Assets/StreamingAssets/cozmo_resources/pocketsphinx");
-
-          // Delete compressed animation files that we don't need
-          string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
-          foreach (string tf in tarFiles) {
-            File.Delete(tf);
-          }
-
-          // Copy audio banks from a specific folder depending on the platform
-          string soundFolder;
-          bool includeHashFile = false;
-          switch (EditorUserBuildSettings.activeBuildTarget) {
-          case BuildTarget.Android:
-            soundFolder = "Android";
-            includeHashFile = true;
-            break;
-
-          case BuildTarget.iOS:
-            soundFolder = "iOS";
-            break;
-
-          case BuildTarget.StandaloneOSXIntel:
-          case BuildTarget.StandaloneOSXIntel64:
-          case BuildTarget.StandaloneOSXUniversal:
-            soundFolder = "Mac";
-            break;
-
-          default:
-            throw new NotImplementedException();
-          }
-          FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
-
-          if (includeHashFile) {
-            Debug.Log("Starting hash...");
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            byte[] filesHash = GetDirectoryMD5Hash("Assets/StreamingAssets");
-            StringBuilder hashString = new StringBuilder();
-            Array.ForEach(filesHash, data => {
-              hashString.Append(data.ToString("x2"));
-            });
-            sw.Stop();
-            Debug.Log("Hash value is: " + hashString + ", time: " + sw.Elapsed.TotalSeconds);
-
-            var fs = File.Create("Assets/StreamingAssets/cozmo_resources/allAssetHash.txt");
-            var hashBytes = Encoding.UTF8.GetBytes(hashString.ToString());
-            fs.Write(hashBytes, 0, hashBytes.Length);
-            fs.Close();
-          }
-
-          Debug.Log("Engine assets copied to StreamingAssets");
+          CopyEngineAssets("Assets/StreamingAssets/cozmo_resources", EditorUserBuildSettings.activeBuildTarget);
           return null;
         }
         catch (Exception e) {
           Debug.LogException(e);
           return e.ToString();
         }
+      }
+
+      public static void CopyEngineAssets(string assetFolder, BuildTarget buildTarget) {
+        // Delete and create the directory to make sure we don't leave stale assets
+        FileUtil.DeleteFileOrDirectory(assetFolder);
+        Directory.CreateDirectory(assetFolder);
+
+        // Copy engine resources
+        // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
+        // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", assetFolder + "/assets");
+        FileUtil.DeleteFileOrDirectory(assetFolder + "/assets/.svn");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
+                                                   assetFolder + "/assets/animationGroupMaps");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
+                                                   assetFolder + "/assets/DailyGoals");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
+                                                   assetFolder + "/assets/RewardedActions");
+
+
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", assetFolder + "/pocketsphinx");
+
+        // Delete compressed animation files that we don't need
+        string[] tarFiles = Directory.GetFiles(assetFolder + "/assets/animations", "*.tar", SearchOption.AllDirectories);
+        foreach (string tf in tarFiles) {
+          File.Delete(tf);
+        }
+
+        // Copy audio banks from a specific folder depending on the platform
+        string soundFolder;
+        bool includeHashFile = false;
+        switch (buildTarget) {
+        case BuildTarget.Android:
+          soundFolder = "Android";
+          includeHashFile = true;
+          break;
+
+        case BuildTarget.iOS:
+          soundFolder = "iOS";
+          break;
+
+        case BuildTarget.StandaloneOSXIntel:
+        case BuildTarget.StandaloneOSXIntel64:
+        case BuildTarget.StandaloneOSXUniversal:
+          soundFolder = "Mac";
+          break;
+
+        default:
+          throw new NotImplementedException();
+        }
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, assetFolder + "/sound");
+
+        if (includeHashFile) {
+          Debug.Log("Starting hash...");
+          var sw = System.Diagnostics.Stopwatch.StartNew();
+          byte[] filesHash = GetDirectoryMD5Hash("Assets/StreamingAssets");
+          StringBuilder hashString = new StringBuilder();
+          Array.ForEach(filesHash, data => {
+            hashString.Append(data.ToString("x2"));
+          });
+          sw.Stop();
+          Debug.Log("Hash value is: " + hashString + ", time: " + sw.Elapsed.TotalSeconds);
+
+          var fs = File.Create("Assets/StreamingAssets/cozmo_resources/allAssetHash.txt");
+          var hashBytes = Encoding.UTF8.GetBytes(hashString.ToString());
+          fs.Write(hashBytes, 0, hashBytes.Length);
+          fs.Close();
+        }
+
+
+        Debug.Log("CopyEngineAssets Engine assets copied to " + assetFolder);
       }
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles %#a")]
@@ -270,48 +276,50 @@ namespace Anki {
         int buildNumber = 1;
         bool enableDebugging = false;
         bool connectWithProfiler = false;
-
+        string assetFolder = null;
+        string buildType = null;
         int i = 0;
 
         while (i < argv.Length) {
           string arg = argv[i++];
-          switch (arg) {
-          case "--platform":
-            {
+          switch (arg.ToLower()) {
+          case "--platform": {
               platform = argv[i++];
               break;
             }
-          case "--config":
-            {
+          case "--config": {
               config = argv[i++];
               break;
             }
-          case "--build-number":
-            {
+          case "--build-number": {
               if (!Int32.TryParse(argv[i++], out buildNumber)) {
                 buildNumber = 1;
               }
               PlayerSettings.Android.bundleVersionCode = buildNumber;
               break;
             }
-          case "--build-path":
-            {
+          case "--build-path": {
               outputFolder = argv[i++];
               break;
             }
-          case "--debug":
-            {
+          case "--debug": {
               enableDebugging = true;
               break;
             }
-          case "--sdk":
-            {
+          case "--sdk": {
               sdk = argv[i++];
               break;
             }
-          case "--profile":
-            {
+          case "--profile": {
               connectWithProfiler = true;
+              break;
+            }
+          case "--asset-path": {
+              assetFolder = argv[i++];
+              break;
+            }
+          case "--build-type": {
+              buildType = argv[i++];
               break;
             }
           default:
@@ -319,26 +327,25 @@ namespace Anki {
           }
         }
 
-        DAS.Debug(null, String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, outputFolder, enableDebugging));
+        Debug.Log(
+          String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3} | assetPath: {4} | buildType: {5} |",
+                        platform, config, outputFolder, enableDebugging, assetFolder, buildType));
 
         iOSSdkVersion saveIOSSDKVersion = PlayerSettings.iOS.sdkVersion;
         ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
 
         BuildTarget buildTarget = BuildTarget.StandaloneOSXIntel64;
-        switch (platform) {
-        case "android":
-          {
+        switch (platform.ToLower()) {
+        case "android": {
             buildTarget = BuildTarget.Android;
             break;
           }
         case "mac":
-        case "osx":
-          {
+        case "osx": {
             buildTarget = BuildTarget.StandaloneOSXIntel64;
             break;
           }
-        case "ios":
-          {
+        case "ios": {
             buildTarget = BuildTarget.iOS;
             if (sdk == "iphoneos") {
               PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
@@ -350,10 +357,14 @@ namespace Anki {
           }
         }
 
+        if (buildType == null) {
+          buildType = "PlayerAndAssets";
+        }
+
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
-        bool isDebugBuild = config == "debug" || config == "Debug";
+        bool isDebugBuild = config.ToLower() == "debug";
         BuildOptions buildOptions = GetBuildOptions(buildTarget, isDebugBuild, enableDebugging, connectWithProfiler);
 
         ConfigurePlayerSettings(buildTarget, config);
@@ -366,8 +377,21 @@ namespace Anki {
         // may not be an actual error http://answers.unity3d.com/questions/63184/error-using-importassetoptionsforcesynchronousimpo.html
         AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
+        // copy assets
+        if (assetFolder != null && buildType.ToLower() != "onlyplayer") {
+          CopyEngineAssets(assetFolder, buildTarget);
+          GenerateResourcesManifest();
+        }
+
         // run build
-        string result = BuildPlayerInternal(outputFolder, buildTarget, buildOptions);
+        string result;
+        if (buildType.ToLower() != "onlyassets") {
+          result = BuildPlayerInternal(outputFolder, buildTarget, buildOptions);
+        }
+        else {
+          // empty string means success
+          result = "";
+        }
 
         // restore player settings
         PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
@@ -413,15 +437,6 @@ namespace Anki {
           return result;
         }
 
-        // Copy engine assets
-        result = CopyEngineAssetsToStreamingAssets();
-        if (!string.IsNullOrEmpty(result)) {
-          return result;
-        }
-
-        // Generate the manifest
-        GenerateResourcesManifest();
-
         // Refresh the asset DB so Unity picks up the new files
         AssetDatabase.Refresh();
 
@@ -461,16 +476,14 @@ namespace Anki {
 
         switch (config) {
         case "debug":
-        case "Debug":
-          {
+        case "Debug": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
           }
           break;
         case "profile":
         case "Profile":
         case "release":
-        case "Release":
-          {
+        case "Release": {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception
             // in the DOTween library.
@@ -538,8 +551,7 @@ namespace Anki {
       private static string GetOutputFolder(BuildTarget buildTarget) {
         switch (buildTarget) {
         case BuildTarget.Android:
-        case BuildTarget.iOS:
-          {
+        case BuildTarget.iOS: {
             string configuration = Debug.isDebugBuild ? "Debug" : "Release";
             string platformName = Assets.AssetBundleManager.GetPlatformName(buildTarget);
             string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-" + platformName;

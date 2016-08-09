@@ -294,6 +294,8 @@ Result IBehavior::Init()
 
 Result IBehavior::Resume()
 {
+  PRINT_CH_INFO("Behaviors", (GetName() + ".Resume").c_str(), "Resuming...");
+  
   _isRunning = true;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = ResumeInternal(_robot);

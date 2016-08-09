@@ -678,7 +678,8 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::driveStraight:
       return new DriveStraightAction(robot, actionUnion.Get_driveStraight().dist_mm,
-                                     actionUnion.Get_driveStraight().speed_mmps);
+                                     actionUnion.Get_driveStraight().speed_mmps,
+                                     actionUnion.Get_driveStraight().shouldPlayAnimation);
       
     case RobotActionUnionTag::panAndTilt:
       return new PanAndTiltAction(robot, Radians(actionUnion.Get_panAndTilt().bodyPan),
@@ -759,13 +760,6 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   // If we don't have a valid robot there's nothing to do
   if (nullptr == robot)
   {
-    return;
-  }
-  
-  if(_ignoreExternalActions)
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.QueueSingleAction",
-                     "Ignoring QueueSingleAction message while external actions are disabled");
     return;
   }
   

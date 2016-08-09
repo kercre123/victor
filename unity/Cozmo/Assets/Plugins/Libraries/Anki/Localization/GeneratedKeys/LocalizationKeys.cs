@@ -60,6 +60,8 @@ public static class LocalizationKeys {
   public const string kConnectivityUpdateApp = "connectivity.updateApp";
   public const string kConnectivityPullTabsTitle = "connectivity.pullTabsTitle";
   public const string kConnectivityEnterDOB = "connectivity.enterDOB";
+  public const string kConnectivityEnterName = "connectivity.enterName";
+  public const string kConnectivityPairingDesc = "connectivity.pairingDesc";
 
   #endregion
 
@@ -189,6 +191,8 @@ public static class LocalizationKeys {
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameTextWinner = "minigame.text.winner";
   public const string kMinigameTextScore = "minigame.text.score";
+  public const string kMinigameTextScorePlayer = "minigame.text.score.player";
+  public const string kMinigameTextScoreCozmo = "minigame.text.score.cozmo";
   public const string kMinigameLabelShowCubesSingular = "minigame.label.showCubes.singular";
   public const string kMinigameLabelShowCubesPlural = "minigame.label.showCubes.plural";
   public const string kMinigameLabelWaitingForCubesSingular = "minigame.label.waitingForCubes.singular";
@@ -370,6 +374,8 @@ public static class LocalizationKeys {
   public const string kRewardCollectInstruction = "reward.collect.Instruction";
   public const string kRewardDescriptionNewDifficulty = "reward.description.NewDifficulty";
   public const string kRewardDescriptionStartNewDay = "reward.description.StartNewDay";
+  public const string kRewardDescriptionSkillUp = "reward.description.SkillUp";
+  public const string kRewardDescriptionSkillDown = "reward.description.SkillDown";
 
   #endregion
 
@@ -422,7 +428,11 @@ public static class LocalizationKeys {
   public const string kLabelEmptyWithArg = "label.emptyWithArg";
   public const string kTitleSoundCheck = "title.soundCheck";
   public const string kButtonGetACozmo = "button.GetACozmo";
+  public const string kButtonStart = "button.start";
+  public const string kSoundcheckDescription = "soundcheck.description";
   public const string kLabelAvailable = "label.available";
+  public const string kButtonReplay = "button.replay";
+  public const string kLabelTo = "label.to";
 
   #endregion
 
@@ -483,6 +493,7 @@ public static class LocalizationKeys {
   public const string kWifiStringsInstructionsSlide2 = "wifiStrings.Instructions.Slide2";
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
   public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
+  public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";
 
   #endregion
 }

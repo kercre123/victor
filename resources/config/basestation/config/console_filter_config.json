@@ -15,6 +15,7 @@
     [
       { "channel": "Unnamed" ,        "enabled": false }, // Unnamed is currently the default channel
       { "channel": "CoreTech",        "enabled": false },
+      { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
       { "channel": "CpuProfiler",     "enabled": true  },
       { "channel": "Keyboard",        "enabled": true },
       { "channel": "Network",         "enabled": false },
@@ -27,7 +28,8 @@
       { "channel": "Behaviors",       "enabled": false },
       { "channel": "AIWhiteboard",    "enabled": false },      
       { "channel": "Audio_WwiseLog",  "enabled": false },
-      { "channel": "FaceRecognizer",  "enabled": false }
+      { "channel": "FaceRecognizer",  "enabled": false },
+      { "channel": "UiComms",         "enabled": false }
 
     ],
     "levels":

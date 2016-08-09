@@ -95,7 +95,6 @@ GameObject:
   - 224: {fileID: 22483390}
   - 222: {fileID: 22231844}
   - 114: {fileID: 11454320}
-  - 114: {fileID: 11435988}
   m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
@@ -147,39 +146,6 @@ MonoBehaviour:
   _NormalColor: {r: 1, g: 1, b: 1, a: 1}
   _DecreasingColor: {r: 1, g: 1, b: 1, a: 1}
   _IncreasingColor: {r: 1, g: 1, b: 1, a: 1}
---- !u!114 &11435988
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 182116}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b45f80f51e6d444ca9cef341fa52af48, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _DASEventViewName: connection_flow_background
-  _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  DimBackground: 0
-  _CompletedStateSprite: {fileID: 21300000, guid: d8970b815c18d4cb2a6493cc98d563d8,
-    type: 3}
-  _CompletedStateBackground: {fileID: 21300000, guid: 25ddd243a4e334033a3167e8f0e43f1e,
-    type: 3}
-  _InProgressSprite: {fileID: 0}
-  _InProgressBackground: {fileID: 21300000, guid: 09bd777b579514ddbbfa221f8b156b88,
-    type: 3}
-  _FailedSprite: {fileID: 21300000, guid: c4e2d14cea3094481a04bf0883054258, type: 3}
-  _FailedBackground: {fileID: 0}
-  _StateImages:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  _StateBackgrounds:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
 --- !u!114 &11445244
 MonoBehaviour:
   m_ObjectHideFlags: 1

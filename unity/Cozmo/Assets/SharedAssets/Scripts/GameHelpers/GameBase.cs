@@ -12,7 +12,7 @@ using Anki.Assets;
 public abstract class GameBase : MonoBehaviour {
 
   private const float kWaitForPickupOrPlaceTimeout_sec = 30f;
-  private const float kChallengeCompleteScoreboardDelay = 5f;
+  private const float kChallengeCompleteScoreboardDelay = 10f;
   private float _AutoAdvanceTimestamp = -1f;
 
   private System.Guid? _GameUUID;
@@ -135,6 +135,7 @@ public abstract class GameBase : MonoBehaviour {
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
     RewardedActionManager.Instance.PendingActionRewards.Clear();
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;
+    RewardedActionManager.Instance.NewSkillChange = 0;
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     SetEnableReactionaryBehaviorsForGame(false);
@@ -173,7 +174,6 @@ public abstract class GameBase : MonoBehaviour {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
-    data.LoadPrefabData((ChallengePrefabData prefabData) => titleWidget.Icon = prefabData.ChallengeIconPlainStyle);
     newView.ShowQuitButton();
 
     if (data.IsMinigame) {
@@ -621,6 +621,9 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.CloseHowToPlayView();
 
     SoftEndGameRobotReset();
+
+    string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    SharedMinigameView.InfoTitleText = winnerText;
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     SharedMinigameView.HideHowToPlayButton();

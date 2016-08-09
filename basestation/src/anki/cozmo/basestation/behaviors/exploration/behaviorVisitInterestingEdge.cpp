@@ -32,7 +32,7 @@ namespace Cozmo {
 // kVieMaxBorderGoals: we currently only support one goal because we don't check with the planner which goal it will take us to
 CONSOLE_VAR(uint8_t, kVieMaxBorderGoals, "BehaviorVisitInterestingEdge", 1); // max number of goals to ask the planner
 // kVie_MoveActionRetries: should probably not be in json, since it's not subject to gameplay tweaks
-CONSOLE_VAR(float, kVie_MoveActionRetries, "BehaviorVisitInterestingEdge", 3);
+CONSOLE_VAR(uint8_t, kVie_MoveActionRetries, "BehaviorVisitInterestingEdge", 3);
 // kVieDrawDebugInfo: Debug. If set to true the behavior renders debug privimitives
 CONSOLE_VAR(bool, kVieDrawDebugInfo, "BehaviorVisitInterestingEdge", true);
 
@@ -57,6 +57,26 @@ constexpr NavMemoryMapTypes::FullContentArray typesToExploreFrom =
 };
 static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToExploreFrom),
   "This array does not define all types once and only once.");
+
+// This is the configuration of memory map types that would invalidate goals because we would
+// need to cross an obstacle or edge to get there
+constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateGoals =
+{
+  {NavMemoryMapTypes::EContentType::Unknown               , false},
+  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
+  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCube          , false}, // this could be ok, since we will walk around them
+  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {NavMemoryMapTypes::EContentType::ObstacleCharger       , false}, // this could be ok, since we will walk around the charger
+  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+  {NavMemoryMapTypes::EContentType::Cliff                 , true},
+  {NavMemoryMapTypes::EContentType::InterestingEdge       , false}, // the goal itself is the closest one, so we can afford not to do this (which simplifies goal point)
+  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
+};
+static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatInvalidateGoals),
+  "This array does not define all types once and only once.");
+  
   
 // This is the configuration of memory map types that would invalidate vantage points because an obstacle would
 // block the point or another edge would present a problem
@@ -84,6 +104,7 @@ static const char* kConfigParamsKey = "params";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
+, _configParams{}
 {
   SetDefaultName("BehaviorVisitInterestingEdge");
   
@@ -114,37 +135,38 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
   // select borders we want to visit
   BorderScoreVector borderGoals;
   PickGoals(robot, borderGoals);
-
-  // cache the goal pose so that we know what we are looking at from the vantage point.
-  // Note: currently we support only one goal. If we want to support multiple, we need to know which vantage point
-  // the planner took us to, and which goal was associated to that vantage point. It's doable, just don't wanna support
-  // that now (rsam 07/20/16)
-  if ( !borderGoals.empty() ) {
-    ASSERT_NAMED(borderGoals.size() == 1, "BehaviorVisitInterestingEdge.MultipleGoalsAreNotSupported");
-    const Vec3f& insideGoalDir = (-borderGoals[0].borderInfo.normal);
-    const Vec3f& lookAtPoint = borderGoals[0].borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
-    _lookAtPoint = lookAtPoint;
-    // actually I have no use for it being a pose, since if we deloc the behavior should be interrupted (guarantee this)
-    //const Vec3f& kUpVector = Z_AXIS_3D();
-    //_lookAtPoint = Pose3d(Rotation3d(0, kUpVector), lookAtPoint, robot.GetWorldOrigin(), "InterestingEdgeLookAtPoint");
-  }
-
-  // for every goal, pick a target point to look at the cube from there. Those are the goals we will feed the planner
-  GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
-
-  // debugging
-  if ( kVieDrawDebugInfo )
+  
+  // validate whether the goal is reachable
+  bool isGoalValid = true;
+  // this is in place of the planner not getting us there (TODO)
+  const bool allowGoalsBehindOthers = _configParams.allowGoalsBehindOtherEdges;
+  if ( !allowGoalsBehindOthers )
   {
-    // border goals
-    for ( const auto& bG : borderGoals )
-    {
-      const NavMemoryMapTypes::Border& b = bG.borderInfo;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-        b.from, b.to, Anki::NamedColors::DARKGREEN, false, 15.0f);
-      Vec3f centerLine = (b.from + b.to)*0.5f;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-        centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::YELLOW, false, 25.0f);
+    ASSERT_NAMED(borderGoals.size() == 1, "BehaviorVisitInterestingEdge.MultipleGoalsAreNotSupported");
+    const Vec3f& goalPoint = borderGoals[0].borderInfo.GetCenter();
+    isGoalValid = CheckGoalReachable(robot, goalPoint);
+  }
+  
+  // calculate vantage points for the goal, only if it's valid/reachable
+  _currentVantagePoints.clear();
+  if ( isGoalValid )
+  {
+    // cache the goal pose so that we know what we are looking at from the vantage point.
+    // Note: currently we support only one goal. If we want to support multiple, we need to know which vantage point
+    // the planner took us to, and which goal was associated to that vantage point. It's doable, just don't wanna support
+    // that now (rsam 07/20/16)
+    if ( !borderGoals.empty() ) {
+      ASSERT_NAMED(borderGoals.size() == 1, "BehaviorVisitInterestingEdge.MultipleGoalsAreNotSupported");
+      const Vec3f& insideGoalDir = (-borderGoals[0].borderInfo.normal);
+      const Vec3f& lookAtPoint = borderGoals[0].borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
+      _lookAtPoint = lookAtPoint;
+      // actually I have no use for it being a pose, since if we deloc the behavior should be interrupted (guarantee this)
+      //const Vec3f& kUpVector = Z_AXIS_3D();
+      //_lookAtPoint = Pose3d(Rotation3d(0, kUpVector), lookAtPoint, robot.GetWorldOrigin(), "InterestingEdgeLookAtPoint");
     }
+
+    // for every goal, pick a target point to look at the cube from there. Those are the goals we will feed the planner
+    GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
   }
 
   // we couldn't calculate vantage points for the selected goal, maybe the goal was in an unreachable place
@@ -168,9 +190,22 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
       // Consider playing a keepAlive animation here if it looks weird that the robot is simply stopped. This should
       // simulate that he is thinking and calculating stuff, and also gives us some debug render time for the quad around
       // goal
-      const double waitTime_sec = 0.10f; // very quick pause
-      IAction* pauseAction = new WaitAction( robot, waitTime_sec );
-      StartActing( pauseAction );
+      const std::string& animTriggerName = _configParams.goalDiscardedAnimTrigger;
+      AnimationTrigger trigger = animTriggerName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerName.c_str());
+      if ( trigger != AnimationTrigger::Count )
+      {
+        // play the animation that let's us know he is thinking and discarding goals
+        IAction* discardedGoalAnimAction = new TriggerAnimationAction(robot, trigger);
+        StartActing( discardedGoalAnimAction );
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("BehaviorVisitInterestingEdge.InitInternal",
+        "[%s] Invalid animation trigger '%s'",
+        GetName().c_str(),
+        animTriggerName.c_str());
+      }
+      
     }
     else
     {
@@ -248,6 +283,52 @@ void BehaviorVisitInterestingEdge::PickGoals(Robot& robot, BorderScoreVector& ou
       }
     }
   }
+  
+  // debugging
+  if ( kVieDrawDebugInfo )
+  {
+    // border goals
+    for ( const auto& bG : outGoals )
+    {
+      const NavMemoryMapTypes::Border& b = bG.borderInfo;
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+        b.from, b.to, Anki::NamedColors::DARKGREEN, false, 15.0f);
+      Vec3f centerLine = (b.from + b.to)*0.5f;
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+        centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::YELLOW, false, 25.0f);
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorVisitInterestingEdge::CheckGoalReachable(Robot& robot, const Vec3f& goalPosition)
+{
+  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  ASSERT_NAMED(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
+  
+  const Vec3f& fromRobot = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+  const Vec3f& toGoal    = goalPosition; // assumed wrt origin
+  
+  // unforunately the goal (border point) can be inside InterestingEdge; this happens for diagonal edges.
+  // Fortunately, we currently only pick the closest goal, which means that if we cross an interesting edge
+  // it has to be the one belonging to the goal itself. This allows setting that type to false, and proceed
+  // to raycast towards the goal, rather than having to calculate the proper offset from the goal towards the
+  // actual corner in the quad
+  static_assert( typesThatInvalidateGoals[Util::EnumToUnderlying(NavMemoryMapTypes::EContentType::InterestingEdge)].Value() == false,
+    "toGoal is inside an InterestingEdge. This type needs to be false for current implementation");
+  const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromRobot, toGoal, typesThatInvalidateGoals);
+  
+  // debug render this ray
+  if ( kVieDrawDebugInfo )
+  {
+    const ColorRGBA& color = hasCollision ? Anki::NamedColors::RED : Anki::NamedColors::GREEN;
+    robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+      fromRobot, toGoal, color, false, 20.0f);
+  }
+  
+  // check result of collision test
+  const bool isGoalReachable = !hasCollision;
+  return isGoalReachable;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -494,6 +575,8 @@ void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
   const std::string& debugName = GetName() + ".BehaviorVisitInterestingEdge.LoadConfig";
 
   _configParams.observeEdgeAnimTrigger = ParseString(config, "observeEdgeAnimTrigger", debugName);
+  _configParams.goalDiscardedAnimTrigger = ParseString(config, "goalDiscardedAnimTrigger", debugName);
+  _configParams.allowGoalsBehindOtherEdges = ParseBool(config, "allowGoalsBehindOtherEdges", debugName);
   _configParams.distanceFromLookAtPointMin_mm = ParseFloat(config, "distanceFromLookAtPointMin_mm", debugName);
   _configParams.distanceFromLookAtPointMax_mm = ParseFloat(config, "distanceFromLookAtPointMax_mm", debugName);
   _configParams.distanceInsideGoalToLookAt_mm = ParseFloat(config, "distanceInsideGoalToLookAt_mm", debugName);

@@ -115,7 +115,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 2;
-            m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, 50));
+            m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, 50, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -134,7 +134,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 3;
-            m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, -50));
+            m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, -50, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

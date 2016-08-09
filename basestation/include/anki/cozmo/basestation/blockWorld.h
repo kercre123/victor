@@ -267,7 +267,14 @@ namespace Anki
       ObservableObject* FindObjectUnderneath(const ObservableObject& objectOnTop,
                                              f32 zTolerance,
                                              const BlockWorldFilter& filterIn = BlockWorldFilter());
-    
+      
+      
+      //Returns the height of the tallest stack of blocks in block world
+      //and sets the bottomBlockID that was passed in
+      //If there are multiple stacks of equivelent height it returns the nearest stack
+      //Pass in a list of bottom blocks to ignore if you are looking to locate a specific stack
+      uint8_t GetTallestStack(ObjectID& bottomBlockID) const;
+      uint8_t GetTallestStack(ObjectID& bottomBlockID, const std::vector<ObjectID>& blocksToIgnore) const;
       
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
@@ -418,6 +425,7 @@ namespace Anki
       // pose is updated to correct anything stacked on top of it to match.
       void UpdateRotationOfObjectsStackedOn(const ObservableObject* existingObjectOnBottom,
                                             ObservableObject* objSeen);
+      
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);

@@ -74,8 +74,13 @@ public class DifficultySelectOption : MonoBehaviour {
 
   public void Initialize(DifficultySelectOptionData data, bool enabled) {
     _Data = data;
-    _Label.text = _Data.DifficultyName;
     _IsLocked = !enabled;
+    if (_IsLocked) {
+      _Label.gameObject.SetActive(false);
+    }
+    else {
+      _Label.text = _Data.DifficultyName;
+    }
     _Button.Initialize(HandleClick, "select_" + _Data.DifficultyName, "difficulty_select_slide");
     _Button.ShowDisabledStateWhenInteractable = _IsLocked;
     _Button.gameObject.name = _Data.DifficultyName + "_Button";

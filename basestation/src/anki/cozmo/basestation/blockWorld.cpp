@@ -67,9 +67,14 @@
 #  define PRINT_LOCALIZATION_INFO(...)
 #endif
 
+
+
 namespace Anki {
 namespace Cozmo {
 
+const float kOnGroundStackTolerence = 5 * ON_GROUND_HEIGHT_TOL_MM;
+const float kOnCubeStackHeightTolerence = 5 * STACKED_HEIGHT_TOL_MM;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
 namespace {
@@ -1438,6 +1443,78 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     
   } // UpdateRotationOfObjectsStackedOn()
   
+  //Returns the height of the tallest stack of blocks in block world
+  //and sets the bottom blockbottom block
+  //If there are multiple stacks of equivelent height it returns the nearest stack
+  //Pass in a list of bottom blocks to ignore if you are looking to locate a specific stack
+  uint8_t BlockWorld::GetTallestStack(ObjectID& bottomBlockID) const
+  {
+    std::vector<ObjectID> bottomBlocksToIgnore;
+    return GetTallestStack(bottomBlockID, bottomBlocksToIgnore);
+  }
+  
+  uint8_t BlockWorld::GetTallestStack(ObjectID& bottomBlockID, const std::vector<ObjectID>& blocksToIgnore) const
+  {
+    std::vector<const ObservableObject*> activeBlocks;
+    
+    {
+      BlockWorldFilter bottomBlockFilter;
+      bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+      bottomBlockFilter.SetFilterFcn([&blocksToIgnore](const ObservableObject* blockPtr)
+                          {
+                            if(!blockPtr->IsPoseStateKnown()){
+                              return false;
+                            }
+                            
+                            if(blockPtr->GetPose().GetWithRespectToOrigin().GetTranslation().z() > kOnGroundStackTolerence){
+                              return false;
+                            }
+
+                            if(std::find(blocksToIgnore.begin(), blocksToIgnore.end(), blockPtr->GetID()) != blocksToIgnore.end()){
+                              return false;
+                            }
+                            
+                            return true;
+                          });
+      
+      FindMatchingObjects(bottomBlockFilter, activeBlocks);
+    }
+    
+    BlockWorldFilter blocksOnlyFilter;
+    blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    
+    int tallestHeight = 0;
+    Pose3d bottomPose = _robot->GetPose();
+    for(auto bottomBlock: activeBlocks){
+      int currentHeight = 1;
+      auto currentBlock = bottomBlock;
+      auto nextBlock = currentBlock;
+      BOUNDED_WHILE(10,(nextBlock = FindObjectOnTopOf(*currentBlock, kOnCubeStackHeightTolerence, blocksOnlyFilter))){
+        currentHeight++;
+        currentBlock = nextBlock;
+      }
+      
+      //check to see which stack is closer to the robot
+      if(currentHeight >= tallestHeight){
+        f32 oldDistance = ComputeEuclidianDistanceBetween(_robot->GetPose(), bottomPose);
+        f32 newDistance = ComputeEuclidianDistanceBetween(_robot->GetPose(), currentBlock->GetPose());
+        
+        if(currentHeight > tallestHeight
+           || (bottomBlockID.IsSet()
+               && newDistance < oldDistance
+               && currentHeight == tallestHeight)){
+          tallestHeight = currentHeight;
+          bottomBlockID = bottomBlock->GetID();
+          bottomPose = bottomBlock->GetPose();
+        }
+      }
+    }
+    
+    
+    return tallestHeight;
+  }
+  
+
   u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
   {
     u32 numVisibleObjects = 0;

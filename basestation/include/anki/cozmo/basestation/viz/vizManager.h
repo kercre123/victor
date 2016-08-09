@@ -318,7 +318,7 @@ namespace Anki {
       // circle as segments
       template <typename T>
       void DrawXYCircleAsSegments(const std::string& identifier, const Point<3, T>& center, const T radius, const ColorRGBA& color,
-        bool clearPrevious, u32 numSegments=8);
+        bool clearPrevious, u32 numSegments=8, const T startAngle=T());
       
       // non-axis aligned quads as 4 segments
       template <typename T>
@@ -618,7 +618,7 @@ namespace Anki {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     template <typename T>
     void VizManager::DrawXYCircleAsSegments(const std::string& identifier, const Point<3, T>& center, const T radius,
-                                const ColorRGBA& color, bool clearPrevious, u32 numSegments)
+                                const ColorRGBA& color, bool clearPrevious, u32 numSegments, const T startAngle)
     {
       // Note we create the polygon clockwise intentionally
       T anglePerSegment = static_cast<T>(-2) * static_cast<T>(PI) / static_cast<T>(numSegments);
@@ -628,9 +628,9 @@ namespace Anki {
       T tangentialFactor = std::tan(anglePerSegment);
       T radialFactor = std::cos(anglePerSegment);
       
-      // Start at angle 0
+      // Start at angle specified
       T newX = radius;
-      T newY = 0;
+      T newY = startAngle;
 
       for (u32 i=0; i<numSegments; ++i)
       {

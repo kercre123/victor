@@ -195,9 +195,6 @@ namespace Cozmo {
       #endregion
 
       [SerializeField]
-      private ParticleSystem[] _BackgroundParticles;
-
-      [SerializeField]
       private ShowCozmoVideo _ShowCozmoVideoPrefab;
       private ShowCozmoVideo _ShowCozmoVideoInstance;
 
@@ -282,9 +279,6 @@ namespace Cozmo {
         closeAnimation = JoinFadeTween(closeAnimation, _MiddleBackgroundTween, _MiddleBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
         closeAnimation = JoinFadeTween(closeAnimation, _OverlayBackgroundTween, _OverlayBackgroundImage, 0f, fadeOutSeconds, fadeOutEasing);
 
-        foreach (ParticleSystem system in _BackgroundParticles) {
-          system.Stop();
-        }
       }
 
       private Sequence JoinFadeTween(Sequence sequenceToUse, Tween tween, Image targetImage, float targetAlpha,
@@ -384,8 +378,6 @@ namespace Cozmo {
         _BackgroundGradient.color = baseColor;
 
         Color transparentBaseColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
-        _MiddleBackgroundImage.color = transparentBaseColor;
-        _IsShowingMiddle = false;
 
         _OverlayBackgroundImage.color = transparentBaseColor;
         _IsShowingOverlay = false;
@@ -394,6 +386,11 @@ namespace Cozmo {
         lockedColor.a = 0;
         _LockedBackgroundImage.color = lockedColor;
         _IsShowingLocked = false;
+
+        Color setupColor = UIColorPalette.GameSetupColor;
+        setupColor.a = 0;
+        _MiddleBackgroundImage.color = setupColor;
+        _IsShowingMiddle = false;
 
         UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, baseColor);
       }
@@ -495,7 +492,7 @@ namespace Cozmo {
         get {
           if (_CozmoScoreWidgetInstance == null) {
             _CozmoScoreWidgetInstance = CreateScoreWidget(_CozmoScoreContainer, _ScoreEnterAnimationXOffset,
-              _CozmoPortraitSprite);
+                                                          _CozmoPortraitSprite, false);
           }
           return _CozmoScoreWidgetInstance;
         }
@@ -510,7 +507,7 @@ namespace Cozmo {
         get {
           if (_PlayerScoreWidgetInstance == null) {
             _PlayerScoreWidgetInstance = CreateScoreWidget(_PlayerScoreContainer, -_ScoreEnterAnimationXOffset,
-              _PlayerPortraitSprite);
+                                                           _PlayerPortraitSprite, true);
           }
           return _PlayerScoreWidgetInstance;
         }
@@ -522,12 +519,13 @@ namespace Cozmo {
       }
 
       private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
-                                            Sprite portrait) {
+                                            Sprite portrait, bool isPlayer) {
         GameObject widgetObj = UIManager.CreateUIElement(_ScoreWidgetPrefab.gameObject, widgetParent);
         ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
         instance.AnimationXOffset = animationOffset;
         instance.Portrait = portrait;
         instance.IsWinner = false;
+        instance.IsPlayer = isPlayer;
         instance.Dim = false;
 
         AddWidget(instance);
@@ -584,7 +582,6 @@ namespace Cozmo {
         CreateWidgetIfNull<HowToPlayButton>(ref _HowToPlayButtonInstance, _HowToPlayButtonPrefab);
         _HowToPlayButtonInstance.Initialize(howToPlayDescKey, howToPlayAnimationPrefab, ComposeDasViewName(_CurrentSlideName), UIColorPalette.GameToggleColor);
         _HowToPlayButtonInstance.OnHowToPlayButtonClicked += HandleHowToPlayButtonClicked;
-        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
       }
 
       public void HideHowToPlayButton() {
@@ -592,7 +589,6 @@ namespace Cozmo {
           HideWidget(_HowToPlayButtonInstance);
           _HowToPlayButtonInstance = null;
         }
-        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
       }
 
       public void OpenHowToPlayView() {
@@ -634,7 +630,6 @@ namespace Cozmo {
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfTextColor, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
-        SetCircuitryBasedOnText(shelfText);
       }
 
       public void ShowContinueButtonCentered(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
@@ -649,15 +644,11 @@ namespace Cozmo {
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
         _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
-        ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.CenterAligned);
       }
 
       public void HideContinueButton() {
         HideWidget(_ContinueButtonInstance);
         _ContinueButtonInstance = null;
-        if (_ShelfWidgetInstance != null) {
-          ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
-        }
       }
 
       public void EnableContinueButton(bool enable) {
@@ -669,16 +660,6 @@ namespace Cozmo {
       public void SetContinueButtonSupplementText(string text, Color color) {
         if (_ContinueButtonInstance != null) {
           _ContinueButtonInstance.SetShelfText(text, color);
-          SetCircuitryBasedOnText(text);
-        }
-      }
-
-      private void SetCircuitryBasedOnText(string text) {
-        if (string.IsNullOrEmpty(text)) {
-          ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedNoText);
-        }
-        else {
-          ShelfWidget.SetCircuitry(ShelfWidget.CircuitryType.RightAlignedForText);
         }
       }
 

@@ -315,6 +315,24 @@ namespace Anki {
         PRINT_NAMED_WARNING("RobotManager.ParseFirmwareHeader", "got version %d, time %d", _fwVersion, _fwTime);
       }
     }
+
+    bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInterface::RobotToEngineTag msgType) const
+    {
+      auto iter = _initialConnections.find(robotId);
+      if (iter == _initialConnections.end()) {
+        return false;
+      }
+      return iter->second.ShouldFilterMessage(msgType);
+    }
+
+    bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInterface::EngineToRobotTag msgType) const
+    {
+      auto iter = _initialConnections.find(robotId);
+      if (iter == _initialConnections.end()) {
+        return false;
+      }
+      return iter->second.ShouldFilterMessage(msgType);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

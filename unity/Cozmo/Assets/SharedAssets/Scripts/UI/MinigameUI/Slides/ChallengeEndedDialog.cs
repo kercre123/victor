@@ -9,6 +9,8 @@ using Anki.Cozmo;
 
 public class ChallengeEndedDialog : MonoBehaviour {
 
+  private const int kMaxRewardFields = 3;
+
   [SerializeField]
   private AnkiTextLabel _AdditionalInfoLabel;
 
@@ -32,6 +34,9 @@ public class ChallengeEndedDialog : MonoBehaviour {
 
   [SerializeField]
   private IconTextLabel _RewardIconPrefab;
+
+  [SerializeField]
+  private IconTextLabel _UnlockIconPrefab;
 
   private bool _DualLists = false;
 
@@ -70,7 +75,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
     // If (DualLists == false) - Use Single Vert Layout Group
     // If (DualLists == true)  - Use two Vert Layout Groups nesting in Horiz Layout Group 
     // (Unlocks to the left of me, Rewards to the Right, and here I am stuck in the middle with you)
-    _DualLists = (RewardedActionManager.Instance.RewardPending && RewardedActionManager.Instance.NewDifficultyPending);
+    _DualLists = (RewardedActionManager.Instance.RewardPending && (RewardedActionManager.Instance.NewDifficultyPending || RewardedActionManager.Instance.NewSkillChangePending));
     if (_DualLists) {
       _DualContainer.gameObject.SetActive(true);
       _DifficultyUnlockContainer = _LeftContainer;
@@ -82,33 +87,40 @@ public class ChallengeEndedDialog : MonoBehaviour {
       _EnergyEarnedContainer = _CenterContainer;
     }
 
-    if (RewardedActionManager.Instance.NewDifficultyUnlock != -1) {
+    if (RewardedActionManager.Instance.NewDifficultyPending) {
       AddDifficultyUnlock(RewardedActionManager.Instance.NewDifficultyUnlock);
     }
 
+    if (RewardedActionManager.Instance.NewSkillChangePending) {
+      AddSkillChange(RewardedActionManager.Instance.NewSkillChange);
+    }
 
+    int rewardCells = 0;
     foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
-      
+
       int count = 0;
       if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(earnedReward, out count)) {
         AddEnergyReward(earnedReward, count);
+        rewardCells++;
+      }
+      // TODO: Make reward fields properly collapse into eachother by game event
+      if (kMaxRewardFields <= rewardCells) {
+        break;
       }
     }
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;
-    
+    RewardedActionManager.Instance.NewSkillChange = 0;
+
   }
 
   public void AddEnergyReward(RewardedActionData reward, int count) {
     if (_EnergyEarnedContainer != null) {
       _EnergyEarnedContainer.gameObject.SetActive(true);
     }
-    ItemData data = ItemDataConfig.GetData(reward.Reward.ItemID);
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
+    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab,
                                     _EnergyEarnedContainer).GetComponent<IconTextLabel>();
     // TextLabel for amount earned
     iconTextLabel.SetText(Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, count));
-
-    iconTextLabel.SetIcon(data.Icon);
 
     iconTextLabel.SetDesc(Localization.Get(reward.Reward.DescriptionKey));
   }
@@ -118,13 +130,33 @@ public class ChallengeEndedDialog : MonoBehaviour {
       _DifficultyUnlockContainer.gameObject.SetActive(true);
     }
 
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
+    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_UnlockIconPrefab,
                                     _DifficultyUnlockContainer).GetComponent<IconTextLabel>();
-    
+
     iconTextLabel.SetText("");
-    iconTextLabel.SetDesc(Localization.GetWithArgs(LocalizationKeys.kRewardDescriptionNewDifficulty, _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName));
+    iconTextLabel.SetDesc(Localization.GetWithArgs(LocalizationKeys.kRewardDescriptionNewDifficulty,
+                                                   new object[] { _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey) }));
 
     iconTextLabel.SetIcon(_ChallengeConfig.ChallengeIcon);
-    
+
+  }
+
+  public void AddSkillChange(int newLevel) {
+    if (_DifficultyUnlockContainer != null) {
+      _DifficultyUnlockContainer.gameObject.SetActive(true);
+    }
+
+    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_UnlockIconPrefab,
+                                    _DifficultyUnlockContainer).GetComponent<IconTextLabel>();
+
+    iconTextLabel.SetText("");
+    string descKey = "";
+    if (newLevel > 0) {
+      descKey = LocalizationKeys.kRewardDescriptionSkillUp;
+    }
+    else {
+      descKey = LocalizationKeys.kRewardDescriptionSkillDown;
+    }
+    iconTextLabel.SetDesc(Localization.GetWithArgs(descKey, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey)));
   }
 }

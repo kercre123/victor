@@ -18,7 +18,7 @@ namespace Vision {
   {
     // If the EnrolledFaceStorage structure below changes, this version number
     // must be incremented
-    EnrolledFaceStorageVersionNumber = 0x0001,
+    EnrolledFaceStorageVersionNumber = 0x0002,
 
     // Constants related to number of items we can store for recognition.
     // Note that num album entries per face includes one entry reserved for session-only use.

@@ -15,7 +15,7 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _NameInputPlaceholder;
 
-  private const int kNameFieldCharacterLimit = 14;
+  private const int kNameFieldCharacterLimit = 12;
 
   private void Awake() {
     _SubmitName.Initialize(HandleSubmitNameButton, "face_enrollment_name_enter_done", "face_enrollment_name_slide");

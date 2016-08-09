@@ -30,12 +30,12 @@ namespace Xcode {
       step++;
     }
 
-    [PostProcessBuild(1)]
-    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
-      if (target == BuildTarget.iOS) {
-        FixupCozmoIos();
-      }
-    }
+//    [PostProcessBuild(1)]
+//    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
+//      if (target == BuildTarget.iOS) {
+//        FixupCozmoIos();
+//      }
+//    }
 
     [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Project")]
     public static void FixupCozmoIos() {

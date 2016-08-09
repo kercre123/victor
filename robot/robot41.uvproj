@@ -529,6 +529,11 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\power.cpp</FilePath>
             </File>
+            <File>
+              <FileName>crashlogger.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\crashlogger.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1190,6 +1195,11 @@
               <FileName>power.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crashlogger.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\crashlogger.cpp</FilePath>
             </File>
           </Files>
         </Group>

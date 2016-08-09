@@ -71,6 +71,10 @@ namespace Cozmo {
     static Result CompressRLE(const Vision::Image& image, std::vector<u8>& rleData);
     static void   DrawFaceRLE(const std::vector<u8>& rleData, Vision::Image& outImg);
     
+    // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
+    // to be called each time we blink.
+    static void SwitchInterlacing();
+    
   protected:
     
     // Protected default constructor for singleton.
@@ -80,8 +84,7 @@ namespace Cozmo {
 
     struct AvailableAnim {
       time_t lastLoadedTime;
-      //std::vector<std::string> filenames;
-      std::vector<std::vector<u8> > rleFrames;
+      std::vector< std::pair<std::vector<u8>, std::vector<u8>> > rleFrames;
       size_t GetNumFrames() const { return rleFrames.size(); }
     };
     
@@ -89,7 +92,8 @@ namespace Cozmo {
     
     std::unordered_map<std::string, AvailableAnim> _availableAnimations;
     
-
+    static u8 _firstScanLine;
+    
   }; // class FaceAnimationManager
   
   
@@ -116,6 +120,9 @@ namespace Cozmo {
     return _availableAnimations.size();
   }
   
+  inline void FaceAnimationManager::SwitchInterlacing() {
+    _firstScanLine = 1 - _firstScanLine;
+  }
   
 } // namespace Cozmo
 } // namespace Anki

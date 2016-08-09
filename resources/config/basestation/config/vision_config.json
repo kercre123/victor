@@ -4,7 +4,8 @@
     "DetectingMarkers"       : true,
     "DetectingFaces"         : true,
     "DetectingMotion"        : true,
-    "DetectingOverheadEdges" : false
+    "DetectingOverheadEdges" : false,
+    "CheckingQuality"        : true
   },
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
   "FaceDetection" : {
@@ -12,5 +13,20 @@
   },
   "FaceRecognition" : {
     "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
+  },
+  "ImageQuality" : {
+    "TimeBeforeErrorMessage_ms" :       3000, // How long VisionSystem must detect "bad" quality before notifying game
+    "RepeatedErrorMessageInverval_ms" : 5000, // Time between error messages once triggered
+    
+    // NOTE: All threshold values below are in image brightness units: [0,255]
+    "TooDarkMeanThreshold_low"  : 15,    // Report "too dark" if mean is below this threshold.
+    "TooDarkMeanThreshold_high" : 50,    // Report "too dark" if mean is below this threshold AND ...
+    "TooDarkStdDevThreshold"    : 10,    // ... standard deviation is below this threshold.
+    
+    "TooBrightMeanThreshold_high" : 210, // Report "too bright" if mean is above this threshold.
+    "TooBrightMeanThreshold_low"  : 175, // Report "too bright" if mean is above this threshold AND ...
+    "TooBrightStddevThreshold"    : 30,  // ... standard deviation is below this threshold.
+    
+    "CheckFrequency" : 30                // How often VisionSystem checks quality (in number of frames)
   }
 }

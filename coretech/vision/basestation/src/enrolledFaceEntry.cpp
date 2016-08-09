@@ -340,7 +340,7 @@ EnrolledFaceEntry::Time EnrolledFaceEntry::FindLastSeenTime() const
 }
   
   
-Result EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& other,
+Result EnrolledFaceEntry::MergeWith(const EnrolledFaceEntry& other,
                                     s32 maxAlbumEntriesToKeep,
                                     std::vector<AlbumEntryID_t>& entriesRemoved)
 {
@@ -373,7 +373,7 @@ Result EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& other,
   return RESULT_OK;
 }
 
-Result EnrolledFaceEntry::MergeAlbumEntriesHelper(EnrolledFaceEntry& other,
+Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other,
                                                   s32 maxAlbumEntriesToKeep,
                                                   std::vector<AlbumEntryID_t>& entriesRemoved)
 {
@@ -428,11 +428,7 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(EnrolledFaceEntry& other,
       _sessionOnlyAlbumEntry = other._sessionOnlyAlbumEntry;
       _albumEntrySeenTimes[_sessionOnlyAlbumEntry] = otherSessionOnlyTime;
     }
-    
-    // We moved everything from "other" so clear it. This also sets its
-    // session only entry to -1
-    other.ClearAlbumEntries();
-    
+
   }
   else
   {
@@ -471,11 +467,6 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(EnrolledFaceEntry& other,
       // Add the entry to this
       _albumEntrySeenTimes.emplace(entriesByTimeIter->second.albumEntry, entriesByTimeIter->first);
       
-      // Remove from other
-      if(!entriesByTimeIter->second.isFromThis) {
-        other._albumEntrySeenTimes.erase(entriesByTimeIter->second.albumEntry);
-      }
-      
       ++entriesByTimeIter;
     }
     
@@ -497,10 +488,6 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(EnrolledFaceEntry& other,
       }
       _sessionOnlyAlbumEntry = other._sessionOnlyAlbumEntry;
       _albumEntrySeenTimes[_sessionOnlyAlbumEntry] = otherSessionOnlyTime;
-      
-      // Remove session only entry from "other" since we took it
-      other._albumEntrySeenTimes.erase(other._sessionOnlyAlbumEntry);
-      other._sessionOnlyAlbumEntry = UnknownAlbumEntryID;
     }
     else if(_sessionOnlyAlbumEntry != UnknownAlbumEntryID)
     {

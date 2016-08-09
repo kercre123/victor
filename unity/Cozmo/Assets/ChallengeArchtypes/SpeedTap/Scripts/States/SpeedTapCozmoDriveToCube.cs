@@ -29,7 +29,7 @@ namespace SpeedTap {
                                    CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
-      _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
+      _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
 
       RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);

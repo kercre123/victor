@@ -12,18 +12,8 @@ namespace Cozmo {
       private const float kAnimYOffset = -476.0f;
       private const float kAnimDur = 0.25f;
 
-      public enum CircuitryType {
-        RightAlignedForText,
-        RightAlignedNoText,
-        CenterAligned,
-        None
-      }
-
       [SerializeField]
-      private RectTransform _BackgroundImageContainer;
-
-      [SerializeField]
-      private Image _BackgroundImage;
+      private RectTransform _BackgroundContainer;
 
       [SerializeField]
       private float _StartYLocalPos = -300f;
@@ -72,27 +62,9 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _ShelfText;
 
-      [SerializeField]
-      private Image _RightAlignedCircuitryForText;
-
-      [SerializeField]
-      private Image _RightAlignedCircuitryForNoText;
-
-      [SerializeField]
-      private Image _CenterAlignedCircuitry;
-
-      private Tweener _CircuitryTweenIn;
-      private Tweener _CircuitryTweenOut;
-
-      private CircuitryType _CurrentCircuitryType;
-
       private void Awake() {
         Color transparent = Color.white;
         transparent.a = 0f;
-        _RightAlignedCircuitryForText.color = Color.white;
-        _RightAlignedCircuitryForNoText.color = transparent;
-        _CenterAlignedCircuitry.color = transparent;
-        _CurrentCircuitryType = CircuitryType.RightAlignedForText;
         _ShelfText.text = "";
       }
 
@@ -107,8 +79,6 @@ namespace Cozmo {
         ResetTween(_ContentTween);
         ResetTween(_BackgroundTween);
         ResetTween(_CaratTween);
-        ResetTween(_CircuitryTweenIn);
-        ResetTween(_CircuitryTweenOut);
       }
 
       public void SetWidgetText(string widgetTextKey) {
@@ -132,7 +102,7 @@ namespace Cozmo {
       private void PlayBackgroundTween(float targetY, Ease easing) {
         ResetTween(_BackgroundTween);
         _BackgroundTween = DOTween.Sequence();
-        _BackgroundTween.Append(_BackgroundImageContainer.transform.DOLocalMoveY(
+        _BackgroundTween.Append(_BackgroundContainer.transform.DOLocalMoveY(
           targetY,
           _GrowTweenDurationSeconds).SetEase(easing));
       }
@@ -209,58 +179,11 @@ namespace Cozmo {
       }
 
       public void ShowBackground(bool show) {
-        _BackgroundImage.gameObject.SetActive(show);
         _CaratContainer.gameObject.SetActive(show);
       }
 
       public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
         _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds);
-      }
-
-      public void SetCircuitry(CircuitryType circuitryType) {
-        if (circuitryType != _CurrentCircuitryType) {
-          Image activeCircuitry = GetCircuitryImageByType(_CurrentCircuitryType);
-          if (activeCircuitry != null) {
-            FadeOutCircuitry(activeCircuitry);
-          }
-
-          Image newCircuitry = GetCircuitryImageByType(circuitryType);
-          if (newCircuitry != null) {
-            FadeInCircuitry(newCircuitry);
-          }
-
-          _CurrentCircuitryType = circuitryType;
-        }
-      }
-
-      public Image GetCircuitryImageByType(CircuitryType circuitryType) {
-        Image circuitryImage = null;
-        switch (circuitryType) {
-        case CircuitryType.RightAlignedForText:
-          circuitryImage = _RightAlignedCircuitryForText;
-          break;
-        case CircuitryType.RightAlignedNoText:
-          circuitryImage = _RightAlignedCircuitryForNoText;
-          break;
-        case CircuitryType.CenterAligned:
-          circuitryImage = _CenterAlignedCircuitry;
-          break;
-        default:
-          break;
-        }
-        return circuitryImage;
-      }
-
-      private void FadeInCircuitry(Image circuitry) {
-        PlayFadeTween(ref _CircuitryTweenIn, circuitry, 1f,
-                      UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds,
-                      UIDefaultTransitionSettings.Instance.FadeInEasing);
-      }
-
-      private void FadeOutCircuitry(Image circuitry) {
-        PlayFadeTween(ref _CircuitryTweenOut, circuitry, 0f,
-                      UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds,
-                      UIDefaultTransitionSettings.Instance.FadeOutEasing);
       }
 
       private void PlayFadeTween(ref Tweener tween, Image target, float targetAlpha, float duration, Ease easing) {
