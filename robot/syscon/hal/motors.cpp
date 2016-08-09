@@ -201,6 +201,7 @@ void Motors::disable(bool disable) {
 
   // Enable motors, recalibrate encoders
   if (!disable) {
+    // Prevent manage from running    
     nrf_gpio_cfg_default(PIN_nCHGOK);
     setup();
     
@@ -210,13 +211,18 @@ void Motors::disable(bool disable) {
     msg.calibrateHead = true;
     msg.calibrateLift = true;
     SendMessage(msg);
+
+    // It is now officially safe for manage to run again
+    motorDisable = false;
   } else {
+    // Prevent manage from running and screwing up everything
+    motorDisable = true;
+
     teardown();
 
-    nrf_gpio_cfg_input(PIN_nCHGOK, NRF_GPIO_PIN_PULLUP);
+    nrf_gpio_cfg_input(PIN_nCHGOK, NRF_GPIO_PIN_PULLUP);    
   }
   
-  motorDisable = disable;
   manage();
 }
 
