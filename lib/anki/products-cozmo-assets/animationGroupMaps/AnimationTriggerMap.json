@@ -214,14 +214,14 @@
     },
     {
       "CladEvent": "HikingIntro",
-      "AnimName": "ag_hiking_observe"
+      "AnimName": "ag_hiking_wakeup"
     },
     {
       "CladEvent": "HikingObserve",
       "AnimName": "ag_hiking_observe"
     },
     {
-      "CladEvent": "HikingReactGeneric",
+      "CladEvent": "HikingInterestingEdgeThought",
       "AnimName": "ag_hiking_react_01"
     },
     {
@@ -238,7 +238,7 @@
     },
     {
       "CladEvent": "HikingWakeUpOffCharger",
-      "AnimName": "ag_hiking_observe"
+      "AnimName": "ag_hiking_wakeup"
     },
     {
       "CladEvent": "IdleOnCharger",

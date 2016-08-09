@@ -47,7 +47,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // set root
-  void SetRoot(NavMeshQuadTreeNode* node) { _root = node; }
+  void SetRoot(NavMeshQuadTreeNode* node);
 
   // notification when the content type changes for the given node
   void OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent);
@@ -98,7 +98,7 @@ private:
     const NavMeshQuadTreeNode* to;    // outer quad
     EDirection direction; // neighbor 4-direction between from and to
     bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishes
-    bool isSeed; // just a flag fore debugging. True if this waypoint was the first in a border
+    bool isSeed; // just a flag for debugging. True if this waypoint was the first in a border
   };
   
   // vector of waypoints that matched a specific combination of node types

@@ -18,10 +18,12 @@
   
     // anim for observing
     "observeEdgeAnimTrigger": "HikingObserve",
+    "goalDiscardedAnimTrigger": "HikingInterestingEdgeThought",
     
     // vantage point generation
-    "distanceFromLookAtPointMin_mm": 75.0,
-    "distanceFromLookAtPointMax_mm": 100.0,
+    "allowGoalsBehindOtherEdges": false,
+    "distanceFromLookAtPointMin_mm": 45.0,
+    "distanceFromLookAtPointMax_mm": 50.0,
     "distanceInsideGoalToLookAt_mm" : 15.0,
     "additionalClearanceInFront_mm": 0.0,
     "additionalClearanceBehind_mm": 10.0, // for backpack

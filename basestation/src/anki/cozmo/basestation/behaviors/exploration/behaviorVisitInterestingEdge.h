@@ -70,8 +70,10 @@ private:
   // behavior configuration passed on initialization
   struct Configuration
   {
-    std::string observeEdgeAnimTrigger; // animation to play when we observe an interesting edge
+    std::string observeEdgeAnimTrigger;   // animation to play when we observe an interesting edge
+    std::string goalDiscardedAnimTrigger; // animation to play when a goal is discarded
     // goal selection / vantage point calculation
+    bool    allowGoalsBehindOtherEdges = true;        // if set to false, goals behind other edges won't be selected, if true any goal is valid
     float   distanceFromLookAtPointMin_mm = 0.0f;     // min value of random distance from LookAt point to generate vantage point
     float   distanceFromLookAtPointMax_mm = 0.0f;     // max value of random distance from LookAt point to generate vantage point
     float   distanceInsideGoalToLookAt_mm = 0.0f;     // the actual point to look at will be inside the interesting border by this distance (important for offsets)
@@ -84,7 +86,7 @@ private:
     float vantageConeFarPlaneDistFromLookAt_mm = 0.0f; // distance of far plane with respect to the lookAt point (=goal + distanceInsideGoalToLookAt_mm)
     float vantageConeHalfWidthAtFarPlane_mm = 0.0f;    // half width at far plane of the cone that flags non-interesting edges
     // quad that clears around a goal for which we couldn't calculate a good vantage point
-    float noVantageGoalHalfQuadSideSize_mm = 50.0f; // when we can't find a goal, half of the side size of the quad centered around the goal that flags as not interesting (optional in json)
+    float noVantageGoalHalfQuadSideSize_mm = 50.0f; // when we can't find a goal, half of the side size of the quad centered around the goal that flags as not interesting (optional)
   };
   
   // score/distance associated with a border
@@ -105,6 +107,9 @@ private:
   // select the border segments we want to visit. It queries the robot's nav memory map to retrieve borders
   // and then selects a few of them among them, returning them in the outGoals vector
   void PickGoals(Robot& robot, BorderScoreVector& outGoals) const;
+  
+  // returns true if the goal position appears to be reachable from the current position by raycasting in the memory map
+  bool CheckGoalReachable(Robot& robot, const Vec3f& goalPosition);
 
   // given a set of border goals, generate the vantage points for the robot to observe/clear those borders
   void GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const;

@@ -1,0 +1,29 @@
+//
+// Hiking_LookingInPlaceForUnknown
+// Use the memory map to clear up the unknown areas we have within our reach.
+//
+//
+//
+//
+{
+  "name": "Hiking_LookingInPlaceForUnknown",
+
+  "behaviorType": "LookInPlaceMemoryMap",
+  "flatScore": 1.0,
+  "behaviorGroups": [
+    "FreeplayHiking"
+  ],
+  
+  "params":
+  {
+    "bodyTurnSpeed_degPerSec": 130,
+    "headTurnSpeed_degPerSec":  60,
+    "bodyAngleFromSectorCenterRangeMin_deg": 0.0,
+    "bodyAngleFromSectorCenterRangeMax_deg": 5.0,
+    "t1_headAngleAbsRangeMin_deg": -15.0,
+    "t1_headAngleAbsRangeMax_deg":  -5.0,
+    "t2_headAngleAbsRangeMin_deg":  -5.0,
+    "t2_headAngleAbsRangeMax_deg":   5.0,
+    "lookInPlaceAnimTrigger": "LookInPlaceForFacesHeadMovePause"
+  }
+}

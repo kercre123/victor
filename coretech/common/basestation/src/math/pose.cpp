@@ -577,47 +577,75 @@ namespace Anki {
   
   Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
-    // Make sure the two poses share a common parent:
-    
-    if(pose1.GetParent() != pose2.GetParent()) {
-      Pose3d pose1wrt2;
-      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
-        PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent",
-                          "Could not get pose1 w.r.t. pose2.");
-        return Vec3f(0.f,0.f,0.f);
-      }
-      return pose1wrt2.GetTranslation();
+    Vec3f ret{0.f,0.f,0.f};
+    const bool comparable = ComputeVectorBetween(pose1, pose2, ret);
+    if ( !comparable ) {
+      PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent", "Could not get pose1 w.r.t. pose2.");
     }
-    
-    // Compute distance between the two poses' translation vectors
-    // TODO: take rotation into account?
-    Vec3f distVec(pose1.GetTranslation());
-    distVec -= pose2.GetTranslation();
-    return distVec;
+    return ret;
   }
 
   f32 ComputeEuclidianDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
-    // Make sure the two poses share a common parent:
-    
-    if(pose1.GetParent() != pose2.GetParent()) {
-      Pose3d pose1wrt2;
-      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
-        PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent",
-                          "Could not get pose1 w.r.t. pose2.");
-        return Vec3f(0.f,0.f,0.f).Length();
-      }
-      return pose1wrt2.GetTranslation().Length();
+    Vec3f vecBetween{0.f,0.f,0.f};
+    const bool comparable = ComputeVectorBetween(pose1, pose2, vecBetween);
+    if ( !comparable ) {
+      PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent", "Could not get pose1 w.r.t. pose2.");
     }
     
-    
-    //Compute the euclidian distance
-    double xDiff =  pow(pose1.GetTranslation().x() - pose2.GetTranslation().x(), 2);
-    double yDiff =  pow(pose1.GetTranslation().y() - pose2.GetTranslation().y(), 2);
-    double zDiff =  pow(pose1.GetTranslation().z() - pose2.GetTranslation().z(), 2);
-    
-    return sqrt(xDiff + yDiff + zDiff);
+    return vecBetween.Length();
+  }
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, Vec3f& outVector)
+  {
+    // if not sharing a parent, we have to transfrom one of them
+    if(pose1.GetParent() != pose2.GetParent())
+    {
+      // try to get pose1 with respect to 2
+      Pose3d pose1wrt2;
+      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
+        // not sharing an origin, do not compute the vector
+        return false;
+      }
+      // successfully transformed, grab the relative translation
+      outVector = pose1wrt2.GetTranslation();
+    }
+    else
+    {
+      // they share a parent, we can compare translations directly
+      outVector = (pose1.GetTranslation() - pose2.GetTranslation());
+    }
+
+    return true;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistance)
+  {
+    Vec3f vectorBetweenPoses;
+    if ( false == ComputeVectorBetween(pose1, pose2, vectorBetweenPoses) )
+    {
+      // not comparable
+      return false;
+    }
+    
+    outDistance = vectorBetweenPoses.Length();
+    return true;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool ComputeDistanceSQBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistanceSQ)
+  {
+    Vec3f vectorBetweenPoses;
+    if ( false == ComputeVectorBetween(pose1, pose2, vectorBetweenPoses) )
+    {
+      // not comparable
+      return false;
+    }
+    
+    outDistanceSQ = vectorBetweenPoses.LengthSq();
+    return true;
   }
   
 } // namespace Anki

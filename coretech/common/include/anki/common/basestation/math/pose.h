@@ -340,6 +340,9 @@ namespace Anki {
     
   }; // class Pose3d
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Additional operations
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // Compute vector from pose2's translation to pose1's translation
   Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2);
@@ -348,6 +351,19 @@ namespace Anki {
   inline f32 ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2) {
     return ComputeVectorBetween(pose1, pose2).Length();
   }
+
+  // calculate vector between pose's translations (rotation is ignored)
+  // returns true/false depending on whether poses are comparable (share origin)
+  // stores result in outVector if the return value is true, untouched if false
+  bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, Vec3f& outVector);
+  // calculate distance between pose's translations (rotation is ignored)
+  // returns true/false depending on whether poses are comparable (share origin)
+  // stores result in outDistance if the return value is true, untouched if false
+  bool ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistance);
+  // calculate distance squared between pose's translations (rotation is ignored)
+  // returns true/false depending on whether poses are comparable (share origin)
+  // stores result in outDistanceSQ if the return value is true, untouched if false
+  bool ComputeDistanceSQBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistanceSQ);
   
   f32 ComputeEuclidianDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
   

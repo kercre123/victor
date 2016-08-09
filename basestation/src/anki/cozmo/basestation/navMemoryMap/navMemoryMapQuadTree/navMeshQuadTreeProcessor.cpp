@@ -55,6 +55,23 @@ NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor(VizManager* vizManager)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::SetRoot(NavMeshQuadTreeNode* node)
+{
+  // grab new root
+  _root = node;
+  
+  // check type if valid root
+  if ( nullptr != _root )
+  {
+    // we expect to set the root before anyone else (and only then)
+    ASSERT_NAMED( node->GetContentType() == ENodeContentType::Invalid, "NavMeshQuadTreeProcessor.SetRoot.RootIsInitialized" );
+    // change from invalid to unknow; this is required when Unknown is cached, so that we cache the root as soon as we get it
+    NavMeshQuadTreeTypes::NodeContent rootContent(ENodeContentType::Unknown);
+    _root->ForceSetDetectedContentType(rootContent, *this);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent)
 {
   CORETECH_ASSERT(node->GetContentType() == newContent);

@@ -1,18 +1,18 @@
 //
-// Hiking_GeneralLookInPlace
+// Hiking_LookInPlace360
 // This behavior runs in the general case of looking for cubes or edges, when we don't have anything interesting
 // at the moment that requires our attention. It's meant to scan the world to add edges, cubes and other info to
 // the memory map, so that other behaviors can trigger.
 //
 //
 {
-  "name": "Hiking_GeneralLookInPlace",
+  "name": "Hiking_LookInPlace360",
 
   "behaviorType": "ExploreLookAroundInPlace",
   "flatScore": 1.0,
-  "behaviorGroups": [
-    "FreeplayHiking"
-  ],
+//  "behaviorGroups": [
+//    // "FreeplayHiking" Disabled in favor of memoryMap one
+//  ],
   
   "params":
   {

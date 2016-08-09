@@ -89,7 +89,8 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
     os << part << " ";
   }
 
-  return os.str();
+  const std::string& ret(os.str());
+  return ret;
 }
 #endif  // defined(__MACH__) && defined(__APPLE__)
 
@@ -101,7 +102,7 @@ void sDumpCallstack(const std::string& name)
     int frames = backtrace(callstack, 128);
     char** strs = backtrace_symbols(callstack, frames);
     for (int i = 0; i < frames; ++i) {
-      PRINT_NAMED_INFO(name.c_str(), "%s", DemangleBacktraceSymbols(strs[i]).c_str());
+      PRINT_CH_INFO("Unfiltered", name.c_str(), "%s", DemangleBacktraceSymbols(strs[i]).c_str());
     }
     free(strs);
   }

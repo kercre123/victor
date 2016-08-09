@@ -35,12 +35,9 @@ NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
-, _content(ENodeContentType::Unknown)
+, _content(ENodeContentType::Invalid)
 {
   CORETECH_ASSERT(_quadrant <= EQuadrant::Root);
-
-  // processor would need to know otherwise, like we do in ForceSetDetectedContentType
-  CORETECH_ASSERT(_content.type == ENodeContentType::Unknown);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -208,6 +205,15 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, NavMeshQuad
   else if (  xPlus && !yPlus ) { childIdx = 2; }
   else if (  xPlus &&  yPlus ) { childIdx = 3; }
   NavMeshQuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
+  
+  // we have to set the new first level children as Unknown, since they are initialized as Invalid
+  // except the child that takes my place, since that one is going to inherit my content
+  NodeContent emptyUnknownContent(ENodeContentType::Unknown);
+  for(size_t idx=0; idx<_childrenPtr.size(); ++idx) {
+    if ( idx != childIdx ) {
+      _childrenPtr[idx]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+    }
+  }
   
   // set the new parent in my old children
   for ( auto& childPtr : oldChildren ) {
