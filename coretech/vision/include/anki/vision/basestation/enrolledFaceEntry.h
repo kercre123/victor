@@ -125,9 +125,8 @@ public:
   bool IsForThisSessionOnly() const { return _name.empty(); }
   
   // Update with bookkeeping from "other" EnrolledFaceEntry.
-  // Any album entries added to "this" will be removed from "other".
   // NOTE: maxAlbumEntriesToKeep includes the session-only entry!
-  Result MergeWith(EnrolledFaceEntry& other, s32 maxAlbumEntriesToKeep,
+  Result MergeWith(const EnrolledFaceEntry& other, s32 maxAlbumEntriesToKeep,
                    std::vector<s32>& entriesRemoved);
   
   // ---------------------------------------------------------------------------
@@ -145,7 +144,7 @@ public:
   
 protected:
   
-  Result MergeAlbumEntriesHelper(EnrolledFaceEntry& other, s32 maxAlbumEntriesToKeep,
+  Result MergeAlbumEntriesHelper(const EnrolledFaceEntry& other, s32 maxAlbumEntriesToKeep,
                                  std::vector<AlbumEntryID_t>& entriesRemoved);
   
   FaceID_t            _faceID = UnknownFaceID; // The ID used for recognition
