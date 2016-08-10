@@ -479,7 +479,7 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
     
     
 #if HijackAudioPlugInDebugLogs
-    _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "",
+    _plugInLog.emplace_back( TimeLog( LogEnumType::DestroyPlugIn, "",
                                       Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
     PrintPlugInLog();
 #endif
@@ -496,7 +496,7 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
     }
      
 #if HijackAudioPlugInDebugLogs
-     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(frameCount),
+     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "SampleCount: " + std::to_string(sampleCount),
                                        Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
   } );
@@ -626,9 +626,9 @@ void AudioController::PrintPlugInLog() {
       case LogEnumType::Post:
       {
         postTime = aLog.TimeInNanoSec;
-        
-        printf("----------------------------------------------\n \
-               Post Event %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+        PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
+                            "----------------------------------------------\n \
+                            Post Event %s - time: %f ms", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
       }
         break;
         
@@ -637,25 +637,29 @@ void AudioController::PrintPlugInLog() {
         createTime = aLog.TimeInNanoSec;
         isFirstUpdateLog = true;
         
-        printf("Create PlugIn %s - time: %f ms\n \
-               - Post -> Create time delta = %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ),
-               ConvertToMiliSec( createTime - postTime ));
+        PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
+                            "Create PlugIn %s - time: %f ms\n - Post -> Create time delta = %f ms\n",
+                            aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ),
+                            ConvertToMiliSec( createTime - postTime ));
       }
         break;
         
       case LogEnumType::Update:
       {
-        printf("Update %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+        PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
+                            "Update %s - time: %f ms\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
         
         
         if ( isFirstUpdateLog ) {
-          printf("- Post -> Update time delta = %f ms\n \
-                  - Create -> Update time delta = %f ms\n", ConvertToMiliSec( aLog.TimeInNanoSec - postTime ),
-                 ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
+          PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
+                              "- Post -> Update time delta = %f ms\n - Create -> Update time delta = %f ms\n",
+                              ConvertToMiliSec( aLog.TimeInNanoSec - postTime ),
+                              ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
         }
         else {
-          printf("- Previous Update -> Update time delta = %f ms\n",
-                 ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
+          PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
+                              "- Previous Update -> Update time delta = %f ms\n",
+                              ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
           
         }
         
@@ -664,12 +668,12 @@ void AudioController::PrintPlugInLog() {
       }
         break;
         
-      case LogEnumType::DestoryPlugIn:
+      case LogEnumType::DestroyPlugIn:
       {
-        printf("Destory Plugin %s - time: %f ms\n \
-               ----------------------------------------------\n",
-               aLog.Msg.c_str(),
-               ConvertToMiliSec( aLog.TimeInNanoSec ));
+        PRINT_NAMED_WARNING("AudioController.PrintPlugInLog",
+                            "Destroy Plugin %s - time: %f ms\n ----------------------------------------------",
+                            aLog.Msg.c_str(),
+                            ConvertToMiliSec( aLog.TimeInNanoSec ));
       }
         break;
         
