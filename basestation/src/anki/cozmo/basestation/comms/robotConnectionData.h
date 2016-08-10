@@ -39,6 +39,7 @@ public:
   RobotConnectionMessageData PopNextMessage();
   void PushArrivedMessage(const uint8_t* buffer, uint32_t numBytes, const Util::TransportAddress& address);
   void Clear();
+  void QueueConnectionDisconnect();
   
   Util::TransportAddress GetAddress() const { return _address; };
   void SetAddress(const Util::TransportAddress& address) { _address = address; }

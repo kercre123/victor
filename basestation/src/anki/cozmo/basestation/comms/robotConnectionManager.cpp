@@ -90,7 +90,7 @@ void RobotConnectionManager::Update()
   
 void RobotConnectionManager::Connect(const Util::TransportAddress& address)
 {
-  DisconnectCurrent();
+  _currentConnectionData->Clear();
   
   _currentConnectionData->SetAddress(address);
   _reliableTransport->Connect(address);
@@ -99,7 +99,7 @@ void RobotConnectionManager::Connect(const Util::TransportAddress& address)
 void RobotConnectionManager::DisconnectCurrent()
 {
   _reliableTransport->Disconnect(_currentConnectionData->GetAddress());
-  _currentConnectionData->Clear();
+  _currentConnectionData->QueueConnectionDisconnect();
 }
   
 bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)

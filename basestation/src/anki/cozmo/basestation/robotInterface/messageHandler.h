@@ -72,6 +72,8 @@ public:
   
   Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
   
+  void Disconnect();
+  
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
 protected:

@@ -42,6 +42,7 @@ public:
   
   bool IsValidConnection() const;
   void Connect(const Util::TransportAddress& address);
+  void DisconnectCurrent();
   
   void Update();
   void ProcessArrivedMessages();
@@ -64,8 +65,6 @@ private:
 #if TRACK_INCOMING_PACKET_LATENCY
   Util::Stats::RecentStatsAccumulator _queuedTimes_ms = 100; // how many ms between packet arriving and it being passed onto game
 #endif // TRACK_INCOMING_PACKET_LATENCY
-  
-  void DisconnectCurrent();
   
   void HandleDataMessage(RobotConnectionMessageData& nextMessage);
   void HandleConnectionResponseMessage(RobotConnectionMessageData& nextMessage);

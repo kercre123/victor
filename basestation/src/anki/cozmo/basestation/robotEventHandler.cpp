@@ -104,19 +104,30 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
     
     // GameToEngine: (in alphabetical order)
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetHeadlight>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1237,7 +1248,7 @@ void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1259,7 +1270,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetHeadlight& msg
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetHeadlight.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetHeadlight.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1273,32 +1284,13 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   if(nullptr == robot) {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
     robot->AbortAnimation();
     PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
   }
-}
-
-// TODO: ALl of the following should probably be robotEventHandling.cpp, b/c they are ExternalInterface, not RobotInterface
-void RobotEventHandler::SetupMiscHandlers(IExternalInterface& externalInterface)
-{
-  auto helper = MakeAnkiEventUtil(externalInterface, *this, _signalHandles);
-  
-  using namespace ExternalInterface;
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
 }
 
 template<>
@@ -1309,7 +1301,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleCancelAction.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleCancelAction.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1325,7 +1317,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleDrawPoseMarker.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleDrawPoseMarker.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1345,7 +1337,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::IMURequest& msg)
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleIMURequest.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleIMURequest.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1361,7 +1353,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableRobotPickup
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnableRobotPickupParalysis.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnableRobotPickupParalysis.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1378,7 +1370,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetBackpackLEDs& 
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetBackpackLEDs.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetBackpackLEDs.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1396,7 +1388,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& 
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleExecuteTestPlan.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleExecuteTestPlan.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1417,7 +1409,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetRobotCarryingObject.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetRobotCarryingObject.InvalidRobotID", "Failed to find robot.");
     
   }
   else
@@ -1438,7 +1430,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleAbortPath.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleAbortPath.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1454,7 +1446,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleAbortAll.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleAbortAll.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1470,7 +1462,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetActiveObjectLE
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetActiveObjectLEDs.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetActiveObjectLEDs.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1496,7 +1488,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjec
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetAllActiveObjectLEDss.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetAllActiveObjectLEDss.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
@@ -1516,7 +1508,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.SetupGainsHandlers.InvalidRobotID", "Failed to find robot %u.", robot->GetID());
+    PRINT_NAMED_WARNING("RobotEventHandler.SetupGainsHandlers.InvalidRobotID", "Failed to find robot.");
   }
   else
   {

@@ -122,7 +122,6 @@ namespace Anki {
       if (_context->GetExternalInterface())
       {
         _robotEventHandler.SetupGainsHandlers(*(_context->GetExternalInterface()));
-        _robotEventHandler.SetupMiscHandlers(*(_context->GetExternalInterface()));
       }
     }
     

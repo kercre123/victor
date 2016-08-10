@@ -88,5 +88,10 @@ void RobotConnectionData::Clear()
   }
 }
   
+void RobotConnectionData::QueueConnectionDisconnect()
+{
+  PushArrivedMessage(Util::INetTransportDataReceiver::OnDisconnected, 0, _address);
+}
+  
 } // end namespace Cozmo
 } // end namespace Anki

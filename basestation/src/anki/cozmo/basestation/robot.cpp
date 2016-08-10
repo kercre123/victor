@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -167,6 +168,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _blockFilter(new BlockFilter(this))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
+  , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
 {
   _poseHistory = new RobotPoseHistory();
   PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -1005,6 +1007,8 @@ Result Robot::Update(bool ignoreVisionModes)
   // personality planner, etc.
       
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  _robotIdleTimeoutComponent->Update(currentTime);
       
   _moodManager->Update(currentTime);
       

@@ -79,6 +79,13 @@ void MessageHandler::ProcessMessages()
     std::vector<uint8_t> nextData;
     while (_robotConnectionManager->PopData(nextData))
     {
+      // If we don't have a robot to care about this message, throw it away
+      Robot* destRobot = _robotManager->GetFirstRobot();
+      if (nullptr == destRobot)
+      {
+        continue;
+      }
+      
       const size_t dataSize = nextData.size();
       if (dataSize <= 0)
       {
@@ -86,7 +93,7 @@ void MessageHandler::ProcessMessages()
         continue;
       }
 
-      auto robotId = _robotManager->GetFirstRobot()->GetID();
+      auto robotId = destRobot->GetID();
 
       // see if message type should be filtered out based on potential firmware mismatch
       const RobotInterface::RobotToEngineTag msgType = static_cast<RobotInterface::RobotToEngineTag>(nextData.data()[0]);
@@ -174,6 +181,11 @@ Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobo
   _robotConnectionManager->Connect(address);
   
   return RESULT_OK;
+}
+  
+void MessageHandler::Disconnect()
+{
+  _robotConnectionManager->DisconnectCurrent();
 }
  
 const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const

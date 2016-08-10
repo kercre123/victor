@@ -80,6 +80,15 @@ message SetFeatureToggle {
   bool value
 }
 
+message StartIdleTimeout {
+  float_32 faceOffTime_s = -1.0,
+  float_32 disconnectTime_s = -1.0
+}
+
+message CancelIdleTimeout {
+  
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Low-level Robot Controls
 ///////////////////////////////////////////////////////////////////////////////

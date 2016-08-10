@@ -213,6 +213,18 @@
       "AnimName": "FlipDownFromBack"
     },
     {
+      "CladEvent": "GoToSleepGetIn",
+      "AnimName": "ag_gotosleep_getin"
+    },
+    {
+      "CladEvent": "GoToSleepOff",
+      "AnimName": "ag_gotosleep_off"
+    },
+    {
+      "CladEvent": "GoToSleepSleeping",
+      "AnimName": "ag_gotosleep_sleeping"
+    },
+    {
       "CladEvent": "HikingIntro",
       "AnimName": "ag_hiking_wakeup"
     },

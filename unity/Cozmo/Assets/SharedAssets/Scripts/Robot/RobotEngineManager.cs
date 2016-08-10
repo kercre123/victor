@@ -409,6 +409,16 @@ public class RobotEngineManager : MonoBehaviour {
     json.AddField("DataPlatformResourcesBasePath", PlatformUtil.GetResourcesBaseFolder());
   }
 
+  public void StartIdleTimeout(float faceOffTime_s, float disconnectTime_s) {
+    Message.StartIdleTimeout = Singleton<Anki.Cozmo.ExternalInterface.StartIdleTimeout>.Instance.Initialize(faceOffTime_s, disconnectTime_s);
+    SendMessage();
+  }
+
+  public void CancelIdleTimeout() {
+    Message.CancelIdleTimeout = Singleton<Anki.Cozmo.ExternalInterface.CancelIdleTimeout>.Instance;
+    SendMessage();
+  }
+
   #region Mocks
 
   public void MockConnect() {

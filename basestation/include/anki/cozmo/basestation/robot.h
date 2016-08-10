@@ -115,6 +115,7 @@ class LightsComponent;
 class RobotToEngineImplMessaging;
 class ActionList;
 class BehaviorManager;
+class RobotIdleTimeoutComponent;
 
   
 namespace Audio {
@@ -1029,6 +1030,7 @@ protected:
   void ConnectToRequestedObjects();
 
   std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
+  std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
 
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,

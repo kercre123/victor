@@ -68,6 +68,9 @@ enum int_32 AnimationTrigger
   FacePlantRollArmUp,
   FailedToRightFromFace,
   FlipDownFromBack,
+  GoToSleepGetIn,
+  GoToSleepSleeping,
+  GoToSleepOff,
   HikingInterestingEdgeThought, // Cozmo decided something about an interesting edge (probably decided he can't reach it)
   HikingIntro,                  // played when we start hiking. This may be used as Intro anim for hiking goal
   HikingObserve,                // when Cozmo visits interesting edges, pretending he is recognizing the border/object
