@@ -25,6 +25,9 @@ namespace Cozmo {
 
         private float _LastMessageSentTimestamp;
 
+        private bool _IsDrivingWheels = false;
+        private bool _IsDrivingHead = false;
+
         private DroneModeTransitionAnimator _RobotAnimator;
 
         public override void Enter() {
@@ -111,30 +114,38 @@ namespace Cozmo {
 
         private void SendDriveRobotMessages() {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec) {
-            _LastMessageSentTimestamp = Time.time;
-            DriveWheelsIfNeeded();
-            DriveHeadIfNeeded();
-            DriveLiftIfNeeded();
-          }
 
-          // If targets are both zero, enable reactionary behavior
-          if (_TargetTurnDirection.IsNear(0f, float.Epsilon) && _TargetDriveSpeed_mmps.IsNear(0f, float.Epsilon)
-              && _TargetDriveHeadSpeed_radps.IsNear(0f, float.Epsilon)) {
-            EnableIdleReactionaryBehaviors(true);
-          }
-          else {
-            EnableIdleReactionaryBehaviors(false);
+            _LastMessageSentTimestamp = Time.time;
+            bool droveWheels = DriveWheelsIfNeeded();
+            bool droveHead = DriveHeadIfNeeded();
+            DriveLiftIfNeeded();
+
+            if (_IsDrivingHead != droveHead || _IsDrivingWheels != droveWheels) {
+              // If targets are both zero, enable reactionary behavior
+              if (!droveHead && !droveWheels) {
+                EnableIdleReactionaryBehaviors(true);
+              }
+              else {
+                EnableIdleReactionaryBehaviors(false);
+              }
+
+              _IsDrivingHead = droveHead;
+              _IsDrivingWheels = droveWheels;
+            }
           }
         }
 
-        private void DriveWheelsIfNeeded() {
+        private bool DriveWheelsIfNeeded() {
+          bool droveWheels = false;
           if (ShouldPointTurn(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
             _CurrentDriveSpeed_mmps = PointTurnRobotWheels(_TargetTurnDirection);
             _CurrentTurnDirection = _TargetTurnDirection;
+            droveWheels = true;
           }
           else if (ShouldDrive(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
             _CurrentDriveSpeed_mmps = DriveRobotWheels(_TargetDriveSpeed_mmps, _TargetTurnDirection);
             _CurrentTurnDirection = _TargetTurnDirection;
+            droveWheels = true;
           }
           else if (ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _TargetDriveSpeed_mmps = 0f;
@@ -145,18 +156,22 @@ namespace Cozmo {
             _CurrentRobot.DriveWheels(0f, 0f);
             _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + 0 + " \nradius mm = N/A";
           }
+          return droveWheels;
         }
 
-        private void DriveHeadIfNeeded() {
+        private bool DriveHeadIfNeeded() {
+          bool droveHead = false;
           if (ShouldDriveHead(_TargetDriveHeadSpeed_radps)) {
             _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
             _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
+            droveHead = true;
           }
           else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
             _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveHeadSpeed_radps = 0f;
             _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
           }
+          return droveHead;
         }
 
         private void DriveLiftIfNeeded() {
