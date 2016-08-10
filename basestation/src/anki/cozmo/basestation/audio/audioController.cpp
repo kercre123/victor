@@ -67,11 +67,17 @@ static bool ResolvePathToAudioFile( const std::string&, const char*, char*, cons
 AudioController::AudioController( const CozmoContext* context )
 : _pluginInterface( new AudioControllerPluginInterface( *this ) )
 {
+  // Setup Music Conductor
+  _musicConductor = new MusicConductor( *this,
+                                        static_cast<AudioGameObject>( GameObjectType::Default ),
+                                        Util::numeric_cast<AudioStateGroupId>( GameState::StateGroupType::Music ),
+                                        Util::numeric_cast<AudioEventId>( GameEvent::Music::Play ),
+                                        Util::numeric_cast<AudioEventId>( GameEvent::Music::Stop ) );
+
 #if USE_AUDIO_ENGINE
   {
     ASSERT_NAMED(nullptr != context, "AudioController.AudioController.CozmocContex.IsNull");
     
-    _audioEngine = new AudioEngineController();
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
@@ -82,7 +88,7 @@ AudioController::AudioController( const CozmoContext* context )
       return;
     }
     
-    // Config engine
+    // Config Engine
     AudioEngine::SetupConfig config{};
     // Assets
     config.assetFilePath = assetPath;
@@ -138,8 +144,14 @@ AudioController::AudioController( const CozmoContext* context )
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
     
+    // Create Engine
+    _audioEngine = new AudioEngineController();
+    
     // Start your Engines!!!
     _isInitialized = _audioEngine->Initialize( config );
+    
+    // Setup Engine Logging callback
+    _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, &AudioEngineLogCallback );
     
     // If we're using the audio engine, assert that it was successfully initialized.
     ASSERT_NAMED(_isInitialized, "AudioController.Initialize Audio Engine fail");
@@ -150,8 +162,6 @@ AudioController::AudioController( const CozmoContext* context )
   if ( _isInitialized )
   {
 #if USE_AUDIO_ENGINE
-    // Setup Ak Logging callback
-    _audioEngine->SetLogOutput( AudioEngine::ErrorLevel::All, &AudioEngineLogCallback );
     
     // Register and Prepare Plug-Ins
     SetupHijackAudioPlugInAndRobotAudioBuffers();
@@ -175,13 +185,6 @@ AudioController::AudioController( const CozmoContext* context )
     _audioEngine->LoadAudioScene( sceneTitle );
     
 #endif
-  
-    // Setup Music Conductor
-    _musicConductor = new MusicConductor( *this,
-                                          static_cast<AudioGameObject>( GameObjectType::Default ),
-                                          Util::numeric_cast<AudioStateGroupId>( GameState::StateGroupType::Music ),
-                                          Util::numeric_cast<AudioEventId>( GameEvent::Music::Play ),
-                                          Util::numeric_cast<AudioEventId>( GameEvent::Music::Stop ) );
   }
 }
 
