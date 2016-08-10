@@ -49,6 +49,7 @@ namespace Vision {
     
     const std::string& GetName() const;
     void SetName(const std::string& newName);
+    bool HasName() const;
     
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
@@ -280,6 +281,10 @@ namespace Vision {
   
   inline const std::string& TrackedFace::GetName() const {
     return _name;
+  }
+
+  inline bool TrackedFace::HasName() const {
+    return !_name.empty();
   }
   
   inline bool TrackedFace::IsFacingCamera() const {

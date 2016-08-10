@@ -141,6 +141,17 @@ void IBehaviorPoseBasedAcknowledgement::HandleNewObservation(s32 id,
     if( ! reactionEnabled ) {
       reaction.FakeReaction();
     }
+
+    if( kDebugAcknowledgements ) {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".AddNewID").c_str(),
+                    "%d seen for the first time at (%f, %f, %f) @time %dms reactionEnabled=%d",
+                    id,
+                    pose.GetTranslation().x(),
+                    pose.GetTranslation().y(),
+                    pose.GetTranslation().z(),
+                    timestamp,
+                    reactionEnabled ? 1 : 0);
+    }
     
     AddReactionData(id, std::move(reaction));
   }
@@ -154,87 +165,143 @@ void IBehaviorPoseBasedAcknowledgement::HandleNewObservation(s32 id,
   }
 }
 
-bool IBehaviorPoseBasedAcknowledgement::ShouldReactToTarget(const Robot& robot,
-                                                            const ReactionDataMap::value_type& reactionPair) const
-{  
-  u32 currTimestamp = robot.GetLastImageTimeStamp();
-  
-  bool shouldReact = reactionPair.second.lastReactionTime_ms == 0;
-  // if we have never reacted, we always want to. Otherwise, check the cooldown and pose
+bool IBehaviorPoseBasedAcknowledgement::ShouldReactToTarget_poseHelper(const Pose3d& thisPose,
+                                                                       const Pose3d& otherPose) const
+{
+  // TODO:(bn) ideally pose should have an IsSameAs function which can return "yes", "no", or
+  // "don't know" / "wrong frame"
 
-  if( !shouldReact ) {
-    const bool isCoolDownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
-    const bool isPoseDifferent = !reactionPair.second.lastPose.IsSameAs(reactionPair.second.lastReactionPose,
-                                                                        _params.samePoseDistThreshold_mm,
-                                                                        _params.samePoseAngleThreshold_rad);
-    shouldReact = isCoolDownOver || isPoseDifferent;
+  Pose3d otherPoseWrtThis;
+  if( ! otherPose.GetWithRespectTo(thisPose, otherPoseWrtThis) ) {
+    // poses aren't in the same frame, so don't react (assume we moved, not the cube)
+    return false;
+  }
+    
+  const bool thisPoseIsSame = thisPose.IsSameAs(otherPoseWrtThis,
+                                                _params.samePoseDistThreshold_mm,
+                                                _params.samePoseAngleThreshold_rad);
+
+  // we want to react if the pose is not the same
+  return !thisPoseIsSame;
+}
+
+bool IBehaviorPoseBasedAcknowledgement::ShouldReactToTarget(const Robot& robot,
+                                                            const ReactionDataMap::value_type& reactionPair,
+                                                            bool matchAnyPose) const
+{  
+  // we should react unless we find a reason not to
+  bool shouldReact = true;
+  
+  if( matchAnyPose ) {
 
     if( kDebugAcknowledgements ) {
-      std::string eventName;
-      if( shouldReact ) {
-        eventName = GetName() + ".HandleNewObservation.ShouldReactAgain";
+      reactionPair.second.lastPose.Print("Behaviors", (GetName() + ".lastPose"));
+    }
+    
+    // in this case, we need to check all poses regardless of ID
+    for( const auto& otherPair : _reactionData ) {
+
+      if( otherPair.second.lastReactionTime_ms == 0 ) {
+        // don't match against something we've never reacted to (could be a brand new observation)
+        if( kDebugAcknowledgements ) {
+          PRINT_CH_INFO("Behaviors", (GetName() + ".CheckAnyPose.Skip").c_str(),
+                        "%3d vs %3d: skip because haven't reacted",
+                        reactionPair.first,
+                        otherPair.first);
+        }
+
+        continue;
       }
-      else {
-        eventName = GetName() + ".HandleNewObservation.DontReactAgain";
-      }
+
+      // if any single pose says we don't need to react, then don't react
+      const bool shouldReactToOther = ShouldReactToTarget_poseHelper(reactionPair.second.lastPose,
+                                                                     otherPair.second.lastReactionPose);
+
+      if( kDebugAcknowledgements ) {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".CheckAnyPose").c_str(),
+                      "%3d vs %3d: shouldReactToOther?%d ",
+                      reactionPair.first,
+                      otherPair.first,
+                      shouldReactToOther ? 1 : 0);        
         
-      PRINT_CH_INFO("Behaviors", eventName.c_str(),
-                    "%3d: cooldownOver?%d poseDifferent?%d lastSeenTime=%dms, currTime=%dms, (cooldown=%dms), "
-                    "lastReactionPose=(%f, %f, %f) @time %dms, currPose=(%f, %f, %f)",
-                    reactionPair.first,
-                    isCoolDownOver ? 1 : 0,
-                    isPoseDifferent ? 1 : 0,
-                    reactionPair.second.lastSeenTime_ms,
-                    currTimestamp,
-                    _params.coolDownDuration_ms,
-                    reactionPair.second.lastReactionPose.GetTranslation().x(),
-                    reactionPair.second.lastReactionPose.GetTranslation().y(),
-                    reactionPair.second.lastReactionPose.GetTranslation().z(),
-                    reactionPair.second.lastReactionTime_ms,
-                    reactionPair.second.lastPose.GetTranslation().x(),
-                    reactionPair.second.lastPose.GetTranslation().y(),
-                    reactionPair.second.lastPose.GetTranslation().z());
+        otherPair.second.lastReactionPose.Print("Behaviors", (GetName() + ".other.lastReaction"));
+      }
+      
+      if( !shouldReactToOther ) {
+        shouldReact = false;
+        break;
+      }
     }
   }
-  else if( kDebugAcknowledgements ) {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".DoInitialReaction").c_str(),
-                  "Doing first reaction to new id %d at ts=%dms, pose (%f, %f, %f)",
-                  reactionPair.first,
-                  reactionPair.second.lastSeenTime_ms,
-                  reactionPair.second.lastPose.GetTranslation().x(),
-                  reactionPair.second.lastPose.GetTranslation().y(),
-                  reactionPair.second.lastPose.GetTranslation().z());
+  else {
+
+    const bool hasEverReactedToThisId = reactionPair.second.lastReactionTime_ms > 0;
+
+    // if we have reacted, then check if we want to react again based on the last pose and time we reacted.
+    if( hasEverReactedToThisId ) {
+      const u32 currTimestamp = robot.GetLastImageTimeStamp();       
+      const bool isCooldownOver = currTimestamp - reactionPair.second.lastReactionTime_ms > _params.coolDownDuration_ms;
+
+      const bool shouldReactToPose = ShouldReactToTarget_poseHelper(reactionPair.second.lastPose,
+                                                                    reactionPair.second.lastReactionPose);
+      shouldReact = isCooldownOver || shouldReactToPose;
+
+      if( kDebugAcknowledgements ) {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".SingleReaction").c_str(),
+                      "%3d: shouldReact?%d isCooldownOver?%d shouldReactToPose?%d",                      
+                      reactionPair.first,
+                      shouldReact ? 1 : 0,
+                      shouldReactToPose ? 1 : 0,
+                      isCooldownOver ? 1 : 0);
+        
+        reactionPair.second.lastPose.Print("Behaviors", (GetName() + ".lastPose"));
+        reactionPair.second.lastReactionPose.Print("Behaviors", (GetName() + ".lastReactionPose"));
+      }
+      
+    }
+    else {
+      // else, we have never reacted to this ID, so do so now
+      if( kDebugAcknowledgements ) {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".DoInitialReaction").c_str(),
+                      "Doing first reaction to new id %d at ts=%dms",
+                      reactionPair.first,
+                      reactionPair.second.lastSeenTime_ms);
+        reactionPair.second.lastPose.Print("Behaviors", (GetName() + ".NewPose"));
+      }
+    }
   }
                     
   return shouldReact;
 }
 
-void IBehaviorPoseBasedAcknowledgement::GetDesiredReactionTargets(const Robot& robot, std::set<s32>& targets) const
+void IBehaviorPoseBasedAcknowledgement::GetDesiredReactionTargets(const Robot& robot,
+                                                                  std::set<s32>& targets,
+                                                                  bool matchAnyPose) const
 {
   // for each id we are tracking, check if it should be reacted to by comparing it's last observation (time
   // and pose) to the last time / place we reacted to it
   for( const auto& reactionPair : _reactionData ) {
-    if( ShouldReactToTarget(robot, reactionPair) ) {
+    if( ShouldReactToTarget(robot, reactionPair, matchAnyPose) ) {
       targets.insert(reactionPair.first);
     }
   }
 }
 
-bool IBehaviorPoseBasedAcknowledgement::HasDesiredReactionTargets(const Robot& robot) const
+bool IBehaviorPoseBasedAcknowledgement::HasDesiredReactionTargets(const Robot& robot, bool matchAnyPose) const
 {
   for( const auto& reactionPair : _reactionData ) {
-    if( ShouldReactToTarget(robot, reactionPair) ) {
+    if( ShouldReactToTarget(robot, reactionPair, matchAnyPose) ) {
       return true;
     }
   }
   return false;
 }
 
-bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& bestTarget) const
+bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& bestTarget, bool matchAnyPose) const
 {
   // TODO:(bn) cache targets instead of doing this per-tick?
   std::set<s32> targets;
-  GetDesiredReactionTargets(robot, targets);
+  GetDesiredReactionTargets(robot, targets, matchAnyPose);
   if( targets.empty() ) {
     return false;
   }

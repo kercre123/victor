@@ -14,7 +14,7 @@
     },
     {
       "CladEvent": "AcknowledgeObject",
-      "AnimName": "ag_reactToNewBlock"
+      "AnimName": "ag_reacttoblock_react_short"
     },
     {
       "CladEvent": "AskToBeRightedLeft",
