@@ -213,6 +213,14 @@
       "AnimName": "FlipDownFromBack"
     },
     {
+      "CladEvent": "FrustratedByFailure",
+      "AnimName": "ag_memorymatch_failgame_cozmo"
+    },
+    {
+      "CladEvent": "FrustratedByFailureMajor",
+      "AnimName": "ag_memorymatch_failgame_cozmo"
+    },
+    {
       "CladEvent": "GoToSleepGetIn",
       "AnimName": "ag_gotosleep_getin"
     },

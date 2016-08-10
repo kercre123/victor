@@ -439,6 +439,9 @@ public:
   // to see if the reactionary behavior has requested a computational switch
   // override to trigger a reactionary behavior based on something other than a message
   virtual bool ShouldComputationallySwitch(const Robot& robot){ return false;}
+
+  // if this returns false, then don't start this behavior if another reactionary is already running
+  virtual bool ShouldInterruptOtherReactionaryBehavior() { return true; }
   
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 
