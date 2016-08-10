@@ -53,7 +53,8 @@
 
 	  'opencv_libs': [
             'libzlib.a',
-            'liblibjpeg.a',
+            #'liblibjpeg.a',
+            'libturbojpeg.a',
             'liblibpng.a',
             'liblibtiff.a',
             'liblibjasper.a',
@@ -72,10 +73,12 @@
 
           'opencv_lib_search_path_debug': [
             '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
+            '<(coretech_external_path)/libjpeg-turbo/android_armv7_libs',
           ],
 
           'opencv_lib_search_path_release': [
             '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
+            '<(coretech_external_path)/libjpeg-turbo/android_armv7_libs',
           ],
         },
 
@@ -94,11 +97,13 @@
 	      '<(coretech_external_path)/opencv-<(opencv_version)/modules/flann/include',
 	      '<(coretech_external_path)/opencv-<(opencv_version)/modules/imgcodecs/include',
 	      '<(coretech_external_path)/opencv-<(opencv_version)/modules/videoio/include',
+          '<(coretech_external_path)/libjpeg-turbo/mac_include/include',
 	    ],
 
 	 'opencv_libs': [
             'libzlib.a',
-            'liblibjpeg.a',
+            #'liblibjpeg.a',
+            'libturbojpeg.a',
             'liblibpng.a',
             'liblibtiff.a',
             'liblibjasper.a',
@@ -119,11 +124,13 @@
           'opencv_lib_search_path_debug': [
             '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Debug',
             '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Debug',
+            '<(coretech_external_path)/libjpeg-turbo/mac_libs',
           ],
 
           'opencv_lib_search_path_release': [
             '<(coretech_external_path)/build/opencv-<(opencv_version)/lib/Release',
             '<(coretech_external_path)/build/opencv-<(opencv_version)/3rdparty/lib/Release',
+            '<(coretech_external_path)/libjpeg-turbo/mac_libs',
           ],
         },
       ],
