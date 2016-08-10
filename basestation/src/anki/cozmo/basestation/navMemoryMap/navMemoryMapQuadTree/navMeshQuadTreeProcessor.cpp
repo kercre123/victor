@@ -352,6 +352,17 @@ void NavMeshQuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeCont
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeProcessor::HasContentType(ENodeContentType nodeType) const
+{
+  ASSERT_NAMED_EVENT(IsCached(nodeType), "NavMeshQuadTreeProcessor.HasContentType", "%s is not cached", ENodeContentTypeToString(nodeType) );
+  
+  // check if any nodes for that type are cached currently
+  auto nodeSetMatch = _nodeSets.find(nodeType);
+  const bool hasAny = (nodeSetMatch != _nodeSets.end()) && !nodeSetMatch->second.empty();
+  return hasAny;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::Draw() const
 {
   // content quads

@@ -3,8 +3,7 @@
   "name": "demo_StackBlocks",
   "requiredUnlockId": "StackTwoCubes",
   "flatScore": 0.8,
-  "behaviorGroups": [
-    "AffectsBlocks",
+  "behaviorGroups": [    
     "Demo",
     "DemoCubes"
   ]

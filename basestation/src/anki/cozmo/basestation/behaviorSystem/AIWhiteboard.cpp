@@ -116,6 +116,69 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const
+{
+  #if ANKI_DEVELOPER_CODE
+  {
+    // all beacons should be in this world
+    for ( const auto& beacon : _beacons ) {
+      ASSERT_NAMED(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(), "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
+    }
+  }
+  #endif
+
+  outObjectList.clear();
+  if ( !_beacons.empty() )
+  {
+    // if the robot is currently carrying a cube, insert only that one right away, regardless of whether it's inside or
+    // outisde the beacon, since we would always want to drop it. Any other cube would be unusable until we drop this one
+    if ( _robot.IsCarryingObject() )
+    {
+      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetObjectByID( _robot.GetCarryingObject() );
+      if ( nullptr != carryingObject ) {
+        outObjectList.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
+      } else {
+        // this can be blocking under certain scenarios, since we can think we are carrying a cube, but it is not in
+        // the blockworld
+        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons", "Could not get carrying object pointer");
+      }
+    }
+    else
+    {
+      // ask for all cubes we know, and if any is not inside a beacon, add to the list
+      BlockWorldFilter filter;
+      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+      filter.SetFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
+        if(!blockPtr->IsPoseStateUnknown())
+        {
+          bool isBlockInAnyBeacon = false;
+          
+          // check if the object is within any beacon
+          for ( const auto& beacon : _beacons ) {
+            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+            if ( isBlockInAnyBeacon ) {
+              break;
+            }
+          }
+          
+          // this block should be carried to a beacon
+          if ( !isBlockInAnyBeacon ) {
+            outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
+          }
+        }
+        return false; // have to return true/false, even though not used
+      });
+      
+      _robot.GetBlockWorld().FilterObjects(filter);
+    }
+  }
+
+  // do we have any usable cubes out of beacons?
+  bool hasBlocksOutOfBeacons = !outObjectList.empty();
+  return hasBlocksOutOfBeacons;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObjects) const
 {
   possibleObjects.clear();
@@ -430,7 +493,11 @@ void AIWhiteboard::UpdateBeaconRender()
       Vec3f center = beacon.GetPose().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius(), NamedColors::GREEN, false);
+          center, beacon.GetRadius(), NamedColors::DARKGREEN, false);
+      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
+          center, beacon.GetRadius()-0.5f, NamedColors::DARKGREEN, false); // double line
+      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
+          center, beacon.GetRadius()-1.0f, NamedColors::DARKGREEN, false); // triple line (jane's request)
     }
   }
 }

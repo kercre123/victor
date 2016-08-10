@@ -136,10 +136,12 @@ private:
   // same as SwitchToBehavior but also handles special reactionary logic
   void SwitchToReactionaryBehavior(IReactionaryBehavior* nextBehavior);
   
-
-  
   // checks the chooser and switches to a new behavior if neccesary
-  void SwitchToNextBehavior(bool didCurrentFinish);
+  void ChooseNextBehaviorAndSwitch();
+  
+  // try to resume back to the previous behavior (after interruptions). This method does not guarantee resuming
+  // to a previous one. If there was no behavior to resume to, it will set null behavior as current.
+  void TryToResumeBehavior();
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopCurrentBehavior();

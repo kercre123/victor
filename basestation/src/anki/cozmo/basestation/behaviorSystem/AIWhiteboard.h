@@ -17,6 +17,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
+#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -50,6 +51,15 @@ public:
   using PossibleObjectList = std::list<PossibleObject>;
   using PossibleObjectVector = std::vector<PossibleObject>;
   
+  // info for objects we search from the whiteboard and return as result of the search
+  struct ObjectInfo {
+    ObjectInfo(ObjectID objId, ObjectFamily fam) : id(objId), family(fam) {}
+    ObjectID id;
+    ObjectFamily family;
+  };
+  using ObjectInfoList = std::vector<ObjectInfo>;
+  
+  // list of beacons
   using BeaconList = std::vector<AIBeacon>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,6 +84,13 @@ public:
 
   // called when we've searched for a possible object at a given pose, but failed to find it
   void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Cube search
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // find any usable cubes (not unknown) that are not in a beacon, and return true if any are found.
+  bool FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -131,7 +148,6 @@ private:
   
   // signal handles for events we register to. These are currently unsubscribed when destroyed
   std::vector<Signal::SmartHandle> _signalHandles;
-  
   
   // time at which the robot got off the charger by itself. Negative value means never
   float _gotOffChargerAtTime_sec;

@@ -11,7 +11,7 @@
   "behaviorType": "DriveOffCharger",
   "flatScore": 10.0,
   "behaviorGroups": [
-    "FreeplayHiking"
+    "FP_Hiking"
   ],
   
   "extraDistanceToDrive_mm": 45.0

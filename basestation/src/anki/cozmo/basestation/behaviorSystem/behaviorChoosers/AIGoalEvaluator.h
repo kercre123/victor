@@ -14,8 +14,10 @@
 
 #include "json/json-forwards.h"
 #include "iBehaviorChooser.h"
+#include "util/helpers/templateHelpers.h"
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace Anki {
@@ -47,22 +49,24 @@ public:
   virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) override { assert(false); } // todo rsam probably read goals, not behavior groups/behaviors
   virtual std::vector<std::string> GetEnabledBehaviorList()  override {std::vector<std::string> list; return list;};
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Behavior selection
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // get next behavior by properly managing the goals
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const override;
+  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Acccessors
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // name (for debug/identification)
-  // todo rsam: add current goal name to the name (like Demo does)
-  virtual const char* GetName() const override { return "GoalEvaluator"; }
+  virtual const char* GetName() const override { return _name.c_str(); }
+  
+  // sets the name of a goal we want to force for debugging (not to be used in production)
+  void SetConsoleRequestedGoalName(const std::string& name) { _debugConsoleRequestedGoal = name; }
   
 private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Constants and Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // json configuration
-  static const char* kSelfConfigKey;
-  static const char* kGoalsConfigKey;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -71,20 +75,31 @@ private:
   // create the proper goals from the given config
   void CreateFromConfig(Robot& robot, const Json::Value& config);
   
-  // picks a new goal from the available ones for the given spark. Note that it will only switch between 2 per spark, since
-  // it grabs the first available one that is not the current one
-  size_t PickNewGoalForSpark(Robot& robot, UnlockId spark) const;
+  // picks a new goal from the available ones for the given spark. Note that at the moment it will only switch
+  // between 2 per spark, since it grabs the first available one that is not the current one
+  // returns true if current goal changes, false otherwise
+  bool PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isCurrentAllowed);
+  
+  // just prints loaded goals to log
+  void DebugPrintGoals() const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // set of goals defined for this evaluator
-  std::vector< std::unique_ptr<AIGoal> > _goals;
+  // name for debugging
+  std::string _name;
   
-  // mutable because ChooseNextBehavior is const. This will go away in an upcoming PR with proper goals  
-  mutable size_t _curGoalIdx;
-  mutable float _lastTimeGoalSwitched;
+  // set of goals defined for this evaluator, stored by spark required to run the goal
+  using GoalVector = std::vector< std::unique_ptr<AIGoal>>;
+  using SparkToGoalsTable = std::unordered_map<UnlockId, GoalVector, Util::EnumHasher>;
+  SparkToGoalsTable _goals;
+  
+  // raw pointer to the current goal, which is guaranteed be stored in _goals
+  AIGoal* _currentGoalPtr;
+  
+  // this variable is set from debug console to cycle through goals in goal evaluators
+  std::string _debugConsoleRequestedGoal;
 };
   
 

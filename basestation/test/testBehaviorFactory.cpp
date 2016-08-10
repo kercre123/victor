@@ -94,7 +94,7 @@ static const char* kTestBehaviorJson =
 "    ]"
 "  },"
 "   \"behaviorGroups\" : ["
-"      \"AffectsBlocks\","
+"      \"MiniGame\","
 "      \"RequestSpeedTap\""
 "   ]"
 "}";
@@ -102,7 +102,7 @@ static const char* kTestBehaviorJson =
 
 bool ShouldBehaviorGroupBeSetForTest(BehaviorGroup behaviorGroup)
 {
-  return (behaviorGroup == BehaviorGroup::AffectsBlocks) || (behaviorGroup == BehaviorGroup::RequestSpeedTap);
+  return (behaviorGroup == BehaviorGroup::MiniGame) || (behaviorGroup == BehaviorGroup::RequestSpeedTap);
 }
 
 

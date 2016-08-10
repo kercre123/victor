@@ -10,7 +10,6 @@ namespace Cozmo {
 enum uint_8 BehaviorGroup {
 
     Reactionary = 0,
-    AffectsBlocks,
     MiniGame,
     RequestSpeedTap,
     RequestMemoryMatch,
@@ -20,8 +19,11 @@ enum uint_8 BehaviorGroup {
     Unlock_CubeRoll,
 
     // Freeplay
-    FreeplayOne,      // this is a temp goal with the old behaviors from freeplay. Placeholder for games before turning into proper goals
-    FreeplayHiking,  // this will be the new exploration goal
+    // FreeplayOne,     // gone in favor of FP_* goals
+    FP_Hiking,          // this will be the new exploration goal
+    FP_PlayWithHumans,  // request games to play with the human player
+    FP_PlayAlone,       // show-off behaviors
+    FP_Socialize,       // interact with faces, seek owner, etc.
 
     Demo,
     DemoFingerPounce,
@@ -37,9 +39,6 @@ enum uint_8 BehaviorGroup {
     SparksKnockOverCubes,
     SparksBuildPyramid,
 
-    ShowOff,
-    Playful,
-    
     Count
 }
 

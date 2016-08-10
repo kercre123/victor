@@ -68,6 +68,7 @@ WebotsKeyboardController {
   filterLogs TRUE
 }
 CozmoVizDisplay {
+  moodViz TRUE
   behaviorSelectionViz TRUE
   filterLogs TRUE
 }

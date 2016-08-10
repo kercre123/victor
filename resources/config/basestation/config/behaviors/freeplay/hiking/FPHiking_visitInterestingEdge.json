@@ -11,7 +11,7 @@
   "behaviorType": "VisitInterestingEdge",
   "flatScore": 0.5,
   "behaviorGroups": [
-    "FreeplayHiking"
+    "FP_Hiking"
   ],
   
   "params": {

@@ -1,6 +1,10 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "popAWheelie",
+  "behaviorGroups": [
+    "FP_PlayAlone"    
+  ],
+  
   "requiredUnlockId": "PopAWheelieAction",
   "flatScore":  0.7,
   "shouldHandleConfirmedObject": false,
@@ -16,9 +20,5 @@
         "y": 1.0
       }
     ]
-  },
-  "behaviorGroups": [
-      "FreeplayOne",
-      "ShowOff"
-  ]
+  }
 }

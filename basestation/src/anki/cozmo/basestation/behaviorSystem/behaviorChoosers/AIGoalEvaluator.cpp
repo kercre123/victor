@@ -12,6 +12,7 @@
 #include "AIGoalEvaluator.h"
 
 #include "AIGoal.h"
+#include "AIGoalStrategies/iAIGoalStrategy.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
@@ -20,30 +21,92 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/random/randomGenerator.h"
 #include "json/json.h"
 
+#include <algorithm>
+#include <sstream>
+
 namespace Anki {
 namespace Cozmo {
 
-const char* AIGoalEvaluator::kSelfConfigKey = "evaluator";
-const char* AIGoalEvaluator::kGoalsConfigKey = "goals";
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helpers and debug utilities
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace
+{
+// static const char* kSelfConfigKey = "evaluator";
+static const char* kGoalsConfigKey = "goals";
+
+AIGoalEvaluator* defaultGoalEvaluator = nullptr;
+void AIGoalEvaluatorSetDebugGoal(const std::string& name)
+{
+  if ( nullptr != defaultGoalEvaluator ) {
+    defaultGoalEvaluator->SetConsoleRequestedGoalName(name);
+  } else {
+    PRINT_NAMED_WARNING("AIGoalEvaluatorCycleGoal", "No default goal evaluator. Can't cycle goals.");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalSetFPHiking( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("FP_Hiking");
+}
+CONSOLE_FUNC( AIGoalSetFPHiking, "AIGoalEvaluator" );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalSetFPPlayWithHumans( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("FP_PlayWithHumans");
+}
+CONSOLE_FUNC( AIGoalSetFPPlayWithHumans, "AIGoalEvaluator" );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalSetFPPlayAlone( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("FP_PlayAlone");
+}
+CONSOLE_FUNC( AIGoalSetFPPlayAlone, "AIGoalEvaluator" );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalSetFPSocialize( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("FP_Socialize");
+}
+CONSOLE_FUNC( AIGoalSetFPSocialize, "AIGoalEvaluator" );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalClearSetting( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("");
+}
+CONSOLE_FUNC( AIGoalClearSetting, "AIGoalEvaluator" );
+
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoalEvaluator::AIGoalEvaluator(Robot& robot, const Json::Value& config)
 : IBehaviorChooser(robot, config)
-, _curGoalIdx(0)
-, _lastTimeGoalSwitched(0.0f)
+, _name("GoalEvaluator")
+, _currentGoalPtr(nullptr)
 {
   CreateFromConfig(robot, config);
+  
+  #if ( ANKI_DEV_CHEATS )
+  {
+    if ( !defaultGoalEvaluator ) {
+      defaultGoalEvaluator = this;
+    }
+  }
+  #endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoalEvaluator::~AIGoalEvaluator()
 {
-
+  #if ( ANKI_DEV_CHEATS )
+  {
+    if ( defaultGoalEvaluator == this ) {
+      defaultGoalEvaluator = nullptr;
+    }
+  }
+  #endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,7 +118,7 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
   const Json::Value& goalsConfig = config[kGoalsConfigKey];
   if ( !goalsConfig.isNull() )
   {
-    // reserve room for goals
+    // reserve room for goals (note we reserve 1 per goal as upper bound, even if some goals fall in the same unlockId)
     _goals.reserve( goalsConfig.size() );
   
     // iterate all objects in the goals adding them to our container
@@ -69,8 +132,9 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
       bool goalInitOk = goal->Init( robot, goalConfig );
       if ( goalInitOk )
       {
-        // add the goal to our container
-        _goals.emplace_back( goal );
+        const UnlockId goalSpark = goal->GetRequiredSpark();
+        // add the goal to the vector of goals with the same spark
+        _goals[goalSpark].emplace_back( goal );
       }
       else
       {
@@ -85,74 +149,191 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
     }
   }
   
-  // set goal index to no-goal
-  _curGoalIdx = _goals.size();
+  // sort goals by priority now so that later we can iterate from front to back
+  // define lambda to sort. Note the container holds unique_ptrs
+  auto sortByPriority = [](const std::unique_ptr<AIGoal>& goal1, const std::unique_ptr<AIGoal>& goal2) {
+    ASSERT_NAMED(goal1->GetPriority() != goal2->GetPriority(), "AIGoalEvaluator.SamePriorityNotSupported"); // there's no tie-break
+    const bool isBetterPriority = (goal1->GetPriority() < goal2->GetPriority());
+    return isBetterPriority;
+  };
+  // iterate all goal vectors and sort
+  for(auto& goalPair : _goals)
+  {
+    GoalVector& goalsPerUnlock = goalPair.second;
+    std::sort(goalsPerUnlock.begin(), goalsPerUnlock.end(), sortByPriority);
+  }
+  
+  // DebugPrintGoals();
+  
+  // clear current goal
+  _currentGoalPtr = nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-size_t AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark) const
+bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isCurrentAllowed)
 {
-  for( size_t idx = 0; idx < _goals.size(); ++idx )
+  // find goals that can run for the given spark
+  const SparkToGoalsTable::iterator goalVectorIt = _goals.find(spark);
+  if ( goalVectorIt != _goals.end() )
   {
-    if ( idx != _curGoalIdx )
+    GoalVector& goalsForThisSpark = goalVectorIt->second;
+  
+    // can't have the spark registered but have no goals in the container, programmer error
+    ASSERT_NAMED(!goalsForThisSpark.empty(), "AIGoalEvaluator.RegisteredSparkHasNoGoals");
+    
+    AIGoal* newGoal = nullptr;
+    
+    // goals are sorted by priority within this spark. Iterate from first to last until one wants to run
+    for(auto& goal : goalsForThisSpark)
     {
-      const bool sparkMatches = (_goals[idx]->GetRequiredSpark() == spark);
-      if ( sparkMatches ) {
-        // this is a goal that is not the current one and matches the desired spark
-        return idx;
+      const IAIGoalStrategy& selectionStrategy = goal->GetStrategy();
+      
+      // if there's a debug console requested goal, force to pick that one
+      if ( !_debugConsoleRequestedGoal.empty() )
+      {
+        // skip if name doesn't match
+        if ( goal->GetName() != _debugConsoleRequestedGoal ) {
+          continue;
+        }
+      }
+      else
+      {
+        // check if this goal is the one that should be running
+        // for current goal, check if it wants to end,
+        // for non-current goals, check if they want to start
+        const bool isCurrentRunningGoal = (goal.get() == _currentGoalPtr);
+        if ( isCurrentRunningGoal )
+        {
+          // if the current goal is not allowed, skip it
+          if ( !isCurrentAllowed ) {
+            continue;
+          }
+          // it's currently running, check if we want to end
+          const float lastTimeStarted = goal->GetLastTimeStartedSecs();
+          const bool wantsToEnd = selectionStrategy.WantsToEnd(robot, lastTimeStarted);
+          if ( wantsToEnd ) {
+            continue;
+          }
+        }
+        else
+        {
+          // it's not running, check if we want to start
+          const float lastTimeFinished = goal->GetLastTimeStoppedSecs();
+          const bool wantsToStart = selectionStrategy.WantsToStart(robot, lastTimeFinished);
+          if ( !wantsToStart ) {
+            continue;
+          }
+        }
+      }
+      
+      // this is the best priority goal that wants to run, done searching
+      newGoal = goal.get();
+      break;
+    }
+    
+    // check if we have selected something different than the current goal
+    const bool selectedNew = (_currentGoalPtr != newGoal);
+    if ( selectedNew )
+    {
+      // TODO consider a different cooldown for isCurrentAllowedToBePicked==false
+      // Since the goal could not pick a valid behavior, but did want to run. Kicking it out now will trigger
+      // regular cooldowns, while we might want to set a smaller cooldown due to failure
+    
+      // log
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PickNewGoalForSpark",
+        "Switched goal from '%s' to '%s'",
+          _currentGoalPtr ? _currentGoalPtr->GetName().c_str() : "no goal",
+          newGoal         ? newGoal->GetName().c_str() : "no goal" );
+      // set new goal and timestamp
+      if ( _currentGoalPtr ) {
+        _currentGoalPtr->Exit();
+      }
+      _currentGoalPtr = newGoal;
+      _name = "Goal" + ( _currentGoalPtr ? _currentGoalPtr->GetName() : "None");
+      if ( _currentGoalPtr ) {
+        _currentGoalPtr->Enter();
       }
     }
+    else if ( _currentGoalPtr != nullptr )
+    {
+      // we picked the same goal
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PickNewGoalForSpark",
+        "Current goal '%s' is still the best one to run for spark '%s', %s",
+          _currentGoalPtr ? _currentGoalPtr->GetName().c_str() : "no goal",
+          EnumToString(spark),
+          ( _debugConsoleRequestedGoal == _currentGoalPtr->GetName() ) ? "forced from debug" : "(not debug forced)");
+    }
+    else
+    {
+        // we did not select any goals. This means we are not going to run behaviors. It should not happen if at
+        // least a fallback goal was defined, which can be done through proper strategy selection in data, so we
+        // shouldn't correct it here, other than warn if it ever happens
+        PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark",
+          "None of the goals available for spark '%s' wants to run.",
+          EnumToString(spark));
+    }
+    
+    return selectedNew;
   }
-
-  PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark", "Could not pick new goal for spark '%s'", EnumToString(spark));
-  return _curGoalIdx;
+  else
+  {
+    PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark", "No goals available for spark '%s'", EnumToString(spark));
+    return false;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const
+IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   // returned variable
   IBehavior* chosenBehavior = nullptr;
   
-  // constants
-  const float timeoutPerGoal_secs = 120.0f; // this is hardcoded here because it is going to be removed this week
-
-  // current goal
-  bool hasGoal = (_curGoalIdx < _goals.size());
-  const AIGoal* currentGoal = hasGoal ? _goals[_curGoalIdx].get() : nullptr;
-  
-  // calculate timeout variables now because they are shared below, making that code easier to read
-  const float currentTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
-  const float runThisGoalUntil = _lastTimeGoalSwitched+timeoutPerGoal_secs;
-  const bool isGoalTimedOut = FLT_GE(currentTime, runThisGoalUntil);
-  
-  // see if sparks or behavior finished cause a goal change
+  // see if anything causes a goal change
   bool getNewGoal = false;
-
-  // get a new goal if the current behavior finished succesfully or sparks changed
+  bool isCurrentAllowedToBePicked = true;
+  bool hasChosenBehavior = false;
   const UnlockId activeSpark = robot.GetBehaviorManager().GetActiveSpark();
-  const UnlockId goalSpark   = hasGoal ? currentGoal->GetRequiredSpark() : UnlockId::Count;
-  const bool changeDueToSpark = (activeSpark != goalSpark);
-  if ( !hasGoal || changeDueToSpark )
+  
+  // check if we have a debugConsole goal
+  if ( !_debugConsoleRequestedGoal.empty() )
   {
-    // the active spark does not match the current goal, pick the first goal available for the spark
-    // this covers both going into and out of sparks
-    getNewGoal = true;
-    PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
-      "Picking new goal to match spark '%s'", EnumToString(activeSpark));
-  }
-  else if ( didCurrentFinish )
-  {
-    // rsam: note on random chance of change. I implemented here a random change of changing, but it worked, it
-    // changed goals in the most random moments, for example, after playing the intro for discovering a beacon,
-    // it could switch to interacting with faces in other goal. Not useful at all and could make QA think that there
-    // are bugs. Rely on timeouts to decide a goal change
-    if ( isGoalTimedOut ) {
+    // if we are not running the debug requested goal, ask to change. It should be picked if name is available
+    if ( (!_currentGoalPtr) || _currentGoalPtr->GetName() != _debugConsoleRequestedGoal ) {
       getNewGoal = true;
       PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
-        "Picking new goal because '%s' has run for more than %.2f seconds (ran for %.2f), and behavior finished",
-        currentGoal->GetName().c_str(),
-        timeoutPerGoal_secs, currentTime-_lastTimeGoalSwitched);
+        "Picking new goal because debug is forcing '%s'", _debugConsoleRequestedGoal.c_str());
+    }
+  }
+  else
+  {
+    // no debug requests
+    // get a new goal if the current behavior finished succesfully or sparks changed
+    const UnlockId goalSpark   = (nullptr != _currentGoalPtr) ? _currentGoalPtr->GetRequiredSpark() : UnlockId::Count;
+    const bool changeDueToSpark = (activeSpark != goalSpark);
+    if ( (nullptr == _currentGoalPtr) || changeDueToSpark )
+    {
+      // the active spark does not match the current goal, pick the first goal available for the spark
+      // this covers both going into and out of sparks
+      getNewGoal = true;
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+        "Picking new goal to match spark '%s'", EnumToString(activeSpark));
+    }
+    else if ( currentRunningBehavior == nullptr )
+    {
+      // check with the current goal if it wants to end
+      // note that we will also ask the current goal this when picking new goals. This additional check is not
+      // superflous: since lower priority goals are not interrupted until they give up their slot or
+      // they time out, this check allows them to give up the slot. This check is expected to be consistent throughout
+      // the tick, so it should not have non-deterministic factors changing within a tick of the GoalEvaluator.
+      const float goalStartTime = _currentGoalPtr->GetLastTimeStartedSecs();
+      const bool currentWantsToEnd = _currentGoalPtr->GetStrategy().WantsToEnd(robot, goalStartTime);
+      if ( currentWantsToEnd )
+      {
+        getNewGoal = true;
+        PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+          "Picking new goal because '%s' wants to end, and behavior finished",
+          _currentGoalPtr->GetName().c_str());
+      }
     }
   }
   
@@ -162,35 +343,35 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, bool didCurrentFini
   if ( !getNewGoal )
   {
     // pick behavior
-    ASSERT_NAMED(nullptr!=currentGoal, "AIGoalEvaluator.CurrentGoalCantBeNull");
-    chosenBehavior = currentGoal->ChooseNextBehavior(robot, didCurrentFinish);
+    ASSERT_NAMED(nullptr!=_currentGoalPtr, "AIGoalEvaluator.CurrentGoalCantBeNull");
+    chosenBehavior = _currentGoalPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+    hasChosenBehavior = true;
 
     // if the picked behavior is not good, we want a new goal too
     if ( (chosenBehavior == nullptr) || (chosenBehavior->GetType() == BehaviorType::NoneBehavior))
     {
       getNewGoal = true;
+      isCurrentAllowedToBePicked = false;
       PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
-        "Picking new goal because '%s' chose behavior '%s'",
-        currentGoal->GetName().c_str(),
+        "Picking new goal because '%s' chose behavior '%s'. This goal is not allowed to be repicked.",
+        _currentGoalPtr->GetName().c_str(),
         chosenBehavior ? chosenBehavior->GetName().c_str() : "(null)" );
     }
     else if ( !chosenBehavior->IsRunning() )
     {
-      // We also want to change goals after some amount of time. However, during testing, I realized that interrupting
-      // behaviors while they where doing something (like picking up cubes, or carrying them somewhere), not only looked
-      // bad, it had terrible gameplay consequences. So, for timeouts, we are letting the current goal pick behaviors.
-      // If the current goal has picked a new one, but it has done so after the timeout period, we are gonna rely on
-      // the fact that the goal decided to switch behaviors anyway to also switch goals at this point. Although
-      // some of these changes would happen when behaviors change (see didCurrentFinish), this code here adds the extra
-      //  layer of checking for timeouts when we switch behaviors because other one becomes higher score.
-      if ( isGoalTimedOut )
+      // check with the current goal if it wants to end
+      // note that we will also ask the current goal this when picking new goals. This additional check is not
+      // superflous: since lower priority goals are not interrupted until they give up their slot or
+      // they time out, this check allows them to give up the slot. This check is expected to be consistent throughout
+      // the tick, so it should not have non-deterministic factors changing within a tick of the GoalEvaluator.
+      const float goalStartTime = _currentGoalPtr->GetLastTimeStartedSecs();
+      const bool currentWantsToEnd = _currentGoalPtr->GetStrategy().WantsToEnd(robot, goalStartTime);
+      if ( currentWantsToEnd )
       {
         getNewGoal = true;
         PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
-          "Picking new goal because '%s' has run for more than %.2f seconds (ran for %.2f), and it picked a new behavior",
-          currentGoal->GetName().c_str(),
-          timeoutPerGoal_secs,
-          currentTime-_lastTimeGoalSwitched);
+          "Picking new goal because '%s' wants to end, and behavior finished",
+          _currentGoalPtr->GetName().c_str());
       }
     }
   }
@@ -198,30 +379,56 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, bool didCurrentFini
   // if we have to pick new goal after having chosen a behavior, do it now
   if ( getNewGoal )
   {
-    const AIGoal* prevGoal = currentGoal;
     // select new goal
-    _curGoalIdx = PickNewGoalForSpark(robot, activeSpark);
-    // update current goal variables that change with current
-    hasGoal = (_curGoalIdx < _goals.size());
-    currentGoal = hasGoal ? _goals[_curGoalIdx].get() : nullptr;
-    // update pick time
-    _lastTimeGoalSwitched = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
-    
-    PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
-      "Switched goal from '%s' to '%s'",
-        prevGoal    ? prevGoal->GetName().c_str() : "no goal",
-        currentGoal ? currentGoal->GetName().c_str() : "no goal");
-
-    // since we have changed goal, ask again for a new behavior
-    IBehavior* chosenBehavior = nullptr;
-    if ( currentGoal ) {
-      chosenBehavior = currentGoal->ChooseNextBehavior(robot, didCurrentFinish);
-    } else {
-      PRINT_NAMED_ERROR("AIGoalEvaluator.ChooseNextBehavior", "No current available goal");
+    const bool changedGoal = PickNewGoalForSpark(robot, activeSpark, isCurrentAllowedToBePicked);
+    if ( changedGoal || !hasChosenBehavior )
+    {
+      // either we picked a new goal or we have the same but we didn't let it chose behavior before because
+      // we wanted to check if there was a better one, so do it now
+      if ( _currentGoalPtr )
+      {
+        chosenBehavior = _currentGoalPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+        
+        // if the first behavior chosen is null/None, the goal conditions to start didn't handle the current situation.
+        // The goal will be asked to leave next frame if it continues to pick null/None.
+        // TODO in this case we might want to apply a different cooldown, rather than the default for
+        // the goal.
+        if ( changedGoal && ((!chosenBehavior)||(chosenBehavior->GetType() == BehaviorType::NoneBehavior)))
+        {
+          PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+            "The new goal '%s' picked no behavior. It probably didn't cover the same conditions as the behaviors.",
+            _currentGoalPtr->GetName().c_str());
+        }
+      } else {
+        PRINT_NAMED_ERROR("AIGoalEvaluator.ChooseNextBehavior", "No current available goal");
+      }
     }
   }
   
   return chosenBehavior;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalEvaluator::DebugPrintGoals() const
+{
+  PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PrintGoals", "There are %zu unlockIds registered with goals:", _goals.size());
+  // log a line per unlockId/sparkId
+  for( const auto& goalTablePair : _goals )
+  {
+    // start the line with the sparkId
+    std::stringstream stringForUnlockId;
+    const UnlockId sparkId = goalTablePair.first;
+    stringForUnlockId << "(" << EnumToString(sparkId) << ") : ";
+    
+    // now add every goal
+    const GoalVector& goalsInSpark = goalTablePair.second;
+    for( const auto& goal : goalsInSpark ) {
+      stringForUnlockId << " --> [" << Util::numeric_cast<int>( goal->GetPriority() ) << "] " << goal->GetName();
+    }
+    
+    // log
+    PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PrintGoals", "%s", stringForUnlockId.str().c_str());
+  }
 }
 
 

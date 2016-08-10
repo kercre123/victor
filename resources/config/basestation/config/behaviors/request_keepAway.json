@@ -2,6 +2,10 @@
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestKeepAway",
   "requiredGameFlags" : "KeepAway",
+  "behaviorGroups": [
+    "FP_PlayWithHumans",
+    "RequestKeepAway"
+  ],
   
   "zero_block_config": {
     "initial_animName" : "RequestGameKeepAwayInitial0",
@@ -76,13 +80,5 @@
         "y" : 1.0
       }
     ]
-  },
-  "behaviorGroups" :
-  [
-    "AffectsBlocks",
-    "MiniGame",
-    "RequestKeepAway",
-    "FreeplayOne",
-    "Playful"
-  ]
+  }
 }

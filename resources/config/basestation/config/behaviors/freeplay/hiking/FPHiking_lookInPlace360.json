@@ -11,7 +11,7 @@
   "behaviorType": "ExploreLookAroundInPlace",
   "flatScore": 1.0,
 //  "behaviorGroups": [
-//    // "FreeplayHiking" Disabled in favor of memoryMap one
+//    // "FP_Hiking" Disabled in favor of memoryMap one
 //  ],
   
   "params":

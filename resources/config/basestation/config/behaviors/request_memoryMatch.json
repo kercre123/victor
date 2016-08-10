@@ -2,6 +2,10 @@
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestMemoryMatch",
   "requiredGameFlags" : "MemoryMatch",
+  "behaviorGroups": [
+    "FP_PlayWithHumans",
+    "RequestMemoryMatch"
+  ],
   
   "zero_block_config": {
     "initial_animName" : "RequestGameMemoryMatchInitial0",
@@ -76,13 +80,5 @@
         "y" : 1.0
       }
     ]
-  },
-  "behaviorGroups" :
-  [
-    "AffectsBlocks",
-    "MiniGame",
-    "RequestMemoryMatch",
-    "FreeplayOne",
-    "Playful"
-  ]
+  }
 }

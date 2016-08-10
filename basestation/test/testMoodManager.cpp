@@ -478,7 +478,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, false);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -492,7 +492,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, false);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -506,7 +506,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, false);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
@@ -526,7 +526,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, false);
+      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;

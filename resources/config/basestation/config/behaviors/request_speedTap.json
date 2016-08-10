@@ -2,6 +2,10 @@
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestSpeedTap",
   "requiredGameFlags" : "SpeedTap",
+  "behaviorGroups": [
+    "FP_PlayWithHumans",
+    "RequestKeepAway"
+  ],
   
   "zero_block_config": {
     "initial_animName" : "RequestGameSpeedTapInitial0",
@@ -76,13 +80,5 @@
         "y" : 1.0
       }
     ]
-  },
-  "behaviorGroups" :
-  [
-    "AffectsBlocks",
-    "MiniGame",
-    "RequestSpeedTap",
-    "FreeplayOne",
-    "Playful"
-  ]
+  }
 }

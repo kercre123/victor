@@ -171,11 +171,6 @@ void DemoBehaviorChooser::ModifyScore(const IBehavior* behavior, float& score) c
   }
 }
 
-IBehavior* DemoBehaviorChooser::ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const
-{
-  return super::ChooseNextBehavior(robot, didCurrentFinish);
-}
-
 void DemoBehaviorChooser::TransitionToNextState()
 {
   switch( _state ) {

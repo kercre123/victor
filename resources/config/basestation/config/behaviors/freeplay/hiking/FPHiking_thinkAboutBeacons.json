@@ -11,7 +11,7 @@
   "behaviorType": "ThinkAboutBeacons",
   "flatScore": 8.0,
   "behaviorGroups": [
-    "FreeplayHiking"
+    "FP_Hiking"
   ],
   
   "params": {

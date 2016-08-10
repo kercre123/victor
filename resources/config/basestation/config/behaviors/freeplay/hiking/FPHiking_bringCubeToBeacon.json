@@ -11,6 +11,6 @@
   "behaviorType": "BringCubeToBeacon",
   "flatScore": 2.1, // intended to interrupt general hiking
   "behaviorGroups": [
-    "FreeplayHiking"
+    "FP_Hiking"
   ]
 }

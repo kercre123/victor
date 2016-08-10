@@ -1,6 +1,11 @@
 {
   "behaviorType": "InteractWithFaces",
   "name": "interactWithFaces",
+  
+  "behaviorGroups": [
+    "FP_Socialize"
+  ],
+  
   "initial_take_anim_group": "InteractWithFacesInitial",
   "wait_anim_group": "InteractWithFacesWait",
   
@@ -31,9 +36,6 @@
         "y": 1.0
       }
     ]
-  },
+  }
 
-  "behaviorGroups": [
-    "FreeplayOne"
-  ]
 }
