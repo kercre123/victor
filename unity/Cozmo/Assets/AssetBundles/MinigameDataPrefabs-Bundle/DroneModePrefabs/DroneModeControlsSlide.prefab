@@ -186,6 +186,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &136670
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22429866}
+  - 114: {fileID: 11442838}
+  m_Layer: 5
+  m_Name: HowToPlayButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &137532
 GameObject:
   m_ObjectHideFlags: 1
@@ -741,6 +757,9 @@ MonoBehaviour:
   _HeadUpThreshold: 0.55
   _BackgroundColor: {r: 0.14117648, g: 0.8627451, b: 0.9019608, a: 1}
   _QuitButtonSprite: {fileID: 21300000, guid: fded4416f84714f928966ec6788973a4, type: 3}
+  _HowToPlayButton: {fileID: 0}
+  _HowToPlayViewPrefab: {fileID: 11483486, guid: f8f7c76789ada49b3a0e8635e05fce20,
+    type: 2}
   TiltText: {fileID: 11466266}
   _CameraFeed: {fileID: 11410814}
 --- !u!114 &11421486
@@ -952,6 +971,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
+--- !u!114 &11442838
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 136670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
+  ModifiedValues: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.Minigame.DroneMode.DroneModeControlsSlide:_HowToPlayButton
+    ReferencePath: 
+  ModifiedGlobalReferences:
+  - ObjectPath: ButtonIcon
+    FieldName: UnityEngine.UI.Image:m_Sprite
+    Reference: {fileID: 21300000, guid: 688d50c36b2614483a2a5c0a6a1fa086, type: 3}
 --- !u!114 &11450480
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1653,6 +1693,24 @@ RectTransform:
   m_AnchoredPosition: {x: 209, y: -207}
   m_SizeDelta: {x: 324, y: 999}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22429866
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 136670}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22452856}
+  m_RootOrder: 12
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -126.00009, y: -153.99994}
+  m_SizeDelta: {x: 175, y: 175}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22430378
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1840,6 +1898,7 @@ RectTransform:
   - {fileID: 22484480}
   - {fileID: 22404702}
   - {fileID: 22404170}
+  - {fileID: 22429866}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}

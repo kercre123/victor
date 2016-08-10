@@ -99,6 +99,24 @@
   "droneMode.unknownObjectReticleLabel":{
     "translation": "UNKNOWN"
   },
+  "droneMode.safePlay.title":{
+    "translation": "Safe Play:"
+  },
+  "droneMode.safePlay.description":{
+    "translation": "- Be careful of cliffs\n- Drive on flat surfaces like the floor\n- Explore indoors in well lit spaces\n- Stay near Cozmo for the best experience"
+  },
+  "droneMode.button.howToPlayConfirm":{
+    "translation": "Got it!"
+  },
+  "droneMode.text.howToPlaySteering":{
+    "translation": "Tilt your device to steer Cozmo left and right."
+  },
+  "droneMode.text.howToPlaySpeed":{
+    "translation": "Drag and hold to move Cozmo forward or backward.\nLet go to stop."
+  },
+  "droneMode.text.howToPlayHead":{
+    "translation": "Drag to tilt Cozmo's view up or down."
+  },
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
   },

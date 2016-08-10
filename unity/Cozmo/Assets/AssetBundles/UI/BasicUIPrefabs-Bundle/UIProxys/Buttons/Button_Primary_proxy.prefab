@@ -148,9 +148,9 @@ MonoBehaviour:
   _Interactable: 1
   _TextLabel: {fileID: 11492386}
   _TextLabelOffset: 0
-  TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  TextPressedColor: {r: 0.28676468, g: 0.2837336, b: 0.23826772, a: 1}
-  TextDisabledColor: {r: 0.41176474, g: 0.40784317, b: 0.34901962, a: 0.316}
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.4, g: 0.4, b: 0.4, a: 1}
+  TextDisabledColor: {r: 1, g: 1, b: 1, a: 0.509}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11403850}
@@ -158,7 +158,7 @@ MonoBehaviour:
     pressedSprite: {fileID: 21300000, guid: c8c259840af204378a8303a468366e73, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: f06f3ac2bd68e45ea98cef17b2a841e8, type: 3}
-    disabledColor: {r: 1, g: 1, b: 1, a: 1}
+    disabledColor: {r: 1, g: 1, b: 1, a: 0.509}
   - targetImage: {fileID: 11441256}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}

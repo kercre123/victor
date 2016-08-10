@@ -16,6 +16,10 @@ namespace Cozmo {
         private DroneModeControlsSlide _DroneModeViewPrefab;
         public DroneModeControlsSlide DroneModeViewPrefab { get { return _DroneModeViewPrefab; } }
 
+        [SerializeField]
+        private GameObject _DroneModeHowToPlaySlidePrefab;
+        public GameObject DroneModeHowToPlaySlidePrefab { get { return _DroneModeHowToPlaySlidePrefab; } }
+
         private DroneModeConfig _DroneModeConfig;
 
         public float MaxReverseSpeed_mmps { get { return _DroneModeConfig.MaxReverseSpeed_mmps; } }

@@ -143,6 +143,8 @@ namespace Cozmo {
       [SerializeField]
       private RectTransform _InfoTextGameSlideContainer;
 
+      private float _SlideXOffset = 100f;
+
       #endregion
 
       #region Default Slides
@@ -392,7 +394,7 @@ namespace Cozmo {
         _MiddleBackgroundImage.color = setupColor;
         _IsShowingMiddle = false;
 
-        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, baseColor);
+        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
       }
 
       public void ShowLockedBackground() {
@@ -580,6 +582,7 @@ namespace Cozmo {
       }
 
       private void HandleQuitConfirmed() {
+        HideGameStateSlide();
         CloseHowToPlayView();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
@@ -773,7 +776,7 @@ namespace Cozmo {
         _InfoTextSlideLayoutElement.gameObject.SetActive(false);
       }
 
-      public void HideGameStateSlide(float transitionXOffset = -100f) {
+      public void HideGameStateSlide() {
         if (_CurrentSlide != null) {
           // Clean up the current out slide
           if (_TransitionOutSlide != null) {
@@ -793,7 +796,7 @@ namespace Cozmo {
           }
           _SlideOutTween = DOTween.Sequence();
           _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
-            transitionXOffset, 0.25f).SetEase(Ease.OutQuad).SetRelative());
+            -_SlideXOffset, 0.25f).SetEase(Ease.OutQuad).SetRelative());
           _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
 
           // At the end of the tween destroy the out slide
@@ -836,9 +839,10 @@ namespace Cozmo {
         }
 
         // Play a transition in tween on it
+        _SlideXOffset = transitionXOffset;
         _SlideInTween = DOTween.Sequence();
         _SlideInTween.Append(_CurrentSlide.transform.DOLocalMoveX(
-          transitionXOffset, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
+          _SlideXOffset, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
         _SlideInTween.Join(_CurrentSlide.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
         if (endInTweenCallback != null) {
           _SlideInTween.AppendCallback(endInTweenCallback);

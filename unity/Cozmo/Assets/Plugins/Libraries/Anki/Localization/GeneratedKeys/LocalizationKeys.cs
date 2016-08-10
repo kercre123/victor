@@ -210,6 +210,12 @@ public static class LocalizationKeys {
   public const string kDroneModeChargerReticleLabel = "droneMode.chargerReticleLabel";
   public const string kDroneModeCubeReticleLabel = "droneMode.cubeReticleLabel";
   public const string kDroneModeUnknownObjectReticleLabel = "droneMode.unknownObjectReticleLabel";
+  public const string kDroneModeSafePlayTitle = "droneMode.safePlay.title";
+  public const string kDroneModeSafePlayDescription = "droneMode.safePlay.description";
+  public const string kDroneModeButtonHowToPlayConfirm = "droneMode.button.howToPlayConfirm";
+  public const string kDroneModeTextHowToPlaySteering = "droneMode.text.howToPlaySteering";
+  public const string kDroneModeTextHowToPlaySpeed = "droneMode.text.howToPlaySpeed";
+  public const string kDroneModeTextHowToPlayHead = "droneMode.text.howToPlayHead";
   public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";
   public const string kSimonGameHowToPlay = "simonGame.howToPlay";
   public const string kSimonGameDifficultyHardDescriptionLocked = "simonGame.difficulty.hardDescription.locked";
