@@ -13,6 +13,7 @@ namespace Cozmo {
       }
 
       // INGO TODO: Replace all this with a shader
+      // See ticket https://ankiinc.atlassian.net/browse/COZMO-2516
       [SerializeField]
       private Image _FromBackgroundImage;
 

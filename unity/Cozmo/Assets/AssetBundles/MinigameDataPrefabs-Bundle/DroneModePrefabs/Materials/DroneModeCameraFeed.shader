@@ -2,7 +2,7 @@
 {
 	Properties {
 		_MainTex ("Base (RGB)", 2D) = "white" {}
-		_MaskAlphaTex ("Mask texture", 2D) = "white" {}
+		// _MaskAlphaTex ("Mask texture", 2D) = "white" {} // mask no longer needed
 		_ScanTex ("Scanline texture", 2D) = "white" {}
 		_ScanBlend ("Scanline blending", Float) = 0.5
 		_ScanSize ("Scanline Size", Float) = 1
@@ -20,6 +20,7 @@
         }
 
         Blend SrcAlpha OneMinusSrcAlpha
+        Cull Off
 
 		Pass {
 			CGPROGRAM
@@ -28,7 +29,7 @@
 			#include "UnityCG.cginc"
 		
 			uniform sampler2D _MainTex;
-			uniform sampler2D _MaskAlphaTex;
+			// uniform sampler2D _MaskAlphaTex; // mask no longer needed
 			uniform sampler2D _ScanTex;
 			
 			fixed _ScanBlend;
@@ -66,7 +67,6 @@
 	        fixed4 frag( v2f i ) : SV_Target {
 				fixed4 base = tex2D(_MainTex, i.uv);
 				fixed4 scan = tex2D(_ScanTex, i.uv2 * _ScanSize);
-				fixed4 mask = tex2D(_MaskAlphaTex, i.uv);
 
 				// Manually grayscale
 				// fixed lum = base.r*.3 + base.g*.59 + base.b*.11;
@@ -77,7 +77,11 @@
 
 				// Multiply by scan line and color
 				base = base * (scan * _ScanBlend) * i.color;
-				base.a = mask.a;
+
+				// Disabling mask because it's no longer required
+				// Apply mask
+				// fixed4 mask = tex2D(_MaskAlphaTex, i.uv);
+				// base.a = mask.a;
 
 				return base;
 	        }

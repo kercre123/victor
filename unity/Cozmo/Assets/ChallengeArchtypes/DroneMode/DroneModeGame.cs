@@ -117,10 +117,10 @@ namespace Cozmo {
             driveWheelSpeed_mmps = TurboSpeed_mmps;
             break;
           case DroneModeControlsSlide.SpeedSliderSegment.Forward:
-            driveWheelSpeed_mmps = MaxForwardSpeed_mmps * sliderSegmentValue;
+            driveWheelSpeed_mmps = Mathf.Lerp(PointTurnSpeed_mmps + 1f, MaxForwardSpeed_mmps, sliderSegmentValue);
             break;
           case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
-            driveWheelSpeed_mmps = MaxReverseSpeed_mmps * sliderSegmentValue * -1;
+            driveWheelSpeed_mmps = Mathf.Lerp(PointTurnSpeed_mmps + 1f, MaxReverseSpeed_mmps, sliderSegmentValue) * -1;
             break;
           default:
             driveWheelSpeed_mmps = 0f;
