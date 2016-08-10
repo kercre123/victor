@@ -31,7 +31,7 @@ extern "C" {
 #include "rsa_pss.h"
 #include "publickeys.h"
 
-#define ESP_FW_MAX_SIZE  (0x80000 - (APPLICATION_A_SECTOR * SECTOR_SIZE))
+#define ESP_FW_MAX_SIZE  (0x07c000) // Defined in factory firmware, can't change this for compatibility
 #define ESP_FW_ADDR_MASK (0x07FFFF)
 
 #define WRITE_DATA_SIZE (1024)
@@ -40,9 +40,6 @@ extern "C" {
 #define SHA_CHECK_READ_LENGTH 512
 
 #define CRC32_POLYNOMIAL (0xedb88320L)
-
-#define FLASH_WRITE_COUNT SECTOR_SIZE
-#define RTIP_WRITE_COUNT  TRANSMIT_BLOCK_SIZE
 
 #define DEBUG_OTA 1
 
@@ -1137,7 +1134,7 @@ namespace UpgradeController {
   
   u32* GetVersionInfo()
   {
-    const uint32_t VERSION_INFO_ADDR = 0x80000 - 0x800; // Memory offset of version info for both apps
+    const uint32_t VERSION_INFO_ADDR = (APPLICATION_A_SECTOR * SECTOR_SIZE) + ESP_FW_MAX_SIZE - 0x800; // Memory offset of version info for both apps
     return FLASH_CACHE_POINTER + (VERSION_INFO_ADDR/4);  // Use A address because both images see it mapped in that place.
   }
 

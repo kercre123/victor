@@ -51,7 +51,9 @@ FACTORY_UPGRD_BLOCK = 0xFFfacfac
 COMMENT_BLOCK       = 0xFFFFFFFC    # this is the JSON used for the app
 HEADER_INFORMATION  = 0xFFFFFFFE    # this is used for the robot
 CERTIFICATE_BLOCK   = 0xFFFFFFFF
-WIFI_MAX_FW_SIZE    = ((0x80-0x03) * 0x1000) - BLOCK_LENGTH # Space available in flash map minus one block for version info
+# Space available in flash map minus one block for version info.
+# Factory firmware is locked down to 0x7c000 so we can't use anything larger
+WIFI_MAX_FW_SIZE    = 0x07c000 - BLOCK_LENGTH
 
 class DigestFile:
     def __init__(self, fn, mode, digestType = SHA512):
