@@ -744,7 +744,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
 {
   ANKI_CPU_PROFILE("Robot::HandlePotentialCliffEvent");
   
-  if(robot->GetIsInDroneMode()){
+  if(robot->GetIsCliffReactionDisabled()){
     IActionRunner* action = new TriggerAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
     robot->GetActionList().QueueActionNow(action);
   }else{

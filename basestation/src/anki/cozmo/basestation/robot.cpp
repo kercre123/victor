@@ -2921,7 +2921,7 @@ Result Robot::SendEnablePickupParalysis(const bool enable) const
 template<>
 void Robot::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
 {
-  _isInDroneMode = msg.isStarted;
+  _isCliffReactionDisabled = msg.isStarted;
   SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(!msg.isStarted)));
 }
   

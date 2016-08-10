@@ -216,7 +216,7 @@ public:
   // Increments frameID
   void SetNewPose(const Pose3d& newPose);
   
-  const bool GetIsInDroneMode() { return _isInDroneMode; }
+  const bool GetIsCliffReactionDisabled() { return _isCliffReactionDisabled; }
   
   //
   // Camera / Vision
@@ -902,7 +902,7 @@ protected:
   bool             _isCliffSensorOn       = false;
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
-  bool             _isInDroneMode         = false;
+  bool             _isCliffReactionDisabled = false;
 
   enum class OffTredsState{
     OnTreds
