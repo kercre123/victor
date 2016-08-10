@@ -27,12 +27,14 @@ enum QueueSlotState {
   QUEUE_READY
 };
 
-struct QueueSlot{
-  CladBufferUp buffer;
+struct QueueSlot {
+  uint8_t size;
+  uint8_t data[SPINE_MAX_CLAD_MSG_SIZE_UP - 1];
+
   volatile QueueSlotState state;
 };
 
-static const int QUEUE_DEPTH = 4;
+static const int QUEUE_DEPTH = 8;
 static QueueSlot queue[QUEUE_DEPTH];
 
 static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
@@ -130,39 +132,66 @@ void Spine::init(void) {
   }
 }
 
-void Spine::processMessage(void* buf) {
+void Spine::processMessages(const uint8_t* buf) {
   using namespace Anki::Cozmo;
-  RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(buf);
 
-  if (msg.tag <= RobotInterface::TO_BODY_END) {
-    switch(msg.tag)
-    {
-      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
-      case RobotInterface::GLOBAL_INVALID_TAG:
-        // pass
-        break ;
-      default:
-        AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, msg.tag);
-        break ;
+  RobotInterface::EngineToRobot msg;
+
+  int remaining = SPINE_MAX_CLAD_MSG_SIZE_DOWN;
+
+  while (remaining > 0) {
+    int size = *(buf++);
+    
+    if (size == 0) {
+      break ;
     }
-  } else {
-    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, msg.tag);
+    
+    memcpy(msg.GetBuffer(), buf, size);
+    buf += size;
+    remaining -= size + 1;
+
+    if (msg.tag <= RobotInterface::TO_BODY_END) {
+      switch(msg.tag)
+      {
+        #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
+        case RobotInterface::GLOBAL_INVALID_TAG:
+          // pass
+          break ;
+        default:
+          AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, msg.tag);
+          break ;
+      }
+    } else {
+      AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, msg.tag);
+    }
   }
 }
 
-void Spine::dequeue(CladBufferUp* dest) {
+void Spine::dequeue(uint8_t* dest) {
   static int queue_exit = 0;
+  int remaining = SPINE_MAX_CLAD_MSG_SIZE_UP;
+  
+  // Dequeue as many messages as we possibly can fit in a bundle
+  while (queue[queue_exit].state == QUEUE_READY) {
+    QueueSlot *msg = &queue[queue_exit];
 
-  dest->length = 0;
+    if (msg->size + 1 > remaining) {
+      break ;
+    }
+    
+    __packed uint8_t *payload =  msg->data;
 
-  if (queue[queue_exit].state != QUEUE_READY) {
-    return ;
+    *(dest++) = msg->size;
+    memcpy(dest, payload, msg->size);
+    dest += msg->size;
+    remaining -= msg->size + 1;
+
+    msg->state = QUEUE_INACTIVE;
+    queue_exit = (queue_exit + 1) % QUEUE_DEPTH;
   }
 
-  // Dequeue and deallocate slot
-  memcpy(dest, &queue[queue_exit].buffer, sizeof(CladBufferUp));
-  queue[queue_exit].state = QUEUE_INACTIVE;
-  queue_exit = (queue_exit + 1) % QUEUE_DEPTH;
+  // We need to clear out trailing garbage
+  memset(dest, 0, remaining);
 }
 
 bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
@@ -194,15 +223,15 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
   }
 
   // Critical section for dequeueing message
-  int index = queue_enter;
+  QueueSlot* slot = &queue[queue_enter];
   queue_enter = (queue_enter + 1) % QUEUE_DEPTH;
   __enable_irq();
 
-  queue[index].buffer.length = size + 1;
-  queue[index].buffer.msgID = msgID;
-  memcpy(&queue[index].buffer.data, buffer, size);
+  slot->size = size + 1;
+  slot->data[0] = msgID;
+  memcpy(&slot->data[1], buffer, size);
 
   // Message is stage and ready for transmission
-  queue[index].state = QUEUE_READY;
+  slot->state = QUEUE_READY;
   return true;
 }

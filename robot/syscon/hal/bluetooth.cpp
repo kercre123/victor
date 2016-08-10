@@ -41,8 +41,6 @@ static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_KEY_LENG
 static DiffieHellmanTask dh_state;
 
 struct BLE_CladBuffer {
-  uint16_t  PADDING;
-  
   union {
     uint8_t     raw[MAX_CLAD_MESSAGE_LENGTH + 2];
     struct {
@@ -180,7 +178,7 @@ static void frame_data_received(const void* state) {
   if (rx_buffer.msgID >= 0x30) {
     Anki::Cozmo::HAL::RadioSendMessage(rx_buffer.data, rx_buffer.length, rx_buffer.msgID);
   } else {
-    Spine::processMessage(&rx_buffer);
+    Spine::processMessages(rx_buffer.raw);
   }
 }
 
@@ -191,7 +189,7 @@ static void frame_receive(CozmoFrame& receive)
   bool encrypted  = (receive.flags & MESSAGE_ENCRYPTED) != 0;
 
   if (start) {
-    rx_buffer.pointer = 0;
+    memset(&rx_buffer, 0, sizeof(rx_buffer));
   }
 
   // Buffer overflow

@@ -12,26 +12,49 @@ namespace Cozmo {
 namespace HAL {
   static const int QUEUE_DEPTH = 8;
   
-  static CladBufferDown spinebuffer[QUEUE_DEPTH];
-  static bool active[QUEUE_DEPTH];
-  static volatile int spine_read = 0;
-  static volatile int spine_write = 0;
+  enum QueueSlotState {
+    QUEUE_INACTIVE,
+    QUEUE_READY
+  };
 
-  void Spine::Dequeue(CladBufferDown* dest) {
-    if (active[spine_read]) {
-      // Skip flags field
-      memcpy(dest, &(spinebuffer[spine_read]), sizeof(CladBufferDown));
-      active[spine_read] = false;
+  struct QueueSlot {
+    uint8_t size;
+    uint8_t data[SPINE_MAX_CLAD_MSG_SIZE_UP - 1];
+
+    volatile QueueSlotState state;
+  };
+
+  static QueueSlot queue[QUEUE_DEPTH];
+
+  void Spine::Dequeue(uint8_t* dest) {
+    static int spine_read = 0;
+
+    int remaining = SPINE_MAX_CLAD_MSG_SIZE_DOWN;
+    
+    while (queue[spine_read].state == QUEUE_READY) {
+      QueueSlot* slot = &queue[spine_read];
+
+      if (slot->size + 1 > remaining) {
+        break ;
+      }
+
+      *(dest++) = slot->size;
+      memcpy(dest, slot->data, slot->size);
+      dest += slot->size;
+      remaining -= slot->size + 1;
+      
+      slot->state = QUEUE_INACTIVE;
       spine_read = (spine_read+1) % QUEUE_DEPTH;
     }
-    else
-    {
-      dest->length = 0;
-    }
+
+    // We need to clear out trailing garbage
+    memset(dest, 0, remaining);
   }
 
   bool Spine::Enqueue(const void* data, const u8 length, u8 tag) {
-    if (active[spine_write]) {
+    static int spine_write = 0;
+
+    if (queue[spine_write].state == QUEUE_READY) {
       return false;
     }
     else if (tag == RobotInterface::GLOBAL_INVALID_TAG)
@@ -45,41 +68,56 @@ namespace HAL {
     }
     else
     {
-      spinebuffer[spine_write].msgID = tag;
-      memcpy(spinebuffer[spine_write].data, data, length);      
-      spinebuffer[spine_write].length = length + 1;
-      active[spine_write] = true;
+      QueueSlot* slot = &queue[spine_write];
+      
+      slot->size = length + 1;
+      slot->data[0] = tag;
+      memcpy(&slot->data[1], data, length);
+      
+      slot->state = QUEUE_READY;
       spine_write = (spine_write+1) % QUEUE_DEPTH;
       return true;
     }
   }
 
   void Spine::Manage() {
-    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToHead.cladBuffer);
+    RobotInterface::EngineToRobot msg;
 
-    if (g_dataToHead.cladBuffer.length == 0)
-    {
-      // pass
-    }
-    else if (msg.tag < RobotInterface::TO_RTIP_START)
-    {
-      AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, msg.tag, g_dataToHead.cladBuffer.length);
-    }
-    else if (msg.tag > RobotInterface::TO_RTIP_END)
-    {
-      RadioSendMessage(g_dataToHead.cladBuffer.data, g_dataToHead.cladBuffer.length - 1, g_dataToHead.cladBuffer.msgID);
-    }
-    else if (msg.Size() != g_dataToHead.cladBuffer.length)
-    {
-      AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, msg.tag, g_dataToHead.cladBuffer.length, msg.Size());
-    }
-    else
-    {
-      Messages::ProcessMessage(msg);
+    int remaining = sizeof(g_dataToHead.cladData);
+    uint8_t* data = g_dataToHead.cladData;
+
+    while (remaining > 0) {
+      int size = *(data++);
+      // Dequeue message
+      memcpy(msg.GetBuffer(), data, size);
+      data += size;
+      remaining -= size + 1;
+
+      if (size == 0)
+      {
+        // Out of messages
+        break ;
+      }
+      else if (msg.tag < RobotInterface::TO_RTIP_START)
+      {
+        AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, msg.tag, size);
+      }
+      else if (msg.tag > RobotInterface::TO_RTIP_END)
+      {
+        RadioSendMessage(msg.GetBuffer() + 1, size - 1, msg.tag);
+      }
+      else if (msg.Size() != size)
+      {
+        AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, msg.tag, size, msg.Size());
+      }
+      else
+      {
+        Messages::ProcessMessage(msg);
+      }
     }
 
     // Prevent same message from getting processed twice (if the spine desyncs)
-    g_dataToHead.cladBuffer.length = 0;
+    memset(g_dataToHead.cladData, 0, sizeof(g_dataToHead.cladData));
   }
 
 }

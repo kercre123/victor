@@ -37,6 +37,7 @@ static int txRxIndex;
 static TRANSMIT_MODE uart_mode;
 
 bool Head::spokenTo;
+bool Head::synced;
 bool lowPowerMode;
 
 GlobalDataToHead g_dataToHead;
@@ -48,8 +49,10 @@ void Head::init()
 {
   // Sync pattern
   memset(&g_dataToBody, 0, sizeof(g_dataToBody));
+  memset(&g_dataToHead, 0, sizeof(g_dataToHead));
   g_dataToHead.source = SPI_SOURCE_BODY;
   Head::spokenTo = false;
+  Head::synced = false;
   txRxIndex = 0;
   lowPowerMode = false;
 
@@ -161,9 +164,7 @@ void Head::manage() {
   Head::spokenTo = false;
 
   // Head body sync is disabled, so just kick the watchdog
-  Spine::dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
-  g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
   
   setTransmitMode(TRANSMIT_SEND);
@@ -210,13 +211,13 @@ void UART0_IRQHandler()
         if (++txRxIndex >= sizeof(GlobalDataToBody)) {
           memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
 
-          if (g_dataToBody.cladBuffer.length > 0) {
-            Spine::processMessage(&g_dataToBody.cladBuffer);
-          }
+          Spine::processMessages(g_dataToBody.cladData);
+          Spine::dequeue(g_dataToHead.cladData);
 
+          Head::synced = true;
           Head::spokenTo = true;
           Watchdog::kick(WDOG_UART);
-          
+
           setTransmitMode(TRANSMIT_CHARGER_RX);
         } else if (txRxIndex + 1 == sizeof(GlobalDataToBody)) {
           // Let our fixture know we are almost ready to receive data

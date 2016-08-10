@@ -88,7 +88,12 @@ uint8_t Battery::getLevel(void) {
 static inline void sendPowerStateUpdate()
 {
   using namespace Anki::Cozmo;
-  
+
+  // We don't need to flood the head with power state updates on sync
+  if (!Head::synced) {
+    return ;
+  }
+
   PowerState msg;
   msg.operatingMode = active_operating_mode;
   msg.VBatFixed = vBat;
