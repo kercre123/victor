@@ -282,7 +282,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: ShowCozmoCubeSlide:_ShowCozmoCubesLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11448748
 MonoBehaviour:
