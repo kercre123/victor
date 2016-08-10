@@ -30,7 +30,7 @@ BODY_BINARY=$(BUILD_DIR)/syscon.axf
 MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
 OTA_FILE=releases/cozmo.safe
 
-.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild
+.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3
 
 ########################################################################################################################
 # Build rules for engine / app
@@ -48,7 +48,9 @@ all: sim app esp k02 nrf
 
 dev: AnkiLog nrf k02 esp
 
-ota: $(OTA_FILE) $(MAP_FILES)
+ota: $(OTA_FILE)
+	if test -e build/app/robot.map; then mv build/app/robot.map $(BUILD_DIR)/robot.map; fi
+	if test -e syscon/build/app/syscon.map; then mv syscon/build/app/syscon.map $(BUILD_DIR)/syscon.map; fi
 
 clean:
 	make -C clad clean
@@ -123,16 +125,11 @@ espBuild: esp AnkiLog
 	make -C espressif lib/libmain_w.a
 	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
 	$(PY) ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin $(WIFI_BINARY)
+	cp espressif/app/esp.map $(BUILD_DIR)/esp.map
 
 $(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	mkdir -p $(dir $@)
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
-
-$(BUILD_DIR)/esp.map:
-	if test -e espressif/app/esp.map; then cp espressif/app/esp.map $@; fi
-
-$(BUILD_DIR)/robot.map:
-	if test -e  $(BUILD_DIR)/app/robot.map; then cp $(BUILD_DIR)/app/robot.map $@; fi
 
 $(BUILD_DIR)/syscon.map:
 	if test -e syscon/build/app/syscon.map; then cp syscon/build/app/syscon.map $@; fi
@@ -146,5 +143,7 @@ server.1: nrf k02
 server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to generate these files
 	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY) $(BUILD_DIR)/app/robot.map syscon/build/app/syscon.map
 
-server.3: espBuild $(OTA_FILE) $(MAP_FILES)
+server.3: espBuild $(OTA_FILE)
+	mv build/app/robot.map build/robot.map
+	mv syscon/build/app/syscon.map build/syscon.map
 	tar -czf firmware.tar.gz $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) $(MAP_FILES)
