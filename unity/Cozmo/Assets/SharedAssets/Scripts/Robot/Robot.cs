@@ -339,6 +339,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.AddCallback<ObjectMoved>(HandleObservedObjectMoved);
     RobotEngineManager.Instance.AddCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
+    RobotEngineManager.Instance.AddCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDeletedFace>(HandleDeletedFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugAnimationString>(HandleDebugAnimationString);
@@ -363,6 +364,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedObject>(HandleSeeObservedObject);
     RobotEngineManager.Instance.RemoveCallback<ObjectMoved>(HandleObservedObjectMoved);
     RobotEngineManager.Instance.RemoveCallback<ObjectStoppedMoving>(HandleObservedObjectStoppedMoving);
+    RobotEngineManager.Instance.RemoveCallback<ObjectUpAxisChanged>(HandleObservedObjectUpAxisChanged);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown>(HandleObservedObjectPoseUnknown);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDeletedFace>(HandleDeletedFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DebugAnimationString>(HandleDebugAnimationString);
@@ -794,6 +796,24 @@ public class Robot : IRobot {
     }
 
   }
+
+
+  private void HandleObservedObjectUpAxisChanged(ObjectUpAxisChanged message) {
+    if (ID == message.robotID) {
+      ObservedObject objectUpAxisChanged = GetObservedObjectById((int)message.objectID);
+      if (objectUpAxisChanged != null) {
+        // Mark is moving false if the new timestamp is newer or the same as the robot's current timestamp
+        if (message.timestamp >= objectUpAxisChanged.LastUpAxisChangedMessageEngineTimestamp) {
+          objectUpAxisChanged.HandleUpAxisChanged(message);
+        }
+        else {
+          DAS.Error("Robot.HandleObservedObjectUpAxisChanged", "Received old ObjectUpAxis message with timestamp " + message.timestamp
+          + " _after_ receiving a newer message with timestamp " + objectUpAxisChanged.LastUpAxisChangedMessageEngineTimestamp + "!");
+        }
+      }
+    }
+  }
+
 
   private void HandleObservedObjectPoseUnknown(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown message) {
     int objectID = (int)message.objectID;

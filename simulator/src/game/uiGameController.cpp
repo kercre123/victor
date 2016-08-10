@@ -247,9 +247,9 @@ namespace Anki {
     
     void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
     {
-      PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%s",
-                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisToString(msg.upAxis));
-      
+      PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving",
+                       msg.objectID);
+
       HandleActiveObjectStoppedMoving(msg);
     }
     

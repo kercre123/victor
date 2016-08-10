@@ -18,16 +18,6 @@
 
 static uint8_t g_shockCount[MAX_CUBES];
 
-// Snapshot of sum of last accelerometer values received that 
-// is within ACC_MOVE_THRESH of the current sum of values on all axes.
-// Used for motion detection.
-static int lastAccSum[MAX_CUBES] = {0};
-static u32 lastMotionCheckTime_ms = 0;
-const u32 MOVE_CHECK_PERIOD_MS = 250;
-
-// If the sum of acceleration values on all axes changes
-// by this much, the block is considered to be moving.
-const int ACC_MOVE_THRESH = 3;
 
 namespace Anki
 {
@@ -35,6 +25,15 @@ namespace Anki
   {
     namespace HAL
     {
+      void ReportUpAxisChanged(int id, UpAxis a)
+      {
+        ObjectUpAxisChanged m;
+        m.timestamp = HAL::GetTimeStamp();
+        m.objectID = id;
+        m.upAxis = a;
+        RobotInterface::SendMessage(m);
+      }
+      
       void GetPropState(int id, int ax, int ay, int az, int shocks,
                         uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
         // Tap detection
@@ -66,59 +65,92 @@ namespace Anki
           RobotInterface::SendMessage(m);
         }
 
-        // Compute upAxis
-        // Send ObjectMoved message if upAxis changes
-        static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};
-        s8 maxAccelVal = 0;
-        UpAxis upAxis = Unknown;
-        if (ABS(ax) > maxAccelVal) {
-          upAxis = ax > 0 ? XPositive : XNegative;
-          maxAccelVal = ABS(ax);
-        }
-        if (ABS(ay) > maxAccelVal) {
-          upAxis = ay > 0 ? YPositive : YNegative;
-          maxAccelVal = ABS(ay);
-        }
-        if (ABS(az) > maxAccelVal) {
-          upAxis = az > 0 ? ZPositive : ZNegative;
-          maxAccelVal = ABS(az);
-        }
-        bool upAxisChanged = (prevUpAxis[id] != Unknown) && (prevUpAxis[id] != upAxis);
-        prevUpAxis[id] = upAxis;
 
-        
-        
         // Detect if block moved from accel data
-        const u8 START_MOVING_COUNT_THRESH = 5;  // Determines number of motion tics that much be observed before Moving msg is sent
-        const u8 STOP_MOVING_COUNT_THRESH = 10;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
+        const u8 START_MOVING_COUNT_THRESH = 2; // Determines number of motion tics that much be observed before Moving msg is sent
+        const u8 STOP_MOVING_COUNT_THRESH = 5;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
+        const int ACC_MOVE_THRESH = 5;          // If current value differs from filtered value by this much, block is considered to be moving.
         static u8 movingTimeoutCtr[MAX_CUBES] = {0};
         static bool isMoving[MAX_CUBES] = {false};
-        
-        // lastAccSum is the reference value we compare current sum 
-        // against to determine if there was motion. This reference value
-        // is updated periodically.
-        //
-        // NOTE: Using sum of accelerations because it's a simple value that changes
-        // with rotations since we're not getting rotations. This is not at all a
-        // mathematically supported way of doing motion detection, but it seems to work
-        // and it's small. When all this logic moves to the engine we can do something fancier.
-        //
-        s32 accSum = ax + ay + az;  // magnitude of 64 is approx 1g
-        if (currTime_ms > lastMotionCheckTime_ms) {  
-          lastAccSum[id] = accSum;
-          lastMotionCheckTime_ms = currTime_ms + MOVE_CHECK_PERIOD_MS;
-        }
-        
-        s32 accDiff = ABS(accSum - lastAccSum[id]);
-        bool isMovingNow = accDiff >= ACC_MOVE_THRESH;
+
+
+        // Accumulate IIR filter for each axis
+        static s32 acc_filt[MAX_CUBES][3] = {0};
+        static const s32 filter_coeff = 20;
+        acc_filt[id][0] = ((filter_coeff * ax) + ((100 - filter_coeff) * acc_filt[id][0])) / 100;
+        acc_filt[id][1] = ((filter_coeff * ay) + ((100 - filter_coeff) * acc_filt[id][1])) / 100;
+        acc_filt[id][2] = ((filter_coeff * az) + ((100 - filter_coeff) * acc_filt[id][2])) / 100;
+
+        // Check for motion
+        bool xMoving = ABS(acc_filt[id][0] - ax) > ACC_MOVE_THRESH;
+        bool yMoving = ABS(acc_filt[id][1] - ay) > ACC_MOVE_THRESH;
+        bool zMoving = ABS(acc_filt[id][2] - az) > ACC_MOVE_THRESH;
+        bool isMovingNow = xMoving || yMoving || zMoving;
+
         if (isMovingNow) {
-          ++movingTimeoutCtr[id];
+          // Incremenent counter if block is not yet considered moving, or
+          // if it is already considered moving and the moving count is less than STOP_MOVING_COUNT_THRESH
+          // so that it doesn't need to decrement so much before it's considered stop moving again.
+          if (!isMoving[id] || (movingTimeoutCtr[id] < STOP_MOVING_COUNT_THRESH)) {
+            ++movingTimeoutCtr[id];
+          }
         } else if (movingTimeoutCtr[id] > 0) {
           --movingTimeoutCtr[id];
         }
-        //AnkiDebugPeriodic(10, 181, "CUBE_ACC", 482, "ax %d, ay %d, az %d, sum %d, accDiff %d", 5, ax, ay, az, accSum, accDiff);
         
-        if (upAxisChanged ||
+
+//        if (id <= 2) {
+//          AnkiDebugPeriodic(50, 217, "CUBE_ACC", 521, "%d: ax %d, ay %d, az %d; filt_x %d, filt_y %d, filt_z %d", 7,
+//                            id, ax, ay, az, acc_filt[id][0], acc_filt[id][1], acc_filt[id][2]);
+//        }
+
+
+        // Motion computation
+        static UpAxis prevMotionDir[MAX_CUBES] = {Unknown};  // Last sent motion direction
+        static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};     // Last sent upAxis
+        static UpAxis nextUpAxis[MAX_CUBES] = {Unknown};     // Candidate next upAxis to send
+        static u8 nextUpAxisCount[MAX_CUBES] = {0};          // Number of times candidate next upAxis is observed
+        static const u8 UPAXIS_STABLE_COUNT_THRESH = 15;  // How long the candidate upAxis must be observed for before it is reported
+        static const UpAxis idxToUpAxis[3][2] = { {XPositive, XNegative},
+                                                  {YPositive, YNegative},
+                                                  {ZPositive, ZNegative} };
+        
+        // Compute motion direction change. i.e. change in dominant acceleration vector
+        s8 maxAccelVal = 0;
+        UpAxis motionDir = Unknown;
+
+        for (int i=0; i < 3; ++i) {
+          s8 absAccel = ABS(acc_filt[id][i]);
+          if (absAccel > maxAccelVal) {
+            motionDir = idxToUpAxis[i][acc_filt[id][i] > 0 ? 0 : 1];
+            maxAccelVal = absAccel;
+          }
+        }
+        bool motionDirChanged = (prevMotionDir[id] != Unknown) && (prevMotionDir[id] != motionDir);
+        prevMotionDir[id] = motionDir;
+
+
+        // Check for stable up axis
+        // Send ObjectUpAxisChanged msg if it changes
+        if (motionDir == nextUpAxis[id]) {
+          //s32 accSum = ax + ay + az;  // magnitude of 64 is approx 1g
+
+          if (nextUpAxis[id] != prevUpAxis[id]) {
+            if (++nextUpAxisCount[id] >= UPAXIS_STABLE_COUNT_THRESH) {
+              ReportUpAxisChanged(id, nextUpAxis[id]);
+              prevUpAxis[id] = nextUpAxis[id];
+            }
+          } else {
+            // Next is same as what was already reported so no need to accumulate count
+            nextUpAxisCount[id] = 0;
+          }
+        } else {
+          nextUpAxisCount[id] = 0;
+          nextUpAxis[id] = motionDir;
+        }
+
+        // Send ObjectMoved message if object was stationary and is now moving or if motionDir changes
+        if (motionDirChanged ||
             ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
           ObjectMoved m;
           m.timestamp = HAL::GetTimeStamp();
@@ -127,17 +159,24 @@ namespace Anki
           m.accel.x = ax;
           m.accel.y = ay;
           m.accel.z = az;
-          m.upAxis = upAxis;  // This should get processed on engine eventually
+          m.axisOfAccel = motionDir;
           RobotInterface::SendMessage(m);
           isMoving[id] = true;
           movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
         } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
+      
+          // If there is an upAxis change to report, then report it.
+          // Just make more logical sense if it gets sent before the stopped message.
+          if (nextUpAxis[id] != prevUpAxis[id]) {
+            ReportUpAxisChanged(id, nextUpAxis[id]);
+            prevUpAxis[id] = nextUpAxis[id];
+          }
+          
+          // Send stopped message
           ObjectStoppedMoving m;
           m.timestamp = HAL::GetTimeStamp();
           m.objectID = id;
           m.robotID = 0;
-          m.upAxis = upAxis;  // This should get processed on engine eventually
-          m.rolled = 0;  // This should get processed on engine eventually
           RobotInterface::SendMessage(m);
           isMoving[id] = false;
         }

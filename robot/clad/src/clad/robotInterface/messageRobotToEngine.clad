@@ -129,6 +129,7 @@ union RobotToEngine {
   RobotStopped               robotStopped           = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
   FactoryTestParameter       factoryTestParam       = 0xD6,
+  ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
 
   FirmwareVersion            firmwareVersion        = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,

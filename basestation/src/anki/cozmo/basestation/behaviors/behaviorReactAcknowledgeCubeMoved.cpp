@@ -49,8 +49,8 @@ public:
 private:
   ObjectID _objectID;
   TimeStamp_t _timeStartedMoving;
-  UpAxis _upAxis;
-  
+  UpAxis _axisOfAccel;
+
   // tracking if the block has moved long enough
   bool _isObjectMoving;
   bool _observedSinceLastReaction;
@@ -237,7 +237,7 @@ void BehaviorReactAcknowledgeCubeMoved::SetState_internal(State state, const std
 ReactionObjectData::ReactionObjectData(ObjectID objectID)
 : _objectID(objectID)
 , _timeStartedMoving(0)
-, _upAxis(UpAxis::Unknown)
+, _axisOfAccel(UpAxis::Unknown)
 , _isObjectMoving(false)
 , _observedSinceLastReaction(false)
 , _hasUpAxisChanged(false)
@@ -305,11 +305,11 @@ void ReactionObjectData::ObjectStartedMoving(const Robot& robot, const ObjectMov
   }else if(!_isObjectMoving){
     _isObjectMoving = true;
     _timeStartedMoving = msg.timestamp;
-    _upAxis = msg.upAxis;
+    _axisOfAccel = msg.axisOfAccel;
   }else{
-    if(msg.upAxis != _upAxis){
+    if(msg.axisOfAccel != _axisOfAccel){
       _hasUpAxisChanged = true;
-      _upAxis = msg.upAxis;
+      _axisOfAccel = msg.axisOfAccel;
     }
   }
 }

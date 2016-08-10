@@ -85,7 +85,6 @@ namespace {
   
   bool wasMoving_;
   double wasLastMovingTime_sec_;
-  UpAxis startingUpAxis_;
   
   // Lookup table for which four LEDs are in the back, left, front, and right positions,
   // given the current up axis.
@@ -188,6 +187,7 @@ void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
 void Process_moved(const ObjectMoved& msg) {}
 void Process_stopped(const ObjectStoppedMoving& msg) {}
 void Process_tapped(const ObjectTapped& msg) {}
+void Process_upAxisChanged(const ObjectUpAxisChanged& msg) {}
   
 void ProcessBadTag_LightCubeMessage(BlockMessages::LightCubeMessage::Tag badTag)
 {
@@ -314,7 +314,6 @@ Result Init()
   
   wasMoving_ = false;
   wasLastMovingTime_sec_ = 0.0;
-  startingUpAxis_ = Unknown;
   
   // Register callbacks
   // I don't think these are relivant anymore. ~Daniel
@@ -604,13 +603,8 @@ Result Update() {
             msg.moved.accel.x = accelVals[0];
             msg.moved.accel.y = accelVals[1];
             msg.moved.accel.z = accelVals[2];
-            msg.moved.upAxis = currentUpAxis_;
+            msg.moved.axisOfAccel = currentUpAxis_;
             emitter_->send(msg.GetBuffer(), msg.Size());
-            
-            if(!wasMoving_) {
-              // Store the Up axis when we first start movement
-              startingUpAxis_ = currentUpAxis_;
-            }
             
             wasLastMovingTime_sec_ = currTime_sec;
             wasMoving_ = true;
@@ -623,12 +617,9 @@ Result Update() {
             BlockMessages::LightCubeMessage msg;
             msg.tag = BlockMessages::LightCubeMessage::Tag_stopped;
             msg.stopped.objectID = blockID_;
-            msg.stopped.upAxis   = currentUpAxis_;
-            msg.stopped.rolled   = currentUpAxis_ != startingUpAxis_; // we rolled if we have a different up axis from when we started moving
             emitter_->send(msg.GetBuffer(), msg.Size());
             
             wasMoving_ = false;
-            startingUpAxis_ = Unknown;
           }
         } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
         

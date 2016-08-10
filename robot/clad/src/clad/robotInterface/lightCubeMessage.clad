@@ -19,6 +19,7 @@ namespace BlockMessages
     ObjectMoved         moved,
     ObjectStoppedMoving stopped,
     ObjectTapped        tapped,
+    ObjectUpAxisChanged upAxisChanged,
   }
 
 } // Namespace BlockMessages

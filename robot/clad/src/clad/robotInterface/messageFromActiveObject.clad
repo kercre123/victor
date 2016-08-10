@@ -33,16 +33,22 @@ message ObjectMoved
   uint_32     objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32     robotID,
   ActiveAccel accel,
-  UpAxis      upAxis,
+  UpAxis      axisOfAccel, // The direction of acceleration, reported when object starts moving, and every time the direction changes.
 }
 
 message ObjectStoppedMoving
 {
-  uint_32     timestamp,
+  uint_32 timestamp,
+  uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 robotID,
+}
+
+message ObjectUpAxisChanged
+{
+  uint_32 timestamp,
   uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 robotID,
   UpAxis  upAxis,
-  bool    rolled,
 }
 
 message ObjectTapped

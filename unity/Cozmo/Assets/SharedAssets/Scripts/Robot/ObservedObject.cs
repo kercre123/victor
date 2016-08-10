@@ -109,6 +109,8 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
   public uint LastMovementMessageEngineTimestamp { get; private set; }
 
+  public uint LastUpAxisChangedMessageEngineTimestamp { get; private set; }
+
   protected IRobot RobotInstance { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   // Maps to isActive from messages in engine; indicates if an object has lights or not
@@ -202,6 +204,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
     LastSeenEngineTimestamp = 0;
     LastMovementMessageEngineTimestamp = 0;
+    LastUpAxisChangedMessageEngineTimestamp = 0;
 
     _ConsecutiveVisionFramesNotSeen = 0;
 
@@ -293,6 +296,10 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
   public virtual void HandleStoppedMoving(ObjectStoppedMoving message) {
     IsMoving = false;
     LastMovementMessageEngineTimestamp = message.timestamp;
+  }
+
+  public virtual void HandleUpAxisChanged(ObjectUpAxisChanged message) {
+    LastUpAxisChangedMessageEngineTimestamp = message.timestamp;
   }
 
   public void MarkPoseUnknown() {

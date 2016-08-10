@@ -101,6 +101,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectConnectionState,    &RobotToEngineImplMessaging::HandleActiveObjectConnectionState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectMoved,              &RobotToEngineImplMessaging::HandleActiveObjectMoved);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectStopped,            &RobotToEngineImplMessaging::HandleActiveObjectStopped);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectUpAxisChanged,      &RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::goalPose,                       &RobotToEngineImplMessaging::HandleGoalPose);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
@@ -561,18 +562,17 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
       ASSERT_NAMED(object->IsActive(), "Robot.HandleActiveObjectMoved.NonActiveObject");
       
       PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ObjectMoved",
-                       "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
+                       "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s",
                        object->GetID().GetValue(), object->GetActiveID(),
-                       EnumToString(object->GetType()), EnumToString(payload.upAxis));
-      
+                       EnumToString(object->GetType()), EnumToString(payload.axisOfAccel));
       
       if(object->GetPoseState() == PoseState::Known)
       {
         PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
-                         "ObjectID: %d (Active ID %d), type: %s, upAxis: %s",
+                         "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s",
                          object->GetID().GetValue(), object->GetActiveID(),
-                         EnumToString(object->GetType()), EnumToString(payload.upAxis));
-        
+                         EnumToString(object->GetType()), EnumToString(payload.axisOfAccel));
+
         // Once an object moves, we can no longer use it for localization because
         // we don't know where it is anymore. Next time we see it, relocalize it
         // relative to robot's pose estimate. Then we can use it for localization
@@ -703,6 +703,49 @@ void RobotToEngineImplMessaging::HandleActiveObjectStopped(const AnkiEvent<Robot
     // Set moving state of object
     object->SetIsMoving(false, payload.timestamp);
   } // for(auto & object : matchingObjects)
+}
+
+
+void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleActiveObjectUpAxisChanged");
+
+  // We make a copy of this message so we can update the object ID before broadcasting
+  ObjectUpAxisChanged payload = message.GetData().Get_activeObjectUpAxisChanged();
+
+  // The message from the robot has the active object ID in it, so we need
+  // to find the object in blockworld (which has its own bookkeeping ID) that
+  // has the matching active ID. We also need to consider all pose states and origin frames.
+  BlockWorldFilter filter;
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  filter.SetFilterFcn([&payload](const ObservableObject* object) {
+    return object->IsActive() && object->GetActiveID() == payload.objectID;
+  });
+
+  std::vector<ObservableObject *> matchingObjects;
+  robot->GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+
+  if(matchingObjects.empty())
+  {
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
+                        "Could not find match for active object ID %d", payload.objectID);
+    return;
+  }
+
+  for(auto object : matchingObjects)
+  {
+
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
+                     "Type: %s, ObjectID: %d, UpAxis: %s",
+                     EnumToString(object->GetType()),
+                     object->GetID().GetValue(),
+                     EnumToString(payload.upAxis));
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = object->GetID();
+    payload.robotID = robot->GetID();
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
+  }
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

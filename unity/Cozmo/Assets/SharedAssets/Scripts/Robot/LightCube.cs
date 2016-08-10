@@ -51,6 +51,8 @@ public class LightCube : ObservedObject {
 
   public UpAxis UpAxis { get; private set; }
 
+  public UpAxis LastAxisOfAccel { get; private set; }
+
   public float XAccel { get; private set; }
 
   public float YAccel { get; private set; }
@@ -80,7 +82,7 @@ public class LightCube : ObservedObject {
   public override void HandleStartedMoving(ObjectMoved message) {
     base.HandleStartedMoving(message);
 
-    UpAxis = message.upAxis;
+    LastAxisOfAccel = message.axisOfAccel;
     XAccel = message.accel.x;
     YAccel = message.accel.y;
     ZAccel = message.accel.z;
@@ -93,13 +95,17 @@ public class LightCube : ObservedObject {
   public override void HandleStoppedMoving(ObjectStoppedMoving message) {
     base.HandleStoppedMoving(message);
 
-    if (message.rolled) {
-      if (OnAxisChange != null)
-        OnAxisChange(this);
-    }
     if (OnStoppedAction != null) {
       OnStoppedAction(ID);
     }
+  }
+
+  public override void HandleUpAxisChanged(ObjectUpAxisChanged message) {
+    base.HandleUpAxisChanged(message);
+
+    UpAxis = message.upAxis;
+    if (OnAxisChange != null)
+      OnAxisChange(this);
   }
 
   public override void HandleObjectTapped(ObjectTapped message) {
