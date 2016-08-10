@@ -17,6 +17,7 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class ChallengeDifficultyUnlockedCondition : GoalCondition {
+      [ChallengeId]
       public string ChallengeID;
       public int Difficulty;
 
@@ -25,7 +26,7 @@ namespace Anki {
         if (cozEvent is DifficultyUnlockedGameEvent) {
           DifficultyUnlockedGameEvent miniGameEvent = (DifficultyUnlockedGameEvent)cozEvent;
           if (miniGameEvent.GameID == ChallengeID &&
-              miniGameEvent.NewDifficulty > 0 && miniGameEvent.NewDifficulty <= Difficulty) {
+              (miniGameEvent.NewDifficulty > 0 && miniGameEvent.NewDifficulty >= Difficulty)) {
             isMet = true;
           }
         }
@@ -35,7 +36,7 @@ namespace Anki {
 #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge with the Unlock"), ChallengeID);
+        ChallengeID = ChallengeIDCondition.DrawChallengeID(ChallengeID);
         Difficulty = EditorGUILayout.IntField(new GUIContent("Difficulty", "Newly unlocked difficulty level from OnChallengeDifficultyUnlock"), Difficulty);
         EditorGUILayout.EndHorizontal();
       }

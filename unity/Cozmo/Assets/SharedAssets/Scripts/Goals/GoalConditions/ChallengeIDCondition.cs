@@ -33,13 +33,18 @@ namespace Anki {
       }
 
 #if UNITY_EDITOR
-      private const string kChallengeDataConfigLocation = "Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeList.asset";
-      private string[] _ChallengeIDs = null;
 
-      public override void DrawControls() {
-        _ChallengeIDs = GetAllChallengeIds();
+      private const string kChallengeDataConfigLocation = "Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeList.asset";
+      private static string[] _ChallengeIDs = null;
+      // Forgive Me. -R.A.
+      public static string DrawChallengeID(string toDraw) {
+        ChallengeDataList challengeDataConfig = AssetDatabase.LoadAssetAtPath<ChallengeDataList>(kChallengeDataConfigLocation);
+        List<string> allIds = new List<string>();
+        List<string> displayIds = new List<string>();
+        allIds.AddRange(challengeDataConfig.EditorGetIds());
+        _ChallengeIDs = allIds.ToArray();
         int currentOption = 0;
-        string currentValue = ChallengeID;
+        string currentValue = toDraw;
         if (!string.IsNullOrEmpty(currentValue)) {
           for (int i = 0; i < _ChallengeIDs.Length; i++) {
             if (_ChallengeIDs[i] == currentValue) {
@@ -48,18 +53,19 @@ namespace Anki {
             }
           }
         }
-
-        int newOption = EditorGUI.Popup(EditorGUILayout.GetControlRect(), currentOption, _ChallengeIDs);
-        ChallengeID = _ChallengeIDs[newOption];
-
+        for (int i = 0; i < challengeDataConfig.ChallengeData.Length; i++) {
+          displayIds.Add((challengeDataConfig.ChallengeData[i].UnlockId).Value.ToString());
+        }
+        string[] _DrawIDs = displayIds.ToArray();
+        int newOption = EditorGUI.Popup(EditorGUILayout.GetControlRect(), currentOption, _DrawIDs);
+        toDraw = _ChallengeIDs[newOption];
+        return toDraw;
       }
 
-      private string[] GetAllChallengeIds() {
-        ChallengeDataList challengeDataConfig = AssetDatabase.LoadAssetAtPath<ChallengeDataList>(kChallengeDataConfigLocation);
-        List<string> allIds = new List<string>();
-        allIds.AddRange(challengeDataConfig.EditorGetIds());
-        return allIds.ToArray();
+      public override void DrawControls() {
+        ChallengeID = DrawChallengeID(ChallengeID);
       }
+
 #endif
     }
   }

@@ -17,7 +17,7 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class CurrentTotalChallengePlayedCondition : GoalCondition {
-
+      [ChallengeId]
       public string ChallengeID;
       public bool UseMinGames;
       public int MinGames;
@@ -39,9 +39,9 @@ namespace Anki {
         return isMet;
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public override void DrawControls() {
-        ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge desired"), ChallengeID);
+        ChallengeID = ChallengeIDCondition.DrawChallengeID(ChallengeID);
         EditorGUILayout.BeginHorizontal();
         UseMinGames = EditorGUILayout.Toggle("Use Min", UseMinGames);
         if (UseMinGames) {
@@ -55,7 +55,7 @@ namespace Anki {
         }
         EditorGUILayout.EndHorizontal();
       }
-      #endif
+#endif
     }
   }
 }

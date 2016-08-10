@@ -17,6 +17,7 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class CurrentDifficultyUnlockedCondition : GoalCondition {
+      [ChallengeId]
       public string ChallengeID;
       public bool UseMinDiff;
       public int MinDiff;
@@ -37,7 +38,8 @@ namespace Anki {
 
 #if UNITY_EDITOR
       public override void DrawControls() {
-        ChallengeID = EditorGUILayout.TextField(new GUIContent("ChallengeID", "The string ID of the Challenge with the Unlock"), ChallengeID);
+
+        ChallengeID = ChallengeIDCondition.DrawChallengeID(ChallengeID);
         EditorGUILayout.BeginHorizontal();
         UseMinDiff = EditorGUILayout.Toggle("Use Min", UseMinDiff);
         if (UseMinDiff) {

@@ -38,6 +38,8 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private GameObject _OpenEnvelope;
   [SerializeField]
+  private Text _OpenEnvelopeNameText;
+  [SerializeField]
   private Transform _FinalEnvelopeTarget;
 
   [SerializeField]
@@ -83,7 +85,8 @@ public class CheckInFlow : MonoBehaviour {
     _SimButton.Initialize(HandleSimButton, "sim_button", "checkin_dialog");
     _MockButton.Initialize(HandleMockButton, "mock_button", "checkin_dialog");
     _EnvelopeButton.Initialize(HandleEnvelopeButton, "envelope_button", "checkin_dialog");
-    //_EnvelopeButton.Text = TODO :: This should set the Envelope Button text to 'TO:PlayerName'
+    _EnvelopeButton.Text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
+    _OpenEnvelopeNameText.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
     _EnvelopeContainer.SetActive(false);
     _TimelineReviewContainer.SetActive(false);
     _ConnectContainer.SetActive(false);

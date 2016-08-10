@@ -765,7 +765,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &11403724
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -786,6 +786,7 @@ MonoBehaviour:
   _TimelineReviewContainer: {fileID: 198618}
   _TimelineCanvas: {fileID: 22505968}
   _OpenEnvelope: {fileID: 195338}
+  _OpenEnvelopeNameText: {fileID: 11419906}
   _FinalEnvelopeTarget: {fileID: 22448532}
   _ConnectContainer: {fileID: 154118}
   _ConnectCanvas: {fileID: 22521606}
@@ -1556,9 +1557,9 @@ MonoBehaviour:
   _Interactable: 1
   _TextLabel: {fileID: 11492954}
   _TextLabelOffset: -5
-  TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  TextPressedColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  TextDisabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextEnabledColor: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
+  TextPressedColor: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
+  TextDisabledColor: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics: []
   _GlintAnimator: {fileID: 0}
@@ -1721,7 +1722,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: WHOEVER
+  m_Text: whoever
   _AllUppercase: 1
   GlowText: 0
 --- !u!114 &11499504
@@ -1926,7 +1927,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 22, y: -146}
-  m_SizeDelta: {x: -285, y: 180}
+  m_SizeDelta: {x: -285, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22401892
 RectTransform:
