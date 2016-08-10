@@ -19,7 +19,7 @@ MonoBehaviour:
   _ChallengeID: DroneModeGame
   _ChallengeTitleLocKey: droneMode.title
   _ChallengeDescriptionLocKey: droneMode.description
-  _ChallengeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 895079540537642b8994e28b8c81cdd2, type: 3}
   _UnlockId:
     _EnumValueAsString: DroneModeGame
     _EnumValue: 14
@@ -27,4 +27,5 @@ MonoBehaviour:
     _Music: -1060883196
   MinigameConfig: {fileID: 11400000, guid: f01a1b66151be43caaaf3b14a0fe42b7, type: 2}
   IsMinigame: 0
+  InstructionVideoPath: 
   DifficultyOptions: []
