@@ -188,9 +188,6 @@ namespace Cozmo {
           // Drive slower while turning so that we're not spinning like crazy
           float absTurnFactor = Mathf.Abs(turnDirection);
           float driveRobotSpeed_mmps = driveSpeed_mmps * (1 - (absTurnFactor * absTurnFactor * absTurnFactor)); // Cubic ease
-          if (driveSpeed_mmps < 0) {
-            driveRobotSpeed_mmps *= -1;
-          }
 
           // Turn more sharply with a greater tilt
           float turnFactor = (1 - Mathf.Abs(turnDirection));
