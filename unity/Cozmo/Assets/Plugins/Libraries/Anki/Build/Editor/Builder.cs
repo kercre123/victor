@@ -381,6 +381,17 @@ namespace Anki {
         // may not be an actual error http://answers.unity3d.com/questions/63184/error-using-importassetoptionsforcesynchronousimpo.html
         AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
+        if (!Directory.Exists(outputFolder)) {
+          Directory.CreateDirectory(outputFolder);
+        }
+        string result;
+
+        // Build and copy asset bundles. If there is an error building bundles, then abort the build
+        result = BuildAssetBundlesInternal(buildTarget);
+        if (!string.IsNullOrEmpty(result)) {
+          return result;
+        }
+
         // copy assets
         if (assetFolder != null && buildType.ToLower() != "onlyplayer") {
           CopyEngineAssets(assetFolder, buildTarget);
@@ -388,7 +399,6 @@ namespace Anki {
         }
 
         // run build
-        string result;
         if (buildType.ToLower() != "onlyassets") {
           result = BuildPlayerInternal(outputFolder, buildTarget, buildOptions);
         }
@@ -431,23 +441,13 @@ namespace Anki {
         if (outputFolder == null)
           return "No output folder specified for the build";
 
-        if (!Directory.Exists(outputFolder)) {
-          Directory.CreateDirectory(outputFolder);
-        }
-
-        // Build and copy asset bundles. If there is an error building bundles, then abort the build
-        string result = BuildAssetBundlesInternal(buildTarget);
-        if (!string.IsNullOrEmpty(result)) {
-          return result;
-        }
-
         // Refresh the asset DB so Unity picks up the new files
         AssetDatabase.Refresh();
 
         string[] scenes = GetScenesFromBuildSettings();
         string outputPath = outputFolder + "/" + GetOutputName(buildTarget);
 
-        result = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, buildOptions);
+        string result = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, buildOptions);
 
         return result;
       }
