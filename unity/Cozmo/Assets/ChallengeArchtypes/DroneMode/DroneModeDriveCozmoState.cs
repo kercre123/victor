@@ -116,6 +116,15 @@ namespace Cozmo {
             DriveHeadIfNeeded();
             DriveLiftIfNeeded();
           }
+
+          // If targets are both zero, enable reactionary behavior
+          if (_TargetTurnDirection.IsNear(0f, float.Epsilon) && _TargetDriveSpeed_mmps.IsNear(0f, float.Epsilon)
+              && _TargetDriveHeadSpeed_radps.IsNear(0f, float.Epsilon)) {
+            EnableIdleReactionaryBehaviors(true);
+          }
+          else {
+            EnableIdleReactionaryBehaviors(false);
+          }
         }
 
         private void DriveWheelsIfNeeded() {
@@ -240,6 +249,12 @@ namespace Cozmo {
 
         private void HandleDriveSpeedFamilyChanged(DroneModeControlsSlide.SpeedSliderSegment currentPosition, DroneModeControlsSlide.SpeedSliderSegment newPosition) {
           _RobotAnimator.PlayTransitionAnimation(newPosition);
+        }
+
+        private void EnableIdleReactionaryBehaviors(bool enable) {
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
         }
       }
     }

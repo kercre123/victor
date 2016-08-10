@@ -108,10 +108,16 @@ public abstract class GameBase : MonoBehaviour {
   #region Initialization
 
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
-  protected virtual void SetEnableReactionaryBehaviorsForGame(bool enable) {
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.ReactToCubeMoved, enable);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+  protected virtual void InitializeReactionaryBehaviorsForGameStart() {
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game_start", Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game_start", Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game_start", Anki.Cozmo.BehaviorType.AcknowledgeFace, false);
+  }
+
+  protected virtual void ResetReactionaryBehaviorsForGameEnd() {
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game_end", Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game_end", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game_end", Anki.Cozmo.BehaviorType.AcknowledgeFace, true);
   }
 
   // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
@@ -138,7 +144,7 @@ public abstract class GameBase : MonoBehaviour {
     RewardedActionManager.Instance.NewSkillChange = 0;
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
-    SetEnableReactionaryBehaviorsForGame(false);
+    InitializeReactionaryBehaviorsForGameStart();
 
     RegisterRobotReactionaryBehaviorEvents();
 
@@ -496,7 +502,7 @@ public abstract class GameBase : MonoBehaviour {
 
     DeregisterRobotReactionaryBehaviorEvents();
 
-    SetEnableReactionaryBehaviorsForGame(true);
+    ResetReactionaryBehaviorsForGameEnd();
 
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
