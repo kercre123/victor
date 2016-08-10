@@ -14,10 +14,20 @@ namespace Cozmo {
 
           _CurrentRobot.SetLiftHeight(0);
 
-          // TODO: Set idle animation? (body allowed)
+          // Push neutral idle
+          _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.DroneModeIdle);
 
-          // TODO: Show instructions slide
-          game.SharedMinigameView.HideGameStateSlide();
+          // Show instructions slide
+          game.SharedMinigameView.ShowWideAnimationSlide(LocalizationKeys.kDroneModeSafePlayDescription, "drone_mode_safe_play",
+                                                         (game as DroneModeGame).DroneModeHowToPlaySlidePrefab,
+                                                         null, null);
+
+          game.SharedMinigameView.TitleWidget.SubtitleText = Localization.Get(LocalizationKeys.kDroneModeSafePlayTitle);
+        }
+
+        public override void Exit() {
+          base.Exit();
+          _CurrentRobot.PopIdleAnimation();
         }
 
         private void HandleContinueButtonClicked() {

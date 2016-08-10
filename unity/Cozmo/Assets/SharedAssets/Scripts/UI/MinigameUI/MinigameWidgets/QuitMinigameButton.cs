@@ -9,7 +9,7 @@ namespace Cozmo {
     public class QuitMinigameButton : MinigameWidget {
 
       private const float kAnimXOffset = 0f;
-      private const float kAnimYOffset = 200.0f;
+      private const float kAnimYOffset = 300.0f;
       private const float kAnimDur = 0.25f;
       // If this is from a minigame or activity, defaults to true
       private bool _IsMinigame = true;

@@ -43,19 +43,16 @@ MonoBehaviour:
   CubeIdsForGame: 
   CozmoScore: 0
   PlayerScore: 0
+  PlayerScoreTotal: 0
+  CozmoScoreTotal: 0
   MaxScorePerRound: 0
   PlayerRoundsWon: 0
   CozmoRoundsWon: 0
   TotalRounds: 0
   _DroneModeViewPrefab: {fileID: 11410830, guid: e66ecd417c9574432a7089c88404ccb9,
     type: 2}
-  _MaxReverseSpeed_mmps: 90
-  _MaxForwardSpeed_mmps: 120
-  _PointTurnSpeed_mmps: 90
-  _TurboSpeed_mmps: 160
-  _HeadMovementSpeed_radps: 0.5
-  _NeutralTiltSize: 0.15
-  _StartingLiftHeight: 0.25
+  _DroneModeHowToPlaySlidePrefab: {fileID: 125442, guid: d2c5614d62e4340978f1fc195d88e94f,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

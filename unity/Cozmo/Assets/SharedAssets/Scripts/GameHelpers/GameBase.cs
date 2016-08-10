@@ -174,6 +174,7 @@ public abstract class GameBase : MonoBehaviour {
     // For all challenges, set the title text and add a quit button by default
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
+    titleWidget.SubtitleText = null;
     newView.ShowQuitButton();
 
     if (data.IsMinigame) {
@@ -533,7 +534,7 @@ public abstract class GameBase : MonoBehaviour {
     }
     CleanUpOnDestroy();
 
-	if (CurrentRobot != null && _StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
+    if (CurrentRobot != null && _StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
       // clears the action queue before quitting the game.
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
     }
@@ -542,14 +543,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void SoftEndGameRobotReset() {
     DeregisterRobotReactionaryBehaviorEvents();
-    // Increment the amount that this challenge has been played by 1, only count fully completed playthroughs of challenges
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.ContainsKey(_ChallengeData.ChallengeID)) {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed[_ChallengeData.ChallengeID]++;
-    }
-    else {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.Add(_ChallengeData.ChallengeID, 1);
-    }
-    DataPersistence.DataPersistenceManager.Instance.Save();
+    AddToTotalGamesPlayed();
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
@@ -565,6 +559,17 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  private void AddToTotalGamesPlayed() {
+    // Increment the amount that this challenge has been played by 1, only count fully completed playthroughs of challenges
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.ContainsKey(_ChallengeData.ChallengeID)) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed[_ChallengeData.ChallengeID]++;
+    }
+    else {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.Add(_ChallengeData.ChallengeID, 1);
+    }
+    DataPersistence.DataPersistenceManager.Instance.Save();
+  }
+
   #endregion
 
   // end Clean Up
@@ -577,6 +582,11 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
+
+    // Track # times played for activities that have no win or lose state
+    if (!_ChallengeData.IsMinigame) {
+      AddToTotalGamesPlayed();
+    }
 
     QuitMinigame();
   }

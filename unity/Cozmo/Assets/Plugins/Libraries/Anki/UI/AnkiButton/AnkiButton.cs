@@ -211,7 +211,9 @@ namespace Anki {
               graphic.enabledColor = graphic.targetImage.color;
             }
             else {
-              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
+                        + " targetImage=" + graphic.targetImage + " sprite="
+                        + graphic.enabledSprite + ". Please check the prefab.");
             }
           }
           _IsInitialized = true;
@@ -326,7 +328,9 @@ namespace Anki {
               SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor, graphic.ignoreSprite);
             }
             else {
-              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
+                        + " targetImage=" + graphic.targetImage + " sprite="
+                        + graphic.enabledSprite + ". Have you initialized this button?");
             }
           }
         }
@@ -341,7 +345,9 @@ namespace Anki {
               SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
             }
             else {
-              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
+                        + " targetImage=" + graphic.targetImage + " sprite="
+                        + graphic.enabledSprite + ". Have you initialized this button?");
             }
           }
 
@@ -356,7 +362,9 @@ namespace Anki {
               SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
             }
             else {
-              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
+                        + " targetImage=" + graphic.targetImage + " sprite="
+                        + graphic.enabledSprite + ". Have you initialized this button?");
             }
           }
 

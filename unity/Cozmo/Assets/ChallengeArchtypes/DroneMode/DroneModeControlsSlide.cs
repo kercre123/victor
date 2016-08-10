@@ -58,6 +58,12 @@ namespace Cozmo.Minigame.DroneMode {
     private Sprite _QuitButtonSprite;
     public Sprite QuitButtonSprite { get { return _QuitButtonSprite; } }
 
+    [SerializeField]
+    private CozmoButton _HowToPlayButton;
+
+    [SerializeField]
+    private DroneModeHowToPlayView _HowToPlayViewPrefab;
+
     // TODO Remove debug text field
     public Anki.UI.AnkiTextLabel TiltText;
 
@@ -77,6 +83,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentHeadSliderSegmentValue = 0f;
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
       _HeadTiltThrottle.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
+      _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
     }
 
     public void InitializeCameraFeed(IRobot currentRobot) {
@@ -86,6 +93,14 @@ namespace Cozmo.Minigame.DroneMode {
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
       _HeadTiltThrottle.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
+    }
+
+    private void HandleHowToPlayClicked() {
+      OpenHowToPlayView();
+    }
+
+    public void OpenHowToPlayView() {
+      UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {

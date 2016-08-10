@@ -13,7 +13,7 @@ namespace Cozmo {
       public event HowToPlayButtonClickedHandler OnHowToPlayButtonClicked;
 
       private const float kAnimXOffset = 0f;
-      private const float kAnimYOffset = -200.0f;
+      private const float kAnimYOffset = 300.0f;
       private const float kAnimDur = 0.25f;
 
       [SerializeField]

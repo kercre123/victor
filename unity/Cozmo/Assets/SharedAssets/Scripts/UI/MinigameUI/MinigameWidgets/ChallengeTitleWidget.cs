@@ -7,17 +7,27 @@ namespace Cozmo {
     public class ChallengeTitleWidget : MinigameWidget {
 
       private const float kAnimXOffset = 0f;
-      private const float kAnimYOffset = 300.0f;
+      private const float kAnimYOffset = 400.0f;
       private const float kAnimDur = 0.25f;
 
       [SerializeField]
       private Anki.UI.AnkiTextLabel _ChallengeTitleLabel;
+
+      [SerializeField]
+      private Anki.UI.AnkiTextLabel _ChallengeSubtitleLabel;
 
       public string Text {
         set {
           _ChallengeTitleLabel.text = value;
         }
       }
+
+      public string SubtitleText {
+        set {
+          _ChallengeSubtitleLabel.text = value;
+        }
+      }
+
       #region IMinigameWidget
 
       public override void DestroyWidgetImmediately() {

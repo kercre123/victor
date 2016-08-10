@@ -140,7 +140,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22479862}
-  - 114: {fileID: 11436152}
+  - 114: {fileID: 11423808}
   m_Layer: 5
   m_Name: TextContainer
   m_TagString: Untagged
@@ -266,7 +266,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11436152
+--- !u!114 &11423808
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -277,24 +277,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
+  Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
-    JsonValue: 0.203921571
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.141176477
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.03529412
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
-  ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: ShowCozmoCubeSlide:_ShowCozmoCubesLabel
-    ReferencePath: 
+  ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11448748
 MonoBehaviour:

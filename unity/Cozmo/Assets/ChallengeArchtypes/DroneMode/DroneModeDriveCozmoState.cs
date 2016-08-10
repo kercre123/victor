@@ -47,6 +47,13 @@ namespace Cozmo {
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
           _DroneModeGame.SharedMinigameView.SetQuitButtonGraphic(_DroneModeControlsSlide.QuitButtonSprite);
 
+          // Show how to play when the player plays drone mode for the first time
+          int timesPlayedDroneMode = 0;
+          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(_DroneModeGame.ChallengeID, out timesPlayedDroneMode);
+          if (timesPlayedDroneMode <= 0) {
+            _DroneModeControlsSlide.OpenHowToPlayView();
+          }
+
           SetupRobotForDriveState();
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);

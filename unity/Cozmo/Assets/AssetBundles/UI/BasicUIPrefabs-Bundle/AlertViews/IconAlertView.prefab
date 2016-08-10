@@ -468,15 +468,6 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
-    JsonValue: 1.0
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 1.0
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 1.0
-  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Play"'
   - ObjectPath: 
