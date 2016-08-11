@@ -394,7 +394,7 @@ def main(scriptArgs):
 
   # revisit for COZMO-1287 to handle multiple firmwares.  
   if subprocess.call(['ln', '-s', '-f', '-n',
-    os.path.join(externalsPath, 'firmware/releases'),
+    os.path.join(externalsPath, 'firmware/build'),
     os.path.join(projectRoot, 'resources/config/basestation/firmware')]) != 0 :
     UtilLog.error("error symlinking firmware resources")
     return False
