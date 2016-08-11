@@ -52,6 +52,8 @@ namespace Cozmo {
       // Conditions that must be met in order for this to progress when its event is fired.
       public List<GoalCondition> ProgConditions = new List<GoalCondition>();
 
+      // Generate a daily goal from parameters
+      [JsonConstructor]
       public DailyGoal(GameEvent gEvent, string titleKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int priority = 0, int currProg = 0) {
         GoalEvent = gEvent;
         Title = new LocalizedString();
@@ -63,6 +65,21 @@ namespace Cozmo {
         RewardType = rewardType;
         ProgConditions = triggerCon;
         Priority = priority;
+        GameEventManager.Instance.OnGameEvent += ProgressGoal;
+      }
+
+      // Generate a fresh Daily Goal from data
+      public DailyGoal(DailyGoalGenerationData.GoalEntry goalData) {
+        GoalEvent = goalData.CladEvent;
+        Title = new LocalizedString();
+        Title.Key = goalData.TitleKey;
+        PointsRewarded = goalData.PointsRewarded;
+        Target = goalData.Target;
+        Progress = 0;
+        _Completed = GoalComplete;
+        RewardType = goalData.RewardType;
+        ProgConditions = goalData.ProgressConditions;
+        Priority = goalData.Priority;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
@@ -88,6 +105,20 @@ namespace Cozmo {
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
+      }
+
+      public void DebugAddGoalProgress() {
+        // Progress Goal
+        Progress++;
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this.GoalEvent, this.Progress, this.Target));
+
+        DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
+        // Check if Completed
+        CheckIfComplete();
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+
       }
 
       public void DebugSetGoalProgress(int prog) {

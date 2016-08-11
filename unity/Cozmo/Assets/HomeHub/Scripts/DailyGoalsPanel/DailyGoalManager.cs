@@ -13,6 +13,8 @@ using Anki.Cozmo;
 /// </summary>
 public class DailyGoalManager : MonoBehaviour {
 
+  public Action OnRefreshDailyGoals;
+
   // List of Current Generation Data
   private DailyGoalGenerationData _CurrentGenData;
 
@@ -63,6 +65,27 @@ public class DailyGoalManager : MonoBehaviour {
       }
     }
     return dailyGoalList;
+  }
+
+  public List<DailyGoalGenerationData.GoalEntry> GetGeneratableGoalEntries() {
+    List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
+    // Look at a list of exclusively goals that have their conditions met
+    for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
+      if (_CurrentGenData.GenList[i].CanGen()) {
+        goalList.Add(_CurrentGenData.GenList[i]);
+      }
+    }
+    return goalList;
+  }
+
+  public List<string> GetGeneratableGoalNames() {
+    List<string> goalNameList = new List<string>();
+    List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
+    goalList = GetGeneratableGoalEntries();
+    for (int i = 0; i < goalList.Count; i++) {
+      goalNameList.Add(Localization.Get(goalList[i].TitleKey));
+    }
+    return goalNameList;
   }
 
   [SerializeField]
@@ -198,12 +221,7 @@ public class DailyGoalManager : MonoBehaviour {
     List<DailyGoal> newGoals = new List<DailyGoal>();
     int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals + 1));
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
-    // Look at a list of exclusively goals that have their conditions met
-    for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
-      if (_CurrentGenData.GenList[i].CanGen()) {
-        goalList.Add(_CurrentGenData.GenList[i]);
-      }
-    }
+    goalList = GetGeneratableGoalEntries();
     goalCount = Mathf.Min(goalCount, goalList.Count);
     // Grab random DailyGoals from the available goal list
     DailyGoalGenerationData.GoalEntry toAdd;
@@ -214,6 +232,9 @@ public class DailyGoalManager : MonoBehaviour {
       newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority));
     }
     SendDasEventsForGoalGeneration(newGoals);
+    if (OnRefreshDailyGoals != null) {
+      OnRefreshDailyGoals.Invoke();
+    }
     return newGoals;
   }
 

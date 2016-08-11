@@ -19,7 +19,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private readonly List<GameObject> _EmptyGoalCells = new List<GameObject>();
   private const float _kFadeTweenDuration = 0.25f;
 
-  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
+  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
   // Prefab for GoalCells
   [SerializeField]
@@ -43,9 +43,11 @@ public class DailyGoalPanel : MonoBehaviour {
 
   void Start() {
     UpdateDailySession();
+    DailyGoalManager.Instance.OnRefreshDailyGoals += UpdateDailySession;
   }
 
   private void OnDestroy() {
+    DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdateDailySession;
     ClearGoalCells();
   }
 
@@ -111,6 +113,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
 
   public void SetDailyGoals(List<DailyGoal> dailyGoals) {
+    ClearGoalCells();
     for (int i = 0; i < dailyGoals.Count; i++) {
       GoalCell cell = CreateGoalCell(dailyGoals[i]);
       if (i == DailyGoalManager.Instance.GetConfigMaxGoalCount() - 1 && cell.GetComponent<GoalCellHorizontalBar>() != null) {
