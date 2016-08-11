@@ -312,6 +312,7 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void WakeupSequence() {
     _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundInstance.transform);
+
     RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
   }
 
@@ -337,7 +338,9 @@ public class ConnectionFlow : MonoBehaviour {
     UIManager.CloseView(_ConnectionFlowBackgroundInstance);
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeFace, true);
     }
 
     if (ConnectionFlowComplete != null) {
@@ -430,6 +433,11 @@ public class ConnectionFlow : MonoBehaviour {
       // progress from the connection screen to the next part of the flow
       _ConnectingToCozmoScreenInstance.ConnectionComplete();
     }
+
+    //Disable reactionary behaviors during wakeup
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeFace, false);
   }
 
   public void HandleRobotDisconnect() {
