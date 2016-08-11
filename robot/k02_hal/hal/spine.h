@@ -11,7 +11,7 @@ namespace Anki {
         void Manage();
         /// Dequeue data for body.
         // @warning Only call from hal exec thread
-        void Dequeue(CladBufferDown* dest);
+        void Dequeue(uint8_t* dest);
         /// Enqueue CLAD data to send to body.
         // @warning Only call from main executation thread
         bool Enqueue(const void* data, const u8 length, const u8 tag);

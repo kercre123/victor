@@ -89,7 +89,7 @@ inline void transmit_mode(TRANSFER_MODE mode) {
     }
     case TRANSMIT_SEND:
     {
-      Anki::Cozmo::HAL::Spine::Dequeue(&(g_dataToBody.cladBuffer));
+      Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.cladData);
       memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
 
       UART0_C2 = UART_C2_TE_MASK;

@@ -5,8 +5,8 @@
 #include "anki/cozmo/robot/spineData.h"
 
 namespace Spine {
-  void dequeue(CladBufferUp* dest);
-  void processMessage(void* msg);
+  void dequeue(uint8_t* dest);
+  void processMessages(const uint8_t* msg);
   void init(void);
 }
 

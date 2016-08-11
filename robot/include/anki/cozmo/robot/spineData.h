@@ -26,26 +26,9 @@ enum SPISource
   SPI_SOURCE_CRASHLOG = 0x48535243
 };
 
-// 32 bytes of payload plus tag
-#define SPINE_MAX_CLAD_MSG_SIZE_DOWN (40)
-#define SPINE_MAX_CLAD_MSG_SIZE_UP (32)
+#define SPINE_MAX_CLAD_MSG_SIZE_DOWN (42)
+#define SPINE_MAX_CLAD_MSG_SIZE_UP (36)
 #define SPINE_CRASH_LOG_SIZE (sizeof(CrashLog_K02))
-
-struct CladBufferDown
-{
-  uint16_t PADDING;
-  uint8_t  length;
-  uint8_t  msgID;
-  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
-};
-
-struct CladBufferUp
-{
-  uint16_t PADDING;
-  uint8_t  length;
-  uint8_t  msgID;
-  uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_UP];
-};
 
 struct GlobalDataToHead
 {
@@ -53,14 +36,14 @@ struct GlobalDataToHead
   Fixed speeds[4];
   Fixed positions[4];
   int32_t cliffLevel;
-  CladBufferUp cladBuffer;
+  uint8_t  cladData[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
 
 struct GlobalDataToBody
 {
   uint32_t source;
   int16_t motorPWM[4];
-  CladBufferDown cladBuffer;
+  uint8_t  cladData[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
 };
 
 static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 132, "Spine transport payload too large");
