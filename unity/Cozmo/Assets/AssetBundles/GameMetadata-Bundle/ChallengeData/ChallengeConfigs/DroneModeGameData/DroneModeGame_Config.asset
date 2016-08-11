@@ -22,6 +22,6 @@ MonoBehaviour:
   _MaxForwardSpeed_mmps: 120
   _PointTurnSpeed_mmps: 6
   _TurboSpeed_mmps: 160
-  _HeadMovementSpeed_radps: 0.5
+  _HeadMovementSpeed_radps: 0.25
   _NeutralTiltSize: 0.15
   _StartingLiftHeight: 0.25
