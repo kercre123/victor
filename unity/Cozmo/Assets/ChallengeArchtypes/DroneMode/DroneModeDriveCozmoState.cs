@@ -113,7 +113,9 @@ namespace Cozmo {
         }
 
         private void SendDriveRobotMessages() {
-          if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec) {
+          if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec
+              || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)
+              || ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
             _LastMessageSentTimestamp = Time.time;
             bool droveWheels = DriveWheelsIfNeeded();
             bool droveHead = DriveHeadIfNeeded();
