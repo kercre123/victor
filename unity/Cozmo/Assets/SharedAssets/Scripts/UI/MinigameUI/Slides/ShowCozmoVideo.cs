@@ -18,17 +18,16 @@ public class ShowCozmoVideo : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _ContinueButton;
 
+  private string _Filename;
+
 #if UNITY_EDITOR
   // The plugin only works in iOS and Android. In the editor we use Unity's video player functionality.
   private Coroutine _PlayCoroutine;
 #endif
 
   private void Awake() {
-    _ContinueButton.onClick.AddListener(() => {
-      if (OnContinueButton != null) {
-        OnContinueButton();
-      }
-    });
+    _ContinueButton.Initialize(HandleContinueButton, "continue_button", "show_cozmo_video");
+    _ReplayButton.Initialize(HandleReplayButton, "replay_button", "show_cozmo_video");
 #if !UNITY_EDITOR
     // Disable the background image until the video has been loaded
     _RawImage.enabled = false;
@@ -63,6 +62,7 @@ public class ShowCozmoVideo : MonoBehaviour {
 
   // filename is a path relative to the StreamingAssets folder
   public void PlayVideo(string filename) {
+    _Filename = filename;
 #if UNITY_EDITOR
     _PlayCoroutine = StartCoroutine(LoadAndPlayCoroutine(filename));
 #else
@@ -77,6 +77,21 @@ public class ShowCozmoVideo : MonoBehaviour {
 
   public void ShowContinueButton(bool show) {
     _ContinueButton.gameObject.SetActive(show);
+  }
+
+  private void HandleContinueButton() {
+    if (OnContinueButton != null) {
+      OnContinueButton();
+    }
+  }
+
+  private void HandleReplayButton() {
+    if (string.IsNullOrEmpty(_Filename)) {
+      DAS.Error("ShowCozmoVideo.HandleReplayButton", "Attempting to replay empty video string");
+    }
+    else {
+      PlayVideo(_Filename);
+    }
   }
 
 #if UNITY_EDITOR
