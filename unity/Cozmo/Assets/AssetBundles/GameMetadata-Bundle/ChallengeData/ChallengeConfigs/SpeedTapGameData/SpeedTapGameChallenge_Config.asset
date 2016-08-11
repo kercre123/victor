@@ -62,7 +62,7 @@ MonoBehaviour:
       LowerBoundThreshold: 0.3
   TapResolutionDelay: 0.1
   Rounds: 3
-  MaxScorePerRound: 3
+  MaxScorePerRound: 5
   MinIdleInterval_percent: 0
   MaxIdleInterval_percent: 0.3
   BaseMatchChance: 0.4

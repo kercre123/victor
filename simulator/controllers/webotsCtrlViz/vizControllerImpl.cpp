@@ -10,7 +10,6 @@
 *
 */
 
-
 #include "vizControllerImpl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"

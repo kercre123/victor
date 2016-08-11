@@ -24,15 +24,15 @@
     "teamcity": {
         "builds": {
             "coretech_external": {
-                "build_id": "96110",
-                "build_type_id": "Cozmo_CoretechExternal_Build",
+                "build_id": "13365",
+                "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
-                "package_name": "Cozmo_CoretechExternal",
-                "version": "132"
+                "package_name": "Cte",
+                "version": "151"
             }
         },
         "default_usr": "puller_cozmo",
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
-        "root_url": "https://teamcity.ankicore.com/"
+        "root_url": "https://build.ankicore.com/"
     }
 }

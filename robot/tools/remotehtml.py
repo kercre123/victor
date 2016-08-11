@@ -19,6 +19,7 @@ client = """<html>
         <script>
       var ws = new WebSocket("ws://127.0.0.1:8765/");
       var motors = { left: 0, right: 0 }
+      var lights = { type: 'lights', red: 0, green: 0, blue: 0 }
 
       function calcSpeed(motors) {
         var left = 0, right = 0;
@@ -39,57 +40,98 @@ client = """<html>
           right -= 100.0;
         }
 
-        return { left, right, lift: motors.lift, head: motors.head }
+        return { type: "motors", left, right, lift: motors.lift, head: motors.head }
       }
 
       document.addEventListener("keydown", function (e) {
+        var doMotor, doLight;
         switch (e.keyCode) {
             case 87: // W
                 motors.lift = +1.0;
+                doMotor = true;
                 break ;
             case 83: // S
                 motors.lift = -1.0;
+                doMotor = true;
                 break ;
             case 69: // E
                 motors.head = +1.5;
+                doMotor = true;
                 break ;
             case 68: // D
                 motors.head = -1.5;
+                doMotor = true;
                 break ;
             case 38: // up
                 motors.up = true;
+                doMotor = true;
                 break ;
             case 40: // down
                 motors.down = true;
+                doMotor = true;
                 break ;
             case 37: // left
                 motors.left = true;
+                doMotor = true;
                 break ;
             case 39: // right
                 motors.right = true;
+                doMotor = true;
+                break ;
+
+            case 49:
+                lights.red = 1;
+                doLight = true;
+                break ;
+            case 50:
+                lights.green = 1;
+                doLight = true;
+                break ;
+            case 51:
+                lights.blue = 1;
+                doLight = true;
                 break ;
         }
         
-        ws.send(JSON.stringify(calcSpeed(motors)));
+        if (doMotor) ws.send(JSON.stringify(calcSpeed(motors)));
+        if (doLight) ws.send(JSON.stringify(lights));
       });
 
       document.addEventListener("keyup", function (e) {
+        var doMotor, doLight;
         switch (e.keyCode) {
             case 38: // up
                 motors.up = false;
+                doMotor = true;
                 break ;
             case 40: // down
                 motors.down = false;
+                doMotor = true;
                 break ;
             case 37: // left
                 motors.left = false;
+                doMotor = true;
                 break ;
             case 39: // right
                 motors.right = false;
+                doMotor = true;
+                break ;
+            case 49:
+                lights.red = 0;
+                doLight = true;
+                break ;
+            case 50:
+                lights.green = 0;
+                doLight = true;
+                break ;
+            case 51:
+                lights.blue = 0;
+                doLight = true;
                 break ;
         }
 
-        ws.send(JSON.stringify(calcSpeed(motors)));
+        if (doMotor) ws.send(JSON.stringify(calcSpeed(motors)));
+        if (doLight) ws.send(JSON.stringify(lights));
       });
 
       ws.onmessage = function (event) {
@@ -146,13 +188,23 @@ class Remote:
 
     async def consumer(self, message):
         message = json.loads(message)
-        
-        robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(message['left'], message['right'])))
 
-        if 'lift' in message:
-            robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
-        if 'head' in message:
-            robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
+        if message['type'] == 'motors':
+            robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(message['left'], message['right'])))
+
+            if 'lift' in message:
+                robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
+            if 'head' in message:
+                robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
+        elif message['type'] == 'lights':
+            lights = robotInterface.RI.BackpackLights()
+            
+            for light in lights.lights:
+                color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)
+
+                light.onColor = light.offColor = color
+
+            robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLights=lights))
 
     async def socket_loop(self, websocket, path):
         while True:

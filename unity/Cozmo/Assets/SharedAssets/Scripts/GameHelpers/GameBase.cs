@@ -107,11 +107,21 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Initialization
 
+  private const string _kReactionaryBehaviorOwnerId = "unity_game";
+
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
-  protected virtual void SetEnableReactionaryBehaviorsForGame(bool enable) {
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.ReactToCubeMoved, enable);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("unity_game", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+  protected virtual void InitializeReactionaryBehaviorsForGameStart() {
+    // If the ID is not the same as the true request, it will not go through so make sure they are the same.
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, false);
+  }
+
+  protected virtual void ResetReactionaryBehaviorsForGameEnd() {
+    // If the ID is not the same as the true request, it will not go through so make sure they are the same.
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
+    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, true);
   }
 
   // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
@@ -138,7 +148,7 @@ public abstract class GameBase : MonoBehaviour {
     RewardedActionManager.Instance.NewSkillChange = 0;
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
-    SetEnableReactionaryBehaviorsForGame(false);
+    InitializeReactionaryBehaviorsForGameStart();
 
     RegisterRobotReactionaryBehaviorEvents();
 
@@ -496,7 +506,7 @@ public abstract class GameBase : MonoBehaviour {
 
     DeregisterRobotReactionaryBehaviorEvents();
 
-    SetEnableReactionaryBehaviorsForGame(true);
+    ResetReactionaryBehaviorsForGameEnd();
 
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
