@@ -24,6 +24,14 @@ public class UnityDasTarget : IDASTarget {
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue), context as UnityEngine.Object);
   }
 
+  public void Ch_Info(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+    UnityEngine.Debug.Log(string.Format("DAS [{0}-{1}] {2} - {3}", 2, channelName, eventName, eventValue), context as UnityEngine.Object);
+  }
+
+  public void Ch_Debug(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+    UnityEngine.Debug.Log(string.Format("DAS [{0}-{1}] {2} - {3}", 1, channelName, eventName, eventValue), context as UnityEngine.Object);
+  }
+
   public void SetGlobal(string key, string value) {
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 6, key, value));
   }

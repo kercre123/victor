@@ -13,6 +13,10 @@ public interface IDASTarget {
 
   void Debug(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null);
 
+  void Ch_Info(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null);
+
+  void Ch_Debug(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null);
+
   void SetGlobal(string key, string value);
 }
 

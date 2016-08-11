@@ -64,6 +64,28 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
+  public void Ch_Info(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null)
+  {
+#if USE_ENGINE_TARGET
+    if (keyValues != null) {
+      Unity_DAS_Ch_LogI(channelName, eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
+    } else {
+      Unity_DAS_Ch_LogI(channelName, eventName, eventValue, null, null, 0);
+    }
+#endif
+  }
+
+  public void Ch_Debug(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null)
+  {
+#if USE_ENGINE_TARGET
+    if (keyValues != null) {
+      Unity_DAS_Ch_LogD(channelName, eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
+    } else {
+      Unity_DAS_Ch_LogD(channelName, eventName, eventValue, null, null, 0);
+    }
+#endif
+  }
+
   public void SetGlobal(string key, string value) {
 #if USE_ENGINE_TARGET
     Unity_DAS_SetGlobal(key,value);
@@ -92,6 +114,12 @@ public class EngineDasTarget : IDASTarget {
 
   [DllImport(EngineDllName)]
   private static extern void Unity_DAS_LogD(string eventName, string eventValue, string[] keys, string[] values, uint keyValueCount);
+
+  [DllImport(EngineDllName)]
+  private static extern void Unity_DAS_Ch_LogI(string channelName, string eventName, string eventValue, string [] keys, string [] values, uint keyValueCount);
+
+  [DllImport(EngineDllName)]
+  private static extern void Unity_DAS_Ch_LogD(string channelName, string eventName, string eventValue, string [] keys, string [] values, uint keyValueCount);
 
   [DllImport(EngineDllName)]
   private static extern void Unity_DAS_SetGlobal(string key, string value);

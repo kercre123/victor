@@ -168,6 +168,14 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context, keyValues);
   }
 
+  void IDASTarget.Ch_Info(string channelName, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Info, channelName + "-" + eventName, eventValue, context, keyValues);
+  }
+  
+  void IDASTarget.Ch_Debug(string channelName, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Debug, channelName + "-" + eventName, eventValue, context, keyValues);
+  }
+
   void IDASTarget.SetGlobal(string eventName, string eventValue) {
     SaveLogPacket(LogPacket.ELogKind.Global, eventName, eventValue, null, null);
   }
