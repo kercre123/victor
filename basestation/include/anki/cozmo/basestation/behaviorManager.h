@@ -139,7 +139,7 @@ private:
 
   
   // checks the chooser and switches to a new behavior if neccesary
-  void SwitchToNextBehavior();
+  void SwitchToNextBehavior(bool didCurrentFinish);
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopCurrentBehavior();

@@ -342,7 +342,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SwitchToNextBehavior()
+void BehaviorManager::SwitchToNextBehavior(bool didCurrentFinish)
 {
   if( _behaviorToResume != nullptr ) {
     if( _shouldResumeBehaviorAfterReaction ) {
@@ -371,7 +371,7 @@ void BehaviorManager::SwitchToNextBehavior()
     }
   }
   
-  SwitchToBehavior( _currentChooserPtr->ChooseNextBehavior(_robot) );
+  SwitchToBehavior( _currentChooserPtr->ChooseNextBehavior(_robot, didCurrentFinish) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -429,7 +429,8 @@ Result BehaviorManager::Update()
   _currentChooserPtr->Update();
 
   if( ! _runningReactionaryBehavior ) {
-    SwitchToNextBehavior();
+    const bool didPreviousFinish = (_currentBehavior == nullptr);
+    SwitchToNextBehavior(didPreviousFinish);
   }
   
   //Allow reactionary behaviors to request a switch without a message
@@ -453,7 +454,7 @@ Result BehaviorManager::Update()
                           _currentBehavior->GetName().c_str());
         if( _runningReactionaryBehavior ) {
           _runningReactionaryBehavior = false;
-          SwitchToNextBehavior();
+          SwitchToNextBehavior(true);
         }
         else {
           SwitchToBehavior(nullptr);
@@ -467,7 +468,7 @@ Result BehaviorManager::Update()
         // same as the Complete case
         if( _runningReactionaryBehavior ) {
           _runningReactionaryBehavior = false;
-          SwitchToNextBehavior();
+          SwitchToNextBehavior(true);
         }
         else {
           SwitchToBehavior(nullptr);
@@ -518,7 +519,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   if(currentNotReactionary){
-    SwitchToNextBehavior();
+    SwitchToNextBehavior(true);
   }
 }
 

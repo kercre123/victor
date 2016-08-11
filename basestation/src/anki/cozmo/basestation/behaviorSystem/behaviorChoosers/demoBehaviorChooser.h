@@ -40,7 +40,7 @@ public:
 
   virtual Result Update() override;
 
-  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override;
+  virtual IBehavior* ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const override;
 
   virtual const char* GetName() const override { return _name.c_str(); }
 

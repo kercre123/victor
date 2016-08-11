@@ -4,7 +4,7 @@
     "DetectingMarkers"       : true,
     "DetectingFaces"         : true,
     "DetectingMotion"        : true,
-    "DetectingOverheadEdges" : false,
+    "DetectingOverheadEdges" : true,
     "CheckingQuality"        : true
   },
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot

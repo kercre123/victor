@@ -117,6 +117,25 @@
         }
      },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // FreeplayHiking : goal to explore Cozmo's surroundings
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      {
+        "name" : "freeplayHiking",
+        "behaviorChooser" :
+        {
+          "type" : "simple",
+     
+          // these are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "FreeplayHiking" ],
+
+          "scoreBonusForCurrentBehavior" : {
+            "nodes" : [
+              { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
+            ]
+          }
+        }
+      },
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // FreeplayOne : old freeplay with game requests
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
@@ -135,46 +154,29 @@
           }
         }
       },
-     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-     // New Behavior Selectors
-     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-     {
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // New Behavior Selectors
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      {
        "name" : "showOff",
+       "requireSpark":"Invalid", // to make showOff not available in current freeplay goal selector. will remove soon
        "behaviorChooser" :
        {
          "type" : "simple",
          // this are the behaviors that are allowed in this behavior chooser
          "behaviorGroups" : [ "ShowOff" ]
        }
-     },
-     {
+      },
+      {
        "name" : "playful",
+       "requireSpark":"Invalid", // to make playful not available in current freeplay goal selector. will remove soon
        "behaviorChooser" :
        {
          "type" : "simple",
          // this are the behaviors that are allowed in this behavior chooser
          "behaviorGroups" : [ "Playful" ]
        }
-     }
-//      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//      // FreeplayHiking : goal to explore Cozmo's surroundings
-//      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//      {
-//        "name" : "freeplayHiking",
-//        "behaviorChooser" :
-//        {
-//          "type" : "simple",
-//     
-//          // these are the behaviors that are allowed in this behavior chooser
-//          "behaviorGroups" : [ "FreeplayHiking" ],
-//
-//          "scoreBonusForCurrentBehavior" : {
-//            "nodes" : [
-//              { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
-//            ]
-//          }
-//        }
-//      }
+      }
     ]
   }
 }

@@ -51,10 +51,13 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // choose next behavior for this goal
-  IBehavior* ChooseNextBehavior(const Robot& robot) const;
+  IBehavior* ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const;
   
+  // returns sparkID required to run this goal, UnlockId::Count if none required
+  UnlockId GetRequiredSpark() const { return _requiresSpark; }
   
-  UnlockId GetRequiresSpark() { return _requiresSpark; }
+  // returns goal name set from config
+  const std::string& GetName() const { return _name; }
 
 private:
 
@@ -75,6 +78,9 @@ private:
   
   // behavior chooser associated to this goal
   std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
+  
+  // goal name (from config)
+  std::string _name;
   
   UnlockId _requiresSpark;
 

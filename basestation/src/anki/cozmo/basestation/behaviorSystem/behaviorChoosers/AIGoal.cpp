@@ -59,16 +59,19 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
   _behaviorChooserPtr.reset( newChooser );
+  
+  _name = JsonTools::ParseString(config, "name", "AIGoal.Init");
 
   const bool success = (nullptr != _behaviorChooserPtr);
   return success;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* AIGoal::ChooseNextBehavior(const Robot& robot) const
+IBehavior* AIGoal::ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const
 {
   // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
-  IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot);
+  // note we pass
+  IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, didCurrentFinish);
   return ret;
 }
 
