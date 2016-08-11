@@ -29,6 +29,8 @@ namespace Cozmo.Minigame.DroneMode {
       Reverse
     }
 
+    public bool ShowDebugTextFields = true;
+
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
 
@@ -67,6 +69,9 @@ namespace Cozmo.Minigame.DroneMode {
     // TODO Remove debug text field
     public Anki.UI.AnkiTextLabel TiltText;
 
+    // TODO Remove debug text field
+    public Anki.UI.AnkiTextLabel DebugText;
+
     [SerializeField]
     private DroneModeCameraFeed _CameraFeed;
 
@@ -84,10 +89,14 @@ namespace Cozmo.Minigame.DroneMode {
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
       _HeadTiltThrottle.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
       _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
+
+      TiltText.gameObject.SetActive(ShowDebugTextFields);
+      DebugText.gameObject.SetActive(ShowDebugTextFields);
     }
 
     public void InitializeCameraFeed(IRobot currentRobot) {
       _CameraFeed.Initialize(currentRobot);
+      _CameraFeed.DebugTextField.gameObject.SetActive(ShowDebugTextFields);
     }
 
     private void OnDestroy() {

@@ -9,7 +9,9 @@ namespace Cozmo.Minigame.DroneMode {
     private DroneModeControlsSlide.SpeedSliderSegment _TargetDriveSpeedSegment = DroneModeControlsSlide.SpeedSliderSegment.Neutral;
     private TransitionAnimationState _CurrentAnimationState = TransitionAnimationState.NONE;
 
-    private enum TransitionAnimationState {
+    private string _DebugString;
+
+    public enum TransitionAnimationState {
       IN,
       OUT,
       NONE
@@ -30,9 +32,15 @@ namespace Cozmo.Minigame.DroneMode {
       _RobotToAnimate.CancelCallback(HandleOutAnimationFinished);
     }
 
+    public override string ToString() {
+      return _DebugString;
+    }
+
     public void PlayTransitionAnimation(DroneModeControlsSlide.SpeedSliderSegment newSliderSegment) {
       DAS.Info("DroneModeTransitionAnimator.PlayTransitionAnimation",
                "State: " + _CurrentAnimationState + "   Current:" + _CurrentDriveSpeedSegment + "   Target:" + _TargetDriveSpeedSegment);
+      //_DebugString = "DroneModeTransitionAnimator.PlayTransitionAnimation" +
+      //       "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
       _TargetDriveSpeedSegment = newSliderSegment;
       if (_CurrentAnimationState == TransitionAnimationState.NONE
           && _CurrentDriveSpeedSegment != _TargetDriveSpeedSegment) {
@@ -43,6 +51,8 @@ namespace Cozmo.Minigame.DroneMode {
     private void PlayOutAnimation() {
       DAS.Info("DroneModeTransitionAnimator.PlayOutAnimation",
                "State: " + _CurrentAnimationState + "   Current:" + _CurrentDriveSpeedSegment + "   Target:" + _TargetDriveSpeedSegment);
+      //_DebugString = "DroneModeTransitionAnimator.PlayOutAnimation" +
+      //        "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
       _CurrentAnimationState = TransitionAnimationState.OUT;
       switch (_CurrentDriveSpeedSegment) {
       case DroneModeControlsSlide.SpeedSliderSegment.Forward:
@@ -76,6 +86,8 @@ namespace Cozmo.Minigame.DroneMode {
     private void HandleOutAnimationFinished(bool success) {
       DAS.Info("DroneModeTransitionAnimator.HandleOutAnimationFinished",
                "State: " + _CurrentAnimationState + "   Current:" + _CurrentDriveSpeedSegment + "   Target:" + _TargetDriveSpeedSegment);
+      _DebugString = "DroneModeTransitionAnimator.HandleOutAnimationFinished" +
+               "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
       // Pop current driving animation if not neutral
       if (_CurrentDriveSpeedSegment != DroneModeControlsSlide.SpeedSliderSegment.Neutral) {
         _RobotToAnimate.PopIdleAnimation();
@@ -90,6 +102,8 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentDriveSpeedSegment = _TargetDriveSpeedSegment;
       DAS.Info("DroneModeTransitionAnimator.PlayInAnimation",
                "State: " + _CurrentAnimationState + "   Current:" + _CurrentDriveSpeedSegment + "   Target:" + _TargetDriveSpeedSegment);
+      //_DebugString = "DroneModeTransitionAnimator.PlayInAnimation" +
+      //        "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
       _CurrentAnimationState = TransitionAnimationState.IN;
       switch (_TargetDriveSpeedSegment) {
       case DroneModeControlsSlide.SpeedSliderSegment.Forward:
@@ -124,11 +138,15 @@ namespace Cozmo.Minigame.DroneMode {
       }
 
       // Check for success = false?
+      _DebugString = "DroneModeTransitionAnimator.HandleInAnimationFinished" +
+               "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
     }
 
     private void SetDrivingAnimation() {
       DAS.Info("DroneModeTransitionAnimator.SetDrivingAnimation",
                "State: " + _CurrentAnimationState + "   Current:" + _CurrentDriveSpeedSegment);
+      //_DebugString = "DroneModeTransitionAnimator.SetDrivingAnimation" +
+      // "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
       // Push current driving animation if not neutral
       switch (_CurrentDriveSpeedSegment) {
       case DroneModeControlsSlide.SpeedSliderSegment.Forward:
