@@ -59,9 +59,7 @@ private:
   bool _hasUpAxisChanged;
 };
   
-  
-CONSOLE_VAR(bool, kBRACM_enableObjectMovedReact, "BehaviorCubeMoved", false);
-  
+
 //////
 /// ReactAcknowledge Cube Moved
 /////
@@ -83,26 +81,27 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
 
 bool BehaviorReactAcknowledgeCubeMoved::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_switchObjectID);
-  if(obj == nullptr){
-    return false;
-  }
-  
-  static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see
-  static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it
-  bool isVisible = obj->IsVisibleFrom(robot.GetVisionComponent().GetCamera(),
-                                      kMaxNormalAngle,
-                                      kMinImageSizePix,
-                                      false);
-  
-  return kBRACM_enableObjectMovedReact && !isVisible;
+  return true;
 }
   
 bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot& robot)
 {
-  for(auto object: _reactionObjects){
+  for(auto& object: _reactionObjects){
+    const ObservableObject* cube = robot.GetBlockWorld().GetObjectByID(object.GetObjectID());
+    if(cube == nullptr){
+      continue;
+    }
+    
+    static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see
+    static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it
+    bool isVisible = cube->IsVisibleFrom(robot.GetVisionComponent().GetCamera(),
+                                        kMaxNormalAngle,
+                                        kMinImageSizePix,
+                                        false);
+    
     if(object.ObjectOutsideIgnoreArea(robot)
        && (object.ObjectHasMovedLongEnough(robot))  //|| object.ObjectUpAxisHasChanged(robot))
+       && !isVisible
     ){
       SET_STATE(PlayingSenseReaction);
       //Ensure there's no throttling between two blocks if moved
