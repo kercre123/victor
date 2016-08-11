@@ -155,11 +155,6 @@ namespace Cozmo {
 
   void CST_Animations::HandleAnimationAborted(const ExternalInterface::AnimationAborted& msg)
   {
-    // Returning a non-zero result signifies this test failed. 255 is an arbitary choice, though in
-    // other test controllers _result can be the result code parameters that exist in certain CLAD
-    // messages. These CLAD message result codes tend to be lower numbers so the arbitrary 255 is
-    // chosen, though it doens't really matter as long as it is non-zero.
-    _result = 255;
     PRINT_NAMED_WARNING("CST_Animations.HandleAnimationAborted",
                       "'%s' was aborted.",
                       _animationToPlay.c_str());
