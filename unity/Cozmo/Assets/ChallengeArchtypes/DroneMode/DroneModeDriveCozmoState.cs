@@ -29,6 +29,7 @@ namespace Cozmo {
         private bool _IsDrivingHead = false;
 
         private float _StoppedDrivingHeadTimestamp;
+        private float _LockedHeadAngle_rad = 0f;
 
         private DroneModeTransitionAnimator _RobotAnimator;
 
@@ -122,6 +123,9 @@ namespace Cozmo {
               // If targets are both zero, enable reactionary behavior
               if (!droveHead && !droveWheels) {
                 EnableIdleReactionaryBehaviors(true);
+
+                // Also make sure to zero out animations
+                _RobotAnimator.PlayTransitionAnimation(DroneModeControlsSlide.SpeedSliderSegment.Neutral);
               }
               else {
                 EnableIdleReactionaryBehaviors(false);
@@ -164,58 +168,28 @@ namespace Cozmo {
             _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
             _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
             droveHead = true;
-            if (_StoppedDrivingHeadTimestamp != -1) {
-              _StoppedDrivingHeadTimestamp = -1f;
-              ResetIdleAnimation();
-            }
+            _StoppedDrivingHeadTimestamp = -1f;
           }
           else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
             _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveHeadSpeed_radps = 0f;
             _CurrentRobot.DriveHead(0f);
             droveHead = true;
-            if (_StoppedDrivingHeadTimestamp == -1) {
-              SetIdleAnimation();
-            }
             _StoppedDrivingHeadTimestamp = Time.time;
+            _LockedHeadAngle_rad = _CurrentRobot.HeadAngle;
+            _CurrentRobot.SetHeadAngle(_LockedHeadAngle_rad, useExactAngle: true);
             HeadDrivingDebugText = "\nPlayer stop driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
           }
           else if (ShouldHoldHead()) {
             HeadDrivingDebugText = "\nCozmo holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
+            _CurrentRobot.SetHeadAngle(_LockedHeadAngle_rad, useExactAngle: true);
             droveHead = true;
           }
           else if (ShouldStopHoldHead()) {
-            if (_StoppedDrivingHeadTimestamp != -1) {
-              _StoppedDrivingHeadTimestamp = -1f;
-              ResetIdleAnimation();
-            }
+            _StoppedDrivingHeadTimestamp = -1f;
             HeadDrivingDebugText = "\nCozmo stop holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
           }
           return droveHead;
-        }
-
-        private void SetIdleAnimation() {
-          _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.ProceduralLive);
-          Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
-              Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
-              Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
-              Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
-              Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
-            };
-          float[] paramValues = {
-              3.0f,
-              0.2f,
-              0.0f,
-              0.0f
-            };
-          _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
-        }
-
-        private void ResetIdleAnimation() {
-          _CurrentRobot.PopIdleAnimation();
-          Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
-          float[] paramValues = { };
-          _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues, true);
         }
 
         private void DriveLiftIfNeeded() {
