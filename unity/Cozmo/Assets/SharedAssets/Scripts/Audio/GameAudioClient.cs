@@ -130,16 +130,6 @@ namespace Anki {
           return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Aria, callbackFlag, handler);
         }
 
-        // Don't think we are going to allow playing cozmo vo from ui, currently they must be played form an animation
-        /*
-        static public ushort PostCozmoVOEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent audioEvent,
-                                              Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
-                                              CallbackHandler handler = null) {
-          AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Default, callbackFlag, handler);
-        }
-        */
-
         // Remove callback handle from Audio Client
         static public void UnregisterCallbackHandler(ushort playId) {
           AudioClient client = AudioClient.Instance;
@@ -235,7 +225,6 @@ namespace Anki {
         static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state,
                                          bool interrupt = false,
                                          uint minDurationInMilliSeconds = 0) {
-          DAS.Info("Audio.SetMusicState ", state.ToString());
           AudioClient client = AudioClient.Instance;
           client.PostMusicState((GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }
