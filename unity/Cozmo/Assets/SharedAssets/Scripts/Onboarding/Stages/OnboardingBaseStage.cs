@@ -37,6 +37,10 @@ namespace Onboarding {
       }
     }
 
+    public virtual void OnDestroy() {
+      DAS.Info("onboarding.stage.ended", name);
+    }
+
     public virtual void SkipPressed() {
       OnboardingManager.Instance.GoToNextStage();
     }

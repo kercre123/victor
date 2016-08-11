@@ -37,6 +37,11 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     _LockedTiles = new List<CozmoUnlockableTile>();
     LoadTiles();
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
+
+    // Show onboarding for this section if it's the first time here.
+    if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
+      OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
+    }
   }
 
   void OnDestroy() {

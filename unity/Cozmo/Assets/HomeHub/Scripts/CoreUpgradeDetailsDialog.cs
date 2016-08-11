@@ -84,7 +84,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _RequestTrickButtonContainer.gameObject.SetActive(false);
 
     // No quitting until they've finished onboarding
-    if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+    if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
       if (_UnlockInfo.UnlockableType == UnlockableType.Action) {
         _OptionalCloseDialogButton.gameObject.SetActive(false);
       }
@@ -188,8 +188,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void ResolveOnNewUnlock() {
     UpdateState();
-    // reinit this view possibly with the sparks, instead of going back.
-    Initialize(_UnlockInfo, CozmoUnlocksPanel.CozmoUnlockState.Unlocked, _ButtonCostPaidSuccessCallback);
+    // Go back and look at your accomplishment
+    CloseView();
   }
 
   private void OnSparkPressed() {

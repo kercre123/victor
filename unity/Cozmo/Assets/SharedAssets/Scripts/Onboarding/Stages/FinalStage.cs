@@ -10,8 +10,9 @@ namespace Onboarding {
       OnboardingManager.Instance.GetHomeView().OnTabChanged += HandleTabChanged;
     }
 
-    public void OnDestroy() {
-      BaseView.BaseViewClosed -= HandleViewOpened;
+    public override void OnDestroy() {
+      base.OnDestroy();
+      BaseView.BaseViewOpened -= HandleViewOpened;
       OnboardingManager.Instance.GetHomeView().OnTabChanged -= HandleTabChanged;
     }
 

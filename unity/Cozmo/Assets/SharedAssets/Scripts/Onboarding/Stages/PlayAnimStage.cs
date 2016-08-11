@@ -20,11 +20,17 @@ namespace Onboarding {
     public override void Start() {
       base.Start();
       _CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding);
       _CurrentRobot.SendAnimationTrigger(_Animation.Value, HandleEndAnimationComplete);
     }
 
-    public void OnDestroy() {
+    public override void OnDestroy() {
+      base.OnDestroy();
       _CurrentRobot.ExecuteBehavior(BehaviorType.NoneBehavior);
+    }
+
+    public override void SkipPressed() {
+      OnboardingManager.Instance.GoToNextStage();
     }
 
     private void HandleEndAnimationComplete(bool success) {

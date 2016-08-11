@@ -155,6 +155,10 @@ public abstract class GameBase : MonoBehaviour {
     RegisterRobotReactionaryBehaviorEvents();
 
     LoadMinigameUIAssetBundle();
+
+    if (CurrentRobot != null) {
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+    }
   }
 
   private void LoadMinigameUIAssetBundle() {

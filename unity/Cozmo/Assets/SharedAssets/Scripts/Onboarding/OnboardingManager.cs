@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using System.Collections.Generic;
 using Anki.Cozmo;
 using Cozmo.HomeHub;
 using DataPersistence;
@@ -9,22 +10,30 @@ public class OnboardingManager : MonoBehaviour {
 
   public static OnboardingManager Instance { get; private set; }
 
-  private Cozmo.HomeHub.HomeView _HomeView;
+  private HomeView _HomeView;
 
-  // Each phase is made up of several stages,
-  // This can be used to checkpoint them, and is the total screens
   public enum OnboardingPhases : int {
-    First = 4,
-    Second,
-    Third,
-    Count
+    Home,
+    Loot,
+    Upgrades,
+    None
   };
+
+  // Since the phases are all done in getters anyways, for clarity edit individual names
+  // in the editor rather than a dictionary...
+  [SerializeField]
+  private List<OnboardingBaseStage> _PhaseHomePrefabs;
+  [SerializeField]
+  private List<OnboardingBaseStage> _PhaseLootPrefabs;
+  [SerializeField]
+  private List<OnboardingBaseStage> _PhaseUpgradesPrefabs;
+
+  private OnboardingPhases _CurrPhase = OnboardingPhases.None;
 
   // Must be in order of enums above
   [SerializeField]
   private OnboardingBaseStage[] _HomeOnboardingStages;
   private GameObject _CurrStageInst = null;
-  private int _CurrStage = -1;
 
   private Transform _OnboardingTransform;
 
@@ -39,40 +48,80 @@ public class OnboardingManager : MonoBehaviour {
       return;
     }
     else {
-      // Resets every time
-      //DataPersistenceManager.Instance.Data.DefaultProfile.OnboardingHomeStage = 0;
       Instance = this;
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Fill Loot Energy", "Unity", GiveEnergy);
     }
   }
 
-  public bool IsOnboardingRequiredHome() {
-    return DataPersistenceManager.Instance.Data.DefaultProfile.OnboardingHomeStage < _HomeOnboardingStages.Length;
+  private int GetCurrStageInPhase(OnboardingPhases phase) {
+    if (phase == OnboardingPhases.None) {
+      return 0;
+    }
+
+    PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+    if (!profile.OnboardingStages.ContainsKey(phase)) {
+      profile.OnboardingStages[phase] = 0;
+    }
+    return profile.OnboardingStages[phase];
+  }
+  private void SetCurrStageInPhase(int stage) {
+    if (_CurrPhase != OnboardingPhases.None) {
+      PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+      profile.OnboardingStages[_CurrPhase] = stage;
+    }
+  }
+
+  private int GetMaxStageInPhase(OnboardingPhases phase) {
+    switch (phase) {
+    case OnboardingPhases.Home:
+      return _PhaseHomePrefabs.Count;
+    case OnboardingPhases.Loot:
+      return _PhaseLootPrefabs.Count;
+    case OnboardingPhases.Upgrades:
+      return _PhaseUpgradesPrefabs.Count;
+    }
+    return 0;
+  }
+  private OnboardingBaseStage GetCurrStagePrefab() {
+    int currStage = GetCurrStageInPhase(_CurrPhase);
+    switch (_CurrPhase) {
+    case OnboardingPhases.Home:
+      return _PhaseHomePrefabs[currStage];
+    case OnboardingPhases.Loot:
+      return _PhaseLootPrefabs[currStage];
+    case OnboardingPhases.Upgrades:
+      return _PhaseUpgradesPrefabs[currStage];
+    }
+    return null;
+  }
+
+  public bool IsOnboardingRequired(OnboardingPhases phase) {
+    return GetCurrStageInPhase(phase) < GetMaxStageInPhase(phase);
   }
 
   public void InitHomeHubOnboarding(HomeView homeview, Transform onboardingLayer) {
     _HomeView = homeview;
     _OnboardingTransform = onboardingLayer;
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding);
-    // TODO: Get more design on where "checkpoints" are.
+
+    if (IsOnboardingRequired(OnboardingPhases.Home)) {
+      StartPhase(OnboardingPhases.Home);
+    }
+  }
+
+  public void StartPhase(OnboardingPhases phase) {
+    // End any previous phase, can only highlight one thing at once
+    if (_CurrPhase != OnboardingPhases.None) {
+      SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
+    }
+    _CurrPhase = phase;
     SetSpecificStage(0);
   }
 
-  private void ExitHomeHubOnboarding() {
-    // Exit back into a normal view...
-    if (_DebugLayer != null) {
-      GameObject.Destroy(_DebugLayer);
-    }
-
-    HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
-    UpdateStage();
-  }
-
   public void GoToNextStage() {
-    SetSpecificStage(_CurrStage + 1);
+    SetSpecificStage(GetCurrStageInPhase(_CurrPhase) + 1);
   }
 
   public void SetSpecificStage(int nextStage) {
-
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
     }
@@ -83,24 +132,25 @@ public class OnboardingManager : MonoBehaviour {
       _DebugLayer = UIManager.CreateUIElement(_DebugLayerPrefab, DebugMenuManager.Instance.DebugOverlayCanvas.transform);
     }
 #endif
-    _CurrStage = nextStage;
-    DataPersistenceManager.Instance.Data.DefaultProfile.OnboardingHomeStage = _CurrStage;
-    if (_CurrStage >= 0 && _CurrStage < _HomeOnboardingStages.Length) {
-      _CurrStageInst = UIManager.CreateUIElement(_HomeOnboardingStages[_CurrStage], _OnboardingTransform);
-      UpdateStage(_HomeOnboardingStages[_CurrStage].ActiveTopBar,
-                   _HomeOnboardingStages[_CurrStage].ActiveMenuContent,
-                   _HomeOnboardingStages[_CurrStage].ActiveTabButtons,
-                   _HomeOnboardingStages[_CurrStage].ReactionsEnabled);
+    SetCurrStageInPhase(nextStage);
+    if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
+      OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
+
+      _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
+      UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveMenuContent,
+                  stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
     }
     else {
-      ExitHomeHubOnboarding();
+      // Officially done with this phase
+      if (_DebugLayer != null) {
+        GameObject.Destroy(_DebugLayer);
+      }
+      _CurrPhase = OnboardingPhases.None;
+      UpdateStage();
+      HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
     }
 
     DataPersistenceManager.Instance.Save();
-  }
-  public void GiveEnergy(int energy) {
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", energy);
-    _HomeView.EnergyDooberBurst(energy);
   }
 
   public HomeView GetHomeView() {
@@ -108,15 +158,18 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   #region DEBUG
+
+  public void GiveEnergy(string param) {
+    int energy = ChestRewardManager.Instance.GetNextRequirementPoints();
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", energy);
+  }
+
   public void DebugSkipOne() {
     OnboardingManager.Instance.SkipPressed();
   }
 
   public void DebugSkipAll() {
-    if (!UnlockablesManager.Instance.IsUnlocked(UnlockId.PickupCube)) {
-      UnlockablesManager.Instance.TrySetUnlocked(UnlockId.PickupCube, true);
-    }
-    OnboardingManager.Instance.SetSpecificStage(_HomeOnboardingStages.Length);
+    OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
   }
   private void SkipPressed() {
     if (_CurrStageInst != null) {

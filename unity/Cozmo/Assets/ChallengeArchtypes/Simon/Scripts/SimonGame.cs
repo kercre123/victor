@@ -64,7 +64,8 @@ namespace Simon {
 
     public enum SimonMode : int {
       VS = 0,
-      SOLO = 1}
+      SOLO = 1
+    }
 
     ;
 
@@ -94,7 +95,6 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
-      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     }
 
     protected override void OnDifficultySet(int difficulty) {

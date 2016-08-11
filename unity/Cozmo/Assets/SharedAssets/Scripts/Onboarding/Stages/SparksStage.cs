@@ -15,7 +15,8 @@ namespace Onboarding {
       BaseView.BaseViewClosed += HandleViewClosed;
     }
 
-    public void OnDestroy() {
+    public override void OnDestroy() {
+      base.OnDestroy();
       UnlockablesManager.Instance.OnSparkComplete -= HandleSparkComplete;
       UnlockablesManager.Instance.OnSparkStarted -= HandleSparkStarted;
       BaseView.BaseViewClosed -= HandleViewClosed;
@@ -41,6 +42,10 @@ namespace Onboarding {
       BaseView sparksView = FindObjectOfType<CoreUpgradeDetailsDialog>();
       if (sparksView != null) {
         sparksView.CloseView();
+      }
+      else {
+        // Handle case if hit before window is even open for spamming
+        base.SkipPressed();
       }
     }
 #endif

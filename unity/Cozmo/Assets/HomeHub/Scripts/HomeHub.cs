@@ -140,7 +140,7 @@ namespace Cozmo.HomeHub {
     public void StartFreeplay(IRobot robot) {
 
       if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
-          !OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
         robot.SetEnableFreeplayBehaviorChooser(true);
       }

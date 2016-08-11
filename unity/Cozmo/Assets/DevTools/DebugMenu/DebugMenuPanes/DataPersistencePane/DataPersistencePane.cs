@@ -69,6 +69,7 @@ namespace DataPersistence {
     private void HandleResetSaveDataButtonClicked() {
       // use reflection to change readonly field
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
+      DataPersistenceManager.Instance.StartNewSession();
       DataPersistenceManager.Instance.Save();
       TryReloadHomeHub();
     }

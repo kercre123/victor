@@ -43,16 +43,14 @@ namespace Onboarding {
       LightCube.OnMovedAction += HandleCubeMoved;
       RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
     }
-    private void OnDestroy() {
+    public override void OnDestroy() {
+      base.OnDestroy();
       LightCube.OnMovedAction -= HandleCubeMoved;
       RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
-      if (id == _SawCubeID) {
-        UpdateSubstate(SubState.ErrorCube);
-        _SawCubeID = -1;
-      }
+      // TODO: cubed move state needs a more specific warning.
     }
     protected void HandleRobotReactionaryBehavior(object messageObject) {
       ReactionaryBehaviorTransition behaviorTransition = messageObject as ReactionaryBehaviorTransition;
@@ -131,7 +129,7 @@ namespace Onboarding {
         IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
         if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
           LightCube block = CurrentRobot.LightCubes[_SawCubeID];
-          CurrentRobot.AlignWithObject(block, 50.0f, HandleBlockAlignComplete);
+          CurrentRobot.AlignWithObject(block, 20.0f, HandleBlockAlignComplete);
         }
         else {
           UpdateSubstate(SubState.WaitForReactToCube);

@@ -58,7 +58,6 @@ namespace Cozmo {
           CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
           CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
           CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
-          CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
         }
 
         protected override void SetupViewAfterCozmoReady(SharedMinigameView newView, ChallengeData data) {

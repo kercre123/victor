@@ -59,8 +59,6 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     protected void InitializeMinigameObjects(int numCubes) {
-
-      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       _StateMachine.SetNextState(new InitialCubesState(new CubePounceStateInitGame(), numCubes));
@@ -197,7 +195,7 @@ namespace Cozmo.Minigame.CubePounce {
     private IEnumerator CheckMovePenalty() {
       yield return new WaitForSeconds(GameConfig.FakeoutCubeMoveTime_s);
 
-      if (_CubeCurrentlyMoving) { 
+      if (_CubeCurrentlyMoving) {
         _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
       }
     }

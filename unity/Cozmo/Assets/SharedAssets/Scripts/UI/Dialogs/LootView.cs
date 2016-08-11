@@ -224,6 +224,10 @@ namespace Cozmo {
 
         GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
         _BannerInstance = banner.GetComponent<Banner>();
+
+        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
+          OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Loot);
+        }
       }
 
       private IEnumerator InitializeBox() {
@@ -337,7 +341,7 @@ namespace Cozmo {
       private void RewardLoot() {
         _BurstParticles.Emit(_OpenChestBurst);
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_LootReleasedSoundEvent);
-        if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
           UnleashTheDoobersForOnboarding();
         }
         else {
@@ -499,7 +503,7 @@ namespace Cozmo {
         _BurstParticles.Emit(_OpenChestBurst);
         TronLineBurst(_OpenChestBurst);
         _LootText.gameObject.SetActive(true);
-        if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
+        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
           _LootTextInstructions1.gameObject.SetActive(true);
           _LootTextInstructions2.gameObject.SetActive(true);
         }

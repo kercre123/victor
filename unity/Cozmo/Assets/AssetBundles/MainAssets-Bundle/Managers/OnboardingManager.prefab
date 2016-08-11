@@ -40,6 +40,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4887f77b48c344d53a94972a455cfb2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PhaseHomePrefabs:
+  - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
+  - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}
+  - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
+  - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
+  - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
+  - {fileID: 11442482, guid: f6c2e8426a4ec48fb9ad931e3b8605a2, type: 2}
+  - {fileID: 11481006, guid: 959fa8ad92264464a87d01febec5a53c, type: 2}
+  _PhaseLootPrefabs:
+  - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
+  _PhaseUpgradesPrefabs:
+  - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
   _HomeOnboardingStages:
   - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
   - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}

@@ -7,12 +7,11 @@ namespace Onboarding {
     public override void Start() {
       base.Start();
 
-      // Fills loot officially
-      OnboardingManager.Instance.GiveEnergy(ChestRewardManager.Instance.GetNextRequirementPoints());
       BaseView.BaseViewCloseAnimationFinished += HandleViewClosed;
     }
 
-    public void OnDestroy() {
+    public override void OnDestroy() {
+      base.OnDestroy();
       BaseView.BaseViewCloseAnimationFinished -= HandleViewClosed;
     }
 

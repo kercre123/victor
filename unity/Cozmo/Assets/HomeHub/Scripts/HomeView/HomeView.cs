@@ -236,9 +236,8 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemRemoved += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
 
-      if (OnboardingManager.Instance.IsOnboardingRequiredHome()) {
-        OnboardingManager.Instance.InitHomeHubOnboarding(this, _OnboardingTransform);
-      }
+      // Checks if any stages are required...
+      OnboardingManager.Instance.InitHomeHubOnboarding(this, _OnboardingTransform);
     }
 
     private IEnumerator BurstAfterInit() {
@@ -384,7 +383,7 @@ namespace Cozmo.HomeHub {
       _ChallengeStates = challengeStatesById;
     }
 
-    public void HandleCozmoTabButton() {
+    private void HandleCozmoTabButton() {
       // Do not allow changing tabs while receiving chests
       if (HomeViewCurrentlyOccupied) {
         return;

@@ -110,6 +110,9 @@ public class DailyGoalManager : MonoBehaviour {
         unlockedList.Add(_RequestMinigameConfig.RequestList[i]);
       }
     }
+    if (unlockedList.Count == 0) {
+      return null;
+    }
 
     RequestGameConfig config = unlockedList[UnityEngine.Random.Range(0, unlockedList.Count)];
 
@@ -159,7 +162,11 @@ public class DailyGoalManager : MonoBehaviour {
     }
     prog = Math.Abs(prog);
     prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, prog);
-    PickMiniGameToRequest();
+    ChallengeData data = PickMiniGameToRequest();
+    // no minigames are unlocked...
+    if (data == null) {
+      prog = 0;
+    }
     RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, prog);
   }
 

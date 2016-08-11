@@ -213,7 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79cdaed9c811d495aad4a12f7c659200, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 1
+  _ActiveTopBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
