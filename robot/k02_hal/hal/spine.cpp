@@ -18,8 +18,14 @@ namespace HAL {
   };
 
   struct QueueSlot {
-    uint8_t size;
-    uint8_t data[SPINE_MAX_CLAD_MSG_SIZE_UP - 1];
+    union {
+      uint8_t raw[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
+      struct {
+        uint8_t size;
+        uint8_t tag;
+        uint8_t payload[1];
+      };
+    };
 
     volatile QueueSlotState state;
   };
@@ -33,15 +39,15 @@ namespace HAL {
     
     while (queue[spine_read].state == QUEUE_READY) {
       QueueSlot* slot = &queue[spine_read];
+      int total_size = slot->size + 1;
 
-      if (slot->size + 1 > remaining) {
+      if (total_size > remaining) {
         break ;
       }
 
-      *(dest++) = slot->size;
-      memcpy(dest, slot->data, slot->size);
-      dest += slot->size;
-      remaining -= slot->size + 1;
+      memcpy(dest, slot->raw, total_size);
+      dest += total_size;
+      remaining -= total_size;
       
       slot->state = QUEUE_INACTIVE;
       spine_read = (spine_read+1) % QUEUE_DEPTH;
@@ -71,8 +77,8 @@ namespace HAL {
       QueueSlot* slot = &queue[spine_write];
       
       slot->size = length + 1;
-      slot->data[0] = tag;
-      memcpy(&slot->data[1], data, length);
+      slot->tag = tag;
+      memcpy(slot->payload, data, length);
       
       slot->state = QUEUE_READY;
       spine_write = (spine_write+1) % QUEUE_DEPTH;
