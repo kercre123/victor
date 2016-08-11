@@ -107,7 +107,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.Minigame.DroneMode.DroneModeCameraReticle:_ReticleLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11469892
 MonoBehaviour:
