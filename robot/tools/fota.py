@@ -6,7 +6,8 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time, hashlib, struct, argparse
 
-DEFAULT_FIRMWARE_IMAGE = os.path.join("build", "cozmo.safe")
+DEFAULT_FIRMWARE_IMAGES = (os.path.join("build", "cozmo.safe"),
+                           os.path.join("..", "EXTERNALS", "firmware", "build", "cozmo.safe"))
 
 parser = argparse.ArgumentParser(description="Upgrade firmware")
 parser.add_argument("-w", "--wait", type=float,
@@ -14,7 +15,6 @@ parser.add_argument("-w", "--wait", type=float,
                     help="increase delay between blocks")
 parser.add_argument("image", type=str,
                     nargs='?',
-                    default=DEFAULT_FIRMWARE_IMAGE,
                     help="image to load on robot")
 argv = parser.parse_args()
 
@@ -97,13 +97,22 @@ class OTAStreamer:
 
 # Script entry point
 if __name__ == '__main__':
-    fwi = DEFAULT_FIRMWARE_IMAGE
+    fwi = None
+    for img in DEFAULT_FIRMWARE_IMAGES:
+        if os.path.isfile(img):
+            fwi = img
+            break
+        
+    if argv.image:
+        if os.path.isfile(argv.image):
+            fwi = argv.image
+        else:
+            sys.exit("No such file as {0}".format(argv.image))
     
-    if os.path.isfile(argv.image):
-        fwi = argv.image
-    else:
-        sys.exit("No such file as {0}".format(argv.image))
+    if fwi is None:
+        sys.exit("Couldn't find OTA file to load")
     
+    print("Loading", fwi)
     robotInterface.Init(True, forkTransportThread = False)
     up = OTAStreamer(fwi)
     robotInterface.Connect(syncTime = None)
