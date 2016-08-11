@@ -100,9 +100,7 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   jint requestTimeout = (jint)kHttpRequestTimeOutMSec;
 
   jbyteArray jbodyArray = env->NewByteArray(bodySize);
-  uint8_t bodyArray[bodySize];
-  std::copy(request.body.begin(), request.body.end(), bodyArray);
-  env->SetByteArrayRegion(jbodyArray, 0, bodySize, (jbyte*)(bodyArray));
+  env->SetByteArrayRegion(jbodyArray, 0, bodySize, (const jbyte*)(request.body.data()));
 
   jstring destinationPath = env->NewStringUTF(request.destinationPath.c_str());
 
