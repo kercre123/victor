@@ -254,14 +254,15 @@ public abstract class GameBase : MonoBehaviour {
     }
     else {
       SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
-      if (!videoPlayedAlready) {
-        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
-        DataPersistence.DataPersistenceManager.Instance.Save();
-      }
     }
   }
 
   private void FinishedInstructionalVideo() {
+    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+    if (!videoPlayedAlready) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
+      DataPersistence.DataPersistenceManager.Instance.Save();
+    }
     InitializeGame(_ChallengeData.MinigameConfig);
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }
