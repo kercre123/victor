@@ -32,6 +32,7 @@ protected:
   BehaviorKnockOverCubes(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;
+  virtual Result ResumeInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;  

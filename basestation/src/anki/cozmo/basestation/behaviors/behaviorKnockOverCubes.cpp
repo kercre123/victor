@@ -92,6 +92,16 @@ Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
   
+Result BehaviorKnockOverCubes::ResumeInternal(Robot& robot)
+{
+  if(IsRunnableInternal(robot)){
+    TransitionToDrivingToReadyPose(robot);
+    return Result::RESULT_OK;
+  }
+  return Result::RESULT_FAIL;
+}
+
+  
 void BehaviorKnockOverCubes::StopInternal(Robot& robot)
 {
   if(_state == State::KnockingOverStack){
@@ -211,7 +221,11 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
 
   StartActing(new DriveAndFlipBlockAction(robot, _baseBlockID)
-              , &BehaviorKnockOverCubes::TransitionToPlayingReaction);
+              , [this, &robot](const ActionResult& result){
+                if(result == ActionResult::SUCCESS){
+                  TransitionToPlayingReaction(robot);
+                }
+              });
 }
   
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)

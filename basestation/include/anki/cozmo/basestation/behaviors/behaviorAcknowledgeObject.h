@@ -66,8 +66,6 @@ private:
   // NOTE: this may get called twice (once from ShouldConsiderObservedObjectHelper and once from AlwaysHandleInternal)
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   
-  void HandleObjectMarkedUnknown(const Robot& robot, ObjectID objectID);
-
   void BeginIteration(Robot& robot);
   void LookUpForStackedCube(Robot& robot);
   void FinishIteration(Robot& robot);

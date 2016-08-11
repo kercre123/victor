@@ -47,10 +47,6 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
   // give the ghost object and ID so we can visualize it
   _ghostStackedObject->SetVizManager(robot.GetContext()->GetVizManager());
   
-  SubscribeToTags({
-    EngineToGameTag::RobotMarkedObjectPoseUnknown,
-  });
-
   SubscribeToTriggerTags({
     EngineToGameTag::RobotObservedObject,
   });
@@ -227,10 +223,6 @@ void BehaviorAcknowledgeObject::AlwaysHandleInternal(const EngineToGameEvent& ev
       break;
     }
 
-    case EngineToGameTag::RobotMarkedObjectPoseUnknown:
-      HandleObjectMarkedUnknown(robot, event.GetData().Get_RobotMarkedObjectPoseUnknown().objectID);
-      break;
-
     default:
       PRINT_NAMED_ERROR("BehaviorAcknowledgeObject.HandleWhileNotRunning.InvalidTag",
                         "Received event with unhandled tag %hhu.",
@@ -298,17 +290,6 @@ bool BehaviorAcknowledgeObject::ShouldRunForEvent(const ExternalInterface::Messa
   return HasDesiredReactionTargets(robot);
 } // ShouldRunForEvent()
 
-  
-void BehaviorAcknowledgeObject::HandleObjectMarkedUnknown(const Robot& robot, ObjectID objectID)
-{
-  const bool objectRemoved = RemoveReactionData(objectID);
-  if(objectRemoved)
-  {
-    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.HandleObjectMarkedUnknown",
-                      "Removing Object %d from reacted set because it was marked unknown",
-                      objectID.GetValue());
-  }
-} // HandleObjectMarkedUnknown()
 
 } // namespace Cozmo
 } // namespace Anki
