@@ -14,6 +14,7 @@ public class DebugProfile {
   public bool RunPressDemo;
   public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
   public bool NoFreeplayOnStart;
+  public bool SkipFirmwareAutoUpdate;
 
   public DebugProfile() {
     SOSLoggerEnabled = false;
@@ -22,8 +23,10 @@ public class DebugProfile {
     RunPressDemo = false;
     FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
     NoFreeplayOnStart = false;
+    SkipFirmwareAutoUpdate = false;
 
     DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
+    DebugConsoleData.Instance.AddConsoleVar("SkipFirmwareAutoUpdate", "Firmware", this);
     DebugConsoleData.Instance.DebugConsoleVarUpdated += HandleDebugConsoleVarUpdated;
   }
 
@@ -33,6 +36,10 @@ public class DebugProfile {
       if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(!NoFreeplayOnStart);
       }
+    }
+
+    if (varName == "SkipFirmwareAutoUpdate") {
+      DataPersistence.DataPersistenceManager.Instance.Save();
     }
   }
 }

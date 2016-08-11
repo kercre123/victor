@@ -387,10 +387,7 @@ public class ConnectionFlow : MonoBehaviour {
   private void HandleRobotConnectResponse(RobotConnectionResult response) {
     switch (response) {
     case RobotConnectionResult.Success:
-      if (_ConnectingToCozmoScreenInstance != null) {
-        // progress from the connection screen to the next part of the flow
-        _ConnectingToCozmoScreenInstance.ConnectionComplete();
-      }
+      RobotConnectResponseSuccess();
       break;
     case RobotConnectionResult.ConnectionFailure:
       if (_ConnectingToCozmoScreenInstance != null) {
@@ -399,10 +396,20 @@ public class ConnectionFlow : MonoBehaviour {
       ReturnToSearch();
       break;
     case RobotConnectionResult.OutdatedApp:
-      UpdateAppScreen();
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SkipFirmwareAutoUpdate) {
+        RobotConnectResponseSuccess();
+      }
+      else {
+        UpdateAppScreen();
+      }
       break;
     case RobotConnectionResult.OutdatedFirmware:
-      UpdateFirmware();
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SkipFirmwareAutoUpdate) {
+        RobotConnectResponseSuccess();
+      }
+      else {
+        UpdateFirmware();
+      }
       break;
     case RobotConnectionResult.NeedsPin:
       GameObject.Destroy(_ConnectingToCozmoScreenInstance);
@@ -415,6 +422,13 @@ public class ConnectionFlow : MonoBehaviour {
     case RobotConnectionResult.PinMaxAttemptsReached:
       ReplaceCozmoOnCharger();
       break;
+    }
+  }
+
+  private void RobotConnectResponseSuccess() {
+    if (_ConnectingToCozmoScreenInstance != null) {
+      // progress from the connection screen to the next part of the flow
+      _ConnectingToCozmoScreenInstance.ConnectionComplete();
     }
   }
 
