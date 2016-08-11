@@ -24,8 +24,7 @@ void GameMessagePort::PushToGameMessage(const uint8_t* buffer, size_t size)
 {
   // add to end of buffer, if room
   if (_toGameSize + size > ExternalInterface::kDirectCommsBufferSize) {
-    PRINT_NAMED_ERROR("GameMessagePort.PushToGameMessage", "send buffer is full!!");
-    assert(false);
+    ASSERT_NAMED(false, "GameMessagePort.PushToGameMessage.send_buffer_full");
     return;
   }
 
@@ -41,8 +40,7 @@ size_t GameMessagePort::PullToGameMessages(uint8_t* buffer, size_t bufferSize)
   // deal with catastrophes
   ASSERT_NAMED(bufferSize == ExternalInterface::kDirectCommsBufferSize, "GameMessagePort.MismatchedOutboundBuffer");
   if (_toGameSize > bufferSize) {
-    PRINT_NAMED_ERROR("GameMessagePort.PullToGameMessages", "outbound buffer is too large to send!");
-    assert(false);
+    ASSERT_NAMED(false, "GameMessagePort.PullToGameMessages.buffer_too_large_to_send");
     _toGameSize = 0;
     return 0;
   }
