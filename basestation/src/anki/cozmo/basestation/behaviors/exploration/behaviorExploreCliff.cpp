@@ -205,8 +205,8 @@ void BehaviorExploreCliff::PickGoals(Robot& robot, BorderScoreVector& outGoals) 
     for ( const auto& border : borders )
     {
       // grab extra info from the border
-      INavMemoryMapQuadData* extraInfoPtr = border.extraData.get();
-      NavMemoryMapQuadData_Cliff* extraInfo = INavMemoryMapQuadDataCast<NavMemoryMapQuadData_Cliff>( extraInfoPtr );
+      const INavMemoryMapQuadData* extraInfoPtr = border.extraData.get();
+      const NavMemoryMapQuadData_Cliff* extraInfo = INavMemoryMapQuadDataCast<const NavMemoryMapQuadData_Cliff>( extraInfoPtr );
       ASSERT_NAMED(nullptr!=extraInfo, "BehaviorExploreCliff.PickGoals.CliffBorderWithoutExtraInfo");
       if ( nullptr == extraInfo  ) {
         // in shipping, ignore this border if it ever happened
@@ -272,8 +272,8 @@ void BehaviorExploreCliff::GenerateVantagePoints(Robot& robot, const BorderScore
     const Vec3f& kUpVector = Z_AXIS_3D();
     
     // grab extra info from the border
-    INavMemoryMapQuadData* extraInfoPtr = goal.borderInfo.extraData.get();
-    NavMemoryMapQuadData_Cliff* extraInfo = INavMemoryMapQuadDataCast<NavMemoryMapQuadData_Cliff>( extraInfoPtr );
+    const INavMemoryMapQuadData* extraInfoPtr = goal.borderInfo.extraData.get();
+    const NavMemoryMapQuadData_Cliff* extraInfo = INavMemoryMapQuadDataCast<const NavMemoryMapQuadData_Cliff>( extraInfoPtr );
     ASSERT_NAMED(nullptr!=extraInfo, "BehaviorExploreCliff.GenerateVantagePoints.CliffBorderWithoutExtraInfo");
     
     // use directionality from the extra info to point in the same direction

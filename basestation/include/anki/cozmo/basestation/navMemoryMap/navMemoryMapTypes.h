@@ -48,7 +48,7 @@ bool ExpectsAdditionalData(EContentType type);
 // struct that defines a border
 struct Border
 {
-  using DataType = std::shared_ptr<INavMemoryMapQuadData>;
+  using DataType = std::shared_ptr<const INavMemoryMapQuadData>;
   Border() : from{}, to{}, normal{}, extraData(nullptr) {}
   Border(const Point3f& f, const Point3f& t, const Vec3f& n, const DataType& data) : from(f), to(t), normal(n), extraData(data) {}
   // -- attributes

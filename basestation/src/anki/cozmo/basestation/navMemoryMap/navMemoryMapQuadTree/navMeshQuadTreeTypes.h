@@ -57,7 +57,7 @@ struct NodeContent {
   bool operator!=(const NodeContent& other) const;
   
   ENodeContentType type;
-  std::shared_ptr<INavMemoryMapQuadData> data;
+  std::shared_ptr<const INavMemoryMapQuadData> data;
 };
 
 // position with respect to the parent
