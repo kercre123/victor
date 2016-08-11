@@ -10,10 +10,11 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "drivingAnimationHandler.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -25,13 +26,20 @@ namespace Anki {
     
     DrivingAnimationHandler::DrivingAnimationHandler(Robot& robot)
     : _robot(robot)
-    , kDefaultDrivingAnimations({AnimationTrigger::DriveStartDefault, AnimationTrigger::DriveLoopDefault, AnimationTrigger::DriveEndDefault})
+    , kDefaultDrivingAnimations({AnimationTrigger::DriveStartDefault,
+                                 AnimationTrigger::DriveLoopDefault,
+                                 AnimationTrigger::DriveEndDefault})
+    , kAngryDrivingAnimations({AnimationTrigger::DriveStartAngry,
+                               AnimationTrigger::DriveLoopAngry,
+                               AnimationTrigger::DriveEndAngry})
     {
-      PushDrivingAnimations(kDefaultDrivingAnimations);
+
+      _currDrivingAnimations = kDefaultDrivingAnimations;
       
       if(_robot.HasExternalInterface())
       {
-        _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
+        _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(
+                                   ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
         [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
         {
           ASSERT_NAMED(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
@@ -39,14 +47,16 @@ namespace Anki {
           HandleActionCompleted(event.GetData().Get_RobotCompletedAction());
         } ));
         
-        _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::PushDrivingAnimations,
+        _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(
+                                   ExternalInterface::MessageGameToEngineTag::PushDrivingAnimations,
         [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
         {
           auto const& payload = event.GetData().Get_PushDrivingAnimations();
           PushDrivingAnimations({payload.drivingStartAnim, payload.drivingLoopAnim, payload.drivingEndAnim});
         }));
         
-        _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::PopDrivingAnimations,
+        _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(
+                                   ExternalInterface::MessageGameToEngineTag::PopDrivingAnimations,
         [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
         {
           PopDrivingAnimations();
@@ -81,26 +91,35 @@ namespace Anki {
       {
         _drivingAnimationStack.pop_back();
       }
-      
-      if(_drivingAnimationStack.empty())
-      {
-        PRINT_NAMED_INFO("DrivingAnimationHandler.PopDrivingAnimations", "Pushing default driving animations");
-        PushDrivingAnimations(kDefaultDrivingAnimations);
-      }
     }
 
     void DrivingAnimationHandler::ClearAllDrivingAnimations()
     {
       _drivingAnimationStack.clear();
-      PushDrivingAnimations(kDefaultDrivingAnimations);
     }
-    
+
+    void DrivingAnimationHandler::UpdateCurrDrivingAnimations()
+    {
+      if( _drivingAnimationStack.empty() ) {
+        // use mood to determine which anims to play
+        if( _robot.GetMoodManager().GetSimpleMood() == SimpleMoodType::Sad ) {
+          _currDrivingAnimations = kAngryDrivingAnimations;
+        }
+        else {
+          _currDrivingAnimations = kDefaultDrivingAnimations;
+        }
+      }
+      else {
+        _currDrivingAnimations = _drivingAnimationStack.back();
+      }
+    }
+
     void DrivingAnimationHandler::HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg)
     {
       // Only start playing drivingLoop if start successfully completes
       if(msg.idTag == _drivingStartAnimTag && msg.result == ActionResult::SUCCESS)
       {
-        if(_drivingAnimationStack.back().drivingLoopAnim != AnimationTrigger::Count)
+        if(_currDrivingAnimations.drivingLoopAnim != AnimationTrigger::Count)
         {
           PlayDrivingLoopAnim();
         }
@@ -152,7 +171,9 @@ namespace Anki {
       {
         return;
       }
-      
+
+      UpdateCurrDrivingAnimations();
+        
       _endAnimCompleted = false;
       _endAnimStarted = false;
       _drivingStartAnimTag = ActionConstants::INVALID_TAG;
@@ -160,12 +181,12 @@ namespace Anki {
       _drivingEndAnimTag = ActionConstants::INVALID_TAG;
       _tracksToUnlock = tracksToUnlock;
       
-      if(_drivingAnimationStack.back().drivingLoopAnim != AnimationTrigger::Count)
+      if(_currDrivingAnimations.drivingLoopAnim != AnimationTrigger::Count)
       {
         PlayDrivingStartAnim();
         _startedPlayingAnimation = true;
       }
-      else if(_drivingAnimationStack.back().drivingLoopAnim != AnimationTrigger::Count)
+      else if(_currDrivingAnimations.drivingLoopAnim != AnimationTrigger::Count)
       {
         PlayDrivingLoopAnim();
         _startedPlayingAnimation = true;
@@ -181,7 +202,7 @@ namespace Anki {
       _robot.GetActionList().Cancel(_drivingStartAnimTag);
       _robot.GetActionList().Cancel(_drivingLoopAnimTag);
       
-      if(_drivingAnimationStack.back().drivingEndAnim != AnimationTrigger::Count && !_endAnimStarted && !_endAnimCompleted)
+      if(_currDrivingAnimations.drivingEndAnim != AnimationTrigger::Count && !_endAnimStarted && !_endAnimCompleted)
       {
         // Unlock our tracks so that endAnim can use them
         // This should be safe since we have finished driving
@@ -195,21 +216,21 @@ namespace Anki {
   
     void DrivingAnimationHandler::PlayDrivingStartAnim()
     {
-      IActionRunner* animAction = new TriggerAnimationAction(_robot, _drivingAnimationStack.back().drivingStartAnim, 1, true);
+      IActionRunner* animAction = new TriggerAnimationAction(_robot, _currDrivingAnimations.drivingStartAnim, 1, true);
       _drivingStartAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
     
     void DrivingAnimationHandler::PlayDrivingLoopAnim()
     {
-      IActionRunner* animAction = new TriggerAnimationAction(_robot, _drivingAnimationStack.back().drivingLoopAnim, 1, true);
+      IActionRunner* animAction = new TriggerAnimationAction(_robot, _currDrivingAnimations.drivingLoopAnim, 1, true);
       _drivingLoopAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
     
     void DrivingAnimationHandler::PlayDrivingEndAnim()
     {
-      IActionRunner* animAction = new TriggerAnimationAction(_robot, _drivingAnimationStack.back().drivingEndAnim, 1, true);
+      IActionRunner* animAction = new TriggerAnimationAction(_robot, _currDrivingAnimations.drivingEndAnim, 1, true);
       _drivingEndAnimTag = animAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
