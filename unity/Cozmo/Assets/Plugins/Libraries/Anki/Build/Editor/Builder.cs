@@ -526,6 +526,8 @@ namespace Anki {
         int substringIndex = resourcesDirectory.Length + 1;
         List<string> all = new List<string>();
 
+        AddFilesToResourcesManifestList(resourcesDirectory, substringIndex, all);
+
         string[] directories = Directory.GetDirectories(resourcesDirectory, "*", SearchOption.AllDirectories);
         foreach (string d in directories) {
           // Only add the folder if it is not in the list of exclussions
@@ -536,20 +538,23 @@ namespace Anki {
             all.Add(d.Substring(substringIndex));
 
             // Now add a line for every valid file in the folder
-            string[] files = Directory.GetFiles(d, "*", SearchOption.TopDirectoryOnly);
-            foreach (string f in files) {
-              // Only add the file if it is not in the list of exclussions
-              if (string.IsNullOrEmpty(Array.Find(_kFileExclusions, (string exclusion) => {
-                return f.Contains(exclusion);
-              }))) {
-                all.Add(f.Substring(substringIndex));
-              }
-            }
+            AddFilesToResourcesManifestList(d, substringIndex, all);
           }
         }
 
         File.WriteAllLines(resourcesDirectory + "/resources.txt", all.ToArray());
+      }
 
+      private static void AddFilesToResourcesManifestList(string directory, int substringIndex, List<string> fileList) {
+        string[] files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
+        foreach (string f in files) {
+          // Only add the file if it is not in the list of exclussions
+          if (string.IsNullOrEmpty(Array.Find(_kFileExclusions, (string exclusion) => {
+            return f.Contains(exclusion);
+          }))) {
+            fileList.Add(f.Substring(substringIndex));
+          }
+        }
       }
 
       // Returns all the enabled scenes from the editor settings
