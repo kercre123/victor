@@ -204,6 +204,12 @@ namespace Anki {
           File.Delete(tf);
         }
 
+        // Delete compressed PNG files that we don't need
+        string[] faceTarFiles = Directory.GetFiles(assetFolder + "/assets/faceAnimations", "*.tar", SearchOption.AllDirectories);
+        foreach (string ftf in faceTarFiles) {
+          File.Delete(ftf);
+        }
+
         // Copy audio banks from a specific folder depending on the platform
         string soundFolder;
         bool includeHashFile = false;

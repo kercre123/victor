@@ -138,11 +138,15 @@ class CopyResources(object):
       self.log.error("error copying {0} to {1}".format (self.options.externalAssetsPath, assetsPath))
       return False
 
-    #remove .svn
+    # remove .svn
     ankibuild.util.File.rm_rf(os.path.join(assetsPath, '.svn'))
 
-    #remove tar files
+    # remove tar files
     for root, dirs, files in os.walk(os.path.join(assetsPath, 'animations')):
+      for file in files:
+        if file.endswith(".tar"):
+          ankibuild.util.File.rm(os.path.join(root, file))
+    for root, dirs, files in os.walk(os.path.join(assetsPath, 'faceAnimations')):
       for file in files:
         if file.endswith(".tar"):
           ankibuild.util.File.rm(os.path.join(root, file))
@@ -170,7 +174,6 @@ class CopyResources(object):
     if not ankibuild.util.File.cptree(self.options.rewardedActionsPath, rewardedActionsPath):
       self.log.error("error copying {0} to {1}".format (self.options.rewardedActionsPath, rewardedActionsPath))
       return False
-
 
     # engine resources
     engineResourcesPath = os.path.join(cozmoResourcesPath, 'config')

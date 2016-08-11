@@ -13,7 +13,7 @@ import json
 import errno
 
 ASSET_REPO = 'cozmo-assets'
-ASSET_REPO_SUBDIRS = ['animations', 'animationGroups']
+ASSET_REPO_SUBDIRS = ['animations', 'animationGroups', 'faceAnimations']
 ASSET_DIR = 'lib/anki/products-cozmo-assets'
 BACKUP_DIR = '/tmp/anim_assets_backup'
 

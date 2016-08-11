@@ -6,11 +6,13 @@
             "cozmo-assets": {
                 "allow_extra_files": "True",
                 "extract_types_from_tar": [
-                    ".json"
+                    ".json",
+                    ".png"
                 ],
                 "subdirs": [
                     "animations",
-                    "animationGroups"
+                    "animationGroups",
+                    "faceAnimations"
                 ],
                 "version": "903"
             },

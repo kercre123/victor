@@ -490,6 +490,19 @@
                 ],
             },
             {
+                'action_name': 'create_symlink_resources_faceAnimations',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<(externals_path)/cozmo-assets/faceAnimations',
+                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/faceAnimations',
+                ],
+            },
+            {
                 'action_name': 'create_symlink_resources_behaviors',
                 'inputs': [],
                 'outputs': [],

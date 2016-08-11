@@ -19,6 +19,13 @@ SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trus
 RELATIVE_DEPS_FILE = "../../DEPS"
 RELATIVE_EXTERNALS_DIR = "../../EXTERNALS"
 
+# Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
+# "animations" directory, but facial animation tar files (packages of PNG files) should be unpacked
+# in a subdirectory of the root "faceAnimations" directory. The following list indicates the groups
+# of tar files that should be unpacked in a subdirectory, which is named after the tar file.
+# TODO: Put this info (unpack files in root directory or subdirectory) somewhere in the DEPS file.
+UNPACK_INTO_SUBDIR = ["faceAnimations"]
+
 
 def is_tool(name):
     """
@@ -55,14 +62,14 @@ def is_up(url_string):
         return False
 
 
-def _extract_files_from_tar(extract_dir, file_types):
+def _extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   for (dir_path, dir_names, file_names) in os.walk(extract_dir):
     all_files = map(lambda x: os.path.join(dir_path, x), file_names)
     tar_files = [a_file for a_file in all_files if a_file.endswith('.tar')]
     for tar_file in tar_files:
-      unpack_tarball(tar_file, file_types)
-      # TODO: Should we remove the tar file after unpacking it?
-      #os.remove(tar_file)
+      unpack_tarball(tar_file, file_types, put_in_subdir)
+      # No need to remove the tar file here after unpacking it - all tar files are
+      # deleted from cozmo_resources/assets/ on the device by Builder.cs
 
 
 def _get_specific_members(members, file_types):
@@ -82,13 +89,16 @@ def insert_source_rev_data_into_json(tar_file, tar_file_rev, json_file):
     file_obj.write("%s%s" % (json.dumps(metadata), os.linesep))
 
 
-def unpack_tarball(tar_file, file_types=[], add_metadata=False):
+def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=False):
 
   # TODO: Set 'add_metadata' to True when we are ready to start inserting
   # metadata into the JSON files to indicate which .tar file and version
   # the data came from.
 
   dest_dir = os.path.dirname(tar_file)
+  if put_in_subdir:
+      subdir = os.path.splitext(os.path.basename(tar_file))[0]
+      dest_dir = os.path.join(dest_dir, subdir)
   try:
     tar = tarfile.open(tar_file)
   except tarfile.ReadError, e:
@@ -233,7 +243,8 @@ def svn_package(svn_dict):
 
             if extract_types:
                 for subdir in subdirs:
-                    _extract_files_from_tar(subdir, extract_types)
+                    put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
+                    _extract_files_from_tar(subdir, extract_types, put_in_subdir)
 
         else:
             print "{0} does not need to be updated.  Current {1} revision at {2} ".format(repo, tool, l_rev)

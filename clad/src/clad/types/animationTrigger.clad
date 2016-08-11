@@ -225,6 +225,7 @@ enum int_32 AnimationTrigger
   StartSleeping,
   SuccessfulWheelie,
   Surprise,
+  TestFacialPng,
   TurtleRoll,
 
   Count, // Keep count at end.
