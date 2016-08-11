@@ -25,6 +25,14 @@ public class ConsoleDasTarget : IDASTarget {
     Console.WriteLine("[Debug][" + eventName + "] " + eventValue);
   }
 
+  public void Ch_Info(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+    Console.WriteLine ("[Ch_Info][" + channelName +"][" + eventName + "] " + eventValue);
+  }
+
+  public void Ch_Debug(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+    Console.WriteLine ("[Ch_Debug][" + channelName + "][" + eventName + "] " + eventValue);
+  }
+
   public void SetGlobal(string key, string value) {
     Console.WriteLine("[SetGlobal][" + key + "] " + value);
   }

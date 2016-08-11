@@ -51,6 +51,10 @@ extern "C" {
   
   void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
   
+  void Unity_DAS_Ch_LogI(const char* channelName, const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
+  
+  void Unity_DAS_Ch_LogD(const char* channelName, const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
+  
   void Unity_DAS_SetGlobal(const char* key, const char* value);
 
 #ifndef _cplusplus

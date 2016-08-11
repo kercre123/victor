@@ -100,6 +100,24 @@ void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** 
   Anki::Util::sChanneledDebugF("Unity", eventName, keyValues, "%s", eventValue);
 }
 
+void Unity_DAS_Ch_LogI(const char* channelName, const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount)
+{
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sChanneledInfoF(channelName, eventName, keyValues, "%s", eventValue);
+}
+
+void Unity_DAS_Ch_LogD(const char* channelName, const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount)
+{
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
+  }
+  Anki::Util::sChanneledDebugF(channelName, eventName, keyValues, "%s", eventValue);
+}
+
 void Unity_DAS_SetGlobal(const char* key, const char* value)
 {
   Anki::Util::sSetGlobal(key,value);

@@ -15,6 +15,10 @@ public interface IDAS {
 
   void Debug(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
 
+  void Ch_Info(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+
+  void Ch_Debug(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+
   void SetGlobal(string key, string value);
 }
 
@@ -82,6 +86,20 @@ public static partial class DAS {
     }
   }
 
+  public static void Ch_Info(string channelName, object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+    string eventName = GetEventName (eventObject);
+    for (int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Ch_Info(channelName, eventName, eventValue, context, keyValues);
+    }
+  }
+
+  public static void Ch_Debug(string channelName, object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+    string eventName = GetEventName (eventObject);
+    for (int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Ch_Debug(channelName, eventName, eventValue, context, keyValues);
+    }
+  }
+
   public static void SetGlobal(string key, string value) {
     for (int i = 0, len = _Targets.Count; i < len; i++) {
       _Targets[i].SetGlobal(key, value);
@@ -140,6 +158,14 @@ public static partial class DAS {
 
     public void Debug(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
       DAS.Debug(_EventName, eventValue, context, keyValues);            
+    }
+
+    public void Ch_Info(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
+      DAS.Ch_Info(channelName, _EventName, eventValue, context, keyValues);
+    }
+    
+    public void Ch_Debug(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
+      DAS.Ch_Debug(channelName, _EventName, eventValue, context, keyValues);
     }
 
     public void SetGlobal(string key, string value) {
