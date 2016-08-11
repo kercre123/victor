@@ -74,7 +74,9 @@ namespace Cozmo.Minigame.CubePounce {
       }
       LightCube.OnMovedAction -= HandleCubeMoved;
       LightCube.OnStoppedAction -= HandleCubeStopped;
-      StopCoroutine(_CheckMovePenaltyCoroutine);
+      if (null != _CheckMovePenaltyCoroutine) {
+        StopCoroutine(_CheckMovePenaltyCoroutine);
+      }
     }
 
     public LightCube GetCubeTarget() {

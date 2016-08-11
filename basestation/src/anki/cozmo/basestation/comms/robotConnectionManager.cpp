@@ -196,7 +196,11 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   _currentConnectionData->Clear();
   
   // This robot is gone.
-  _robotManager->RemoveRobot(_robotManager->GetFirstRobot()->GetID());
+  Robot* robot =  _robotManager->GetFirstRobot();
+  if (nullptr != robot)
+  {
+    _robotManager->RemoveRobot(robot->GetID());
+  }
 }
 
 void RobotConnectionManager::HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage)

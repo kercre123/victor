@@ -90,6 +90,9 @@ message FeatureToggles {
   FeatureToggle features[uint_16]
 }
 
+message GoingToSleep {
+}
+
 
 /*
 message Bogus {

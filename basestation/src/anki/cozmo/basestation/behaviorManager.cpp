@@ -144,13 +144,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                             ExternalInterface::MessageGameToEngineTag::EnableReactionaryBehaviors,
                           [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                           {
-                            _reactionsEnabled = event.GetData().Get_EnableReactionaryBehaviors().enabled;
-                            PRINT_NAMED_INFO("EnableReactionaryBehaviors", (_reactionsEnabled ? "Enabled" : "Disabled"));
-                            if(!_reactionsEnabled && _runningReactionaryBehavior)
-                            {
-                              PRINT_NAMED_INFO("EnableReactionaryBehaviors", "Disabling reactionary behaviors stopping currently running one");
-                              SwitchToBehavior(nullptr);
-                            }
+                            SetReactionaryBehaviorsEnabled(event.GetData().Get_EnableReactionaryBehaviors().enabled, true);
                           }));
     _eventHandlers.push_back(externalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
@@ -625,6 +619,19 @@ void BehaviorManager::SetActiveSpark(UnlockId spark)
   }
   
   _activeSpark = spark;
+}
+  
+void BehaviorManager::SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent)
+{
+  _reactionsEnabled = isEnabled;
+  PRINT_CH_INFO("Behaviors", "BehaviorManager.SetReactionaryBehaviorsEnabled", (_reactionsEnabled ? "Enabled" : "Disabled"));
+  
+  if(stopCurrent && !_reactionsEnabled && _runningReactionaryBehavior)
+  {
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.SetReactionaryBehaviorsEnabled", "Disabling reactionary behaviors stopping currently running one");
+    SwitchToBehavior(nullptr);
+  }
+  
 }
   
 } // namespace Cozmo

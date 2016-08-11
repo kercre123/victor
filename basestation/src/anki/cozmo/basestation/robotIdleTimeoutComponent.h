@@ -20,6 +20,7 @@ namespace Anki {
 namespace Cozmo {
   
 class Robot;
+class IActionRunner;
 
 class RobotIdleTimeoutComponent : protected Util::SignalHolder
 {
@@ -31,6 +32,8 @@ public:
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
+  
+  static IActionRunner* CreateGoToSleepAnimSequence(Robot& robot);
   
 private:
   Robot& _robot;

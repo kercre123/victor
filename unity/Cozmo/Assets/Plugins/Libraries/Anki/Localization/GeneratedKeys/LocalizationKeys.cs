@@ -62,6 +62,8 @@ public static class LocalizationKeys {
   public const string kConnectivityEnterDOB = "connectivity.enterDOB";
   public const string kConnectivityEnterName = "connectivity.enterName";
   public const string kConnectivityPairingDesc = "connectivity.pairingDesc";
+  public const string kConnectivityCozmoSleepTitle = "connectivity.cozmoSleepTitle";
+  public const string kConnectivityCozmoSleepDesc = "connectivity.cozmoSleepDesc";
 
   #endregion
 

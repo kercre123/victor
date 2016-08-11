@@ -41,11 +41,7 @@ void RobotIdleTimeoutComponent::Update(double currentTime_s)
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {
     _faceOffTimeout_s = -1.0f;
-    CompoundActionSequential* goToSleepAnims = new CompoundActionSequential(_robot);
-    goToSleepAnims->AddAction(new TriggerAnimationAction(_robot, AnimationTrigger::GoToSleepGetIn));
-    goToSleepAnims->AddAction(new TriggerAnimationAction(_robot, AnimationTrigger::GoToSleepSleeping));
-    goToSleepAnims->AddAction(new TriggerAnimationAction(_robot, AnimationTrigger::GoToSleepOff));
-    _robot.GetActionList().QueueActionNow(goToSleepAnims);
+    _robot.GetActionList().QueueActionNow(CreateGoToSleepAnimSequence(_robot));
   }
   
   // If it's time to disconnect
@@ -76,6 +72,15 @@ void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::CancelIdl
 {
   _faceOffTimeout_s = -1;
   _disconnectTimeout_s = -1;
+}
+  
+IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(Robot& robot)
+{
+  CompoundActionSequential* goToSleepAnims = new CompoundActionSequential(robot);
+  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepGetIn));
+  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepSleeping));
+  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepOff));
+  return goToSleepAnims;
 }
 
 } // end namespace Cozmo

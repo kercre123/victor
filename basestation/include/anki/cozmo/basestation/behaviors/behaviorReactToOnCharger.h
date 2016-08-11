@@ -30,8 +30,6 @@ public:
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
   virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return false; }
-  virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) override;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
 protected:
   
@@ -42,7 +40,6 @@ protected:
   
 private:
   
-  bool _shouldStopBehavior = false;
   bool _isOnCharger = false;
 }; // class BehaviorReactToOnCharger
   

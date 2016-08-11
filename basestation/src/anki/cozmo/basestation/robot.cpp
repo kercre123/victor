@@ -291,20 +291,22 @@ void Robot::SetOnCharger(bool onCharger)
 {
   ObservableObject* object = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
   Charger* charger = dynamic_cast<Charger*>(object);
-  if (onCharger && !_isOnCharger) {
-        
-  // If we don't actually have a charger, add an unconnected one now
-  if (nullptr == charger)
+  if (onCharger && !_isOnCharger)
   {
-    ObjectID newObj = AddUnconnectedCharger();
-    charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
-    ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
+    // If we don't actually have a charger, add an unconnected one now
+    if (nullptr == charger)
+    {
+      ObjectID newObj = AddUnconnectedCharger();
+      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
+      ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
+    }
+          
+    PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
+    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
+        
   }
-        
-  PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
-  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
-        
-  } else if (!onCharger && _isOnCharger) {
+  else if (!onCharger && _isOnCharger)
+  {
     PRINT_NAMED_INFO("Robot.SetOnCharger.OffCharger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }

@@ -11,10 +11,12 @@
  **/
 
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -31,15 +33,8 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
     EngineToGameTag::ChargerEvent,
   });
   
-  SubscribeToTags({
-    GameToEngineTag::ContinueFreeplayFromIdle,
-  });
-  SubscribeToTags({
-    EngineToGameTag::RobotPickedUp,
-  });
-  
 }
-// It's pretty easy for him to get nudged off and back on the charger, so make sure he has left the platform at least once
+  
 bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot) const
 {
   return _isOnCharger;
@@ -47,14 +42,16 @@ bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot)
 
 Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
 {
-  _shouldStopBehavior = false;
+  robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(false);
+  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
+  
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PlacedOnCharger),&BehaviorReactToOnCharger::TransitionToIdleLoop);
   return Result::RESULT_OK;
 }
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 {
-  if( _isOnCharger && !_shouldStopBehavior )
+  if( _isOnCharger )
   {
     return Status::Running;
   }
@@ -64,9 +61,9 @@ IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 
 bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
 {
-  if(event.GetTag() == MessageEngineToGameTag::ChargerEvent)
+  if(event.GetTag() == MessageEngineToGameTag::ChargerEvent && event.Get_ChargerEvent().onCharger)
   {
-    _isOnCharger = event.Get_ChargerEvent().onCharger;
+    _isOnCharger = true;
     return _isOnCharger;
   }
   
@@ -75,41 +72,10 @@ bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::Messag
 
 void BehaviorReactToOnCharger::TransitionToIdleLoop(Robot& robot)
 {
-  if( _isOnCharger )
-  {
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::IdleOnCharger),&BehaviorReactToOnCharger::TransitionToIdleLoop);
-  }
-}
+  auto doDisconnect = [] (Robot& robot) { robot.GetRobotMessageHandler()->Disconnect(); };
   
-void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
-{
-  switch(event.GetData().GetTag())
-  {
-    case GameToEngineTag::ContinueFreeplayFromIdle:
-    {
-      _shouldStopBehavior = true;
-      break;
-    }
-    default:
-    {
-      break;
-    }
-  }
+  StartActing(RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(robot), doDisconnect);
 }
-
-void BehaviorReactToOnCharger::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
-{
-  switch (event.GetData().GetTag()) {
-    case EngineToGameTag::RobotPickedUp:
-      _shouldStopBehavior = true;
-      break;
-      
-    default:
-      break;
-  }
-}
-
-  
 
 } // namespace Cozmo
 } // namespace Anki

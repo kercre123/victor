@@ -117,6 +117,8 @@ public:
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
      
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
+  
+  void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
 
 private:
 
