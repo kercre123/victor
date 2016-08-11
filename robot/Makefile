@@ -56,8 +56,8 @@ clean:
 	make -C clad clean
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
-	rm -rf $(BUILD_DIR)
-	rm -rf $(GENERATED_DIR)
+	rm -rf $(BUILD_DIR) $(GENERATED_DIR) syscon/build
+	rm -rf generated.tar.bz2 keil.tar.bz2 firmware.tar.gz
 
 fresh: clean $(ANKI_LOG_TABLE_JSON) all python
 	rm -Rf build ./syscon/build
