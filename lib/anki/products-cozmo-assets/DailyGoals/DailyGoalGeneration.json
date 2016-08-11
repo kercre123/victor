@@ -479,7 +479,7 @@
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
       "RewardType": "experience",
-      "PointsRewarded": 50,
+      "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
       "CladEvent": "OnChallengeComplete",
