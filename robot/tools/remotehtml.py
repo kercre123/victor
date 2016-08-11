@@ -92,7 +92,7 @@ client = """<html>
                 doLight = true;
                 break ;
         }
-        
+
         if (doMotor) ws.send(JSON.stringify(calcSpeed(motors)));
         if (doLight) ws.send(JSON.stringify(lights));
       });
@@ -197,20 +197,21 @@ class Remote:
             if 'head' in message:
                 robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
         elif message['type'] == 'lights':
-            lights = robotInterface.RI.BackpackLights()
-            
+            lights = robotInterface.RI.BackpackLightsMiddle()
+
             for light in lights.lights:
                 color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)
 
                 light.onColor = light.offColor = color
 
-            robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLights=lights))
+            print (lights)
+            robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLightsMiddle=lights))
 
     async def socket_loop(self, websocket, path):
         while True:
             listener_task = asyncio.ensure_future(websocket.recv())
             producer_task = asyncio.ensure_future(self.producer())
-            
+
             done, pending = await asyncio.wait(
                 [listener_task, producer_task],
                 return_when=asyncio.FIRST_COMPLETED)
@@ -228,7 +229,7 @@ class Remote:
                 producer_task.cancel()
 
     def flask(self):
-        thread = threading.Thread()        
+        thread = threading.Thread()
 
     def run(self):
         robotInterface.Connect()

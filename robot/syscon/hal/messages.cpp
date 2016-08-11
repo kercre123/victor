@@ -28,8 +28,14 @@ enum QueueSlotState {
 };
 
 struct QueueSlot {
-  uint8_t size;
-  uint8_t data[SPINE_MAX_CLAD_MSG_SIZE_UP - 1];
+  union {
+    uint8_t raw[SPINE_MAX_CLAD_MSG_SIZE_UP];
+    struct {
+      uint8_t size;
+      uint8_t tag;
+      uint8_t payload[];
+    };
+  };
 
   volatile QueueSlotState state;
 };
@@ -184,17 +190,15 @@ void Spine::dequeue(uint8_t* dest) {
   // Dequeue as many messages as we possibly can fit in a bundle
   while (queue[queue_exit].state == QUEUE_READY) {
     QueueSlot *msg = &queue[queue_exit];
+    int total_size = msg->size + 1;
 
-    if (msg->size + 1 > remaining) {
+    if (total_size > remaining) {
       break ;
     }
-    
-    __packed uint8_t *payload =  msg->data;
 
-    *(dest++) = msg->size;
-    memcpy(dest, payload, msg->size);
-    dest += msg->size;
-    remaining -= msg->size + 1;
+    memcpy(dest, msg->raw, total_size);
+    dest += total_size;
+    remaining -= total_size;
 
     msg->state = QUEUE_INACTIVE;
     queue_exit = (queue_exit + 1) % QUEUE_DEPTH;
@@ -238,8 +242,8 @@ bool HAL::RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
   __enable_irq();
 
   slot->size = size + 1;
-  slot->data[0] = msgID;
-  memcpy(&slot->data[1], buffer, size);
+  slot->tag = msgID;
+  memcpy(slot->payload, buffer, size);
 
   // Message is stage and ready for transmission
   slot->state = QUEUE_READY;
