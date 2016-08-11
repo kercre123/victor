@@ -42,6 +42,8 @@ public:
     PlayOnDevice,   // Play on Device - This is not perfectly synced to animations
     PlayOnRobot     // Play on Robot by using Hijack Audio plug-in to get audio stream from Wwise
   };
+  
+  static const char* kRobotAudioLogChannelName;
 
   // Default Constructor
   RobotAudioClient( Robot* robot );

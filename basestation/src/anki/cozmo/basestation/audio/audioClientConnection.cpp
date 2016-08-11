@@ -21,10 +21,11 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+const char* AudioClientConnection::kAudioLogChannel = "Audio";
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioClientConnection::AudioClientConnection()
 {
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

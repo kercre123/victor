@@ -70,7 +70,9 @@ RobotAudioAnimationOnDevice::AnimationState RobotAudioAnimationOnDevice::Update(
   }
 
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::Update", "EXIT State - %hhu", GetAnimationState());
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnDevice.Update",
+                  "EXIT State - %hhu", GetAnimationState());
   }
 
   return GetAnimationState();
@@ -82,13 +84,14 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                                                         TimeStamp_t streamingTime_ms )
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO( "RobotAudioAnimationOnDevice::PopRobotAudioMessagePlayOnDeviceMode", "StartTime: %d - \
-                      StreamingTime: %d - RelevantTime: %d - eventIdx: %d / %lu",
-                      startTime_ms,
-                      streamingTime_ms,
-                      (streamingTime_ms - startTime_ms),
-                      GetEventIndex(),
-                      (unsigned long)_animationEvents.size() );
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnDevice.PopRobotAudioMessagePlayOnDeviceMode",
+                  "StartTime: %d - StreamingTime: %d - RelevantTime: %d - eventIdx: %d / %lu",
+                  startTime_ms,
+                  streamingTime_ms,
+                  (streamingTime_ms - startTime_ms),
+                  GetEventIndex(),
+                  (unsigned long)_animationEvents.size());
   }
   
   // When playing on device we always send Silence messages
@@ -153,7 +156,9 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
 void RobotAudioAnimationOnDevice::PrepareAnimation()
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::PrepareAnimation", "Animation %s", _animationName.c_str());
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnDevice.PrepareAnimation",
+                  "Animation %s", _animationName.c_str());
   }
   
   // Use audio controller to play sounds therefore we are ready to go

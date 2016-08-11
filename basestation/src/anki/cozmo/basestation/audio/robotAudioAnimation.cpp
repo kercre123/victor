@@ -57,7 +57,10 @@ RobotAudioAnimation::~RobotAudioAnimation()
 void RobotAudioAnimation::AbortAnimation()
 {  
   if ( DEBUG_ROBOT_ANIMATION_AUDIO || DEBUG_ROBOT_AUDIO_ANIMATION_OVERRIDE ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation.AbortAnimation", "Animation: %s", _animationName.c_str());
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimation.AbortAnimation",
+                  "Animation: %s",
+                  _animationName.c_str());
   }
   
   // Always stop other events from posting to Audio Client
@@ -108,7 +111,10 @@ uint32_t RobotAudioAnimation::GetNextEventTime_ms()
 void RobotAudioAnimation::SetAnimationState( AnimationState state )
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation.SetAnimationState", "State: %s", GetStringForAnimationState(state).c_str() );
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimation.SetAnimationState",
+                  "State: %s",
+                  GetStringForAnimationState(state).c_str() );
   }
   _state = state;
 }
@@ -189,15 +195,20 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
              [] (const AnimationEvent& lhs, const AnimationEvent& rhs) { return lhs.time_ms < rhs.time_ms; } );
   
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events Size: %lu - Enter", (unsigned long)_animationEvents.size());
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimation.LoadAnimation",
+                  "Audio Events Size: %lu - Enter",
+                  (unsigned long)_animationEvents.size());
     for (size_t idx = 0; idx < _animationEvents.size(); ++idx ) {
-      PRINT_NAMED_INFO( "RobotAudioAnimation::LoadAnimation",
-                        "Event Id: %d AudioEvent: %s TimeInMS: %d",
-                        _animationEvents[idx].eventId,
-                        EnumToString( _animationEvents[idx].audioEvent ),
-                        _animationEvents[idx].time_ms );
+      PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                    "RobotAudioAnimation.LoadAnimation",
+                    "Event Id: %d AudioEvent: %s TimeInMS: %d",
+                    _animationEvents[idx].eventId,
+                    EnumToString( _animationEvents[idx].audioEvent ),
+                    _animationEvents[idx].time_ms );
     }
-    PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events - Exit");
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimation.LoadAnimation", "Audio Events - Exit");
   }
   
   // Setup Dispatch
@@ -215,8 +226,10 @@ void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEve
       
     case AudioEngine::AudioCallbackType::Error:
     {
-      PRINT_NAMED_INFO( "RobotAudioAnimation.HandleCozmoEventCallback", "Error: %s",
-                        callbackInfo.GetDescription().c_str() );
+      PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                    "RobotAudioAnimation.HandleCozmoEventCallback",
+                    "Error: %s",
+                    callbackInfo.GetDescription().c_str());
       IncrementCompletedEventCount();
       std::lock_guard<std::mutex> lock(_animationEventLock);
       animationEvent->state = AnimationEvent::AnimationEventState::Error;
@@ -243,13 +256,14 @@ bool RobotAudioAnimation::IsAnimationDone() const
   const bool isDone = GetCompletedEventCount() >= _animationEvents.size() && !_audioBuffer->HasAudioBufferStream();
   
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO( "RobotAudioAnimation.IsAnimationDone",
-                      "eventCount: %zu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d | Result %s",
-                      _animationEvents.size(),
-                      GetEventIndex(),
-                      GetCompletedEventCount(),
-                      _audioBuffer->HasAudioBufferStream(),
-                      isDone ? "T" : "F" );
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimation.IsAnimationDone",
+                  "eventCount: %zu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d | Result %s",
+                  _animationEvents.size(),
+                  GetEventIndex(),
+                  GetCompletedEventCount(),
+                  _audioBuffer->HasAudioBufferStream(),
+                  isDone ? "T" : "F" );
   }
   
   return isDone;
