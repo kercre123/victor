@@ -124,7 +124,7 @@
     "translation": "Listen and watch the pattern for each round.  When it’s your turn, tap the Cubes in order to repeat the pattern.  One mistake, and it’s game over!"
   },
   "simonGame.difficulty.hardDescription.locked": {
-    "translation": "Unlock by winning Simon Easy."
+    "translation": "Unlock by winning Memory Match on Easy."
   },
   "simonGame.label.yourTurn": {
     "translation": "Your turn:"
@@ -284,16 +284,16 @@
     "translation": "How To Play:"
   },
   "minigame.difficulty.easy": {
-    "translation": "Easy"
+    "translation": "One Color"
   },
   "minigame.difficulty.medium": {
-    "translation": "Medium"
+    "translation": "Two Colors"
   },
   "minigame.difficulty.hard": {
-    "translation": "Hard"
+    "translation": "Three Colors"
   },
   "minigame.difficulty.expert": {
-    "translation": "Expert"
+    "translation": "Four Colors"
   },
  "speedTap.difficulty.easyDescription": {
    "translation": "Be the first to slap your cube when the colors match\n- but never slap on red!"
@@ -314,16 +314,16 @@
     "translation": "Cozmo is getting ready..."
   },
   "speedTap.difficulty.easyDescription.locked": {
-    "translation": "Unlock by unlocking Speed Tap."
+    "translation": "Unlock by unlocking Quick Tap."
   },
   "speedTap.difficulty.mediumDescription.locked": {
-    "translation": "Unlock by winning Speed Tap Easy."
+    "translation": "Unlock by winning Quick Tap in One-Color Mode."
   },
   "speedTap.difficulty.hardDescription.locked": {
-    "translation": "Unlock by winning Speed Tap Medium."
+    "translation": "Unlock by winning Quick Tap in Two-Color Mode."
   },
   "speedTap.difficulty.expertDescription.locked": {
-    "translation": "Unlock by winning Speed Tap Hard."
+    "translation": "Unlock by winning Quick Tap in Three-Color Mode."
   }, 
   "speedTap.text.getReady": {
     "translation": "Get Ready!"

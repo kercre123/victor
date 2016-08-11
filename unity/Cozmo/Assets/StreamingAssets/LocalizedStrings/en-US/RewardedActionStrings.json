@@ -35,7 +35,7 @@
     "translation": "Cozmo Completed the “Pounce on Motion” behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.TipOver": {
-    "translation": "Cozmo Completed the “Tip over Stack of Cubes” behavior successfully"
+    "translation": "Cozmo Completed the “Knock Over Stacks” behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid": {
     "translation": "Cozmo Completed the “Build a Pyramid” behavior successfully"

@@ -19,10 +19,10 @@
     ]
   },
   "item.experience.singular": {
-    "translation": "Green Point"
+    "translation": "Energy"
   },
   "item.experience.plural": {
-    "translation": "Green Points"
+    "translation": "Energy"
   },
   "item.treat.singular": {
     "translation": "Spark"
@@ -31,10 +31,10 @@
     "translation": "Sparks"
   },
   "item.genericHex.singular": {
-    "translation": "Code Fragment"
+    "translation": "Bit"
   },
   "item.genericHex.plural": {
-    "translation": "Code Fragments"
+    "translation": "Bits"
   },
   "item.cube.singular": {
     "translation": "Cube"

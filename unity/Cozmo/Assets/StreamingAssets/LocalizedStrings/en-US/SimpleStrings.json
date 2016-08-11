@@ -121,13 +121,13 @@
     "translation": "Save"
   },
   "cozmoTab.title": {
-    "translation": "Core Upgrades"
+    "translation": "Upgrades"
   },
   "cozmoTab.hexCount": {
     "translation": "Code Fragments: {0}"
   },
   "coreUpgradeDetailsDialog.titleLabel": {
-    "translation": "Core Upgrade:"
+    "translation": "Upgrade:"
   },
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
