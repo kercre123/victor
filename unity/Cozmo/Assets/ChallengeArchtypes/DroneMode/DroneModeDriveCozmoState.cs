@@ -28,10 +28,16 @@ namespace Cozmo {
         private bool _IsDrivingWheels = false;
         private bool _IsDrivingHead = false;
 
+        private float _StoppedDrivingHeadTimestamp;
+
         private DroneModeTransitionAnimator _RobotAnimator;
+
+        public string TiltDrivingDebugText = "";
+        public string HeadDrivingDebugText = "";
 
         public override void Enter() {
           _LastMessageSentTimestamp = Time.time;
+          _StoppedDrivingHeadTimestamp = -1f;
 
           _DroneModeGame = _StateMachine.GetGame() as DroneModeGame;
 
@@ -41,10 +47,6 @@ namespace Cozmo {
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           EnableInput();
 
-          // TODO Use different colors for bottom and top colors
-          // Top = R36, G220, B230
-          // Bottom = R25, G131, B213
-          // See ticket https://ankiinc.atlassian.net/browse/COZMO-2516 and BackgroundColorController.cs
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
                                                                           _DroneModeControlsSlide.BackgroundColor);
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
@@ -75,20 +77,17 @@ namespace Cozmo {
 
           // Send drive wheels / drive head messages if needed
           SendDriveRobotMessages();
+
+          _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
+          _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
         }
 
         public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           // Don't show the "don't move cozmo" ui
-
-          // DisableInput();
         }
 
         public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
           SetupRobotForDriveState();
-
-          // EnableInput();
-
-          // Does this get called? I think Resume might not get called in COZMO-3221
         }
 
         private void EnableInput() {
@@ -109,12 +108,11 @@ namespace Cozmo {
         }
 
         private void SetupRobotForDriveState() {
-          _CurrentRobot.SetLiftHeight(_DroneModeGame.StartingLiftHeight);
+          _CurrentRobot.SetLiftHeight(_DroneModeGame.DroneModeConfigData.StartingLiftHeight);
         }
 
         private void SendDriveRobotMessages() {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec) {
-
             _LastMessageSentTimestamp = Time.time;
             bool droveWheels = DriveWheelsIfNeeded();
             bool droveHead = DriveHeadIfNeeded();
@@ -154,7 +152,7 @@ namespace Cozmo {
             _CurrentTurnDirection = 0f;
             _CurrentRobot.DriveArc(0f, 0);
             _CurrentRobot.DriveWheels(0f, 0f);
-            _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + 0 + " \nradius mm = N/A";
+            TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + 0 + " \nradius mm = N/A";
           }
           return droveWheels;
         }
@@ -162,22 +160,68 @@ namespace Cozmo {
         private bool DriveHeadIfNeeded() {
           bool droveHead = false;
           if (ShouldDriveHead(_TargetDriveHeadSpeed_radps)) {
+            HeadDrivingDebugText = "\nPlayer driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
             _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
             _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
             droveHead = true;
+            if (_StoppedDrivingHeadTimestamp != -1) {
+              _StoppedDrivingHeadTimestamp = -1f;
+              ResetIdleAnimation();
+            }
           }
           else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
             _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveHeadSpeed_radps = 0f;
-            _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
+            _CurrentRobot.DriveHead(0f);
+            droveHead = true;
+            if (_StoppedDrivingHeadTimestamp == -1) {
+              SetIdleAnimation();
+            }
+            _StoppedDrivingHeadTimestamp = Time.time;
+            HeadDrivingDebugText = "\nPlayer stop driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
+          }
+          else if (ShouldHoldHead()) {
+            HeadDrivingDebugText = "\nCozmo holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
+            droveHead = true;
+          }
+          else if (ShouldStopHoldHead()) {
+            if (_StoppedDrivingHeadTimestamp != -1) {
+              _StoppedDrivingHeadTimestamp = -1f;
+              ResetIdleAnimation();
+            }
+            HeadDrivingDebugText = "\nCozmo stop holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
           }
           return droveHead;
         }
 
+        private void SetIdleAnimation() {
+          _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.ProceduralLive);
+          Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+              Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
+              Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
+              Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+              Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
+            };
+          float[] paramValues = {
+              3.0f,
+              0.2f,
+              0.0f,
+              0.0f
+            };
+          _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
+        }
+
+        private void ResetIdleAnimation() {
+          _CurrentRobot.PopIdleAnimation();
+          Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
+          float[] paramValues = { };
+          _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues, true);
+        }
+
         private void DriveLiftIfNeeded() {
           // Ideally we could do this check after every animation end, but this works for now.
-          if (!_CurrentRobot.LiftHeightFactor.IsNear(_DroneModeGame.StartingLiftHeight, _kLiftFactorThreshold)) {
-            _CurrentRobot.SetLiftHeight(_DroneModeGame.StartingLiftHeight);
+          if (!_CurrentRobot.LiftHeightFactor.IsNear(_DroneModeGame.DroneModeConfigData.StartingLiftHeight, _kLiftFactorThreshold)) {
+            _CurrentRobot.SetLiftHeight(_DroneModeGame.DroneModeConfigData.StartingLiftHeight);
           }
         }
 
@@ -200,14 +244,25 @@ namespace Cozmo {
         }
 
         private bool ShouldDriveHead(float targetHeadSpeed) {
-          return !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
+          return !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)
+                                 && !targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps);
         }
 
         private bool ShouldStopDriveHead(float targetHeadSpeed) {
           return targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps)
-                                 && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
+                                && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)
+                                && _StoppedDrivingHeadTimestamp == -1f;
         }
 
+        private bool ShouldHoldHead() {
+          return _StoppedDrivingHeadTimestamp != -1f
+                                && ((Time.time - _StoppedDrivingHeadTimestamp) < _DroneModeGame.DroneModeConfigData.HeadIdleDelay_s);
+        }
+
+        private bool ShouldStopHoldHead() {
+          return _StoppedDrivingHeadTimestamp != -1f
+            && ((Time.time - _StoppedDrivingHeadTimestamp) >= _DroneModeGame.DroneModeConfigData.HeadIdleDelay_s);
+        }
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
           float driveRobotSpeed_mmps = 0f;
@@ -230,20 +285,20 @@ namespace Cozmo {
           }
 
           // TODO remove debug text field
-          _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
+          TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
           _CurrentRobot.DriveArc(driveRobotSpeed_mmps, (int)arcRadius_mm);
           return driveRobotSpeed_mmps;
         }
 
         private float PointTurnRobotWheels(float turnDirection) {
-          float pointTurnSpeed_mmps = _DroneModeGame.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
+          float pointTurnSpeed_mmps = _DroneModeGame.DroneModeConfigData.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
           float arcRadius_mm = _kRadiusMin_mm;
           if (turnDirection > 0f) {
             arcRadius_mm *= -1;
           }
 
           // TODO remove debug text field
-          _DroneModeControlsSlide.TiltText.text = "Drive Arc: \nspeed mmps = " + pointTurnSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
+          TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + pointTurnSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
           _CurrentRobot.DriveArc(pointTurnSpeed_mmps, (int)arcRadius_mm);
           return pointTurnSpeed_mmps;
         }

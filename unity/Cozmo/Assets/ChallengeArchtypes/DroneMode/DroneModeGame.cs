@@ -21,20 +21,7 @@ namespace Cozmo {
         public GameObject DroneModeHowToPlaySlidePrefab { get { return _DroneModeHowToPlaySlidePrefab; } }
 
         private DroneModeConfig _DroneModeConfig;
-
-        public float MaxReverseSpeed_mmps { get { return _DroneModeConfig.MaxReverseSpeed_mmps; } }
-
-        public float MaxForwardSpeed_mmps { get { return _DroneModeConfig.MaxForwardSpeed_mmps; } }
-
-        public float PointTurnSpeed_mmps { get { return _DroneModeConfig.PointTurnSpeed_mmps; } }
-
-        public float TurboSpeed_mmps { get { return _DroneModeConfig.TurboSpeed_mmps; } }
-
-        public float HeadMovementSpeed_radps { get { return _DroneModeConfig.HeadMovementSpeed_radps; } }
-
-        public float NeutralTiltSize { get { return _DroneModeConfig.NeutralTiltSize; } }
-
-        public float StartingLiftHeight { get { return _DroneModeConfig.StartingLiftHeight; } }
+        public DroneModeConfig DroneModeConfigData { get { return _DroneModeConfig; } }
 
         private float _CurrentTurnDirection;
         private IEnumerator _SteeringInputCoroutine;
@@ -113,14 +100,14 @@ namespace Cozmo {
         private float MapDevicePitchToTurnDirection(float newDevicePitch) {
           float normalizedPitch = 0f;
           newDevicePitch = Mathf.Clamp(newDevicePitch, -1f, 1f);
-          float negativeThreshold = -NeutralTiltSize;
+          float negativeThreshold = -DroneModeConfigData.NeutralTiltSize;
           if (newDevicePitch < negativeThreshold) {
             float difference = newDevicePitch - negativeThreshold;
             normalizedPitch = difference / Mathf.Abs(-1 - negativeThreshold);
           }
-          else if (newDevicePitch > NeutralTiltSize) {
-            float difference = newDevicePitch - NeutralTiltSize;
-            normalizedPitch = difference / (1 - NeutralTiltSize);
+          else if (newDevicePitch > DroneModeConfigData.NeutralTiltSize) {
+            float difference = newDevicePitch - DroneModeConfigData.NeutralTiltSize;
+            normalizedPitch = difference / (1 - DroneModeConfigData.NeutralTiltSize);
           }
           return normalizedPitch;
         }
@@ -129,13 +116,13 @@ namespace Cozmo {
           float driveWheelSpeed_mmps = 0f;
           switch (sliderSegment) {
           case DroneModeControlsSlide.SpeedSliderSegment.Turbo:
-            driveWheelSpeed_mmps = TurboSpeed_mmps;
+            driveWheelSpeed_mmps = DroneModeConfigData.TurboSpeed_mmps;
             break;
           case DroneModeControlsSlide.SpeedSliderSegment.Forward:
-            driveWheelSpeed_mmps = Mathf.Lerp(PointTurnSpeed_mmps + 1f, MaxForwardSpeed_mmps, sliderSegmentValue);
+            driveWheelSpeed_mmps = Mathf.Lerp(DroneModeConfigData.PointTurnSpeed_mmps + 1f, DroneModeConfigData.MaxForwardSpeed_mmps, sliderSegmentValue);
             break;
           case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
-            driveWheelSpeed_mmps = Mathf.Lerp(PointTurnSpeed_mmps + 1f, MaxReverseSpeed_mmps, sliderSegmentValue) * -1;
+            driveWheelSpeed_mmps = Mathf.Lerp(DroneModeConfigData.PointTurnSpeed_mmps + 1f, DroneModeConfigData.MaxReverseSpeed_mmps, sliderSegmentValue) * -1;
             break;
           default:
             driveWheelSpeed_mmps = 0f;
@@ -148,10 +135,10 @@ namespace Cozmo {
           float driveHeadSpeed_radps = 0f;
           switch (sliderSegment) {
           case DroneModeControlsSlide.HeadSliderSegment.Forward:
-            driveHeadSpeed_radps = HeadMovementSpeed_radps * sliderSegmentValue;
+            driveHeadSpeed_radps = DroneModeConfigData.HeadMovementSpeed_radps * sliderSegmentValue;
             break;
           case DroneModeControlsSlide.HeadSliderSegment.Reverse:
-            driveHeadSpeed_radps = HeadMovementSpeed_radps * sliderSegmentValue * -1;
+            driveHeadSpeed_radps = DroneModeConfigData.HeadMovementSpeed_radps * sliderSegmentValue * -1;
             break;
           default:
             driveHeadSpeed_radps = 0f;

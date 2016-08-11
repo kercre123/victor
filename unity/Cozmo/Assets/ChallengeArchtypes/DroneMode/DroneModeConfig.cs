@@ -30,11 +30,15 @@ namespace Cozmo {
       private float _HeadMovementSpeed_radps = 0.5f;
       public float HeadMovementSpeed_radps { get { return _HeadMovementSpeed_radps; } }
 
-      [SerializeField, Range(0f, 1f)]
+      [SerializeField]
+      private float _HeadIdleDelay_s = 4f;
+      public float HeadIdleDelay_s { get { return _HeadIdleDelay_s; } }
+
+      [SerializeField, Range(0f, 1f), Tooltip("(%) Percent size near neutral position that counts as '0' for the purposes of turning.")]
       private float _NeutralTiltSize = 0.15f;
       public float NeutralTiltSize { get { return _NeutralTiltSize; } }
 
-      [SerializeField, Range(0f, 1f)]
+      [SerializeField, Range(0f, 1f), Tooltip("(%) Starting lift height, where 0 is minimum and 1 is maximum.")]
       private float _StartingLiftHeight = 0.25f;
       public float StartingLiftHeight { get { return _StartingLiftHeight; } }
     }
