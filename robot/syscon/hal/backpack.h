@@ -24,7 +24,8 @@ namespace Backpack {
   void blink(void);
 
   void defaultPattern(DefaultBackpackPattern pattern);
-  void setLights(const LightState* lights);
+  void setLightsMiddle(const LightState* lights);
+  void setLightsTurnSignals(const LightState* lights);
 }
 
 #endif /* LIGHTS_H */

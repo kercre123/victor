@@ -65,6 +65,10 @@ structure LightState
   uint_8   offFrames = 0,
   uint_8   transitionOnFrames = 0,
   uint_8   transitionOffFrames = 0,
+  uint_8   onOffset = 0,
+  // offOffset can be combined with offFrames to free a spot but this structure needs to align
+  // in order to allow arrays
+  uint_8   offOffset = 0,
 }
 
 

@@ -38,6 +38,7 @@ namespace Cozmo {
                  const ColorRGBA& onColor,        const ColorRGBA& offColor,
                  const u32 onPeriod_ms,           const u32 offPeriod_ms,
                  const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
+                 const u32 onOffset, const u32 offOffset,
                  const bool turnOffUnspecifiedLEDs);
     
     // Specify individual colors and flash frequencies for all the LEDS of the block
@@ -48,7 +49,9 @@ namespace Cozmo {
                  const std::array<u32,NUM_LEDS>& onPeriods_ms,
                  const std::array<u32,NUM_LEDS>& offPeriods_ms,
                  const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
-                 const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms);
+                 const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms,
+                 const std::array<u32,NUM_LEDS>& onOffsets,
+                 const std::array<u32,NUM_LEDS>& offOffsets);
     
 
     // If object is moving, returns true and the time that it started moving in t.
@@ -70,10 +73,13 @@ namespace Cozmo {
       u32       offPeriod_ms;
       u32       transitionOnPeriod_ms;
       u32       transitionOffPeriod_ms;
+      u32       onOffset;
+      u32       offOffset;
       
       LEDstate()
       : onColor(0), offColor(0), onPeriod_ms(0), offPeriod_ms(0)
       , transitionOnPeriod_ms(0), transitionOffPeriod_ms(0)
+      , onOffset(0), offOffset(0)
       {
         
       }

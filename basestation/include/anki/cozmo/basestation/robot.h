@@ -633,8 +633,11 @@ public:
                          const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
                          const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
                          const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
+                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onOffset,
+                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offOffset,
                          const MakeRelativeMode makeRelative,
-                         const Point2f& relativeToPoint);
+                         const Point2f& relativeToPoint,
+                         const u32 rotationPeriod_ms);
     
   // Set all LEDs of the specified block to the same color/flashrate
   Result SetObjectLights(const ObjectID& objectID,
@@ -644,7 +647,8 @@ public:
                          const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                          const bool turnOffUnspecifiedLEDs,
                          const MakeRelativeMode makeRelative,
-                         const Point2f& relativeToPoint);
+                         const Point2f& relativeToPoint,
+                         const u32 rotationPeriod_ms);
     
   // Shorthand for turning off all lights on an object
   Result TurnOffObjectLights(const ObjectID& objectID);
@@ -1130,7 +1134,7 @@ inline bool Robot::IsIdleAnimating() const {
 
 inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
   return SetObjectLights(objectID, WhichCubeLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
-                         false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
+                         false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f}, 0);
 }
 
 inline s32 Robot::GetNumAnimationBytesPlayed() const {

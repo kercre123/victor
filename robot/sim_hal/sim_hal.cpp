@@ -1292,8 +1292,13 @@ namespace Anki {
       for (int i=0; i<NUM_CUBE_LEDS; ++i) {
         m.setCubeLights.lights[i].onColor = colors[i];
       }
-      m.setCubeLights.objectID = activeID;
-
+      
+      BlockMessages::LightCubeMessage msg;
+      msg.tag = BlockMessages::LightCubeMessage::Tag_setCubeID;
+      msg.setCubeID.objectID = activeID;
+      msg.setCubeID.rotationPeriod_frames = 0;
+      
+      SendBlockMessage(activeID, msg);
       return SendBlockMessage(activeID, m);
     }
 

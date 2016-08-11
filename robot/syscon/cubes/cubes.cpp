@@ -80,6 +80,9 @@ static RadioState        radioState;
 
 static uint8_t _tapTime = 0;
 
+static unsigned int lastSlot = MAX_ACCESSORIES;
+static uint8_t lastRotationPeriod = 0;
+
 void Radio::init() {
   light_gamma = 0x100;
 }
@@ -122,14 +125,16 @@ void Radio::advertise(void) {
   colors[3].offColor = 0x03E0;
 
   for (int c = 0; c < MAX_ACCESSORIES; c++) {
-    Radio::setPropLights(c, colors);
+    Radio::setPropLightsID(c, 0);
+    Radio::setPropLights(colors);
   }
   #else
   LightState black[NUM_PROP_LIGHTS];
   memset(&black, 0, sizeof(black));
 
   for (int c = 0; c < MAX_ACCESSORIES; c++) {
-    Radio::setPropLights(c, black);
+    Radio::setPropLightsID(c, 0);
+    Radio::setPropLights(black);
   }
   #endif
   
@@ -441,14 +446,26 @@ void uesb_event_handler(uint32_t flags)
   }
 }
 
-void Radio::setPropLights(unsigned int slot, const LightState *state) {
+void Radio::setPropLightsID(unsigned int slot, uint8_t rotationPeriod)
+{
   if (slot >= MAX_ACCESSORIES) {
     return ;
   }
+  
+  lastSlot = slot;
+  lastRotationPeriod = rotationPeriod;
+}
 
-  for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-    Lights::update(lightController.cube[slot][c], &state[c]);
+void Radio::setPropLights(const LightState *state) {
+  if (lastSlot >= MAX_ACCESSORIES) {
+    return ;
   }
+  
+  for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+    Lights::update(lightController.cube[lastSlot][c], &state[c], lastSlot, lastRotationPeriod);
+  }
+  
+  lastSlot = MAX_ACCESSORIES;
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {

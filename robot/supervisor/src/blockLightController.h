@@ -25,7 +25,7 @@ namespace BlockLightController {
   Result Update();
 
   // Set lights for a blockID.
-  Result SetLights(u8 blockID, const LightState *params);  
+  Result SetLights(u8 blockID, const LightState *params, u8 rotationPeriod);
   
 } // namespace BlockLightController
 } // namespace Cozmo

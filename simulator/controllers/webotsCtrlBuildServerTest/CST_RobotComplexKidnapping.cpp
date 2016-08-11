@@ -130,6 +130,13 @@ namespace Cozmo {
       {
         MakeSynchronous();
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
+        
+        ExternalInterface::EnableLightStates m;
+        m.enable = false;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_EnableLightStates(m);
+        SendMessage(message);
+        
         _testState = TestState::InitialLocalization;
         break;
       }

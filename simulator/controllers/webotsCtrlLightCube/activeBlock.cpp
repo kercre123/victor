@@ -131,7 +131,6 @@ namespace {
   
 } // private namespace
 
-
 // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
 // to make it suitable for webots LED 24bit RGB color
 inline void SetLED_helper(u32 index, u32 rgbaColor) {
@@ -144,7 +143,6 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
   betterLed_[index]->getField("betterColor")->setSFVec3f(betterColor);
 }
 
-
 // ========== Callbacks for messages from robot =========
 void Process_flashID(const FlashObjectIDs& msg)
 {
@@ -153,9 +151,13 @@ void Process_flashID(const FlashObjectIDs& msg)
   //printf("Starting ID flash\n");
 }
 
-void Process_setCubeLights(const CubeLights& msg)
+void Process_setCubeID(const CubeID& msg)
 {
   
+}
+
+void Process_setCubeLights(const CubeLights& msg)
+{
   // See if the message is actually changing anything about the block's current
   // state. If not, don't update anything.
   if(memcmp(ledParams_, msg.lights, sizeof(ledParams_))) {

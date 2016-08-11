@@ -33,7 +33,9 @@ namespace BackpackLightController {
   namespace {
 
     // User-defined light params
-    RobotInterface::BackpackLights  _ledParams[BPL_NUM_LAYERS];
+    // The ordering of the params follows the ordering of the LED_BACKPACK_* enum
+    RobotInterface::BackpackLightsTurnSignals  _ledParamsTurnSignals[BPL_NUM_LAYERS];
+    RobotInterface::BackpackLightsMiddle _ledParamsMiddle[BPL_NUM_LAYERS];
     
     // Currently animated layer
     BackpackLightLayer _layer;
@@ -42,16 +44,27 @@ namespace BackpackLightController {
     TimeStamp_t _ledPhases[NUM_BACKPACK_LEDS];
     
     // The current LED params being played
-    const RobotInterface::BackpackLights* _currParams = &_ledParams[BPL_USER];
+    const RobotInterface::BackpackLightsTurnSignals* _currParamsTurnSignals = &_ledParamsTurnSignals[BPL_USER];
+    const RobotInterface::BackpackLightsMiddle* _currParamsMiddle = &_ledParamsMiddle[BPL_USER];
 #endif
     
     bool       _enable;
   };
 
-  void SetParams(const RobotInterface::BackpackLights& params)
+  void SetParams(const RobotInterface::BackpackLightsTurnSignals& params)
   {
 #ifdef SIMULATOR
-    _currParams = &params;
+    _currParamsTurnSignals = &params;
+    memset(_ledPhases, 0, sizeof(_ledPhases));
+#else
+    RobotInterface::SendMessage(params);
+#endif
+  }
+
+  void SetParams(const RobotInterface::BackpackLightsMiddle& params)
+  {
+#ifdef SIMULATOR
+    _currParamsMiddle = &params;
     memset(_ledPhases, 0, sizeof(_ledPhases));
 #else
     RobotInterface::SendMessage(params);
@@ -67,7 +80,8 @@ namespace BackpackLightController {
 
     if (forceUpdate || (_layer != layer)) {
       _layer = layer;
-      SetParams(_ledParams[_layer]);
+      SetParams(_ledParamsTurnSignals[_layer]);
+      SetParams(_ledParamsMiddle[_layer]);
     }
   }
   
@@ -83,7 +97,8 @@ namespace BackpackLightController {
 
   Result Init()
   {
-    memset(&_ledParams[BPL_USER], 0, sizeof(_ledParams[BPL_USER]));
+    memset(&_ledParamsMiddle[BPL_USER], 0, sizeof(_ledParamsMiddle[BPL_USER]));
+    memset(&_ledParamsTurnSignals[BPL_USER], 0, sizeof(_ledParamsTurnSignals[BPL_USER]));
     _enable = true;
 
     return RESULT_OK;
@@ -97,10 +112,21 @@ namespace BackpackLightController {
 
 #ifdef SIMULATOR
     TimeStamp_t currentTime = HAL::GetTimeStamp();
+    u8 turnCount = 0;
+    u8 middleCount = 0;
     for(int i=0; i<NUM_BACKPACK_LEDS; ++i)
     {
       u16 newColor;
-      const bool colorUpdated = GetCurrentLEDcolor(_currParams->lights[i], currentTime, _ledPhases[i], newColor);
+      bool colorUpdated = false;
+      if(i == LED_BACKPACK_LEFT || i == LED_BACKPACK_RIGHT)
+      {
+        colorUpdated = GetCurrentLEDcolor(_currParamsTurnSignals->lights[turnCount++], currentTime, _ledPhases[i], newColor);
+      }
+      else
+      {
+        colorUpdated = GetCurrentLEDcolor(_currParamsMiddle->lights[middleCount++], currentTime, _ledPhases[i], newColor);
+      }
+
       if(colorUpdated) {
         HAL::SetLED((LEDId)i, newColor);
       }
@@ -118,14 +144,25 @@ namespace BackpackLightController {
       return;
     }
     
-    LightState& params = _ledParams[layer].lights[whichLED];
+    LightState* params;
+    if(whichLED == LED_BACKPACK_RIGHT || whichLED == LED_BACKPACK_LEFT)
+    {
+      // LED_BACKPACK_LEFT is the first param and RIGHT is the second
+      const u8 i = (whichLED == LED_BACKPACK_LEFT ? 0 : 1);
+      params = &_ledParamsTurnSignals[layer].lights[i];
+    }
+    else
+    {
+      // Subtract by 1 to shift the LED_BACKPACK_FRONT/MIDDLE/BACK down to the 0-2 range
+      params = &_ledParamsMiddle[layer].lights[whichLED-1];
+    }
 
-    params.onColor = onColor;
-    params.offColor = offColor;
-    params.onFrames = onFrames;
-    params.offFrames = offFrames;
-    params.transitionOnFrames = transitionOnFrames;
-    params.transitionOffFrames = transitionOffFrames;
+    params->onColor = onColor;
+    params->offColor = offColor;
+    params->onFrames = onFrames;
+    params->offFrames = offFrames;
+    params->transitionOnFrames = transitionOnFrames;
+    params->transitionOffFrames = transitionOffFrames;
 #ifdef SIMULATOR
     _ledPhases[whichLED] = HAL::GetTimeStamp();
 #endif

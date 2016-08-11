@@ -18,9 +18,9 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-
-static const u32 kTimeToMarkCubeNonVisible_ms = 3000;
 
 namespace Anki {
 namespace Cozmo {
@@ -32,7 +32,72 @@ LightsComponent::LightsComponent(Robot& robot)
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
   }
+  
+  if(robot.GetContextDataPlatform() != nullptr)
+  {
+    if(Util::FileUtils::FileExists(robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/lightStates/lightStates.json")))
+    {
+      Json::Value json;
+      if(robot.GetContextDataPlatform()->readAsJson(Util::Data::Scope::Resources, "config/basestation/lightStates/lightStates.json", json))
+      {
+        AddLightStateValues(CubeLightsState::WakeUp,        json["wakeUp"]);
+        AddLightStateValues(CubeLightsState::WakeUpFadeOut, json["wakeUpFadeOut"]);
+        AddLightStateValues(CubeLightsState::Connected,     json["connected"]);
+        AddLightStateValues(CubeLightsState::Visible,       json["visible"]);
+        AddLightStateValues(CubeLightsState::Interacting,   json["interacting"]);
+        
+        _wakeupTime_ms    = json["wakeUpDuration_ms"].asUInt();
+        _wakeupFadeOut_ms = json["wakeUpFadeOutDuration_ms"].asUInt();
+        _fadePeriod_ms    = json["fadePeriod_ms"].asUInt();
+        _fadeTime_ms      = json["fadeTransitionTime_ms"].asUInt();
+      }
+    }
+  }
+}
+
+void LightsComponent::AddLightStateValues(CubeLightsState state, const Json::Value& data)
+{
+  LightValues values = {
+    .onColors               = JsonColorValueToArray(data["onColors"]),
+    .offColors              = JsonColorValueToArray(data["offColors"]),
+    .onPeriod_ms            = JsonValueToArray(data["onPeriod_ms"]),
+    .offPeriod_ms           = JsonValueToArray(data["offPeriod_ms"]),
+    .transitionOnPeriod_ms  = JsonValueToArray(data["transitionOnPeriod_ms"]),
+    .transitionOffPeriod_ms = JsonValueToArray(data["transitionOffPeriod_ms"]),
+    .onOffset               = JsonValueToArray(data["onOffset"]),
+    .offOffset              = JsonValueToArray(data["offOffset"]),
+    .rotationPeriod_ms      = data["rotationPeriod_ms"].asUInt()
+  };
+  _stateToValues.emplace(state, values);
+}
+
+std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToArray(const Json::Value& value)
+{
+  LEDArray arr;
+  for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  {
+    arr[i] = value[i].asUInt();
+  }
+  return arr;
+}
+
+std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonColorValueToArray(const Json::Value& value)
+{
+  LEDArray arr;
+  for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  {
+    
+    ColorRGBA color(value[i][0].asFloat(),
+                    value[i][1].asFloat(),
+                    value[i][2].asFloat(),
+                    value[i][3].asFloat());
+    arr[i] = color.AsRGBA();
+  }
+  return arr;
 }
 
 void LightsComponent::Update()
@@ -43,31 +108,53 @@ void LightsComponent::Update()
     return;
   }
 
-  // TODO: check for cubes that we can hear but not see
-
-  // check if any cubes are no longer visible
-  TimeStamp_t currTS = _robot.GetLastImageTimeStamp();
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   for( auto& cubeInfoPair : _cubeInfo )
   {
-    CubeLightsState newState = CubeLightsState::Visible;
+    CubeLightsState newState = cubeInfoPair.second.desiredState;
+    CubeLightsState currState = cubeInfoPair.second.currState;
+    const TimeStamp_t timeDiff = currTime - cubeInfoPair.second.startCurrStateTime;
+    auto& fadeFromTo = cubeInfoPair.second.fadeFromTo;
+    
+    bool endingFade = false;
+    
+    if(currState == CubeLightsState::WakeUp &&
+       (timeDiff > _wakeupTime_ms))
+    {
+      newState = CubeLightsState::WakeUpFadeOut;
+    }
+    else if(currState == CubeLightsState::WakeUpFadeOut &&
+            (timeDiff > _wakeupFadeOut_ms))
+    {
+      newState = CubeLightsState::Connected;
+    }
+    else if(currState == CubeLightsState::Fade &&
+            (timeDiff > _fadeTime_ms + _fadePeriod_ms*2)) // Multiply fadePeriod by 2 for both onPeriod and offPeriod
+    {
+      currState = fadeFromTo.first;
+      newState = fadeFromTo.second;
+      endingFade = true;
+      fadeFromTo.first = CubeLightsState::Invalid;
+      fadeFromTo.second = CubeLightsState::Invalid;
+    }
     
     // If we're interacting with this object, put it in interacting state
-    if(_interactionObjects.count(cubeInfoPair.first) > 0)
+    // but only if we are not already fading to an interacting state
+    if(_interactionObjects.count(cubeInfoPair.first) > 0 &&
+       fadeFromTo.second != CubeLightsState::Interacting)
     {
       newState = CubeLightsState::Interacting;
     }
     
-    // Ignore age timeout for carried object
-    else if(_robot.GetCarryingObject() != cubeInfoPair.first)
+    // Only fade if we did not just end a fade and we can fade from current state to the new state
+    if(!endingFade && FadeBetween(currState, newState, fadeFromTo))
     {
-      u32 age = currTS - cubeInfoPair.second.lastObservedTime_ms;
-      if( age > kTimeToMarkCubeNonVisible_ms ) {
-        newState = CubeLightsState::Connected;
-      }
+      newState = CubeLightsState::Fade;
     }
     
-    if( ShouldOverrideState( cubeInfoPair.second.currState, newState )) {
+    if(ShouldOverrideState(currState, newState))
+    {
       cubeInfoPair.second.desiredState = newState;
     }
   }
@@ -86,8 +173,56 @@ void LightsComponent::UpdateToDesiredLights()
 
 bool LightsComponent::ShouldOverrideState(CubeLightsState currState, CubeLightsState nextState)
 {
-  // This is a placeholder for more complicated logic to come later
+  // We should never transition to Invalid, override the Fade state since it manages itself,
+  // or override WakeUp with anything other than WakeUpFadeOut
+  if(nextState == CubeLightsState::Invalid ||
+     currState == CubeLightsState::Fade ||
+     (currState == CubeLightsState::WakeUp && nextState != CubeLightsState::WakeUpFadeOut))
+  {
+    return false;
+  }
+
   return true;
+}
+
+bool LightsComponent::FadeBetween(CubeLightsState from, CubeLightsState to,
+                                  std::pair<CubeLightsState, CubeLightsState>& fadeFromTo)
+{
+  // These are all the state transitions that we should fade between really only works well
+  // when fading from/to states that are solid colors
+  if((from == CubeLightsState::Visible      && to == CubeLightsState::Interacting) ||
+     (from == CubeLightsState::Interacting  && to == CubeLightsState::Visible) ||
+     (from == CubeLightsState::Visible      && to == CubeLightsState::Connected) ||
+     (from == CubeLightsState::Interacting  && to == CubeLightsState::Connected))
+  {
+    fadeFromTo.first = from;
+    fadeFromTo.second = to;
+  
+    // If we are fading to connected than we actually want to fade the lights off but
+    // the actual fadeTo state is still connected
+    if(to == CubeLightsState::Connected)
+    {
+      to = CubeLightsState::Off;
+    }
+    
+    // Values for dynamic fade
+    // offPeriod is multiplied by 2 to ensure the fade lights don't loop before we transition out of fade
+    LightValues fadeValues = {
+      .onColors               = _stateToValues[from].onColors,
+      .offColors              = _stateToValues[to].onColors,
+      .onPeriod_ms            = {{_fadePeriod_ms,_fadePeriod_ms,_fadePeriod_ms,_fadePeriod_ms}},
+      .offPeriod_ms           = {{_fadePeriod_ms*2,_fadePeriod_ms*2,_fadePeriod_ms*2,_fadePeriod_ms*2}},
+      .transitionOnPeriod_ms  = {{0,0,0,0}},
+      .transitionOffPeriod_ms = {{_fadeTime_ms,_fadeTime_ms,_fadeTime_ms,_fadeTime_ms}},
+      .onOffset               = {{0,0,0,0}},
+      .offOffset              = {{0,0,0,0}},
+      .rotationPeriod_ms      = 0
+    };
+    _stateToValues[CubeLightsState::Fade] = fadeValues;
+    
+    return true;
+  }
+  return false;
 }
 
 void LightsComponent::SetEnableComponent(bool enable)
@@ -110,68 +245,23 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
     return;
   }
   
-  switch( state ) {      
-    case CubeLightsState::Off:
-      _robot.TurnOffObjectLights(object);
-      
-      PRINT_NAMED_DEBUG("LightsComponent.SetLights",
-                        "Object %d set to off",
-                        object.GetValue());
-      break;
-      
-    case CubeLightsState::Connected:
-      _robot.SetObjectLights(object,
-                             WhichCubeLEDs::ALL,
-                             ColorRGBA(0.6f,0.6f,0.6f), ColorRGBA(0.35f, 0.35f, 0.35f),
-                             250, 100,
-                             2000, 2000,
-                             true,
-                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-                             Point2f{0.0, 0.0});
-
-      // TODO:(bn) need to set this to cubes I haven't seen yet, but can't figure out how
-      //_robot.TurnOffObjectLights(object);
-      
-      PRINT_NAMED_DEBUG("LightsComponent.SetLights",
-                        "Object %d set to connected",
-                        object.GetValue());
-
-      break;
-      
-    case CubeLightsState::Visible:
-      _robot.SetObjectLights(object,
-                             WhichCubeLEDs::ALL,
-                             NamedColors::CYAN, NamedColors::CYAN,
-                             1000, 0,
-                             500, 500,
-                             true,
-                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-                             Point2f{0.0, 0.0});
-
-      PRINT_NAMED_DEBUG("LightsComponent.SetLights",
-                        "Object %d set to visible",
-                        object.GetValue());
-
-      break;
-      
-    case CubeLightsState::Interacting:
-      _robot.SetObjectLights(object,
-                             WhichCubeLEDs::ALL,
-                             NamedColors::GREEN, NamedColors::GREEN,
-                             1000, 0,
-                             500, 500,
-                             true,
-                             MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-                             Point2f{0.0, 0.0});
-      
-      PRINT_NAMED_DEBUG("LightsComponent.SetLights",
-                        "Object %d set to interacting",
-                        object.GetValue());
-
-      break;
-  }
-
+  _cubeInfo[object].startCurrStateTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();;
+  
   _cubeInfo[object].currState = state;
+  
+  PRINT_NAMED_INFO("LightsComponent.SetLights",
+                   "Setting object %d to state %d",
+                   object.GetValue(),
+                   state);
+  
+  const LightValues& values = _stateToValues[state];
+  _robot.SetObjectLights(object,
+                         values.onColors, values.offColors,
+                         values.onPeriod_ms, values.offPeriod_ms,
+                         values.transitionOnPeriod_ms, values.transitionOffPeriod_ms,
+                         values.onOffset, values.offOffset,
+                         MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+                         Point2f{0,0}, values.rotationPeriod_ms);
 }
 
 // TODO:(bn) handle disconnected? can't really change the lights in that case anyway....
@@ -189,6 +279,32 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
       _cubeInfo[msg.objectID].desiredState = CubeLightsState::Visible;
     }
   }
+}
+
+template<>
+void LightsComponent::HandleMessage(const ObjectMoved& msg)
+{
+  if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Connected ) ) {
+    _cubeInfo[msg.objectID].desiredState = CubeLightsState::Connected;
+  }
+}
+
+template<>
+void LightsComponent::HandleMessage(const ObjectConnectionState& msg)
+{
+  if( msg.connected &&
+     (msg.device_type == ActiveObjectType::OBJECT_CUBE1 ||
+      msg.device_type == ActiveObjectType::OBJECT_CUBE2 ||
+      msg.device_type == ActiveObjectType::OBJECT_CUBE3) &&
+     ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::WakeUp ) ) {
+    _cubeInfo[msg.objectID].desiredState = CubeLightsState::WakeUp;
+  }
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::EnableLightStates& msg)
+{
+  SetEnableComponent(msg.enable);
 }
 
 LightsComponent::ObjectInfo::ObjectInfo()

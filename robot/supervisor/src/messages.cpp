@@ -76,6 +76,9 @@ namespace Anki {
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
 #endif
+        uint32_t cubeID_;
+        u8 rotationPeriod_;
+        bool cubIDSet_ = false;
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -132,8 +135,11 @@ namespace Anki {
 #ifdef TARGET_K02
           #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
           // Need to add additional messages for special cases handled both on the Espressif and K02
-          case RobotInterface::EngineToRobot::Tag_setBackpackLights:  // This one is actually handled only on K02 and body
-            Process_setBackpackLights(msg.setBackpackLights);
+          case RobotInterface::EngineToRobot::Tag_setBackpackLightsMiddle:  // This one is actually handled only on K02 and body
+            Process_setBackpackLightsMiddle(msg.setBackpackLightsMiddle);
+            break;
+          case RobotInterface::EngineToRobot::Tag_setBackpackLightsTurnSignals:
+            Process_setBackpackLightsTurnSignals(msg.setBackpackLightsTurnSignals);
             break;
           case RobotInterface::EngineToRobot::Tag_animHeadAngle:
             Process_animHeadAngle(msg.animHeadAngle);
@@ -828,14 +834,42 @@ namespace Anki {
         HAL::RadioUpdateState(state.rtCount, false);
       }
       
-      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+      void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals& msg)
       {
-        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
-          BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)i,
-                                             msg.lights[i].onColor, msg.lights[i].offColor,
-                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
-                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
-        }
+        u8 led = LED_BACKPACK_LEFT;
+        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
+                                             msg.lights[0].onColor, msg.lights[0].offColor,
+                                             msg.lights[0].onFrames, msg.lights[0].offFrames,
+                                             msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames);
+        
+        led = LED_BACKPACK_RIGHT;
+        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
+                                           msg.lights[1].onColor, msg.lights[1].offColor,
+                                           msg.lights[1].onFrames, msg.lights[1].offFrames,
+                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames);
+        
+        BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
+      }
+      
+      void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle& msg)
+      {
+        u8 led = LED_BACKPACK_FRONT;
+        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
+                                           msg.lights[0].onColor, msg.lights[0].offColor,
+                                           msg.lights[0].onFrames, msg.lights[0].offFrames,
+                                           msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames);
+        
+        led = LED_BACKPACK_MIDDLE;
+        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
+                                           msg.lights[1].onColor, msg.lights[1].offColor,
+                                           msg.lights[1].onFrames, msg.lights[1].offFrames,
+                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames);
+        led = LED_BACKPACK_BACK;
+        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
+                                           msg.lights[2].onColor, msg.lights[2].offColor,
+                                           msg.lights[2].onFrames, msg.lights[2].offFrames,
+                                           msg.lights[2].transitionOnFrames, msg.lights[2].transitionOffFrames);
+
         BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
       }
 
@@ -910,9 +944,20 @@ namespace Anki {
       {
         HAL::AssignCubeSlots(7, msg.factory_id);
       }
+      void Process_setCubeID(const CubeID& msg)
+      {
+        cubeID_ = msg.objectID;
+        rotationPeriod_ = msg.rotationPeriod_frames;
+        cubIDSet_ = true;
+      }
       void Process_setCubeLights(const CubeLights& msg)
       {
-        BlockLightController::SetLights(msg.objectID, msg.lights);
+        if(!cubIDSet_)
+        {
+          return;
+        }
+        BlockLightController::SetLights(cubeID_, msg.lights, rotationPeriod_);
+        cubIDSet_ = false;
       }
       void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
       {

@@ -29,18 +29,33 @@ namespace BlockLightController {
 
     // Parameters for each LED on each block
     LightState _ledParams[MAX_NUM_CUBES][NUM_CUBE_LEDS];
-    // Keep track of where we are in the fase cycle for each LED
+    // Keep track of where we are in the phase cycle for each LED
     TimeStamp_t _ledPhases[MAX_NUM_CUBES][NUM_CUBE_LEDS];
 
     // Messages to be sent to each block
     uint16_t _blockMsg[MAX_NUM_CUBES][NUM_CUBE_LEDS];
+    
+    struct Rotation
+    {
+      u8 rotationPeriod = 0;
+      TimeStamp_t lastRotation = 0;
+      u8 rotationOffset = 0;
+    };
+    
+    Rotation _rotations[MAX_NUM_CUBES];
 
   }; // "private" variables
 
 
-  Result SetLights(u8 blockID, const LightState *params)
+  Result SetLights(u8 blockID, const LightState *params, u8 rotationPeriod)
   {
     memcpy(_ledParams[blockID], params, sizeof(LightState)*NUM_CUBE_LEDS);
+    memset(_ledPhases[blockID], 0, sizeof(TimeStamp_t)*NUM_CUBE_LEDS);
+
+    _rotations[blockID].lastRotation = 0;
+    _rotations[blockID].rotationPeriod = rotationPeriod;
+    _rotations[blockID].rotationOffset = 0;
+    
     return RESULT_OK;
   }
 
@@ -48,11 +63,22 @@ namespace BlockLightController {
   {
     bool blockLEDsUpdated = false;
     uint16_t* m = _blockMsg[blockID];
+    
+    if(_rotations[blockID].rotationPeriod > 0 &&
+       TIMESTAMP_TO_FRAMES(currentTime - _rotations[blockID].lastRotation) > _rotations[blockID].rotationPeriod)
+    {
+      _rotations[blockID].lastRotation = currentTime;
+      ++_rotations[blockID].rotationOffset;
+      if(_rotations[blockID].rotationOffset >= NUM_CUBE_LEDS)
+      {
+        _rotations[blockID].rotationOffset = 0;
+      }
+    }
 
     for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
       u16 newColor;
       if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, _ledPhases[blockID][i], newColor)) {
-        m[i] = newColor;   // Currently, onColor is the only thing that matters in this message.
+        m[(i + _rotations[blockID].rotationOffset) % NUM_CUBE_LEDS] = newColor;   // Currently, onColor is the only thing that matters in this message.
         blockLEDsUpdated = true;
       }
     }

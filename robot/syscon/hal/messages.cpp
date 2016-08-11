@@ -41,14 +41,24 @@ static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
   Bluetooth::diffieHellmanResults(msg);
 }
 
-static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+static void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle& msg)
 {
-  Backpack::setLights(msg.lights);
+  Backpack::setLightsMiddle(msg.lights);
+}
+
+static void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals& msg)
+{
+  Backpack::setLightsTurnSignals(msg.lights);
+}
+
+static void Process_setCubeID(const CubeID& msg)
+{
+  Radio::setPropLightsID(msg.objectID, msg.rotationPeriod_frames);
 }
 
 static void Process_setCubeLights(const CubeLights& msg)
 {
-  Radio::setPropLights(msg.objectID, msg.lights);
+  Radio::setPropLights(msg.lights);
 }
 
 static void Process_setCubeGamma(const SetCubeGamma& msg)

@@ -37,7 +37,8 @@ enum LightMode {
   TRANSITION_UP,
   HOLD_ON,
   TRANSITION_DOWN,
-  HOLD_OFF
+  HOLD_OFF,
+  WAIT,
 };
 
 struct LightSet {
@@ -62,6 +63,8 @@ struct LightValues {
   uint8_t offFrames;
   uint8_t transitionOnFrames;
   uint8_t transitionOffFrames;
+  uint8_t onOffset;
+  uint8_t offOffset;
 };
 
 union ControllerLights {
@@ -80,7 +83,7 @@ extern ControllerLights lightController;
 namespace Lights {
   void init();
   void manage();
-  void update(LightValues& light, const LightState* ledParams);
+  void update(LightValues& light, const LightState* ledParams, const int cubeSlot = -1, const uint8_t rotationPeriod = 0);
 };
 
 #endif

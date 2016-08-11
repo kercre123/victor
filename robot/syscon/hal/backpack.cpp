@@ -55,7 +55,9 @@ static int off_time = 0;
 // Start all pins as input
 void Backpack::init()
 {
-  setLights(BackpackLights::startup);
+  setLightsMiddle(BackpackLights::startup + 1);
+  const LightState turnSignals[] = {BackpackLights::startup[0], BackpackLights::startup[4]};
+  setLightsTurnSignals(turnSignals);
   defaultPattern(LIGHTS_USER);
   
   // Prime our counter
@@ -174,8 +176,21 @@ void Backpack::defaultPattern(DefaultBackpackPattern pattern) {
   };
 }
 
-void Backpack::setLights(const LightState* update) {
-  memcpy(_userLights, update, sizeof(_userLights));
+void Backpack::setLightsMiddle(const LightState* update) {
+  // Middle lights are indicies 1,2,3
+  memcpy(_userLights+1, update, sizeof(LightState)*3);
+  
+  if (lights_locked) {
+    return ;
+  }
+  
+  updateLights(_userLights);
+}
+
+void Backpack::setLightsTurnSignals(const LightState* update) {
+  // Turnsignal lights are indicies 0,4
+  memcpy(_userLights, update, sizeof(LightState));
+  memcpy(_userLights+NUM_BACKPACK_LEDS-1, update+1, sizeof(LightState));
   
   if (lights_locked) {
     return ;

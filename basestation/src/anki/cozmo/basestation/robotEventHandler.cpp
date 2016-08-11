@@ -1474,7 +1474,8 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetActiveObjectLE
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
                            msg.turnOffUnspecifiedLEDs,
                            msg.makeRelative,
-                           Point2f(msg.relativeToX, msg.relativeToY));
+                           Point2f(msg.relativeToX, msg.relativeToY),
+                           msg.rotationPeriod_ms);
   }
 }
 
@@ -1497,7 +1498,9 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjec
                            msg.onColor, msg.offColor,
                            msg.onPeriod_ms, msg.offPeriod_ms,
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                           msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+                           msg.onOffset, msg.offOffset,
+                           msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY),
+                           msg.rotationPeriod_ms);
   }
 }
 

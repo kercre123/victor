@@ -314,7 +314,11 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     {
       Face::Clear();
       os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
-      msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLights;
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLightsMiddle;
+      RTIP::SendMessage(msg);
+      
+      os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLightsTurnSignals;
       RTIP::SendMessage(msg);
 
       os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));

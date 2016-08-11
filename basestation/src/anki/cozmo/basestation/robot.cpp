@@ -3188,20 +3188,40 @@ void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_L
                               const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                               const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
 {
-  std::array<Anki::Cozmo::LightState, (size_t)LEDId::NUM_BACKPACK_LEDS> lights;
+  std::array<Anki::Cozmo::LightState, 2> turnSignals;
+  u8 turnCount = 0;
+  std::array<Anki::Cozmo::LightState, 3> middleLights;
+  u8 middleCount = 0;
   for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
-    lights[i].onColor  = ENCODED_COLOR(onColor[i]);
-    lights[i].offColor = ENCODED_COLOR(offColor[i]);
-    lights[i].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
-    lights[i].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
-    lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
-    lights[i].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+    if(i == (int)LEDId::LED_BACKPACK_RIGHT || i == (int)LEDId::LED_BACKPACK_LEFT)
+    {
+      turnSignals[turnCount].onColor  = ENCODED_COLOR(onColor[i]);
+      turnSignals[turnCount].offColor = ENCODED_COLOR(offColor[i]);
+      turnSignals[turnCount].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
+      turnSignals[turnCount].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
+      turnSignals[turnCount].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
+      turnSignals[turnCount].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+      ++turnCount;
+    }
+    else
+    {
+      middleLights[middleCount].onColor  = ENCODED_COLOR(onColor[i]);
+      middleLights[middleCount].offColor = ENCODED_COLOR(offColor[i]);
+      middleLights[middleCount].onFrames  = MS_TO_LED_FRAMES(onPeriod_ms[i]);
+      middleLights[middleCount].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
+      middleLights[middleCount].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
+      middleLights[middleCount].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+      ++middleCount;
+    }
+  
+    
     // PRINT_NAMED_DEBUG("BackpackLights",
     //                   "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)",
     //                   i, lights[i].onColor, onColor[i], lights[i].offColor, offColor[i]);
   }
-
-  SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
+  
+  SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals)));
+  SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights)));
 }
     
 void Robot::SetHeadlight(bool on)
@@ -3227,7 +3247,8 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
                               const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                               const bool turnOffUnspecifiedLEDs,
                               const MakeRelativeMode makeRelative,
-                              const Point2f& relativeToPoint)
+                              const Point2f& relativeToPoint,
+                              const u32 rotationPeriod_ms)
 {
   ActiveObject* activeObject = GetActiveObjectInAnyFrame(GetBlockWorld(), objectID);
   
@@ -3249,7 +3270,7 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
 
         
     activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
-                          transitionOnPeriod_ms, transitionOffPeriod_ms,
+                          transitionOnPeriod_ms, transitionOffPeriod_ms, 0, 0,
                           turnOffUnspecifiedLEDs);
         
     std::array<Anki::Cozmo::LightState, 4> lights;
@@ -3262,6 +3283,8 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
       lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
       lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
       lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+      lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
+      lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
       // PRINT_NAMED_DEBUG("SetObjectLights(1)",
       //                   "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)",
       //                   i,
@@ -3278,7 +3301,8 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
     }
 
     SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
-    return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
+    SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(), MS_TO_LED_FRAMES(rotationPeriod_ms))));
+    return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
   }
 }
       
@@ -3290,8 +3314,11 @@ Result Robot::SetObjectLights(
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
+  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onOffset,
+  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offOffset,
   const MakeRelativeMode makeRelative,
-  const Point2f& relativeToPoint)
+  const Point2f& relativeToPoint,
+  const u32 rotationPeriod_ms)
 {
   ActiveObject* activeObject = GetActiveObjectInAnyFrame(GetBlockWorld(), objectID);
   
@@ -3300,7 +3327,7 @@ Result Robot::SetObjectLights(
     return RESULT_FAIL_INVALID_OBJECT;
   } else {
         
-    activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+    activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, onOffset, offOffset);
 
 
     ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
@@ -3322,16 +3349,18 @@ Result Robot::SetObjectLights(
       lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
       lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
       lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+      lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
+      lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
       
-      // PRINT_NAMED_DEBUG("SetObjectLights(2)",
-      //                   "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
-      //                   "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
-      //                   i, lights[i].onColor, ledState.onColor.AsRGBA(),
-      //                   lights[i].offColor, ledState.offColor.AsRGBA(),
-      //                   lights[i].onFrames, ledState.onPeriod_ms,
-      //                   lights[i].offFrames, ledState.offPeriod_ms,
-      //                   lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
-      //                   lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
+       PRINT_NAMED_DEBUG("SetObjectLights(2)",
+                         "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
+                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
+                         i, lights[i].onColor, ledState.onColor.AsRGBA(),
+                         lights[i].offColor, ledState.offColor.AsRGBA(),
+                         lights[i].onFrames, ledState.onPeriod_ms,
+                         lights[i].offFrames, ledState.offPeriod_ms,
+                         lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
+                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
       
     }
 
@@ -3342,7 +3371,8 @@ Result Robot::SetObjectLights(
     }
         
     SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
-    return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
+    SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(), MS_TO_LED_FRAMES(rotationPeriod_ms))));
+    return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
   }
 
 }

@@ -27,6 +27,8 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       OffPeriodMs = offDurationMs;
       TransitionOnPeriodMs = transitionMs;
       TransitionOffPeriodMs = transitionMs;
+      OnOffset = 0;
+      OffOffset = 0;
     }
   }
 
@@ -126,7 +128,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
   public bool LightsChanged {
     get {
-      if (lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY)
+      if (lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY || lastRotationPeriodMs != rotationPeriodMs)
         return true;
 
       for (int i = 0; i < Lights.Length; ++i) {
@@ -180,6 +182,9 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
   private MakeRelativeMode lastRelativeMode;
   public MakeRelativeMode relativeMode;
+
+  private float lastRotationPeriodMs;
+  public float rotationPeriodMs;
 
   private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
 
@@ -320,11 +325,14 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
       SetAllActiveObjectLEDsMessage.onColor[i] = Lights[i].OnColor;
       SetAllActiveObjectLEDsMessage.offColor[i] = Lights[i].OffColor;
+      SetAllActiveObjectLEDsMessage.onOffset [i] = Lights[i].OnOffset;
+      SetAllActiveObjectLEDsMessage.offOffset [i] = Lights[i].OffOffset;
     }
 
     SetAllActiveObjectLEDsMessage.makeRelative = relativeMode;
     SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
     SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
+    SetAllActiveObjectLEDsMessage.rotationPeriod_ms = (uint)rotationPeriodMs;
 
     RobotEngineManager.Instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -336,6 +344,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
     lastRelativeMode = relativeMode;
     lastRelativeToX = relativeToX;
     lastRelativeToY = relativeToY;
+    lastRotationPeriodMs = rotationPeriodMs;
 
     for (int i = 0; i < Lights.Length; ++i) {
       Lights[i].SetLastInfo();
@@ -386,11 +395,14 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       light.OffPeriodMs = offPeriod_ms;
       light.TransitionOnPeriodMs = transitionOnPeriod_ms;
       light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+      light.OnOffset = 0;
+      light.OffOffset = 0;
     }
 
     relativeMode = 0;
     relativeToX = 0;
     relativeToY = 0;
+    rotationPeriodMs = 0;
   }
 
   public void SetLEDs(uint[] lightColors, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
@@ -407,11 +419,14 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       light.OffPeriodMs = offPeriod_ms;
       light.TransitionOnPeriodMs = transitionOnPeriod_ms;
       light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+      light.OnOffset = 0;
+      light.OffOffset = 0;
     }
 
     relativeMode = 0;
     relativeToX = 0;
     relativeToY = 0;
+    rotationPeriodMs = 0;
   }
 
   public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,

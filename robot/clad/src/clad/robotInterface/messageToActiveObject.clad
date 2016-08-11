@@ -7,11 +7,16 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+  message CubeID
+  {
+    uint_32    objectID,
+    uint_8     rotationPeriod_frames,
+  }
+
   message CubeLights
   {
     LightState lights[4],
-    uint_32    objectID,
   }
 
   message FlashObjectIDs

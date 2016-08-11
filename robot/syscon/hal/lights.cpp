@@ -45,6 +45,11 @@ static const uint16_t DivTable[] = {
     264,   263,   262,   261,   260,   259,   258,   257
 };
 
+static uint8_t rotationPeriods[MAX_ACCESSORIES] = {0};
+static uint8_t rotationOffset[MAX_ACCESSORIES] = {0};
+static unsigned int lastRotation[MAX_ACCESSORIES] = {0};
+static unsigned int frame_time = 0;
+
 static inline void AlphaBlend(
   LightSet& color, 
   const LightSet on, const LightSet off, 
@@ -60,7 +65,7 @@ static inline void AlphaBlend(
   color.ir = (alpha >= 0x80) ? on.ir : off.ir;
 }
 
-static inline bool transition(const int time, int& phase, LightMode& mode, const LightMode next, const uint8_t frames) {
+static inline bool transition(const int time, int& phase, LightMode& mode, const LightMode next, const uint16_t frames) {
   phase += time;
   if (phase >= frames) {
     phase -= frames;
@@ -70,7 +75,7 @@ static inline bool transition(const int time, int& phase, LightMode& mode, const
   return false;
 }
 
-static void CalculateLEDColor(LightValues& light, const uint32_t time)
+static void CalculateLEDColor(LightValues& light, const uint32_t time, LightSet& actualLight, const uint8_t rotPeriod)
 { 
   int delta = time - light.clock;
   light.clock = time;
@@ -80,26 +85,33 @@ static void CalculateLEDColor(LightValues& light, const uint32_t time)
   }
     
   switch (light.mode) {
+    case WAIT:
+      transition(delta, light.phase, light.mode, TRANSITION_UP, light.onOffset);
+      break;
     case TRANSITION_UP:
-      AlphaBlend(light.values, light.onColor, light.offColor, light.phase, light.transitionOnFrames);
+      AlphaBlend(actualLight, light.onColor, light.offColor, light.phase, light.transitionOnFrames);
       
       if (transition(delta, light.phase, light.mode, HOLD_ON, light.transitionOnFrames)) {
-        memcpy(&light.values, &light.onColor, sizeof(LightSet));
+        memcpy(&actualLight, &light.onColor, sizeof(LightSet));
       }
       break ;
     case HOLD_ON:
       transition(delta, light.phase, light.mode, TRANSITION_DOWN, light.onFrames);
       break ;
     case TRANSITION_DOWN:
-      AlphaBlend(light.values, light.offColor, light.onColor, light.phase, light.transitionOffFrames);
+      AlphaBlend(actualLight, light.offColor, light.onColor, light.phase, light.transitionOffFrames);
       
       if (transition(delta, light.phase, light.mode, HOLD_OFF, light.transitionOffFrames)) {
-        memcpy(&light.values, &light.offColor, sizeof(LightSet));
+        memcpy(&actualLight, &light.offColor, sizeof(LightSet));
       }
       break ;
     case HOLD_OFF:
-      transition(delta, light.phase, light.mode, TRANSITION_UP, light.offFrames);
+      transition(delta, light.phase, light.mode, WAIT, light.offFrames + light.offOffset);
       break ;
+    case HOLD_VALUE:
+      if(rotPeriod > 0) {
+        memcpy(&actualLight, &light.onColor, sizeof(LightSet));
+      }
     default:
       return ;
   }
@@ -122,7 +134,6 @@ void Lights::manage() {
   unsigned int delta = counter - last_counter;
   last_counter = counter;
 
-  static unsigned int frame_time = 0;
   static unsigned int accumulator = 0;
 
   accumulator += delta * FRAME_RATE;
@@ -130,13 +141,42 @@ void Lights::manage() {
     frame_time++;
     accumulator -= TICKS_PER_SECOND;
   }
-
-  for (int i = 0; i < TOTAL_LIGHTS; i++) {
-    CalculateLEDColor(lightController.lights[i], frame_time);
+  
+  for(int i = 0; i < MAX_ACCESSORIES; ++i)
+  {
+    unsigned int* lastRot = lastRotation + i;
+    uint8_t* offset = rotationOffset + i;
+    const uint8_t rotPeriod = rotationPeriods[i];
+    
+    if(rotPeriod > 0 && ((frame_time - (*lastRot)) > rotPeriod))
+    {
+      *lastRot = frame_time;
+      (*offset)++;
+      if(*offset >= NUM_PROP_LIGHTS)
+      {
+        *offset = 0;
+      }
+    }
+  
+    for(int j = 0; j < NUM_PROP_LIGHTS; ++j)
+    {
+      int k = j + *offset;
+      if(k >= NUM_PROP_LIGHTS)
+      {
+        k -= NUM_PROP_LIGHTS;
+      }
+      CalculateLEDColor(lightController.cube[i][j], frame_time, lightController.cube[i][k].values, rotPeriod);
+    }
   }
+  
+  for(int i = 0; i < 5; ++i)
+  {
+    CalculateLEDColor(lightController.backpack[i], frame_time, lightController.backpack[i].values, 0);
+  }
+  
 }
 
-void Lights::update(LightValues& light, const LightState* params) {
+void Lights::update(LightValues& light, const LightState* params, const int cubeSlot, const uint8_t rotationPeriod) {
   // Convert from 5bpp to 16bpp
   LightSet onColor = { UNPACK_COLORS(params->onColor) };
   LightSet offColor = { UNPACK_COLORS(params->offColor) };
@@ -147,13 +187,22 @@ void Lights::update(LightValues& light, const LightState* params) {
   light.offFrames = params->offFrames;
   light.transitionOnFrames = params->transitionOnFrames;
   light.transitionOffFrames = params->transitionOffFrames;
+  light.onOffset = params->onOffset;
+  light.offOffset = params->offOffset;
+  
+  if(cubeSlot >= 0)
+  {
+    rotationPeriods[cubeSlot] = rotationPeriod;
+    rotationOffset[cubeSlot] = 0;
+    lastRotation[cubeSlot] = frame_time;
+  }
   
   // If this is a constant light
   if (params->onFrames == 255 || (params->onColor == params->offColor)) {
     light.mode = HOLD_VALUE;   
     memcpy(&light.values, &light.onColor, sizeof(LightSet));
   } else {
-    light.mode = TRANSITION_UP;
+    light.mode = WAIT;
     light.phase = 0;
   }
 }

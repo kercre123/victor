@@ -4,6 +4,8 @@
 #include "anki/types.h"
 #include "clad/types/ledTypes.h"
 
+#define TIMESTAMP_TO_FRAMES(ts) ((u16)((ts) / 30))
+
 namespace Anki {
   namespace Cozmo {
 

@@ -259,9 +259,14 @@ message SetMotionModelParams
   float_32 slipFactor,
 }
 
-message BackpackLights
+message BackpackLightsMiddle
 {
-  LightState lights[5],
+  LightState lights[3],
+}
+
+message BackpackLightsTurnSignals
+{
+  LightState lights[2],
 }
 
 message AbortAnimation
@@ -358,7 +363,7 @@ union EngineToRobot
 
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
-  BackpackLights                setBackpackLights           = 0x03,
+  BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
@@ -370,6 +375,8 @@ union EngineToRobot
   OTA::BodyRestart              bodyRestart                 = 0x0D,
   ReadBodyStorage               readBodyStorage             = 0x0E,
   WriteBodyStorage              writeBodyStorage            = 0x0F,
+  CubeID                        setCubeID                   = 0x10,
+  BackpackLightsTurnSignals     setBackpackLightsTurnSignals = 0x11,
 
   DiffieHellmanResults          diffieHellmanResults        = 0x26,
   EnterPairing                  enterPairing                = 0x27,
