@@ -92,13 +92,13 @@ namespace Anki.Cozmo.Audio {
         GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
         break;
       case "Ui":
-        AudioClient.Instance.StopAllAudioEvents(GameObjectType.UI);
+        UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType.UI);
         break;
       case "Sfx":
-        AudioClient.Instance.StopAllAudioEvents(GameObjectType.SFX);
+        UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType.SFX);
         break;
       case "Vo":
-        AudioClient.Instance.StopAllAudioEvents(GameObjectType.Default);
+        UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType.Default);
         break;
       }
     }

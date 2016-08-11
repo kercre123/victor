@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,19 +11,19 @@ namespace Anki {
 
       public delegate void CallbackHandler(CallbackInfo callbackInfo);
 
-      public class AudioClient {
+      public class UnityAudioClient {
 
         public event CallbackHandler OnAudioCallback;
 
         private static String kAudioLogChannelName = "Audio";
-        private static AudioClient _AudioClient = null;
+        private static UnityAudioClient _AudioClient = null;
         private RobotEngineManager _RobotEngineManager = null;
         private bool _IsInitialized = false;
 
-        public static AudioClient Instance {
+        public static UnityAudioClient Instance {
           get {
             if (_AudioClient == null) {
-              _AudioClient = new AudioClient();
+              _AudioClient = new UnityAudioClient();
             }
             _AudioClient.Initialize();
             return _AudioClient;
@@ -46,7 +46,7 @@ namespace Anki {
           }
         }
 
-        ~AudioClient() {
+        ~UnityAudioClient() {
           _RobotEngineManager.RemoveCallback<Anki.Cozmo.Audio.AudioCallback>(HandleCallback);
           _RobotEngineManager = null;
           _IsInitialized = false;
