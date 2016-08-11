@@ -8,26 +8,9 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22404124}
-  - 114: {fileID: 11458820}
+  - 114: {fileID: 11457164}
   m_Layer: 5
-  m_Name: Quit Button
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &145444
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22430006}
-  - 222: {fileID: 22249776}
-  - 114: {fileID: 11474252}
-  m_Layer: 0
-  m_Name: ButtonIcon
+  m_Name: QuitButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -111,7 +94,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11458820
+--- !u!114 &11457164
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -119,29 +102,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 141546}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _Interactable: 1
-  _TextLabel: {fileID: 0}
-  _TextLabelOffset: 0
-  TextEnabledColor: {r: 0.7019608, g: 0.89411765, b: 1, a: 1}
-  TextPressedColor: {r: 0.40727723, g: 0.5286883, b: 0.5955882, a: 1}
-  TextDisabledColor: {r: 0.7019608, g: 0.8941177, b: 1, a: 0.20392157}
-  _AlphaController: {fileID: 0}
-  ButtonGraphics:
-  - targetImage: {fileID: 11474252}
-    ignoreSprite: 0
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.25735295, g: 0.25475103, b: 0.21572232, a: 1}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 0.334}
-  _GlintAnimator: {fileID: 0}
-  _UISoundEvent:
-    _Event: Play__Ui__Click_General
-    _EventType: Ui
-    _GameObjectType: 2
-  _ShowDisabledStateWhenInteractable: 0
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
+  ModifiedValues: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: WifiInstructionsView:_OptionalCloseDialogButton
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11473468
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -162,33 +132,6 @@ MonoBehaviour:
   _SwipeContainer: {fileID: 22405804}
   _PageIndicatorPrefab: {fileID: 11435474, guid: 570bebd44cb114622b6d8fb39a91247a,
     type: 2}
---- !u!114 &11474252
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145444}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: a06872b4ef1ea433698eaa1f0c3dd771, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!114 &11483990
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -203,7 +146,7 @@ MonoBehaviour:
   _DASEventViewName: wifi_instructions_view
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 11458820}
+  _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
 --- !u!222 &22249756
 CanvasRenderer:
@@ -211,12 +154,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 185630}
---- !u!222 &22249776
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145444}
 --- !u!222 &22277488
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -239,14 +176,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children:
-  - {fileID: 22430006}
+  m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 150, y: -150}
-  m_SizeDelta: {x: 189, y: 175}
+  m_SizeDelta: {x: 270, y: 203}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22405804
 RectTransform:
@@ -265,24 +201,6 @@ RectTransform:
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 150}
   m_SizeDelta: {x: 0, y: -300}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22430006
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145444}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 22404124}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 104, y: 123}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461814
 RectTransform:

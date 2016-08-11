@@ -7,7 +7,7 @@ public class ConnectionFlow : MonoBehaviour {
   public System.Action ConnectionFlowComplete;
   public System.Action ConnectionFlowQuit;
 
-  public const float kConnectionFlowDelay = 1.0f;
+  public const float kConnectionFlowDelay = 1.5f;
 
   [SerializeField]
   private ConnectionFlowBackground _ConnectionFlowBackgroundPrefab;
@@ -287,7 +287,6 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void CheckForRestoreRobotFlow() {
-    // TODO: implement check for if we need to try to restore old robot profile to a new robot.
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // we are done with first time user flow.. TODO: move this to after onboarding?
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;

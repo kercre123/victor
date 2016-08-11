@@ -71,6 +71,16 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
     _BirthDatePicker.gameObject.SetActive(show);
     _ContinueButton.gameObject.SetActive(show);
     _BirthdateLabel.gameObject.SetActive(show);
+    _ContinueButton.Interactable = false;
+  }
+
+  private void HandleDatePicked() {
+    if (_BirthDatePicker.date < System.DateTime.Today) {
+      _ContinueButton.Interactable = true;
+    }
+    else {
+      _ContinueButton.Interactable = false;
+    }
   }
 
   private void HideNameInput() {
@@ -81,6 +91,7 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
 
   private void ShowBirthdateEntry() {
     ShowDOBEntry(true);
+    _BirthDatePicker.ValueChange += HandleDatePicked;
   }
 
   private void HandleBirthdateEntryDone() {
