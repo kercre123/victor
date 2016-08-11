@@ -42,6 +42,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TimeTilFaceOff_s: 20
   TimeTilDisconnect_s: 40
+  _FilterSmoothingWeight: 0.99
+  _LowBatteryVoltageValue: 3.75
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
