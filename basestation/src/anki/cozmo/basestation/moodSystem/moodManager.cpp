@@ -103,20 +103,24 @@ void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
     }
   }
 
+  PRINT_CH_INFO("Mood", "MoodManager.LoadedEventMap",
+                "Loaded mood reactions for %zu action types",
+                _actionCompletedEventMap.size());
+
   // PrintActionCompletedEventMap();
 }
 
 void MoodManager::PrintActionCompletedEventMap() const
 {
-  PRINT_NAMED_INFO("MoodManager.PrintActionCompletedEventMap", "action result event map follows:");
+  PRINT_CH_INFO("Mood", "MoodManager.PrintActionCompletedEventMap", "action result event map follows:");
 
   for( const auto& actionIt : _actionCompletedEventMap ) {
     for( const auto& resultIt : actionIt.second ) {
-      PRINT_NAMED_INFO("MoodManager.PrintActionCompletedEventMap",
-                       "%20s %15s %s",
-                       actionIt.first.c_str(),
-                       resultIt.first.c_str(),
-                       resultIt.second.c_str());
+      PRINT_CH_INFO("Mood", "MoodManager.PrintActionCompletedEventMap",
+                    "%20s %15s %s",
+                    actionIt.first.c_str(),
+                    resultIt.first.c_str(),
+                    resultIt.second.c_str());
     }
   }
 }
@@ -189,11 +193,11 @@ void MoodManager::HandleMessage(const ExternalInterface::RobotCompletedAction& m
   if( actionIt != _actionCompletedEventMap.end() ) {
     const auto& resultIt = actionIt->second.find( ActionResultToString(msg.result) );
     if( resultIt != actionIt->second.end() ) {
-      PRINT_NAMED_DEBUG("MoodManager.ActionCompleted.Reaction",
-                        "Reacting to action '%s' completion with '%s' by triggering event '%s'",
-                        RobotActionTypeToString(msg.actionType),
-                        ActionResultToString(msg.result),
-                        resultIt->second.c_str());
+      PRINT_CH_DEBUG("Mood", "MoodManager.ActionCompleted.Reaction",
+                     "Reacting to action '%s' completion with '%s' by triggering event '%s'",
+                     RobotActionTypeToString(msg.actionType),
+                     ActionResultToString(msg.result),
+                     resultIt->second.c_str());
       TriggerEmotionEvent(resultIt->second, GetCurrentTimeInSeconds());
     }
   }
@@ -305,6 +309,8 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, double curre
   const EmotionEvent* emotionEvent = GetStaticMoodData().GetEmotionEventMapper().FindEvent(eventName);
   if (emotionEvent)
   {
+    PRINT_CH_INFO("Mood", "TriggerEmotionEvent", "%s", eventName.c_str());
+    
     const float timeSinceLastOccurence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
     const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurence);
 
@@ -389,7 +395,9 @@ void MoodManager::SetEnableMoodEventOnCompletion(u32 actionTag, bool enable)
 SimpleMoodType MoodManager::GetSimpleMood() const
 {
   float happiness = GetEmotion(EmotionType::Happy).GetValue();
-  if(happiness < -0.33f) {
+  float confidence = GetEmotion(EmotionType::Confident).GetValue();
+  // TODO:(bn) / mooly check AGs for driving groups, hopefully this will work for frustrated
+  if(happiness < -0.33f || confidence < -0.29f) {
     return SimpleMoodType::Sad;
   }
   if(happiness > 0.33f) {

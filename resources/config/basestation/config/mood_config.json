@@ -58,6 +58,27 @@
            "y": 0
          }
        ]
+     },
+     {
+       "emotionType": "Confident",
+       "nodes": [
+         {
+           "x": 0,
+           "y": 1
+         },
+         {
+           "x": 30,
+           "y": 1
+         },
+         {
+           "x": 60,
+           "y": 0.5
+         },
+         {
+           "x": 70,
+           "y": 0
+         }
+       ]
      }
   ],
   "eventMapper" : {
@@ -81,6 +102,15 @@
       "FAILURE_RETRY": "DrivingActionFailedWithRetry",
       "FAILURE_ABORT": "DrivingActionFailedWithAbort"
     },
+    "DRIVE_TO_OBJECT": {
+      "FAILURE_RETRY": "DrivingActionFailedWithRetry",
+      "FAILURE_ABORT": "DrivingActionFailedWithAbort"
+    },
+    "PICK_AND_PLACE_INCOMPLETE": {
+      "SUCCESS": "PickupSucceeded", // NOTE: this really shouldn't happen
+      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    },
     "PICKUP_OBJECT_LOW": {
       "SUCCESS": "PickupSucceeded",
       "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
@@ -100,6 +130,18 @@
       "SUCCESS": "RollSucceeded",
       "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
       "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    },
+    "POP_A_WHEELIE": {
+      "SUCCESS": "RollSucceeded",
+      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    },
+    "FLIP_BLOCK": {
+      "SUCCESS": "FlipBlockSucceeded"
+    },
+    "DRIVE_TO_FLIP_BLOCK_POSE": {
+      "FAILURE_RETRY": "DrivingActionFailedWithRetry",
+      "FAILURE_ABORT": "DrivingActionFailedWithAbort"
     }
   }
 }

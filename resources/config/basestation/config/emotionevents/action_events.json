@@ -9,7 +9,7 @@
          },
          {
             "emotionType": "Confident",
-            "value": -0.04
+            "value": -0.1
          }
       ]
     },
@@ -22,7 +22,7 @@
          },
          {
             "emotionType": "Confident",
-            "value": -0.08
+            "value": -0.2
          }
       ]
     },
@@ -35,7 +35,7 @@
          },
          {
             "emotionType": "Confident",
-            "value": -0.08
+            "value": -0.2
          }
       ]
     },
@@ -48,7 +48,7 @@
          },
          {
             "emotionType": "Confident",
-            "value": -0.12
+            "value": -0.2
          }
       ]
     },
@@ -57,7 +57,7 @@
       "emotionAffectors": [										  
         {
           "emotionType": "Confident",
-          "value": 0.02
+          "value": 0.04
         }
       ]
     },
@@ -70,7 +70,7 @@
         },
         {
           "emotionType": "Confident",
-          "value": 0.08
+          "value": 0.2
         }
       ]
     },
@@ -96,10 +96,23 @@
         },
         {
           "emotionType": "Confident",
-          "value": 0.12
+          "value": 0.2
         }
       ]
-    }
+    },
+    {
+      "name": "FlipBlockSucceeded",
+      "emotionAffectors": [										  
+        {
+          "emotionType": "Happy",
+          "value": 0.8
+        },
+        {
+          "emotionType": "Confident",
+          "value": 0.5
+        }
+      ]
+    }      
   ]
 }
 

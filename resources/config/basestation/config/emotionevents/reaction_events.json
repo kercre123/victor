@@ -1,0 +1,23 @@
+{
+  "emotionEvents": [
+    {
+      "name": "FinishedMinorFrustration",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Confident",
+            "value": 0.1
+         }
+      ]
+    },
+    {
+      "name": "FinishedMajorFrustration",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Confident",
+            "value": 1.0
+         }
+      ]
+    }      
+  ]
+}
+

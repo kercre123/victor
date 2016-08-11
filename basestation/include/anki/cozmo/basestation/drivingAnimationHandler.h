@@ -66,6 +66,8 @@ namespace Anki {
         // Listens for driving animations to complete and handles what animation to play next
         void HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg);
       
+        void UpdateCurrDrivingAnimations();
+
         // Queues the respective driving animation
         void PlayDrivingStartAnim();
         void PlayDrivingLoopAnim();
@@ -74,7 +76,11 @@ namespace Anki {
         Robot& _robot;
       
         std::vector<DrivingAnimations> _drivingAnimationStack;
+        DrivingAnimations _currDrivingAnimations;
+      
         const DrivingAnimations kDefaultDrivingAnimations;
+        const DrivingAnimations kAngryDrivingAnimations;
+      
       
         bool _startedPlayingAnimation = false;
       

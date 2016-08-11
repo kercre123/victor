@@ -259,6 +259,7 @@ void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventT
     if (0 != GetReactionaryBehaviorTags<typename EventType::Tag>(behavior).count(event.GetData().GetTag()))
     {
       if ( !behavior->IsRunning() &&
+           ( !_runningReactionaryBehavior || behavior->ShouldInterruptOtherReactionaryBehavior() ) && 
            behavior->ShouldRunForEvent(event.GetData(),_robot) &&
            behavior->IsRunnable(_robot) ) {
         PRINT_NAMED_INFO("ReactionaryBehavior.Found",
@@ -549,6 +550,7 @@ void BehaviorManager::CheckForComputationalSwitch()
   for( auto rBehavior: _reactionaryBehaviors){
     if(!rBehavior->IsRunning()
        && rBehavior->IsRunnable(_robot)
+       && ( !_runningReactionaryBehavior || rBehavior->ShouldInterruptOtherReactionaryBehavior() )
        && rBehavior->ShouldComputationallySwitch(_robot)){
           SwitchToReactionaryBehavior(rBehavior);
           if(hasSwitched){
