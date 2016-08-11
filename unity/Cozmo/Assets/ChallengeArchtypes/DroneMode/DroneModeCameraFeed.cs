@@ -243,17 +243,23 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void ShowTextForReticle(IVisibleInCamera reticleFocus, DroneModeCameraReticle reticle) {
       if (reticle != null) {
-        string text = "";
-        if (!string.IsNullOrEmpty(reticleFocus.ReticleLabelStringArg)) {
-          text = Localization.GetWithArgs(reticleFocus.ReticleLabelLocKey, reticleFocus.ReticleLabelStringArg);
+        if (!string.IsNullOrEmpty(reticleFocus.ReticleLabelLocKey)) {
+          string text = "";
+          if (!string.IsNullOrEmpty(reticleFocus.ReticleLabelStringArg)) {
+            text = Localization.GetWithArgs(reticleFocus.ReticleLabelLocKey, reticleFocus.ReticleLabelStringArg);
+          }
+          else {
+            text = Localization.Get(reticleFocus.ReticleLabelLocKey);
+          }
+          _FocusedObjectFrameContainer.gameObject.SetActive(true);
+          _FocusedObjectTextLabel.text = text;
+          reticle.ReticleLabel = text;
+          reticle.ShowReticleLabelText(true);
         }
         else {
-          text = Localization.Get(reticleFocus.ReticleLabelLocKey);
+          _FocusedObjectFrameContainer.gameObject.SetActive(false);
+          reticle.ShowReticleLabelText(false);
         }
-        _FocusedObjectFrameContainer.gameObject.SetActive(true);
-        _FocusedObjectTextLabel.text = text;
-        reticle.ReticleLabel = text;
-        reticle.ShowReticleLabelText(true);
       }
       else {
         _FocusedObjectFrameContainer.gameObject.SetActive(false);
