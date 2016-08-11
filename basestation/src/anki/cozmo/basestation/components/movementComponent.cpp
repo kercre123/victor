@@ -111,7 +111,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   
   // Don't check for unexpected movement while playing animations that are moving the body
   // because some of them rapidly move the motors which triggers false positives
-  if(_robot.IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK))
+  // Or the robot is picking/placing
+  if((_robot.IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) || _robot.IsPickingOrPlacing())
   {
     return;
   }

@@ -3352,15 +3352,15 @@ Result Robot::SetObjectLights(
       lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
       lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
       
-       PRINT_NAMED_DEBUG("SetObjectLights(2)",
-                         "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
-                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
-                         i, lights[i].onColor, ledState.onColor.AsRGBA(),
-                         lights[i].offColor, ledState.offColor.AsRGBA(),
-                         lights[i].onFrames, ledState.onPeriod_ms,
-                         lights[i].offFrames, ledState.offPeriod_ms,
-                         lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
-                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
+//       PRINT_NAMED_DEBUG("SetObjectLights(2)",
+//                         "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
+//                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
+//                         i, lights[i].onColor, ledState.onColor.AsRGBA(),
+//                         lights[i].offColor, ledState.offColor.AsRGBA(),
+//                         lights[i].onFrames, ledState.onPeriod_ms,
+//                         lights[i].offFrames, ledState.offPeriod_ms,
+//                         lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
+//                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
       
     }
 
