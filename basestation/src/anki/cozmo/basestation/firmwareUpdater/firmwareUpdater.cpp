@@ -90,12 +90,12 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData, std::function<void()> callbac
   
 std::string GetFirmwareFilename()
 {
-  return "config/basestation/firmware/v0/cozmo.safe";
+  return "config/basestation/firmware/cozmo.safe";
 }
 
 void FirmwareUpdater::LoadHeader(const JsonCallback& callback)
 {
-  _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename()));
+    _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename()));
 
   auto loadCallback = [this, callback]
   {

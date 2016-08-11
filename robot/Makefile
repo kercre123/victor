@@ -28,7 +28,7 @@ WIFI_BINARY=$(BUILD_DIR)/esp.user.bin
 RTIP_BINARY=$(BUILD_DIR)/robot.axf
 BODY_BINARY=$(BUILD_DIR)/syscon.axf
 MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
-OTA_FILE=releases/cozmo.safe
+OTA_FILE=$(BUILD_DIR)/cozmo.safe
 
 .PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3
 
@@ -56,8 +56,7 @@ clean:
 	make -C clad clean
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
-	#rm -rf $(BUILD_DIR)
-	#rm -rf syscon/build
+	rm -rf $(BUILD_DIR)
 	rm -rf $(GENERATED_DIR)
 
 fresh: clean $(ANKI_LOG_TABLE_JSON) all python
@@ -128,7 +127,6 @@ espBuild: esp AnkiLog
 	cp espressif/app/esp.map $(BUILD_DIR)/esp.map
 
 $(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
-	mkdir -p $(dir $@)
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
 $(BUILD_DIR)/syscon.map:

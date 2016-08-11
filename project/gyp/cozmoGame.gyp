@@ -55,12 +55,12 @@
 
     'cte_lib_search_path_ios_debug': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
-      '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
+      #'<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
     ],
 
     'cte_lib_search_path_ios_release': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
-      '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos',
+      #'<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos',
     ],
 
     'webots_includes': [

@@ -227,6 +227,9 @@ UnityDASDll/UnityDASDll/bin/*
 # Anki specific
 EXTERNALS
 
+#symlinks
+resources/config/basestation/firmware
+
 # VSCode
 .vscode
 # Misc

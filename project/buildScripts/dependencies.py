@@ -300,9 +300,12 @@ def teamcity_package(tc_dict):
                         new_version = False
             else:
                 #Should only get here if VERSION file was manually removed.
+                if VERBOSE:
+                    print "Generating version file."
                 vfile = open(version_file, mode="w")
                 vfile.write(str(version))
                 vfile.close()
+                new_version = False
 
         if new_version and os.path.isdir(loc):
             pipe = subprocess.Popen(pull_down, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -314,7 +317,10 @@ def teamcity_package(tc_dict):
                 if os.path.isfile(dist):
                     os.remove(dist)
                 print "ERROR {0}ing {1}.  Please try again.".format(tool, package)
-
+            else:
+                print "{0} Downloaded.  New version {1} ".format(package_name.title(), version)
+        else:
+            print "{0} does not need to be updated.  Current version {1}".format(package_name.title(), version)
         if os.path.isfile(dist):
             if os.path.isdir(unpackage_location):
                 shutil.rmtree(unpackage_location)

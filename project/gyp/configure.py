@@ -380,7 +380,6 @@ def main(scriptArgs):
   if options.mex:
     buildMex = 'yes'
 
-  # symlink coretech external resources
   if subprocess.call(['mkdir', '-p',
     os.path.join(projectRoot, 'generated/resources')]) != 0 :
     UtilLog.error("error creating generated/resources")
@@ -391,6 +390,13 @@ def main(scriptArgs):
     os.path.join(coretechExternalPath, 'pocketsphinx/pocketsphinx/model/en-us'),
     os.path.join(projectRoot, 'generated/resources/pocketsphinx')]) != 0 :
     UtilLog.error("error symlinking pocket sphinx resources")
+    return False
+
+  # revisit for COZMO-1287 to handle multiple firmwares.  
+  if subprocess.call(['ln', '-s', '-f', '-n',
+    os.path.join(externalsPath, 'firmware/releases'),
+    os.path.join(projectRoot, 'resources/config/basestation/firmware')]) != 0 :
+    UtilLog.error("error symlinking firmware resources")
     return False
 
   # paths relative to gyp file

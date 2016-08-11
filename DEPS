@@ -29,10 +29,18 @@
                 "extension": "tar.gz",
                 "package_name": "Cte",
                 "version": "151"
+            },
+            "firmware": {
+                "build_id": "14501",
+                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
+                "extension": "tar.gz",
+                "package_name": "firmware",
+                "version": "95"
             }
         },
         "default_usr": "puller_cozmo",
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://build.ankicore.com/"
     }
+
 }
