@@ -10,47 +10,35 @@
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
-  static const int QUEUE_DEPTH = 8;
+  static const int QUEUE_SIZE = 256;
   
-  enum QueueSlotState {
-    QUEUE_INACTIVE,
-    QUEUE_READY
-  };
-
-  struct QueueSlot {
-    union {
-      uint8_t raw[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
-      struct {
-        uint8_t size;
-        uint8_t tag;
-        uint8_t payload[1];
-      };
-    };
-
-    volatile QueueSlotState state;
-  };
-
-  static QueueSlot queue[QUEUE_DEPTH];
+  static uint8_t queue[QUEUE_SIZE];
+  static int queue_used = 0;
+  
+  static int inc(int& ptr) {
+    int prev = ptr;
+    ptr = (ptr+1) % sizeof(queue);
+    return prev;
+  }
 
   void Spine::Dequeue(uint8_t* dest) {
-    static int spine_read = 0;
+    static int queue_read = 0;
 
     int remaining = SPINE_MAX_CLAD_MSG_SIZE_DOWN;
     
-    while (queue[spine_read].state == QUEUE_READY) {
-      QueueSlot* slot = &queue[spine_read];
-      int total_size = slot->size + 1;
+    while (queue_used > 0) {
+      int total_size = queue[queue_read] + 1;
 
       if (total_size > remaining) {
         break ;
       }
 
-      memcpy(dest, slot->raw, total_size);
-      dest += total_size;
       remaining -= total_size;
-      
-      slot->state = QUEUE_INACTIVE;
-      spine_read = (spine_read+1) % QUEUE_DEPTH;
+      queue_used -= total_size;
+
+      while (total_size-- > 0) {
+        *(dest++) = queue[inc(queue_read)];
+      }
     }
 
     // We need to clear out trailing garbage
@@ -58,9 +46,10 @@ namespace HAL {
   }
 
   bool Spine::Enqueue(const void* data, const u8 length, u8 tag) {
-    static int spine_write = 0;
-
-    if (queue[spine_write].state == QUEUE_READY) {
+    static int queue_write = 0;
+    int total_size = length + 2;
+    
+    if (sizeof(queue) < total_size + queue_used) {
       return false;
     }
     else if (tag == RobotInterface::GLOBAL_INVALID_TAG)
@@ -74,14 +63,17 @@ namespace HAL {
     }
     else
     {
-      QueueSlot* slot = &queue[spine_write];
+      const uint8_t* src = (const uint8_t*) data;
+
+      queue_used += total_size;
       
-      slot->size = length + 1;
-      slot->tag = tag;
-      memcpy(slot->payload, data, length);
-      
-      slot->state = QUEUE_READY;
-      spine_write = (spine_write+1) % QUEUE_DEPTH;
+      queue[inc(queue_write)] = length + 1;
+      queue[inc(queue_write)] = tag;
+
+      for (int i = 0; i < length; i++) {
+        queue[inc(queue_write)] = *(src++);
+      }
+
       return true;
     }
   }
